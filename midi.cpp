@@ -569,6 +569,7 @@ public:
 		if (loop_begin != -1) p_info.info_set_int("midi_loop_start", loop_begin);
 		if (loop_end != -1) p_info.info_set_int("midi_loop_end", loop_end);
 		//p_info.info_set_int("samplerate", srate);
+		p_info.info_set_int("channels", 2);
 		p_info.set_length( get_length() );
 	}
 
@@ -984,6 +985,7 @@ fagotry:
 	{
 		unsigned seek_msec = unsigned( audio_math::time_to_samples( p_seconds, 1000 ) );
 
+		first_block = true;
 		eof = false;
 
 		unsigned done = unsigned( ( t_int64( seek_msec ) * t_int64( srate) ) / 1000 );
