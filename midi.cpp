@@ -775,9 +775,12 @@ public:
 
 			thePlayer->FillBuffer(ptr, todo);
 
-			p_chunk.set_data_32( ptr, todo, 2, srate );
+			if ( ! p_chunk.set_data_32( ptr, todo, 2, srate ) )
+				return io_result_error_out_of_memory;
 #else
-			float * ptr = p_chunk.set_size( todo * 2 );
+			if ( ! p_chunk.check_data_size( todo * 2 ) )
+				return io_result_error_out_of_memory;
+			float * ptr = p_chunk.get_data();
 			thePlayer->FillBuffer( ptr, todo );
 			p_chunk.set_srate( srate );
 			p_chunk.set_channels( 2 );
@@ -795,7 +798,10 @@ public:
 			unsigned todo = 576;
 			unsigned nch = vstPlayer->getChannelCount();
 
-			audio_sample * out = p_chunk.check_data_size( todo * nch );
+			if ( ! p_chunk.check_data_size( todo * nch ) )
+				return io_result_error_out_of_memory;
+
+			audio_sample * out = p_chunk.get_data();
 
 			unsigned done = vstPlayer->Play( out, todo );
 
@@ -921,7 +927,10 @@ fagotry:
 
 			if (done)
 			{
-				audio_sample * out = p_chunk.check_data_size( done * 2 );
+				if ( ! p_chunk.check_data_size( done * 2 ) )
+					return io_result_error_out_of_memory;
+
+				audio_sample * out = p_chunk.get_data();
 
 				for ( unsigned i = 0; i < done; ++i )
 				{
