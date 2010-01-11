@@ -1,7 +1,11 @@
-#define MYVERSION "1.81"
+#define MYVERSION "1.82"
 
 /*
 	change log
+
+2009-08-16 03:16 UTC - kode54
+- Solved rounding error in MIDI do_table and Marker/SysEx map translation
+- Version is now 1.82
 
 2009-06-14 20:15 UTC - kode54
 - Changed VSTi player loop end handler to simply truncate, rather than mash all end events together
