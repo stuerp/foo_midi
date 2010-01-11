@@ -570,7 +570,8 @@ void VSTiPlayer::Seek(unsigned sample)
 		}
 
 		mem_block temp;
-		VstEvents * my_events_list = (VstEvents*) temp.set_size(events_size);
+		if ( ! temp.set_size( events_size ) ) return;
+		VstEvents * my_events_list = (VstEvents*) temp.get_ptr();
 
 		my_events_list->numEvents = j;
 		my_events_list->reserved = 0;

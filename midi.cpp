@@ -3,6 +3,9 @@
 /*
 	change log
 
+2005-11-14 00:00 UTC - kode54
+- Fixed bug in VSTiPlayer seeking ( bleh, C-style cast flubbed changes to mem_block class )
+
 2005-10-08 22:10 UTC - kode54
 - Ported to 0.9 beta 7 + input API
 - DXi support disabled because it is a bloated mess and should die
@@ -1023,7 +1026,12 @@ fagotry:
 		return true;
 	}
 
-	bool decode_get_dynamic_info( file_info & p_out, double & p_timestamp_delta,bool & p_track_change )
+	bool decode_get_dynamic_info( file_info & p_out, double & p_timestamp_delta )
+	{
+		return false;
+	}
+
+	bool decode_get_dynamic_info_track( file_info & p_out, double & p_timestamp_delta )
 	{
 		return false;
 	}
