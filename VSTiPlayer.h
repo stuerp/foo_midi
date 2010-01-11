@@ -52,6 +52,8 @@ public:
 	unsigned Play(audio_sample * out, unsigned count);
 	void Seek(unsigned sample);
 
+	void needIdle();
+
 #ifdef TIME_INFO
 	// for audiomaster callback
 	VstTimeInfo * getTime();
@@ -86,6 +88,8 @@ private:
 	float      * float_out;
 
 	VstEvents  * events_list;
+
+	bool         bNeedIdle;
 
 #ifdef TIME_INFO
 	VstTimeInfo* time_info;

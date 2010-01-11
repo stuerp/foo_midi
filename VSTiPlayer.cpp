@@ -19,35 +19,12 @@ struct VstMidiSysexEvent
 
 #define BUFFER_SIZE 4096
 
-#ifdef TIME_INFO
 class VSTiPlayer;
-struct host_effect
-{
-	VSTiPlayer * host;
-	AEffect * effect;
-	host_effect( VSTiPlayer * h, AEffect * e ) : host(h), effect(e) {}
-};
-
-critical_section effect_list_lock;
-pfc::chain_list_simple_t<host_effect> effect_list;
-#endif
 
 static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long value, void *ptr, float opt)
 {
-#ifdef TIME_INFO
 	VSTiPlayer * host = 0;
-	{
-		insync(effect_list_lock);
-		for ( pfc::chain_list_simple_t<host_effect>::t_iter i = effect_list.first(); i; i = effect_list.next( i ) )
-		{
-			if ( effect_list.get_item( i ).effect == effect )
-			{
-				host = effect_list.get_item( i ).host;
-				break;
-			}
-		}
-	}
-#endif
+	if ( effect ) host = (VSTiPlayer *) effect->user;
 
 	switch (opcode)
 	{
@@ -83,9 +60,18 @@ static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long v
 
 	case audioMasterWillReplaceOrAccumulate:
 		return 1;
+
+	case audioMasterNeedIdle:
+		if ( host ) host->needIdle();
+		return 1;
 	}
 
 	return 0;
+}
+
+void VSTiPlayer::needIdle()
+{
+	bNeedIdle = true;
 }
 
 #ifdef TIME_INFO
@@ -104,6 +90,8 @@ VSTiPlayer::VSTiPlayer()
 	uTimeCurrent = 0;
 	uTimeEnd = 0;
 	uTimeLoopStart = 0;
+
+	bNeedIdle = false;
 
 #ifdef TIME_INFO
 	time_info = new VstTimeInfo;
@@ -136,20 +124,6 @@ VSTiPlayer::~VSTiPlayer()
 		}
 
 		pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
-
-#ifdef TIME_INFO
-		{
-			insync( effect_list_lock );
-			for ( pfc::chain_list_simple_t<host_effect>::t_iter i = effect_list.first(); i; i = effect_list.next( i ) )
-			{
-				if ( effect_list.get_item( i ).host == this )
-				{
-					effect_list.remove( i );
-					break;
-				}
-			}
-		}
-#endif
 	}
 
 	if (hDll)
@@ -181,15 +155,10 @@ bool VSTiPlayer::LoadVST(const char * path)
 		{
 			pEffect = (*pMain)(&audioMaster);
 
-#ifdef TIME_INFO
-			{
-				insync(effect_list_lock);
-				effect_list.insert_last( host_effect( this, pEffect ) );
-			}
-#endif
-
 			if (pEffect)
 			{
+				pEffect->user = this;
+
 				pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
 
 				if (pEffect->dispatcher(pEffect, effGetPlugCategory, 0, 0, 0, 0) == kPlugCategSynth &&
@@ -459,7 +428,10 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 		resizeState(buffer_size);
 	}
 
-	pEffect->dispatcher(pEffect, effIdle, 0, 0, 0, 0);
+	if ( bNeedIdle )
+	{
+		bNeedIdle = !! pEffect->dispatcher(pEffect, effIdle, 0, 0, 0, 0);
+	}
 
 	DWORD done = 0;
 
@@ -592,27 +564,9 @@ void VSTiPlayer::Seek(unsigned sample)
 
 		if (blState.get_size())
 		{
-#ifdef TIME_INFO
-			insync( effect_list_lock );
-#endif
-
 			// total shutdown
 			pEffect->dispatcher(pEffect, effStopProcess, 0, 0, 0, 0);
 			pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
-
-#ifdef TIME_INFO
-			pfc::chain_list_simple_t<host_effect>::t_iter item = 0;
-
-			for ( pfc::chain_list_simple_t<host_effect>::t_iter i = effect_list.first(); i; i = effect_list.next( i ) )
-			{
-				if ( effect_list.get_item( i ).effect == pEffect )
-				{
-					item = i;
-					effect_list.get_item( i ).host = 0;
-					break;
-				}
-			}
-#endif
 
 			blState.set_size(0);
 
@@ -622,23 +576,12 @@ void VSTiPlayer::Seek(unsigned sample)
 
 			if (!pEffect)
 			{
-#ifdef TIME_INFO
-				if ( item ) effect_list.remove( item );
-#endif
 				return;
 			}
 
-#ifdef TIME_INFO
-			if ( item )
-			{
-				effect_list.get_item( item ).host = this;
-				effect_list.get_item( item ).effect = pEffect;
-			}
-			else
-			{
-				effect_list.insert_last( host_effect( this, pEffect ) );
-			}
-#endif
+			pEffect->user = this;
+
+			pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
 		}
 	}
 
