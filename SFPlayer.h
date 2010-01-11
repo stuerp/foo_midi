@@ -64,6 +64,10 @@ private:
 
 	UINT               uStreamLoopStart;
 	DWORD              uTimeLoopStart;
+
+	void reset_drums();
+	BYTE               drum_channels[16];
+	BYTE               gs_part_to_ch[16];
 };
 
 #endif

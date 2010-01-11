@@ -11,6 +11,8 @@ SFPlayer::SFPlayer()
 	uTimeEnd = 0;
 	uTimeLoopStart = 0;
 
+	reset_drums();
+
 	_settings = new_fluid_settings();
 
 	fluid_settings_setnum(_settings, "synth.gain", 1.0);
@@ -325,6 +327,8 @@ void SFPlayer::Seek(unsigned sample)
 		// hokkai, let's kill any hanging notes
 		uStreamPosition = 0;
 
+		reset_drums();
+
 		fluid_synth_system_reset(_synth);
 	}
 
@@ -410,8 +414,20 @@ void SFPlayer::send_event(DWORD b)
 			break;
 		case 0xB0:
 			fluid_synth_cc(_synth, chan, param1, param2);
+			if ( param1 == 0 || param1 == 0x20 )
+			{
+				unsigned int sfont, bank, preset;
+				if ( !fluid_synth_get_program(_synth, chan, &sfont, &bank, &preset) )
+				{
+					if ( bank == 16256 || bank == 15360 )
+						drum_channels [chan] = 1;
+					else if ( bank == 15488 )
+						drum_channels [chan] = 0;
+				}
+			}
 			break;
 		case 0xC0:
+			if ( drum_channels [chan] ) fluid_synth_bank_select(_synth, chan, 128 /*DRUM_INST_BANK*/);
 			fluid_synth_program_change(_synth, chan, param1);
 			break;
 		case 0xD0:
@@ -421,13 +437,39 @@ void SFPlayer::send_event(DWORD b)
 			fluid_synth_pitch_bend(_synth, chan, (param2 << 7) | param1);
 			break;
 		case 0xF0:
-			if (chan == 15) fluid_synth_system_reset(_synth);
+			if (chan == 15)
+			{
+				reset_drums();
+				fluid_synth_system_reset(_synth);
+			}
 			break;
 		}
 	}
 	else
 	{
-		// don't know what to do with sysex events yet
+		UINT n = b & 0xffffff;
+		SYSEX_ENTRY & sysex = pSysexMap->events[n];
+		BYTE * sysex_data = pSysexMap->data + sysex.ofs;
+		if ( sysex.len == 11 &&
+			sysex_data [0] == 0xF0 && sysex_data [1] == 0x41 && sysex_data [3] == 0x42 &&
+			sysex_data [4] == 0x12 && sysex_data [5] == 0x40 && (sysex_data [6] & 0xF0) == 0x10 &&
+			sysex_data [10] == 0xF7)
+		{
+			if (sysex_data [7] == 2)
+			{
+				// GS MIDI channel to part assign
+				gs_part_to_ch [ sysex_data [6] & 15 ] = sysex_data [8];
+			}
+			else if ( sysex_data [7] == 0x15 )
+			{
+				// GS part to rhythm allocation
+				unsigned int drum_channel = gs_part_to_ch [ sysex_data [6] & 15 ];
+				if ( drum_channel < 16 )
+				{
+					drum_channels [ drum_channel ] = sysex_data [8];
+				}
+			}
+		}
 	}
 }
 
@@ -452,6 +494,17 @@ void SFPlayer::shutdown()
 
 void SFPlayer::startup()
 {
+	reset_drums();
 	_synth = new_fluid_synth(_settings);
 	if (sSoundFontName.length()) _soundFont = fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), 1);
+}
+
+void SFPlayer::reset_drums()
+{
+	static const BYTE part_to_ch[16] = {9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15};
+
+	memset( drum_channels, 0, sizeof( drum_channels ) );
+	drum_channels [9] = 1;
+
+	memcpy( gs_part_to_ch, part_to_ch, sizeof( gs_part_to_ch ) );
 }

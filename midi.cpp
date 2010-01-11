@@ -1,7 +1,11 @@
-#define MYVERSION "1.93"
+#define MYVERSION "1.94"
 
 /*
 	change log
+
+2009-09-01 03:13 UTC - kode54
+- FluidSynth player now supports basic GS/XG drum channel control
+- Version is now 1.94
 
 2009-08-30 01:37 UTC - kode54
 - Fixed loop end event handling for both VSTi and FluidSynth players
