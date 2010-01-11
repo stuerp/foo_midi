@@ -334,6 +334,8 @@ void SFPlayer::Seek(unsigned sample)
 		}
 	}
 
+	if (!_synth) startup();
+
 	if (uTimeCurrent > sample)
 	{
 		// hokkai, let's kill any hanging notes

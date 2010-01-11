@@ -1,7 +1,14 @@
-#define MYVERSION "1.9"
+#define MYVERSION "1.91"
 
 /*
 	change log
+
+2009-08-22 01:08 UTC - kode54
+- Fixed crash bug with delay load checking by calling LoadLibraryEx instead
+
+2009-08-22 00:49 UTC - kode54
+- Fixed crash bug in FluidSynth player when seeking before starting playback
+- Version is now 1.91
 
 2009-08-21 08:02 UTC - kode54
 - Added support for FluidSynth
@@ -101,6 +108,12 @@
 #include "VSTiPlayer.h"
 #include "SFPlayer.h"
 
+#ifdef NDEBUG
+#define FLUIDSYNTH_DLL L"fluidsynth.dll"
+#else
+#define FLUIDSYNTH_DLL L"fluidsynth_debug.dll"
+#endif
+
 //#define DXISUPPORT 1
 
 #ifdef DXISUPPORT
@@ -114,8 +127,6 @@
 #endif
 
 #include "main.h"
-
-#include <delayimp.h>
 
 #include "resource.h"
 
@@ -737,10 +748,12 @@ public:
 			}
 			else if (plugin == 2)
 			{
-				if (FAILED(__HrLoadAllImportsForDll("fluidsynth.dll")))
+				HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
+				if ( !fsmod )
 				{
 					throw exception_io_data("Failed to load FluidSynth.dll");
 				}
+				FreeLibrary( fsmod );
 
 				delete sfPlayer;
 				sfPlayer = new SFPlayer;
@@ -1385,8 +1398,10 @@ class preferences_page_midi : public preferences_page
 				}
 
 				{
-					if (SUCCEEDED(__HrLoadAllImportsForDll("fluidsynth.dll")))
+					HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
+					if (fsmod)
 					{
+						FreeLibrary( fsmod );
 						uSendMessageText(w, CB_ADDSTRING, 0, "FluidSynth");
 					}
 				}
