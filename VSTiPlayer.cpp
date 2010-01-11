@@ -304,12 +304,12 @@ bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 						{
 							//uStreamLoopStart = i;
 							UINT j;
+							uTimeLoopStart = pStream[i].tm;
 							for (j = i - 1; j != ~0; --j)
 							{
 								if (pStream[j].tm < uTimeLoopStart) break;
 							}
 							uStreamLoopStart = j + 1;
-							uTimeLoopStart = pStream[i].tm;
 							uLoopMode |= loop_mode_force;
 						}
 						break;

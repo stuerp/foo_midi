@@ -3,6 +3,7 @@
 
 #include "main.h"
 
+#define FLUIDSYNTH_NOT_A_DLL
 #include <fluidsynth.h>
 
 #ifndef _AUDIO_CHUNK_H_

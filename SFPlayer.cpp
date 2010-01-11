@@ -119,12 +119,12 @@ bool SFPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 						{
 							//uStreamLoopStart = i;
 							UINT j;
+							uTimeLoopStart = pStream[i].tm;
 							for (j = i - 1; j != ~0; --j)
 							{
 								if (pStream[j].tm < uTimeLoopStart) break;
 							}
 							uStreamLoopStart = j + 1;
-							uTimeLoopStart = pStream[i].tm;
 							uLoopMode |= loop_mode_force;
 						}
 						break;
@@ -469,5 +469,5 @@ void SFPlayer::shutdown()
 void SFPlayer::startup()
 {
 	_synth = new_fluid_synth(_settings);
-	if (sSoundFontName.length()) _soundFont = fluid_synth_sfload(_synth, sSoundFontName, 1);
+	if (sSoundFontName.length()) _soundFont = fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), 1);
 }

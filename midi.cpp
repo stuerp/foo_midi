@@ -1,7 +1,14 @@
-#define MYVERSION "1.91"
+#define MYVERSION "1.92"
 
 /*
 	change log
+
+2009-08-23 02:20 UTC - kode54
+- Fixed control change loop start position for VSTi and FluidSynth players
+
+2009-08-22 23:28 UTC - kode54
+- Now static linking to FluidSynth
+- Version is now 1.92
 
 2009-08-22 01:08 UTC - kode54
 - Fixed crash bug with delay load checking by calling LoadLibraryEx instead
@@ -748,16 +755,16 @@ public:
 			}
 			else if (plugin == 2)
 			{
-				HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
+				/*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
 				if ( !fsmod )
 				{
 					throw exception_io_data("Failed to load FluidSynth.dll");
 				}
-				FreeLibrary( fsmod );
+				FreeLibrary( fsmod );*/
 
 				delete sfPlayer;
 				sfPlayer = new SFPlayer;
-				sfPlayer->setSoundFont(pfc::stringcvt::string_ansi_from_utf8(cfg_soundfont_path));
+				sfPlayer->setSoundFont(cfg_soundfont_path);
 				sfPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;
@@ -1377,6 +1384,7 @@ class preferences_page_midi : public preferences_page
 
 				w = GetDlgItem(wnd, IDC_PLUGIN);
 				uSendMessageText(w, CB_ADDSTRING, 0, "Emu de MIDI");
+				uSendMessageText(w, CB_ADDSTRING, 0, "FluidSynth");
 
 				/*
 				if (plugin == 1)
@@ -1397,14 +1405,14 @@ class preferences_page_midi : public preferences_page
 						vsti_selected = i;
 				}
 
-				{
+				/*{
 					HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
 					if (fsmod)
 					{
 						FreeLibrary( fsmod );
 						uSendMessageText(w, CB_ADDSTRING, 0, "FluidSynth");
 					}
-				}
+				}*/
 
 				if ( plugin != 2 )
 				{
@@ -1436,8 +1444,8 @@ class preferences_page_midi : public preferences_page
 				}
 				CoUninitialize();
 #endif
-				if ( plugin == 1 ) plugin += vsti_selected;
-				else if ( plugin == 2 ) plugin += vsti_count - 1;
+				if ( plugin == 1 ) plugin += vsti_selected + 1;
+				else if ( plugin == 2 ) plugin--;
 #ifdef DXISUPPORT
 				else if ( plugin ) plugin += vsti_count;
 #endif
@@ -1497,15 +1505,15 @@ class preferences_page_midi : public preferences_page
 					{
 						cfg_plugin = 0;
 					}
-					else if ( plugin <= vsti_count )
-					{
-						cfg_plugin = 1;
-						cfg_vst_path = vsti_plugins[ plugin - 1 ].path;
-					}
-					else
+					else if ( plugin == 1 )
 					{
 						cfg_plugin = 2;
 						//cfg_plugin = plugin - vsti_count + 1;
+					}
+					else if ( plugin <= vsti_count + 1 )
+					{
+						cfg_plugin = 1;
+						cfg_vst_path = vsti_plugins[ plugin - 2 ].path;
 					}
 					EnableWindow( GetDlgItem( wnd, IDC_SAMPLERATE ), plugin || !g_running );
 					EnableWindow( GetDlgItem( wnd, IDC_EMIDI_EX ), !! plugin );
