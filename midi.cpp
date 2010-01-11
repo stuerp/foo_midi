@@ -131,8 +131,8 @@ cfg_string cfg_vst_path(guid_cfg_vst_path, "");
 
 static const char * exts[]=
 {
-	// Original set copied from foo_mod, perhaps most frequently used types
 	"MID",
+	"MIDI",
 	"RMI",
 	"MIDS",
 	"CMF",
@@ -457,7 +457,7 @@ private:
 public:
 	void open( service_ptr_t<file> p_file,const char * p_path,t_input_open_reason p_reason,abort_callback & p_abort )
 	{
-		if ( p_reason == input_open_info_write ) throw exception_io_data();
+		if ( p_reason == input_open_info_write ) throw exception_io_unsupported_format();
 
 		if ( p_file.is_empty() )
 		{
@@ -518,7 +518,7 @@ public:
 
 		if (mf->info.traxnames && mf->info.traxtext)
 		{
-			string8_fastalloc name;
+			pfc::string8_fastalloc name;
 			for (unsigned i = 0, j = mf->info.ntrax; i < j; i++)
 			{
 				if (mf->info.traxnames[i] && mf->info.traxnames[i].length())
@@ -792,7 +792,7 @@ public:
 			unsigned todo = 1024;
 			unsigned nch = vstPlayer->getChannelCount();
 
-			p_chunk.check_data_size( todo * nch );
+			p_chunk.set_data_size( todo * nch );
 
 			audio_sample * out = p_chunk.get_data();
 
@@ -912,13 +912,13 @@ fagotry:
 				}
 				catch ( const dsa::RuntimeException & e )
 				{
-					throw std::exception( string8() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")" );
+					throw std::exception( pfc::string8() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")" );
 				}
 			}
 
 			if (done)
 			{
-				p_chunk.check_data_size( done * 2 );
+				p_chunk.set_data_size( done * 2 );
 
 				audio_sample * out = p_chunk.get_data();
 
@@ -938,7 +938,7 @@ fagotry:
 
 	void decode_seek( double p_seconds, abort_callback & p_abort )
 	{
-		unsigned seek_msec = unsigned( p_seconds * 1000. );
+		unsigned seek_msec = unsigned( audio_math::time_to_samples( p_seconds, 1000 ) );
 
 		eof = false;
 
@@ -998,7 +998,7 @@ fagotry:
 			}
 			catch ( const dsa::RuntimeException & e )
 			{
-				throw std::exception( string8() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")" );
+				throw std::exception( pfc::string8() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")" );
 			}
 		}
 	}
@@ -1024,7 +1024,7 @@ fagotry:
 
 	void retag( const file_info & p_info, abort_callback & p_abort )
 	{
-		throw exception_io_data();
+		throw exception_io_unsupported_format();
 	}
 
 	static bool g_is_our_content_type( const char * p_content_type )
@@ -1052,7 +1052,7 @@ class preferences_page_midi : public preferences_page
 {
 	static bool set_vsti(HWND wnd, bool choose)
 	{
-		string8 path;
+		pfc::string8 path;
 		if (choose)
 		{
 			if (!uGetOpenFileName(wnd, "Dll Files|*.dll", 0, "dll", "Choose a VST instrument...", 0, path, FALSE))
@@ -1063,7 +1063,7 @@ class preferences_page_midi : public preferences_page
 		else path = cfg_vst_path;
 
 		bool rval = false;
-		string8_fastalloc display;
+		pfc::string8_fastalloc display;
 		display = "VST instrument";
 
 		if (path.length())
@@ -1071,7 +1071,7 @@ class preferences_page_midi : public preferences_page
 			VSTiPlayer vstPlayer;
 			if (vstPlayer.LoadVST(path))
 			{
-				string8 vendor, product;
+				pfc::string8 vendor, product;
 				vstPlayer.getVendorString(vendor);
 				vstPlayer.getProductString(product);
 
@@ -1101,7 +1101,7 @@ class preferences_page_midi : public preferences_page
 			}
 			else
 			{
-				if (choose) uMessageBox(wnd, string8() << path.get_ptr() + path.scan_filename() << " is not a working VST instrument.", "Error", MB_ICONEXCLAMATION );
+				if (choose) uMessageBox(wnd, pfc::string8() << path.get_ptr() + path.scan_filename() << " is not a working VST instrument.", "Error", MB_ICONEXCLAMATION );
 				else
 				{
 					cfg_vst_path = "";
@@ -1151,7 +1151,7 @@ class preferences_page_midi : public preferences_page
 					if (SUCCEEDED(theInventory.EnumPlugIns()))
 					{
 						unsigned count = theInventory.GetCount();
-						string8_fastalloc name;
+						pfc::string8_fastalloc name;
 						CLSID foo;
 						for (unsigned i = 0; i < count; i++)
 						{
@@ -1337,6 +1337,6 @@ class midi_file_types : public input_file_type
 
 static input_singletrack_factory_t<input_midi>                      g_input_midi_factory;
 static preferences_page_factory_t <preferences_page_midi>           g_config_midi_factory;
-static service_factory_single_t   <input_file_type,midi_file_types> g_input_file_type_midi_factory;
+static service_factory_single_t   <midi_file_types> g_input_file_type_midi_factory;
 
 DECLARE_COMPONENT_VERSION("MIDI synthesizer host", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.");
