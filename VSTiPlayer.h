@@ -65,6 +65,7 @@ private:
 
 	unsigned     uSampleRate;
 	unsigned     uLoopMode;
+	unsigned     uNumOutputs;
 
 	CSysexMap  * pSysexMap;
 	MIDI_EVENT * pStream;
@@ -90,6 +91,8 @@ private:
 	VstEvents  * events_list;
 
 	bool         bNeedIdle;
+
+	pfc::array_t<t_uint8>    blChunk;
 
 #ifdef TIME_INFO
 	VstTimeInfo* time_info;

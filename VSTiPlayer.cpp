@@ -87,6 +87,7 @@ VSTiPlayer::VSTiPlayer()
 	pEffect = 0;
 	pStream = 0;
 	uSampleRate = 1000;
+	uNumOutputs = 0;
 	uTimeCurrent = 0;
 	uTimeEnd = 0;
 	uTimeLoopStart = 0;
@@ -159,6 +160,8 @@ bool VSTiPlayer::LoadVST(const char * path)
 			{
 				pEffect->user = this;
 
+				uNumOutputs = min( pEffect->numOutputs, 2 );
+
 				pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
 
 				if (pEffect->dispatcher(pEffect, effGetPlugCategory, 0, 0, 0, 0) == kPlugCategSynth &&
@@ -224,6 +227,8 @@ void VSTiPlayer::setChunk( const void * in, unsigned size )
 {
 	if ( pEffect )
 	{
+		blChunk.set_size( size );
+		memcpy( blChunk.get_ptr(), in, size );
 		pEffect->dispatcher( pEffect, effSetChunk, 0, size, ( void * ) in, 0 );
 	}
 }
@@ -263,8 +268,7 @@ void VSTiPlayer::setSampleRate(unsigned rate)
 
 unsigned VSTiPlayer::getChannelCount()
 {
-	if (pEffect) return pEffect->numOutputs;
-	else return 0;
+	return uNumOutputs;
 }
 
 bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
@@ -383,7 +387,7 @@ bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 				{
 					if ( note_on[ j ] )
 					{
-						pStream[i].tm = uTimeEnd;
+						pStream[i].tm = uTimeEnd - 1;
 						pStream[i].ev = 0x80 + ( j >> 8 ) + ( j & 0x7F ) * 0x100;
 						i++;
 					}
@@ -525,23 +529,20 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 		uTimeCurrent = time_target;
 
-		if (pEffect->flags & effFlagsCanReplacing)
-		{
-			pEffect->processReplacing(pEffect, float_list_in, float_list_out, todo);
-		}
-		else
-		{
-			memset(float_out, 0, sizeof(float) * BUFFER_SIZE * pEffect->numOutputs);
-			pEffect->process(pEffect, float_list_in, float_list_out, todo);
-		}
+		memset(float_out, 0, sizeof(float) * BUFFER_SIZE * pEffect->numOutputs);
 
-		for (UINT i = 0, nch = pEffect->numOutputs; i < todo; i++)
+		if (pEffect->flags & effFlagsCanReplacing)
+			pEffect->processReplacing(pEffect, float_list_in, float_list_out, todo);
+		else
+			pEffect->process(pEffect, float_list_in, float_list_out, todo);
+
+		for (UINT i = 0; i < todo; i++)
 		{
-			for (UINT j = 0; j < nch; j++)
+			for (UINT j = 0; j < uNumOutputs; j++)
 			{
 				out[j] = audio_sample(float_out[i + j * BUFFER_SIZE]);
 			}
-			out += nch;
+			out += uNumOutputs;
 		}
 
 		done += todo;
@@ -607,6 +608,9 @@ void VSTiPlayer::Seek(unsigned sample)
 			pEffect->user = this;
 
 			pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
+
+			if ( blChunk.get_size() )
+				pEffect->dispatcher( pEffect, effSetChunk, 0, blChunk.get_size(), blChunk.get_ptr(), 0 );
 		}
 	}
 
