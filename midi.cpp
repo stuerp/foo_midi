@@ -1,7 +1,11 @@
-#define MYVERSION "1.92"
+#define MYVERSION "1.93"
 
 /*
 	change log
+
+2009-08-30 01:37 UTC - kode54
+- Fixed loop end event handling for both VSTi and FluidSynth players
+- Version is now 1.93
 
 2009-08-23 02:20 UTC - kode54
 - Fixed control change loop start position for VSTi and FluidSynth players

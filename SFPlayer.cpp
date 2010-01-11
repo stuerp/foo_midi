@@ -187,7 +187,7 @@ bool SFPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 						UINT on = ( ev == 0x90 ) && ( pStream[i].ev & 0xFF0000 );
 						note_on [ ch * 128 + note ] = on;
 					}
-					if (pStream[i].tm >= uTimeEnd) break;
+					if (pStream[i].tm > uTimeEnd) break;
 				}
 				UINT note_off_count = 0;
 				for ( UINT j = 0; j < 128 * 16; j++ )
@@ -202,7 +202,7 @@ bool SFPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 				{
 					if ( note_on[ j ] )
 					{
-						pStream[i].tm = uTimeEnd - 1;
+						pStream[i].tm = uTimeEnd;
 						pStream[i].ev = 0x80 + ( j >> 8 ) + ( j & 0x7F ) * 0x100;
 						i++;
 					}
@@ -255,9 +255,7 @@ unsigned SFPlayer::Play(audio_sample * out, unsigned count)
 
 		if (stream_end > uStreamPosition)
 		{
-			UINT i;
-
-			for (i = 0; uStreamPosition < stream_end; uStreamPosition++, i++)
+			for (; uStreamPosition < stream_end; uStreamPosition++)
 			{
 				MIDI_EVENT * me = pStream + uStreamPosition;
 				
@@ -300,6 +298,15 @@ unsigned SFPlayer::Play(audio_sample * out, unsigned count)
 
 		if (uTimeCurrent >= uTimeEnd)
 		{
+			if ( uStreamPosition < uStreamSize )
+			{
+				for (; uStreamPosition < uStreamSize; uStreamPosition++)
+				{
+					MIDI_EVENT * me = pStream + uStreamPosition;
+					send_event( me->ev );
+				}
+			}
+
 			if ((uLoopMode & (loop_mode_enable | loop_mode_force)) == (loop_mode_enable | loop_mode_force))
 			{
 				if (uStreamLoopStart == ~0)

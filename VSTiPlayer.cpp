@@ -372,7 +372,7 @@ bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 						UINT on = ( ev == 0x90 ) && ( pStream[i].ev & 0xFF0000 );
 						note_on [ ch * 128 + note ] = on;
 					}
-					if (pStream[i].tm >= uTimeEnd) break;
+					if (pStream[i].tm > uTimeEnd) break;
 				}
 				UINT note_off_count = 0;
 				for ( UINT j = 0; j < 128 * 16; j++ )
@@ -387,7 +387,7 @@ bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 				{
 					if ( note_on[ j ] )
 					{
-						pStream[i].tm = uTimeEnd - 1;
+						pStream[i].tm = uTimeEnd;
 						pStream[i].ev = 0x80 + ( j >> 8 ) + ( j & 0x7F ) * 0x100;
 						i++;
 					}
@@ -549,6 +549,61 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 		if (uTimeCurrent >= uTimeEnd)
 		{
+			if ( uStreamPosition < uStreamSize )
+			{
+				unsigned events_size = sizeof(long) * 2 + sizeof(VstEvent*) * (uStreamSize - uStreamPosition);
+				UINT i;
+
+				for (i = uStreamPosition; i < uStreamSize; i++)
+				{
+					if (!(pStream[i].ev & 0xFF000000)) events_size += sizeof(VstMidiEvent);
+					else events_size += sizeof(VstMidiSysexEvent);
+				}
+
+				resizeState(buffer_size + events_size);
+
+				events_list->numEvents = uStreamSize - uStreamPosition;
+				events_list->reserved = 0;
+
+				VstEvent * event = (VstEvent*) (events_list->events + events_list->numEvents);
+
+				for (i = 0; uStreamPosition < uStreamSize; uStreamPosition++, i++)
+				{
+					events_list->events[i] = event;
+
+					if (!(pStream[uStreamPosition].ev & 0xFF000000))
+					{
+						VstMidiEvent * e = (VstMidiEvent*) event;
+						memset(e, 0, sizeof(*e));
+						e->type = kVstMidiType;
+						e->byteSize = sizeof(*e);
+						e->deltaFrames = 0;
+						memcpy(&e->midiData, &pStream[uStreamPosition].ev, 4);
+						event = (VstEvent*)(e + 1);
+					}
+					else
+					{
+						VstMidiSysexEvent * e = (VstMidiSysexEvent*) event;
+						UINT n = pStream[uStreamPosition].ev & 0xffffff;
+						SYSEX_ENTRY & sysex = pSysexMap->events[n];
+						e->type = kVstSysExType;
+						e->byteSize = sizeof(*e);
+						e->deltaFrames = 0;
+						e->flags = 0;
+						e->dumpBytes = sysex.len;
+						e->resvd1 = 0;
+						e->sysexDump = (char *)(pSysexMap->data + sysex.ofs);
+						e->resvd2 = 0;
+						event = (VstEvent*)(e + 1);
+					}
+				}
+
+				pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, events_list, 0);
+
+				if (pEffect->flags & effFlagsCanReplacing) pEffect->processReplacing(pEffect, float_list_in, float_list_out, 1);
+				else pEffect->process(pEffect, float_list_in, float_list_out, 1);
+			}
+
 			if ((uLoopMode & (loop_mode_enable | loop_mode_force)) == (loop_mode_enable | loop_mode_force))
 			{
 				if (uStreamLoopStart == ~0)
