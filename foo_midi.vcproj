@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="foo_midi"
 	ProjectGUID="{4588FF4C-92BF-4EA0-9FD4-6AAEE89D4843}"
 	RootNamespace="foo_midi"
@@ -10,6 +10,7 @@
 	SccLocalPath="SAK"
 	SccProvider="SAK"
 	Keyword="MFCProj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -90,6 +91,8 @@
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\../Debug/foo_midi.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\../Debug/foo_midi.lib"
 				TargetMachine="1"
 			/>
@@ -110,9 +113,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -192,6 +192,8 @@
 				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames=""
 				ProgramDatabaseFile=".\../Release/foo_midi.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\../Release/foo_midi.lib"
 				TargetMachine="1"
 			/>
@@ -212,9 +214,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -294,6 +293,8 @@
 				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames=""
 				ProgramDatabaseFile=".\../Release staticlink/foo_midi.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\../Release staticlink/foo_midi.lib"
 				TargetMachine="1"
 			/>
@@ -314,9 +315,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
