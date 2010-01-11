@@ -84,6 +84,8 @@
 
 #include "MfxSeq.h"
 #include "MfxBufferFactory.h"
+
+#pragma comment( lib, "strmiids.lib" )
 #endif
 
 #include "main.h"
@@ -190,6 +192,8 @@ class input_midi
 
 	bool eof;
 	bool dont_loop;
+
+	bool first_block;
 
 	t_filestats m_stats;
 
@@ -560,7 +564,7 @@ public:
 
 		if (loop_begin != -1) p_info.info_set_int("midi_loop_start", loop_begin);
 		if (loop_end != -1) p_info.info_set_int("midi_loop_end", loop_end);
-		p_info.info_set_int("samplerate", srate);
+		//p_info.info_set_int("samplerate", srate);
 		p_info.set_length( get_length() );
 	}
 
@@ -571,6 +575,8 @@ public:
 
 	void decode_initialize( unsigned p_flags, abort_callback & p_abort )
 	{
+		first_block = true;
+
 		get_length();
 
 #ifdef DXISUPPORT
@@ -1044,6 +1050,14 @@ fagotry:
 
 	bool decode_get_dynamic_info( file_info & p_out, double & p_timestamp_delta )
 	{
+		if ( first_block )
+		{
+			p_out.info_set_int( "samplerate", srate );
+			p_timestamp_delta = 0.;
+			first_block = false;
+			return true;
+		}
+
 		return false;
 	}
 
