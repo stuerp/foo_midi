@@ -570,6 +570,7 @@ public:
 		if (loop_end != -1) p_info.info_set_int("midi_loop_end", loop_end);
 		//p_info.info_set_int("samplerate", srate);
 		p_info.info_set_int("channels", 2);
+		p_info.info_set( "encoding", "synthesized" );
 		p_info.set_length( get_length() );
 	}
 
