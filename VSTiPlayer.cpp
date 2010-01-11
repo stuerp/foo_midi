@@ -668,6 +668,11 @@ void VSTiPlayer::Seek(unsigned sample)
 			MIDI_EVENT & e = me[i];
 			if ((e.ev & 0xFF0000F0) == 0x90) // note on
 			{
+				if ((e.ev & 0x0F) == 9) // hax
+				{
+					e.ev = 0;
+					continue;
+				}
 				DWORD m = (e.ev & 0xFF0F) | 0x80; // note off
 				for (j = i + 1; j < stream_start; j++)
 				{
