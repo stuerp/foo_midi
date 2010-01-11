@@ -1,7 +1,11 @@
-#define MYVERSION "1.7"
+#define MYVERSION "1.8"
 
 /*
 	change log
+
+2009-03-18 20:22 UTC - kode54
+- Added General MIDI converter context menu item.
+- Version is now 1.8
 
 2006-12-24 05:15 UTC - kode54
 - Fixed plug-in droplist change handler for VSTi plug-ins so the last item in the list won't enable
@@ -1498,8 +1502,91 @@ class midi_file_types : public input_file_type
 	}
 };
 
-static input_singletrack_factory_t<input_midi>                      g_input_midi_factory;
-static preferences_page_factory_t <preferences_page_midi>           g_config_midi_factory;
-static service_factory_single_t   <midi_file_types> g_input_file_type_midi_factory;
+class context_midi : public contextmenu_item_simple
+{
+public:
+	virtual unsigned get_num_items() { return 1; }
+
+	virtual void get_item_name( unsigned n, pfc::string_base & out )
+	{
+		out = "Convert to General MIDI";
+	}
+
+	virtual void get_item_default_path( unsigned n, pfc::string_base & out )
+	{
+		out = "Utils";
+	}
+
+	virtual bool get_item_description( unsigned n, pfc::string_base & out )
+	{
+		out = "Converts the selected files into General MIDI files in the same path as the source.";
+		return true;
+	}
+
+	virtual GUID get_item_guid( unsigned n )
+	{
+		static const GUID guid = { 0x70985c72, 0xe77e, 0x4bbb, { 0xbf, 0x11, 0x3c, 0x90, 0x2b, 0x27, 0x39, 0x9d } };
+		return guid;
+	}
+
+	virtual bool context_get_display( unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out,unsigned & displayflags, const GUID & )
+	{
+		unsigned matches, i, j;
+		i = data.get_count();
+		for (matches = 0, j = 0; j < i; j++)
+		{
+			const playable_location & foo = data.get_item(j)->get_location();
+			pfc::string_extension ext(foo.get_path());
+			for ( unsigned k = 2, l = tabsize(exts); k < l; k++ )
+			{
+				if ( !stricmp( ext, exts[ k ] ) )
+				{
+					matches++;
+					break;
+				}
+			}
+		}
+		if ( matches == i )
+		{
+			out = "Convert to General MIDI";
+			return true;
+		}
+		return false;
+	}
+
+	virtual void context_command( unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, const GUID & )
+	{
+		unsigned i = data.get_count();
+		abort_callback_impl m_abort;
+		for ( unsigned i = 0, j = data.get_count(); i < j; i++ )
+		{
+			const playable_location & loc = data.get_item( i )->get_location();
+			pfc::string8 out_path = loc.get_path();
+			out_path += ".mid";
+
+			service_ptr_t<file> p_file;
+			filesystem::g_open( p_file, loc.get_path(), filesystem::open_mode_read, m_abort );
+			t_filesize sz;
+			pfc::array_t< t_uint8 > buffer;
+			sz = p_file->get_size_ex( m_abort );
+			if ( sz > ( 1 << 30 ) ) continue;
+			unsigned sz32 = (unsigned) sz;
+			buffer.set_size( sz32 );
+			p_file->read_object( buffer.get_ptr(), sz32, m_abort );
+			p_file.release();
+
+			MIDI_file * mf = MIDI_file::Create( buffer.get_ptr(), sz32 );
+			if ( !mf ) continue;
+
+			filesystem::g_open( p_file, out_path, filesystem::open_mode_write_new, m_abort );
+			p_file->write_object( mf->data, mf->size, m_abort );
+		}
+	}
+};
+
+static input_singletrack_factory_t<input_midi>            g_input_midi_factory;
+static preferences_page_factory_t <preferences_page_midi> g_config_midi_factory;
+static service_factory_single_t   <midi_file_types>       g_input_file_type_midi_factory;
+static contextmenu_item_factory_t <context_midi>          g_contextmenu_item_midi_factory;
 
 DECLARE_COMPONENT_VERSION("MIDI synthesizer host", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.");
