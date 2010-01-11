@@ -13,8 +13,8 @@ SFPlayer::SFPlayer()
 
 	_settings = new_fluid_settings();
 
-	setNum("synth.gain", 1.0);
-	setNum("synth.sample-rate", 44100);
+	fluid_settings_setnum(_settings, "synth.gain", 1.0);
+	fluid_settings_setnum(_settings, "synth.sample-rate", 44100);
 }
 
 SFPlayer::~SFPlayer()
@@ -29,29 +29,6 @@ SFPlayer::~SFPlayer()
 	{
 		free(pStream);
 	}
-}
-
-void SFPlayer::setInt(const char *name, int val) {
-	char *name2 = strdup(name);
-
-	fluid_settings_setint(_settings, name2, val);
-	free(name2);
-}
-
-void SFPlayer::setNum(const char *name, double val) {
-	char *name2 = strdup(name);
-
-	fluid_settings_setnum(_settings, name2, val);
-	free(name2);
-}
-
-void SFPlayer::setStr(const char *name, const char *val) {
-	char *name2 = strdup(name);
-	char *val2 = strdup(val);
-
-	fluid_settings_setstr(_settings, name2, val2);
-	free(name2);
-	free(val2);
 }
 
 void SFPlayer::setSampleRate(unsigned rate)
@@ -81,7 +58,7 @@ void SFPlayer::setSampleRate(unsigned rate)
 
 	uSampleRate = rate;
 
-	setNum("synth.sample-rate", uSampleRate);
+	fluid_settings_setnum(_settings, "synth.sample-rate", uSampleRate);
 
 	shutdown();
 }
