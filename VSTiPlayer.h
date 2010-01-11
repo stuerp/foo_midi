@@ -6,6 +6,10 @@
 struct AEffect;
 struct VstEvents;
 
+#ifdef TIME_INFO
+struct VstTimeInfo;
+#endif
+
 #ifndef _AUDIO_CHUNK_H_
 typedef double audio_sample;
 #endif
@@ -48,6 +52,11 @@ public:
 	unsigned Play(audio_sample * out, unsigned count);
 	void Seek(unsigned sample);
 
+#ifdef TIME_INFO
+	// for audiomaster callback
+	VstTimeInfo * getTime();
+#endif
+
 private:
 	HMODULE      hDll;
 	AEffect    * pEffect;
@@ -77,6 +86,10 @@ private:
 	float      * float_out;
 
 	VstEvents  * events_list;
+
+#ifdef TIME_INFO
+	VstTimeInfo* time_info;
+#endif
 };
 
 #endif

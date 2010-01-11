@@ -1,7 +1,14 @@
-#define MYVERSION "1.6"
+#define MYVERSION "1.7"
 
 /*
 	change log
+
+2006-08-21 09:22 UTC - kode54
+- Added call to effMainsChanged before effStartProcess for some VST instruments which require
+  it. (Steinberg Hypersonic 2 crashes without this.)
+- Fixed a bug in VSTiPlayer Play(), where processReplace would be called even if it didn't exist.
+- Added GM initialization preset for Steinberg Hypersonic 2, requires foo_unpack.
+- Version is now 1.7
 
 2005-11-14 00:00 UTC - kode54
 - Fixed bug in VSTiPlayer seeking ( bleh, C-style cast flubbed changes to mem_block class )
@@ -63,6 +70,9 @@
 
 #include <foobar2000.h>
 #include "../helpers/dropdown_helper.h"
+
+#include <shlobj.h>
+#include <shlwapi.h>
 
 #include "VSTiPlayer.h"
 
@@ -619,21 +629,45 @@ public:
 				if (vstPlayer->LoadVST(cfg_vst_path))
 				{
 					{
-						pfc::array_t< t_uint8 > foo;
-						vstPlayer->getChunk(foo);
-						if (foo.get_size())
+						pfc::array_t< t_uint8 > buffer;
+						vstPlayer->getChunk(buffer);
+						if (buffer.get_size())
 						{
 							static const unsigned char def_syxg50[] = { 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74,
 								0x20, 0x53, 0x65, 0x74, 0x75, 0x70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 								0x20, 1, 1, 1, 0x65 };
 
+							static const unsigned char def_hypersonic2_id[] = { 0x52, 0xB8, 0x9E, 0x3E };
+
 							if (vstPlayer->getUniqueID() == 'd2w1' &&
-								foo.get_size() == sizeof(def_syxg50) &&
-								!memcmp(foo.get_ptr(), &def_syxg50, sizeof(def_syxg50)))
+								buffer.get_size() == sizeof(def_syxg50) &&
+								!memcmp(buffer.get_ptr(), &def_syxg50, sizeof(def_syxg50)))
 							{
-								unsigned char * ptr = (unsigned char *) foo.get_ptr();
+								unsigned char * ptr = (unsigned char *) buffer.get_ptr();
 								ptr[0x1C] = 128;
 								vstPlayer->setChunk(ptr, sizeof(def_syxg50));
+							}
+							else if ( vstPlayer->getUniqueID() == 'StSS' &&
+								buffer.get_size() == 35559 && 
+								!memcmp((char*)buffer.get_ptr() + 0x88BB, &def_hypersonic2_id, 4))
+							{
+								try
+								{
+#include "hypersonic2.h"
+									abort_callback_impl m_abort;
+									service_ptr_t<file> in, temp;
+									//filesystem::g_open(in, "file://c:\\new_chunk.gz", filesystem::open_mode_read, m_abort);
+									filesystem::g_open_tempmem(in, m_abort);
+									in->write(hypersonic2_gm, sizeof(hypersonic2_gm), m_abort);
+									in->reopen(m_abort);
+									unpacker::g_open(temp, in, m_abort);
+									buffer.set_size(temp->get_size_ex(m_abort));
+									temp->read(buffer.get_ptr(), buffer.get_size(), m_abort);
+									vstPlayer->setChunk(buffer.get_ptr(), buffer.get_size());
+								}
+								catch(...)
+								{
+								}
 							}
 						}
 					}
@@ -1048,8 +1082,93 @@ static cfg_dropdown_history cfg_history_rate(guid_cfg_history_rate,16);
 
 static const int srate_tab[]={8000,11025,16000,22050,24000,32000,44100,48000,64000,88200,96000};
 
+struct vsti_info
+{
+	pfc::string8 path, display_name;
+};
+
+static pfc::array_t< vsti_info > vsti_plugins;
+
 class preferences_page_midi : public preferences_page
 {
+	static void enum_vsti_plugins( const char * _path = 0, puFindFile _find = 0 )
+	{
+		pfc::string8 ppath;
+		if ( ! _find )
+		{
+			vsti_plugins.set_size( 0 );
+			TCHAR path[ MAX_PATH + 1 ];
+			if ( SUCCEEDED( SHGetFolderPath( 0, CSIDL_PROGRAM_FILES, 0, SHGFP_TYPE_CURRENT, path ) ) )
+			{
+				ppath = pfc::stringcvt::string_utf8_from_os( path );
+				ppath += "\\Steinberg\\VstPlugins";
+				ppath.add_byte( '\\' );
+				ppath += "*.*";
+				_path = ppath;
+				_find = uFindFirstFile( ppath );
+			}
+		}
+		if ( _find )
+		{
+			do
+			{
+				if ( _find->IsDirectory() && strcmp( _find->GetFileName(), "." ) && strcmp( _find->GetFileName(), ".." ) )
+				{
+					pfc::string8 npath( _path );
+					npath.truncate( npath.length() - 3 );
+					npath += _find->GetFileName();
+					npath.add_byte( '\\' );
+					npath += "*.*";
+					puFindFile pfind = uFindFirstFile( npath );
+					if ( pfind ) enum_vsti_plugins( npath, pfind );
+				}
+				else if ( _find->GetFileSize() )
+				{
+					pfc::string8 npath( _path );
+					npath.truncate( npath.length() - 3 );
+					npath += _find->GetFileName();
+					if ( !stricmp_utf8( npath.get_ptr() + npath.length() - 4, ".dll" ) )
+					{
+						VSTiPlayer vstPlayer;
+						if ( vstPlayer.LoadVST( npath ) )
+						{
+							vsti_info info;
+							info.path = npath;
+
+							pfc::string8 vendor, product;
+							vstPlayer.getVendorString(vendor);
+							vstPlayer.getProductString(product);
+
+							if (product.length() || vendor.length())
+							{
+								if (!vendor.length() ||
+									(product.length() >= vendor.length() &&
+									!strncmp(vendor, product, vendor.length())))
+								{
+									info.display_name = product;
+								}
+								else
+								{
+									info.display_name = vendor;
+									if (product.length())
+									{
+										info.display_name.add_byte(' ');
+										info.display_name += product;
+									}
+								}
+							}
+							else info.display_name = _find->GetFileName();
+
+							vsti_plugins.append_single( info );
+						}
+					}
+				}
+			} while ( _find->FindNext() );
+			delete _find;
+		}
+	}
+
+	/*
 	static bool set_vsti(HWND wnd, bool choose)
 	{
 		pfc::string8 path;
@@ -1125,6 +1244,7 @@ class preferences_page_midi : public preferences_page
 
 		return rval;
 	}
+	*/
 
 	static BOOL CALLBACK ConfigProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 	{
@@ -1138,11 +1258,24 @@ class preferences_page_midi : public preferences_page
 				w = GetDlgItem(wnd, IDC_PLUGIN);
 				uSendMessageText(w, CB_ADDSTRING, 0, "Emu de MIDI");
 
+				/*
 				if (plugin == 1)
 				{
 					if (!set_vsti(wnd, false)) plugin = 0;
 				}
 				else uSendMessageText(w, CB_ADDSTRING, 0, "VST instrument");
+				*/
+
+				enum_vsti_plugins();
+
+				unsigned vsti_count = vsti_plugins.get_size(), vsti_selected = ~0;
+
+				for ( unsigned i = 0; i < vsti_count; ++i )
+				{
+					uSendMessageText( w, CB_ADDSTRING, 0, vsti_plugins[ i ].display_name );
+					if ( plugin == 1 && ! stricmp_utf8( vsti_plugins[ i ].path, cfg_vst_path ) )
+						vsti_selected = i;
+				}
 
 #ifdef DXISUPPORT
 				CoInitialize(NULL);
@@ -1161,6 +1294,10 @@ class preferences_page_midi : public preferences_page
 					}
 				}
 				CoUninitialize();
+#endif
+				if ( plugin == 1 ) plugin += vsti_selected;
+#ifdef DXISUPPORT
+				else if ( plugin ) plugin += vsti_count;
 #endif
 				uSendMessage(w, CB_SETCURSEL, plugin, 0);
 
@@ -1187,7 +1324,7 @@ class preferences_page_midi : public preferences_page
 					EnableWindow(GetDlgItem(wnd,IDC_EMIDI_EX), FALSE);
 				}
 
-				if ( plugin < 2 ) EnableWindow(GetDlgItem(wnd,IDC_GM2), FALSE);
+				if ( plugin <= vsti_count ) EnableWindow(GetDlgItem(wnd,IDC_GM2), FALSE);
 
 				w = GetDlgItem(wnd, IDC_LOOP);
 				for (unsigned i = 0; i < tabsize(loop_txt); i++)
@@ -1211,26 +1348,26 @@ class preferences_page_midi : public preferences_page
 			{
 			case (CBN_SELCHANGE << 16) | IDC_PLUGIN:
 				{
+					t_size vsti_count = vsti_plugins.get_size();
 					int plugin = uSendMessage((HWND)lp,CB_GETCURSEL,0,0);
 
-					if (plugin == 1)
+					if ( ! plugin )
 					{
-						if (!set_vsti(wnd, true))
-						{
-							plugin = cfg_plugin;
-							uSendMessage((HWND)lp, CB_SETCURSEL, plugin, 0);
-						}
+						cfg_plugin = 0;
+					}
+					else if ( plugin <= vsti_count )
+					{
+						cfg_plugin = 1;
+						cfg_vst_path = vsti_plugins[ plugin - 1 ].path;
 					}
 					else
 					{
-						uSendMessage((HWND)lp, CB_DELETESTRING, 1, 0);
-						uSendMessageText((HWND)lp, CB_INSERTSTRING, 1, "VST instrument");
-						uSendMessage((HWND)lp, CB_SETCURSEL, plugin, 0);
+						cfg_plugin = plugin - vsti_count + 1;
 					}
 					cfg_plugin = plugin;
 					EnableWindow( GetDlgItem( wnd, IDC_SAMPLERATE ), plugin || !g_running );
 					EnableWindow( GetDlgItem( wnd, IDC_EMIDI_EX ), !! plugin );
-					EnableWindow( GetDlgItem( wnd, IDC_GM2 ), plugin > 1 );
+					EnableWindow( GetDlgItem( wnd, IDC_GM2 ), plugin >= vsti_count );
 				}
 				break;
 			case (CBN_KILLFOCUS<<16)|IDC_SAMPLERATE:
@@ -1265,6 +1402,11 @@ class preferences_page_midi : public preferences_page
 				/*case IDC_HACK_XG_DRUMS:
 				cfg_hack_xg_drums = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
 				break;*/
+			}
+			break;
+		case WM_DESTROY:
+			{
+				vsti_plugins.set_size( 0 );
 			}
 			break;
 		}

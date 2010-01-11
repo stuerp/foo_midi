@@ -19,10 +19,44 @@ struct VstMidiSysexEvent
 
 #define BUFFER_SIZE 4096
 
+#ifdef TIME_INFO
+class VSTiPlayer;
+struct host_effect
+{
+	VSTiPlayer * host;
+	AEffect * effect;
+	host_effect( VSTiPlayer * h, AEffect * e ) : host(h), effect(e) {}
+};
+
+critical_section effect_list_lock;
+pfc::chain_list_simple_t<host_effect> effect_list;
+#endif
+
 static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long value, void *ptr, float opt)
 {
+#ifdef TIME_INFO
+	VSTiPlayer * host = 0;
+	{
+		insync(effect_list_lock);
+		for ( pfc::chain_list_simple_t<host_effect>::t_iter i = effect_list.first(); i; i = effect_list.next( i ) )
+		{
+			if ( effect_list.get_item( i ).effect == effect )
+			{
+				host = effect_list.get_item( i ).host;
+				break;
+			}
+		}
+	}
+#endif
+
 	switch (opcode)
 	{
+#ifdef TIME_INFO
+	case audioMasterGetTime:
+		if (host) return (long) host->getTime();
+		break;
+#endif
+
 	case audioMasterVersion:
 		return 2300;
 
@@ -54,6 +88,13 @@ static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long v
 	return 0;
 }
 
+#ifdef TIME_INFO
+VstTimeInfo * VSTiPlayer::getTime()
+{
+	return time_info;
+}
+#endif
+
 VSTiPlayer::VSTiPlayer()
 {
 	hDll = 0;
@@ -63,6 +104,25 @@ VSTiPlayer::VSTiPlayer()
 	uTimeCurrent = 0;
 	uTimeEnd = 0;
 	uTimeLoopStart = 0;
+
+#ifdef TIME_INFO
+	time_info = new VstTimeInfo;
+
+	time_info->samplePos = 0.0;
+	time_info->sampleRate = uSampleRate;
+	time_info->nanoSeconds = 0.0;
+	time_info->ppqPos = 0.0;
+	time_info->tempo = 120.0;
+	time_info->barStartPos = 0.0;
+	time_info->cycleStartPos = 0.0;
+	time_info->cycleEndPos = 0.0;
+	time_info->timeSigNumerator = 4;
+	time_info->timeSigDenominator = 4;
+	time_info->smpteOffset = 0;
+	time_info->smpteFrameRate = 1;
+	time_info->samplesToNextClock = 0;
+	time_info->flags = 0;
+#endif
 }
 
 VSTiPlayer::~VSTiPlayer()
@@ -76,6 +136,20 @@ VSTiPlayer::~VSTiPlayer()
 		}
 
 		pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
+
+#ifdef TIME_INFO
+		{
+			insync( effect_list_lock );
+			for ( pfc::chain_list_simple_t<host_effect>::t_iter i = effect_list.first(); i; i = effect_list.next( i ) )
+			{
+				if ( effect_list.get_item( i ).host == this )
+				{
+					effect_list.remove( i );
+					break;
+				}
+			}
+		}
+#endif
 	}
 
 	if (hDll)
@@ -87,6 +161,10 @@ VSTiPlayer::~VSTiPlayer()
 	{
 		free(pStream);
 	}
+
+#ifdef TIME_INFO
+	delete time_info;
+#endif
 }
 
 typedef AEffect * (*main_func)(audioMasterCallback audioMaster);
@@ -102,6 +180,13 @@ bool VSTiPlayer::LoadVST(const char * path)
 		if (pMain)
 		{
 			pEffect = (*pMain)(&audioMaster);
+
+#ifdef TIME_INFO
+			{
+				insync(effect_list_lock);
+				effect_list.insert_last( host_effect( this, pEffect ) );
+			}
+#endif
 
 			if (pEffect)
 			{
@@ -202,6 +287,9 @@ void VSTiPlayer::setSampleRate(unsigned rate)
 	}
 
 	uSampleRate = rate;
+#ifdef TIME_INFO
+	time_info->sampleRate = rate;
+#endif
 }
 
 unsigned VSTiPlayer::getChannelCount()
@@ -241,7 +329,13 @@ bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 					case 0x74B0:
 						if (uStreamLoopStart == ~0)
 						{
-							uStreamLoopStart = i;
+							//uStreamLoopStart = i;
+							UINT j;
+							for (j = i - 1; j != ~0; --j)
+							{
+								if (pStream[j].tm < uTimeLoopStart) break;
+							}
+							uStreamLoopStart = j + 1;
 							uTimeLoopStart = pStream[i].tm;
 							uLoopMode |= loop_mode_force;
 						}
@@ -354,6 +448,7 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 	{
 		pEffect->dispatcher(pEffect, effSetSampleRate, 0, 0, 0, float(uSampleRate));
 		pEffect->dispatcher(pEffect, effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
+		pEffect->dispatcher(pEffect, effMainsChanged, 0, 1, 0, 0);
 		pEffect->dispatcher(pEffect, effStartProcess, 0, 0, 0, 0);
 
 		buffer_size = sizeof(float*) * (pEffect->numInputs + pEffect->numOutputs); // float lists
@@ -363,6 +458,8 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 		float_list_in = 0;
 		resizeState(buffer_size);
 	}
+
+	pEffect->dispatcher(pEffect, effIdle, 0, 0, 0, 0);
 
 	DWORD done = 0;
 
@@ -431,14 +528,14 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 		uTimeCurrent = time_target;
 
-		if (pEffect->processReplacing)
+		if (pEffect->flags & effFlagsCanReplacing)
 		{
 			pEffect->processReplacing(pEffect, float_list_in, float_list_out, todo);
 		}
 		else
 		{
 			memset(float_out, 0, sizeof(float) * BUFFER_SIZE * pEffect->numOutputs);
-			pEffect->processReplacing(pEffect, float_list_in, float_list_out, todo);
+			pEffect->process(pEffect, float_list_in, float_list_out, todo);
 		}
 
 		for (UINT i = 0, nch = pEffect->numOutputs; i < todo; i++)
@@ -495,9 +592,27 @@ void VSTiPlayer::Seek(unsigned sample)
 
 		if (blState.get_size())
 		{
+#ifdef TIME_INFO
+			insync( effect_list_lock );
+#endif
+
 			// total shutdown
 			pEffect->dispatcher(pEffect, effStopProcess, 0, 0, 0, 0);
 			pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
+
+#ifdef TIME_INFO
+			pfc::chain_list_simple_t<host_effect>::t_iter item = 0;
+
+			for ( pfc::chain_list_simple_t<host_effect>::t_iter i = effect_list.first(); i; i = effect_list.next( i ) )
+			{
+				if ( effect_list.get_item( i ).effect == pEffect )
+				{
+					item = i;
+					effect_list.get_item( i ).host = 0;
+					break;
+				}
+			}
+#endif
 
 			blState.set_size(0);
 
@@ -505,7 +620,25 @@ void VSTiPlayer::Seek(unsigned sample)
 
 			pEffect = (*pMain)(&audioMaster);
 
-			if (!pEffect) return;
+			if (!pEffect)
+			{
+#ifdef TIME_INFO
+				if ( item ) effect_list.remove( item );
+#endif
+				return;
+			}
+
+#ifdef TIME_INFO
+			if ( item )
+			{
+				effect_list.get_item( item ).host = this;
+				effect_list.get_item( item ).effect = pEffect;
+			}
+			else
+			{
+				effect_list.insert_last( host_effect( this, pEffect ) );
+			}
+#endif
 		}
 	}
 
@@ -611,7 +744,7 @@ void VSTiPlayer::Seek(unsigned sample)
 
 		pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, my_events_list, 0);
 
-		if (pEffect->processReplacing) pEffect->processReplacing(pEffect, float_list_in, float_list_out, 1);
+		if (pEffect->flags & effFlagsCanReplacing) pEffect->processReplacing(pEffect, float_list_in, float_list_out, 1);
 		else pEffect->process(pEffect, float_list_in, float_list_out, 1);
 	}
 }

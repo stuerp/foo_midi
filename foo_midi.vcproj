@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="foo_midi"
 	ProjectGUID="{4588FF4C-92BF-4EA0-9FD4-6AAEE89D4843}"
+	RootNamespace="foo_midi"
 	SccProjectName="SAK"
 	SccAuxPath="SAK"
 	SccLocalPath="SAK"
@@ -798,6 +799,10 @@
 		</File>
 		<File
 			RelativePath="foo_midi.rc"
+			>
+		</File>
+		<File
+			RelativePath=".\hypersonic2.h"
 			>
 		</File>
 		<File
