@@ -151,7 +151,7 @@ static const char * exts[]=
 	"MIDI",
 	"RMI",
 	"MIDS",
-	"CMF",
+//	"CMF",
 	"GMF",
 	"HMI",
 	"HMP",
