@@ -614,6 +614,7 @@ public:
 #endif
 			if (plugin)
 			{
+				delete vstPlayer;
 				vstPlayer = new VSTiPlayer;
 				if (vstPlayer->LoadVST(cfg_vst_path))
 				{
@@ -696,6 +697,7 @@ public:
 				}
 				}
 				*/
+				delete smfplay;
 				smfplay = new dsa::CSMFPlay(srate, 8);
 				if (smfplay->Load(mf->data, mf->size))
 				{
