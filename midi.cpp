@@ -3,6 +3,10 @@
 /*
 	change log
 
+2006-12-24 05:15 UTC - kode54
+- Fixed plug-in droplist change handler for VSTi plug-ins so the last item in the list won't enable
+  the GS/XG to GM2 checkbox.
+
 2006-08-21 09:22 UTC - kode54
 - Added call to effMainsChanged before effStartProcess for some VST instruments which require
   it. (Steinberg Hypersonic 2 crashes without this.)
@@ -1381,7 +1385,7 @@ class preferences_page_midi : public preferences_page
 					cfg_plugin = plugin;
 					EnableWindow( GetDlgItem( wnd, IDC_SAMPLERATE ), plugin || !g_running );
 					EnableWindow( GetDlgItem( wnd, IDC_EMIDI_EX ), !! plugin );
-					EnableWindow( GetDlgItem( wnd, IDC_GM2 ), plugin >= vsti_count );
+					EnableWindow( GetDlgItem( wnd, IDC_GM2 ), plugin > vsti_count );
 				}
 				break;
 			case (CBN_KILLFOCUS<<16)|IDC_SAMPLERATE:
