@@ -1,7 +1,15 @@
-#define MYVERSION "1.82"
+#define MYVERSION "1.9"
 
 /*
 	change log
+
+2009-08-21 08:02 UTC - kode54
+- Added support for FluidSynth
+- Version is now 1.9
+
+2009-08-21 00:57 UTC - kode54
+- Fixed memory leak in General MIDI converter context menu handler
+- Version is now 1.83
 
 2009-08-16 03:16 UTC - kode54
 - Solved rounding error in MIDI do_table and Marker/SysEx map translation
@@ -91,6 +99,7 @@
 #include <shlwapi.h>
 
 #include "VSTiPlayer.h"
+#include "SFPlayer.h"
 
 //#define DXISUPPORT 1
 
@@ -105,6 +114,8 @@
 #endif
 
 #include "main.h"
+
+#include <delayimp.h>
 
 #include "resource.h"
 
@@ -143,19 +154,24 @@ static const GUID guid_cfg_plugin =
 static const GUID guid_cfg_history_rate = 
 { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
 // {F3EE2258-65D3-4219-B932-BF52119F2484}
-static const GUID guid_cfg_gm2 = 
-{ 0xf3ee2258, 0x65d3, 0x4219, { 0xb9, 0x32, 0xbf, 0x52, 0x11, 0x9f, 0x24, 0x84 } };
+/*static const GUID guid_cfg_gm2 = 
+{ 0xf3ee2258, 0x65d3, 0x4219, { 0xb9, 0x32, 0xbf, 0x52, 0x11, 0x9f, 0x24, 0x84 } };*/
 // {1A6EA7E5-718A-485a-B167-CFDF3B406145}
 static const GUID guid_cfg_vst_path = 
 { 0x1a6ea7e5, 0x718a, 0x485a, { 0xb1, 0x67, 0xcf, 0xdf, 0x3b, 0x40, 0x61, 0x45 } };
+// {696D12DD-AF32-43d9-8DF6-BDD11E818329}
+static const GUID guid_cfg_soundfont_path = 
+{ 0x696d12dd, 0xaf32, 0x43d9, { 0x8d, 0xf6, 0xbd, 0xd1, 0x1e, 0x81, 0x83, 0x29 } };
 
 cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, 0), cfg_ff7loopz(guid_cfg_ff7loopz, 0),
 		cfg_emidi_exclusion(guid_cfg_emidi_exclusion, 0), /*cfg_hack_xg_drums("yam", 0),*/
 		cfg_recover_tracks(guid_cfg_recover_tracks, 0), cfg_loop_type(guid_cfg_loop_type, 0),
-		/*cfg_nosysex("sux", 0),*/ cfg_gm2(guid_cfg_gm2, 0),
+		/*cfg_nosysex("sux", 0),*/ /*cfg_gm2(guid_cfg_gm2, 0),*/
 		cfg_srate(guid_cfg_srate, 44100), cfg_plugin(guid_cfg_plugin, 0);
 
 cfg_string cfg_vst_path(guid_cfg_vst_path, "");
+
+cfg_string cfg_soundfont_path(guid_cfg_soundfont_path, "");
 
 static const char * exts[]=
 {
@@ -188,6 +204,7 @@ class input_midi
 #endif
 
 	VSTiPlayer * vstPlayer;
+	SFPlayer * sfPlayer;
 
 	MIDI_file * mf;
 
@@ -197,7 +214,7 @@ class input_midi
 	bool b_xmiloopz;
 	bool b_ff7loopz;
 	bool b_emidi_ex;
-	bool b_gm2;
+	//bool b_gm2;
 
 	unsigned length_samples;
 	unsigned length_ticks;
@@ -230,7 +247,7 @@ class input_midi
 
 public:
 	input_midi() : srate(cfg_srate), plugin(cfg_plugin), b_xmiloopz(!!cfg_xmiloopz),
-		b_ff7loopz(!!cfg_ff7loopz), b_emidi_ex(!!cfg_emidi_exclusion), b_gm2(!!cfg_gm2)
+		b_ff7loopz(!!cfg_ff7loopz), b_emidi_ex(!!cfg_emidi_exclusion) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
 		initialized = false;
@@ -239,6 +256,7 @@ public:
 #endif
 
 		vstPlayer = NULL;
+		sfPlayer = NULL;
 
 		mf = NULL;
 
@@ -267,6 +285,7 @@ public:
 		if (theSequence) delete theSequence;
 #endif
 		if (vstPlayer) delete vstPlayer;
+		if (sfPlayer) delete sfPlayer;
 		if (mf) mf->Free();
 #ifdef DXISUPPORT
 		if (initialized) CoUninitialize();
@@ -646,7 +665,7 @@ public:
 		}
 		else
 #endif
-			if (plugin)
+			if (plugin == 1)
 			{
 				delete vstPlayer;
 				vstPlayer = new VSTiPlayer;
@@ -714,6 +733,36 @@ public:
 
 						return;
 					}
+				}
+			}
+			else if (plugin == 2)
+			{
+				if (FAILED(__HrLoadAllImportsForDll("fluidsynth.dll")))
+				{
+					throw exception_io_data("Failed to load FluidSynth.dll");
+				}
+
+				delete sfPlayer;
+				sfPlayer = new SFPlayer;
+				sfPlayer->setSoundFont(pfc::stringcvt::string_ansi_from_utf8(cfg_soundfont_path));
+				sfPlayer->setSampleRate(srate);
+
+				unsigned loop_mode = 0;
+
+				if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
+				{
+					loop_mode = SFPlayer::loop_mode_enable;
+					if ( cfg_loop_type > 1 ) loop_mode |= SFPlayer::loop_mode_force;
+					if ( b_xmiloopz ) loop_mode |= SFPlayer::loop_mode_xmi;
+					if ( b_ff7loopz ) loop_mode |= SFPlayer::loop_mode_marker;
+				}
+
+				if ( sfPlayer->Load( mf, loop_mode, b_emidi_ex ? CLEAN_EMIDI : 0 ) )
+				{
+					eof = false;
+					dont_loop = true;
+
+					return;
 				}
 			}
 			else
@@ -845,7 +894,7 @@ public:
 		}
 		else
 #endif
-		if (plugin)
+		if (plugin == 1)
 		{
 			unsigned todo = 1024;
 			unsigned nch = vstPlayer->getChannelCount();
@@ -860,6 +909,26 @@ public:
 
 			p_chunk.set_srate( srate );
 			p_chunk.set_channels( nch );
+			p_chunk.set_sample_count( done );
+
+			if ( done < todo ) eof = true;
+
+			return true;
+		}
+		else if (plugin == 2)
+		{
+			unsigned todo = 1024;
+
+			p_chunk.set_data_size( todo * 2 );
+
+			audio_sample * out = p_chunk.get_data();
+
+			unsigned done = sfPlayer->Play( out, todo );
+
+			if ( ! done ) return false;
+
+			p_chunk.set_srate( srate );
+			p_chunk.set_channels( 2 );
 			p_chunk.set_sample_count( done );
 
 			if ( done < todo ) eof = true;
@@ -1023,9 +1092,14 @@ fagotry:
 		}
 		else
 #endif
-		if ( plugin )
+		if ( plugin == 1 )
 		{
 			vstPlayer->Seek( done );
+			return;
+		}
+		else if ( plugin == 2 )
+		{
+			sfPlayer->Seek( done );
 			return;
 		}
 		else
@@ -1310,6 +1384,25 @@ class preferences_page_midi : public preferences_page
 						vsti_selected = i;
 				}
 
+				{
+					if (SUCCEEDED(__HrLoadAllImportsForDll("fluidsynth.dll")))
+					{
+						uSendMessageText(w, CB_ADDSTRING, 0, "FluidSynth");
+					}
+				}
+
+				if ( plugin != 2 )
+				{
+					EnableWindow( GetDlgItem( wnd, IDC_SOUNDFONT_TEXT ), FALSE );
+					EnableWindow( GetDlgItem( wnd, IDC_SOUNDFONT ), FALSE );
+				}
+
+				{
+					pfc::string8 path = cfg_soundfont_path;
+					if ( path.is_empty() ) path = "Click to set.";
+					uSetDlgItemText( wnd, IDC_SOUNDFONT, path );
+				}
+
 #ifdef DXISUPPORT
 				CoInitialize(NULL);
 				{
@@ -1329,6 +1422,7 @@ class preferences_page_midi : public preferences_page
 				CoUninitialize();
 #endif
 				if ( plugin == 1 ) plugin += vsti_selected;
+				else if ( plugin == 2 ) plugin += vsti_count - 1;
 #ifdef DXISUPPORT
 				else if ( plugin ) plugin += vsti_count;
 #endif
@@ -1357,7 +1451,7 @@ class preferences_page_midi : public preferences_page
 					EnableWindow(GetDlgItem(wnd,IDC_EMIDI_EX), FALSE);
 				}
 
-				if ( plugin <= vsti_count ) EnableWindow(GetDlgItem(wnd,IDC_GM2), FALSE);
+				//if ( plugin <= vsti_count ) EnableWindow(GetDlgItem(wnd,IDC_GM2), FALSE);
 
 				w = GetDlgItem(wnd, IDC_LOOP);
 				for (unsigned i = 0; i < tabsize(loop_txt); i++)
@@ -1370,7 +1464,7 @@ class preferences_page_midi : public preferences_page
 				uSendDlgItemMessage(wnd, IDC_FF7LOOPZ, BM_SETCHECK, cfg_ff7loopz, 0);
 
 				uSendDlgItemMessage(wnd, IDC_EMIDI_EX, BM_SETCHECK, cfg_emidi_exclusion, 0);
-				uSendDlgItemMessage(wnd, IDC_GM2, BM_SETCHECK, cfg_gm2, 0);
+				//uSendDlgItemMessage(wnd, IDC_GM2, BM_SETCHECK, cfg_gm2, 0);
 				uSendDlgItemMessage(wnd, IDC_RECOVER, BM_SETCHECK, cfg_recover_tracks, 0);
 				//uSendDlgItemMessage(wnd, IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex, 0);
 				//uSendDlgItemMessage(wnd, IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums, 0);
@@ -1395,12 +1489,28 @@ class preferences_page_midi : public preferences_page
 					}
 					else
 					{
-						cfg_plugin = plugin - vsti_count + 1;
+						cfg_plugin = 2;
+						//cfg_plugin = plugin - vsti_count + 1;
 					}
-					cfg_plugin = plugin;
 					EnableWindow( GetDlgItem( wnd, IDC_SAMPLERATE ), plugin || !g_running );
 					EnableWindow( GetDlgItem( wnd, IDC_EMIDI_EX ), !! plugin );
-					EnableWindow( GetDlgItem( wnd, IDC_GM2 ), plugin > vsti_count );
+
+					EnableWindow( GetDlgItem( wnd, IDC_SOUNDFONT_TEXT ), cfg_plugin == 2 );
+					EnableWindow( GetDlgItem( wnd, IDC_SOUNDFONT ), cfg_plugin == 2 );
+
+					//EnableWindow( GetDlgItem( wnd, IDC_GM2 ), plugin > vsti_count );
+				}
+				break;
+			case (EN_SETFOCUS << 16) | IDC_SOUNDFONT:
+				{
+					SetFocus( wnd );
+
+					pfc::string8 path;
+					if (uGetOpenFileName(wnd, "SoundFont files|*.sf2", 0, "sf2", "Choose a SoundFont bank...", 0, path, FALSE))
+					{
+						cfg_soundfont_path = path;
+						uSetWindowText( (HWND) lp, path );
+					}
 				}
 				break;
 			case (CBN_KILLFOCUS<<16)|IDC_SAMPLERATE:
@@ -1409,6 +1519,7 @@ class preferences_page_midi : public preferences_page
 					if (t<6000) t=6000;
 					else if (t>192000) t=192000;
 					cfg_srate = t;
+					return 1;
 				}
 				break;
 			case (CBN_SELCHANGE << 16) | IDC_LOOP:
@@ -1423,9 +1534,9 @@ class preferences_page_midi : public preferences_page
 			case IDC_EMIDI_EX:
 				cfg_emidi_exclusion = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
 				break;
-			case IDC_GM2:
+			/*case IDC_GM2:
 				cfg_gm2 = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
-				break;
+				break;*/
 			case IDC_RECOVER:
 				cfg_recover_tracks = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
 				break;
@@ -1471,10 +1582,11 @@ public:
 		cfg_recover_tracks = 0;
 		cfg_loop_type = 0;
 		/* cfg_nosysex = 0; */
-		cfg_gm2 = 0;
+		/*cfg_gm2 = 0;*/
 		cfg_srate = 44100;
 		cfg_plugin = 0;
 		cfg_vst_path = "";
+		cfg_soundfont_path = "";
 	}
 };
 
@@ -1586,8 +1698,17 @@ public:
 			MIDI_file * mf = MIDI_file::Create( buffer.get_ptr(), sz32 );
 			if ( !mf ) continue;
 
-			filesystem::g_open( p_file, out_path, filesystem::open_mode_write_new, m_abort );
-			p_file->write_object( mf->data, mf->size, m_abort );
+			try
+			{
+				filesystem::g_open( p_file, out_path, filesystem::open_mode_write_new, m_abort );
+				p_file->write_object( mf->data, mf->size, m_abort );
+			}
+			catch (...)
+			{
+				mf->Free();
+				throw;
+			}
+			mf->Free();
 		}
 	}
 };

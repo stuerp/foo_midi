@@ -58,26 +58,21 @@ FONT 8, "Tahoma", 0, 0, 0x0
 BEGIN
     GROUPBOX        "Output",IDC_STATIC,7,7,175,45
     RTEXT           "Plug-in:",IDC_STATIC,27,19,30,10
-    COMBOBOX        IDC_PLUGIN,60,17,116,54,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
+    COMBOBOX        IDC_PLUGIN,60,17,116,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Sample rate:",IDC_STATIC,13,36,44,10
-    COMBOBOX        IDC_SAMPLERATE,60,34,116,54,CBS_DROPDOWN | WS_VSCROLL | 
-                    WS_TABSTOP
+    COMBOBOX        IDC_SAMPLERATE,60,34,116,54,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Looping",IDC_STATIC,7,55,175,56
-    COMBOBOX        IDC_LOOP,13,65,163,54,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    CONTROL         "CC 116/117 (HMI, XMI, EMIDI)",IDC_XMILOOPZ,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,13,83,130,8
+    COMBOBOX        IDC_LOOP,13,65,163,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "CC 116/117 (HMI, XMI, EMIDI)",IDC_XMILOOPZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,83,130,8
     CONTROL         "loopStart/loopEnd track markers (FF7 PC)",IDC_FF7LOOPZ,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,96,156,8
-    GROUPBOX        "Misc",IDC_STATIC,7,114,175,52
-    CONTROL         "EMIDI device track exclusion (Duke3D, etc.)",
-                    IDC_EMIDI_EX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,
-                    125,157,8
-    CONTROL         "Convert GS/XG drum parts to GM2",IDC_GM2,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,13,138,124,8
-    CONTROL         "Try to recover incomplete tracks",IDC_RECOVER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,13,151,119,8
+    GROUPBOX        "Misc",IDC_STATIC,7,114,175,39
+    CONTROL         "EMIDI device track exclusion (Duke3D, etc.)",IDC_EMIDI_EX,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,125,157,8
+    CONTROL         "Try to recover incomplete tracks",IDC_RECOVER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,138,119,8
+    GROUPBOX        "FluidSynth",IDC_STATIC,7,156,175,28
+    EDITTEXT        IDC_SOUNDFONT,60,166,116,12,ES_AUTOHSCROLL | ES_READONLY,WS_EX_ACCEPTFILES
+    RTEXT           "SoundFont:",IDC_SOUNDFONT_TEXT,13,168,44,10
 END
 
 

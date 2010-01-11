@@ -53,7 +53,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha"
+				AdditionalIncludeDirectories="../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha;C:\programming\fluidsynth\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -152,7 +152,7 @@
 				Optimization="1"
 				InlineFunctionExpansion="1"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha"
+				AdditionalIncludeDirectories="../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha;C:\programming\fluidsynth\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS"
 				StringPooling="true"
 				ExceptionHandling="1"
@@ -252,7 +252,7 @@
 				Optimization="1"
 				InlineFunctionExpansion="1"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha"
+				AdditionalIncludeDirectories="../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha;C:\programming\fluidsynth\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS"
 				StringPooling="true"
 				ExceptionHandling="1"
@@ -284,12 +284,13 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
 				AdditionalOptions="/force:multiple"
-				AdditionalDependencies="winmm.lib"
+				AdditionalDependencies="winmm.lib Delayimp.lib"
 				OutputFile=".\../Release staticlink/foo_midi.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames=""
+				DelayLoadDLLs="fluidsynth.dll"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\../Release staticlink/foo_midi.pdb"
 				OptimizeReferences="2"
@@ -907,6 +908,14 @@
 		</File>
 		<File
 			RelativePath=".\resource.h"
+			>
+		</File>
+		<File
+			RelativePath=".\SFPlayer.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\SFPlayer.h"
 			>
 		</File>
 		<File
