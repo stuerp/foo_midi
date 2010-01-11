@@ -1,7 +1,11 @@
-#define MYVERSION "1.8"
+#define MYVERSION "1.81"
 
 /*
 	change log
+
+2009-06-14 20:15 UTC - kode54
+- Changed VSTi player loop end handler to simply truncate, rather than mash all end events together
+- Version is now 1.81
 
 2009-03-18 20:22 UTC - kode54
 - Added General MIDI converter context menu item.

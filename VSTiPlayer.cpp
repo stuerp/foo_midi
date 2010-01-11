@@ -356,14 +356,39 @@ bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 			else
 			{
 				UINT i;
+				unsigned char note_on[128 * 16];
+				memset( note_on, 0, sizeof( note_on ) );
 				for (i = 0; i < uStreamSize; i++)
 				{
+					UINT ev = pStream[i].ev & 0xFF0000F0;
+					if ( ev == 0x90 || ev == 0x80 )
+					{
+						UINT ch = pStream[i].ev & 0x0F;
+						UINT note = ( pStream[i].ev >> 8 ) & 0x7F;
+						UINT on = ( ev == 0x90 ) && ( pStream[i].ev & 0xFF0000 );
+						note_on [ ch * 128 + note ] = on;
+					}
 					if (pStream[i].tm >= uTimeEnd) break;
 				}
-				for (; i < uStreamSize; i++)
+				UINT note_off_count = 0;
+				for ( UINT j = 0; j < 128 * 16; j++ )
 				{
-					pStream[i].tm = uTimeEnd - 1;
+					if ( note_on[ j ] ) note_off_count++;
 				}
+				if ( note_off_count > uStreamSize - i )
+				{
+					pStream = ( MIDI_EVENT * ) realloc( pStream, ( i + note_off_count ) * sizeof( MIDI_EVENT ) );
+				}
+				for ( UINT j = 0; j < 128 * 16; j++ )
+				{
+					if ( note_on[ j ] )
+					{
+						pStream[i].tm = uTimeEnd;
+						pStream[i].ev = 0x80 + ( j >> 8 ) + ( j & 0x7F ) * 0x100;
+						i++;
+					}
+				}
+				uStreamSize = i;
 			}
 		}
 		else uTimeEnd = mf->len + 1000;
