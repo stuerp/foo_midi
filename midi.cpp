@@ -263,7 +263,7 @@ private:
 		CATCH_ALL(e)
 			TCHAR foo[256];
 			e->GetErrorMessage(foo, sizeof(foo) / sizeof(*foo));
-			if (*foo) console::info(string_utf8_from_os(foo));
+			if (*foo) console::info(pfc::stringcvt::string_utf8_from_os(foo));
 			return -1;
 		END_CATCH_ALL
 		if (FAILED(rval)) return rval;
@@ -508,18 +508,18 @@ public:
 					entry = meta_table::enum_next_entry(entry);
 				}
 			}
-			p_info.meta_add(title ? "display_name" : "title", string_utf8_from_ansi(mf->title));
+			p_info.meta_add(title ? "display_name" : "title", pfc::stringcvt::string_utf8_from_ansi(mf->title));
 			title = true;
 		}
-		if (mf->info.copyright.length()) p_info.meta_add("copyright", string_utf8_from_ansi(mf->info.copyright));
-		if (mf->info.markers.length()) p_info.meta_add("track_markers", string_utf8_from_ansi(mf->info.markers));
+		if (mf->info.copyright.length()) p_info.meta_add("copyright", pfc::stringcvt::string_utf8_from_ansi(mf->info.copyright));
+		if (mf->info.markers.length()) p_info.meta_add("track_markers", pfc::stringcvt::string_utf8_from_ansi(mf->info.markers));
 
 		if (!mf->rmi_data.is_empty())
 		{
 			const void * entry = mf->rmi_data.enum_entry(0);
 			while (entry)
 			{
-				p_info.meta_add(meta_table::enum_name(entry), string_utf8_from_ansi(meta_table::enum_data(entry)));
+				p_info.meta_add(meta_table::enum_name(entry), pfc::stringcvt::string_utf8_from_ansi(meta_table::enum_data(entry)));
 				entry = meta_table::enum_next_entry(entry);
 			}
 		}
@@ -538,14 +538,14 @@ public:
 						if (i < 10) name.add_byte('0');
 						name.add_int(i);
 					}
-					p_info.meta_add(name, string_utf8_from_ansi(mf->info.traxnames[i].get_ptr()));
+					p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(mf->info.traxnames[i].get_ptr()));
 				}
 				if (mf->info.traxtext[i] && mf->info.traxtext[i].length())
 				{
 					name = "track";
 					if (i < 10) name.add_byte('0');
 					name.add_int(i);
-					p_info.meta_add(name, string_utf8_from_ansi(mf->info.traxtext[i].get_ptr()));
+					p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(mf->info.traxtext[i].get_ptr()));
 				}
 			}
 		}
