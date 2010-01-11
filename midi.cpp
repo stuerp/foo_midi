@@ -908,8 +908,8 @@ fagotry:
 			}
 			catch (dsa::RuntimeException e)
 			{
-				console::info(uStringPrintf("%s (%s:%d)", e.m_message, e.m_file, e.m_lineno));
-				return io_result_error_generic;
+				console::formatter() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")";
+				return io_result_error_data;
 			}
 
 			if (!dont_loop && done < todo)
@@ -1002,7 +1002,7 @@ fagotry:
 					unsigned todo = samples_wanted - samples_done;
 					if ( todo > 576 ) todo = 576;
 					if ( ! smfplay_buffer.check_size( todo * 2 ) )
-						throw io_result_error_out_of_memory;
+						return io_result_error_out_of_memory;
 					int * ptr = smfplay_buffer.get_ptr();
 					if ( smfplay->Render( ptr, todo ) < todo )
 					{
