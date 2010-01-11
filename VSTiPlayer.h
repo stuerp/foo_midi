@@ -31,14 +31,14 @@ public:
 	bool LoadVST(const char * path);
 
 	// must be loaded for the following to work
-	void getVendorString(string_base & out);
-	void getProductString(string_base & out);
+	void getVendorString(pfc::string_base & out);
+	void getProductString(pfc::string_base & out);
 	long getVendorVersion();
 	long getUniqueID();
 
 	// configuration
-	void getChunk(mem_block & out);
-	void setChunk(const void * in, unsigned size);
+	void getChunk(pfc::array_t<t_uint8> & out);
+	void setChunk( const void * in, unsigned size );
 
 	// setup
 	void setSampleRate(unsigned rate);
@@ -68,7 +68,7 @@ private:
 
 	void resizeState(unsigned size);
 
-	mem_block    blState;
+	pfc::array_t<t_uint8>    blState;
 	unsigned     buffer_size;
 
 	float     ** float_list_in;

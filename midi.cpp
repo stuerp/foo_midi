@@ -184,7 +184,7 @@ class input_midi
 	t_filestats m_stats;
 
 #if audio_sample_size != 32
-	mem_block_t<float> sample_buffer;
+	pfc::array_t<float> sample_buffer;
 #endif
 
 	/* crap for external input */
@@ -196,7 +196,7 @@ class input_midi
 	unsigned sample_loop_end;
 	*/
 	dsa::CSMFPlay * smfplay;
-	mem_block_t<int> smfplay_buffer;
+	pfc::array_t<int> smfplay_buffer;
 
 public:
 	input_midi() : srate(cfg_srate), plugin(cfg_plugin), b_xmiloopz(!!cfg_xmiloopz),
@@ -455,42 +455,34 @@ private:
 	*/
 
 public:
-	t_io_result open( service_ptr_t<file> p_file,const char * p_path,t_input_open_reason p_reason,abort_callback & p_abort )
+	void open( service_ptr_t<file> p_file,const char * p_path,t_input_open_reason p_reason,abort_callback & p_abort )
 	{
-		if ( p_reason == input_open_info_write ) return io_result_error_data;
-
-		t_io_result status;
+		if ( p_reason == input_open_info_write ) throw exception_io_data();
 
 		if ( p_file.is_empty() )
 		{
-			status = filesystem::g_open( p_file, p_path, filesystem::open_mode_read, p_abort );
-			if ( io_result_failed( status ) ) return status;
+			filesystem::g_open( p_file, p_path, filesystem::open_mode_read, p_abort );
 		}
 
-		status = p_file->get_stats( m_stats, p_abort );
-		if ( io_result_failed( status ) ) return status;
-		if ( ! m_stats.m_size || m_stats.m_size > ( 1 << 30 ) ) return io_result_error_data;
+		m_stats = p_file->get_stats( p_abort );
+		if ( ! m_stats.m_size || m_stats.m_size > ( 1 << 30 ) ) throw exception_io_data();
 
 		unsigned sz;
-		mem_block buffer;
+		pfc::array_t< t_uint8 > buffer;
 
 		sz = (unsigned) m_stats.m_size;
-		if ( ! buffer.set_size( sz ) )
-			return io_result_error_out_of_memory;
-		status = p_file->read_object( buffer, sz, p_abort );
-		if ( io_result_failed( status ) ) return status;
+		buffer.set_size( sz );
+		p_file->read_object( buffer.get_ptr(), sz, p_abort );
 
 #ifdef DXISUPPORT
 		theSequence = new CMfxSeq;
-		if ( FAILED( load_file( buffer, sz, theSequence ) ) ) return io_result_error_data;
+		if ( FAILED( load_file( buffer, sz, theSequence ) ) ) throw exception_io_data();
 #else
-		if (FAILED(load_file(buffer, sz))) return io_result_error_data;
+		if (FAILED(load_file(buffer.get_ptr(), sz))) throw exception_io_data();
 #endif
-
-		return io_result_success;
 	}
 
-	t_io_result get_info( file_info & p_info, abort_callback & p_abort )
+	void get_info( file_info & p_info, abort_callback & p_abort )
 	{
 		bool title = false;
 		if (mf->title.length())
@@ -536,7 +528,7 @@ public:
 					{
 						name = "track";
 						if (i < 10) name.add_byte('0');
-						name.add_int(i);
+						name << i;
 					}
 					p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(mf->info.traxnames[i].get_ptr()));
 				}
@@ -544,7 +536,7 @@ public:
 				{
 					name = "track";
 					if (i < 10) name.add_byte('0');
-					name.add_int(i);
+					name << i;
 					p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(mf->info.traxtext[i].get_ptr()));
 				}
 			}
@@ -560,17 +552,14 @@ public:
 		if (loop_end != -1) p_info.info_set_int("midi_loop_end", loop_end);
 		p_info.info_set_int("samplerate", srate);
 		p_info.set_length( get_length() );
-
-		return io_result_success;
 	}
 
-	t_io_result get_file_stats( t_filestats & p_stats,abort_callback & p_abort )
+	t_filestats get_file_stats( abort_callback & p_abort )
 	{
-		p_stats = m_stats;
-		return io_result_success;
+		return m_stats;
 	}
 
-	t_io_result decode_initialize( unsigned p_flags, abort_callback & p_abort )
+	void decode_initialize( unsigned p_flags, abort_callback & p_abort )
 	{
 		get_length();
 
@@ -629,7 +618,7 @@ public:
 				if (vstPlayer->LoadVST(cfg_vst_path))
 				{
 					{
-						mem_block foo;
+						pfc::array_t< t_uint8 > foo;
 						vstPlayer->getChunk(foo);
 						if (foo.get_size())
 						{
@@ -664,7 +653,7 @@ public:
 						eof = false;
 						dont_loop = true;
 
-						return io_result_success;
+						return;
 					}
 				}
 			}
@@ -719,7 +708,7 @@ public:
 							get_length();
 							delete smfplay;
 							smfplay = new dsa::CSMFPlay(srate, 8);
-							if (!smfplay->Load(mf->data, mf->size)) return io_result_error_data;
+							if (!smfplay->Load(mf->data, mf->size)) throw exception_io_data();
 						}
 					}
 
@@ -745,21 +734,21 @@ public:
 
 					samples_done = 0;
 
-					return io_result_success;
+					return;
 				}
 			}
 
-		return io_result_error_out_of_memory;
+		throw std::bad_alloc();
 	}
 
-	t_io_result decode_run( audio_chunk & p_chunk, abort_callback & p_abort )
+	bool decode_run( audio_chunk & p_chunk, abort_callback & p_abort )
 	{
-		if (eof) return io_result_eof;
+		if (eof) return false;
 
 #ifdef DXISUPPORT
 		if (plugin>1)
 		{
-			unsigned todo = 576;
+			unsigned todo = 1024;
 
 			if (dont_loop)
 			{
@@ -798,17 +787,16 @@ public:
 #endif
 		if (plugin)
 		{
-			unsigned todo = 576;
+			unsigned todo = 1024;
 			unsigned nch = vstPlayer->getChannelCount();
 
-			if ( ! p_chunk.check_data_size( todo * nch ) )
-				return io_result_error_out_of_memory;
+			p_chunk.check_data_size( todo * nch );
 
 			audio_sample * out = p_chunk.get_data();
 
 			unsigned done = vstPlayer->Play( out, todo );
 
-			if ( ! done ) return io_result_eof;
+			if ( ! done ) return false;
 
 			p_chunk.set_srate( srate );
 			p_chunk.set_channels( nch );
@@ -816,7 +804,7 @@ public:
 
 			if ( done < todo ) eof = true;
 
-			return io_result_success;
+			return true;
 		}
 		else
 		{
@@ -884,19 +872,18 @@ fagotry:
 			}
 			return rval;
 			*/
-			unsigned todo = 576;
+			unsigned todo = 1024;
 
 			if (dont_loop)
 			{
 				if (length_samples && samples_done + todo > length_samples)
 				{
 					todo = length_samples - samples_done;
-					if (!todo) return io_result_eof;
+					if (!todo) return false;
 				}
 			}
 
-			if ( ! smfplay_buffer.check_size( todo * 2 ) )
-				return io_result_error_out_of_memory;
+			smfplay_buffer.grow_size( todo * 2 );
 
 			int * ptr = smfplay_buffer.get_ptr();
 
@@ -906,10 +893,10 @@ fagotry:
 			{
 				done = smfplay->Render(ptr, todo);
 			}
-			catch (dsa::RuntimeException e)
+			catch ( const dsa::RuntimeException & e )
 			{
 				console::formatter() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")";
-				return io_result_error_data;
+				throw exception_io_data();
 			}
 
 			if (!dont_loop && done < todo)
@@ -921,25 +908,19 @@ fagotry:
 					if (loop_begin > 0) smfplay->Render(NULL, loop_begin);
 					if (!done) done = smfplay->Render(ptr, todo);
 				}
-				catch (dsa::RuntimeException e)
+				catch ( const dsa::RuntimeException & e )
 				{
-					console::info(uStringPrintf("%s (%s:%d)", e.m_message, e.m_file, e.m_lineno));
-					return io_result_error_generic;
+					throw std::exception( string8() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")" );
 				}
 			}
 
 			if (done)
 			{
-				if ( ! p_chunk.check_data_size( done * 2 ) )
-					return io_result_error_out_of_memory;
+				p_chunk.check_data_size( done * 2 );
 
 				audio_sample * out = p_chunk.get_data();
 
-				for ( unsigned i = 0; i < done; ++i )
-				{
-					*out++ = *ptr++ * ( 1. / 32768. );
-					*out++ = *ptr++ * ( 1. / 32768. );
-				}
+				audio_math::convert_from_int32( ptr, done * 2, out, 1 << 16 );
 
 				samples_done += done;
 
@@ -949,11 +930,11 @@ fagotry:
 				//chunk->set_data_fixedpoint(ptr, done * 4, srate, 2, 16);
 			}
 
-			return done ? io_result_success : io_result_eof;
+			return !! done;
 		}
 	}
 
-	t_io_result decode_seek( double p_seconds, abort_callback & p_abort )
+	void decode_seek( double p_seconds, abort_callback & p_abort )
 	{
 		unsigned seek_msec = unsigned( p_seconds * 1000. );
 
@@ -963,7 +944,7 @@ fagotry:
 		if ( length_samples && done >= ( length_samples - srate ) )
 		{
 			eof = true;
-			return io_result_eof;
+			return;
 		}
 
 #ifdef DXISUPPORT
@@ -984,7 +965,7 @@ fagotry:
 		if ( plugin )
 		{
 			vstPlayer->Seek( done );
-			return io_result_success;
+			return;
 		}
 		else
 		{
@@ -997,12 +978,13 @@ fagotry:
 			}
 			try
 			{
-				while ( samples_done < samples_wanted && ! p_abort.is_aborting() )
+				while ( samples_done < samples_wanted )
 				{
+					p_abort.check();
+
 					unsigned todo = samples_wanted - samples_done;
-					if ( todo > 576 ) todo = 576;
-					if ( ! smfplay_buffer.check_size( todo * 2 ) )
-						return io_result_error_out_of_memory;
+					if ( todo > 1024 ) todo = 1024;
+					smfplay_buffer.grow_size( todo * 2 );
 					int * ptr = smfplay_buffer.get_ptr();
 					if ( smfplay->Render( ptr, todo ) < todo )
 					{
@@ -1012,12 +994,10 @@ fagotry:
 					samples_done += todo;
 				}
 			}
-			catch ( dsa::RuntimeException e )
+			catch ( const dsa::RuntimeException & e )
 			{
-				console::formatter() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")";
-				return io_result_error_generic;
+				throw std::exception( string8() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")" );
 			}
-			return ( samples_done == samples_wanted ) ? io_result_success : io_result_aborted;
 		}
 	}
 
@@ -1040,9 +1020,9 @@ fagotry:
 	{
 	}
 
-	t_io_result retag( const file_info & p_info,abort_callback & p_abort )
+	void retag( const file_info & p_info, abort_callback & p_abort )
 	{
-		return io_result_error_data;
+		throw exception_io_data();
 	}
 
 	static bool g_is_our_content_type( const char * p_content_type )
@@ -1119,7 +1099,7 @@ class preferences_page_midi : public preferences_page
 			}
 			else
 			{
-				if (choose) uMessageBox(wnd, uStringPrintf("%s is not a working VST instrument.", path.get_ptr() + path.scan_filename()), "Error", MB_ICONEXCLAMATION);
+				if (choose) uMessageBox(wnd, string8() << path.get_ptr() + path.scan_filename() << " is not a working VST instrument.", "Error", MB_ICONEXCLAMATION );
 				else
 				{
 					cfg_vst_path = "";
@@ -1328,22 +1308,21 @@ class midi_file_types : public input_file_type
 		return 1;
 	}
 
-	virtual bool get_name(unsigned idx, string_base & out)
+	virtual bool get_name(unsigned idx, pfc::string_base & out)
 	{
 		if (idx > 0) return false;
 		out = "MIDI files";
 		return true;
 	}
 
-	virtual bool get_mask(unsigned idx, string_base & out)
+	virtual bool get_mask(unsigned idx, pfc::string_base & out)
 	{
 		if (idx > 0) return false;
 		out.reset();
 		for (int n = 0; n < tabsize(exts); n++)
 		{
 			if (n) out.add_byte(';');
-			out += "*.";
-			out += exts[n];
+			out << "*." << exts[n];
 		}
 		return true;
 	}

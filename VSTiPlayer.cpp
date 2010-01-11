@@ -119,7 +119,7 @@ bool VSTiPlayer::LoadVST(const char * path)
 	return false;
 }
 
-void VSTiPlayer::getVendorString(string_base & out)
+void VSTiPlayer::getVendorString(pfc::string_base & out)
 {
 	char temp[65];
 	memset(&temp, 0, sizeof(temp));
@@ -131,7 +131,7 @@ void VSTiPlayer::getVendorString(string_base & out)
 	}
 }
 
-void VSTiPlayer::getProductString(string_base & out)
+void VSTiPlayer::getProductString(pfc::string_base & out)
 {
 	char temp[65];
 	memset(&temp, 0, sizeof(temp));
@@ -155,14 +155,14 @@ long VSTiPlayer::getUniqueID()
 	else return 0;
 }
 
-void VSTiPlayer::getChunk( mem_block & out )
+void VSTiPlayer::getChunk( pfc::array_t<t_uint8> & out )
 {
 	if (pEffect)
 	{
 		void * chunk;
 		long size = pEffect->dispatcher(pEffect, effGetChunk, 0, 0, &chunk, 0);
-		if ( out.set_size( size ) )
-			memcpy( out.get_ptr(), chunk, size );
+		out.set_size( size );
+		memcpy( out.get_ptr(), chunk, size );
 	}
 }
 
@@ -320,9 +320,9 @@ bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 
 void VSTiPlayer::resizeState(unsigned size)
 {
-	blState.check_size( size ); // FUCKO
+	blState.grow_size( size );
 
-	if ( blState.get_ptr() != float_list_in )
+	if ( ( float ** ) blState.get_ptr() != float_list_in )
 	{
 		long i;
 
@@ -516,7 +516,7 @@ void VSTiPlayer::Seek(unsigned sample)
 
 	uTimeCurrent = sample;
 
-	mem_block_t<MIDI_EVENT> filler;
+	pfc::array_t<MIDI_EVENT> filler;
 
 	UINT stream_start = uStreamPosition;
 
@@ -524,7 +524,7 @@ void VSTiPlayer::Seek(unsigned sample)
 
 	if (uStreamPosition > stream_start)
 	{
-		filler.set_size(uStreamPosition - stream_start);
+		filler.set_size( uStreamPosition - stream_start );
 		memcpy(filler.get_ptr(), &pStream[stream_start], sizeof(MIDI_EVENT) * (uStreamPosition - stream_start));
 
 		UINT i, j;
@@ -569,8 +569,8 @@ void VSTiPlayer::Seek(unsigned sample)
 			else events_size += sizeof(VstMidiSysexEvent);
 		}
 
-		mem_block temp;
-		if ( ! temp.set_size( events_size ) ) return;
+		pfc::array_t< t_uint8 > temp;
+		temp.set_size( events_size );
 		VstEvents * my_events_list = (VstEvents*) temp.get_ptr();
 
 		my_events_list->numEvents = j;
