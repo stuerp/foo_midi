@@ -1,7 +1,19 @@
-#define MYVERSION "1.94"
+#define MYVERSION "1.97"
 
 /*
 	change log
+
+2010-02-10 09:49 UTC - kode54
+- Made some parts of the MIDI processor used by VSTi and FluidSynth safer
+- Version is now 1.97
+
+2010-01-13 00:33 UTC - kode54
+- Updated context menu code
+- Version is now 1.96
+
+2010-01-11 14:30 UTC - kode54
+- Updated preferences page to 1.0 API
+- Version is now 1.95
 
 2009-09-01 03:13 UTC - kode54
 - FluidSynth player now supports basic GS/XG drum channel control
@@ -116,6 +128,7 @@
 
 #include <foobar2000.h>
 #include "../helpers/dropdown_helper.h"
+#include "../ATLHelpers/ATLHelpers.h"
 
 #include <shlobj.h>
 #include <shlwapi.h>
@@ -189,11 +202,22 @@ static const GUID guid_cfg_vst_path =
 static const GUID guid_cfg_soundfont_path = 
 { 0x696d12dd, 0xaf32, 0x43d9, { 0x8d, 0xf6, 0xbd, 0xd1, 0x1e, 0x81, 0x83, 0x29 } };
 
-cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, 0), cfg_ff7loopz(guid_cfg_ff7loopz, 0),
-		cfg_emidi_exclusion(guid_cfg_emidi_exclusion, 0), /*cfg_hack_xg_drums("yam", 0),*/
-		cfg_recover_tracks(guid_cfg_recover_tracks, 0), cfg_loop_type(guid_cfg_loop_type, 0),
+enum
+{
+	default_cfg_xmiloopz = 0,
+	default_cfg_ff7loopz = 0,
+	default_cfg_emidi_exclusion = 0,
+	default_cfg_recover_tracks = 0,
+	default_cfg_loop_type = 0,
+	default_cfg_srate = 44100,
+	default_cfg_plugin = 0
+};
+
+cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
+		cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion), /*cfg_hack_xg_drums("yam", 0),*/
+		cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks), cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
 		/*cfg_nosysex("sux", 0),*/ /*cfg_gm2(guid_cfg_gm2, 0),*/
-		cfg_srate(guid_cfg_srate, 44100), cfg_plugin(guid_cfg_plugin, 0);
+		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin);
 
 cfg_string cfg_vst_path(guid_cfg_vst_path, "");
 
@@ -1213,412 +1237,421 @@ fagotry:
 
 static const char * loop_txt[] = {"Never", "When loop info detected", "Always"};
 
+static const char * click_to_set = "Click to set.";
+
 static cfg_dropdown_history cfg_history_rate(guid_cfg_history_rate,16);
 
 static const int srate_tab[]={8000,11025,16000,22050,24000,32000,44100,48000,64000,88200,96000};
 
-struct vsti_info
-{
-	pfc::string8 path, display_name;
+class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_page_instance {
+public:
+	//Constructor - invoked by preferences_page_impl helpers - don't do Create() in here, preferences_page_impl does this for us
+	CMyPreferences(preferences_page_callback::ptr callback) : m_callback(callback) {}
+
+	//Note that we don't bother doing anything regarding destruction of our class.
+	//The host ensures that our dialog is destroyed first, then the last reference to our preferences_page_instance object is released, causing our object to be deleted.
+
+
+	//dialog resource ID
+	enum {IDD = IDD_CONFIG};
+	// preferences_page_instance methods (not all of them - get_wnd() is supplied by preferences_page_impl helpers)
+	t_uint32 get_state();
+	void apply();
+	void reset();
+
+	//WTL message map
+	BEGIN_MSG_MAP(CMyPreferences)
+		MSG_WM_INITDIALOG(OnInitDialog)
+		COMMAND_HANDLER_EX(IDC_PLUGIN, CBN_SELCHANGE, OnPluginChange)
+		COMMAND_HANDLER_EX(IDC_SOUNDFONT, EN_SETFOCUS, OnSetFocus)
+		COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_EDITCHANGE, OnEditChange)
+		COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_SELCHANGE, OnSelectionChange)
+		DROPDOWN_HISTORY_HANDLER(IDC_SAMPLERATE, cfg_history_rate)
+		COMMAND_HANDLER_EX(IDC_LOOP, CBN_SELCHANGE, OnSelectionChange)
+		COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
+		COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
+		COMMAND_HANDLER_EX(IDC_EMIDI_EX, BN_CLICKED, OnButtonClick)
+		COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
+	END_MSG_MAP()
+private:
+	BOOL OnInitDialog(CWindow, LPARAM);
+	void OnEditChange(UINT, int, CWindow);
+	void OnSelectionChange(UINT, int, CWindow);
+	void OnPluginChange(UINT, int, CWindow);
+	void OnButtonClick(UINT, int, CWindow);
+	void OnSetFocus(UINT, int, CWindow);
+	bool HasChanged();
+	void OnChanged();
+
+	void enum_vsti_plugins( const char * _path = 0, puFindFile _find = 0 );
+
+	const preferences_page_callback::ptr m_callback;
+
+	struct vsti_info
+	{
+		pfc::string8 path, display_name;
+	};
+
+	pfc::array_t< vsti_info > vsti_plugins;
 };
 
-static pfc::array_t< vsti_info > vsti_plugins;
-
-class preferences_page_midi : public preferences_page
+void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 {
-	static void enum_vsti_plugins( const char * _path = 0, puFindFile _find = 0 )
+	pfc::string8 ppath;
+	if ( ! _find )
 	{
-		pfc::string8 ppath;
-		if ( ! _find )
+		vsti_plugins.set_size( 0 );
+		TCHAR path[ MAX_PATH + 1 ];
+		if ( SUCCEEDED( SHGetFolderPath( 0, CSIDL_PROGRAM_FILES, 0, SHGFP_TYPE_CURRENT, path ) ) )
 		{
-			vsti_plugins.set_size( 0 );
-			TCHAR path[ MAX_PATH + 1 ];
-			if ( SUCCEEDED( SHGetFolderPath( 0, CSIDL_PROGRAM_FILES, 0, SHGFP_TYPE_CURRENT, path ) ) )
-			{
-				ppath = pfc::stringcvt::string_utf8_from_os( path );
-				ppath += "\\Steinberg\\VstPlugins";
-				ppath.add_byte( '\\' );
-				ppath += "*.*";
-				_path = ppath;
-				_find = uFindFirstFile( ppath );
-			}
+			ppath = pfc::stringcvt::string_utf8_from_os( path );
+			ppath += "\\Steinberg\\VstPlugins";
+			ppath.add_byte( '\\' );
+			ppath += "*.*";
+			_path = ppath;
+			_find = uFindFirstFile( ppath );
 		}
-		if ( _find )
+	}
+	if ( _find )
+	{
+		do
 		{
-			do
+			if ( _find->IsDirectory() && strcmp( _find->GetFileName(), "." ) && strcmp( _find->GetFileName(), ".." ) )
 			{
-				if ( _find->IsDirectory() && strcmp( _find->GetFileName(), "." ) && strcmp( _find->GetFileName(), ".." ) )
+				pfc::string8 npath( _path );
+				npath.truncate( npath.length() - 3 );
+				npath += _find->GetFileName();
+				npath.add_byte( '\\' );
+				npath += "*.*";
+				puFindFile pfind = uFindFirstFile( npath );
+				if ( pfind ) enum_vsti_plugins( npath, pfind );
+			}
+			else if ( _find->GetFileSize() )
+			{
+				pfc::string8 npath( _path );
+				npath.truncate( npath.length() - 3 );
+				npath += _find->GetFileName();
+				if ( !stricmp_utf8( npath.get_ptr() + npath.length() - 4, ".dll" ) )
 				{
-					pfc::string8 npath( _path );
-					npath.truncate( npath.length() - 3 );
-					npath += _find->GetFileName();
-					npath.add_byte( '\\' );
-					npath += "*.*";
-					puFindFile pfind = uFindFirstFile( npath );
-					if ( pfind ) enum_vsti_plugins( npath, pfind );
-				}
-				else if ( _find->GetFileSize() )
-				{
-					pfc::string8 npath( _path );
-					npath.truncate( npath.length() - 3 );
-					npath += _find->GetFileName();
-					if ( !stricmp_utf8( npath.get_ptr() + npath.length() - 4, ".dll" ) )
+					VSTiPlayer vstPlayer;
+					if ( vstPlayer.LoadVST( npath ) )
 					{
-						VSTiPlayer vstPlayer;
-						if ( vstPlayer.LoadVST( npath ) )
+						vsti_info info;
+						info.path = npath;
+
+						pfc::string8 vendor, product;
+						vstPlayer.getVendorString(vendor);
+						vstPlayer.getProductString(product);
+
+						if (product.length() || vendor.length())
 						{
-							vsti_info info;
-							info.path = npath;
-
-							pfc::string8 vendor, product;
-							vstPlayer.getVendorString(vendor);
-							vstPlayer.getProductString(product);
-
-							if (product.length() || vendor.length())
+							if (!vendor.length() ||
+								(product.length() >= vendor.length() &&
+								!strncmp(vendor, product, vendor.length())))
 							{
-								if (!vendor.length() ||
-									(product.length() >= vendor.length() &&
-									!strncmp(vendor, product, vendor.length())))
+								info.display_name = product;
+							}
+							else
+							{
+								info.display_name = vendor;
+								if (product.length())
 								{
-									info.display_name = product;
-								}
-								else
-								{
-									info.display_name = vendor;
-									if (product.length())
-									{
-										info.display_name.add_byte(' ');
-										info.display_name += product;
-									}
+									info.display_name.add_byte(' ');
+									info.display_name += product;
 								}
 							}
-							else info.display_name = _find->GetFileName();
-
-							vsti_plugins.append_single( info );
 						}
+						else info.display_name = _find->GetFileName();
+
+						vsti_plugins.append_single( info );
 					}
 				}
-			} while ( _find->FindNext() );
-			delete _find;
-		}
+			}
+		} while ( _find->FindNext() );
+		delete _find;
 	}
+}
 
+BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
+	CWindow w;
+	int plugin = cfg_plugin;
+	
+	w = GetDlgItem( IDC_PLUGIN );
+	uSendMessageText( w, CB_ADDSTRING, 0, "Emu de MIDI" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "FluidSynth" );
+	
 	/*
-	static bool set_vsti(HWND wnd, bool choose)
+	if (plugin == 1)
 	{
-		pfc::string8 path;
-		if (choose)
-		{
-			if (!uGetOpenFileName(wnd, "Dll Files|*.dll", 0, "dll", "Choose a VST instrument...", 0, path, FALSE))
-			{
-				return false;
-			}
-		}
-		else path = cfg_vst_path;
-
-		bool rval = false;
-		pfc::string8_fastalloc display;
-		display = "VST instrument";
-
-		if (path.length())
-		{
-			VSTiPlayer vstPlayer;
-			if (vstPlayer.LoadVST(path))
-			{
-				pfc::string8 vendor, product;
-				vstPlayer.getVendorString(vendor);
-				vstPlayer.getProductString(product);
-
-				if (product.length() || vendor.length())
-				{
-					if (!vendor.length() ||
-						(product.length() >= vendor.length() &&
-						!strncmp(vendor, product, vendor.length())))
-					{
-						display = product;
-					}
-					else
-					{
-						display = vendor;
-						if (product.length())
-						{
-							display.add_byte(' ');
-							display += product;
-						}
-					}
-				}
-				else display = path.get_ptr() + path.scan_filename();
-
-				rval = true;
-				cfg_vst_path = path;
-				cfg_plugin = 1;
-			}
-			else
-			{
-				if (choose) uMessageBox(wnd, pfc::string8() << path.get_ptr() + path.scan_filename() << " is not a working VST instrument.", "Error", MB_ICONEXCLAMATION );
-				else
-				{
-					cfg_vst_path = "";
-					cfg_plugin = 0;
-				}
-			}
-		}
-
-		HWND w = GetDlgItem(wnd, IDC_PLUGIN);
-
-		if (choose)
-		{
-			uSendMessage(w, CB_DELETESTRING, 1, 0);
-			uSendMessageText(w, CB_INSERTSTRING, 1, display);
-			uSendMessage(w, CB_SETCURSEL, cfg_plugin, 0);
-		}
-		else
-		{
-			uSendMessageText(w, CB_ADDSTRING, 0, display);
-		}
-
-		return rval;
+	if (!set_vsti(wnd, false)) plugin = 0;
 	}
+	else uSendMessageText(w, CB_ADDSTRING, 0, "VST instrument");
 	*/
-
-	static BOOL CALLBACK ConfigProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
+	
+	enum_vsti_plugins();
+	
+	unsigned vsti_count = vsti_plugins.get_size(), vsti_selected = ~0;
+	
+	for ( unsigned i = 0; i < vsti_count; ++i )
 	{
-		switch(msg)
+		uSendMessageText( w, CB_ADDSTRING, 0, vsti_plugins[ i ].display_name );
+		if ( plugin == 1 && ! stricmp_utf8( vsti_plugins[ i ].path, cfg_vst_path ) )
+			vsti_selected = i;
+	}
+	
+	/*{
+	HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
+	if (fsmod)
+	{
+	FreeLibrary( fsmod );
+	uSendMessageText(w, CB_ADDSTRING, 0, "FluidSynth");
+	}
+	}*/
+	
+	if ( plugin != 2 )
+	{
+		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
+	}
+	
+	{
+		pfc::string8 path = cfg_soundfont_path;
+		if ( path.is_empty() ) path = click_to_set;
+		uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, path );
+	}
+
+#ifdef DXISUPPORT
+	CoInitialize(NULL);
+	{
+		CPlugInInventory theInventory;
+		if (SUCCEEDED(theInventory.EnumPlugIns()))
 		{
-		case WM_INITDIALOG:
+			unsigned count = theInventory.GetCount();
+			pfc::string8_fastalloc name;
+			CLSID foo;
+			for (unsigned i = 0; i < count; i++)
 			{
-				HWND w;
-				int plugin = cfg_plugin;
-
-				w = GetDlgItem(wnd, IDC_PLUGIN);
-				uSendMessageText(w, CB_ADDSTRING, 0, "Emu de MIDI");
-				uSendMessageText(w, CB_ADDSTRING, 0, "FluidSynth");
-
-				/*
-				if (plugin == 1)
-				{
-					if (!set_vsti(wnd, false)) plugin = 0;
-				}
-				else uSendMessageText(w, CB_ADDSTRING, 0, "VST instrument");
-				*/
-
-				enum_vsti_plugins();
-
-				unsigned vsti_count = vsti_plugins.get_size(), vsti_selected = ~0;
-
-				for ( unsigned i = 0; i < vsti_count; ++i )
-				{
-					uSendMessageText( w, CB_ADDSTRING, 0, vsti_plugins[ i ].display_name );
-					if ( plugin == 1 && ! stricmp_utf8( vsti_plugins[ i ].path, cfg_vst_path ) )
-						vsti_selected = i;
-				}
-
-				/*{
-					HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
-					if (fsmod)
-					{
-						FreeLibrary( fsmod );
-						uSendMessageText(w, CB_ADDSTRING, 0, "FluidSynth");
-					}
-				}*/
-
-				if ( plugin != 2 )
-				{
-					EnableWindow( GetDlgItem( wnd, IDC_SOUNDFONT_TEXT ), FALSE );
-					EnableWindow( GetDlgItem( wnd, IDC_SOUNDFONT ), FALSE );
-				}
-
-				{
-					pfc::string8 path = cfg_soundfont_path;
-					if ( path.is_empty() ) path = "Click to set.";
-					uSetDlgItemText( wnd, IDC_SOUNDFONT, path );
-				}
-
-#ifdef DXISUPPORT
-				CoInitialize(NULL);
-				{
-					CPlugInInventory theInventory;
-					if (SUCCEEDED(theInventory.EnumPlugIns()))
-					{
-						unsigned count = theInventory.GetCount();
-						pfc::string8_fastalloc name;
-						CLSID foo;
-						for (unsigned i = 0; i < count; i++)
-						{
-							theInventory.GetInfo(i, &foo, name);
-							uSendMessageText(w, CB_ADDSTRING, 0, name);
-						}
-					}
-				}
-				CoUninitialize();
-#endif
-				if ( plugin == 1 ) plugin += vsti_selected + 1;
-				else if ( plugin == 2 ) plugin--;
-#ifdef DXISUPPORT
-				else if ( plugin ) plugin += vsti_count;
-#endif
-				uSendMessage(w, CB_SETCURSEL, plugin, 0);
-
-				{
-					char temp[16];
-					int n;
-					for(n=tabsize(srate_tab);n--;)
-					{
-						if (srate_tab[n] != cfg_srate)
-						{
-							itoa(srate_tab[n], temp, 10);
-							cfg_history_rate.add_item(temp);
-						}
-					}
-					itoa(cfg_srate, temp, 10);
-					cfg_history_rate.add_item(temp);
-					cfg_history_rate.setup_dropdown(w = GetDlgItem(wnd,IDC_SAMPLERATE));
-					uSendMessage(w, CB_SETCURSEL, 0, 0);
-				}
-
-				if (!plugin)
-				{
-					if (g_running) EnableWindow(GetDlgItem(wnd,IDC_SAMPLERATE), FALSE);
-					EnableWindow(GetDlgItem(wnd,IDC_EMIDI_EX), FALSE);
-				}
-
-				//if ( plugin <= vsti_count ) EnableWindow(GetDlgItem(wnd,IDC_GM2), FALSE);
-
-				w = GetDlgItem(wnd, IDC_LOOP);
-				for (unsigned i = 0; i < tabsize(loop_txt); i++)
-				{
-					uSendMessageText(w, CB_ADDSTRING, 0, loop_txt[i]);
-				}
-				uSendMessage(w, CB_SETCURSEL, cfg_loop_type, 0);
-
-				uSendDlgItemMessage(wnd, IDC_XMILOOPZ, BM_SETCHECK, cfg_xmiloopz, 0);
-				uSendDlgItemMessage(wnd, IDC_FF7LOOPZ, BM_SETCHECK, cfg_ff7loopz, 0);
-
-				uSendDlgItemMessage(wnd, IDC_EMIDI_EX, BM_SETCHECK, cfg_emidi_exclusion, 0);
-				//uSendDlgItemMessage(wnd, IDC_GM2, BM_SETCHECK, cfg_gm2, 0);
-				uSendDlgItemMessage(wnd, IDC_RECOVER, BM_SETCHECK, cfg_recover_tracks, 0);
-				//uSendDlgItemMessage(wnd, IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex, 0);
-				//uSendDlgItemMessage(wnd, IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums, 0);
+				theInventory.GetInfo(i, &foo, name);
+				uSendMessageText(w, CB_ADDSTRING, 0, name);
 			}
-			break;
-		case WM_COMMAND:
-			switch (wp)
-			{
-			case (CBN_SELCHANGE << 16) | IDC_PLUGIN:
-				{
-					t_size vsti_count = vsti_plugins.get_size();
-					int plugin = uSendMessage((HWND)lp,CB_GETCURSEL,0,0);
-
-					if ( ! plugin )
-					{
-						cfg_plugin = 0;
-					}
-					else if ( plugin == 1 )
-					{
-						cfg_plugin = 2;
-						//cfg_plugin = plugin - vsti_count + 1;
-					}
-					else if ( plugin <= vsti_count + 1 )
-					{
-						cfg_plugin = 1;
-						cfg_vst_path = vsti_plugins[ plugin - 2 ].path;
-					}
-					EnableWindow( GetDlgItem( wnd, IDC_SAMPLERATE ), plugin || !g_running );
-					EnableWindow( GetDlgItem( wnd, IDC_EMIDI_EX ), !! plugin );
-
-					EnableWindow( GetDlgItem( wnd, IDC_SOUNDFONT_TEXT ), cfg_plugin == 2 );
-					EnableWindow( GetDlgItem( wnd, IDC_SOUNDFONT ), cfg_plugin == 2 );
-
-					//EnableWindow( GetDlgItem( wnd, IDC_GM2 ), plugin > vsti_count );
-				}
-				break;
-			case (EN_SETFOCUS << 16) | IDC_SOUNDFONT:
-				{
-					SetFocus( wnd );
-
-					pfc::string8 path;
-					if (uGetOpenFileName(wnd, "SoundFont files|*.sf2", 0, "sf2", "Choose a SoundFont bank...", 0, path, FALSE))
-					{
-						cfg_soundfont_path = path;
-						uSetWindowText( (HWND) lp, path );
-					}
-				}
-				break;
-			case (CBN_KILLFOCUS<<16)|IDC_SAMPLERATE:
-				{
-					int t = GetDlgItemInt(wnd,IDC_SAMPLERATE,0,0);
-					if (t<6000) t=6000;
-					else if (t>192000) t=192000;
-					cfg_srate = t;
-					return 1;
-				}
-				break;
-			case (CBN_SELCHANGE << 16) | IDC_LOOP:
-				cfg_loop_type = uSendMessage((HWND)lp,CB_GETCURSEL,0,0);
-				break;
-			case IDC_XMILOOPZ:
-				cfg_xmiloopz = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
-				break;
-			case IDC_FF7LOOPZ:
-				cfg_ff7loopz = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
-				break;
-			case IDC_EMIDI_EX:
-				cfg_emidi_exclusion = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
-				break;
-			/*case IDC_GM2:
-				cfg_gm2 = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
-				break;*/
-			case IDC_RECOVER:
-				cfg_recover_tracks = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
-				break;
-				/*case IDC_NOSYSEX:
-				cfg_nosysex = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
-				break;*/
-				/*case IDC_HACK_XG_DRUMS:
-				cfg_hack_xg_drums = uSendMessage((HWND)lp,BM_GETCHECK,0,0);
-				break;*/
-			}
-			break;
-		case WM_DESTROY:
-			{
-				vsti_plugins.set_size( 0 );
-			}
-			break;
 		}
-		return 0;
+	}
+	CoUninitialize();
+#endif
+	if ( plugin == 1 ) plugin += vsti_selected + 1;
+	else if ( plugin == 2 ) plugin--;
+#ifdef DXISUPPORT
+	else if ( plugin ) plugin += vsti_count - 1;
+#endif
+	::SendMessage( w, CB_SETCURSEL, plugin, 0 );
+	
+	{
+		char temp[16];
+		int n;
+		for(n=tabsize(srate_tab);n--;)
+		{
+			if (srate_tab[n] != cfg_srate)
+			{
+				itoa(srate_tab[n], temp, 10);
+				cfg_history_rate.add_item(temp);
+			}
+		}
+		itoa(cfg_srate, temp, 10);
+		cfg_history_rate.add_item(temp);
+		w = GetDlgItem( IDC_SAMPLERATE );
+		cfg_history_rate.setup_dropdown( w );
+		::SendMessage( w, CB_SETCURSEL, 0, 0 );
 	}
 
-public:
-	HWND create(HWND parent)
+	if ( !plugin )
 	{
-		return uCreateDialog(IDD_CONFIG, parent, ConfigProc);
+		if ( g_running ) GetDlgItem( IDC_SAMPLERATE ).EnableWindow( FALSE );
+		GetDlgItem( IDC_EMIDI_EX ).EnableWindow( FALSE );
 	}
-	GUID get_guid()
+	
+	//if ( plugin <= vsti_count ) GetDlgItem( IDC_GM2 ).EnableWindow( FALSE );
+	
+	w = GetDlgItem( IDC_LOOP );
+	for (unsigned i = 0; i < tabsize(loop_txt); i++)
 	{
+		uSendMessageText( w, CB_ADDSTRING, 0, loop_txt[i] );
+	}
+	::SendMessage( w, CB_SETCURSEL, cfg_loop_type, 0 );
+
+	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, cfg_xmiloopz );
+	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, cfg_ff7loopz );
+
+	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, cfg_emidi_exclusion );
+	//SendDlgItemMessage( IDC_GM2, BM_SETCHECK, cfg_gm2 );
+	SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, cfg_recover_tracks );
+	//SendDlgItemMessage( IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex );
+	//SendDlgItemMessage( IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums );
+
+	return TRUE;
+}
+
+void CMyPreferences::OnEditChange(UINT, int, CWindow) {
+	OnChanged();
+}
+
+void CMyPreferences::OnSelectionChange(UINT, int, CWindow) {
+	OnChanged();
+}
+
+void CMyPreferences::OnButtonClick(UINT, int, CWindow) {
+	OnChanged();
+}
+
+void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
+	t_size vsti_count = vsti_plugins.get_size();
+	int plugin = ::SendMessage( w, CB_GETCURSEL, 0, 0 );
+	
+	GetDlgItem( IDC_SAMPLERATE ).EnableWindow( plugin || !g_running );
+	GetDlgItem( IDC_EMIDI_EX ).EnableWindow( !! plugin );
+	
+	GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( plugin == 1 );
+	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 1 );
+	
+	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
+	
+	OnChanged();
+}
+
+void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
+	SetFocus();
+
+	pfc::string8 path;
+	if ( uGetOpenFileName( m_hWnd, "SoundFont files|*.sf2", 0, "sf2", "Choose a SoundFont bank...", 0, path, FALSE ) )
+	{
+		uSetWindowText( w, path );
+		OnChanged();
+	}
+}
+
+t_uint32 CMyPreferences::get_state() {
+	t_uint32 state = preferences_state::resettable;
+	if (HasChanged()) state |= preferences_state::changed;
+	return state;
+}
+
+void CMyPreferences::reset() {
+	SendDlgItemMessage( IDC_PLUGIN, CB_SETCURSEL, default_cfg_plugin );
+	if ( default_cfg_plugin != 2 )
+	{
+		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
+	}
+	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
+	SetDlgItemInt( IDC_SAMPLERATE, default_cfg_srate, FALSE );
+	if ( !default_cfg_plugin )
+	{
+		if ( g_running ) GetDlgItem( IDC_SAMPLERATE ).EnableWindow( FALSE );
+		GetDlgItem( IDC_EMIDI_EX ).EnableWindow( FALSE );
+	}
+	SendDlgItemMessage( IDC_LOOP, CB_SETCURSEL, default_cfg_loop_type );
+	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz );
+	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz );
+	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion );
+	SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
+	
+	OnChanged();
+}
+
+void CMyPreferences::apply() {
+	char temp[16];
+	int t = GetDlgItemInt( IDC_SAMPLERATE, NULL, FALSE );
+	if ( t < 6000 ) t = 6000;
+	else if ( t > 192000 ) t = 192000;
+	SetDlgItemInt( IDC_SAMPLERATE, t, FALSE );
+	itoa( t, temp, 10 );
+	cfg_history_rate.add_item( temp );
+	cfg_srate = t;
+	{
+		t_size vsti_count = vsti_plugins.get_size();
+		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
+		
+		cfg_vst_path = "";
+		
+		if ( ! plugin )
+		{
+			cfg_plugin = 0;
+		}
+		else if ( plugin == 1 )
+		{
+			cfg_plugin = 2;
+			//cfg_plugin = plugin - vsti_count + 1;
+		}
+		else if ( plugin <= vsti_count + 1 )
+		{
+			cfg_plugin = 1;
+			cfg_vst_path = vsti_plugins[ plugin - 2 ].path;
+		}
+	}
+	{
+		string_utf8_from_window sf( GetDlgItem( IDC_SOUNDFONT ) );
+		if ( !strcmp( sf, click_to_set ) ) cfg_soundfont_path = "";
+		else cfg_soundfont_path = sf;
+	}
+	cfg_loop_type = SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL );
+	cfg_xmiloopz = SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK );
+	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK );
+	cfg_emidi_exclusion = SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK );
+	cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK );
+	
+	OnChanged(); //our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
+}
+
+bool CMyPreferences::HasChanged() {
+	//returns whether our dialog content is different from the current configuration (whether the apply button should be enabled or not)
+	bool changed = false;
+	if ( !changed && GetDlgItemInt( IDC_SAMPLERATE, NULL, FALSE ) != cfg_srate ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL ) != cfg_loop_type ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK ) != cfg_xmiloopz ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK ) != cfg_ff7loopz ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK ) != cfg_emidi_exclusion ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK ) != cfg_recover_tracks ) changed = true;
+	if ( !changed )
+	{
+		t_size vsti_count = vsti_plugins.get_size();
+		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
+		
+		if ( ! plugin )
+		{
+			if ( cfg_plugin != 0 ) changed = true;
+		}
+		else if ( plugin == 1 )
+		{
+			if ( cfg_plugin != 2 ) changed = true;
+		}
+		else if ( plugin <= vsti_count + 1 )
+		{
+			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 2 ].path ) ) changed = true;
+		}
+	}
+	if ( !changed )
+	{
+		string_utf8_from_window sf( GetDlgItem( IDC_SOUNDFONT ) );
+		if ( ( !strcmp( sf, click_to_set ) && strlen( cfg_soundfont_path ) != 0 ) ||
+			stricmp_utf8( sf, cfg_soundfont_path ) )
+			changed = true;
+	}
+	return changed;
+}
+void CMyPreferences::OnChanged() {
+	//tell the host that our state has changed to enable/disable the apply button appropriately.
+	m_callback->on_state_changed();
+}
+
+class preferences_page_myimpl : public preferences_page_impl<CMyPreferences> {
+	// preferences_page_impl<> helper deals with instantiation of our dialog; inherits from preferences_page_v3.
+public:
+	const char * get_name() {return "MIDI synthesizer host";}
+	GUID get_guid() {
 		// {1623AA03-BADC-4bab-8A17-C737CF782661}
-		static const GUID guid = 
-		{ 0x1623aa03, 0xbadc, 0x4bab, { 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } };
+		static const GUID guid = { 0x1623aa03, 0xbadc, 0x4bab, { 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } };
 		return guid;
 	}
-	const char * get_name() { return "MIDI synthesizer host"; }
 	GUID get_parent_guid() {return guid_input;}
-
-	bool reset_query() {return true;}
-	void reset()
-	{
-		cfg_xmiloopz = 0;
-		cfg_ff7loopz = 0;
-		cfg_emidi_exclusion = 0;
-		/* cfg_hack_xg_drums = 0; */
-		cfg_recover_tracks = 0;
-		cfg_loop_type = 0;
-		/* cfg_nosysex = 0; */
-		/*cfg_gm2 = 0;*/
-		cfg_srate = 44100;
-		cfg_plugin = 0;
-		cfg_vst_path = "";
-		cfg_soundfont_path = "";
-	}
 };
 
 class midi_file_types : public input_file_type
@@ -1660,16 +1693,21 @@ public:
 
 	virtual void get_item_name( unsigned n, pfc::string_base & out )
 	{
+		if ( n ) uBugCheck();
 		out = "Convert to General MIDI";
 	}
 
+	/*
 	virtual void get_item_default_path( unsigned n, pfc::string_base & out )
 	{
 		out = "Utils";
 	}
+	*/
+	GUID get_parent() {return contextmenu_groups::utilities;}
 
 	virtual bool get_item_description( unsigned n, pfc::string_base & out )
 	{
+		if ( n ) uBugCheck();
 		out = "Converts the selected files into General MIDI files in the same path as the source.";
 		return true;
 	}
@@ -1677,11 +1715,13 @@ public:
 	virtual GUID get_item_guid( unsigned n )
 	{
 		static const GUID guid = { 0x70985c72, 0xe77e, 0x4bbb, { 0xbf, 0x11, 0x3c, 0x90, 0x2b, 0x27, 0x39, 0x9d } };
+		if ( n ) uBugCheck();
 		return guid;
 	}
 
 	virtual bool context_get_display( unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out,unsigned & displayflags, const GUID & )
 	{
+		if ( n ) uBugCheck();
 		unsigned matches, i, j;
 		i = data.get_count();
 		for (matches = 0, j = 0; j < i; j++)
@@ -1707,6 +1747,7 @@ public:
 
 	virtual void context_command( unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, const GUID & )
 	{
+		if ( n ) uBugCheck();
 		unsigned i = data.get_count();
 		abort_callback_impl m_abort;
 		for ( unsigned i = 0, j = data.get_count(); i < j; i++ )
@@ -1744,9 +1785,11 @@ public:
 	}
 };
 
-static input_singletrack_factory_t<input_midi>            g_input_midi_factory;
-static preferences_page_factory_t <preferences_page_midi> g_config_midi_factory;
-static service_factory_single_t   <midi_file_types>       g_input_file_type_midi_factory;
-static contextmenu_item_factory_t <context_midi>          g_contextmenu_item_midi_factory;
+static input_singletrack_factory_t<input_midi>              g_input_midi_factory;
+static preferences_page_factory_t <preferences_page_myimpl> g_config_midi_factory;
+static service_factory_single_t   <midi_file_types>         g_input_file_type_midi_factory;
+static contextmenu_item_factory_t <context_midi>            g_contextmenu_item_midi_factory;
 
 DECLARE_COMPONENT_VERSION("MIDI synthesizer host", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.");
+
+VALIDATE_COMPONENT_FILENAME("foo_midi.dll");

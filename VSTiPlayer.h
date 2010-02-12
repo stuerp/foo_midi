@@ -11,7 +11,7 @@ struct VstTimeInfo;
 #endif
 
 #ifndef _AUDIO_CHUNK_H_
-typedef double audio_sample;
+typedef float audio_sample;
 #endif
 
 class VSTiPlayer
