@@ -1,7 +1,11 @@
-#define MYVERSION "1.97"
+#define MYVERSION "1.98"
 
 /*
 	change log
+
+2010-02-16 21:17 UTC - kode54
+- Fixed preferences apply for multiple settings
+- Version is now 1.98
 
 2010-02-10 09:49 UTC - kode54
 - Made some parts of the MIDI processor used by VSTi and FluidSynth safer
@@ -1594,9 +1598,9 @@ void CMyPreferences::apply() {
 	}
 	cfg_loop_type = SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL );
 	cfg_xmiloopz = SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK );
-	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK );
-	cfg_emidi_exclusion = SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK );
-	cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK );
+	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK );
+	cfg_emidi_exclusion = SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK );
+	cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
 	
 	OnChanged(); //our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
 }
