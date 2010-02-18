@@ -1,7 +1,11 @@
-#define MYVERSION "1.98"
+#define MYVERSION "1.99"
 
 /*
 	change log
+
+2010-02-18 20:14 UTC - kode54
+- Fixed Emu de MIDI handling of initial track deltas
+- Version is now 1.99
 
 2010-02-16 21:17 UTC - kode54
 - Fixed preferences apply for multiple settings
