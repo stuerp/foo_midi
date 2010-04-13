@@ -1,7 +1,11 @@
-#define MYVERSION "1.99"
+#define MYVERSION "1.100"
 
 /*
 	change log
+
+2010-04-13 14:57 UTC - kode54
+- Amended preferences WM_INITDIALOG handler
+- Version is now 1.100
 
 2010-02-18 20:14 UTC - kode54
 - Fixed Emu de MIDI handling of initial track deltas
@@ -1495,7 +1499,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	//SendDlgItemMessage( IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex );
 	//SendDlgItemMessage( IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums );
 
-	return TRUE;
+	return FALSE;
 }
 
 void CMyPreferences::OnEditChange(UINT, int, CWindow) {

@@ -469,6 +469,12 @@
     <ProjectReference Include="..\..\..\fluidsynth\winbuild\fluidsynth_lib\fluidsynth_lib.vcxproj">
       <Project>{cd7d1a45-9970-4958-bd8f-7f42b083093c}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\glib-2.20.4\build\win32\vs9\glib-static.vcxproj">
+      <Project>{12bca020-eabf-429e-876a-a476bc9c10c0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\glib-2.20.4\build\win32\vs9\gthread-static.vcxproj">
+      <Project>{c8afb8c3-fffd-460f-bc13-9ac25d7b117c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\scc\emidi_alpha\emidi.vcxproj">
       <Project>{69719831-d965-4aed-91c1-70c4ff01945d}</Project>
     </ProjectReference>
