@@ -1,7 +1,12 @@
-#define MYVERSION "1.100"
+#define MYVERSION "1.101"
 
 /*
 	change log
+
+2010-05-01 06:55 UTC - kode54
+- Removed full path from the SoundFont selection box display, and made the file selection
+  dialog open where the last file was selected.
+- Version is now 1.101
 
 2010-04-13 14:57 UTC - kode54
 - Amended preferences WM_INITDIALOG handler
@@ -133,6 +138,8 @@
 - Version is now 1.0.1
 
 */
+
+#define _WIN32_WINNT 0x0501
 
 #ifdef DXISUPPORT
 #include "stdafx.h"
@@ -1305,6 +1312,8 @@ private:
 	};
 
 	pfc::array_t< vsti_info > vsti_plugins;
+
+	pfc::string8 m_soundfont;
 };
 
 void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
@@ -1427,9 +1436,11 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	
 	{
-		pfc::string8 path = cfg_soundfont_path;
-		if ( path.is_empty() ) path = click_to_set;
-		uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, path );
+		m_soundfont = cfg_soundfont_path;
+		const char * filename;
+		if ( m_soundfont.is_empty() ) filename = click_to_set;
+		else filename = m_soundfont.get_ptr() + m_soundfont.scan_filename();
+		uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, filename );
 	}
 
 #ifdef DXISUPPORT
@@ -1532,10 +1543,14 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 	SetFocus();
 
-	pfc::string8 path;
-	if ( uGetOpenFileName( m_hWnd, "SoundFont files|*.sf2", 0, "sf2", "Choose a SoundFont bank...", 0, path, FALSE ) )
+	pfc::string8 directory, filename;
+	directory = m_soundfont;
+	filename = m_soundfont;
+	directory.truncate( directory.scan_filename() );
+	if ( uGetOpenFileName( m_hWnd, "SoundFont files|*.sf2", 0, "sf2", "Choose a SoundFont bank...", directory, filename, FALSE ) )
 	{
-		uSetWindowText( w, path );
+		m_soundfont = filename;
+		uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );
 		OnChanged();
 	}
 }
@@ -1554,6 +1569,7 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
 	}
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
+	m_soundfont.reset();
 	SetDlgItemInt( IDC_SAMPLERATE, default_cfg_srate, FALSE );
 	if ( !default_cfg_plugin )
 	{
@@ -1599,11 +1615,7 @@ void CMyPreferences::apply() {
 			cfg_vst_path = vsti_plugins[ plugin - 2 ].path;
 		}
 	}
-	{
-		string_utf8_from_window sf( GetDlgItem( IDC_SOUNDFONT ) );
-		if ( !strcmp( sf, click_to_set ) ) cfg_soundfont_path = "";
-		else cfg_soundfont_path = sf;
-	}
+	cfg_soundfont_path = m_soundfont;
 	cfg_loop_type = SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL );
 	cfg_xmiloopz = SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK );
 	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK );
@@ -1642,9 +1654,7 @@ bool CMyPreferences::HasChanged() {
 	}
 	if ( !changed )
 	{
-		string_utf8_from_window sf( GetDlgItem( IDC_SOUNDFONT ) );
-		if ( ( !strcmp( sf, click_to_set ) && strlen( cfg_soundfont_path ) != 0 ) ||
-			stricmp_utf8( sf, cfg_soundfont_path ) )
+		if ( stricmp_utf8( m_soundfont, cfg_soundfont_path ) )
 			changed = true;
 	}
 	return changed;
