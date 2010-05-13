@@ -89,7 +89,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha;C:\programming\fluidsynth\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha;C:\programming\fluidsynth\include;C:\programming\munt\mt32emu\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -139,7 +139,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha;C:\programming\fluidsynth\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha;C:\programming\fluidsynth\include;C:\programming\munt\mt32emu\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -189,7 +189,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha;C:\programming\fluidsynth\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;./stoeled;./stoeled/converters;../../../scc/emidi_alpha;C:\programming\fluidsynth\include;C:\programming\munt\mt32emu\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -206,6 +206,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -231,6 +232,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="MT32Player.cpp" />
     <ClCompile Include="stoeled\cleaner.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -439,6 +441,7 @@
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MT32Player.h" />
     <ClInclude Include="stoeled\midifile.h" />
     <ClInclude Include="stoeled\utils.h" />
     <ClInclude Include="stoeled\converters\cvt.h" />
@@ -474,6 +477,9 @@
     </ProjectReference>
     <ProjectReference Include="..\..\..\glib-2.20.4\build\win32\vs9\gthread-static.vcxproj">
       <Project>{c8afb8c3-fffd-460f-bc13-9ac25d7b117c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\munt\mt32emu\mt32emu_msvc7.vcxproj">
+      <Project>{063a149d-e48c-499b-b13f-7a70c140a662}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\scc\emidi_alpha\emidi.vcxproj">
       <Project>{69719831-d965-4aed-91c1-70c4ff01945d}</Project>

@@ -1,7 +1,11 @@
-#define MYVERSION "1.101"
+#define MYVERSION "1.102"
 
 /*
 	change log
+
+2010-05-13 12:48 UTC - kode54
+- Implemented MT-32 player based on MUNT, triggered by MT-32 SysEx autodetection
+- Version is now 1.102
 
 2010-05-01 06:55 UTC - kode54
 - Removed full path from the SoundFont selection box display, and made the file selection
@@ -154,6 +158,7 @@
 
 #include "VSTiPlayer.h"
 #include "SFPlayer.h"
+#include "MT32Player.h"
 
 #ifdef NDEBUG
 #define FLUIDSYNTH_DLL L"fluidsynth.dll"
@@ -220,6 +225,9 @@ static const GUID guid_cfg_vst_path =
 // {696D12DD-AF32-43d9-8DF6-BDD11E818329}
 static const GUID guid_cfg_soundfont_path = 
 { 0x696d12dd, 0xaf32, 0x43d9, { 0x8d, 0xf6, 0xbd, 0xd1, 0x1e, 0x81, 0x83, 0x29 } };
+// {D7E0EC5E-872F-41E3-9B5B-D202D8B942A7}
+static const GUID guid_cfg_munt_base_path = 
+{ 0xd7e0ec5e, 0x872f, 0x41e3, { 0x9b, 0x5b, 0xd2, 0x2, 0xd8, 0xb9, 0x42, 0xa7 } };
 
 enum
 {
@@ -241,6 +249,8 @@ cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid
 cfg_string cfg_vst_path(guid_cfg_vst_path, "");
 
 cfg_string cfg_soundfont_path(guid_cfg_soundfont_path, "");
+
+cfg_string cfg_munt_base_path(guid_cfg_munt_base_path, "");
 
 static const char * exts[]=
 {
@@ -274,6 +284,7 @@ class input_midi
 
 	VSTiPlayer * vstPlayer;
 	SFPlayer * sfPlayer;
+	MT32Player * mt32Player;
 
 	MIDI_file * mf;
 
@@ -326,6 +337,7 @@ public:
 
 		vstPlayer = NULL;
 		sfPlayer = NULL;
+		mt32Player = NULL;
 
 		mf = NULL;
 
@@ -355,6 +367,7 @@ public:
 #endif
 		if (vstPlayer) delete vstPlayer;
 		if (sfPlayer) delete sfPlayer;
+		if (mt32Player) delete mt32Player;
 		if (mf) mf->Free();
 #ifdef DXISUPPORT
 		if (initialized) CoUninitialize();
@@ -598,6 +611,8 @@ public:
 #else
 		if (FAILED(load_file(buffer.get_ptr(), sz))) throw exception_io_data();
 #endif
+
+		if ( mf->info.e_type && !strcmp( mf->info.e_type, "MT-32" ) ) plugin = 3;
 	}
 
 	void get_info( file_info & p_info, abort_callback & p_abort )
@@ -836,6 +851,38 @@ public:
 					return;
 				}
 			}
+			else if (plugin == 3)
+			{
+				delete mt32Player;
+				mt32Player = new MT32Player;
+				pfc::string8 p_base_path = cfg_munt_base_path;
+				if ( !strlen( p_base_path ) )
+				{
+					p_base_path = core_api::get_my_full_path();
+					p_base_path.truncate( p_base_path.scan_filename() );
+				}
+				mt32Player->setBasePath( p_base_path );
+				mt32Player->setAbortCallback( &p_abort );
+				mt32Player->setSampleRate( srate );
+
+				unsigned loop_mode = 0;
+
+				if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
+				{
+					loop_mode = SFPlayer::loop_mode_enable;
+					if ( cfg_loop_type > 1 ) loop_mode |= SFPlayer::loop_mode_force;
+					if ( b_xmiloopz ) loop_mode |= SFPlayer::loop_mode_xmi;
+					if ( b_ff7loopz ) loop_mode |= SFPlayer::loop_mode_marker;
+				}
+
+				if ( mt32Player->Load( mf, loop_mode, b_emidi_ex ? CLEAN_EMIDI : 0 ) )
+				{
+					eof = false;
+					dont_loop = true;
+
+					return;
+				}
+			}
 			else
 			{
 				/* oh boy, yank in an external service! */
@@ -995,6 +1042,28 @@ public:
 			audio_sample * out = p_chunk.get_data();
 
 			unsigned done = sfPlayer->Play( out, todo );
+
+			if ( ! done ) return false;
+
+			p_chunk.set_srate( srate );
+			p_chunk.set_channels( 2 );
+			p_chunk.set_sample_count( done );
+
+			if ( done < todo ) eof = true;
+
+			return true;
+		}
+		else if (plugin == 3)
+		{
+			unsigned todo = 1024;
+
+			p_chunk.set_data_size( todo * 2 );
+
+			audio_sample * out = p_chunk.get_data();
+
+			mt32Player->setAbortCallback( &p_abort );
+
+			unsigned done = mt32Player->Play( out, todo );
 
 			if ( ! done ) return false;
 
@@ -1171,6 +1240,11 @@ fagotry:
 		else if ( plugin == 2 )
 		{
 			sfPlayer->Seek( done );
+			return;
+		}
+		else if ( plugin == 3 )
+		{
+			mt32Player->Seek( done );
 			return;
 		}
 		else
@@ -1400,6 +1474,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	w = GetDlgItem( IDC_PLUGIN );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Emu de MIDI" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "FluidSynth" );
+	//uSendMessageText( w, CB_ADDSTRING, 0, "MUNT" );
 	
 	/*
 	if (plugin == 1)
