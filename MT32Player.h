@@ -21,7 +21,7 @@ public:
 	};
 
 	// zero variables
-	MT32Player();
+	MT32Player( bool gm = false );
 
 	// close, unload
 	~MT32Player();
@@ -47,6 +47,8 @@ private:
 	MT32Emu::Synth   * _synth;
 	pfc::string8       sBasePath;
 	abort_callback   * _abort;
+
+	bool               bGM;
 
 	unsigned           uSamplesRemaining;
 

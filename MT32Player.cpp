@@ -4,7 +4,8 @@
 
 #include "../helpers/file_cached.h"
 
-MT32Player::MT32Player()
+MT32Player::MT32Player( bool gm )
+	: bGM( gm )
 {
 	_synth = NULL;
 	uSamplesRemaining = 0;
@@ -205,6 +206,7 @@ unsigned MT32Player::Play(audio_sample * out, unsigned count)
 	if ( !_synth )
 	{
 		if ( !startup() ) return 0;
+		if ( bGM ) reset();
 	}
 
 	DWORD done = 0;
@@ -320,6 +322,7 @@ void MT32Player::Seek(unsigned sample)
 	if (!_synth)
 	{
 		if ( !startup() ) return;
+		if ( bGM ) reset();
 	}
 
 	if (uTimeCurrent > sample)
@@ -465,6 +468,21 @@ void MT32Player::reset()
 	static const BYTE mt32_reset[10] = {0xF0, MT32Emu::SYSEX_MANUFACTURER_ROLAND, 0x10, MT32Emu::SYSEX_MDL_MT32, MT32Emu::SYSEX_CMD_DT1, 0x7F, 0, 0, 0xF7};
 
 	_synth->playSysex( mt32_reset, sizeof( mt32_reset ) );
+
+	if ( bGM )
+	{
+#include "mtgm.h"
+		const unsigned char * start, * end;
+		start = mt32_gm_sysex;
+		end = start + _countof( mt32_gm_sysex );
+		while ( start < end )
+		{
+			const unsigned char * sequence_end = start;
+			while ( sequence_end < end && *sequence_end != 0xF7 ) sequence_end++;
+			_synth->playSysex( start, sequence_end - start + 1 );
+			start = sequence_end + 1;
+		}
+	}
 }
 
 void MT32Player::cb_printDebug( void *userData, const char *fmt, va_list list )

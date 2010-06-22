@@ -3,9 +3,12 @@
 /*
 	change log
 
+2010-06-22 01:14 UTC - kode54
+- Implemented GM support for MT-32 player
+- Version is now 1.102
+
 2010-05-13 12:48 UTC - kode54
 - Implemented MT-32 player based on MUNT, triggered by MT-32 SysEx autodetection
-- Version is now 1.102
 
 2010-05-01 06:55 UTC - kode54
 - Removed full path from the SoundFont selection box display, and made the file selection
@@ -853,8 +856,9 @@ public:
 			}
 			else if (plugin == 3)
 			{
+				bool is_mt32 = ( mf->info.e_type && !strcmp( mf->info.e_type, "MT-32" ) );
 				delete mt32Player;
-				mt32Player = new MT32Player;
+				mt32Player = new MT32Player( !is_mt32 );
 				pfc::string8 p_base_path = cfg_munt_base_path;
 				if ( !strlen( p_base_path ) )
 				{
@@ -1474,7 +1478,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	w = GetDlgItem( IDC_PLUGIN );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Emu de MIDI" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "FluidSynth" );
-	//uSendMessageText( w, CB_ADDSTRING, 0, "MUNT" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "MUNT" );
 	
 	/*
 	if (plugin == 1)
@@ -1536,8 +1540,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	CoUninitialize();
 #endif
-	if ( plugin == 1 ) plugin += vsti_selected + 1;
-	else if ( plugin == 2 ) plugin--;
+	if ( plugin == 1 ) plugin += vsti_selected + 2;
+	else if ( plugin == 2 || plugin == 3 ) plugin--;
 #ifdef DXISUPPORT
 	else if ( plugin ) plugin += vsti_count - 1;
 #endif
@@ -1601,7 +1605,7 @@ void CMyPreferences::OnButtonClick(UINT, int, CWindow) {
 }
 
 void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
-	t_size vsti_count = vsti_plugins.get_size();
+	//t_size vsti_count = vsti_plugins.get_size();
 	int plugin = ::SendMessage( w, CB_GETCURSEL, 0, 0 );
 	
 	GetDlgItem( IDC_SAMPLERATE ).EnableWindow( plugin || !g_running );
@@ -1679,15 +1683,15 @@ void CMyPreferences::apply() {
 		{
 			cfg_plugin = 0;
 		}
-		else if ( plugin == 1 )
+		else if ( plugin == 1 || plugin == 2 )
 		{
-			cfg_plugin = 2;
+			cfg_plugin = plugin + 1;
 			//cfg_plugin = plugin - vsti_count + 1;
 		}
-		else if ( plugin <= vsti_count + 1 )
+		else if ( plugin <= vsti_count + 2 )
 		{
 			cfg_plugin = 1;
-			cfg_vst_path = vsti_plugins[ plugin - 2 ].path;
+			cfg_vst_path = vsti_plugins[ plugin - 3 ].path;
 		}
 	}
 	cfg_soundfont_path = m_soundfont;
@@ -1718,13 +1722,13 @@ bool CMyPreferences::HasChanged() {
 		{
 			if ( cfg_plugin != 0 ) changed = true;
 		}
-		else if ( plugin == 1 )
+		else if ( plugin == 1 || plugin == 2 )
 		{
-			if ( cfg_plugin != 2 ) changed = true;
+			if ( cfg_plugin != plugin + 1 ) changed = true;
 		}
-		else if ( plugin <= vsti_count + 1 )
+		else if ( plugin <= vsti_count + 2 )
 		{
-			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 2 ].path ) ) changed = true;
+			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 3 ].path ) ) changed = true;
 		}
 	}
 	if ( !changed )
