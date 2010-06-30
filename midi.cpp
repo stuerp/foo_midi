@@ -3,9 +3,12 @@
 /*
 	change log
 
+2010-06-30 09:45 UTC - kode54
+- Fixed FluidSynth pitch bend range RPN
+- Version is now 1.102
+
 2010-06-22 01:14 UTC - kode54
 - Implemented GM support for MT-32 player
-- Version is now 1.102
 
 2010-05-13 12:48 UTC - kode54
 - Implemented MT-32 player based on MUNT, triggered by MT-32 SysEx autodetection
