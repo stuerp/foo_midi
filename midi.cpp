@@ -3,9 +3,15 @@
 /*
 	change log
 
+2010-07-18 07:46 UTC - kode54
+- Fixed FluidSynth XG and GM2 drum channel allocation
+- Version is now 1.102
+
+2010-07-17 23:14 UTC - kode54
+- Implemented dynamic sample loading in FluidSynth
+
 2010-06-30 09:45 UTC - kode54
 - Fixed FluidSynth pitch bend range RPN
-- Version is now 1.102
 
 2010-06-22 01:14 UTC - kode54
 - Implemented GM support for MT-32 player

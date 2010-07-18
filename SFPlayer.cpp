@@ -416,14 +416,14 @@ void SFPlayer::send_event(DWORD b)
 			fluid_synth_cc(_synth, chan, param1, param2);
 			if ( param1 == 0 || param1 == 0x20 )
 			{
-				unsigned int sfont, bank, preset;
-				if ( !fluid_synth_get_program(_synth, chan, &sfont, &bank, &preset) )
-				{
-					if ( bank == 16256 || bank == 15360 )
-						drum_channels [chan] = 1;
-					else if ( bank == 15488 )
-						drum_channels [chan] = 0;
-				}
+				unsigned bank = channel_banks[ chan ];
+				if ( param1 == 0x20 ) bank = ( bank & 0x3F80 ) | ( param2 & 0x7F );
+				else bank = ( bank & 0x007F ) | ( ( param2 & 0x7F ) << 7 );
+				channel_banks[ chan ] = bank;
+				if ( bank == 16256 || bank == 15360 )
+					drum_channels [chan] = 1;
+				else if ( bank == 15488 )
+					drum_channels [chan] = 0;
 			}
 			break;
 		case 0xC0:
@@ -507,4 +507,6 @@ void SFPlayer::reset_drums()
 	drum_channels [9] = 1;
 
 	memcpy( gs_part_to_ch, part_to_ch, sizeof( gs_part_to_ch ) );
+
+	memset( channel_banks, 0, sizeof( channel_banks ) );
 }
