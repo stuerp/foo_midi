@@ -1,7 +1,11 @@
-#define MYVERSION "1.102"
+#define MYVERSION "1.103"
 
 /*
 	change log
+
+2010-07-18 22:55 UTC - kode54
+- Implemented error checking in FluidSynth dynamic sample loader
+- Version is now 1.103
 
 2010-07-18 07:46 UTC - kode54
 - Fixed FluidSynth XG and GM2 drum channel allocation
