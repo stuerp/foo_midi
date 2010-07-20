@@ -1,7 +1,11 @@
-#define MYVERSION "1.103"
+#define MYVERSION "1.104"
 
 /*
 	change log
+
+2010-07-19 20:37 UTC - kode54
+- Updated FluidSynth to revision 328
+- Version is now 1.104
 
 2010-07-18 22:55 UTC - kode54
 - Implemented error checking in FluidSynth dynamic sample loader
