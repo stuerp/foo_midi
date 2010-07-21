@@ -1,7 +1,11 @@
-#define MYVERSION "1.104"
+#define MYVERSION "1.105"
 
 /*
 	change log
+
+2010-07-20 21:54 UTC - kode54
+- Plugged a memory leak in FluidSynth with a dirty workaround
+- Version is now 1.105
 
 2010-07-19 20:37 UTC - kode54
 - Updated FluidSynth to revision 328

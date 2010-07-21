@@ -21,9 +21,6 @@ SFPlayer::SFPlayer()
 
 SFPlayer::~SFPlayer()
 {
-	if (_soundFont != -1)
-		fluid_synth_sfunload(_synth, _soundFont, 1);
-
 	if (_synth) delete_fluid_synth(_synth);
 	if (_settings) delete_fluid_settings(_settings);
 
@@ -486,7 +483,6 @@ void SFPlayer::setSoundFont( const char * in )
 
 void SFPlayer::shutdown()
 {
-	if (_soundFont != -1) fluid_synth_sfunload(_synth, _soundFont, 1);
 	_soundFont = -1;
 	if (_synth) delete_fluid_synth(_synth);
 	_synth = 0;
