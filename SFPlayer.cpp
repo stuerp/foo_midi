@@ -3,7 +3,6 @@
 SFPlayer::SFPlayer()
 {
 	_synth = 0;
-	_soundFont = -1;
 	uSamplesRemaining = 0;
 	pStream = 0;
 	uSampleRate = 1000;
@@ -483,7 +482,6 @@ void SFPlayer::setSoundFont( const char * in )
 
 void SFPlayer::shutdown()
 {
-	_soundFont = -1;
 	if (_synth) delete_fluid_synth(_synth);
 	_synth = 0;
 }
@@ -492,7 +490,40 @@ void SFPlayer::startup()
 {
 	reset_drums();
 	_synth = new_fluid_synth(_settings);
-	if (sSoundFontName.length()) _soundFont = fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), 1);
+	if (sSoundFontName.length())
+	{
+		pfc::string_extension ext(sSoundFontName);
+		if ( !pfc::stricmp_ascii( ext, "sf2" ) )
+			fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), 1);
+		else if ( !pfc::stricmp_ascii( ext, "sflist" ) )
+		{
+			FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( sSoundFontName ), _T("r, ccs=UTF-8") );
+			if ( fl )
+			{
+				TCHAR path[1024], name[1024], temp[1024];
+				pfc::stringcvt::convert_utf8_to_wide( path, 1024, sSoundFontName, sSoundFontName.scan_filename() );
+				while ( !feof( fl ) )
+				{
+					_fgetts( name, 1024, fl );
+					name[1023] = 0;
+					TCHAR * cr = _tcschr( name, '\n' );
+					if ( cr ) *cr = 0;
+					if ( isalpha( name[0] ) && name[1] == ':' )
+					{
+						cr = name;
+					}
+					else
+					{
+						_tcscpy_s( temp, 1024, path );
+						_tcscat_s( temp, 1024, name );
+						cr = temp;
+					}
+					fluid_synth_sfload( _synth, cr, 1 );
+				}
+				fclose( fl );
+			}
+		}
+	}
 }
 
 void SFPlayer::reset_drums()

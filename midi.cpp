@@ -1,7 +1,11 @@
-#define MYVERSION "1.105"
+#define MYVERSION "1.106"
 
 /*
 	change log
+
+2010-07-21 07:26 UTC - kode54
+- Implemented support for SoundFont list files in the FluidSynth player
+- Version is now 1.106
 
 2010-07-20 21:54 UTC - kode54
 - Plugged a memory leak in FluidSynth with a dirty workaround
@@ -1647,7 +1651,7 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 	directory = m_soundfont;
 	filename = m_soundfont;
 	directory.truncate( directory.scan_filename() );
-	if ( uGetOpenFileName( m_hWnd, "SoundFont files|*.sf2", 0, "sf2", "Choose a SoundFont bank...", directory, filename, FALSE ) )
+	if ( uGetOpenFileName( m_hWnd, "SounFont and list files|*.sf2;*.sflist|SoundFont files|*.sf2|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
 	{
 		m_soundfont = filename;
 		uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );
