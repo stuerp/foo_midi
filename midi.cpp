@@ -1,7 +1,16 @@
-#define MYVERSION "1.106"
+#define MYVERSION "1.108"
 
 /*
 	change log
+
+2010-08-10 20:39 UTC - kode54
+- Changed open function to report unsupported file type when file loading fails, to
+  allow fallback to other inputs
+- Version is now 1.108
+
+2010-08-08 22:04 UTC - kode54
+- Added error checking to some memory allocation calls in MIDI loader
+- Version is now 1.107
 
 2010-07-21 07:26 UTC - kode54
 - Implemented support for SoundFont list files in the FluidSynth player
@@ -624,7 +633,7 @@ public:
 		}
 
 		m_stats = p_file->get_stats( p_abort );
-		if ( ! m_stats.m_size || m_stats.m_size > ( 1 << 30 ) ) throw exception_io_data();
+		if ( ! m_stats.m_size || m_stats.m_size > ( 1 << 30 ) ) throw exception_io_unsupported_format();
 
 		unsigned sz;
 		pfc::array_t< t_uint8 > buffer;
@@ -637,7 +646,7 @@ public:
 		theSequence = new CMfxSeq;
 		if ( FAILED( load_file( buffer, sz, theSequence ) ) ) throw exception_io_data();
 #else
-		if (FAILED(load_file(buffer.get_ptr(), sz))) throw exception_io_data();
+		if (FAILED(load_file(buffer.get_ptr(), sz))) throw exception_io_unsupported_format();
 #endif
 
 		if ( mf->info.e_type && !strcmp( mf->info.e_type, "MT-32" ) ) plugin = 3;
