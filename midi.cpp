@@ -1,7 +1,12 @@
-#define MYVERSION "1.108"
+#define MYVERSION "1.109"
 
 /*
 	change log
+
+2010-09-06 21:13 UTC - kode54
+- Added some range checks to various MIDI parsing code, should hopefully prevent some crashes
+  on invalid files
+- Version is now 1.109
 
 2010-08-10 20:39 UTC - kode54
 - Changed open function to report unsupported file type when file loading fails, to
