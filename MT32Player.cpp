@@ -4,8 +4,8 @@
 
 #include "../helpers/file_cached.h"
 
-MT32Player::MT32Player( bool gm )
-	: bGM( gm )
+MT32Player::MT32Player( bool gm, bool debug_info )
+	: bGM( gm ), bDebug( debug_info )
 {
 	_synth = NULL;
 	uSamplesRemaining = 0;
@@ -487,9 +487,13 @@ void MT32Player::reset()
 
 void MT32Player::cb_printDebug( void *userData, const char *fmt, va_list list )
 {
-	char temp[1024];
-	int count = vsnprintf_s( temp, _countof( temp ) - 1, fmt, list );
-	if ( count > 0 ) console::formatter() << "MUNT: " << temp;
+	MT32Player * thePlayer = ( MT32Player * ) userData;
+	if ( thePlayer->bDebug )
+	{
+		char temp[1024];
+		int count = vsnprintf_s( temp, _countof( temp ) - 1, fmt, list );
+		if ( count > 0 ) console::formatter() << "MUNT: " << temp;
+	}
 }
 
 class FBFile : public MT32Emu::File

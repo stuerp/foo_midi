@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -52,7 +50,7 @@ END
 // Dialog
 //
 
-IDD_CONFIG DIALOGEX 0, 0, 189, 221
+IDD_CONFIG DIALOGEX 0, 0, 189, 242
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "Tahoma", 0, 0, 0x0
 BEGIN
@@ -71,8 +69,11 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,125,157,8
     CONTROL         "Try to recover incomplete tracks",IDC_RECOVER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,138,119,8
     GROUPBOX        "FluidSynth",IDC_STATIC,7,156,175,28
-    EDITTEXT        IDC_SOUNDFONT,60,166,116,12,ES_AUTOHSCROLL | ES_READONLY,WS_EX_ACCEPTFILES
     RTEXT           "SoundFont:",IDC_SOUNDFONT_TEXT,13,168,44,10
+    EDITTEXT        IDC_SOUNDFONT,60,166,116,12,ES_AUTOHSCROLL | ES_READONLY,WS_EX_ACCEPTFILES
+    GROUPBOX        "MUNT",IDC_STATIC,7,187,175,28
+    RTEXT           "Data path:",IDC_STATIC,13,199,44,10
+    EDITTEXT        IDC_MUNT,60,197,116,12,ES_AUTOHSCROLL | ES_READONLY,WS_EX_ACCEPTFILES
 END
 
 
@@ -82,7 +83,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_CONFIG, DIALOG
     BEGIN
@@ -92,12 +93,12 @@ BEGIN
         VERTGUIDE, 57
         VERTGUIDE, 176
         TOPMARGIN, 7
-        BOTTOMMARGIN, 214
+        BOTTOMMARGIN, 235
     END
 END
 #endif    // APSTUDIO_INVOKED
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

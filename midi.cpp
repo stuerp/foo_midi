@@ -1,7 +1,12 @@
-#define MYVERSION "1.109"
+#define MYVERSION "1.110"
 
 /*
 	change log
+
+2010-09-10 19:39 UTC - kode54
+- Made MUNT data file path configurable
+- Made MUNT debug info configurable, disabled by default
+- Version is now 1.110
 
 2010-09-06 21:13 UTC - kode54
 - Added some range checks to various MIDI parsing code, should hopefully prevent some crashes
@@ -270,6 +275,9 @@ static const GUID guid_cfg_soundfont_path =
 // {D7E0EC5E-872F-41E3-9B5B-D202D8B942A7}
 static const GUID guid_cfg_munt_base_path = 
 { 0xd7e0ec5e, 0x872f, 0x41e3, { 0x9b, 0x5b, 0xd2, 0x2, 0xd8, 0xb9, 0x42, 0xa7 } };
+// {8FFE9127-579E-46B8-951D-3C785930307F}
+static const GUID guid_cfg_munt_debug_info = 
+{ 0x8ffe9127, 0x579e, 0x46b8, { 0x95, 0x1d, 0x3c, 0x78, 0x59, 0x30, 0x30, 0x7f } };
 
 enum
 {
@@ -293,6 +301,8 @@ cfg_string cfg_vst_path(guid_cfg_vst_path, "");
 cfg_string cfg_soundfont_path(guid_cfg_soundfont_path, "");
 
 cfg_string cfg_munt_base_path(guid_cfg_munt_base_path, "");
+
+advconfig_checkbox_factory cfg_munt_debug_info("MUNT - display debug information", guid_cfg_munt_debug_info, advconfig_branch::guid_branch_playback, 0, false);
 
 static const char * exts[]=
 {
@@ -896,8 +906,9 @@ public:
 			else if (plugin == 3)
 			{
 				bool is_mt32 = ( mf->info.e_type && !strcmp( mf->info.e_type, "MT-32" ) );
+				bool mt32_debug_info = cfg_munt_debug_info;
 				delete mt32Player;
-				mt32Player = new MT32Player( !is_mt32 );
+				mt32Player = new MT32Player( !is_mt32, mt32_debug_info );
 				pfc::string8 p_base_path = cfg_munt_base_path;
 				if ( !strlen( p_base_path ) )
 				{
@@ -1400,6 +1411,7 @@ public:
 		MSG_WM_INITDIALOG(OnInitDialog)
 		COMMAND_HANDLER_EX(IDC_PLUGIN, CBN_SELCHANGE, OnPluginChange)
 		COMMAND_HANDLER_EX(IDC_SOUNDFONT, EN_SETFOCUS, OnSetFocus)
+		COMMAND_HANDLER_EX(IDC_MUNT, EN_SETFOCUS, OnSetFocus)
 		COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_EDITCHANGE, OnEditChange)
 		COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_SELCHANGE, OnSelectionChange)
 		DROPDOWN_HISTORY_HANDLER(IDC_SAMPLERATE, cfg_history_rate)
@@ -1430,7 +1442,7 @@ private:
 
 	pfc::array_t< vsti_info > vsti_plugins;
 
-	pfc::string8 m_soundfont;
+	pfc::string8 m_soundfont, m_munt_path;
 };
 
 void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
@@ -1552,13 +1564,21 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
 	}
-	
+
 	{
 		m_soundfont = cfg_soundfont_path;
 		const char * filename;
 		if ( m_soundfont.is_empty() ) filename = click_to_set;
 		else filename = m_soundfont.get_ptr() + m_soundfont.scan_filename();
 		uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, filename );
+	}
+
+	{
+		m_munt_path = cfg_munt_base_path;
+		const char * path;
+		if ( m_munt_path.is_empty() ) path = click_to_set;
+		else path = m_munt_path;
+		uSetDlgItemText( m_hWnd, IDC_MUNT, path );
 	}
 
 #ifdef DXISUPPORT
@@ -1652,7 +1672,7 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	
 	GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( plugin == 1 );
 	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 1 );
-	
+
 	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
 	
 	OnChanged();
@@ -1661,15 +1681,32 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 	SetFocus();
 
-	pfc::string8 directory, filename;
-	directory = m_soundfont;
-	filename = m_soundfont;
-	directory.truncate( directory.scan_filename() );
-	if ( uGetOpenFileName( m_hWnd, "SounFont and list files|*.sf2;*.sflist|SoundFont files|*.sf2|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
+	if ( w == GetDlgItem( IDC_SOUNDFONT ) )
 	{
-		m_soundfont = filename;
-		uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );
-		OnChanged();
+		pfc::string8 directory, filename;
+		directory = m_soundfont;
+		filename = m_soundfont;
+		directory.truncate( directory.scan_filename() );
+		if ( uGetOpenFileName( m_hWnd, "SounFont and list files|*.sf2;*.sflist|SoundFont files|*.sf2|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
+		{
+			m_soundfont = filename;
+			uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );
+			OnChanged();
+		}
+	}
+	else if ( w == GetDlgItem( IDC_MUNT ) )
+	{
+		pfc::string8 path;
+		if ( uBrowseForFolder( m_hWnd, "Locate MT-32 or CM-32L ROM set...", path ) )
+		{
+			m_munt_path = path;
+			unsigned length = m_munt_path.length();
+			if ( length >= 1 && !pfc::is_path_separator( *( m_munt_path.get_ptr() + length - 1 ) ) ) m_munt_path.add_byte( '\\' );
+			const char * display_path;
+			if ( length ) display_path = m_munt_path;
+			else display_path = click_to_set;
+			uSetWindowText( w, display_path );
+		}
 	}
 }
 
@@ -1687,7 +1724,9 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
 	}
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
+	uSetDlgItemText( m_hWnd, IDC_MUNT, click_to_set );
 	m_soundfont.reset();
+	m_munt_path.reset();
 	SetDlgItemInt( IDC_SAMPLERATE, default_cfg_srate, FALSE );
 	if ( !default_cfg_plugin )
 	{
@@ -1734,6 +1773,7 @@ void CMyPreferences::apply() {
 		}
 	}
 	cfg_soundfont_path = m_soundfont;
+	cfg_munt_base_path = m_munt_path;
 	cfg_loop_type = SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL );
 	cfg_xmiloopz = SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK );
 	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK );
@@ -1773,6 +1813,11 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed )
 	{
 		if ( stricmp_utf8( m_soundfont, cfg_soundfont_path ) )
+			changed = true;
+	}
+	if ( !changed )
+	{
+		if ( stricmp_utf8( m_munt_path, cfg_munt_base_path ) )
 			changed = true;
 	}
 	return changed;

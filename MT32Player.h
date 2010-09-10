@@ -21,7 +21,7 @@ public:
 	};
 
 	// zero variables
-	MT32Player( bool gm = false );
+	MT32Player( bool gm = false, bool debug_info = false );
 
 	// close, unload
 	~MT32Player();
@@ -49,6 +49,7 @@ private:
 	abort_callback   * _abort;
 
 	bool               bGM;
+	bool               bDebug;
 
 	unsigned           uSamplesRemaining;
 

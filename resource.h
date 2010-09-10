@@ -18,6 +18,9 @@
 #define IDC_EDIT1                       1010
 #define IDC_SOUNDFONT                   1010
 #define IDC_SOUNDFONT_TEXT              1011
+#define IDC_SOUNDFONT2                  1012
+#define IDC_MUNT                        1012
+#define IDC_MUNT_TEXT                   1013
 
 // Next default values for new objects
 // 
