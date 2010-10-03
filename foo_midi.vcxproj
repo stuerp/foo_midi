@@ -443,6 +443,7 @@
   <ItemGroup>
     <ClInclude Include="MT32Player.h" />
     <ClInclude Include="mtgm.h" />
+    <ClInclude Include="stoeled\main.h" />
     <ClInclude Include="stoeled\midifile.h" />
     <ClInclude Include="stoeled\utils.h" />
     <ClInclude Include="stoeled\converters\cvt.h" />
