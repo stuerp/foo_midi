@@ -1,7 +1,11 @@
-#define MYVERSION "1.110"
+#define MYVERSION "1.111"
 
 /*
 	change log
+
+2010-11-16 03:46 UTC - kode54
+- Fixed a potential crash in all readers involving deltas returning negative values
+- Version is now 1.111
 
 2010-09-10 19:39 UTC - kode54
 - Made MUNT data file path configurable
