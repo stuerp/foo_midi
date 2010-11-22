@@ -37,12 +37,16 @@ public:
 	unsigned Play(audio_sample * out, unsigned count);
 	void Seek(unsigned sample);
 
+	const char * GetLastError() const;
+
 private:
 	void send_event(DWORD b);
 	void render(audio_sample * out, unsigned count);
 
 	void shutdown();
-	void startup();
+	bool startup();
+
+	pfc::string8       _last_error;
 
 	fluid_settings_t * _settings;
 	fluid_synth_t    * _synth;

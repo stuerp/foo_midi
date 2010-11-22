@@ -1,7 +1,12 @@
-#define MYVERSION "1.111"
+#define MYVERSION "1.112"
 
 /*
 	change log
+
+2010-11-21 23:51 UTC - kode54
+- FluidSynth player will now correctly fail instead of crashing if any SoundFonts fail to load
+- Changed mostly cosmetic error with MT32Player using SFPlayer control flags
+- Version is now 1.112
 
 2010-11-16 03:46 UTC - kode54
 - Fixed a potential crash in all readers involving deltas returning negative values
@@ -927,10 +932,10 @@ public:
 
 				if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
 				{
-					loop_mode = SFPlayer::loop_mode_enable;
-					if ( cfg_loop_type > 1 ) loop_mode |= SFPlayer::loop_mode_force;
-					if ( b_xmiloopz ) loop_mode |= SFPlayer::loop_mode_xmi;
-					if ( b_ff7loopz ) loop_mode |= SFPlayer::loop_mode_marker;
+					loop_mode = MT32Player::loop_mode_enable;
+					if ( cfg_loop_type > 1 ) loop_mode |= MT32Player::loop_mode_force;
+					if ( b_xmiloopz ) loop_mode |= MT32Player::loop_mode_xmi;
+					if ( b_ff7loopz ) loop_mode |= MT32Player::loop_mode_marker;
 				}
 
 				if ( mt32Player->Load( mf, loop_mode, b_emidi_ex ? CLEAN_EMIDI : 0 ) )
@@ -1101,7 +1106,12 @@ public:
 
 			unsigned done = sfPlayer->Play( out, todo );
 
-			if ( ! done ) return false;
+			if ( ! done )
+			{
+				const char * err = sfPlayer->GetLastError();
+				if ( err ) throw exception_io_data( err );
+				return false;
+			}
 
 			p_chunk.set_srate( srate );
 			p_chunk.set_channels( 2 );
@@ -1298,6 +1308,8 @@ fagotry:
 		else if ( plugin == 2 )
 		{
 			sfPlayer->Seek( done );
+			const char * err = sfPlayer->GetLastError();
+			if ( err ) throw exception_io_data( err );
 			return;
 		}
 		else if ( plugin == 3 )

@@ -204,7 +204,7 @@ unsigned SFPlayer::Play(audio_sample * out, unsigned count)
 {
 	assert(pStream);
 
-	if (!_synth) startup();
+	if (!_synth && !startup()) return 0;
 
 	DWORD done = 0;
 
@@ -316,7 +316,7 @@ void SFPlayer::Seek(unsigned sample)
 		}
 	}
 
-	if (!_synth) startup();
+	if (!_synth && !startup()) return;
 
 	if (uTimeCurrent > sample)
 	{
@@ -486,15 +486,28 @@ void SFPlayer::shutdown()
 	_synth = 0;
 }
 
-void SFPlayer::startup()
+bool SFPlayer::startup()
 {
 	reset_drums();
 	_synth = new_fluid_synth(_settings);
+	if (!_synth)
+	{
+		_last_error = "Out of memory";
+		return false;
+	}
 	if (sSoundFontName.length())
 	{
 		pfc::string_extension ext(sSoundFontName);
 		if ( !pfc::stricmp_ascii( ext, "sf2" ) )
-			fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), 1);
+		{
+			if ( FLUID_FAILED == fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), 1) )
+			{
+				shutdown();
+				_last_error = "Failed to load SoundFont bank: ";
+				_last_error += sSoundFontName;
+				return false;
+			}
+		}
 		else if ( !pfc::stricmp_ascii( ext, "sflist" ) )
 		{
 			FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( sSoundFontName ), _T("r, ccs=UTF-8") );
@@ -518,12 +531,22 @@ void SFPlayer::startup()
 						_tcscat_s( temp, 1024, name );
 						cr = temp;
 					}
-					fluid_synth_sfload( _synth, cr, 1 );
+					if ( FLUID_FAILED == fluid_synth_sfload( _synth, cr, 1 ) )
+					{
+						fclose( fl );
+						shutdown();
+						_last_error = "Failed to load SoundFont bank: ";
+						_last_error += pfc::stringcvt::string_utf8_from_os( cr );
+						return false;
+					}
 				}
 				fclose( fl );
 			}
 		}
 	}
+	_last_error.reset();
+
+	return true;
 }
 
 void SFPlayer::reset_drums()
@@ -536,4 +559,10 @@ void SFPlayer::reset_drums()
 	memcpy( gs_part_to_ch, part_to_ch, sizeof( gs_part_to_ch ) );
 
 	memset( channel_banks, 0, sizeof( channel_banks ) );
+}
+
+const char * SFPlayer::GetLastError() const
+{
+	if ( _last_error.length() ) return _last_error;
+	return NULL;
 }
