@@ -542,6 +542,12 @@ bool SFPlayer::startup()
 				}
 				fclose( fl );
 			}
+			else
+			{
+				_last_error = "Failed to open SoundFont list: ";
+				_last_error += sSoundFontName;
+				return false;
+			}
 		}
 	}
 	_last_error.reset();

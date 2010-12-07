@@ -1,7 +1,13 @@
-#define MYVERSION "1.112"
+#define MYVERSION "1.113"
 
 /*
 	change log
+
+2010-11-25 00:59 UTC - kode54
+- Fixed a typo in the SoundFont loader dialog description string
+- Fixed the SoundFont player to so it fails if the specified sflist file fails to open
+- Fixed the FluidSynth SoundFont loader so it won't attempt to fclose a NULL file handle
+- Version is now 1.113
 
 2010-11-21 23:51 UTC - kode54
 - FluidSynth player will now correctly fail instead of crashing if any SoundFonts fail to load
@@ -1703,7 +1709,7 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 		directory = m_soundfont;
 		filename = m_soundfont;
 		directory.truncate( directory.scan_filename() );
-		if ( uGetOpenFileName( m_hWnd, "SounFont and list files|*.sf2;*.sflist|SoundFont files|*.sf2|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
+		if ( uGetOpenFileName( m_hWnd, "SoundFont and list files|*.sf2;*.sflist|SoundFont files|*.sf2|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
 		{
 			m_soundfont = filename;
 			uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );
