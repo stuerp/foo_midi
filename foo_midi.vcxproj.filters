@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="processing">
+      <UniqueIdentifier>{41f5dd80-205f-4f2c-9000-5d091094d786}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="processing\converters">
+      <UniqueIdentifier>{b37e53b9-47dd-49cd-b6ed-c919d9716559}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DXiPlayer.cpp" />
+    <ClCompile Include="midi.cpp" />
+    <ClCompile Include="PlugInInventory.cpp" />
+    <ClCompile Include="SFPlayer.cpp" />
+    <ClCompile Include="SMF.cpp" />
+    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="stoeled\cleaner.cpp">
+      <Filter>processing</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\converters\cmf.cpp">
+      <Filter>processing\converters</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\converters\gmf.cpp">
+      <Filter>processing\converters</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\converters\hmi.cpp">
+      <Filter>processing\converters</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\converters\hmp.cpp">
+      <Filter>processing\converters</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\converters\mids.cpp">
+      <Filter>processing\converters</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\converters\mus.cpp">
+      <Filter>processing\converters</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\converters\xmi.cpp">
+      <Filter>processing\converters</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\midifile.cpp">
+      <Filter>processing</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\midiinfo.cpp">
+      <Filter>processing</Filter>
+    </ClCompile>
+    <ClCompile Include="stoeled\utils.cpp">
+      <Filter>processing</Filter>
+    </ClCompile>
+    <ClCompile Include="VSTiPlayer.cpp" />
+    <ClCompile Include="MT32Player.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="hypersonic2.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="SFPlayer.h" />
+    <ClInclude Include="stoeled\converters\cvt.h">
+      <Filter>processing\converters</Filter>
+    </ClInclude>
+    <ClInclude Include="stoeled\midifile.h">
+      <Filter>processing</Filter>
+    </ClInclude>
+    <ClInclude Include="stoeled\utils.h">
+      <Filter>processing</Filter>
+    </ClInclude>
+    <ClInclude Include="VSTiPlayer.h" />
+    <ClInclude Include="MT32Player.h" />
+    <ClInclude Include="mtgm.h" />
+    <ClInclude Include="stoeled\main.h">
+      <Filter>processing</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="foo_midi.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="DXiPlayer.h" />
+    <CustomBuild Include="PlugInInventory.h" />
+    <CustomBuild Include="StdAfx.h" />
+  </ItemGroup>
+</Project>
