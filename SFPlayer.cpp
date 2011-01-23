@@ -9,6 +9,7 @@ SFPlayer::SFPlayer()
 	uTimeCurrent = 0;
 	uTimeEnd = 0;
 	uTimeLoopStart = 0;
+	uInterpolationMethod = FLUID_INTERP_DEFAULT;
 
 	reset_drums();
 
@@ -59,6 +60,12 @@ void SFPlayer::setSampleRate(unsigned rate)
 	fluid_settings_setnum(_settings, "synth.sample-rate", uSampleRate);
 
 	shutdown();
+}
+
+void SFPlayer::setInterpolationMethod(unsigned method)
+{
+	uInterpolationMethod = method;
+	if ( _synth ) fluid_synth_set_interp_method( _synth, -1, method );
 }
 
 bool SFPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
@@ -326,6 +333,8 @@ void SFPlayer::Seek(unsigned sample)
 		reset_drums();
 
 		fluid_synth_system_reset(_synth);
+
+		fluid_synth_set_interp_method( _synth, -1, uInterpolationMethod );
 	}
 
 	uTimeCurrent = sample;
@@ -423,7 +432,7 @@ void SFPlayer::send_event(DWORD b)
 			}
 			break;
 		case 0xC0:
-			if ( drum_channels [chan] ) fluid_synth_bank_select(_synth, chan, 128 /*DRUM_INST_BANK*/);
+			if ( drum_channels [chan] ) fluid_synth_bank_select(_synth, chan, 16256 /*DRUM_INST_BANK*/);
 			fluid_synth_program_change(_synth, chan, param1);
 			break;
 		case 0xD0:
@@ -437,6 +446,7 @@ void SFPlayer::send_event(DWORD b)
 			{
 				reset_drums();
 				fluid_synth_system_reset(_synth);
+				fluid_synth_set_interp_method( _synth, -1, uInterpolationMethod );
 			}
 			break;
 		}
@@ -495,6 +505,7 @@ bool SFPlayer::startup()
 		_last_error = "Out of memory";
 		return false;
 	}
+	fluid_synth_set_interp_method( _synth, -1, uInterpolationMethod );
 	if (sSoundFontName.length())
 	{
 		pfc::string_extension ext(sSoundFontName);

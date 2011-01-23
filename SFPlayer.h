@@ -32,6 +32,7 @@ public:
 
 	// setup
 	void setSampleRate(unsigned rate);
+	void setInterpolationMethod(unsigned method);
 
 	bool Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags);
 	unsigned Play(audio_sample * out, unsigned count);
@@ -57,6 +58,7 @@ private:
 
 	unsigned           uSampleRate;
 	unsigned           uLoopMode;
+	unsigned           uInterpolationMethod;
 
 	CSysexMap        * pSysexMap;
 	MIDI_EVENT       * pStream;

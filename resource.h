@@ -11,6 +11,7 @@
 #define IDC_EMIDI_EX                    1005
 #define IDC_RECOVER                     1006
 #define IDC_NOSYSEX                     1007
+#define IDC_FLUID_INTERPOLATION         1007
 #define IDC_HACK_XG_DRUMS               1008
 #define IDC_RECOVER2                    1008
 #define IDC_GM2                         1008
@@ -18,9 +19,9 @@
 #define IDC_EDIT1                       1010
 #define IDC_SOUNDFONT                   1010
 #define IDC_SOUNDFONT_TEXT              1011
-#define IDC_SOUNDFONT2                  1012
 #define IDC_MUNT                        1012
-#define IDC_MUNT_TEXT                   1013
+#define IDC_SOUNDFONT_TEXT2             1013
+#define IDC_FLUID_INTERPOLATION_TEXT    1013
 
 // Next default values for new objects
 // 
