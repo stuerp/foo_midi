@@ -1,7 +1,11 @@
-#define MYVERSION "1.114"
+#define MYVERSION "1.115"
 
 /*
 	change log
+
+2011-01-24 10:40 UTC - kode54
+- Updated MUNT with MMX/3DNow!/SSE acceleration from the DOSBox Development forum
+- Version is now 1.115
 
 2011-01-23 09:04 UTC - kode54
 - Modified SoundFont loader to translate banks to MSB
