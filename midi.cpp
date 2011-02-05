@@ -1,7 +1,11 @@
-#define MYVERSION "1.115"
+#define MYVERSION "1.116"
 
 /*
 	change log
+
+2011-02-05 06:40 UTC - kode54
+- Reverted default reverb send level
+- Version is now 1.116
 
 2011-01-24 10:40 UTC - kode54
 - Updated MUNT with MMX/3DNow!/SSE acceleration from the DOSBox Development forum
