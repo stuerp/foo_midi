@@ -1,7 +1,11 @@
-#define MYVERSION "1.116"
+#define MYVERSION "1.117"
 
 /*
 	change log
+
+2011-02-07 14:51 UTC - kode54
+- Reverted reverb and chorus send level scale back to 20%
+- Version is now 1.117
 
 2011-02-05 06:40 UTC - kode54
 - Reverted default reverb send level
