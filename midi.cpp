@@ -1,7 +1,11 @@
-#define MYVERSION "1.117"
+#define MYVERSION "1.118"
 
 /*
 	change log
+
+2011-02-09 08:22 UTC - kode54
+- Fixed FluidSynth initializing channel 10 bank to 128 instead of DRUM_INST_BANK by default
+- Version is now 1.118
 
 2011-02-07 14:51 UTC - kode54
 - Reverted reverb and chorus send level scale back to 20%
