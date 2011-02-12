@@ -85,7 +85,6 @@ VSTiPlayer::VSTiPlayer()
 {
 	hDll = 0;
 	pEffect = 0;
-	pStream = 0;
 	uSampleRate = 1000;
 	uNumOutputs = 0;
 	uTimeCurrent = 0;
@@ -130,11 +129,6 @@ VSTiPlayer::~VSTiPlayer()
 	if (hDll)
 	{
 		FreeLibrary(hDll);
-	}
-
-	if (pStream)
-	{
-		free(pStream);
 	}
 
 #ifdef TIME_INFO
@@ -237,11 +231,11 @@ void VSTiPlayer::setSampleRate(unsigned rate)
 {
 	assert(!blState.get_size());
 
-	if (pStream)
+	if (mStream.get_count())
 	{
-		for (UINT i = 0; i < uStreamSize; i++)
+		for (UINT i = 0; i < mStream.get_count(); i++)
 		{
-			pStream[i].tm = MulDiv(pStream[i].tm, rate, uSampleRate);
+			mStream[ i ].m_timestamp = MulDiv( mStream[ i ].m_timestamp, rate, uSampleRate );
 		}
 	}
 
@@ -271,14 +265,13 @@ unsigned VSTiPlayer::getChannelCount()
 	return uNumOutputs;
 }
 
-bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
+bool VSTiPlayer::Load(const midi_container & midi_file, unsigned loop_mode, bool clean_flag)
 {
-	assert(!pStream);
+	assert(!mStream.get_count());
 
-	pSysexMap = mf->smap;
-	pStream = do_table(mf, 1, &uStreamSize, clean_flags);
+	midi_file.serialize_as_stream( mStream, mSysexMap, clean_flag );
 
-	if (pStream && uStreamSize)
+	if (mStream.get_count())
 	{
 		uStreamPosition = 0;
 		uTimeCurrent = 0;
@@ -287,73 +280,31 @@ bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 
 		if (uLoopMode & loop_mode_enable)
 		{
-			uTimeEnd = mf->len;
-			uStreamLoopStart = ~0;
+			uTimeLoopStart = midi_file.get_timestamp_loop_start( true );
+			unsigned uTimeLoopEnd = midi_file.get_timestamp_loop_end( true );
+			uTimeEnd = midi_file.get_timestamp_end( true );
 
-			if (uLoopMode & loop_mode_xmi)
+			if ( uTimeLoopStart != ~0 || uTimeLoopEnd != ~0 )
 			{
-				UINT i;
+				uLoopMode |= loop_mode_force;
+			}
 
-				for (i = 0; i < uStreamSize; i++)
+			if ( uTimeLoopStart != ~0 )
+			{
+				for ( unsigned i = 0; i < mStream.get_count(); ++i )
 				{
-					MIDI_EVENT & e = pStream[i];
-					switch (e.ev & 0xFF00FFF0)
+					if ( mStream[ i ].m_timestamp >= uTimeLoopStart )
 					{
-					case 0x74B0:
-						if (uStreamLoopStart == ~0)
-						{
-							//uStreamLoopStart = i;
-							UINT j;
-							uTimeLoopStart = pStream[i].tm;
-							for (j = i - 1; j != ~0; --j)
-							{
-								if (pStream[j].tm < uTimeLoopStart) break;
-							}
-							uStreamLoopStart = j + 1;
-							uLoopMode |= loop_mode_force;
-						}
-						break;
-
-					case 0x75B0:
-						uTimeEnd = e.tm;
-						uLoopMode |= loop_mode_force;
+						uStreamLoopStart = i;
 						break;
 					}
 				}
 			}
+			else uStreamLoopStart = ~0;
 
-			if (uLoopMode & loop_mode_marker &&
-				mf->mmap->pos)
+			if ( uTimeLoopEnd != ~0 )
 			{
-				CMarkerMap * mmap = mf->mmap->Translate(mf);
-				if (mmap)
-				{
-					UINT i, j;
-					for (i = 0; i < mmap->pos; i++)
-					{
-						SYSEX_ENTRY & e = mmap->events[i];
-						if (e.len == 9 && !memcmp(mmap->data + e.ofs, "loopStart", 9))
-						{
-							if (uStreamLoopStart == ~0)
-							{
-								uTimeLoopStart = e.pos;
-								for (j = 0; j < uStreamSize; j++)
-								{
-									if (pStream[j].tm >= uTimeLoopStart) break;
-								}
-								uStreamLoopStart = j;
-								uLoopMode |= loop_mode_force;
-							}
-						}
-						else if (e.len == 7 && !memcmp(mmap->data + e.ofs, "loopEnd", 7))
-						{
-							uTimeEnd = e.pos;
-							uLoopMode |= loop_mode_force;
-						}
-					}
-
-					delete mmap;
-				}
+				uTimeEnd = uTimeLoopEnd;
 			}
 
 			if (!(uLoopMode & loop_mode_force)) uTimeEnd += 1000;
@@ -362,40 +313,29 @@ bool VSTiPlayer::Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags)
 				UINT i;
 				unsigned char note_on[128 * 16];
 				memset( note_on, 0, sizeof( note_on ) );
-				for (i = 0; i < uStreamSize; i++)
+				for (i = 0; i < mStream.get_count(); i++)
 				{
-					UINT ev = pStream[i].ev & 0xFF0000F0;
+					if (mStream[ i ].m_timestamp > uTimeEnd) break;
+					UINT ev = mStream[ i ].m_event & 0xFF0000F0;
 					if ( ev == 0x90 || ev == 0x80 )
 					{
-						UINT ch = pStream[i].ev & 0x0F;
-						UINT note = ( pStream[i].ev >> 8 ) & 0x7F;
-						UINT on = ( ev == 0x90 ) && ( pStream[i].ev & 0xFF0000 );
+						UINT ch = mStream[ i ].m_event & 0x0F;
+						UINT note = ( mStream[ i ].m_event >> 8 ) & 0x7F;
+						UINT on = ( ev == 0x90 ) && ( mStream[ i ].m_event & 0xFF0000 );
 						note_on [ ch * 128 + note ] = on;
 					}
-					if (pStream[i].tm > uTimeEnd) break;
 				}
-				UINT note_off_count = 0;
-				for ( UINT j = 0; j < 128 * 16; j++ )
-				{
-					if ( note_on[ j ] ) note_off_count++;
-				}
-				if ( note_off_count > uStreamSize - i )
-				{
-					pStream = ( MIDI_EVENT * ) realloc( pStream, ( i + note_off_count ) * sizeof( MIDI_EVENT ) );
-				}
+				mStream.set_count( i );
 				for ( UINT j = 0; j < 128 * 16; j++ )
 				{
 					if ( note_on[ j ] )
 					{
-						pStream[i].tm = uTimeEnd;
-						pStream[i].ev = 0x80 + ( j >> 8 ) + ( j & 0x7F ) * 0x100;
-						i++;
+						mStream.append_single( midi_stream_event( uTimeEnd, ( j >> 7 ) + ( j & 0x7F ) * 0x100 + 0x90 ) );
 					}
 				}
-				uStreamSize = i;
 			}
 		}
-		else uTimeEnd = mf->len + 1000;
+		else uTimeEnd = midi_file.get_timestamp_end( true ) + 1000;
 
 		if (uSampleRate != 1000)
 		{
@@ -440,7 +380,7 @@ void VSTiPlayer::resizeState(unsigned size)
 
 unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 {
-	assert(pStream);
+	assert(mStream.get_count());
 
 	if (!blState.get_size())
 	{
@@ -473,7 +413,7 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 		DWORD time_target = todo + uTimeCurrent;
 		UINT stream_end = uStreamPosition;
 
-		while (stream_end < uStreamSize && pStream[stream_end].tm < time_target) stream_end++;
+		while (stream_end < mStream.get_count() && mStream[stream_end].m_timestamp < time_target) stream_end++;
 
 		if (stream_end > uStreamPosition)
 		{
@@ -482,7 +422,7 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 			for (i = uStreamPosition; i < stream_end; i++)
 			{
-				if (!(pStream[i].ev & 0xFF000000)) events_size += sizeof(VstMidiEvent);
+				if (!(mStream[i].m_event & 0xFF000000)) events_size += sizeof(VstMidiEvent);
 				else events_size += sizeof(VstMidiSysexEvent);
 			}
 
@@ -497,28 +437,30 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 			{
 				events_list->events[i] = event;
 
-				if (!(pStream[uStreamPosition].ev & 0xFF000000))
+				if (!(mStream[uStreamPosition].m_event & 0xFF000000))
 				{
 					VstMidiEvent * e = (VstMidiEvent*) event;
 					memset(e, 0, sizeof(*e));
 					e->type = kVstMidiType;
 					e->byteSize = sizeof(*e);
-					e->deltaFrames = pStream[uStreamPosition].tm - uTimeCurrent;
-					memcpy(&e->midiData, &pStream[uStreamPosition].ev, 4);
+					e->deltaFrames = mStream[uStreamPosition].m_timestamp - uTimeCurrent;
+					memcpy(&e->midiData, &mStream[uStreamPosition].m_event, 4);
 					event = (VstEvent*)(e + 1);
 				}
 				else
 				{
 					VstMidiSysexEvent * e = (VstMidiSysexEvent*) event;
-					UINT n = pStream[uStreamPosition].ev & 0xffffff;
-					SYSEX_ENTRY & sysex = pSysexMap->events[n];
+					UINT n = mStream[uStreamPosition].m_event & 0xffffff;
+					const t_uint8 * data;
+					t_size size;
+					mSysexMap.get_entry( n, data, size );
 					e->type = kVstSysExType;
 					e->byteSize = sizeof(*e);
-					e->deltaFrames = pStream[uStreamPosition].tm - uTimeCurrent;
+					e->deltaFrames = mStream[uStreamPosition].m_timestamp - uTimeCurrent;
 					e->flags = 0;
-					e->dumpBytes = sysex.len;
+					e->dumpBytes = size;
 					e->resvd1 = 0;
-					e->sysexDump = (char *)(pSysexMap->data + sysex.ofs);
+					e->sysexDump = (char *)data;
 					e->resvd2 = 0;
 					event = (VstEvent*)(e + 1);
 				}
@@ -549,50 +491,52 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 		if (uTimeCurrent >= uTimeEnd)
 		{
-			if ( uStreamPosition < uStreamSize )
+			if ( uStreamPosition < mStream.get_count() )
 			{
-				unsigned events_size = sizeof(long) * 2 + sizeof(VstEvent*) * (uStreamSize - uStreamPosition);
+				unsigned events_size = sizeof(long) * 2 + sizeof(VstEvent*) * (mStream.get_count() - uStreamPosition);
 				UINT i;
 
-				for (i = uStreamPosition; i < uStreamSize; i++)
+				for (i = uStreamPosition; i < mStream.get_count(); i++)
 				{
-					if (!(pStream[i].ev & 0xFF000000)) events_size += sizeof(VstMidiEvent);
+					if (!(mStream[i].m_event & 0xFF000000)) events_size += sizeof(VstMidiEvent);
 					else events_size += sizeof(VstMidiSysexEvent);
 				}
 
 				resizeState(buffer_size + events_size);
 
-				events_list->numEvents = uStreamSize - uStreamPosition;
+				events_list->numEvents = mStream.get_count() - uStreamPosition;
 				events_list->reserved = 0;
 
 				VstEvent * event = (VstEvent*) (events_list->events + events_list->numEvents);
 
-				for (i = 0; uStreamPosition < uStreamSize; uStreamPosition++, i++)
+				for (i = 0; uStreamPosition < mStream.get_count(); uStreamPosition++, i++)
 				{
 					events_list->events[i] = event;
 
-					if (!(pStream[uStreamPosition].ev & 0xFF000000))
+					if (!(mStream[uStreamPosition].m_event & 0xFF000000))
 					{
 						VstMidiEvent * e = (VstMidiEvent*) event;
 						memset(e, 0, sizeof(*e));
 						e->type = kVstMidiType;
 						e->byteSize = sizeof(*e);
 						e->deltaFrames = 0;
-						memcpy(&e->midiData, &pStream[uStreamPosition].ev, 4);
+						memcpy(&e->midiData, &mStream[uStreamPosition].m_event, 4);
 						event = (VstEvent*)(e + 1);
 					}
 					else
 					{
 						VstMidiSysexEvent * e = (VstMidiSysexEvent*) event;
-						UINT n = pStream[uStreamPosition].ev & 0xffffff;
-						SYSEX_ENTRY & sysex = pSysexMap->events[n];
+						UINT n = mStream[uStreamPosition].m_event & 0xffffff;
+						const t_uint8 * data;
+						t_size size;
+						mSysexMap.get_entry( n, data, size );
 						e->type = kVstSysExType;
 						e->byteSize = sizeof(*e);
 						e->deltaFrames = 0;
 						e->flags = 0;
-						e->dumpBytes = sysex.len;
+						e->dumpBytes = size;
 						e->resvd1 = 0;
-						e->sysexDump = (char *)(pSysexMap->data + sysex.ofs);
+						e->sysexDump = (char *)data;
 						e->resvd2 = 0;
 						event = (VstEvent*)(e + 1);
 					}
@@ -676,39 +620,40 @@ void VSTiPlayer::Seek(unsigned sample)
 
 	uTimeCurrent = sample;
 
-	pfc::array_t<MIDI_EVENT> filler;
+	pfc::array_t<midi_stream_event> filler;
 
 	UINT stream_start = uStreamPosition;
 
-	for (; uStreamPosition < uStreamSize && pStream[uStreamPosition].tm < uTimeCurrent; uStreamPosition++);
+	for (; uStreamPosition < mStream.get_count() && mStream[uStreamPosition].m_timestamp < uTimeCurrent; uStreamPosition++);
 
 	if (uStreamPosition > stream_start)
 	{
 		filler.set_size( uStreamPosition - stream_start );
-		memcpy(filler.get_ptr(), &pStream[stream_start], sizeof(MIDI_EVENT) * (uStreamPosition - stream_start));
+		memcpy(filler.get_ptr(), &mStream[stream_start], sizeof(midi_stream_event) * (uStreamPosition - stream_start));
 
 		UINT i, j;
-		MIDI_EVENT * me = filler.get_ptr();
+		midi_stream_event * me = filler.get_ptr();
 
 		for (i = 0, stream_start = uStreamPosition - stream_start; i < stream_start; i++)
 		{
-			MIDI_EVENT & e = me[i];
-			if ((e.ev & 0xFF0000F0) == 0x90) // note on
+			midi_stream_event & e = me[i];
+			if ((e.m_event & 0xFF0000F0) == 0x90 && (e.m_event & 0xFF0000)) // note on
 			{
-				if ((e.ev & 0x0F) == 9) // hax
+				if ((e.m_event & 0x0F) == 9) // hax
 				{
-					e.ev = 0;
+					e.m_event = 0;
 					continue;
 				}
-				DWORD m = (e.ev & 0xFF0F) | 0x80; // note off
+				DWORD m = (e.m_event & 0xFF0F) | 0x80; // note off
+				DWORD m2 = e.m_event & 0xFFFF; // also note off
 				for (j = i + 1; j < stream_start; j++)
 				{
-					MIDI_EVENT & e2 = me[j];
-					if ((e2.ev & 0xFF00FFFF) == m)
+					midi_stream_event & e2 = me[j];
+					if ((e2.m_event & 0xFF00FFFF) == m || e2.m_event == m2)
 					{
 						// kill 'em
-						e.ev = 0;
-						e2.ev = 0;
+						e.m_event = 0;
+						e2.m_event = 0;
 						break;
 					}
 				}
@@ -717,7 +662,7 @@ void VSTiPlayer::Seek(unsigned sample)
 
 		for (i = 0, j = 0; i < stream_start; i++)
 		{
-			if (me[i].ev)
+			if (me[i].m_event)
 			{
 				if (i != j) me[j] = me[i];
 				j++;
@@ -730,7 +675,7 @@ void VSTiPlayer::Seek(unsigned sample)
 
 		for (i = 0; i < j; i++)
 		{
-			if (!(me[i].ev & 0xFF000000)) events_size += sizeof(VstMidiEvent);
+			if (!(me[i].m_event & 0xFF000000)) events_size += sizeof(VstMidiEvent);
 			else events_size += sizeof(VstMidiSysexEvent);
 		}
 
@@ -747,28 +692,30 @@ void VSTiPlayer::Seek(unsigned sample)
 		{
 			my_events_list->events[i] = event;
 
-			if (!(me[i].ev & 0xFF000000))
+			if (!(me[i].m_event & 0xFF000000))
 			{
 				VstMidiEvent * e = (VstMidiEvent*) event;
 				memset(e, 0, sizeof(*e));
 				e->type = kVstMidiType;
 				e->byteSize = sizeof(*e);
 				e->deltaFrames = 0;
-				memcpy(&e->midiData, &me[i].ev, 4);
+				memcpy(&e->midiData, &me[i].m_event, 4);
 				event = (VstEvent*)(e + 1);
 			}
 			else
 			{
 				VstMidiSysexEvent * e = (VstMidiSysexEvent*) event;
-				UINT n = me[i].ev & 0xffffff;
-				SYSEX_ENTRY & sysex = pSysexMap->events[n];
+				UINT n = me[i].m_event & 0xffffff;
+				const t_uint8 * data;
+				t_size size;
+				mSysexMap.get_entry( n, data, size );
 				e->type = kVstSysExType;
 				e->byteSize = sizeof(*e);
 				e->deltaFrames = 0;
 				e->flags = 0;
-				e->dumpBytes = sysex.len;
+				e->dumpBytes = size;
 				e->resvd1 = 0;
-				e->sysexDump = (char *)(pSysexMap->data + sysex.ofs);
+				e->sysexDump = (char *)data;
 				e->resvd2 = 0;
 				event = (VstEvent*)(e + 1);
 			}

@@ -1,13 +1,11 @@
 #ifndef __MT32Player_h__
 #define __MT32Player_h__
 
-#include "main.h"
+#include <foobar2000.h>
+
+#include "nu_processing/midi_container.h"
 
 #include <mt32emu.h>
-
-#ifndef _AUDIO_CHUNK_H_
-typedef float audio_sample;
-#endif
 
 class MT32Player
 {
@@ -15,9 +13,7 @@ public:
 	enum
 	{
 		loop_mode_enable = 1 << 0,
-		loop_mode_force  = 1 << 1,
-		loop_mode_xmi    = 1 << 2,
-		loop_mode_marker = 1 << 3
+		loop_mode_force  = 1 << 1
 	};
 
 	// zero variables
@@ -33,7 +29,7 @@ public:
 	// setup
 	void setSampleRate(unsigned rate);
 
-	bool Load(MIDI_file * mf, unsigned loop_mode, unsigned clean_flags);
+	bool Load(const midi_container & midi_file, unsigned loop_mode, bool clean_flag);
 	unsigned Play(audio_sample * out, unsigned count);
 	void Seek(unsigned sample);
 
@@ -56,9 +52,8 @@ private:
 	unsigned           uSampleRate;
 	unsigned           uLoopMode;
 
-	CSysexMap        * pSysexMap;
-	MIDI_EVENT       * pStream;
-	UINT               uStreamSize;
+	system_exclusive_table mSysexMap;
+	pfc::array_t<midi_stream_event> mStream;
 
 	UINT               uStreamPosition;
 	DWORD              uTimeCurrent;

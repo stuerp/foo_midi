@@ -1,7 +1,66 @@
-#define MYVERSION "1.118"
+#define MYVERSION "1.119"
 
 /*
 	change log
+
+2011-02-12 00:09 UTC - kode54
+- Standard MIDI file processor now ignores MIDI start and stop status codes
+- Version is now 1.119
+
+2011-02-11 23:56 UTC - kode54
+- Changed standard MIDI file last event handling to work around Meta/SysEx events
+
+2011-02-11 23:27 UTC - kode54
+- Changed a few stricmps and stricmp_utf8s to pfc::stricmp_ascii, and added a safety check to
+  VSTi finding function
+
+2011-02-11 22:53 UTC - kode54
+- Added MDS to file name extensions list
+
+2011-02-11 22:42 UTC - kode54
+- Completed MIDS file processor
+
+2011-02-11 20:26 UTC - kode54
+- Changed tempo map timestamp converter to default to a tempo of 500000
+
+2011-02-11 20:05 UTC - kode54
+- Completed MUS file processor
+
+2011-02-11 17:14 UTC - kode54
+- Fixed VSTi, FluidSynth, and MUNT players to correctly handle note on with velocity of zero
+  when seeking
+
+2011-02-11 17:05 UTC - kode54
+- Removed incomplete track recovery option
+
+2011-02-11 16:55 UTC - kode54
+- Completed XMI file processor
+
+2011-02-11 13:43 UTC - kode54
+- Fixed loop end truncation in VSTi, FluidSynth, and MUNT players adding note off commands
+  for the wrong channel numbers
+
+2011-02-11 13:22 UTC - kode54
+- Fixed loop end truncation in VSTi, FluidSynth, and MUNT players
+
+2011-02-11 13:03 UTC - kode54
+- Completed HMI file processor
+
+2011-02-11 12:43 UTC - kode54
+- Increased FluidSynth missing drum instrument search to include every preset below the
+  missing preset
+
+2011-02-11 11:40 UTC - kode54
+- Completed HMP file processor
+
+2011-02-10 12:39 UTC - kode54
+- Completed RIFF MIDI file processor
+
+2011-02-10 10:07 UTC - kode54
+- Completed Standard MIDI file processor
+
+2011-02-09 23:38 UTC - kode54
+- Started rewrite of MIDI file processing routines
 
 2011-02-09 08:22 UTC - kode54
 - Fixed FluidSynth initializing channel 10 bank to 128 instead of DRUM_INST_BANK by default
@@ -240,6 +299,8 @@
 #include "../helpers/dropdown_helper.h"
 #include "../ATLHelpers/ATLHelpers.h"
 
+#include "nu_processing/midi_processor.h"
+
 #include <shlobj.h>
 #include <shlwapi.h>
 
@@ -265,8 +326,6 @@
 #pragma comment( lib, "strmiids.lib" )
 #endif
 
-#include "main.h"
-
 #include "resource.h"
 
 #include "CSMFPlay.hpp"
@@ -289,8 +348,8 @@ static const GUID guid_cfg_ff7loopz =
 static const GUID guid_cfg_emidi_exclusion = 
 { 0xc090f9c7, 0x47f9, 0x4f6f, { 0x84, 0x7a, 0x27, 0xcd, 0x75, 0x96, 0xc9, 0xd4 } };
 // {FE5B24D8-C8A5-4b49-A163-972649217185}
-static const GUID guid_cfg_recover_tracks = 
-{ 0xfe5b24d8, 0xc8a5, 0x4b49, { 0xa1, 0x63, 0x97, 0x26, 0x49, 0x21, 0x71, 0x85 } };
+/*static const GUID guid_cfg_recover_tracks = 
+{ 0xfe5b24d8, 0xc8a5, 0x4b49, { 0xa1, 0x63, 0x97, 0x26, 0x49, 0x21, 0x71, 0x85 } };*/
 // {DA3A7D23-BCEB-40f9-B594-2A9428A1E533}
 static const GUID guid_cfg_loop_type = 
 { 0xda3a7d23, 0xbceb, 0x40f9, { 0xb5, 0x94, 0x2a, 0x94, 0x28, 0xa1, 0xe5, 0x33 } };
@@ -327,7 +386,7 @@ enum
 	default_cfg_xmiloopz = 0,
 	default_cfg_ff7loopz = 0,
 	default_cfg_emidi_exclusion = 0,
-	default_cfg_recover_tracks = 0,
+	//default_cfg_recover_tracks = 0,
 	default_cfg_loop_type = 0,
 	default_cfg_srate = 44100,
 	default_cfg_plugin = 0,
@@ -336,7 +395,7 @@ enum
 
 cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
 		cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion), /*cfg_hack_xg_drums("yam", 0),*/
-		cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks), cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
+		/*cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),*/ cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
 		/*cfg_nosysex("sux", 0),*/ /*cfg_gm2(guid_cfg_gm2, 0),*/
 		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
 		cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method);
@@ -354,9 +413,9 @@ static const char * exts[]=
 	"MID",
 	"MIDI",
 	"RMI",
-	"MIDS",
+	"MIDS", "MDS",
 //	"CMF",
-	"GMF",
+//	"GMF",
 	"HMI",
 	"HMP",
 	"MUS",
@@ -383,7 +442,9 @@ class input_midi
 	SFPlayer * sfPlayer;
 	MT32Player * mt32Player;
 
-	MIDI_file * mf;
+	midi_container midi_file;
+
+	midi_meta_data meta_data;
 
 	unsigned srate;
 	unsigned plugin;
@@ -397,8 +458,8 @@ class input_midi
 	unsigned length_ticks;
 	unsigned samples_done;
 
-	int loop_begin;
-	int loop_end;
+	unsigned loop_begin;
+	unsigned loop_end;
 
 	bool eof;
 	bool dont_loop;
@@ -436,8 +497,6 @@ public:
 		sfPlayer = NULL;
 		mt32Player = NULL;
 
-		mf = NULL;
-
 		length_samples = 0;
 		length_ticks = 0;
 
@@ -465,177 +524,17 @@ public:
 		if (vstPlayer) delete vstPlayer;
 		if (sfPlayer) delete sfPlayer;
 		if (mt32Player) delete mt32Player;
-		if (mf) mf->Free();
 #ifdef DXISUPPORT
 		if (initialized) CoUninitialize();
 #endif
 	}
 
 private:
-	HRESULT load_file(const void * data, unsigned size
-#ifdef DXISUPPORT
-		, CMfxSeq * out
-#endif
-		)
-	{
-		mf = MIDI_file::Create(data, size);
-		if (!mf) return E_FAIL;
-		
-		loop_begin = -1;
-		loop_end = -1;
-
-#ifdef DXISUPPORT
-		HRESULT rval;
-		TRY
-		rval = LoadMid(*out, CMemFile((BYTE*)mf->data, mf->size));
-		CATCH_ALL(e)
-			TCHAR foo[256];
-			e->GetErrorMessage(foo, sizeof(foo) / sizeof(*foo));
-			if (*foo) console::info(pfc::stringcvt::string_utf8_from_os(foo));
-			return -1;
-		END_CATCH_ALL
-		if (FAILED(rval)) return rval;
-
-		int i, j;
-
-		if (b_emidi_ex || b_xmiloopz || b_gm2)
-		{
-			BYTE part_to_ch[16] = {9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15};
-
-			map<int,CMfxTrack>::iterator it;
-			for (it = theSequence->GetBeginTrack(); it != theSequence->GetEndTrack(); it++)
-			{
-				int index = it->first;
-				CMfxTrack & trk = it->second;
-
-				if (b_gm2)
-				{
-					if (trk.GetBank() == 16256) // XG
-						trk.SetBank(15360); // remap to GM2
-				}
-
-				for (i = 0, j = trk.size(); i < j; i++)
-				{
-					switch (trk[i].GetType())
-					{
-					case MfxEvent::Patch:
-						if (b_gm2)
-						{
-							if (trk[i].GetBank() == 16256) // XG
-								trk[i].SetBank(15360); // GM2
-						}
-						break;
-					case MfxEvent::Control:
-						switch (trk[i].GetCtrlNum())
-						{
-						case 0:
-							if (b_gm2)
-							{
-								if (trk[i].GetCtrlVal() == 127) // XG drum, hackery
-									trk[i].SetCtrlVal(120); // GM2 drum, hackery
-							}
-							break;
-						case EMIDI_CONTROLLER_TRACK_DESIGNATION:
-							if (b_emidi_ex)
-							{
-								int dev = trk[i].GetCtrlVal();
-								if (dev != 0 && dev != 127)
-								{
-									trk.clear();
-									i = j;
-								}
-							}
-							break;
-						case EMIDI_CONTROLLER_TRACK_EXCLUSION:
-							if (b_emidi_ex)
-							{
-								if (trk[i].GetCtrlNum() == 0)
-								{
-									trk.clear();
-									i = j;
-								}
-							}
-							break;
-						case EMIDI_CONTROLLER_LOOP_BEGIN:
-							if (b_xmiloopz)
-							{
-								if (loop_begin == -1)
-								{
-									loop_begin = trk[i].GetTime();
-								}
-							}
-							break;
-						case EMIDI_CONTROLLER_LOOP_END:
-							if (b_xmiloopz)
-							{
-								if (loop_end == -1)
-								{
-									loop_end = trk[i].GetTime();
-								}
-							}
-							break;
-						}
-						break;
-					case MfxEvent::Sysx:
-						if (b_gm2)
-						{
-							BYTE * pData;
-							DWORD dwLength;
-							if (theBufferFactory.GetPointer(trk[i].m_hBuffer, (void**) &pData, &dwLength) == S_OK &&
-								dwLength == 11 &&
-								pData[0] == 0xF0 && pData[1] == 0x41 && pData[3] == 0x42 && pData[4] == 0x12 && pData[5] == 0x40 && (pData[6] & 0xF0) == 0x10 && pData[10] == 0xF7)
-							{
-								if (pData[7] == 2)
-								{
-									// GS MIDI channel to part assign
-									part_to_ch[pData[6] & 15] = pData[8];
-								}
-								else if (pData[7] == 0x15)
-								{
-									// GS part to rhythm allocation
-									if (part_to_ch[pData[6] & 15] < 16)
-									{
-										CMfxEvent event( MfxEvent::Patch );
-										event.SetTime( trk[i].GetTime() );
-										event.SetChannel( part_to_ch[ pData[6] & 15 ] );
-										event.SetPatch( 0 );
-										event.SetBank( pData[8] ? 15360 : 15488 );
-										trk[i] = event;
-									}
-								}
-							}
-						}
-						break;
-					}
-				}
-			}
-		}
-
-		if (b_ff7loopz)
-		{
-			for (i = 0, j = theSequence->m_markers.size(); i < j; i++)
-			{
-				const CMarker & marker = theSequence->m_markers[i];
-				if (loop_begin == -1 && !strcmp(marker.GetName(), "loopStart"))
-				{
-					loop_begin = marker.GetTime();
-				}
-				else if (loop_end == -1 && !strcmp(marker.GetName(), "loopEnd"))
-				{
-					loop_end = marker.GetTime();
-				}
-			}
-		}
-#endif
-
-		return S_OK;
-	}
-
 	double get_length()
 	{
-		int len = mf->GetLength();
+		unsigned len = midi_file.get_timestamp_end( true );
 		double length = len * .001 + 1.;
-		length_ticks = mf->tix; //theSequence->m_tempoMap.Sample2Tick(len, 1000);
+		length_ticks = midi_file.get_timestamp_end(); //theSequence->m_tempoMap.Sample2Tick(len, 1000);
 		length_samples = (unsigned)(((__int64)len * (__int64)srate) / 1000) + srate;
 		return length;
 	}
@@ -645,8 +544,8 @@ private:
 #ifdef DXISUPPORT
 		if (plugin>1 && thePlayer)
 		{
-			thePlayer->SetLoopStart(loop_begin != -1 ? loop_begin : 0);
-			thePlayer->SetLoopEnd(loop_end != -1 ? loop_end : length_ticks);
+			thePlayer->SetLoopStart(loop_begin != ~0 ? loop_begin : 0);
+			thePlayer->SetLoopEnd(loop_end != ~0 ? loop_end : length_ticks);
 			thePlayer->SetLooping(TRUE);
 		}
 		/*else
@@ -658,29 +557,10 @@ private:
 #endif
 		if (smfplay)
 		{
-			smfplay->SetEndPoint(loop_end != -1 ? loop_end : length_ticks);
+			smfplay->SetEndPoint(loop_end != ~0 ? loop_end : length_ticks);
 		}
 		dont_loop = false;
 	}
-
-	/*
-	input * get_external_decoder()
-	{
-		service_enum_t<input> e;
-		input * i;
-		for (i = e.first(); i; i = e.next())
-		{
-			if (i->needs_reader() && i->test_filename("", "mid"))
-			{
-				input_midi * im = service_query_t(input_midi,i);
-				if (!im) break;
-				im->service_release();
-			}
-			i->service_release();
-		}
-		return i;
-	}
-	*/
 
 public:
 	void open( service_ptr_t<file> p_file,const char * p_path,t_input_open_reason p_reason,abort_callback & p_abort )
@@ -695,91 +575,43 @@ public:
 		m_stats = p_file->get_stats( p_abort );
 		if ( ! m_stats.m_size || m_stats.m_size > ( 1 << 30 ) ) throw exception_io_unsupported_format();
 
-		unsigned sz;
-		pfc::array_t< t_uint8 > buffer;
+		midi_processor::process_file( p_file, midi_file, p_abort );
 
-		sz = (unsigned) m_stats.m_size;
-		buffer.set_size( sz );
-		p_file->read_object( buffer.get_ptr(), sz, p_abort );
+		midi_file.get_meta_data( meta_data );
 
-#ifdef DXISUPPORT
-		theSequence = new CMfxSeq;
-		if ( FAILED( load_file( buffer, sz, theSequence ) ) ) throw exception_io_data();
-#else
-		if (FAILED(load_file(buffer.get_ptr(), sz))) throw exception_io_unsupported_format();
-#endif
+		midi_meta_data_item item;
+		if ( meta_data.get_item( "type", item ) && !strcmp( item.m_value, "MT-32" ) ) plugin = 3;
 
-		if ( mf->info.e_type && !strcmp( mf->info.e_type, "MT-32" ) ) plugin = 3;
+		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz );
+
+		loop_begin = midi_file.get_timestamp_loop_start();
+		loop_end = midi_file.get_timestamp_loop_end();
 	}
 
 	void get_info( file_info & p_info, abort_callback & p_abort )
 	{
-		bool title = false;
-		if (mf->title.length())
-		{
-			if (!mf->rmi_data.is_empty())
-			{
-				const void * entry = mf->rmi_data.enum_entry(0);
-				while (entry)
-				{
-					if (!strcmp(meta_table::enum_name(entry), "title"))
-					{
-						title = true;
-						break;
-					}
-					entry = meta_table::enum_next_entry(entry);
-				}
-			}
-			p_info.meta_add(title ? "display_name" : "title", pfc::stringcvt::string_utf8_from_ansi(mf->title));
-			title = true;
-		}
-		if (mf->info.copyright.length()) p_info.meta_add("copyright", pfc::stringcvt::string_utf8_from_ansi(mf->info.copyright));
-		if (mf->info.markers.length()) p_info.meta_add("track_markers", pfc::stringcvt::string_utf8_from_ansi(mf->info.markers));
+		midi_meta_data_item item;
+		bool remap_display_name = !meta_data.get_item( "title", item );
 
-		if (!mf->rmi_data.is_empty())
+		for ( t_size i = 0; i < meta_data.get_count(); ++i )
 		{
-			const void * entry = mf->rmi_data.enum_entry(0);
-			while (entry)
+			const midi_meta_data_item & item = meta_data[ i ];
+			if ( pfc::stricmp_ascii( item.m_name, "type" ) )
 			{
-				p_info.meta_add(meta_table::enum_name(entry), pfc::stringcvt::string_utf8_from_ansi(meta_table::enum_data(entry)));
-				entry = meta_table::enum_next_entry(entry);
+				const char * name = item.m_name;
+				if ( remap_display_name && !pfc::stricmp_ascii( name, "display_name" ) ) name = "title";
+				p_info.meta_add( name, item.m_value );
 			}
 		}
 
-		if (mf->info.traxnames && mf->info.traxtext)
-		{
-			pfc::string8_fastalloc name;
-			for (unsigned i = 0, j = mf->info.ntrax; i < j; i++)
-			{
-				if (mf->info.traxnames[i] && mf->info.traxnames[i].length())
-				{
-					if (!i && mf->info.fmt && !title) name = "title";
-					else
-					{
-						name = "track";
-						if (i < 10) name.add_byte('0');
-						name << i;
-					}
-					p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(mf->info.traxnames[i].get_ptr()));
-				}
-				if (mf->info.traxtext[i] && mf->info.traxtext[i].length())
-				{
-					name = "track";
-					if (i < 10) name.add_byte('0');
-					name << i;
-					p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(mf->info.traxtext[i].get_ptr()));
-				}
-			}
-		}
+		p_info.info_set_int("midi_format", midi_file.get_format());
+		p_info.info_set_int("midi_tracks", midi_file.get_track_count());
+		p_info.info_set_int("midi_channels", midi_file.get_channel_count());
+		p_info.info_set_int("midi_ticks", midi_file.get_timestamp_end());
+		if (meta_data.get_item("type", item)) p_info.info_set("midi_type", item.m_value);
 
-		p_info.info_set_int("midi_format", mf->info.fmt);
-		p_info.info_set_int("midi_tracks", mf->info.ntrax);
-		p_info.info_set_int("midi_channels", mf->info.channels);
-		p_info.info_set_int("midi_ticks", mf->info.tix);
-		if (mf->info.e_type) p_info.info_set("midi_type", mf->info.e_type);
-
-		if (loop_begin != -1) p_info.info_set_int("midi_loop_start", loop_begin);
-		if (loop_end != -1) p_info.info_set_int("midi_loop_end", loop_end);
+		if (loop_begin != ~0) p_info.info_set_int("midi_loop_start", loop_begin);
+		if (loop_end != ~0) p_info.info_set_int("midi_loop_end", loop_end);
 		//p_info.info_set_int("samplerate", srate);
 		p_info.info_set_int("channels", 2);
 		p_info.info_set( "encoding", "synthesized" );
@@ -903,11 +735,9 @@ public:
 					{
 						loop_mode = VSTiPlayer::loop_mode_enable;
 						if ( cfg_loop_type > 1 ) loop_mode |= VSTiPlayer::loop_mode_force;
-						if ( b_xmiloopz ) loop_mode |= VSTiPlayer::loop_mode_xmi;
-						if ( b_ff7loopz ) loop_mode |= VSTiPlayer::loop_mode_marker;
 					}
 
-					if ( vstPlayer->Load( mf, loop_mode, b_emidi_ex ? CLEAN_EMIDI : 0 ) )
+					if ( vstPlayer->Load( midi_file, loop_mode, b_emidi_ex ) )
 					{
 						eof = false;
 						dont_loop = true;
@@ -937,11 +767,9 @@ public:
 				{
 					loop_mode = SFPlayer::loop_mode_enable;
 					if ( cfg_loop_type > 1 ) loop_mode |= SFPlayer::loop_mode_force;
-					if ( b_xmiloopz ) loop_mode |= SFPlayer::loop_mode_xmi;
-					if ( b_ff7loopz ) loop_mode |= SFPlayer::loop_mode_marker;
 				}
 
-				if ( sfPlayer->Load( mf, loop_mode, b_emidi_ex ? CLEAN_EMIDI : 0 ) )
+				if ( sfPlayer->Load( midi_file, loop_mode, b_emidi_ex ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -951,7 +779,8 @@ public:
 			}
 			else if (plugin == 3)
 			{
-				bool is_mt32 = ( mf->info.e_type && !strcmp( mf->info.e_type, "MT-32" ) );
+				midi_meta_data_item item;
+				bool is_mt32 = ( meta_data.get_item( "type", item ) && !strcmp( item.m_value, "MT-32" ) );
 				bool mt32_debug_info = cfg_munt_debug_info;
 				delete mt32Player;
 				mt32Player = new MT32Player( !is_mt32, mt32_debug_info );
@@ -971,11 +800,9 @@ public:
 				{
 					loop_mode = MT32Player::loop_mode_enable;
 					if ( cfg_loop_type > 1 ) loop_mode |= MT32Player::loop_mode_force;
-					if ( b_xmiloopz ) loop_mode |= MT32Player::loop_mode_xmi;
-					if ( b_ff7loopz ) loop_mode |= MT32Player::loop_mode_marker;
 				}
 
-				if ( mt32Player->Load( mf, loop_mode, b_emidi_ex ? CLEAN_EMIDI : 0 ) )
+				if ( mt32Player->Load( midi_file, loop_mode, b_emidi_ex ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -1024,7 +851,11 @@ public:
 				*/
 				delete smfplay;
 				smfplay = new dsa::CSMFPlay(srate, 8);
-				if (smfplay->Load(mf->data, mf->size))
+
+				pfc::array_t< t_uint8 > buffer;
+				midi_file.serialize_as_standard_midi_file( buffer );
+
+				if (smfplay->Load(buffer.get_ptr(), buffer.get_count()))
 				{
 					{
 						insync(sync);
@@ -1035,7 +866,7 @@ public:
 							get_length();
 							delete smfplay;
 							smfplay = new dsa::CSMFPlay(srate, 8);
-							if (!smfplay->Load(mf->data, mf->size)) throw exception_io_data();
+							if (!smfplay->Load(buffer.get_ptr(), buffer.get_count())) throw exception_io_data();
 						}
 					}
 
@@ -1429,7 +1260,7 @@ fagotry:
 	{
 		for( unsigned n=0; n< _countof( exts ); ++n )
 		{
-			if ( ! stricmp( p_extension, exts[ n ] ) ) return true;
+			if ( ! pfc::stricmp_ascii( p_extension, exts[ n ] ) ) return true;
 		}
 		return false;
 	}
@@ -1477,7 +1308,7 @@ public:
 		COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_EMIDI_EX, BN_CLICKED, OnButtonClick)
-		COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
+		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
 	END_MSG_MAP()
 private:
 	BOOL OnInitDialog(CWindow, LPARAM);
@@ -1539,7 +1370,7 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 				pfc::string8 npath( _path );
 				npath.truncate( npath.length() - 3 );
 				npath += _find->GetFileName();
-				if ( !stricmp_utf8( npath.get_ptr() + npath.length() - 4, ".dll" ) )
+				if ( npath.length() > 4 && !pfc::stricmp_ascii( npath.get_ptr() + npath.length() - 4, ".dll" ) )
 				{
 					VSTiPlayer vstPlayer;
 					if ( vstPlayer.LoadVST( npath ) )
@@ -1704,7 +1535,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, cfg_emidi_exclusion );
 	//SendDlgItemMessage( IDC_GM2, BM_SETCHECK, cfg_gm2 );
-	SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, cfg_recover_tracks );
+	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, cfg_recover_tracks );
 	//SendDlgItemMessage( IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex );
 	//SendDlgItemMessage( IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums );
 
@@ -1816,7 +1647,7 @@ void CMyPreferences::reset() {
 	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz );
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz );
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion );
-	SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
+	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
 	SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_SETCURSEL, interp_method_default );
 	
 	OnChanged();
@@ -1858,7 +1689,7 @@ void CMyPreferences::apply() {
 	cfg_xmiloopz = SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK );
 	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK );
 	cfg_emidi_exclusion = SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK );
-	cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
+	//cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
 	cfg_fluid_interp_method = interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ];
 	
 	OnChanged(); //our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
@@ -1872,7 +1703,7 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK ) != cfg_xmiloopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK ) != cfg_ff7loopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK ) != cfg_emidi_exclusion ) changed = true;
-	if ( !changed && SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK ) != cfg_recover_tracks ) changed = true;
+	//if ( !changed && SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK ) != cfg_recover_tracks ) changed = true;
 	if ( !changed && interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ] != cfg_fluid_interp_method ) changed = true;
 	if ( !changed )
 	{
@@ -1997,7 +1828,7 @@ public:
 			pfc::string_extension ext(foo.get_path());
 			for ( unsigned k = 2, l = tabsize(exts); k < l; k++ )
 			{
-				if ( !stricmp( ext, exts[ k ] ) )
+				if ( !pfc::stricmp_ascii( ext, exts[ k ] ) )
 				{
 					matches++;
 					break;
@@ -2025,29 +1856,15 @@ public:
 
 			service_ptr_t<file> p_file;
 			filesystem::g_open( p_file, loc.get_path(), filesystem::open_mode_read, m_abort );
-			t_filesize sz;
-			pfc::array_t< t_uint8 > buffer;
-			sz = p_file->get_size_ex( m_abort );
-			if ( sz > ( 1 << 30 ) ) continue;
-			unsigned sz32 = (unsigned) sz;
-			buffer.set_size( sz32 );
-			p_file->read_object( buffer.get_ptr(), sz32, m_abort );
-			p_file.release();
 
-			MIDI_file * mf = MIDI_file::Create( buffer.get_ptr(), sz32 );
-			if ( !mf ) continue;
+			midi_container midi_file;
+			midi_processor::process_file( p_file, midi_file, m_abort );
 
-			try
-			{
-				filesystem::g_open( p_file, out_path, filesystem::open_mode_write_new, m_abort );
-				p_file->write_object( mf->data, mf->size, m_abort );
-			}
-			catch (...)
-			{
-				mf->Free();
-				throw;
-			}
-			mf->Free();
+			pfc::array_t<t_uint8> data;
+			midi_file.serialize_as_standard_midi_file( data );
+
+			filesystem::g_open( p_file, out_path, filesystem::open_mode_write_new, m_abort );
+			p_file->write_object( data.get_ptr(), data.get_count(), m_abort );
 		}
 	}
 };
