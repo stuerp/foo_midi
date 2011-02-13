@@ -5,6 +5,11 @@
 
 struct midi_event
 {
+	enum
+	{
+		max_static_data_count = 16
+	};
+
 	enum event_type
 	{
 		note_off = 0,
@@ -21,11 +26,16 @@ struct midi_event
 
 	event_type m_type;
 	unsigned m_channel;
-	pfc::array_t<t_uint8> m_data;
+	unsigned m_data_count;
+	t_uint8 m_data[max_static_data_count];
+	pfc::array_t<t_uint8> m_ext_data;
 
-	midi_event() : m_timestamp(0), m_type(note_off), m_channel(0) { }
+	midi_event() : m_timestamp(0), m_type(note_off), m_channel(0), m_data_count(0) { }
 	midi_event( const midi_event & p_in );
-	midi_event( unsigned p_timestamp, event_type p_type, unsigned p_channel, const t_uint8 * p_data, t_size p_data_size );
+	midi_event( unsigned p_timestamp, event_type p_type, unsigned p_channel, const t_uint8 * p_data, t_size p_data_count );
+
+	unsigned get_data_count() const;
+	void copy_data( t_uint8 * p_out, unsigned p_offset, unsigned p_count ) const;
 };
 
 class midi_track

@@ -1,7 +1,11 @@
-#define MYVERSION "1.119"
+#define MYVERSION "1.120"
 
 /*
 	change log
+
+2011-02-13 00:33 UTC - kode54
+- Changed MIDI event class to store up to 16 bytes of parameter data statically
+- Version is now 1.120
 
 2011-02-12 00:09 UTC - kode54
 - Standard MIDI file processor now ignores MIDI start and stop status codes

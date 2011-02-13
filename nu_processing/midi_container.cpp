@@ -5,15 +5,48 @@ midi_event::midi_event( const midi_event & p_in )
 	m_timestamp = p_in.m_timestamp;
 	m_channel = p_in.m_channel;
 	m_type = p_in.m_type;
-	m_data = p_in.m_data;
+	m_data_count = p_in.m_data_count;
+	memcpy( m_data, p_in.m_data, m_data_count );
+	m_ext_data = p_in.m_ext_data;
 }
 
-midi_event::midi_event( unsigned p_timestamp, event_type p_type, unsigned p_channel, const t_uint8 * p_data, t_size p_data_size )
+midi_event::midi_event( unsigned p_timestamp, event_type p_type, unsigned p_channel, const t_uint8 * p_data, t_size p_data_count )
 {
 	m_timestamp = p_timestamp;
 	m_type = p_type;
 	m_channel = p_channel;
-	m_data.set_data_fromptr( p_data, p_data_size );
+	if ( p_data_count <= max_static_data_count )
+	{
+		m_data_count = p_data_count;
+		memcpy( m_data, p_data, p_data_count );
+	}
+	else
+	{
+		m_data_count = max_static_data_count;
+		memcpy( m_data, p_data, max_static_data_count );
+		m_ext_data.set_data_fromptr( p_data + max_static_data_count, p_data_count - max_static_data_count );
+	}
+}
+
+unsigned midi_event::get_data_count() const
+{
+	return m_data_count + m_ext_data.get_count();
+}
+
+void midi_event::copy_data( t_uint8 * p_out, unsigned p_offset, unsigned p_count ) const
+{
+	unsigned max_count = m_data_count + m_ext_data.get_count() - p_offset;
+	p_count = min( p_count, max_count );
+	if ( p_offset < max_static_data_count )
+	{
+		unsigned max_count = max_static_data_count - p_offset;
+		unsigned count = min( max_count, p_count );
+		memcpy( p_out, m_data + p_offset, count );
+		p_offset -= count;
+		p_count -= count;
+		p_out += count;
+	}
+	memcpy( p_out, m_ext_data.get_ptr(), p_count );
 }
 
 midi_track::midi_track(const midi_track & p_in)
@@ -28,7 +61,7 @@ void midi_track::add_event( const midi_event & p_event )
 	if ( index )
 	{
 		midi_event & event = m_events[ index - 1 ];
-		if ( event.m_type == midi_event::extended && event.m_data.get_count() >= 2 &&
+		if ( event.m_type == midi_event::extended && event.get_data_count() >= 2 &&
 			event.m_data[ 0 ] == 0xFF && event.m_data[ 1 ] == 0x2F )
 		{
 			--index;
@@ -226,7 +259,7 @@ void midi_container::add_track( const midi_track & p_track )
 	for ( i = 0; i < p_track.get_count(); ++i )
 	{
 		const midi_event & event = p_track[ i ];
-		if ( event.m_type == midi_event::extended && event.m_data.get_count() >= 5 &&
+		if ( event.m_type == midi_event::extended && event.get_data_count() >= 5 &&
 			event.m_data[ 0 ] == 0xFF && event.m_data[ 1 ] == 0x51 )
 		{
 			unsigned tempo = ( event.m_data[ 2 ] << 16 ) + ( event.m_data[ 3 ] << 8 ) + event.m_data[ 4 ];
@@ -250,7 +283,7 @@ void midi_container::add_track_event( t_size p_track_index, const midi_event & p
 
 	track.add_event( p_event );
 
-	if ( p_event.m_type == midi_event::extended && p_event.m_data.get_count() >= 5 &&
+	if ( p_event.m_type == midi_event::extended && p_event.get_data_count() >= 5 &&
 		p_event.m_data[ 0 ] == 0xFF && p_event.m_data[ 1 ] == 0x51 )
 	{
 		unsigned tempo = ( p_event.m_data[ 2 ] << 16 ) + ( p_event.m_data[ 3 ] << 8 ) + p_event.m_data[ 4 ];
@@ -270,6 +303,7 @@ void midi_container::set_extra_meta_data( const midi_meta_data & p_data )
 void midi_container::serialize_as_stream( pfc::array_t<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, bool clean_emidi ) const
 {
 	unsigned current_timestamp = 0;
+	pfc::array_t<t_uint8> data;
 	pfc::array_t<t_size> track_positions;
 	t_size track_count = m_tracks.get_count();
 
@@ -332,17 +366,22 @@ void midi_container::serialize_as_stream( pfc::array_t<midi_stream_event> & p_st
 		if ( event.m_type != midi_event::extended )
 		{
 			unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
-			if ( event.m_data.get_count() >= 1 ) event_code += event.m_data[ 0 ] << 8;
-			if ( event.m_data.get_count() >= 2 ) event_code += event.m_data[ 1 ] << 16;
+			if ( event.get_data_count() >= 1 ) event_code += event.m_data[ 0 ] << 8;
+			if ( event.get_data_count() >= 2 ) event_code += event.m_data[ 1 ] << 16;
 			p_stream.append_single( midi_stream_event( timestamp_ms, event_code ) );
 		}
 		else
 		{
-			t_size data_count = event.m_data.get_count();
-			if ( data_count >= 3 && event.m_data[ 0 ] == 0xF0 && event.m_data[ data_count - 1 ] == 0xF7 )
+			t_size data_count = event.get_data_count();
+			if ( data_count >= 3 && event.m_data[ 0 ] == 0xF0 )
 			{
-				unsigned system_exclusive_index = p_system_exclusive.add_entry( event.m_data.get_ptr(), event.m_data.get_count() );
-				p_stream.append_single( midi_stream_event( timestamp_ms, system_exclusive_index | 0x80000000 ) );
+				data.grow_size( data_count );
+				event.copy_data( data.get_ptr(), 0, data_count );
+				if ( data[ data_count - 1 ] == 0xF7 )
+				{
+					unsigned system_exclusive_index = p_system_exclusive.add_entry( data.get_ptr(), data_count );
+					p_stream.append_single( midi_stream_event( timestamp_ms, system_exclusive_index | 0x80000000 ) );
+				}
 			}
 		}
 
@@ -353,6 +392,8 @@ void midi_container::serialize_as_stream( pfc::array_t<midi_stream_event> & p_st
 void midi_container::serialize_as_standard_midi_file( pfc::array_t<t_uint8> & p_midi_file ) const
 {
 	if ( !m_tracks.get_count() ) return;
+
+	pfc::array_t<t_uint8> data;
 
 	p_midi_file.append_fromptr( "MThd", 4 );
 	p_midi_file.append_multi( (unsigned char)0, 3 );
@@ -389,25 +430,31 @@ void midi_container::serialize_as_standard_midi_file( pfc::array_t<t_uint8> & p_
 					p_midi_file.append_single( event_code );
 					last_event_code = event_code;
 				}
-				p_midi_file.append_fromptr( event.m_data.get_ptr(), event.m_data.get_count() );
+				p_midi_file.append_fromptr( event.m_data, event.m_data_count );
 			}
 			else
 			{
-				t_size data_count = event.m_data.get_count();
+				t_size data_count = event.get_data_count();
 				if ( data_count >= 1 )
 				{
 					if ( event.m_data[ 0 ] == 0xF0 )
 					{
+						--data_count;
 						p_midi_file.append_single( (unsigned char)0xF0 );
-						encode_delta( p_midi_file, data_count - 1 );
-						p_midi_file.append_fromptr( event.m_data.get_ptr() + 1, data_count - 1 );
+						encode_delta( p_midi_file, data_count );
+						data.grow_size( data_count );
+						event.copy_data( data.get_ptr(), 1, data_count );
+						p_midi_file.append_fromptr( data.get_ptr(), data_count );
 					}
 					else if ( event.m_data[ 0 ] == 0xFF && data_count >= 2 )
 					{
+						data_count -= 2;
 						p_midi_file.append_single( (unsigned char)0xFF );
 						p_midi_file.append_single( event.m_data[ 1 ] );
-						encode_delta( p_midi_file, data_count - 2 );
-						p_midi_file.append_fromptr( event.m_data.get_ptr() + 2, data_count - 2 );
+						encode_delta( p_midi_file, data_count );
+						data.grow_size( data_count );
+						event.copy_data( data.get_ptr(), 2, data_count );
+						p_midi_file.append_fromptr( data.get_ptr(), data_count );
 					}
 				}
 			}
@@ -466,6 +513,8 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 	pfc::string8_fast temp;
 	pfc::stringcvt::string_utf8_from_ansi convert;
 
+	pfc::array_t<t_uint8> data;
+
 	bool type_found = false;
 	bool type_non_gm_found = false;
 
@@ -477,7 +526,7 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 			const midi_event & event = track[ j ];
 			if ( event.m_type == midi_event::extended )
 			{
-				t_size data_count = event.m_data.get_count();
+				t_size data_count = event.get_data_count();
 				if ( !type_non_gm_found && data_count >= 1 && event.m_data[ 0 ] == 0xF0 )
 				{
 					unsigned char test = 0;
@@ -513,20 +562,27 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 				}
 				else if ( data_count >= 2 && event.m_data[ 0 ] == 0xFF )
 				{
+					data_count -= 2;
 					switch ( event.m_data[ 1 ] )
 					{
 					case 6:
-						convert.convert( (const char *)event.m_data.get_ptr() + 2, event.m_data.get_count() - 2 );
+						data.grow_size( data_count );
+						event.copy_data( data.get_ptr(), 2, data_count );
+						convert.convert( (const char *)data.get_ptr(), data_count );
 						p_out.add_item( midi_meta_data_item( m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx ), "track_marker", convert ) );
 						break;
 
 					case 2:
-						convert.convert( (const char *)event.m_data.get_ptr() + 2, event.m_data.get_count() - 2 );
+						data.grow_size( data_count );
+						event.copy_data( data.get_ptr(), 2, data_count );
+						convert.convert( (const char *)data.get_ptr(), data_count );
 						p_out.add_item( midi_meta_data_item( m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx ), "copyright", convert ) );
 						break;
 
 					case 1:
-						convert.convert( (const char *)event.m_data.get_ptr() + 2, event.m_data.get_count() - 2 );
+						data.grow_size( data_count );
+						event.copy_data( data.get_ptr(), 2, data_count );
+						convert.convert( (const char *)data.get_ptr(), data_count );
 						temp = "track_text_";
 						temp += pfc::format_int( i, 2 );
 						p_out.add_item( midi_meta_data_item( m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx ), temp, convert ) );
@@ -534,7 +590,9 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 
 					case 3:
 					case 4:
-						convert.convert( (const char *)event.m_data.get_ptr() + 2, event.m_data.get_count() - 2 );
+						data.grow_size( data_count );
+						event.copy_data( data.get_ptr(), 2, data_count );
+						convert.convert( (const char *)data.get_ptr(), data_count );
 						temp = "track_name_";
 						temp += pfc::format_int( i, 2 );
 						p_out.add_item( midi_meta_data_item( m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx ), temp, convert ) );
@@ -555,6 +613,8 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 
 void midi_container::scan_for_loops( bool p_xmi_loops, bool p_marker_loops )
 {
+	pfc::array_t<t_uint8> data;
+
 	m_timestamp_loop_start = ~0;
 	m_timestamp_loop_end = ~0;
 
@@ -597,17 +657,21 @@ void midi_container::scan_for_loops( bool p_xmi_loops, bool p_marker_loops )
 			{
 				const midi_event & event = track[ j ];
 				if ( event.m_type == midi_event::extended &&
-					event.m_data.get_count() >= 9 &&
+					event.get_data_count() >= 9 &&
 					event.m_data[ 0 ] == 0xFF && event.m_data[ 1 ] == 0x06 )
 				{
-					if ( event.m_data.get_count() == 11 && !pfc::stricmp_ascii_ex( (const char *)event.m_data.get_ptr() + 2, 9, "loopStart", 9 ) )
+					unsigned data_count = event.get_data_count() - 2;
+					data.grow_size( data_count );
+					event.copy_data( data.get_ptr(), 2, data_count );
+
+					if ( data_count == 9 && !pfc::stricmp_ascii_ex( (const char *)data.get_ptr(), 9, "loopStart", 9 ) )
 					{
 						if ( m_timestamp_loop_start == ~0 || m_timestamp_loop_start > event.m_timestamp )
 						{
 							m_timestamp_loop_start = event.m_timestamp;
 						}
 					}
-					else if ( event.m_data.get_count() == 9 && !pfc::stricmp_ascii_ex( (const char *)event.m_data.get_ptr() + 2, 7, "loopEnd", 7 ) )
+					else if ( data_count == 7 && !pfc::stricmp_ascii_ex( (const char *)data.get_ptr(), 7, "loopEnd", 7 ) )
 					{
 						if ( m_timestamp_loop_end == ~0 || m_timestamp_loop_end < event.m_timestamp )
 						{
