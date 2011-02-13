@@ -323,7 +323,7 @@ void midi_container::serialize_as_stream( pfc::array_t<midi_stream_event> & p_st
 				{
 					if ( event.m_data[ 0 ] == 110 )
 					{
-						if ( event.m_data[ 1 ] != 0 || event.m_data[ 1 ] != 127 )
+						if ( event.m_data[ 1 ] != 0 && event.m_data[ 1 ] != 127 )
 						{
 							skip_track = true;
 							break;
@@ -366,8 +366,8 @@ void midi_container::serialize_as_stream( pfc::array_t<midi_stream_event> & p_st
 		if ( event.m_type != midi_event::extended )
 		{
 			unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
-			if ( event.get_data_count() >= 1 ) event_code += event.m_data[ 0 ] << 8;
-			if ( event.get_data_count() >= 2 ) event_code += event.m_data[ 1 ] << 16;
+			if ( event.m_data_count >= 1 ) event_code += event.m_data[ 0 ] << 8;
+			if ( event.m_data_count >= 2 ) event_code += event.m_data[ 1 ] << 16;
 			p_stream.append_single( midi_stream_event( timestamp_ms, event_code ) );
 		}
 		else

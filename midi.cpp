@@ -1,7 +1,11 @@
-#define MYVERSION "1.120"
+#define MYVERSION "1.121"
 
 /*
 	change log
+
+2011-02-13 01:29 UTC - kode54
+- Fixed EMIDI track exclusion
+- Version is now 1.121
 
 2011-02-13 00:33 UTC - kode54
 - Changed MIDI event class to store up to 16 bytes of parameter data statically
@@ -900,7 +904,7 @@ public:
 				}
 			}
 
-		throw std::bad_alloc();
+		throw exception_io_data();
 	}
 
 	bool decode_run( audio_chunk & p_chunk, abort_callback & p_abort )
