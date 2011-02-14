@@ -16,9 +16,6 @@ bool midi_processor::is_hmi( file::ptr & p_file, abort_callback & p_abort )
 	}
 }
 
-const t_uint8 midi_processor::hmi_loop_start[11] = {0xFF, 0x06, 'l', 'o', 'o', 'p', 'S', 't', 'a', 'r', 't'};
-const t_uint8 midi_processor::hmi_loop_end[9] =    {0xFF, 0x06, 'l', 'o', 'o', 'p', 'E', 'n', 'd'};
-
 void midi_processor::process_hmi( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort )
 {
 	pfc::array_t<t_uint8> buffer;
@@ -159,12 +156,12 @@ void midi_processor::process_hmi( file::ptr & p_file, midi_container & p_out, ab
 				else if ( buffer[ 1 ] == 0x14 )
 				{
 					track_body->skip( 2, p_abort );
-					p_out.add_track_event( 0, midi_event( current_timestamp, midi_event::extended, 0, hmi_loop_start, _countof( hmi_loop_start ) ) );
+					p_out.add_track_event( 0, midi_event( current_timestamp, midi_event::extended, 0, loop_start, _countof( loop_start ) ) );
 				}
 				else if ( buffer[ 1 ] == 0x15 )
 				{
 					track_body->skip( 6, p_abort );
-					p_out.add_track_event( 0, midi_event( current_timestamp, midi_event::extended, 0, hmi_loop_end, _countof( hmi_loop_end ) ) );
+					p_out.add_track_event( 0, midi_event( current_timestamp, midi_event::extended, 0, loop_end, _countof( loop_end ) ) );
 				}
 				else throw exception_io_data( "Unexpected HMI meta event" );
 			}

@@ -41,6 +41,9 @@
     <ClCompile Include="nu_processing\midi_processor_mids.cpp">
       <Filter>new processing</Filter>
     </ClCompile>
+    <ClCompile Include="nu_processing\midi_processor_lds.cpp">
+      <Filter>new processing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />

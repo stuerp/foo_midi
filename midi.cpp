@@ -1,7 +1,11 @@
-#define MYVERSION "1.121"
+#define MYVERSION "1.122"
 
 /*
 	change log
+
+2011-02-14 13:13 UTC - kode54
+- Completed LDS file processor
+- Version is now 1.122
 
 2011-02-13 01:29 UTC - kode54
 - Fixed EMIDI track exclusion
@@ -428,6 +432,7 @@ static const char * exts[]=
 	"HMP",
 	"MUS",
 	"XMI",
+	"LDS",
 };
 
 #ifdef DXISUPPORT
@@ -583,7 +588,7 @@ public:
 		m_stats = p_file->get_stats( p_abort );
 		if ( ! m_stats.m_size || m_stats.m_size > ( 1 << 30 ) ) throw exception_io_unsupported_format();
 
-		midi_processor::process_file( p_file, midi_file, p_abort );
+		midi_processor::process_file( p_file, pfc::string_extension( p_path ), midi_file, p_abort );
 
 		midi_file.get_meta_data( meta_data );
 
@@ -1866,7 +1871,7 @@ public:
 			filesystem::g_open( p_file, loc.get_path(), filesystem::open_mode_read, m_abort );
 
 			midi_container midi_file;
-			midi_processor::process_file( p_file, midi_file, m_abort );
+			midi_processor::process_file( p_file, pfc::string_extension( loc.get_path() ), midi_file, m_abort );
 
 			pfc::array_t<t_uint8> data;
 			midi_file.serialize_as_standard_midi_file( data );

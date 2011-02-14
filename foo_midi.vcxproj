@@ -239,6 +239,7 @@
     <ClCompile Include="nu_processing\midi_processor_helpers.cpp" />
     <ClCompile Include="nu_processing\midi_processor_hmi.cpp" />
     <ClCompile Include="nu_processing\midi_processor_hmp.cpp" />
+    <ClCompile Include="nu_processing\midi_processor_lds.cpp" />
     <ClCompile Include="nu_processing\midi_processor_mids.cpp" />
     <ClCompile Include="nu_processing\midi_processor_mus.cpp" />
     <ClCompile Include="nu_processing\midi_processor_riff_midi.cpp" />

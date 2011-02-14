@@ -293,6 +293,11 @@ void midi_container::add_track_event( t_size p_track_index, const midi_event & p
 	{
 		m_channel_mask |= 1 << p_event.m_channel;
 	}
+
+	if ( p_event.m_timestamp > m_timestamp_end )
+	{
+		m_timestamp_end = p_event.m_timestamp;
+	}
 }
 
 void midi_container::set_extra_meta_data( const midi_meta_data & p_data )
