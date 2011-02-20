@@ -1570,9 +1570,14 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 2 );
-		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin == 2 );
 	}
+
+	if ( plugin != 2 )
+	{
+		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
+	}
+
 
 	{
 		m_soundfont = cfg_soundfont_path;
@@ -1751,8 +1756,11 @@ void CMyPreferences::reset() {
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( default_cfg_plugin != 2 );
-		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( default_cfg_plugin != 2 );
+	}
+	if ( default_cfg_plugin != 2 )
+	{
+		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
 	}
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
 	uSetDlgItemText( m_hWnd, IDC_MUNT, click_to_set );
