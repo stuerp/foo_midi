@@ -3,9 +3,15 @@
 /*
 	change log
 
+2011-02-20 09:22 UTC - kode54
+- Implemented support for per-file SoundFont banks
+- Version is now 1.123
+
+2011-02-20 08:50 UTC - kode54
+- Fixed MUS note off handling
+
 2011-02-20 04:50 UTC - kode54
 - Implemented BASSMIDI support
-- Version is now 1.123
 
 2011-02-14 13:13 UTC - kode54
 - Completed LDS file processor
@@ -485,6 +491,8 @@ class input_midi
 
 	bool first_block;
 
+	pfc::string8 m_path;
+
 	t_filestats m_stats;
 
 #if audio_sample_size != 32
@@ -593,6 +601,8 @@ public:
 			filesystem::g_open( p_file, p_path, filesystem::open_mode_read, p_abort );
 		}
 
+		m_path = p_path;
+
 		m_stats = p_file->get_stats( p_abort );
 		if ( ! m_stats.m_size || m_stats.m_size > ( 1 << 30 ) ) throw exception_io_unsupported_format();
 
@@ -649,6 +659,32 @@ public:
 		first_block = true;
 
 		get_length();
+
+		pfc::string8 file_soundfont;
+
+		if ( plugin == 1 || plugin == 4 )
+		{
+			pfc::string8_fast temp;
+
+			if ( !pfc::strcmp_partial( m_path, "file://" ) )
+			{
+				temp = m_path;
+				temp += ".sf2";
+				if ( !filesystem::g_exists( temp, p_abort ) )
+				{
+					temp = pfc::string_replace_extension( m_path, "sf2" );
+					if ( !filesystem::g_exists( temp, p_abort ) )
+					{
+						temp.reset();
+					}
+				}
+
+				if ( temp.length() )
+				{
+					file_soundfont = temp.get_ptr() + 7;
+				}
+			}
+		}
 
 #ifdef DXISUPPORT
 		if (plugin>1)
@@ -779,6 +815,7 @@ public:
 				delete sfPlayer;
 				sfPlayer = new SFPlayer;
 				sfPlayer->setSoundFont(cfg_soundfont_path);
+				if ( file_soundfont.length() ) sfPlayer->setFileSoundFont( file_soundfont );
 				sfPlayer->setSampleRate(srate);
 				sfPlayer->setInterpolationMethod(cfg_fluid_interp_method);
 
@@ -810,6 +847,7 @@ public:
 				delete bmPlayer;
 				bmPlayer = new BMPlayer;
 				bmPlayer->setSoundFont(cfg_soundfont_path);
+				if ( file_soundfont.length() ) bmPlayer->setFileSoundFont( file_soundfont );
 				bmPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;
@@ -1532,8 +1570,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin != 2 );
-		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin != 2 );
+		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 2 );
+		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin == 2 );
 	}
 
 	{
@@ -1678,7 +1716,7 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 		directory = m_soundfont;
 		filename = m_soundfont;
 		directory.truncate( directory.scan_filename() );
-		if ( uGetOpenFileName( m_hWnd, "SoundFont and list files|*.sf2;*.sf2pack;*.sflist|SoundFont files|*.sf2|Packed SoundFont files|*.sf2pack|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
+		if ( uGetOpenFileName( m_hWnd, "SoundFont and list files|*.sf2;*.sflist|SoundFont files|*.sf2|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
 		{
 			m_soundfont = filename;
 			uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );

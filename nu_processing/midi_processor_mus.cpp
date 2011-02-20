@@ -78,9 +78,10 @@ void midi_processor::process_mus( file::ptr & p_file, midi_container & p_out, ab
 		switch ( buffer[ 0 ] & 0x70 )
 		{
 		case 0x00:
-			type = midi_event::note_off;
+			type = midi_event::note_on;
 			track_body->read_object_t( buffer[ 1 ], p_abort );
-			bytes_to_write = 1;
+			buffer[ 2 ] = 0;
+			bytes_to_write = 2;
 			break;
 
 		case 0x10:

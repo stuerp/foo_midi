@@ -25,6 +25,7 @@ public:
 
 	// configuration
 	void setSoundFont( const char * in );
+	void setFileSoundFont( const char * in );
 
 	// setup
 	void setSampleRate(unsigned rate);
@@ -47,8 +48,8 @@ private:
 
 	fluid_settings_t * _settings;
 	fluid_synth_t    * _synth;
-	int                _soundFont;
 	pfc::string8       sSoundFontName;
+	pfc::string8       sFileSoundFontName;
 
 	unsigned           uSamplesRemaining;
 

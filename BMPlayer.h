@@ -24,6 +24,7 @@ public:
 
 	// configuration
 	void setSoundFont( const char * in );
+	void setFileSoundFont( const char * in );
 
 	// setup
 	void setSampleRate(unsigned rate);
@@ -41,6 +42,7 @@ private:
 
 	pfc::array_t<HSOUNDFONT> _soundFonts;
 	pfc::string8       sSoundFontName;
+	pfc::string8       sFileSoundFontName;
 
 	HSTREAM            _stream;
 

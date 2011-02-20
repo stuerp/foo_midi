@@ -666,6 +666,12 @@ void BMPlayer::setSoundFont( const char * in )
 	shutdown();
 }
 
+void BMPlayer::setFileSoundFont( const char * in )
+{
+	sFileSoundFontName = in;
+	shutdown();
+}
+
 void BMPlayer::shutdown()
 {
 	if ( _stream ) BASS_StreamFree( _stream );
@@ -688,7 +694,7 @@ bool BMPlayer::startup()
 	if (sSoundFontName.length())
 	{
 		pfc::string_extension ext(sSoundFontName);
-		if ( !pfc::stricmp_ascii( ext, "sf2" ) || !pfc::stricmp_ascii( ext, "sf2pack" ) )
+		if ( !pfc::stricmp_ascii( ext, "sf2" ) )
 		{
 			HSOUNDFONT font = BASS_MIDI_FontInit( pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), BASS_UNICODE );
 			if ( !font )
@@ -739,6 +745,18 @@ bool BMPlayer::startup()
 				return false;
 			}
 		}
+	}
+
+	if ( sFileSoundFontName.length() )
+	{
+		HSOUNDFONT font = BASS_MIDI_FontInit( pfc::stringcvt::string_wide_from_utf8( sFileSoundFontName ), BASS_UNICODE );
+		if ( !font )
+		{
+			shutdown();
+			return false;
+		}
+		g_map.add_font( font );
+		_soundFonts.append_single( font );
 	}
 
 	pfc::array_t< BASS_MIDI_FONT > fonts;

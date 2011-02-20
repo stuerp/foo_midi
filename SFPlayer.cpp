@@ -431,6 +431,12 @@ void SFPlayer::setSoundFont( const char * in )
 	shutdown();
 }
 
+void SFPlayer::setFileSoundFont( const char * in )
+{
+	sFileSoundFontName = in;
+	shutdown();
+}
+
 void SFPlayer::shutdown()
 {
 	if (_synth) delete_fluid_synth(_synth);
@@ -450,13 +456,7 @@ bool SFPlayer::startup()
 	if (sSoundFontName.length())
 	{
 		pfc::string_extension ext(sSoundFontName);
-		if ( !pfc::stricmp_ascii( ext, "sf2pack" ) )
-		{
-			shutdown();
-			_last_error = "FluidSynth does not support SF2Pack files";
-			return false;
-		}
-		else if ( !pfc::stricmp_ascii( ext, "sf2" ) )
+		if ( !pfc::stricmp_ascii( ext, "sf2" ) )
 		{
 			if ( FLUID_FAILED == fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), 1) )
 			{
@@ -508,6 +508,18 @@ bool SFPlayer::startup()
 			}
 		}
 	}
+
+	if ( sFileSoundFontName.length() )
+	{
+		if ( FLUID_FAILED == fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sFileSoundFontName ), 1) )
+		{
+			shutdown();
+			_last_error = "Failed to load SoundFont bank: ";
+			_last_error += sFileSoundFontName;
+			return false;
+		}
+	}
+
 	_last_error.reset();
 
 	return true;
