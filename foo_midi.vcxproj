@@ -234,6 +234,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="MT32Player.cpp" />
     <ClCompile Include="nu_processing\midi_container.cpp" />
     <ClCompile Include="nu_processing\midi_processor_helpers.cpp" />
@@ -321,6 +322,7 @@
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="MT32Player.h" />
     <ClInclude Include="mtgm.h" />
     <ClInclude Include="nu_processing\midi_container.h" />

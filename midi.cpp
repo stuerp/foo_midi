@@ -1,7 +1,11 @@
-#define MYVERSION "1.122"
+#define MYVERSION "1.123"
 
 /*
 	change log
+
+2011-02-20 04:50 UTC - kode54
+- Implemented BASSMIDI support
+- Version is now 1.123
 
 2011-02-14 13:13 UTC - kode54
 - Completed LDS file processor
@@ -318,6 +322,7 @@
 
 #include "VSTiPlayer.h"
 #include "SFPlayer.h"
+#include "BMPlayer.h"
 #include "MT32Player.h"
 
 #ifdef NDEBUG
@@ -453,6 +458,7 @@ class input_midi
 
 	VSTiPlayer * vstPlayer;
 	SFPlayer * sfPlayer;
+	BMPlayer * bmPlayer;
 	MT32Player * mt32Player;
 
 	midi_container midi_file;
@@ -508,6 +514,7 @@ public:
 
 		vstPlayer = NULL;
 		sfPlayer = NULL;
+		bmPlayer = NULL;
 		mt32Player = NULL;
 
 		length_samples = 0;
@@ -536,6 +543,7 @@ public:
 #endif
 		if (vstPlayer) delete vstPlayer;
 		if (sfPlayer) delete sfPlayer;
+		if (bmPlayer) delete bmPlayer;
 		if (mt32Player) delete mt32Player;
 #ifdef DXISUPPORT
 		if (initialized) CoUninitialize();
@@ -790,6 +798,36 @@ public:
 					return;
 				}
 			}
+			else if (plugin == 4)
+			{
+				/*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
+				if ( !fsmod )
+				{
+					throw exception_io_data("Failed to load FluidSynth.dll");
+				}
+				FreeLibrary( fsmod );*/
+
+				delete bmPlayer;
+				bmPlayer = new BMPlayer;
+				bmPlayer->setSoundFont(cfg_soundfont_path);
+				bmPlayer->setSampleRate(srate);
+
+				unsigned loop_mode = 0;
+
+				if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
+				{
+					loop_mode = BMPlayer::loop_mode_enable;
+					if ( cfg_loop_type > 1 ) loop_mode |= BMPlayer::loop_mode_force;
+				}
+
+				if ( bmPlayer->Load( midi_file, loop_mode, b_emidi_ex ) )
+				{
+					eof = false;
+					dont_loop = true;
+
+					return;
+				}
+			}
 			else if (plugin == 3)
 			{
 				midi_meta_data_item item;
@@ -1002,6 +1040,29 @@ public:
 
 			return true;
 		}
+		else if (plugin == 4)
+		{
+			unsigned todo = 1024;
+
+			p_chunk.set_data_size( todo * 2 );
+
+			audio_sample * out = p_chunk.get_data();
+
+			unsigned done = bmPlayer->Play( out, todo );
+
+			if ( ! done )
+			{
+				return false;
+			}
+
+			p_chunk.set_srate( srate );
+			p_chunk.set_channels( 2 );
+			p_chunk.set_sample_count( done );
+
+			if ( done < todo ) eof = true;
+
+			return true;
+		}
 		else if (plugin == 3)
 		{
 			unsigned todo = 1024;
@@ -1191,6 +1252,11 @@ fagotry:
 			sfPlayer->Seek( done );
 			const char * err = sfPlayer->GetLastError();
 			if ( err ) throw exception_io_data( err );
+			return;
+		}
+		else if ( plugin == 4 )
+		{
+			bmPlayer->Seek( done );
 			return;
 		}
 		else if ( plugin == 3 )
@@ -1431,6 +1497,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	w = GetDlgItem( IDC_PLUGIN );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Emu de MIDI" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "FluidSynth" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "BASSMIDI" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "MUNT" );
 	
 	/*
@@ -1461,12 +1528,12 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	}*/
 	
-	if ( plugin != 2 )
+	if ( plugin != 2 && plugin != 4 )
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
+		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin != 2 );
+		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin != 2 );
 	}
 
 	{
@@ -1503,8 +1570,11 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	CoUninitialize();
 #endif
-	if ( plugin == 1 ) plugin += vsti_selected + 2;
-	else if ( plugin == 2 || plugin == 3 ) plugin--;
+	if ( plugin == 1 ) plugin += vsti_selected + 3;
+	else if ( plugin >= 2 && plugin <= 4 )
+	{
+		plugin = plugin == 2 ? 1 : plugin == 4 ? 2 : 3;
+	}
 #ifdef DXISUPPORT
 	else if ( plugin ) plugin += vsti_count - 1;
 #endif
@@ -1589,8 +1659,8 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_SAMPLERATE ).EnableWindow( plugin || !g_running );
 	GetDlgItem( IDC_EMIDI_EX ).EnableWindow( !! plugin );
 	
-	GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( plugin == 1 );
-	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 1 );
+	GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
+	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 1 );
 	GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin == 1 );
 
@@ -1608,7 +1678,7 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 		directory = m_soundfont;
 		filename = m_soundfont;
 		directory.truncate( directory.scan_filename() );
-		if ( uGetOpenFileName( m_hWnd, "SoundFont and list files|*.sf2;*.sflist|SoundFont files|*.sf2|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
+		if ( uGetOpenFileName( m_hWnd, "SoundFont and list files|*.sf2;*.sf2pack;*.sflist|SoundFont files|*.sf2|Packed SoundFont files|*.sf2pack|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
 		{
 			m_soundfont = filename;
 			uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );
@@ -1639,12 +1709,12 @@ t_uint32 CMyPreferences::get_state() {
 
 void CMyPreferences::reset() {
 	SendDlgItemMessage( IDC_PLUGIN, CB_SETCURSEL, default_cfg_plugin );
-	if ( default_cfg_plugin != 2 )
+	if ( default_cfg_plugin != 2 && default_cfg_plugin != 4 )
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
+		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( default_cfg_plugin != 2 );
+		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( default_cfg_plugin != 2 );
 	}
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
 	uSetDlgItemText( m_hWnd, IDC_MUNT, click_to_set );
@@ -1685,15 +1755,15 @@ void CMyPreferences::apply() {
 		{
 			cfg_plugin = 0;
 		}
-		else if ( plugin == 1 || plugin == 2 )
+		else if ( plugin >= 1 && plugin <= 3 )
 		{
-			cfg_plugin = plugin + 1;
+			cfg_plugin = plugin == 1 ? 2 : plugin == 2 ? 4 : 3;
 			//cfg_plugin = plugin - vsti_count + 1;
 		}
-		else if ( plugin <= vsti_count + 2 )
+		else if ( plugin <= vsti_count + 3 )
 		{
 			cfg_plugin = 1;
-			cfg_vst_path = vsti_plugins[ plugin - 3 ].path;
+			cfg_vst_path = vsti_plugins[ plugin - 4 ].path;
 		}
 	}
 	cfg_soundfont_path = m_soundfont;
@@ -1727,13 +1797,14 @@ bool CMyPreferences::HasChanged() {
 		{
 			if ( cfg_plugin != 0 ) changed = true;
 		}
-		else if ( plugin == 1 || plugin == 2 )
+		else if ( plugin >= 1 && plugin <= 3 )
 		{
-			if ( cfg_plugin != plugin + 1 ) changed = true;
+			int plugin_compare = plugin == 1 ? 2 : plugin == 2 ? 4 : 3;
+			if ( cfg_plugin != plugin_compare ) changed = true;
 		}
-		else if ( plugin <= vsti_count + 2 )
+		else if ( plugin <= vsti_count + 3 )
 		{
-			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 3 ].path ) ) changed = true;
+			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 4 ].path ) ) changed = true;
 		}
 	}
 	if ( !changed )

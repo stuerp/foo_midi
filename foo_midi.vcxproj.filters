@@ -44,6 +44,7 @@
     <ClCompile Include="nu_processing\midi_processor_lds.cpp">
       <Filter>new processing</Filter>
     </ClCompile>
+    <ClCompile Include="BMPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -58,6 +59,7 @@
     <ClInclude Include="nu_processing\midi_processor.h">
       <Filter>new processing</Filter>
     </ClInclude>
+    <ClInclude Include="BMPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
