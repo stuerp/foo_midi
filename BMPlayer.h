@@ -40,6 +40,8 @@ private:
 	void shutdown();
 	bool startup();
 
+	void reset_drum_channels();
+
 	pfc::array_t<HSOUNDFONT> _soundFonts;
 	pfc::string8       sSoundFontName;
 	pfc::string8       sFileSoundFontName;
@@ -61,15 +63,8 @@ private:
 	UINT               uStreamLoopStart;
 	DWORD              uTimeLoopStart;
 
-	void reset_drums();
-	BYTE               drum_channels[16];
 	BYTE               gs_part_to_ch[16];
-
-	bool               is_nrpn;
-	WORD               index_rpn;
-	WORD               index_nrpn;
-
-	WORD               rpn_finetune;
+	BYTE               drum_channels[16];
 };
 
 #endif

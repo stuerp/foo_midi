@@ -1,7 +1,20 @@
-#define MYVERSION "1.123"
+#define MYVERSION "1.124"
 
 /*
 	change log
+
+2011-02-25 01:44 UTC - kode54
+- Fixed drum channel handling with new BASSMIDI
+- Version is now 1.124
+
+2011-02-22 06:38 UTC - kode54
+- Fixed tempo map handling multiple tempos on the same timestamp
+
+2011-02-22 05:41 UTC - kode54
+- Implemented delayed SoundFont closing in BASSMIDI player
+
+2011-02-22 05:00 UTC - kode54
+- Updated to newer version of BASSMIDI which simplifies sending MIDI data
 
 2011-02-20 09:22 UTC - kode54
 - Implemented support for per-file SoundFont banks

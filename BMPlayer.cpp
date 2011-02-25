@@ -3,6 +3,87 @@
 #pragma comment(lib, "../../../bass/c/bass.lib")
 #pragma comment(lib, "../../../bass/c/bassmidi.lib")
 
+static const char sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
+static const char sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
+static const char sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
+
+class soundfont_map : public pfc::thread
+{
+	critical_section m_lock;
+
+	struct soundfont_info
+	{
+		unsigned m_reference_count;
+		LARGE_INTEGER m_release_time;
+	};
+
+	pfc::map_t<HSOUNDFONT, soundfont_info> m_map;
+
+	bool thread_running;
+
+	virtual void threadProc()
+	{
+		thread_running = true;
+
+		while (thread_running)
+		{
+			LARGE_INTEGER now;
+			QueryPerformanceCounter( &now );
+			{
+				insync( m_lock );
+				for ( pfc::map_t<HSOUNDFONT, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); )
+				{
+					pfc::map_t<HSOUNDFONT, soundfont_info>::const_iterator it_copy = it++;
+					if ( it_copy->m_value.m_reference_count == 0 && now.QuadPart >= it_copy->m_value.m_release_time.QuadPart )
+					{
+						BASS_MIDI_FontFree( it_copy->m_key );
+						m_map.remove( it_copy );
+					}
+				}
+			}
+			Sleep( 250 );
+		}
+	}
+
+public:
+	~soundfont_map()
+	{
+		thread_running = false;
+		waitTillDone();
+		for ( pfc::map_t<HSOUNDFONT, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); ++it )
+		{
+			BASS_MIDI_FontFree( it->m_key );
+		}
+	}
+
+	void add_font( HSOUNDFONT p_font )
+	{
+		insync( m_lock );
+
+		if ( m_map.have_item( p_font ) ) ++m_map[ p_font ].m_reference_count;
+		else m_map[ p_font ].m_reference_count = 1;
+	}
+
+	void free_font( HSOUNDFONT p_font )
+	{
+		insync( m_lock );
+
+		if ( --m_map[ p_font ].m_reference_count == 0 )
+		{
+			LARGE_INTEGER now;
+			LARGE_INTEGER increment;
+			QueryPerformanceCounter( &now );
+			QueryPerformanceFrequency( &increment );
+			now.QuadPart += increment.QuadPart * 2;
+			m_map[ p_font ].m_release_time = now;
+
+			if ( !isActive() ) start();
+		}
+	}
+};
+
+soundfont_map * g_map = NULL;
+
 class Bass_Initializer
 {
 	critical_section lock;
@@ -14,7 +95,11 @@ public:
 
 	~Bass_Initializer()
 	{
-		if ( initialized ) BASS_Free();
+		if ( initialized )
+		{
+			delete g_map;
+			BASS_Free();
+		}
 	}
 
 	bool initialize()
@@ -27,38 +112,12 @@ public:
 			{
 				BASS_SetConfigPtr( BASS_CONFIG_MIDI_DEFFONT, NULL );
 				BASS_SetConfig( BASS_CONFIG_MIDI_VOICES, 256 );
+				g_map = new soundfont_map;
 			}
 		}
 		return initialized;
 	}
 } g_initializer;
-
-class soundfont_map
-{
-	critical_section m_lock;
-	pfc::map_t<HSOUNDFONT, unsigned> m_map;
-
-public:
-	void add_font( HSOUNDFONT p_font )
-	{
-		insync( m_lock );
-
-		if ( m_map.have_item( p_font ) ) ++m_map[ p_font ];
-		else m_map[ p_font ] = 1;
-	}
-
-	void free_font( HSOUNDFONT p_font )
-	{
-		insync( m_lock );
-
-		if ( --m_map[ p_font ] == 0 )
-		{
-			m_map.remove( m_map.find( p_font ) );
-			BASS_MIDI_FontFree( p_font );
-		}
-	}
-
-} g_map;
 
 BMPlayer::BMPlayer()
 {
@@ -68,8 +127,6 @@ BMPlayer::BMPlayer()
 	uTimeCurrent = 0;
 	uTimeEnd = 0;
 	uTimeLoopStart = 0;
-
-	reset_drums();
 
 	if ( !g_initializer.initialize() ) throw exception_io_data( "Unable to initialize BASS" );
 }
@@ -319,11 +376,6 @@ void BMPlayer::Seek(unsigned sample)
 
 	if (!_stream && !startup()) return;
 
-	if (uTimeCurrent > sample)
-	{
-		reset_drums();
-	}
-
 	uTimeCurrent = sample;
 
 	pfc::array_t<midi_stream_event> filler;
@@ -390,236 +442,22 @@ void BMPlayer::send_event(DWORD b)
 {
 	if (!(b & 0xFF000000))
 	{
-		int param2 = (b >> 16) & 0xFF;
-		int param1 = (b >> 8) & 0xFF;
-		int cmd = b & 0xF0;
-		int chan = b & 0x0F;
-
-		switch (cmd)
+		unsigned char event[ 3 ];
+		event[ 0 ] = (unsigned char)b;
+		event[ 1 ] = (unsigned char)( b >> 8 );
+		event[ 2 ] = (unsigned char)( b >> 16 );
+		unsigned channel = b & 0x0F;
+		unsigned command = b & 0xF0;
+		unsigned event_length = ( command == 0xC0 || command == 0xD0 ) ? 2 : 3;
+		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW, event, event_length );
+		if ( command == 0xB0 && event[ 1 ] == 0 )
 		{
-		case 0x80:
-			BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_NOTE, MAKEWORD( param1, 0 ) );
-			break;
-		case 0x90:
-			BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_NOTE, MAKEWORD( param1, param2 ) );
-			break;
-		case 0xA0:
-			break;
-		case 0xB0:
-			switch ( param1 )
-			{
-			case 0:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_BANK, param2 );
-				if ( ( param2 == 127 || param2 == 120 ) && !drum_channels[ chan ] )
-				{
-					BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUMS, 1 );
-					drum_channels[ chan ] = 1;
-				}
-				else if ( param2 == 121 && drum_channels[ chan ] )
-				{
-					BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUMS, 0 );
-					drum_channels[ chan ] = 0;
-				}
-				break;
-
-			case 1:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_MODULATION, param2 );
-				break;
-
-			case 5:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_PORTATIME, param2 );
-				break;
-
-			case 7:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_VOLUME, param2 );
-				break;
-
-			case 10:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_PAN, param2 );
-				break;
-
-			case 11:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_EXPRESSION, param2 );
-				break;
-
-			case 64:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_SUSTAIN, param2 );
-				break;
-
-			case 65:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_PORTAMENTO, param2 );
-				break;
-
-			case 71:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_RESONANCE, param2 );
-				break;
-
-			case 72:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_RELEASE, param2 );
-				break;
-
-			case 73:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_ATTACK, param2 );
-				break;
-
-			case 74:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_CUTOFF, param2 );
-				break;
-
-			case 84:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_PORTANOTE, param2 );
-				break;
-
-			case 91:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_REVERB, param2 );
-				break;
-
-			case 93:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_CHORUS, param2 );
-				break;
-
-			case 120:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_SOUNDOFF, 0 );
-				break;
-
-			case 121:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_RESET, 0 );
-				is_nrpn = false;
-				index_rpn = 16383;
-				index_nrpn = 16383;
-				rpn_finetune = 8192;
-				break;
-
-			case 123:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_NOTESOFF, 0 );
-				break;
-
-			case 126:
-			case 127:
-				BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_MODE, param1 == 126 ? 1 : 0 );
-				break;
-
-			case 100:
-			case 101:
-				is_nrpn = false;
-				if ( param1 == 100 ) index_rpn = ( index_rpn & 0x3F80 ) + param2;
-				else index_rpn = ( index_rpn & 0x7F ) + ( param2 << 7 );
-				break;
-
-			case 98:
-			case 99:
-				is_nrpn = true;
-				if ( param1 == 98 ) index_nrpn = ( index_nrpn & 0x3F80 ) + param2;
-				else index_nrpn = ( index_nrpn & 0x7F ) + ( param2 << 7 );
-				break;
-
-			case 96:
-				if ( is_nrpn ) index_nrpn = ( index_nrpn + 1 ) & 0x3FFF;
-				else index_rpn = ( index_rpn + 1 ) & 0x3FFF;
-				break;
-
-			case 97:
-				if ( is_nrpn ) index_nrpn = ( index_nrpn - 1 ) & 0x3FFF;
-				else index_rpn = ( index_rpn - 1 ) & 0x3FFF;
-				break;
-
-			case 38:
-				if ( !is_nrpn && index_rpn == 1 )
-				{
-					rpn_finetune = ( rpn_finetune & 0x3F80 ) + param2;
-					BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_FINETUNE, rpn_finetune );
-				}
-				break;
-
-			case 6:
-				if ( !is_nrpn )
-				{
-					switch ( index_rpn )
-					{
-					case 0:
-						BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_PITCHRANGE, param2 );
-						break;
-
-					case 1:
-						rpn_finetune = ( rpn_finetune & 0x7F ) + ( param2 << 7 );
-						BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_FINETUNE, rpn_finetune );
-						break;
-
-					case 2:
-						BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_COARSETUNE, param2 );
-						break;
-					}
-				}
-				else
-				{
-					switch( index_nrpn )
-					{
-					case 0x121:
-						BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_RESONANCE, param2 );
-						break;
-
-					case 0x166:
-						BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_RELEASE, param2 );
-						break;
-
-					case 0x163:
-						BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_ATTACK, param2 );
-						break;
-
-					case 0x120:
-						BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_CUTOFF, param2 );
-						break;
-
-					default:
-						switch ( index_nrpn >> 8 )
-						{
-						case 0x14:
-							BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUM_CUTOFF, MAKEWORD( index_nrpn & 0x7F, param2 ) );
-							break;
-
-						case 0x15:
-							BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUM_RESONANCE, MAKEWORD( index_nrpn & 0x7F, param2 ) );
-							break;
-
-						case 0x18:
-							BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUM_COARSETUNE, MAKEWORD( index_nrpn & 0x7F, param2 ) );
-							break;
-
-						case 0x19:
-							BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUM_FINETUNE, MAKEWORD( index_nrpn & 0x7F, param2 ) );
-							break;
-
-						case 0x1A:
-							BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUM_LEVEL, MAKEWORD( index_nrpn & 0x7F, param2 ) );
-							break;
-
-						case 0x1C:
-							BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUM_PAN, MAKEWORD( index_nrpn & 0x7F, param2 ) );
-							break;
-
-						case 0x1D:
-							BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUM_REVERB, MAKEWORD( index_nrpn & 0x7F, param2 ) );
-							break;
-
-						case 0x1E:
-							BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_DRUM_CHORUS, MAKEWORD( index_nrpn & 0x7F, param2 ) );
-							break;
-						}
-					}
-				}
-			}
-			break;
-		case 0xC0:
-			BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_PROGRAM, param1 );
-			break;
-		case 0xD0:
-			BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_CHANPRES, param1 );
-			break;
-		case 0xE0:
-			BASS_MIDI_StreamEvent( _stream, chan, MIDI_EVENT_PITCH, ( param2 << 7 ) + param1 );
-			break;
-		case 0xF0:
-			break;
+			if ( event[ 2 ] == 127 ) drum_channels[ channel ] = 1;
+			else if ( event[ 2 ] == 121 ) drum_channels[ channel ] = 0;
+		}
+		else if ( command == 0xC0 && drum_channels[ channel ] )
+		{
+			BASS_MIDI_StreamEvent( _stream, channel, MIDI_EVENT_DRUMS, 1 );
 		}
 	}
 	else
@@ -628,7 +466,14 @@ void BMPlayer::send_event(DWORD b)
 		const t_uint8 * data;
 		t_size size;
 		mSysexMap.get_entry( n, data, size );
-		if ( size == 11 &&
+		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW, data, size );
+		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
+			( size == _countof( sysex_gs_reset ) && !memcmp( data, sysex_gs_reset, _countof( sysex_gs_reset ) ) ) ||
+			( size == _countof( sysex_xg_reset ) && !memcmp( data, sysex_xg_reset, _countof( sysex_xg_reset ) ) ) )
+		{
+			reset_drum_channels();
+		}
+		else if ( size == 11 &&
 			data [0] == 0xF0 && data [1] == 0x41 && data [3] == 0x42 &&
 			data [4] == 0x12 && data [5] == 0x40 && (data [6] & 0xF0) == 0x10 &&
 			data [10] == 0xF7)
@@ -644,11 +489,7 @@ void BMPlayer::send_event(DWORD b)
 				unsigned int drum_channel = gs_part_to_ch [ data [6] & 15 ];
 				if ( drum_channel < 16 )
 				{
-					if ( drum_channels[ drum_channel ] != data[ 8 ] )
-					{
-						BASS_MIDI_StreamEvent( _stream, drum_channel, MIDI_EVENT_DRUMS, data[ 8 ] );
-						drum_channels [ drum_channel ] = data [8];
-					}
+					drum_channels [ drum_channel ] = data [8];
 				}
 			}
 		}
@@ -678,7 +519,7 @@ void BMPlayer::shutdown()
 	_stream = NULL;
 	for ( unsigned i = 0; i < _soundFonts.get_count(); ++i )
 	{
-		g_map.free_font( _soundFonts[ i ] );
+		g_map->free_font( _soundFonts[ i ] );
 	}
 	_soundFonts.set_count( 0 );
 }
@@ -690,7 +531,6 @@ bool BMPlayer::startup()
 	{
 		return false;
 	}
-	reset_drums();
 	if (sSoundFontName.length())
 	{
 		pfc::string_extension ext(sSoundFontName);
@@ -702,7 +542,7 @@ bool BMPlayer::startup()
 				shutdown();
 				return false;
 			}
-			g_map.add_font( font );
+			g_map->add_font( font );
 			_soundFonts.append_single( font );
 		}
 		else if ( !pfc::stricmp_ascii( ext, "sflist" ) )
@@ -735,7 +575,7 @@ bool BMPlayer::startup()
 						shutdown();
 						return false;
 					}
-					g_map.add_font( font );
+					g_map->add_font( font );
 					_soundFonts.append_single( font );
 				}
 				fclose( fl );
@@ -755,7 +595,7 @@ bool BMPlayer::startup()
 			shutdown();
 			return false;
 		}
-		g_map.add_font( font );
+		g_map->add_font( font );
 		_soundFonts.append_single( font );
 	}
 
@@ -770,15 +610,17 @@ bool BMPlayer::startup()
 	}
 	BASS_MIDI_StreamSetFonts( _stream, fonts.get_ptr(), fonts.get_count() );
 
+	reset_drum_channels();
+
 	return true;
 }
 
-void BMPlayer::reset_drums()
+void BMPlayer::reset_drum_channels()
 {
 	static const BYTE part_to_ch[16] = {9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15};
 
 	memset( drum_channels, 0, sizeof( drum_channels ) );
-	drum_channels [9] = 1;
+	drum_channels[ 9 ] = 1;
 
 	memcpy( gs_part_to_ch, part_to_ch, sizeof( gs_part_to_ch ) );
 

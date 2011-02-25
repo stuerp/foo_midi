@@ -103,7 +103,7 @@ void tempo_map::add_tempo( unsigned p_tempo, unsigned p_timestamp )
 
 	while ( index > 0 )
 	{
-		if ( m_entries[ index - 1 ].m_timestamp < p_timestamp ) break;
+		if ( m_entries[ index - 1 ].m_timestamp <= p_timestamp ) break;
 		--index;
 	}
 
