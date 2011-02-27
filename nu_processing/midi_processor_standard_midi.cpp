@@ -37,7 +37,7 @@ void midi_processor::process_standard_midi( file::ptr & p_file, midi_container &
 	t_uint16 dtx;
 	t_size track_count;
 	p_file->read_bendian_t( form, p_abort );
-	if ( form > 1 ) throw exception_io_data();
+	if ( form > 2 ) throw exception_io_data();
 	p_file->read_bendian_t( track_count_16, p_abort );
 	p_file->read_bendian_t( dtx, p_abort );
 	track_count = track_count_16;

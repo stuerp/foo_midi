@@ -1,7 +1,12 @@
-#define MYVERSION "1.126"
+#define MYVERSION "1.127"
 
 /*
 	change log
+
+2011-02-27 16:19 UTC - kode54
+- Enabled Standard MIDI File type 2 support
+- Fixed type 2 tempo handling
+- Version is now 1.127
 
 2011-02-25 23:28 UTC - kode54
 - Changed BASSMIDI SoundFont reference counting system

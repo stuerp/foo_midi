@@ -67,6 +67,9 @@ class tempo_map
 public:
 	void add_tempo( unsigned p_tempo, unsigned p_timestamp );
 	const unsigned timestamp_to_ms( unsigned p_timestamp, unsigned p_dtx ) const;
+
+	t_size get_count() const;
+	const tempo_entry & operator [] ( t_size p_index ) const;
 };
 
 struct system_exclusive_entry
@@ -142,6 +145,8 @@ class midi_container
 	pfc::array_t<unsigned> m_timestamp_loop_end;
 
 	static void encode_delta( pfc::array_t<t_uint8> & p_out, unsigned delta );
+
+	const unsigned timestamp_to_ms( unsigned p_timestamp, unsigned p_subsong ) const;
 
 public:
 	midi_container() { }
