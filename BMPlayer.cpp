@@ -1,11 +1,13 @@
 #include "BMPlayer.h"
 
+#include <string>
+
 #pragma comment(lib, "../../../bass/c/bass.lib")
 #pragma comment(lib, "../../../bass/c/bassmidi.lib")
 
-static const char sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-static const char sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const char sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
+static const t_uint8 sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
+static const t_uint8 sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
+static const t_uint8 sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
 
 class soundfont_map : public pfc::thread
 {
@@ -14,10 +16,11 @@ class soundfont_map : public pfc::thread
 	struct soundfont_info
 	{
 		unsigned m_reference_count;
+		HSOUNDFONT m_handle;
 		LARGE_INTEGER m_release_time;
 	};
 
-	pfc::map_t<HSOUNDFONT, soundfont_info> m_map;
+	pfc::map_t<std::wstring, soundfont_info> m_map;
 
 	bool thread_running;
 
@@ -31,12 +34,12 @@ class soundfont_map : public pfc::thread
 			QueryPerformanceCounter( &now );
 			{
 				insync( m_lock );
-				for ( pfc::map_t<HSOUNDFONT, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); )
+				for ( pfc::map_t<std::wstring, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); )
 				{
-					pfc::map_t<HSOUNDFONT, soundfont_info>::const_iterator it_copy = it++;
+					pfc::map_t<std::wstring, soundfont_info>::const_iterator it_copy = it++;
 					if ( it_copy->m_value.m_reference_count == 0 && now.QuadPart >= it_copy->m_value.m_release_time.QuadPart )
 					{
-						BASS_MIDI_FontFree( it_copy->m_key );
+						BASS_MIDI_FontFree( it_copy->m_value.m_handle );
 						m_map.remove( it_copy );
 					}
 				}
@@ -50,34 +53,54 @@ public:
 	{
 		thread_running = false;
 		waitTillDone();
-		for ( pfc::map_t<HSOUNDFONT, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); ++it )
+		for ( pfc::map_t<std::wstring, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); ++it )
 		{
-			BASS_MIDI_FontFree( it->m_key );
+			BASS_MIDI_FontFree( it->m_value.m_handle );
 		}
 	}
 
-	void add_font( HSOUNDFONT p_font )
+	HSOUNDFONT load_font( std::wstring p_path )
 	{
 		insync( m_lock );
 
-		if ( m_map.have_item( p_font ) ) ++m_map[ p_font ].m_reference_count;
-		else m_map[ p_font ].m_reference_count = 1;
+		pfc::map_t<std::wstring, soundfont_info>::iterator it = m_map.find( p_path );
+
+		if ( it.is_valid() )
+		{
+			++(it->m_value.m_reference_count);
+			return it->m_value.m_handle;
+		}
+		else
+		{
+			HSOUNDFONT font = BASS_MIDI_FontInit( p_path.c_str(), BASS_UNICODE );
+			if ( font )
+			{
+				m_map[ p_path ].m_reference_count = 1;
+				m_map[ p_path ].m_handle = font;
+			}
+			return font;
+		}
 	}
 
 	void free_font( HSOUNDFONT p_font )
 	{
 		insync( m_lock );
 
-		if ( --m_map[ p_font ].m_reference_count == 0 )
+		for ( pfc::map_t<std::wstring, soundfont_info>::iterator it = m_map.first(); it.is_valid(); ++it )
 		{
-			LARGE_INTEGER now;
-			LARGE_INTEGER increment;
-			QueryPerformanceCounter( &now );
-			QueryPerformanceFrequency( &increment );
-			now.QuadPart += increment.QuadPart * 2;
-			m_map[ p_font ].m_release_time = now;
-
-			if ( !isActive() ) start();
+			if ( it->m_value.m_handle == p_font )
+			{
+				if ( --(it->m_value.m_reference_count) == 0 )
+				{
+					LARGE_INTEGER now;
+					LARGE_INTEGER increment;
+					QueryPerformanceCounter( &now );
+					QueryPerformanceFrequency( &increment );
+					now.QuadPart += increment.QuadPart * 2;
+					it->m_value.m_release_time.QuadPart = now.QuadPart;
+				}
+				break;
+			}
 		}
 	}
 };
@@ -166,11 +189,11 @@ void BMPlayer::setSampleRate(unsigned rate)
 	shutdown();
 }
 
-bool BMPlayer::Load(const midi_container & midi_file, unsigned loop_mode, bool clean_flag)
+bool BMPlayer::Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, bool clean_flag)
 {
 	assert(!mStream.get_count());
 
-	midi_file.serialize_as_stream( mStream, mSysexMap, clean_flag );
+	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flag );
 
 	if (mStream.get_count())
 	{
@@ -181,9 +204,9 @@ bool BMPlayer::Load(const midi_container & midi_file, unsigned loop_mode, bool c
 
 		if (uLoopMode & loop_mode_enable)
 		{
-			uTimeLoopStart = midi_file.get_timestamp_loop_start( true );
-			unsigned uTimeLoopEnd = midi_file.get_timestamp_loop_end( true );
-			uTimeEnd = midi_file.get_timestamp_end( true );
+			uTimeLoopStart = midi_file.get_timestamp_loop_start( subsong, true );
+			unsigned uTimeLoopEnd = midi_file.get_timestamp_loop_end( subsong, true );
+			uTimeEnd = midi_file.get_timestamp_end( subsong, true );
 
 			if ( uTimeLoopStart != ~0 || uTimeLoopEnd != ~0 )
 			{
@@ -236,7 +259,7 @@ bool BMPlayer::Load(const midi_container & midi_file, unsigned loop_mode, bool c
 				}
 			}
 		}
-		else uTimeEnd = midi_file.get_timestamp_end( true ) + 1000;
+		else uTimeEnd = midi_file.get_timestamp_end( subsong, true ) + 1000;
 
 		if (uSampleRate != 1000)
 		{
@@ -536,13 +559,12 @@ bool BMPlayer::startup()
 		pfc::string_extension ext(sSoundFontName);
 		if ( !pfc::stricmp_ascii( ext, "sf2" ) )
 		{
-			HSOUNDFONT font = BASS_MIDI_FontInit( pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), BASS_UNICODE );
+			HSOUNDFONT font = g_map->load_font( pfc::stringcvt::string_wide_from_utf8( sSoundFontName ).get_ptr() );
 			if ( !font )
 			{
 				shutdown();
 				return false;
 			}
-			g_map->add_font( font );
 			_soundFonts.append_single( font );
 		}
 		else if ( !pfc::stricmp_ascii( ext, "sflist" ) )
@@ -554,7 +576,7 @@ bool BMPlayer::startup()
 				pfc::stringcvt::convert_utf8_to_wide( path, 1024, sSoundFontName, sSoundFontName.scan_filename() );
 				while ( !feof( fl ) )
 				{
-					_fgetts( name, 1024, fl );
+					if ( !_fgetts( name, 1024, fl ) ) break;
 					name[1023] = 0;
 					TCHAR * cr = _tcschr( name, '\n' );
 					if ( cr ) *cr = 0;
@@ -568,14 +590,13 @@ bool BMPlayer::startup()
 						_tcscat_s( temp, 1024, name );
 						cr = temp;
 					}
-					HSOUNDFONT font = BASS_MIDI_FontInit( cr, BASS_UNICODE );
+					HSOUNDFONT font = g_map->load_font( cr );
 					if ( !font )
 					{
 						fclose( fl );
 						shutdown();
 						return false;
 					}
-					g_map->add_font( font );
 					_soundFonts.append_single( font );
 				}
 				fclose( fl );
@@ -589,13 +610,12 @@ bool BMPlayer::startup()
 
 	if ( sFileSoundFontName.length() )
 	{
-		HSOUNDFONT font = BASS_MIDI_FontInit( pfc::stringcvt::string_wide_from_utf8( sFileSoundFontName ), BASS_UNICODE );
+		HSOUNDFONT font = g_map->load_font( pfc::stringcvt::string_wide_from_utf8( sFileSoundFontName ).get_ptr() );
 		if ( !font )
 		{
 			shutdown();
 			return false;
 		}
-		g_map->add_font( font );
 		_soundFonts.append_single( font );
 	}
 

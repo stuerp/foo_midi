@@ -248,6 +248,16 @@ void midi_container::initialize( unsigned p_form, unsigned p_dtx )
 {
 	m_form = p_form;
 	m_dtx = p_dtx;
+	if ( p_form != 2 )
+	{
+		m_channel_mask.set_count( 1 );
+		m_channel_mask[ 0 ] = 0;
+		m_tempo_map.set_count( 1 );
+		m_timestamp_end.set_count( 1 );
+		m_timestamp_end[ 0 ] = 0;
+		m_timestamp_loop_start.set_count( 1 );
+		m_timestamp_loop_end.set_count( 1 );
+	}
 }
 
 void midi_container::add_track( const midi_track & p_track )
@@ -263,17 +273,32 @@ void midi_container::add_track( const midi_track & p_track )
 			event.m_data[ 0 ] == 0xFF && event.m_data[ 1 ] == 0x51 )
 		{
 			unsigned tempo = ( event.m_data[ 2 ] << 16 ) + ( event.m_data[ 3 ] << 8 ) + event.m_data[ 4 ];
-			m_tempo_map.add_tempo( tempo, event.m_timestamp );
+			if ( m_form != 2 ) m_tempo_map[ 0 ].add_tempo( tempo, event.m_timestamp );
+			else
+			{
+				m_tempo_map.grow_size( m_tracks.get_count() );
+				m_tempo_map[ m_tracks.get_count() - 1 ].add_tempo( tempo, event.m_timestamp );
+			}
 		}
 		else if ( event.m_type == midi_event::note_on || event.m_type == midi_event::note_off )
 		{
-			m_channel_mask |= 1 << event.m_channel;
+			if ( m_form != 2 ) m_channel_mask[ 0 ] |= 1 << event.m_channel;
+			else
+			{
+				m_channel_mask.append_multi( (unsigned)0, m_tracks.get_count() - m_channel_mask.get_count() );
+				m_channel_mask[ m_tracks.get_count() - 1 ] |= 1 << event.m_channel;
+			}
 		}
 	}
 
-	if ( i && p_track[ i - 1 ].m_timestamp > m_timestamp_end )
+	if ( i && m_form != 2 && p_track[ i - 1 ].m_timestamp > m_timestamp_end[ 0 ] )
+		m_timestamp_end[ 0 ] = p_track[ i - 1 ].m_timestamp;
+	else if ( m_form == 2 )
 	{
-		m_timestamp_end = p_track[ i - 1 ].m_timestamp;
+		if ( i )
+			m_timestamp_end.append_single( p_track[ i - 1 ].m_timestamp );
+		else
+			m_timestamp_end.append_single( (unsigned)0 );
 	}
 }
 
@@ -287,16 +312,30 @@ void midi_container::add_track_event( t_size p_track_index, const midi_event & p
 		p_event.m_data[ 0 ] == 0xFF && p_event.m_data[ 1 ] == 0x51 )
 	{
 		unsigned tempo = ( p_event.m_data[ 2 ] << 16 ) + ( p_event.m_data[ 3 ] << 8 ) + p_event.m_data[ 4 ];
-		m_tempo_map.add_tempo( tempo, p_event.m_timestamp );
+		if ( m_form != 2 ) m_tempo_map[ 0 ].add_tempo( tempo, p_event.m_timestamp );
+		else
+		{
+			m_tempo_map.grow_size( m_tracks.get_count() );
+			m_tempo_map[ p_track_index ].add_tempo( tempo, p_event.m_timestamp );
+		}
 	}
 	else if ( p_event.m_type == midi_event::note_on || p_event.m_type == midi_event::note_off )
 	{
-		m_channel_mask |= 1 << p_event.m_channel;
+		if ( m_form != 2 ) m_channel_mask[ 0 ] |= 1 << p_event.m_channel;
+		else
+		{
+			m_channel_mask.append_multi( (unsigned)0, m_tracks.get_count() - m_channel_mask.get_count() );
+			m_channel_mask[ p_track_index ] |= 1 << p_event.m_channel;
+		}
 	}
 
-	if ( p_event.m_timestamp > m_timestamp_end )
+	if ( m_form != 2 && p_event.m_timestamp > m_timestamp_end[ 0 ] )
 	{
-		m_timestamp_end = p_event.m_timestamp;
+		m_timestamp_end[ 0 ] = p_event.m_timestamp;
+	}
+	else if ( m_form == 2 && p_event.m_timestamp > m_timestamp_end[ p_track_index ] )
+	{
+		m_timestamp_end[ p_track_index ] = p_event.m_timestamp;
 	}
 }
 
@@ -305,7 +344,7 @@ void midi_container::set_extra_meta_data( const midi_meta_data & p_data )
 	m_extra_meta_data = p_data;
 }
 
-void midi_container::serialize_as_stream( pfc::array_t<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, bool clean_emidi ) const
+void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, bool clean_emidi ) const
 {
 	unsigned current_timestamp = 0;
 	pfc::array_t<t_uint8> data;
@@ -351,6 +390,14 @@ void midi_container::serialize_as_stream( pfc::array_t<midi_stream_event> & p_st
 		}
 	}
 
+	if ( m_form == 2 )
+	{
+		for ( unsigned i = 0; i < track_count; ++i )
+		{
+			if ( i != subsong ) track_positions[ i ] = m_tracks[ i ].get_count();
+		}
+	}
+
 	for (;;)
 	{
 		unsigned next_timestamp = ~0;
@@ -366,8 +413,11 @@ void midi_container::serialize_as_stream( pfc::array_t<midi_stream_event> & p_st
 		}
 		if ( next_timestamp == ~0 ) break;
 
+		unsigned tempo_track = 0;
+		if ( m_form == 2 && subsong ) tempo_track = subsong;
+
 		const midi_event & event = m_tracks[ next_track ][ track_positions[ next_track ] ];
-		unsigned timestamp_ms = m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx );
+		unsigned timestamp_ms = m_tempo_map[ tempo_track ].timestamp_to_ms( event.m_timestamp, m_dtx );
 		if ( event.m_type != midi_event::extended )
 		{
 			unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
@@ -473,10 +523,40 @@ void midi_container::serialize_as_standard_midi_file( pfc::array_t<t_uint8> & p_
 	}
 }
 
-const unsigned midi_container::get_timestamp_end(bool ms /* = false */) const
+const unsigned midi_container::get_subsong_count() const
 {
-	if ( !ms ) return m_timestamp_end;
-	else return m_tempo_map.timestamp_to_ms( m_timestamp_end, m_dtx );
+	unsigned subsong_count = 0;
+	for ( unsigned i = 0; i < m_channel_mask.get_count(); ++i )
+	{
+		if ( m_channel_mask[ i ] ) ++subsong_count;
+	}
+	return subsong_count;
+}
+
+const unsigned midi_container::get_subsong( unsigned p_index ) const
+{
+	for ( unsigned i = 0; i < m_channel_mask.get_count(); ++i )
+	{
+		if ( m_channel_mask[ i ] )
+		{
+			if ( p_index ) --p_index;
+			else return i;
+		}
+	}
+	return 0;
+}
+
+const unsigned midi_container::get_timestamp_end(unsigned subsong, bool ms /* = false */) const
+{
+	unsigned tempo_track = 0;
+	unsigned timestamp = m_timestamp_end[ 0 ];
+	if ( m_form == 2 && subsong )
+	{
+		tempo_track = subsong;
+		timestamp = m_timestamp_end[ subsong ];
+	}
+	if ( !ms ) return timestamp;
+	else return m_tempo_map[ tempo_track ].timestamp_to_ms( timestamp, m_dtx );
 }
 
 const unsigned midi_container::get_format() const
@@ -489,31 +569,45 @@ const unsigned midi_container::get_track_count() const
 	return m_tracks.get_count();
 }
 
-const unsigned midi_container::get_channel_count() const
+const unsigned midi_container::get_channel_count( unsigned subsong ) const
 {
 	unsigned count = 0;
 	for (unsigned i = 0, j = 1; i < 16; ++i, j <<= 1)
 	{
-		if ( m_channel_mask & j ) ++count;
+		if ( m_channel_mask[ subsong ] & j ) ++count;
 	}
 	return count;
 }
 
-const unsigned midi_container::get_timestamp_loop_start(bool ms /* = false */) const
+const unsigned midi_container::get_timestamp_loop_start( unsigned subsong, bool ms /* = false */ ) const
 {
-	if ( !ms ) return m_timestamp_loop_start;
-	else if ( m_timestamp_loop_start != ~0 ) return m_tempo_map.timestamp_to_ms( m_timestamp_loop_start, m_dtx );
+	unsigned tempo_track = 0;
+	unsigned timestamp = m_timestamp_loop_start[ 0 ];
+	if ( m_form == 2 && subsong )
+	{
+		tempo_track = subsong;
+		timestamp = m_timestamp_loop_start[ subsong ];
+	}
+	if ( !ms ) return timestamp;
+	else if ( timestamp != ~0 ) return m_tempo_map[ tempo_track ].timestamp_to_ms( timestamp, m_dtx );
 	else return ~0;
 }
 
-const unsigned midi_container::get_timestamp_loop_end(bool ms /* = false */) const
+const unsigned midi_container::get_timestamp_loop_end( unsigned subsong, bool ms /* = false */ ) const
 {
-	if ( !ms ) return m_timestamp_loop_end;
-	else if ( m_timestamp_loop_end != ~0 ) return m_tempo_map.timestamp_to_ms( m_timestamp_loop_end, m_dtx );
+	unsigned tempo_track = 0;
+	unsigned timestamp = m_timestamp_loop_end[ 0 ];
+	if ( m_form == 2 && subsong )
+	{
+		tempo_track = subsong;
+		timestamp = m_timestamp_loop_end[ subsong ];
+	}
+	if ( !ms ) return timestamp;
+	else if ( timestamp != ~0 ) return m_tempo_map[ tempo_track ].timestamp_to_ms( timestamp, m_dtx );
 	else return ~0;
 }
 
-void midi_container::get_meta_data( midi_meta_data & p_out )
+void midi_container::get_meta_data( unsigned subsong, midi_meta_data & p_out )
 {
 	pfc::string8_fast temp;
 	pfc::stringcvt::string_utf8_from_ansi convert;
@@ -525,6 +619,11 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 
 	for ( unsigned i = 0; i < m_tracks.get_count(); ++i )
 	{
+		if ( m_form == 2 && i != subsong ) continue;
+
+		unsigned tempo_track = 0;
+		if ( m_form == 2 ) tempo_track = i;
+
 		const midi_track & track = m_tracks[ i ];
 		for ( unsigned j = 0; j < track.get_count(); ++j )
 		{
@@ -562,7 +661,7 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 					{
 						type_found = true;
 						type_non_gm_found = true;
-						p_out.add_item( midi_meta_data_item( m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx ), "type", type ) );
+						p_out.add_item( midi_meta_data_item( m_tempo_map[ tempo_track ].timestamp_to_ms( event.m_timestamp, m_dtx ), "type", type ) );
 					}
 				}
 				else if ( data_count >= 2 && event.m_data[ 0 ] == 0xFF )
@@ -574,14 +673,14 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 						data.grow_size( data_count );
 						event.copy_data( data.get_ptr(), 2, data_count );
 						convert.convert( (const char *)data.get_ptr(), data_count );
-						p_out.add_item( midi_meta_data_item( m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx ), "track_marker", convert ) );
+						p_out.add_item( midi_meta_data_item( m_tempo_map[ tempo_track ].timestamp_to_ms( event.m_timestamp, m_dtx ), "track_marker", convert ) );
 						break;
 
 					case 2:
 						data.grow_size( data_count );
 						event.copy_data( data.get_ptr(), 2, data_count );
 						convert.convert( (const char *)data.get_ptr(), data_count );
-						p_out.add_item( midi_meta_data_item( m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx ), "copyright", convert ) );
+						p_out.add_item( midi_meta_data_item( m_tempo_map[ tempo_track ].timestamp_to_ms( event.m_timestamp, m_dtx ), "copyright", convert ) );
 						break;
 
 					case 1:
@@ -590,7 +689,7 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 						convert.convert( (const char *)data.get_ptr(), data_count );
 						temp = "track_text_";
 						temp += pfc::format_int( i, 2 );
-						p_out.add_item( midi_meta_data_item( m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx ), temp, convert ) );
+						p_out.add_item( midi_meta_data_item( m_tempo_map[ tempo_track ].timestamp_to_ms( event.m_timestamp, m_dtx ), temp, convert ) );
 						break;
 
 					case 3:
@@ -600,7 +699,7 @@ void midi_container::get_meta_data( midi_meta_data & p_out )
 						convert.convert( (const char *)data.get_ptr(), data_count );
 						temp = "track_name_";
 						temp += pfc::format_int( i, 2 );
-						p_out.add_item( midi_meta_data_item( m_tempo_map.timestamp_to_ms( event.m_timestamp, m_dtx ), temp, convert ) );
+						p_out.add_item( midi_meta_data_item( m_tempo_map[ tempo_track ].timestamp_to_ms( event.m_timestamp, m_dtx ), temp, convert ) );
 						break;
 					}
 				}
@@ -620,13 +719,24 @@ void midi_container::scan_for_loops( bool p_xmi_loops, bool p_marker_loops )
 {
 	pfc::array_t<t_uint8> data;
 
-	m_timestamp_loop_start = ~0;
-	m_timestamp_loop_end = ~0;
+	unsigned subsong_count = m_form == 2 ? m_tracks.get_count() : 1;
+
+	m_timestamp_loop_start.set_count( subsong_count );
+	m_timestamp_loop_end.set_count( subsong_count );
+
+	for ( unsigned i = 0; i < subsong_count; ++i )
+	{
+		m_timestamp_loop_start[ i ] = ~0;
+		m_timestamp_loop_end[ i ] = ~0;
+	}
 
 	if ( p_xmi_loops )
 	{
 		for ( unsigned i = 0; i < m_tracks.get_count(); ++i )
 		{
+			unsigned subsong = 0;
+			if ( m_form == 2 ) subsong = i;
+
 			const midi_track & track = m_tracks[ i ];
 			for ( unsigned j = 0; j < track.get_count(); ++j )
 			{
@@ -636,16 +746,16 @@ void midi_container::scan_for_loops( bool p_xmi_loops, bool p_marker_loops )
 				{
 					if ( event.m_data[ 0 ] == 0x74 )
 					{
-						if ( m_timestamp_loop_start == ~0 || m_timestamp_loop_start > event.m_timestamp )
+						if ( m_timestamp_loop_start[ subsong ] == ~0 || m_timestamp_loop_start[ subsong ] > event.m_timestamp )
 						{
-							m_timestamp_loop_start = event.m_timestamp;
+							m_timestamp_loop_start[ subsong ] = event.m_timestamp;
 						}
 					}
 					else
 					{
-						if ( m_timestamp_loop_end == ~0 || m_timestamp_loop_end < event.m_timestamp )
+						if ( m_timestamp_loop_end[ subsong ] == ~0 || m_timestamp_loop_end[ subsong ] < event.m_timestamp )
 						{
-							m_timestamp_loop_end = event.m_timestamp;
+							m_timestamp_loop_end[ subsong ] = event.m_timestamp;
 						}
 					}
 				}
@@ -657,6 +767,9 @@ void midi_container::scan_for_loops( bool p_xmi_loops, bool p_marker_loops )
 	{
 		for ( unsigned i = 0; i < m_tracks.get_count(); ++i )
 		{
+			unsigned subsong = 0;
+			if ( m_form == 2 ) subsong = i;
+
 			const midi_track & track = m_tracks[ i ];
 			for ( unsigned j = 0; j < track.get_count(); ++j )
 			{
@@ -671,16 +784,16 @@ void midi_container::scan_for_loops( bool p_xmi_loops, bool p_marker_loops )
 
 					if ( data_count == 9 && !pfc::stricmp_ascii_ex( (const char *)data.get_ptr(), 9, "loopStart", 9 ) )
 					{
-						if ( m_timestamp_loop_start == ~0 || m_timestamp_loop_start > event.m_timestamp )
+						if ( m_timestamp_loop_start[ subsong ] == ~0 || m_timestamp_loop_start[ subsong ] > event.m_timestamp )
 						{
-							m_timestamp_loop_start = event.m_timestamp;
+							m_timestamp_loop_start[ subsong ] = event.m_timestamp;
 						}
 					}
 					else if ( data_count == 7 && !pfc::stricmp_ascii_ex( (const char *)data.get_ptr(), 7, "loopEnd", 7 ) )
 					{
-						if ( m_timestamp_loop_end == ~0 || m_timestamp_loop_end < event.m_timestamp )
+						if ( m_timestamp_loop_end[ subsong ] == ~0 || m_timestamp_loop_end[ subsong ] < event.m_timestamp )
 						{
-							m_timestamp_loop_end = event.m_timestamp;
+							m_timestamp_loop_end[ subsong ] = event.m_timestamp;
 						}
 					}
 				}

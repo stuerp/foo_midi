@@ -130,21 +130,21 @@ class midi_container
 {
 	unsigned m_form;
 	unsigned m_dtx;
-	unsigned m_channel_mask;
-	tempo_map m_tempo_map;
+	pfc::array_t<unsigned> m_channel_mask;
+	pfc::array_t<tempo_map> m_tempo_map;
 	pfc::array_t<midi_track> m_tracks;
 
 	midi_meta_data m_extra_meta_data;
 
-	unsigned m_timestamp_end;
+	pfc::array_t<unsigned> m_timestamp_end;
 
-	unsigned m_timestamp_loop_start;
-	unsigned m_timestamp_loop_end;
+	pfc::array_t<unsigned> m_timestamp_loop_start;
+	pfc::array_t<unsigned> m_timestamp_loop_end;
 
 	static void encode_delta( pfc::array_t<t_uint8> & p_out, unsigned delta );
 
 public:
-	midi_container() : m_channel_mask(0), m_timestamp_end(0), m_timestamp_loop_start(~0), m_timestamp_loop_end(~0) { }
+	midi_container() { }
 
 	void initialize( unsigned p_form, unsigned p_dtx );
 
@@ -154,20 +154,23 @@ public:
 
 	void set_extra_meta_data( const midi_meta_data & p_data );
 
-	void serialize_as_stream( pfc::array_t<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, bool clean_emidi ) const;
+	void serialize_as_stream( unsigned subsong, pfc::array_t<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, bool clean_emidi ) const;
 
 	void serialize_as_standard_midi_file( pfc::array_t<t_uint8> & p_midi_file ) const;
 
-	const unsigned get_timestamp_end(bool ms = false) const;
+	const unsigned get_subsong_count() const;
+	const unsigned get_subsong( unsigned p_index ) const;
+
+	const unsigned get_timestamp_end(unsigned subsong, bool ms = false) const;
 
 	const unsigned get_format() const;
 	const unsigned get_track_count() const;
-	const unsigned get_channel_count() const;
+	const unsigned get_channel_count(unsigned subsong) const;
 
-	const unsigned get_timestamp_loop_start(bool ms = false) const;
-	const unsigned get_timestamp_loop_end(bool ms = false) const;
+	const unsigned get_timestamp_loop_start(unsigned subsong, bool ms = false) const;
+	const unsigned get_timestamp_loop_end(unsigned subsong, bool ms = false) const;
 
-	void get_meta_data( midi_meta_data & p_out );
+	void get_meta_data( unsigned subsong, midi_meta_data & p_out );
 
 	void scan_for_loops( bool p_xmi_loops, bool p_marker_loops );
 };

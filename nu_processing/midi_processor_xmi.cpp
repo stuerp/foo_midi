@@ -26,7 +26,7 @@ bool midi_processor::is_xmi( file::ptr & p_file, abort_callback & p_abort )
 	}
 }
 
-const t_uint8 midi_processor::xmi_default_tempo[5] = {0xFF, 0x51, 0x20, 0x8D, 0xB7};
+const t_uint8 midi_processor::xmi_default_tempo[5] = {0xFF, 0x51, 0x07, 0xA1, 0x20};
 
 unsigned midi_processor::decode_xmi_delta( file::ptr & p_file, abort_callback & p_abort )
 {
@@ -168,27 +168,22 @@ void midi_processor::process_xmi( file::ptr & p_file, midi_container & p_out, ab
 	const iff_chunk & cat_chunk = xmi_file.find_chunk( "CAT " );
 	if ( memcmp( cat_chunk.m_type, "XMID", 4 ) ) throw exception_io_data( "XMI CAT chunk not XMID type" );
 
-	const iff_chunk & xmid_form_chunk = cat_chunk.find_sub_chunk( "FORM" );
-	if ( memcmp( xmid_form_chunk.m_type, "XMID", 4 ) ) throw exception_io_data( "XMI nested FORM chunk not XMID type" );
+	unsigned track_count = cat_chunk.get_chunk_count( "FORM" );
 
-	unsigned track_count = xmid_form_chunk.get_chunk_count( "EVNT" );
-
-	p_out.initialize( track_count > 1 ? 2 : 0, 0x100 );
-
-	{
-		midi_track track;
-		track.add_event( midi_event( 0, midi_event::extended, 0, xmi_default_tempo, _countof( xmi_default_tempo ) ) );
-		track.add_event( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
-		p_out.add_track( track );
-	}
+	p_out.initialize( track_count > 1 ? 2 : 0, 60 );
 
 	for ( unsigned i = 0; i < track_count; ++i )
 	{
-		const iff_chunk & event_chunk = xmid_form_chunk.find_sub_chunk( "EVNT", i );
+		const iff_chunk & xmid_form_chunk = cat_chunk.find_sub_chunk( "FORM", i );
+		if ( memcmp( xmid_form_chunk.m_type, "XMID", 4 ) ) throw exception_io_data( "XMI nested FORM chunk not XMID type" );
+
+		const iff_chunk & event_chunk = xmid_form_chunk.find_sub_chunk( "EVNT" );
 		file::ptr event_body = event_chunk.m_data;
 		event_body->reopen( p_abort );
 
 		midi_track track;
+
+		bool initial_tempo = false;
 
 		unsigned current_timestamp = 0;
 
@@ -217,6 +212,16 @@ void midi_processor::process_xmi( file::ptr & p_file, midi_container & p_out, ab
 				if ( buffer[ 1 ] == 0x2F && current_timestamp < last_event_timestamp )
 				{
 					current_timestamp = last_event_timestamp;
+				}
+				if ( buffer[ 1 ] == 0x51 && meta_count == 3 )
+				{
+					unsigned tempo = buffer[ 2 ] * 0x10000 + buffer[ 3 ] * 0x100 + buffer[ 4 ];
+					unsigned ppqn = ( tempo * 3 ) / 25000;
+					tempo = tempo * 60 / ppqn;
+					buffer[ 2 ] = tempo / 0x10000;
+					buffer[ 3 ] = tempo / 0x100;
+					buffer[ 4 ] = tempo;
+					if ( current_timestamp == 0 ) initial_tempo = true;
 				}
 				track.add_event( midi_event( current_timestamp, midi_event::extended, 0, buffer.get_ptr(), meta_count + 2 ) );
 				if ( buffer[ 1 ] == 0x2F ) break;
@@ -252,6 +257,10 @@ void midi_processor::process_xmi( file::ptr & p_file, midi_container & p_out, ab
 			else throw exception_io_data( "Unexpected XMI status code" );
 		}
 
+		if ( !initial_tempo )
+			track.add_event( midi_event( 0, midi_event::extended, 0, xmi_default_tempo, _countof( xmi_default_tempo ) ) );
+
 		p_out.add_track( track );
 	}
+
 }

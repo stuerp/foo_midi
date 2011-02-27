@@ -29,7 +29,7 @@ public:
 	// setup
 	void setSampleRate(unsigned rate);
 
-	bool Load(const midi_container & midi_file, unsigned loop_mode, bool clean_flag);
+	bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, bool clean_flag);
 	unsigned Play(audio_sample * out, unsigned count);
 	void Seek(unsigned sample);
 

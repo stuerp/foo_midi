@@ -1,7 +1,20 @@
-#define MYVERSION "1.124"
+#define MYVERSION "1.126"
 
 /*
 	change log
+
+2011-02-25 23:28 UTC - kode54
+- Changed BASSMIDI SoundFont reference counting system
+- Updated BASSMIDI to version 2.4.5.12
+- Fixed SoundFont list handler loading the last item twice
+- Version is now 1.126
+
+2011-02-25 19:27 UTC - kode54
+- Fixed XMI tempo
+- Version is now 1.125
+
+2011-02-25 16:11 UTC - kode54
+- Implemented MIDI type 2 subsong support
 
 2011-02-25 01:44 UTC - kode54
 - Fixed drum channel handling with new BASSMIDI
@@ -482,8 +495,6 @@ class input_midi
 
 	midi_container midi_file;
 
-	midi_meta_data meta_data;
-
 	unsigned srate;
 	unsigned plugin;
 
@@ -572,12 +583,14 @@ public:
 	}
 
 private:
-	double get_length()
+	double get_length( unsigned p_subsong )
 	{
-		unsigned len = midi_file.get_timestamp_end( true );
+		unsigned len = midi_file.get_timestamp_end( p_subsong, true );
 		double length = len * .001 + 1.;
-		length_ticks = midi_file.get_timestamp_end(); //theSequence->m_tempoMap.Sample2Tick(len, 1000);
+		length_ticks = midi_file.get_timestamp_end( p_subsong ); //theSequence->m_tempoMap.Sample2Tick(len, 1000);
 		length_samples = (unsigned)(((__int64)len * (__int64)srate) / 1000) + srate;
+		loop_begin = midi_file.get_timestamp_loop_start( p_subsong );
+		loop_end = midi_file.get_timestamp_loop_end( p_subsong );
 		return length;
 	}
 
@@ -621,19 +634,24 @@ public:
 
 		midi_processor::process_file( p_file, pfc::string_extension( p_path ), midi_file, p_abort );
 
-		midi_file.get_meta_data( meta_data );
-
-		midi_meta_data_item item;
-		if ( meta_data.get_item( "type", item ) && !strcmp( item.m_value, "MT-32" ) ) plugin = 3;
-
 		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz );
-
-		loop_begin = midi_file.get_timestamp_loop_start();
-		loop_end = midi_file.get_timestamp_loop_end();
 	}
 
-	void get_info( file_info & p_info, abort_callback & p_abort )
+	unsigned get_subsong_count()
 	{
+		return midi_file.get_subsong_count();
+	}
+
+	t_uint32 get_subsong( unsigned p_index )
+	{
+		return midi_file.get_subsong( p_index );
+	}
+
+	void get_info( t_uint32 p_subsong, file_info & p_info, abort_callback & p_abort )
+	{
+		midi_meta_data meta_data;
+		midi_file.get_meta_data( p_subsong, meta_data );
+
 		midi_meta_data_item item;
 		bool remap_display_name = !meta_data.get_item( "title", item );
 
@@ -649,17 +667,20 @@ public:
 		}
 
 		p_info.info_set_int("midi_format", midi_file.get_format());
-		p_info.info_set_int("midi_tracks", midi_file.get_track_count());
-		p_info.info_set_int("midi_channels", midi_file.get_channel_count());
-		p_info.info_set_int("midi_ticks", midi_file.get_timestamp_end());
+		p_info.info_set_int("midi_tracks", midi_file.get_format() == 2 ? 1 : midi_file.get_track_count());
+		p_info.info_set_int("midi_channels", midi_file.get_channel_count(p_subsong));
+		p_info.info_set_int("midi_ticks", midi_file.get_timestamp_end(p_subsong));
 		if (meta_data.get_item("type", item)) p_info.info_set("midi_type", item.m_value);
 
-		if (loop_begin != ~0) p_info.info_set_int("midi_loop_start", loop_begin);
-		if (loop_end != ~0) p_info.info_set_int("midi_loop_end", loop_end);
+		unsigned loop_begin = midi_file.get_timestamp_loop_start( p_subsong );
+		unsigned loop_end = midi_file.get_timestamp_loop_end( p_subsong );
+
+		if (loop_begin != ~0) p_info.info_set_int("midi_loop_start", loop_begin );
+		if (loop_end != ~0) p_info.info_set_int("midi_loop_end", loop_end );
 		//p_info.info_set_int("samplerate", srate);
 		p_info.info_set_int("channels", 2);
 		p_info.info_set( "encoding", "synthesized" );
-		p_info.set_length( get_length() );
+		p_info.set_length( double( midi_file.get_timestamp_end( p_subsong, true ) ) * 0.001 + 1.0 );
 	}
 
 	t_filestats get_file_stats( abort_callback & p_abort )
@@ -667,11 +688,18 @@ public:
 		return m_stats;
 	}
 
-	void decode_initialize( unsigned p_flags, abort_callback & p_abort )
+	void decode_initialize( unsigned p_subsong, unsigned p_flags, abort_callback & p_abort )
 	{
 		first_block = true;
 
-		get_length();
+		get_length(p_subsong);
+
+		midi_meta_data meta_data;
+
+		midi_file.get_meta_data( p_subsong, meta_data );
+
+		midi_meta_data_item item;
+		if ( meta_data.get_item( "type", item ) && !strcmp( item.m_value, "MT-32" ) ) plugin = 3;
 
 		pfc::string8 file_soundfont;
 
@@ -807,7 +835,7 @@ public:
 						if ( cfg_loop_type > 1 ) loop_mode |= VSTiPlayer::loop_mode_force;
 					}
 
-					if ( vstPlayer->Load( midi_file, loop_mode, b_emidi_ex ) )
+					if ( vstPlayer->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
 					{
 						eof = false;
 						dont_loop = true;
@@ -840,7 +868,7 @@ public:
 					if ( cfg_loop_type > 1 ) loop_mode |= SFPlayer::loop_mode_force;
 				}
 
-				if ( sfPlayer->Load( midi_file, loop_mode, b_emidi_ex ) )
+				if ( sfPlayer->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -871,7 +899,7 @@ public:
 					if ( cfg_loop_type > 1 ) loop_mode |= BMPlayer::loop_mode_force;
 				}
 
-				if ( bmPlayer->Load( midi_file, loop_mode, b_emidi_ex ) )
+				if ( bmPlayer->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -904,7 +932,7 @@ public:
 					if ( cfg_loop_type > 1 ) loop_mode |= MT32Player::loop_mode_force;
 				}
 
-				if ( mt32Player->Load( midi_file, loop_mode, b_emidi_ex ) )
+				if ( mt32Player->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -965,7 +993,6 @@ public:
 						else if (srate != g_srate)
 						{
 							srate = g_srate;
-							get_length();
 							delete smfplay;
 							smfplay = new dsa::CSMFPlay(srate, 8);
 							if (!smfplay->Load(buffer.get_ptr(), buffer.get_count())) throw exception_io_data();
@@ -1376,7 +1403,12 @@ fagotry:
 	{
 	}
 
-	void retag( const file_info & p_info, abort_callback & p_abort )
+	void retag_set_info( t_uint32 p_subsong, const file_info & p_info, abort_callback & p_abort )
+	{
+		throw exception_io_unsupported_format();
+	}
+
+	void retag_commit( abort_callback & p_abort )
 	{
 		throw exception_io_unsupported_format();
 	}
@@ -2012,7 +2044,7 @@ public:
 	}
 };
 
-static input_singletrack_factory_t<input_midi>              g_input_midi_factory;
+static input_factory_t<input_midi>                          g_input_midi_factory;
 static preferences_page_factory_t <preferences_page_myimpl> g_config_midi_factory;
 static service_factory_single_t   <midi_file_types>         g_input_file_type_midi_factory;
 static contextmenu_item_factory_t <context_midi>            g_contextmenu_item_midi_factory;

@@ -54,11 +54,11 @@ void MT32Player::setSampleRate(unsigned rate)
 	shutdown();
 }
 
-bool MT32Player::Load(const midi_container & midi_file, unsigned loop_mode, bool clean_flag)
+bool MT32Player::Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, bool clean_flag)
 {
 	assert(!mStream.get_count());
 
-	midi_file.serialize_as_stream( mStream, mSysexMap, clean_flag );
+	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flag );
 
 	if (mStream.get_count())
 	{
@@ -69,9 +69,9 @@ bool MT32Player::Load(const midi_container & midi_file, unsigned loop_mode, bool
 
 		if (uLoopMode & loop_mode_enable)
 		{
-			uTimeLoopStart = midi_file.get_timestamp_loop_start( true );
-			unsigned uTimeLoopEnd = midi_file.get_timestamp_loop_end( true );
-			uTimeEnd = midi_file.get_timestamp_end( true );
+			uTimeLoopStart = midi_file.get_timestamp_loop_start( subsong, true );
+			unsigned uTimeLoopEnd = midi_file.get_timestamp_loop_end( subsong, true );
+			uTimeEnd = midi_file.get_timestamp_end( subsong, true );
 
 			if ( uTimeLoopStart != ~0 || uTimeLoopEnd != ~0 )
 			{
@@ -124,7 +124,7 @@ bool MT32Player::Load(const midi_container & midi_file, unsigned loop_mode, bool
 				}
 			}
 		}
-		else uTimeEnd = midi_file.get_timestamp_end( true ) + 1000;
+		else uTimeEnd = midi_file.get_timestamp_end( subsong, true ) + 1000;
 
 		if (uSampleRate != 1000)
 		{
