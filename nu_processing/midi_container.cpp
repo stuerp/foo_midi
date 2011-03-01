@@ -423,7 +423,7 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 				{
 					if ( event.m_data[ 0 ] == 110 )
 					{
-						if ( event.m_data[ 1 ] != 0 && event.m_data[ 1 ] != 127 )
+						if ( event.m_data[ 1 ] != 0 && event.m_data[ 1 ] != 1 && event.m_data[ 1 ] != 127 )
 						{
 							skip_track = true;
 							break;
@@ -431,7 +431,7 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 					}
 					else
 					{
-						if ( event.m_data[ 1 ] == 0 )
+						if ( event.m_data[ 1 ] == 0 || event.m_data[ 1 ] == 1 )
 						{
 							skip_track = true;
 							break;

@@ -1,7 +1,12 @@
-#define MYVERSION "1.127"
+#define MYVERSION "1.128"
 
 /*
 	change log
+
+2011-02-29 02:00 UTC - kode54
+- Updated BASSMIDI to version 2.4.5.13
+- Amended EMIDI track exclusion to include GS tracks
+- Version is now 1.128
 
 2011-02-27 16:19 UTC - kode54
 - Enabled Standard MIDI File type 2 support
