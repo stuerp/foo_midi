@@ -137,6 +137,8 @@ class midi_container
 	pfc::array_t<tempo_map> m_tempo_map;
 	pfc::array_t<midi_track> m_tracks;
 
+	pfc::array_t<pfc::string8> m_device_names;
+
 	midi_meta_data m_extra_meta_data;
 
 	pfc::array_t<unsigned> m_timestamp_end;

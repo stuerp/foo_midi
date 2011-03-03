@@ -16,6 +16,7 @@ SFPlayer::SFPlayer()
 
 	fluid_settings_setnum(_settings, "synth.gain", 1.0);
 	fluid_settings_setnum(_settings, "synth.sample-rate", 44100);
+	fluid_settings_setint(_settings, "synth.midi-channels", 32);
 }
 
 SFPlayer::~SFPlayer()
@@ -113,13 +114,15 @@ bool SFPlayer::Load(const midi_container & midi_file, unsigned subsong, unsigned
 				for (i = 0; i < mStream.get_count(); i++)
 				{
 					if (mStream[ i ].m_timestamp > uTimeEnd) break;
-					UINT ev = mStream[ i ].m_event & 0xFF0000F0;
+					UINT ev = mStream[ i ].m_event & 0x800000F0;
 					if ( ev == 0x90 || ev == 0x80 )
 					{
+						UINT port = ( mStream[ i ].m_event & 0x7F000000 ) >> 24;
 						UINT ch = mStream[ i ].m_event & 0x0F;
 						UINT note = ( mStream[ i ].m_event >> 8 ) & 0x7F;
 						UINT on = ( ev == 0x90 ) && ( mStream[ i ].m_event & 0xFF0000 );
-						note_on [ ch * 128 + note ] = on;
+						UINT bit = 1 << port;
+						note_on [ ch * 128 + note ] = ( note_on [ ch * 128 + note ] & ~bit ) | ( bit * on );
 					}
 				}
 				mStream.set_count( i );
@@ -127,7 +130,13 @@ bool SFPlayer::Load(const midi_container & midi_file, unsigned subsong, unsigned
 				{
 					if ( note_on[ j ] )
 					{
-						mStream.append_single( midi_stream_event( uTimeEnd, ( j >> 7 ) + ( j & 0x7F ) * 0x100 + 0x90 ) );
+						for ( UINT k = 0; k < 8; k++ )
+						{
+							if ( note_on[ j ] & ( 1 << k ) )
+							{
+								mStream.append_single( midi_stream_event( uTimeEnd, ( k << 24 ) + ( j >> 7 ) + ( j & 0x7F ) * 0x100 + 0x90 ) );
+							}
+						}
 					}
 				}
 			}
@@ -269,11 +278,11 @@ void SFPlayer::Seek(unsigned sample)
 		// hokkai, let's kill any hanging notes
 		uStreamPosition = 0;
 
-		reset_drums();
-
 		fluid_synth_system_reset(_synth);
 
 		fluid_synth_set_interp_method( _synth, -1, uInterpolationMethod );
+
+		reset_drums();
 	}
 
 	uTimeCurrent = sample;
@@ -297,15 +306,15 @@ void SFPlayer::Seek(unsigned sample)
 		for (i = 0, stream_start = uStreamPosition - stream_start; i < stream_start; i++)
 		{
 			midi_stream_event & e = me[i];
-			if ((e.m_event & 0xFF0000F0) == 0x90 && (e.m_event & 0xFF0000)) // note on
+			if ((e.m_event & 0x800000F0) == 0x90 && (e.m_event & 0xFF0000)) // note on
 			{
 				if ((e.m_event & 0x0F) == 9) // hax
 				{
 					e.m_event = 0;
 					continue;
 				}
-				DWORD m = (e.m_event & 0xFF0F) | 0x80; // note off
-				DWORD m2 = e.m_event & 0xFFFF; // also note off
+				DWORD m = (e.m_event & 0x7F00FF0F) | 0x80; // note off
+				DWORD m2 = e.m_event & 0x7F00FFFF; // also note off
 				for (j = i + 1; j < stream_start; j++)
 				{
 					midi_stream_event & e2 = me[j];
@@ -340,12 +349,16 @@ void SFPlayer::Seek(unsigned sample)
 
 void SFPlayer::send_event(DWORD b)
 {
-	if (!(b & 0xFF000000))
+	if (!(b & 0x80000000))
 	{
 		int param2 = (b >> 16) & 0xFF;
 		int param1 = (b >> 8) & 0xFF;
 		int cmd = b & 0xF0;
 		int chan = b & 0x0F;
+		int port = (b >> 24) & 0x7F;
+
+		if ( port == 1 ) chan += 16;
+		else if ( port > 1 ) return;
 
 		switch (cmd)
 		{
@@ -381,14 +394,6 @@ void SFPlayer::send_event(DWORD b)
 		case 0xE0:
 			fluid_synth_pitch_bend(_synth, chan, (param2 << 7) | param1);
 			break;
-		case 0xF0:
-			if (chan == 15)
-			{
-				reset_drums();
-				fluid_synth_system_reset(_synth);
-				fluid_synth_set_interp_method( _synth, -1, uInterpolationMethod );
-			}
-			break;
 		}
 	}
 	else
@@ -405,13 +410,13 @@ void SFPlayer::send_event(DWORD b)
 			if (data [7] == 2)
 			{
 				// GS MIDI channel to part assign
-				gs_part_to_ch [ data [6] & 15 ] = data [8];
+				gs_part_to_ch [ data [6] & 31 ] = data [8];
 			}
 			else if ( data [7] == 0x15 )
 			{
 				// GS part to rhythm allocation
-				unsigned int drum_channel = gs_part_to_ch [ data [6] & 15 ];
-				if ( drum_channel < 16 )
+				unsigned int drum_channel = gs_part_to_ch [ data [6] & 31 ];
+				if ( drum_channel < 32 )
 				{
 					drum_channels [ drum_channel ] = data [8];
 				}
@@ -445,7 +450,6 @@ void SFPlayer::shutdown()
 
 bool SFPlayer::startup()
 {
-	reset_drums();
 	_synth = new_fluid_synth(_settings);
 	if (!_synth)
 	{
@@ -453,6 +457,7 @@ bool SFPlayer::startup()
 		return false;
 	}
 	fluid_synth_set_interp_method( _synth, -1, uInterpolationMethod );
+	reset_drums();
 	if (sSoundFontName.length())
 	{
 		pfc::string_extension ext(sSoundFontName);
@@ -527,14 +532,27 @@ bool SFPlayer::startup()
 
 void SFPlayer::reset_drums()
 {
-	static const BYTE part_to_ch[16] = {9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15};
+	static const BYTE part_to_ch[32] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15,
+	                                    16,17,18,19,20,21,22,23,24,25, 26, 27, 28, 29, 30, 31};
 
 	memset( drum_channels, 0, sizeof( drum_channels ) );
 	drum_channels [9] = 1;
+	drum_channels [25] = 1;
 
 	memcpy( gs_part_to_ch, part_to_ch, sizeof( gs_part_to_ch ) );
 
 	memset( channel_banks, 0, sizeof( channel_banks ) );
+
+	if ( _synth )
+	{
+		for ( unsigned i = 0; i < 32; ++i )
+		{
+			if ( drum_channels [i] )
+			{
+				fluid_synth_bank_select( _synth, i, 16256 /*DRUM_INST_BANK*/);
+			}
+		}
+	}
 }
 
 const char * SFPlayer::GetLastError() const

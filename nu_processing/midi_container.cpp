@@ -319,6 +319,10 @@ void midi_container::initialize( unsigned p_form, unsigned p_dtx )
 void midi_container::add_track( const midi_track & p_track )
 {
 	unsigned i;
+	unsigned port_number = 0;
+
+	pfc::array_t<t_uint8> data;
+	pfc::string8_fast device_name;
 
 	m_tracks.append_single( p_track );
 
@@ -336,13 +340,42 @@ void midi_container::add_track( const midi_track & p_track )
 				m_tempo_map[ m_tracks.get_count() - 1 ].add_tempo( tempo, event.m_timestamp );
 			}
 		}
+		else if ( event.m_type == midi_event::extended && event.get_data_count() >= 3 &&
+			event.m_data[ 0 ] == 0xFF )
+		{
+			if ( event.m_data[ 1 ] == 4 )
+			{
+				unsigned data_count = event.get_data_count() - 2;
+				data.grow_size( data_count );
+				event.copy_data( data.get_ptr(), 2, data_count );
+				device_name.reset();
+				pfc::stringToLowerAppend( device_name, (const char *)data.get_ptr(), data_count );
+				for ( port_number = 0; port_number < m_device_names.get_count(); ++port_number )
+				{
+					if ( !strcmp( m_device_names[ port_number ], device_name ) )
+					{
+						break;
+					}
+				}
+				if ( port_number == m_device_names.get_count() )
+				{
+					m_device_names.append_single( device_name );
+				}
+			}
+			else if ( event.m_data[ 1 ] == 0x20 || event.m_data[ 1 ] == 0x21 )
+			{
+				port_number = event.m_data[ 2 ];
+			}
+		}
 		else if ( event.m_type == midi_event::note_on || event.m_type == midi_event::note_off )
 		{
-			if ( m_form != 2 ) m_channel_mask[ 0 ] |= 1 << event.m_channel;
+			unsigned channel = event.m_channel;
+			if ( port_number == 1 ) channel += 16;
+			if ( m_form != 2 ) m_channel_mask[ 0 ] |= 1 << channel;
 			else
 			{
 				m_channel_mask.append_multi( (unsigned)0, m_tracks.get_count() - m_channel_mask.get_count() );
-				m_channel_mask[ m_tracks.get_count() - 1 ] |= 1 << event.m_channel;
+				m_channel_mask[ m_tracks.get_count() - 1 ] |= 1 << channel;
 			}
 		}
 	}
@@ -405,9 +438,12 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 	unsigned current_timestamp = 0;
 	pfc::array_t<t_uint8> data;
 	pfc::array_t<t_size> track_positions;
+	pfc::array_t<t_uint8> port_numbers;
+	pfc::string8_fast device_name;
 	t_size track_count = m_tracks.get_count();
 
 	track_positions.append_multi( (t_size)0, track_count );
+	port_numbers.append_multi( (t_uint8)0, track_count );
 
 	if ( clean_emidi )
 	{
@@ -479,6 +515,7 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 			unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
 			if ( event.m_data_count >= 1 ) event_code += event.m_data[ 0 ] << 8;
 			if ( event.m_data_count >= 2 ) event_code += event.m_data[ 1 ] << 16;
+			event_code += ( port_numbers[ next_track ] & 0x7F ) << 24;
 			p_stream.append_single( midi_stream_event( timestamp_ms, event_code ) );
 		}
 		else
@@ -492,6 +529,30 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 				{
 					unsigned system_exclusive_index = p_system_exclusive.add_entry( data.get_ptr(), data_count );
 					p_stream.append_single( midi_stream_event( timestamp_ms, system_exclusive_index | 0x80000000 ) );
+				}
+			}
+			else if ( data_count >= 3 && event.m_data[ 0 ] == 0xFF )
+			{
+				if ( event.m_data[ 1 ] == 4 )
+				{
+					data_count -= 2;
+					data.grow_size( data_count );
+					event.copy_data( data.get_ptr(), 2, data_count );
+					device_name.reset();
+					pfc::stringToLowerAppend( device_name, (const char *)data.get_ptr(), data_count );
+					unsigned port_number;
+					for ( port_number = 0; port_number < m_device_names.get_count(); ++port_number )
+					{
+						if ( !strcmp( m_device_names[ port_number ], device_name ) )
+						{
+							break;
+						}
+					}
+					port_numbers[ next_track ] = port_number;
+				}
+				else if ( event.m_data[ 1 ] == 0x20 || event.m_data[ 1 ] == 0x21 )
+				{
+					port_numbers[ next_track ] = event.m_data[ 2 ];
 				}
 			}
 		}
@@ -628,7 +689,7 @@ const unsigned midi_container::get_track_count() const
 const unsigned midi_container::get_channel_count( unsigned subsong ) const
 {
 	unsigned count = 0;
-	for (unsigned i = 0, j = 1; i < 16; ++i, j <<= 1)
+	for (unsigned i = 0, j = 1; i < 32; ++i, j <<= 1)
 	{
 		if ( m_channel_mask[ subsong ] & j ) ++count;
 	}

@@ -1,7 +1,12 @@
-#define MYVERSION "1.128"
+#define MYVERSION "1.129"
 
 /*
 	change log
+
+2011-03-03 13:44 UTC - kode54
+- Implemented support for multi-port MIDI files, properly supported by the
+  FluidSynth and BASSMIDI players
+- Version is now 1.129
 
 2011-02-29 02:00 UTC - kode54
 - Updated BASSMIDI to version 2.4.5.13

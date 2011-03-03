@@ -316,13 +316,15 @@ bool VSTiPlayer::Load(const midi_container & midi_file, unsigned subsong, unsign
 				for (i = 0; i < mStream.get_count(); i++)
 				{
 					if (mStream[ i ].m_timestamp > uTimeEnd) break;
-					UINT ev = mStream[ i ].m_event & 0xFF0000F0;
+					UINT ev = mStream[ i ].m_event & 0x800000F0;
 					if ( ev == 0x90 || ev == 0x80 )
 					{
+						UINT port = ( mStream[ i ].m_event & 0x7F000000 ) >> 24;
 						UINT ch = mStream[ i ].m_event & 0x0F;
 						UINT note = ( mStream[ i ].m_event >> 8 ) & 0x7F;
 						UINT on = ( ev == 0x90 ) && ( mStream[ i ].m_event & 0xFF0000 );
-						note_on [ ch * 128 + note ] = on;
+						UINT bit = 1 << port;
+						note_on [ ch * 128 + note ] = ( note_on [ ch * 128 + note ] & ~bit ) | ( bit * on );
 					}
 				}
 				mStream.set_count( i );
@@ -330,7 +332,13 @@ bool VSTiPlayer::Load(const midi_container & midi_file, unsigned subsong, unsign
 				{
 					if ( note_on[ j ] )
 					{
-						mStream.append_single( midi_stream_event( uTimeEnd, ( j >> 7 ) + ( j & 0x7F ) * 0x100 + 0x90 ) );
+						for ( UINT k = 0; k < 8; k++ )
+						{
+							if ( note_on[ j ] & ( 1 << k ) )
+							{
+								mStream.append_single( midi_stream_event( uTimeEnd, ( k << 24 ) + ( j >> 7 ) + ( j & 0x7F ) * 0x100 + 0x90 ) );
+							}
+						}
 					}
 				}
 			}
@@ -422,7 +430,7 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 			for (i = uStreamPosition; i < stream_end; i++)
 			{
-				if (!(mStream[i].m_event & 0xFF000000)) events_size += sizeof(VstMidiEvent);
+				if (!(mStream[i].m_event & 0x80000000)) events_size += sizeof(VstMidiEvent);
 				else events_size += sizeof(VstMidiSysexEvent);
 			}
 
@@ -437,7 +445,7 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 			{
 				events_list->events[i] = event;
 
-				if (!(mStream[uStreamPosition].m_event & 0xFF000000))
+				if (!(mStream[uStreamPosition].m_event & 0x80000000))
 				{
 					VstMidiEvent * e = (VstMidiEvent*) event;
 					memset(e, 0, sizeof(*e));
@@ -498,7 +506,7 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 				for (i = uStreamPosition; i < mStream.get_count(); i++)
 				{
-					if (!(mStream[i].m_event & 0xFF000000)) events_size += sizeof(VstMidiEvent);
+					if (!(mStream[i].m_event & 0x80000000)) events_size += sizeof(VstMidiEvent);
 					else events_size += sizeof(VstMidiSysexEvent);
 				}
 
@@ -513,7 +521,7 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 				{
 					events_list->events[i] = event;
 
-					if (!(mStream[uStreamPosition].m_event & 0xFF000000))
+					if (!(mStream[uStreamPosition].m_event & 0x80000000))
 					{
 						VstMidiEvent * e = (VstMidiEvent*) event;
 						memset(e, 0, sizeof(*e));
@@ -637,15 +645,15 @@ void VSTiPlayer::Seek(unsigned sample)
 		for (i = 0, stream_start = uStreamPosition - stream_start; i < stream_start; i++)
 		{
 			midi_stream_event & e = me[i];
-			if ((e.m_event & 0xFF0000F0) == 0x90 && (e.m_event & 0xFF0000)) // note on
+			if ((e.m_event & 0x800000F0) == 0x90 && (e.m_event & 0xFF0000)) // note on
 			{
 				if ((e.m_event & 0x0F) == 9) // hax
 				{
 					e.m_event = 0;
 					continue;
 				}
-				DWORD m = (e.m_event & 0xFF0F) | 0x80; // note off
-				DWORD m2 = e.m_event & 0xFFFF; // also note off
+				DWORD m = (e.m_event & 0x7F00FF0F) | 0x80; // note off
+				DWORD m2 = e.m_event & 0x7F00FFFF; // also note off
 				for (j = i + 1; j < stream_start; j++)
 				{
 					midi_stream_event & e2 = me[j];
@@ -675,7 +683,7 @@ void VSTiPlayer::Seek(unsigned sample)
 
 		for (i = 0; i < j; i++)
 		{
-			if (!(me[i].m_event & 0xFF000000)) events_size += sizeof(VstMidiEvent);
+			if (!(me[i].m_event & 0x80000000)) events_size += sizeof(VstMidiEvent);
 			else events_size += sizeof(VstMidiSysexEvent);
 		}
 
@@ -692,7 +700,7 @@ void VSTiPlayer::Seek(unsigned sample)
 		{
 			my_events_list->events[i] = event;
 
-			if (!(me[i].m_event & 0xFF000000))
+			if (!(me[i].m_event & 0x80000000))
 			{
 				VstMidiEvent * e = (VstMidiEvent*) event;
 				memset(e, 0, sizeof(*e));
