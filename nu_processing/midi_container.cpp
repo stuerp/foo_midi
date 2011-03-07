@@ -362,7 +362,7 @@ void midi_container::add_track( const midi_track & p_track )
 					m_device_names.append_single( device_name );
 				}
 			}
-			else if ( event.m_data[ 1 ] == 0x20 || event.m_data[ 1 ] == 0x21 )
+			else if ( event.m_data[ 1 ] == 0x21 )
 			{
 				port_number = event.m_data[ 2 ];
 			}
@@ -550,7 +550,7 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 					}
 					port_numbers[ next_track ] = port_number;
 				}
-				else if ( event.m_data[ 1 ] == 0x20 || event.m_data[ 1 ] == 0x21 )
+				else if ( event.m_data[ 1 ] == 0x21 )
 				{
 					port_numbers[ next_track ] = event.m_data[ 2 ];
 				}

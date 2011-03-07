@@ -1,7 +1,16 @@
-#define MYVERSION "1.129"
+#define MYVERSION "1.131"
 
 /*
 	change log
+
+2011-03-06 00:53 UTC - kode54
+- Fixed the consequences of odd files with lots of weird instrument name meta
+  events losing entire tracks in playback
+- Version is now 1.131
+
+2011-03-05 07:02 UTC - kode54
+- Fixed multi-port MIDI file support
+- Version is now 1.130
 
 2011-03-03 13:44 UTC - kode54
 - Implemented support for multi-port MIDI files, properly supported by the

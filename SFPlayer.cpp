@@ -357,8 +357,7 @@ void SFPlayer::send_event(DWORD b)
 		int chan = b & 0x0F;
 		int port = (b >> 24) & 0x7F;
 
-		if ( port == 1 ) chan += 16;
-		else if ( port > 1 ) return;
+		if ( port & 1 ) chan += 16;
 
 		switch (cmd)
 		{

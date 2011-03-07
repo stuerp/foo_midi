@@ -481,8 +481,7 @@ void BMPlayer::send_event(DWORD b)
 		unsigned channel = b & 0x0F;
 		unsigned command = b & 0xF0;
 		unsigned event_length = ( command == 0xC0 || command == 0xD0 ) ? 2 : 3;
-		if (port == 1) channel += 16;
-		else if (port > 1) return;
+		if (port & 1) channel += 16;
 		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW + 1 + channel, event, event_length );
 		if ( command == 0xB0 && event[ 1 ] == 0 )
 		{
