@@ -1,7 +1,11 @@
-#define MYVERSION "1.131"
+#define MYVERSION "1.132"
 
 /*
 	change log
+
+2011-03-21 17:55 UTC - kode54
+- Updated BASSMIDI to version 2.4.5.14
+- Version is now 1.132
 
 2011-03-06 00:53 UTC - kode54
 - Fixed the consequences of odd files with lots of weird instrument name meta
