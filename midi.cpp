@@ -1,7 +1,11 @@
-#define MYVERSION "1.132"
+#define MYVERSION "1.133"
 
 /*
 	change log
+
+2011-03-31 09:31 UTC - kode54
+- Updated BASSMIDI to version 2.4.6
+- Version is now 1.133
 
 2011-03-21 17:55 UTC - kode54
 - Updated BASSMIDI to version 2.4.5.14
