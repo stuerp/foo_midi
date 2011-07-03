@@ -1,7 +1,12 @@
-#define MYVERSION "1.134"
+#define MYVERSION "1.135"
 
 /*
 	change log
+
+2011-07-04 22:45 UTC - kode54
+- Changed FluidSynth and BASSMIDI drivers to require GM, GS, or XG mode for
+  relevant drum channel controls to work
+- Version is now 1.135
 
 2011-07-03 03:42 UTC - kode54
 - Fixed S-YXG50 VSTi configuration preset for 'funny' versions with junk after

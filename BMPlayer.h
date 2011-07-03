@@ -63,6 +63,14 @@ private:
 	UINT               uStreamLoopStart;
 	DWORD              uTimeLoopStart;
 
+	enum
+	{
+	                   mode_gm = 0,
+	                   mode_gs,
+	                   mode_xg
+	}
+	                   synth_mode;
+
 	BYTE               gs_part_to_ch[32];
 	BYTE               drum_channels[32];
 };

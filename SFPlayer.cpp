@@ -1,5 +1,9 @@
 #include "SFPlayer.h"
 
+static const t_uint8 sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
+static const t_uint8 sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
+static const t_uint8 sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
+
 SFPlayer::SFPlayer()
 {
 	_synth = 0;
@@ -11,6 +15,8 @@ SFPlayer::SFPlayer()
 	uInterpolationMethod = FLUID_INTERP_DEFAULT;
 
 	reset_drums();
+
+	synth_mode = mode_gm;
 
 	_settings = new_fluid_settings();
 
@@ -283,6 +289,8 @@ void SFPlayer::Seek(unsigned sample)
 		fluid_synth_set_interp_method( _synth, -1, uInterpolationMethod );
 
 		reset_drums();
+
+		synth_mode = mode_gm;
 	}
 
 	uTimeCurrent = sample;
@@ -377,10 +385,18 @@ void SFPlayer::send_event(DWORD b)
 				if ( param1 == 0x20 ) bank = ( bank & 0x3F80 ) | ( param2 & 0x7F );
 				else bank = ( bank & 0x007F ) | ( ( param2 & 0x7F ) << 7 );
 				channel_banks[ chan ] = bank;
-				if ( bank == 16256 || bank == 15360 )
-					drum_channels [chan] = 1;
-				else if ( bank == 15488 )
-					drum_channels [chan] = 0;
+				if ( synth_mode == mode_xg )
+				{
+					if ( bank == 16256 ) drum_channels [chan] = 1;
+					else drum_channels [chan] = 0;
+				}
+				else if ( synth_mode == mode_gm ) // GM 2
+				{
+					if ( bank == 15360 )
+						drum_channels [chan] = 1;
+					else if ( bank == 15488 )
+						drum_channels [chan] = 0;
+				}
 			}
 			break;
 		case 0xC0:
@@ -401,7 +417,17 @@ void SFPlayer::send_event(DWORD b)
 		const t_uint8 * data;
 		t_size size;
 		mSysexMap.get_entry( n, data, size );
-		if ( size == 11 &&
+		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
+			( size == _countof( sysex_gs_reset ) && !memcmp( data, sysex_gs_reset, _countof( sysex_gs_reset ) ) ) ||
+			( size == _countof( sysex_xg_reset ) && !memcmp( data, sysex_xg_reset, _countof( sysex_xg_reset ) ) ) )
+		{
+			fluid_synth_system_reset( _synth );
+			reset_drums();
+			synth_mode = ( size == _countof( sysex_gm_reset ) ) ? mode_gm :
+			             ( size == _countof( sysex_gs_reset ) ) ? mode_gs :
+			                                                      mode_xg;
+		}
+		else if ( synth_mode == mode_gs && size == 11 &&
 			data [0] == 0xF0 && data [1] == 0x41 && data [3] == 0x42 &&
 			data [4] == 0x12 && data [5] == 0x40 && (data [6] & 0xF0) == 0x10 &&
 			data [10] == 0xF7)
@@ -457,6 +483,7 @@ bool SFPlayer::startup()
 	}
 	fluid_synth_set_interp_method( _synth, -1, uInterpolationMethod );
 	reset_drums();
+	synth_mode = mode_gm;
 	if (sSoundFontName.length())
 	{
 		pfc::string_extension ext(sSoundFontName);

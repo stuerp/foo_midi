@@ -485,12 +485,20 @@ void BMPlayer::send_event(DWORD b)
 		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW + 1 + channel, event, event_length );
 		if ( command == 0xB0 && event[ 1 ] == 0 )
 		{
-			if ( event[ 2 ] == 127 ) drum_channels[ channel ] = 1;
-			else if ( event[ 2 ] == 121 ) drum_channels[ channel ] = 0;
+			if ( synth_mode == mode_xg )
+			{
+				if ( event[ 2 ] == 127 ) drum_channels[ channel ] = 1;
+				else drum_channels[ channel ] = 0;
+			}
+			else if ( synth_mode == mode_gm ) // GM 2
+			{
+				if ( event[ 2 ] == 120 ) drum_channels[ channel ] = 1;
+				else if ( event[ 2 ] == 121 ) drum_channels[ channel ] = 0;
+			}
 		}
-		else if ( command == 0xC0 && drum_channels[ channel ] )
+		else if ( command == 0xC0 )
 		{
-			BASS_MIDI_StreamEvent( _stream, channel, MIDI_EVENT_DRUMS, 1 );
+			BASS_MIDI_StreamEvent( _stream, channel, MIDI_EVENT_DRUMS, drum_channels[ channel ] );
 		}
 	}
 	else
@@ -505,8 +513,11 @@ void BMPlayer::send_event(DWORD b)
 			( size == _countof( sysex_xg_reset ) && !memcmp( data, sysex_xg_reset, _countof( sysex_xg_reset ) ) ) )
 		{
 			reset_drum_channels();
+			synth_mode = ( size == _countof( sysex_gm_reset ) ) ? mode_gm :
+			             ( size == _countof( sysex_gs_reset ) ) ? mode_gs :
+			                                                      mode_xg;
 		}
-		else if ( size == 11 &&
+		else if ( synth_mode == mode_gs && size == 11 &&
 			data [0] == 0xF0 && data [1] == 0x41 && data [3] == 0x42 &&
 			data [4] == 0x12 && data [5] == 0x40 && (data [6] & 0xF0) == 0x10 &&
 			data [10] == 0xF7)
@@ -641,6 +652,8 @@ bool BMPlayer::startup()
 	BASS_MIDI_StreamSetFonts( _stream, fonts.get_ptr(), fonts.get_count() );
 
 	reset_drum_channels();
+
+	synth_mode = mode_gm;
 
 	return true;
 }
