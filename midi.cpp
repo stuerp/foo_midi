@@ -1,7 +1,12 @@
-#define MYVERSION "1.133"
+#define MYVERSION "1.134"
 
 /*
 	change log
+
+2011-07-03 03:42 UTC - kode54
+- Fixed S-YXG50 VSTi configuration preset for 'funny' versions with junk after
+  the preset name
+- Version is now 1.134
 
 2011-03-31 09:31 UTC - kode54
 - Updated BASSMIDI to version 2.4.6
@@ -819,19 +824,18 @@ public:
 						vstPlayer->getChunk(buffer);
 						if (buffer.get_size())
 						{
-							static const unsigned char def_syxg50[] = { 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74,
-								0x20, 0x53, 0x65, 0x74, 0x75, 0x70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-								0x20, 1, 1, 1, 0x65 };
+							static const unsigned char def_syxg50_partial[] = { 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74,
+								0x20, 0x53, 0x65, 0x74, 0x75, 0x70, 0 };
 
 							static const unsigned char def_hypersonic2_id[] = { 0x52, 0xB8, 0x9E, 0x3E };
 
 							if (vstPlayer->getUniqueID() == 'd2w1' &&
-								buffer.get_size() == sizeof(def_syxg50) &&
-								!memcmp(buffer.get_ptr(), &def_syxg50, sizeof(def_syxg50)))
+								buffer.get_size() == 0x21 &&
+								!memcmp(buffer.get_ptr(), &def_syxg50_partial, sizeof(def_syxg50_partial)))
 							{
 								unsigned char * ptr = (unsigned char *) buffer.get_ptr();
 								ptr[0x1C] = 128;
-								vstPlayer->setChunk(ptr, sizeof(def_syxg50));
+								vstPlayer->setChunk(ptr, 0x21);
 							}
 							else if ( vstPlayer->getUniqueID() == 'StSS' &&
 								buffer.get_size() == 35559 && 
