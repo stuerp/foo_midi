@@ -1,7 +1,11 @@
-#define MYVERSION "1.135"
+#define MYVERSION "1.136"
 
 /*
 	change log
+
+2011-07-05 04:03 UTC - kode54
+- Limited FluidSynth and BASSMIDI GS drum channel control to 16 channels
+- Version is now 1.136
 
 2011-07-04 22:45 UTC - kode54
 - Changed FluidSynth and BASSMIDI drivers to require GM, GS, or XG mode for

@@ -77,7 +77,7 @@ private:
 
 	void reset_drums();
 	BYTE               drum_channels[32];
-	BYTE               gs_part_to_ch[32];
+	BYTE               gs_part_to_ch[16];
 	unsigned short     channel_banks[32];
 };
 

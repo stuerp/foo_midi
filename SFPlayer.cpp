@@ -435,13 +435,13 @@ void SFPlayer::send_event(DWORD b)
 			if (data [7] == 2)
 			{
 				// GS MIDI channel to part assign
-				gs_part_to_ch [ data [6] & 31 ] = data [8];
+				gs_part_to_ch [ data [6] & 15 ] = data [8];
 			}
 			else if ( data [7] == 0x15 )
 			{
 				// GS part to rhythm allocation
-				unsigned int drum_channel = gs_part_to_ch [ data [6] & 31 ];
-				if ( drum_channel < 32 )
+				unsigned int drum_channel = gs_part_to_ch [ data [6] & 15 ];
+				if ( drum_channel < 16 )
 				{
 					drum_channels [ drum_channel ] = data [8];
 				}
@@ -558,8 +558,7 @@ bool SFPlayer::startup()
 
 void SFPlayer::reset_drums()
 {
-	static const BYTE part_to_ch[32] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15,
-	                                    16,17,18,19,20,21,22,23,24,25, 26, 27, 28, 29, 30, 31};
+	static const BYTE part_to_ch[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
 
 	memset( drum_channels, 0, sizeof( drum_channels ) );
 	drum_channels [9] = 1;
