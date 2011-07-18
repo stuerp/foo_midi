@@ -1,7 +1,19 @@
-#define MYVERSION "1.136"
+#define MYVERSION "1.138"
+
+// #define DXISUPPORT
 
 /*
 	change log
+
+2011-07-11 19:58 UTC - kode54
+- Implemented GM2 reset handling in FluidSynth and BASSMIDI drivers
+- Fixed FluidSynth and BASSMIDI GS drum channel control again for files
+  where tracks may end up mapped to the second port
+- Version is now 1.138
+
+2011-07-10 23:19 UTC - kode54
+- Added VSTi plug-in configuration
+- Version is now 1.137
 
 2011-07-05 04:03 UTC - kode54
 - Limited FluidSynth and BASSMIDI GS drum channel control to 16 channels
@@ -386,10 +398,6 @@
 
 #define _WIN32_WINNT 0x0501
 
-#ifdef DXISUPPORT
-#include "stdafx.h"
-#endif
-
 #include <foobar2000.h>
 #include "../helpers/dropdown_helper.h"
 #include "../ATLHelpers/ATLHelpers.h"
@@ -410,15 +418,9 @@
 #define FLUIDSYNTH_DLL L"fluidsynth_debug.dll"
 #endif
 
-//#define DXISUPPORT 1
-
 #ifdef DXISUPPORT
-#include "DXiPlayer.h"
+#include "DXiProxy.h"
 #include "PlugInInventory.h"
-
-#include "MfxSeq.h"
-#include "MfxBufferFactory.h"
-
 #pragma comment( lib, "strmiids.lib" )
 #endif
 
@@ -476,6 +478,34 @@ static const GUID guid_cfg_munt_debug_info =
 // {A395C6FD-492A-401B-8BDB-9DF53E2EF7CF}
 static const GUID guid_cfg_fluid_interp_method = 
 { 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } };
+// {A1097E84-09B6-4708-9A58-8B1247D54299}
+static const GUID guid_cfg_vst_config = 
+{ 0xa1097e84, 0x9b6, 0x4708, { 0x9a, 0x58, 0x8b, 0x12, 0x47, 0xd5, 0x42, 0x99 } };
+#ifdef DXISUPPORT
+// {D5C87282-A9E6-40F3-9382-9568E6541A46}
+static const GUID guid_cfg_dxi_plugin = 
+{ 0xd5c87282, 0xa9e6, 0x40f3, { 0x93, 0x82, 0x95, 0x68, 0xe6, 0x54, 0x1a, 0x46 } };
+#endif
+
+template <typename TObj>
+class cfg_array : public cfg_var, public pfc::array_t<TObj> {
+public:
+	cfg_array(const GUID& guid) : cfg_var(guid), pfc::array_t<TObj>() {}
+
+	pfc::array_t<TObj> & val() {return *this;}
+	pfc::array_t<TObj> const & val() const {return *this;}
+
+	void get_data_raw(stream_writer * p_stream,abort_callback & p_abort) {
+		stream_writer_formatter<> out(*p_stream,p_abort);
+		const pfc::array_t<TObj> * ptr = this;
+		out.write_array( *ptr );
+	}
+	void set_data_raw(stream_reader * p_stream,t_size p_sizehint,abort_callback & p_abort) {
+		stream_reader_formatter<> in(*p_stream,p_abort);
+		pfc::array_t<TObj> * ptr = this;
+		in.read_array( *ptr );
+	}
+};
 
 enum
 {
@@ -489,6 +519,10 @@ enum
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
 };
 
+#ifdef DXISUPPORT
+static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
+#endif
+
 cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
 		cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion), /*cfg_hack_xg_drums("yam", 0),*/
 		/*cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),*/ cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
@@ -496,7 +530,13 @@ cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid
 		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
 		cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method);
 
+#ifdef DXISUPPORT
+cfg_guid cfg_dxi_plugin(guid_cfg_dxi_plugin, default_cfg_dxi_plugin);
+#endif
+
 cfg_string cfg_vst_path(guid_cfg_vst_path, "");
+
+cfg_array<t_uint8> cfg_vst_config(guid_cfg_vst_config);
 
 cfg_string cfg_soundfont_path(guid_cfg_soundfont_path, "");
 
@@ -519,10 +559,6 @@ static const char * exts[]=
 	"LDS",
 };
 
-#ifdef DXISUPPORT
-HRESULT LoadMid( CMfxSeq& rSeq, CFile& rFile );
-#endif
-
 static critical_section sync;
 static int g_running = 0;
 static int g_srate;
@@ -530,9 +566,7 @@ static int g_srate;
 class input_midi
 {
 #ifdef DXISUPPORT
-	bool initialized;
-	CDXiPlayer * thePlayer;
-	CMfxSeq * theSequence;
+	DXiProxy * dxiProxy;
 #endif
 
 	VSTiPlayer * vstPlayer;
@@ -586,9 +620,7 @@ public:
 		b_ff7loopz(!!cfg_ff7loopz), b_emidi_ex(!!cfg_emidi_exclusion) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
-		initialized = false;
-		thePlayer = NULL;
-		theSequence = NULL;
+		dxiProxy = NULL;
 #endif
 
 		vstPlayer = NULL;
@@ -617,16 +649,12 @@ public:
 			g_running--;
 		}
 #ifdef DXISUPPORT
-		if (thePlayer) delete thePlayer;
-		if (theSequence) delete theSequence;
+		if (dxiProxy) delete dxiProxy;
 #endif
 		if (vstPlayer) delete vstPlayer;
 		if (sfPlayer) delete sfPlayer;
 		if (bmPlayer) delete bmPlayer;
 		if (mt32Player) delete mt32Player;
-#ifdef DXISUPPORT
-		if (initialized) CoUninitialize();
-#endif
 	}
 
 private:
@@ -644,11 +672,9 @@ private:
 	void set_loop()
 	{
 #ifdef DXISUPPORT
-		if (plugin>1 && thePlayer)
+		if (plugin == 5 && dxiProxy)
 		{
-			thePlayer->SetLoopStart(loop_begin != ~0 ? loop_begin : 0);
-			thePlayer->SetLoopEnd(loop_end != ~0 ? loop_end : length_ticks);
-			thePlayer->SetLooping(TRUE);
+			dxiProxy->setLoop( loop_begin != ~0 ? loop_begin : 0, loop_end != ~0 ? loop_end : length_ticks );
 		}
 		/*else
 		{
@@ -775,48 +801,44 @@ public:
 		}
 
 #ifdef DXISUPPORT
-		if (plugin>1)
+		if (plugin == 5)
 		{
-			thePlayer = new CDXiPlayer;
-			CoInitialize(NULL);
-			initialized = true;
-			if (SUCCEEDED(thePlayer->Initialize()))
+			pfc::array_t<t_uint8> serialized_midi_file;
+			midi_file.serialize_as_standard_midi_file( serialized_midi_file );
+
+			delete dxiProxy;
+			dxiProxy = NULL;
+
+			dxiProxy = new DXiProxy;
+			if ( SUCCEEDED( dxiProxy->initialize() ) )
 			{
-				thePlayer->SetSampleRate(srate);
-				if (SUCCEEDED(thePlayer->SetSeq(theSequence)))
+				dxiProxy->setSampleRate( srate );
+				if ( SUCCEEDED( dxiProxy->setSequence( serialized_midi_file.get_ptr(), serialized_midi_file.get_count() ) ) )
 				{
-					CPlugInInventory theInventory;
-					if (SUCCEEDED(theInventory.EnumPlugIns()))
+					if ( SUCCEEDED( dxiProxy->setPlugin( cfg_dxi_plugin.get_value() ) ) )
 					{
-						IBaseFilter* pFilter = NULL;
-						if (SUCCEEDED(theInventory.CreatePlugIn(plugin-2, &pFilter)))
+						dxiProxy->Stop();
+						dxiProxy->Play(TRUE);
+
+						eof = false;
+						dont_loop = true;
+
+						if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type)
 						{
-							thePlayer->SetFilter(pFilter);
-							pFilter->Release();
-							thePlayer->Stop();
-							thePlayer->Play(TRUE);
-
-							eof = false;
-							dont_loop = true;
-
-							if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type)
+							if (cfg_loop_type == 1)
 							{
-								if (cfg_loop_type == 1)
-								{
-									if (loop_begin != -1 || loop_end != -1)
-									{
-										set_loop();
-									}
-								}
-								else
+								if (loop_begin != -1 || loop_end != -1)
 								{
 									set_loop();
 								}
 							}
-
-							samples_done = 0;
-							return io_result_success;
+							else
+							{
+								set_loop();
+							}
 						}
+
+						return;
 					}
 				}
 			}
@@ -829,48 +851,8 @@ public:
 				vstPlayer = new VSTiPlayer;
 				if (vstPlayer->LoadVST(cfg_vst_path))
 				{
-					{
-						pfc::array_t< t_uint8 > buffer;
-						vstPlayer->getChunk(buffer);
-						if (buffer.get_size())
-						{
-							static const unsigned char def_syxg50_partial[] = { 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74,
-								0x20, 0x53, 0x65, 0x74, 0x75, 0x70, 0 };
+					vstPlayer->setChunk( cfg_vst_config.val().get_ptr(), cfg_vst_config.val().get_count() );
 
-							static const unsigned char def_hypersonic2_id[] = { 0x52, 0xB8, 0x9E, 0x3E };
-
-							if (vstPlayer->getUniqueID() == 'd2w1' &&
-								buffer.get_size() == 0x21 &&
-								!memcmp(buffer.get_ptr(), &def_syxg50_partial, sizeof(def_syxg50_partial)))
-							{
-								unsigned char * ptr = (unsigned char *) buffer.get_ptr();
-								ptr[0x1C] = 128;
-								vstPlayer->setChunk(ptr, 0x21);
-							}
-							else if ( vstPlayer->getUniqueID() == 'StSS' &&
-								buffer.get_size() == 35559 && 
-								!memcmp((char*)buffer.get_ptr() + 0x88BB, &def_hypersonic2_id, 4))
-							{
-								try
-								{
-#include "hypersonic2.h"
-									abort_callback_impl m_abort;
-									service_ptr_t<file> in, temp;
-									//filesystem::g_open(in, "file://c:\\new_chunk.gz", filesystem::open_mode_read, m_abort);
-									filesystem::g_open_tempmem(in, m_abort);
-									in->write(hypersonic2_gm, sizeof(hypersonic2_gm), m_abort);
-									in->reopen(m_abort);
-									unpacker::g_open(temp, in, m_abort);
-									buffer.set_size(temp->get_size_ex(m_abort));
-									temp->read(buffer.get_ptr(), buffer.get_size(), m_abort);
-									vstPlayer->setChunk(buffer.get_ptr(), buffer.get_size());
-								}
-								catch(...)
-								{
-								}
-							}
-						}
-					}
 					vstPlayer->setSampleRate(srate);
 
 					unsigned loop_mode = 0;
@@ -1079,7 +1061,7 @@ public:
 		if (eof) return false;
 
 #ifdef DXISUPPORT
-		if (plugin>1)
+		if (plugin == 5)
 		{
 			unsigned todo = 1024;
 
@@ -1088,25 +1070,22 @@ public:
 				if (length_samples && samples_done + todo > length_samples)
 				{
 					todo = length_samples - samples_done;
-					if (!todo) return io_result_eof;
+					if (!todo) return false;
 				}
 			}
 
 #if audio_sample_size != 32
-			if ( ! sample_buffer.check_size( todo * 2 ) )
-				return io_result_error_out_of_memory;
+			sample_buffer.grow_size( todo * 2 );
 
 			float * ptr = sample_buffer.get_ptr();
 
 			thePlayer->FillBuffer(ptr, todo);
 
-			if ( ! p_chunk.set_data_32( ptr, todo, 2, srate ) )
-				return io_result_error_out_of_memory;
+			p_chunk.set_data_32( ptr, todo, 2, srate );
 #else
-			if ( ! p_chunk.check_data_size( todo * 2 ) )
-				return io_result_error_out_of_memory;
+			p_chunk.set_data_size( todo * 2 );
 			float * ptr = p_chunk.get_data();
-			thePlayer->FillBuffer( ptr, todo );
+			dxiProxy->fillBuffer( ptr, todo );
 			p_chunk.set_srate( srate );
 			p_chunk.set_channels( 2 );
 			p_chunk.set_sample_count( todo );
@@ -1114,7 +1093,7 @@ public:
 
 			samples_done += todo;
 
-			return io_result_success;
+			return true;
 		}
 		else
 #endif
@@ -1352,17 +1331,13 @@ fagotry:
 		}
 
 #ifdef DXISUPPORT
-		if ( plugin > 1 )
+		if ( plugin == 5 )
 		{
-			unsigned tick = theSequence->m_tempoMap.Sample2Tick( seek_msec, 1000 );
-
-			thePlayer->Stop();
-			thePlayer->SetPosition( tick );
-			thePlayer->Play( TRUE );
+			dxiProxy->setPosition( seek_msec );
 
 			samples_done = done;
 
-			return io_result_success;
+			return;
 		}
 		else
 #endif
@@ -1516,6 +1491,7 @@ public:
 		COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_EMIDI_EX, BN_CLICKED, OnButtonClick)
+		COMMAND_HANDLER_EX(IDC_PLUGIN_CONFIGURE, BN_CLICKED, OnButtonConfig)
 		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
 	END_MSG_MAP()
 private:
@@ -1524,6 +1500,7 @@ private:
 	void OnSelectionChange(UINT, int, CWindow);
 	void OnPluginChange(UINT, int, CWindow);
 	void OnButtonClick(UINT, int, CWindow);
+	void OnButtonConfig(UINT, int, CWindow);
 	void OnSetFocus(UINT, int, CWindow);
 	bool HasChanged();
 	void OnChanged();
@@ -1532,12 +1509,17 @@ private:
 
 	const preferences_page_callback::ptr m_callback;
 
+	pfc::array_t< CLSID > dxi_plugins;
+
 	struct vsti_info
 	{
 		pfc::string8 path, display_name;
+		bool has_editor;
 	};
 
 	pfc::array_t< vsti_info > vsti_plugins;
+
+	pfc::array_t< t_uint8 > vsti_config;
 
 	pfc::string8 m_soundfont, m_munt_path;
 };
@@ -1610,6 +1592,8 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 						}
 						else info.display_name = _find->GetFileName();
 
+						info.has_editor = vstPlayer.hasEditor();
+
 						vsti_plugins.append_single( info );
 					}
 				}
@@ -1647,7 +1631,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		if ( plugin == 1 && ! stricmp_utf8( vsti_plugins[ i ].path, cfg_vst_path ) )
 			vsti_selected = i;
 	}
-	
+
 	/*{
 	HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
 	if (fsmod)
@@ -1669,6 +1653,15 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
 	}
 
+	if ( plugin != 1 )
+	{
+		GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( FALSE );
+	}
+	else
+	{
+		GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( vsti_plugins[ vsti_selected ].has_editor );
+		vsti_config = cfg_vst_config.val();
+	}
 
 	{
 		m_soundfont = cfg_soundfont_path;
@@ -1687,6 +1680,10 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 
 #ifdef DXISUPPORT
+	unsigned dxi_selected = ~0;
+
+	dxi_plugins.set_count( 0 );
+
 	CoInitialize(NULL);
 	{
 		CPlugInInventory theInventory;
@@ -1694,11 +1691,16 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		{
 			unsigned count = theInventory.GetCount();
 			pfc::string8_fastalloc name;
-			CLSID foo;
+			CLSID theClsid;
 			for (unsigned i = 0; i < count; i++)
 			{
-				theInventory.GetInfo(i, &foo, name);
-				uSendMessageText(w, CB_ADDSTRING, 0, name);
+				if (SUCCEEDED(theInventory.GetInfo(i, &theClsid, name)))
+				{
+					dxi_plugins.append_single( theClsid );
+					uSendMessageText(w, CB_ADDSTRING, 0, name);
+
+					if ( theClsid == cfg_dxi_plugin.get_value() ) dxi_selected = i;
+				}
 			}
 		}
 	}
@@ -1710,7 +1712,11 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		plugin = plugin == 2 ? 1 : plugin == 4 ? 2 : 3;
 	}
 #ifdef DXISUPPORT
-	else if ( plugin ) plugin += vsti_count - 1;
+	else if ( plugin == 5 )
+	{
+		if ( dxi_selected != ~0 ) plugin += vsti_count + dxi_selected - 1;
+		else plugin = 0;
+	}
 #endif
 	::SendMessage( w, CB_SETCURSEL, plugin, 0 );
 	
@@ -1786,6 +1792,21 @@ void CMyPreferences::OnButtonClick(UINT, int, CWindow) {
 	OnChanged();
 }
 
+void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
+	int plugin = GetDlgItem( IDC_PLUGIN ).SendMessage( CB_GETCURSEL, 0, 0 );
+	if ( plugin >= 4 && plugin < 4 + vsti_plugins.get_count() )
+	{
+		VSTiPlayer vstPlayer;
+		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 4 ].path ) )
+		{
+			vstPlayer.setChunk( vsti_config.get_ptr(), vsti_config.get_count() );
+			vstPlayer.displayEditorModal( *this );
+			vstPlayer.getChunk( vsti_config );
+			OnChanged();
+		}
+	}
+}
+
 void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	//t_size vsti_count = vsti_plugins.get_size();
 	int plugin = ::SendMessage( w, CB_GETCURSEL, 0, 0 );
@@ -1799,7 +1820,11 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin == 1 );
 
 	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
-	
+
+	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= 4 && plugin < 4 + vsti_plugins.get_count() && vsti_plugins[ plugin - 4 ].has_editor );
+
+	vsti_config.set_count( 0 );
+
 	OnChanged();
 }
 
@@ -1869,7 +1894,9 @@ void CMyPreferences::reset() {
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion );
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
 	SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_SETCURSEL, interp_method_default );
-	
+
+	vsti_config.set_count( 0 );
+
 	OnChanged();
 }
 
@@ -1885,23 +1912,36 @@ void CMyPreferences::apply() {
 	{
 		t_size vsti_count = vsti_plugins.get_size();
 		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
+#ifdef DXISUPPORT
+		t_size dxi_count = dxi_plugins.get_count();
+#endif
 		
 		cfg_vst_path = "";
 		
 		if ( ! plugin )
 		{
 			cfg_plugin = 0;
+			cfg_vst_config.val().set_count( 0 );
 		}
 		else if ( plugin >= 1 && plugin <= 3 )
 		{
 			cfg_plugin = plugin == 1 ? 2 : plugin == 2 ? 4 : 3;
 			//cfg_plugin = plugin - vsti_count + 1;
+			cfg_vst_config.val().set_count( 0 );
 		}
 		else if ( plugin <= vsti_count + 3 )
 		{
 			cfg_plugin = 1;
 			cfg_vst_path = vsti_plugins[ plugin - 4 ].path;
+			cfg_vst_config.val() = vsti_config;
 		}
+#ifdef DXISUPPORT
+		else if ( plugin <= vsti_count + dxi_count + 3 )
+		{
+			cfg_plugin = 5;
+			cfg_dxi_plugin = dxi_plugins[ plugin - vsti_count - 4 ];
+		}
+#endif
 	}
 	cfg_soundfont_path = m_soundfont;
 	cfg_munt_base_path = m_munt_path;
@@ -1929,6 +1969,9 @@ bool CMyPreferences::HasChanged() {
 	{
 		t_size vsti_count = vsti_plugins.get_size();
 		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
+#ifdef DXISUPPORT
+		t_size dxi_count = dxi_plugins.get_count();
+#endif
 		
 		if ( ! plugin )
 		{
@@ -1942,7 +1985,17 @@ bool CMyPreferences::HasChanged() {
 		else if ( plugin <= vsti_count + 3 )
 		{
 			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 4 ].path ) ) changed = true;
+			if ( !changed )
+			{
+				if ( vsti_config.get_count() != cfg_vst_config.val().get_count() || memcmp( vsti_config.get_ptr(), cfg_vst_config.val().get_ptr(), vsti_config.get_count() ) ) changed = true;
+			}
 		}
+#ifdef DXISUPPORT
+		else if ( plugin <= vsti_count + dxi_count + 3 )
+		{
+			if ( cfg_plugin != 5 || dxi_plugins[ plugin - vsti_count - 4 ] != cfg_dxi_plugin.get_value() ) changed = true;
+		}
+#endif
 	}
 	if ( !changed )
 	{

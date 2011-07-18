@@ -6,6 +6,7 @@
 #pragma comment(lib, "../../../bass/c/bassmidi.lib")
 
 static const t_uint8 sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
+static const t_uint8 sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
 static const t_uint8 sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
 static const t_uint8 sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
 
@@ -490,7 +491,7 @@ void BMPlayer::send_event(DWORD b)
 				if ( event[ 2 ] == 127 ) drum_channels[ channel ] = 1;
 				else drum_channels[ channel ] = 0;
 			}
-			else if ( synth_mode == mode_gm ) // GM 2
+			else if ( synth_mode == mode_gm2 )
 			{
 				if ( event[ 2 ] == 120 ) drum_channels[ channel ] = 1;
 				else if ( event[ 2 ] == 121 ) drum_channels[ channel ] = 0;
@@ -509,13 +510,15 @@ void BMPlayer::send_event(DWORD b)
 		mSysexMap.get_entry( n, data, size );
 		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW, data, size );
 		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
+			( size == _countof( sysex_gm2_reset ) && !memcmp( data, sysex_gm2_reset, _countof( sysex_gm2_reset ) ) ) ||
 			( size == _countof( sysex_gs_reset ) && !memcmp( data, sysex_gs_reset, _countof( sysex_gs_reset ) ) ) ||
 			( size == _countof( sysex_xg_reset ) && !memcmp( data, sysex_xg_reset, _countof( sysex_xg_reset ) ) ) )
 		{
 			reset_drum_channels();
-			synth_mode = ( size == _countof( sysex_gm_reset ) ) ? mode_gm :
+			synth_mode = ( size == _countof( sysex_xg_reset ) ) ? mode_xg :
 			             ( size == _countof( sysex_gs_reset ) ) ? mode_gs :
-			                                                      mode_xg;
+			             ( data [4] == 0x01 )                   ? mode_gm :
+			                                                      mode_gm2;
 		}
 		else if ( synth_mode == mode_gs && size == 11 &&
 			data [0] == 0xF0 && data [1] == 0x41 && data [3] == 0x42 &&
@@ -534,6 +537,7 @@ void BMPlayer::send_event(DWORD b)
 				if ( drum_channel < 16 )
 				{
 					drum_channels [ drum_channel ] = data [8];
+					drum_channels [ 16 + drum_channel ] = data [8];
 				}
 			}
 		}

@@ -40,6 +40,10 @@ public:
 	void getChunk(pfc::array_t<t_uint8> & out);
 	void setChunk( const void * in, unsigned size );
 
+	// editor
+	bool hasEditor() const;
+	void displayEditorModal( HWND hwndParent );
+
 	// setup
 	void setSampleRate(unsigned rate);
 	unsigned getChannelCount();

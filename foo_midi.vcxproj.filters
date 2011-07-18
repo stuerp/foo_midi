@@ -45,6 +45,7 @@
       <Filter>new processing</Filter>
     </ClCompile>
     <ClCompile Include="BMPlayer.cpp" />
+    <ClCompile Include="DXiProxy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -60,6 +61,7 @@
       <Filter>new processing</Filter>
     </ClInclude>
     <ClInclude Include="BMPlayer.h" />
+    <ClInclude Include="DXiProxy.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

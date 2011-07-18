@@ -15,6 +15,7 @@ class CDirectSound;
 class CDxFilterGraph;
 class CMfxSeq;
 class CMfxHostSite;
+class IMfxSoftSynth;
 struct IBaseFilter;
 
 ////////////////////////////////////////////////////////////////////////////////

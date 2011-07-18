@@ -11,6 +11,11 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+#include "../../pfc/pfc.h"
+
+class IBaseFilter;
+struct REGFILTER;
+
 class CPlugInInventory  
 {
 public:
@@ -19,7 +24,7 @@ public:
 
 	HRESULT EnumPlugIns();
 	ULONG GetCount() const { return m_cRegFilter; }
-	HRESULT GetInfo( ULONG ix, CLSID* pClsid, string_base & out ) const;
+	HRESULT GetInfo( ULONG ix, CLSID* pClsid, pfc::string_base & out ) const;
 
 	HRESULT CreatePlugIn( ULONG ix, IBaseFilter** ppFilter ) const;
 

@@ -185,7 +185,7 @@ HRESULT CPlugInInventory::EnumPlugIns()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-HRESULT CPlugInInventory::GetInfo( ULONG ix, CLSID* pClsid, string_base & out ) const
+HRESULT CPlugInInventory::GetInfo( ULONG ix, CLSID* pClsid, pfc::string_base & out ) const
 {
 	if (ix >= m_cRegFilter)
 		return E_INVALIDARG;
@@ -193,7 +193,7 @@ HRESULT CPlugInInventory::GetInfo( ULONG ix, CLSID* pClsid, string_base & out ) 
 		return E_POINTER;
 
 	*pClsid = m_aRegFilter[ ix ].Clsid;
-	out.set_string_utf16(m_aRegFilter[ ix ].Name);
+	out = pfc::stringcvt::string_utf8_from_wide( m_aRegFilter[ ix ].Name );
 	return S_OK;
 }
 

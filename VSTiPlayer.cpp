@@ -206,24 +206,194 @@ long VSTiPlayer::getUniqueID()
 	else return 0;
 }
 
+template<typename T>
+static void append_be( pfc::array_t<t_uint8> & out, const T & value )
+{
+	union
+	{
+		T original;
+		t_uint8 raw[sizeof(T)];
+	} carriage;
+	carriage.original = value;
+	for ( unsigned i = 0; i < sizeof(T); ++i )
+	{
+		out.append_single( carriage.raw[ sizeof(T) - 1 - i ] );
+	}
+}
+
+template<typename T>
+static void retrieve_be( T & out, const t_uint8 * & in, unsigned & size )
+{
+	if ( size < sizeof(T) ) return;
+
+	size -= sizeof(T);
+
+	union
+	{
+		T original;
+		t_uint8 raw[sizeof(T)];
+	} carriage;
+	for ( unsigned i = 0; i < sizeof(T); ++i )
+	{
+		carriage.raw[ sizeof(T) - 1 - i ] = *in++;
+	}
+
+	out = carriage.original;
+}
+
 void VSTiPlayer::getChunk( pfc::array_t<t_uint8> & out )
 {
+	out.set_count( 0 );
 	if (pEffect)
 	{
-		void * chunk;
-		long size = pEffect->dispatcher(pEffect, effGetChunk, 0, 0, &chunk, 0);
-		out.set_size( size );
-		memcpy( out.get_ptr(), chunk, size );
+		append_be( out, pEffect->uniqueID );
+		bool type_chunked = !!( pEffect->flags & effFlagsProgramChunks );
+		append_be( out, type_chunked );
+		if ( !type_chunked )
+		{
+			append_be( out, pEffect->numParams );
+			for ( unsigned i = 0, j = pEffect->numParams; i < j; ++i )
+			{
+				float parameter = pEffect->getParameter( pEffect, i );
+				append_be( out, parameter );
+			}
+		}
+		else
+		{
+			void * chunk;
+			long size = pEffect->dispatcher(pEffect, effGetChunk, 0, 0, &chunk, 0);
+			append_be( out, size );
+			out.append_fromptr( ( const t_uint8 * )chunk, size );
+		}
 	}
 }
 
 void VSTiPlayer::setChunk( const void * in, unsigned size )
 {
-	if ( pEffect )
+	if ( pEffect && size )
 	{
-		blChunk.set_size( size );
-		memcpy( blChunk.get_ptr(), in, size );
-		pEffect->dispatcher( pEffect, effSetChunk, 0, size, ( void * ) in, 0 );
+		if ( in != NULL )
+		{
+			blChunk.set_count( size );
+			memcpy( blChunk.get_ptr(), in, size );
+		}
+		in = ( const void * )( blChunk.get_ptr() );
+		size = blChunk.get_count();
+
+		const t_uint8 * inc = ( const t_uint8 * ) in;
+		long effect_id;
+		retrieve_be( effect_id, inc, size );
+		if ( effect_id != pEffect->uniqueID ) return;
+		bool type_chunked;
+		retrieve_be( type_chunked, inc, size );
+		if ( type_chunked != !!( pEffect->flags & effFlagsProgramChunks ) ) return;
+		if ( !type_chunked )
+		{
+			long num_params;
+			retrieve_be( num_params, inc, size );
+			if ( num_params != pEffect->numParams ) return;
+			for ( unsigned i = 0; i < num_params; ++i )
+			{
+				float parameter;
+				retrieve_be( parameter, inc, size );
+				pEffect->setParameter( pEffect, i, parameter );
+			}
+		}
+		else
+		{
+			long chunk_size;
+			retrieve_be( chunk_size, inc, size );
+			if ( chunk_size > size ) return;
+			pEffect->dispatcher( pEffect, effSetChunk, 0, chunk_size, ( void * ) inc, 0 );
+		}
+	}
+}
+
+struct ERect
+{
+	short top;
+	short left;
+	short bottom;
+	short right;
+};
+
+struct MyDLGTEMPLATE: DLGTEMPLATE
+{
+	WORD ext[3];
+	MyDLGTEMPLATE ()
+	{ memset (this, 0, sizeof(*this)); };
+};
+
+INT_PTR CALLBACK EditorProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	
+	AEffect* effect;
+	switch(msg)
+	{
+	case WM_INITDIALOG :
+		{
+			SetWindowLongPtr(hwnd,GWLP_USERDATA,lParam);
+			effect = (AEffect*)lParam;
+			SetWindowText (hwnd, L"VST Editor");
+			SetTimer (hwnd, 1, 20, 0);
+			if(effect)
+			{
+				effect->dispatcher (effect, effEditOpen, 0, 0, hwnd, 0);
+				ERect* eRect = 0;
+				effect->dispatcher (effect, effEditGetRect, 0, 0, &eRect, 0);
+				if(eRect)
+				{
+					int width = eRect->right - eRect->left;
+					int height = eRect->bottom - eRect->top;
+					if(width < 50)
+						width = 50;
+					if(height < 50)
+						height = 50;
+					RECT wRect;
+					SetRect (&wRect, 0, 0, width, height);
+					AdjustWindowRectEx (&wRect, GetWindowLong (hwnd, GWL_STYLE), FALSE, GetWindowLong (hwnd, GWL_EXSTYLE));
+					width = wRect.right - wRect.left;
+					height = wRect.bottom - wRect.top;
+					SetWindowPos (hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE);
+				}
+			}
+		}
+		break;
+	case WM_TIMER :
+		effect = (AEffect*)GetWindowLongPtr(hwnd,GWLP_USERDATA);
+		if(effect)
+			effect->dispatcher (effect, effEditIdle, 0, 0, 0, 0);
+		break;
+	case WM_CLOSE :
+		{
+			effect = (AEffect*)GetWindowLongPtr(hwnd,GWLP_USERDATA);
+			KillTimer (hwnd, 1);
+			if(effect)
+			{
+				effect->dispatcher (effect, effEditClose, 0, 0, 0, 0);
+			}
+
+			EndDialog (hwnd, IDOK);
+		}
+		break;
+	}
+
+	return 0;
+}
+
+bool VSTiPlayer::hasEditor() const
+{
+	if (pEffect && (pEffect->flags & effFlagsHasEditor)) return true;
+	return false;
+}
+
+void VSTiPlayer::displayEditorModal( HWND hwndParent )
+{
+	if(pEffect && (pEffect->flags & effFlagsHasEditor))
+	{
+		MyDLGTEMPLATE t;	
+		t.style = WS_POPUPWINDOW|WS_DLGFRAME|DS_MODALFRAME|DS_CENTER;
+		DialogBoxIndirectParam (core_api::get_my_instance(), &t, hwndParent, (DLGPROC)EditorProc, (LPARAM)pEffect);
 	}
 }
 
@@ -617,7 +787,7 @@ void VSTiPlayer::Seek(unsigned sample)
 			pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
 
 			if ( blChunk.get_size() )
-				pEffect->dispatcher( pEffect, effSetChunk, 0, blChunk.get_size(), blChunk.get_ptr(), 0 );
+				setChunk( NULL, 0 );
 		}
 	}
 

@@ -66,6 +66,7 @@ private:
 	enum
 	{
 	                   mode_gm = 0,
+					   mode_gm2,
 	                   mode_gs,
 	                   mode_xg
 	}
