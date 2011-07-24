@@ -515,7 +515,7 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 			unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
 			if ( event.m_data_count >= 1 ) event_code += event.m_data[ 0 ] << 8;
 			if ( event.m_data_count >= 2 ) event_code += event.m_data[ 1 ] << 16;
-			event_code += ( port_numbers[ next_track ] & 0x7F ) << 24;
+			event_code += port_numbers[ next_track ] ? 0x1000000 : 0;
 			p_stream.append_single( midi_stream_event( timestamp_ms, event_code ) );
 		}
 		else

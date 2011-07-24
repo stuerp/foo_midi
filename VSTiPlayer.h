@@ -5,8 +5,20 @@
 
 #include "nu_processing/midi_container.h"
 
-struct AEffect;
-struct VstEvents;
+#include "c:\\programming\\vstsdk2.3\\source\\common\\aeffect.h"
+#include "c:\\programming\\vstsdk2.3\\source\\common\\aeffectx.h"
+
+struct VstMidiSysexEvent
+{
+	long type;        // kVstSysexType
+	long byteSize;    // 24
+	long deltaFrames;
+	long flags;       // none defined yet
+	long dumpBytes;   // byte size of sysexDump
+	long resvd1;      // zero
+	char *sysexDump;
+	long resvd2;      // zero
+};
 
 #ifdef TIME_INFO
 struct VstTimeInfo;
@@ -60,8 +72,13 @@ public:
 #endif
 
 private:
+	void send_event( DWORD );
+	void render(audio_sample *, unsigned);
+
 	HMODULE      hDll;
-	AEffect    * pEffect;
+	AEffect    * pEffect[2];
+
+	unsigned     uSamplesRemaining;
 
 	unsigned     uSampleRate;
 	unsigned     uLoopMode;
@@ -87,7 +104,18 @@ private:
 	float      * float_null;
 	float      * float_out;
 
-	VstEvents  * events_list;
+	struct myVstEvent
+	{
+		struct myVstEvent * next;
+		unsigned port;
+		union
+		{
+			VstMidiEvent midiEvent;
+			VstMidiSysexEvent sysexEvent;
+		} ev;
+	} * evChain, * evTail;
+
+	void freeChain();
 
 	bool         bNeedIdle;
 

@@ -2,21 +2,6 @@
 
 #include <shared.h>
 
-#include "c:\\programming\\vstsdk2.3\\source\\common\\aeffect.h"
-#include "c:\\programming\\vstsdk2.3\\source\\common\\aeffectx.h"
-
-struct VstMidiSysexEvent
-{
-	long type;        // kVstSysexType
-	long byteSize;    // 24
-	long deltaFrames;
-	long flags;       // none defined yet
-	long dumpBytes;   // byte size of sysexDump
-	long resvd1;      // zero
-	char *sysexDump;
-	long resvd2;      // zero
-};
-
 #define BUFFER_SIZE 4096
 
 class VSTiPlayer;
@@ -84,12 +69,16 @@ VstTimeInfo * VSTiPlayer::getTime()
 VSTiPlayer::VSTiPlayer()
 {
 	hDll = 0;
-	pEffect = 0;
+	pEffect[0] = 0;
+	pEffect[1] = 0;
+	uSamplesRemaining = 0;
 	uSampleRate = 1000;
 	uNumOutputs = 0;
 	uTimeCurrent = 0;
 	uTimeEnd = 0;
 	uTimeLoopStart = 0;
+	evChain = 0;
+	evTail = 0;
 
 	bNeedIdle = false;
 
@@ -115,16 +104,28 @@ VSTiPlayer::VSTiPlayer()
 
 VSTiPlayer::~VSTiPlayer()
 {
-	if (pEffect)
+	if (pEffect[1])
 	{
 		// buffer allocated at start of playback
 		if (blState.get_size())
 		{
-			pEffect->dispatcher(pEffect, effStopProcess, 0, 0, 0, 0);
+			pEffect[1]->dispatcher(pEffect[1], effStopProcess, 0, 0, 0, 0);
 		}
 
-		pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
+		pEffect[1]->dispatcher(pEffect[1], effClose, 0, 0, 0, 0);
 	}
+
+	if (pEffect[0])
+	{
+		if (blState.get_size())
+		{
+			pEffect[0]->dispatcher(pEffect[0], effStopProcess, 0, 0, 0, 0);
+		}
+
+		pEffect[0]->dispatcher(pEffect[0], effClose, 0, 0, 0, 0);
+	}
+
+	freeChain();
 
 	if (hDll)
 	{
@@ -148,20 +149,26 @@ bool VSTiPlayer::LoadVST(const char * path)
 
 		if (pMain)
 		{
-			pEffect = (*pMain)(&audioMaster);
+			pEffect[0] = (*pMain)(&audioMaster);
 
-			if (pEffect)
+			if (pEffect[0])
 			{
-				pEffect->user = this;
+				pEffect[0]->user = this;
 
-				uNumOutputs = min( pEffect->numOutputs, 2 );
+				uNumOutputs = min( pEffect[0]->numOutputs, 2 );
 
-				pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
+				pEffect[0]->dispatcher(pEffect[0], effOpen, 0, 0, 0, 0);
 
-				if (pEffect->dispatcher(pEffect, effGetPlugCategory, 0, 0, 0, 0) == kPlugCategSynth &&
-					pEffect->dispatcher(pEffect, effCanDo, 0, 0, "sendVstMidiEvent", 0))
+				if (pEffect[0]->dispatcher(pEffect[0], effGetPlugCategory, 0, 0, 0, 0) == kPlugCategSynth &&
+					pEffect[0]->dispatcher(pEffect[0], effCanDo, 0, 0, "sendVstMidiEvent", 0))
 				{
-					return true;
+					pEffect[1] = (*pMain)(&audioMaster);
+					if (pEffect[1])
+					{
+						pEffect[1]->user = this;
+						pEffect[1]->dispatcher(pEffect[1], effOpen, 0, 0, 0, 0);
+						return true;
+					}
 				}
 			}
 		}
@@ -175,9 +182,9 @@ void VSTiPlayer::getVendorString(pfc::string_base & out)
 	char temp[65];
 	memset(&temp, 0, sizeof(temp));
 
-	if (pEffect)
+	if (pEffect[0])
 	{
-		pEffect->dispatcher(pEffect, effGetVendorString, 0, 0, &temp, 0);
+		pEffect[0]->dispatcher(pEffect[0], effGetVendorString, 0, 0, &temp, 0);
 		out = temp;
 	}
 }
@@ -187,22 +194,22 @@ void VSTiPlayer::getProductString(pfc::string_base & out)
 	char temp[65];
 	memset(&temp, 0, sizeof(temp));
 
-	if (pEffect)
+	if (pEffect[0])
 	{
-		pEffect->dispatcher(pEffect, effGetProductString, 0, 0, &temp, 0);
+		pEffect[0]->dispatcher(pEffect[0], effGetProductString, 0, 0, &temp, 0);
 		out = temp;
 	}
 }
 
 long VSTiPlayer::getVendorVersion()
 {
-	if (pEffect) return pEffect->dispatcher(pEffect, effGetVendorVersion, 0, 0, 0, 0);
+	if (pEffect) return pEffect[0]->dispatcher(pEffect[0], effGetVendorVersion, 0, 0, 0, 0);
 	else return 0;
 }
 
 long VSTiPlayer::getUniqueID()
 {
-	if (pEffect) return pEffect->uniqueID;
+	if (pEffect) return pEffect[0]->uniqueID;
 	else return 0;
 }
 
@@ -246,22 +253,22 @@ void VSTiPlayer::getChunk( pfc::array_t<t_uint8> & out )
 	out.set_count( 0 );
 	if (pEffect)
 	{
-		append_be( out, pEffect->uniqueID );
-		bool type_chunked = !!( pEffect->flags & effFlagsProgramChunks );
+		append_be( out, pEffect[0]->uniqueID );
+		bool type_chunked = !!( pEffect[0]->flags & effFlagsProgramChunks );
 		append_be( out, type_chunked );
 		if ( !type_chunked )
 		{
-			append_be( out, pEffect->numParams );
-			for ( unsigned i = 0, j = pEffect->numParams; i < j; ++i )
+			append_be( out, pEffect[0]->numParams );
+			for ( unsigned i = 0, j = pEffect[0]->numParams; i < j; ++i )
 			{
-				float parameter = pEffect->getParameter( pEffect, i );
+				float parameter = pEffect[0]->getParameter( pEffect[0], i );
 				append_be( out, parameter );
 			}
 		}
 		else
 		{
 			void * chunk;
-			long size = pEffect->dispatcher(pEffect, effGetChunk, 0, 0, &chunk, 0);
+			long size = pEffect[0]->dispatcher(pEffect[0], effGetChunk, 0, 0, &chunk, 0);
 			append_be( out, size );
 			out.append_fromptr( ( const t_uint8 * )chunk, size );
 		}
@@ -283,20 +290,21 @@ void VSTiPlayer::setChunk( const void * in, unsigned size )
 		const t_uint8 * inc = ( const t_uint8 * ) in;
 		long effect_id;
 		retrieve_be( effect_id, inc, size );
-		if ( effect_id != pEffect->uniqueID ) return;
+		if ( effect_id != pEffect[0]->uniqueID ) return;
 		bool type_chunked;
 		retrieve_be( type_chunked, inc, size );
-		if ( type_chunked != !!( pEffect->flags & effFlagsProgramChunks ) ) return;
+		if ( type_chunked != !!( pEffect[0]->flags & effFlagsProgramChunks ) ) return;
 		if ( !type_chunked )
 		{
 			long num_params;
 			retrieve_be( num_params, inc, size );
-			if ( num_params != pEffect->numParams ) return;
+			if ( num_params != pEffect[0]->numParams ) return;
 			for ( unsigned i = 0; i < num_params; ++i )
 			{
 				float parameter;
 				retrieve_be( parameter, inc, size );
-				pEffect->setParameter( pEffect, i, parameter );
+				pEffect[0]->setParameter( pEffect[0], i, parameter );
+				pEffect[1]->setParameter( pEffect[1], i, parameter );
 			}
 		}
 		else
@@ -304,7 +312,8 @@ void VSTiPlayer::setChunk( const void * in, unsigned size )
 			long chunk_size;
 			retrieve_be( chunk_size, inc, size );
 			if ( chunk_size > size ) return;
-			pEffect->dispatcher( pEffect, effSetChunk, 0, chunk_size, ( void * ) inc, 0 );
+			pEffect[0]->dispatcher( pEffect[0], effSetChunk, 0, chunk_size, ( void * ) inc, 0 );
+			pEffect[1]->dispatcher( pEffect[1], effSetChunk, 0, chunk_size, ( void * ) inc, 0 );
 		}
 	}
 }
@@ -383,17 +392,17 @@ INT_PTR CALLBACK EditorProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 bool VSTiPlayer::hasEditor() const
 {
-	if (pEffect && (pEffect->flags & effFlagsHasEditor)) return true;
+	if (pEffect[0] && (pEffect[0]->flags & effFlagsHasEditor)) return true;
 	return false;
 }
 
 void VSTiPlayer::displayEditorModal( HWND hwndParent )
 {
-	if(pEffect && (pEffect->flags & effFlagsHasEditor))
+	if(pEffect[0] && (pEffect[0]->flags & effFlagsHasEditor))
 	{
 		MyDLGTEMPLATE t;	
 		t.style = WS_POPUPWINDOW|WS_DLGFRAME|DS_MODALFRAME|DS_CENTER;
-		DialogBoxIndirectParam (core_api::get_my_instance(), &t, hwndParent, (DLGPROC)EditorProc, (LPARAM)pEffect);
+		DialogBoxIndirectParam (core_api::get_my_instance(), &t, hwndParent, (DLGPROC)EditorProc, (LPARAM)(pEffect[0]));
 	}
 }
 
@@ -537,17 +546,16 @@ void VSTiPlayer::resizeState(unsigned size)
 		long i;
 
 		float_list_in  = (float**) blState.get_ptr();
-		float_list_out = float_list_in + pEffect->numInputs;
-		float_null     = (float*) (float_list_out + pEffect->numOutputs);
+		float_list_out = float_list_in + pEffect[0]->numInputs;
+		float_null     = (float*) (float_list_out + pEffect[0]->numOutputs * 2);
 		float_out      = float_null + BUFFER_SIZE;
-		events_list    = (VstEvents*) (float_out + BUFFER_SIZE * pEffect->numOutputs);
 
-		for (i = 0; i < pEffect->numInputs; i++)
+		for (i = 0; i < pEffect[0]->numInputs; i++)
 		{
 			float_list_in[i] = float_null;
 		}
 
-		for (i = 0; i < pEffect->numOutputs; i++)
+		for (i = 0; i < pEffect[0]->numOutputs * 2; i++)
 		{
 			float_list_out[i] = float_out + BUFFER_SIZE * i;
 		}
@@ -562,14 +570,19 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 	if (!blState.get_size())
 	{
-		pEffect->dispatcher(pEffect, effSetSampleRate, 0, 0, 0, float(uSampleRate));
-		pEffect->dispatcher(pEffect, effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
-		pEffect->dispatcher(pEffect, effMainsChanged, 0, 1, 0, 0);
-		pEffect->dispatcher(pEffect, effStartProcess, 0, 0, 0, 0);
+		pEffect[0]->dispatcher(pEffect[0], effSetSampleRate, 0, 0, 0, float(uSampleRate));
+		pEffect[0]->dispatcher(pEffect[0], effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
+		pEffect[0]->dispatcher(pEffect[0], effMainsChanged, 0, 1, 0, 0);
+		pEffect[0]->dispatcher(pEffect[0], effStartProcess, 0, 0, 0, 0);
 
-		buffer_size = sizeof(float*) * (pEffect->numInputs + pEffect->numOutputs); // float lists
+		pEffect[1]->dispatcher(pEffect[1], effSetSampleRate, 0, 0, 0, float(uSampleRate));
+		pEffect[1]->dispatcher(pEffect[1], effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
+		pEffect[1]->dispatcher(pEffect[1], effMainsChanged, 0, 1, 0, 0);
+		pEffect[1]->dispatcher(pEffect[1], effStartProcess, 0, 0, 0, 0);
+
+		buffer_size = sizeof(float*) * (pEffect[0]->numInputs + pEffect[0]->numOutputs * 2); // float lists
 		buffer_size += sizeof(float) * BUFFER_SIZE;                                // null input
-		buffer_size += sizeof(float) * BUFFER_SIZE * pEffect->numOutputs;          // outputs
+		buffer_size += sizeof(float) * BUFFER_SIZE * pEffect[0]->numOutputs * 2;          // outputs
 
 		float_list_in = 0;
 		resizeState(buffer_size);
@@ -577,16 +590,25 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 	if ( bNeedIdle )
 	{
-		bNeedIdle = !! pEffect->dispatcher(pEffect, effIdle, 0, 0, 0, 0);
+		bNeedIdle = pEffect[0]->dispatcher(pEffect[0], effIdle, 0, 0, 0, 0) || pEffect[1]->dispatcher(pEffect[1], effIdle, 0, 0, 0, 0);
 	}
 
 	DWORD done = 0;
+
+	if ( uSamplesRemaining )
+	{
+		DWORD todo = uSamplesRemaining;
+		if (todo > count) todo = count;
+		render( out, todo );
+		uSamplesRemaining -= todo;
+		done += todo;
+		uTimeCurrent += todo;
+	}
 
 	while (done < count)
 	{
 		DWORD todo = uTimeEnd - uTimeCurrent;
 		if (todo > count - done) todo = count - done;
-		if (todo > BUFFER_SIZE) todo = BUFFER_SIZE;
 
 		DWORD time_target = todo + uTimeCurrent;
 		UINT stream_end = uStreamPosition;
@@ -595,135 +617,55 @@ unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 
 		if (stream_end > uStreamPosition)
 		{
-			unsigned events_size = sizeof(long) * 2 + sizeof(VstEvent*) * (stream_end - uStreamPosition);
-			UINT i;
-
-			for (i = uStreamPosition; i < stream_end; i++)
+			for (; uStreamPosition < stream_end; uStreamPosition++)
 			{
-				if (!(mStream[i].m_event & 0x80000000)) events_size += sizeof(VstMidiEvent);
-				else events_size += sizeof(VstMidiSysexEvent);
-			}
-
-			resizeState(buffer_size + events_size);
-
-			events_list->numEvents = stream_end - uStreamPosition;
-			events_list->reserved = 0;
-
-			VstEvent * event = (VstEvent*) (events_list->events + events_list->numEvents);
-
-			for (i = 0; uStreamPosition < stream_end; uStreamPosition++, i++)
-			{
-				events_list->events[i] = event;
-
-				if (!(mStream[uStreamPosition].m_event & 0x80000000))
+				midi_stream_event * me = mStream.get_ptr() + uStreamPosition;
+				
+				DWORD samples_todo = me->m_timestamp - uTimeCurrent;
+				if ( samples_todo )
 				{
-					VstMidiEvent * e = (VstMidiEvent*) event;
-					memset(e, 0, sizeof(*e));
-					e->type = kVstMidiType;
-					e->byteSize = sizeof(*e);
-					e->deltaFrames = mStream[uStreamPosition].m_timestamp - uTimeCurrent;
-					memcpy(&e->midiData, &mStream[uStreamPosition].m_event, 4);
-					event = (VstEvent*)(e + 1);
-				}
-				else
-				{
-					VstMidiSysexEvent * e = (VstMidiSysexEvent*) event;
-					UINT n = mStream[uStreamPosition].m_event & 0xffffff;
-					const t_uint8 * data;
-					t_size size;
-					mSysexMap.get_entry( n, data, size );
-					e->type = kVstSysExType;
-					e->byteSize = sizeof(*e);
-					e->deltaFrames = mStream[uStreamPosition].m_timestamp - uTimeCurrent;
-					e->flags = 0;
-					e->dumpBytes = size;
-					e->resvd1 = 0;
-					e->sysexDump = (char *)data;
-					e->resvd2 = 0;
-					event = (VstEvent*)(e + 1);
-				}
-			}
+					if ( samples_todo > count - done )
+					{
+						uSamplesRemaining = samples_todo - ( count - done );
+						samples_todo = count - done;
+					}
+					render( out + done * 2, samples_todo );
+					done += samples_todo;
 
-			pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, events_list, 0);
+					if ( uSamplesRemaining )
+					{
+						uTimeCurrent = me->m_timestamp;
+						return done;
+					}
+				}
+
+				send_event( me->m_event );
+
+				uTimeCurrent = me->m_timestamp;
+			}
+		}
+
+		if ( done < count )
+		{
+			DWORD samples_todo;
+			if ( uStreamPosition < mStream.get_count() ) samples_todo = mStream[uStreamPosition].m_timestamp;
+			else samples_todo = uTimeEnd;
+			samples_todo -= uTimeCurrent;
+			if ( samples_todo > count - done ) samples_todo = count - done;
+			render( out + done * 2, samples_todo );
+			done += samples_todo;
 		}
 
 		uTimeCurrent = time_target;
-
-		memset(float_out, 0, sizeof(float) * BUFFER_SIZE * pEffect->numOutputs);
-
-		if (pEffect->flags & effFlagsCanReplacing)
-			pEffect->processReplacing(pEffect, float_list_in, float_list_out, todo);
-		else
-			pEffect->process(pEffect, float_list_in, float_list_out, todo);
-
-		for (UINT i = 0; i < todo; i++)
-		{
-			for (UINT j = 0; j < uNumOutputs; j++)
-			{
-				out[j] = audio_sample(float_out[i + j * BUFFER_SIZE]);
-			}
-			out += uNumOutputs;
-		}
-
-		done += todo;
 
 		if (uTimeCurrent >= uTimeEnd)
 		{
 			if ( uStreamPosition < mStream.get_count() )
 			{
-				unsigned events_size = sizeof(long) * 2 + sizeof(VstEvent*) * (mStream.get_count() - uStreamPosition);
-				UINT i;
-
-				for (i = uStreamPosition; i < mStream.get_count(); i++)
+				for (; uStreamPosition < mStream.get_count(); uStreamPosition++)
 				{
-					if (!(mStream[i].m_event & 0x80000000)) events_size += sizeof(VstMidiEvent);
-					else events_size += sizeof(VstMidiSysexEvent);
+					send_event( mStream[ uStreamPosition ].m_event );
 				}
-
-				resizeState(buffer_size + events_size);
-
-				events_list->numEvents = mStream.get_count() - uStreamPosition;
-				events_list->reserved = 0;
-
-				VstEvent * event = (VstEvent*) (events_list->events + events_list->numEvents);
-
-				for (i = 0; uStreamPosition < mStream.get_count(); uStreamPosition++, i++)
-				{
-					events_list->events[i] = event;
-
-					if (!(mStream[uStreamPosition].m_event & 0x80000000))
-					{
-						VstMidiEvent * e = (VstMidiEvent*) event;
-						memset(e, 0, sizeof(*e));
-						e->type = kVstMidiType;
-						e->byteSize = sizeof(*e);
-						e->deltaFrames = 0;
-						memcpy(&e->midiData, &mStream[uStreamPosition].m_event, 4);
-						event = (VstEvent*)(e + 1);
-					}
-					else
-					{
-						VstMidiSysexEvent * e = (VstMidiSysexEvent*) event;
-						UINT n = mStream[uStreamPosition].m_event & 0xffffff;
-						const t_uint8 * data;
-						t_size size;
-						mSysexMap.get_entry( n, data, size );
-						e->type = kVstSysExType;
-						e->byteSize = sizeof(*e);
-						e->deltaFrames = 0;
-						e->flags = 0;
-						e->dumpBytes = size;
-						e->resvd1 = 0;
-						e->sysexDump = (char *)data;
-						e->resvd2 = 0;
-						event = (VstEvent*)(e + 1);
-					}
-				}
-
-				pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, events_list, 0);
-
-				if (pEffect->flags & effFlagsCanReplacing) pEffect->processReplacing(pEffect, float_list_in, float_list_out, 1);
-				else pEffect->process(pEffect, float_list_in, float_list_out, 1);
 			}
 
 			if ((uLoopMode & (loop_mode_enable | loop_mode_force)) == (loop_mode_enable | loop_mode_force))
@@ -768,32 +710,35 @@ void VSTiPlayer::Seek(unsigned sample)
 		if (blState.get_size())
 		{
 			// total shutdown
-			pEffect->dispatcher(pEffect, effStopProcess, 0, 0, 0, 0);
-			pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
+			pEffect[ 0 ]->dispatcher(pEffect[ 0 ], effStopProcess, 0, 0, 0, 0);
+			pEffect[ 0 ]->dispatcher(pEffect[ 0 ], effClose, 0, 0, 0, 0);
+
+			pEffect[ 1 ]->dispatcher(pEffect[ 1 ], effStopProcess, 0, 0, 0, 0);
+			pEffect[ 1 ]->dispatcher(pEffect[ 1 ], effClose, 0, 0, 0, 0);
 
 			blState.set_size(0);
 
+			freeChain();
+
 			main_func pMain = (main_func) GetProcAddress(hDll, "main");
 
-			pEffect = (*pMain)(&audioMaster);
+			pEffect[ 0 ] = (*pMain)(&audioMaster);
+			pEffect[ 1 ] = (*pMain)(&audioMaster);
 
-			if (!pEffect)
+			if (!pEffect[ 0 ] || !pEffect[ 1 ])
 			{
 				return;
 			}
 
-			pEffect->user = this;
+			pEffect[ 0 ]->user = this;
+			pEffect[ 1 ]->user = this;
 
-			pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
+			pEffect[ 0 ]->dispatcher(pEffect[ 0 ], effOpen, 0, 0, 0, 0);
+			pEffect[ 1 ]->dispatcher(pEffect[ 1 ], effOpen, 0, 0, 0, 0);
 
 			if ( blChunk.get_size() )
 				setChunk( NULL, 0 );
 		}
-	}
-
-	if (!blState.get_size())
-	{
-		Play(0, 0);
 	}
 
 	uTimeCurrent = sample;
@@ -803,6 +748,8 @@ void VSTiPlayer::Seek(unsigned sample)
 	UINT stream_start = uStreamPosition;
 
 	for (; uStreamPosition < mStream.get_count() && mStream[uStreamPosition].m_timestamp < uTimeCurrent; uStreamPosition++);
+
+	uSamplesRemaining = mStream[uStreamPosition].m_timestamp - uTimeCurrent;
 
 	if (uStreamPosition > stream_start)
 	{
@@ -849,59 +796,142 @@ void VSTiPlayer::Seek(unsigned sample)
 
 		if (!j) return;
 
-		unsigned events_size = sizeof(long) * 2 + sizeof(VstEvent*) * j;
-
-		for (i = 0; i < j; i++)
+		for ( i = 0; i < j; i++ )
 		{
-			if (!(me[i].m_event & 0x80000000)) events_size += sizeof(VstMidiEvent);
-			else events_size += sizeof(VstMidiSysexEvent);
+			send_event( me[i].m_event );
 		}
-
-		pfc::array_t< t_uint8 > temp;
-		temp.set_size( events_size );
-		VstEvents * my_events_list = (VstEvents*) temp.get_ptr();
-
-		my_events_list->numEvents = j;
-		my_events_list->reserved = 0;
-
-		VstEvent * event = (VstEvent*) (my_events_list->events + my_events_list->numEvents);
-
-		for (i = 0; i < j; i++)
-		{
-			my_events_list->events[i] = event;
-
-			if (!(me[i].m_event & 0x80000000))
-			{
-				VstMidiEvent * e = (VstMidiEvent*) event;
-				memset(e, 0, sizeof(*e));
-				e->type = kVstMidiType;
-				e->byteSize = sizeof(*e);
-				e->deltaFrames = 0;
-				memcpy(&e->midiData, &me[i].m_event, 4);
-				event = (VstEvent*)(e + 1);
-			}
-			else
-			{
-				VstMidiSysexEvent * e = (VstMidiSysexEvent*) event;
-				UINT n = me[i].m_event & 0xffffff;
-				const t_uint8 * data;
-				t_size size;
-				mSysexMap.get_entry( n, data, size );
-				e->type = kVstSysExType;
-				e->byteSize = sizeof(*e);
-				e->deltaFrames = 0;
-				e->flags = 0;
-				e->dumpBytes = size;
-				e->resvd1 = 0;
-				e->sysexDump = (char *)data;
-				e->resvd2 = 0;
-				event = (VstEvent*)(e + 1);
-			}
-		}
-
-		pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, my_events_list, 0);
-
-		if (pEffect->flags & effFlagsCanReplacing) pEffect->processReplacing(pEffect, float_list_in, float_list_out, 1);
-		else pEffect->process(pEffect, float_list_in, float_list_out, 1);
 	}
+}
+
+void VSTiPlayer::freeChain()
+{
+	myVstEvent * ev = evChain;
+	while ( ev )
+	{
+		myVstEvent * next = ev->next;
+		free( ev );
+		ev = next;
+	}
+	evChain = NULL;
+	evTail = NULL;
+}
+
+void VSTiPlayer::send_event( DWORD b )
+{
+	myVstEvent * ev = ( myVstEvent * ) calloc( sizeof( myVstEvent ), 1 );
+	if ( evTail ) evTail->next = ev;
+	evTail = ev;
+	if ( !evChain ) evChain = ev;
+	if (!(b & 0x80000000))
+	{
+		ev->port = (b & 0x7F000000) ? 1 : 0;
+		ev->ev.midiEvent.type = kVstMidiType;
+		ev->ev.midiEvent.byteSize = sizeof(ev->ev.midiEvent);
+		memcpy(&ev->ev.midiEvent.midiData, &b, 3);
+	}
+	else
+	{
+		UINT n = b & 0xffffff;
+		const t_uint8 * data;
+		t_size size;
+		mSysexMap.get_entry( n, data, size );
+		ev->ev.sysexEvent.type = kVstSysExType;
+		ev->ev.sysexEvent.byteSize = sizeof(ev->ev.sysexEvent);
+		ev->ev.sysexEvent.dumpBytes = size;
+		ev->ev.sysexEvent.sysexDump = (char *)data;
+
+		evTail = ( myVstEvent * ) calloc( sizeof( myVstEvent ), 1 );
+		ev->next = evTail;
+		evTail->port = 1;
+		evTail->ev.sysexEvent = ev->ev.sysexEvent;
+	}
+}
+
+void VSTiPlayer::render( audio_sample * out, unsigned count )
+{
+	VstEvents * events[2] = {0};
+
+	if ( evChain )
+	{
+		unsigned event_count[2] = {0};
+		myVstEvent * ev = evChain;
+		while ( ev )
+		{
+			event_count[ ev->port ]++;
+			ev = ev->next;
+		}
+
+		if ( event_count[ 0 ] )
+		{
+			events[ 0 ] = ( VstEvents * ) malloc( sizeof(long) + sizeof(long) + sizeof(VstEvent*) * event_count[ 0 ] );
+
+			events[ 0 ]->numEvents = event_count[ 0 ];
+			events[ 0 ]->reserved = 0;
+
+			ev = evChain;
+
+			for ( unsigned i = 0; ev; )
+			{
+				if ( !ev->port ) events[ 0 ]->events[ i++ ] = (VstEvent*) &ev->ev;
+				ev = ev->next;
+			}
+
+			pEffect[ 0 ]->dispatcher(pEffect[ 0 ], effProcessEvents, 0, 0, events[ 0 ], 0);
+		}
+
+		if ( event_count[ 1 ] )
+		{
+			events[ 1 ] = ( VstEvents * ) malloc( sizeof(long) + sizeof(long) + sizeof(VstEvent*) * event_count[ 1 ] );
+
+			events[ 1 ]->numEvents = event_count[ 1 ];
+			events[ 1 ]->reserved = 0;
+
+			ev = evChain;
+
+			for ( unsigned i = 0; ev; )
+			{
+				if ( ev->port ) events[ 1 ]->events[ i++ ] = (VstEvent*) &ev->ev;
+				ev = ev->next;
+			}
+
+			pEffect[ 1 ]->dispatcher(pEffect[ 1 ], effProcessEvents, 0, 0, events[ 1 ], 0);
+		}
+	}
+
+	while ( count )
+	{
+		unsigned count_to_do = min( count, BUFFER_SIZE );
+		unsigned num_outputs = pEffect[ 0 ]->numOutputs;
+
+		pEffect[ 0 ]->processReplacing( pEffect[ 0 ], float_list_in, float_list_out, count_to_do );
+		pEffect[ 1 ]->processReplacing( pEffect[ 1 ], float_list_in, float_list_out + num_outputs, count_to_do );
+
+		if ( uNumOutputs == 2 )
+		{
+			for (unsigned i = 0; i < count_to_do; i++)
+			{
+				audio_sample sample = ( float_out[ i ] + float_out[ i + BUFFER_SIZE * num_outputs ] );
+				out[0] = sample;
+				sample = ( float_out[ i + BUFFER_SIZE ] + float_out[ i + BUFFER_SIZE + BUFFER_SIZE * num_outputs ] );
+				out[1] = sample;
+				out += 2;
+			}
+		}
+		else
+		{
+			for (unsigned i = 0; i < count_to_do; i++)
+			{
+				audio_sample sample = ( float_out[ i ] + float_out[ i + BUFFER_SIZE * num_outputs ] );
+				out[0] = sample;
+				out++;
+			}
+		}
+
+		count -= count_to_do;
+	}
+
+	if ( events[ 0 ] ) free( events[ 0 ] );
+	if ( events[ 1 ] ) free( events[ 1 ] );
+
+	freeChain();
 }

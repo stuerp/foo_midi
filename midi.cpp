@@ -1,9 +1,17 @@
-#define MYVERSION "1.138"
+#define MYVERSION "1.140"
 
 // #define DXISUPPORT
 
 /*
 	change log
+
+2011-07-24 06:57 UTC - kode54
+- Limited MIDI port numbers to 0 and 1
+- Version is now 1.140
+
+2011-07-24 04:51 UTC - kode54
+- Restructured VSTi player and added dual port support
+- Version is now 1.139
 
 2011-07-11 19:58 UTC - kode54
 - Implemented GM2 reset handling in FluidSynth and BASSMIDI drivers
