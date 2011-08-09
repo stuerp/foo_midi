@@ -87,39 +87,6 @@ void midi_processor::process_mids( file::ptr & p_file, midi_container & p_out, a
 
 	bool is_eight_byte = !!(flags & 1);
 
-	// Probe for either 8 or 12 byte chunks
-	if ( !is_eight_byte )
-	{
-		for ( unsigned i = 0; i < segment_count; ++i )
-		{
-			t_uint32 start_timestamp;
-			t_uint32 segment_size;
-			data_body->read_lendian_t( start_timestamp, p_abort );
-			data_body->read_lendian_t( segment_size, p_abort );
-			if ( segment_size % 12 )
-			{
-				is_eight_byte = true;
-				break;
-			}
-			file::ptr segment_body = reader_limited::g_create( data_body, data_body->get_position( p_abort ), segment_size, p_abort );
-			while ( !segment_body->is_eof( p_abort ) )
-			{
-				t_uint32 delta;
-				t_uint32 skip;
-				t_uint32 event;
-				segment_body->read_lendian_t( delta, p_abort );
-				segment_body->read_lendian_t( skip, p_abort );
-				segment_body->read_lendian_t( event, p_abort );
-				if ( skip )
-				{
-					i = segment_count;
-					is_eight_byte = true;
-					break;
-				}
-			}
-		}
-	}
-
 	data_body->seek( 4, p_abort );
 
 	midi_track track;

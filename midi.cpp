@@ -1,9 +1,13 @@
-#define MYVERSION "1.140"
+#define MYVERSION "1.141"
 
 // #define DXISUPPORT
 
 /*
 	change log
+
+2011-08-09 23:13 UTC - kode54
+- Removed faulty format detection logic from the MDS/MIDS format handler
+- Version is now 1.141
 
 2011-07-24 06:57 UTC - kode54
 - Limited MIDI port numbers to 0 and 1
