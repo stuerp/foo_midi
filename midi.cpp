@@ -1,9 +1,13 @@
-#define MYVERSION "1.141"
+#define MYVERSION "1.142"
 
 // #define DXISUPPORT
 
 /*
 	change log
+
+2011-09-10 03:19 UTC - kode54
+- Made VSTi search path configurable
+- Version is now 1.142
 
 2011-08-09 23:13 UTC - kode54
 - Removed faulty format detection logic from the MDS/MIDS format handler
@@ -498,6 +502,13 @@ static const GUID guid_cfg_vst_config =
 static const GUID guid_cfg_dxi_plugin = 
 { 0xd5c87282, 0xa9e6, 0x40f3, { 0x93, 0x82, 0x95, 0x68, 0xe6, 0x54, 0x1a, 0x46 } };
 #endif
+// {66524470-7EC7-445E-A6FD-C0FBAE74E5FC}
+static const GUID guid_cfg_midi_parent = 
+{ 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0xfd, 0xc0, 0xfb, 0xae, 0x74, 0xe5, 0xfc } };
+// {BB4C61A1-03C4-4B62-B04D-2C86CEDE005D}
+static const GUID guid_cfg_vsti_search_path = 
+{ 0xbb4c61a1, 0x3c4, 0x4b62, { 0xb0, 0x4d, 0x2c, 0x86, 0xce, 0xde, 0x0, 0x5d } };
+
 
 template <typename TObj>
 class cfg_array : public cfg_var, public pfc::array_t<TObj> {
@@ -554,7 +565,11 @@ cfg_string cfg_soundfont_path(guid_cfg_soundfont_path, "");
 
 cfg_string cfg_munt_base_path(guid_cfg_munt_base_path, "");
 
-advconfig_checkbox_factory cfg_munt_debug_info("MUNT - display debug information", guid_cfg_munt_debug_info, advconfig_branch::guid_branch_playback, 0, false);
+advconfig_branch_factory cfg_midi_parent("MIDI Decoder", guid_cfg_midi_parent, advconfig_branch::guid_branch_playback, 0);
+
+advconfig_checkbox_factory cfg_munt_debug_info("MUNT - display debug information", guid_cfg_munt_debug_info, guid_cfg_midi_parent, 0, false);
+
+advconfig_string_factory cfg_vsti_search_path("VSTi search path (empty for default)", guid_cfg_vsti_search_path, guid_cfg_midi_parent, 0, "");
 
 static const char * exts[]=
 {
@@ -1542,16 +1557,21 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 	if ( ! _find )
 	{
 		vsti_plugins.set_size( 0 );
-		TCHAR path[ MAX_PATH + 1 ];
-		if ( SUCCEEDED( SHGetFolderPath( 0, CSIDL_PROGRAM_FILES, 0, SHGFP_TYPE_CURRENT, path ) ) )
+
+		cfg_vsti_search_path.get(ppath);
+		if (ppath.is_empty())
 		{
-			ppath = pfc::stringcvt::string_utf8_from_os( path );
-			ppath += "\\Steinberg\\VstPlugins";
-			ppath.add_byte( '\\' );
-			ppath += "*.*";
-			_path = ppath;
-			_find = uFindFirstFile( ppath );
+			TCHAR path[ MAX_PATH + 1 ];
+			if ( SUCCEEDED( SHGetFolderPath( 0, CSIDL_PROGRAM_FILES, 0, SHGFP_TYPE_CURRENT, path ) ) )
+			{
+				ppath = pfc::stringcvt::string_utf8_from_os( path );
+				ppath += "\\Steinberg\\VstPlugins";
+			}
 		}
+		ppath.add_byte( '\\' );
+		ppath += "*.*";
+		_path = ppath;
+		_find = uFindFirstFile( ppath );
 	}
 	if ( _find )
 	{
