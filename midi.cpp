@@ -1,9 +1,13 @@
-#define MYVERSION "1.143"
+#define MYVERSION "1.144"
 
 // #define DXISUPPORT
 
 /*
 	change log
+
+2011-09-11 09:41 UTC - kode54
+- Implemented drum channel control for Emu de MIDI
+- Version is now 1.144
 
 2011-09-11 07:38 UTC - kode54
 - Replaced Emu de MIDI main player core with my own stream parser

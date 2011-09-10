@@ -36,6 +36,9 @@ private:
 	void send_event( DWORD );
 	void render(audio_sample *, unsigned);
 
+	void reset_drum_channels();
+	void set_drum_channel(int channel, int enable);
+
 	dsa::CMIDIModule mModule[8];
 
 	unsigned     uSamplesRemaining;
@@ -53,6 +56,18 @@ private:
 
 	UINT         uStreamLoopStart;
 	DWORD        uTimeLoopStart;
+
+	enum
+	{
+	                   mode_gm = 0,
+					   mode_gm2,
+	                   mode_gs,
+	                   mode_xg
+	}
+	                   synth_mode;
+
+	BYTE               gs_part_to_ch[16];
+	BYTE               drum_channels[32];
 };
 
 #endif
