@@ -1,9 +1,13 @@
-#define MYVERSION "1.142"
+#define MYVERSION "1.143"
 
 // #define DXISUPPORT
 
 /*
 	change log
+
+2011-09-11 07:38 UTC - kode54
+- Replaced Emu de MIDI main player core with my own stream parser
+- Version is now 1.143
 
 2011-09-10 03:19 UTC - kode54
 - Made VSTi search path configurable
@@ -427,6 +431,7 @@
 #include "SFPlayer.h"
 #include "BMPlayer.h"
 #include "MT32Player.h"
+#include "EMIDIPlayer.h"
 
 #ifdef NDEBUG
 #define FLUIDSYNTH_DLL L"fluidsynth.dll"
@@ -441,8 +446,6 @@
 #endif
 
 #include "resource.h"
-
-#include "CSMFPlay.hpp"
 
 #define XMIDI_CONTROLLER_FOR_LOOP			0x74	// For Loop
 #define XMIDI_CONTROLLER_NEXT_BREAK			0x75	// Next/Break
@@ -600,6 +603,7 @@ class input_midi
 	SFPlayer * sfPlayer;
 	BMPlayer * bmPlayer;
 	MT32Player * mt32Player;
+	EMIDIPlayer * emidiPlayer;
 
 	midi_container midi_file;
 
@@ -639,8 +643,6 @@ class input_midi
 	unsigned sample_loop_start;
 	unsigned sample_loop_end;
 	*/
-	dsa::CSMFPlay * smfplay;
-	pfc::array_t<int> smfplay_buffer;
 
 public:
 	input_midi() : srate(cfg_srate), plugin(cfg_plugin), b_xmiloopz(!!cfg_xmiloopz),
@@ -654,6 +656,7 @@ public:
 		sfPlayer = NULL;
 		bmPlayer = NULL;
 		mt32Player = NULL;
+		emidiPlayer = NULL;
 
 		length_samples = 0;
 		length_ticks = 0;
@@ -662,16 +665,15 @@ public:
 		external_decoder = 0;
 		mem_reader = 0;
 		*/
-		smfplay = 0;
 	}
 
 	~input_midi()
 	{
 		/*if (external_decoder) external_decoder->service_release();
 		if (mem_reader) mem_reader->reader_release();*/
-		if (smfplay)
+		if (emidiPlayer)
 		{
-			delete smfplay;
+			delete emidiPlayer;
 			insync(sync);
 			g_running--;
 		}
@@ -710,10 +712,6 @@ private:
 		}*/
 		else
 #endif
-		if (smfplay)
-		{
-			smfplay->SetEndPoint(loop_end != ~0 ? loop_end : length_ticks);
-		}
 		dont_loop = false;
 	}
 
@@ -1034,13 +1032,18 @@ public:
 				}
 				}
 				*/
-				delete smfplay;
-				smfplay = new dsa::CSMFPlay(srate, 8);
+				delete emidiPlayer;
+				emidiPlayer = new EMIDIPlayer;
 
-				pfc::array_t< t_uint8 > buffer;
-				midi_file.serialize_as_standard_midi_file( buffer );
+				unsigned loop_mode = 0;
 
-				if (smfplay->Load(buffer.get_ptr(), buffer.get_count()))
+				if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
+				{
+					loop_mode = EMIDIPlayer::loop_mode_enable;
+					if ( cfg_loop_type > 1 ) loop_mode |= EMIDIPlayer::loop_mode_force;
+				}
+
+				if ( emidiPlayer->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
 				{
 					{
 						insync(sync);
@@ -1048,33 +1051,13 @@ public:
 						else if (srate != g_srate)
 						{
 							srate = g_srate;
-							delete smfplay;
-							smfplay = new dsa::CSMFPlay(srate, 8);
-							if (!smfplay->Load(buffer.get_ptr(), buffer.get_count())) throw exception_io_data();
 						}
 					}
+
+					emidiPlayer->setSampleRate( srate );
 
 					eof = false;
 					dont_loop = true;
-
-					smfplay->Start();
-
-					if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
-					{
-						if ( cfg_loop_type == 1 )
-						{
-							if ( loop_begin != -1 || loop_end != -1 )
-							{
-								set_loop();
-							}
-						}
-						else
-						{
-							set_loop();
-						}
-					}
-
-					samples_done = 0;
 
 					return;
 				}
@@ -1283,63 +1266,21 @@ fagotry:
 			*/
 			unsigned todo = 1024;
 
-			if (dont_loop)
-			{
-				if (length_samples && samples_done + todo > length_samples)
-				{
-					todo = length_samples - samples_done;
-					if (!todo) return false;
-				}
-			}
+			p_chunk.set_data_size( todo * 2 );
 
-			smfplay_buffer.grow_size( todo * 2 );
+			audio_sample * out = p_chunk.get_data();
 
-			int * ptr = smfplay_buffer.get_ptr();
+			unsigned done = emidiPlayer->Play( out, todo );
 
-			unsigned done;
-			
-			try
-			{
-				done = smfplay->Render(ptr, todo);
-			}
-			catch ( const dsa::RuntimeException & e )
-			{
-				console::formatter() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")";
-				throw exception_io_data();
-			}
+			if ( ! done ) return false;
 
-			if (!dont_loop && done < todo)
-			{
-				smfplay->Start(loop_begin <= 0);
-				set_loop();
-				try
-				{
-					if (loop_begin > 0) smfplay->Render(NULL, loop_begin);
-					if (!done) done = smfplay->Render(ptr, todo);
-				}
-				catch ( const dsa::RuntimeException & e )
-				{
-					throw std::exception( pfc::string8() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")" );
-				}
-			}
+			p_chunk.set_srate( srate );
+			p_chunk.set_channels( 2 );
+			p_chunk.set_sample_count( done );
 
-			if (done)
-			{
-				p_chunk.set_data_size( done * 2 );
+			if ( done < todo ) eof = true;
 
-				audio_sample * out = p_chunk.get_data();
-
-				audio_math::convert_from_int32( ptr, done * 2, out, 1 << 16 );
-
-				samples_done += done;
-
-				p_chunk.set_srate( srate );
-				p_chunk.set_channels( 2 );
-				p_chunk.set_sample_count( done );
-				//chunk->set_data_fixedpoint(ptr, done * 4, srate, 2, 16);
-			}
-
-			return !! done;
+			return true;
 		}
 	}
 
@@ -1392,35 +1333,8 @@ fagotry:
 		}
 		else
 		{
-			unsigned samples_wanted = unsigned( p_seconds * double( srate ) );
-			if ( samples_wanted < samples_done )
-			{
-				smfplay->Start();
-				if ( ! dont_loop ) set_loop();
-				samples_done = 0;
-			}
-			try
-			{
-				while ( samples_done < samples_wanted )
-				{
-					p_abort.check();
-
-					unsigned todo = samples_wanted - samples_done;
-					if ( todo > 1024 ) todo = 1024;
-					smfplay_buffer.grow_size( todo * 2 );
-					int * ptr = smfplay_buffer.get_ptr();
-					if ( smfplay->Render( ptr, todo ) < todo )
-					{
-						eof = true;
-						break;
-					}
-					samples_done += todo;
-				}
-			}
-			catch ( const dsa::RuntimeException & e )
-			{
-				throw std::exception( pfc::string8() << e.m_message << " (" << e.m_file << ":" << e.m_lineno << ")" );
-			}
+			emidiPlayer->Seek( done );
+			return;
 		}
 	}
 

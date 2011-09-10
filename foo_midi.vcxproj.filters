@@ -46,6 +46,7 @@
     </ClCompile>
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="DXiProxy.cpp" />
+    <ClCompile Include="EMIDIPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -62,6 +63,7 @@
     </ClInclude>
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="DXiProxy.h" />
+    <ClInclude Include="EMIDIPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
