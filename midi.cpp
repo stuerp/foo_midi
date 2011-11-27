@@ -1,9 +1,17 @@
-#define MYVERSION "1.144"
+#define MYVERSION "1.146"
 
 // #define DXISUPPORT
 
 /*
 	change log
+
+2011-11-27 02:45 UTC - kode54
+- Implemented support for GMF format files
+- Version is now 1.146
+
+2011-09-17 03:00 UTC - kode54
+- Made XMI parser more tolerant of broken files
+- Version is now 1.145
 
 2011-09-11 09:41 UTC - kode54
 - Implemented drum channel control for Emu de MIDI

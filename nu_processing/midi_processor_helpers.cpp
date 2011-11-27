@@ -63,5 +63,10 @@ void midi_processor::process_file( file::ptr & p_file, const char * p_extension,
 		temp->reopen( p_abort );
 		process_lds( temp, p_out, p_abort );
 	}
+	else if ( is_gmf( temp, p_abort ) )
+	{
+		temp->reopen( p_abort );
+		process_gmf( temp, p_out, p_abort );
+	}
 	else throw exception_io_unsupported_format();
 }

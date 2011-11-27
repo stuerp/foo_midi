@@ -32,6 +32,9 @@ class midi_processor
 	static bool is_mus( file::ptr & p_file, abort_callback & p_abort );
 	static bool is_mids( file::ptr & p_file, abort_callback & p_abort );
 	static bool is_lds( file::ptr & p_file, const char * p_extension, abort_callback & p_abort );
+	static bool is_gmf( file::ptr & p_file, abort_callback & p_abort );
+
+	static void process_standard_midi_track( file::ptr & p_file, midi_container & p_out, bool needs_end_marker, abort_callback & p_abort );
 
 	static void process_standard_midi( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort );
 	static void process_riff_midi( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort );
@@ -41,6 +44,7 @@ class midi_processor
 	static void process_mus( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort );
 	static void process_mids( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort );
 	static void process_lds( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort );
+	static void process_gmf( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort );
 
 public:
 	static void process_file( file::ptr & p_file, const char * p_extension, midi_container & p_out, abort_callback & p_abort );

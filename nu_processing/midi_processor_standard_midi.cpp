@@ -25,6 +25,100 @@ bool midi_processor::is_standard_midi( file::ptr & p_file, abort_callback & p_ab
 	}
 }
 
+void midi_processor::process_standard_midi_track( file::ptr & p_file, midi_container & p_out, bool needs_end_marker, abort_callback & p_abort )
+{
+	midi_track track;
+	unsigned current_timestamp = 0;
+	unsigned char last_event_code = 0xFF;
+
+	pfc::array_t<t_uint8> buffer;
+	buffer.grow_size( 3 );
+
+	try
+	{
+		for (;;)
+		{
+			if ( !needs_end_marker && p_file->is_eof( p_abort ) ) break;
+			unsigned delta = decode_delta( p_file, p_abort );
+			if ( !needs_end_marker && p_file->is_eof( p_abort ) ) break;
+
+			current_timestamp += delta;
+			unsigned char event_code;
+			p_file->read_object_t( event_code, p_abort );
+			unsigned data_bytes_read = 0;
+			if ( event_code < 0x80 )
+			{
+				if ( last_event_code == 0xFF ) throw exception_io_data("First MIDI track event short encoded");
+				buffer[ data_bytes_read++ ] = event_code;
+				event_code = last_event_code;
+			}
+			if ( event_code < 0xF0 )
+			{
+				last_event_code = event_code;
+				if ( !needs_end_marker && ( event_code & 0xF0 ) == 0xE0 ) continue;
+				if ( data_bytes_read < 1 )
+				{
+					p_file->read_object_t( buffer[ 0 ], p_abort );
+					++data_bytes_read;
+				}
+				switch ( event_code & 0xF0 )
+				{
+				case 0xC0:
+				case 0xD0:
+					break;
+				default:
+					p_file->read_object_t( buffer[ data_bytes_read ], p_abort );
+					++data_bytes_read;
+				}
+				track.add_event( midi_event( current_timestamp, (midi_event::event_type)(( event_code >> 4 ) - 8), event_code & 0x0F, buffer.get_ptr(), data_bytes_read ) );
+			}
+			else if ( event_code == 0xF0 )
+			{
+				unsigned data_count = decode_delta( p_file, p_abort );
+				buffer.grow_size( data_count + 1 );
+				buffer[ 0 ] = 0xF0;
+				p_file->read_object( buffer.get_ptr() + 1, data_count, p_abort );
+				track.add_event( midi_event( current_timestamp, midi_event::extended, 0, buffer.get_ptr(), data_count + 1 ) );
+			}
+			else if ( event_code == 0xFF )
+			{
+				unsigned char meta_type;
+				p_file->read_object_t( meta_type, p_abort );
+				unsigned data_count = decode_delta( p_file, p_abort );
+				buffer.grow_size( data_count + 2 );
+				buffer[ 0 ] = 0xFF;
+				buffer[ 1 ] = meta_type;
+				p_file->read_object( buffer.get_ptr() + 2, data_count, p_abort );
+				track.add_event( midi_event( current_timestamp, midi_event::extended, 0, buffer.get_ptr(), data_count + 2 ) );
+
+				if ( meta_type == 0x2F )
+				{
+					needs_end_marker = true;
+					break;
+				}
+			}
+			else if ( event_code == 0xFB || event_code == 0xFC )
+			{
+				console::formatter() << "[foo_midi] MIDI " << ( ( event_code == 0xFC ) ? "stop" : "start" ) << " status code ignored";
+			}
+			else throw exception_io_data("Unhandled MIDI status code");
+		}
+	}
+	catch (exception_io_data_truncation &)
+	{
+		throw exception_io_data_truncation("MIDI track truncated");
+	}
+
+	if ( !needs_end_marker )
+	{
+		buffer[ 0 ] = 0xFF;
+		buffer[ 1 ] = 0x2F;
+		track.add_event( midi_event( current_timestamp, midi_event::extended, 0, buffer.get_ptr(), 2 ) );
+	}
+
+	p_out.add_track( track );
+}
+
 void midi_processor::process_standard_midi( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort )
 {
 	unsigned char buffer[4];
@@ -53,79 +147,7 @@ void midi_processor::process_standard_midi( file::ptr & p_file, midi_container &
 		t_filesize track_data_offset = p_file->get_position( p_abort );
 		file::ptr file_limited = reader_limited::g_create( p_file, track_data_offset, track_size, p_abort );
 
-		midi_track track;
-		unsigned current_timestamp = 0;
-		unsigned char last_event_code = 0xFF;
-
-		pfc::array_t<t_uint8> buffer;
-		buffer.grow_size( 3 );
-
-		try
-		{
-			for (;;)
-			{
-				unsigned delta = decode_delta( file_limited, p_abort );
-				current_timestamp += delta;
-				unsigned char event_code;
-				file_limited->read_object_t( event_code, p_abort );
-				unsigned data_bytes_read = 0;
-				if ( event_code < 0x80 )
-				{
-					if ( last_event_code == 0xFF ) throw exception_io_data("First MIDI track event short encoded");
-					buffer[ data_bytes_read++ ] = event_code;
-					event_code = last_event_code;
-				}
-				if ( event_code < 0xF0 )
-				{
-					last_event_code = event_code;
-					if ( data_bytes_read < 1 )
-					{
-						file_limited->read_object_t( buffer[ 0 ], p_abort );
-						++data_bytes_read;
-					}
-					switch ( event_code & 0xF0 )
-					{
-					case 0xC0:
-					case 0xD0:
-						break;
-					default:
-						file_limited->read_object_t( buffer[ data_bytes_read ], p_abort );
-						++data_bytes_read;
-					}
-					track.add_event( midi_event( current_timestamp, (midi_event::event_type)(( event_code >> 4 ) - 8), event_code & 0x0F, buffer.get_ptr(), data_bytes_read ) );
-				}
-				else if ( event_code == 0xF0 )
-				{
-					unsigned data_count = decode_delta( file_limited, p_abort );
-					buffer.grow_size( data_count + 1 );
-					buffer[ 0 ] = 0xF0;
-					file_limited->read_object( buffer.get_ptr() + 1, data_count, p_abort );
-					track.add_event( midi_event( current_timestamp, midi_event::extended, 0, buffer.get_ptr(), data_count + 1 ) );
-				}
-				else if ( event_code == 0xFF )
-				{
-					unsigned char meta_type;
-					file_limited->read_object_t( meta_type, p_abort );
-					unsigned data_count = decode_delta( file_limited, p_abort );
-					buffer.grow_size( data_count + 2 );
-					buffer[ 0 ] = 0xFF;
-					buffer[ 1 ] = meta_type;
-					file_limited->read_object( buffer.get_ptr() + 2, data_count, p_abort );
-					track.add_event( midi_event( current_timestamp, midi_event::extended, 0, buffer.get_ptr(), data_count + 2 ) );
-
-					if ( meta_type == 0x2F ) break;
-				}
-				else if ( event_code == 0xFB || event_code == 0xFC )
-				{
-					console::formatter() << "[foo_midi] MIDI " << ( ( event_code == 0xFC ) ? "stop" : "start" ) << " status code ignored";
-				}
-				else throw exception_io_data("Unhandled MIDI status code");
-			}
-		}
-		catch (exception_io_data_truncation &)
-		{
-			throw exception_io_data_truncation("MIDI track truncated");
-		}
+		process_standard_midi_track( file_limited, p_out, true, p_abort );
 
 		file_limited.release();
 
@@ -134,7 +156,5 @@ void midi_processor::process_standard_midi( file::ptr & p_file, midi_container &
 		{
 			p_file->seek( track_data_offset, p_abort );
 		}
-
-		p_out.add_track( track );
 	}
 }

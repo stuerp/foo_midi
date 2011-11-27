@@ -119,6 +119,8 @@ static void read_iff_chunk( file::ptr & p_file, iff_chunk & p_out, bool first_ch
 	p_file->read_bendian_t( chunk_size, p_abort );
 	bool is_cat_chunk = !memcmp( p_out.m_id, "CAT ", 4 );
 	bool is_form_chunk = !memcmp( p_out.m_id, "FORM", 4 );
+	t_filesize chunk_size_limit = p_file->get_size_ex( p_abort ) - p_file->get_position( p_abort );
+	if ( chunk_size > chunk_size_limit ) chunk_size = chunk_size_limit;
 	if ( ( first_chunk && is_form_chunk ) || ( !first_chunk && is_cat_chunk ) )
 	{
 		file::ptr chunk_body = reader_limited::g_create( p_file, p_file->get_position( p_abort ), chunk_size, p_abort );
@@ -130,13 +132,13 @@ static void read_iff_chunk( file::ptr & p_file, iff_chunk & p_out, bool first_ch
 			p_out.m_sub_chunks.append_single( chunk );
 		}
 		chunk_body->seek_ex( 0, file::seek_from_eof, p_abort );
-		if ( chunk_size & 1 ) p_file->skip( 1, p_abort );
+		if ( chunk_size & 1 ) try { p_file->skip( 1, p_abort ); } catch (exception_io_seek_out_of_range &) { }
 	}
 	else if ( !is_form_chunk && !is_cat_chunk )
 	{
 		p_out.m_data = reader_limited::g_create( p_file, p_file->get_position( p_abort ), chunk_size, p_abort );
 		p_file->skip( chunk_size, p_abort );
-		if ( chunk_size & 1 ) p_file->skip( 1, p_abort );
+		if ( chunk_size & 1 ) try { p_file->skip( 1, p_abort ); } catch (exception_io_seek_out_of_range &) { }
 	}
 	else
 	{
@@ -206,9 +208,17 @@ void midi_processor::process_xmi( file::ptr & p_file, midi_container & p_out, ab
 			if ( buffer[ 0 ] == 0xFF )
 			{
 				event_body->read_object_t( buffer[ 1 ], p_abort );
-				unsigned meta_count = decode_delta( event_body, p_abort );
-				buffer.grow_size( meta_count + 2 );
-				event_body->read_object( buffer.get_ptr() + 2, meta_count, p_abort );
+				unsigned meta_count;
+				if ( buffer[ 1 ] == 0x2F )
+				{
+					meta_count = 0;
+				}
+				else
+				{
+					meta_count = decode_delta( event_body, p_abort );
+					buffer.grow_size( meta_count + 2 );
+					event_body->read_object( buffer.get_ptr() + 2, meta_count, p_abort );
+				}
 				if ( buffer[ 1 ] == 0x2F && current_timestamp < last_event_timestamp )
 				{
 					current_timestamp = last_event_timestamp;

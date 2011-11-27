@@ -47,6 +47,9 @@
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="DXiProxy.cpp" />
     <ClCompile Include="EMIDIPlayer.cpp" />
+    <ClCompile Include="nu_processing\midi_processor_gmf.cpp">
+      <Filter>new processing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
