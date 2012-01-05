@@ -1,9 +1,13 @@
-#define MYVERSION "1.146"
+#define MYVERSION "1.147"
 
 // #define DXISUPPORT
 
 /*
 	change log
+
+2012-01-05 20:16 UTC - kode54
+- Removed default VST search path and added a warning if no path is configured
+- Version is now 1.147
 
 2011-11-27 02:45 UTC - kode54
 - Implemented support for GMF format files
@@ -584,7 +588,7 @@ advconfig_branch_factory cfg_midi_parent("MIDI Decoder", guid_cfg_midi_parent, a
 
 advconfig_checkbox_factory cfg_munt_debug_info("MUNT - display debug information", guid_cfg_munt_debug_info, guid_cfg_midi_parent, 0, false);
 
-advconfig_string_factory cfg_vsti_search_path("VSTi search path (empty for default)", guid_cfg_vsti_search_path, guid_cfg_midi_parent, 0, "");
+advconfig_string_factory cfg_vsti_search_path("VSTi search path", guid_cfg_vsti_search_path, guid_cfg_midi_parent, 0, "");
 
 static const char * exts[]=
 {
@@ -1487,13 +1491,13 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 		cfg_vsti_search_path.get(ppath);
 		if (ppath.is_empty())
 		{
-			TCHAR path[ MAX_PATH + 1 ];
-			if ( SUCCEEDED( SHGetFolderPath( 0, CSIDL_PROGRAM_FILES, 0, SHGFP_TYPE_CURRENT, path ) ) )
-			{
-				ppath = pfc::stringcvt::string_utf8_from_os( path );
-				ppath += "\\Steinberg\\VstPlugins";
-			}
+			GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_SHOW );
+			GetDlgItem( IDC_PLUGIN_CONFIGURE ).ShowWindow( SW_HIDE );
+			return;
 		}
+
+		console::formatter() << "Enumerating VSTi Plug-ins...";
+
 		ppath.add_byte( '\\' );
 		ppath += "*.*";
 		_path = ppath;
@@ -1520,6 +1524,8 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 				npath += _find->GetFileName();
 				if ( npath.length() > 4 && !pfc::stricmp_ascii( npath.get_ptr() + npath.length() - 4, ".dll" ) )
 				{
+					console::formatter() << "Trying " << npath;
+
 					VSTiPlayer vstPlayer;
 					if ( vstPlayer.LoadVST( npath ) )
 					{
@@ -1580,6 +1586,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	*/
 	
 	enum_vsti_plugins();
+
+	if ( vsti_plugins.get_size() ) console::formatter() << "Found " << vsti_plugins.get_size() << " plug-ins";
 	
 	unsigned vsti_count = vsti_plugins.get_size(), vsti_selected = ~0;
 	
