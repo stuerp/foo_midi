@@ -1,9 +1,19 @@
-#define MYVERSION "1.147"
+#define MYVERSION "1.149"
 
 // #define DXISUPPORT
+// #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-01-06 09:23 UTC - kode54
+- Fixed automatic paired SoundFont loading for FluidSynth
+- Disabled FluidSynth support
+- Version is now 1.149
+
+2012-01-06 09:18 UTC - kode54
+- Rewrote VSTi player to use an external bridge process
+- Version is now 1.148
 
 2012-01-05 20:16 UTC - kode54
 - Removed default VST search path and added a warning if no path is configured
@@ -444,16 +454,12 @@
 #include <shlwapi.h>
 
 #include "VSTiPlayer.h"
+#ifdef FLUIDSYNTHSUPPORT
 #include "SFPlayer.h"
+#endif
 #include "BMPlayer.h"
 #include "MT32Player.h"
 #include "EMIDIPlayer.h"
-
-#ifdef NDEBUG
-#define FLUIDSYNTH_DLL L"fluidsynth.dll"
-#else
-#define FLUIDSYNTH_DLL L"fluidsynth_debug.dll"
-#endif
 
 #ifdef DXISUPPORT
 #include "DXiProxy.h"
@@ -510,9 +516,11 @@ static const GUID guid_cfg_munt_base_path =
 // {8FFE9127-579E-46B8-951D-3C785930307F}
 static const GUID guid_cfg_munt_debug_info = 
 { 0x8ffe9127, 0x579e, 0x46b8, { 0x95, 0x1d, 0x3c, 0x78, 0x59, 0x30, 0x30, 0x7f } };
+#ifdef FLUIDSYNTHSUPPORT
 // {A395C6FD-492A-401B-8BDB-9DF53E2EF7CF}
 static const GUID guid_cfg_fluid_interp_method = 
 { 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } };
+#endif
 // {A1097E84-09B6-4708-9A58-8B1247D54299}
 static const GUID guid_cfg_vst_config = 
 { 0xa1097e84, 0x9b6, 0x4708, { 0x9a, 0x58, 0x8b, 0x12, 0x47, 0xd5, 0x42, 0x99 } };
@@ -558,7 +566,9 @@ enum
 	default_cfg_loop_type = 0,
 	default_cfg_srate = 44100,
 	default_cfg_plugin = 0,
+#ifdef FLUIDSYNTHSUPPORT
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
+#endif
 };
 
 #ifdef DXISUPPORT
@@ -569,8 +579,11 @@ cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid
 		cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion), /*cfg_hack_xg_drums("yam", 0),*/
 		/*cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),*/ cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
 		/*cfg_nosysex("sux", 0),*/ /*cfg_gm2(guid_cfg_gm2, 0),*/
-		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
-		cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method);
+		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin)
+#ifdef FLUIDSYNTHSUPPORT
+		,cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
+#endif
+		;
 
 #ifdef DXISUPPORT
 cfg_guid cfg_dxi_plugin(guid_cfg_dxi_plugin, default_cfg_dxi_plugin);
@@ -616,7 +629,9 @@ class input_midi
 #endif
 
 	VSTiPlayer * vstPlayer;
+#ifdef FLUIDSYNTHSUPPORT
 	SFPlayer * sfPlayer;
+#endif
 	BMPlayer * bmPlayer;
 	MT32Player * mt32Player;
 	EMIDIPlayer * emidiPlayer;
@@ -669,7 +684,9 @@ public:
 #endif
 
 		vstPlayer = NULL;
+#ifdef FLUIDSYNTHSUPPORT
 		sfPlayer = NULL;
+#endif
 		bmPlayer = NULL;
 		mt32Player = NULL;
 		emidiPlayer = NULL;
@@ -697,7 +714,9 @@ public:
 		if (dxiProxy) delete dxiProxy;
 #endif
 		if (vstPlayer) delete vstPlayer;
+#ifdef FLUIDSYNTHSUPPORT
 		if (sfPlayer) delete sfPlayer;
+#endif
 		if (bmPlayer) delete bmPlayer;
 		if (mt32Player) delete mt32Player;
 	}
@@ -817,7 +836,7 @@ public:
 
 		pfc::string8 file_soundfont;
 
-		if ( plugin == 1 || plugin == 4 )
+		if ( plugin == 2 || plugin == 4 )
 		{
 			pfc::string8_fast temp;
 
@@ -913,6 +932,7 @@ public:
 					}
 				}
 			}
+#ifdef FLUIDSYNTHSUPPORT
 			else if (plugin == 2)
 			{
 				/*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
@@ -946,6 +966,9 @@ public:
 				}
 			}
 			else if (plugin == 4)
+#else
+			else if (plugin == 2 || plugin == 4)
+#endif
 			{
 				/*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
 				if ( !fsmod )
@@ -1144,6 +1167,7 @@ public:
 
 			return true;
 		}
+#ifdef FLUIDSYNTHSUPPORT
 		else if (plugin == 2)
 		{
 			unsigned todo = 1024;
@@ -1170,6 +1194,9 @@ public:
 			return true;
 		}
 		else if (plugin == 4)
+#else
+		else if (plugin == 2 || plugin == 4)
+#endif
 		{
 			unsigned todo = 1024;
 
@@ -1330,6 +1357,7 @@ fagotry:
 			vstPlayer->Seek( done );
 			return;
 		}
+#ifdef FLUIDSYNTHSUPPORT
 		else if ( plugin == 2 )
 		{
 			sfPlayer->Seek( done );
@@ -1338,6 +1366,9 @@ fagotry:
 			return;
 		}
 		else if ( plugin == 4 )
+#else
+		else if ( plugin == 2 || plugin == 4 )
+#endif
 		{
 			bmPlayer->Seek( done );
 			return;
@@ -1408,9 +1439,11 @@ fagotry:
 
 static const char * loop_txt[] = {"Never", "When loop info detected", "Always"};
 
+#ifdef FLUIDSYNTHSUPPORT
 static const char * interp_txt[] = {"None", "Linear", "Cubic", "7th Order Sinc"};
 static int interp_method[] = {FLUID_INTERP_NONE, FLUID_INTERP_LINEAR, FLUID_INTERP_4THORDER, FLUID_INTERP_7THORDER};
 enum { interp_method_default = 2 };
+#endif
 
 static const char * click_to_set = "Click to set.";
 
@@ -1444,7 +1477,9 @@ public:
 		COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_SELCHANGE, OnSelectionChange)
 		DROPDOWN_HISTORY_HANDLER(IDC_SAMPLERATE, cfg_history_rate)
 		COMMAND_HANDLER_EX(IDC_LOOP, CBN_SELCHANGE, OnSelectionChange)
+#ifdef FLUIDSYNTHSUPPORT
 		COMMAND_HANDLER_EX(IDC_FLUID_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
+#endif
 		COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_EMIDI_EX, BN_CLICKED, OnButtonClick)
@@ -1573,9 +1608,15 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	
 	w = GetDlgItem( IDC_PLUGIN );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Emu de MIDI" );
+#ifdef FLUIDSYNTHSUPPORT
 	uSendMessageText( w, CB_ADDSTRING, 0, "FluidSynth" );
+#endif
 	uSendMessageText( w, CB_ADDSTRING, 0, "BASSMIDI" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "MUNT" );
+
+#ifndef FLUIDSYNTHSUPPORT
+	if ( plugin == 2 ) plugin = 4;
+#endif
 	
 	/*
 	if (plugin == 1)
@@ -1598,6 +1639,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 			vsti_selected = i;
 	}
 
+	if ( plugin == 1 && vsti_selected == ~0 ) plugin = 0;
+
 	/*{
 	HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
 	if (fsmod)
@@ -1613,11 +1656,13 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
 	}
 
+#ifdef FLUIDSYNTHSUPPORT
 	if ( plugin != 2 )
 	{
 		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
 	}
+#endif
 
 	if ( plugin != 1 )
 	{
@@ -1684,6 +1729,10 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		else plugin = 0;
 	}
 #endif
+#ifndef FLUIDSYNTHSUPPORT
+	if ( plugin > 1 ) --plugin;
+#endif
+
 	::SendMessage( w, CB_SETCURSEL, plugin, 0 );
 	
 	{
@@ -1728,6 +1777,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	//SendDlgItemMessage( IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex );
 	//SendDlgItemMessage( IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums );
 
+#ifdef FLUIDSYNTHSUPPORT
 	w = GetDlgItem( IDC_FLUID_INTERPOLATION );
 	for (unsigned i = 0; i < _countof(interp_txt); i++)
 	{
@@ -1742,6 +1792,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 			break;
 		}
 	}
+#endif
 
 	return FALSE;
 }
@@ -1760,13 +1811,16 @@ void CMyPreferences::OnButtonClick(UINT, int, CWindow) {
 
 void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 	int plugin = GetDlgItem( IDC_PLUGIN ).SendMessage( CB_GETCURSEL, 0, 0 );
+#ifndef FLUIDSYNTHSUPPORT
+	if ( plugin > 0 ) ++plugin;
+#endif
 	if ( plugin >= 4 && plugin < 4 + vsti_plugins.get_count() )
 	{
 		VSTiPlayer vstPlayer;
 		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 4 ].path ) )
 		{
 			vstPlayer.setChunk( vsti_config.get_ptr(), vsti_config.get_count() );
-			vstPlayer.displayEditorModal( *this );
+			vstPlayer.displayEditorModal();
 			vstPlayer.getChunk( vsti_config );
 			OnChanged();
 		}
@@ -1776,14 +1830,19 @@ void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	//t_size vsti_count = vsti_plugins.get_size();
 	int plugin = ::SendMessage( w, CB_GETCURSEL, 0, 0 );
+#ifndef FLUIDSYNTHSUPPORT
+	if ( plugin > 0 ) ++plugin;
+#endif
 	
 	GetDlgItem( IDC_SAMPLERATE ).EnableWindow( plugin || !g_running );
 	GetDlgItem( IDC_EMIDI_EX ).EnableWindow( !! plugin );
 	
 	GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 1 || plugin == 2 );
+#ifdef FLUIDSYNTHSUPPORT
 	GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 1 );
 	GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin == 1 );
+#endif
 
 	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
 
@@ -1839,11 +1898,13 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
 	}
+#ifdef FLUIDSYNTHSUPPORT
 	if ( default_cfg_plugin != 2 )
 	{
 		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
 	}
+#endif
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
 	uSetDlgItemText( m_hWnd, IDC_MUNT, click_to_set );
 	m_soundfont.reset();
@@ -1859,7 +1920,9 @@ void CMyPreferences::reset() {
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz );
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion );
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
+#ifdef FLUIDSYNTHSUPPORT
 	SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_SETCURSEL, interp_method_default );
+#endif
 
 	vsti_config.set_count( 0 );
 
@@ -1881,7 +1944,9 @@ void CMyPreferences::apply() {
 #ifdef DXISUPPORT
 		t_size dxi_count = dxi_plugins.get_count();
 #endif
-		
+#ifndef FLUIDSYNTHSUPPORT
+		if ( plugin > 0 ) ++plugin;
+#endif		
 		cfg_vst_path = "";
 		
 		if ( ! plugin )
@@ -1916,7 +1981,9 @@ void CMyPreferences::apply() {
 	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK );
 	cfg_emidi_exclusion = SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK );
 	//cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
+#ifdef FLUIDSYNTHSUPPORT
 	cfg_fluid_interp_method = interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ];
+#endif
 	
 	OnChanged(); //our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
 }
@@ -1930,7 +1997,9 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK ) != cfg_ff7loopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK ) != cfg_emidi_exclusion ) changed = true;
 	//if ( !changed && SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK ) != cfg_recover_tracks ) changed = true;
+#ifdef FLUIDSYNTHSUPPORT
 	if ( !changed && interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ] != cfg_fluid_interp_method ) changed = true;
+#endif
 	if ( !changed )
 	{
 		t_size vsti_count = vsti_plugins.get_size();
@@ -1938,7 +2007,10 @@ bool CMyPreferences::HasChanged() {
 #ifdef DXISUPPORT
 		t_size dxi_count = dxi_plugins.get_count();
 #endif
-		
+#ifndef FLUIDSYNTHSUPPORT
+		if ( plugin > 0 ) ++plugin;
+#endif
+
 		if ( ! plugin )
 		{
 			if ( cfg_plugin != 0 ) changed = true;

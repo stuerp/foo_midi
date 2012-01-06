@@ -182,7 +182,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="SFPlayer.cpp" />
+    <ClCompile Include="SFPlayer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="SMF.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -228,7 +231,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </CustomBuild>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="SFPlayer.h" />
+    <ClInclude Include="SFPlayer.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <CustomBuild Include="StdAfx.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -239,15 +245,6 @@
     <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\fluidsynth\winbuild\fluidsynth_lib\fluidsynth_lib.vcxproj">
-      <Project>{cd7d1a45-9970-4958-bd8f-7f42b083093c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\glib-2.20.4\build\win32\vs9\glib-static.vcxproj">
-      <Project>{12bca020-eabf-429e-876a-a476bc9c10c0}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\glib-2.20.4\build\win32\vs9\gthread-static.vcxproj">
-      <Project>{c8afb8c3-fffd-460f-bc13-9ac25d7b117c}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\munt\mt32emu\mt32emu_msvc7.vcxproj">
       <Project>{063a149d-e48c-499b-b13f-7a70c140a662}</Project>
     </ProjectReference>
@@ -266,8 +263,16 @@
     <ProjectReference Include="..\SDK\foobar2000_SDK.vcxproj">
       <Project>{e8091321-d79d-4575-86ef-064ea1a4a20d}</Project>
     </ProjectReference>
+    <ProjectReference Include="vsthost\vsthost.vcxproj">
+      <Project>{5d666f11-5e76-4653-8b5b-32988e4907a0}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="foo_midi.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

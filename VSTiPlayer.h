@@ -5,25 +5,6 @@
 
 #include "nu_processing/midi_container.h"
 
-#include "c:\\programming\\vstsdk2.3\\source\\common\\aeffect.h"
-#include "c:\\programming\\vstsdk2.3\\source\\common\\aeffectx.h"
-
-struct VstMidiSysexEvent
-{
-	long type;        // kVstSysexType
-	long byteSize;    // 24
-	long deltaFrames;
-	long flags;       // none defined yet
-	long dumpBytes;   // byte size of sysexDump
-	long resvd1;      // zero
-	char *sysexDump;
-	long resvd2;      // zero
-};
-
-#ifdef TIME_INFO
-struct VstTimeInfo;
-#endif
-
 class VSTiPlayer
 {
 public:
@@ -53,8 +34,8 @@ public:
 	void setChunk( const void * in, unsigned size );
 
 	// editor
-	bool hasEditor() const;
-	void displayEditorModal( HWND hwndParent );
+	bool hasEditor();
+	void displayEditorModal();
 
 	// setup
 	void setSampleRate(unsigned rate);
@@ -64,19 +45,31 @@ public:
 	unsigned Play(audio_sample * out, unsigned count);
 	void Seek(unsigned sample);
 
-	void needIdle();
-
-#ifdef TIME_INFO
-	// for audiomaster callback
-	VstTimeInfo * getTime();
-#endif
-
 private:
 	void send_event( DWORD );
 	void render(audio_sample *, unsigned);
 
-	HMODULE      hDll;
-	AEffect    * pEffect[2];
+	bool process_create();
+	void process_terminate();
+	bool process_running();
+	t_uint32 process_read_code();
+	void process_read_bytes(void * buffer, t_uint32 size);
+	void process_write_code(t_uint32 code);
+	void process_write_bytes(const void * buffer, t_uint32 size);
+
+	pfc::string8 sPlugin;
+
+	HANDLE       hProcess;
+	HANDLE       hThread;
+	HANDLE       hChildStd_IN_Rd;
+	HANDLE       hChildStd_IN_Wr;
+	HANDLE       hChildStd_OUT_Rd;
+	HANDLE       hChildStd_OUT_Wr;
+
+	char       * sVendor;
+	char       * sProduct;
+	t_uint32     uVendorVersion;
+	t_uint32     uUniqueId;
 
 	unsigned     uSamplesRemaining;
 
@@ -93,37 +86,6 @@ private:
 
 	UINT         uStreamLoopStart;
 	DWORD        uTimeLoopStart;
-
-	void resizeState(unsigned size);
-
-	pfc::array_t<t_uint8>    blState;
-	unsigned     buffer_size;
-
-	float     ** float_list_in;
-	float     ** float_list_out;
-	float      * float_null;
-	float      * float_out;
-
-	struct myVstEvent
-	{
-		struct myVstEvent * next;
-		unsigned port;
-		union
-		{
-			VstMidiEvent midiEvent;
-			VstMidiSysexEvent sysexEvent;
-		} ev;
-	} * evChain, * evTail;
-
-	void freeChain();
-
-	bool         bNeedIdle;
-
-	pfc::array_t<t_uint8>    blChunk;
-
-#ifdef TIME_INFO
-	VstTimeInfo* time_info;
-#endif
 };
 
 #endif

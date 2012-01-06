@@ -2,414 +2,291 @@
 
 #include <shared.h>
 
-#define BUFFER_SIZE 4096
-
-class VSTiPlayer;
-
-static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long value, void *ptr, float opt)
-{
-	VSTiPlayer * host = 0;
-	if ( effect ) host = (VSTiPlayer *) effect->user;
-
-	switch (opcode)
-	{
-#ifdef TIME_INFO
-	case audioMasterGetTime:
-		if (host) return (long) host->getTime();
-		break;
-#endif
-
-	case audioMasterVersion:
-		return 2300;
-
-	case audioMasterCurrentId:
-		if (effect) return effect->uniqueID;
-		break;
-
-	case audioMasterGetVendorString:
-		strncpy((char *)ptr, "Chris Moeller", 64);
-		//strncpy((char *)ptr, "YAMAHA", 64);
-		break;
-
-	case audioMasterGetProductString:
-		strncpy((char *)ptr, "VSTiPlayer", 64);
-		//strncpy((char *)ptr, "SOL/SQ01", 64);
-		break;
-
-	case audioMasterGetVendorVersion:
-		return 1337; // uhuhuhuhu
-		//return 0;
-
-	case audioMasterGetLanguage:
-		return kVstLangEnglish;
-
-	case audioMasterWillReplaceOrAccumulate:
-		return 1;
-
-	case audioMasterNeedIdle:
-		if ( host ) host->needIdle();
-		return 1;
-	}
-
-	return 0;
-}
-
-void VSTiPlayer::needIdle()
-{
-	bNeedIdle = true;
-}
-
-#ifdef TIME_INFO
-VstTimeInfo * VSTiPlayer::getTime()
-{
-	return time_info;
-}
-#endif
+// #define LOG_EXCHANGE
 
 VSTiPlayer::VSTiPlayer()
 {
-	hDll = 0;
-	pEffect[0] = 0;
-	pEffect[1] = 0;
+	hProcess = NULL;
+	hThread = NULL;
+	hChildStd_IN_Rd = NULL;
+	hChildStd_IN_Wr = NULL;
+	hChildStd_OUT_Rd = NULL;
+	hChildStd_OUT_Wr = NULL;
+	sVendor = NULL;
+	sProduct = NULL;
 	uSamplesRemaining = 0;
 	uSampleRate = 1000;
 	uNumOutputs = 0;
 	uTimeCurrent = 0;
 	uTimeEnd = 0;
 	uTimeLoopStart = 0;
-	evChain = 0;
-	evTail = 0;
-
-	bNeedIdle = false;
-
-#ifdef TIME_INFO
-	time_info = new VstTimeInfo;
-
-	time_info->samplePos = 0.0;
-	time_info->sampleRate = uSampleRate;
-	time_info->nanoSeconds = 0.0;
-	time_info->ppqPos = 0.0;
-	time_info->tempo = 120.0;
-	time_info->barStartPos = 0.0;
-	time_info->cycleStartPos = 0.0;
-	time_info->cycleEndPos = 0.0;
-	time_info->timeSigNumerator = 4;
-	time_info->timeSigDenominator = 4;
-	time_info->smpteOffset = 0;
-	time_info->smpteFrameRate = 1;
-	time_info->samplesToNextClock = 0;
-	time_info->flags = 0;
-#endif
 }
 
 VSTiPlayer::~VSTiPlayer()
 {
-	if (pEffect[1])
-	{
-		// buffer allocated at start of playback
-		if (blState.get_size())
-		{
-			pEffect[1]->dispatcher(pEffect[1], effStopProcess, 0, 0, 0, 0);
-		}
-
-		pEffect[1]->dispatcher(pEffect[1], effClose, 0, 0, 0, 0);
-	}
-
-	if (pEffect[0])
-	{
-		if (blState.get_size())
-		{
-			pEffect[0]->dispatcher(pEffect[0], effStopProcess, 0, 0, 0, 0);
-		}
-
-		pEffect[0]->dispatcher(pEffect[0], effClose, 0, 0, 0, 0);
-	}
-
-	freeChain();
-
-	if (hDll)
-	{
-		FreeLibrary(hDll);
-	}
-
-#ifdef TIME_INFO
-	delete time_info;
-#endif
+	process_terminate();
+	delete [] sVendor;
+	delete [] sProduct;
 }
-
-typedef AEffect * (*main_func)(audioMasterCallback audioMaster);
 
 bool VSTiPlayer::LoadVST(const char * path)
 {
-	hDll = uLoadLibrary(path);
+	sPlugin = path;
 
-	if (hDll)
+	return process_create();
+}
+
+bool VSTiPlayer::process_create()
+{
+	SECURITY_ATTRIBUTES saAttr;
+
+	saAttr.nLength = sizeof(saAttr);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+
+	if ( !CreatePipe( &hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0 ) ||
+		!SetHandleInformation( hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0 ) ||
+		!CreatePipe( &hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0 ) ||
+		!SetHandleInformation( hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0 ) )
 	{
-		main_func pMain = (main_func) GetProcAddress(hDll, "main");
-
-		if (pMain)
-		{
-			pEffect[0] = (*pMain)(&audioMaster);
-
-			if (pEffect[0])
-			{
-				pEffect[0]->user = this;
-
-				uNumOutputs = min( pEffect[0]->numOutputs, 2 );
-
-				pEffect[0]->dispatcher(pEffect[0], effOpen, 0, 0, 0, 0);
-
-				if (pEffect[0]->dispatcher(pEffect[0], effGetPlugCategory, 0, 0, 0, 0) == kPlugCategSynth &&
-					pEffect[0]->dispatcher(pEffect[0], effCanDo, 0, 0, "sendVstMidiEvent", 0))
-				{
-					pEffect[1] = (*pMain)(&audioMaster);
-					if (pEffect[1])
-					{
-						pEffect[1]->user = this;
-						pEffect[1]->dispatcher(pEffect[1], effOpen, 0, 0, 0, 0);
-						return true;
-					}
-				}
-			}
-		}
+		process_terminate();
+		return false;
 	}
 
+	pfc::string8 szCmdLine = "\"";
+	szCmdLine += core_api::get_my_full_path();
+	szCmdLine.truncate( szCmdLine.scan_filename() );
+	szCmdLine += "vsthost.exe";
+	szCmdLine += "\" \"";
+	szCmdLine += sPlugin;
+	szCmdLine += "\" ";
+
+	unsigned sum = 0;
+
+	pfc::stringcvt::string_os_from_utf8 plugin_os( sPlugin );
+	const TCHAR * ch = plugin_os.get_ptr();
+	while ( *ch )
+	{
+		sum += (TCHAR)( *ch++ * 820109 );
+	}
+
+	szCmdLine += pfc::format_int( sum, 0, 16 );
+
+	PROCESS_INFORMATION piProcInfo;
+	STARTUPINFO siStartInfo = {0};
+
+	siStartInfo.cb = sizeof(siStartInfo);
+	siStartInfo.hStdError = hChildStd_OUT_Wr;
+	siStartInfo.hStdOutput = hChildStd_OUT_Wr;
+	siStartInfo.hStdInput = hChildStd_IN_Rd;
+	//siStartInfo.wShowWindow = SW_HIDE;
+	siStartInfo.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
+
+	if ( !CreateProcess( NULL, (LPTSTR)(LPCTSTR) pfc::stringcvt::string_os_from_utf8( szCmdLine ), NULL, NULL, TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo ) )
+	{
+		process_terminate();
+		return false;
+	}
+
+	// Close remote handles so pipes will break when process terminates
+	CloseHandle( hChildStd_OUT_Wr );
+	CloseHandle( hChildStd_IN_Rd );
+	hChildStd_OUT_Wr = NULL;
+	hChildStd_IN_Rd = NULL;
+
+	hProcess = piProcInfo.hProcess;
+	hThread = piProcInfo.hThread;
+
+	SetPriorityClass( hProcess, GetPriorityClass( GetCurrentProcess() ) );
+	SetThreadPriority( hThread, GetThreadPriority( GetCurrentThread() ) );
+
+	t_uint32 code = process_read_code();
+
+	if ( code != 0 )
+	{
+		process_terminate();
+		return false;
+	}
+
+	t_uint32 vendor_string_length = process_read_code();
+	t_uint32 product_string_length = process_read_code();
+	uVendorVersion = process_read_code();
+	uUniqueId = process_read_code();
+	uNumOutputs = process_read_code();
+
+	delete [] sVendor;
+	delete [] sProduct;
+
+	sVendor = new char[ vendor_string_length + 1 ];
+	sProduct = new char[ product_string_length + 1 ];
+
+	process_read_bytes( sVendor, vendor_string_length );
+	process_read_bytes( sProduct, product_string_length );
+
+	sVendor[ vendor_string_length ] = 0;
+	sProduct[ product_string_length ] = 0;
+
+	return true;
+}
+
+void VSTiPlayer::process_terminate()
+{
+	if ( hProcess )
+	{
+		process_write_code( 0 );
+		WaitForSingleObject( hProcess, 5000 );
+		TerminateProcess( hProcess, 0 );
+		CloseHandle( hThread );
+		CloseHandle( hProcess );
+	}
+	if ( hChildStd_IN_Rd ) CloseHandle( hChildStd_IN_Rd );
+	if ( hChildStd_IN_Wr ) CloseHandle( hChildStd_IN_Wr );
+	if ( hChildStd_OUT_Rd ) CloseHandle( hChildStd_OUT_Rd );
+	if ( hChildStd_OUT_Wr ) CloseHandle( hChildStd_OUT_Wr );
+	hProcess = NULL;
+	hThread = NULL;
+	hChildStd_IN_Rd = NULL;
+	hChildStd_IN_Wr = NULL;
+	hChildStd_OUT_Rd = NULL;
+	hChildStd_OUT_Wr = NULL;
+}
+
+bool VSTiPlayer::process_running()
+{
+	if ( hProcess && WaitForSingleObject( hProcess, 0 ) == WAIT_TIMEOUT ) return true;
 	return false;
+}
+
+#ifdef LOG_EXCHANGE
+unsigned exchange_count = 0;
+#endif
+
+void VSTiPlayer::process_read_bytes( void * in, t_uint32 size )
+{
+	if ( process_running() && size )
+	{
+		DWORD dwRead;
+		if ( !ReadFile( hChildStd_OUT_Rd, in, size, &dwRead, NULL ) || dwRead < size )
+		{
+			memset( in, 0xFF, size );
+#ifdef LOG_EXCHANGE
+			TCHAR logfile[MAX_PATH];
+			_stprintf_s( logfile, _T("C:\\temp\\log2\\bytes_%08u.err"), exchange_count++ );
+			FILE * f = _tfopen( logfile, _T("wb") );
+			_ftprintf( f, _T("Wanted %u bytes, got %u"), size, dwRead );
+			fclose( f );
+#endif
+		}
+		else
+		{
+#ifdef LOG_EXCHANGE
+			TCHAR logfile[MAX_PATH];
+			_stprintf_s( logfile, _T("C:\\temp\\log2\\bytes_%08u.in"), exchange_count++ );
+			FILE * f = _tfopen( logfile, _T("wb") );
+			fwrite( in, 1, size, f );
+			fclose( f );
+#endif
+		}
+	}
+	else memset( in, 0xFF, size );
+}
+
+t_uint32 VSTiPlayer::process_read_code()
+{
+	t_uint32 code;
+	process_read_bytes( &code, sizeof(code) );
+	return code;
+}
+
+void VSTiPlayer::process_write_bytes( const void * out, t_uint32 size )
+{
+	if ( process_running() )
+	{
+		DWORD dwWritten;
+		WriteFile( hChildStd_IN_Wr, out, size, &dwWritten, NULL );
+#ifdef LOG_EXCHANGE
+		TCHAR logfile[MAX_PATH];
+		_stprintf_s( logfile, _T("C:\\temp\\log2\\bytes_%08u.out"), exchange_count++ );
+		FILE * f = _tfopen( logfile, _T("wb") );
+		fwrite( out, 1, size, f );
+		fclose( f );
+#endif
+	}
+}
+
+void VSTiPlayer::process_write_code( t_uint32 code )
+{
+	process_write_bytes( &code, sizeof(code) );
 }
 
 void VSTiPlayer::getVendorString(pfc::string_base & out)
 {
-	char temp[65];
-	memset(&temp, 0, sizeof(temp));
-
-	if (pEffect[0])
-	{
-		pEffect[0]->dispatcher(pEffect[0], effGetVendorString, 0, 0, &temp, 0);
-		out = temp;
-	}
+	out = sVendor;
 }
 
 void VSTiPlayer::getProductString(pfc::string_base & out)
 {
-	char temp[65];
-	memset(&temp, 0, sizeof(temp));
-
-	if (pEffect[0])
-	{
-		pEffect[0]->dispatcher(pEffect[0], effGetProductString, 0, 0, &temp, 0);
-		out = temp;
-	}
+	out = sProduct;
 }
 
 long VSTiPlayer::getVendorVersion()
 {
-	if (pEffect) return pEffect[0]->dispatcher(pEffect[0], effGetVendorVersion, 0, 0, 0, 0);
-	else return 0;
+	return uVendorVersion;
 }
 
 long VSTiPlayer::getUniqueID()
 {
-	if (pEffect) return pEffect[0]->uniqueID;
-	else return 0;
-}
-
-template<typename T>
-static void append_be( pfc::array_t<t_uint8> & out, const T & value )
-{
-	union
-	{
-		T original;
-		t_uint8 raw[sizeof(T)];
-	} carriage;
-	carriage.original = value;
-	for ( unsigned i = 0; i < sizeof(T); ++i )
-	{
-		out.append_single( carriage.raw[ sizeof(T) - 1 - i ] );
-	}
-}
-
-template<typename T>
-static void retrieve_be( T & out, const t_uint8 * & in, unsigned & size )
-{
-	if ( size < sizeof(T) ) return;
-
-	size -= sizeof(T);
-
-	union
-	{
-		T original;
-		t_uint8 raw[sizeof(T)];
-	} carriage;
-	for ( unsigned i = 0; i < sizeof(T); ++i )
-	{
-		carriage.raw[ sizeof(T) - 1 - i ] = *in++;
-	}
-
-	out = carriage.original;
+	return uUniqueId;
 }
 
 void VSTiPlayer::getChunk( pfc::array_t<t_uint8> & out )
 {
-	out.set_count( 0 );
-	if (pEffect)
+	process_write_code( 1 );
+
+	t_uint32 code = process_read_code();
+
+	if ( code == 0 )
 	{
-		append_be( out, pEffect[0]->uniqueID );
-		bool type_chunked = !!( pEffect[0]->flags & effFlagsProgramChunks );
-		append_be( out, type_chunked );
-		if ( !type_chunked )
-		{
-			append_be( out, pEffect[0]->numParams );
-			for ( unsigned i = 0, j = pEffect[0]->numParams; i < j; ++i )
-			{
-				float parameter = pEffect[0]->getParameter( pEffect[0], i );
-				append_be( out, parameter );
-			}
-		}
-		else
-		{
-			void * chunk;
-			long size = pEffect[0]->dispatcher(pEffect[0], effGetChunk, 0, 0, &chunk, 0);
-			append_be( out, size );
-			out.append_fromptr( ( const t_uint8 * )chunk, size );
-		}
+		t_uint32 size = process_read_code();
+
+		out.set_count( size );
+
+		process_read_bytes( out.get_ptr(), size );
 	}
+	else process_terminate();
 }
 
 void VSTiPlayer::setChunk( const void * in, unsigned size )
 {
-	if ( pEffect && size )
-	{
-		if ( in != NULL )
-		{
-			blChunk.set_count( size );
-			memcpy( blChunk.get_ptr(), in, size );
-		}
-		in = ( const void * )( blChunk.get_ptr() );
-		size = blChunk.get_count();
-
-		const t_uint8 * inc = ( const t_uint8 * ) in;
-		long effect_id;
-		retrieve_be( effect_id, inc, size );
-		if ( effect_id != pEffect[0]->uniqueID ) return;
-		bool type_chunked;
-		retrieve_be( type_chunked, inc, size );
-		if ( type_chunked != !!( pEffect[0]->flags & effFlagsProgramChunks ) ) return;
-		if ( !type_chunked )
-		{
-			long num_params;
-			retrieve_be( num_params, inc, size );
-			if ( num_params != pEffect[0]->numParams ) return;
-			for ( unsigned i = 0; i < num_params; ++i )
-			{
-				float parameter;
-				retrieve_be( parameter, inc, size );
-				pEffect[0]->setParameter( pEffect[0], i, parameter );
-				pEffect[1]->setParameter( pEffect[1], i, parameter );
-			}
-		}
-		else
-		{
-			long chunk_size;
-			retrieve_be( chunk_size, inc, size );
-			if ( chunk_size > size ) return;
-			pEffect[0]->dispatcher( pEffect[0], effSetChunk, 0, chunk_size, ( void * ) inc, 0 );
-			pEffect[1]->dispatcher( pEffect[1], effSetChunk, 0, chunk_size, ( void * ) inc, 0 );
-		}
-	}
+	process_write_code( 2 );
+	process_write_code( size );
+	process_write_bytes( in, size );
+	t_uint32 code = process_read_code();
+	if ( code != 0 ) process_terminate();
 }
 
-struct ERect
+bool VSTiPlayer::hasEditor()
 {
-	short top;
-	short left;
-	short bottom;
-	short right;
-};
-
-struct MyDLGTEMPLATE: DLGTEMPLATE
-{
-	WORD ext[3];
-	MyDLGTEMPLATE ()
-	{ memset (this, 0, sizeof(*this)); };
-};
-
-INT_PTR CALLBACK EditorProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	
-	AEffect* effect;
-	switch(msg)
+	process_write_code( 3 );
+	t_uint32 code = process_read_code();
+	if ( code != 0 )
 	{
-	case WM_INITDIALOG :
-		{
-			SetWindowLongPtr(hwnd,GWLP_USERDATA,lParam);
-			effect = (AEffect*)lParam;
-			SetWindowText (hwnd, L"VST Editor");
-			SetTimer (hwnd, 1, 20, 0);
-			if(effect)
-			{
-				effect->dispatcher (effect, effEditOpen, 0, 0, hwnd, 0);
-				ERect* eRect = 0;
-				effect->dispatcher (effect, effEditGetRect, 0, 0, &eRect, 0);
-				if(eRect)
-				{
-					int width = eRect->right - eRect->left;
-					int height = eRect->bottom - eRect->top;
-					if(width < 50)
-						width = 50;
-					if(height < 50)
-						height = 50;
-					RECT wRect;
-					SetRect (&wRect, 0, 0, width, height);
-					AdjustWindowRectEx (&wRect, GetWindowLong (hwnd, GWL_STYLE), FALSE, GetWindowLong (hwnd, GWL_EXSTYLE));
-					width = wRect.right - wRect.left;
-					height = wRect.bottom - wRect.top;
-					SetWindowPos (hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE);
-				}
-			}
-		}
-		break;
-	case WM_TIMER :
-		effect = (AEffect*)GetWindowLongPtr(hwnd,GWLP_USERDATA);
-		if(effect)
-			effect->dispatcher (effect, effEditIdle, 0, 0, 0, 0);
-		break;
-	case WM_CLOSE :
-		{
-			effect = (AEffect*)GetWindowLongPtr(hwnd,GWLP_USERDATA);
-			KillTimer (hwnd, 1);
-			if(effect)
-			{
-				effect->dispatcher (effect, effEditClose, 0, 0, 0, 0);
-			}
-
-			EndDialog (hwnd, IDOK);
-		}
-		break;
+		process_terminate();
+		return false;
 	}
-
-	return 0;
+	code = process_read_code();
+	return code != 0;
 }
 
-bool VSTiPlayer::hasEditor() const
+void VSTiPlayer::displayEditorModal()
 {
-	if (pEffect[0] && (pEffect[0]->flags & effFlagsHasEditor)) return true;
-	return false;
-}
-
-void VSTiPlayer::displayEditorModal( HWND hwndParent )
-{
-	if(pEffect[0] && (pEffect[0]->flags & effFlagsHasEditor))
-	{
-		MyDLGTEMPLATE t;	
-		t.style = WS_POPUPWINDOW|WS_DLGFRAME|DS_MODALFRAME|DS_CENTER;
-		DialogBoxIndirectParam (core_api::get_my_instance(), &t, hwndParent, (DLGPROC)EditorProc, (LPARAM)(pEffect[0]));
-	}
+	process_write_code( 4 );
+	t_uint32 code = process_read_code();
+	if ( code != 0 ) process_terminate();
 }
 
 void VSTiPlayer::setSampleRate(unsigned rate)
 {
-	assert(!blState.get_size());
-
 	if (mStream.get_count())
 	{
 		for (UINT i = 0; i < mStream.get_count(); i++)
@@ -434,9 +311,13 @@ void VSTiPlayer::setSampleRate(unsigned rate)
 	}
 
 	uSampleRate = rate;
-#ifdef TIME_INFO
-	time_info->sampleRate = rate;
-#endif
+
+	process_write_code( 5 );
+	process_write_code( sizeof(t_uint32) );
+	process_write_code( rate );
+	
+	t_uint32 code = process_read_code();
+	if ( code != 0 ) process_terminate();
 }
 
 unsigned VSTiPlayer::getChannelCount()
@@ -537,61 +418,11 @@ bool VSTiPlayer::Load(const midi_container & midi_file, unsigned subsong, unsign
 	return false;
 }
 
-void VSTiPlayer::resizeState(unsigned size)
-{
-	blState.grow_size( size );
-
-	if ( ( float ** ) blState.get_ptr() != float_list_in )
-	{
-		long i;
-
-		float_list_in  = (float**) blState.get_ptr();
-		float_list_out = float_list_in + pEffect[0]->numInputs;
-		float_null     = (float*) (float_list_out + pEffect[0]->numOutputs * 2);
-		float_out      = float_null + BUFFER_SIZE;
-
-		for (i = 0; i < pEffect[0]->numInputs; i++)
-		{
-			float_list_in[i] = float_null;
-		}
-
-		for (i = 0; i < pEffect[0]->numOutputs * 2; i++)
-		{
-			float_list_out[i] = float_out + BUFFER_SIZE * i;
-		}
-
-		memset(float_null, 0, sizeof(float) * BUFFER_SIZE);
-	}
-}
-
 unsigned VSTiPlayer::Play(audio_sample * out, unsigned count)
 {
 	assert(mStream.get_count());
 
-	if (!blState.get_size())
-	{
-		pEffect[0]->dispatcher(pEffect[0], effSetSampleRate, 0, 0, 0, float(uSampleRate));
-		pEffect[0]->dispatcher(pEffect[0], effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
-		pEffect[0]->dispatcher(pEffect[0], effMainsChanged, 0, 1, 0, 0);
-		pEffect[0]->dispatcher(pEffect[0], effStartProcess, 0, 0, 0, 0);
-
-		pEffect[1]->dispatcher(pEffect[1], effSetSampleRate, 0, 0, 0, float(uSampleRate));
-		pEffect[1]->dispatcher(pEffect[1], effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
-		pEffect[1]->dispatcher(pEffect[1], effMainsChanged, 0, 1, 0, 0);
-		pEffect[1]->dispatcher(pEffect[1], effStartProcess, 0, 0, 0, 0);
-
-		buffer_size = sizeof(float*) * (pEffect[0]->numInputs + pEffect[0]->numOutputs * 2); // float lists
-		buffer_size += sizeof(float) * BUFFER_SIZE;                                // null input
-		buffer_size += sizeof(float) * BUFFER_SIZE * pEffect[0]->numOutputs * 2;          // outputs
-
-		float_list_in = 0;
-		resizeState(buffer_size);
-	}
-
-	if ( bNeedIdle )
-	{
-		bNeedIdle = pEffect[0]->dispatcher(pEffect[0], effIdle, 0, 0, 0, 0) || pEffect[1]->dispatcher(pEffect[1], effIdle, 0, 0, 0, 0);
-	}
+	if ( !process_running() ) return 0;
 
 	DWORD done = 0;
 
@@ -707,37 +538,13 @@ void VSTiPlayer::Seek(unsigned sample)
 		// hokkai, let's kill any hanging notes
 		uStreamPosition = 0;
 
-		if (blState.get_size())
+		process_write_code( 6 );
+		
+		t_uint32 code = process_read_code();
+		if ( code != 0 )
 		{
-			// total shutdown
-			pEffect[ 0 ]->dispatcher(pEffect[ 0 ], effStopProcess, 0, 0, 0, 0);
-			pEffect[ 0 ]->dispatcher(pEffect[ 0 ], effClose, 0, 0, 0, 0);
-
-			pEffect[ 1 ]->dispatcher(pEffect[ 1 ], effStopProcess, 0, 0, 0, 0);
-			pEffect[ 1 ]->dispatcher(pEffect[ 1 ], effClose, 0, 0, 0, 0);
-
-			blState.set_size(0);
-
-			freeChain();
-
-			main_func pMain = (main_func) GetProcAddress(hDll, "main");
-
-			pEffect[ 0 ] = (*pMain)(&audioMaster);
-			pEffect[ 1 ] = (*pMain)(&audioMaster);
-
-			if (!pEffect[ 0 ] || !pEffect[ 1 ])
-			{
-				return;
-			}
-
-			pEffect[ 0 ]->user = this;
-			pEffect[ 1 ]->user = this;
-
-			pEffect[ 0 ]->dispatcher(pEffect[ 0 ], effOpen, 0, 0, 0, 0);
-			pEffect[ 1 ]->dispatcher(pEffect[ 1 ], effOpen, 0, 0, 0, 0);
-
-			if ( blChunk.get_size() )
-				setChunk( NULL, 0 );
+			process_terminate();
+			return;
 		}
 	}
 
@@ -803,31 +610,12 @@ void VSTiPlayer::Seek(unsigned sample)
 	}
 }
 
-void VSTiPlayer::freeChain()
-{
-	myVstEvent * ev = evChain;
-	while ( ev )
-	{
-		myVstEvent * next = ev->next;
-		free( ev );
-		ev = next;
-	}
-	evChain = NULL;
-	evTail = NULL;
-}
-
 void VSTiPlayer::send_event( DWORD b )
 {
-	myVstEvent * ev = ( myVstEvent * ) calloc( sizeof( myVstEvent ), 1 );
-	if ( evTail ) evTail->next = ev;
-	evTail = ev;
-	if ( !evChain ) evChain = ev;
 	if (!(b & 0x80000000))
 	{
-		ev->port = (b & 0x7F000000) ? 1 : 0;
-		ev->ev.midiEvent.type = kVstMidiType;
-		ev->ev.midiEvent.byteSize = sizeof(ev->ev.midiEvent);
-		memcpy(&ev->ev.midiEvent.midiData, &b, 3);
+		process_write_code( 7 );
+		process_write_code( b );
 	}
 	else
 	{
@@ -835,103 +623,33 @@ void VSTiPlayer::send_event( DWORD b )
 		const t_uint8 * data;
 		t_size size;
 		mSysexMap.get_entry( n, data, size );
-		ev->ev.sysexEvent.type = kVstSysExType;
-		ev->ev.sysexEvent.byteSize = sizeof(ev->ev.sysexEvent);
-		ev->ev.sysexEvent.dumpBytes = size;
-		ev->ev.sysexEvent.sysexDump = (char *)data;
-
-		evTail = ( myVstEvent * ) calloc( sizeof( myVstEvent ), 1 );
-		ev->next = evTail;
-		evTail->port = 1;
-		evTail->ev.sysexEvent = ev->ev.sysexEvent;
+		process_write_code( 8 );
+		process_write_code( size );
+		process_write_bytes( data, size );
 	}
+	t_uint32 code = process_read_code();
+	if ( code != 0 ) process_terminate();
 }
 
 void VSTiPlayer::render( audio_sample * out, unsigned count )
 {
-	VstEvents * events[2] = {0};
-
-	if ( evChain )
+	process_write_code( 9 );
+	process_write_code( count );
+	t_uint32 code = process_read_code();
+	if ( code != 0 )
 	{
-		unsigned event_count[2] = {0};
-		myVstEvent * ev = evChain;
-		while ( ev )
-		{
-			event_count[ ev->port ]++;
-			ev = ev->next;
-		}
-
-		if ( event_count[ 0 ] )
-		{
-			events[ 0 ] = ( VstEvents * ) malloc( sizeof(long) + sizeof(long) + sizeof(VstEvent*) * event_count[ 0 ] );
-
-			events[ 0 ]->numEvents = event_count[ 0 ];
-			events[ 0 ]->reserved = 0;
-
-			ev = evChain;
-
-			for ( unsigned i = 0; ev; )
-			{
-				if ( !ev->port ) events[ 0 ]->events[ i++ ] = (VstEvent*) &ev->ev;
-				ev = ev->next;
-			}
-
-			pEffect[ 0 ]->dispatcher(pEffect[ 0 ], effProcessEvents, 0, 0, events[ 0 ], 0);
-		}
-
-		if ( event_count[ 1 ] )
-		{
-			events[ 1 ] = ( VstEvents * ) malloc( sizeof(long) + sizeof(long) + sizeof(VstEvent*) * event_count[ 1 ] );
-
-			events[ 1 ]->numEvents = event_count[ 1 ];
-			events[ 1 ]->reserved = 0;
-
-			ev = evChain;
-
-			for ( unsigned i = 0; ev; )
-			{
-				if ( ev->port ) events[ 1 ]->events[ i++ ] = (VstEvent*) &ev->ev;
-				ev = ev->next;
-			}
-
-			pEffect[ 1 ]->dispatcher(pEffect[ 1 ], effProcessEvents, 0, 0, events[ 1 ], 0);
-		}
+		process_terminate();
+		memset( out, 0, sizeof(audio_sample) * count * uNumOutputs );
+		return;
 	}
+	assert(sizeof(audio_sample) == sizeof(float));
 
 	while ( count )
 	{
-		unsigned count_to_do = min( count, BUFFER_SIZE );
-		unsigned num_outputs = pEffect[ 0 ]->numOutputs;
-
-		pEffect[ 0 ]->processReplacing( pEffect[ 0 ], float_list_in, float_list_out, count_to_do );
-		pEffect[ 1 ]->processReplacing( pEffect[ 1 ], float_list_in, float_list_out + num_outputs, count_to_do );
-
-		if ( uNumOutputs == 2 )
-		{
-			for (unsigned i = 0; i < count_to_do; i++)
-			{
-				audio_sample sample = ( float_out[ i ] + float_out[ i + BUFFER_SIZE * num_outputs ] );
-				out[0] = sample;
-				sample = ( float_out[ i + BUFFER_SIZE ] + float_out[ i + BUFFER_SIZE + BUFFER_SIZE * num_outputs ] );
-				out[1] = sample;
-				out += 2;
-			}
-		}
-		else
-		{
-			for (unsigned i = 0; i < count_to_do; i++)
-			{
-				audio_sample sample = ( float_out[ i ] + float_out[ i + BUFFER_SIZE * num_outputs ] );
-				out[0] = sample;
-				out++;
-			}
-		}
-
+		unsigned count_to_do = 4096 * uNumOutputs;
+		if ( count_to_do > count ) count_to_do = count;
+		process_read_bytes( out, sizeof(audio_sample) * count_to_do * uNumOutputs );
+		out += count_to_do * uNumOutputs;
 		count -= count_to_do;
 	}
-
-	if ( events[ 0 ] ) free( events[ 0 ] );
-	if ( events[ 1 ] ) free( events[ 1 ] );
-
-	freeChain();
 }
