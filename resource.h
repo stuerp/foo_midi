@@ -25,6 +25,9 @@
 #define IDC_BUTTON1                     1014
 #define IDC_PLUGIN_CONFIGURE            1014
 #define IDC_VST_WARNING                 1015
+#define IDC_FILTER_INSTRUMENTS          1016
+#define IDC_CHECK2                      1017
+#define IDC_FILTER_BANKS                1017
 
 // Next default values for new objects
 // 
@@ -32,7 +35,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        101
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_CONTROL_VALUE         1018
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

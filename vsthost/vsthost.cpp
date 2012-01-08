@@ -265,12 +265,26 @@ static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long v
 	return 0;
 }
 
+LONG __stdcall myExceptFilterProc( LPEXCEPTION_POINTERS param )
+{
+	if (IsDebuggerPresent())
+	{
+		return UnhandledExceptionFilter(param);
+	}
+	else
+	{
+		//DumpCrashInfo( param );
+		TerminateProcess( GetCurrentProcess(), 0 );
+		return 0;// never reached
+	}
+}
+
 int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow )
 {
 	int argc = 0;
 	LPWSTR * argv = CommandLineToArgvW( GetCommandLineW(), &argc );
 
-	if ( argc != 3 ) return 1;
+	if ( argv == NULL || argc != 3 ) return 1;
 
 	wchar_t * end_char = 0;
 	unsigned in_sum = wcstoul( argv[ 2 ], &end_char, 16 );
@@ -285,9 +299,6 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 	if ( test_sum != in_sum ) return 1;
 
-	_setmode(_fileno(stdin), _O_BINARY);
-	_setmode(_fileno(stdout), _O_BINARY);
-
 	unsigned code = 0;
 
 	HMODULE hDll = NULL;
@@ -300,6 +311,10 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 	std::vector<uint8_t> chunk;
 	std::vector<float> sample_buffer;
+
+#ifndef _DEBUG
+	SetUnhandledExceptionFilter( myExceptFilterProc );
+#endif
 
 	hDll = LoadLibraryW( argv[ 1 ] );
 	if ( !hDll )
@@ -665,6 +680,7 @@ exit:
 	}
 	freeChain();
 	if ( hDll ) FreeLibrary( hDll );
+	if ( argv ) LocalFree( argv );
 
 	put_code( code );
 	return code ? 1 : 0;

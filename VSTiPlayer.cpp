@@ -6,8 +6,10 @@
 
 VSTiPlayer::VSTiPlayer()
 {
+	bInitialized = false;
 	hProcess = NULL;
 	hThread = NULL;
+	hReadEvent = NULL;
 	hChildStd_IN_Rd = NULL;
 	hChildStd_IN_Wr = NULL;
 	hChildStd_OUT_Rd = NULL;
@@ -36,6 +38,17 @@ bool VSTiPlayer::LoadVST(const char * path)
 	return process_create();
 }
 
+static bool create_pipe_name( pfc::string_base & out )
+{
+	GUID guid;
+	if ( FAILED( CoCreateGuid( &guid ) ) ) return false;
+
+	out = "\\\\.\\pipe\\";
+	out += pfc::print_guid( guid );
+
+	return true;
+}
+
 bool VSTiPlayer::process_create()
 {
 	SECURITY_ATTRIBUTES saAttr;
@@ -44,14 +57,42 @@ bool VSTiPlayer::process_create()
 	saAttr.bInheritHandle = TRUE;
 	saAttr.lpSecurityDescriptor = NULL;
 
-	if ( !CreatePipe( &hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0 ) ||
-		!SetHandleInformation( hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0 ) ||
-		!CreatePipe( &hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0 ) ||
-		!SetHandleInformation( hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0 ) )
+	if ( !bInitialized )
+	{
+		if ( FAILED( CoInitialize( NULL ) ) ) return false;
+		bInitialized = true;
+	}
+
+	hReadEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
+
+	pfc::string8 pipe_name_in, pipe_name_out;
+	if ( !create_pipe_name( pipe_name_in ) || !create_pipe_name( pipe_name_out ) )
 	{
 		process_terminate();
 		return false;
 	}
+
+	pfc::stringcvt::string_os_from_utf8 pipe_name_in_os( pipe_name_in ), pipe_name_out_os( pipe_name_out );
+
+	HANDLE hPipe = CreateNamedPipe( pipe_name_in_os, PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &saAttr );
+	if ( hPipe == INVALID_HANDLE_VALUE )
+	{
+		process_terminate();
+		return false;
+	}
+	hChildStd_IN_Rd = CreateFile( pipe_name_in_os, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL );
+	DuplicateHandle( GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd_IN_Wr, 0, FALSE, DUPLICATE_SAME_ACCESS );
+	CloseHandle( hPipe );
+
+	hPipe = CreateNamedPipe( pipe_name_out_os, PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &saAttr );
+	if ( hPipe == INVALID_HANDLE_VALUE )
+	{
+		process_terminate();
+		return false;
+	}
+	hChildStd_OUT_Wr = CreateFile( pipe_name_out_os, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL );
+	DuplicateHandle( GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd_OUT_Rd, 0, FALSE, DUPLICATE_SAME_ACCESS );
+	CloseHandle( hPipe );
 
 	pfc::string8 szCmdLine = "\"";
 	szCmdLine += core_api::get_my_full_path();
@@ -76,9 +117,9 @@ bool VSTiPlayer::process_create()
 	STARTUPINFO siStartInfo = {0};
 
 	siStartInfo.cb = sizeof(siStartInfo);
-	siStartInfo.hStdError = hChildStd_OUT_Wr;
-	siStartInfo.hStdOutput = hChildStd_OUT_Wr;
 	siStartInfo.hStdInput = hChildStd_IN_Rd;
+	siStartInfo.hStdOutput = hChildStd_OUT_Wr;
+	siStartInfo.hStdError = GetStdHandle( STD_ERROR_HANDLE );
 	//siStartInfo.wShowWindow = SW_HIDE;
 	siStartInfo.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
 
@@ -143,8 +184,12 @@ void VSTiPlayer::process_terminate()
 	if ( hChildStd_IN_Wr ) CloseHandle( hChildStd_IN_Wr );
 	if ( hChildStd_OUT_Rd ) CloseHandle( hChildStd_OUT_Rd );
 	if ( hChildStd_OUT_Wr ) CloseHandle( hChildStd_OUT_Wr );
+	if ( hReadEvent ) CloseHandle( hReadEvent );
+	if ( bInitialized ) CoUninitialize();
+	bInitialized = false;
 	hProcess = NULL;
 	hThread = NULL;
+	hReadEvent = NULL;
 	hChildStd_IN_Rd = NULL;
 	hChildStd_IN_Wr = NULL;
 	hChildStd_OUT_Rd = NULL;
@@ -161,34 +206,61 @@ bool VSTiPlayer::process_running()
 unsigned exchange_count = 0;
 #endif
 
-void VSTiPlayer::process_read_bytes( void * in, t_uint32 size )
+static void ProcessPendingMessages()
+{
+	MSG msg = {};
+	while ( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) ) DispatchMessage( &msg );
+}
+
+t_uint32 VSTiPlayer::process_read_bytes_pass( void * out, t_uint32 size )
+{
+	OVERLAPPED ol = {};
+	ol.hEvent = hReadEvent;
+	ResetEvent( hReadEvent );
+	DWORD bytesDone;
+	SetLastError( NO_ERROR );
+	if ( ReadFile( hChildStd_OUT_Rd, out, size, &bytesDone, &ol ) ) return bytesDone;
+	if ( GetLastError() != ERROR_IO_PENDING ) return 0;
+
+	const HANDLE handles[1] = {hReadEvent};
+	SetLastError( NO_ERROR );
+	DWORD state;
+	for (;;)
+	{
+		state = MsgWaitForMultipleObjects( _countof( handles ), handles, FALSE, INFINITE, QS_ALLEVENTS );
+		if ( state == WAIT_OBJECT_0 + _countof( handles ) ) ProcessPendingMessages();
+		else break;
+	}
+
+	if ( state == WAIT_OBJECT_0 && GetOverlappedResult( hChildStd_OUT_Rd, &ol, &bytesDone, TRUE ) ) return bytesDone;
+
+#if _WIN32_WINNT >= 0x600
+	CancelIoEx( hChildStd_OUT_Rd, &ol );
+#else
+	CancelIo( hChildStd_OUT_Rd );
+#endif
+
+	return 0;
+}
+
+void VSTiPlayer::process_read_bytes( void * out, t_uint32 size )
 {
 	if ( process_running() && size )
 	{
-		DWORD dwRead;
-		if ( !ReadFile( hChildStd_OUT_Rd, in, size, &dwRead, NULL ) || dwRead < size )
+		t_uint8 * ptr = (t_uint8 *) out;
+		t_uint32 done = 0;
+		while ( done < size )
 		{
-			memset( in, 0xFF, size );
-#ifdef LOG_EXCHANGE
-			TCHAR logfile[MAX_PATH];
-			_stprintf_s( logfile, _T("C:\\temp\\log2\\bytes_%08u.err"), exchange_count++ );
-			FILE * f = _tfopen( logfile, _T("wb") );
-			_ftprintf( f, _T("Wanted %u bytes, got %u"), size, dwRead );
-			fclose( f );
-#endif
-		}
-		else
-		{
-#ifdef LOG_EXCHANGE
-			TCHAR logfile[MAX_PATH];
-			_stprintf_s( logfile, _T("C:\\temp\\log2\\bytes_%08u.in"), exchange_count++ );
-			FILE * f = _tfopen( logfile, _T("wb") );
-			fwrite( in, 1, size, f );
-			fclose( f );
-#endif
+			t_uint32 delta = process_read_bytes_pass( ptr + done, size - done );
+			if ( delta == 0 )
+			{
+				memset( out, 0xFF, size );
+				break;
+			}
+			done += delta;
 		}
 	}
-	else memset( in, 0xFF, size );
+	else memset( out, 0xFF, size );
 }
 
 t_uint32 VSTiPlayer::process_read_code()
@@ -198,19 +270,13 @@ t_uint32 VSTiPlayer::process_read_code()
 	return code;
 }
 
-void VSTiPlayer::process_write_bytes( const void * out, t_uint32 size )
+void VSTiPlayer::process_write_bytes( const void * in, t_uint32 size )
 {
 	if ( process_running() )
 	{
-		DWORD dwWritten;
-		WriteFile( hChildStd_IN_Wr, out, size, &dwWritten, NULL );
-#ifdef LOG_EXCHANGE
-		TCHAR logfile[MAX_PATH];
-		_stprintf_s( logfile, _T("C:\\temp\\log2\\bytes_%08u.out"), exchange_count++ );
-		FILE * f = _tfopen( logfile, _T("wb") );
-		fwrite( out, 1, size, f );
-		fclose( f );
-#endif
+		if ( size == 0 ) return;
+		DWORD bytesWritten;
+		if ( !WriteFile( hChildStd_IN_Wr, in, size, &bytesWritten, NULL ) || bytesWritten < size ) process_terminate();
 	}
 }
 
@@ -325,11 +391,11 @@ unsigned VSTiPlayer::getChannelCount()
 	return uNumOutputs;
 }
 
-bool VSTiPlayer::Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, bool clean_flag)
+bool VSTiPlayer::Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags)
 {
 	assert(!mStream.get_count());
 
-	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flag );
+	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flags );
 
 	if (mStream.get_count())
 	{

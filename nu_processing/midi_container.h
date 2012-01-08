@@ -131,6 +131,15 @@ public:
 
 class midi_container
 {
+public:
+	enum
+	{
+		clean_flag_emidi       = 1 << 0,
+		clean_flag_instruments = 1 << 1,
+		clean_flag_banks       = 1 << 2,
+	};
+
+private:
 	unsigned m_form;
 	unsigned m_dtx;
 	pfc::array_t<unsigned> m_channel_mask;
@@ -161,7 +170,7 @@ public:
 
 	void set_extra_meta_data( const midi_meta_data & p_data );
 
-	void serialize_as_stream( unsigned subsong, pfc::array_t<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, bool clean_emidi ) const;
+	void serialize_as_stream( unsigned subsong, pfc::array_t<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, unsigned clean_flags ) const;
 
 	void serialize_as_standard_midi_file( pfc::array_t<t_uint8> & p_midi_file ) const;
 

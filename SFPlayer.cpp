@@ -70,11 +70,11 @@ void SFPlayer::setInterpolationMethod(unsigned method)
 	if ( _synth ) fluid_synth_set_interp_method( _synth, -1, method );
 }
 
-bool SFPlayer::Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, bool clean_flag)
+bool SFPlayer::Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags)
 {
 	assert(!mStream.get_count());
 
-	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flag );
+	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flags );
 
 	if (mStream.get_count())
 	{

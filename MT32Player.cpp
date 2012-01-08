@@ -54,11 +54,11 @@ void MT32Player::setSampleRate(unsigned rate)
 	shutdown();
 }
 
-bool MT32Player::Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, bool clean_flag)
+bool MT32Player::Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags)
 {
 	assert(!mStream.get_count());
 
-	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flag );
+	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flags );
 
 	if (mStream.get_count())
 	{

@@ -433,7 +433,7 @@ void midi_container::set_extra_meta_data( const midi_meta_data & p_data )
 	m_extra_meta_data = p_data;
 }
 
-void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, bool clean_emidi ) const
+void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, unsigned clean_flags ) const
 {
 	unsigned current_timestamp = 0;
 	pfc::array_t<t_uint8> data;
@@ -444,6 +444,10 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 
 	track_positions.append_multi( (t_size)0, track_count );
 	port_numbers.append_multi( (t_uint8)0, track_count );
+
+	bool clean_emidi = !!( clean_flags & clean_flag_emidi );
+	bool clean_instruments = !!( clean_flags & clean_flag_instruments );
+	bool clean_banks = !!( clean_flags & clean_flag_banks );
 
 	if ( clean_emidi )
 	{
@@ -505,54 +509,67 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 		}
 		if ( next_timestamp == ~0 ) break;
 
-		unsigned tempo_track = 0;
-		if ( m_form == 2 && subsong ) tempo_track = subsong;
+		bool filtered = false;
 
-		const midi_event & event = m_tracks[ next_track ][ track_positions[ next_track ] ];
-		unsigned timestamp_ms = timestamp_to_ms( event.m_timestamp, tempo_track );
-		if ( event.m_type != midi_event::extended )
+		if ( clean_instruments || clean_banks )
 		{
-			unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
-			if ( event.m_data_count >= 1 ) event_code += event.m_data[ 0 ] << 8;
-			if ( event.m_data_count >= 2 ) event_code += event.m_data[ 1 ] << 16;
-			event_code += port_numbers[ next_track ] ? 0x1000000 : 0;
-			p_stream.append_single( midi_stream_event( timestamp_ms, event_code ) );
+			const midi_event & event = m_tracks[ next_track ][ track_positions[ next_track ] ];
+			if ( clean_instruments && event.m_type == midi_event::program_change ) filtered = true;
+			else if ( clean_banks && event.m_type == midi_event::control_change &&
+				( event.m_data[ 0 ] == 0x00 || event.m_data[ 0 ] == 0x20 ) ) filtered = true;
 		}
-		else
+
+		if ( !filtered )
 		{
-			t_size data_count = event.get_data_count();
-			if ( data_count >= 3 && event.m_data[ 0 ] == 0xF0 )
+			unsigned tempo_track = 0;
+			if ( m_form == 2 && subsong ) tempo_track = subsong;
+
+			const midi_event & event = m_tracks[ next_track ][ track_positions[ next_track ] ];
+			unsigned timestamp_ms = timestamp_to_ms( event.m_timestamp, tempo_track );
+			if ( event.m_type != midi_event::extended )
 			{
-				data.grow_size( data_count );
-				event.copy_data( data.get_ptr(), 0, data_count );
-				if ( data[ data_count - 1 ] == 0xF7 )
-				{
-					unsigned system_exclusive_index = p_system_exclusive.add_entry( data.get_ptr(), data_count );
-					p_stream.append_single( midi_stream_event( timestamp_ms, system_exclusive_index | 0x80000000 ) );
-				}
+				unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
+				if ( event.m_data_count >= 1 ) event_code += event.m_data[ 0 ] << 8;
+				if ( event.m_data_count >= 2 ) event_code += event.m_data[ 1 ] << 16;
+				event_code += port_numbers[ next_track ] ? 0x1000000 : 0;
+				p_stream.append_single( midi_stream_event( timestamp_ms, event_code ) );
 			}
-			else if ( data_count >= 3 && event.m_data[ 0 ] == 0xFF )
+			else
 			{
-				if ( event.m_data[ 1 ] == 4 )
+				t_size data_count = event.get_data_count();
+				if ( data_count >= 3 && event.m_data[ 0 ] == 0xF0 )
 				{
-					data_count -= 2;
 					data.grow_size( data_count );
-					event.copy_data( data.get_ptr(), 2, data_count );
-					device_name.reset();
-					pfc::stringToLowerAppend( device_name, (const char *)data.get_ptr(), data_count );
-					unsigned port_number;
-					for ( port_number = 0; port_number < m_device_names.get_count(); ++port_number )
+					event.copy_data( data.get_ptr(), 0, data_count );
+					if ( data[ data_count - 1 ] == 0xF7 )
 					{
-						if ( !strcmp( m_device_names[ port_number ], device_name ) )
-						{
-							break;
-						}
+						unsigned system_exclusive_index = p_system_exclusive.add_entry( data.get_ptr(), data_count );
+						p_stream.append_single( midi_stream_event( timestamp_ms, system_exclusive_index | 0x80000000 ) );
 					}
-					port_numbers[ next_track ] = port_number;
 				}
-				else if ( event.m_data[ 1 ] == 0x21 )
+				else if ( data_count >= 3 && event.m_data[ 0 ] == 0xFF )
 				{
-					port_numbers[ next_track ] = event.m_data[ 2 ];
+					if ( event.m_data[ 1 ] == 4 )
+					{
+						data_count -= 2;
+						data.grow_size( data_count );
+						event.copy_data( data.get_ptr(), 2, data_count );
+						device_name.reset();
+						pfc::stringToLowerAppend( device_name, (const char *)data.get_ptr(), data_count );
+						unsigned port_number;
+						for ( port_number = 0; port_number < m_device_names.get_count(); ++port_number )
+						{
+							if ( !strcmp( m_device_names[ port_number ], device_name ) )
+							{
+								break;
+							}
+						}
+						port_numbers[ next_track ] = port_number;
+					}
+					else if ( event.m_data[ 1 ] == 0x21 )
+					{
+						port_numbers[ next_track ] = event.m_data[ 2 ];
+					}
 				}
 			}
 		}

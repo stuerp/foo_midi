@@ -41,7 +41,7 @@ public:
 	void setSampleRate(unsigned rate);
 	unsigned getChannelCount();
 
-	bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, bool clean_flag);
+	bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
 	unsigned Play(audio_sample * out, unsigned count);
 	void Seek(unsigned sample);
 
@@ -53,14 +53,17 @@ private:
 	void process_terminate();
 	bool process_running();
 	t_uint32 process_read_code();
-	void process_read_bytes(void * buffer, t_uint32 size);
-	void process_write_code(t_uint32 code);
-	void process_write_bytes(const void * buffer, t_uint32 size);
+	void process_read_bytes( void * buffer, t_uint32 size );
+	t_uint32 process_read_bytes_pass( void * buffer, t_uint32 size );
+	void process_write_code( t_uint32 code );
+	void process_write_bytes( const void * buffer, t_uint32 size );
 
 	pfc::string8 sPlugin;
 
+	bool         bInitialized;
 	HANDLE       hProcess;
 	HANDLE       hThread;
+	HANDLE       hReadEvent;
 	HANDLE       hChildStd_IN_Rd;
 	HANDLE       hChildStd_IN_Wr;
 	HANDLE       hChildStd_OUT_Rd;

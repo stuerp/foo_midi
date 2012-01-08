@@ -1,10 +1,17 @@
-#define MYVERSION "1.149"
+#define MYVERSION "1.150"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-01-08 16:13 UTC - kode54
+- Implemented MIDI instrument and bank change filters
+- Version is now 1.150
+
+2012-01-08 01:30 UTC - kode54
+- Improved the VSTi host bridge and its communication system
 
 2012-01-06 09:23 UTC - kode54
 - Fixed automatic paired SoundFont loading for FluidSynth
@@ -486,6 +493,12 @@ static const GUID guid_cfg_ff7loopz =
 // {C090F9C7-47F9-4f6f-847A-27CD7596C9D4}
 static const GUID guid_cfg_emidi_exclusion = 
 { 0xc090f9c7, 0x47f9, 0x4f6f, { 0x84, 0x7a, 0x27, 0xcd, 0x75, 0x96, 0xc9, 0xd4 } };
+// {6D30C919-B053-43AA-9F1B-1D401882805E}
+static const GUID guid_cfg_filter_instruments = 
+{ 0x6d30c919, 0xb053, 0x43aa, { 0x9f, 0x1b, 0x1d, 0x40, 0x18, 0x82, 0x80, 0x5e } };
+// {3145963C-7322-4B48-99FF-75EAC5F4DACC}
+static const GUID guid_cfg_filter_banks = 
+{ 0x3145963c, 0x7322, 0x4b48, { 0x99, 0xff, 0x75, 0xea, 0xc5, 0xf4, 0xda, 0xcc } };
 // {FE5B24D8-C8A5-4b49-A163-972649217185}
 /*static const GUID guid_cfg_recover_tracks = 
 { 0xfe5b24d8, 0xc8a5, 0x4b49, { 0xa1, 0x63, 0x97, 0x26, 0x49, 0x21, 0x71, 0x85 } };*/
@@ -561,7 +574,9 @@ enum
 {
 	default_cfg_xmiloopz = 0,
 	default_cfg_ff7loopz = 0,
-	default_cfg_emidi_exclusion = 0,
+	default_cfg_emidi_exclusion = 1,
+	default_cfg_filter_instruments = 0,
+	default_cfg_filter_banks = 0,
 	//default_cfg_recover_tracks = 0,
 	default_cfg_loop_type = 0,
 	default_cfg_srate = 44100,
@@ -577,6 +592,8 @@ static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 }
 
 cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
 		cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion), /*cfg_hack_xg_drums("yam", 0),*/
+		cfg_filter_instruments(guid_cfg_filter_instruments, default_cfg_filter_instruments),
+		cfg_filter_banks(guid_cfg_filter_banks, default_cfg_filter_banks),
 		/*cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),*/ cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
 		/*cfg_nosysex("sux", 0),*/ /*cfg_gm2(guid_cfg_gm2, 0),*/
 		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin)
@@ -643,7 +660,7 @@ class input_midi
 
 	bool b_xmiloopz;
 	bool b_ff7loopz;
-	bool b_emidi_ex;
+	unsigned clean_flags;
 	//bool b_gm2;
 
 	unsigned length_samples;
@@ -677,7 +694,7 @@ class input_midi
 
 public:
 	input_midi() : srate(cfg_srate), plugin(cfg_plugin), b_xmiloopz(!!cfg_xmiloopz),
-		b_ff7loopz(!!cfg_ff7loopz), b_emidi_ex(!!cfg_emidi_exclusion) //, b_gm2(!!cfg_gm2)
+		b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
 		dxiProxy = NULL;
@@ -698,6 +715,10 @@ public:
 		external_decoder = 0;
 		mem_reader = 0;
 		*/
+
+		clean_flags = (cfg_emidi_exclusion ? midi_container::clean_flag_emidi : 0) |
+			(cfg_filter_instruments ? midi_container::clean_flag_instruments : 0) |
+			(cfg_filter_banks ? midi_container::clean_flag_banks : 0);
 	}
 
 	~input_midi()
@@ -923,7 +944,7 @@ public:
 						if ( cfg_loop_type > 1 ) loop_mode |= VSTiPlayer::loop_mode_force;
 					}
 
-					if ( vstPlayer->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
+					if ( vstPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 					{
 						eof = false;
 						dont_loop = true;
@@ -957,7 +978,7 @@ public:
 					if ( cfg_loop_type > 1 ) loop_mode |= SFPlayer::loop_mode_force;
 				}
 
-				if ( sfPlayer->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
+				if ( sfPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -991,7 +1012,7 @@ public:
 					if ( cfg_loop_type > 1 ) loop_mode |= BMPlayer::loop_mode_force;
 				}
 
-				if ( bmPlayer->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
+				if ( bmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -1024,7 +1045,7 @@ public:
 					if ( cfg_loop_type > 1 ) loop_mode |= MT32Player::loop_mode_force;
 				}
 
-				if ( mt32Player->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
+				if ( mt32Player->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -1082,7 +1103,7 @@ public:
 					if ( cfg_loop_type > 1 ) loop_mode |= EMIDIPlayer::loop_mode_force;
 				}
 
-				if ( emidiPlayer->Load( midi_file, p_subsong, loop_mode, b_emidi_ex ) )
+				if ( emidiPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
 					{
 						insync(sync);
@@ -1454,7 +1475,7 @@ static const int srate_tab[]={8000,11025,16000,22050,24000,32000,44100,48000,640
 class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_page_instance {
 public:
 	//Constructor - invoked by preferences_page_impl helpers - don't do Create() in here, preferences_page_impl does this for us
-	CMyPreferences(preferences_page_callback::ptr callback) : m_callback(callback) {}
+	CMyPreferences(preferences_page_callback::ptr callback) : m_callback(callback), busy(false) {}
 
 	//Note that we don't bother doing anything regarding destruction of our class.
 	//The host ensures that our dialog is destroyed first, then the last reference to our preferences_page_instance object is released, causing our object to be deleted.
@@ -1483,6 +1504,8 @@ public:
 		COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_EMIDI_EX, BN_CLICKED, OnButtonClick)
+		COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS, BN_CLICKED, OnButtonClick)
+		COMMAND_HANDLER_EX(IDC_FILTER_BANKS, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_PLUGIN_CONFIGURE, BN_CLICKED, OnButtonConfig)
 		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
 	END_MSG_MAP()
@@ -1501,7 +1524,11 @@ private:
 
 	const preferences_page_callback::ptr m_callback;
 
+	bool busy;
+
+#ifdef DXISUPPORT
 	pfc::array_t< CLSID > dxi_plugins;
+#endif
 
 	struct vsti_info
 	{
@@ -1756,7 +1783,6 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	if ( !plugin )
 	{
 		if ( g_running ) GetDlgItem( IDC_SAMPLERATE ).EnableWindow( FALSE );
-		GetDlgItem( IDC_EMIDI_EX ).EnableWindow( FALSE );
 	}
 	
 	//if ( plugin <= vsti_count ) GetDlgItem( IDC_GM2 ).EnableWindow( FALSE );
@@ -1772,6 +1798,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, cfg_ff7loopz );
 
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, cfg_emidi_exclusion );
+	SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_SETCHECK, cfg_filter_instruments );
+	SendDlgItemMessage( IDC_FILTER_BANKS, BM_SETCHECK, cfg_filter_banks );
 	//SendDlgItemMessage( IDC_GM2, BM_SETCHECK, cfg_gm2 );
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, cfg_recover_tracks );
 	//SendDlgItemMessage( IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex );
@@ -1793,6 +1821,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		}
 	}
 #endif
+
+	busy = false;
 
 	return FALSE;
 }
@@ -1816,14 +1846,19 @@ void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 #endif
 	if ( plugin >= 4 && plugin < 4 + vsti_plugins.get_count() )
 	{
+		busy = true;
+		OnChanged();
+
 		VSTiPlayer vstPlayer;
 		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 4 ].path ) )
 		{
 			vstPlayer.setChunk( vsti_config.get_ptr(), vsti_config.get_count() );
 			vstPlayer.displayEditorModal();
 			vstPlayer.getChunk( vsti_config );
-			OnChanged();
 		}
+
+		busy = false;
+		OnChanged();
 	}
 }
 
@@ -1835,7 +1870,6 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 #endif
 	
 	GetDlgItem( IDC_SAMPLERATE ).EnableWindow( plugin || !g_running );
-	GetDlgItem( IDC_EMIDI_EX ).EnableWindow( !! plugin );
 	
 	GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 1 || plugin == 2 );
@@ -1888,6 +1922,7 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 t_uint32 CMyPreferences::get_state() {
 	t_uint32 state = preferences_state::resettable;
 	if (HasChanged()) state |= preferences_state::changed;
+	if (busy) state |= preferences_state::busy;
 	return state;
 }
 
@@ -1913,12 +1948,13 @@ void CMyPreferences::reset() {
 	if ( !default_cfg_plugin )
 	{
 		if ( g_running ) GetDlgItem( IDC_SAMPLERATE ).EnableWindow( FALSE );
-		GetDlgItem( IDC_EMIDI_EX ).EnableWindow( FALSE );
 	}
 	SendDlgItemMessage( IDC_LOOP, CB_SETCURSEL, default_cfg_loop_type );
 	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz );
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz );
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion );
+	SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments );
+	SendDlgItemMessage( IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks );
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
 #ifdef FLUIDSYNTHSUPPORT
 	SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_SETCURSEL, interp_method_default );
@@ -1980,6 +2016,8 @@ void CMyPreferences::apply() {
 	cfg_xmiloopz = SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK );
 	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK );
 	cfg_emidi_exclusion = SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK );
+	cfg_filter_instruments = SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_GETCHECK );
+	cfg_filter_banks = SendDlgItemMessage( IDC_FILTER_BANKS, BM_GETCHECK );
 	//cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
 #ifdef FLUIDSYNTHSUPPORT
 	cfg_fluid_interp_method = interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ];
@@ -1996,6 +2034,8 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK ) != cfg_xmiloopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK ) != cfg_ff7loopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK ) != cfg_emidi_exclusion ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_GETCHECK ) != cfg_filter_instruments ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_FILTER_BANKS, BM_GETCHECK ) != cfg_filter_banks ) changed = true;
 	//if ( !changed && SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK ) != cfg_recover_tracks ) changed = true;
 #ifdef FLUIDSYNTHSUPPORT
 	if ( !changed && interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ] != cfg_fluid_interp_method ) changed = true;
