@@ -94,7 +94,6 @@
     <ResourceCompile Include="vsthost.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="icon1.ico" />
     <None Include="vsthost.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
