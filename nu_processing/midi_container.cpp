@@ -934,4 +934,15 @@ void midi_container::scan_for_loops( bool p_xmi_loops, bool p_marker_loops )
 			}
 		}
 	}
+
+	// Sanity
+
+	for ( unsigned i = 0; i < subsong_count; ++i )
+	{
+		if ( m_timestamp_loop_start[ i ] != ~0 && m_timestamp_loop_start[ i ] == m_timestamp_loop_end[ i ] )
+		{
+			m_timestamp_loop_start[ i ] = ~0;
+			m_timestamp_loop_end[ i ] = ~0;
+		}
+	}
 }

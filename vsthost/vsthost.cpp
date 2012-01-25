@@ -10,7 +10,9 @@ enum
 
 // #define LOG_EXCHANGE
 
+#ifdef VST_SDK_2_3
 bool need_idle = false;
+#endif
 
 struct myVstEvent
 {
@@ -29,7 +31,7 @@ void freeChain()
 	while ( ev )
 	{
 		myVstEvent * next = ev->next;
-		if ( ev->ev.sysexEvent.type == kVstSysExType ) free( ev->ev.sysexEvent.sysexDump );
+		if ( ev->port && ev->ev.sysexEvent.type == kVstSysExType ) free( ev->ev.sysexEvent.sysexDump );
 		free( ev );
 		ev = next;
 	}
@@ -154,6 +156,7 @@ void setChunk( AEffect * pEffect, std::vector<uint8_t> const& in )
 	}
 }
 
+#ifdef VST_SDK_2_3
 struct ERect
 {
 	short top;
@@ -161,6 +164,7 @@ struct ERect
 	short bottom;
 	short right;
 };
+#endif
 
 struct MyDLGTEMPLATE: DLGTEMPLATE
 {
@@ -226,19 +230,35 @@ INT_PTR CALLBACK EditorProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long value, void *ptr, float opt)
+struct audioMasterData
 {
+	VstIntPtr effect_number;
+};
+
+#ifdef VST_SDK_2_3
+static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long value, void *ptr, float opt)
+#else
+static VstIntPtr VSTCALLBACK audioMaster( AEffect * effect, VstInt32 opcode, VstInt32 index, VstIntPtr value, void * ptr, float opt)
+#endif
+{
+	audioMasterData * data = NULL;
+	if ( effect ) data = ( audioMasterData * ) effect->user;
+
 	switch (opcode)
 	{
 	case audioMasterVersion:
+#ifdef VST_SDK_2_3
 		return 2300;
+#else
+		return 2400;
+#endif
 
 	case audioMasterCurrentId:
-		if (effect) return effect->uniqueID;
+		if ( data ) return data->effect_number;
 		break;
 
 	case audioMasterGetVendorString:
-		strncpy((char *)ptr, "Chris Moeller", 64);
+		strncpy((char *)ptr, "NoWork, Inc.", 64);
 		//strncpy((char *)ptr, "YAMAHA", 64);
 		break;
 
@@ -248,18 +268,19 @@ static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long v
 		break;
 
 	case audioMasterGetVendorVersion:
-		return 1337; // uhuhuhuhu
-		//return 0;
+		return 1000;
 
 	case audioMasterGetLanguage:
 		return kVstLangEnglish;
 
+#ifdef VST_SDK_2_3
 	case audioMasterWillReplaceOrAccumulate:
 		return 1;
 
 	case audioMasterNeedIdle:
 		need_idle = true;
 		return 1;
+#endif
 	}
 
 	return 0;
@@ -288,7 +309,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 	wchar_t * end_char = 0;
 	unsigned in_sum = wcstoul( argv[ 2 ], &end_char, 16 );
-	if ( end_char == argv[ 2 ] || *end_char ) return 1;
+	if ( end_char == argv[ 2 ] || *end_char ) return 2;
 
 	unsigned test_sum = 0;
 	end_char = argv[ 1 ];
@@ -297,7 +318,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 		test_sum += (TCHAR)( *end_char++ * 820109 );
 	}
 
-	if ( test_sum != in_sum ) return 1;
+	if ( test_sum != in_sum ) return 3;
 
 	unsigned code = 0;
 
@@ -305,48 +326,66 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	main_func pMain = NULL;
 	AEffect * pEffect[2] = {0};
 
+	audioMasterData effectData[2] = { { 0 }, { 1 } };
+
 	std::vector<uint8_t> blState;
 
+	uint32_t max_num_outputs = 2;
 	uint32_t sample_rate = 44100;
 
 	std::vector<uint8_t> chunk;
 	std::vector<float> sample_buffer;
 
+	{
+		INITCOMMONCONTROLSEX icc;
+		icc.dwSize = sizeof(icc);
+		icc.dwICC = ICC_WIN95_CLASSES | ICC_COOL_CLASSES | ICC_STANDARD_CLASSES;
+		if ( !InitCommonControlsEx( &icc ) ) return 4;
+	}
+
+	if ( FAILED( CoInitialize( NULL ) ) ) return 5;
+
 #ifndef _DEBUG
 	SetUnhandledExceptionFilter( myExceptFilterProc );
+#endif
+
+#if 0
+	MessageBox( GetDesktopWindow(), argv[ 1 ], _T("HUUUURRRRRR"), 0 );
 #endif
 
 	hDll = LoadLibraryW( argv[ 1 ] );
 	if ( !hDll )
 	{
-		code = 1;
+		code = 6;
 		goto exit;
 	}
 
 	pMain = (main_func) GetProcAddress( hDll, "main" );
 	if ( !pMain )
 	{
-		code = 2;
+		code = 7;
 		goto exit;
 	}
 
 	pEffect[ 0 ] = pMain( &audioMaster );
-	if ( !pEffect[ 0 ] )
+	if ( !pEffect[ 0 ] || pEffect[ 0 ]->magic != kEffectMagic )
 	{
-		code = 3;
+		code = 8;
 		goto exit;
 	}
 
-	uint32_t max_num_outputs = min( pEffect[ 0 ]->numOutputs, 2 );
+	pEffect[ 0 ]->user = &effectData[ 0 ];
 
 	pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effOpen, 0, 0, 0, 0 );
 
 	if ( pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effGetPlugCategory, 0, 0, 0, 0 ) != kPlugCategSynth ||
 		pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effCanDo, 0, 0, "sendVstMidiEvent", 0 ) == 0 )
 	{
-		code = 4;
+		code = 9;
 		goto exit;
 	}
+
+	max_num_outputs = min( pEffect[ 0 ]->numOutputs, 2 );
 
 	{
 		char vendor_string[65] = { 0 };
@@ -435,7 +474,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 				uint32_t size = get_code();
 				if ( size != sizeof(sample_rate) )
 				{
-					code = 5;
+					code = 10;
 					goto exit;
 				}
 
@@ -463,9 +502,10 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 				pEffect[ 0 ] = pMain( &audioMaster );
 				if ( !pEffect[ 0 ] )
 				{
-					code = 3;
+					code = 8;
 					goto exit;
 				}
+				pEffect[ 0 ]->user = &effectData[ 0 ];
 				pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effOpen, 0, 0, 0, 0 );
 				setChunk( pEffect[ 0 ], chunk );
 
@@ -510,8 +550,6 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 				ev->next = evTail;
 				evTail->port = 1;
 				evTail->ev.sysexEvent = ev->ev.sysexEvent;
-				evTail->ev.sysexEvent.sysexDump = (char*) malloc( size );
-				memcpy( evTail->ev.sysexEvent.sysexDump, ev->ev.sysexEvent.sysexDump, size );
 
 				put_code( 0 );
 			}
@@ -524,9 +562,10 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 					pEffect[ 1 ] = pMain( &audioMaster );
 					if ( !pEffect[ 1 ] )
 					{
-						code = 6;
+						code = 11;
 						goto exit;
 					}
+					pEffect[ 1 ]->user = &effectData[ 1 ];
 					pEffect[ 1 ]->dispatcher( pEffect[ 1 ], effOpen, 0, 0, 0, 0 );
 					setChunk( pEffect[ 1 ], chunk );
 				}
@@ -562,7 +601,9 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 					sample_buffer.resize( BUFFER_SIZE * max_num_outputs );
 				}
 
+#ifdef VST_SDK_2_3
 				if ( need_idle ) need_idle = pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effIdle, 0, 0, 0, 0 ) || pEffect[ 1 ]->dispatcher( pEffect[ 1 ], effIdle, 0, 0, 0, 0 );
+#endif
 
 				VstEvents * events[ 2 ] = {0};
 
@@ -661,7 +702,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 			break;
 
 		default:
-			code = 6;
+			code = 12;
 			goto exit;
 			break;
 		}
@@ -680,9 +721,9 @@ exit:
 	}
 	freeChain();
 	if ( hDll ) FreeLibrary( hDll );
+	CoUninitialize();
 	if ( argv ) LocalFree( argv );
 
 	put_code( code );
-	return code ? 1 : 0;
+	return code;
 }
-

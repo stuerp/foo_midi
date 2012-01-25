@@ -1,10 +1,14 @@
-#define MYVERSION "1.150"
+#define MYVERSION "1.151"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-01-25 10:39 UTC - kode54
+- Added sanity checking to loop scanner so zero-length loops are ignored
+- Version is now 1.151
 
 2012-01-08 16:13 UTC - kode54
 - Implemented MIDI instrument and bank change filters
