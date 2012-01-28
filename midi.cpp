@@ -1,10 +1,14 @@
-#define MYVERSION "1.151"
+#define MYVERSION "1.152"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-01-28 22:57 UTC - kode54
+- Updated BASSMIDI to version 2.4.6.10
+- Version is now 1.152
 
 2012-01-25 10:39 UTC - kode54
 - Added sanity checking to loop scanner so zero-length loops are ignored
