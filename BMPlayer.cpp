@@ -137,6 +137,7 @@ public:
 				BASS_SetConfigPtr( BASS_CONFIG_MIDI_DEFFONT, NULL );
 				BASS_SetConfig( BASS_CONFIG_MIDI_VOICES, 256 );
 				g_map = new soundfont_map;
+				g_map->start();
 			}
 		}
 		return initialized;

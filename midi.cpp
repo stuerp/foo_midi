@@ -1,10 +1,14 @@
-#define MYVERSION "1.152"
+#define MYVERSION "1.153"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-02-09 14:28 UTC - kode54
+- BASSMIDI driver now correctly frees SoundFont banks when all playback stops
+- Version is now 1.153
 
 2012-01-28 22:57 UTC - kode54
 - Updated BASSMIDI to version 2.4.6.10
