@@ -1,10 +1,14 @@
-#define MYVERSION "1.153"
+#define MYVERSION "1.154"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-02-19 19:59 UTC - kode54
+- Added abort check to decoder
+- Version is now 1.154
 
 2012-02-09 14:28 UTC - kode54
 - BASSMIDI driver now correctly frees SoundFont banks when all playback stops
@@ -1140,6 +1144,8 @@ public:
 
 	bool decode_run( audio_chunk & p_chunk, abort_callback & p_abort )
 	{
+		p_abort.check();
+
 		if (eof) return false;
 
 #ifdef DXISUPPORT
