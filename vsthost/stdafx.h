@@ -26,11 +26,11 @@
 
 // #define VST_SDK_2_3
 #ifdef VST_SDK_2_3
-#include "c:\\programming\\vstsdk2.3\\source\\common\\aeffect.h"
-#include "c:\\programming\\vstsdk2.3\\source\\common\\aeffectx.h"
+#include "..\\..\\..\\..\\vstsdk2.3\\source\\common\\aeffect.h"
+#include "..\\..\\..\\..\\vstsdk2.3\\source\\common\\aeffectx.h"
 #else
-#include "c:\\programming\\vstsdk2.4\\pluginterfaces\\vst2.x\\aeffect.h"
-#include "c:\\programming\\vstsdk2.4\\pluginterfaces\\vst2.x\\aeffectx.h"
+#include "..\\..\\..\\..\\vstsdk2.4\\pluginterfaces\\vst2.x\\aeffect.h"
+#include "..\\..\\..\\..\\vstsdk2.4\\pluginterfaces\\vst2.x\\aeffectx.h"
 #endif
 
 #if defined _M_IX86
