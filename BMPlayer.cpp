@@ -148,6 +148,7 @@ BMPlayer::BMPlayer()
 {
 	_stream = 0;
 	uSamplesRemaining = 0;
+	bSincInterpolation = false;
 	uSampleRate = 1000;
 	uTimeCurrent = 0;
 	uTimeEnd = 0;
@@ -187,6 +188,13 @@ void BMPlayer::setSampleRate(unsigned rate)
 	}
 
 	uSampleRate = rate;
+
+	shutdown();
+}
+
+void BMPlayer::setSincInterpolation(bool enable)
+{
+	bSincInterpolation = enable;
 
 	shutdown();
 }
@@ -575,7 +583,7 @@ void BMPlayer::shutdown()
 
 bool BMPlayer::startup()
 {
-	_stream = BASS_MIDI_StreamCreate( 32, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE, uSampleRate );
+	_stream = BASS_MIDI_StreamCreate( 32, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ), uSampleRate );
 	if (!_stream)
 	{
 		return false;

@@ -28,6 +28,7 @@ public:
 
 	// setup
 	void setSampleRate(unsigned rate);
+	void setSincInterpolation(bool enable = true);
 
 	bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
 	unsigned Play(audio_sample * out, unsigned count);
@@ -50,6 +51,7 @@ private:
 
 	unsigned           uSamplesRemaining;
 
+	bool               bSincInterpolation;
 	unsigned           uSampleRate;
 	unsigned           uLoopMode;
 

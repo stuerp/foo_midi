@@ -1,10 +1,15 @@
-#define MYVERSION "1.154"
+#define MYVERSION "1.155"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-03-26 18:47 UTC - kode54
+- Updated BASSMIDI to version 2.4.6.11
+- Implemented support for BASSMIDI sinc interpolation
+- Version is now 1.155
 
 2012-02-19 19:59 UTC - kode54
 - Added abort check to decoder
@@ -527,6 +532,9 @@ static const GUID guid_cfg_srate =
 // {1253BAC2-9193-420c-A919-9A1CF8706E2C}
 static const GUID guid_cfg_plugin = 
 { 0x1253bac2, 0x9193, 0x420c, { 0xa9, 0x19, 0x9a, 0x1c, 0xf8, 0x70, 0x6e, 0x2c } };
+// {F9DDD2C0-D8FD-442F-9E49-D901B51D6D38}
+static const GUID guid_cfg_resampling = 
+{ 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } };
 // {408AA155-4C42-42b5-8C3E-D10C35DD5EF1}
 static const GUID guid_cfg_history_rate = 
 { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
@@ -597,6 +605,7 @@ enum
 	default_cfg_loop_type = 0,
 	default_cfg_srate = 44100,
 	default_cfg_plugin = 0,
+	default_cfg_resampling = 1,
 #ifdef FLUIDSYNTHSUPPORT
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
 #endif
@@ -612,7 +621,8 @@ cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid
 		cfg_filter_banks(guid_cfg_filter_banks, default_cfg_filter_banks),
 		/*cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),*/ cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
 		/*cfg_nosysex("sux", 0),*/ /*cfg_gm2(guid_cfg_gm2, 0),*/
-		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin)
+		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
+		cfg_resampling(guid_cfg_resampling, default_cfg_resampling)
 #ifdef FLUIDSYNTHSUPPORT
 		,cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
 #endif
@@ -673,6 +683,7 @@ class input_midi
 
 	unsigned srate;
 	unsigned plugin;
+	unsigned resampling;
 
 	bool b_xmiloopz;
 	bool b_ff7loopz;
@@ -709,8 +720,8 @@ class input_midi
 	*/
 
 public:
-	input_midi() : srate(cfg_srate), plugin(cfg_plugin), b_xmiloopz(!!cfg_xmiloopz),
-		b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
+	input_midi() : srate(cfg_srate), plugin(cfg_plugin), resampling(cfg_resampling),
+		b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
 		dxiProxy = NULL;
@@ -1019,6 +1030,7 @@ public:
 				bmPlayer->setSoundFont(cfg_soundfont_path);
 				if ( file_soundfont.length() ) bmPlayer->setFileSoundFont( file_soundfont );
 				bmPlayer->setSampleRate(srate);
+				bmPlayer->setSincInterpolation(!!resampling);
 
 				unsigned loop_mode = 0;
 
@@ -1519,6 +1531,7 @@ public:
 #ifdef FLUIDSYNTHSUPPORT
 		COMMAND_HANDLER_EX(IDC_FLUID_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
 #endif
+		COMMAND_HANDLER_EX(IDC_RESAMPLING, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_EMIDI_EX, BN_CLICKED, OnButtonClick)
@@ -1699,6 +1712,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_RESAMPLING_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_RESAMPLING ).EnableWindow( FALSE );
 	}
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -1840,6 +1855,11 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 #endif
 
+	w = GetDlgItem( IDC_RESAMPLING );
+	uSendMessageText( w, CB_ADDSTRING, 0, "Linear interpolation" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "Sinc interpolation" );
+	::SendMessage( w, CB_SETCURSEL, cfg_resampling, 0 );
+
 	busy = false;
 
 	return FALSE;
@@ -1891,6 +1911,8 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	
 	GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 1 || plugin == 2 );
+	GetDlgItem( IDC_RESAMPLING_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
+	GetDlgItem( IDC_RESAMPLING ).EnableWindow( plugin == 1 || plugin == 2 );
 #ifdef FLUIDSYNTHSUPPORT
 	GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 1 );
 	GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin == 1 );
@@ -1950,6 +1972,8 @@ void CMyPreferences::reset() {
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_RESAMPLING_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_RESAMPLING ).EnableWindow( FALSE );
 	}
 #ifdef FLUIDSYNTHSUPPORT
 	if ( default_cfg_plugin != 2 )
@@ -1977,6 +2001,7 @@ void CMyPreferences::reset() {
 #ifdef FLUIDSYNTHSUPPORT
 	SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_SETCURSEL, interp_method_default );
 #endif
+	SendDlgItemMessage( IDC_RESAMPLING, CB_SETCURSEL, default_cfg_resampling );
 
 	vsti_config.set_count( 0 );
 
@@ -2040,6 +2065,7 @@ void CMyPreferences::apply() {
 #ifdef FLUIDSYNTHSUPPORT
 	cfg_fluid_interp_method = interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ];
 #endif
+	cfg_resampling = SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL );
 	
 	OnChanged(); //our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
 }
@@ -2058,6 +2084,7 @@ bool CMyPreferences::HasChanged() {
 #ifdef FLUIDSYNTHSUPPORT
 	if ( !changed && interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ] != cfg_fluid_interp_method ) changed = true;
 #endif
+	if ( !changed && SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL ) != cfg_resampling ) changed = true;
 	if ( !changed )
 	{
 		t_size vsti_count = vsti_plugins.get_size();
