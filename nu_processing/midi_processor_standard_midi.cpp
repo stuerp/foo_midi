@@ -39,8 +39,14 @@ void midi_processor::process_standard_midi_track( file::ptr & p_file, midi_conta
 		for (;;)
 		{
 			if ( !needs_end_marker && p_file->is_eof( p_abort ) ) break;
-			unsigned delta = decode_delta( p_file, p_abort );
+			int delta = decode_delta( p_file, p_abort );
 			if ( !needs_end_marker && p_file->is_eof( p_abort ) ) break;
+
+			if ( delta < 0 )
+			{
+				console::formatter() << "[foo_midi] MIDI processor encountered negative delta: " << pfc::format_int( delta ) << "; flipping sign.";
+				delta = -delta;
+			}
 
 			current_timestamp += delta;
 			unsigned char event_code;
@@ -74,7 +80,8 @@ void midi_processor::process_standard_midi_track( file::ptr & p_file, midi_conta
 			}
 			else if ( event_code == 0xF0 )
 			{
-				unsigned data_count = decode_delta( p_file, p_abort );
+				int data_count = decode_delta( p_file, p_abort );
+				if ( data_count < 0 ) throw exception_io_data( "Invalid System Exclusive message" );
 				buffer.grow_size( data_count + 1 );
 				buffer[ 0 ] = 0xF0;
 				p_file->read_object( buffer.get_ptr() + 1, data_count, p_abort );
@@ -84,7 +91,8 @@ void midi_processor::process_standard_midi_track( file::ptr & p_file, midi_conta
 			{
 				unsigned char meta_type;
 				p_file->read_object_t( meta_type, p_abort );
-				unsigned data_count = decode_delta( p_file, p_abort );
+				int data_count = decode_delta( p_file, p_abort );
+				if ( data_count < 0 ) throw exception_io_data( "Invalid meta message" );
 				buffer.grow_size( data_count + 2 );
 				buffer[ 0 ] = 0xFF;
 				buffer[ 1 ] = meta_type;

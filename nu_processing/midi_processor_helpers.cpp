@@ -6,9 +6,9 @@ const t_uint8 midi_processor::end_of_track[2] = {0xFF, 0x2F};
 const t_uint8 midi_processor::loop_start[11] = {0xFF, 0x06, 'l', 'o', 'o', 'p', 'S', 't', 'a', 'r', 't'};
 const t_uint8 midi_processor::loop_end[9] =    {0xFF, 0x06, 'l', 'o', 'o', 'p', 'E', 'n', 'd'};
 
-unsigned midi_processor::decode_delta( service_ptr_t<file> & p_file, abort_callback & p_abort )
+int midi_processor::decode_delta( service_ptr_t<file> & p_file, abort_callback & p_abort )
 {
-	unsigned delta = 0;
+	int delta = 0;
 	unsigned char byte;
 	do
 	{

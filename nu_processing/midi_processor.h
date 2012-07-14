@@ -20,7 +20,7 @@ class midi_processor
 
 	static const t_uint8 lds_default_tempo[5];
 
-	static unsigned decode_delta( file::ptr & p_file, abort_callback & p_abort );
+	static int decode_delta( file::ptr & p_file, abort_callback & p_abort );
 	static unsigned decode_hmp_delta( file::ptr & p_file, abort_callback & p_abort );
 	static unsigned decode_xmi_delta( file::ptr & p_file, abort_callback & p_abort );
 

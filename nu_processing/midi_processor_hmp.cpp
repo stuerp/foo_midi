@@ -127,7 +127,8 @@ void midi_processor::process_hmp( file::ptr & p_file, midi_container & p_out, ab
 			if ( buffer[ 0 ] == 0xFF )
 			{
 				track_body->read_object_t( buffer[ 1 ], p_abort );
-				unsigned meta_count = decode_delta( track_body, p_abort );
+				int meta_count = decode_delta( track_body, p_abort );
+				if ( meta_count < 0 ) throw exception_io_data( "Invalid HMP meta message" );
 				buffer.grow_size( meta_count + 2 );
 				track_body->read_object( buffer.get_ptr() + 2, meta_count, p_abort );
 				track.add_event( midi_event( current_timestamp, midi_event::extended, 0, buffer.get_ptr(), meta_count + 2 ) );

@@ -149,7 +149,8 @@ void midi_processor::process_mus( file::ptr & p_file, midi_container & p_out, ab
 
 		if ( buffer[ 0 ] & 0x80 )
 		{
-			unsigned delta = decode_delta( track_body, p_abort );
+			int delta = decode_delta( track_body, p_abort );
+			if ( delta < 0 ) throw exception_io_data( "Invalid MUS delta" );
 			current_timestamp += delta;
 		}
 	}

@@ -97,8 +97,8 @@ void midi_processor::process_hmi( file::ptr & p_file, midi_container & p_out, ab
 
 		while ( !track_body->is_eof( p_abort ) )
 		{
-			unsigned delta = decode_delta( track_body, p_abort );
-			if ( delta > 0xFFFF )
+			int delta = decode_delta( track_body, p_abort );
+			if ( delta > 0xFFFF || delta < 0 )
 			{
 				current_timestamp = last_event_timestamp;
 				console::formatter() << "[foo_midi] Large HMI delta detected, shunting.";
@@ -117,7 +117,8 @@ void midi_processor::process_hmi( file::ptr & p_file, midi_container & p_out, ab
 			{
 				last_event_code = 0xFF;
 				track_body->read_object_t( buffer[ 1 ], p_abort );
-				unsigned meta_count = decode_delta( track_body, p_abort );
+				int meta_count = decode_delta( track_body, p_abort );
+				if ( meta_count < 0 ) throw exception_io_data( "Invalid HMI meta message" );
 				buffer.grow_size( meta_count + 2 );
 				track_body->read_object( buffer.get_ptr() + 2, meta_count, p_abort );
 				if ( buffer[ 1 ] == 0x2F && last_event_timestamp > current_timestamp )
@@ -130,7 +131,8 @@ void midi_processor::process_hmi( file::ptr & p_file, midi_container & p_out, ab
 			else if ( buffer[ 0 ] == 0xF0 )
 			{
 				last_event_code = 0xFF;
-				unsigned system_exclusive_count = decode_delta( track_body, p_abort );
+				int system_exclusive_count = decode_delta( track_body, p_abort );
+				if ( system_exclusive_count < 0 ) throw exception_io_data( "Invalid HMI System Exclusive message" );
 				buffer.grow_size( system_exclusive_count + 1 );
 				track_body->read_object( buffer.get_ptr() + 1, system_exclusive_count, p_abort );
 				track.add_event( midi_event( current_timestamp, midi_event::extended, 0, buffer.get_ptr(), system_exclusive_count + 1 ) );
@@ -190,7 +192,8 @@ void midi_processor::process_hmi( file::ptr & p_file, midi_container & p_out, ab
 				if ( type == midi_event::note_on )
 				{
 					buffer[ 2 ] = 0x00;
-					unsigned note_length = decode_delta( track_body, p_abort );
+					int note_length = decode_delta( track_body, p_abort );
+					if ( note_length < 0 ) throw exception_io_data( "Invalid HMI note message" );
 					unsigned note_end_timestamp = current_timestamp + note_length;
 					if ( note_end_timestamp > last_event_timestamp ) last_event_timestamp = note_end_timestamp;
 					track.add_event( midi_event( note_end_timestamp, midi_event::note_on, channel, buffer.get_ptr() + 1, bytes_read ) );

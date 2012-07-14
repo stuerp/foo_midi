@@ -1,10 +1,15 @@
-#define MYVERSION "1.155"
+#define MYVERSION "1.156"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-07-14 02:15 UTC - kode54
+- Changed MIDI delta processing to signed 32 bit format and added guards and
+  workarounds for negative results
+- Version is now 1.156
 
 2012-03-26 18:47 UTC - kode54
 - Updated BASSMIDI to version 2.4.6.11

@@ -208,7 +208,7 @@ void midi_processor::process_xmi( file::ptr & p_file, midi_container & p_out, ab
 			if ( buffer[ 0 ] == 0xFF )
 			{
 				event_body->read_object_t( buffer[ 1 ], p_abort );
-				unsigned meta_count;
+				int meta_count;
 				if ( buffer[ 1 ] == 0x2F )
 				{
 					meta_count = 0;
@@ -216,6 +216,7 @@ void midi_processor::process_xmi( file::ptr & p_file, midi_container & p_out, ab
 				else
 				{
 					meta_count = decode_delta( event_body, p_abort );
+					if ( meta_count < 0 ) throw exception_io_data( "Invalid XMI meta message" );
 					buffer.grow_size( meta_count + 2 );
 					event_body->read_object( buffer.get_ptr() + 2, meta_count, p_abort );
 				}
@@ -238,7 +239,8 @@ void midi_processor::process_xmi( file::ptr & p_file, midi_container & p_out, ab
 			}
 			else if ( buffer[ 0 ] == 0xF0 )
 			{
-				unsigned system_exclusive_count = decode_delta( event_body, p_abort );
+				int system_exclusive_count = decode_delta( event_body, p_abort );
+				if ( system_exclusive_count < 0 ) throw exception_io_data( "Invalid XMI System Exclusive message" );
 				buffer.grow_size( system_exclusive_count + 1 );
 				event_body->read_object( buffer.get_ptr() + 1, system_exclusive_count, p_abort );
 				track.add_event( midi_event( current_timestamp, midi_event::extended, 0, buffer.get_ptr(), system_exclusive_count + 1 ) );
@@ -258,7 +260,8 @@ void midi_processor::process_xmi( file::ptr & p_file, midi_container & p_out, ab
 				if ( type == midi_event::note_on )
 				{
 					buffer[ 2 ] = 0x00;
-					unsigned note_length = decode_delta( event_body, p_abort );
+					int note_length = decode_delta( event_body, p_abort );
+					if ( note_length < 0 ) throw exception_io_data( "Invalid XMI note message" );
 					unsigned note_end_timestamp = current_timestamp + note_length;
 					if ( note_end_timestamp > last_event_timestamp ) last_event_timestamp = note_end_timestamp;
 					track.add_event( midi_event( note_end_timestamp, type, channel, buffer.get_ptr() + 1, bytes_read ) );
