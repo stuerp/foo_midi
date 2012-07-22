@@ -1,10 +1,14 @@
-#define MYVERSION "1.156"
+#define MYVERSION "1.157"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-07-22 15:48 UTC - kode54
+- Updated MUNT to git revision munt_0_1_3-484-g6807408
+- Version is now 1.157
 
 2012-07-14 02:15 UTC - kode54
 - Changed MIDI delta processing to signed 32 bit format and added guards and

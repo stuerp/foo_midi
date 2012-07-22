@@ -2,8 +2,6 @@
 
 #include "shared.h"
 
-#include "../helpers/file_cached.h"
-
 MT32Player::MT32Player( bool gm, bool debug_info )
 	: bGM( gm ), bDebug( debug_info )
 {
@@ -398,8 +396,6 @@ bool MT32Player::startup()
 	_synth = new MT32Emu::Synth;
 	MT32Emu::SynthProperties props = {0};
 	props.sampleRate = uSampleRate;
-	props.useReverb = true;
-	props.useDefaultReverb = true;
 	props.userData = this;
 	props.printDebug = cb_printDebug;
 	props.openFile = cb_openFile;
@@ -447,21 +443,27 @@ void MT32Player::cb_printDebug( void *userData, const char *fmt, va_list list )
 
 class FBFile : public MT32Emu::File
 {
-	service_ptr_t<file>   m_file;
-	abort_callback      & m_abort;
-
 public:
-	FBFile( abort_callback & p_abort ) : m_abort( p_abort ) { }
-	~FBFile() { }
-
-	bool open( const char *filename, OpenMode mode )
+	FBFile()
 	{
-		if ( mode != OpenMode_read ) return false;
+		data = NULL;
+	}
+	~FBFile()
+	{
+		close();
+	}
+
+	bool open( const char *filename, abort_callback & p_abort )
+	{
 		try
 		{
 			service_ptr_t< file > p_temp;
-			filesystem::g_open( p_temp, filename, filesystem::open_mode_read, m_abort );
-			file_cached::g_create( m_file, p_temp, m_abort, 4096 );
+			filesystem::g_open( p_temp, filename, filesystem::open_mode_read, p_abort );
+			t_filesize length64 = p_temp->get_size_ex( p_abort );
+			if ( length64 > INT_MAX ) length64 = INT_MAX;
+			fileSize = length64;
+			data = new unsigned char[ length64 ];
+			p_temp->read_object( data, fileSize, p_abort );
 			return true;
 		}
 		catch ( ... )
@@ -472,66 +474,19 @@ public:
 
 	void close()
 	{
-		try
-		{
-			m_file.release();
-		}
-		catch ( ... )
-		{
-		}
+		delete [] data;
+		data = NULL;
 	}
 
-	size_t read( void *in, size_t size )
-	{
-		try
-		{
-			return m_file->read( in, size, m_abort );
-		}
-		catch ( ... )
-		{
-			return 0;
-		}
-	}
-
-	bool readLine( char *in, size_t size )
-	{
-		return false;
-	}
-
-	bool readBit8u( MT32Emu::Bit8u *in )
-	{
-		if ( read( in, 1 ) != 1 ) return false;
-		else return true;
-	}
-
-	size_t write( const void *out, size_t size )
-	{
-		return 0;
-	}
-
-	bool writeBit8u( MT32Emu::Bit8u out )
-	{
-		return false;
-	}
-
-	bool isEOF()
-	{
-		try
-		{
-			return m_file->is_eof( m_abort );
-		}
-		catch ( ... )
-		{
-			return true;
-		}
-	}
+	size_t getSize() { return fileSize; }
+	unsigned char *getData() { return data; }
 };
 
-MT32Emu::File * MT32Player::cb_openFile( void *userData, const char *filename, MT32Emu::File::OpenMode mode )
+MT32Emu::File * MT32Player::cb_openFile( void *userData, const char *filename )
 {
 	MT32Player * thePlayer = ( MT32Player * ) userData;
-	FBFile * ret = new FBFile( *( thePlayer->_abort ) );
-	if ( ! ret->open( pfc::string8() << thePlayer->sBasePath << filename, mode ) )
+	FBFile * ret = new FBFile;
+	if ( ! ret->open( pfc::string8() << thePlayer->sBasePath << filename, *( thePlayer->_abort ) ) )
 	{
 		delete ret;
 		ret = 0;

@@ -66,7 +66,7 @@ private:
 
 	// callbacks
 	static void cb_printDebug( void *userData, const char *fmt, va_list list );
-	static MT32Emu::File * cb_openFile( void *userData, const char *filename, MT32Emu::File::OpenMode mode );
+	static MT32Emu::File * cb_openFile( void *userData, const char *filename );
 };
 
 #endif
