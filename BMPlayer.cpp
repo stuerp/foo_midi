@@ -10,6 +10,18 @@ static const t_uint8 sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
 static const t_uint8 sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
 static const t_uint8 sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
 
+static bool is_gs_reset(const unsigned char * data, unsigned size)
+{
+	if ( size != _countof( sysex_gs_reset ) ) return false;
+
+	if ( memcmp( data, sysex_gs_reset, 5 ) != 0 ) return false;
+	if ( memcmp( data + 7, sysex_gs_reset + 7, 2 ) != 0 ) return false;
+	if ( ( ( data[ 5 ] + data[ 6 ] + 1 ) & 127 ) != data[ 9 ] ) return false;
+	if ( data[ 10 ] != sysex_gs_reset[ 10 ] ) return false;
+
+	return true;
+}
+
 class soundfont_map : public pfc::thread
 {
 	critical_section m_lock;
@@ -520,7 +532,7 @@ void BMPlayer::send_event(DWORD b)
 		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW, data, size );
 		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
 			( size == _countof( sysex_gm2_reset ) && !memcmp( data, sysex_gm2_reset, _countof( sysex_gm2_reset ) ) ) ||
-			( size == _countof( sysex_gs_reset ) && !memcmp( data, sysex_gs_reset, _countof( sysex_gs_reset ) ) ) ||
+			is_gs_reset( data, size ) ||
 			( size == _countof( sysex_xg_reset ) && !memcmp( data, sysex_xg_reset, _countof( sysex_xg_reset ) ) ) )
 		{
 			reset_drum_channels();

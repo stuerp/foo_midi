@@ -1,10 +1,18 @@
-#define MYVERSION "1.158"
+#define MYVERSION "1.160"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-07-27 08:35 UTC - kode54
+- Updated BASSMIDI to version 2.4.7.4
+- Version is now 1.160
+
+2012-07-27 08:24 UTC - kode54
+- Made GS reset message detection more lenient
+- Version is now 1.159
 
 2012-07-27 03:36 UTC - kode54
 - Added direct floating point output to MUNT
