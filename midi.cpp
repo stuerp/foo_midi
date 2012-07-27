@@ -1,10 +1,15 @@
-#define MYVERSION "1.157"
+#define MYVERSION "1.158"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-07-27 03:36 UTC - kode54
+- Added direct floating point output to MUNT
+- Added "Super" mode to MUNT for non-MT-32 files
+- Version is now 1.158
 
 2012-07-22 15:48 UTC - kode54
 - Updated MUNT to git revision munt_0_1_3-484-g6807408

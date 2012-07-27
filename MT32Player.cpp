@@ -358,6 +358,10 @@ void MT32Player::send_event(DWORD b)
 
 void MT32Player::render(audio_sample * out, unsigned count)
 {
+#if 1
+	pfc::static_assert_t<sizeof(audio_sample) == sizeof(float)>();
+	_synth->render_float( out, count );
+#else
 	MT32Emu::Bit16s temp[512];
 	while ( count > 0 )
 	{
@@ -368,6 +372,7 @@ void MT32Player::render(audio_sample * out, unsigned count)
 		out += todo * 2;
 		count -= todo;
 	}
+#endif
 }
 
 void MT32Player::setBasePath( const char * in )
@@ -396,6 +401,8 @@ bool MT32Player::startup()
 	_synth = new MT32Emu::Synth;
 	MT32Emu::SynthProperties props = {0};
 	props.sampleRate = uSampleRate;
+	props.useFloat = true;
+	props.useSuper = bGM;
 	props.userData = this;
 	props.printDebug = cb_printDebug;
 	props.openFile = cb_openFile;
