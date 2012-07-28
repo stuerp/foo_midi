@@ -2,7 +2,20 @@
 
 const t_uint8 midi_processor::lds_default_tempo[5] = { 0xFF, 0x51, 0x07, 0xA1, 0x20 };
 
-#if 0
+#define ENABLE_WHEEL
+//#define ENABLE_VIB
+//#define ENABLE_ARP
+//#define ENABLE_TREM
+
+#ifdef ENABLE_WHEEL
+#define WHEEL_RANGE_HIGH 12
+#define WHEEL_RANGE_LOW 0
+#define WHEEL_SCALE(x) ((x) * 512 / WHEEL_RANGE_HIGH)
+#define WHEEL_SCALE_LOW(x) (WHEEL_SCALE(x) & 127)
+#define WHEEL_SCALE_HIGH(x) (((WHEEL_SCALE(x) >> 7) + 64) & 127)
+#endif
+
+#ifdef ENABLE_VIB
 // Vibrato (sine) table
 static const unsigned char vibtab[] = {
   0, 13, 25, 37, 50, 62, 74, 86, 98, 109, 120, 131, 142, 152, 162,
@@ -11,7 +24,9 @@ static const unsigned char vibtab[] = {
   231, 225, 219, 212, 205, 197, 189, 180, 171, 162, 152, 142, 131,
   120, 109, 98, 86, 74, 62, 50, 37, 25, 13
 };
+#endif
 
+#ifdef ENABLE_TREM
 // Tremolo (sine * sine) table
 static const unsigned char tremtab[] = {
   0, 0, 1, 1, 2, 4, 5, 7, 10, 12, 15, 18, 21, 25, 29, 33, 37, 42, 47,
@@ -47,16 +62,24 @@ struct sound_patch
 {
 	// skip 11 bytes worth of Adlib crap
 	t_uint8 keyoff;
+#ifdef ENABLE_WHEEL
 	t_uint8 portamento;
 	t_int8 glide;
+#endif
 	// skip 1 byte
+#ifdef ENABLE_VIB
 	t_uint8 vibrato;
 	t_uint8 vibrato_delay;
+#endif
+#ifdef ENABLE_TREM
 	t_uint8 modulator_tremolo;
 	t_uint8 carrier_tremolo;
 	t_uint8 tremolo_delay;
-	/*t_uint8 arpeggio;
-	t_int8 arpeggio_table[12];*/
+#endif
+#ifdef ENABLE_ARP
+	t_uint8 arpeggio;
+	t_int8 arpeggio_table[12];
+#endif
 	// skip 4 bytes worth of digital instrument crap
 	// skip 3 more bytes worth of Adlib crap that isn't even used
 	t_uint8 midi_instrument;
@@ -67,14 +90,27 @@ struct sound_patch
 };
 
 struct channel_state {
+#ifdef ENABLE_WHEEL
 	t_int16 gototune, lasttune;
+#endif
 	t_uint16 packpos;
 	t_int8 finetune;
-	t_uint8 glideto, portspeed, nextvol, volmod, volcar,
-		vibwait, vibspeed, vibrate, trmstay, trmwait, trmspeed, trmrate, trmcount,
-		trcwait, trcspeed, trcrate, trccount, /*arp_size, arp_speed,*/ keycount,
-		vibcount, /*arp_pos,*/ arp_count, packwait;
-	/*t_int8 arp_tab[12];*/
+#ifdef ENABLE_WHEEL
+	t_uint8 glideto, portspeed;
+#endif
+	t_uint8 nextvol, volmod, volcar,
+		keycount, packwait;
+#ifdef ENABLE_VIB
+	t_uint8 vibwait, vibspeed, vibrate, vibcount;
+#endif
+#ifdef ENABLE_TREM
+	t_uint8 trmstay, trmwait, trmspeed, trmrate, trmcount,
+		trcwait, trcspeed, trcrate, trccount;
+#endif
+#ifdef ENABLE_ARP
+	t_uint8 arp_count, arp_size, arp_speed, arp_pos;
+	t_int8 arp_tab[12];
+#endif
 
 	struct {
 		t_uint8 chandelay, sound;
@@ -82,7 +118,11 @@ struct channel_state {
 	} chancheat;
 };
 
-void playsound( t_uint8 current_instrument[], const pfc::array_t<sound_patch> & patches, t_uint8 last_note[], t_uint8 last_channel[], t_uint8 last_instrument[], t_uint8 last_volume[], t_uint8 last_sent_volume[]/*, t_int16 last_pitch_wheel[]*/, channel_state * c, t_uint8 allvolume, unsigned current_timestamp, unsigned sound, unsigned chan, unsigned high, midi_track & track )
+void playsound( t_uint8 current_instrument[], const pfc::array_t<sound_patch> & patches, t_uint8 last_note[], t_uint8 last_channel[], t_uint8 last_instrument[], t_uint8 last_volume[], t_uint8 last_sent_volume[],
+#ifdef ENABLE_WHEEL
+	t_int16 last_pitch_wheel[],
+#endif
+	channel_state * c, t_uint8 allvolume, unsigned current_timestamp, unsigned sound, unsigned chan, unsigned high, midi_track & track )
 {
 	t_uint8 buffer[ 2 ];
 	current_instrument[ chan ] = sound;
@@ -98,38 +138,32 @@ void playsound( t_uint8 current_instrument[], const pfc::array_t<sound_patch> & 
 		high += c->finetune;
 
 		// arpeggio handling
-		/*if(patch.arpeggio)
+#ifdef ENABLE_ARP
+		if(patch.arpeggio)
 		{
 			short arpcalc = patch.arpeggio_table[0] << 4;
 
 			high += arpcalc;
-		}*/
+		}
+#endif
 
 		// and MIDI transpose
 		high = (int)high + ( patch.midi_transpose << 4 );
 
-		note = high; // - c->lasttune;
+		note = high
+#ifdef ENABLE_WHEEL
+			- c->lasttune
+#endif
+			;
 
 		// glide handling
-#if 0
+#ifdef ENABLE_WHEEL
 		if(c->glideto != 0)
 		{
-			/*c->gototune = note - ( last_note[ chan ] << 4 ) + c->lasttune;
+			c->gototune = note - ( last_note[ chan ] << 4 ) + c->lasttune;
 			c->portspeed = c->glideto;
 			c->glideto = c->finetune = 0;
-			return;*/
-			buffer[ 0 ] = 65;
-			buffer[ 1 ] = 127;
-			track.add_event( midi_event( current_timestamp, midi_event::control_change, channel, buffer, 2 ) );
-			buffer[ 0 ] = 5;
-			buffer[ 1 ] = min( c->glideto * 16, 127 );
-			track.add_event( midi_event( current_timestamp, midi_event::control_change, channel, buffer, 2 ) );
-		}
-		else
-		{
-			buffer[ 0 ] = 65;
-			buffer[ 1 ] = 0;
-			track.add_event( midi_event( current_timestamp, midi_event::control_change, channel, buffer, 2 ) );
+			return;
 		}
 #endif
 
@@ -172,35 +206,58 @@ void playsound( t_uint8 current_instrument[], const pfc::array_t<sound_patch> & 
 		buffer[ 1 ] = 127;
 		track.add_event( midi_event( current_timestamp, midi_event::note_off, last_channel[ chan ], buffer, 2 ) );
 		last_note[ chan ] = 0xFF;
+#ifdef ENABLE_WHEEL
+		if ( channel != 9 )
+		{
+			note += c->lasttune;
+			c->lasttune = 0;
+			if ( last_pitch_wheel[ channel ] != 0 )
+			{
+				buffer[ 0 ] = 0;
+				buffer[ 1 ] = 64;
+				track.add_event( midi_event( current_timestamp, midi_event::pitch_wheel, last_channel[ chan ], buffer, 2 ) );
+				last_pitch_wheel[ channel ] = 0;
+			}
+		}
+#endif
 	}
-	/*if ( c->lasttune != last_pitch_wheel[ channel ] )
+#ifdef ENABLE_WHEEL
+	if ( c->lasttune != last_pitch_wheel[ channel ] )
 	{
-		buffer[ 0 ] = ( c->lasttune & 0x0F ) << 3;
-		buffer[ 1 ] = ( c->lasttune >> 4 ) + 64;
+		buffer[ 0 ] = WHEEL_SCALE_LOW( c->lasttune );
+		buffer[ 1 ] = WHEEL_SCALE_HIGH( c->lasttune );
 		track.add_event( midi_event( current_timestamp, midi_event::pitch_wheel, channel, buffer, 2 ) );
 		last_pitch_wheel[ channel ] = c->lasttune;
-	}*/
-	/*if( !patch.glide )*/
+	}
+	if( !patch.glide || last_note[ chan ] == 0xFF )
+#endif
 	{
-		/*if( !patch.portamento )*/
+#ifdef ENABLE_WHEEL
+		if( !patch.portamento || last_note[ chan ] == 0xFF )
+#endif
 		{
 			buffer[ 0 ] = note >> 4;
 			buffer[ 1 ] = patch.midi_velocity;
 			track.add_event( midi_event( current_timestamp, midi_event::note_on, channel, buffer, 2 ) );
 			last_note[ chan ] = note >> 4;
 			last_channel[ chan ] = channel;
-			//c->gototune = c->lasttune;
+#ifdef ENABLE_WHEEL
+			c->gototune = c->lasttune;
+#endif
 		}
-		/*else
+#ifdef ENABLE_WHEEL
+		else
 		{
 			c->gototune = note - last_note[ chan ] << 4 + c->lasttune;
 			c->portspeed = patch.portamento;
 			buffer[ 0 ] = last_note[ chan ] = saved_last_note;
 			buffer[ 1 ] = patch.midi_velocity;
 			track.add_event( midi_event( current_timestamp, midi_event::note_on, channel, buffer, 2 ) );
-		}*/
+		}
+#endif
 	}
-	/*else
+#ifdef ENABLE_WHEEL
+	else
 	{
 		buffer[ 0 ] = note >> 4;
 		buffer[ 1 ] = patch.midi_velocity;
@@ -209,21 +266,25 @@ void playsound( t_uint8 current_instrument[], const pfc::array_t<sound_patch> & 
 		last_channel[ chan ] = channel;
 		c->gototune = patch.glide;
 		c->portspeed = patch.portamento;
-	}*/
+	}
+#endif
 
-	/*if(!patch.vibrato)*/
+#ifdef ENABLE_VIB
+	if(!patch.vibrato)
 	{
 		c->vibwait = c->vibspeed = c->vibrate = 0;
 	}
-	/*else
+	else
 	{
 		c->vibwait = patch.vibrato_delay;
 		// PASCAL:    c->vibspeed = ((i->vibrato >> 4) & 15) + 1;
 		c->vibspeed = (patch.vibrato >> 4) + 2;
 		c->vibrate = (patch.vibrato & 15) + 1;
-	}*/
+	}
+#endif
 
-	/*if(!(c->trmstay & 0xf0))
+#ifdef ENABLE_TREM
+	if(!(c->trmstay & 0xf0))
 	{
 		c->trmwait = (patch.tremolo_delay & 0xf0) >> 3;
 		// PASCAL:    c->trmspeed = (i->mod_trem >> 4) & 15;
@@ -239,13 +300,23 @@ void playsound( t_uint8 current_instrument[], const pfc::array_t<sound_patch> & 
 		c->trcspeed = patch.carrier_tremolo >> 4;
 		c->trcrate = patch.carrier_tremolo & 15;
 		c->trccount = 0;
-	}*/
+	}
+#endif
 
-	/*c->arp_size = patch.arpeggio & 15;
+#ifdef ENABLE_ARP
+	c->arp_size = patch.arpeggio & 15;
 	c->arp_speed = patch.arpeggio >> 4;
-	memcpy(c->arp_tab, patch.arpeggio_table, 12);*/
+	memcpy(c->arp_tab, patch.arpeggio_table, 12);
+	c->arp_pos = c->arp_count = 0;
+#endif
+#ifdef ENABLE_VIB
+	c->vibcount = 0;
+#endif
+#ifdef ENABLE_WHEEL
+	c->glideto = 0;
+#endif
 	c->keycount = patch.keyoff;
-	c->nextvol = c->glideto = c->finetune = c->vibcount /*= c->arp_pos = c->arp_count*/ = 0;
+	c->nextvol = c->finetune = 0;
 }
 
 void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort )
@@ -285,24 +356,47 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 		sound_patch & patch = patches[ i ];
 		p_file->skip( 11, p_abort );
 		p_file->read_object_t( patch.keyoff, p_abort );
+#ifdef ENABLE_WHEEL
 		p_file->read_object_t( patch.portamento, p_abort );
 		p_file->read_object_t( patch.glide, p_abort );
 		p_file->skip( 1, p_abort );
+#else
+		p_file->skip( 3, p_abort );
+#endif
+#ifdef ENABLE_VIB
 		p_file->read_object_t( patch.vibrato, p_abort );
 		p_file->read_object_t( patch.vibrato_delay, p_abort );
+#else
+		p_file->skip( 2, p_abort );
+#endif
+#ifdef ENABLE_TREM
 		p_file->read_object_t( patch.modulator_tremolo, p_abort );
 		p_file->read_object_t( patch.carrier_tremolo, p_abort );
 		p_file->read_object_t( patch.tremolo_delay, p_abort );
-		/*p_file->read_object_t( patch.arpeggio, p_abort );
+#else
+		p_file->skip( 3, p_abort );
+#endif
+#ifdef ENABLE_ARP
+		p_file->read_object_t( patch.arpeggio, p_abort );
 		for ( unsigned j = 0; j < 12; ++j )
 			p_file->read_object_t( patch.arpeggio_table[ j ], p_abort );
-		p_file->skip( 7, p_abort );*/
+		p_file->skip( 7, p_abort );
+#else
 		p_file->skip( 20, p_abort );
+#endif
 		p_file->read_object_t( patch.midi_instrument, p_abort );
 		p_file->read_object_t( patch.midi_velocity, p_abort );
 		p_file->read_object_t( patch.midi_key, p_abort );
 		p_file->read_object_t( patch.midi_transpose, p_abort );
 		p_file->skip( 2, p_abort );
+
+#ifdef ENABLE_WHEEL
+		// hax
+		if ( patch.midi_instrument >= 0x80 )
+		{
+			patch.glide = 0;
+		}
+#endif
 	}
 
 	p_file->read_lendian_t( position_count, p_abort );
@@ -343,7 +437,9 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 	t_uint8 last_note[9];
 	t_uint8 last_volume[9];
 	t_uint8 last_sent_volume[11];
-	//t_int16 last_pitch_wheel[11];
+#ifdef ENABLE_WHEEL
+	t_int16 last_pitch_wheel[11];
+#endif
 	t_uint8 ticks_without_notes[11];
 
 	memset( last_channel, 0, sizeof( last_channel ) );
@@ -351,7 +447,9 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 	memset( last_note, 0xFF, sizeof( last_note ) );
 	memset( last_volume, 127, sizeof( last_volume ) );
 	memset( last_sent_volume, 127, sizeof( last_sent_volume ) );
-	//memset( last_pitch_wheel, 0, sizeof( last_pitch_wheel ) );
+#ifdef ENABLE_WHEEL
+	memset( last_pitch_wheel, 0, sizeof( last_pitch_wheel ) );
+#endif
 	memset( ticks_without_notes, 0, sizeof( ticks_without_notes ) );
 
 	unsigned current_timestamp = 0;
@@ -370,19 +468,21 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 			track.add_event( midi_event( 0, midi_event::control_change, i, buffer, 2 ) );
 			buffer[ 0 ] = 121;
 			track.add_event( midi_event( 0, midi_event::control_change, i, buffer, 2 ) );
-			/*buffer[ 0 ] = 0x65;
+#ifdef ENABLE_WHEEL
+			buffer[ 0 ] = 0x65;
 			track.add_event( midi_event( 0, midi_event::control_change, i, buffer, 2 ) );
 			buffer[ 0 ] = 0x64;
 			track.add_event( midi_event( 0, midi_event::control_change, i, buffer, 2 ) );
 			buffer[ 0 ] = 0x06;
-			buffer[ 1 ] = 64;
+			buffer[ 1 ] = WHEEL_RANGE_HIGH;
 			track.add_event( midi_event( 0, midi_event::control_change, i, buffer, 2 ) );
 			buffer[ 0 ] = 0x26;
-			buffer[ 1 ] = 0;
+			buffer[ 1 ] = WHEEL_RANGE_LOW;
 			track.add_event( midi_event( 0, midi_event::control_change, i, buffer, 2 ) );
 			buffer[ 0 ] = 0;
 			buffer[ 1 ] = 64;
-			track.add_event( midi_event( 0, midi_event::pitch_wheel, i, buffer, 2 ) );*/
+			track.add_event( midi_event( 0, midi_event::pitch_wheel, i, buffer, 2 ) );
+#endif
 		}
 		track.add_event( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
 		p_out.add_track( track );
@@ -412,10 +512,20 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 	bool playing = true;
 	while ( playing )
 	{
-		t_uint16        chan/*, wibc, tremc*/;
-		//t_int16         tune; //, arpreg;
+		t_uint16        chan;
+#ifdef ENABLE_VIB
+		t_uint16        wibc;
+#endif
+#if defined(ENABLE_VIB) || defined(ENABLE_ARP)
+		t_int16         tune;
+#endif
+#ifdef ENABLE_ARP
+		t_int16         arpreg;
+#endif
+#ifdef ENABLE_TREM
+		t_uint16        tremc;
+#endif
 		bool            vbreak;
-		/*t_uint8         level, comhi, comlo*/;
 		unsigned        i;
 		channel_state * c;
 
@@ -459,7 +569,11 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 			{
 				if(!(--c->chancheat.chandelay))
 				{
-					playsound( current_instrument, patches, last_note, last_channel, last_instrument, last_volume, last_sent_volume/*, last_pitch_wheel*/, c, allvolume, current_timestamp, c->chancheat.sound, chan, c->chancheat.high, tracks[ chan ] );
+					playsound( current_instrument, patches, last_note, last_channel, last_instrument, last_volume, last_sent_volume,
+#ifdef ENABLE_WHEEL
+						last_pitch_wheel,
+#endif
+						c, allvolume, current_timestamp, c->chancheat.sound, chan, c->chancheat.high, tracks[ chan ] );
 					ticks_without_notes[ last_channel[ chan ] ] = 0;
 				}
 			}
@@ -538,16 +652,22 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 								}
 								break;
 							case 0xf8:
+#ifdef ENABLE_WHEEL
 								c->lasttune = 0;
+#endif
 								break;
 							case 0xf7:
+#ifdef ENABLE_VIB
 								c->vibwait = 0;
 								// PASCAL: c->vibspeed = ((comlo >> 4) & 15) + 2;
 								c->vibspeed = (comlo >> 4) + 2;
 								c->vibrate = (comlo & 15) + 1;
+#endif
 								break;
 							case 0xf6:
+#ifdef ENABLE_WHEEL
 								c->glideto = comlo;
+#endif
 								break;
 							case 0xf5:
 								c->finetune = comlo;
@@ -562,7 +682,9 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 								if(!hardfade) fadeonoff = comlo;
 								break;
 							case 0xf2:
+#ifdef ENABLE_TREM
 								c->trmstay = comlo;
+#endif
 								break;
 							case 0xf1:
 								buffer[ 0 ] = 10;
@@ -574,8 +696,10 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 								tracks[ chan ].add_event( midi_event( current_timestamp, midi_event::program_change, last_channel[ chan ], buffer, 1 ) );
 								break;
 							default:
+#ifdef ENABLE_WHEEL
 								if(comhi < 0xa0)
 									c->glideto = comhi & 0x1f;
+#endif
 								break;
 							}
 						}
@@ -602,7 +726,11 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 
 							if( !channel_delay[ chan ] )
 							{
-								playsound( current_instrument, patches, last_note, last_channel, last_instrument, last_volume, last_sent_volume/*, last_pitch_wheel*/, c, allvolume, current_timestamp, sound, chan, high, tracks[ chan ] );
+								playsound( current_instrument, patches, last_note, last_channel, last_instrument, last_volume, last_sent_volume,
+#ifdef ENABLE_WHEEL
+									last_pitch_wheel,
+#endif
+									c, allvolume, current_timestamp, sound, chan, high, tracks[ chan ] );
 								ticks_without_notes[ last_channel[ chan ] ] = 0;
 							}
 							else
@@ -667,16 +795,28 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 					buffer[ 1 ] = 127;
 					tracks[ chan ].add_event( midi_event( current_timestamp, midi_event::note_off, last_channel[ chan ], buffer, 2 ) );
 					last_note[ chan ] = 0xFF;
+#ifdef ENABLE_WHEEL
+					if ( 0 != last_pitch_wheel[ last_channel[ chan ] ] )
+					{
+						buffer[ 0 ] = 0;
+						buffer[ 1 ] = 64;
+						tracks[ chan ].add_event( midi_event( current_timestamp, midi_event::pitch_wheel, last_channel[ chan ], buffer, 2 ) );
+						last_pitch_wheel[ last_channel[ chan ] ] = 0;
+						c->lasttune = 0;
+						c->gototune = 0;
+					}
+#endif
 				}
 				c->keycount--;
 			}
 
+#ifdef ENABLE_ARP
 			// arpeggio
-			/*if(c->arp_size == 0)*/
-			/*{
+			if(c->arp_size == 0)
+			{
 				arpreg = 0;
-			}*/
-			/*else
+			}
+			else
 			{
 				arpreg = c->arp_tab[c->arp_pos] << 4;
 				if(arpreg == -0x800)
@@ -695,10 +835,12 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 				{
 					c->arp_count++;
 				}
-			}*/
+			}
+#endif
 
+#ifdef ENABLE_WHEEL
 			// glide & portamento
-			/*if(c->lasttune != c->gototune)
+			if(c->lasttune != c->gototune)
 			{
 				if(c->lasttune > c->gototune)
 				{
@@ -723,20 +865,27 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 					}
 				}
 
-				arpreg += c->lasttune;
+#ifdef ENABLE_ARP
+				arpreg +=
+#else
+				t_int16 arpreg =
+#endif
+					c->lasttune;
 
 				if ( arpreg != last_pitch_wheel[ last_channel[ chan ] ] )
 				{
-					buffer[ 0 ] = ( arpreg & 0x0F ) << 3;
-					buffer[ 1 ] = ( arpreg >> 4 ) + 64;
+					buffer[ 0 ] = WHEEL_SCALE_LOW( arpreg );
+					buffer[ 1 ] = WHEEL_SCALE_HIGH( arpreg );
 					tracks[ chan ].add_event( midi_event( current_timestamp, midi_event::pitch_wheel, last_channel[ chan ], buffer, 2 ) );
 					last_pitch_wheel[ last_channel[ chan ] ] = arpreg;
 				}
-			} else*/ {
+			} else
+			{
+#ifdef ENABLE_VIB
 				// vibrato
-				/*if(!c->vibwait)*/
+				if(!c->vibwait)
 				{
-					/*if(c->vibrate)
+					if(c->vibrate)
 					{
 						wibc = vibtab[c->vibcount & 0x3f] * c->vibrate;
 
@@ -745,34 +894,44 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 						else
 							tune = c->lasttune - (wibc >> 8);
 
+#ifdef ENABLE_ARP
 						tune += arpreg;
+#endif
 
 						if ( tune != last_pitch_wheel[ last_channel[ chan ] ] )
 						{
-							buffer[ 0 ] = ( tune & 0x0F ) << 3;
-							buffer[ 1 ] = ( tune >> 4 ) + 64;
+							buffer[ 0 ] = WHEEL_SCALE_LOW( tune );
+							buffer[ 1 ] = WHEEL_SCALE_HIGH( tune );
 							tracks[ chan ].add_event( midi_event( current_timestamp, midi_event::pitch_wheel, last_channel[ chan ], buffer, 2 ) );
 							last_pitch_wheel[ last_channel[ chan ] ] = tune;
 						}
 
 						c->vibcount += c->vibspeed;
 					}
+#ifdef ENABLE_ARP
 					else if(c->arp_size != 0)
-					/*{	// no vibrato, just arpeggio
+					{	// no vibrato, just arpeggio
 						tune = c->lasttune + arpreg;
 
 						if ( tune != last_pitch_wheel[ last_channel[ chan ] ] )
 						{
-							buffer[ 0 ] = ( tune & 0x0F ) << 3;
-							buffer[ 1 ] = ( tune >> 4 ) + 64;
+							buffer[ 0 ] = WHEEL_SCALE_LOW( tune );
+							buffer[ 1 ] = WHEEL_SCALE_HIGH( tune );
 							tracks[ chan ].add_event( midi_event( current_timestamp, midi_event::pitch_wheel, last_channel[ chan ], buffer, 2 ) );
 							last_pitch_wheel[ last_channel[ chan ] ] = tune;
 						}
-					}*/
+					}
+#endif
 				}
-				/*else
+#ifdef ENABLE_ARP
+				else
+#endif
+#endif
+#ifdef ENABLE_ARP
 				{	// no vibrato, just arpeggio
+#ifdef ENABLE_VIB
 					c->vibwait--;
+#endif
 
 					if(c->arp_size != 0)
 					{
@@ -780,16 +939,19 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 
 						if ( tune != last_pitch_wheel[ last_channel[ chan ] ] )
 						{
-							buffer[ 0 ] = ( tune & 0x0F ) << 3;
-							buffer[ 1 ] = ( tune >> 4 ) + 64;
+							buffer[ 0 ] = WHEEL_SCALE_LOW( tune );
+							buffer[ 1 ] = WHEEL_SCALE_HIGH( tune );
 							tracks[ chan ].add_event( midi_event( current_timestamp, midi_event::pitch_wheel, last_channel[ chan ], buffer, 2 ) );
 							last_pitch_wheel[ last_channel[ chan ] ] = tune;
 						}
 					}
-				}*/
+				}
+#endif
 			}
+#endif
 
-			/*unsigned volume = last_volume[ chan ];
+#ifdef ENABLE_TREM
+			unsigned volume = last_volume[ chan ];
 
 			// tremolo (modulator)
 			if(!c->trmwait)
@@ -838,7 +1000,8 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 				buffer[ 1 ] = volume;
 				tracks[ chan ].add_event( midi_event( current_timestamp, midi_event::control_change, last_channel[ chan ], buffer, 2 ) );
 				last_sent_volume[ last_channel[ chan ] ] = volume;
-			}*/
+			}
+#endif
 
 		}
 
@@ -858,6 +1021,14 @@ void midi_processor::process_lds( file::ptr & p_file, midi_container & p_out, ab
 				buffer[ 0 ] = last_note[ i ];
 				buffer[ 1 ] = 127;
 				track.add_event( midi_event( current_timestamp + channel[ i ].keycount, midi_event::note_off, last_channel[ i ], buffer, 2 ) );
+#ifdef ENABLE_WHEEL
+				if ( last_pitch_wheel[ last_channel[ i ] ] != 0 )
+				{
+					buffer[ 0 ] = 0;
+					buffer[ 1 ] = 0x40;
+					track.add_event( midi_event( current_timestamp + channel[ i ].keycount, midi_event::pitch_wheel, last_channel[ i ], buffer, 2 ) );
+				}
+#endif
 			}
 			p_out.add_track( track );
 		}

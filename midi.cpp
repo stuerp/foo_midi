@@ -1,10 +1,14 @@
-#define MYVERSION "1.160"
+#define MYVERSION "1.161"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-07-28 10:39 UTC - kode54
+- Restored and enabled tone portamento support in the LDS loader
+- Version is now 1.161
 
 2012-07-27 08:35 UTC - kode54
 - Updated BASSMIDI to version 2.4.7.4
