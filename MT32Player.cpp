@@ -350,8 +350,8 @@ void MT32Player::send_event(DWORD b)
 	{
 		UINT n = b & 0xffffff;
 		const t_uint8 * data;
-		t_size size;
-		mSysexMap.get_entry( n, data, size );
+		t_size size, port;
+		mSysexMap.get_entry( n, data, size, port );
 		_synth->playSysex( data, size );
 	}
 }

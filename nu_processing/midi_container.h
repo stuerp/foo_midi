@@ -74,11 +74,12 @@ public:
 
 struct system_exclusive_entry
 {
+	t_size m_port;
 	t_size m_offset;
 	t_size m_length;
-	system_exclusive_entry() : m_offset(0), m_length(0) { }
+	system_exclusive_entry() : m_port(0), m_offset(0), m_length(0) { }
 	system_exclusive_entry(const system_exclusive_entry & p_in);
-	system_exclusive_entry(t_size p_offset, t_size p_length);
+	system_exclusive_entry(t_size p_port, t_size p_offset, t_size p_length);
 };
 
 class system_exclusive_table
@@ -87,8 +88,8 @@ class system_exclusive_table
 	pfc::array_t<system_exclusive_entry> m_entries;
 
 public:
-	unsigned add_entry( const t_uint8 * p_data, t_size p_size );
-	void get_entry( unsigned p_index, const t_uint8 * & p_data, t_size & p_size );
+	unsigned add_entry( const t_uint8 * p_data, t_size p_size, t_size p_port );
+	void get_entry( unsigned p_index, const t_uint8 * & p_data, t_size & p_size, t_size & p_port );
 };
 
 struct midi_stream_event
@@ -146,7 +147,7 @@ private:
 	pfc::array_t<tempo_map> m_tempo_map;
 	pfc::array_t<midi_track> m_tracks;
 
-	pfc::array_t<pfc::string8> m_device_names;
+	pfc::array_t<pfc::array_t<pfc::string8>> m_device_names;
 
 	midi_meta_data m_extra_meta_data;
 
@@ -155,12 +156,10 @@ private:
 	pfc::array_t<unsigned> m_timestamp_loop_start;
 	pfc::array_t<unsigned> m_timestamp_loop_end;
 
-	static void encode_delta( pfc::array_t<t_uint8> & p_out, unsigned delta );
-
 	const unsigned timestamp_to_ms( unsigned p_timestamp, unsigned p_subsong ) const;
 
 public:
-	midi_container() { }
+	midi_container() { m_device_names.set_count( 16 ); }
 
 	void initialize( unsigned p_form, unsigned p_dtx );
 
@@ -189,6 +188,8 @@ public:
 	void get_meta_data( unsigned subsong, midi_meta_data & p_out );
 
 	void scan_for_loops( bool p_xmi_loops, bool p_marker_loops );
+
+	static void encode_delta( pfc::array_t<t_uint8> & p_out, unsigned delta );
 };
 
 #endif

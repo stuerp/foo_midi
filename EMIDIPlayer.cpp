@@ -401,8 +401,8 @@ void EMIDIPlayer::send_event( DWORD b )
 	{
 		UINT n = b & 0xffffff;
 		const t_uint8 * data;
-		t_size size;
-		mSysexMap.get_entry( n, data, size );
+		t_size size, port;
+		mSysexMap.get_entry( n, data, size, port );
 		for ( n = 0; n < size; ++n ) mi.Interpret( data[ n ] );
 
 		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
@@ -433,7 +433,6 @@ void EMIDIPlayer::send_event( DWORD b )
 				if ( drum_channel < 16 )
 				{
 					drum_channels [ drum_channel ] = data [8];
-					drum_channels [ 16 + drum_channel ] = data [8];
 				}
 			}
 		}

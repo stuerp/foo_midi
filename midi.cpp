@@ -1,10 +1,15 @@
-#define MYVERSION "1.161"
+#define MYVERSION "1.162"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
 
 /*
 	change log
+
+2012-07-31 16:17 UTC - kode54
+- Restructured MIDI port detection and routing
+- Updated BASSMIDI to version 2.4.7.5
+- Version is now 1.162
 
 2012-07-28 10:39 UTC - kode54
 - Restored and enabled tone portamento support in the LDS loader

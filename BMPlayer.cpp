@@ -527,8 +527,8 @@ void BMPlayer::send_event(DWORD b)
 	{
 		UINT n = b & 0xffffff;
 		const t_uint8 * data;
-		t_size size;
-		mSysexMap.get_entry( n, data, size );
+		t_size size, port;
+		mSysexMap.get_entry( n, data, size, port );
 		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW, data, size );
 		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
 			( size == _countof( sysex_gm2_reset ) && !memcmp( data, sysex_gm2_reset, _countof( sysex_gm2_reset ) ) ) ||
@@ -549,16 +549,16 @@ void BMPlayer::send_event(DWORD b)
 			if (data [7] == 2)
 			{
 				// GS MIDI channel to part assign
-				gs_part_to_ch [ data [6] & 15 ] = data [8];
+				gs_part_to_ch [ port & 1 ][ data [6] & 15 ] = data [8];
 			}
 			else if ( data [7] == 0x15 )
 			{
 				// GS part to rhythm allocation
-				unsigned int drum_channel = gs_part_to_ch [ data [6] & 15 ];
+				unsigned int drum_channel = gs_part_to_ch [ port & 1 ][ data [6] & 15 ];
 				if ( drum_channel < 16 )
 				{
+					if ( port ) drum_channel += 16;
 					drum_channels [ drum_channel ] = data [8];
-					drum_channels [ 16 + drum_channel ] = data [8];
 				}
 			}
 		}

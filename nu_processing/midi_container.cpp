@@ -154,35 +154,38 @@ const tempo_entry & tempo_map::operator [] ( t_size p_index ) const
 
 system_exclusive_entry::system_exclusive_entry(const system_exclusive_entry & p_in)
 {
+	m_port = p_in.m_port;
 	m_offset = p_in.m_offset;
 	m_length = p_in.m_length;
 }
 
-system_exclusive_entry::system_exclusive_entry(t_size p_offset, t_size p_length)
+system_exclusive_entry::system_exclusive_entry(t_size p_port, t_size p_offset, t_size p_length)
 {
+	m_port = p_port;
 	m_offset = p_offset;
 	m_length = p_length;
 }
 
-unsigned system_exclusive_table::add_entry( const t_uint8 * p_data, t_size p_size )
+unsigned system_exclusive_table::add_entry( const t_uint8 * p_data, t_size p_size, t_size p_port )
 {
 	for ( unsigned i = 0; i < m_entries.get_count(); ++i )
 	{
 		const system_exclusive_entry & entry = m_entries[ i ];
-		if ( p_size == entry.m_length && !memcmp( p_data, m_data.get_ptr() + entry.m_offset, p_size ) )
+		if ( p_port == entry.m_port && p_size == entry.m_length && !memcmp( p_data, m_data.get_ptr() + entry.m_offset, p_size ) )
 			return i;
 	}
-	system_exclusive_entry entry( m_data.get_count(), p_size );
+	system_exclusive_entry entry( p_port, m_data.get_count(), p_size );
 	m_data.append_fromptr( p_data, p_size );
 	m_entries.append_single( entry );
 	return m_entries.get_count() - 1;
 }
 
-void system_exclusive_table::get_entry( unsigned p_index, const t_uint8 * & p_data, t_size & p_size )
+void system_exclusive_table::get_entry( unsigned p_index, const t_uint8 * & p_data, t_size & p_size, t_size & p_port )
 {
 	const system_exclusive_entry & entry = m_entries[ p_index ];
 	p_data = m_data.get_ptr() + entry.m_offset;
 	p_size = entry.m_length;
+	p_port = entry.m_port;
 }
 
 midi_stream_event::midi_stream_event(unsigned p_timestamp, unsigned p_event)
@@ -350,26 +353,31 @@ void midi_container::add_track( const midi_track & p_track )
 				event.copy_data( data.get_ptr(), 2, data_count );
 				device_name.reset();
 				pfc::stringToLowerAppend( device_name, (const char *)data.get_ptr(), data_count );
-				for ( port_number = 0; port_number < m_device_names.get_count(); ++port_number )
-				{
-					if ( !strcmp( m_device_names[ port_number ], device_name ) )
-					{
-						break;
-					}
-				}
-				if ( port_number == m_device_names.get_count() )
-				{
-					m_device_names.append_single( device_name );
-				}
 			}
 			else if ( event.m_data[ 1 ] == 0x21 )
 			{
 				port_number = event.m_data[ 2 ];
+				device_name.reset();
 			}
 		}
 		else if ( event.m_type == midi_event::note_on || event.m_type == midi_event::note_off )
 		{
 			unsigned channel = event.m_channel;
+			if ( device_name.length() )
+			{
+				unsigned i, j;
+				for ( i = 0, j = m_device_names[ channel ].get_count(); i < j; ++i )
+				{
+					if ( !strcmp( m_device_names[ channel ][ i ], device_name ) ) break;
+				}
+				if ( i < j ) port_number = i;
+				else
+				{
+					m_device_names[ channel ].append_single( device_name );
+					port_number = j;
+				}
+			}
+
 			if ( port_number == 1 ) channel += 16;
 			if ( m_form != 2 ) m_channel_mask[ 0 ] |= 1 << channel;
 			else
@@ -439,11 +447,12 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 	pfc::array_t<t_uint8> data;
 	pfc::array_t<t_size> track_positions;
 	pfc::array_t<t_uint8> port_numbers;
-	pfc::string8_fast device_name;
+	pfc::array_t<pfc::string8_fast> device_names;
 	t_size track_count = m_tracks.get_count();
 
 	track_positions.append_multi( (t_size)0, track_count );
 	port_numbers.append_multi( (t_uint8)0, track_count );
+	device_names.set_count( track_count );
 
 	bool clean_emidi = !!( clean_flags & clean_flag_emidi );
 	bool clean_instruments = !!( clean_flags & clean_flag_instruments );
@@ -528,6 +537,17 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 			unsigned timestamp_ms = timestamp_to_ms( event.m_timestamp, tempo_track );
 			if ( event.m_type != midi_event::extended )
 			{
+				if ( device_names[ next_track ].length() )
+				{
+					unsigned i, j;
+					for ( i = 0, j = m_device_names[ event.m_channel ].get_count(); i < j; ++i )
+					{
+						if ( !strcmp( m_device_names[ event.m_channel ][ i ], device_names[ next_track ] ) ) break;
+					}
+					port_numbers[ next_track ] = i;
+					device_names[ next_track ].reset();
+				}
+
 				unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
 				if ( event.m_data_count >= 1 ) event_code += event.m_data[ 0 ] << 8;
 				if ( event.m_data_count >= 2 ) event_code += event.m_data[ 1 ] << 16;
@@ -539,11 +559,22 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 				t_size data_count = event.get_data_count();
 				if ( data_count >= 3 && event.m_data[ 0 ] == 0xF0 )
 				{
+					if ( device_names[ next_track ].length() )
+					{
+						unsigned i, j;
+						for ( i = 0, j = m_device_names[ event.m_channel ].get_count(); i < j; ++i )
+						{
+							if ( !strcmp( m_device_names[ event.m_channel ][ i ], device_names[ next_track ] ) ) break;
+						}
+						port_numbers[ next_track ] = i;
+						device_names[ next_track ].reset();
+					}
+
 					data.grow_size( data_count );
 					event.copy_data( data.get_ptr(), 0, data_count );
 					if ( data[ data_count - 1 ] == 0xF7 )
 					{
-						unsigned system_exclusive_index = p_system_exclusive.add_entry( data.get_ptr(), data_count );
+						unsigned system_exclusive_index = p_system_exclusive.add_entry( data.get_ptr(), data_count, port_numbers[ next_track ] );
 						p_stream.append_single( midi_stream_event( timestamp_ms, system_exclusive_index | 0x80000000 ) );
 					}
 				}
@@ -551,24 +582,16 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 				{
 					if ( event.m_data[ 1 ] == 4 )
 					{
-						data_count -= 2;
+						unsigned data_count = event.get_data_count() - 2;
 						data.grow_size( data_count );
 						event.copy_data( data.get_ptr(), 2, data_count );
-						device_name.reset();
-						pfc::stringToLowerAppend( device_name, (const char *)data.get_ptr(), data_count );
-						unsigned port_number;
-						for ( port_number = 0; port_number < m_device_names.get_count(); ++port_number )
-						{
-							if ( !strcmp( m_device_names[ port_number ], device_name ) )
-							{
-								break;
-							}
-						}
-						port_numbers[ next_track ] = port_number;
+						device_names[ next_track ].reset();
+						pfc::stringToLowerAppend( device_names[ next_track ], (const char *)data.get_ptr(), data_count );
 					}
 					else if ( event.m_data[ 1 ] == 0x21 )
 					{
 						port_numbers[ next_track ] = event.m_data[ 2 ];
+						device_names[ next_track ].reset();
 					}
 				}
 			}
