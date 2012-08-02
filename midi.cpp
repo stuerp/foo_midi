@@ -1,10 +1,24 @@
-#define MYVERSION "1.162"
+#define MYVERSION "1.165"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
+#define SF2PACK
 
 /*
 	change log
+
+2012-08-01 01:14 UTC - kode54
+- Added code page detection to MIDI metadata retrieval
+- Version is now 1.165
+
+2012-08-01 00:16 UTC - kode54
+- Changed BASS plug-in loader to search using a wildcard match so
+  I can add more plug-ins without changing the source code
+- Version is now 1.164
+
+2012-07-31 18:00 UTC - kode54
+- Enabled sf2pack support with FLAC and WavPack plug-ins
+- Version is now 1.163
 
 2012-07-31 16:17 UTC - kode54
 - Restructured MIDI port detection and routing
@@ -925,11 +939,23 @@ public:
 				temp += ".sf2";
 				if ( !filesystem::g_exists( temp, p_abort ) )
 				{
-					temp = pfc::string_replace_extension( m_path, "sf2" );
+#ifdef SF2PACK
+					temp += "pack";
 					if ( !filesystem::g_exists( temp, p_abort ) )
 					{
-						temp.reset();
+#endif
+						temp = pfc::string_replace_extension( m_path, "sf2" );
+						if ( !filesystem::g_exists( temp, p_abort ) )
+						{
+#ifdef SF2PACK
+							temp += "pack";
+							if ( !filesystem::g_exists( temp, p_abort ) )
+#endif
+								temp.reset();
+						}
+#ifdef SF2PACK
 					}
+#endif
 				}
 
 				if ( temp.length() )
@@ -1967,7 +1993,15 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 		directory = m_soundfont;
 		filename = m_soundfont;
 		directory.truncate( directory.scan_filename() );
-		if ( uGetOpenFileName( m_hWnd, "SoundFont and list files|*.sf2;*.sflist|SoundFont files|*.sf2|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
+		if ( uGetOpenFileName( m_hWnd, "SoundFont and list files|*.sf2;"
+#ifdef SF2PACK
+			"*.sf2pack;"
+#endif
+			"*.sflist|SoundFont files|*.sf2"
+#ifdef SF2PACK
+			";*.sf2pack"
+#endif
+			"|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
 		{
 			m_soundfont = filename;
 			uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );

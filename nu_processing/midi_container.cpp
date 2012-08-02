@@ -764,10 +764,35 @@ const unsigned midi_container::get_timestamp_loop_end( unsigned subsong, bool ms
 	else return ~0;
 }
 
+static void convert_mess_to_utf8( const char * p_src, size_t p_src_len, pfc::string_base & p_dst )
+{
+	static const UINT codepages[] = { CP_UTF8, 932 /* Shift-JIS */, 936 /* GBK */, 950 /* Big5 */, 1251 /* Cyrillic */ };
+
+	t_size src_len = strnlen( p_src, p_src_len );
+
+	UINT codepage;
+	unsigned i;
+	int ret;
+
+	for ( i = 0; i < _countof( codepages ); ++i )
+	{
+		codepage = codepages[ i ];
+		ret = MultiByteToWideChar( codepage, MB_ERR_INVALID_CHARS, p_src, src_len, 0, 0 );
+		if ( ret || GetLastError() != ERROR_NO_UNICODE_TRANSLATION ) break;
+	}
+
+	if ( ! ret )
+		codepage = pfc::stringcvt::codepage_system;
+
+	if ( codepage == 65001 )
+		p_dst.set_string( p_src, src_len );
+	else
+		p_dst = pfc::stringcvt::string_utf8_from_codepage( codepage, p_src, src_len );
+}
+
 void midi_container::get_meta_data( unsigned subsong, midi_meta_data & p_out )
 {
-	pfc::string8_fast temp;
-	pfc::stringcvt::string_utf8_from_ansi convert;
+	pfc::string8_fast temp, convert;
 
 	pfc::array_t<t_uint8> data;
 
@@ -829,21 +854,21 @@ void midi_container::get_meta_data( unsigned subsong, midi_meta_data & p_out )
 					case 6:
 						data.grow_size( data_count );
 						event.copy_data( data.get_ptr(), 2, data_count );
-						convert.convert( (const char *)data.get_ptr(), data_count );
+						convert_mess_to_utf8( ( const char * ) data.get_ptr(), data_count, convert );
 						p_out.add_item( midi_meta_data_item( timestamp_to_ms( event.m_timestamp, tempo_track ), "track_marker", convert ) );
 						break;
 
 					case 2:
 						data.grow_size( data_count );
 						event.copy_data( data.get_ptr(), 2, data_count );
-						convert.convert( (const char *)data.get_ptr(), data_count );
+						convert_mess_to_utf8( ( const char * ) data.get_ptr(), data_count, convert );
 						p_out.add_item( midi_meta_data_item( timestamp_to_ms( event.m_timestamp, tempo_track ), "copyright", convert ) );
 						break;
 
 					case 1:
 						data.grow_size( data_count );
 						event.copy_data( data.get_ptr(), 2, data_count );
-						convert.convert( (const char *)data.get_ptr(), data_count );
+						convert_mess_to_utf8( ( const char * ) data.get_ptr(), data_count, convert );
 						temp = "track_text_";
 						temp += pfc::format_int( i, 2 );
 						p_out.add_item( midi_meta_data_item( timestamp_to_ms( event.m_timestamp, tempo_track ), temp, convert ) );
@@ -853,7 +878,7 @@ void midi_container::get_meta_data( unsigned subsong, midi_meta_data & p_out )
 					case 4:
 						data.grow_size( data_count );
 						event.copy_data( data.get_ptr(), 2, data_count );
-						convert.convert( (const char *)data.get_ptr(), data_count );
+						convert_mess_to_utf8( ( const char * ) data.get_ptr(), data_count, convert );
 						temp = "track_name_";
 						temp += pfc::format_int( i, 2 );
 						p_out.add_item( midi_meta_data_item( timestamp_to_ms( event.m_timestamp, tempo_track ), temp, convert ) );

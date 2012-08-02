@@ -5,6 +5,8 @@
 #pragma comment(lib, "../../../bass/c/bass.lib")
 #pragma comment(lib, "../../../bass/c/bassmidi.lib")
 
+#define SF2PACK
+
 static const t_uint8 sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
 static const t_uint8 sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
 static const t_uint8 sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
@@ -143,6 +145,26 @@ public:
 		insync(lock);
 		if ( !initialized )
 		{
+#ifdef SF2PACK
+			pfc::string8_fast filename;
+			pfc::string8 path = core_api::get_my_full_path();
+			path.truncate( path.scan_filename() );
+			filename = path;
+			puFindFile finder = uFindFirstFile( pfc::string_formatter() << path << "bass*.dll" );
+			if ( finder )
+			{
+				pfc::stringcvt::string_wide_from_utf8_fast convert;
+				do
+				{
+					filename.truncate( path.length() );
+					filename += finder->GetFileName();
+					convert.convert( filename );
+					BASS_PluginLoad( ( const char * ) convert.get_ptr(), BASS_UNICODE );
+				} while ( finder->FindNext() );
+				delete finder;
+			}
+#endif
+			BASS_SetConfig( BASS_CONFIG_UPDATEPERIOD, 0 );
 			initialized = !!BASS_Init( 0, 44100, 0, core_api::get_main_window(), NULL );
 			if ( initialized )
 			{
@@ -603,7 +625,11 @@ bool BMPlayer::startup()
 	if (sSoundFontName.length())
 	{
 		pfc::string_extension ext(sSoundFontName);
-		if ( !pfc::stricmp_ascii( ext, "sf2" ) )
+		if ( !pfc::stricmp_ascii( ext, "sf2" )
+#ifdef SF2PACK
+			|| !pfc::stricmp_ascii( ext, "sf2pack" )
+#endif
+			)
 		{
 			HSOUNDFONT font = g_map->load_font( pfc::stringcvt::string_wide_from_utf8( sSoundFontName ).get_ptr() );
 			if ( !font )
