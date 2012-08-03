@@ -118,8 +118,8 @@ bool VSTiPlayer::process_create()
 
 	siStartInfo.cb = sizeof(siStartInfo);
 	siStartInfo.hStdInput = hChildStd_IN_Rd;
-	siStartInfo.hStdOutput = hChildStd_OUT_Wr;
-	siStartInfo.hStdError = GetStdHandle( STD_ERROR_HANDLE );
+	siStartInfo.hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+	siStartInfo.hStdError = hChildStd_OUT_Wr;
 	//siStartInfo.wShowWindow = SW_HIDE;
 	siStartInfo.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
 

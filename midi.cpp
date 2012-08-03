@@ -1,4 +1,4 @@
-#define MYVERSION "1.165"
+#define MYVERSION "1.166"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-08-03 03:02 UTC - kode54
+- Fixed VSTi driver for Edirol Hyper Canvas, stupid thing floods stdout
+- Version is now 1.166
 
 2012-08-01 01:14 UTC - kode54
 - Added code page detection to MIDI metadata retrieval

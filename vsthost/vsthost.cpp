@@ -46,7 +46,7 @@ unsigned exchange_count = 0;
 void put_bytes( const void * out, uint32_t size )
 {
 	DWORD dwWritten;
-	WriteFile( GetStdHandle( STD_OUTPUT_HANDLE ), out, size, &dwWritten, NULL );
+	WriteFile( GetStdHandle( STD_ERROR_HANDLE ), out, size, &dwWritten, NULL );
 #ifdef LOG_EXCHANGE
 	TCHAR logfile[MAX_PATH];
 	_stprintf_s( logfile, _T("C:\\temp\\log\\bytes_%08u.out"), exchange_count++ );
@@ -318,7 +318,9 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 		test_sum += (TCHAR)( *end_char++ * 820109 );
 	}
 
+#ifdef NDEBUG
 	if ( test_sum != in_sum ) return 3;
+#endif
 
 	unsigned code = 0;
 
