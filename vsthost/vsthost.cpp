@@ -317,7 +317,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 	if ( argv == NULL ||
 #ifdef REMOTE_OPENS_PIPES
-		argc != 5
+		argc != 4
 #else
 		argc != 3
 #endif
@@ -360,20 +360,14 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	_tcscpy_s( pipe_name, _countof( pipe_name ), _T("\\\\.\\pipe\\") );
 
 	_tcscpy_s( pipe_name + 9, _countof( pipe_name ) - 9, argv[ 3 ] );
-	pipe_in = CreateFile( pipe_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+	pipe_in = CreateFile( pipe_name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
 	if ( !pipe_in )
 	{
 		code = 13;
 		goto exit;
 	}
 
-	_tcscpy_s( pipe_name + 9, _countof( pipe_name ) - 9, argv[ 4 ] );
-	pipe_out = CreateFile( pipe_name, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
-	if ( !pipe_out )
-	{
-		code = 14;
-		goto exit;
-	}
+	pipe_out = pipe_in;
 #endif
 
 	{
@@ -767,7 +761,6 @@ exit:
 	put_code( code );
 
 #ifdef REMOTE_OPENS_PIPES
-	if ( pipe_out ) CloseHandle( pipe_out );
 	if ( pipe_in ) CloseHandle( pipe_in );
 #endif
 

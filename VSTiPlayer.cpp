@@ -10,12 +10,12 @@ VSTiPlayer::VSTiPlayer()
 	hProcess = NULL;
 	hThread = NULL;
 	hReadEvent = NULL;
-#ifndef REMOTE_OPENS_PIPES
+#ifdef REMOTE_OPENS_PIPES
+	hChildStd = NULL;
+#else
 	hChildStd_IN_Rd = NULL;
-#endif
 	hChildStd_IN_Wr = NULL;
 	hChildStd_OUT_Rd = NULL;
-#ifndef REMOTE_OPENS_PIPES
 	hChildStd_OUT_Wr = NULL;
 #endif
 	sVendor = NULL;
@@ -87,13 +87,24 @@ bool VSTiPlayer::process_create()
 
 	hReadEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
 
+#ifdef REMOTE_OPENS_PIPES
+	pfc::string8 pipe_name;
+	if ( !create_pipe_name( pipe_name ) )
+#else
 	pfc::string8 pipe_name_in, pipe_name_out;
 	if ( !create_pipe_name( pipe_name_in ) || !create_pipe_name( pipe_name_out ) )
+#endif
 	{
 		process_terminate();
 		return false;
 	}
 
+#ifdef REMOTE_OPENS_PIPES
+	pfc::stringcvt::string_os_from_utf8 pipe_name_os( pipe_name );
+
+	HANDLE hPipe = CreateNamedPipe( pipe_name_os, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &saAttr );
+	DuplicateHandle( GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd, 0, FALSE, DUPLICATE_SAME_ACCESS );
+#else
 	pfc::stringcvt::string_os_from_utf8 pipe_name_in_os( pipe_name_in ), pipe_name_out_os( pipe_name_out );
 
 	HANDLE hPipe = CreateNamedPipe( pipe_name_in_os, PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &saAttr );
@@ -102,9 +113,7 @@ bool VSTiPlayer::process_create()
 		process_terminate();
 		return false;
 	}
-#ifndef REMOTE_OPENS_PIPES
 	hChildStd_IN_Rd = CreateFile( pipe_name_in_os, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL );
-#endif
 	DuplicateHandle( GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd_IN_Wr, 0, FALSE, DUPLICATE_SAME_ACCESS );
 	CloseHandle( hPipe );
 
@@ -114,11 +123,10 @@ bool VSTiPlayer::process_create()
 		process_terminate();
 		return false;
 	}
-#ifndef REMOTE_OPENS_PIPES
 	hChildStd_OUT_Wr = CreateFile( pipe_name_out_os, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL );
-#endif
 	DuplicateHandle( GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd_OUT_Rd, 0, FALSE, DUPLICATE_SAME_ACCESS );
 	CloseHandle( hPipe );
+#endif
 
 	pfc::string8 szCmdLine = "\"";
 	szCmdLine += core_api::get_my_full_path();
@@ -141,9 +149,7 @@ bool VSTiPlayer::process_create()
 
 #ifdef REMOTE_OPENS_PIPES
 	szCmdLine += " ";
-	szCmdLine += pipe_name_in.get_ptr() + 9;
-	szCmdLine += " ";
-	szCmdLine += pipe_name_out.get_ptr() + 9;
+	szCmdLine += pipe_name.get_ptr() + 9;
 #endif
 
 	PROCESS_INFORMATION piProcInfo;
@@ -181,7 +187,7 @@ bool VSTiPlayer::process_create()
 #endif
 
 #ifdef REMOTE_OPENS_PIPES
-	if ( !connect_pipe( hChildStd_IN_Wr ) || !connect_pipe( hChildStd_OUT_Rd ) )
+	if ( !connect_pipe( hChildStd ) )
 	{
 		process_terminate();
 		return false;
@@ -227,12 +233,12 @@ void VSTiPlayer::process_terminate()
 		CloseHandle( hThread );
 		CloseHandle( hProcess );
 	}
-#ifndef REMOTE_OPENS_PIPES
+#ifdef REMOTE_OPENS_PIPES
+	if ( hChildStd ) CloseHandle( hChildStd );
+#else
 	if ( hChildStd_IN_Rd ) CloseHandle( hChildStd_IN_Rd );
-#endif
 	if ( hChildStd_IN_Wr ) CloseHandle( hChildStd_IN_Wr );
 	if ( hChildStd_OUT_Rd ) CloseHandle( hChildStd_OUT_Rd );
-#ifndef REMOTE_OPENS_PIPES
 	if ( hChildStd_OUT_Wr ) CloseHandle( hChildStd_OUT_Wr );
 #endif
 	if ( hReadEvent ) CloseHandle( hReadEvent );
@@ -241,12 +247,12 @@ void VSTiPlayer::process_terminate()
 	hProcess = NULL;
 	hThread = NULL;
 	hReadEvent = NULL;
-#ifndef REMOTE_OPENS_PIPES
+#ifdef REMOTE_OPENS_PIPES
+	hChildStd = NULL;
+#else
 	hChildStd_IN_Rd = NULL;
-#endif
 	hChildStd_IN_Wr = NULL;
 	hChildStd_OUT_Rd = NULL;
-#ifndef REMOTE_OPENS_PIPES
 	hChildStd_OUT_Wr = NULL;
 #endif
 }
@@ -274,7 +280,11 @@ t_uint32 VSTiPlayer::process_read_bytes_pass( void * out, t_uint32 size )
 	ResetEvent( hReadEvent );
 	DWORD bytesDone;
 	SetLastError( NO_ERROR );
+#ifdef REMOTE_OPENS_PIPES
+	if ( ReadFile( hChildStd, out, size, &bytesDone, &ol ) ) return bytesDone;
+#else
 	if ( ReadFile( hChildStd_OUT_Rd, out, size, &bytesDone, &ol ) ) return bytesDone;
+#endif
 	if ( GetLastError() != ERROR_IO_PENDING ) return 0;
 
 	const HANDLE handles[1] = {hReadEvent};
@@ -287,12 +297,24 @@ t_uint32 VSTiPlayer::process_read_bytes_pass( void * out, t_uint32 size )
 		else break;
 	}
 
+#ifdef REMOTE_OPENS_PIPES
+	if ( state == WAIT_OBJECT_0 && GetOverlappedResult( hChildStd, &ol, &bytesDone, TRUE ) ) return bytesDone;
+#else
 	if ( state == WAIT_OBJECT_0 && GetOverlappedResult( hChildStd_OUT_Rd, &ol, &bytesDone, TRUE ) ) return bytesDone;
+#endif
 
 #if _WIN32_WINNT >= 0x600
+#ifdef REMOTE_OPENS_PIPES
+	CancelIoEx( hChildStd, &ol );
+#else
 	CancelIoEx( hChildStd_OUT_Rd, &ol );
+#endif
+#else
+#ifdef REMOTE_OPENS_PIPES
+	CancelIo( hChildStd );
 #else
 	CancelIo( hChildStd_OUT_Rd );
+#endif
 #endif
 
 	return 0;
@@ -331,7 +353,11 @@ void VSTiPlayer::process_write_bytes( const void * in, t_uint32 size )
 	{
 		if ( size == 0 ) return;
 		DWORD bytesWritten;
+#ifdef REMOTE_OPENS_PIPES
+		if ( !WriteFile( hChildStd, in, size, &bytesWritten, NULL ) || bytesWritten < size ) process_terminate();
+#else
 		if ( !WriteFile( hChildStd_IN_Wr, in, size, &bytesWritten, NULL ) || bytesWritten < size ) process_terminate();
+#endif
 	}
 }
 

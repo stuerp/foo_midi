@@ -69,12 +69,12 @@ private:
 	HANDLE       hProcess;
 	HANDLE       hThread;
 	HANDLE       hReadEvent;
-#ifndef REMOTE_OPENS_PIPES
+#ifdef REMOTE_OPENS_PIPES
+	HANDLE       hChildStd;
+#else
 	HANDLE       hChildStd_IN_Rd;
-#endif
 	HANDLE       hChildStd_IN_Wr;
 	HANDLE       hChildStd_OUT_Rd;
-#ifndef REMOTE_OPENS_PIPES
 	HANDLE       hChildStd_OUT_Wr;
 #endif
 
