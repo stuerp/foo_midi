@@ -10,10 +10,14 @@ VSTiPlayer::VSTiPlayer()
 	hProcess = NULL;
 	hThread = NULL;
 	hReadEvent = NULL;
+#ifndef REMOTE_OPENS_PIPES
 	hChildStd_IN_Rd = NULL;
+#endif
 	hChildStd_IN_Wr = NULL;
 	hChildStd_OUT_Rd = NULL;
+#ifndef REMOTE_OPENS_PIPES
 	hChildStd_OUT_Wr = NULL;
+#endif
 	sVendor = NULL;
 	sProduct = NULL;
 	uSamplesRemaining = 0;
@@ -49,6 +53,24 @@ static bool create_pipe_name( pfc::string_base & out )
 	return true;
 }
 
+#ifdef REMOTE_OPENS_PIPES
+bool VSTiPlayer::connect_pipe( HANDLE hPipe )
+{
+	OVERLAPPED ol = {};
+	ol.hEvent = hReadEvent;
+	ResetEvent( hReadEvent );
+	if ( !ConnectNamedPipe( hPipe, &ol ) )
+	{
+		DWORD error = GetLastError();
+		if ( error == ERROR_PIPE_CONNECTED ) return true;
+		if ( error != ERROR_IO_PENDING ) return false;
+
+		if ( WaitForSingleObject( hReadEvent, 10000 ) == WAIT_TIMEOUT ) return false;
+	}
+	return true;
+}
+#endif
+
 bool VSTiPlayer::process_create()
 {
 	SECURITY_ATTRIBUTES saAttr;
@@ -80,7 +102,9 @@ bool VSTiPlayer::process_create()
 		process_terminate();
 		return false;
 	}
+#ifndef REMOTE_OPENS_PIPES
 	hChildStd_IN_Rd = CreateFile( pipe_name_in_os, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL );
+#endif
 	DuplicateHandle( GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd_IN_Wr, 0, FALSE, DUPLICATE_SAME_ACCESS );
 	CloseHandle( hPipe );
 
@@ -90,7 +114,9 @@ bool VSTiPlayer::process_create()
 		process_terminate();
 		return false;
 	}
+#ifndef REMOTE_OPENS_PIPES
 	hChildStd_OUT_Wr = CreateFile( pipe_name_out_os, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL );
+#endif
 	DuplicateHandle( GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd_OUT_Rd, 0, FALSE, DUPLICATE_SAME_ACCESS );
 	CloseHandle( hPipe );
 
@@ -113,15 +139,24 @@ bool VSTiPlayer::process_create()
 
 	szCmdLine += pfc::format_int( sum, 0, 16 );
 
+#ifdef REMOTE_OPENS_PIPES
+	szCmdLine += " ";
+	szCmdLine += pipe_name_in.get_ptr() + 9;
+	szCmdLine += " ";
+	szCmdLine += pipe_name_out.get_ptr() + 9;
+#endif
+
 	PROCESS_INFORMATION piProcInfo;
 	STARTUPINFO siStartInfo = {0};
 
 	siStartInfo.cb = sizeof(siStartInfo);
+#ifndef REMOTE_OPENS_PIPES
 	siStartInfo.hStdInput = hChildStd_IN_Rd;
 	siStartInfo.hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
 	siStartInfo.hStdError = hChildStd_OUT_Wr;
 	//siStartInfo.wShowWindow = SW_HIDE;
 	siStartInfo.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
+#endif
 
 	if ( !CreateProcess( NULL, (LPTSTR)(LPCTSTR) pfc::stringcvt::string_os_from_utf8( szCmdLine ), NULL, NULL, TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo ) )
 	{
@@ -129,17 +164,29 @@ bool VSTiPlayer::process_create()
 		return false;
 	}
 
+#ifndef REMOTE_OPENS_PIPES
 	// Close remote handles so pipes will break when process terminates
 	CloseHandle( hChildStd_OUT_Wr );
 	CloseHandle( hChildStd_IN_Rd );
 	hChildStd_OUT_Wr = NULL;
 	hChildStd_IN_Rd = NULL;
+#endif
 
 	hProcess = piProcInfo.hProcess;
 	hThread = piProcInfo.hThread;
 
+#ifdef NDEBUG
 	SetPriorityClass( hProcess, GetPriorityClass( GetCurrentProcess() ) );
 	SetThreadPriority( hThread, GetThreadPriority( GetCurrentThread() ) );
+#endif
+
+#ifdef REMOTE_OPENS_PIPES
+	if ( !connect_pipe( hChildStd_IN_Wr ) || !connect_pipe( hChildStd_OUT_Rd ) )
+	{
+		process_terminate();
+		return false;
+	}
+#endif
 
 	t_uint32 code = process_read_code();
 
@@ -180,20 +227,28 @@ void VSTiPlayer::process_terminate()
 		CloseHandle( hThread );
 		CloseHandle( hProcess );
 	}
+#ifndef REMOTE_OPENS_PIPES
 	if ( hChildStd_IN_Rd ) CloseHandle( hChildStd_IN_Rd );
+#endif
 	if ( hChildStd_IN_Wr ) CloseHandle( hChildStd_IN_Wr );
 	if ( hChildStd_OUT_Rd ) CloseHandle( hChildStd_OUT_Rd );
+#ifndef REMOTE_OPENS_PIPES
 	if ( hChildStd_OUT_Wr ) CloseHandle( hChildStd_OUT_Wr );
+#endif
 	if ( hReadEvent ) CloseHandle( hReadEvent );
 	if ( bInitialized ) CoUninitialize();
 	bInitialized = false;
 	hProcess = NULL;
 	hThread = NULL;
 	hReadEvent = NULL;
+#ifndef REMOTE_OPENS_PIPES
 	hChildStd_IN_Rd = NULL;
+#endif
 	hChildStd_IN_Wr = NULL;
 	hChildStd_OUT_Rd = NULL;
+#ifndef REMOTE_OPENS_PIPES
 	hChildStd_OUT_Wr = NULL;
+#endif
 }
 
 bool VSTiPlayer::process_running()

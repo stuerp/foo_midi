@@ -5,6 +5,8 @@
 
 #include "nu_processing/midi_container.h"
 
+#define REMOTE_OPENS_PIPES
+
 class VSTiPlayer
 {
 public:
@@ -49,6 +51,9 @@ private:
 	void send_event( DWORD );
 	void render(audio_sample *, unsigned);
 
+#ifdef REMOTE_OPENS_PIPES
+	bool connect_pipe( HANDLE hPipe );
+#endif
 	bool process_create();
 	void process_terminate();
 	bool process_running();
@@ -64,10 +69,14 @@ private:
 	HANDLE       hProcess;
 	HANDLE       hThread;
 	HANDLE       hReadEvent;
+#ifndef REMOTE_OPENS_PIPES
 	HANDLE       hChildStd_IN_Rd;
+#endif
 	HANDLE       hChildStd_IN_Wr;
 	HANDLE       hChildStd_OUT_Rd;
+#ifndef REMOTE_OPENS_PIPES
 	HANDLE       hChildStd_OUT_Wr;
+#endif
 
 	char       * sVendor;
 	char       * sProduct;

@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 
+#define REMOTE_OPENS_PIPES
+
 enum
 {
 	BUFFER_SIZE = 4096,
@@ -12,6 +14,14 @@ enum
 
 #ifdef VST_SDK_2_3
 bool need_idle = false;
+#endif
+
+#ifdef REMOTE_OPENS_PIPES
+static HANDLE pipe_in = NULL;
+static HANDLE pipe_out = NULL;
+#else
+#define pipe_in GetStdHandle( STD_INPUT_HANDLE )
+#define pipe_out GetStdHandle( STD_ERROR_HANDLE );
 #endif
 
 struct myVstEvent
@@ -46,7 +56,7 @@ unsigned exchange_count = 0;
 void put_bytes( const void * out, uint32_t size )
 {
 	DWORD dwWritten;
-	WriteFile( GetStdHandle( STD_ERROR_HANDLE ), out, size, &dwWritten, NULL );
+	WriteFile( pipe_out, out, size, &dwWritten, NULL );
 #ifdef LOG_EXCHANGE
 	TCHAR logfile[MAX_PATH];
 	_stprintf_s( logfile, _T("C:\\temp\\log\\bytes_%08u.out"), exchange_count++ );
@@ -64,7 +74,7 @@ void put_code( uint32_t code )
 void get_bytes( void * in, uint32_t size )
 {
 	DWORD dwRead;
-	if ( !ReadFile( GetStdHandle( STD_INPUT_HANDLE ), in, size, &dwRead, NULL ) || dwRead < size )
+	if ( !ReadFile( pipe_in, in, size, &dwRead, NULL ) || dwRead < size )
 	{
 		memset( in, 0, size );
 #ifdef LOG_EXCHANGE
@@ -305,7 +315,13 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	int argc = 0;
 	LPWSTR * argv = CommandLineToArgvW( GetCommandLineW(), &argc );
 
-	if ( argv == NULL || argc != 3 ) return 1;
+	if ( argv == NULL ||
+#ifdef REMOTE_OPENS_PIPES
+		argc != 5
+#else
+		argc != 3
+#endif
+		) return 1;
 
 	wchar_t * end_char = 0;
 	unsigned in_sum = wcstoul( argv[ 2 ], &end_char, 16 );
@@ -326,7 +342,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 	HMODULE hDll = NULL;
 	main_func pMain = NULL;
-	AEffect * pEffect[2] = {0};
+	AEffect * pEffect[2] = {0, 0};
 
 	audioMasterData effectData[2] = { { 0 }, { 1 } };
 
@@ -337,6 +353,28 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 	std::vector<uint8_t> chunk;
 	std::vector<float> sample_buffer;
+
+#ifdef REMOTE_OPENS_PIPES
+	TCHAR pipe_name[128];
+
+	_tcscpy_s( pipe_name, _countof( pipe_name ), _T("\\\\.\\pipe\\") );
+
+	_tcscpy_s( pipe_name + 9, _countof( pipe_name ) - 9, argv[ 3 ] );
+	pipe_in = CreateFile( pipe_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+	if ( !pipe_in )
+	{
+		code = 13;
+		goto exit;
+	}
+
+	_tcscpy_s( pipe_name + 9, _countof( pipe_name ) - 9, argv[ 4 ] );
+	pipe_out = CreateFile( pipe_name, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+	if ( !pipe_out )
+	{
+		code = 14;
+		goto exit;
+	}
+#endif
 
 	{
 		INITCOMMONCONTROLSEX icc;
@@ -727,5 +765,11 @@ exit:
 	if ( argv ) LocalFree( argv );
 
 	put_code( code );
+
+#ifdef REMOTE_OPENS_PIPES
+	if ( pipe_out ) CloseHandle( pipe_out );
+	if ( pipe_in ) CloseHandle( pipe_in );
+#endif
+
 	return code;
 }

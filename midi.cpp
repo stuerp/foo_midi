@@ -1,4 +1,4 @@
-#define MYVERSION "1.166"
+#define MYVERSION "1.167"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2012-08-04 00:01 UTC - kode54
+- Changed VSTi player to pass pipe names to the VST host and let it open
+  them itself
+- Version is now 1.167
 
 2012-08-03 03:02 UTC - kode54
 - Fixed VSTi driver for Edirol Hyper Canvas, stupid thing floods stdout
