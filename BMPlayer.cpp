@@ -542,7 +542,11 @@ void BMPlayer::send_event(DWORD b)
 		}
 		else if ( command == 0xC0 )
 		{
-			BASS_MIDI_StreamEvent( _stream, channel, MIDI_EVENT_DRUMS, drum_channels[ channel ] );
+			unsigned channel_masked = channel & 0x0F;
+			unsigned drum_channel = drum_channels[ channel ];
+			if ( ( channel_masked == 9 && !drum_channel ) ||
+				( channel_masked != 9 && drum_channel ) )
+				BASS_MIDI_StreamEvent( _stream, channel, MIDI_EVENT_DRUMS, drum_channel );
 		}
 	}
 	else

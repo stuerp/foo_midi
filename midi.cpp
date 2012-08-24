@@ -1,4 +1,4 @@
-#define MYVERSION "1.167"
+#define MYVERSION "1.168"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2012-08-22 19:44 UTC - kode54
+- Updated BASSMIDI to version 2.4.7.9
+- Hopefully fixed BASSMIDI player bank select control
+- Version is now 1.168
 
 2012-08-04 00:01 UTC - kode54
 - Changed VSTi player to pass pipe names to the VST host and let it open
