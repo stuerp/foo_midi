@@ -18,6 +18,7 @@ VSTiPlayer::VSTiPlayer()
 	hChildStd_OUT_Rd = NULL;
 	hChildStd_OUT_Wr = NULL;
 #endif
+	sName = NULL;
 	sVendor = NULL;
 	sProduct = NULL;
 	uSamplesRemaining = 0;
@@ -31,6 +32,7 @@ VSTiPlayer::VSTiPlayer()
 VSTiPlayer::~VSTiPlayer()
 {
 	process_terminate();
+	delete [] sName;
 	delete [] sVendor;
 	delete [] sProduct;
 }
@@ -202,21 +204,26 @@ bool VSTiPlayer::process_create()
 		return false;
 	}
 
+	t_uint32 name_string_length = process_read_code();
 	t_uint32 vendor_string_length = process_read_code();
 	t_uint32 product_string_length = process_read_code();
 	uVendorVersion = process_read_code();
 	uUniqueId = process_read_code();
 	uNumOutputs = process_read_code();
 
+	delete [] sName;
 	delete [] sVendor;
 	delete [] sProduct;
 
+	sName = new char[ name_string_length + 1 ];
 	sVendor = new char[ vendor_string_length + 1 ];
 	sProduct = new char[ product_string_length + 1 ];
 
+	process_read_bytes( sName, name_string_length );
 	process_read_bytes( sVendor, vendor_string_length );
 	process_read_bytes( sProduct, product_string_length );
 
+	sName[ name_string_length ] = 0;
 	sVendor[ vendor_string_length ] = 0;
 	sProduct[ product_string_length ] = 0;
 

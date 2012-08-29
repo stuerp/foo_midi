@@ -378,11 +378,12 @@ void midi_container::add_track( const midi_track & p_track )
 				}
 			}
 
-			if ( port_number == 1 ) channel += 16;
+			channel += 16 * port_number;
+			channel %= 48;
 			if ( m_form != 2 ) m_channel_mask[ 0 ] |= 1 << channel;
 			else
 			{
-				m_channel_mask.append_multi( (unsigned)0, m_tracks.get_count() - m_channel_mask.get_count() );
+				m_channel_mask.append_multi( (t_uint64)0, m_tracks.get_count() - m_channel_mask.get_count() );
 				m_channel_mask[ m_tracks.get_count() - 1 ] |= 1 << channel;
 			}
 		}
@@ -421,7 +422,7 @@ void midi_container::add_track_event( t_size p_track_index, const midi_event & p
 		if ( m_form != 2 ) m_channel_mask[ 0 ] |= 1 << p_event.m_channel;
 		else
 		{
-			m_channel_mask.append_multi( (unsigned)0, m_tracks.get_count() - m_channel_mask.get_count() );
+			m_channel_mask.append_multi( (t_uint64)0, m_tracks.get_count() - m_channel_mask.get_count() );
 			m_channel_mask[ p_track_index ] |= 1 << p_event.m_channel;
 		}
 	}
@@ -551,7 +552,7 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 				unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
 				if ( event.m_data_count >= 1 ) event_code += event.m_data[ 0 ] << 8;
 				if ( event.m_data_count >= 2 ) event_code += event.m_data[ 1 ] << 16;
-				event_code += port_numbers[ next_track ] ? 0x1000000 : 0;
+				event_code += port_numbers[ next_track ] << 24;
 				p_stream.append_single( midi_stream_event( timestamp_ms, event_code ) );
 			}
 			else
@@ -729,7 +730,8 @@ const unsigned midi_container::get_track_count() const
 const unsigned midi_container::get_channel_count( unsigned subsong ) const
 {
 	unsigned count = 0;
-	for (unsigned i = 0, j = 1; i < 32; ++i, j <<= 1)
+	t_uint64 j = 1;
+	for (unsigned i = 0; i < 48; ++i, j <<= 1)
 	{
 		if ( m_channel_mask[ subsong ] & j ) ++count;
 	}

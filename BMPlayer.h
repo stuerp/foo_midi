@@ -74,8 +74,8 @@ private:
 	}
 	                   synth_mode;
 
-	BYTE               gs_part_to_ch[2][16];
-	BYTE               drum_channels[32];
+	BYTE               gs_part_to_ch[3][16];
+	BYTE               drum_channels[48];
 };
 
 #endif

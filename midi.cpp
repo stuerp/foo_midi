@@ -1,4 +1,4 @@
-#define MYVERSION "1.168"
+#define MYVERSION "1.169"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-08-29 03:23 UTC - kode54
+- Implemented support for 48 channel MIDI files
+- Version is now 1.169
 
 2012-08-22 19:44 UTC - kode54
 - Updated BASSMIDI to version 2.4.7.9

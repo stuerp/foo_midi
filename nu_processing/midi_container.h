@@ -143,7 +143,7 @@ public:
 private:
 	unsigned m_form;
 	unsigned m_dtx;
-	pfc::array_t<unsigned> m_channel_mask;
+	pfc::array_t<t_uint64> m_channel_mask;
 	pfc::array_t<tempo_map> m_tempo_map;
 	pfc::array_t<midi_track> m_tracks;
 

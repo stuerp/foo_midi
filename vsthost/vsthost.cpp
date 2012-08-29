@@ -3,8 +3,6 @@
 
 #include "stdafx.h"
 
-#define REMOTE_OPENS_PIPES
-
 enum
 {
 	BUFFER_SIZE = 4096,
@@ -12,17 +10,8 @@ enum
 
 // #define LOG_EXCHANGE
 
-#ifdef VST_SDK_2_3
-bool need_idle = false;
-#endif
-
-#ifdef REMOTE_OPENS_PIPES
 static HANDLE pipe_in = NULL;
 static HANDLE pipe_out = NULL;
-#else
-#define pipe_in GetStdHandle( STD_INPUT_HANDLE )
-#define pipe_out GetStdHandle( STD_ERROR_HANDLE );
-#endif
 
 struct myVstEvent
 {
@@ -166,16 +155,6 @@ void setChunk( AEffect * pEffect, std::vector<uint8_t> const& in )
 	}
 }
 
-#ifdef VST_SDK_2_3
-struct ERect
-{
-	short top;
-	short left;
-	short bottom;
-	short right;
-};
-#endif
-
 struct MyDLGTEMPLATE: DLGTEMPLATE
 {
 	WORD ext[3];
@@ -245,11 +224,7 @@ struct audioMasterData
 	VstIntPtr effect_number;
 };
 
-#ifdef VST_SDK_2_3
-static long __cdecl audioMaster(AEffect *effect, long opcode, long index, long value, void *ptr, float opt)
-#else
 static VstIntPtr VSTCALLBACK audioMaster( AEffect * effect, VstInt32 opcode, VstInt32 index, VstIntPtr value, void * ptr, float opt)
-#endif
 {
 	audioMasterData * data = NULL;
 	if ( effect ) data = ( audioMasterData * ) effect->user;
@@ -257,11 +232,7 @@ static VstIntPtr VSTCALLBACK audioMaster( AEffect * effect, VstInt32 opcode, Vst
 	switch (opcode)
 	{
 	case audioMasterVersion:
-#ifdef VST_SDK_2_3
-		return 2300;
-#else
 		return 2400;
-#endif
 
 	case audioMasterCurrentId:
 		if ( data ) return data->effect_number;
@@ -282,15 +253,6 @@ static VstIntPtr VSTCALLBACK audioMaster( AEffect * effect, VstInt32 opcode, Vst
 
 	case audioMasterGetLanguage:
 		return kVstLangEnglish;
-
-#ifdef VST_SDK_2_3
-	case audioMasterWillReplaceOrAccumulate:
-		return 1;
-
-	case audioMasterNeedIdle:
-		need_idle = true;
-		return 1;
-#endif
 	}
 
 	return 0;
@@ -315,13 +277,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	int argc = 0;
 	LPWSTR * argv = CommandLineToArgvW( GetCommandLineW(), &argc );
 
-	if ( argv == NULL ||
-#ifdef REMOTE_OPENS_PIPES
-		argc != 4
-#else
-		argc != 3
-#endif
-		) return 1;
+	if ( argv == NULL || argc != 4 ) return 1;
 
 	wchar_t * end_char = 0;
 	unsigned in_sum = wcstoul( argv[ 2 ], &end_char, 16 );
@@ -342,9 +298,9 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 	HMODULE hDll = NULL;
 	main_func pMain = NULL;
-	AEffect * pEffect[2] = {0, 0};
+	AEffect * pEffect[3] = {0, 0, 0};
 
-	audioMasterData effectData[2] = { { 0 }, { 1 } };
+	audioMasterData effectData[3] = { { 0 }, { 1 }, { 2 } };
 
 	std::vector<uint8_t> blState;
 
@@ -354,7 +310,6 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	std::vector<uint8_t> chunk;
 	std::vector<float> sample_buffer;
 
-#ifdef REMOTE_OPENS_PIPES
 	TCHAR pipe_name[128];
 
 	_tcscpy_s( pipe_name, _countof( pipe_name ), _T("\\\\.\\pipe\\") );
@@ -368,7 +323,6 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	}
 
 	pipe_out = pipe_in;
-#endif
 
 	{
 		INITCOMMONCONTROLSEX icc;
@@ -422,26 +376,32 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	max_num_outputs = min( pEffect[ 0 ]->numOutputs, 2 );
 
 	{
-		char vendor_string[65] = { 0 };
-		char product_string[65] = { 0 };
+		char name_string[256] = { 0 };
+		char vendor_string[256] = { 0 };
+		char product_string[256] = { 0 };
+		uint32_t name_string_length;
 		uint32_t vendor_string_length;
 		uint32_t product_string_length;
 		uint32_t vendor_version;
 		uint32_t unique_id;
 
+		pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effGetEffectName, 0, 0, &name_string, 0 );
 		pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effGetVendorString, 0, 0, &vendor_string, 0 );
 		pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effGetProductString, 0, 0, &product_string, 0 );
+		name_string_length = strlen( name_string );
 		vendor_string_length = strlen( vendor_string );
 		product_string_length = strlen( product_string );
 		vendor_version = pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effGetVendorVersion, 0, 0, 0, 0 );
 		unique_id = pEffect[ 0 ]->uniqueID;
 
 		put_code( 0 );
+		put_code( name_string_length );
 		put_code( vendor_string_length );
 		put_code( product_string_length );
 		put_code( vendor_version );
 		put_code( unique_id );
 		put_code( max_num_outputs );
+		if ( name_string_length ) put_bytes( name_string, name_string_length );
 		if ( vendor_string_length ) put_bytes( vendor_string, vendor_string_length );
 		if ( product_string_length ) put_bytes( product_string, product_string_length );
 	}
@@ -474,6 +434,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 				setChunk( pEffect[ 0 ], chunk );
 				setChunk( pEffect[ 1 ], chunk );
+				setChunk( pEffect[ 2 ], chunk );
 
 				put_code( 0 );
 			}
@@ -497,6 +458,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 					DialogBoxIndirectParam ( 0, &t, GetDesktopWindow(), (DLGPROC)EditorProc, (LPARAM)( pEffect[ 0 ] ) );
 					getChunk( pEffect[ 0 ], chunk );
 					setChunk( pEffect[ 1 ], chunk );
+					setChunk( pEffect[ 2 ], chunk );
 				}
 
 				put_code( 0 );
@@ -520,6 +482,12 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 		case 6: // Reset
 			{
+				if ( pEffect[ 2 ] )
+				{
+					if ( blState.size() ) pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effStopProcess, 0, 0, 0, 0 );
+					pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effClose, 0, 0, 0, 0 );
+					pEffect[ 2 ] = NULL;
+				}
 				if ( pEffect[ 1 ] )
 				{
 					if ( blState.size() ) pEffect[ 1 ]->dispatcher( pEffect[ 1 ], effStopProcess, 0, 0, 0, 0 );
@@ -556,7 +524,8 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 				uint32_t b = get_code();
 
-				ev->port = (b & 0x7F000000) ? 1 : 0;
+				ev->port = (b & 0x7F000000) >> 24;
+				if (ev->port > 2) ev->port = 2;
 				ev->ev.midiEvent.type = kVstMidiType;
 				ev->ev.midiEvent.byteSize = sizeof(ev->ev.midiEvent);
 				memcpy(&ev->ev.midiEvent.midiData, &b, 3);
@@ -569,21 +538,21 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 			{
 				myVstEvent * ev = ( myVstEvent * ) calloc( sizeof( myVstEvent ), 1 );
 				if ( evTail ) evTail->next = ev;
+				evTail = ev;
 				if ( !evChain ) evChain = ev;
 
 				uint32_t size = get_code();
+				uint32_t port = size >> 24;
+				size &= 0xFFFFFF;
 
+				ev->port = port;
+				if (ev->port > 2) ev->port = 2;
 				ev->ev.sysexEvent.type = kVstSysExType;
 				ev->ev.sysexEvent.byteSize = sizeof(ev->ev.sysexEvent);
 				ev->ev.sysexEvent.dumpBytes = size;
 				ev->ev.sysexEvent.sysexDump = (char*) malloc( size );
 
 				get_bytes( ev->ev.sysexEvent.sysexDump, size );
-
-				evTail = ( myVstEvent * ) calloc( sizeof( myVstEvent ), 1 );
-				ev->next = evTail;
-				evTail->port = 1;
-				evTail->ev.sysexEvent = ev->ev.sysexEvent;
 
 				put_code( 0 );
 			}
@@ -603,6 +572,18 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 					pEffect[ 1 ]->dispatcher( pEffect[ 1 ], effOpen, 0, 0, 0, 0 );
 					setChunk( pEffect[ 1 ], chunk );
 				}
+				if ( !pEffect[ 2 ] )
+				{
+					pEffect[ 2 ] = pMain( &audioMaster );
+					if ( !pEffect[ 2 ] )
+					{
+						code = 11;
+						goto exit;
+					}
+					pEffect[ 2 ]->user = &effectData[ 2 ];
+					pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effOpen, 0, 0, 0, 0 );
+					setChunk( pEffect[ 2 ], chunk );
+				}
 
 				if ( !blState.size() )
 				{
@@ -616,34 +597,35 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 					pEffect[ 1 ]->dispatcher( pEffect[ 1 ], effMainsChanged, 0, 1, 0, 0 );
 					pEffect[ 1 ]->dispatcher( pEffect[ 1 ], effStartProcess, 0, 0, 0, 0 );
 
-					size_t buffer_size = sizeof(float*) * ( pEffect[ 0 ]->numInputs + pEffect[ 0 ]->numOutputs * 2 ); // float lists
+					pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effSetSampleRate, 0, 0, 0, float(sample_rate) );
+					pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effSetBlockSize, 0, BUFFER_SIZE, 0, 0 );
+					pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effMainsChanged, 0, 1, 0, 0 );
+					pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effStartProcess, 0, 0, 0, 0 );
+
+					size_t buffer_size = sizeof(float*) * ( pEffect[ 0 ]->numInputs + pEffect[ 0 ]->numOutputs * 3 ); // float lists
 					buffer_size += sizeof(float) * BUFFER_SIZE;                                // null input
-					buffer_size += sizeof(float) * BUFFER_SIZE * pEffect[ 0 ]->numOutputs * 2;          // outputs
+					buffer_size += sizeof(float) * BUFFER_SIZE * pEffect[ 0 ]->numOutputs * 3;          // outputs
 
 					blState.resize( buffer_size );
 
 					float_list_in  = (float**) blState.data();
 					float_list_out = float_list_in + pEffect[ 0 ]->numInputs;
-					float_null     = (float*) ( float_list_out + pEffect[ 0 ]->numOutputs * 2 );
+					float_null     = (float*) ( float_list_out + pEffect[ 0 ]->numOutputs * 3 );
 					float_out      = float_null + BUFFER_SIZE;
 
 					for ( unsigned i = 0; i < pEffect[ 0 ]->numInputs; ++i )      float_list_in [ i ] = float_null;
-					for ( unsigned i = 0; i < pEffect[ 0 ]->numOutputs * 2; ++i ) float_list_out[ i ] = float_out + BUFFER_SIZE * i;
+					for ( unsigned i = 0; i < pEffect[ 0 ]->numOutputs * 3; ++i ) float_list_out[ i ] = float_out + BUFFER_SIZE * i;
 
 					memset( float_null, 0, sizeof(float) * BUFFER_SIZE );
 
 					sample_buffer.resize( BUFFER_SIZE * max_num_outputs );
 				}
 
-#ifdef VST_SDK_2_3
-				if ( need_idle ) need_idle = pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effIdle, 0, 0, 0, 0 ) || pEffect[ 1 ]->dispatcher( pEffect[ 1 ], effIdle, 0, 0, 0, 0 );
-#endif
-
-				VstEvents * events[ 2 ] = {0};
+				VstEvents * events[ 3 ] = {0};
 
 				if ( evChain )
 				{
-					unsigned event_count[ 2 ] = {0};
+					unsigned event_count[ 3 ] = {0};
 					myVstEvent * ev = evChain;
 					while ( ev )
 					{
@@ -680,11 +662,29 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 						for ( unsigned i = 0; ev; )
 						{
-							if ( ev->port ) events[ 1 ]->events[ i++ ] = (VstEvent*) &ev->ev;
+							if ( ev->port == 1 ) events[ 1 ]->events[ i++ ] = (VstEvent*) &ev->ev;
 							ev = ev->next;
 						}
 
 						pEffect[ 1 ]->dispatcher( pEffect[ 1 ], effProcessEvents, 0, 0, events[ 1 ], 0 );
+					}
+
+					if ( event_count[ 2 ] )
+					{
+						events[ 2 ] = ( VstEvents * ) malloc( sizeof(long) + sizeof(long) + sizeof(VstEvent*) * event_count[ 2 ] );
+
+						events[ 2 ]->numEvents = event_count[ 2 ];
+						events[ 2 ]->reserved = 0;
+
+						ev = evChain;
+
+						for ( unsigned i = 0; ev; )
+						{
+							if ( ev->port == 2 ) events[ 2 ]->events[ i++ ] = (VstEvent*) &ev->ev;
+							ev = ev->next;
+						}
+
+						pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effProcessEvents, 0, 0, events[ 2 ], 0 );
 					}
 				}
 
@@ -699,6 +699,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 					pEffect[ 0 ]->processReplacing( pEffect[ 0 ], float_list_in, float_list_out, count_to_do );
 					pEffect[ 1 ]->processReplacing( pEffect[ 1 ], float_list_in, float_list_out + num_outputs, count_to_do );
+					pEffect[ 2 ]->processReplacing( pEffect[ 2 ], float_list_in, float_list_out + num_outputs * 2, count_to_do );
 
 					float * out = sample_buffer.data();
 
@@ -706,9 +707,9 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 					{
 						for ( unsigned i = 0; i < count_to_do; ++i )
 						{
-							float sample = ( float_out[ i ] + float_out[ i + BUFFER_SIZE * num_outputs ] );
+							float sample = ( float_out[ i ] + float_out[ i + BUFFER_SIZE * num_outputs ] + float_out[ i + BUFFER_SIZE * num_outputs * 2 ] );
 							out[ 0 ] = sample;
-							sample = ( float_out[ i + BUFFER_SIZE ] + float_out[ i + BUFFER_SIZE + BUFFER_SIZE * num_outputs ] );
+							sample = ( float_out[ i + BUFFER_SIZE ] + float_out[ i + BUFFER_SIZE + BUFFER_SIZE * num_outputs ] + float_out[ i + BUFFER_SIZE + BUFFER_SIZE * num_outputs * 2 ] );
 							out[ 1 ] = sample;
 							out += 2;
 						}
@@ -717,7 +718,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 					{
 						for ( unsigned i = 0; i < count_to_do; ++i )
 						{
-							float sample = ( float_out[ i ] + float_out[ i + BUFFER_SIZE * num_outputs ] );
+							float sample = ( float_out[ i ] + float_out[ i + BUFFER_SIZE * num_outputs ] + float_out[ i + BUFFER_SIZE * num_outputs * 2 ] );
 							out[ 0 ] = sample;
 							out++;
 						}
@@ -730,6 +731,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 				if ( events[ 0 ] ) free( events[ 0 ] );
 				if ( events[ 1 ] ) free( events[ 1 ] );
+				if ( events[ 2 ] ) free( events[ 2 ] );
 
 				freeChain();
 			}
@@ -743,6 +745,11 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	}
 
 exit:
+	if ( pEffect[ 2 ] )
+	{
+		if ( blState.size() ) pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effStopProcess, 0, 0, 0, 0 );
+		pEffect[ 2 ]->dispatcher( pEffect[ 2 ], effClose, 0, 0, 0, 0 );
+	}
 	if ( pEffect[ 1 ] )
 	{
 		if ( blState.size() ) pEffect[ 1 ]->dispatcher( pEffect[ 1 ], effStopProcess, 0, 0, 0, 0 );
@@ -760,9 +767,7 @@ exit:
 
 	put_code( code );
 
-#ifdef REMOTE_OPENS_PIPES
 	if ( pipe_in ) CloseHandle( pipe_in );
-#endif
 
 	return code;
 }

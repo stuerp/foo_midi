@@ -525,7 +525,7 @@ void BMPlayer::send_event(DWORD b)
 		unsigned channel = b & 0x0F;
 		unsigned command = b & 0xF0;
 		unsigned event_length = ( command == 0xC0 || command == 0xD0 ) ? 2 : 3;
-		if (port & 1) channel += 16;
+		channel += 16 * port;
 		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW + 1 + channel, event, event_length );
 		if ( command == 0xB0 && event[ 1 ] == 0 )
 		{
@@ -555,6 +555,7 @@ void BMPlayer::send_event(DWORD b)
 		const t_uint8 * data;
 		t_size size, port;
 		mSysexMap.get_entry( n, data, size, port );
+		if ( port > 2 ) port = 2;
 		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW, data, size );
 		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
 			( size == _countof( sysex_gm2_reset ) && !memcmp( data, sysex_gm2_reset, _countof( sysex_gm2_reset ) ) ) ||
@@ -575,15 +576,15 @@ void BMPlayer::send_event(DWORD b)
 			if (data [7] == 2)
 			{
 				// GS MIDI channel to part assign
-				gs_part_to_ch [ port & 1 ][ data [6] & 15 ] = data [8];
+				gs_part_to_ch [ port ][ data [6] & 15 ] = data [8];
 			}
 			else if ( data [7] == 0x15 )
 			{
 				// GS part to rhythm allocation
-				unsigned int drum_channel = gs_part_to_ch [ port & 1 ][ data [6] & 15 ];
+				unsigned int drum_channel = gs_part_to_ch [ port ][ data [6] & 15 ];
 				if ( drum_channel < 16 )
 				{
-					if ( port ) drum_channel += 16;
+					drum_channel += 16 * port;
 					drum_channels [ drum_channel ] = data [8];
 				}
 			}
@@ -621,7 +622,7 @@ void BMPlayer::shutdown()
 
 bool BMPlayer::startup()
 {
-	_stream = BASS_MIDI_StreamCreate( 32, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ), uSampleRate );
+	_stream = BASS_MIDI_StreamCreate( 48, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ), uSampleRate );
 	if (!_stream)
 	{
 		return false;
@@ -720,12 +721,14 @@ void BMPlayer::reset_drum_channels()
 	memset( drum_channels, 0, sizeof( drum_channels ) );
 	drum_channels[ 9 ] = 1;
 	drum_channels[ 25 ] = 1;
+	drum_channels[ 41 ] = 1;
 
-	memcpy( gs_part_to_ch, part_to_ch, sizeof( gs_part_to_ch ) );
+	for ( unsigned i = 0; i < 3; i++ )
+		memcpy( gs_part_to_ch[ i ], part_to_ch, sizeof( gs_part_to_ch[ i ] ) );
 
 	if ( _stream )
 	{
-		for ( unsigned i = 0; i < 32; ++i )
+		for ( unsigned i = 0; i < 48; ++i )
 		{
 			BASS_MIDI_StreamEvent( _stream, i, MIDI_EVENT_DRUMS, drum_channels[ i ] );
 		}

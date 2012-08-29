@@ -78,6 +78,7 @@ private:
 	HANDLE       hChildStd_OUT_Wr;
 #endif
 
+	char       * sName;
 	char       * sVendor;
 	char       * sProduct;
 	t_uint32     uVendorVersion;
