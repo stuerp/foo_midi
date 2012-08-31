@@ -1,4 +1,4 @@
-#define MYVERSION "1.169"
+#define MYVERSION "1.170"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2012-08-31 20:01 UTC - kode54
+- Hotfix to include updated VSTHost.exe
+- Now supports 64-bit VST instruments
+- Version is now 1.170
 
 2012-08-29 03:23 UTC - kode54
 - Implemented support for 48 channel MIDI files
