@@ -1,4 +1,4 @@
-#define MYVERSION "1.170"
+#define MYVERSION "1.171"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-09-02 01:58 UTC - kode54
+- Implemented finite looping and fading support
+- Version is now 1.171
 
 2012-08-31 20:01 UTC - kode54
 - Hotfix to include updated VSTHost.exe
@@ -640,6 +644,15 @@ static const GUID guid_cfg_midi_parent =
 // {BB4C61A1-03C4-4B62-B04D-2C86CEDE005D}
 static const GUID guid_cfg_vsti_search_path = 
 { 0xbb4c61a1, 0x3c4, 0x4b62, { 0xb0, 0x4d, 0x2c, 0x86, 0xce, 0xde, 0x0, 0x5d } };
+// {851583F7-98B4-44C7-9DF4-4C7F859D13BA}
+static const GUID guid_cfg_midi_timing_parent = 
+{ 0x851583f7, 0x98b4, 0x44c7, { 0x9d, 0xf4, 0x4c, 0x7f, 0x85, 0x9d, 0x13, 0xba } };
+// {D8492AD0-3B70-4768-8D07-97F5508C08E8}
+static const GUID guid_cfg_midi_loop_count = 
+{ 0xd8492ad0, 0x3b70, 0x4768, { 0x8d, 0x7, 0x97, 0xf5, 0x50, 0x8c, 0x8, 0xe8 } };
+// {1CC76581-6FC8-445E-9E3D-020043D98B65}
+static const GUID guid_cfg_midi_fade_time = 
+{ 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
 
 
 template <typename TObj>
@@ -714,6 +727,11 @@ advconfig_checkbox_factory cfg_munt_debug_info("MUNT - display debug information
 
 advconfig_string_factory cfg_vsti_search_path("VSTi search path", guid_cfg_vsti_search_path, guid_cfg_midi_parent, 0, "");
 
+advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops present", guid_cfg_midi_timing_parent, guid_cfg_midi_parent, 1.0);
+
+advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
+advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 10, 30000);
+
 static const char * exts[]=
 {
 	"MID",
@@ -755,15 +773,23 @@ class input_midi
 
 	bool b_xmiloopz;
 	bool b_ff7loopz;
+	unsigned loop_type;
 	unsigned clean_flags;
 	//bool b_gm2;
 
+	unsigned length_ms;
 	unsigned length_samples;
 	unsigned length_ticks;
 	unsigned samples_done;
 
-	unsigned loop_begin;
-	unsigned loop_end;
+	unsigned loop_begin, loop_begin_ms;
+	unsigned loop_end, loop_end_ms;
+
+	unsigned loop_count, fade_ms;
+
+	unsigned samples_played;
+	unsigned samples_fade_begin;
+	unsigned samples_fade_end;
 
 	bool eof;
 	bool dont_loop;
@@ -789,7 +815,7 @@ class input_midi
 
 public:
 	input_midi() : srate(cfg_srate), plugin(cfg_plugin), resampling(cfg_resampling),
-		b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
+		loop_type(cfg_loop_type), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
 		dxiProxy = NULL;
@@ -814,6 +840,9 @@ public:
 		clean_flags = (cfg_emidi_exclusion ? midi_container::clean_flag_emidi : 0) |
 			(cfg_filter_instruments ? midi_container::clean_flag_instruments : 0) |
 			(cfg_filter_banks ? midi_container::clean_flag_banks : 0);
+
+		loop_count = cfg_midi_loop_count.get();
+		fade_ms = cfg_midi_fade_time.get();
 	}
 
 	~input_midi()
@@ -840,12 +869,20 @@ public:
 private:
 	double get_length( unsigned p_subsong )
 	{
-		unsigned len = midi_file.get_timestamp_end( p_subsong, true );
-		double length = len * .001 + 1.;
+		length_ms = midi_file.get_timestamp_end( p_subsong, true );
+		double length = length_ms * .001 + 1.;
 		length_ticks = midi_file.get_timestamp_end( p_subsong ); //theSequence->m_tempoMap.Sample2Tick(len, 1000);
-		length_samples = (unsigned)(((__int64)len * (__int64)srate) / 1000) + srate;
+		length_samples = (unsigned)(((__int64)length_ms * (__int64)srate) / 1000) + srate;
 		loop_begin = midi_file.get_timestamp_loop_start( p_subsong );
 		loop_end = midi_file.get_timestamp_loop_end( p_subsong );
+		loop_begin_ms = midi_file.get_timestamp_loop_start( p_subsong, true );
+		loop_end_ms = midi_file.get_timestamp_loop_end( p_subsong, true );
+		if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 1 )
+		{
+			if ( loop_begin_ms == ~0 ) loop_begin_ms = 0;
+			if ( loop_end_ms == ~0 ) loop_end_ms = length_ms;
+			length = (double)( loop_begin_ms + ( loop_end_ms - loop_begin_ms ) * loop_count + fade_ms ) * 0.001;
+		}
 		return length;
 	}
 
@@ -923,13 +960,25 @@ public:
 
 		unsigned loop_begin = midi_file.get_timestamp_loop_start( p_subsong );
 		unsigned loop_end = midi_file.get_timestamp_loop_end( p_subsong );
+		unsigned loop_begin_ms = midi_file.get_timestamp_loop_start( p_subsong, true );
+		unsigned loop_end_ms = midi_file.get_timestamp_loop_end( p_subsong, true );
 
 		if (loop_begin != ~0) p_info.info_set_int("midi_loop_start", loop_begin );
 		if (loop_end != ~0) p_info.info_set_int("midi_loop_end", loop_end );
+		if (loop_begin_ms != ~0) p_info.info_set_int("midi_loop_start_ms", loop_begin_ms );
+		if (loop_end_ms != ~0) p_info.info_set_int("midi_loop_end_ms", loop_end_ms );
 		//p_info.info_set_int("samplerate", srate);
+		unsigned length_ms = midi_file.get_timestamp_end( p_subsong, true );
+		double length = double( length_ms ) * 0.001 + 1.0;
+		if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 1 )
+		{
+			if ( loop_begin_ms == ~0 ) loop_begin_ms = 0;
+			if ( loop_end_ms == ~0 ) loop_end_ms = length_ms;
+			length = (double)( loop_begin_ms + ( loop_end_ms - loop_begin_ms ) * loop_count + fade_ms ) * 0.001;
+		}
 		p_info.info_set_int("channels", 2);
 		p_info.info_set( "encoding", "synthesized" );
-		p_info.set_length( double( midi_file.get_timestamp_end( p_subsong, true ) ) * 0.001 + 1.0 );
+		p_info.set_length( length );
 	}
 
 	t_filestats get_file_stats( abort_callback & p_abort )
@@ -942,6 +991,26 @@ public:
 		first_block = true;
 
 		get_length(p_subsong);
+
+		samples_played = 0;
+
+		if ( p_flags & input_flag_no_looping || !loop_type )
+		{
+			unsigned samples_length = length_samples;
+			samples_fade_begin = samples_length;
+			samples_fade_end = samples_length;
+
+			if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 1 )
+			{
+				samples_fade_begin = MulDiv(loop_begin_ms + (loop_end_ms - loop_begin_ms) * loop_count, srate, 1000);
+				samples_fade_end = samples_fade_begin + srate * fade_ms / 1000;
+			}
+		}
+		else
+		{
+			samples_fade_begin = ~0;
+			samples_fade_end = ~0;
+		}
 
 		midi_meta_data meta_data;
 
@@ -1011,9 +1080,9 @@ public:
 						eof = false;
 						dont_loop = true;
 
-						if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type)
+						if (loop_type)
 						{
-							if (cfg_loop_type == 1)
+							if (loop_type == 1)
 							{
 								if (loop_begin != -1 || loop_end != -1)
 								{
@@ -1045,10 +1114,10 @@ public:
 
 					unsigned loop_mode = 0;
 
-					if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
+					if ( loop_type )
 					{
 						loop_mode = VSTiPlayer::loop_mode_enable;
-						if ( cfg_loop_type > 1 ) loop_mode |= VSTiPlayer::loop_mode_force;
+						if ( loop_type > 1 ) loop_mode |= VSTiPlayer::loop_mode_force;
 					}
 
 					if ( vstPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -1079,10 +1148,10 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
+				if ( loop_type )
 				{
 					loop_mode = SFPlayer::loop_mode_enable;
-					if ( cfg_loop_type > 1 ) loop_mode |= SFPlayer::loop_mode_force;
+					if ( loop_type > 1 ) loop_mode |= SFPlayer::loop_mode_force;
 				}
 
 				if ( sfPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -1114,10 +1183,10 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
+				if ( loop_type )
 				{
 					loop_mode = BMPlayer::loop_mode_enable;
-					if ( cfg_loop_type > 1 ) loop_mode |= BMPlayer::loop_mode_force;
+					if ( loop_type > 1 ) loop_mode |= BMPlayer::loop_mode_force;
 				}
 
 				if ( bmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -1147,10 +1216,10 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
+				if ( loop_type )
 				{
 					loop_mode = MT32Player::loop_mode_enable;
-					if ( cfg_loop_type > 1 ) loop_mode |= MT32Player::loop_mode_force;
+					if ( loop_type > 1 ) loop_mode |= MT32Player::loop_mode_force;
 				}
 
 				if ( mt32Player->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -1179,9 +1248,9 @@ public:
 				eof = false;
 				dont_loop = true;
 
-				if (!(flags & OPEN_FLAG_NO_LOOPING) && cfg_loop_type)
+				if (!(flags & OPEN_FLAG_NO_LOOPING) && loop_type)
 				{
-				if (cfg_loop_type == 1)
+				if (loop_type == 1)
 				{
 				if (loop_begin != -1 || loop_end != -1)
 				{
@@ -1205,10 +1274,10 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( ! ( p_flags & input_flag_no_looping ) && cfg_loop_type )
+				if ( loop_type )
 				{
 					loop_mode = EMIDIPlayer::loop_mode_enable;
-					if ( cfg_loop_type > 1 ) loop_mode |= EMIDIPlayer::loop_mode_force;
+					if ( loop_type > 1 ) loop_mode |= EMIDIPlayer::loop_mode_force;
 				}
 
 				if ( emidiPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -1239,6 +1308,8 @@ public:
 		p_abort.check();
 
 		if (eof) return false;
+
+		bool rv = false;
 
 #ifdef DXISUPPORT
 		if (plugin == 5)
@@ -1273,7 +1344,7 @@ public:
 
 			samples_done += todo;
 
-			return true;
+			rv = true;
 		}
 		else
 #endif
@@ -1296,7 +1367,7 @@ public:
 
 			if ( done < todo ) eof = true;
 
-			return true;
+			rv = true;
 		}
 #ifdef FLUIDSYNTHSUPPORT
 		else if (plugin == 2)
@@ -1322,7 +1393,7 @@ public:
 
 			if ( done < todo ) eof = true;
 
-			return true;
+			rv = true;
 		}
 		else if (plugin == 4)
 #else
@@ -1348,7 +1419,7 @@ public:
 
 			if ( done < todo ) eof = true;
 
-			return true;
+			rv = true;
 		}
 		else if (plugin == 3)
 		{
@@ -1370,7 +1441,7 @@ public:
 
 			if ( done < todo ) eof = true;
 
-			return true;
+			rv = true;
 		}
 		else
 		{
@@ -1454,13 +1525,43 @@ fagotry:
 
 			if ( done < todo ) eof = true;
 
-			return true;
+			rv = true;
 		}
+
+		if ( rv && samples_fade_begin != ~0 && samples_fade_end != ~0 )
+		{
+			unsigned samples_played_start = samples_played;
+			unsigned samples_played_end = samples_played += p_chunk.get_sample_count();
+
+			if ( samples_played_end >= samples_fade_begin )
+			{
+				for ( unsigned i = (samples_fade_begin > samples_played_start) ? samples_fade_begin : samples_played_start; i < ((samples_played > samples_fade_end) ? samples_fade_end : samples_played); i++ )
+				{
+					audio_sample * sample = p_chunk.get_data() + ( i - samples_played_start ) * 2;
+					audio_sample scale = (audio_sample)( samples_fade_end - i ) / (audio_sample)( samples_fade_end - samples_fade_begin );
+					sample[ 0 ] *= scale;
+					sample[ 1 ] *= scale;
+				}
+
+				if ( samples_played_end > samples_fade_end )
+				{
+					p_chunk.set_sample_count( samples_fade_end - samples_played_start );
+					eof = true;
+				}
+			}
+		}
+
+		return rv;
 	}
 
 	void decode_seek( double p_seconds, abort_callback & p_abort )
 	{
 		unsigned seek_msec = unsigned( audio_math::time_to_samples( p_seconds, 1000 ) );
+
+		if ( seek_msec > loop_end_ms )
+		{
+			seek_msec = ( seek_msec - loop_begin_ms ) % ( loop_end_ms - loop_begin_ms ) + loop_begin_ms;
+		}
 
 		first_block = true;
 		eof = false;
