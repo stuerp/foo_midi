@@ -53,18 +53,21 @@ unsigned VSTiPlayer::test_plugin_platform() {
 	file::ptr f;
 	abort_callback_dummy m_abort;
 
-	filesystem::g_open( f, plugin, filesystem::open_mode_read, m_abort );
+	try
+	{
+		filesystem::g_open( f, plugin, filesystem::open_mode_read, m_abort );
 
-	f->read_object( peheader, iMZHeaderSize, m_abort );
-	if ( getwordle(peheader) != 0x5A4D ) return 0;
-	dwOffsetPE = getdwordle( peheader + 0x3c );
-	f->seek( dwOffsetPE, m_abort );
-	f->read_object( peheader, iPEHeaderSize, m_abort );
-	if ( getdwordle( peheader ) != 0x00004550 ) return 0;
-	switch ( getwordle( peheader + 4 ) ) {
-	case 0x014C: return 32;
-	case 0x8664: return 64;
-	}
+		f->read_object( peheader, iMZHeaderSize, m_abort );
+		if ( getwordle(peheader) != 0x5A4D ) return 0;
+		dwOffsetPE = getdwordle( peheader + 0x3c );
+		f->seek( dwOffsetPE, m_abort );
+		f->read_object( peheader, iPEHeaderSize, m_abort );
+		if ( getdwordle( peheader ) != 0x00004550 ) return 0;
+		switch ( getwordle( peheader + 4 ) ) {
+		case 0x014C: return 32;
+		case 0x8664: return 64;
+		}
+	} catch (...) { }
 
 	return 0;
 }

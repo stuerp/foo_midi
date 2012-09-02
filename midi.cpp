@@ -1,4 +1,4 @@
-#define MYVERSION "1.171"
+#define MYVERSION "1.172"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2012-09-02 22:47 UTC - kode54
+- Fixed VSTi loading when the search path has a trailing slash
+- Added exception handling around VSTi platform check
+- Version is now 1.172
 
 2012-09-02 01:58 UTC - kode54
 - Implemented finite looping and fading support
@@ -1772,7 +1777,7 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 
 		console::formatter() << "Enumerating VSTi Plug-ins...";
 
-		ppath.add_byte( '\\' );
+		if (ppath[ppath.length()-1] != '\\') ppath.add_byte( '\\' );
 		ppath += "*.*";
 		_path = ppath;
 		_find = uFindFirstFile( ppath );
