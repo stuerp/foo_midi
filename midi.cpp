@@ -1,4 +1,4 @@
-#define MYVERSION "1.172"
+#define MYVERSION "1.173"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-09-03 00:21 UTC - kode54
+- Added storage for multiple VSTi configuration blocks
+- Version is now 1.173
 
 2012-09-02 22:47 UTC - kode54
 - Fixed VSTi loading when the search path has a trailing slash
@@ -635,9 +639,9 @@ static const GUID guid_cfg_munt_debug_info =
 static const GUID guid_cfg_fluid_interp_method = 
 { 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } };
 #endif
-// {A1097E84-09B6-4708-9A58-8B1247D54299}
+// {44E7C715-D256-44C4-8FB6-B720FA9B31FC}
 static const GUID guid_cfg_vst_config = 
-{ 0xa1097e84, 0x9b6, 0x4708, { 0x9a, 0x58, 0x8b, 0x12, 0x47, 0xd5, 0x42, 0x99 } };
+{ 0x44e7c715, 0xd256, 0x44c4, { 0x8f, 0xb6, 0xb7, 0x20, 0xfa, 0x9b, 0x31, 0xfc } };
 #ifdef DXISUPPORT
 // {D5C87282-A9E6-40F3-9382-9568E6541A46}
 static const GUID guid_cfg_dxi_plugin = 
@@ -660,23 +664,54 @@ static const GUID guid_cfg_midi_fade_time =
 { 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
 
 
-template <typename TObj>
-class cfg_array : public cfg_var, public pfc::array_t<TObj> {
-public:
-	cfg_array(const GUID& guid) : cfg_var(guid), pfc::array_t<TObj>() {}
+class cfg_map : public cfg_var, public pfc::map_t<t_uint32, pfc::array_t<t_uint8>> {
 
-	pfc::array_t<TObj> & val() {return *this;}
-	pfc::array_t<TObj> const & val() const {return *this;}
+	class cfg_map_enumerator_callback
+	{
+		stream_writer * m_stream;
+		abort_callback * m_abort;
+
+	public:
+		cfg_map_enumerator_callback( stream_writer * p_stream, abort_callback & p_abort )
+			: m_stream( p_stream ), m_abort( &p_abort ) { }
+
+		void operator() ( const t_uint32 p_key, const pfc::array_t<t_uint8> & p_value )
+		{
+			stream_writer_formatter<> out(*m_stream, *m_abort);
+			out.write_int( p_key );
+			out.write_array( p_value );
+		}
+	};
+
+public:
+	cfg_map(const GUID& guid) : cfg_var(guid), pfc::map_t<t_uint32, pfc::array_t<t_uint8>>() {}
 
 	void get_data_raw(stream_writer * p_stream,abort_callback & p_abort) {
-		stream_writer_formatter<> out(*p_stream,p_abort);
-		const pfc::array_t<TObj> * ptr = this;
-		out.write_array( *ptr );
+		{
+			stream_writer_formatter<> out(*p_stream, p_abort);
+			out.write_int( get_count() );
+		}
+		enumerate( cfg_map_enumerator_callback( p_stream, p_abort ) );
 	}
+
 	void set_data_raw(stream_reader * p_stream,t_size p_sizehint,abort_callback & p_abort) {
 		stream_reader_formatter<> in(*p_stream,p_abort);
-		pfc::array_t<TObj> * ptr = this;
-		in.read_array( *ptr );
+
+		remove_all();
+
+		t_size count;
+		in.read_int( count );
+
+		for ( t_size i = 0; i < count; i++ )
+		{
+			t_uint32 p_key;
+			pfc::array_t<t_uint8> p_value;
+
+			in.read_int( p_key );
+			in.read_array( p_value );
+
+			find_or_add( p_key ) = p_value;
+		}
 	}
 };
 
@@ -720,7 +755,7 @@ cfg_guid cfg_dxi_plugin(guid_cfg_dxi_plugin, default_cfg_dxi_plugin);
 
 cfg_string cfg_vst_path(guid_cfg_vst_path, "");
 
-cfg_array<t_uint8> cfg_vst_config(guid_cfg_vst_config);
+cfg_map cfg_vst_config(guid_cfg_vst_config);
 
 cfg_string cfg_soundfont_path(guid_cfg_soundfont_path, "");
 
@@ -1113,7 +1148,7 @@ public:
 				vstPlayer = new VSTiPlayer;
 				if (vstPlayer->LoadVST(cfg_vst_path))
 				{
-					vstPlayer->setChunk( cfg_vst_config.val().get_ptr(), cfg_vst_config.val().get_count() );
+					vstPlayer->setChunk( cfg_vst_config[ vstPlayer->getUniqueID() ].get_ptr(), cfg_vst_config[ vstPlayer->getUniqueID() ].get_count() );
 
 					vstPlayer->setSampleRate(srate);
 
@@ -1750,6 +1785,7 @@ private:
 	struct vsti_info
 	{
 		pfc::string8 path, display_name;
+		t_uint32 unique_id;
 		bool has_editor;
 	};
 
@@ -1835,6 +1871,8 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 						}
 						else info.display_name = _find->GetFileName();
 
+						info.unique_id = vstPlayer.getUniqueID();
+
 						info.has_editor = vstPlayer.hasEditor();
 
 						vsti_plugins.append_single( info );
@@ -1917,7 +1955,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	else
 	{
 		GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( vsti_plugins[ vsti_selected ].has_editor );
-		vsti_config = cfg_vst_config.val();
+		vsti_config = cfg_vst_config[ vsti_plugins[ vsti_selected ].unique_id ];
 	}
 
 	{
@@ -2108,7 +2146,10 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 
 	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= 4 && plugin < 4 + vsti_plugins.get_count() && vsti_plugins[ plugin - 4 ].has_editor );
 
-	vsti_config.set_count( 0 );
+	if ( plugin >= 4 && plugin < 4 + vsti_plugins.get_count() )
+	{
+		vsti_config = cfg_vst_config[ vsti_plugins[ plugin - 4].unique_id ];
+	}
 
 	OnChanged();
 }
@@ -2225,19 +2266,17 @@ void CMyPreferences::apply() {
 		if ( ! plugin )
 		{
 			cfg_plugin = 0;
-			cfg_vst_config.val().set_count( 0 );
 		}
 		else if ( plugin >= 1 && plugin <= 3 )
 		{
 			cfg_plugin = plugin == 1 ? 2 : plugin == 2 ? 4 : 3;
 			//cfg_plugin = plugin - vsti_count + 1;
-			cfg_vst_config.val().set_count( 0 );
 		}
 		else if ( plugin <= vsti_count + 3 )
 		{
 			cfg_plugin = 1;
 			cfg_vst_path = vsti_plugins[ plugin - 4 ].path;
-			cfg_vst_config.val() = vsti_config;
+			cfg_vst_config[ vsti_plugins[ plugin - 4 ].unique_id ] = vsti_config;
 		}
 #ifdef DXISUPPORT
 		else if ( plugin <= vsti_count + dxi_count + 3 )
@@ -2304,7 +2343,8 @@ bool CMyPreferences::HasChanged() {
 			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 4 ].path ) ) changed = true;
 			if ( !changed )
 			{
-				if ( vsti_config.get_count() != cfg_vst_config.val().get_count() || memcmp( vsti_config.get_ptr(), cfg_vst_config.val().get_ptr(), vsti_config.get_count() ) ) changed = true;
+				t_uint32 unique_id = vsti_plugins[ plugin - 4 ].unique_id;
+				if ( vsti_config.get_count() != cfg_vst_config[ unique_id ].get_count() || memcmp( vsti_config.get_ptr(), cfg_vst_config[ unique_id ].get_ptr(), vsti_config.get_count() ) ) changed = true;
 			}
 		}
 #ifdef DXISUPPORT
