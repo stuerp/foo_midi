@@ -1,4 +1,4 @@
-#define MYVERSION "1.173"
+#define MYVERSION "1.174"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2012-09-28 18:30 UTC - kode54
+- Added support for automatically loading SoundFont banks named after the
+  directory containing the MIDI file
+- Version is now 1.174
 
 2012-09-03 00:21 UTC - kode54
 - Added storage for multiple VSTi configuration blocks
@@ -1083,7 +1088,29 @@ public:
 							temp += "pack";
 							if ( !filesystem::g_exists( temp, p_abort ) )
 #endif
-								temp.reset();
+							{
+								pfc::string8 temp2;
+								t_size pos1, pos2;
+								temp = m_path;
+								temp.truncate( temp.scan_filename() );
+								pos2 = temp.length() - 1;
+								pos1 = temp.find_last( '\\', pos2 - 1 );
+								if ( pos1 > 0 && pos1 < pos2 )
+								{
+									temp.add_string( &temp[ pos1 + 1 ], pos2 - pos1 - 1 );
+									temp.add_byte( '.' );
+									temp += "sf2";
+									if ( !filesystem::g_exists( temp, p_abort ) )
+									{
+#ifdef SF2PACK
+										temp += "pack";
+										if ( !filesystem::g_exists( temp, p_abort ) )
+#endif
+											temp.reset();
+									}
+								}
+								else temp.reset();
+							}
 						}
 #ifdef SF2PACK
 					}
