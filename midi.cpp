@@ -1,4 +1,4 @@
-#define MYVERSION "1.174"
+#define MYVERSION "1.175"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-11-26 11:24 UTC - kode54
+- Added .KAR to the supported file name extensions list
+- Version is now 1.175
 
 2012-09-28 18:30 UTC - kode54
 - Added support for automatically loading SoundFont banks named after the
