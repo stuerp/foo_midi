@@ -1,4 +1,4 @@
-#define MYVERSION "1.176"
+#define MYVERSION "1.177"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -9,6 +9,10 @@
 
 2012-12-14 01:28 UTC - kode54
 - Added BASSMIDI sample cache statistics reporting to configuration dialog
+- Version is now 1.177
+
+2012-12-xx xx:xx UTC - kode54
+- Updated BASSMIDI to version 2.4.7.10.
 - Version is now 1.176
 
 2012-11-26 11:24 UTC - kode54
