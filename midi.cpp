@@ -1,4 +1,4 @@
-#define MYVERSION "1.175"
+#define MYVERSION "1.176"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-12-14 01:28 UTC - kode54
+- Added BASSMIDI sample cache statistics reporting to configuration dialog
+- Version is now 1.176
 
 2012-11-26 11:24 UTC - kode54
 - Added .KAR to the supported file name extensions list
@@ -1770,6 +1774,8 @@ public:
 	void apply();
 	void reset();
 
+	enum {ID_CACHED = 1000};
+
 	//WTL message map
 	BEGIN_MSG_MAP(CMyPreferences)
 		MSG_WM_INITDIALOG(OnInitDialog)
@@ -1791,6 +1797,7 @@ public:
 		COMMAND_HANDLER_EX(IDC_FILTER_BANKS, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_PLUGIN_CONFIGURE, BN_CLICKED, OnButtonConfig)
 		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
+		MSG_WM_TIMER(OnTimer)
 	END_MSG_MAP()
 private:
 	BOOL OnInitDialog(CWindow, LPARAM);
@@ -1800,6 +1807,7 @@ private:
 	void OnButtonClick(UINT, int, CWindow);
 	void OnButtonConfig(UINT, int, CWindow);
 	void OnSetFocus(UINT, int, CWindow);
+	void OnTimer(UINT_PTR nIDEvent);
 	bool HasChanged();
 	void OnChanged();
 
@@ -1825,6 +1833,8 @@ private:
 	pfc::array_t< t_uint8 > vsti_config;
 
 	pfc::string8 m_soundfont, m_munt_path;
+
+	pfc::string8_fast m_cached, m_cached_current;
 };
 
 void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
@@ -1969,6 +1979,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_RESAMPLING_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_RESAMPLING ).EnableWindow( FALSE );
+		GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_CACHED ).EnableWindow( FALSE );
 	}
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -2115,6 +2127,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	uSendMessageText( w, CB_ADDSTRING, 0, "Sinc interpolation" );
 	::SendMessage( w, CB_SETCURSEL, cfg_resampling, 0 );
 
+	SetTimer( ID_CACHED, 20 );
+
 	busy = false;
 
 	return FALSE;
@@ -2221,6 +2235,35 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 			if ( length ) display_path = m_munt_path;
 			else display_path = click_to_set;
 			uSetWindowText( w, display_path );
+		}
+	}
+}
+
+bool g_get_soundfont_stats( t_filesize & total_sample_size, t_filesize & samples_loaded_size );
+
+void CMyPreferences::OnTimer(UINT_PTR nIDEvent)
+{
+	if ( nIDEvent == ID_CACHED )
+	{
+		m_cached.reset();
+
+		t_filesize total_sample_size, samples_loaded_size;
+
+		if ( g_get_soundfont_stats( total_sample_size, samples_loaded_size ) )
+		{
+			m_cached = pfc::format_file_size_short( samples_loaded_size );
+			m_cached += " / ";
+			m_cached += pfc::format_file_size_short( total_sample_size );
+		}
+		else
+		{
+			m_cached = "BASS not loaded.";
+		}
+
+		if ( strcmp( m_cached, m_cached_current ) )
+		{
+			m_cached_current = m_cached;
+			uSetWindowText( GetDlgItem( IDC_CACHED ), m_cached );
 		}
 	}
 }

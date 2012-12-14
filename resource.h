@@ -11,25 +11,17 @@
 #define IDC_EMIDI_EX                    1005
 #define IDC_RECOVER                     1006
 #define IDC_NOSYSEX                     1007
-#define IDC_FLUID_INTERPOLATION         1007
-#define IDC_HACK_XG_DRUMS               1008
-#define IDC_RECOVER2                    1008
-#define IDC_GM2                         1008
-#define IDC_FLUIDSYNTH                  1009
-#define IDC_EDIT1                       1010
-#define IDC_SOUNDFONT                   1010
-#define IDC_SOUNDFONT_TEXT              1011
-#define IDC_MUNT                        1012
-#define IDC_SOUNDFONT_TEXT2             1013
-#define IDC_FLUID_INTERPOLATION_TEXT    1013
-#define IDC_BUTTON1                     1014
-#define IDC_PLUGIN_CONFIGURE            1014
-#define IDC_VST_WARNING                 1015
-#define IDC_FILTER_INSTRUMENTS          1016
-#define IDC_CHECK2                      1017
-#define IDC_FILTER_BANKS                1017
-#define IDC_RESAMPLING                  1018
-#define IDC_RESAMPLING_TEXT             1019
+#define IDC_SOUNDFONT                   1008
+#define IDC_SOUNDFONT_TEXT              1009
+#define IDC_MUNT                        1010
+#define IDC_PLUGIN_CONFIGURE            1011
+#define IDC_VST_WARNING                 1012
+#define IDC_FILTER_INSTRUMENTS          1013
+#define IDC_FILTER_BANKS                1014
+#define IDC_RESAMPLING                  1015
+#define IDC_RESAMPLING_TEXT             1016
+#define IDC_CACHED                      1017
+#define IDC_CACHED_TEXT                 1018
 
 // Next default values for new objects
 // 
@@ -37,7 +29,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        101
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1020
+#define _APS_NEXT_CONTROL_VALUE         1019
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

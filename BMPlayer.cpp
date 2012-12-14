@@ -118,6 +118,24 @@ public:
 			}
 		}
 	}
+
+	void get_stats( t_filesize & total_sample_size, t_filesize & samples_loaded_size )
+	{
+		total_sample_size = 0;
+		samples_loaded_size = 0;
+
+		insync( m_lock );
+
+		for ( pfc::map_t<std::wstring, soundfont_info>::iterator it = m_map.first(); it.is_valid(); ++it )
+		{
+			BASS_MIDI_FONTINFO info;
+			if ( BASS_MIDI_FontGetInfo( it->m_value.m_handle, &info ) )
+			{
+				total_sample_size += info.samsize;
+				samples_loaded_size += info.samload;
+			}
+		}
+	}
 };
 
 soundfont_map * g_map = NULL;
@@ -138,6 +156,12 @@ public:
 			delete g_map;
 			BASS_Free();
 		}
+	}
+
+	bool check_initialized()
+	{
+		insync(lock);
+		return initialized;
 	}
 
 	bool initialize()
@@ -177,6 +201,16 @@ public:
 		return initialized;
 	}
 } g_initializer;
+
+bool g_get_soundfont_stats( t_filesize & total_sample_size, t_filesize & samples_loaded_size )
+{
+	if ( g_initializer.check_initialized() )
+	{
+		g_map->get_stats( total_sample_size, samples_loaded_size );
+		return true;
+	}
+	else return false;
+}
 
 BMPlayer::BMPlayer()
 {
