@@ -16,12 +16,13 @@
 #define IDC_MUNT                        1010
 #define IDC_PLUGIN_CONFIGURE            1011
 #define IDC_VST_WARNING                 1012
-#define IDC_FILTER_INSTRUMENTS          1013
-#define IDC_FILTER_BANKS                1014
-#define IDC_RESAMPLING                  1015
-#define IDC_RESAMPLING_TEXT             1016
-#define IDC_CACHED                      1017
-#define IDC_CACHED_TEXT                 1018
+#define IDC_MUNT_WARNING                1013
+#define IDC_FILTER_INSTRUMENTS          1014
+#define IDC_FILTER_BANKS                1015
+#define IDC_RESAMPLING                  1016
+#define IDC_RESAMPLING_TEXT             1017
+#define IDC_CACHED                      1018
+#define IDC_CACHED_TEXT                 1019
 
 // Next default values for new objects
 // 
@@ -29,7 +30,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        101
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

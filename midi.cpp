@@ -1,4 +1,4 @@
-#define MYVERSION "1.177"
+#define MYVERSION "1.178"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2012-12-14 03:38 UTC - kode54
+- Renamed MUNT output setting and added a warning
+- Fixed enabling and disabling of BASSMIDI cache status
+- Version is now 1.178
 
 2012-12-14 01:28 UTC - kode54
 - Added BASSMIDI sample cache statistics reporting to configuration dialog
@@ -1778,7 +1783,7 @@ public:
 	void apply();
 	void reset();
 
-	enum {ID_CACHED = 1000};
+	enum {ID_REFRESH = 1000};
 
 	//WTL message map
 	BEGIN_MSG_MAP(CMyPreferences)
@@ -1939,7 +1944,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	uSendMessageText( w, CB_ADDSTRING, 0, "FluidSynth" );
 #endif
 	uSendMessageText( w, CB_ADDSTRING, 0, "BASSMIDI" );
-	uSendMessageText( w, CB_ADDSTRING, 0, "MUNT" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "Super MUNT GM" );
 
 #ifndef FLUIDSYNTHSUPPORT
 	if ( plugin == 2 ) plugin = 4;
@@ -1985,6 +1990,12 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem( IDC_RESAMPLING ).EnableWindow( FALSE );
 		GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_CACHED ).EnableWindow( FALSE );
+	}
+
+	if ( plugin == 3 )
+	{
+		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_SHOW );
 	}
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -2131,7 +2142,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	uSendMessageText( w, CB_ADDSTRING, 0, "Sinc interpolation" );
 	::SendMessage( w, CB_SETCURSEL, cfg_resampling, 0 );
 
-	SetTimer( ID_CACHED, 20 );
+	SetTimer( ID_REFRESH, 20 );
 
 	busy = false;
 
@@ -2186,10 +2197,23 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_RESAMPLING_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_RESAMPLING ).EnableWindow( plugin == 1 || plugin == 2 );
+	GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
+	GetDlgItem( IDC_CACHED ).EnableWindow( plugin == 1 || plugin == 2 );
 #ifdef FLUIDSYNTHSUPPORT
 	GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 1 );
 	GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin == 1 );
 #endif
+
+	if ( plugin == 3 )
+	{
+		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_SHOW );
+	}
+	else if ( vsti_plugins.get_count() == 0 )
+	{
+		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_SHOW );
+	}
 
 	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
 
@@ -2247,8 +2271,11 @@ bool g_get_soundfont_stats( t_filesize & total_sample_size, t_filesize & samples
 
 void CMyPreferences::OnTimer(UINT_PTR nIDEvent)
 {
-	if ( nIDEvent == ID_CACHED )
+	if ( nIDEvent == ID_REFRESH )
 	{
+		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
+		GetDlgItem( IDC_SAMPLERATE ).EnableWindow( plugin || !g_running );
+
 		m_cached.reset();
 
 		t_filesize total_sample_size, samples_loaded_size;
@@ -2287,6 +2314,8 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_SOUNDFONT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_RESAMPLING_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_RESAMPLING ).EnableWindow( FALSE );
+		GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_CACHED ).EnableWindow( FALSE );
 	}
 #ifdef FLUIDSYNTHSUPPORT
 	if ( default_cfg_plugin != 2 )
@@ -2295,6 +2324,17 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
 	}
 #endif
+	if ( default_cfg_plugin == 3 )
+	{
+		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_SHOW );
+	}
+	else if ( vsti_plugins.get_count() == 0 )
+	{
+		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_SHOW );
+	}
+
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
 	uSetDlgItemText( m_hWnd, IDC_MUNT, click_to_set );
 	m_soundfont.reset();

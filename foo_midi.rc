@@ -58,6 +58,7 @@ BEGIN
     RTEXT           "Plug-in:",IDC_STATIC,27,19,30,10
     COMBOBOX        IDC_PLUGIN,60,17,116,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CTEXT           "No VST path configured in advanced preferences.",IDC_VST_WARNING,13,35,163,10,NOT WS_VISIBLE
+    CTEXT           "Regular MUNT will already be used automatically.",IDC_MUNT_WARNING,13,35,163,10,NOT WS_VISIBLE
     PUSHBUTTON      "Configure",IDC_PLUGIN_CONFIGURE,60,34,116,12
     RTEXT           "Sample rate:",IDC_STATIC,13,53,44,10
     COMBOBOX        IDC_SAMPLERATE,60,51,116,54,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
