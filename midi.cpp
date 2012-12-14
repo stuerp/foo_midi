@@ -1995,6 +1995,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	if ( plugin == 3 )
 	{
 		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_PLUGIN_CONFIGURE ).ShowWindow( SW_HIDE );
 		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_SHOW );
 	}
 
@@ -2207,12 +2208,20 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	if ( plugin == 3 )
 	{
 		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_PLUGIN_CONFIGURE ).ShowWindow( SW_HIDE );
 		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_SHOW );
 	}
 	else if ( vsti_plugins.get_count() == 0 )
 	{
-		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_HIDE );
 		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_SHOW );
+		GetDlgItem( IDC_PLUGIN_CONFIGURE ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_HIDE );
+	}
+	else
+	{
+		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_PLUGIN_CONFIGURE ).ShowWindow( SW_SHOW );
+		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_HIDE );
 	}
 
 	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
@@ -2327,12 +2336,20 @@ void CMyPreferences::reset() {
 	if ( default_cfg_plugin == 3 )
 	{
 		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_PLUGIN_CONFIGURE ).ShowWindow( SW_HIDE );
 		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_SHOW );
 	}
 	else if ( vsti_plugins.get_count() == 0 )
 	{
-		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_HIDE );
 		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_SHOW );
+		GetDlgItem( IDC_PLUGIN_CONFIGURE ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_HIDE );
+	}
+	else
+	{
+		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_HIDE );
+		GetDlgItem( IDC_PLUGIN_CONFIGURE ).ShowWindow( SW_SHOW );
+		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_HIDE );
 	}
 
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
