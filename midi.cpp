@@ -1,4 +1,4 @@
-#define MYVERSION "1.178"
+#define MYVERSION "1.179"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-12-15 18:27 UTC - kode54
+- Fixed file termination when seeking
+- Version is now 1.179
 
 2012-12-14 03:38 UTC - kode54
 - Renamed MUNT output setting and added a warning
@@ -1642,6 +1646,9 @@ fagotry:
 	{
 		unsigned seek_msec = unsigned( audio_math::time_to_samples( p_seconds, 1000 ) );
 
+		// This value should not be wrapped to within the loop range
+		samples_played = unsigned( ( t_int64( seek_msec ) * t_int64( srate ) ) / 1000 );
+
 		if ( seek_msec > loop_end_ms )
 		{
 			seek_msec = ( seek_msec - loop_begin_ms ) % ( loop_end_ms - loop_begin_ms ) + loop_begin_ms;
@@ -1650,7 +1657,7 @@ fagotry:
 		first_block = true;
 		eof = false;
 
-		unsigned done = unsigned( ( t_int64( seek_msec ) * t_int64( srate) ) / 1000 );
+		unsigned done = unsigned( ( t_int64( seek_msec ) * t_int64( srate ) ) / 1000 );
 		if ( length_samples && done >= ( length_samples - srate ) )
 		{
 			eof = true;
