@@ -1,4 +1,4 @@
-#define MYVERSION "1.179"
+#define MYVERSION "1.180"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-12-16 01:00 UTC - kode54
+- Fixed sample rate configuration disable state for Emu de MIDI
+- Version is now 1.180
 
 2012-12-15 18:27 UTC - kode54
 - Fixed file termination when seeking
@@ -814,8 +818,8 @@ static const char * exts[]=
 };
 
 static critical_section sync;
-static int g_running = 0;
-static int g_srate;
+static volatile int g_running = 0;
+static volatile int g_srate;
 
 class input_midi
 {
@@ -2289,8 +2293,7 @@ void CMyPreferences::OnTimer(UINT_PTR nIDEvent)
 {
 	if ( nIDEvent == ID_REFRESH )
 	{
-		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
-		GetDlgItem( IDC_SAMPLERATE ).EnableWindow( plugin || !g_running );
+		GetDlgItem( IDC_SAMPLERATE ).EnableWindow( cfg_plugin || !g_running );
 
 		m_cached.reset();
 
