@@ -137,7 +137,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="adldata.cpp" />
+    <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="BMPlayer.cpp" />
+    <ClCompile Include="dbopl.cpp" />
     <ClCompile Include="DXiProxy.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -215,7 +218,10 @@
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="adldata.h" />
+    <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="BMPlayer.h" />
+    <ClInclude Include="dbopl.h" />
     <ClInclude Include="DXiProxy.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

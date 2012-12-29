@@ -50,6 +50,9 @@
     <ClCompile Include="nu_processing\midi_processor_gmf.cpp">
       <Filter>new processing</Filter>
     </ClCompile>
+    <ClCompile Include="adldata.cpp" />
+    <ClCompile Include="ADLPlayer.cpp" />
+    <ClCompile Include="dbopl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -67,6 +70,9 @@
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="DXiProxy.h" />
     <ClInclude Include="EMIDIPlayer.h" />
+    <ClInclude Include="adldata.h" />
+    <ClInclude Include="ADLPlayer.h" />
+    <ClInclude Include="dbopl.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

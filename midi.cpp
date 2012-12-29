@@ -1,4 +1,4 @@
-#define MYVERSION "1.180"
+#define MYVERSION "1.181"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-12-29 16:18 UTC - kode54
+- Implemented Adlib/OPL3 synthesizer driver based on Joel Yliluoma's adlmidi
+- Version is now 1.181
 
 2012-12-16 01:00 UTC - kode54
 - Fixed sample rate configuration disable state for Emu de MIDI
@@ -600,6 +604,9 @@
 #include "MT32Player.h"
 #include "EMIDIPlayer.h"
 
+#include "ADLPlayer.h"
+#include "adldata.h"
+
 #ifdef DXISUPPORT
 #include "DXiProxy.h"
 #include "PlugInInventory.h"
@@ -692,6 +699,15 @@ static const GUID guid_cfg_midi_loop_count =
 // {1CC76581-6FC8-445E-9E3D-020043D98B65}
 static const GUID guid_cfg_midi_fade_time = 
 { 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
+// {CB43A7B1-CB70-4A61-84FB-9D746F3D42F9}
+static const GUID guid_cfg_adl_bank = 
+{ 0xcb43a7b1, 0xcb70, 0x4a61, { 0x84, 0xfb, 0x9d, 0x74, 0x6f, 0x3d, 0x42, 0xf9 } };
+// {974365ED-D4F9-4DAA-B489-AD7AD291FA94}
+static const GUID guid_cfg_adl_chips = 
+{ 0x974365ed, 0xd4f9, 0x4daa, { 0xb4, 0x89, 0xad, 0x7a, 0xd2, 0x91, 0xfa, 0x94 } };
+// {C5FB4053-75BF-4C0D-A1B1-7173863288A6}
+static const GUID guid_cfg_adl_4op = 
+{ 0xc5fb4053, 0x75bf, 0x4c0d, { 0xa1, 0xb1, 0x71, 0x73, 0x86, 0x32, 0x88, 0xa6 } };
 
 
 class cfg_map : public cfg_var, public pfc::map_t<t_uint32, pfc::array_t<t_uint8>> {
@@ -757,6 +773,9 @@ enum
 	default_cfg_srate = 44100,
 	default_cfg_plugin = 0,
 	default_cfg_resampling = 1,
+	default_cfg_adl_bank = 51,
+	default_cfg_adl_chips = 10,
+	default_cfg_adl_4op = 14,
 #ifdef FLUIDSYNTHSUPPORT
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
 #endif
@@ -773,7 +792,10 @@ cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid
 		/*cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),*/ cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
 		/*cfg_nosysex("sux", 0),*/ /*cfg_gm2(guid_cfg_gm2, 0),*/
 		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
-		cfg_resampling(guid_cfg_resampling, default_cfg_resampling)
+		cfg_resampling(guid_cfg_resampling, default_cfg_resampling),
+		cfg_adl_bank(guid_cfg_adl_bank, default_cfg_adl_bank),
+		cfg_adl_chips(guid_cfg_adl_chips, default_cfg_adl_chips),
+		cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op)
 #ifdef FLUIDSYNTHSUPPORT
 		,cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
 #endif
@@ -834,6 +856,7 @@ class input_midi
 	BMPlayer * bmPlayer;
 	MT32Player * mt32Player;
 	EMIDIPlayer * emidiPlayer;
+	ADLPlayer * adlPlayer;
 
 	midi_container midi_file;
 
@@ -898,6 +921,7 @@ public:
 		bmPlayer = NULL;
 		mt32Player = NULL;
 		emidiPlayer = NULL;
+		adlPlayer = NULL;
 
 		length_samples = 0;
 		length_ticks = 0;
@@ -919,6 +943,10 @@ public:
 	{
 		/*if (external_decoder) external_decoder->service_release();
 		if (mem_reader) mem_reader->reader_release();*/
+		if (adlPlayer)
+		{
+			delete adlPlayer;
+		}
 		if (emidiPlayer)
 		{
 			delete emidiPlayer;
@@ -1289,6 +1317,31 @@ public:
 					return;
 				}
 			}
+			else if ( plugin == 6 )
+			{
+				delete adlPlayer;
+				adlPlayer = new ADLPlayer;
+				adlPlayer->setBank( cfg_adl_bank );
+				adlPlayer->setChipCount( cfg_adl_chips );
+				adlPlayer->set4OpCount( cfg_adl_4op );
+				adlPlayer->setSampleRate(srate);
+
+				unsigned loop_mode = 0;
+
+				if ( loop_type )
+				{
+					loop_mode = ADLPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= ADLPlayer::loop_mode_force;
+				}
+
+				if ( adlPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
+				{
+					eof = false;
+					dont_loop = true;
+
+					return;
+				}
+			}
 			else if (plugin == 3)
 			{
 				midi_meta_data_item item;
@@ -1513,6 +1566,29 @@ public:
 
 			rv = true;
 		}
+		else if (plugin == 6)
+		{
+			unsigned todo = 1024;
+
+			p_chunk.set_data_size( todo * 2 );
+
+			audio_sample * out = p_chunk.get_data();
+
+			unsigned done = adlPlayer->Play( out, todo );
+
+			if ( ! done )
+			{
+				return false;
+			}
+
+			p_chunk.set_srate( srate );
+			p_chunk.set_channels( 2 );
+			p_chunk.set_sample_count( done );
+
+			if ( done < todo ) eof = true;
+
+			rv = true;
+		}
 		else if (plugin == 3)
 		{
 			unsigned todo = 1024;
@@ -1700,6 +1776,11 @@ fagotry:
 			bmPlayer->Seek( done );
 			return;
 		}
+		else if ( plugin == 6 )
+		{
+			adlPlayer->Seek( done );
+			return;
+		}
 		else if ( plugin == 3 )
 		{
 			mt32Player->Seek( done );
@@ -1816,6 +1897,9 @@ public:
 		COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_FILTER_BANKS, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_PLUGIN_CONFIGURE, BN_CLICKED, OnButtonConfig)
+		COMMAND_HANDLER_EX(IDC_ADL_BANK, CBN_SELCHANGE, OnSelectionChange)
+		COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_SELCHANGE, OnSelectionChange)
+		COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_EDITCHANGE, OnEditChange)
 		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
 		MSG_WM_TIMER(OnTimer)
 	END_MSG_MAP()
@@ -1945,6 +2029,8 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 	}
 }
 
+static const char * chip_counts[] = {"1", "2", "5", "10", "25", "50", "100"};
+
 BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	CWindow w;
 	int plugin = cfg_plugin;
@@ -1956,6 +2042,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 #endif
 	uSendMessageText( w, CB_ADDSTRING, 0, "BASSMIDI" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Super MUNT GM" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "adlmidi" );
 
 #ifndef FLUIDSYNTHSUPPORT
 	if ( plugin == 2 ) plugin = 4;
@@ -2071,10 +2158,14 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	CoUninitialize();
 #endif
-	if ( plugin == 1 ) plugin += vsti_selected + 3;
+	if ( plugin == 1 ) plugin += vsti_selected + 5;
 	else if ( plugin >= 2 && plugin <= 4 )
 	{
 		plugin = plugin == 2 ? 1 : plugin == 4 ? 2 : 3;
+	}
+	else if ( plugin == 6 )
+	{
+		plugin = 4;
 	}
 #ifdef DXISUPPORT
 	else if ( plugin == 5 )
@@ -2131,6 +2222,20 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, cfg_recover_tracks );
 	//SendDlgItemMessage( IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex );
 	//SendDlgItemMessage( IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums );
+
+	w = GetDlgItem( IDC_ADL_BANK );
+	for ( unsigned i = 0; i < _countof( banknames ); i++ )
+	{
+		uSendMessageText( w, CB_ADDSTRING, 0, banknames[ i ] );
+	}
+	w.SendMessage( CB_SETCURSEL, cfg_adl_bank );
+
+	w = GetDlgItem( IDC_ADL_CHIPS );
+	for ( unsigned i = 0; i < _countof( chip_counts ); i++ )
+	{
+		uSendMessageText( w, CB_ADDSTRING, 0, chip_counts[ i ] );
+	}
+	SetDlgItemInt( IDC_ADL_CHIPS, cfg_adl_chips, 0 );
 
 #ifdef FLUIDSYNTHSUPPORT
 	w = GetDlgItem( IDC_FLUID_INTERPOLATION );
@@ -2237,11 +2342,11 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 
 	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
 
-	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= 4 && plugin < 4 + vsti_plugins.get_count() && vsti_plugins[ plugin - 4 ].has_editor );
+	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= 5 && plugin < 5 + vsti_plugins.get_count() && vsti_plugins[ plugin - 5 ].has_editor );
 
-	if ( plugin >= 4 && plugin < 4 + vsti_plugins.get_count() )
+	if ( plugin >= 5 && plugin < 5 + vsti_plugins.get_count() )
 	{
-		vsti_config = cfg_vst_config[ vsti_plugins[ plugin - 4].unique_id ];
+		vsti_config = cfg_vst_config[ vsti_plugins[ plugin - 5 ].unique_id ];
 	}
 
 	OnChanged();
@@ -2377,6 +2482,8 @@ void CMyPreferences::reset() {
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion );
 	SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments );
 	SendDlgItemMessage( IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks );
+	SendDlgItemMessage( IDC_ADL_BANK, CB_SETCURSEL, default_cfg_adl_bank );
+	SetDlgItemInt( IDC_ADL_CHIPS, default_cfg_adl_chips, 0 );
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
 #ifdef FLUIDSYNTHSUPPORT
 	SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_SETCURSEL, interp_method_default );
@@ -2397,6 +2504,12 @@ void CMyPreferences::apply() {
 	itoa( t, temp, 10 );
 	cfg_history_rate.add_item( temp );
 	cfg_srate = t;
+	cfg_adl_bank = SendDlgItemMessage( IDC_ADL_BANK, CB_GETCURSEL );
+	t = GetDlgItemInt( IDC_ADL_CHIPS, NULL, FALSE );
+	if ( t < 1 ) t = 1;
+	if ( t > 100 ) t = 100;
+	SetDlgItemInt( IDC_ADL_CHIPS, t, FALSE );
+	cfg_adl_chips = t;
 	{
 		t_size vsti_count = vsti_plugins.get_size();
 		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
@@ -2416,6 +2529,10 @@ void CMyPreferences::apply() {
 		{
 			cfg_plugin = plugin == 1 ? 2 : plugin == 2 ? 4 : 3;
 			//cfg_plugin = plugin - vsti_count + 1;
+		}
+		else if ( plugin == 4 )
+		{
+			cfg_plugin = 6;
 		}
 		else if ( plugin <= vsti_count + 3 )
 		{
@@ -2463,6 +2580,8 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ] != cfg_fluid_interp_method ) changed = true;
 #endif
 	if ( !changed && SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL ) != cfg_resampling ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_ADL_BANK, CB_GETCURSEL ) != cfg_adl_bank ) changed = true;
+	if ( !changed && GetDlgItemInt( IDC_ADL_CHIPS, NULL, FALSE ) != cfg_adl_chips ) changed = true;
 	if ( !changed )
 	{
 		t_size vsti_count = vsti_plugins.get_size();
@@ -2482,6 +2601,10 @@ bool CMyPreferences::HasChanged() {
 		{
 			int plugin_compare = plugin == 1 ? 2 : plugin == 2 ? 4 : 3;
 			if ( cfg_plugin != plugin_compare ) changed = true;
+		}
+		else if ( plugin == 4 )
+		{
+			if ( cfg_plugin != 6 ) changed = true;
 		}
 		else if ( plugin <= vsti_count + 3 )
 		{
