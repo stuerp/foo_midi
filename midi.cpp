@@ -1,4 +1,4 @@
-#define MYVERSION "1.183"
+#define MYVERSION "1.184"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+
+2012-12-30 17:41 UTC - kode54
+- Automatically switch to BASSMIDI when a file SoundFont is detected
+- Version is now 1.184
+
+2012-12-30 17:34 UTC - kode54
+- Fixed VSTi configuration for real this time
 
 2012-12-30 17:04 UTC - kode54
 - Removed 4OP configuration variable and set 4OP limit to 2 voices per chip
@@ -1127,7 +1134,7 @@ public:
 
 		pfc::string8 file_soundfont;
 
-		if ( plugin == 2 || plugin == 4 )
+		/*if ( plugin == 2 || plugin == 4 )*/
 		{
 			pfc::string8_fast temp;
 
@@ -1181,6 +1188,7 @@ public:
 				if ( temp.length() )
 				{
 					file_soundfont = temp.get_ptr() + 7;
+					plugin = 4;
 				}
 			}
 		}
@@ -2166,7 +2174,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	CoUninitialize();
 #endif
-	if ( plugin == 1 ) plugin += vsti_selected + 5;
+	if ( plugin == 1 ) plugin += vsti_selected + 4;
 	else if ( plugin >= 2 && plugin <= 4 )
 	{
 		plugin = plugin == 2 ? 1 : plugin == 4 ? 2 : 3;
@@ -2542,11 +2550,11 @@ void CMyPreferences::apply() {
 		{
 			cfg_plugin = 6;
 		}
-		else if ( plugin <= vsti_count + 3 )
+		else if ( plugin <= vsti_count + 4 )
 		{
 			cfg_plugin = 1;
-			cfg_vst_path = vsti_plugins[ plugin - 4 ].path;
-			cfg_vst_config[ vsti_plugins[ plugin - 4 ].unique_id ] = vsti_config;
+			cfg_vst_path = vsti_plugins[ plugin - 5 ].path;
+			cfg_vst_config[ vsti_plugins[ plugin - 5 ].unique_id ] = vsti_config;
 		}
 #ifdef DXISUPPORT
 		else if ( plugin <= vsti_count + dxi_count + 3 )
@@ -2614,12 +2622,12 @@ bool CMyPreferences::HasChanged() {
 		{
 			if ( cfg_plugin != 6 ) changed = true;
 		}
-		else if ( plugin <= vsti_count + 3 )
+		else if ( plugin <= vsti_count + 4 )
 		{
-			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 4 ].path ) ) changed = true;
+			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 5 ].path ) ) changed = true;
 			if ( !changed )
 			{
-				t_uint32 unique_id = vsti_plugins[ plugin - 4 ].unique_id;
+				t_uint32 unique_id = vsti_plugins[ plugin - 5 ].unique_id;
 				if ( vsti_config.get_count() != cfg_vst_config[ unique_id ].get_count() || memcmp( vsti_config.get_ptr(), cfg_vst_config[ unique_id ].get_ptr(), vsti_config.get_count() ) ) changed = true;
 			}
 		}
