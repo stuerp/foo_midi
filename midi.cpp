@@ -1,4 +1,4 @@
-#define MYVERSION "1.181"
+#define MYVERSION "1.182"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-12-30 00:09 UTC - kode54
+- Fixed VSTi configuration
+- Version is now 1.182
 
 2012-12-29 16:18 UTC - kode54
 - Implemented Adlib/OPL3 synthesizer driver based on Joel Yliluoma's adlmidi
@@ -2283,13 +2287,13 @@ void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 #ifndef FLUIDSYNTHSUPPORT
 	if ( plugin > 0 ) ++plugin;
 #endif
-	if ( plugin >= 4 && plugin < 4 + vsti_plugins.get_count() )
+	if ( plugin >= 5 && plugin < 5 + vsti_plugins.get_count() )
 	{
 		busy = true;
 		OnChanged();
 
 		VSTiPlayer vstPlayer;
-		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 4 ].path ) )
+		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 5 ].path ) )
 		{
 			vstPlayer.setChunk( vsti_config.get_ptr(), vsti_config.get_count() );
 			vstPlayer.displayEditorModal();
