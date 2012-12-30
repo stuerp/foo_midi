@@ -1,4 +1,4 @@
-#define MYVERSION "1.182"
+#define MYVERSION "1.183"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-12-30 17:04 UTC - kode54
+- Removed 4OP configuration variable and set 4OP limit to 2 voices per chip
+- Version is now 1.183
 
 2012-12-30 00:09 UTC - kode54
 - Fixed VSTi configuration
@@ -710,8 +714,8 @@ static const GUID guid_cfg_adl_bank =
 static const GUID guid_cfg_adl_chips = 
 { 0x974365ed, 0xd4f9, 0x4daa, { 0xb4, 0x89, 0xad, 0x7a, 0xd2, 0x91, 0xfa, 0x94 } };
 // {C5FB4053-75BF-4C0D-A1B1-7173863288A6}
-static const GUID guid_cfg_adl_4op = 
-{ 0xc5fb4053, 0x75bf, 0x4c0d, { 0xa1, 0xb1, 0x71, 0x73, 0x86, 0x32, 0x88, 0xa6 } };
+/*static const GUID guid_cfg_adl_4op = 
+{ 0xc5fb4053, 0x75bf, 0x4c0d, { 0xa1, 0xb1, 0x71, 0x73, 0x86, 0x32, 0x88, 0xa6 } };*/
 
 
 class cfg_map : public cfg_var, public pfc::map_t<t_uint32, pfc::array_t<t_uint8>> {
@@ -779,7 +783,7 @@ enum
 	default_cfg_resampling = 1,
 	default_cfg_adl_bank = 51,
 	default_cfg_adl_chips = 10,
-	default_cfg_adl_4op = 14,
+	//default_cfg_adl_4op = 14,
 #ifdef FLUIDSYNTHSUPPORT
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
 #endif
@@ -798,8 +802,8 @@ cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid
 		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
 		cfg_resampling(guid_cfg_resampling, default_cfg_resampling),
 		cfg_adl_bank(guid_cfg_adl_bank, default_cfg_adl_bank),
-		cfg_adl_chips(guid_cfg_adl_chips, default_cfg_adl_chips),
-		cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op)
+		cfg_adl_chips(guid_cfg_adl_chips, default_cfg_adl_chips)/*,
+		cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op)*/
 #ifdef FLUIDSYNTHSUPPORT
 		,cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
 #endif
@@ -1327,7 +1331,7 @@ public:
 				adlPlayer = new ADLPlayer;
 				adlPlayer->setBank( cfg_adl_bank );
 				adlPlayer->setChipCount( cfg_adl_chips );
-				adlPlayer->set4OpCount( cfg_adl_4op );
+				adlPlayer->set4OpCount( cfg_adl_chips * 2 /*cfg_adl_4op*/ );
 				adlPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;
