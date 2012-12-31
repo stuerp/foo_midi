@@ -1063,7 +1063,7 @@ private:
     {
         // If there is an adlib channel that has multiple notes
         // simulated on the same channel, arpeggio them.
-        const unsigned desired_arpeggio_rate = 40; // Hz (upper limit)
+        const double desired_arpeggio_rate = 40; // Hz (upper limit)
       #if 0
         static unsigned cache=0;
         amount=amount; // Ignore amount. Assume we get a constant rate.

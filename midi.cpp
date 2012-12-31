@@ -1,4 +1,4 @@
-#define MYVERSION "1.185"
+#define MYVERSION "1.186"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-12-31 21:09 UTC - kode54
+- Included new OPL3 banks and changed the default bank
+- Version is now 1.186
 
 2012-12-31 00:33 UTC - kode54
 - Fixed adlmidi arpeggio handling
@@ -719,9 +723,8 @@ static const GUID guid_cfg_midi_loop_count =
 static const GUID guid_cfg_midi_fade_time = 
 { 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
 // {CB43A7B1-CB70-4A61-84FB-9D746F3D42F9}
-static const GUID guid_cfg_adl_bank = 
+ static const GUID guid_cfg_adl_bank = 
 { 0xcb43a7b1, 0xcb70, 0x4a61, { 0x84, 0xfb, 0x9d, 0x74, 0x6f, 0x3d, 0x42, 0xf9 } };
-// {974365ED-D4F9-4DAA-B489-AD7AD291FA94}
 static const GUID guid_cfg_adl_chips = 
 { 0x974365ed, 0xd4f9, 0x4daa, { 0xb4, 0x89, 0xad, 0x7a, 0xd2, 0x91, 0xfa, 0x94 } };
 // {C5FB4053-75BF-4C0D-A1B1-7173863288A6}
@@ -1343,7 +1346,7 @@ public:
 				adlPlayer = new ADLPlayer;
 				adlPlayer->setBank( cfg_adl_bank );
 				adlPlayer->setChipCount( cfg_adl_chips );
-				adlPlayer->set4OpCount( cfg_adl_chips * 2 /*cfg_adl_4op*/ );
+				adlPlayer->set4OpCount( cfg_adl_chips * 6 /*cfg_adl_4op*/ );
 				adlPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;
