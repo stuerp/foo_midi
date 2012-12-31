@@ -1,4 +1,4 @@
-#define MYVERSION "1.184"
+#define MYVERSION "1.185"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2012-12-31 00:33 UTC - kode54
+- Fixed adlmidi arpeggio handling
+- Version is now 1.185
 
 2012-12-30 17:41 UTC - kode54
 - Automatically switch to BASSMIDI when a file SoundFont is detected

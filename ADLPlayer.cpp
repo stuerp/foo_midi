@@ -292,6 +292,13 @@ static const char PercussionMap[256] =
 
 class MIDIplay
 {
+	double arpeggio_cache;
+	unsigned arpeggio_counter;
+
+public:
+	MIDIplay() : arpeggio_cache(0.0), arpeggio_counter(0) { }
+
+private:
     // Persistent settings for each MIDI channel
     struct MIDIchannel
     {
@@ -1057,21 +1064,17 @@ private:
         // If there is an adlib channel that has multiple notes
         // simulated on the same channel, arpeggio them.
         const unsigned desired_arpeggio_rate = 40; // Hz (upper limit)
-        /*
-      #if 1
+      #if 0
         static unsigned cache=0;
         amount=amount; // Ignore amount. Assume we get a constant rate.
         cache += MaxSamplesAtTime * desired_arpeggio_rate;
         if(cache < PCM_RATE) return;
         cache %= PCM_RATE;
       #else
-        static double arpeggio_cache = 0;
         arpeggio_cache += amount * desired_arpeggio_rate;
         if(arpeggio_cache < 1.0) return;
-        arpeggio_cache = 0.0;
+        arpeggio_cache -= 1.0;
       #endif
-      */
-        static unsigned arpeggio_counter = 0;
         ++arpeggio_counter;
 
         for(unsigned c = 0; c < opl.NumChannels; ++c)
