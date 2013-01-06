@@ -26,6 +26,7 @@ public:
 	void setBank( unsigned );
 	void setChipCount( unsigned );
 	void set4OpCount( unsigned );
+	void setFullPanning( bool );
 
 	// setup
 	void setSampleRate(unsigned rate);
@@ -48,6 +49,7 @@ private:
 	unsigned           uBankNumber;
 	unsigned           uChipCount;
 	unsigned           u4OpCount;
+	bool               bFullPanning;
 
 	unsigned           uSamplesRemaining;
 

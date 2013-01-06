@@ -78,16 +78,19 @@ struct OPL3
     bool HighTremoloMode;
     bool HighVibratoMode;
     bool AdlPercussionMode;
+	bool FullPan;
 
 	OPL3() : PcmRate( 44100 ), NumFourOps( 7 ), NumCards( 2 ),
 		HighTremoloMode( false ), HighVibratoMode( false ),
-		AdlPercussionMode( false )
+		AdlPercussionMode( false ), FullPan( false )
 	{
 	}
 
     std::vector<DBOPL::Handler> cards;
 private:
     std::vector<unsigned short> ins; // index to adl[], cached, needed by Touch()
+	std::vector<unsigned int> vol;   // note volume, cached, needed by Pan() in FullPan mode
+	std::vector<unsigned char> pan;  // note panning, cached, needed by Touch() in FullPan mode
     std::vector<unsigned char> pit;  // value poked to B0, cached, needed by NoteOff)(
     std::vector<unsigned char> regBD;
 public:
@@ -99,22 +102,28 @@ public:
                                         // 7 = percussion Hihat
                                         // 8 = percussion slave
 
-    void Poke(unsigned card, unsigned index, unsigned value)
+    void Poke(unsigned card, unsigned index, unsigned value, bool both = true)
     {
         cards[card].WriteReg(index, value);
+		if (FullPan && both) cards[card + NumCards].WriteReg(index, value);
     }
-    void NoteOff(unsigned c)
+    void NoteOff_Real(unsigned c)
     {
         unsigned card = c/23, cc = c%23;
         if(cc >= 18)
         {
             regBD[card] &= ~(0x10 >> (cc-18));
-            Poke(card, 0xBD, regBD[card]);
+            Poke(card, 0xBD, regBD[card], false);
             return;
         }
-        Poke(card, 0xB0 + Channels[cc], pit[c] & 0xDF);
+        Poke(card, 0xB0 + Channels[cc], pit[c] & 0xDF, false);
     }
-    void NoteOn(unsigned c, double hertz) // Hertz range: 0..131071
+	void NoteOff(unsigned c)
+	{
+		NoteOff_Real(c);
+		if ( FullPan ) NoteOff_Real( c + 23 * NumCards );
+	}
+    void NoteOn_Real(unsigned c, double hertz) // Hertz range: 0..131071
     {
         unsigned card = c/23, cc = c%23;
         unsigned x = 0x2000;
@@ -124,25 +133,30 @@ public:
         if(cc >= 18)
         {
             regBD[card] |= (0x10 >> (cc-18));
-            Poke(card, 0x0BD, regBD[card]);
+            Poke(card, 0x0BD, regBD[card], false);
             x &= ~0x2000;
             //x |= 0x800; // for test
         }
         if(chn != 0xFFF)
         {
-            Poke(card, 0xA0 + chn, x & 0xFF);
-            Poke(card, 0xB0 + chn, pit[c] = x >> 8);
+            Poke(card, 0xA0 + chn, x & 0xFF, false);
+            Poke(card, 0xB0 + chn, pit[c] = x >> 8, false);
         }
     }
-    void Touch_Real(unsigned c, unsigned volume)
+    void NoteOn(unsigned c, double hertz, double hertz_phased) // Hertz range: 0..131071
+	{
+		NoteOn_Real( c, hertz );
+		if ( FullPan ) NoteOn_Real( c + 23 * NumCards, hertz_phased );
+	}
+    void Touch_Real(unsigned c, unsigned volume, bool both = true)
     {
         if(volume > 63) volume = 63;
         unsigned card = c/23, cc = c%23;
-        unsigned i = ins[c], o1 = Operators[cc*2], o2 = Operators[cc*2+1];
+        unsigned i = ins[c % (NumCards * 23)], o1 = Operators[cc*2], o2 = Operators[cc*2+1];
         unsigned x = adl[i].carrier_40, y = adl[i].modulator_40;
-        Poke(card, 0x40+o1, (x|63) - volume + volume*(x&63)/63);
+        Poke(card, 0x40+o1, (x|63) - volume + volume*(x&63)/63, both);
         if(o2 != 0xFFF)
-        Poke(card, 0x40+o2, (y|63) - volume + volume*(y&63)/63);
+        Poke(card, 0x40+o2, (y|63) - volume + volume*(y&63)/63, both);
         // Correct formula (ST3, AdPlug):
         //   63-((63-(instrvol))/63)*chanvol
         // Reduces to (tested identical):
@@ -153,7 +167,19 @@ public:
     void Touch(unsigned c, unsigned volume) // Volume maxes at 127*127*127
     {
         // The formula below: SOLVE(V=127^3 * 2^( (A-63.49999) / 8), A)
-        Touch_Real(c, volume>8725  ? std::log((float)volume)*11.541561 + (0.5 - 104.22845) : 0);
+		if ( FullPan )
+		{
+			vol[ c ] = volume;
+			unsigned p = pan[ c ];
+			unsigned volume_left = volume * (128 - p) / 64;
+			unsigned volume_right = volume * p / 64;
+			Touch_Real(c, volume_left>8725  ? std::log((float)volume_left)*11.541561 + (0.5 - 104.22845) : 0, false);
+			Touch_Real(c + NumCards * 23, volume_right>8725  ? std::log((float)volume_right)*11.541561 + (0.5 - 104.22845) : 0, false);
+		}
+		else
+		{
+			Touch_Real(c, volume>8725  ? std::log((float)volume)*11.541561 + (0.5 - 104.22845) : 0);
+		}
         // The incorrect formula below: SOLVE(V=127^3 * (2^(A/63)-1), A)
         //Touch_Real(c, volume>11210 ? 91.61112 * std::log(4.8819E-7*volume + 1.0)+0.5 : 0);
     }
@@ -170,12 +196,30 @@ public:
             if(o2 != 0xFFF)
             Poke(card, data[a]+o2, y&0xFF); y>>=8;
         }
+		if ( FullPan )
+		{
+			Poke(card, 0xC0 + Channels[cc], adl[ins[c]].feedconn | 0x10, false);
+			Poke(card + NumCards, 0xC0 + Channels[cc], adl[ins[c]].feedconn | 0x20, false);
+		}
     }
     void Pan(unsigned c, unsigned value)
     {
         unsigned card = c/23, cc = c%23;
         if(Channels[cc] != 0xFFF)
-            Poke(card, 0xC0 + Channels[cc], adl[ins[c]].feedconn | value);
+		{
+			if ( FullPan )
+			{
+				pan[c] = value;
+				Touch(c, vol[c]);
+			}
+			else
+			{
+				unsigned realvalue = 0x00;
+                if(value  < 64+32) realvalue |= 0x10;
+                if(value >= 64-32) realvalue |= 0x20;
+				Poke(card, 0xC0 + Channels[cc], adl[ins[c]].feedconn | realvalue);
+			}
+		}
     }
     void Silence() // Silence all OPL channels.
     {
@@ -183,11 +227,17 @@ public:
     }
     void Reset()
     {
-        cards.resize(NumCards);
+		unsigned RealNumCards = NumCards * (FullPan ? 2 : 1);
+        cards.resize(RealNumCards);
         NumChannels = NumCards * 23;
         ins.resize(NumChannels,     189);
-        pit.resize(NumChannels,       0);
-        regBD.resize(NumCards);
+		if (FullPan)
+		{
+			vol.resize(NumChannels, 0);
+			pan.resize(NumChannels, 0x40);
+		}
+        pit.resize(NumChannels * (FullPan ? 2 : 1),       0);
+        regBD.resize(RealNumCards);
         four_op_category.resize(NumChannels);
         for(unsigned p=0, a=0; a<NumCards; ++a)
         {
@@ -204,12 +254,13 @@ public:
         for(unsigned card=0; card<NumCards; ++card)
         {
             cards[card].Init(PcmRate);
+			if (FullPan) cards[card+NumCards].Init(PcmRate);
             for(unsigned a=0; a< 18; ++a) Poke(card, 0xB0+Channels[a], 0x00);
             for(unsigned a=0; a< sizeof(data)/sizeof(*data); a+=2)
                 Poke(card, data[a], data[a+1]);
             Poke(card, 0x0BD, regBD[card] = (HighTremoloMode*0x80
                                            + HighVibratoMode*0x40
-                                           + AdlPercussionMode*0x20) );
+                                           + AdlPercussionMode*0x20));
             unsigned fours_this_card = min(fours, 6u);
             Poke(card, 0x104, (1 << fours_this_card) - 1);
             //fprintf(stderr, "Card %u: %u four-ops.\n", card, fours_this_card);
@@ -335,7 +386,7 @@ private:
             : portamento(0),
               bank_lsb(0), bank_msb(0), patch(0),
               volume(100),expression(100),
-              panning(0x30), vibrato(0), sustain(0),
+              panning(0x40), vibrato(0), sustain(0),
               bend(0.0), bendsense(2 / 8192.0),
               vibpos(0), vibspeed(2*3.141592653*5.0),
               vibdepth(0.5/127), vibdelay(0),
@@ -490,7 +541,7 @@ private:
             }
             if(props_mask & Upd_Pan)
             {
-                opl.Pan(c, Ch[MidCh].panning);
+				opl.Pan(c, Ch[MidCh].panning);
             }
             if(props_mask & Upd_Volume)
             {
@@ -512,9 +563,16 @@ private:
                 if(!d.sustained)
                 {
                     double bend = Ch[MidCh].bend + adl[ins].finetune;
+					double phase = 0.0;
+					const double phase_offset = 0.125;
+					double hertz, hertz_phased;
+					if((adlins[insmeta].flags & 1) && ins == adlins[insmeta].adlno2)
+						phase = phase_offset;
                     if(Ch[MidCh].vibrato && d.vibdelay >= Ch[MidCh].vibdelay)
                         bend += Ch[MidCh].vibrato * Ch[MidCh].vibdepth * std::sin(Ch[MidCh].vibpos);
-                    opl.NoteOn(c, 172.00093 * std::exp(0.057762265 * (tone + bend)));
+					hertz = 172.00093 * std::exp(0.057762265 * (tone + bend + phase));
+					hertz_phased = 172.00093 * std::exp(0.057762265 * (tone + bend + phase + phase_offset));
+                    opl.NoteOn(c, hertz, hertz_phased);
                 }
             }
         }
@@ -581,6 +639,7 @@ public:
                         tone -= adlins[meta].tone-128;
                 }
                 int i[2] = { adlins[meta].adlno1, adlins[meta].adlno2 };
+				bool pseudo_fourop = !!(adlins[meta].flags & 1);
 
                 if(opl.AdlPercussionMode && PercussionMap[midiins & 0xFF]) i[1] = i[0];
 
@@ -601,7 +660,7 @@ public:
                         if(ccount == 1 && a == adlchannel[0]) continue;
                         // ^ Don't use the same channel for primary&secondary
 
-                        if(i[0] == i[1])
+                        if(i[0] == i[1] || pseudo_fourop)
                         {
                             // Only use regular channels
                             int expected_mode = 0;
@@ -719,9 +778,7 @@ public:
                         NoteUpdate_All(MidCh, Upd_Volume);
                         break;
                     case 10: // Change panning
-                        Ch[MidCh].panning = 0x00;
-                        if(value  < 64+32) Ch[MidCh].panning |= 0x10;
-                        if(value >= 64-32) Ch[MidCh].panning |= 0x20;
+                        Ch[MidCh].panning = value;
                         NoteUpdate_All(MidCh, Upd_Pan);
                         break;
                     case 121: // Reset all controllers
@@ -1549,7 +1606,8 @@ void ADLPlayer::render(audio_sample * out, unsigned count)
 
 		memset( accum_buffer, 0, todo * sizeof( Bit32s ) * 2 );
 
-		for ( unsigned i = 0; i < midiplay->opl.NumCards; i++ )
+		unsigned num_cards = midiplay->opl.NumCards * (midiplay->opl.FullPan ? 2 : 1);
+		for ( unsigned i = 0; i < num_cards; i++ )
 		{
 			midiplay->opl.cards[ i ].Generate( buffer, todo );
 			for ( unsigned j = 0; j < todo * 2; j++ )
@@ -1582,6 +1640,11 @@ void ADLPlayer::set4OpCount( unsigned count )
 	u4OpCount = count;
 }
 
+void ADLPlayer::setFullPanning( bool enable )
+{
+	bFullPanning = enable;
+}
+
 void ADLPlayer::shutdown()
 {
 	delete midiplay;
@@ -1594,6 +1657,7 @@ bool ADLPlayer::startup()
 	midiplay->AdlBank = uBankNumber;
 	midiplay->opl.NumCards = uChipCount;
 	midiplay->opl.NumFourOps = u4OpCount;
+	midiplay->opl.FullPan = bFullPanning;
 	midiplay->opl.PcmRate = uSampleRate;
 	midiplay->opl.Reset();
 	midiplay->init();

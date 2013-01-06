@@ -1,4 +1,4 @@
-#define MYVERSION "1.186"
+#define MYVERSION "1.187"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,16 @@
 
 /*
 	change log
+
+2013-01-06 03:17 UTC - kode54
+- Implemented adlmidi full panning mode
+- Version is now 1.187
+
+2013-01-06 01:12 UTC - kode54
+- Reduced 4OP voice count to 4 per chip
+- Fixed DMX instruments, now dual voice instruments are pseudo-
+  four-operator, with each voice playing out of a separate
+  speaker and the second voice slightly phased
 
 2012-12-31 21:09 UTC - kode54
 - Included new OPL3 banks and changed the default bank
@@ -727,6 +737,9 @@ static const GUID guid_cfg_midi_fade_time =
 { 0xcb43a7b1, 0xcb70, 0x4a61, { 0x84, 0xfb, 0x9d, 0x74, 0x6f, 0x3d, 0x42, 0xf9 } };
 static const GUID guid_cfg_adl_chips = 
 { 0x974365ed, 0xd4f9, 0x4daa, { 0xb4, 0x89, 0xad, 0x7a, 0xd2, 0x91, 0xfa, 0x94 } };
+// {AD6821B4-493F-4BB3-B7BB-E0A67C5D5907}
+static const GUID guid_cfg_adl_panning = 
+{ 0xad6821b4, 0x493f, 0x4bb3, { 0xb7, 0xbb, 0xe0, 0xa6, 0x7c, 0x5d, 0x59, 0x7 } };
 // {C5FB4053-75BF-4C0D-A1B1-7173863288A6}
 /*static const GUID guid_cfg_adl_4op = 
 { 0xc5fb4053, 0x75bf, 0x4c0d, { 0xa1, 0xb1, 0x71, 0x73, 0x86, 0x32, 0x88, 0xa6 } };*/
@@ -797,6 +810,7 @@ enum
 	default_cfg_resampling = 1,
 	default_cfg_adl_bank = 51,
 	default_cfg_adl_chips = 10,
+	default_cfg_adl_panning = 1,
 	//default_cfg_adl_4op = 14,
 #ifdef FLUIDSYNTHSUPPORT
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
@@ -816,7 +830,8 @@ cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid
 		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
 		cfg_resampling(guid_cfg_resampling, default_cfg_resampling),
 		cfg_adl_bank(guid_cfg_adl_bank, default_cfg_adl_bank),
-		cfg_adl_chips(guid_cfg_adl_chips, default_cfg_adl_chips)/*,
+		cfg_adl_chips(guid_cfg_adl_chips, default_cfg_adl_chips),
+		cfg_adl_panning(guid_cfg_adl_panning, default_cfg_adl_panning)/*,
 		cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op)*/
 #ifdef FLUIDSYNTHSUPPORT
 		,cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
@@ -1346,7 +1361,8 @@ public:
 				adlPlayer = new ADLPlayer;
 				adlPlayer->setBank( cfg_adl_bank );
 				adlPlayer->setChipCount( cfg_adl_chips );
-				adlPlayer->set4OpCount( cfg_adl_chips * 6 /*cfg_adl_4op*/ );
+				adlPlayer->setFullPanning( cfg_adl_panning );
+				adlPlayer->set4OpCount( cfg_adl_chips * 4 /*cfg_adl_4op*/ );
 				adlPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;
@@ -1923,6 +1939,7 @@ public:
 		COMMAND_HANDLER_EX(IDC_ADL_BANK, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_EDITCHANGE, OnEditChange)
+		COMMAND_HANDLER_EX(IDC_ADL_PANNING, BN_CLICKED, OnButtonClick)
 		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
 		MSG_WM_TIMER(OnTimer)
 	END_MSG_MAP()
@@ -2260,6 +2277,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	SetDlgItemInt( IDC_ADL_CHIPS, cfg_adl_chips, 0 );
 
+	SendDlgItemMessage( IDC_ADL_PANNING, BM_SETCHECK, cfg_adl_panning );
+
 #ifdef FLUIDSYNTHSUPPORT
 	w = GetDlgItem( IDC_FLUID_INTERPOLATION );
 	for (unsigned i = 0; i < _countof(interp_txt); i++)
@@ -2506,6 +2525,7 @@ void CMyPreferences::reset() {
 	SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments );
 	SendDlgItemMessage( IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks );
 	SendDlgItemMessage( IDC_ADL_BANK, CB_SETCURSEL, default_cfg_adl_bank );
+	SendDlgItemMessage( IDC_ADL_PANNING, BM_SETCHECK, default_cfg_adl_panning );
 	SetDlgItemInt( IDC_ADL_CHIPS, default_cfg_adl_chips, 0 );
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
 #ifdef FLUIDSYNTHSUPPORT
@@ -2533,6 +2553,7 @@ void CMyPreferences::apply() {
 	if ( t > 100 ) t = 100;
 	SetDlgItemInt( IDC_ADL_CHIPS, t, FALSE );
 	cfg_adl_chips = t;
+	cfg_adl_panning = SendDlgItemMessage( IDC_ADL_PANNING, BM_GETCHECK );
 	{
 		t_size vsti_count = vsti_plugins.get_size();
 		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
@@ -2605,6 +2626,7 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL ) != cfg_resampling ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_ADL_BANK, CB_GETCURSEL ) != cfg_adl_bank ) changed = true;
 	if ( !changed && GetDlgItemInt( IDC_ADL_CHIPS, NULL, FALSE ) != cfg_adl_chips ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_ADL_PANNING, BM_GETCHECK ) != cfg_adl_panning ) changed = true;
 	if ( !changed )
 	{
 		t_size vsti_count = vsti_plugins.get_size();

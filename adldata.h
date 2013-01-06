@@ -27,6 +27,7 @@ extern const struct adlinsdata
 {
     Uint16 adlno1, adlno2;
     Uint8 tone;
+	Uint8 flags;
     Uint16 ms_sound_kon;  // Number of milliseconds it produces sound;
     Uint16 ms_sound_koff;
 } adlins[];
