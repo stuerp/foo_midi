@@ -1,4 +1,4 @@
-#define MYVERSION "1.188"
+#define MYVERSION "1.189"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2013-01-07 21:32 UTC - kode54
+- Fixed gen_adldata to handle relative note number values, and also adjust
+  DMX note numbers so they're never relative
+- Version is now 1.189
 
 2013-01-07 04:30 UTC - kode54
 - Implement adlmidi resampler so emulated chips run at their
