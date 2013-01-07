@@ -1,4 +1,4 @@
-#define MYVERSION "1.187"
+#define MYVERSION "1.188"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2013-01-07 04:30 UTC - kode54
+- Implement adlmidi resampler so emulated chips run at their
+  native clock rate
+- Version is now 1.188
 
 2013-01-06 03:17 UTC - kode54
 - Implemented adlmidi full panning mode

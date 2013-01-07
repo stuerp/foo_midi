@@ -139,6 +139,10 @@
   <ItemGroup>
     <ClCompile Include="adldata.cpp" />
     <ClCompile Include="ADLPlayer.cpp" />
+    <ClCompile Include="blargg\blargg_common.cpp" />
+    <ClCompile Include="blargg\blargg_errors.cpp" />
+    <ClCompile Include="blargg\Fir_Resampler.cpp" />
+    <ClCompile Include="blargg\Resampler.cpp" />
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="dbopl.cpp" />
     <ClCompile Include="DXiProxy.cpp">
@@ -220,6 +224,12 @@
   <ItemGroup>
     <ClInclude Include="adldata.h" />
     <ClInclude Include="ADLPlayer.h" />
+    <ClInclude Include="blargg\blargg_common.h" />
+    <ClInclude Include="blargg\blargg_config.h" />
+    <ClInclude Include="blargg\blargg_errors.h" />
+    <ClInclude Include="blargg\blargg_source.h" />
+    <ClInclude Include="blargg\Fir_Resampler.h" />
+    <ClInclude Include="blargg\Resampler.h" />
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="dbopl.h" />
     <ClInclude Include="DXiProxy.h">

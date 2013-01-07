@@ -7,6 +7,8 @@
 
 class MIDIplay;
 
+class Chip_Resampler;
+
 class ADLPlayer
 {
 public:
@@ -27,6 +29,7 @@ public:
 	void setChipCount( unsigned );
 	void set4OpCount( unsigned );
 	void setFullPanning( bool );
+	void setUseMame( bool );
 
 	// setup
 	void setSampleRate(unsigned rate);
@@ -39,6 +42,8 @@ private:
 	void send_event(DWORD b);
 	void render(audio_sample * out, unsigned count);
 
+	static void render_internal(void * context, int count, short * out);
+
 	void shutdown();
 	bool startup();
 
@@ -46,10 +51,13 @@ private:
 
 	MIDIplay         * midiplay;
 
+	Chip_Resampler   * resampler;
+
 	unsigned           uBankNumber;
 	unsigned           uChipCount;
 	unsigned           u4OpCount;
 	bool               bFullPanning;
+	bool               bUseMame;
 
 	unsigned           uSamplesRemaining;
 

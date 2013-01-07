@@ -1195,6 +1195,7 @@ static bool is_gs_reset(const unsigned char * data, unsigned size)
 ADLPlayer::ADLPlayer()
 {
 	midiplay = 0;
+	resampler = 0;
 	uSamplesRemaining = 0;
 	uSampleRate = 1000;
 	uTimeCurrent = 0;
@@ -1594,8 +1595,159 @@ void ADLPlayer::send_event(DWORD b)
 	}
 }
 
-void ADLPlayer::render(audio_sample * out, unsigned count)
+#include "blargg/blargg_source.h"
+
+#include "blargg/Fir_Resampler.h"
+typedef Fir_Resampler_Norm Chip_Resampler_Downsampler;
+
+int const resampler_extra = 0; //34;
+
+class Chip_Resampler {
+	int last_time;
+	short* out;
+	typedef short dsample_t;
+	enum { disabled_time = -1 };
+	enum { gain_bits = 14 };
+	blargg_vector<dsample_t> sample_buf;
+	int sample_buf_size;
+	int oversamples_per_frame;
+	int buf_pos;
+	int buffered;
+	int resampler_size;
+	int gain_;
+
+	Chip_Resampler_Downsampler resampler;
+
+	void put_samples( short * buf, int count )
+	{
+        dsample_t * inptr = sample_buf.begin();
+		memcpy( buf, inptr, count * 2 * sizeof(short) );
+	}
+
+public:
+	Chip_Resampler()      { last_time = disabled_time; out = NULL; }
+	blargg_err_t setup( double oversample, double rolloff, double gain )
+	{
+		gain_ = (int) ((1 << gain_bits) * gain);
+		RETURN_ERR( resampler.set_rate( oversample ) );
+		return reset_resampler();
+	}
+
+	blargg_err_t reset()
+	{
+		resampler.clear();
+		return blargg_ok;
+	}
+
+	blargg_err_t reset_resampler()
+	{
+		unsigned int pairs;
+		double rate = resampler.rate();
+		if ( rate >= 1.0 ) pairs = 64.0 * rate;
+		else pairs = 64.0 / rate;
+		RETURN_ERR( sample_buf.resize( (pairs + (pairs >> 2)) * 2 ) );
+		resize( pairs );
+		resampler_size = oversamples_per_frame + (oversamples_per_frame >> 2);
+		RETURN_ERR( resampler.resize_buffer( resampler_size ) );
+		return blargg_ok;
+	}
+
+	void resize( int pairs )
+	{
+		int new_sample_buf_size = pairs * 2;
+		//new_sample_buf_size = new_sample_buf_size / 4 * 4; // TODO: needed only for 3:2 downsampler
+		if ( sample_buf_size != new_sample_buf_size )
+		{
+			if ( (unsigned) new_sample_buf_size > sample_buf.size() )
+			{
+				check( false );
+				return;
+			}
+			sample_buf_size = new_sample_buf_size;
+			oversamples_per_frame = int (pairs * resampler.rate()) * 2 + 2;
+			clear();
+		}
+	}
+
+	void clear()
+	{
+		buf_pos = buffered = 0;
+		resampler.clear();
+	}
+
+	void enable( bool b = true )    { last_time = b ? 0 : disabled_time; }
+	bool enabled() const            { return last_time != disabled_time; }
+	void begin_frame( short* buf )  { out = buf; last_time = 0; }
+
+	int run_until( int time, void (*emu_render)(void * context, int count, short * out), void *context )
+	{
+		int count = time - last_time;
+		while ( count > 0 )
+		{
+			if ( last_time < 0 )
+				return false;
+			last_time = time;
+			if ( buffered )
+			{
+				int samples_to_copy = buffered;
+				if ( samples_to_copy > count ) samples_to_copy = count;
+				memcpy( out, sample_buf.begin(), samples_to_copy * sizeof(short) * 2 );
+				memcpy( sample_buf.begin(), sample_buf.begin() + samples_to_copy * 2, ( buffered - samples_to_copy ) * 2 * sizeof(short) );
+				buffered -= samples_to_copy;
+				count -= samples_to_copy;
+				continue;
+			}
+			int sample_count = oversamples_per_frame - resampler.written() + resampler_extra;
+			memset( resampler.buffer(), 0, sample_count * sizeof(*resampler.buffer()) );
+			emu_render( context, sample_count >> 1, resampler.buffer() );
+			for ( unsigned i = 0; i < sample_count; i++ )
+			{
+                dsample_t * ptr = resampler.buffer() + i;
+				*ptr = ( *ptr * gain_ ) >> gain_bits;
+			}
+			short* p = out;
+			resampler.write( sample_count );
+			sample_count = resampler.read( sample_buf.begin(), count * 2 > sample_buf_size ? sample_buf_size : count * 2 ) >> 1;
+			if ( sample_count > count )
+			{
+				out += count * 2;
+				put_samples( p, count );
+				memmove( sample_buf.begin(), sample_buf.begin() + count * 2, (sample_count - count) * 2 * sizeof(short) );
+				buffered = sample_count - count;
+				return true;
+			}
+			else if (!sample_count) return true;
+			out += sample_count * 2;
+			put_samples( p, sample_count );
+			count -= sample_count;
+		}
+		return true;
+	}
+};
+
+void ADLPlayer::render( audio_sample * out, unsigned count )
 {
+	short buffer[ 512 ];
+
+	while ( count )
+	{
+		unsigned todo = count;
+		if ( todo > 256 ) todo = 256;
+
+		resampler->begin_frame( buffer );
+		resampler->run_until( todo, render_internal, this );
+
+		audio_math::convert_from_int16( buffer, todo * 2, out, 2.0 );
+
+		out += todo * 2;
+		count -= todo;
+	}
+}
+
+void ADLPlayer::render_internal(void * context, int count, short * out)
+{
+	ADLPlayer * pthis = (ADLPlayer *) context;
+
 	Bit32s accum_buffer[ 512 ];
 	Bit32s buffer[ 512 ];
 
@@ -1606,19 +1758,24 @@ void ADLPlayer::render(audio_sample * out, unsigned count)
 
 		memset( accum_buffer, 0, todo * sizeof( Bit32s ) * 2 );
 
-		unsigned num_cards = midiplay->opl.NumCards * (midiplay->opl.FullPan ? 2 : 1);
+		unsigned num_cards = pthis->midiplay->opl.NumCards * (pthis->midiplay->opl.FullPan ? 2 : 1);
 		for ( unsigned i = 0; i < num_cards; i++ )
 		{
-			midiplay->opl.cards[ i ].Generate( buffer, todo );
+			pthis->midiplay->opl.cards[ i ].Generate( buffer, todo );
 			for ( unsigned j = 0; j < todo * 2; j++ )
 			{
 				accum_buffer[ j ] += buffer[ j ];
 			}
 		}
 
-		midiplay->Tick( (double)todo / (double)uSampleRate );
+		for ( unsigned i = 0; i < todo * 2; i++ )
+		{
+			Bit32s sample = accum_buffer[ i ];
+			if ( (Bit32u)( sample + 0x8000 ) >= 0x10000 ) sample = ( sample >> 31 ) ^ 0x7FFF;
+			out[ i ] = ( short ) sample;
+		}
 
-		audio_math::convert_from_int32( accum_buffer, todo * 2, out, 1 << 17 );
+		pthis->midiplay->Tick( (double)todo / (double)pthis->uSampleRate );
 
 		out += todo * 2;
 		count -= todo;
@@ -1647,6 +1804,8 @@ void ADLPlayer::setFullPanning( bool enable )
 
 void ADLPlayer::shutdown()
 {
+	delete resampler;
+	resampler = NULL;
 	delete midiplay;
 	midiplay = NULL;
 }
@@ -1658,9 +1817,13 @@ bool ADLPlayer::startup()
 	midiplay->opl.NumCards = uChipCount;
 	midiplay->opl.NumFourOps = u4OpCount;
 	midiplay->opl.FullPan = bFullPanning;
-	midiplay->opl.PcmRate = uSampleRate;
+	midiplay->opl.PcmRate = 49716;
 	midiplay->opl.Reset();
 	midiplay->init();
+
+	resampler = new Chip_Resampler;
+	if ( resampler->setup( 49716.0 / (double)uSampleRate, 0.85, 1.0 ) )
+		return false;
 
 	reset_drum_channels();
 
