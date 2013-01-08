@@ -1,4 +1,4 @@
-#define MYVERSION "1.189"
+#define MYVERSION "1.190"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-01-08 01:48 UTC - kode54
+- Disabled adlmidi resampler if sample rate matches OPL3 native rate
+- Version is now 1.190
 
 2013-01-07 21:32 UTC - kode54
 - Fixed gen_adldata to handle relative note number values, and also adjust
@@ -1906,7 +1910,7 @@ static const char * click_to_set = "Click to set.";
 
 static cfg_dropdown_history cfg_history_rate(guid_cfg_history_rate,16);
 
-static const int srate_tab[]={8000,11025,16000,22050,24000,32000,44100,48000,64000,88200,96000};
+static const int srate_tab[]={8000,11025,16000,22050,24000,32000,44100,48000,49716,64000,88200,96000};
 
 class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_page_instance {
 public:

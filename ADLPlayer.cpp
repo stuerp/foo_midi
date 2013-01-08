@@ -1734,8 +1734,12 @@ void ADLPlayer::render( audio_sample * out, unsigned count )
 		unsigned todo = count;
 		if ( todo > 256 ) todo = 256;
 
-		resampler->begin_frame( buffer );
-		resampler->run_until( todo, render_internal, this );
+		if ( resampler )
+		{
+			resampler->begin_frame( buffer );
+			resampler->run_until( todo, render_internal, this );
+		}
+		else render_internal( this, todo, buffer );
 
 		audio_math::convert_from_int16( buffer, todo * 2, out, 2.0 );
 
@@ -1821,9 +1825,12 @@ bool ADLPlayer::startup()
 	midiplay->opl.Reset();
 	midiplay->init();
 
-	resampler = new Chip_Resampler;
-	if ( resampler->setup( 49716.0 / (double)uSampleRate, 0.85, 1.0 ) )
-		return false;
+	if ( uSampleRate != 49716 )
+	{
+		resampler = new Chip_Resampler;
+		if ( resampler->setup( 49716.0 / (double)uSampleRate, 0.85, 1.0 ) )
+			return false;
+	}
 
 	reset_drum_channels();
 
