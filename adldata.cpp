@@ -4584,13 +4584,13 @@ const struct adlinsdata adlins[3768] =
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
     { 153,153, 14, 0,     13,    13 }, // 153: GP70; f15GP70; f17GP70; f26GP70; f29GP70; f30GP70; f34GP70; f35GP70; f49GP70; mGP70; sGP70; Maracas
 
-    // Amplitude begins at    0.0,
-    // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 154,154,215, 0,      0,     0 }, // 154: GP71; f15GP71; f17GP71; f26GP71; f29GP71; f30GP71; f34GP71; f35GP71; f48GP71; f49GP71; mGP71; sGP71; Short Whistle
+    // Amplitude begins at   53.8, peaks 1584.0 at 0.0s,
+    // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
+    { 154,154,215, 0,     60,    60 }, // 154: GP71; f15GP71; f17GP71; f26GP71; f29GP71; f30GP71; f34GP71; f35GP71; f48GP71; f49GP71; mGP71; sGP71; Short Whistle
 
-    // Amplitude begins at    0.0,
-    // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 155,155,215, 0,      0,     0 }, // 155: GP72; f15GP72; f17GP72; f26GP72; f29GP72; f30GP72; f34GP72; f35GP72; f48GP72; f49GP72; mGP72; sGP72; Long Whistle
+    // Amplitude begins at   49.8, peaks 2172.0 at 0.0s,
+    // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
+    { 155,155,215, 0,     60,    60 }, // 155: GP72; f15GP72; f17GP72; f26GP72; f29GP72; f30GP72; f34GP72; f35GP72; f48GP72; f49GP72; mGP72; sGP72; Long Whistle
 
     // Amplitude begins at    6.5, peaks 1514.5 at 0.0s,
     // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
@@ -11020,9 +11020,9 @@ const struct adlinsdata adlins[3768] =
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
     { 1861,1861,  0, 0,     13,    13 }, // 1762: f34GP7; f34GP8
 
-    // Amplitude begins at    0.0,
-    // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 1862,1862,209, 0,      0,     0 }, // 1763: f34GP9
+    // Amplitude begins at    0.0, peaks 1174.5 at 0.1s,
+    // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
+    { 1862,1862,209, 0,    126,   126 }, // 1763: f34GP9
 
     // Amplitude begins at 1456.8, peaks 1570.7 at 0.0s,
     // fades to 20% at 1.1s, keyoff fades to 20% in 1.1s.
@@ -11232,9 +11232,9 @@ const struct adlinsdata adlins[3768] =
     // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
     { 328,328, 30, 0,     93,    93 }, // 1815: f35GP38; Acoustic Snare
 
-    // Amplitude begins at    0.0,
+    // Amplitude begins at 2608.5,
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 329,329,198, 0,      0,     0 }, // 1816: f35GP39; Hand Clap
+    { 329,329,198, 0,     13,    13 }, // 1816: f35GP39; Hand Clap
 
     // Amplitude begins at 1035.1,
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
@@ -11244,45 +11244,45 @@ const struct adlinsdata adlins[3768] =
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
     { 331,331, 14, 0,     33,    33 }, // 1818: f35GP42; Closed High Hat
 
-    // Amplitude begins at    0.0,
-    // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 332,332,196, 0,      0,     0 }, // 1819: f35GP46; Open High Hat
+    // Amplitude begins at   34.8, peaks 1473.1 at 0.0s,
+    // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
+    { 332,332,196, 0,     66,    66 }, // 1819: f35GP46; Open High Hat
 
-    // Amplitude begins at    0.0,
-    // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 335,335,238, 0,      0,     0 }, // 1820: f35GP54; Tambourine
+    // Amplitude begins at   31.5, peaks 1165.8 at 0.0s,
+    // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
+    { 335,335,238, 0,     93,    93 }, // 1820: f35GP54; Tambourine
 
-    // Amplitude begins at    0.0,
+    // Amplitude begins at  657.8,
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 324,324,198, 0,      0,     0 }, // 1821: f35GP56; Cow Bell
+    { 324,324,198, 0,      6,     6 }, // 1821: f35GP56; Cow Bell
 
-    // Amplitude begins at    0.0,
+    // Amplitude begins at  504.6, peaks 1664.5 at 0.0s,
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 1912,1912,224, 0,      0,     0 }, // 1822: f35GP57; Crash Cymbal 2
+    { 1912,1912,224, 0,     46,    46 }, // 1822: f35GP57; Crash Cymbal 2
 
-    // Amplitude begins at    0.0,
+    // Amplitude begins at   39.6,
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 358,358,194, 0,      0,     0 }, // 1823: f35GP60; f35GP61; High Bongo; Low Bongo
+    { 358,358,194, 0,     20,    20 }, // 1823: f35GP60; f35GP61; High Bongo; Low Bongo
 
-    // Amplitude begins at    0.0,
+    // Amplitude begins at   94.9,
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 325,325,192, 0,      0,     0 }, // 1824: f35GP62; Mute High Conga
+    { 325,325,192, 0,     13,    13 }, // 1824: f35GP62; Mute High Conga
 
-    // Amplitude begins at    0.0,
+    // Amplitude begins at  157.9,
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 357,357,192, 0,      0,     0 }, // 1825: f35GP63; f35GP64; Low Conga; Open High Conga
+    { 357,357,192, 0,      6,     6 }, // 1825: f35GP63; f35GP64; Low Conga; Open High Conga
 
     // Amplitude begins at    1.1, peaks 1259.4 at 0.0s,
     // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
     { 1913,1913,101, 0,     93,    93 }, // 1826: f35GP69; Cabasa
 
-    // Amplitude begins at    0.0,
+    // Amplitude begins at  125.0,
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 356,356,194, 0,      0,     0 }, // 1827: f35GP74; Long Guiro
+    { 356,356,194, 0,      6,     6 }, // 1827: f35GP74; Long Guiro
 
-    // Amplitude begins at    0.0,
+    // Amplitude begins at 1006.5,
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 336,336,214, 0,      0,     0 }, // 1828: f35GP75; Claves
+    { 336,336,214, 0,      6,     6 }, // 1828: f35GP75; Claves
 
     // Amplitude begins at 3914.1, peaks 4397.7 at 0.0s,
     // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
@@ -12796,9 +12796,9 @@ const struct adlinsdata adlins[3768] =
     // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
     { 2332,2332,110, 0,     60,    60 }, // 2206: f48GP55; Splash Cymbal
 
-    // Amplitude begins at    0.0,
-    // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 2333,2333,206, 0,      0,     0 }, // 2207: f48GP57; Crash Cymbal 2
+    // Amplitude begins at 1571.2, peaks 1720.0 at 0.1s,
+    // fades to 20% at 1.5s, keyoff fades to 20% in 1.5s.
+    { 2333,2333,206, 0,   1506,  1506 }, // 2207: f48GP57; Crash Cymbal 2
 
     // Amplitude begins at 2665.9,
     // fades to 20% at 0.1s, keyoff fades to 20% in 0.1s.
@@ -12824,9 +12824,9 @@ const struct adlinsdata adlins[3768] =
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
     { 2339,2339, 14, 0,     33,    33 }, // 2213: f48GP70; Maracas
 
-    // Amplitude begins at    0.0,
-    // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 2340,2340,206, 0,      0,     0 }, // 2214: f48GP73; Short Guiro
+    // Amplitude begins at    0.0, peaks 1184.1 at 0.7s,
+    // fades to 20% at 0.7s, keyoff fades to 20% in 0.7s.
+    { 2340,2340,206, 0,    706,   706 }, // 2214: f48GP73; Short Guiro
 
     // Amplitude begins at    0.0, peaks 2830.7 at 0.2s,
     // fades to 20% at 0.2s, keyoff fades to 20% in 0.2s.
@@ -12836,9 +12836,9 @@ const struct adlinsdata adlins[3768] =
     // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
     { 2342,2342,  6, 0,     40,    40 }, // 2216: f48GP75; Claves
 
-    // Amplitude begins at    0.0,
-    // fades to 20% at 0.0s, keyoff fades to 20% in 0.0s.
-    { 2343,2343,225, 0,      0,     0 }, // 2217: f48GP78; Mute Cuica
+    // Amplitude begins at    0.0, peaks 1820.1 at 0.4s,
+    // fades to 20% at 0.4s, keyoff fades to 20% in 0.4s.
+    { 2343,2343,225, 0,    373,   373 }, // 2217: f48GP78; Mute Cuica
 
     // Amplitude begins at  828.7,
     // fades to 20% at 0.2s, keyoff fades to 20% in 0.2s.

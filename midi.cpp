@@ -1,4 +1,4 @@
-#define MYVERSION "1.190"
+#define MYVERSION "1.191"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,14 @@
 
 /*
 	change log
+
+2013-01-08 03:02 UTC - kode54
+- Added precalculated attack rates table to dbopl for 49716Hz, speeding
+  up initialization
+- Fixed notes with base notes or fine tune offsets so low that they wrap
+  into the negative by changing one note variable to a signed type, and
+  also fixed the instrument table generator for that case
+- Version is now 1.191
 
 2013-01-08 01:48 UTC - kode54
 - Disabled adlmidi resampler if sample rate matches OPL3 native rate
