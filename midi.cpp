@@ -7,7 +7,7 @@
 /*
 	change log
 
-2013-01-10 02:49 UTC - kode54
+2013-01-10 03:02 UTC - kode54
 - Fixed adldata fixed drum notes for OP3 bank files
 - Fixed adldata note length calculation for four operator voices
 - Fixed adlmidi volume control to only apply to carrier voices

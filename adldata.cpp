@@ -18949,8 +18949,8 @@ const char* const banknames[57] =
     "HMI (Descent:: Int)",
     "HMI (Descent:: Ham)",
     "HMI (Descent:: Rick)",
-    "DMX (Doom           :: partially 4op)",
-    "DMX (Hexen, Heretic :: partially 4op)",
+    "DMX (Doom           :: partially pseudo 4op)",
+    "DMX (Hexen, Heretic :: partially pseudo 4op)",
     "AIL (Warcraft 2)",
     "AIL (SimFarm, SimHealth :: 4op)",
     "AIL (SimFarm, Settlers, Serf City)",
@@ -19094,7 +19094,7 @@ const unsigned short banks[57][256] =
 422,423,374,424,376,425,426,427,428,429,198,198,198,198,198,198,
 198,198,198,198,198,198,198,198,198,198,198,198,198,198,198,198,
     },
-    { // bank 5, DMX (Doom           :: partially 4op)
+    { // bank 5, DMX (Doom           :: partially pseudo 4op)
 430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,445,
 446,447,448,449,450,451,452,453,454,455,456,457,458,459,460,461,
 462,463,464,465,466,467,468,469,470,471,472,473,474,475,476,477,
@@ -19112,7 +19112,7 @@ const unsigned short banks[57][256] =
 198,198,198,198,198,198,198,198,198,198,198,198,198,198,198,198,
 198,198,198,198,198,198,198,198,198,198,198,198,198,198,198,198,
     },
-    { // bank 6, DMX (Hexen, Heretic :: partially 4op)
+    { // bank 6, DMX (Hexen, Heretic :: partially pseudo 4op)
 430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,445,
 446,447,448,449,450,451,452,453,454,455,456,457,458,597,598,461,
 599,463,464,600,601,467,468,469,470,471,472,473,474,475,476,477,
