@@ -152,11 +152,84 @@ public:
     {
         if(volume > 63) volume = 63;
         unsigned card = c/23, cc = c%23;
-        unsigned i = ins[c % (NumCards * 23)], o1 = Operators[cc*2], o2 = Operators[cc*2+1];
-        unsigned x = adl[i].carrier_40, y = adl[i].modulator_40;
-        Poke(card, 0x40+o1, (x|63) - volume + volume*(x&63)/63, both);
+        unsigned i = ins[c %= (NumCards * 23)], o1 = Operators[cc*2], o2 = Operators[cc*2+1];
+        unsigned x = adl[i].modulator_40, y = adl[i].carrier_40;
+		bool do_modulator;
+		bool do_carrier;
+		unsigned mode = 1;
+		if ( four_op_category[c] == 0 || four_op_category[c] == 3 ) mode = adl[i].feedconn & 1;
+		else if ( four_op_category[c] == 1 || four_op_category[c] == 2 )
+		{
+			unsigned i0, i1;
+			if ( four_op_category[c] == 1 )
+			{
+				i0 = i;
+				i1 = ins[c + 3];
+				mode = 2;
+			}
+			else
+			{
+				i0 = ins[c - 3];
+				i1 = i;
+				mode = 6;
+			}
+			mode += (adl[i0].feedconn & 1) + (adl[i1].feedconn & 1) * 2;
+		}
+		switch (mode)
+		{
+		case 0: // 2op FM
+			do_modulator = false;
+			do_carrier = true;
+			break;
+
+		case 1: // 2op AM
+			do_modulator = true;
+			do_carrier = true;
+			break;
+
+		case 2: // 4op FM-FM ops 1&2
+			do_modulator = false;
+			do_carrier = false;
+			break;
+
+		case 3: // 4op AM-FM ops 1&2
+			do_modulator = true;
+			do_carrier = false;
+			break;
+
+		case 4: // 4op FM-AM ops 1&2
+			do_modulator = false;
+			do_carrier = true;
+			break;
+
+		case 5: // 4op AM-AM ops 1&2
+			do_modulator = true;
+			do_carrier = false;
+			break;
+
+		case 6: // 4op FM-FM ops 3&4
+			do_modulator = false;
+			do_carrier = true;
+			break;
+
+		case 7: // 4op AM-FM ops 3&4
+			do_modulator = false;
+			do_carrier = true;
+			break;
+
+		case 8: // 4op FM-AM ops 3&4
+			do_modulator = false;
+			do_carrier = true;
+			break;
+
+		case 9: // 4op AM-AM ops 3&4
+			do_modulator = true;
+			do_carrier = true;
+			break;
+		}
+        Poke(card, 0x40+o1, do_modulator ? (x|63) - volume + volume*(x&63)/63 : x, both);
         if(o2 != 0xFFF)
-        Poke(card, 0x40+o2, (y|63) - volume + volume*(y&63)/63, both);
+        Poke(card, 0x40+o2, do_carrier ? (y|63) - volume + volume*(y&63)/63 : y, both);
         // Correct formula (ST3, AdPlug):
         //   63-((63-(instrvol))/63)*chanvol
         // Reduces to (tested identical):
@@ -189,7 +262,7 @@ public:
         static const unsigned char data[4] = {0x20,0x60,0x80,0xE0};
         ins[c] = i;
         unsigned o1 = Operators[cc*2+0], o2 = Operators[cc*2+1];
-        unsigned x = adl[i].carrier_E862, y = adl[i].modulator_E862;
+        unsigned x = adl[i].modulator_E862, y = adl[i].carrier_E862;
         for(unsigned a=0; a<4; ++a)
         {
             Poke(card, data[a]+o1, x&0xFF); x>>=8;
@@ -505,6 +578,30 @@ private:
             int ins = j->second;
             if(select_adlchn >= 0 && c != select_adlchn) continue;
 
+			// Both patches must be applied before volume and panning changes,
+			// due to how the volume/operator setting logic works with four
+			// operator voices now
+            if(props_mask & Upd_Patch)
+            {
+                opl.Patch(c, ins);
+                AdlChannel::LocationData& d = ch[c].users[my_loc];
+                d.sustained = false; // inserts if necessary
+                d.vibdelay  = 0;
+                d.kon_time_until_neglible = adlins[insmeta].ms_sound_kon;
+                d.ins       = ins;
+            }
+        }
+
+        for(std::map<unsigned short,unsigned short>::iterator
+            jnext = info.phys.begin();
+            jnext != info.phys.end();
+           )
+        {
+            std::map<unsigned short,unsigned short>::iterator j(jnext++);
+            int c   = j->first;
+            int ins = j->second;
+            if(select_adlchn >= 0 && c != select_adlchn) continue;
+
             if(props_mask & Upd_Off) // note off
             {
                 if(Ch[MidCh].sustain == 0)
@@ -529,15 +626,6 @@ private:
                 }
                 info.phys.erase(j);
                 continue;
-            }
-            if(props_mask & Upd_Patch)
-            {
-                opl.Patch(c, ins);
-                AdlChannel::LocationData& d = ch[c].users[my_loc];
-                d.sustained = false; // inserts if necessary
-                d.vibdelay  = 0;
-                d.kon_time_until_neglible = adlins[insmeta].ms_sound_kon;
-                d.ins       = ins;
             }
             if(props_mask & Upd_Pan)
             {

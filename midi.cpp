@@ -1,4 +1,4 @@
-#define MYVERSION "1.191"
+#define MYVERSION "1.192"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2013-01-10 02:49 UTC - kode54
+- Fixed adldata fixed drum notes for OP3 bank files
+- Fixed adldata note length calculation for four operator voices
+- Fixed adlmidi volume control to only apply to carrier voices
+- Version is now 1.192
 
 2013-01-08 03:02 UTC - kode54
 - Added precalculated attack rates table to dbopl for 49716Hz, speeding

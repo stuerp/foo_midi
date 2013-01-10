@@ -18,8 +18,8 @@ typedef uint32_t Uint32;
 
 extern const struct adldata
 {
-    Uint32 carrier_E862, modulator_E862;  // See below
-    Uint8 carrier_40, modulator_40; // KSL/attenuation settings
+    Uint32 modulator_E862, carrier_E862;  // See below
+    Uint8 modulator_40, carrier_40; // KSL/attenuation settings
     Uint8 feedconn; // Feedback/connection bits for the channel
     signed char finetune;
 } adl[];
