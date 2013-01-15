@@ -1,15 +1,17 @@
-#ifndef __ADLPlayer_h__
-#define __ADLPlayer_h__
+#ifndef __fmmidiPlayer_h__
+#define __fmmidiPlayer_h__
 
 #include <foobar2000.h>
 
 #include "nu_processing/midi_container.h"
 
-class MIDIplay;
+namespace midisynth
+{
+	class fm_note_factory;
+	class synthesizer;
+}
 
-class Chip_Resampler;
-
-class ADLPlayer
+class fmmidiPlayer
 {
 public:
 	enum
@@ -19,16 +21,13 @@ public:
 	};
 
 	// zero variables
-	ADLPlayer();
+	fmmidiPlayer();
 
 	// close, unload
-	~ADLPlayer();
+	~fmmidiPlayer();
 
 	// configuration
-	void setBank( unsigned );
-	void setChipCount( unsigned );
-	void set4OpCount( unsigned );
-	void setFullPanning( bool );
+	void setProgramPath( const char * );
 
 	// setup
 	void setSampleRate(unsigned rate);
@@ -41,21 +40,14 @@ private:
 	void send_event(DWORD b);
 	void render(audio_sample * out, unsigned count);
 
-	static void render_internal(void * context, int count, short * out);
-
 	void shutdown();
 	bool startup();
 
-	void reset_drum_channels();
+	pfc::string8                 bank_path;
 
-	MIDIplay         * midiplay;
+	midisynth::fm_note_factory * factory;
 
-	Chip_Resampler   * resampler;
-
-	unsigned           uBankNumber;
-	unsigned           uChipCount;
-	unsigned           u4OpCount;
-	bool               bFullPanning;
+	midisynth::synthesizer     * synthesizers[4];
 
 	unsigned           uSamplesRemaining;
 
@@ -71,18 +63,6 @@ private:
 
 	UINT               uStreamLoopStart;
 	DWORD              uTimeLoopStart;
-
-	enum
-	{
-	                   mode_gm = 0,
-					   mode_gm2,
-	                   mode_gs,
-	                   mode_xg
-	}
-	                   synth_mode;
-
-	BYTE               gs_part_to_ch[16];
-	BYTE               drum_channels[16];
 };
 
 #endif

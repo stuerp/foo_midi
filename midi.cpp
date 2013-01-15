@@ -1,4 +1,4 @@
-#define MYVERSION "1.192"
+#define MYVERSION "1.193"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-01-15 06:34 UTC - kode54
+- Implemented support for fmmidi by yuno
+- Version is now 1.193
 
 2013-01-10 03:02 UTC - kode54
 - Fixed adldata fixed drum notes for OP3 bank files
@@ -668,6 +672,8 @@
 #include "ADLPlayer.h"
 #include "adldata.h"
 
+#include "fmmidiPlayer.h"
+
 #ifdef DXISUPPORT
 #include "DXiProxy.h"
 #include "PlugInInventory.h"
@@ -922,6 +928,7 @@ class input_midi
 	MT32Player * mt32Player;
 	EMIDIPlayer * emidiPlayer;
 	ADLPlayer * adlPlayer;
+	fmmidiPlayer * fmPlayer;
 
 	midi_container midi_file;
 
@@ -987,6 +994,7 @@ public:
 		mt32Player = NULL;
 		emidiPlayer = NULL;
 		adlPlayer = NULL;
+		fmPlayer = NULL;
 
 		length_samples = 0;
 		length_ticks = 0;
@@ -1008,6 +1016,10 @@ public:
 	{
 		/*if (external_decoder) external_decoder->service_release();
 		if (mem_reader) mem_reader->reader_release();*/
+		if (fmPlayer)
+		{
+			delete fmPlayer;
+		}
 		if (adlPlayer)
 		{
 			delete adlPlayer;
@@ -1409,6 +1421,34 @@ public:
 					return;
 				}
 			}
+			else if ( plugin == 7 )
+			{
+				delete fmPlayer;
+				fmPlayer = new fmmidiPlayer;
+
+				pfc::string8 path;
+				path = core_api::get_my_full_path();
+				path.truncate( path.scan_filename() );
+				fmPlayer->setProgramPath( path );
+
+				fmPlayer->setSampleRate(srate);
+
+				unsigned loop_mode = 0;
+
+				if ( loop_type )
+				{
+					loop_mode = fmmidiPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= fmmidiPlayer::loop_mode_force;
+				}
+
+				if ( fmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
+				{
+					eof = false;
+					dont_loop = true;
+
+					return;
+				}
+			}
 			else if (plugin == 3)
 			{
 				midi_meta_data_item item;
@@ -1656,6 +1696,29 @@ public:
 
 			rv = true;
 		}
+		else if (plugin == 7)
+		{
+			unsigned todo = 1024;
+
+			p_chunk.set_data_size( todo * 2 );
+
+			audio_sample * out = p_chunk.get_data();
+
+			unsigned done = fmPlayer->Play( out, todo );
+
+			if ( ! done )
+			{
+				return false;
+			}
+
+			p_chunk.set_srate( srate );
+			p_chunk.set_channels( 2 );
+			p_chunk.set_sample_count( done );
+
+			if ( done < todo ) eof = true;
+
+			rv = true;
+		}
 		else if (plugin == 3)
 		{
 			unsigned todo = 1024;
@@ -1846,6 +1909,11 @@ fagotry:
 		else if ( plugin == 6 )
 		{
 			adlPlayer->Seek( done );
+			return;
+		}
+		else if ( plugin == 7 )
+		{
+			fmPlayer->Seek( done );
 			return;
 		}
 		else if ( plugin == 3 )
@@ -2111,6 +2179,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	uSendMessageText( w, CB_ADDSTRING, 0, "BASSMIDI" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Super MUNT GM" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "adlmidi" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "fmmidi" );
 
 #ifndef FLUIDSYNTHSUPPORT
 	if ( plugin == 2 ) plugin = 4;
@@ -2226,7 +2295,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	CoUninitialize();
 #endif
-	if ( plugin == 1 ) plugin += vsti_selected + 4;
+	if ( plugin == 1 ) plugin += vsti_selected + 5;
 	else if ( plugin >= 2 && plugin <= 4 )
 	{
 		plugin = plugin == 2 ? 1 : plugin == 4 ? 2 : 3;
@@ -2234,6 +2303,10 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	else if ( plugin == 6 )
 	{
 		plugin = 4;
+	}
+	else if ( plugin == 7 )
+	{
+		plugin = 5;
 	}
 #ifdef DXISUPPORT
 	else if ( plugin == 5 )
@@ -2353,13 +2426,13 @@ void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 #ifndef FLUIDSYNTHSUPPORT
 	if ( plugin > 0 ) ++plugin;
 #endif
-	if ( plugin >= 5 && plugin < 5 + vsti_plugins.get_count() )
+	if ( plugin >= 6 && plugin < 6 + vsti_plugins.get_count() )
 	{
 		busy = true;
 		OnChanged();
 
 		VSTiPlayer vstPlayer;
-		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 5 ].path ) )
+		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 6 ].path ) )
 		{
 			vstPlayer.setChunk( vsti_config.get_ptr(), vsti_config.get_count() );
 			vstPlayer.displayEditorModal();
@@ -2412,11 +2485,11 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 
 	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
 
-	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= 5 && plugin < 5 + vsti_plugins.get_count() && vsti_plugins[ plugin - 5 ].has_editor );
+	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= 6 && plugin < 6 + vsti_plugins.get_count() && vsti_plugins[ plugin - 6 ].has_editor );
 
-	if ( plugin >= 5 && plugin < 5 + vsti_plugins.get_count() )
+	if ( plugin >= 6 && plugin < 6 + vsti_plugins.get_count() )
 	{
-		vsti_config = cfg_vst_config[ vsti_plugins[ plugin - 5 ].unique_id ];
+		vsti_config = cfg_vst_config[ vsti_plugins[ plugin - 6 ].unique_id ];
 	}
 
 	OnChanged();
@@ -2606,11 +2679,15 @@ void CMyPreferences::apply() {
 		{
 			cfg_plugin = 6;
 		}
-		else if ( plugin <= vsti_count + 4 )
+		else if ( plugin == 5 )
+		{
+			cfg_plugin = 7;
+		}
+		else if ( plugin <= vsti_count + 5 )
 		{
 			cfg_plugin = 1;
-			cfg_vst_path = vsti_plugins[ plugin - 5 ].path;
-			cfg_vst_config[ vsti_plugins[ plugin - 5 ].unique_id ] = vsti_config;
+			cfg_vst_path = vsti_plugins[ plugin - 6 ].path;
+			cfg_vst_config[ vsti_plugins[ plugin - 6 ].unique_id ] = vsti_config;
 		}
 #ifdef DXISUPPORT
 		else if ( plugin <= vsti_count + dxi_count + 3 )
@@ -2679,12 +2756,16 @@ bool CMyPreferences::HasChanged() {
 		{
 			if ( cfg_plugin != 6 ) changed = true;
 		}
-		else if ( plugin <= vsti_count + 4 )
+		else if ( plugin == 5 )
 		{
-			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 5 ].path ) ) changed = true;
+			if ( cfg_plugin != 7 ) changed = true;
+		}
+		else if ( plugin <= vsti_count + 5 )
+		{
+			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 6 ].path ) ) changed = true;
 			if ( !changed )
 			{
-				t_uint32 unique_id = vsti_plugins[ plugin - 5 ].unique_id;
+				t_uint32 unique_id = vsti_plugins[ plugin - 6 ].unique_id;
 				if ( vsti_config.get_count() != cfg_vst_config[ unique_id ].get_count() || memcmp( vsti_config.get_ptr(), cfg_vst_config[ unique_id ].get_ptr(), vsti_config.get_count() ) ) changed = true;
 			}
 		}

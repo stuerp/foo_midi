@@ -150,6 +150,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="EMIDIPlayer.cpp" />
+    <ClCompile Include="fmmidiPlayer.cpp" />
+    <ClCompile Include="midisynth.cpp" />
     <ClCompile Include="MT32Player.cpp" />
     <ClCompile Include="nu_processing\midi_container.cpp" />
     <ClCompile Include="nu_processing\midi_processor_gmf.cpp" />
@@ -237,6 +239,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="EMIDIPlayer.h" />
+    <ClInclude Include="fmmidiPlayer.h" />
+    <ClInclude Include="midisynth.hpp" />
     <ClInclude Include="MT32Player.h" />
     <ClInclude Include="mtgm.h" />
     <ClInclude Include="nu_processing\midi_container.h" />

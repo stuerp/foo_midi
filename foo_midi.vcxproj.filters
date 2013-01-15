@@ -68,6 +68,8 @@
       <Filter>blargg</Filter>
     </ClCompile>
     <ClCompile Include="dbopl.cpp" />
+    <ClCompile Include="midisynth.cpp" />
+    <ClCompile Include="fmmidiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -106,6 +108,8 @@
       <Filter>blargg</Filter>
     </ClInclude>
     <ClInclude Include="dbopl.h" />
+    <ClInclude Include="midisynth.hpp" />
+    <ClInclude Include="fmmidiPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
