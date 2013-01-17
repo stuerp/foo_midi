@@ -1,4 +1,4 @@
-#define MYVERSION "1.193"
+#define MYVERSION "1.194"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,14 @@
 
 /*
 	change log
+
+2013-01-17 02:57 UTC - kode54
+- Regenerated the adldata file from latest adlmidi
+- Fixed fmmidi bank LSB control
+- Rearranged the preferences page
+- Added automatic sorting of the adlmidi bank list
+- Disabled adlmidi configuration when adlmidi isn't selected
+- Version is now 1.194
 
 2013-01-15 06:34 UTC - kode54
 - Implemented support for fmmidi by yuno
@@ -2075,6 +2083,43 @@ private:
 	pfc::string8 m_soundfont, m_munt_path;
 
 	pfc::string8_fast m_cached, m_cached_current;
+
+	struct adl_bank
+	{
+		int number;
+		const char * name;
+
+		adl_bank() : number( -1 ), name( "" ) { }
+		adl_bank( const adl_bank& b ) : number( b.number ), name( b.name ) { }
+		adl_bank( int _number, const char * _name ) : number( _number ), name( _name ) { }
+
+		adl_bank & operator= (const adl_bank& b)
+		{
+			number = b.number;
+			name = b.name;
+			return *this;
+		}
+
+		bool operator==(const adl_bank& b) const
+		{
+			return number == b.number;
+		}
+		bool operator< (const adl_bank& b) const
+		{
+			int c = stricmp_utf8( name, b.name );
+			if ( c ) return c < 0;
+			return 0;
+		}
+		bool operator> (const adl_bank& b) const
+		{
+			int c = stricmp_utf8( name, b.name );
+			if ( c ) return c > 0;
+			return 0;
+		}
+		bool operator!=(const adl_bank& b) const { return !operator==(b); }
+	};
+
+	pfc::list_t<adl_bank> m_bank_list;
 };
 
 void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
@@ -2242,6 +2287,15 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 #endif
 
+	if ( plugin != 6 )
+	{
+		GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_ADL_BANK ).EnableWindow( FALSE );
+		GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( FALSE );
+		GetDlgItem( IDC_ADL_PANNING ).EnableWindow( FALSE );
+	}
+
 	if ( plugin != 1 )
 	{
 		GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( FALSE );
@@ -2364,12 +2418,20 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	//SendDlgItemMessage( IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex );
 	//SendDlgItemMessage( IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums );
 
-	w = GetDlgItem( IDC_ADL_BANK );
 	for ( unsigned i = 0; i < _countof( banknames ); i++ )
 	{
-		uSendMessageText( w, CB_ADDSTRING, 0, banknames[ i ] );
+		m_bank_list += adl_bank( i, banknames[ i ] );
 	}
-	w.SendMessage( CB_SETCURSEL, cfg_adl_bank );
+	m_bank_list.sort();
+
+	unsigned bank_selected = 0;
+	w = GetDlgItem( IDC_ADL_BANK );
+	for ( unsigned i = 0; i < m_bank_list.get_count(); i++ )
+	{
+		uSendMessageText( w, CB_ADDSTRING, 0, m_bank_list[ i ].name );
+		if ( m_bank_list[ i ].number == cfg_adl_bank ) bank_selected = i;
+	}
+	w.SendMessage( CB_SETCURSEL, bank_selected );
 
 	w = GetDlgItem( IDC_ADL_CHIPS );
 	for ( unsigned i = 0; i < _countof( chip_counts ); i++ )
@@ -2459,6 +2521,12 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_RESAMPLING ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_CACHED ).EnableWindow( plugin == 1 || plugin == 2 );
+	GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( plugin == 4 );
+	GetDlgItem( IDC_ADL_BANK ).EnableWindow( plugin == 4 );
+	GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( plugin == 4 );
+	GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( plugin == 4 );
+	GetDlgItem( IDC_ADL_PANNING ).EnableWindow( plugin == 4 );
+
 #ifdef FLUIDSYNTHSUPPORT
 	GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 1 );
 	GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin == 1 );
@@ -2584,6 +2652,14 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_CACHED ).EnableWindow( FALSE );
 	}
+	if ( default_cfg_plugin != 6 )
+	{
+		GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_ADL_BANK ).EnableWindow( FALSE );
+		GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( FALSE );
+		GetDlgItem( IDC_ADL_PANNING ).EnableWindow( FALSE );
+	}
 #ifdef FLUIDSYNTHSUPPORT
 	if ( default_cfg_plugin != 2 )
 	{
@@ -2625,7 +2701,16 @@ void CMyPreferences::reset() {
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion );
 	SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments );
 	SendDlgItemMessage( IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks );
-	SendDlgItemMessage( IDC_ADL_BANK, CB_SETCURSEL, default_cfg_adl_bank );
+	unsigned bank_selected = 0;
+	for ( unsigned i = 0; i < m_bank_list.get_count(); i++ )
+	{
+		if ( m_bank_list[ i ].number == default_cfg_adl_bank )
+		{
+			bank_selected = i;
+			break;
+		}
+	}
+	SendDlgItemMessage( IDC_ADL_BANK, CB_SETCURSEL, bank_selected );
 	SendDlgItemMessage( IDC_ADL_PANNING, BM_SETCHECK, default_cfg_adl_panning );
 	SetDlgItemInt( IDC_ADL_CHIPS, default_cfg_adl_chips, 0 );
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
@@ -2648,7 +2733,9 @@ void CMyPreferences::apply() {
 	itoa( t, temp, 10 );
 	cfg_history_rate.add_item( temp );
 	cfg_srate = t;
-	cfg_adl_bank = SendDlgItemMessage( IDC_ADL_BANK, CB_GETCURSEL );
+	t = SendDlgItemMessage( IDC_ADL_BANK, CB_GETCURSEL );
+	if ( t < 0 || t >= m_bank_list.get_count() ) t = 0;
+	cfg_adl_bank = m_bank_list[ t ].number;
 	t = GetDlgItemInt( IDC_ADL_CHIPS, NULL, FALSE );
 	if ( t < 1 ) t = 1;
 	if ( t > 100 ) t = 100;
@@ -2729,7 +2816,12 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ] != cfg_fluid_interp_method ) changed = true;
 #endif
 	if ( !changed && SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL ) != cfg_resampling ) changed = true;
-	if ( !changed && SendDlgItemMessage( IDC_ADL_BANK, CB_GETCURSEL ) != cfg_adl_bank ) changed = true;
+	if ( !changed )
+	{
+		int t = SendDlgItemMessage( IDC_ADL_BANK, CB_GETCURSEL );
+		if ( t < 0 || t >= m_bank_list.get_count() ) t = 0;
+		if ( m_bank_list[ t ].number != cfg_adl_bank ) changed = true;
+	}
 	if ( !changed && GetDlgItemInt( IDC_ADL_CHIPS, NULL, FALSE ) != cfg_adl_chips ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_ADL_PANNING, BM_GETCHECK ) != cfg_adl_panning ) changed = true;
 	if ( !changed )
