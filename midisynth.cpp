@@ -225,7 +225,7 @@ namespace midisynth{
             expression = (expression & 0x7F) | (value << 7);
             break;
         case 0x20:
-            bank_select((bank & 0x7F) | (value << 7));
+            bank_select((bank & ~0x7F) | value);
             break;
         case 0x21:
             set_modulation_depth((modulation_depth & ~0x7F) | value);
