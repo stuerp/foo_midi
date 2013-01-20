@@ -1,4 +1,4 @@
-#define MYVERSION "1.194"
+#define MYVERSION "1.195"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-01-20 01:06 UTC - kode54
+- Added more instrument banks to adlmidi
+- Version is now 1.195
 
 2013-01-17 02:57 UTC - kode54
 - Regenerated the adldata file from latest adlmidi
