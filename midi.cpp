@@ -1,4 +1,4 @@
-#define MYVERSION "1.195"
+#define MYVERSION "1.196"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2013-01-30 19:14 UTC - kode54
+- Implemented support for MIDI meta number 9 for port name
+- Implemented support for four ports in adlmidi player
+- Fixed the Bisqwit bank, and all the banks were renumbered
+- Version is now 1.196
 
 2013-01-20 01:06 UTC - kode54
 - Added more instrument banks to adlmidi
@@ -778,9 +784,9 @@ static const GUID guid_cfg_midi_loop_count =
 // {1CC76581-6FC8-445E-9E3D-020043D98B65}
 static const GUID guid_cfg_midi_fade_time = 
 { 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
-// {CB43A7B1-CB70-4A61-84FB-9D746F3D42F9}
- static const GUID guid_cfg_adl_bank = 
-{ 0xcb43a7b1, 0xcb70, 0x4a61, { 0x84, 0xfb, 0x9d, 0x74, 0x6f, 0x3d, 0x42, 0xf9 } };
+// {A62A00A7-0DBF-4475-BECA-EDBF5D064A80}
+static const GUID guid_cfg_adl_bank = 
+{ 0xa62a00a7, 0xdbf, 0x4475, { 0xbe, 0xca, 0xed, 0xbf, 0x5d, 0x6, 0x4a, 0x80 } };
 static const GUID guid_cfg_adl_chips = 
 { 0x974365ed, 0xd4f9, 0x4daa, { 0xb4, 0x89, 0xad, 0x7a, 0xd2, 0x91, 0xfa, 0x94 } };
 // {AD6821B4-493F-4BB3-B7BB-E0A67C5D5907}
@@ -854,7 +860,7 @@ enum
 	default_cfg_srate = 44100,
 	default_cfg_plugin = 0,
 	default_cfg_resampling = 1,
-	default_cfg_adl_bank = 51,
+	default_cfg_adl_bank = 1,
 	default_cfg_adl_chips = 10,
 	default_cfg_adl_panning = 1,
 	//default_cfg_adl_4op = 14,

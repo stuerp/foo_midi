@@ -346,7 +346,7 @@ void midi_container::add_track( const midi_track & p_track )
 		else if ( event.m_type == midi_event::extended && event.get_data_count() >= 3 &&
 			event.m_data[ 0 ] == 0xFF )
 		{
-			if ( event.m_data[ 1 ] == 4 )
+			if ( event.m_data[ 1 ] == 4 || event.m_data[ 1 ] == 9 )
 			{
 				unsigned data_count = event.get_data_count() - 2;
 				data.grow_size( data_count );
@@ -581,7 +581,7 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 				}
 				else if ( data_count >= 3 && event.m_data[ 0 ] == 0xFF )
 				{
-					if ( event.m_data[ 1 ] == 4 )
+					if ( event.m_data[ 1 ] == 4 || event.m_data[ 1 ] == 9 )
 					{
 						unsigned data_count = event.get_data_count() - 2;
 						data.grow_size( data_count );

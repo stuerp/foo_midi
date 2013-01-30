@@ -522,7 +522,7 @@ public:
     unsigned AdlBank;
 
 	void init() {
-		Ch.resize( 16 );
+		Ch.resize( 64 );
         ch.resize(opl.NumChannels);
 	}
 
@@ -669,7 +669,7 @@ private:
     }
 
 public:
-    void HandleEvent(const unsigned char * event, unsigned int event_size)
+    void HandleEvent(const unsigned char * event, unsigned int event_size, unsigned int port)
     {
         if ( event_size < 1 ) return;
         unsigned char byte = event[ 0 ];
@@ -685,7 +685,7 @@ public:
         /*UI.PrintLn("@%X Track %u: %02X %02X",
             CurrentPosition.track[tk].ptr-1, (unsigned)tk, byte,
             TrackData[tk][CurrentPosition.track[tk].ptr]);*/
-        unsigned MidCh = byte & 0x0F, EvType = byte >> 4;
+        unsigned MidCh = (byte & 0x0F) + (port & 3) * 16, EvType = byte >> 4;
 
         switch(EvType)
         {
@@ -1614,30 +1614,28 @@ void ADLPlayer::send_event(DWORD b)
 		event[ 0 ] = (unsigned char)b;
 		event[ 1 ] = (unsigned char)( b >> 8 );
 		event[ 2 ] = (unsigned char)( b >> 16 );
+		unsigned port = (b >> 24) & 3;
 		unsigned channel = b & 0x0F;
 		unsigned command = b & 0xF0;
 		unsigned event_length = ( command == 0xC0 || command == 0xD0 ) ? 2 : 3;
-		midiplay->HandleEvent( event, event_length );
+		midiplay->HandleEvent( event, event_length, port );
 		if ( command == 0xB0 && event[ 1 ] == 0 )
 		{
 			if ( synth_mode == mode_xg )
 			{
-				if ( event[ 2 ] == 127 ) drum_channels[ channel ] = 1;
-				else drum_channels[ channel ] = 0;
+				if ( event[ 2 ] == 127 ) drum_channels[ port ][ channel ] = 1;
+				else drum_channels[ port ][ channel ] = 0;
 			}
 			else if ( synth_mode == mode_gm2 )
 			{
-				if ( event[ 2 ] == 120 ) drum_channels[ channel ] = 1;
-				else if ( event[ 2 ] == 121 ) drum_channels[ channel ] = 0;
+				if ( event[ 2 ] == 120 ) drum_channels[ port ][ channel ] = 1;
+				else if ( event[ 2 ] == 121 ) drum_channels[ port ][ channel ] = 0;
 			}
 		}
 		else if ( command == 0xC0 )
 		{
-			unsigned channel_masked = channel & 0x0F;
-			unsigned drum_channel = drum_channels[ channel ];
-			if ( ( channel_masked == 9 && !drum_channel ) ||
-				( channel_masked != 9 && drum_channel ) )
-				midiplay->setDrumMode( channel_masked, !!drum_channel );
+			unsigned drum_channel = drum_channels[ port ][ channel ];
+			midiplay->setDrumMode( channel + (port * 16), !!drum_channel );
 		}
 	}
 	else
@@ -1646,8 +1644,8 @@ void ADLPlayer::send_event(DWORD b)
 		const t_uint8 * data;
 		t_size size, port;
 		mSysexMap.get_entry( n, data, size, port );
-		if ( port > 2 ) port = 2;
-		midiplay->HandleEvent( data, size );
+		port &= 3;
+		midiplay->HandleEvent( data, size, port );
 		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
 			( size == _countof( sysex_gm2_reset ) && !memcmp( data, sysex_gm2_reset, _countof( sysex_gm2_reset ) ) ) ||
 			is_gs_reset( data, size ) ||
@@ -1667,16 +1665,16 @@ void ADLPlayer::send_event(DWORD b)
 			if (data [7] == 2)
 			{
 				// GS MIDI channel to part assign
-				gs_part_to_ch [ data [6] & 15 ] = data [8];
+				gs_part_to_ch [ port ][ data [6] & 15 ] = data [8];
 			}
 			else if ( data [7] == 0x15 )
 			{
 				// GS part to rhythm allocation
-				unsigned int drum_channel = gs_part_to_ch [ data [6] & 15 ];
+				unsigned int drum_channel = gs_part_to_ch [ port ][ data [6] & 15 ];
 				if ( drum_channel < 16 )
 				{
 					drum_channel += 16 * port;
-					drum_channels [ drum_channel ] = data [8];
+					drum_channels [ port ][ drum_channel ] = data [8];
 				}
 			}
 		}
@@ -1932,15 +1930,18 @@ void ADLPlayer::reset_drum_channels()
 	static const BYTE part_to_ch[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
 
 	memset( drum_channels, 0, sizeof( drum_channels ) );
-	drum_channels[ 9 ] = 1;
+	for (unsigned i = 0; i < 4; i++)
+	{
+		drum_channels[ i ][ 9 ] = 1;
 
-	memcpy( gs_part_to_ch, part_to_ch, sizeof( gs_part_to_ch ) );
+		memcpy( gs_part_to_ch[ i ], part_to_ch, sizeof( gs_part_to_ch[ i ] ) );
+	}
 
 	if ( midiplay )
 	{
-		for ( unsigned i = 0; i < 16; ++i )
+		for ( unsigned i = 0; i < 64; ++i )
 		{
-			midiplay->setDrumMode( i, !!drum_channels[ i ] );
+			midiplay->setDrumMode( i, !!drum_channels[ i / 16 ][ i & 15 ] );
 		}
 	}
 }
