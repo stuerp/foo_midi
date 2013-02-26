@@ -463,7 +463,7 @@ private:
               bend(0.0), bendsense(2 / 8192.0),
               vibpos(0), vibspeed(2*3.141592653*5.0),
               vibdepth(0.5/127), vibdelay(0),
-              lastlrpn(0),lastmrpn(0),nrpn(false),
+              lastlrpn(127),lastmrpn(127),nrpn(false),
 			  drum_mode(false),
               activenotes() { }
     };

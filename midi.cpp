@@ -1,4 +1,4 @@
-#define MYVERSION "1.196"
+#define MYVERSION "1.197"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,14 @@
 
 /*
 	change log
+
+2013-02-26 03:57 UTC - kode54
+- Implemented database metadata storage system
+- Implemented per-file synthesizer preset configuration
+- Version is now 1.197
+
+2013-02-26 00:57 UTC - kode54
+- Fixed adlmidi to initialize RPN to 0x3fff
 
 2013-01-30 19:14 UTC - kode54
 - Implemented support for MIDI meta number 9 for port name
@@ -913,6 +921,224 @@ advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops pres
 advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
 advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 10, 30000);
 
+struct midi_preset
+{
+	enum { version = 0 };
+
+	// version 0
+	unsigned int plugin;
+
+	// v0 - plug-in == 1 - VSTi
+	pfc::string8 vst_path;
+	pfc::array_t<t_uint8> vst_config;
+
+	// v0 - plug-in == 2/4 - SoundFont synthesizer
+	pfc::string8 soundfont_path;
+
+#ifdef DXISUPPORT
+	// v0 - plug-in == 5 - DXi
+	GUID dxi_plugin;
+#endif
+
+	// v0 - plug-in == 6 - adlmidi
+	unsigned int adl_bank;
+	unsigned int adl_chips;
+	bool adl_panning;
+
+	midi_preset()
+	{
+		plugin = cfg_plugin;
+		vst_path = cfg_vst_path;
+		try
+		{
+			VSTiPlayer * vstPlayer;
+			vstPlayer = new VSTiPlayer;
+			if (vstPlayer->LoadVST(vst_path))
+			{
+				vst_config = cfg_vst_config[ vstPlayer->getUniqueID() ];
+			}
+		}
+		catch (...)
+		{
+			if ( plugin == 1 ) plugin = 0;
+		}
+		soundfont_path = cfg_soundfont_path;
+#ifdef DXISUPPORT
+		dxi_plugin = cfg_dxi_plugin;
+#endif
+		adl_bank = cfg_adl_bank;
+		adl_chips = cfg_adl_chips;
+		adl_panning = !!cfg_adl_panning;
+	}
+
+	void serialize(pfc::string8 & p_out)
+	{
+		p_out.reset();
+
+		p_out += pfc::format_int( version );
+		p_out += "|";
+
+		p_out += pfc::format_int( plugin );
+
+		if ( plugin == 1 )
+		{
+			p_out += "|";
+
+			p_out += vst_path;
+			p_out += "|";
+
+			for ( unsigned i = 0; i < vst_config.get_count(); i++ )
+			{
+				p_out += pfc::format_hex( vst_config[ i ], 2 );
+			}
+		}
+		else if ( plugin == 2 || plugin == 4 )
+		{
+			p_out += "|";
+
+			p_out += soundfont_path;
+		}
+#ifdef DXISUPPORT
+		else if ( plugin == 5 )
+		{
+			p_out += "|";
+
+			p_out += pfc::format_hex( dxi_plugin.Data1, 8 );
+			p_out += "-";
+			p_out += pfc::format_hex( dxi_plugin.Data2, 4 );
+			p_out += "-";
+			p_out += pfc::format_hex( dxi_plugin.Data3, 4 );
+			p_out += "-";
+			p_out += pfc::format_hex( dxi_plugin.Data4[0], 2 );
+			p_out += pfc::format_hex( dxi_plugin.Data4[1], 2 );
+			p_out += "-";
+			p_out += pfc::format_hex( dxi_plugin.Data4[2], 2 );
+			p_out += pfc::format_hex( dxi_plugin.Data4[3], 2 );
+			p_out += pfc::format_hex( dxi_plugin.Data4[4], 2 );
+			p_out += pfc::format_hex( dxi_plugin.Data4[5], 2 );
+			p_out += pfc::format_hex( dxi_plugin.Data4[6], 2 );
+			p_out += pfc::format_hex( dxi_plugin.Data4[7], 2 );
+		}
+#endif
+		else if ( plugin == 6 )
+		{
+			p_out += "|";
+
+			p_out += banknames[ adl_bank ];
+			p_out += "|";
+
+			p_out += pfc::format_int( adl_chips );
+			p_out += "|";
+
+			p_out += pfc::format_int( adl_panning );
+		}
+	}
+
+	void unserialize( const char * p_in )
+	{
+		const char * bar_pos = strchr( p_in, '|' );
+		if ( !bar_pos ) return;
+
+		unsigned in_version = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+		if ( in_version > version ) return;
+
+		p_in = bar_pos + 1;
+
+		bar_pos = strchr( p_in, '|' );
+		if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+		unsigned in_plugin = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+		pfc::string8 in_vst_path;
+		pfc::array_t<t_uint8> in_vst_config;
+		pfc::string8 in_soundfont_path;
+		GUID in_dxi_plugin;
+		unsigned in_adl_bank, in_adl_chips;
+		bool in_adl_panning;
+
+		if ( *bar_pos )
+		{
+			p_in = bar_pos + 1;
+			bar_pos = strchr( p_in, '|' );
+			if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+			if ( in_plugin == 1 )
+			{
+				in_vst_path.set_string( p_in, bar_pos - p_in );
+
+				p_in = bar_pos + (*bar_pos == '|');
+				bar_pos = strchr( p_in, '|' );
+				if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+				while ( *p_in )
+				{
+					in_vst_config.append_single( pfc::atohex<unsigned char>( p_in, 2 ) );
+					p_in += 2;
+				}
+			}
+			else if ( in_plugin == 2 || in_plugin == 4 )
+			{
+				in_soundfont_path.set_string( p_in, bar_pos - p_in );
+			}
+#ifdef DXISUPPORT
+			else if ( in_plugin == 5 )
+			{
+				if ( bar_pos - p_in < 8 + 1 + 4 + 1 + 4 + 1 + 4 + 1 + 12 ) return;
+				in_dxi_plugin.Data1 = pfc::atohex<t_uint32>( p_in, 8 );
+				in_dxi_plugin.Data2 = pfc::atohex<t_uint16>( p_in + 8 + 1, 4 );
+				in_dxi_plugin.Data3 = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1, 4 );
+				in_dxi_plugin.Data4[0] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1, 2 );
+				in_dxi_plugin.Data4[1] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2, 2 );
+				in_dxi_plugin.Data4[2] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1, 2 );
+				in_dxi_plugin.Data4[3] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2, 2 );
+				in_dxi_plugin.Data4[4] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2, 2 );
+				in_dxi_plugin.Data4[5] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2, 2 );
+				in_dxi_plugin.Data4[6] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2, 2 );
+				in_dxi_plugin.Data4[7] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2 + 2, 2 );				
+			}
+#endif
+			else if ( in_plugin == 6 )
+			{
+				unsigned i, j;
+				for ( i = 0, j = _countof( banknames ); i < j; i++ )
+				{
+					size_t len = strlen( banknames[ i ] );
+					if ( len == bar_pos - p_in && !strncmp( p_in, banknames[ i ], len ) )
+					{
+						in_adl_bank = i;
+						break;
+					}
+				}
+				if ( i == j ) return;
+
+				p_in = bar_pos + (*bar_pos == '|');
+				bar_pos = strchr( p_in, '|' );
+				if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+				if ( !*p_in ) return;
+				in_adl_chips = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+
+				p_in = bar_pos + (*bar_pos == '|');
+				bar_pos = strchr( p_in, '|' );
+				if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+				if ( !*p_in ) return;
+				in_adl_panning = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+			}
+		}
+
+		plugin = in_plugin;
+		vst_path = in_vst_path;
+		vst_config = in_vst_config;
+		soundfont_path = in_soundfont_path;
+#ifdef DXISUPPORT
+		dxi_plugin = in_dxi_plugin;
+#endif
+		adl_bank = in_adl_bank;
+		adl_chips = in_adl_chips;
+		adl_panning = in_adl_panning;
+	}
+};
+
 static const char * exts[]=
 {
 	"MID",
@@ -926,6 +1152,82 @@ static const char * exts[]=
 	"MUS",
 	"XMI",
 	"LDS",
+};
+
+static bool g_test_extension(const char * ext)
+{
+	int n;
+	for(n=0;n<tabsize(exts);n++)
+	{
+		if (!stricmp(ext,exts[n])) return true;
+	}
+	return false;
+}
+
+// {4209C12E-C2F4-40CA-B2BC-FB61C32687D0}
+static const GUID guid_midi_index = 
+{ 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0x61, 0xc3, 0x26, 0x87, 0xd0 } };
+
+static const char field_hash[] = "midi_hash";
+static const char field_format[] = "midi_format";
+static const char field_tracks[] = "midi_tracks";
+static const char field_channels[] = "midi_channels";
+static const char field_ticks[] = "midi_ticks";
+static const char field_type[] = "midi_type";
+static const char field_loop_start[] = "midi_loop_start";
+static const char field_loop_end[] = "midi_loop_end";
+static const char field_loop_start_ms[] = "midi_loop_start_ms";
+static const char field_loop_end_ms[] = "midi_loop_end_ms";
+static const char field_preset[] = "midi_preset";
+
+class metadb_index_client_midi : public metadb_index_client
+{
+	virtual metadb_index_hash transform(const file_info & info, const playable_location & location)
+	{
+		const metadb_index_hash hash_null = 0;
+
+		if ( !g_test_extension( pfc::string_extension( location.get_path() ) ) ) return hash_null;
+
+		hasher_md5_state hasher_state;
+		static_api_ptr_t<hasher_md5> hasher;
+
+		t_uint32 subsong = location.get_subsong();
+
+		hasher->initialize( hasher_state );
+
+		hasher->process( hasher_state, &subsong, sizeof(subsong) );
+		
+		const char * str = info.info_get( field_hash );
+		if ( str ) hasher->process_string( hasher_state, str );
+		else hasher->process_string( hasher_state, location.get_path() );
+
+#define HASH_STRING(s) \
+		str = info.info_get( s ); \
+		if ( str ) hasher->process_string( hasher_state, str );
+
+		HASH_STRING( field_format );
+		HASH_STRING( field_tracks );
+		HASH_STRING( field_channels );
+		HASH_STRING( field_ticks );
+		HASH_STRING( field_type );
+		HASH_STRING( field_loop_start );
+		HASH_STRING( field_loop_end );
+		HASH_STRING( field_loop_start_ms );
+		HASH_STRING( field_loop_end_ms );
+
+		return from_md5( hasher->get_result( hasher_state ) );
+	}
+};
+
+class initquit_midi : public initquit
+{
+public:
+	void on_init()
+	{
+		static_api_ptr_t<metadb_index_manager>()->add( new service_impl_t<metadb_index_client_midi>, guid_midi_index, 4 * 7 * 24 * 60 * 60 * 10000000 );
+	}
+
+	void on_quit() { }
 };
 
 static critical_section sync;
@@ -983,6 +1285,9 @@ class input_midi
 
 	t_filestats m_stats;
 
+	metadb_index_hash m_index_hash;
+	hasher_md5_result m_file_hash;
+
 #if audio_sample_size != 32
 	pfc::array_t<float> sample_buffer;
 #endif
@@ -997,7 +1302,7 @@ class input_midi
 	*/
 
 public:
-	input_midi() : srate(cfg_srate), plugin(cfg_plugin), resampling(cfg_resampling),
+	input_midi() : srate(cfg_srate), resampling(cfg_resampling),
 		loop_type(cfg_loop_type), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
@@ -1099,8 +1404,6 @@ private:
 public:
 	void open( service_ptr_t<file> p_file,const char * p_path,t_input_open_reason p_reason,abort_callback & p_abort )
 	{
-		if ( p_reason == input_open_info_write ) throw exception_io_unsupported_format();
-
 		if ( p_file.is_empty() )
 		{
 			filesystem::g_open( p_file, p_path, filesystem::open_mode_read, p_abort );
@@ -1114,6 +1417,18 @@ public:
 		midi_processor::process_file( p_file, pfc::string_extension( p_path ), midi_file, p_abort );
 
 		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz );
+
+		pfc::array_t<t_uint8> temp_file;
+
+		midi_file.serialize_as_standard_midi_file( temp_file );
+
+		hasher_md5_state hasher_state;
+		static_api_ptr_t<hasher_md5> hasher;
+
+		hasher->initialize( hasher_state );
+		hasher->process( hasher_state, temp_file.get_ptr(), temp_file.get_size() );
+
+		m_file_hash = hasher->get_result( hasher_state );
 	}
 
 	unsigned get_subsong_count()
@@ -1145,21 +1460,21 @@ public:
 			}
 		}
 
-		p_info.info_set_int("midi_format", midi_file.get_format());
-		p_info.info_set_int("midi_tracks", midi_file.get_format() == 2 ? 1 : midi_file.get_track_count());
-		p_info.info_set_int("midi_channels", midi_file.get_channel_count(p_subsong));
-		p_info.info_set_int("midi_ticks", midi_file.get_timestamp_end(p_subsong));
-		if (meta_data.get_item("type", item)) p_info.info_set("midi_type", item.m_value);
+		p_info.info_set_int(field_format, midi_file.get_format());
+		p_info.info_set_int(field_tracks, midi_file.get_format() == 2 ? 1 : midi_file.get_track_count());
+		p_info.info_set_int(field_channels, midi_file.get_channel_count(p_subsong));
+		p_info.info_set_int(field_ticks, midi_file.get_timestamp_end(p_subsong));
+		if (meta_data.get_item("type", item)) p_info.info_set(field_type, item.m_value);
 
 		unsigned loop_begin = midi_file.get_timestamp_loop_start( p_subsong );
 		unsigned loop_end = midi_file.get_timestamp_loop_end( p_subsong );
 		unsigned loop_begin_ms = midi_file.get_timestamp_loop_start( p_subsong, true );
 		unsigned loop_end_ms = midi_file.get_timestamp_loop_end( p_subsong, true );
 
-		if (loop_begin != ~0) p_info.info_set_int("midi_loop_start", loop_begin );
-		if (loop_end != ~0) p_info.info_set_int("midi_loop_end", loop_end );
-		if (loop_begin_ms != ~0) p_info.info_set_int("midi_loop_start_ms", loop_begin_ms );
-		if (loop_end_ms != ~0) p_info.info_set_int("midi_loop_end_ms", loop_end_ms );
+		if (loop_begin != ~0) p_info.info_set_int(field_loop_start, loop_begin );
+		if (loop_end != ~0) p_info.info_set_int(field_loop_end, loop_end );
+		if (loop_begin_ms != ~0) p_info.info_set_int(field_loop_start_ms, loop_begin_ms );
+		if (loop_end_ms != ~0) p_info.info_set_int(field_loop_end_ms, loop_end_ms );
 		//p_info.info_set_int("samplerate", srate);
 		unsigned length_ms = midi_file.get_timestamp_end( p_subsong, true );
 		double length = double( length_ms ) * 0.001 + 1.0;
@@ -1172,6 +1487,37 @@ public:
 		p_info.info_set_int("channels", 2);
 		p_info.info_set( "encoding", "synthesized" );
 		p_info.set_length( length );
+
+		pfc::string8 hash_string;
+
+		for ( unsigned i = 0; i < 16; i++ ) hash_string += pfc::format_uint( (t_uint8)m_file_hash.m_data[i], 2, 16 );
+
+		p_info.info_set( field_hash, hash_string );
+
+		service_ptr_t<metadb_index_client> index_client = new service_impl_t<metadb_index_client_midi>;
+		m_index_hash = index_client->transform( p_info, playable_location_impl( m_path, p_subsong ) );
+
+		pfc::array_t<t_uint8> tag;
+		static_api_ptr_t<metadb_index_manager>()->get_user_data_t( guid_midi_index, m_index_hash, tag );
+
+		if ( tag.get_count() )
+		{
+			file::ptr tag_file;
+			filesystem::g_open_tempmem( tag_file, p_abort );
+			tag_file->write_object( tag.get_ptr(), tag.get_count(), p_abort );
+
+			p_info.meta_remove_all();
+
+			tag_processor::read_trailing( tag_file, p_info, p_abort );
+			p_info.info_set( "tagtype", "apev2 db" );
+
+			const char * midi_preset = p_info.meta_get( field_preset, 0 );
+			if ( midi_preset )
+			{
+				p_info.info_set( field_preset, midi_preset );
+				p_info.meta_remove_field( field_preset );
+			}
+		}
 	}
 
 	t_filestats get_file_stats( abort_callback & p_abort )
@@ -1181,6 +1527,65 @@ public:
 
 	void decode_initialize( unsigned p_subsong, unsigned p_flags, abort_callback & p_abort )
 	{
+		midi_preset thePreset;
+
+		{
+			file_info_impl p_info;
+
+			midi_meta_data meta_data;
+			midi_file.get_meta_data( p_subsong, meta_data );
+
+			midi_meta_data_item item;
+
+			p_info.info_set_int(field_format, midi_file.get_format());
+			p_info.info_set_int(field_tracks, midi_file.get_format() == 2 ? 1 : midi_file.get_track_count());
+			p_info.info_set_int(field_channels, midi_file.get_channel_count(p_subsong));
+			p_info.info_set_int(field_ticks, midi_file.get_timestamp_end(p_subsong));
+			if (meta_data.get_item("type", item)) p_info.info_set(field_type, item.m_value);
+
+			unsigned loop_begin = midi_file.get_timestamp_loop_start( p_subsong );
+			unsigned loop_end = midi_file.get_timestamp_loop_end( p_subsong );
+			unsigned loop_begin_ms = midi_file.get_timestamp_loop_start( p_subsong, true );
+			unsigned loop_end_ms = midi_file.get_timestamp_loop_end( p_subsong, true );
+
+			if (loop_begin != ~0) p_info.info_set_int(field_loop_start, loop_begin );
+			if (loop_end != ~0) p_info.info_set_int(field_loop_end, loop_end );
+			if (loop_begin_ms != ~0) p_info.info_set_int(field_loop_start_ms, loop_begin_ms );
+			if (loop_end_ms != ~0) p_info.info_set_int(field_loop_end_ms, loop_end_ms );
+
+			pfc::string8 hash_string;
+
+			for ( unsigned i = 0; i < 16; i++ ) hash_string += pfc::format_uint( (t_uint8)m_file_hash.m_data[i], 2, 16 );
+
+			p_info.info_set( field_hash, hash_string );
+
+			service_ptr_t<metadb_index_client> index_client = new service_impl_t<metadb_index_client_midi>;
+			m_index_hash = index_client->transform( p_info, playable_location_impl( m_path, p_subsong ) );
+
+			pfc::array_t<t_uint8> tag;
+			static_api_ptr_t<metadb_index_manager>()->get_user_data_t( guid_midi_index, m_index_hash, tag );
+
+			if ( tag.get_count() )
+			{
+				file::ptr tag_file;
+				filesystem::g_open_tempmem( tag_file, p_abort );
+				tag_file->write_object( tag.get_ptr(), tag.get_count(), p_abort );
+
+				p_info.meta_remove_all();
+
+				tag_processor::read_trailing( tag_file, p_info, p_abort );
+				p_info.info_set( "tagtype", "apev2 db" );
+			}
+
+			const char * midi_preset = p_info.meta_get( field_preset, 0 );
+			if ( midi_preset )
+			{
+				thePreset.unserialize( midi_preset );
+			}
+		}
+
+		plugin = thePreset.plugin;
+
 		first_block = true;
 
 		get_length(p_subsong);
@@ -1288,7 +1693,7 @@ public:
 				dxiProxy->setSampleRate( srate );
 				if ( SUCCEEDED( dxiProxy->setSequence( serialized_midi_file.get_ptr(), serialized_midi_file.get_count() ) ) )
 				{
-					if ( SUCCEEDED( dxiProxy->setPlugin( cfg_dxi_plugin.get_value() ) ) )
+					if ( SUCCEEDED( dxiProxy->setPlugin( thePreset.dxi_plugin ) ) )
 					{
 						dxiProxy->Stop();
 						dxiProxy->Play(TRUE);
@@ -1322,9 +1727,9 @@ public:
 			{
 				delete vstPlayer;
 				vstPlayer = new VSTiPlayer;
-				if (vstPlayer->LoadVST(cfg_vst_path))
+				if (vstPlayer->LoadVST(thePreset.vst_path))
 				{
-					vstPlayer->setChunk( cfg_vst_config[ vstPlayer->getUniqueID() ].get_ptr(), cfg_vst_config[ vstPlayer->getUniqueID() ].get_count() );
+					vstPlayer->setChunk( thePreset.vst_config.get_ptr(), thePreset.vst_config.get_count() );
 
 					vstPlayer->setSampleRate(srate);
 
@@ -1357,7 +1762,7 @@ public:
 
 				delete sfPlayer;
 				sfPlayer = new SFPlayer;
-				sfPlayer->setSoundFont(cfg_soundfont_path);
+				sfPlayer->setSoundFont(thePreset.soundfont_path);
 				if ( file_soundfont.length() ) sfPlayer->setFileSoundFont( file_soundfont );
 				sfPlayer->setSampleRate(srate);
 				sfPlayer->setInterpolationMethod(cfg_fluid_interp_method);
@@ -1392,7 +1797,7 @@ public:
 
 				delete bmPlayer;
 				bmPlayer = new BMPlayer;
-				bmPlayer->setSoundFont(cfg_soundfont_path);
+				bmPlayer->setSoundFont(thePreset.soundfont_path);
 				if ( file_soundfont.length() ) bmPlayer->setFileSoundFont( file_soundfont );
 				bmPlayer->setSampleRate(srate);
 				bmPlayer->setSincInterpolation(!!resampling);
@@ -1417,10 +1822,10 @@ public:
 			{
 				delete adlPlayer;
 				adlPlayer = new ADLPlayer;
-				adlPlayer->setBank( cfg_adl_bank );
-				adlPlayer->setChipCount( cfg_adl_chips );
-				adlPlayer->setFullPanning( cfg_adl_panning );
-				adlPlayer->set4OpCount( cfg_adl_chips * 4 /*cfg_adl_4op*/ );
+				adlPlayer->setBank( thePreset.adl_bank );
+				adlPlayer->setChipCount( thePreset.adl_chips );
+				adlPlayer->setFullPanning( thePreset.adl_panning );
+				adlPlayer->set4OpCount( thePreset.adl_chips * 4 /*cfg_adl_4op*/ );
 				adlPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;
@@ -1975,12 +2380,28 @@ fagotry:
 
 	void retag_set_info( t_uint32 p_subsong, const file_info & p_info, abort_callback & p_abort )
 	{
-		throw exception_io_unsupported_format();
+		file_info_impl m_info( p_info );
+
+		const char * midi_preset = m_info.info_get( field_preset );
+		if ( midi_preset )
+		{
+			m_info.meta_set( field_preset, midi_preset );
+		}
+
+		file::ptr tag_file;
+		filesystem::g_open_tempmem( tag_file, p_abort );
+		tag_processor::write_apev2( tag_file, m_info, p_abort );
+
+		pfc::array_t<t_uint8> tag;
+		tag_file->seek( 0, p_abort );
+		tag.set_count( tag_file->get_size_ex( p_abort ) );
+		tag_file->read_object( tag.get_ptr(), tag.get_count(), p_abort );
+
+		static_api_ptr_t<metadb_index_manager>()->set_user_data( guid_midi_index, m_index_hash, tag.get_ptr(), tag.get_count() );
 	}
 
 	void retag_commit( abort_callback & p_abort )
 	{
-		throw exception_io_unsupported_format();
 	}
 
 	static bool g_is_our_content_type( const char * p_content_type )
@@ -1990,11 +2411,7 @@ fagotry:
 
 	static bool g_is_our_path( const char * p_full_path, const char * p_extension )
 	{
-		for( unsigned n=0; n< _countof( exts ); ++n )
-		{
-			if ( ! pfc::stricmp_ascii( p_extension, exts[ n ] ) ) return true;
-		}
-		return false;
+		return g_test_extension( p_extension );
 	}
 };
 
@@ -2939,15 +3356,54 @@ class midi_file_types : public input_file_type
 	}
 };
 
+static const char * context_names[3] = {"Convert to General MIDI", "Save synthesizer preset", "Remove synthesizer preset"};
+
+class midi_preset_filter : public file_info_filter
+{
+	pfc::string8 m_midi_preset;
+
+	metadb_handle_list m_handles;
+
+public:
+	midi_preset_filter( const pfc::list_base_const_t<metadb_handle_ptr> & p_list, const char * p_midi_preset )
+	{
+		m_midi_preset = p_midi_preset ? p_midi_preset : "";
+
+		pfc::array_t<t_size> order;
+		order.set_size(p_list.get_count());
+		order_helper::g_fill(order.get_ptr(),order.get_size());
+		p_list.sort_get_permutation_t(pfc::compare_t<metadb_handle_ptr,metadb_handle_ptr>,order.get_ptr());
+		m_handles.set_count(order.get_size());
+		for(t_size n = 0; n < order.get_size(); n++) {
+			m_handles[n] = p_list[order[n]];
+		}
+	}
+
+	virtual bool apply_filter(metadb_handle_ptr p_location,t_filestats p_stats,file_info & p_info)
+	{
+		t_size index;
+		if (m_handles.bsearch_t(pfc::compare_t<metadb_handle_ptr,metadb_handle_ptr>,p_location,index))
+		{
+			if ( m_midi_preset.get_length() ) p_info.info_set( field_preset, m_midi_preset );
+			else p_info.info_remove( field_preset );
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+};
+
 class context_midi : public contextmenu_item_simple
 {
 public:
-	virtual unsigned get_num_items() { return 1; }
+	virtual unsigned get_num_items() { return 3; }
 
 	virtual void get_item_name( unsigned n, pfc::string_base & out )
 	{
-		if ( n ) uBugCheck();
-		out = "Convert to General MIDI";
+		if ( n > 2 ) uBugCheck();
+		out = context_names[ n ];
 	}
 
 	/*
@@ -2960,28 +3416,36 @@ public:
 
 	virtual bool get_item_description( unsigned n, pfc::string_base & out )
 	{
-		if ( n ) uBugCheck();
-		out = "Converts the selected files into General MIDI files in the same path as the source.";
+		if ( n > 2 ) uBugCheck();
+		static const char * descriptions[3] = { "Converts the selected files into General MIDI files in the same path as the source.",
+			"Applies the current synthesizer setup to this track for future playback.",
+			"Removes a saved synthesizer preset from this track."
+		};
+		out = descriptions[ n ];
 		return true;
 	}
 
 	virtual GUID get_item_guid( unsigned n )
 	{
-		static const GUID guid = { 0x70985c72, 0xe77e, 0x4bbb, { 0xbf, 0x11, 0x3c, 0x90, 0x2b, 0x27, 0x39, 0x9d } };
-		if ( n ) uBugCheck();
-		return guid;
+		static const GUID guids[3] = {
+			{ 0x70985c72, 0xe77e, 0x4bbb, { 0xbf, 0x11, 0x3c, 0x90, 0x2b, 0x27, 0x39, 0x9d } },
+			{ 0xeb3f3ab4, 0x60b3, 0x4579, { 0x9f, 0xf8, 0x38, 0xda, 0xc0, 0x91, 0x2c, 0x82 } },
+			{ 0x5bcb6efe, 0x2eb5, 0x4331, { 0xb9, 0xc1, 0x92, 0x4b, 0x77, 0xba, 0xcc, 0x10 } }
+		};
+		if ( n > 2 ) uBugCheck();
+		return guids[ n ];
 	}
 
 	virtual bool context_get_display( unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out,unsigned & displayflags, const GUID & )
 	{
-		if ( n ) uBugCheck();
+		if ( n > 2 ) uBugCheck();
 		unsigned matches, i, j;
 		i = data.get_count();
 		for (matches = 0, j = 0; j < i; j++)
 		{
 			const playable_location & foo = data.get_item(j)->get_location();
 			pfc::string_extension ext(foo.get_path());
-			for ( unsigned k = 2, l = tabsize(exts); k < l; k++ )
+			for ( unsigned k = ((n == 0) ? 2 : 0), l = _countof(exts); k < l; k++ )
 			{
 				if ( !pfc::stricmp_ascii( ext, exts[ k ] ) )
 				{
@@ -2992,7 +3456,7 @@ public:
 		}
 		if ( matches == i )
 		{
-			out = "Convert to General MIDI";
+			out = context_names[ n ];
 			return true;
 		}
 		return false;
@@ -3000,26 +3464,46 @@ public:
 
 	virtual void context_command( unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, const GUID & )
 	{
-		if ( n ) uBugCheck();
-		unsigned i = data.get_count();
-		abort_callback_impl m_abort;
-		for ( unsigned i = 0, j = data.get_count(); i < j; i++ )
+		if ( n > 2 ) uBugCheck();
+		if ( !n )
 		{
-			const playable_location & loc = data.get_item( i )->get_location();
-			pfc::string8 out_path = loc.get_path();
-			out_path += ".mid";
+			unsigned i = data.get_count();
+			abort_callback_impl m_abort;
+			for ( unsigned i = 0, j = data.get_count(); i < j; i++ )
+			{
+				const playable_location & loc = data.get_item( i )->get_location();
+				pfc::string8 out_path = loc.get_path();
+				out_path += ".mid";
 
-			service_ptr_t<file> p_file;
-			filesystem::g_open( p_file, loc.get_path(), filesystem::open_mode_read, m_abort );
+				service_ptr_t<file> p_file;
+				filesystem::g_open( p_file, loc.get_path(), filesystem::open_mode_read, m_abort );
 
-			midi_container midi_file;
-			midi_processor::process_file( p_file, pfc::string_extension( loc.get_path() ), midi_file, m_abort );
+				midi_container midi_file;
+				midi_processor::process_file( p_file, pfc::string_extension( loc.get_path() ), midi_file, m_abort );
 
-			pfc::array_t<t_uint8> data;
-			midi_file.serialize_as_standard_midi_file( data );
+				pfc::array_t<t_uint8> data;
+				midi_file.serialize_as_standard_midi_file( data );
 
-			filesystem::g_open( p_file, out_path, filesystem::open_mode_write_new, m_abort );
-			p_file->write_object( data.get_ptr(), data.get_count(), m_abort );
+				filesystem::g_open( p_file, out_path, filesystem::open_mode_write_new, m_abort );
+				p_file->write_object( data.get_ptr(), data.get_count(), m_abort );
+			}
+		}
+		else
+		{
+			const char * p_midi_preset;
+			pfc::string8 preset_serialized;
+
+			if ( n == 1 )
+			{
+				midi_preset thePreset;
+				thePreset.serialize( preset_serialized );
+				p_midi_preset = preset_serialized.get_ptr();
+			}
+			else p_midi_preset = 0;
+
+			static_api_ptr_t<metadb_io_v2> p_imgr;
+			service_ptr_t<midi_preset_filter> p_filter = new service_impl_t< midi_preset_filter >( data, p_midi_preset );
+			p_imgr->update_info_async( data, p_filter, core_api::get_main_window(), 0, 0 );
 		}
 	}
 };
@@ -3028,6 +3512,7 @@ static input_factory_t<input_midi>                          g_input_midi_factory
 static preferences_page_factory_t <preferences_page_myimpl> g_config_midi_factory;
 static service_factory_single_t   <midi_file_types>         g_input_file_type_midi_factory;
 static contextmenu_item_factory_t <context_midi>            g_contextmenu_item_midi_factory;
+static initquit_factory_t         <initquit_midi>           g_initquit_midi_factory;
 
 DECLARE_COMPONENT_VERSION("MIDI synthesizer host", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.");
 
