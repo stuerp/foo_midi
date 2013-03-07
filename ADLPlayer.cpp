@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <vector> // vector
 #include <cmath>  // exp, log, ceil
+#include <limits>
 
 #include <assert.h>
 
@@ -660,6 +661,10 @@ private:
                         bend += Ch[MidCh].vibrato * Ch[MidCh].vibdepth * std::sin(Ch[MidCh].vibpos);
 					hertz = 172.00093 * std::exp(0.057762265 * (tone + bend + phase));
 					hertz_phased = 172.00093 * std::exp(0.057762265 * (tone + bend + phase + phase_offset));
+					if ( hertz == std::numeric_limits<double>::infinity() )
+					{
+						continue; // This should never happen, but better safe than sorry. Also blocked off to ease setting a breakpoint.
+					}
                     opl.NoteOn(c, hertz, hertz_phased);
                 }
             }
@@ -1150,7 +1155,7 @@ private:
                 Ch[MidCh].vibspeed *= 2*3.141592653*5.0;
                 break;
             case 0x0109 + 1*0x10000 + 1*0x20000: // Vibrato depth
-                Ch[MidCh].vibdepth = ((value-64)*0.15)*0.01;
+                Ch[MidCh].vibdepth = (((signed)value-64)*0.15)*0.01;
                 break;
             case 0x010A + 1*0x10000 + 1*0x20000: // Vibrato delay in millisecons
                 Ch[MidCh].vibdelay =
