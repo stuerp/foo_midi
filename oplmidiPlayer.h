@@ -1,5 +1,5 @@
-#ifndef __fmmidiPlayer_h__
-#define __fmmidiPlayer_h__
+#ifndef __oplmidiPlayer_h__
+#define __oplmidiPlayer_h__
 
 #include <foobar2000.h>
 
@@ -7,14 +7,14 @@
 
 namespace midisynth
 {
-	namespace opn
+	namespace opl
 	{
 		class fm_note_factory;
 	}
 	class synthesizer;
 }
 
-class fmmidiPlayer
+class oplmidiPlayer
 {
 public:
 	enum
@@ -24,10 +24,10 @@ public:
 	};
 
 	// zero variables
-	fmmidiPlayer();
+	oplmidiPlayer();
 
 	// close, unload
-	~fmmidiPlayer();
+	~oplmidiPlayer();
 
 	// configuration
 	void setProgramPath( const char * );
@@ -48,7 +48,7 @@ private:
 
 	pfc::string8                 bank_path;
 
-	midisynth::opn::fm_note_factory * factory;
+	midisynth::opl::fm_note_factory * factory;
 
 	midisynth::synthesizer     * synthesizers[4];
 

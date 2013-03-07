@@ -7,6 +7,9 @@
     <Filter Include="blargg">
       <UniqueIdentifier>{53c5fff5-1672-43f2-8d1e-37997214b3ab}</UniqueIdentifier>
     </Filter>
+    <Filter Include="midisynth">
+      <UniqueIdentifier>{6ccd073f-d424-4b06-9496-ca2955a73461}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DXiPlayer.cpp" />
@@ -68,8 +71,17 @@
       <Filter>blargg</Filter>
     </ClCompile>
     <ClCompile Include="dbopl.cpp" />
-    <ClCompile Include="midisynth.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
+    <ClCompile Include="midisynth\midisynth.cpp">
+      <Filter>midisynth</Filter>
+    </ClCompile>
+    <ClCompile Include="midisynth\fmmidi.cpp">
+      <Filter>midisynth</Filter>
+    </ClCompile>
+    <ClCompile Include="midisynth\oplmidi.cpp">
+      <Filter>midisynth</Filter>
+    </ClCompile>
+    <ClCompile Include="oplmidiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -108,8 +120,17 @@
       <Filter>blargg</Filter>
     </ClInclude>
     <ClInclude Include="dbopl.h" />
-    <ClInclude Include="midisynth.hpp" />
     <ClInclude Include="fmmidiPlayer.h" />
+    <ClInclude Include="midisynth\midisynth.hpp">
+      <Filter>midisynth</Filter>
+    </ClInclude>
+    <ClInclude Include="midisynth\fmmidi.hpp">
+      <Filter>midisynth</Filter>
+    </ClInclude>
+    <ClInclude Include="midisynth\oplmidi.hpp">
+      <Filter>midisynth</Filter>
+    </ClInclude>
+    <ClInclude Include="oplmidiPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

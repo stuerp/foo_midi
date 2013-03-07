@@ -151,7 +151,9 @@
     </ClCompile>
     <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
-    <ClCompile Include="midisynth.cpp" />
+    <ClCompile Include="midisynth\fmmidi.cpp" />
+    <ClCompile Include="midisynth\midisynth.cpp" />
+    <ClCompile Include="midisynth\oplmidi.cpp" />
     <ClCompile Include="MT32Player.cpp" />
     <ClCompile Include="nu_processing\midi_container.cpp" />
     <ClCompile Include="nu_processing\midi_processor_gmf.cpp" />
@@ -184,6 +186,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="oplmidiPlayer.cpp" />
     <ClCompile Include="PlugInInventory.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -240,7 +243,9 @@
     </ClInclude>
     <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="fmmidiPlayer.h" />
-    <ClInclude Include="midisynth.hpp" />
+    <ClInclude Include="midisynth\fmmidi.hpp" />
+    <ClInclude Include="midisynth\midisynth.hpp" />
+    <ClInclude Include="midisynth\oplmidi.hpp" />
     <ClInclude Include="MT32Player.h" />
     <ClInclude Include="mtgm.h" />
     <ClInclude Include="nu_processing\midi_container.h" />
@@ -254,6 +259,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </CustomBuild>
+    <ClInclude Include="oplmidiPlayer.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SFPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
