@@ -1,4 +1,4 @@
-#define MYVERSION "1.198"
+#define MYVERSION "1.199"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-04-24 16:09 UTC - kode54
+- Added .KAR to extensions list for real this time
+- Version is now 1.199
 
 2013-03-07 17:27 UTC - kode54
 - Fixed adlmidi negative vibrato depth
@@ -1152,6 +1156,7 @@ static const char * exts[]=
 {
 	"MID",
 	"MIDI",
+	"KAR",
 	"RMI",
 	"MIDS", "MDS",
 //	"CMF",
@@ -3525,7 +3530,7 @@ public:
 		{
 			const playable_location & foo = data.get_item(j)->get_location();
 			pfc::string_extension ext(foo.get_path());
-			for ( unsigned k = ((n == 0) ? 2 : 0), l = _countof(exts); k < l; k++ )
+			for ( unsigned k = ((n == 0) ? 3 : 0), l = _countof(exts); k < l; k++ )
 			{
 				if ( !pfc::stricmp_ascii( ext, exts[ k ] ) )
 				{
