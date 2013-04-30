@@ -165,6 +165,7 @@
     <ClCompile Include="nu_processing\midi_processor_mus.cpp" />
     <ClCompile Include="nu_processing\midi_processor_riff_midi.cpp" />
     <ClCompile Include="nu_processing\midi_processor_standard_midi.cpp" />
+    <ClCompile Include="nu_processing\midi_processor_syx.cpp" />
     <ClCompile Include="nu_processing\midi_processor_xmi.cpp" />
     <ClCompile Include="DXiPlayer.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>

@@ -1,4 +1,4 @@
-#define MYVERSION "1.199"
+#define MYVERSION "1.201"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,18 @@
 
 /*
 	change log
+
+2013-04-28 05:48 UTC - kode54
+- Fixed configuration Apply button remaining active if plugin is
+  set to oplmidi
+- Verson is now 1.201
+
+2013-04-28 03:31 UTC - kode54
+- Rebased MUNT to version 1.2.0
+
+2013-04-28 01:04 UTC - kode54
+- Implemented support for applying external SysEx dumps to files
+- Version is now 1.200
 
 2013-04-24 16:09 UTC - kode54
 - Added .KAR to extensions list for real this time
@@ -774,9 +786,6 @@ static const GUID guid_cfg_soundfont_path =
 // {D7E0EC5E-872F-41E3-9B5B-D202D8B942A7}
 static const GUID guid_cfg_munt_base_path = 
 { 0xd7e0ec5e, 0x872f, 0x41e3, { 0x9b, 0x5b, 0xd2, 0x2, 0xd8, 0xb9, 0x42, 0xa7 } };
-// {8FFE9127-579E-46B8-951D-3C785930307F}
-static const GUID guid_cfg_munt_debug_info = 
-{ 0x8ffe9127, 0x579e, 0x46b8, { 0x95, 0x1d, 0x3c, 0x78, 0x59, 0x30, 0x30, 0x7f } };
 #ifdef FLUIDSYNTHSUPPORT
 // {A395C6FD-492A-401B-8BDB-9DF53E2EF7CF}
 static const GUID guid_cfg_fluid_interp_method = 
@@ -924,8 +933,6 @@ cfg_string cfg_soundfont_path(guid_cfg_soundfont_path, "");
 cfg_string cfg_munt_base_path(guid_cfg_munt_base_path, "");
 
 advconfig_branch_factory cfg_midi_parent("MIDI Decoder", guid_cfg_midi_parent, advconfig_branch::guid_branch_playback, 0);
-
-advconfig_checkbox_factory cfg_munt_debug_info("MUNT - display debug information", guid_cfg_munt_debug_info, guid_cfg_midi_parent, 0, false);
 
 advconfig_string_factory cfg_vsti_search_path("VSTi search path", guid_cfg_vsti_search_path, guid_cfg_midi_parent, 0, "");
 
@@ -1152,6 +1159,112 @@ struct midi_preset
 	}
 };
 
+static void relative_path_create( const char * p_file, const char * p_base_path, pfc::string_base & p_out )
+{
+	t_size p_file_fn = pfc::scan_filename( p_file );
+	t_size p_base_path_fn = pfc::scan_filename( p_base_path );
+
+	if ( p_file_fn == p_base_path_fn && !strncmp( p_file, p_base_path, p_file_fn ) )
+	{
+		p_out = p_file + p_file_fn;
+	}
+	else if ( p_file_fn > p_base_path_fn && !strncmp( p_file, p_base_path, p_base_path_fn ) && pfc::is_path_separator( p_file[ p_base_path_fn - 1 ] ) )
+	{
+		p_out = p_file + p_base_path_fn;
+	}
+	else if ( p_base_path_fn > p_file_fn && !strncmp( p_file, p_base_path, p_file_fn ) && pfc::is_path_separator( p_base_path[ p_file_fn - 1 ] ) )
+	{
+		p_out.reset();
+		t_size p_base_path_search = p_file_fn;
+		while ( p_base_path_search < p_base_path_fn )
+		{
+			if ( pfc::is_path_separator( p_base_path[ p_base_path_search++ ] ) )
+			{
+				p_out += "..\\";
+			}
+		}
+		p_out += p_file + p_file_fn;
+	}
+	else
+	{
+		p_out = p_file;
+	}
+}
+
+static void relative_path_parse( const char * p_relative, const char * p_base_path, pfc::string_base & p_out )
+{
+	pfc::string8 temp = p_base_path;
+	temp.truncate( temp.scan_filename() );
+	temp += p_relative;
+	filesystem::g_get_canonical_path( temp, p_out );
+}
+
+struct midi_syx_dumps
+{
+	pfc::array_t<pfc::string8> dumps;
+
+	midi_syx_dumps() { }
+	midi_syx_dumps( const midi_syx_dumps & p_in ) : dumps( p_in.dumps ) { }
+
+	void serialize( const char * p_midi_path, pfc::string8 & p_out )
+	{
+		pfc::string8_fast p_relative;
+
+		p_out.reset();
+
+		for ( unsigned i = 0; i < dumps.get_count(); i++ )
+		{
+			relative_path_create( dumps[ i ], p_midi_path, p_relative );
+
+			if ( i ) p_out += "\n";
+			p_out += p_relative;
+		}
+	}
+
+	void unserialize( const char * p_in, const char * p_midi_path )
+	{
+		pfc::string8_fast p_relative, p_absolute;
+
+		const char * end = p_in + strlen( p_in );
+
+		while ( p_in < end )
+		{
+			const char * lf_pos = strchr( p_in, '\n' );
+			if ( !lf_pos ) lf_pos = end;
+
+			p_relative.set_string( p_in, lf_pos - p_in );
+			relative_path_parse( p_relative, p_midi_path, p_absolute );
+
+			dumps.append_single( p_absolute );
+
+			p_in = lf_pos;
+		}
+	}
+
+	void merge_into_file( midi_container & p_midi_file, abort_callback & p_abort )
+	{
+		for ( unsigned i = 0; i < dumps.get_count(); i++ )
+		{
+			file::ptr p_file;
+			midi_container p_dump;
+
+			try
+			{
+				filesystem::g_open( p_file, dumps[ i ], filesystem::open_mode_read, p_abort );
+				midi_processor::process_syx_file( p_file, p_dump, p_abort );
+
+				p_midi_file.merge_tracks( p_dump );
+			}
+			catch ( std::exception & e )
+			{
+				pfc::string8 path;
+				filesystem::g_get_canonical_path( dumps[ i ], path );
+				throw exception_io_data( pfc::string_formatter() << "Error processing dump " << path << ": " << e.what() );
+			}
+		}
+	}
+};
+
 static const char * exts[]=
 {
 	"MID",
@@ -1168,12 +1281,28 @@ static const char * exts[]=
 	"LDS",
 };
 
+static const char * exts_syx[]=
+{
+	"SYX",
+	"DMP"
+};
+
 static bool g_test_extension(const char * ext)
 {
 	int n;
-	for(n=0;n<tabsize(exts);n++)
+	for(n=0;n<_countof(exts);n++)
 	{
 		if (!stricmp(ext,exts[n])) return true;
+	}
+	return false;
+}
+
+static bool g_test_extension_syx(const char * ext)
+{
+	int n;
+	for(n=0;n<_countof(exts_syx);n++)
+	{
+		if (!stricmp(ext,exts_syx[n])) return true;
 	}
 	return false;
 }
@@ -1193,6 +1322,7 @@ static const char field_loop_end[] = "midi_loop_end";
 static const char field_loop_start_ms[] = "midi_loop_start_ms";
 static const char field_loop_end_ms[] = "midi_loop_end_ms";
 static const char field_preset[] = "midi_preset";
+static const char field_syx[] = "midi_sysex_dumps";
 
 class metadb_index_client_midi : public metadb_index_client
 {
@@ -1295,6 +1425,10 @@ class input_midi
 	bool dont_loop;
 
 	bool first_block;
+
+	unsigned original_track_count;
+
+	bool is_syx;
 
 	pfc::string8 m_path;
 
@@ -1430,11 +1564,20 @@ public:
 		}
 
 		m_path = p_path;
+		is_syx = g_test_extension_syx( pfc::string_extension( p_path ) );
 
 		m_stats = p_file->get_stats( p_abort );
 		if ( ! m_stats.m_size || m_stats.m_size > ( 1 << 30 ) ) throw exception_io_unsupported_format();
 
+		if ( is_syx )
+		{
+			midi_processor::process_syx_file( p_file, midi_file, p_abort );
+			return;
+		}
+
 		midi_processor::process_file( p_file, pfc::string_extension( p_path ), midi_file, p_abort );
+
+		original_track_count = midi_file.get_track_count();
 
 		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz );
 
@@ -1453,16 +1596,18 @@ public:
 
 	unsigned get_subsong_count()
 	{
-		return midi_file.get_subsong_count();
+		return is_syx ? 1 : midi_file.get_subsong_count();
 	}
 
 	t_uint32 get_subsong( unsigned p_index )
 	{
-		return midi_file.get_subsong( p_index );
+		return is_syx ? 0 : midi_file.get_subsong( p_index );
 	}
 
 	void get_info( t_uint32 p_subsong, file_info & p_info, abort_callback & p_abort )
 	{
+		if ( is_syx ) return;
+
 		midi_meta_data meta_data;
 		midi_file.get_meta_data( p_subsong, meta_data );
 
@@ -1537,6 +1682,13 @@ public:
 				p_info.info_set( field_preset, midi_preset );
 				p_info.meta_remove_field( field_preset );
 			}
+
+			const char * midi_syx = p_info.meta_get( field_syx, 0 );
+			if ( midi_syx )
+			{
+				p_info.info_set( field_syx, midi_syx );
+				p_info.meta_remove_field( field_syx );
+			}
 		}
 	}
 
@@ -1547,7 +1699,14 @@ public:
 
 	void decode_initialize( unsigned p_subsong, unsigned p_flags, abort_callback & p_abort )
 	{
+		if ( is_syx )
+		{
+			throw exception_io_data( "You cannot play SysEx dumps" );
+		}
+
 		midi_preset thePreset;
+
+		midi_syx_dumps theDumps;
 
 		{
 			file_info_impl p_info;
@@ -1602,33 +1761,20 @@ public:
 			{
 				thePreset.unserialize( midi_preset );
 			}
+
+			const char * midi_syx = p_info.meta_get( field_syx, 0 );
+			if ( midi_syx )
+			{
+				theDumps.unserialize( midi_syx, m_path );
+			}
 		}
+
+		midi_file.set_track_count( original_track_count );
+		theDumps.merge_into_file( midi_file, p_abort );
 
 		plugin = thePreset.plugin;
 
 		first_block = true;
-
-		get_length(p_subsong);
-
-		samples_played = 0;
-
-		if ( p_flags & input_flag_no_looping || !loop_type )
-		{
-			unsigned samples_length = length_samples;
-			samples_fade_begin = samples_length;
-			samples_fade_end = samples_length;
-
-			if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 1 )
-			{
-				samples_fade_begin = MulDiv(loop_begin_ms + (loop_end_ms - loop_begin_ms) * loop_count, srate, 1000);
-				samples_fade_end = samples_fade_begin + srate * fade_ms / 1000;
-			}
-		}
-		else
-		{
-			samples_fade_begin = ~0;
-			samples_fade_end = ~0;
-		}
 
 		midi_meta_data meta_data;
 
@@ -1696,6 +1842,30 @@ public:
 					plugin = 4;
 				}
 			}
+		}
+
+		if ( plugin == 3 ) srate = MT32Emu::SAMPLE_RATE;
+
+		get_length(p_subsong);
+
+		samples_played = 0;
+
+		if ( p_flags & input_flag_no_looping || !loop_type )
+		{
+			unsigned samples_length = length_samples;
+			samples_fade_begin = samples_length;
+			samples_fade_end = samples_length;
+
+			if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 1 )
+			{
+				samples_fade_begin = MulDiv(loop_begin_ms + (loop_end_ms - loop_begin_ms) * loop_count, srate, 1000);
+				samples_fade_end = samples_fade_begin + srate * fade_ms / 1000;
+			}
+		}
+		else
+		{
+			samples_fade_begin = ~0;
+			samples_fade_end = ~0;
 		}
 
 #ifdef DXISUPPORT
@@ -1924,9 +2094,8 @@ public:
 			{
 				midi_meta_data_item item;
 				bool is_mt32 = ( meta_data.get_item( "type", item ) && !strcmp( item.m_value, "MT-32" ) );
-				bool mt32_debug_info = cfg_munt_debug_info;
 				delete mt32Player;
-				mt32Player = new MT32Player( !is_mt32, mt32_debug_info );
+				mt32Player = new MT32Player( !is_mt32 );
 				pfc::string8 p_base_path = cfg_munt_base_path;
 				if ( !strlen( p_base_path ) )
 				{
@@ -2456,12 +2625,25 @@ fagotry:
 
 	void retag_set_info( t_uint32 p_subsong, const file_info & p_info, abort_callback & p_abort )
 	{
+		if ( is_syx )
+		{
+			throw exception_io_data( "You cannot tag SysEx dumps" );
+		}
+
 		file_info_impl m_info( p_info );
 
+		m_info.meta_remove_field( field_preset );
 		const char * midi_preset = m_info.info_get( field_preset );
 		if ( midi_preset )
 		{
 			m_info.meta_set( field_preset, midi_preset );
+		}
+
+		m_info.meta_remove_field( field_syx );
+		const char * midi_syx = m_info.info_get( field_syx );
+		if ( midi_syx )
+		{
+			m_info.meta_set( field_syx, midi_syx );
 		}
 
 		file::ptr tag_file;
@@ -2487,7 +2669,7 @@ fagotry:
 
 	static bool g_is_our_path( const char * p_full_path, const char * p_extension )
 	{
-		return g_test_extension( p_extension );
+		return g_test_extension( p_extension ) || g_test_extension_syx( p_extension );
 	}
 };
 
@@ -3364,6 +3546,10 @@ bool CMyPreferences::HasChanged() {
 		{
 			if ( cfg_plugin != 7 ) changed = true;
 		}
+		else if ( plugin == 6 )
+		{
+			if ( cfg_plugin != 8 ) changed = true;
+		}
 		else if ( plugin <= vsti_count + 6 )
 		{
 			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 7 ].path ) ) changed = true;
@@ -3413,24 +3599,26 @@ class midi_file_types : public input_file_type
 {
 	virtual unsigned get_count()
 	{
-		return 1;
+		return 2;
 	}
 
 	virtual bool get_name(unsigned idx, pfc::string_base & out)
 	{
-		if (idx > 0) return false;
-		out = "MIDI files";
+		if (idx > 1) return false;
+		out = idx == 0 ? "MIDI files" : "SysEx dump files";
 		return true;
 	}
 
 	virtual bool get_mask(unsigned idx, pfc::string_base & out)
 	{
-		if (idx > 0) return false;
+		if (idx > 1) return false;
 		out.reset();
-		for (int n = 0; n < tabsize(exts); n++)
+		int count = idx == 0 ? _countof(exts) : _countof(exts_syx);
+		const char ** the_exts = idx == 0 ? exts : exts_syx;
+		for (int n = 0; n < count; n++)
 		{
 			if (n) out.add_byte(';');
-			out << "*." << exts[n];
+			out << "*." << the_exts[n];
 		}
 		return true;
 	}
@@ -3441,7 +3629,7 @@ class midi_file_types : public input_file_type
 	}
 };
 
-static const char * context_names[3] = {"Convert to General MIDI", "Save synthesizer preset", "Remove synthesizer preset"};
+static const char * context_names[5] = {"Convert to General MIDI", "Save synthesizer preset", "Remove synthesizer preset", "Assign SysEx dumps", "Clear SysEx dumps"};
 
 class midi_preset_filter : public file_info_filter
 {
@@ -3480,14 +3668,60 @@ public:
 	}
 };
 
+class midi_syx_filter : public file_info_filter
+{
+	midi_syx_dumps m_dumps;
+
+	metadb_handle_list m_handles;
+
+public:
+	midi_syx_filter( const pfc::list_base_const_t<metadb_handle_ptr> & p_list, const midi_syx_dumps & p_dumps )
+	{
+		m_dumps = p_dumps;
+
+		pfc::array_t<t_size> order;
+		order.set_size(p_list.get_count());
+		order_helper::g_fill(order.get_ptr(),order.get_size());
+		p_list.sort_get_permutation_t(pfc::compare_t<metadb_handle_ptr,metadb_handle_ptr>,order.get_ptr());
+		m_handles.set_count(order.get_size());
+		for(t_size n = 0; n < order.get_size(); n++) {
+			m_handles[n] = p_list[order[n]];
+		}
+	}
+
+	virtual bool apply_filter(metadb_handle_ptr p_location,t_filestats p_stats,file_info & p_info)
+	{
+		pfc::string_extension m_ext( p_location->get_path() );
+
+		for ( unsigned j = 0, k = _countof(exts_syx); j < k; j++ )
+		{
+			if ( !pfc::stricmp_ascii( m_ext, exts_syx[ j ] ) ) return false;
+		}
+
+		t_size index;
+		if (m_handles.bsearch_t(pfc::compare_t<metadb_handle_ptr,metadb_handle_ptr>,p_location,index))
+		{
+			pfc::string8 m_dump_serialized;
+			m_dumps.serialize( p_location->get_path(), m_dump_serialized );
+			if ( m_dump_serialized.get_length() ) p_info.info_set( field_syx, m_dump_serialized );
+			else p_info.info_remove( field_syx );
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+};
+
 class context_midi : public contextmenu_item_simple
 {
 public:
-	virtual unsigned get_num_items() { return 3; }
+	virtual unsigned get_num_items() { return 5; }
 
 	virtual void get_item_name( unsigned n, pfc::string_base & out )
 	{
-		if ( n > 2 ) uBugCheck();
+		if ( n > 4 ) uBugCheck();
 		out = context_names[ n ];
 	}
 
@@ -3501,10 +3735,12 @@ public:
 
 	virtual bool get_item_description( unsigned n, pfc::string_base & out )
 	{
-		if ( n > 2 ) uBugCheck();
-		static const char * descriptions[3] = { "Converts the selected files into General MIDI files in the same path as the source.",
+		if ( n > 4 ) uBugCheck();
+		static const char * descriptions[5] = { "Converts the selected files into General MIDI files in the same path as the source.",
 			"Applies the current synthesizer setup to this track for future playback.",
-			"Removes a saved synthesizer preset from this track."
+			"Removes a saved synthesizer preset from this track.",
+			"Assigns the selected SysEx dumps to the selected MIDI files.",
+			"Clears all assigned SysEx dumps from the selected MIDI files."
 		};
 		out = descriptions[ n ];
 		return true;
@@ -3512,25 +3748,27 @@ public:
 
 	virtual GUID get_item_guid( unsigned n )
 	{
-		static const GUID guids[3] = {
+		static const GUID guids[5] = {
 			{ 0x70985c72, 0xe77e, 0x4bbb, { 0xbf, 0x11, 0x3c, 0x90, 0x2b, 0x27, 0x39, 0x9d } },
 			{ 0xeb3f3ab4, 0x60b3, 0x4579, { 0x9f, 0xf8, 0x38, 0xda, 0xc0, 0x91, 0x2c, 0x82 } },
-			{ 0x5bcb6efe, 0x2eb5, 0x4331, { 0xb9, 0xc1, 0x92, 0x4b, 0x77, 0xba, 0xcc, 0x10 } }
+			{ 0x5bcb6efe, 0x2eb5, 0x4331, { 0xb9, 0xc1, 0x92, 0x4b, 0x77, 0xba, 0xcc, 0x10 } },
+			{ 0xd0e4a166, 0x10c, 0x41f0, { 0xad, 0x5a, 0x51, 0x84, 0x44, 0xa3, 0x92, 0x9c } },
+			{ 0x2aa8c082, 0x5d84, 0x4982, { 0xb4, 0x5d, 0xde, 0x51, 0xcb, 0x75, 0xff, 0xf2 } }
 		};
-		if ( n > 2 ) uBugCheck();
+		if ( n > 4 ) uBugCheck();
 		return guids[ n ];
 	}
 
 	virtual bool context_get_display( unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out,unsigned & displayflags, const GUID & )
 	{
-		if ( n > 2 ) uBugCheck();
-		unsigned matches, i, j;
+		if ( n > 4 ) uBugCheck();
+		unsigned matches, matches_syx, i, j, k, l;
 		i = data.get_count();
-		for (matches = 0, j = 0; j < i; j++)
+		for (matches = 0, matches_syx = 0, j = 0; j < i; j++)
 		{
 			const playable_location & foo = data.get_item(j)->get_location();
 			pfc::string_extension ext(foo.get_path());
-			for ( unsigned k = ((n == 0) ? 3 : 0), l = _countof(exts); k < l; k++ )
+			for ( k = ((n == 0) ? 3 : 0), l = _countof(exts); k < l; k++ )
 			{
 				if ( !pfc::stricmp_ascii( ext, exts[ k ] ) )
 				{
@@ -3538,8 +3776,20 @@ public:
 					break;
 				}
 			}
+			if ( k < l ) continue;
+			if ( n == 3 )
+			{
+				for ( unsigned k = 0, l = _countof(exts_syx); k < l; k++ )
+				{
+					if ( !pfc::stricmp_ascii( ext, exts_syx[ k ] ) )
+					{
+						matches_syx++;
+						break;
+					}
+				}
+			}
 		}
-		if ( matches == i )
+		if ( ( n != 3 && matches == i ) || ( n == 3 && ( matches + matches_syx ) == i ) )
 		{
 			out = context_names[ n ];
 			return true;
@@ -3549,7 +3799,7 @@ public:
 
 	virtual void context_command( unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, const GUID & )
 	{
-		if ( n > 2 ) uBugCheck();
+		if ( n > 4 ) uBugCheck();
 		if ( !n )
 		{
 			unsigned i = data.get_count();
@@ -3573,7 +3823,7 @@ public:
 				p_file->write_object( data.get_ptr(), data.get_count(), m_abort );
 			}
 		}
-		else
+		else if ( n < 3 )
 		{
 			const char * p_midi_preset;
 			pfc::string8 preset_serialized;
@@ -3588,6 +3838,26 @@ public:
 
 			static_api_ptr_t<metadb_io_v2> p_imgr;
 			service_ptr_t<midi_preset_filter> p_filter = new service_impl_t< midi_preset_filter >( data, p_midi_preset );
+			p_imgr->update_info_async( data, p_filter, core_api::get_main_window(), 0, 0 );
+		}
+		else
+		{
+			midi_syx_dumps m_dumps;
+
+			if ( n == 3 )
+			{
+				for ( unsigned i = 0; i < data.get_count(); i++ )
+				{
+					const char * path = data[ i ]->get_path();
+					if ( g_test_extension_syx( pfc::string_extension( path ) ) )
+					{
+						m_dumps.dumps.append_single( path );
+					}
+				}
+			}
+
+			static_api_ptr_t<metadb_io_v2> p_imgr;
+			service_ptr_t<midi_syx_filter> p_filter = new service_impl_t< midi_syx_filter >( data, m_dumps );
 			p_imgr->update_info_async( data, p_filter, core_api::get_main_window(), 0, 0 );
 		}
 	}

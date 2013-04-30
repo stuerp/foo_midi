@@ -2,10 +2,14 @@
 
 #include "shared.h"
 
-MT32Player::MT32Player( bool gm, bool debug_info )
-	: bGM( gm ), bDebug( debug_info )
+MT32Player::MT32Player( bool gm )
+	: bGM( gm )
 {
 	_synth = NULL;
+	controlRom = NULL;
+	pcmRom = NULL;
+	controlRomFile = NULL;
+	pcmRomFile = NULL;
 	uSamplesRemaining = 0;
 	uSampleRate = 1000;
 	uTimeCurrent = 0;
@@ -20,6 +24,16 @@ MT32Player::~MT32Player()
 		_synth->close();
 		delete _synth;
 	}
+	if (controlRom)
+	{
+		MT32Emu::ROMImage::freeROMImage( controlRom );
+	}
+	if (pcmRom)
+	{
+		MT32Emu::ROMImage::freeROMImage( pcmRom );
+	}
+	delete controlRomFile;
+	delete pcmRomFile;
 }
 
 void MT32Player::setSampleRate(unsigned rate)
@@ -393,20 +407,45 @@ void MT32Player::shutdown()
 		_synth->close();
 		delete _synth;
 	}
+	if (controlRom)
+	{
+		MT32Emu::ROMImage::freeROMImage( controlRom );
+	}
+	if (pcmRom)
+	{
+		MT32Emu::ROMImage::freeROMImage( pcmRom );
+	}
+	delete controlRomFile;
+	delete pcmRomFile;
 	_synth = 0;
+	controlRom = 0;
+	pcmRom = 0;
+	controlRomFile = 0;
+	pcmRomFile = 0;
 }
+
+static const char * control_rom_names[] = { "CM32L_CONTROL.ROM", "MT32_CONTROL.ROM" };
+static const char * pcm_rom_names[] = { "CM32L_PCM.ROM", "MT32_PCM.ROM" };
 
 bool MT32Player::startup()
 {
+	shutdown();
+	unsigned rom_set = 0;
+	controlRomFile = openFile( control_rom_names[ 0 ] );
+	if ( !controlRomFile )
+	{
+		rom_set = 1;
+		controlRomFile = openFile( control_rom_names[ 1 ] );
+	}
+	if ( !controlRomFile ) return false;
+	pcmRomFile = openFile( pcm_rom_names[ rom_set ] );
+	if ( !pcmRomFile ) return false;
+	controlRom = MT32Emu::ROMImage::makeROMImage( controlRomFile );
+	if ( !controlRom ) return false;
+	pcmRom = MT32Emu::ROMImage::makeROMImage( pcmRomFile );
+	if ( !pcmRom ) return false;
 	_synth = new MT32Emu::Synth;
-	MT32Emu::SynthProperties props = {0};
-	props.sampleRate = uSampleRate;
-	props.useFloat = true;
-	props.useSuper = bGM;
-	props.userData = this;
-	props.printDebug = cb_printDebug;
-	props.openFile = cb_openFile;
-	if ( !_synth->open( props ) )
+	if ( !_synth->open( *controlRom, *pcmRom, bGM, true ) )
 	{
 		delete _synth;
 		_synth = 0;
@@ -434,17 +473,6 @@ void MT32Player::reset()
 			_synth->playSysex( start, sequence_end - start + 1 );
 			start = sequence_end + 1;
 		}
-	}
-}
-
-void MT32Player::cb_printDebug( void *userData, const char *fmt, va_list list )
-{
-	MT32Player * thePlayer = ( MT32Player * ) userData;
-	if ( thePlayer->bDebug )
-	{
-		char temp[1024];
-		int count = vsnprintf_s( temp, _countof( temp ) - 1, fmt, list );
-		if ( count > 0 ) console::formatter() << "MUNT: " << temp;
 	}
 }
 
@@ -486,14 +514,13 @@ public:
 	}
 
 	size_t getSize() { return fileSize; }
-	unsigned char *getData() { return data; }
+	const unsigned char *getData() { return data; }
 };
 
-MT32Emu::File * MT32Player::cb_openFile( void *userData, const char *filename )
+MT32Emu::File * MT32Player::openFile( const char *filename )
 {
-	MT32Player * thePlayer = ( MT32Player * ) userData;
 	FBFile * ret = new FBFile;
-	if ( ! ret->open( pfc::string8() << thePlayer->sBasePath << filename, *( thePlayer->_abort ) ) )
+	if ( ! ret->open( pfc::string8() << sBasePath << filename, *_abort ) )
 	{
 		delete ret;
 		ret = 0;

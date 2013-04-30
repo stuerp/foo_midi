@@ -437,6 +437,19 @@ void midi_container::add_track_event( t_size p_track_index, const midi_event & p
 	}
 }
 
+void midi_container::merge_tracks( const midi_container & p_source )
+{
+	for ( unsigned i = 0; i < p_source.m_tracks.get_count(); i++ )
+	{
+		add_track( p_source.m_tracks[ i ] );
+	}
+}
+
+void midi_container::set_track_count( unsigned count )
+{
+	m_tracks.set_count( count );
+}
+
 void midi_container::set_extra_meta_data( const midi_meta_data & p_data )
 {
 	m_extra_meta_data = p_data;

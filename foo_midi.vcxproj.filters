@@ -82,6 +82,9 @@
       <Filter>midisynth</Filter>
     </ClCompile>
     <ClCompile Include="oplmidiPlayer.cpp" />
+    <ClCompile Include="nu_processing\midi_processor_syx.cpp">
+      <Filter>new processing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />

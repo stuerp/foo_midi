@@ -17,7 +17,7 @@ public:
 	};
 
 	// zero variables
-	MT32Player( bool gm = false, bool debug_info = false );
+	MT32Player( bool gm = false );
 
 	// close, unload
 	~MT32Player();
@@ -44,8 +44,10 @@ private:
 	pfc::string8       sBasePath;
 	abort_callback   * _abort;
 
+	MT32Emu::File    * controlRomFile, * pcmRomFile;
+	const MT32Emu::ROMImage * controlRom, * pcmRom;
+
 	bool               bGM;
-	bool               bDebug;
 
 	unsigned           uSamplesRemaining;
 
@@ -64,9 +66,7 @@ private:
 
 	void               reset();
 
-	// callbacks
-	static void cb_printDebug( void *userData, const char *fmt, va_list list );
-	static MT32Emu::File * cb_openFile( void *userData, const char *filename );
+	MT32Emu::File * openFile( const char *filename );
 };
 
 #endif

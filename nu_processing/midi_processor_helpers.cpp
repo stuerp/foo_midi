@@ -70,3 +70,15 @@ void midi_processor::process_file( file::ptr & p_file, const char * p_extension,
 	}
 	else throw exception_io_unsupported_format();
 }
+
+void midi_processor::process_syx_file( file::ptr & p_file, midi_container & p_out, abort_callback & p_abort )
+{
+	file::ptr temp;
+	file_cached::g_create( temp, p_file, p_abort, 4096 );
+	if ( is_syx( temp, p_abort ) )
+	{
+		temp->reopen( p_abort );
+		process_syx( temp, p_out, p_abort );
+	}
+	else throw exception_io_unsupported_format();
+}
