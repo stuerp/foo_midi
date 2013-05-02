@@ -2,8 +2,8 @@
 
 #include "shared.h"
 
-MT32Player::MT32Player( bool gm )
-	: bGM( gm )
+MT32Player::MT32Player( bool gm, unsigned gm_set )
+	: bGM( gm ), uGMSet( gm_set )
 {
 	_synth = NULL;
 	controlRom = NULL;
@@ -463,9 +463,18 @@ void MT32Player::reset()
 	if ( bGM )
 	{
 #include "mtgm.h"
+#include "kq6mtgm.h"
 		const unsigned char * start, * end;
-		start = mt32_gm_sysex;
-		end = start + _countof( mt32_gm_sysex );
+		if ( uGMSet == 0 )
+		{
+			start = mt32_gm_sysex;
+			end = start + _countof( mt32_gm_sysex );
+		}
+		else
+		{
+			start = kq6_mt32_gm_sysex;
+			end = start + _countof( kq6_mt32_gm_sysex );
+		}
 		while ( start < end )
 		{
 			const unsigned char * sequence_end = start;

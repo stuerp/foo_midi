@@ -322,7 +322,7 @@ void midi_container::initialize( unsigned p_form, unsigned p_dtx )
 void midi_container::add_track( const midi_track & p_track )
 {
 	unsigned i;
-	unsigned port_number = 0;
+	int base_port_number = 0, port_number = -1;
 
 	pfc::array_t<t_uint8> data;
 	pfc::string8_fast device_name;
@@ -366,19 +366,37 @@ void midi_container::add_track( const midi_track & p_track )
 			if ( device_name.length() )
 			{
 				unsigned i, j;
-				for ( i = 0, j = m_device_names[ channel ].get_count(); i < j; ++i )
+				for ( i = 0, j = m_device_names.get_count(); i < j; ++i )
 				{
-					if ( !strcmp( m_device_names[ channel ][ i ], device_name ) ) break;
+					if ( !strcmp( m_device_names[ i ], device_name ) ) break;
 				}
 				if ( i < j ) port_number = i;
 				else
 				{
-					m_device_names[ channel ].append_single( device_name );
+					m_device_names.append_single( device_name );
 					port_number = j;
 				}
+				device_name.reset();
 			}
 
-			channel += 16 * port_number;
+			if ( port_number >= 0 )
+			{
+				unsigned i, j;
+				for ( i = 0, j = m_port_numbers[ channel ].get_count(); i < j; ++i )
+				{
+					if ( m_port_numbers[ channel ][ i ] == port_number ) break;
+				}
+				if ( i < j ) base_port_number = i;
+				else
+				{
+					m_port_numbers[ channel ].append_single( port_number );
+					base_port_number = j;
+				}
+
+				port_number = -1;
+			}
+
+			channel += 16 * base_port_number;
 			channel %= 48;
 			if ( m_form != 2 ) m_channel_mask[ 0 ] |= 1 << channel;
 			else
@@ -460,12 +478,14 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 	unsigned current_timestamp = 0;
 	pfc::array_t<t_uint8> data;
 	pfc::array_t<t_size> track_positions;
-	pfc::array_t<t_uint8> port_numbers;
+	pfc::array_t<t_uint8> base_port_numbers;
+	pfc::array_t<t_int8> port_numbers;
 	pfc::array_t<pfc::string8_fast> device_names;
 	t_size track_count = m_tracks.get_count();
 
 	track_positions.append_multi( (t_size)0, track_count );
-	port_numbers.append_multi( (t_uint8)0, track_count );
+	base_port_numbers.append_multi( (t_uint8)0, track_count );
+	port_numbers.append_multi( (t_int8)-1, track_count );
 	device_names.set_count( track_count );
 
 	bool clean_emidi = !!( clean_flags & clean_flag_emidi );
@@ -554,18 +574,29 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 				if ( device_names[ next_track ].length() )
 				{
 					unsigned i, j;
-					for ( i = 0, j = m_device_names[ event.m_channel ].get_count(); i < j; ++i )
+					for ( i = 0, j = m_device_names.get_count(); i < j; ++i )
 					{
-						if ( !strcmp( m_device_names[ event.m_channel ][ i ], device_names[ next_track ] ) ) break;
+						if ( !strcmp( m_device_names[ i ], device_names[ next_track ] ) ) break;
 					}
 					port_numbers[ next_track ] = i;
 					device_names[ next_track ].reset();
 				}
 
+				if ( port_numbers[ next_track ] >= 0 )
+				{
+					unsigned i, j;
+					for ( i = 0, j = m_port_numbers[ event.m_channel ].get_count(); i < j; ++i )
+					{
+						if ( m_port_numbers[ event.m_channel ][ i ] == port_numbers[ next_track ] ) break;
+					}
+					base_port_numbers[ next_track ] = i;
+					port_numbers[ next_track ] = -1;
+				}
+
 				unsigned event_code = ( ( event.m_type + 8 ) << 4 ) + event.m_channel;
 				if ( event.m_data_count >= 1 ) event_code += event.m_data[ 0 ] << 8;
 				if ( event.m_data_count >= 2 ) event_code += event.m_data[ 1 ] << 16;
-				event_code += port_numbers[ next_track ] << 24;
+				event_code += base_port_numbers[ next_track ] << 24;
 				p_stream.append_single( midi_stream_event( timestamp_ms, event_code ) );
 			}
 			else
@@ -576,19 +607,30 @@ void midi_container::serialize_as_stream( unsigned subsong, pfc::array_t<midi_st
 					if ( device_names[ next_track ].length() )
 					{
 						unsigned i, j;
-						for ( i = 0, j = m_device_names[ event.m_channel ].get_count(); i < j; ++i )
+						for ( i = 0, j = m_device_names.get_count(); i < j; ++i )
 						{
-							if ( !strcmp( m_device_names[ event.m_channel ][ i ], device_names[ next_track ] ) ) break;
+							if ( !strcmp( m_device_names[ i ], device_names[ next_track ] ) ) break;
 						}
 						port_numbers[ next_track ] = i;
 						device_names[ next_track ].reset();
+					}
+
+					if ( port_numbers[ next_track ] >= 0 )
+					{
+						unsigned i, j;
+						for ( i = 0, j = m_port_numbers[ event.m_channel ].get_count(); i < j; ++i )
+						{
+							if ( m_port_numbers[ event.m_channel ][ i ] == port_numbers[ next_track ] ) break;
+						}
+						base_port_numbers[ next_track ] = i;
+						port_numbers[ next_track ] = -1;
 					}
 
 					data.grow_size( data_count );
 					event.copy_data( data.get_ptr(), 0, data_count );
 					if ( data[ data_count - 1 ] == 0xF7 )
 					{
-						unsigned system_exclusive_index = p_system_exclusive.add_entry( data.get_ptr(), data_count, port_numbers[ next_track ] );
+						unsigned system_exclusive_index = p_system_exclusive.add_entry( data.get_ptr(), data_count, base_port_numbers[ next_track ] );
 						p_stream.append_single( midi_stream_event( timestamp_ms, system_exclusive_index | 0x80000000 ) );
 					}
 				}

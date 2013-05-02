@@ -1,4 +1,4 @@
-#define MYVERSION "1.201"
+#define MYVERSION "1.202"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,14 @@
 
 /*
 	change log
+
+2013-05-02 01:28 UTC - kode54
+- Normalized MIDI port number meta commands per channel which they
+  are applied to
+- Version is now 1.202
+
+2013-05-01 01:35 UTC - kode54
+- Added King's Quest 6 GM set for MT-32 GM playback
 
 2013-04-28 05:48 UTC - kode54
 - Fixed configuration Apply button remaining active if plugin is
@@ -825,6 +833,9 @@ static const GUID guid_cfg_adl_panning =
 // {C5FB4053-75BF-4C0D-A1B1-7173863288A6}
 /*static const GUID guid_cfg_adl_4op = 
 { 0xc5fb4053, 0x75bf, 0x4c0d, { 0xa1, 0xb1, 0x71, 0x73, 0x86, 0x32, 0x88, 0xa6 } };*/
+// {07257AC7-9901-4A5F-9D8B-C5B5F1B8CF5B}
+static const GUID guid_cfg_munt_gm = 
+{ 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 0xc5, 0xb5, 0xf1, 0xb8, 0xcf, 0x5b } };
 
 
 class cfg_map : public cfg_var, public pfc::map_t<t_uint32, pfc::array_t<t_uint8>> {
@@ -894,6 +905,7 @@ enum
 	default_cfg_adl_chips = 10,
 	default_cfg_adl_panning = 1,
 	//default_cfg_adl_4op = 14,
+	default_cfg_munt_gm = 0,
 #ifdef FLUIDSYNTHSUPPORT
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
 #endif
@@ -913,7 +925,8 @@ cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid
 		cfg_resampling(guid_cfg_resampling, default_cfg_resampling),
 		cfg_adl_bank(guid_cfg_adl_bank, default_cfg_adl_bank),
 		cfg_adl_chips(guid_cfg_adl_chips, default_cfg_adl_chips),
-		cfg_adl_panning(guid_cfg_adl_panning, default_cfg_adl_panning)/*,
+		cfg_adl_panning(guid_cfg_adl_panning, default_cfg_adl_panning),
+		cfg_munt_gm(guid_cfg_munt_gm, default_cfg_munt_gm)/*,
 		cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op)*/
 #ifdef FLUIDSYNTHSUPPORT
 		,cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
@@ -941,9 +954,15 @@ advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops pres
 advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
 advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 10, 30000);
 
+static const char * munt_bank_names[] =
+{
+	"Roland",
+	"Sierra / King's Quest 6",
+};
+
 struct midi_preset
 {
-	enum { version = 0 };
+	enum { version = 1 };
 
 	// version 0
 	unsigned int plugin;
@@ -964,6 +983,9 @@ struct midi_preset
 	unsigned int adl_bank;
 	unsigned int adl_chips;
 	bool adl_panning;
+
+	// v1 - plug-in == 3 - MUNT
+	unsigned int munt_gm_set;
 
 	midi_preset()
 	{
@@ -989,6 +1011,7 @@ struct midi_preset
 		adl_bank = cfg_adl_bank;
 		adl_chips = cfg_adl_chips;
 		adl_panning = !!cfg_adl_panning;
+		munt_gm_set = cfg_munt_gm;
 	}
 
 	void serialize(pfc::string8 & p_out)
@@ -1052,6 +1075,12 @@ struct midi_preset
 
 			p_out += pfc::format_int( adl_panning );
 		}
+		else if ( plugin == 3 )
+		{
+			p_out += "|";
+
+			p_out += munt_bank_names[ munt_gm_set ];
+		}
 	}
 
 	void unserialize( const char * p_in )
@@ -1074,6 +1103,7 @@ struct midi_preset
 		GUID in_dxi_plugin;
 		unsigned in_adl_bank, in_adl_chips;
 		bool in_adl_panning;
+		unsigned in_munt_gm_set;
 
 		if ( *bar_pos )
 		{
@@ -1145,6 +1175,20 @@ struct midi_preset
 				in_adl_panning = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
 			}
 		}
+		else if ( in_plugin == 3 )
+		{
+			unsigned i, j;
+			for ( i = 0, j = _countof( munt_bank_names ); i < j; i++ )
+			{
+				size_t len = strlen( munt_bank_names[ i ] );
+				if ( len == bar_pos - p_in && !strncmp( p_in, munt_bank_names[ i ], len ) )
+				{
+					in_munt_gm_set = i;
+					break;
+				}
+			}
+			if ( i == j ) return;
+		}
 
 		plugin = in_plugin;
 		vst_path = in_vst_path;
@@ -1156,6 +1200,7 @@ struct midi_preset
 		adl_bank = in_adl_bank;
 		adl_chips = in_adl_chips;
 		adl_panning = in_adl_panning;
+		munt_gm_set = in_munt_gm_set;
 	}
 };
 
@@ -2095,7 +2140,7 @@ public:
 				midi_meta_data_item item;
 				bool is_mt32 = ( meta_data.get_item( "type", item ) && !strcmp( item.m_value, "MT-32" ) );
 				delete mt32Player;
-				mt32Player = new MT32Player( !is_mt32 );
+				mt32Player = new MT32Player( !is_mt32, thePreset.munt_gm_set );
 				pfc::string8 p_base_path = cfg_munt_base_path;
 				if ( !strlen( p_base_path ) )
 				{
@@ -2730,6 +2775,7 @@ public:
 		COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_EDITCHANGE, OnEditChange)
 		COMMAND_HANDLER_EX(IDC_ADL_PANNING, BN_CLICKED, OnButtonClick)
 		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
+		COMMAND_HANDLER_EX(IDC_MUNT_GM, CBN_SELCHANGE, OnSelectionChange)
 		MSG_WM_TIMER(OnTimer)
 	END_MSG_MAP()
 private:
@@ -3154,6 +3200,13 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	uSendMessageText( w, CB_ADDSTRING, 0, "Sinc interpolation" );
 	::SendMessage( w, CB_SETCURSEL, cfg_resampling, 0 );
 
+	w = GetDlgItem( IDC_MUNT_GM );
+	for ( unsigned i = 0, j = _countof( munt_bank_names ); i < j; i++ )
+	{
+		uSendMessageText( w, CB_ADDSTRING, 0, munt_bank_names[ i ] );
+	}
+	::SendMessage( w, CB_SETCURSEL, cfg_munt_gm, 0 );
+
 	SetTimer( ID_REFRESH, 20 );
 
 	busy = false;
@@ -3432,6 +3485,7 @@ void CMyPreferences::apply() {
 	SetDlgItemInt( IDC_ADL_CHIPS, t, FALSE );
 	cfg_adl_chips = t;
 	cfg_adl_panning = SendDlgItemMessage( IDC_ADL_PANNING, BM_GETCHECK );
+	cfg_munt_gm = SendDlgItemMessage( IDC_MUNT_GM, CB_GETCURSEL );
 	{
 		t_size vsti_count = vsti_plugins.get_size();
 		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
@@ -3518,6 +3572,7 @@ bool CMyPreferences::HasChanged() {
 	}
 	if ( !changed && GetDlgItemInt( IDC_ADL_CHIPS, NULL, FALSE ) != cfg_adl_chips ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_ADL_PANNING, BM_GETCHECK ) != cfg_adl_panning ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_MUNT_GM, CB_GETCURSEL ) != cfg_munt_gm ) changed = true;
 	if ( !changed )
 	{
 		t_size vsti_count = vsti_plugins.get_size();

@@ -134,6 +134,7 @@
       <Filter>midisynth</Filter>
     </ClInclude>
     <ClInclude Include="oplmidiPlayer.h" />
+    <ClInclude Include="kq6mtgm.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

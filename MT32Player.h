@@ -17,7 +17,7 @@ public:
 	};
 
 	// zero variables
-	MT32Player( bool gm = false );
+	MT32Player( bool gm = false, unsigned gm_set = 0 );
 
 	// close, unload
 	~MT32Player();
@@ -48,6 +48,7 @@ private:
 	const MT32Emu::ROMImage * controlRom, * pcmRom;
 
 	bool               bGM;
+	unsigned           uGMSet;
 
 	unsigned           uSamplesRemaining;
 

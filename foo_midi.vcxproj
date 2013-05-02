@@ -244,6 +244,7 @@
     </ClInclude>
     <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="fmmidiPlayer.h" />
+    <ClInclude Include="kq6mtgm.h" />
     <ClInclude Include="midisynth\fmmidi.hpp" />
     <ClInclude Include="midisynth\midisynth.hpp" />
     <ClInclude Include="midisynth\oplmidi.hpp" />

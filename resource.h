@@ -28,6 +28,9 @@
 #define IDC_ADL_CHIPS                   1022
 #define IDC_ADL_CHIPS_TEXT              1023
 #define IDC_ADL_PANNING                 1024
+#define IDC_RESAMPLING_TEXT2            1029
+#define IDC_RESAMPLING2                 1030
+#define IDC_MUNT_GM                     1030
 
 // Next default values for new objects
 // 
