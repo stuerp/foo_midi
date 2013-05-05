@@ -1,4 +1,4 @@
-#define MYVERSION "1.202"
+#define MYVERSION "1.203"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+
+2013-05-05 03:52 UTC - kode54
+- Minor optimization and fix to the Lanczos resampler
+- Version is now 1.203
+
+2013-05-03 02:23 UTC - kode54
+- Replaced blargg's Fir_Resampler with a different Lanczos sinc resampler
 
 2013-05-02 01:28 UTC - kode54
 - Normalized MIDI port number meta commands per channel which they

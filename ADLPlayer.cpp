@@ -1686,139 +1686,17 @@ void ADLPlayer::send_event(DWORD b)
 	}
 }
 
-#include "blargg/blargg_source.h"
+#include "lanczos_resampler.h"
 
-#include "blargg/Fir_Resampler.h"
-typedef Fir_Resampler_Norm Chip_Resampler_Downsampler;
-
-int const resampler_extra = 0; //34;
-
-class Chip_Resampler {
-	int last_time;
-	short* out;
-	typedef short dsample_t;
-	enum { disabled_time = -1 };
-	enum { gain_bits = 14 };
-	blargg_vector<dsample_t> sample_buf;
-	int sample_buf_size;
-	int oversamples_per_frame;
-	int buf_pos;
-	int buffered;
-	int resampler_size;
-	int gain_;
-
-	Chip_Resampler_Downsampler resampler;
-
-	void put_samples( short * buf, int count )
-	{
-        dsample_t * inptr = sample_buf.begin();
-		memcpy( buf, inptr, count * 2 * sizeof(short) );
-	}
-
-public:
-	Chip_Resampler()      { last_time = disabled_time; out = NULL; }
-	blargg_err_t setup( double oversample, double rolloff, double gain )
-	{
-		gain_ = (int) ((1 << gain_bits) * gain);
-		RETURN_ERR( resampler.set_rate( oversample ) );
-		return reset_resampler();
-	}
-
-	blargg_err_t reset()
-	{
-		resampler.clear();
-		return blargg_ok;
-	}
-
-	blargg_err_t reset_resampler()
-	{
-		unsigned int pairs;
-		double rate = resampler.rate();
-		if ( rate >= 1.0 ) pairs = 64.0 * rate;
-		else pairs = 64.0 / rate;
-		RETURN_ERR( sample_buf.resize( (pairs + (pairs >> 2)) * 2 ) );
-		resize( pairs );
-		resampler_size = oversamples_per_frame + (oversamples_per_frame >> 2);
-		RETURN_ERR( resampler.resize_buffer( resampler_size ) );
-		return blargg_ok;
-	}
-
-	void resize( int pairs )
-	{
-		int new_sample_buf_size = pairs * 2;
-		//new_sample_buf_size = new_sample_buf_size / 4 * 4; // TODO: needed only for 3:2 downsampler
-		if ( sample_buf_size != new_sample_buf_size )
-		{
-			if ( (unsigned) new_sample_buf_size > sample_buf.size() )
-			{
-				check( false );
-				return;
-			}
-			sample_buf_size = new_sample_buf_size;
-			oversamples_per_frame = int (pairs * resampler.rate()) * 2 + 2;
-			clear();
-		}
-	}
-
-	void clear()
-	{
-		buf_pos = buffered = 0;
-		resampler.clear();
-	}
-
-	void enable( bool b = true )    { last_time = b ? 0 : disabled_time; }
-	bool enabled() const            { return last_time != disabled_time; }
-	void begin_frame( short* buf )  { out = buf; last_time = 0; }
-
-	int run_until( int time, void (*emu_render)(void * context, int count, short * out), void *context )
-	{
-		int count = time - last_time;
-		while ( count > 0 )
-		{
-			if ( last_time < 0 )
-				return false;
-			last_time = time;
-			if ( buffered )
-			{
-				int samples_to_copy = buffered;
-				if ( samples_to_copy > count ) samples_to_copy = count;
-				memcpy( out, sample_buf.begin(), samples_to_copy * sizeof(short) * 2 );
-				memcpy( sample_buf.begin(), sample_buf.begin() + samples_to_copy * 2, ( buffered - samples_to_copy ) * 2 * sizeof(short) );
-				buffered -= samples_to_copy;
-				count -= samples_to_copy;
-				continue;
-			}
-			int sample_count = oversamples_per_frame - resampler.written() + resampler_extra;
-			memset( resampler.buffer(), 0, sample_count * sizeof(*resampler.buffer()) );
-			emu_render( context, sample_count >> 1, resampler.buffer() );
-			for ( unsigned i = 0; i < sample_count; i++ )
-			{
-                dsample_t * ptr = resampler.buffer() + i;
-				*ptr = ( *ptr * gain_ ) >> gain_bits;
-			}
-			short* p = out;
-			resampler.write( sample_count );
-			sample_count = resampler.read( sample_buf.begin(), count * 2 > sample_buf_size ? sample_buf_size : count * 2 ) >> 1;
-			if ( sample_count > count )
-			{
-				out += count * 2;
-				put_samples( p, count );
-				memmove( sample_buf.begin(), sample_buf.begin() + count * 2, (sample_count - count) * 2 * sizeof(short) );
-				buffered = sample_count - count;
-				return true;
-			}
-			else if (!sample_count) return true;
-			out += sample_count * 2;
-			put_samples( p, sample_count );
-			count -= sample_count;
-		}
-		return true;
-	}
-};
+static struct init_lanczos
+{
+	init_lanczos() { lanczos_init(); }
+} g_lanczos_initializer;
 
 void ADLPlayer::render( audio_sample * out, unsigned count )
 {
-	short buffer[ 512 ];
+	short intermediate_buffer[ 512 ];
+	int resampled_buffer[ 512 ];
 
 	while ( count )
 	{
@@ -1827,12 +1705,38 @@ void ADLPlayer::render( audio_sample * out, unsigned count )
 
 		if ( resampler )
 		{
-			resampler->begin_frame( buffer );
-			resampler->run_until( todo, render_internal, this );
-		}
-		else render_internal( this, todo, buffer );
+			unsigned samples_written = 0;
 
-		audio_math::convert_from_int16( buffer, todo * 2, out, 2.0 );
+			while ( todo )
+			{
+				int to_write = lanczos_resampler_get_free_count( resampler );
+				if ( to_write )
+				{
+					render_internal( this, to_write, intermediate_buffer );
+					for ( unsigned i = 0; i < to_write; i++ )
+					{
+						lanczos_resampler_write_sample( resampler, intermediate_buffer[ i * 2 ], intermediate_buffer[ i * 2 + 1 ] );
+					}
+				}
+				/* if ( !lanczos_resampler_ready( resampler ) ) break; */ /* We assume that by filling the input buffer completely every pass, there will always be samples ready. */
+				int ls, rs;
+				lanczos_resampler_get_sample( resampler, &ls, &rs );
+				lanczos_resampler_remove_sample( resampler );
+				resampled_buffer[ samples_written++ ] = ls;
+				resampled_buffer[ samples_written++ ] = rs;
+				--todo;
+			}
+
+			audio_math::convert_from_int32( resampled_buffer, samples_written, out, 1 << 9 );
+
+			todo = samples_written / 2;
+		}
+		else
+		{
+			render_internal( this, todo, intermediate_buffer );
+
+			audio_math::convert_from_int16( intermediate_buffer, todo * 2, out, 2.0 );
+		}
 
 		out += todo * 2;
 		count -= todo;
@@ -1899,7 +1803,7 @@ void ADLPlayer::setFullPanning( bool enable )
 
 void ADLPlayer::shutdown()
 {
-	delete resampler;
+	if ( resampler ) lanczos_resampler_delete( resampler );
 	resampler = NULL;
 	delete midiplay;
 	midiplay = NULL;
@@ -1918,9 +1822,10 @@ bool ADLPlayer::startup()
 
 	if ( uSampleRate != 49716 )
 	{
-		resampler = new Chip_Resampler;
-		if ( resampler->setup( 49716.0 / (double)uSampleRate, 0.85, 1.0 ) )
+		resampler = lanczos_resampler_create();
+		if ( !resampler )
 			return false;
+		lanczos_resampler_set_rate( resampler, 49716.0 / (double)uSampleRate );
 	}
 
 	reset_drum_channels();

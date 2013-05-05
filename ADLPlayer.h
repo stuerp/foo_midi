@@ -7,8 +7,6 @@
 
 class MIDIplay;
 
-class Chip_Resampler;
-
 class ADLPlayer
 {
 public:
@@ -50,7 +48,7 @@ private:
 
 	MIDIplay         * midiplay;
 
-	Chip_Resampler   * resampler;
+	void             * resampler;
 
 	unsigned           uBankNumber;
 	unsigned           uChipCount;

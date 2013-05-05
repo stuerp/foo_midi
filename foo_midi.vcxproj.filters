@@ -4,9 +4,6 @@
     <Filter Include="new processing">
       <UniqueIdentifier>{adaab277-2f49-4404-9715-6d957c4dc48d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="blargg">
-      <UniqueIdentifier>{53c5fff5-1672-43f2-8d1e-37997214b3ab}</UniqueIdentifier>
-    </Filter>
     <Filter Include="midisynth">
       <UniqueIdentifier>{6ccd073f-d424-4b06-9496-ca2955a73461}</UniqueIdentifier>
     </Filter>
@@ -58,18 +55,6 @@
     </ClCompile>
     <ClCompile Include="adldata.cpp" />
     <ClCompile Include="ADLPlayer.cpp" />
-    <ClCompile Include="blargg\blargg_common.cpp">
-      <Filter>blargg</Filter>
-    </ClCompile>
-    <ClCompile Include="blargg\blargg_errors.cpp">
-      <Filter>blargg</Filter>
-    </ClCompile>
-    <ClCompile Include="blargg\Fir_Resampler.cpp">
-      <Filter>blargg</Filter>
-    </ClCompile>
-    <ClCompile Include="blargg\Resampler.cpp">
-      <Filter>blargg</Filter>
-    </ClCompile>
     <ClCompile Include="dbopl.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
     <ClCompile Include="midisynth\midisynth.cpp">
@@ -85,6 +70,7 @@
     <ClCompile Include="nu_processing\midi_processor_syx.cpp">
       <Filter>new processing</Filter>
     </ClCompile>
+    <ClCompile Include="lanczos_resampler.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -104,24 +90,6 @@
     <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="adldata.h" />
     <ClInclude Include="ADLPlayer.h" />
-    <ClInclude Include="blargg\blargg_common.h">
-      <Filter>blargg</Filter>
-    </ClInclude>
-    <ClInclude Include="blargg\blargg_config.h">
-      <Filter>blargg</Filter>
-    </ClInclude>
-    <ClInclude Include="blargg\blargg_errors.h">
-      <Filter>blargg</Filter>
-    </ClInclude>
-    <ClInclude Include="blargg\blargg_source.h">
-      <Filter>blargg</Filter>
-    </ClInclude>
-    <ClInclude Include="blargg\Fir_Resampler.h">
-      <Filter>blargg</Filter>
-    </ClInclude>
-    <ClInclude Include="blargg\Resampler.h">
-      <Filter>blargg</Filter>
-    </ClInclude>
     <ClInclude Include="dbopl.h" />
     <ClInclude Include="fmmidiPlayer.h" />
     <ClInclude Include="midisynth\midisynth.hpp">
@@ -135,6 +103,7 @@
     </ClInclude>
     <ClInclude Include="oplmidiPlayer.h" />
     <ClInclude Include="kq6mtgm.h" />
+    <ClInclude Include="lanczos_resampler.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
