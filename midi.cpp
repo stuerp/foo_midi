@@ -1,4 +1,4 @@
-#define MYVERSION "1.203"
+#define MYVERSION "1.204"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-05-05 17:56 UTC - kode54
+- Changed optimization settings
+- Version is now 1.204
 
 2013-05-05 03:52 UTC - kode54
 - Minor optimization and fix to the Lanczos resampler

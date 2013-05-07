@@ -103,8 +103,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <Optimization>MinSpace</Optimization>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
