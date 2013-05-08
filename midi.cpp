@@ -1,4 +1,4 @@
-#define MYVERSION "1.207"
+#define MYVERSION "1.208"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2013-05-08 07:59 UTC - kode54
+- Updated BASSMIDI to version 2.4.8
+- Updated SoundFont support to use foobar2000 file system functions
+- Version is now 1.208
 
 2013-05-08 06:54 UTC - kode54
 - Container normalizes port numbers correctly now
@@ -1877,58 +1882,55 @@ public:
 		{
 			pfc::string8_fast temp;
 
-			if ( !pfc::strcmp_partial( m_path, "file://" ) )
+			temp = m_path;
+			temp += ".sf2";
+			if ( !filesystem::g_exists( temp, p_abort ) )
 			{
-				temp = m_path;
-				temp += ".sf2";
+#ifdef SF2PACK
+				temp += "pack";
 				if ( !filesystem::g_exists( temp, p_abort ) )
 				{
-#ifdef SF2PACK
-					temp += "pack";
+#endif
+					temp = pfc::string_replace_extension( m_path, "sf2" );
 					if ( !filesystem::g_exists( temp, p_abort ) )
 					{
-#endif
-						temp = pfc::string_replace_extension( m_path, "sf2" );
+#ifdef SF2PACK
+						temp += "pack";
 						if ( !filesystem::g_exists( temp, p_abort ) )
+#endif
 						{
-#ifdef SF2PACK
-							temp += "pack";
-							if ( !filesystem::g_exists( temp, p_abort ) )
-#endif
+							pfc::string8 temp2;
+							t_size pos1, pos2;
+							temp = m_path;
+							temp.truncate( temp.scan_filename() );
+							pos2 = temp.length() - 1;
+							pos1 = temp.find_last( '\\', pos2 - 1 );
+							if ( pos1 > 0 && pos1 < pos2 )
 							{
-								pfc::string8 temp2;
-								t_size pos1, pos2;
-								temp = m_path;
-								temp.truncate( temp.scan_filename() );
-								pos2 = temp.length() - 1;
-								pos1 = temp.find_last( '\\', pos2 - 1 );
-								if ( pos1 > 0 && pos1 < pos2 )
+								temp.add_string( &temp[ pos1 + 1 ], pos2 - pos1 - 1 );
+								temp.add_byte( '.' );
+								temp += "sf2";
+								if ( !filesystem::g_exists( temp, p_abort ) )
 								{
-									temp.add_string( &temp[ pos1 + 1 ], pos2 - pos1 - 1 );
-									temp.add_byte( '.' );
-									temp += "sf2";
+#ifdef SF2PACK
+									temp += "pack";
 									if ( !filesystem::g_exists( temp, p_abort ) )
-									{
-#ifdef SF2PACK
-										temp += "pack";
-										if ( !filesystem::g_exists( temp, p_abort ) )
 #endif
-											temp.reset();
-									}
+										temp.reset();
 								}
-								else temp.reset();
 							}
+							else temp.reset();
 						}
-#ifdef SF2PACK
 					}
+#ifdef SF2PACK
+				}
 #endif
-				}
+			}
 
-				if ( temp.length() )
-				{
-					file_soundfont = temp.get_ptr() + 7;
-					plugin = 4;
-				}
+			if ( temp.length() )
+			{
+				file_soundfont = temp;
+				plugin = 4;
 			}
 		}
 

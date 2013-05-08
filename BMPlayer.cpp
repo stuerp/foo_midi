@@ -24,6 +24,75 @@ static bool is_gs_reset(const unsigned char * data, unsigned size)
 	return true;
 }
 
+static void CALLBACK fb_close(void * user)
+{
+	delete (file::ptr*) user;
+}
+
+static QWORD CALLBACK fb_length(void * user)
+{
+	try
+	{
+		return (*((file::ptr*)user))->get_size_ex( abort_callback_dummy() );
+	}
+	catch (...)
+	{
+		return 0;
+	}
+}
+
+static DWORD CALLBACK fb_read(void * buffer, DWORD length, void * user)
+{
+	try
+	{
+		return (*((file::ptr*)user))->read( buffer, length, abort_callback_dummy() );
+	}
+	catch (...)
+	{
+		return 0;
+	}
+}
+
+static BOOL CALLBACK fb_seek(QWORD offset, void * user)
+{
+	try
+	{
+		(*((file::ptr*)user))->seek( offset, abort_callback_dummy() );
+		return TRUE;
+	}
+	catch (...)
+	{
+		return FALSE;
+	}
+}
+
+static BASS_FILEPROCS fb_fileprocs = { fb_close, fb_length, fb_read, fb_seek };
+
+static void * fb_open( const char * path )
+{
+	file::ptr * f = NULL;
+	try
+	{
+		f = new file::ptr;
+		pfc::string8 m_path, m_canonical_path;
+		if ( !strstr( path, "://" ) )
+		{
+			m_path = "file://";
+			m_path += path;
+			path = m_path.get_ptr();
+		}
+		filesystem::g_get_canonical_path( path, m_canonical_path );
+		filesystem::g_open( *f, m_canonical_path, filesystem::open_mode_read, abort_callback_dummy() );
+		return (void *) f;
+	}
+	catch (std::exception & e)
+	{
+		OutputDebugStringA( e.what() );
+		delete f;
+		return NULL;
+	}
+}
+
 class soundfont_map : public pfc::thread
 {
 	critical_section m_lock;
@@ -35,7 +104,7 @@ class soundfont_map : public pfc::thread
 		LARGE_INTEGER m_release_time;
 	};
 
-	pfc::map_t<std::wstring, soundfont_info> m_map;
+	pfc::map_t<std::string, soundfont_info> m_map;
 
 	bool thread_running;
 
@@ -49,9 +118,9 @@ class soundfont_map : public pfc::thread
 			QueryPerformanceCounter( &now );
 			{
 				insync( m_lock );
-				for ( pfc::map_t<std::wstring, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); )
+				for ( pfc::map_t<std::string, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); )
 				{
-					pfc::map_t<std::wstring, soundfont_info>::const_iterator it_copy = it++;
+					pfc::map_t<std::string, soundfont_info>::const_iterator it_copy = it++;
 					if ( it_copy->m_value.m_reference_count == 0 && now.QuadPart >= it_copy->m_value.m_release_time.QuadPart )
 					{
 						BASS_MIDI_FontFree( it_copy->m_value.m_handle );
@@ -68,17 +137,17 @@ public:
 	{
 		thread_running = false;
 		waitTillDone();
-		for ( pfc::map_t<std::wstring, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); ++it )
+		for ( pfc::map_t<std::string, soundfont_info>::const_iterator it = m_map.first(); it.is_valid(); ++it )
 		{
 			BASS_MIDI_FontFree( it->m_value.m_handle );
 		}
 	}
 
-	HSOUNDFONT load_font( std::wstring p_path )
+	HSOUNDFONT load_font( std::string p_path )
 	{
 		insync( m_lock );
 
-		pfc::map_t<std::wstring, soundfont_info>::iterator it = m_map.find( p_path );
+		pfc::map_t<std::string, soundfont_info>::iterator it = m_map.find( p_path );
 
 		if ( it.is_valid() )
 		{
@@ -87,7 +156,10 @@ public:
 		}
 		else
 		{
-			HSOUNDFONT font = BASS_MIDI_FontInit( p_path.c_str(), BASS_UNICODE );
+			void * fb_file = fb_open( p_path.c_str() );
+			if ( !fb_file ) return NULL;
+
+			HSOUNDFONT font = BASS_MIDI_FontInitUser( &fb_fileprocs, fb_file, 0 );
 			if ( font )
 			{
 				m_map[ p_path ].m_reference_count = 1;
@@ -101,7 +173,7 @@ public:
 	{
 		insync( m_lock );
 
-		for ( pfc::map_t<std::wstring, soundfont_info>::iterator it = m_map.first(); it.is_valid(); ++it )
+		for ( pfc::map_t<std::string, soundfont_info>::iterator it = m_map.first(); it.is_valid(); ++it )
 		{
 			if ( it->m_value.m_handle == p_font )
 			{
@@ -126,7 +198,7 @@ public:
 
 		insync( m_lock );
 
-		for ( pfc::map_t<std::wstring, soundfont_info>::iterator it = m_map.first(); it.is_valid(); ++it )
+		for ( pfc::map_t<std::string, soundfont_info>::iterator it = m_map.first(); it.is_valid(); ++it )
 		{
 			BASS_MIDI_FONTINFO info;
 			if ( BASS_MIDI_FontGetInfo( it->m_value.m_handle, &info ) )
@@ -670,7 +742,7 @@ bool BMPlayer::startup()
 #endif
 			)
 		{
-			HSOUNDFONT font = g_map->load_font( pfc::stringcvt::string_wide_from_utf8( sSoundFontName ).get_ptr() );
+			HSOUNDFONT font = g_map->load_font( sSoundFontName.get_ptr() );
 			if ( !font )
 			{
 				shutdown();
@@ -701,7 +773,7 @@ bool BMPlayer::startup()
 						_tcscat_s( temp, 1024, name );
 						cr = temp;
 					}
-					HSOUNDFONT font = g_map->load_font( cr );
+					HSOUNDFONT font = g_map->load_font( pfc::stringcvt::string_utf8_from_os( cr ).get_ptr() );
 					if ( !font )
 					{
 						fclose( fl );
@@ -721,7 +793,7 @@ bool BMPlayer::startup()
 
 	if ( sFileSoundFontName.length() )
 	{
-		HSOUNDFONT font = g_map->load_font( pfc::stringcvt::string_wide_from_utf8( sFileSoundFontName ).get_ptr() );
+		HSOUNDFONT font = g_map->load_font( sFileSoundFontName.get_ptr() );
 		if ( !font )
 		{
 			shutdown();
