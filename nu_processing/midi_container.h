@@ -147,8 +147,9 @@ private:
 	pfc::array_t<tempo_map> m_tempo_map;
 	pfc::array_t<midi_track> m_tracks;
 
-	pfc::array_t<pfc::array_t<t_uint8>> m_port_numbers;
-	pfc::array_t<pfc::string8> m_device_names;
+	pfc::array_t<t_uint8> m_port_numbers;
+
+	pfc::array_t< pfc::array_t<pfc::string8> > m_device_names;
 
 	midi_meta_data m_extra_meta_data;
 
@@ -159,8 +160,37 @@ private:
 
 	const unsigned timestamp_to_ms( unsigned p_timestamp, unsigned p_subsong ) const;
 
+	/*
+	 * Normalize port numbers properly
+	 */
+	template <typename T> void limit_port_number(T & number)
+	{
+		for ( unsigned i = 0; i < m_port_numbers.get_count(); i++ )
+		{
+			if ( m_port_numbers[ i ] == number )
+			{
+				number = i;
+				return;
+			}
+		}
+		m_port_numbers.append_single( (t_uint8) number );
+		number = m_port_numbers.get_count() - 1;
+	}
+
+	template <typename T> void limit_port_number(T & number) const
+	{
+		for ( unsigned i = 0; i < m_port_numbers.get_count(); i++ )
+		{
+			if ( m_port_numbers[ i ] == number )
+			{
+				number = i;
+				return;
+			}
+		}
+	}
+
 public:
-	midi_container() { m_port_numbers.set_count( 16 ); }
+	midi_container() { m_device_names.set_count( 16 ); }
 
 	void initialize( unsigned p_form, unsigned p_dtx );
 

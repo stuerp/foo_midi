@@ -1,4 +1,4 @@
-#define MYVERSION "1.206"
+#define MYVERSION "1.207"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-05-08 06:54 UTC - kode54
+- Container normalizes port numbers correctly now
+- Version is now 1.207
 
 2013-05-08 02:39 UTC - kode54
 - Implemented VSTHost hacks necessary to get Universal Sound Module
