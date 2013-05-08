@@ -1,4 +1,4 @@
-#define MYVERSION "1.205"
+#define MYVERSION "1.206"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,19 @@
 
 /*
 	change log
+
+2013-05-08 02:39 UTC - kode54
+- Implemented VSTHost hacks necessary to get Universal Sound Module
+  working acceptably
+- Version is now 1.206
+
+2013-05-08 01:40 UTC - kode54
+- Fixed a stupid VSTPlayer memory leak introduced with the new MIDI
+  preset system
+
+2013-05-08 01:27 UTC - kode54
+- Reverted VSTHost process to use standard input and output,
+  but reassign them to a null file for the duration of execution
 
 2013-05-08 00:06 UTC - kode54
 - Fixed external SysEx dump support for absolute paths
@@ -1007,9 +1020,9 @@ struct midi_preset
 	{
 		plugin = cfg_plugin;
 		vst_path = cfg_vst_path;
+		VSTiPlayer * vstPlayer = NULL;
 		try
 		{
-			VSTiPlayer * vstPlayer;
 			vstPlayer = new VSTiPlayer;
 			if (vstPlayer->LoadVST(vst_path))
 			{
@@ -1020,6 +1033,7 @@ struct midi_preset
 		{
 			if ( plugin == 1 ) plugin = 0;
 		}
+		delete vstPlayer;
 		soundfont_path = cfg_soundfont_path;
 #ifdef DXISUPPORT
 		dxi_plugin = cfg_dxi_plugin;

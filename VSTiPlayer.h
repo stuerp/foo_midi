@@ -68,7 +68,10 @@ private:
 	HANDLE       hProcess;
 	HANDLE       hThread;
 	HANDLE       hReadEvent;
-	HANDLE       hChildStd;
+ 	HANDLE       hChildStd_IN_Rd;
+ 	HANDLE       hChildStd_IN_Wr;
+ 	HANDLE       hChildStd_OUT_Rd;
+ 	HANDLE       hChildStd_OUT_Wr;
 
 	char       * sName;
 	char       * sVendor;
