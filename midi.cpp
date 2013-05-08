@@ -1,4 +1,4 @@
-#define MYVERSION "1.204"
+#define MYVERSION "1.205"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2013-05-08 00:06 UTC - kode54
+- Fixed external SysEx dump support for absolute paths
+- Fixed external SysEx dump support for multiple items
+- Version is now 1.205
 
 2013-05-05 17:56 UTC - kode54
 - Changed optimization settings
@@ -1249,10 +1254,18 @@ static void relative_path_create( const char * p_file, const char * p_base_path,
 
 static void relative_path_parse( const char * p_relative, const char * p_base_path, pfc::string_base & p_out )
 {
-	pfc::string8 temp = p_base_path;
-	temp.truncate( temp.scan_filename() );
-	temp += p_relative;
-	filesystem::g_get_canonical_path( temp, p_out );
+	try
+	{
+		filesystem::ptr fs = filesystem::g_get_interface( p_relative );
+		p_out = p_relative;
+	}
+	catch (...)
+	{
+		pfc::string8 temp = p_base_path;
+		temp.truncate( temp.scan_filename() );
+		temp += p_relative;
+		filesystem::g_get_canonical_path( temp, p_out );
+	}
 }
 
 struct midi_syx_dumps
@@ -1294,6 +1307,7 @@ struct midi_syx_dumps
 			dumps.append_single( p_absolute );
 
 			p_in = lf_pos;
+			while ( *p_in == '\n' ) ++p_in;
 		}
 	}
 
