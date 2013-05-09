@@ -385,8 +385,8 @@ namespace midisynth{
     void channel::update_frequency_multiplier()
     {
         float value = master_frequency_multiplier
-                    * std::pow(2, (coarse_tuning - 8192) / (128.0 * 100.0 * 12.0)
-                                + (fine_tuning - 8192) / (8192.0 * 100.0 * 12.0)
+                    * std::pow(2, (coarse_tuning - 8192) / (128.0 * 12.0)
+                                + (fine_tuning - 8192) / (8192.0 * 12.0)
                                 + static_cast<double>(pitch_bend - 8192) * pitch_bend_sensitivity / (8192.0 * 128.0 * 12.0));
         if(frequency_multiplier != value){
             frequency_multiplier = value;

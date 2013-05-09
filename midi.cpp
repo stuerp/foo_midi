@@ -1,4 +1,4 @@
-#define MYVERSION "1.208"
+#define MYVERSION "1.209"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-05-09 01:22 UTC - kode54
+- Fixed midisynth coarse and fine tuning
+- Version is now 1.209
 
 2013-05-08 07:59 UTC - kode54
 - Updated BASSMIDI to version 2.4.8
