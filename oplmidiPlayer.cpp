@@ -26,9 +26,9 @@ oplmidiPlayer::~oplmidiPlayer()
 
 void oplmidiPlayer::setSampleRate(unsigned rate)
 {
-	if (mStream.get_count())
+	if (mStream.size())
 	{
-		for (UINT i = 0; i < mStream.get_count(); i++)
+		for (UINT i = 0; i < mStream.size(); i++)
 		{
 			mStream[i].m_timestamp = MulDiv(mStream[i].m_timestamp, rate, uSampleRate);
 		}
@@ -56,11 +56,11 @@ void oplmidiPlayer::setSampleRate(unsigned rate)
 
 bool oplmidiPlayer::Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags)
 {
-	assert(!mStream.get_count());
+	assert(!mStream.size());
 
 	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flags );
 
-	if (mStream.get_count())
+	if (mStream.size())
 	{
 		uStreamPosition = 0;
 		uTimeCurrent = 0;
@@ -80,7 +80,7 @@ bool oplmidiPlayer::Load(const midi_container & midi_file, unsigned subsong, uns
 
 			if ( uTimeLoopStart != ~0 )
 			{
-				for ( unsigned i = 0; i < mStream.get_count(); ++i )
+				for ( unsigned i = 0; i < mStream.size(); ++i )
 				{
 					if ( mStream[ i ].m_timestamp >= uTimeLoopStart )
 					{
@@ -102,7 +102,7 @@ bool oplmidiPlayer::Load(const midi_container & midi_file, unsigned subsong, uns
 				UINT i;
 				unsigned char note_on[128 * 16];
 				memset( note_on, 0, sizeof( note_on ) );
-				for (i = 0; i < mStream.get_count(); i++)
+				for (i = 0; i < mStream.size(); i++)
 				{
 					if (mStream[ i ].m_timestamp > uTimeEnd) break;
 					UINT ev = mStream[ i ].m_event & 0x800000F0;
@@ -116,7 +116,7 @@ bool oplmidiPlayer::Load(const midi_container & midi_file, unsigned subsong, uns
 						note_on [ ch * 128 + note ] = ( note_on [ ch * 128 + note ] & ~bit ) | ( bit * on );
 					}
 				}
-				mStream.set_count( i );
+				mStream.resize( i );
 				for ( UINT j = 0; j < 128 * 16; j++ )
 				{
 					if ( note_on[ j ] )
@@ -125,7 +125,7 @@ bool oplmidiPlayer::Load(const midi_container & midi_file, unsigned subsong, uns
 						{
 							if ( note_on[ j ] & ( 1 << k ) )
 							{
-								mStream.append_single( midi_stream_event( uTimeEnd, ( k << 24 ) + ( j >> 7 ) + ( j & 0x7F ) * 0x100 + 0x90 ) );
+								mStream.push_back( midi_stream_event( uTimeEnd, ( k << 24 ) + ( j >> 7 ) + ( j & 0x7F ) * 0x100 + 0x90 ) );
 							}
 						}
 					}
@@ -149,7 +149,7 @@ bool oplmidiPlayer::Load(const midi_container & midi_file, unsigned subsong, uns
 
 unsigned oplmidiPlayer::Play(audio_sample * out, unsigned count)
 {
-	assert(mStream.get_count());
+	assert(mStream.size());
 
 	if (!factory && !startup()) return 0;
 
@@ -173,13 +173,13 @@ unsigned oplmidiPlayer::Play(audio_sample * out, unsigned count)
 		DWORD time_target = todo + uTimeCurrent;
 		UINT stream_end = uStreamPosition;
 
-		while (stream_end < mStream.get_count() && mStream[stream_end].m_timestamp < time_target) stream_end++;
+		while (stream_end < mStream.size() && mStream[stream_end].m_timestamp < time_target) stream_end++;
 
 		if (stream_end > uStreamPosition)
 		{
 			for (; uStreamPosition < stream_end; uStreamPosition++)
 			{
-				midi_stream_event * me = mStream.get_ptr() + uStreamPosition;
+				midi_stream_event * me = &mStream[uStreamPosition];
 				
 				DWORD samples_todo = me->m_timestamp - uTimeCurrent;
 				if ( samples_todo )
@@ -208,7 +208,7 @@ unsigned oplmidiPlayer::Play(audio_sample * out, unsigned count)
 		if ( done < count )
 		{
 			DWORD samples_todo;
-			if ( uStreamPosition < mStream.get_count() ) samples_todo = mStream[uStreamPosition].m_timestamp;
+			if ( uStreamPosition < mStream.size() ) samples_todo = mStream[uStreamPosition].m_timestamp;
 			else samples_todo = uTimeEnd;
 			samples_todo -= uTimeCurrent;
 			if ( samples_todo > count - done ) samples_todo = count - done;
@@ -220,9 +220,9 @@ unsigned oplmidiPlayer::Play(audio_sample * out, unsigned count)
 
 		if (uTimeCurrent >= uTimeEnd)
 		{
-			if ( uStreamPosition < mStream.get_count() )
+			if ( uStreamPosition < mStream.size() )
 			{
-				for (; uStreamPosition < mStream.get_count(); uStreamPosition++)
+				for (; uStreamPosition < mStream.size(); uStreamPosition++)
 				{
 					send_event( mStream[ uStreamPosition ].m_event );
 				}
@@ -278,7 +278,7 @@ void oplmidiPlayer::Seek(unsigned sample)
 
 	UINT stream_start = uStreamPosition;
 
-	for (; uStreamPosition < mStream.get_count() && mStream[uStreamPosition].m_timestamp < uTimeCurrent; uStreamPosition++);
+	for (; uStreamPosition < mStream.size() && mStream[uStreamPosition].m_timestamp < uTimeCurrent; uStreamPosition++);
 
 	uSamplesRemaining = mStream[uStreamPosition].m_timestamp - uTimeCurrent;
 

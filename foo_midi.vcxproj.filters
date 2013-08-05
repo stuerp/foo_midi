@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="new processing">
-      <UniqueIdentifier>{adaab277-2f49-4404-9715-6d957c4dc48d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="midisynth">
       <UniqueIdentifier>{6ccd073f-d424-4b06-9496-ca2955a73461}</UniqueIdentifier>
     </Filter>
@@ -17,42 +14,9 @@
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="VSTiPlayer.cpp" />
     <ClCompile Include="MT32Player.cpp" />
-    <ClCompile Include="nu_processing\midi_container.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
-    <ClCompile Include="nu_processing\midi_processor_standard_midi.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
-    <ClCompile Include="nu_processing\midi_processor_helpers.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
-    <ClCompile Include="nu_processing\midi_processor_riff_midi.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
-    <ClCompile Include="nu_processing\midi_processor_hmp.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
-    <ClCompile Include="nu_processing\midi_processor_hmi.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
-    <ClCompile Include="nu_processing\midi_processor_xmi.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
-    <ClCompile Include="nu_processing\midi_processor_mus.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
-    <ClCompile Include="nu_processing\midi_processor_mids.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
-    <ClCompile Include="nu_processing\midi_processor_lds.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="DXiProxy.cpp" />
     <ClCompile Include="EMIDIPlayer.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_gmf.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
     <ClCompile Include="adldata.cpp" />
     <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="dbopl.cpp" />
@@ -67,9 +31,6 @@
       <Filter>midisynth</Filter>
     </ClCompile>
     <ClCompile Include="oplmidiPlayer.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_syx.cpp">
-      <Filter>new processing</Filter>
-    </ClCompile>
     <ClCompile Include="lanczos_resampler.c" />
   </ItemGroup>
   <ItemGroup>
@@ -79,12 +40,6 @@
     <ClInclude Include="VSTiPlayer.h" />
     <ClInclude Include="MT32Player.h" />
     <ClInclude Include="mtgm.h" />
-    <ClInclude Include="nu_processing\midi_container.h">
-      <Filter>new processing</Filter>
-    </ClInclude>
-    <ClInclude Include="nu_processing\midi_processor.h">
-      <Filter>new processing</Filter>
-    </ClInclude>
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="DXiProxy.h" />
     <ClInclude Include="EMIDIPlayer.h" />

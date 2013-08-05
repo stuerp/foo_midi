@@ -27,7 +27,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>PGUpdate</WholeProgramOptimization>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
     <PlatformToolset>v110_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -66,7 +66,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../../midi_processing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -88,6 +88,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -107,7 +108,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../../midi_processing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -136,6 +137,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -154,18 +156,6 @@
     <ClCompile Include="midisynth\midisynth.cpp" />
     <ClCompile Include="midisynth\oplmidi.cpp" />
     <ClCompile Include="MT32Player.cpp" />
-    <ClCompile Include="nu_processing\midi_container.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_gmf.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_helpers.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_hmi.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_hmp.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_lds.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_mids.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_mus.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_riff_midi.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_standard_midi.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_syx.cpp" />
-    <ClCompile Include="nu_processing\midi_processor_xmi.cpp" />
     <ClCompile Include="DXiPlayer.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -244,8 +234,6 @@
     <ClInclude Include="midisynth\oplmidi.hpp" />
     <ClInclude Include="MT32Player.h" />
     <ClInclude Include="mtgm.h" />
-    <ClInclude Include="nu_processing\midi_container.h" />
-    <ClInclude Include="nu_processing\midi_processor.h" />
     <CustomBuild Include="DXiPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -271,6 +259,9 @@
     <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\midi_processing\midi_processing.vcxproj">
+      <Project>{4573e081-973b-47f0-a67d-551761ba1678}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\munt\mt32emu\mt32emu_msvc7.vcxproj">
       <Project>{063a149d-e48c-499b-b13f-7a70c140a662}</Project>
     </ProjectReference>

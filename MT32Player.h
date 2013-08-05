@@ -3,7 +3,7 @@
 
 #include <foobar2000.h>
 
-#include "nu_processing/midi_container.h"
+#include <midi_container.h>
 
 #include <mt32emu.h>
 
@@ -56,7 +56,7 @@ private:
 	unsigned           uLoopMode;
 
 	system_exclusive_table mSysexMap;
-	pfc::array_t<midi_stream_event> mStream;
+	std::vector<midi_stream_event> mStream;
 
 	UINT               uStreamPosition;
 	DWORD              uTimeCurrent;

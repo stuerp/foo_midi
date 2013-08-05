@@ -1,4 +1,4 @@
-#define MYVERSION "1.209"
+#define MYVERSION "1.210"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2013-08-05 01:57 UTC - kode54
+- Replaced customized MIDI processing routines with in-memory STL
+  based midi_processing library, improving loading speed greatly
+- Version is now 1.210
 
 2013-05-09 01:22 UTC - kode54
 - Fixed midisynth coarse and fine tuning
@@ -756,7 +761,7 @@
 #include "../helpers/dropdown_helper.h"
 #include "../ATLHelpers/ATLHelpers.h"
 
-#include "nu_processing/midi_processor.h"
+#include <midi_processor.h>
 
 #include <shlobj.h>
 #include <shlwapi.h>
@@ -1340,6 +1345,8 @@ struct midi_syx_dumps
 
 	void merge_into_file( midi_container & p_midi_file, abort_callback & p_abort )
 	{
+		std::vector<uint8_t> file_data;
+
 		for ( unsigned i = 0; i < dumps.get_count(); i++ )
 		{
 			file::ptr p_file;
@@ -1348,7 +1355,13 @@ struct midi_syx_dumps
 			try
 			{
 				filesystem::g_open( p_file, dumps[ i ], filesystem::open_mode_read, p_abort );
-				midi_processor::process_syx_file( p_file, p_dump, p_abort );
+
+				t_filesize size = p_file->get_size_ex( p_abort );
+
+				file_data.resize( size );
+				p_file->read_object( &file_data[0], size, p_abort );
+
+				midi_processor::process_syx_file( file_data, p_dump );
 
 				p_midi_file.merge_tracks( p_dump );
 			}
@@ -1666,27 +1679,32 @@ public:
 		m_stats = p_file->get_stats( p_abort );
 		if ( ! m_stats.m_size || m_stats.m_size > ( 1 << 30 ) ) throw exception_io_unsupported_format();
 
+		std::vector<uint8_t> file_data;
+
+		file_data.resize( m_stats.m_size );
+		p_file->read_object( &file_data[0], m_stats.m_size, p_abort );
+
 		if ( is_syx )
 		{
-			midi_processor::process_syx_file( p_file, midi_file, p_abort );
+			midi_processor::process_syx_file( file_data, midi_file );
 			return;
 		}
 
-		midi_processor::process_file( p_file, pfc::string_extension( p_path ), midi_file, p_abort );
+		midi_processor::process_file( file_data, pfc::string_extension( p_path ), midi_file );
 
 		original_track_count = midi_file.get_track_count();
 
 		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz );
 
-		pfc::array_t<t_uint8> temp_file;
+		file_data.resize( 0 );
 
-		midi_file.serialize_as_standard_midi_file( temp_file );
+		midi_file.serialize_as_standard_midi_file( file_data );
 
 		hasher_md5_state hasher_state;
 		static_api_ptr_t<hasher_md5> hasher;
 
 		hasher->initialize( hasher_state );
-		hasher->process( hasher_state, temp_file.get_ptr(), temp_file.get_size() );
+		hasher->process( hasher_state, &file_data[0], file_data.size() );
 
 		m_file_hash = hasher->get_result( hasher_state );
 	}
@@ -1714,11 +1732,11 @@ public:
 		for ( t_size i = 0; i < meta_data.get_count(); ++i )
 		{
 			const midi_meta_data_item & item = meta_data[ i ];
-			if ( pfc::stricmp_ascii( item.m_name, "type" ) )
+			if ( pfc::stricmp_ascii( item.m_name.c_str(), "type" ) )
 			{
-				const char * name = item.m_name;
-				if ( remap_display_name && !pfc::stricmp_ascii( name, "display_name" ) ) name = "title";
-				p_info.meta_add( name, item.m_value );
+				std::string name = item.m_name;
+				if ( remap_display_name && !pfc::stricmp_ascii( name.c_str(), "display_name" ) ) name = "title";
+				p_info.meta_add( name.c_str(), item.m_value.c_str() );
 			}
 		}
 
@@ -1726,7 +1744,7 @@ public:
 		p_info.info_set_int(field_tracks, midi_file.get_format() == 2 ? 1 : midi_file.get_track_count());
 		p_info.info_set_int(field_channels, midi_file.get_channel_count(p_subsong));
 		p_info.info_set_int(field_ticks, midi_file.get_timestamp_end(p_subsong));
-		if (meta_data.get_item("type", item)) p_info.info_set(field_type, item.m_value);
+		if (meta_data.get_item("type", item)) p_info.info_set(field_type, item.m_value.c_str());
 
 		unsigned loop_begin = midi_file.get_timestamp_loop_start( p_subsong );
 		unsigned loop_end = midi_file.get_timestamp_loop_end( p_subsong );
@@ -1817,7 +1835,7 @@ public:
 			p_info.info_set_int(field_tracks, midi_file.get_format() == 2 ? 1 : midi_file.get_track_count());
 			p_info.info_set_int(field_channels, midi_file.get_channel_count(p_subsong));
 			p_info.info_set_int(field_ticks, midi_file.get_timestamp_end(p_subsong));
-			if (meta_data.get_item("type", item)) p_info.info_set(field_type, item.m_value);
+			if (meta_data.get_item("type", item)) p_info.info_set(field_type, item.m_value.c_str());
 
 			unsigned loop_begin = midi_file.get_timestamp_loop_start( p_subsong );
 			unsigned loop_end = midi_file.get_timestamp_loop_end( p_subsong );
@@ -1878,7 +1896,7 @@ public:
 		midi_file.get_meta_data( p_subsong, meta_data );
 
 		midi_meta_data_item item;
-		if ( meta_data.get_item( "type", item ) && !strcmp( item.m_value, "MT-32" ) ) plugin = 3;
+		if ( meta_data.get_item( "type", item ) && !strcmp( item.m_value.c_str(), "MT-32" ) ) plugin = 3;
 
 		pfc::string8 file_soundfont;
 
@@ -2187,7 +2205,7 @@ public:
 			else if (plugin == 3)
 			{
 				midi_meta_data_item item;
-				bool is_mt32 = ( meta_data.get_item( "type", item ) && !strcmp( item.m_value, "MT-32" ) );
+				bool is_mt32 = ( meta_data.get_item( "type", item ) && !strcmp( item.m_value.c_str(), "MT-32" ) );
 				delete mt32Player;
 				mt32Player = new MT32Player( !is_mt32, thePreset.munt_gm_set );
 				pfc::string8 p_base_path = cfg_munt_base_path;
@@ -3907,7 +3925,8 @@ public:
 		if ( !n )
 		{
 			unsigned i = data.get_count();
-			abort_callback_impl m_abort;
+			abort_callback_dummy m_abort;
+			std::vector<uint8_t> file_data;
 			for ( unsigned i = 0, j = data.get_count(); i < j; i++ )
 			{
 				const playable_location & loc = data.get_item( i )->get_location();
@@ -3917,14 +3936,19 @@ public:
 				service_ptr_t<file> p_file;
 				filesystem::g_open( p_file, loc.get_path(), filesystem::open_mode_read, m_abort );
 
-				midi_container midi_file;
-				midi_processor::process_file( p_file, pfc::string_extension( loc.get_path() ), midi_file, m_abort );
+				t_filesize size = p_file->get_size_ex( m_abort );
 
-				pfc::array_t<t_uint8> data;
-				midi_file.serialize_as_standard_midi_file( data );
+				file_data.resize( size );
+				p_file->read_object( &file_data[0], size, m_abort );
+
+				midi_container midi_file;
+				midi_processor::process_file( file_data, pfc::string_extension( loc.get_path() ), midi_file );
+
+				file_data.resize( 0 );
+				midi_file.serialize_as_standard_midi_file( file_data );
 
 				filesystem::g_open( p_file, out_path, filesystem::open_mode_write_new, m_abort );
-				p_file->write_object( data.get_ptr(), data.get_count(), m_abort );
+				p_file->write_object( &file_data[0], file_data.size(), m_abort );
 			}
 		}
 		else if ( n < 3 )
