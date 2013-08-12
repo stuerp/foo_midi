@@ -1,7 +1,7 @@
 #include "fmmidiPlayer.h"
 
-#include "midisynth/midisynth.hpp"
-#include "midisynth/fmmidi.hpp"
+#include <midisynth.hpp>
+#include <fmmidi.hpp>
 
 #include <stdio.h>
 
@@ -353,7 +353,7 @@ void fmmidiPlayer::send_event(DWORD b)
 
 void fmmidiPlayer::render( audio_sample * out, unsigned count )
 {
-	midisynth::int_least32_t buffer[ 512 ];
+	int_least32_t buffer[ 512 ];
 
 	while ( count )
 	{

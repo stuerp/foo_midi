@@ -66,7 +66,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../../midi_processing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../../midi_processing;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -108,7 +108,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../../midi_processing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../../midi_processing;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -152,9 +152,6 @@
     <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
     <ClCompile Include="lanczos_resampler.c" />
-    <ClCompile Include="midisynth\fmmidi.cpp" />
-    <ClCompile Include="midisynth\midisynth.cpp" />
-    <ClCompile Include="midisynth\oplmidi.cpp" />
     <ClCompile Include="MT32Player.cpp" />
     <ClCompile Include="DXiPlayer.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
@@ -229,9 +226,6 @@
     <ClInclude Include="fmmidiPlayer.h" />
     <ClInclude Include="kq6mtgm.h" />
     <ClInclude Include="lanczos_resampler.h" />
-    <ClInclude Include="midisynth\fmmidi.hpp" />
-    <ClInclude Include="midisynth\midisynth.hpp" />
-    <ClInclude Include="midisynth\oplmidi.hpp" />
     <ClInclude Include="MT32Player.h" />
     <ClInclude Include="mtgm.h" />
     <CustomBuild Include="DXiPlayer.h">
@@ -259,6 +253,9 @@
     <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\midisynth\midisynth.vcxproj">
+      <Project>{987fc62d-eaf6-41ed-be12-d8f867581534}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\midi_processing\midi_processing.vcxproj">
       <Project>{4573e081-973b-47f0-a67d-551761ba1678}</Project>
     </ProjectReference>

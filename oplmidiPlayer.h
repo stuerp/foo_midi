@@ -30,7 +30,7 @@ public:
 	~oplmidiPlayer();
 
 	// configuration
-	void setProgramPath( const char * );
+	void setBank( unsigned );
 
 	// setup
 	void setSampleRate(unsigned rate);
@@ -46,7 +46,7 @@ private:
 	void shutdown();
 	bool startup();
 
-	pfc::string8                 bank_path;
+	unsigned           uBankNumber;
 
 	midisynth::opl::fm_note_factory * factory;
 

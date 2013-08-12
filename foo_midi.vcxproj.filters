@@ -1,11 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="midisynth">
-      <UniqueIdentifier>{6ccd073f-d424-4b06-9496-ca2955a73461}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="DXiPlayer.cpp" />
     <ClCompile Include="midi.cpp" />
     <ClCompile Include="PlugInInventory.cpp" />
@@ -21,15 +16,6 @@
     <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="dbopl.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
-    <ClCompile Include="midisynth\midisynth.cpp">
-      <Filter>midisynth</Filter>
-    </ClCompile>
-    <ClCompile Include="midisynth\fmmidi.cpp">
-      <Filter>midisynth</Filter>
-    </ClCompile>
-    <ClCompile Include="midisynth\oplmidi.cpp">
-      <Filter>midisynth</Filter>
-    </ClCompile>
     <ClCompile Include="oplmidiPlayer.cpp" />
     <ClCompile Include="lanczos_resampler.c" />
   </ItemGroup>
@@ -47,15 +33,6 @@
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="dbopl.h" />
     <ClInclude Include="fmmidiPlayer.h" />
-    <ClInclude Include="midisynth\midisynth.hpp">
-      <Filter>midisynth</Filter>
-    </ClInclude>
-    <ClInclude Include="midisynth\fmmidi.hpp">
-      <Filter>midisynth</Filter>
-    </ClInclude>
-    <ClInclude Include="midisynth\oplmidi.hpp">
-      <Filter>midisynth</Filter>
-    </ClInclude>
     <ClInclude Include="oplmidiPlayer.h" />
     <ClInclude Include="kq6mtgm.h" />
     <ClInclude Include="lanczos_resampler.h" />

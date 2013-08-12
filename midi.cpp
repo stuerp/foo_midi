@@ -1,4 +1,4 @@
-#define MYVERSION "1.210"
+#define MYVERSION "1.211"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2013-08-12 23:28 UTC - kode54
+- Moved midisynth into its own external library
+- Changed oplmidi interface to borrow instruments from adlmidi
+- Fixed several bounds checking exceptions which could occur in
+  midi_processing
 
 2013-08-05 01:57 UTC - kode54
 - Replaced customized MIDI processing routines with in-memory STL
@@ -2179,10 +2185,7 @@ public:
 				delete oplPlayer;
 				oplPlayer = new oplmidiPlayer;
 
-				pfc::string8 path;
-				path = core_api::get_my_full_path();
-				path.truncate( path.scan_filename() );
-				oplPlayer->setProgramPath( path );
+				oplPlayer->setBank( thePreset.adl_bank );
 
 				oplPlayer->setSampleRate(srate);
 
@@ -3085,11 +3088,14 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
 	}
 #endif
-
-	if ( plugin != 6 )
+	if ( plugin != 6 && plugin != 8 )
 	{
 		GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_BANK ).EnableWindow( FALSE );
+	}
+
+	if ( plugin != 6 )
+	{
 		GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_PANNING ).EnableWindow( FALSE );
@@ -3331,8 +3337,8 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_RESAMPLING ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_CACHED ).EnableWindow( plugin == 1 || plugin == 2 );
-	GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( plugin == 4 );
-	GetDlgItem( IDC_ADL_BANK ).EnableWindow( plugin == 4 );
+	GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( plugin == 4 || plugin == 6 );
+	GetDlgItem( IDC_ADL_BANK ).EnableWindow( plugin == 4 || plugin == 6 );
 	GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( plugin == 4 );
 	GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( plugin == 4 );
 	GetDlgItem( IDC_ADL_PANNING ).EnableWindow( plugin == 4 );
@@ -3462,10 +3468,13 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_CACHED ).EnableWindow( FALSE );
 	}
-	if ( default_cfg_plugin != 6 )
+	if ( default_cfg_plugin != 6 && default_cfg_plugin != 8 )
 	{
 		GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_BANK ).EnableWindow( FALSE );
+	}
+	if ( default_cfg_plugin != 6 )
+	{
 		GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_PANNING ).EnableWindow( FALSE );
