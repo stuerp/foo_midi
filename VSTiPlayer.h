@@ -1,24 +1,16 @@
 #ifndef __VSTiPlayer_h__
 #define __VSTiPlayer_h__
 
-#include <foobar2000.h>
+#include "MIDIPlayer.h"
 
-#include <midi_container.h>
-
-class VSTiPlayer
+class VSTiPlayer : public MIDIPlayer
 {
 public:
-	enum
-	{
-		loop_mode_enable = 1 << 0,
-		loop_mode_force  = 1 << 1
-	};
-
 	// zero variables
 	VSTiPlayer();
 
 	// close, unload
-	~VSTiPlayer();
+	virtual ~VSTiPlayer();
 
 	// load, open, verify type
 	bool LoadVST(const char * path);
@@ -38,17 +30,16 @@ public:
 	void displayEditorModal();
 
 	// setup
-	void setSampleRate(unsigned rate);
 	unsigned getChannelCount();
 
-	bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
-	unsigned Play(audio_sample * out, unsigned count);
-	void Seek(unsigned sample);
+protected:
+	virtual void send_event( DWORD );
+	virtual void render(audio_sample *, unsigned);
+
+	virtual void shutdown();
+	virtual bool startup();
 
 private:
-	void send_event( DWORD );
-	void render(audio_sample *, unsigned);
-
 	unsigned test_plugin_platform();
 
 	bool connect_pipe( HANDLE hPipe );
@@ -79,21 +70,9 @@ private:
 	t_uint32     uVendorVersion;
 	t_uint32     uUniqueId;
 
-	unsigned     uSamplesRemaining;
-
-	unsigned     uSampleRate;
-	unsigned     uLoopMode;
 	unsigned     uNumOutputs;
 
-	system_exclusive_table mSysexMap;
-	std::vector<midi_stream_event> mStream;
-
-	UINT         uStreamPosition;
-	DWORD        uTimeCurrent;
-	DWORD        uTimeEnd;
-
-	UINT         uStreamLoopStart;
-	DWORD        uTimeLoopStart;
+	pfc::array_t<t_uint8> blChunk;
 };
 
 #endif

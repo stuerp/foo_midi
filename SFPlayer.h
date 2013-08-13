@@ -1,48 +1,33 @@
 #ifndef __SFPlayer_h__
 #define __SFPlayer_h__
 
-#include <foobar2000.h>
-
-#include <midi_container.h>
+#include "MIDIPlayer.h"
 
 #define FLUIDSYNTH_NOT_A_DLL
 #include <fluidsynth.h>
 
-class SFPlayer
+class SFPlayer : public MIDIPlayer
 {
 public:
-	enum
-	{
-		loop_mode_enable = 1 << 0,
-		loop_mode_force  = 1 << 1
-	};
-
 	// zero variables
 	SFPlayer();
 
 	// close, unload
-	~SFPlayer();
+	virtual ~SFPlayer();
 
 	// configuration
 	void setSoundFont( const char * in );
 	void setFileSoundFont( const char * in );
-
-	// setup
-	void setSampleRate(unsigned rate);
 	void setInterpolationMethod(unsigned method);
-
-	bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
-	unsigned Play(audio_sample * out, unsigned count);
-	void Seek(unsigned sample);
 
 	const char * GetLastError() const;
 
 private:
-	void send_event(DWORD b);
-	void render(audio_sample * out, unsigned count);
+	virtual void send_event(DWORD b);
+	virtual void render(audio_sample * out, unsigned count);
 
-	void shutdown();
-	bool startup();
+	virtual void shutdown();
+	virtual bool startup();
 
 	pfc::string8       _last_error;
 
@@ -51,21 +36,7 @@ private:
 	pfc::string8       sSoundFontName;
 	pfc::string8       sFileSoundFontName;
 
-	unsigned           uSamplesRemaining;
-
-	unsigned           uSampleRate;
-	unsigned           uLoopMode;
 	unsigned           uInterpolationMethod;
-
-	system_exclusive_table mSysexMap;
-	std::vector<midi_stream_event> mStream;
-
-	UINT               uStreamPosition;
-	DWORD              uTimeCurrent;
-	DWORD              uTimeEnd;
-
-	UINT               uStreamLoopStart;
-	DWORD              uTimeLoopStart;
 
 	enum
 	{

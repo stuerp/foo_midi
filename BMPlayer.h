@@ -1,45 +1,30 @@
 #ifndef __BMPlayer_h__
 #define __BMPlayer_h__
 
-#include <foobar2000.h>
-
-#include <midi_container.h>
+#include "MIDIPlayer.h"
 
 #include "../../../bass/c/bassmidi.h"
 
-class BMPlayer
+class BMPlayer : public MIDIPlayer
 {
 public:
-	enum
-	{
-		loop_mode_enable = 1 << 0,
-		loop_mode_force  = 1 << 1
-	};
-
 	// zero variables
 	BMPlayer();
 
 	// close, unload
-	~BMPlayer();
+	virtual ~BMPlayer();
 
 	// configuration
 	void setSoundFont( const char * in );
 	void setFileSoundFont( const char * in );
-
-	// setup
-	void setSampleRate(unsigned rate);
 	void setSincInterpolation(bool enable = true);
 
-	bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
-	unsigned Play(audio_sample * out, unsigned count);
-	void Seek(unsigned sample);
-
 private:
-	void send_event(DWORD b);
-	void render(audio_sample * out, unsigned count);
+	virtual void send_event(DWORD b);
+	virtual void render(audio_sample * out, unsigned count);
 
-	void shutdown();
-	bool startup();
+	virtual void shutdown();
+	virtual bool startup();
 
 	void reset_drum_channels();
 
@@ -49,21 +34,7 @@ private:
 
 	HSTREAM            _stream;
 
-	unsigned           uSamplesRemaining;
-
 	bool               bSincInterpolation;
-	unsigned           uSampleRate;
-	unsigned           uLoopMode;
-
-	system_exclusive_table mSysexMap;
-	std::vector<midi_stream_event> mStream;
-
-	UINT               uStreamPosition;
-	DWORD              uTimeCurrent;
-	DWORD              uTimeEnd;
-
-	UINT               uStreamLoopStart;
-	DWORD              uTimeLoopStart;
 
 	enum
 	{

@@ -7,6 +7,10 @@
 /*
 	change log
 
+2013-08-13 01:08 UTC - kode54
+- Migrated all common MIDI player code to a single base class
+- Version is now 1.211
+
 2013-08-12 23:28 UTC - kode54
 - Moved midisynth into its own external library
 - Changed oplmidi interface to borrow instruments from adlmidi
@@ -1500,16 +1504,9 @@ class input_midi
 	DXiProxy * dxiProxy;
 #endif
 
-	VSTiPlayer * vstPlayer;
-#ifdef FLUIDSYNTHSUPPORT
-	SFPlayer * sfPlayer;
-#endif
-	BMPlayer * bmPlayer;
-	MT32Player * mt32Player;
-	EMIDIPlayer * emidiPlayer;
-	ADLPlayer * adlPlayer;
-	fmmidiPlayer * fmPlayer;
-	oplmidiPlayer * oplPlayer;
+	bool is_emidi;
+
+	MIDIPlayer * midiPlayer;
 
 	midi_container midi_file;
 
@@ -1574,16 +1571,9 @@ public:
 		dxiProxy = NULL;
 #endif
 
-		vstPlayer = NULL;
-#ifdef FLUIDSYNTHSUPPORT
-		sfPlayer = NULL;
-#endif
-		bmPlayer = NULL;
-		mt32Player = NULL;
-		emidiPlayer = NULL;
-		adlPlayer = NULL;
-		fmPlayer = NULL;
-		oplPlayer = NULL;
+		is_emidi = false;
+
+		midiPlayer = NULL;
 
 		length_samples = 0;
 		length_ticks = 0;
@@ -1605,33 +1595,15 @@ public:
 	{
 		/*if (external_decoder) external_decoder->service_release();
 		if (mem_reader) mem_reader->reader_release();*/
-		if (oplPlayer)
+		delete midiPlayer;
+		if (is_emidi)
 		{
-			delete oplPlayer;
-		}
-		if (fmPlayer)
-		{
-			delete fmPlayer;
-		}
-		if (adlPlayer)
-		{
-			delete adlPlayer;
-		}
-		if (emidiPlayer)
-		{
-			delete emidiPlayer;
 			insync(sync);
 			g_running--;
 		}
 #ifdef DXISUPPORT
 		if (dxiProxy) delete dxiProxy;
 #endif
-		if (vstPlayer) delete vstPlayer;
-#ifdef FLUIDSYNTHSUPPORT
-		if (sfPlayer) delete sfPlayer;
-#endif
-		if (bmPlayer) delete bmPlayer;
-		if (mt32Player) delete mt32Player;
 	}
 
 private:
@@ -2033,8 +2005,11 @@ public:
 #endif
 			if (plugin == 1)
 			{
-				delete vstPlayer;
-				vstPlayer = new VSTiPlayer;
+				delete midiPlayer;
+
+				VSTiPlayer * vstPlayer = new VSTiPlayer;
+				midiPlayer = vstPlayer;
+
 				if (vstPlayer->LoadVST(thePreset.vst_path))
 				{
 					vstPlayer->setChunk( thePreset.vst_config.get_ptr(), thePreset.vst_config.get_count() );
@@ -2068,8 +2043,11 @@ public:
 				}
 				FreeLibrary( fsmod );*/
 
-				delete sfPlayer;
-				sfPlayer = new SFPlayer;
+				delete midiPlayer;
+
+				SFPlayer * sfPlayer = new SFPlayer;
+				midiPlayer = sfPlayer;
+
 				sfPlayer->setSoundFont(thePreset.soundfont_path);
 				if ( file_soundfont.length() ) sfPlayer->setFileSoundFont( file_soundfont );
 				sfPlayer->setSampleRate(srate);
@@ -2103,8 +2081,11 @@ public:
 				}
 				FreeLibrary( fsmod );*/
 
-				delete bmPlayer;
-				bmPlayer = new BMPlayer;
+				delete midiPlayer;
+
+				BMPlayer * bmPlayer = new BMPlayer;
+				midiPlayer = bmPlayer;
+
 				bmPlayer->setSoundFont(thePreset.soundfont_path);
 				if ( file_soundfont.length() ) bmPlayer->setFileSoundFont( file_soundfont );
 				bmPlayer->setSampleRate(srate);
@@ -2128,8 +2109,11 @@ public:
 			}
 			else if ( plugin == 6 )
 			{
-				delete adlPlayer;
-				adlPlayer = new ADLPlayer;
+				delete midiPlayer;
+
+				ADLPlayer * adlPlayer = new ADLPlayer;
+				midiPlayer = adlPlayer;
+
 				adlPlayer->setBank( thePreset.adl_bank );
 				adlPlayer->setChipCount( thePreset.adl_chips );
 				adlPlayer->setFullPanning( thePreset.adl_panning );
@@ -2154,8 +2138,10 @@ public:
 			}
 			else if ( plugin == 7 )
 			{
-				delete fmPlayer;
-				fmPlayer = new fmmidiPlayer;
+				delete midiPlayer;
+
+				fmmidiPlayer * fmPlayer = new fmmidiPlayer;
+				midiPlayer = fmPlayer;
 
 				pfc::string8 path;
 				path = core_api::get_my_full_path();
@@ -2182,8 +2168,10 @@ public:
 			}
 			else if ( plugin == 8 )
 			{
-				delete oplPlayer;
-				oplPlayer = new oplmidiPlayer;
+				delete midiPlayer;
+
+				oplmidiPlayer * oplPlayer = new oplmidiPlayer;
+				midiPlayer = oplPlayer;
 
 				oplPlayer->setBank( thePreset.adl_bank );
 
@@ -2209,8 +2197,12 @@ public:
 			{
 				midi_meta_data_item item;
 				bool is_mt32 = ( meta_data.get_item( "type", item ) && !strcmp( item.m_value.c_str(), "MT-32" ) );
-				delete mt32Player;
-				mt32Player = new MT32Player( !is_mt32, thePreset.munt_gm_set );
+
+				delete midiPlayer;
+
+				MT32Player * mt32Player = new MT32Player( !is_mt32, thePreset.munt_gm_set );
+				midiPlayer = mt32Player;
+
 				pfc::string8 p_base_path = cfg_munt_base_path;
 				if ( !strlen( p_base_path ) )
 				{
@@ -2276,8 +2268,10 @@ public:
 				}
 				}
 				*/
-				delete emidiPlayer;
-				emidiPlayer = new EMIDIPlayer;
+				delete midiPlayer;
+
+				EMIDIPlayer * emidiPlayer = new EMIDIPlayer;
+				midiPlayer = emidiPlayer;
 
 				unsigned loop_mode = 0;
 
@@ -2296,6 +2290,7 @@ public:
 						{
 							srate = g_srate;
 						}
+						is_emidi = true;
 					}
 
 					emidiPlayer->setSampleRate( srate );
@@ -2357,6 +2352,8 @@ public:
 #endif
 		if (plugin == 1)
 		{
+			VSTiPlayer * vstPlayer = (VSTiPlayer *) midiPlayer;
+
 			unsigned todo = 1024;
 			unsigned nch = vstPlayer->getChannelCount();
 
@@ -2376,129 +2373,10 @@ public:
 
 			rv = true;
 		}
-#ifdef FLUIDSYNTHSUPPORT
-		else if (plugin == 2)
-		{
-			unsigned todo = 1024;
-
-			p_chunk.set_data_size( todo * 2 );
-
-			audio_sample * out = p_chunk.get_data();
-
-			unsigned done = sfPlayer->Play( out, todo );
-
-			if ( ! done )
-			{
-				const char * err = sfPlayer->GetLastError();
-				if ( err ) throw exception_io_data( err );
-				return false;
-			}
-
-			p_chunk.set_srate( srate );
-			p_chunk.set_channels( 2 );
-			p_chunk.set_sample_count( done );
-
-			if ( done < todo ) eof = true;
-
-			rv = true;
-		}
-		else if (plugin == 4)
-#else
-		else if (plugin == 2 || plugin == 4)
-#endif
-		{
-			unsigned todo = 1024;
-
-			p_chunk.set_data_size( todo * 2 );
-
-			audio_sample * out = p_chunk.get_data();
-
-			unsigned done = bmPlayer->Play( out, todo );
-
-			if ( ! done )
-			{
-				return false;
-			}
-
-			p_chunk.set_srate( srate );
-			p_chunk.set_channels( 2 );
-			p_chunk.set_sample_count( done );
-
-			if ( done < todo ) eof = true;
-
-			rv = true;
-		}
-		else if (plugin == 6)
-		{
-			unsigned todo = 1024;
-
-			p_chunk.set_data_size( todo * 2 );
-
-			audio_sample * out = p_chunk.get_data();
-
-			unsigned done = adlPlayer->Play( out, todo );
-
-			if ( ! done )
-			{
-				return false;
-			}
-
-			p_chunk.set_srate( srate );
-			p_chunk.set_channels( 2 );
-			p_chunk.set_sample_count( done );
-
-			if ( done < todo ) eof = true;
-
-			rv = true;
-		}
-		else if (plugin == 7)
-		{
-			unsigned todo = 1024;
-
-			p_chunk.set_data_size( todo * 2 );
-
-			audio_sample * out = p_chunk.get_data();
-
-			unsigned done = fmPlayer->Play( out, todo );
-
-			if ( ! done )
-			{
-				return false;
-			}
-
-			p_chunk.set_srate( srate );
-			p_chunk.set_channels( 2 );
-			p_chunk.set_sample_count( done );
-
-			if ( done < todo ) eof = true;
-
-			rv = true;
-		}
-		else if (plugin == 8)
-		{
-			unsigned todo = 1024;
-
-			p_chunk.set_data_size( todo * 2 );
-
-			audio_sample * out = p_chunk.get_data();
-
-			unsigned done = oplPlayer->Play( out, todo );
-
-			if ( ! done )
-			{
-				return false;
-			}
-
-			p_chunk.set_srate( srate );
-			p_chunk.set_channels( 2 );
-			p_chunk.set_sample_count( done );
-
-			if ( done < todo ) eof = true;
-
-			rv = true;
-		}
 		else if (plugin == 3)
 		{
+			MT32Player * mt32Player = (MT32Player *) midiPlayer;
+
 			unsigned todo = 1024;
 
 			p_chunk.set_data_size( todo * 2 );
@@ -2519,81 +2397,20 @@ public:
 
 			rv = true;
 		}
-		else
+		else if (midiPlayer)
 		{
-			/*
-			int rval = external_decoder->run(chunk);
-			if (rval >= 0)
-			{
-				if (!dont_loop)
-				{
-					if (rval)
-					{
-						unsigned new_rate = chunk->get_srate();
-						if (srate != new_rate)
-						{
-							ULONGLONG meh = UInt32x32To64(samples_done, new_rate);
-							samples_done = (unsigned)(meh / (ULONGLONG)srate);
-							srate = new_rate;
-							set_loop();
-							get_length();
-						}
-					}
-
-					unsigned done = chunk->get_sample_count();
-					if (!rval || (samples_done + done >= sample_loop_end))
-					{
-						if (!external_decoder->seek((double)sample_loop_start / (double)srate))
-						{
-							goto fagotry;
-						}
-
-						if (rval)
-						{
-							done = sample_loop_end - samples_done;
-							if (done)
-							{
-								chunk->set_sample_count(done);
-								samples_done = sample_loop_start;
-								return 1;
-							}
-						}
-
-						rval = external_decoder->run(chunk);
-
-						if (!rval)
-						{
-							/* gee, looks like input needs a bit more coaxing to reset, damnit
-fagotry:
-							external_decoder->service_release();
-							external_decoder = get_external_decoder();
-							if (!external_decoder) return 0;
-
-							file_info_i info;
-							mem_reader->seek(0);
-							if (!external_decoder->open(mem_reader, &info, OPEN_FLAG_DECODE)) return 0;
-							if (!external_decoder->seek((double)sample_loop_start / (double)srate)) return 0;
-
-							rval = external_decoder->run(chunk);
-						}
-
-						samples_done = sample_loop_start;
-						done = chunk->get_sample_count();
-					}
-					samples_done += done;
-				}
-			}
-			return rval;
-			*/
 			unsigned todo = 1024;
 
 			p_chunk.set_data_size( todo * 2 );
 
 			audio_sample * out = p_chunk.get_data();
 
-			unsigned done = emidiPlayer->Play( out, todo );
+			unsigned done = midiPlayer->Play( out, todo );
 
-			if ( ! done ) return false;
+			if ( ! done )
+			{
+				return false;
+			}
 
 			p_chunk.set_srate( srate );
 			p_chunk.set_channels( 2 );
@@ -2663,50 +2480,9 @@ fagotry:
 		}
 		else
 #endif
-		if ( plugin == 1 )
+		if ( midiPlayer )
 		{
-			vstPlayer->Seek( done );
-			return;
-		}
-#ifdef FLUIDSYNTHSUPPORT
-		else if ( plugin == 2 )
-		{
-			sfPlayer->Seek( done );
-			const char * err = sfPlayer->GetLastError();
-			if ( err ) throw exception_io_data( err );
-			return;
-		}
-		else if ( plugin == 4 )
-#else
-		else if ( plugin == 2 || plugin == 4 )
-#endif
-		{
-			bmPlayer->Seek( done );
-			return;
-		}
-		else if ( plugin == 6 )
-		{
-			adlPlayer->Seek( done );
-			return;
-		}
-		else if ( plugin == 7 )
-		{
-			fmPlayer->Seek( done );
-			return;
-		}
-		else if ( plugin == 8 )
-		{
-			oplPlayer->Seek( done );
-			return;
-		}
-		else if ( plugin == 3 )
-		{
-			mt32Player->Seek( done );
-			return;
-		}
-		else
-		{
-			emidiPlayer->Seek( done );
+			midiPlayer->Seek( done );
 			return;
 		}
 	}

@@ -18,6 +18,7 @@
     <ClCompile Include="fmmidiPlayer.cpp" />
     <ClCompile Include="oplmidiPlayer.cpp" />
     <ClCompile Include="lanczos_resampler.c" />
+    <ClCompile Include="MIDIPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -36,6 +37,7 @@
     <ClInclude Include="oplmidiPlayer.h" />
     <ClInclude Include="kq6mtgm.h" />
     <ClInclude Include="lanczos_resampler.h" />
+    <ClInclude Include="MIDIPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

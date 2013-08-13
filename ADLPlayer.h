@@ -1,26 +1,18 @@
 #ifndef __ADLPlayer_h__
 #define __ADLPlayer_h__
 
-#include <foobar2000.h>
-
-#include <midi_container.h>
+#include "MIDIPlayer.h"
 
 class MIDIplay;
 
-class ADLPlayer
+class ADLPlayer : public MIDIPlayer
 {
 public:
-	enum
-	{
-		loop_mode_enable = 1 << 0,
-		loop_mode_force  = 1 << 1
-	};
-
 	// zero variables
 	ADLPlayer();
 
 	// close, unload
-	~ADLPlayer();
+	virtual ~ADLPlayer();
 
 	// configuration
 	void setBank( unsigned );
@@ -28,21 +20,15 @@ public:
 	void set4OpCount( unsigned );
 	void setFullPanning( bool );
 
-	// setup
-	void setSampleRate(unsigned rate);
+protected:
+	virtual void send_event(DWORD b);
+	virtual void render(audio_sample * out, unsigned count);
 
-	bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
-	unsigned Play(audio_sample * out, unsigned count);
-	void Seek(unsigned sample);
+	virtual void shutdown();
+	virtual bool startup();
 
 private:
-	void send_event(DWORD b);
-	void render(audio_sample * out, unsigned count);
-
 	static void render_internal(void * context, int count, short * out);
-
-	void shutdown();
-	bool startup();
 
 	void reset_drum_channels();
 
@@ -54,21 +40,6 @@ private:
 	unsigned           uChipCount;
 	unsigned           u4OpCount;
 	bool               bFullPanning;
-
-	unsigned           uSamplesRemaining;
-
-	unsigned           uSampleRate;
-	unsigned           uLoopMode;
-
-	system_exclusive_table mSysexMap;
-	std::vector<midi_stream_event> mStream;
-
-	UINT               uStreamPosition;
-	DWORD              uTimeCurrent;
-	DWORD              uTimeEnd;
-
-	UINT               uStreamLoopStart;
-	DWORD              uTimeLoopStart;
 
 	enum
 	{

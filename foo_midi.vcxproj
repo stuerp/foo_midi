@@ -152,6 +152,7 @@
     <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
     <ClCompile Include="lanczos_resampler.c" />
+    <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MT32Player.cpp" />
     <ClCompile Include="DXiPlayer.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
@@ -226,6 +227,7 @@
     <ClInclude Include="fmmidiPlayer.h" />
     <ClInclude Include="kq6mtgm.h" />
     <ClInclude Include="lanczos_resampler.h" />
+    <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="MT32Player.h" />
     <ClInclude Include="mtgm.h" />
     <CustomBuild Include="DXiPlayer.h">
