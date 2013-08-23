@@ -1,4 +1,4 @@
-#define MYVERSION "1.211"
+#define MYVERSION "1.212"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,20 @@
 
 /*
 	change log
+
+2013-08-23 01:10 UTC - kode54
+- Adjusted reverb send level calculation
+- Version is now 1.212
+
+2013-08-23 01:03 UTC - kode54
+- Optimized reverb and corrected wet/dry mixing
+
+2013-08-23 00:48 UTC - kode54
+- Fixed MIDI preset storage for oplmidi
+
+2013-08-23 00:35 UTC - kode54
+- Doubled oplmidi volume
+- Added reverb to fmmidi and oplmidi
 
 2013-08-13 01:08 UTC - kode54
 - Migrated all common MIDI player code to a single base class
@@ -1037,7 +1051,10 @@ struct midi_preset
 #endif
 
 	// v0 - plug-in == 6 - adlmidi
+	// v0 - plug-in == 8 - oplmidi
 	unsigned int adl_bank;
+
+	// v0 - plug-in == 6 - adlmidi
 	unsigned int adl_chips;
 	bool adl_panning;
 
@@ -1138,6 +1155,12 @@ struct midi_preset
 			p_out += "|";
 
 			p_out += munt_bank_names[ munt_gm_set ];
+		}
+		else if ( plugin == 8 )
+		{
+			p_out += "|";
+
+			p_out += banknames[ adl_bank ];
 		}
 	}
 
@@ -1242,6 +1265,20 @@ struct midi_preset
 				if ( len == bar_pos - p_in && !strncmp( p_in, munt_bank_names[ i ], len ) )
 				{
 					in_munt_gm_set = i;
+					break;
+				}
+			}
+			if ( i == j ) return;
+		}
+		else if ( in_plugin == 8 )
+		{
+			unsigned i, j;
+			for ( i = 0, j = _countof( banknames ); i < j; i++ )
+			{
+				size_t len = strlen( banknames[ i ] );
+				if ( len == bar_pos - p_in && !strncmp( p_in, banknames[ i ], len ) )
+				{
+					in_adl_bank = i;
 					break;
 				}
 			}
