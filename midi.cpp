@@ -1,4 +1,4 @@
-#define MYVERSION "1.212"
+#define MYVERSION "1.213"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2013-09-02 08:45 UTC - kode54
+- Added back error checking that was missing after switching to the alternative
+  midi_processing library
+- Version is now 1.213
 
 2013-08-23 01:10 UTC - kode54
 - Adjusted reverb send level calculation
@@ -1408,7 +1413,8 @@ struct midi_syx_dumps
 				file_data.resize( size );
 				p_file->read_object( &file_data[0], size, p_abort );
 
-				midi_processor::process_syx_file( file_data, p_dump );
+				if ( ! midi_processor::process_syx_file( file_data, p_dump ) )
+					break;
 
 				p_midi_file.merge_tracks( p_dump );
 			}
@@ -1701,11 +1707,13 @@ public:
 
 		if ( is_syx )
 		{
-			midi_processor::process_syx_file( file_data, midi_file );
+			if ( ! midi_processor::process_syx_file( file_data, midi_file ) )
+				throw exception_io_data( "Invalid SysEx dump" );
 			return;
 		}
 
-		midi_processor::process_file( file_data, pfc::string_extension( p_path ), midi_file );
+		if ( ! midi_processor::process_file( file_data, pfc::string_extension( p_path ), midi_file ) )
+			throw exception_io_data( "Invalid MIDI file" );
 
 		original_track_count = midi_file.get_track_count();
 
@@ -3764,7 +3772,8 @@ public:
 				p_file->read_object( &file_data[0], size, m_abort );
 
 				midi_container midi_file;
-				midi_processor::process_file( file_data, pfc::string_extension( loc.get_path() ), midi_file );
+				if ( ! midi_processor::process_file( file_data, pfc::string_extension( loc.get_path() ), midi_file ) )
+					continue;
 
 				file_data.resize( 0 );
 				midi_file.serialize_as_standard_midi_file( file_data );
