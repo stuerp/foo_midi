@@ -3,7 +3,9 @@
 
 #include "MIDIPlayer.h"
 
-#include "../../../bass/c/bassmidi.h"
+#include "bassmidi.h"
+
+extern bool g_get_soundfont_stats( uint64_t & total_sample_size, uint64_t & sample_loaded_size );
 
 class BMPlayer : public MIDIPlayer
 {
@@ -20,17 +22,17 @@ public:
 	void setSincInterpolation(bool enable = true);
 
 private:
-	virtual void send_event(DWORD b);
-	virtual void render(audio_sample * out, unsigned count);
+	virtual void send_event(uint32_t b);
+	virtual void render(float * out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();
 
 	void reset_drum_channels();
 
-	pfc::array_t<HSOUNDFONT> _soundFonts;
-	pfc::string8       sSoundFontName;
-	pfc::string8       sFileSoundFontName;
+    std::vector<HSOUNDFONT> _soundFonts;
+    std::string        sSoundFontName;
+    std::string        sFileSoundFontName;
 
 	HSTREAM            _stream;
 
@@ -45,8 +47,8 @@ private:
 	}
 	                   synth_mode;
 
-	BYTE               gs_part_to_ch[3][16];
-	BYTE               drum_channels[48];
+	uint8_t            gs_part_to_ch[3][16];
+	uint8_t            drum_channels[48];
 };
 
 #endif

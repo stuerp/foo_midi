@@ -47,4 +47,8 @@
     <CustomBuild Include="PlugInInventory.h" />
     <CustomBuild Include="StdAfx.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\bass\c\bass.lib" />
+    <Library Include="..\..\..\bass\c\bassmidi.lib" />
+  </ItemGroup>
 </Project>

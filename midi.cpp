@@ -1,4 +1,4 @@
-#define MYVERSION "1.213"
+#define MYVERSION "1.214"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2013-10-16 03:01 UTC - kode54
+- Major overhaul to use more STL and C++11 features in the MIDI players, to hopefully
+  ease synchronizing the code between this component and other Unixish platforms
+- Version is now 1.214
 
 2013-09-02 08:45 UTC - kode54
 - Added back error checking that was missing after switching to the alternative
@@ -790,7 +795,9 @@
 #include "../helpers/dropdown_helper.h"
 #include "../ATLHelpers/ATLHelpers.h"
 
-#include <midi_processor.h>
+#include <midi_processing/midi_processor.h>
+
+#include <map>
 
 #include <shlobj.h>
 #include <shlwapi.h>
@@ -914,40 +921,26 @@ static const GUID guid_cfg_munt_gm =
 { 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 0xc5, 0xb5, 0xf1, 0xb8, 0xcf, 0x5b } };
 
 
-class cfg_map : public cfg_var, public pfc::map_t<t_uint32, pfc::array_t<t_uint8>> {
-
-	class cfg_map_enumerator_callback
-	{
-		stream_writer * m_stream;
-		abort_callback * m_abort;
-
-	public:
-		cfg_map_enumerator_callback( stream_writer * p_stream, abort_callback & p_abort )
-			: m_stream( p_stream ), m_abort( &p_abort ) { }
-
-		void operator() ( const t_uint32 p_key, const pfc::array_t<t_uint8> & p_value )
-		{
-			stream_writer_formatter<> out(*m_stream, *m_abort);
-			out.write_int( p_key );
-			out.write_array( p_value );
-		}
-	};
-
+class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>> {
 public:
-	cfg_map(const GUID& guid) : cfg_var(guid), pfc::map_t<t_uint32, pfc::array_t<t_uint8>>() {}
+	cfg_map(const GUID& guid) : cfg_var(guid), std::map<t_uint32, std::vector<uint8_t>>() {}
 
 	void get_data_raw(stream_writer * p_stream,abort_callback & p_abort) {
+		stream_writer_formatter<> out(*p_stream, p_abort);
+		out.write_int( size() );
+		for ( auto it = begin(); it != end(); ++it )
 		{
-			stream_writer_formatter<> out(*p_stream, p_abort);
-			out.write_int( get_count() );
+			out.write_int( it->first );
+			const t_uint32 size = pfc::downcast_guarded<t_uint32>(it->second.size());
+			out << size;
+			for(t_uint32 walk = 0; walk < size; ++walk) out << it->second[walk];
 		}
-		enumerate( cfg_map_enumerator_callback( p_stream, p_abort ) );
 	}
 
 	void set_data_raw(stream_reader * p_stream,t_size p_sizehint,abort_callback & p_abort) {
 		stream_reader_formatter<> in(*p_stream,p_abort);
 
-		remove_all();
+		clear();
 
 		t_size count;
 		in.read_int( count );
@@ -955,12 +948,16 @@ public:
 		for ( t_size i = 0; i < count; i++ )
 		{
 			t_uint32 p_key;
-			pfc::array_t<t_uint8> p_value;
+			std::vector<uint8_t> p_value;
 
 			in.read_int( p_key );
-			in.read_array( p_value );
 
-			find_or_add( p_key ) = p_value;
+			{
+				t_uint32 size; in >> size; p_value.resize(size);
+				for(t_uint32 walk = 0; walk < size; ++walk) in >> p_value[walk];
+			}
+
+			operator[] ( p_key ) = p_value;
 		}
 	}
 };
@@ -1045,7 +1042,7 @@ struct midi_preset
 
 	// v0 - plug-in == 1 - VSTi
 	pfc::string8 vst_path;
-	pfc::array_t<t_uint8> vst_config;
+	std::vector<uint8_t> vst_config;
 
 	// v0 - plug-in == 2/4 - SoundFont synthesizer
 	pfc::string8 soundfont_path;
@@ -1110,7 +1107,7 @@ struct midi_preset
 			p_out += vst_path;
 			p_out += "|";
 
-			for ( unsigned i = 0; i < vst_config.get_count(); i++ )
+			for ( unsigned i = 0; i < vst_config.size(); i++ )
 			{
 				p_out += pfc::format_hex( vst_config[ i ], 2 );
 			}
@@ -1184,7 +1181,7 @@ struct midi_preset
 
 		unsigned in_plugin = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
 		pfc::string8 in_vst_path;
-		pfc::array_t<t_uint8> in_vst_config;
+		std::vector<uint8_t> in_vst_config;
 		pfc::string8 in_soundfont_path;
 		GUID in_dxi_plugin;
 		unsigned in_adl_bank, in_adl_chips;
@@ -1207,7 +1204,7 @@ struct midi_preset
 
 				while ( *p_in )
 				{
-					in_vst_config.append_single( pfc::atohex<unsigned char>( p_in, 2 ) );
+					in_vst_config.push_back( pfc::atohex<unsigned char>( p_in, 2 ) );
 					p_in += 2;
 				}
 			}
@@ -2057,7 +2054,8 @@ public:
 
 				if (vstPlayer->LoadVST(thePreset.vst_path))
 				{
-					vstPlayer->setChunk( thePreset.vst_config.get_ptr(), thePreset.vst_config.get_count() );
+					if ( thePreset.vst_config.size() )
+						vstPlayer->setChunk( &thePreset.vst_config[0], thePreset.vst_config.size() );
 
 					vstPlayer->setSampleRate(srate);
 
@@ -2065,8 +2063,8 @@ public:
 
 					if ( loop_type )
 					{
-						loop_mode = VSTiPlayer::loop_mode_enable;
-						if ( loop_type > 1 ) loop_mode |= VSTiPlayer::loop_mode_force;
+						loop_mode = MIDIPlayer::loop_mode_enable;
+						if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 					}
 
 					if ( vstPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -2102,8 +2100,8 @@ public:
 
 				if ( loop_type )
 				{
-					loop_mode = SFPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= SFPlayer::loop_mode_force;
+					loop_mode = MIDIPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 				}
 
 				if ( sfPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -2140,8 +2138,8 @@ public:
 
 				if ( loop_type )
 				{
-					loop_mode = BMPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= BMPlayer::loop_mode_force;
+					loop_mode = MIDIPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 				}
 
 				if ( bmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -2169,8 +2167,8 @@ public:
 
 				if ( loop_type )
 				{
-					loop_mode = ADLPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= ADLPlayer::loop_mode_force;
+					loop_mode = MIDIPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 				}
 
 				if ( adlPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -2199,8 +2197,8 @@ public:
 
 				if ( loop_type )
 				{
-					loop_mode = fmmidiPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= fmmidiPlayer::loop_mode_force;
+					loop_mode = MIDIPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 				}
 
 				if ( fmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -2226,8 +2224,8 @@ public:
 
 				if ( loop_type )
 				{
-					loop_mode = oplmidiPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= oplmidiPlayer::loop_mode_force;
+					loop_mode = MIDIPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 				}
 
 				if ( oplPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -2262,8 +2260,8 @@ public:
 
 				if ( loop_type )
 				{
-					loop_mode = MT32Player::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= MT32Player::loop_mode_force;
+					loop_mode = MIDIPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 				}
 
 				if ( mt32Player->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -2322,8 +2320,8 @@ public:
 
 				if ( loop_type )
 				{
-					loop_mode = EMIDIPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= EMIDIPlayer::loop_mode_force;
+					loop_mode = MIDIPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 				}
 
 				if ( emidiPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
@@ -2693,14 +2691,14 @@ private:
 
 	struct vsti_info
 	{
-		pfc::string8 path, display_name;
-		t_uint32 unique_id;
+		std::string path, display_name;
+		uint32_t unique_id;
 		bool has_editor;
 	};
 
 	pfc::array_t< vsti_info > vsti_plugins;
 
-	pfc::array_t< t_uint8 > vsti_config;
+	std::vector< uint8_t > vsti_config;
 
 	pfc::string8 m_soundfont, m_munt_path;
 
@@ -2795,7 +2793,7 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 						vsti_info info;
 						info.path = npath;
 
-						pfc::string8 vendor, product;
+						std::string vendor, product;
 						vstPlayer.getVendorString(vendor);
 						vstPlayer.getProductString(product);
 
@@ -2803,7 +2801,7 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 						{
 							if (!vendor.length() ||
 								(product.length() >= vendor.length() &&
-								!strncmp(vendor, product, vendor.length())))
+								!strncmp(vendor.c_str(), product.c_str(), vendor.length())))
 							{
 								info.display_name = product;
 							}
@@ -2812,7 +2810,7 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 								info.display_name = vendor;
 								if (product.length())
 								{
-									info.display_name.add_byte(' ');
+									info.display_name += ' ';
 									info.display_name += product;
 								}
 							}
@@ -2869,8 +2867,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	
 	for ( unsigned i = 0; i < vsti_count; ++i )
 	{
-		uSendMessageText( w, CB_ADDSTRING, 0, vsti_plugins[ i ].display_name );
-		if ( plugin == 1 && ! stricmp_utf8( vsti_plugins[ i ].path, cfg_vst_path ) )
+		uSendMessageText( w, CB_ADDSTRING, 0, vsti_plugins[ i ].display_name.c_str() );
+		if ( plugin == 1 && ! stricmp_utf8( vsti_plugins[ i ].path.c_str(), cfg_vst_path ) )
 			vsti_selected = i;
 	}
 
@@ -3131,9 +3129,10 @@ void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 		OnChanged();
 
 		VSTiPlayer vstPlayer;
-		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 7 ].path ) )
+		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 7 ].path.c_str() ) )
 		{
-			vstPlayer.setChunk( vsti_config.get_ptr(), vsti_config.get_count() );
+			if ( vsti_config.size() )
+				vstPlayer.setChunk( &vsti_config[0], vsti_config.size() );
 			vstPlayer.displayEditorModal();
 			vstPlayer.getChunk( vsti_config );
 		}
@@ -3240,8 +3239,6 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 	}
 }
 
-bool g_get_soundfont_stats( t_filesize & total_sample_size, t_filesize & samples_loaded_size );
-
 void CMyPreferences::OnTimer(UINT_PTR nIDEvent)
 {
 	if ( nIDEvent == ID_REFRESH )
@@ -3250,7 +3247,7 @@ void CMyPreferences::OnTimer(UINT_PTR nIDEvent)
 
 		m_cached.reset();
 
-		t_filesize total_sample_size, samples_loaded_size;
+		uint64_t total_sample_size, samples_loaded_size;
 
 		if ( g_get_soundfont_stats( total_sample_size, samples_loaded_size ) )
 		{
@@ -3359,7 +3356,7 @@ void CMyPreferences::reset() {
 #endif
 	SendDlgItemMessage( IDC_RESAMPLING, CB_SETCURSEL, default_cfg_resampling );
 
-	vsti_config.set_count( 0 );
+	vsti_config.resize( 0 );
 
 	OnChanged();
 }
@@ -3418,7 +3415,7 @@ void CMyPreferences::apply() {
 		else if ( plugin <= vsti_count + 6 )
 		{
 			cfg_plugin = 1;
-			cfg_vst_path = vsti_plugins[ plugin - 7 ].path;
+			cfg_vst_path = vsti_plugins[ plugin - 7 ].path.c_str();
 			cfg_vst_config[ vsti_plugins[ plugin - 7 ].unique_id ] = vsti_config;
 		}
 #ifdef DXISUPPORT
@@ -3504,11 +3501,11 @@ bool CMyPreferences::HasChanged() {
 		}
 		else if ( plugin <= vsti_count + 6 )
 		{
-			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 7 ].path ) ) changed = true;
+			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 7 ].path.c_str() ) ) changed = true;
 			if ( !changed )
 			{
 				t_uint32 unique_id = vsti_plugins[ plugin - 7 ].unique_id;
-				if ( vsti_config.get_count() != cfg_vst_config[ unique_id ].get_count() || memcmp( vsti_config.get_ptr(), cfg_vst_config[ unique_id ].get_ptr(), vsti_config.get_count() ) ) changed = true;
+				if ( vsti_config.size() != cfg_vst_config[ unique_id ].size() || (vsti_config.size() && memcmp( &vsti_config[0], &cfg_vst_config[ unique_id ][0], vsti_config.size() ) ) ) changed = true;
 			}
 		}
 #ifdef DXISUPPORT

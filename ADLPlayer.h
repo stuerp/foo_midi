@@ -21,8 +21,8 @@ public:
 	void setFullPanning( bool );
 
 protected:
-	virtual void send_event(DWORD b);
-	virtual void render(audio_sample * out, unsigned count);
+	virtual void send_event(uint32_t b);
+	virtual void render(float * out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();
@@ -50,8 +50,8 @@ private:
 	}
 	                   synth_mode;
 
-	BYTE               gs_part_to_ch[4][16];
-	BYTE               drum_channels[4][16];
+	uint8_t            gs_part_to_ch[4][16];
+	uint8_t            drum_channels[4][16];
 };
 
 #endif

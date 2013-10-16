@@ -3,6 +3,8 @@
 
 #include "MIDIPlayer.h"
 
+typedef void* HANDLE;
+
 class VSTiPlayer : public MIDIPlayer
 {
 public:
@@ -16,14 +18,14 @@ public:
 	bool LoadVST(const char * path);
 
 	// must be loaded for the following to work
-	void getVendorString(pfc::string_base & out);
-	void getProductString(pfc::string_base & out);
+	void getVendorString(std::string & out);
+	void getProductString(std::string & out);
 	long getVendorVersion();
 	long getUniqueID();
 
 	// configuration
-	void getChunk(pfc::array_t<t_uint8> & out);
-	void setChunk( const void * in, unsigned size );
+	void getChunk(std::vector<uint8_t> & out);
+	void setChunk( const void * in, unsigned long size );
 
 	// editor
 	bool hasEditor();
@@ -33,8 +35,8 @@ public:
 	unsigned getChannelCount();
 
 protected:
-	virtual void send_event( DWORD );
-	virtual void render(audio_sample *, unsigned);
+	virtual void send_event( uint32_t );
+	virtual void render(float *, unsigned long);
 
 	virtual void shutdown();
 	virtual bool startup();
@@ -46,13 +48,13 @@ private:
 	bool process_create();
 	void process_terminate();
 	bool process_running();
-	t_uint32 process_read_code();
-	void process_read_bytes( void * buffer, t_uint32 size );
-	t_uint32 process_read_bytes_pass( void * buffer, t_uint32 size );
-	void process_write_code( t_uint32 code );
-	void process_write_bytes( const void * buffer, t_uint32 size );
+	uint32_t process_read_code();
+	void process_read_bytes( void * buffer, uint32_t size );
+	uint32_t process_read_bytes_pass( void * buffer, uint32_t size );
+	void process_write_code( uint32_t code );
+	void process_write_bytes( const void * buffer, uint32_t size );
 
-	pfc::string8 sPlugin;
+	std::string  sPlugin;
 	unsigned     uPluginPlatform;
 
 	bool         bInitialized;
@@ -67,12 +69,12 @@ private:
 	char       * sName;
 	char       * sVendor;
 	char       * sProduct;
-	t_uint32     uVendorVersion;
-	t_uint32     uUniqueId;
+	uint32_t     uVendorVersion;
+	uint32_t    uUniqueId;
 
 	unsigned     uNumOutputs;
 
-	pfc::array_t<t_uint8> blChunk;
+	std::vector<uint8_t> blChunk;
 };
 
 #endif

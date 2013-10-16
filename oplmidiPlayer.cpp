@@ -5,7 +5,7 @@
 
 #include "adldata.h"
 
-#include <stdio.h>
+#include "shared.h"
 
 oplmidiPlayer::oplmidiPlayer() : MIDIPlayer()
 {
@@ -21,7 +21,7 @@ oplmidiPlayer::~oplmidiPlayer()
 	shutdown();
 }
 
-void oplmidiPlayer::send_event(DWORD b)
+void oplmidiPlayer::send_event(uint32_t b)
 {
 	if (!(b & 0x80000000))
 	{
@@ -30,15 +30,15 @@ void oplmidiPlayer::send_event(DWORD b)
 	}
 	else
 	{
-		UINT n = b & 0xffffff;
-		const t_uint8 * data;
-		t_size size, port;
+		uint32_t n = b & 0xffffff;
+		const uint8_t * data;
+		size_t size, port;
 		mSysexMap.get_entry( n, data, size, port );
 		synthesizers[ port & 3 ]->sysex_message( data, size );
 	}
 }
 
-void oplmidiPlayer::render( audio_sample * out, unsigned count )
+void oplmidiPlayer::render( float * out, unsigned long count )
 {
 	int_least32_t buffer[ 512 ];
 

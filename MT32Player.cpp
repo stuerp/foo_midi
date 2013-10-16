@@ -1,6 +1,6 @@
-#include "MT32Player.h"
+#include <foobar2000.h>
 
-#include "shared.h"
+#include "MT32Player.h"
 
 MT32Player::MT32Player( bool gm, unsigned gm_set )
 	: bGM( gm ), uGMSet( gm_set ), MIDIPlayer()
@@ -31,7 +31,7 @@ MT32Player::~MT32Player()
 	delete pcmRomFile;
 }
 
-void MT32Player::send_event(DWORD b)
+void MT32Player::send_event(uint32_t b)
 {
 	if (!(b & 0x80000000))
 	{
@@ -39,15 +39,15 @@ void MT32Player::send_event(DWORD b)
 	}
 	else
 	{
-		UINT n = b & 0xffffff;
-		const t_uint8 * data;
-		t_size size, port;
+		uint32_t n = b & 0xffffff;
+		const uint8_t * data;
+		size_t size, port;
 		mSysexMap.get_entry( n, data, size, port );
 		_synth->playSysex( data, size );
 	}
 }
 
-void MT32Player::render(audio_sample * out, unsigned count)
+void MT32Player::render(float * out, unsigned long count)
 {
 #if 1
 	pfc::static_assert_t<sizeof(audio_sample) == sizeof(float)>();
@@ -56,9 +56,9 @@ void MT32Player::render(audio_sample * out, unsigned count)
 	MT32Emu::Bit16s temp[512];
 	while ( count > 0 )
 	{
-		unsigned todo = count;
+		unsigned long todo = count;
 		if ( todo > 256 ) todo = 256;
-		_synth->render( temp, todo );
+		_synth->render( temp, (unsigned) todo );
 		audio_math::convert_from_int16( temp, todo * 2, out, 1. );
 		out += todo * 2;
 		count -= todo;
@@ -135,7 +135,7 @@ bool MT32Player::startup()
 
 void MT32Player::reset()
 {
-	static const BYTE mt32_reset[10] = {0xF0, MT32Emu::SYSEX_MANUFACTURER_ROLAND, 0x10, MT32Emu::SYSEX_MDL_MT32, MT32Emu::SYSEX_CMD_DT1, 0x7F, 0, 0, 0xF7};
+	static const uint8_t mt32_reset[10] = {0xF0, MT32Emu::SYSEX_MANUFACTURER_ROLAND, 0x10, MT32Emu::SYSEX_MDL_MT32, MT32Emu::SYSEX_CMD_DT1, 0x7F, 0, 0, 0xF7};
 
 	_synth->playSysex( mt32_reset, sizeof( mt32_reset ) );
 

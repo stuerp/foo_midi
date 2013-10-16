@@ -1,3 +1,9 @@
+#include <foobar2000.h>
+
+// Remove Windows versions and use std namespace versions
+#undef min
+#undef max
+
 #include "ADLPlayer.h"
 
 #include <vector>
@@ -335,7 +341,7 @@ public:
             Poke(card, 0x0BD, regBD[card] = (HighTremoloMode*0x80
                                            + HighVibratoMode*0x40
                                            + AdlPercussionMode*0x20));
-            unsigned fours_this_card = min(fours, 6u);
+            unsigned fours_this_card = std::min(fours, 6u);
             Poke(card, 0x104, (1 << fours_this_card) - 1);
             //fprintf(stderr, "Card %u: %u four-ops.\n", card, fours_this_card);
             fours -= fours_this_card;
@@ -502,14 +508,14 @@ private:
         {
             if(users.empty())
                 koff_time_until_neglible =
-                    max(koff_time_until_neglible-ms, -0x1FFFFFFFl);
+                    std::max(koff_time_until_neglible-ms, -0x1FFFFFFFl);
             else
             {
                 koff_time_until_neglible = 0;
                 for(users_t::iterator i = users.begin(); i != users.end(); ++i)
                 {
                     i->second.kon_time_until_neglible =
-                    max(i->second.kon_time_until_neglible-ms, -0x1FFFFFFFl);
+                    std::max(i->second.kon_time_until_neglible-ms, -0x1FFFFFFFl);
                     i->second.vibdelay += ms;
                 }
             }
@@ -1268,12 +1274,12 @@ private:
     }
 };
 
-static const t_uint8 sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-static const t_uint8 sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-static const t_uint8 sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const t_uint8 sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
+static const uint8_t sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
+static const uint8_t sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
+static const uint8_t sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
+static const uint8_t sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
 
-static bool is_gs_reset(const unsigned char * data, unsigned size)
+static bool is_gs_reset(const unsigned char * data, unsigned long size)
 {
 	if ( size != _countof( sysex_gs_reset ) ) return false;
 
@@ -1296,7 +1302,7 @@ ADLPlayer::~ADLPlayer()
 	shutdown();
 }
 
-void ADLPlayer::send_event(DWORD b)
+void ADLPlayer::send_event(uint32_t b)
 {
 	if (!(b & 0x80000000))
 	{
@@ -1330,9 +1336,9 @@ void ADLPlayer::send_event(DWORD b)
 	}
 	else
 	{
-		UINT n = b & 0xffffff;
-		const t_uint8 * data;
-		t_size size, port;
+		uint32_t n = b & 0xffffff;
+		const uint8_t * data;
+		size_t size, port;
 		mSysexMap.get_entry( n, data, size, port );
 		port &= 3;
 		midiplay->HandleEvent( data, size, port );
@@ -1378,7 +1384,7 @@ static struct init_lanczos
 	init_lanczos() { lanczos_init(); }
 } g_lanczos_initializer;
 
-void ADLPlayer::render( audio_sample * out, unsigned count )
+void ADLPlayer::render( float * out, unsigned long count )
 {
 	short intermediate_buffer[ 512 ];
 	int resampled_buffer[ 512 ];
@@ -1452,7 +1458,7 @@ void ADLPlayer::render_internal(void * context, int count, short * out)
 			}
 		}
 
-		for ( unsigned i = 0; i < todo * 2; i++ )
+		for ( unsigned long i = 0; i < todo * 2; i++ )
 		{
 			Bit32s sample = accum_buffer[ i ];
 			if ( (Bit32u)( sample + 0x8000 ) >= 0x10000 ) sample = ( sample >> 31 ) ^ 0x7FFF;

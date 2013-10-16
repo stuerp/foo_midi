@@ -2,12 +2,12 @@
 
 #include "shared.h"
 
-static const t_uint8 sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-static const t_uint8 sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-static const t_uint8 sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const t_uint8 sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
+static const uint8_t sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
+static const uint8_t sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
+static const uint8_t sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
+static const uint8_t sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
 
-static bool is_gs_reset(const unsigned char * data, unsigned size)
+static bool is_gs_reset(const unsigned char * data, unsigned long size)
 {
 	if ( size != _countof( sysex_gs_reset ) ) return false;
 
@@ -30,7 +30,7 @@ EMIDIPlayer::~EMIDIPlayer()
 	shutdown();
 }
 
-void EMIDIPlayer::send_event( DWORD b )
+void EMIDIPlayer::send_event( uint32_t b )
 {
 	dsa::CMIDIMsgInterpreter mi;
 
@@ -67,9 +67,9 @@ void EMIDIPlayer::send_event( DWORD b )
 	}
 	else
 	{
-		UINT n = b & 0xffffff;
-		const t_uint8 * data;
-		t_size size, port;
+		uint32_t n = b & 0xffffff;
+		const uint8_t * data;
+		size_t size, port;
 		mSysexMap.get_entry( n, data, size, port );
 		for ( n = 0; n < size; ++n ) mi.Interpret( data[ n ] );
 
@@ -115,14 +115,14 @@ void EMIDIPlayer::send_event( DWORD b )
 	}
 }
 
-void EMIDIPlayer::render( audio_sample * out, unsigned count )
+void EMIDIPlayer::render( float * out, unsigned long count )
 {
 	INT32 b[512];
 
 	while ( count )
 	{
 		unsigned todo = 256;
-		if ( todo > count ) todo = count;
+		if ( todo > count ) todo = (unsigned) count;
 
 		memset( b, 0, todo * 4 * 2 );
 
@@ -175,7 +175,7 @@ void EMIDIPlayer::shutdown()
 
 void EMIDIPlayer::reset_drum_channels()
 {
-	static const BYTE part_to_ch[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
+	static const uint8_t part_to_ch[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
 
 	memset( drum_channels, 0, sizeof( drum_channels ) );
 	drum_channels[ 9 ] = 1;

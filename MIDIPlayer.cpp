@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "MIDIPlayer.h"
 
 MIDIPlayer::MIDIPlayer()
@@ -9,29 +11,29 @@ MIDIPlayer::MIDIPlayer()
 	uTimeLoopStart = 0;
 }
 
-void MIDIPlayer::setSampleRate(unsigned rate)
+void MIDIPlayer::setSampleRate(unsigned long rate)
 {
 	if (mStream.size())
 	{
-		for (UINT i = 0; i < mStream.size(); i++)
+		for (unsigned long i = 0; i < mStream.size(); i++)
 		{
-			mStream[i].m_timestamp = MulDiv(mStream[i].m_timestamp, rate, uSampleRate);
+			mStream[i].m_timestamp = mStream[i].m_timestamp * rate / uSampleRate;
 		}
 	}
 
 	if (uTimeCurrent)
 	{
-		uTimeCurrent = MulDiv(uTimeCurrent, rate, uSampleRate);
+		uTimeCurrent = uTimeCurrent * rate / uSampleRate;
 	}
 
 	if (uTimeEnd)
 	{
-		uTimeEnd = MulDiv(uTimeEnd, rate, uSampleRate);
+		uTimeEnd = uTimeEnd * rate / uSampleRate;
 	}
 
 	if (uTimeLoopStart)
 	{
-		uTimeLoopStart = MulDiv(uTimeLoopStart, rate, uSampleRate);
+		uTimeLoopStart = uTimeLoopStart * rate / uSampleRate;
 	}
 
 	uSampleRate = rate;
@@ -43,7 +45,7 @@ bool MIDIPlayer::Load(const midi_container & midi_file, unsigned subsong, unsign
 {
 	assert(!mStream.size());
 
-	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, clean_flags );
+	midi_file.serialize_as_stream( subsong, mStream, mSysexMap, uStreamLoopStart, uStreamEnd, clean_flags );
 
 	if (mStream.size())
 	{
@@ -51,77 +53,60 @@ bool MIDIPlayer::Load(const midi_container & midi_file, unsigned subsong, unsign
 		uTimeCurrent = 0;
 
 		uLoopMode = loop_mode;
+        
+        uTimeEnd = midi_file.get_timestamp_end( subsong ) + 1000;
 
 		if (uLoopMode & loop_mode_enable)
 		{
 			uTimeLoopStart = midi_file.get_timestamp_loop_start( subsong, true );
-			unsigned uTimeLoopEnd = midi_file.get_timestamp_loop_end( subsong, true );
-			uTimeEnd = midi_file.get_timestamp_end( subsong, true );
+			unsigned long uTimeLoopEnd = midi_file.get_timestamp_loop_end( subsong, true );
 
-			if ( uTimeLoopStart != ~0 || uTimeLoopEnd != ~0 )
+			if ( uTimeLoopStart != ~0UL || uTimeLoopEnd != ~0UL )
 			{
 				uLoopMode |= loop_mode_force;
 			}
 
-			if ( uTimeLoopStart != ~0 )
+			if ((uLoopMode & loop_mode_force))
 			{
-				for ( unsigned i = 0; i < mStream.size(); ++i )
-				{
-					if ( mStream[ i ].m_timestamp >= uTimeLoopStart )
-					{
-						uStreamLoopStart = i;
-						break;
-					}
-				}
-			}
-			else uStreamLoopStart = ~0;
-
-			if ( uTimeLoopEnd != ~0 )
-			{
-				uTimeEnd = uTimeLoopEnd;
-			}
-
-			if (!(uLoopMode & loop_mode_force)) uTimeEnd += 1000;
-			else
-			{
-				UINT i;
+				unsigned long i;
 				unsigned char note_on[128 * 16];
 				memset( note_on, 0, sizeof( note_on ) );
-				for (i = 0; i < mStream.size(); i++)
+				for (i = 0; i < mStream.size() && i < uStreamEnd; i++)
 				{
-					if (mStream[ i ].m_timestamp > uTimeEnd) break;
-					UINT ev = mStream[ i ].m_event & 0x800000F0;
+					uint32_t ev = mStream[ i ].m_event & 0x800000F0;
 					if ( ev == 0x90 || ev == 0x80 )
 					{
-						UINT port = ( mStream[ i ].m_event & 0x7F000000 ) >> 24;
-						UINT ch = mStream[ i ].m_event & 0x0F;
-						UINT note = ( mStream[ i ].m_event >> 8 ) & 0x7F;
-						UINT on = ( ev == 0x90 ) && ( mStream[ i ].m_event & 0xFF0000 );
-						UINT bit = 1 << port;
+						unsigned long port = ( mStream[ i ].m_event & 0x7F000000 ) >> 24;
+						unsigned long ch = mStream[ i ].m_event & 0x0F;
+						unsigned long note = ( mStream[ i ].m_event >> 8 ) & 0x7F;
+						unsigned long on = ( ev == 0x90 ) && ( mStream[ i ].m_event & 0xFF0000 );
+						unsigned long bit = 1 << port;
 						note_on [ ch * 128 + note ] = ( note_on [ ch * 128 + note ] & ~bit ) | ( bit * on );
 					}
 				}
+                unsigned long uSavedEndTime = ( i < mStream.size() ) ? mStream[ i ].m_timestamp : mStream[ mStream.size() - 1 ].m_timestamp + 1;
 				mStream.resize( i );
-				for ( UINT j = 0; j < 128 * 16; j++ )
+                uTimeEnd = mStream[ i - 1 ].m_timestamp;
+				for ( unsigned long j = 0; j < 128 * 16; j++ )
 				{
 					if ( note_on[ j ] )
 					{
-						for ( UINT k = 0; k < 8; k++ )
+						for ( unsigned long k = 0; k < 8; k++ )
 						{
 							if ( note_on[ j ] & ( 1 << k ) )
 							{
-								mStream.push_back( midi_stream_event( uTimeEnd, ( k << 24 ) + ( j >> 7 ) + ( j & 0x7F ) * 0x100 + 0x90 ) );
+								mStream.push_back( midi_stream_event( uTimeEnd, (uint32_t)(( k << 24 ) + ( j >> 7 ) + ( j & 0x7F ) * 0x100 + 0x90 )) );
 							}
 						}
 					}
 				}
+                uTimeEnd = uSavedEndTime;
 			}
 		}
-		else uTimeEnd = midi_file.get_timestamp_end( subsong, true ) + 1000;
 
 		if (uSampleRate != 1000)
 		{
-			unsigned rate = uSampleRate;
+			unsigned long rate = uSampleRate;
 			uSampleRate = 1000;
 			setSampleRate(rate);
 		}
@@ -132,17 +117,17 @@ bool MIDIPlayer::Load(const midi_container & midi_file, unsigned subsong, unsign
 	return false;
 }
 
-unsigned MIDIPlayer::Play(audio_sample * out, unsigned count)
+unsigned long MIDIPlayer::Play(float * out, unsigned long count)
 {
 	assert(mStream.size());
 
 	if ( !startup() ) return 0;
 
-	DWORD done = 0;
+	unsigned long done = 0;
 
 	if ( uSamplesRemaining )
 	{
-		DWORD todo = uSamplesRemaining;
+		unsigned long todo = uSamplesRemaining;
 		if (todo > count) todo = count;
 		render( out, todo );
 		uSamplesRemaining -= todo;
@@ -152,11 +137,11 @@ unsigned MIDIPlayer::Play(audio_sample * out, unsigned count)
 
 	while (done < count)
 	{
-		DWORD todo = uTimeEnd - uTimeCurrent;
+		unsigned long todo = uTimeEnd - uTimeCurrent;
 		if (todo > count - done) todo = count - done;
 
-		DWORD time_target = todo + uTimeCurrent;
-		UINT stream_end = uStreamPosition;
+		unsigned long time_target = todo + uTimeCurrent;
+		unsigned long stream_end = uStreamPosition;
 
 		while (stream_end < mStream.size() && mStream[stream_end].m_timestamp < time_target) stream_end++;
 
@@ -166,7 +151,7 @@ unsigned MIDIPlayer::Play(audio_sample * out, unsigned count)
 			{
 				midi_stream_event * me = &mStream[uStreamPosition];
 				
-				DWORD samples_todo = me->m_timestamp - uTimeCurrent;
+				unsigned long samples_todo = me->m_timestamp - uTimeCurrent;
 				if ( samples_todo )
 				{
 					if ( samples_todo > count - done )
@@ -192,7 +177,7 @@ unsigned MIDIPlayer::Play(audio_sample * out, unsigned count)
 
 		if ( done < count )
 		{
-			DWORD samples_todo;
+			unsigned long samples_todo;
 			if ( uStreamPosition < mStream.size() ) samples_todo = mStream[uStreamPosition].m_timestamp;
 			else samples_todo = uTimeEnd;
 			samples_todo -= uTimeCurrent;
@@ -233,7 +218,7 @@ unsigned MIDIPlayer::Play(audio_sample * out, unsigned count)
 	return done;
 }
 
-void MIDIPlayer::Seek(unsigned sample)
+void MIDIPlayer::Seek(unsigned long sample)
 {
 	if (sample >= uTimeEnd)
 	{
@@ -259,9 +244,9 @@ void MIDIPlayer::Seek(unsigned sample)
 
 	uTimeCurrent = sample;
 
-	pfc::array_t<midi_stream_event> filler;
+	std::vector<midi_stream_event> filler;
 
-	UINT stream_start = uStreamPosition;
+	unsigned long stream_start = uStreamPosition;
 
 	for (; uStreamPosition < mStream.size() && mStream[uStreamPosition].m_timestamp < uTimeCurrent; uStreamPosition++);
 
@@ -269,11 +254,11 @@ void MIDIPlayer::Seek(unsigned sample)
 
 	if (uStreamPosition > stream_start)
 	{
-		filler.set_size( uStreamPosition - stream_start );
-		memcpy(filler.get_ptr(), &mStream[stream_start], sizeof(midi_stream_event) * (uStreamPosition - stream_start));
+		filler.resize( uStreamPosition - stream_start );
+		filler.assign( &mStream[stream_start], &mStream[uStreamPosition] );
 
-		UINT i, j;
-		midi_stream_event * me = filler.get_ptr();
+		unsigned long i, j;
+		midi_stream_event * me = &filler[0];
 
 		for (i = 0, stream_start = uStreamPosition - stream_start; i < stream_start; i++)
 		{
@@ -285,8 +270,8 @@ void MIDIPlayer::Seek(unsigned sample)
 					e.m_event = 0;
 					continue;
 				}
-				DWORD m = (e.m_event & 0x7F00FF0F) | 0x80; // note off
-				DWORD m2 = e.m_event & 0x7F00FFFF; // also note off
+				uint32_t m = (e.m_event & 0x7F00FF0F) | 0x80; // note off
+				uint32_t m2 = e.m_event & 0x7F00FFFF; // also note off
 				for (j = i + 1; j < stream_start; j++)
 				{
 					midi_stream_event & e2 = me[j];
@@ -301,20 +286,10 @@ void MIDIPlayer::Seek(unsigned sample)
 			}
 		}
 
-		for (i = 0, j = 0; i < stream_start; i++)
+		for (i = 0; i < stream_start; i++)
 		{
 			if (me[i].m_event)
-			{
-				if (i != j) me[j] = me[i];
-				j++;
-			}
-		}
-
-		if (!j) return;
-
-		for (i = 0; i < j; i++)
-		{
-			send_event( me[i].m_event );
+				send_event(me[i].m_event);
 		}
 	}
 }

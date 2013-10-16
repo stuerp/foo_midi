@@ -25,13 +25,13 @@ public:
 	void setProgramPath( const char * );
 
 private:
-	virtual void send_event(DWORD b);
-	virtual void render(audio_sample * out, unsigned count);
+	virtual void send_event(uint32_t b);
+	virtual void render(float * out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();
 
-	pfc::string8                 bank_path;
+	std::string                       bank_path;
 
 	midisynth::opn::fm_note_factory * factory;
 

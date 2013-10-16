@@ -1,9 +1,7 @@
 #ifndef __MIDIPlayer_h__
 #define __MIDIPlayer_h__
 
-#include <foobar2000.h>
-
-#include <midi_container.h>
+#include <midi_processing/midi_container.h>
 
 class MIDIPlayer
 {
@@ -21,35 +19,37 @@ public:
 	virtual ~MIDIPlayer() {};
 
 	// setup
-	void setSampleRate(unsigned rate);
+	void setSampleRate(unsigned long rate);
 
 	bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
-	unsigned Play(audio_sample * out, unsigned count);
-	void Seek(unsigned sample);
+	unsigned long Play(float * out, unsigned long count);
+	void Seek(unsigned long sample);
 
 protected:
-	virtual void send_event(DWORD b) {}
-	virtual void render(audio_sample * out, unsigned count) {}
+	virtual void send_event(uint32_t b) {}
+	virtual void render(float * out, unsigned long count) {}
 
 	virtual void shutdown() {};
 	virtual bool startup() {return false;}
 
-	unsigned           uSampleRate;
+	unsigned long      uSampleRate;
 	system_exclusive_table mSysexMap;
 
 private:
-	unsigned           uSamplesRemaining;
+	unsigned long      uSamplesRemaining;
 
 	unsigned           uLoopMode;
 
 	std::vector<midi_stream_event> mStream;
 
-	UINT               uStreamPosition;
-	DWORD              uTimeCurrent;
-	DWORD              uTimeEnd;
+	unsigned long      uStreamPosition;
+	unsigned long      uTimeCurrent;
+	unsigned long      uTimeEnd;
 
-	UINT               uStreamLoopStart;
-	DWORD              uTimeLoopStart;
+	unsigned long      uStreamLoopStart;
+	unsigned long      uTimeLoopStart;
+    unsigned long      uStreamEnd;
 };
 
 #endif
+

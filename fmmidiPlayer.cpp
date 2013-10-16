@@ -1,3 +1,5 @@
+#include <foobar2000.h>
+
 #include "fmmidiPlayer.h"
 
 #include <midisynth.hpp>
@@ -19,7 +21,7 @@ fmmidiPlayer::~fmmidiPlayer()
 	shutdown();
 }
 
-void fmmidiPlayer::send_event(DWORD b)
+void fmmidiPlayer::send_event(uint32_t b)
 {
 	if (!(b & 0x80000000))
 	{
@@ -36,7 +38,7 @@ void fmmidiPlayer::send_event(DWORD b)
 	}
 }
 
-void fmmidiPlayer::render( audio_sample * out, unsigned count )
+void fmmidiPlayer::render( float * out, unsigned long count )
 {
 	int_least32_t buffer[ 512 ];
 
@@ -82,7 +84,7 @@ bool fmmidiPlayer::startup()
 
 	factory = new midisynth::opn::fm_note_factory;
 
-	FILE* fp = fopen(bank_path, "rt");
+	FILE* fp = _tfopen( pfc::stringcvt::string_os_from_utf8( bank_path.c_str() ), _T("rt") );
 	if(!fp){
 		return false;
 	}else{

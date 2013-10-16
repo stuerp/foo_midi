@@ -1,6 +1,6 @@
 #include "VSTiPlayer.h"
 
-#include <shared.h>
+#include <foobar2000.h>
 
 // #define LOG_EXCHANGE
 
@@ -28,24 +28,24 @@ VSTiPlayer::~VSTiPlayer()
 	delete [] sProduct;
 }
 
-static WORD getwordle(BYTE *pData)
+static uint16_t getwordle(uint8_t *pData)
 {
-	return (WORD)(pData[0] | (((WORD)pData[1]) << 8));
+	return (uint16_t)(pData[0] | (((uint16_t)pData[1]) << 8));
 }
 
-static DWORD getdwordle(BYTE *pData)
+static uint32_t getdwordle(uint8_t *pData)
 {
-	return pData[0] | (((DWORD)pData[1]) << 8) | (((DWORD)pData[2]) << 16) | (((DWORD)pData[3]) << 24);
+	return pData[0] | (((uint32_t)pData[1]) << 8) | (((uint32_t)pData[2]) << 16) | (((uint32_t)pData[3]) << 24);
 }
 
 unsigned VSTiPlayer::test_plugin_platform() {
 #define iMZHeaderSize (0x40)
 #define iPEHeaderSize (4 + 20 + 224)
 
-	BYTE peheader[iPEHeaderSize];
-	DWORD dwOffsetPE;
+	uint8_t peheader[iPEHeaderSize];
+	uint32_t dwOffsetPE;
 
-	pfc::string8 plugin = "file://";
+	std::string plugin = "file://";
 	plugin += sPlugin;
 
 	file::ptr f;
@@ -53,7 +53,7 @@ unsigned VSTiPlayer::test_plugin_platform() {
 
 	try
 	{
-		filesystem::g_open( f, plugin, filesystem::open_mode_read, m_abort );
+		filesystem::g_open( f, plugin.c_str(), filesystem::open_mode_read, m_abort );
 
 		f->read_object( peheader, iMZHeaderSize, m_abort );
 		if ( getwordle(peheader) != 0x5A4D ) return 0;
@@ -137,9 +137,11 @@ bool VSTiPlayer::process_create()
  	DuplicateHandle( GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd_OUT_Rd, 0, FALSE, DUPLICATE_SAME_ACCESS );
  	CloseHandle( hPipe );
  
- 	pfc::string8 szCmdLine = "\"";
+ 	std::string szCmdLine = "\"";
  	szCmdLine += core_api::get_my_full_path();
- 	szCmdLine.truncate( szCmdLine.scan_filename() );
+	size_t slash = szCmdLine.find_last_of( '\\' );
+	if ( slash != std::string::npos )
+		szCmdLine.erase( szCmdLine.begin() + slash + 1, szCmdLine.end() );
  	szCmdLine += (uPluginPlatform == 64) ? "vsthost64.exe" : "vsthost32.exe";
  	szCmdLine += "\" \"";
  	szCmdLine += sPlugin;
@@ -147,7 +149,7 @@ bool VSTiPlayer::process_create()
  
  	unsigned sum = 0;
  
- 	pfc::stringcvt::string_os_from_utf8 plugin_os( sPlugin );
+ 	pfc::stringcvt::string_os_from_utf8 plugin_os( sPlugin.c_str() );
  	const TCHAR * ch = plugin_os.get_ptr();
  	while ( *ch )
  	{
@@ -166,7 +168,7 @@ bool VSTiPlayer::process_create()
  	//siStartInfo.wShowWindow = SW_HIDE;
  	siStartInfo.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
  
- 	if ( !CreateProcess( NULL, (LPTSTR)(LPCTSTR) pfc::stringcvt::string_os_from_utf8( szCmdLine ), NULL, NULL, TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo ) )
+ 	if ( !CreateProcess( NULL, (LPTSTR)(LPCTSTR) pfc::stringcvt::string_os_from_utf8( szCmdLine.c_str() ), NULL, NULL, TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo ) )
  	{
  		process_terminate();
  		return false;
@@ -186,7 +188,7 @@ bool VSTiPlayer::process_create()
 	SetThreadPriority( hThread, GetThreadPriority( GetCurrentThread() ) );
 #endif
 
-	t_uint32 code = process_read_code();
+	uint32_t code = process_read_code();
 
 	if ( code != 0 )
 	{
@@ -194,9 +196,9 @@ bool VSTiPlayer::process_create()
 		return false;
 	}
 
-	t_uint32 name_string_length = process_read_code();
-	t_uint32 vendor_string_length = process_read_code();
-	t_uint32 product_string_length = process_read_code();
+	uint32_t name_string_length = process_read_code();
+	uint32_t vendor_string_length = process_read_code();
+	uint32_t product_string_length = process_read_code();
 	uVendorVersion = process_read_code();
 	uUniqueId = process_read_code();
 	uNumOutputs = process_read_code();
@@ -262,7 +264,7 @@ static void ProcessPendingMessages()
 	while ( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) ) DispatchMessage( &msg );
 }
 
-t_uint32 VSTiPlayer::process_read_bytes_pass( void * out, t_uint32 size )
+uint32_t VSTiPlayer::process_read_bytes_pass( void * out, uint32_t size )
 {
 	OVERLAPPED ol = {};
 	ol.hEvent = hReadEvent;
@@ -293,15 +295,15 @@ t_uint32 VSTiPlayer::process_read_bytes_pass( void * out, t_uint32 size )
 	return 0;
 }
 
-void VSTiPlayer::process_read_bytes( void * out, t_uint32 size )
+void VSTiPlayer::process_read_bytes( void * out, uint32_t size )
 {
 	if ( process_running() && size )
 	{
-		t_uint8 * ptr = (t_uint8 *) out;
-		t_uint32 done = 0;
+		uint8_t * ptr = (uint8_t *) out;
+		uint32_t done = 0;
 		while ( done < size )
 		{
-			t_uint32 delta = process_read_bytes_pass( ptr + done, size - done );
+			uint32_t delta = process_read_bytes_pass( ptr + done, size - done );
 			if ( delta == 0 )
 			{
 				memset( out, 0xFF, size );
@@ -313,14 +315,14 @@ void VSTiPlayer::process_read_bytes( void * out, t_uint32 size )
 	else memset( out, 0xFF, size );
 }
 
-t_uint32 VSTiPlayer::process_read_code()
+uint32_t VSTiPlayer::process_read_code()
 {
-	t_uint32 code;
+	uint32_t code;
 	process_read_bytes( &code, sizeof(code) );
 	return code;
 }
 
-void VSTiPlayer::process_write_bytes( const void * in, t_uint32 size )
+void VSTiPlayer::process_write_bytes( const void * in, uint32_t size )
 {
 	if ( process_running() )
 	{
@@ -330,17 +332,17 @@ void VSTiPlayer::process_write_bytes( const void * in, t_uint32 size )
 	}
 }
 
-void VSTiPlayer::process_write_code( t_uint32 code )
+void VSTiPlayer::process_write_code( uint32_t code )
 {
 	process_write_bytes( &code, sizeof(code) );
 }
 
-void VSTiPlayer::getVendorString(pfc::string_base & out)
+void VSTiPlayer::getVendorString(std::string & out)
 {
 	out = sVendor;
 }
 
-void VSTiPlayer::getProductString(pfc::string_base & out)
+void VSTiPlayer::getProductString(std::string & out)
 {
 	out = sProduct;
 }
@@ -355,7 +357,7 @@ long VSTiPlayer::getUniqueID()
 	return uUniqueId;
 }
 
-void VSTiPlayer::getChunk( pfc::array_t<t_uint8> & out )
+void VSTiPlayer::getChunk( std::vector<uint8_t> & out )
 {
 	process_write_code( 1 );
 
@@ -363,34 +365,36 @@ void VSTiPlayer::getChunk( pfc::array_t<t_uint8> & out )
 
 	if ( code == 0 )
 	{
-		t_uint32 size = process_read_code();
+		uint32_t size = process_read_code();
 
-		out.set_count( size );
+		out.resize( size );
 
-		process_read_bytes( out.get_ptr(), size );
+		if ( size )
+			process_read_bytes( &out[0], size );
 	}
 	else process_terminate();
 }
 
-void VSTiPlayer::setChunk( const void * in, unsigned size )
+void VSTiPlayer::setChunk( const void * in, unsigned long size )
 {
-	if ( in != (const void*)blChunk.get_ptr() )
+	if ( blChunk.size() == size && size != 0 && in != (const void*)&blChunk[0] )
 	{
-		blChunk.set_count( size );
-		memcpy( blChunk.get_ptr(), in, size );
+		blChunk.resize( size );
+		if ( size )
+			memcpy( &blChunk[0], in, size );
 	}
 
 	process_write_code( 2 );
 	process_write_code( size );
 	process_write_bytes( in, size );
-	t_uint32 code = process_read_code();
+	uint32_t code = process_read_code();
 	if ( code != 0 ) process_terminate();
 }
 
 bool VSTiPlayer::hasEditor()
 {
 	process_write_code( 3 );
-	t_uint32 code = process_read_code();
+	uint32_t code = process_read_code();
 	if ( code != 0 )
 	{
 		process_terminate();
@@ -403,7 +407,7 @@ bool VSTiPlayer::hasEditor()
 void VSTiPlayer::displayEditorModal()
 {
 	process_write_code( 4 );
-	t_uint32 code = process_read_code();
+	uint32_t code = process_read_code();
 	if ( code != 0 ) process_terminate();
 }
 
@@ -416,15 +420,16 @@ bool VSTiPlayer::startup()
 {
 	if ( process_running() ) return true;
 
-	if ( !LoadVST( sPlugin ) ) return false;
+	if ( !LoadVST( sPlugin.c_str() ) ) return false;
 
-	setChunk( blChunk.get_ptr(), blChunk.get_count() );
+	if ( blChunk.size() )
+		setChunk( &blChunk[0], blChunk.size() );
 
 	process_write_code( 5 );
-	process_write_code( sizeof(t_uint32) );
+	process_write_code( sizeof(uint32_t) );
 	process_write_code( uSampleRate );
 	
-	t_uint32 code = process_read_code();
+	uint32_t code = process_read_code();
 	if ( code != 0 ) process_terminate();
 
 	return true;
@@ -435,7 +440,7 @@ unsigned VSTiPlayer::getChannelCount()
 	return uNumOutputs;
 }
 
-void VSTiPlayer::send_event( DWORD b )
+void VSTiPlayer::send_event( uint32_t b )
 {
 	if (!(b & 0x80000000))
 	{
@@ -444,9 +449,9 @@ void VSTiPlayer::send_event( DWORD b )
 	}
 	else
 	{
-		UINT n = b & 0xffffff;
-		const t_uint8 * data;
-		t_size size, port;
+		uint32_t n = b & 0xffffff;
+		const uint8_t * data;
+		size_t size, port;
 		mSysexMap.get_entry( n, data, size, port );
 		process_write_code( 8 );
 		process_write_code( size );
@@ -456,24 +461,23 @@ void VSTiPlayer::send_event( DWORD b )
 	if ( code != 0 ) process_terminate();
 }
 
-void VSTiPlayer::render( audio_sample * out, unsigned count )
+void VSTiPlayer::render( float * out, unsigned long count )
 {
 	process_write_code( 9 );
 	process_write_code( count );
-	t_uint32 code = process_read_code();
+	uint32_t code = process_read_code();
 	if ( code != 0 )
 	{
 		process_terminate();
-		memset( out, 0, sizeof(audio_sample) * count * uNumOutputs );
+		memset( out, 0, sizeof(float) * count * uNumOutputs );
 		return;
 	}
-	assert(sizeof(audio_sample) == sizeof(float));
 
 	while ( count )
 	{
 		unsigned count_to_do = 4096 * uNumOutputs;
 		if ( count_to_do > count ) count_to_do = count;
-		process_read_bytes( out, sizeof(audio_sample) * count_to_do * uNumOutputs );
+		process_read_bytes( out, sizeof(float) * count_to_do * uNumOutputs );
 		out += count_to_do * uNumOutputs;
 		count -= count_to_do;
 	}

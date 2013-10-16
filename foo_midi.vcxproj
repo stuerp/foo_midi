@@ -66,7 +66,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../../midi_processing;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../..;../../../midisynth;../../../bass/c;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -108,7 +108,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../../midi_processing;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../..;../shared;../SDK;./DXiClasses;./include;../../../scc/emidi_alpha;../../../munt/mt32emu/src;../../..;../../../midisynth;../../../bass/c;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -282,6 +282,10 @@
     <ProjectReference Include="vsthost\vsthost.vcxproj">
       <Project>{5d666f11-5e76-4653-8b5b-32988e4907a0}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\bass\c\bass.lib" />
+    <Library Include="..\..\..\bass\c\bassmidi.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,11 +1,11 @@
 #include "SFPlayer.h"
 
-static const t_uint8 sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-static const t_uint8 sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-static const t_uint8 sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const t_uint8 sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
+static const uint8_t sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
+static const uint8_t sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
+static const uint8_t sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
+static const uint8_t sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
 
-static bool is_gs_reset(const unsigned char * data, unsigned size)
+static bool is_gs_reset(const unsigned char * data, unsigned long size)
 {
 	if ( size != _countof( sysex_gs_reset ) ) return false;
 
@@ -45,7 +45,7 @@ void SFPlayer::setInterpolationMethod(unsigned method)
 	if ( _synth ) fluid_synth_set_interp_method( _synth, -1, method );
 }
 
-void SFPlayer::send_event(DWORD b)
+void SFPlayer::send_event(uint32_t b)
 {
 	if (!(b & 0x80000000))
 	{
@@ -103,9 +103,9 @@ void SFPlayer::send_event(DWORD b)
 	}
 	else
 	{
-		UINT n = b & 0xffffff;
-		const t_uint8 * data;
-		t_size size;
+		uint32_t n = b & 0xffffff;
+		const uint8_t * data;
+		size_t size;
 		mSysexMap.get_entry( n, data, size );
 		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
 			( size == _countof( sysex_gm2_reset ) && !memcmp( data, sysex_gm2_reset, _countof( sysex_gm2_reset ) ) ) ||
@@ -143,7 +143,7 @@ void SFPlayer::send_event(DWORD b)
 	}
 }
 
-void SFPlayer::render(audio_sample * out, unsigned count)
+void SFPlayer::render(float * out, unsigned long count)
 {
 	fluid_synth_write_float(_synth, count, out, 0, 2, out, 1, 2);
 }
@@ -183,10 +183,13 @@ bool SFPlayer::startup()
 	synth_mode = mode_gm;
 	if (sSoundFontName.length())
 	{
-		pfc::string_extension ext(sSoundFontName);
-		if ( !pfc::stricmp_ascii( ext, "sf2" ) )
+		std::string ext;
+		size_t dot = sSoundFontName.find_last_of( '.' );
+		if ( dot != std::string::npos )
+			ext.assign( sSoundFontName.begin() + dot + 1, sSoundFontName.end() );
+		if ( !stricmp_utf8( ext.c_str(), "sf2" ) )
 		{
-			if ( FLUID_FAILED == fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName ), 1) )
+			if ( FLUID_FAILED == fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName.c_str() ), 1) )
 			{
 				shutdown();
 				_last_error = "Failed to load SoundFont bank: ";
@@ -194,30 +197,34 @@ bool SFPlayer::startup()
 				return false;
 			}
 		}
-		else if ( !pfc::stricmp_ascii( ext, "sflist" ) )
+		else if ( !stricmp_utf8( ext.c_str(), "sflist" ) )
 		{
 			FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( sSoundFontName ), _T("r, ccs=UTF-8") );
 			if ( fl )
 			{
-				TCHAR path[1024], name[1024], temp[1024];
-				pfc::stringcvt::convert_utf8_to_wide( path, 1024, sSoundFontName, sSoundFontName.scan_filename() );
+				std::string path, temp;
+				TCHAR name[32768];
+				size_t slash = sSoundFontName.find_last_of( '\\' );
+				if ( slash != std::string::npos )
+					path.assign( sSoundFontName.begin(), sSoundFontName.begin() + slash + 1 );
 				while ( !feof( fl ) )
 				{
-					if ( !_fgetts( name, 1024, fl ) ) break;
-					name[1023] = 0;
+					if ( !_fgetts( name, 32767, fl ) ) break;
+					name[32767] = 0;
 					TCHAR * cr = _tcschr( name, '\n' );
 					if ( cr ) *cr = 0;
-					if ( isalpha( name[0] ) && name[1] == ':' )
+					cr = _tcschr( name, '\r' );
+					if ( cr ) *cr = 0;
+					if ( ( isalpha( name[0] ) && name[1] == ':' ) || name[0] == '\\' )
 					{
-						cr = name;
+						temp = name;
 					}
 					else
 					{
-						_tcscpy_s( temp, 1024, path );
-						_tcscat_s( temp, 1024, name );
-						cr = temp;
+						temp = path;
+						temp += name;
 					}
-					if ( FLUID_FAILED == fluid_synth_sfload( _synth, cr, 1 ) )
+					if ( FLUID_FAILED == fluid_synth_sfload( _synth, pfc::stringcvt::string_wide_from_utf8( temp.c_str() ), 1 ) )
 					{
 						fclose( fl );
 						shutdown();
@@ -239,7 +246,7 @@ bool SFPlayer::startup()
 
 	if ( sFileSoundFontName.length() )
 	{
-		if ( FLUID_FAILED == fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sFileSoundFontName ), 1) )
+		if ( FLUID_FAILED == fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sFileSoundFontName.c_str() ), 1) )
 		{
 			shutdown();
 			_last_error = "Failed to load SoundFont bank: ";
@@ -255,7 +262,7 @@ bool SFPlayer::startup()
 
 void SFPlayer::reset_drums()
 {
-	static const BYTE part_to_ch[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
+	static const uint8_t part_to_ch[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
 
 	memset( drum_channels, 0, sizeof( drum_channels ) );
 	drum_channels [9] = 1;
@@ -279,6 +286,6 @@ void SFPlayer::reset_drums()
 
 const char * SFPlayer::GetLastError() const
 {
-	if ( _last_error.length() ) return _last_error;
+	if ( _last_error.length() ) return _last_error.c_str();
 	return NULL;
 }

@@ -5,6 +5,11 @@
 
 #include <mt32emu.h>
 
+namespace foobar2000_io
+{
+	class abort_callback;
+};
+
 class MT32Player : public MIDIPlayer
 {
 public:
@@ -19,8 +24,8 @@ public:
 	void setAbortCallback( abort_callback * in );
 
 protected:
-	virtual void send_event(DWORD b);
-	virtual void render(audio_sample * out, unsigned count);
+	virtual void send_event(uint32_t b);
+	virtual void render(float * out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();

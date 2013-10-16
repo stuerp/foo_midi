@@ -23,18 +23,18 @@ public:
 	const char * GetLastError() const;
 
 private:
-	virtual void send_event(DWORD b);
-	virtual void render(audio_sample * out, unsigned count);
+	virtual void send_event(uint32_t b);
+	virtual void render(float * out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();
 
-	pfc::string8       _last_error;
+	std::string       _last_error;
 
 	fluid_settings_t * _settings;
 	fluid_synth_t    * _synth;
-	pfc::string8       sSoundFontName;
-	pfc::string8       sFileSoundFontName;
+	std::string        sSoundFontName;
+	std::string        sFileSoundFontName;
 
 	unsigned           uInterpolationMethod;
 
@@ -48,8 +48,8 @@ private:
 	                   synth_mode;
 
 	void reset_drums();
-	BYTE               drum_channels[32];
-	BYTE               gs_part_to_ch[16];
+	uint8_t            drum_channels[32];
+	uint8_t            gs_part_to_ch[16];
 	unsigned short     channel_banks[32];
 };
 

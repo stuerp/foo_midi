@@ -18,8 +18,8 @@ public:
 	virtual ~EMIDIPlayer();
 
 private:
-	virtual void send_event( DWORD );
-	virtual void render(audio_sample *, unsigned);
+	virtual void send_event( uint32_t );
+	virtual void render(float *, unsigned long);
 
 	virtual void shutdown();
 	virtual bool startup();
