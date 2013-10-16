@@ -5,8 +5,12 @@
 #include <string>
 
 #include <map>
-#include <thread>
 #include <time.h>
+
+#undef USE_STD_THREAD
+#ifdef USE_STD_THREAD
+#include <thread>
+#endif
 
 #define SF2PACK
 
@@ -43,20 +47,50 @@ static std::map<std::string, Cached_SoundFont> Cache_List;
 
 static bool Cache_Running = false;
 
-static std::thread * Cache_Thread = NULL;
-
 static void cache_run();
+
+#ifdef USE_STD_THREAD
+static std::thread * Cache_Thread = NULL;
+#else
+class Cache_Thread : public pfc::thread
+{
+public:
+	virtual void threadProc()
+	{
+		cache_run();
+	}
+
+	~Cache_Thread()
+	{
+		Cache_Running = false;
+		waitTillDone();
+	}
+};
+
+static Cache_Thread * Cache_Thread_Instance = NULL;
+#endif
 
 static void cache_init()
 {
+#ifdef USE_STD_THREAD
     Cache_Thread = new std::thread( cache_run );
+#else
+	Cache_Thread_Instance = new Cache_Thread;
+	Cache_Thread_Instance->start();
+#endif
 }
 
 static void cache_deinit()
 {
+#ifdef USE_STD_THREAD
     Cache_Running = false;
     Cache_Thread->join();
     delete Cache_Thread;
+	Cache_Thread = NULL;
+#else
+	delete Cache_Thread_Instance;
+	Cache_Thread_Instance = NULL;
+#endif
     
     for ( auto it = Cache_List.begin(); it != Cache_List.end(); ++it )
     {

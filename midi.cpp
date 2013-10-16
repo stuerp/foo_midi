@@ -7,10 +7,14 @@
 /*
 	change log
 
+2013-10-16 03:12 UTC - kode54
+- Disabled use of std::thread in BASSMIDI Player to spare wine users the fallout of
+  MSVC 2012+ std::thread not working there yet
+- Version is now 1.214
+
 2013-10-16 03:01 UTC - kode54
 - Major overhaul to use more STL and C++11 features in the MIDI players, to hopefully
   ease synchronizing the code between this component and other Unixish platforms
-- Version is now 1.214
 
 2013-09-02 08:45 UTC - kode54
 - Added back error checking that was missing after switching to the alternative
