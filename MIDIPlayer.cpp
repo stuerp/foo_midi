@@ -54,7 +54,7 @@ bool MIDIPlayer::Load(const midi_container & midi_file, unsigned subsong, unsign
 
 		uLoopMode = loop_mode;
         
-        uTimeEnd = midi_file.get_timestamp_end( subsong ) + 1000;
+        uTimeEnd = midi_file.get_timestamp_end( subsong, true ) + 1000;
 
 		if (uLoopMode & loop_mode_enable)
 		{

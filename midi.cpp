@@ -1,4 +1,4 @@
-#define MYVERSION "1.215"
+#define MYVERSION "1.216"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-10-16 16:54 UTC - kode54
+- Fixed MIDIPlayer length enforcement for non-looping files
+- Version is now 1.216
 
 2013-10-16 10:37 UTC - kode54
 - Fixed SoundFont handle cache
