@@ -120,7 +120,10 @@ static HSOUNDFONT cache_open( const char * path )
         }
     }
     else
+	{
         font = entry.handle;
+		++entry.ref_count;
+	}
     
     return font;
 }
@@ -170,16 +173,18 @@ static void cache_run()
 		{
 			insync( Cache_Lock );
 
-			for ( auto it = Cache_List.begin(); it != Cache_List.end(); ++it )
+			for ( auto it = Cache_List.begin(); it != Cache_List.end(); )
 			{
 				if ( it->second.ref_count == 0 )
 				{
 					if ( difftime( it->second.time_released, now ) >= 10.0 )
 					{
 						BASS_MIDI_FontFree( it->second.handle );
-						Cache_List.erase( it );
+						it = Cache_List.erase( it );
+						continue;
 					}
 				}
+				++it;
 			}
 		}
         

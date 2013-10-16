@@ -1,4 +1,4 @@
-#define MYVERSION "1.214"
+#define MYVERSION "1.215"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-10-16 10:37 UTC - kode54
+- Fixed SoundFont handle cache
+- Version is now 1.215
 
 2013-10-16 03:12 UTC - kode54
 - Disabled use of std::thread in BASSMIDI Player to spare wine users the fallout of
