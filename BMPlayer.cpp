@@ -618,6 +618,7 @@ bool BMPlayer::startup()
 							presets.clear();
 							BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
 							presets.push_back( fex );
+							memset( bank_lsb_override, 0, sizeof( bank_lsb_override ) );
 						}
 					}
 					else
