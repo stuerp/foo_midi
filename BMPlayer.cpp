@@ -302,6 +302,8 @@ void BMPlayer::send_event(uint32_t b)
 		unsigned command = b & 0xF0;
 		unsigned event_length = ( command == 0xC0 || command == 0xD0 ) ? 2 : 3;
 		channel += 16 * port;
+        channel %= 48;
+        if ( command == 0xB0 && event[ 1 ] == 0x20 ) return;
 		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW + 1 + channel, event, event_length );
 		if ( command == 0xB0 && event[ 1 ] == 0 )
 		{
@@ -338,7 +340,7 @@ void BMPlayer::send_event(uint32_t b)
 			is_gs_reset( data, size ) ||
 			( size == _countof( sysex_xg_reset ) && !memcmp( data, sysex_xg_reset, _countof( sysex_xg_reset ) ) ) )
 		{
-			reset_drum_channels();
+			reset_parameters();
 			synth_mode = ( size == _countof( sysex_xg_reset ) ) ? mode_xg :
 			             ( size == _countof( sysex_gs_reset ) ) ? mode_gs :
 			             ( data [4] == 0x01 )                   ? mode_gm :
@@ -405,6 +407,8 @@ bool BMPlayer::startup()
 	{
 		return false;
 	}
+	memset( bank_lsb_override, 0, sizeof( bank_lsb_override ) );
+	std::vector<BASS_MIDI_FONTEX> presetList;
 	if (sSoundFontName.length())
 	{
         std::string ext;
@@ -423,6 +427,8 @@ bool BMPlayer::startup()
 				return false;
 			}
 			_soundFonts.push_back( font );
+			BASS_MIDI_FONTEX fex = {font, -1, -1, -1, 0, 0};
+			presetList.push_back( fex );
 		}
 		else if ( !stricmp_utf8( ext.c_str(), "sflist" ) )
 		{
@@ -432,18 +438,196 @@ bool BMPlayer::startup()
                 std::string path, temp;
 				pfc::stringcvt::string_utf8_from_os converter;
                 TCHAR name[32768];
+				TCHAR *nameptr;
                 size_t slash = sSoundFontName.find_last_of('\\');
                 if ( slash != std::string::npos ) path.assign( sSoundFontName.begin(), sSoundFontName.begin() + slash + 1 );
 				while ( !feof( fl ) )
 				{
+					std::vector<BASS_MIDI_FONTEX> presets;
+                    
 					if ( !_fgetts( name, 32767, fl ) ) break;
 					name[32767] = 0;
 					TCHAR * cr = _tcschr( name, _T('\n') );
 					if ( cr ) *cr = 0;
                     cr = _tcschr( name, _T('\r') );
                     if ( cr ) *cr = 0;
-					converter.convert( name );
-					if ( ( isalpha( name[0] ) && name[1] == _T(':') ) || name[0] == '\\' )
+					cr = _tcschr( name, '|' );
+					if ( cr )
+					{
+						long dbank = 0, dpreset = -1, sbank = -1, spreset = -1;
+						std::vector<long> channels;
+						bool valid = true;
+						bool pushed_back = true;
+						TCHAR *endchr;
+						nameptr = cr + 1;
+						*cr = 0;
+						cr = name;
+						while ( *cr && valid )
+						{
+							switch ( *cr++ )
+							{
+							case 'p':
+								{
+									// patch override - "p[db#,]dp#=[sb#,]sp#" ex. "p0,5=0,1"
+									// may be used once per preset group
+									pushed_back = false;
+									dbank = 0;
+									dpreset = _tcstol( cr, &endchr, 10 );
+									if ( endchr == cr )
+									{
+										valid = false;
+										break;
+									}
+									if ( *endchr == ',' )
+									{
+										dbank = dpreset;
+										cr = endchr + 1;
+										dpreset = _tcstol( cr, &endchr, 10 );
+										if ( endchr == cr )
+										{
+											valid = false;
+											break;
+										}
+									}
+									if ( *endchr != '=' )
+									{
+										valid = false;
+										break;
+									}
+									cr = endchr + 1;
+									sbank = -1;
+									spreset = _tcstol( cr, &endchr, 10 );
+									if ( endchr == cr )
+									{
+										valid = false;
+										break;
+									}
+									if ( *endchr == ',' )
+									{
+										sbank = spreset;
+										cr = endchr + 1;
+										spreset = _tcstol( cr, &endchr, 10 );
+										if ( endchr == cr )
+										{
+											cr = nameptr - 1;
+											break;
+										}
+									}
+									if ( *endchr && *endchr != ';' && *endchr != '&' )
+									{
+										cr = nameptr - 1;
+										break;
+									}
+									cr = endchr;
+								}
+								break;
+
+							case 'c':
+								{
+									// channel override - implemented using bank LSB, which is disabled from
+									// actual use. - format "c#" ex. "c16" (range is 1-48)
+									// may be used multiple times per preset group
+									pushed_back = false;
+									long channel = _tcstol(cr, &endchr, 10);
+									if ( endchr == cr )
+									{
+										valid = false;
+										break;
+									}
+									if ( channel < 1 || channel > 48 )
+									{
+										valid = false;
+										break;
+									}
+									for ( auto it = channels.begin(); it != channels.end(); ++it )
+									{
+										if ( *it == channel )
+										{
+											valid = false;
+											break;
+										}
+									}
+									if ( *endchr && *endchr != ';' )
+									{
+										valid = false;
+										break;
+									}
+									cr = endchr;
+									channels.push_back( channel );
+								}
+								break;
+
+							case '&':
+								{
+									// separates preset groups per SoundFont bank
+									if ( !pushed_back )
+									{
+										if ( channels.size() )
+										{
+											for ( auto it = channels.begin(); it != channels.end(); ++it )
+											{
+												bank_lsb_override[ *it - 1 ] = *it;
+
+												int dbanklsb = (int) *it;
+												BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, dbanklsb };
+												presets.push_back( fex );
+											}
+										}
+										else
+										{
+											BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, 0 };
+											presets.push_back( fex );
+										}
+										sbank = -1; spreset = -1; dpreset = -1; dbank = 0; channels.clear();
+										pushed_back = true;
+									}
+								}
+								break;
+
+							case ';':
+								// separates preset items
+								break;
+
+							default:
+								// invalid command character
+								valid = false;
+								break;
+							}
+						}
+						if ( !pushed_back && valid )
+						{
+							if ( channels.size() )
+							{
+								for ( auto it = channels.begin(); it != channels.end(); ++it )
+								{
+									bank_lsb_override[ *it - 1 ] = *it;
+
+									int dbanklsb = (int) *it;
+									BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, dbanklsb };
+									presets.push_back( fex );
+								}
+							}
+							else
+							{
+								BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, 0 };
+								presets.push_back( fex );
+							}
+						}
+						if ( !valid )
+						{
+							presets.clear();
+							BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
+							presets.push_back( fex );
+						}
+					}
+					else
+					{
+						BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
+						presets.push_back( fex );
+						nameptr = name;
+					}
+					converter.convert( nameptr );
+					if ( ( isalpha( nameptr[0] ) && nameptr[1] == _T(':') ) || nameptr[0] == '\\' )
 					{
 						temp = converter;
 					}
@@ -458,6 +642,11 @@ bool BMPlayer::startup()
 						fclose( fl );
 						shutdown();
 						return false;
+					}
+					for ( auto it = presets.begin(); it != presets.end(); ++it )
+					{
+						it->font = font;
+						presetList.push_back( *it );
 					}
 					_soundFonts.push_back( font );
 				}
@@ -481,25 +670,21 @@ bool BMPlayer::startup()
 		_soundFonts.push_back( font );
 	}
 
-    std::vector< BASS_MIDI_FONT > fonts;
-	for ( unsigned long i = 0, j = _soundFonts.size(); i < j; ++i )
+    std::vector< BASS_MIDI_FONTEX > fonts;
+	for ( unsigned long i = 0, j = presetList.size(); i < j; ++i )
 	{
-		BASS_MIDI_FONT sf;
-		sf.font = _soundFonts[ j - i - 1 ];
-		sf.preset = -1;
-		sf.bank = 0;
-		fonts.push_back( sf );
+		fonts.push_back( presetList[ j - i - 1 ] );
 	}
-	BASS_MIDI_StreamSetFonts( _stream, &fonts[0], (unsigned int) fonts.size() );
+	BASS_MIDI_StreamSetFonts( _stream, &fonts[0], (unsigned int) fonts.size() | BASS_MIDI_FONT_EX );
 
-	reset_drum_channels();
+	reset_parameters();
 
 	synth_mode = mode_gm;
 
 	return true;
 }
 
-void BMPlayer::reset_drum_channels()
+void BMPlayer::reset_parameters()
 {
 	static const uint8_t part_to_ch[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
 
@@ -518,4 +703,7 @@ void BMPlayer::reset_drum_channels()
 			BASS_MIDI_StreamEvent( _stream, i, MIDI_EVENT_DRUMS, drum_channels[ i ] );
 		}
 	}
+
+	for ( unsigned int i = 0; i < 48; ++i )
+		BASS_MIDI_StreamEvent( _stream, i, MIDI_EVENT_BANK_LSB, bank_lsb_override[i] );
 }

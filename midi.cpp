@@ -1,4 +1,4 @@
-#define MYVERSION "1.216"
+#define MYVERSION "1.220"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,23 @@
 
 /*
 	change log
+
+2013-10-19 02:05 UTC - kode54
+- Added support for extended SFList preset overrides. To use, precede any line of an
+  .sflist file with a vertical bar "|" and fill in a list of commands, separated into
+  groups by ampersand "&" characters. Each group may contain one preset "p" command
+  and any number of non-overlapping channel "c" commands. The preset command is of
+  the format "p[#,]#=[#,]#", where the four parameters, left to right, are destination
+  bank, destination program, source bank, source program. The either of the bank
+  numbers is optional, and the default will map all banks, or map to the default bank.
+  The channel command is of the format "c#", where the one parameter is a channel
+  number in the range of 1-48. The channel command is implemented by routing the paired
+  programs, or all programs in the bank if none is specified, to the bank LSB of the
+  channels' numbers. Thus, playback through the BASSMIDI driver ignores bank LSB
+  commands in the actual files. If anyone can suggest a better way to do this, or ask
+  Ian Luck to further extend the BASS_MIDI_FONTEX structure with a channel bitfield,
+  be my guest.
+- Version is now 1.220
 
 2013-10-16 16:54 UTC - kode54
 - Fixed MIDIPlayer length enforcement for non-looping files

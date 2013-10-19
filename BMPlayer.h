@@ -28,9 +28,9 @@ private:
 	virtual void shutdown();
 	virtual bool startup();
 
-	void reset_drum_channels();
+	void reset_parameters();
 
-    std::vector<HSOUNDFONT> _soundFonts;
+	std::vector<HSOUNDFONT> _soundFonts;
     std::string        sSoundFontName;
     std::string        sFileSoundFontName;
 
@@ -49,6 +49,7 @@ private:
 
 	uint8_t            gs_part_to_ch[3][16];
 	uint8_t            drum_channels[48];
+	uint8_t            bank_lsb_override[48];
 };
 
 #endif
