@@ -1,4 +1,4 @@
-#define MYVERSION "1.220"
+#define MYVERSION "1.221"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+
+2013-10-21 00:22 UTC - kode54
+- BASSMIDI sflist preset command system now supports more than one preset (p) command
+  per command group (once again, groups separated by &)
+- BASSMIDI sflist channel command now supports ranges of multiple channels, optionally
+  specified using a hyphen and a higher channel number: c1-4
+- Version is now 1.221
 
 2013-10-19 02:05 UTC - kode54
 - Added support for extended SFList preset overrides. To use, precede any line of an

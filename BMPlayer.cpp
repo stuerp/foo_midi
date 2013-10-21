@@ -398,6 +398,38 @@ void BMPlayer::shutdown()
 	_soundFonts.resize( 0 );
 }
 
+void BMPlayer::compound_presets( std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels )
+{
+	if ( !in.size() )
+	{
+		BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
+		in.push_back( fex );
+	}
+
+	if ( channels.size() )
+	{
+		for ( auto pit = in.begin(); pit != in.end(); ++pit )
+		{
+			for ( auto it = channels.begin(); it != channels.end(); ++it )
+			{
+				bank_lsb_override[ *it - 1 ] = *it;
+
+				int dbanklsb = (int) *it;
+				pit->dbanklsb = dbanklsb;
+
+				out.push_back( *pit );
+			}
+		}
+	}
+	else
+	{
+		for ( auto pit = in.begin(); pit != in.end(); ++pit )
+		{
+			out.push_back( *pit );
+		}
+	}
+}
+
 bool BMPlayer::startup()
 {
 	if ( _stream ) return true;
@@ -454,172 +486,154 @@ bool BMPlayer::startup()
 					cr = _tcschr( name, '|' );
 					if ( cr )
 					{
-						long dbank = 0, dpreset = -1, sbank = -1, spreset = -1;
-						std::vector<long> channels;
-						bool valid = true;
-						bool pushed_back = true;
-						TCHAR *endchr;
-						nameptr = cr + 1;
-						*cr = 0;
-						cr = name;
-						while ( *cr && valid )
-						{
-							switch ( *cr++ )
-							{
-							case 'p':
-								{
-									// patch override - "p[db#,]dp#=[sb#,]sp#" ex. "p0,5=0,1"
-									// may be used once per preset group
-									pushed_back = false;
-									dbank = 0;
-									dpreset = _tcstol( cr, &endchr, 10 );
-									if ( endchr == cr )
-									{
-										valid = false;
-										break;
-									}
-									if ( *endchr == ',' )
-									{
-										dbank = dpreset;
-										cr = endchr + 1;
-										dpreset = _tcstol( cr, &endchr, 10 );
-										if ( endchr == cr )
-										{
-											valid = false;
-											break;
-										}
-									}
-									if ( *endchr != '=' )
-									{
-										valid = false;
-										break;
-									}
-									cr = endchr + 1;
-									sbank = -1;
-									spreset = _tcstol( cr, &endchr, 10 );
-									if ( endchr == cr )
-									{
-										valid = false;
-										break;
-									}
-									if ( *endchr == ',' )
-									{
-										sbank = spreset;
-										cr = endchr + 1;
-										spreset = _tcstol( cr, &endchr, 10 );
-										if ( endchr == cr )
-										{
-											cr = nameptr - 1;
-											break;
-										}
-									}
-									if ( *endchr && *endchr != ';' && *endchr != '&' )
-									{
-										cr = nameptr - 1;
-										break;
-									}
-									cr = endchr;
-								}
-								break;
-
-							case 'c':
-								{
-									// channel override - implemented using bank LSB, which is disabled from
-									// actual use. - format "c#" ex. "c16" (range is 1-48)
-									// may be used multiple times per preset group
-									pushed_back = false;
-									long channel = _tcstol(cr, &endchr, 10);
-									if ( endchr == cr )
-									{
-										valid = false;
-										break;
-									}
-									if ( channel < 1 || channel > 48 )
-									{
-										valid = false;
-										break;
-									}
-									for ( auto it = channels.begin(); it != channels.end(); ++it )
-									{
-										if ( *it == channel )
-										{
-											valid = false;
-											break;
-										}
-									}
-									if ( *endchr && *endchr != ';' )
-									{
-										valid = false;
-										break;
-									}
-									cr = endchr;
-									channels.push_back( channel );
-								}
-								break;
-
-							case '&':
-								{
-									// separates preset groups per SoundFont bank
-									if ( !pushed_back )
-									{
-										if ( channels.size() )
-										{
-											for ( auto it = channels.begin(); it != channels.end(); ++it )
-											{
-												bank_lsb_override[ *it - 1 ] = *it;
-
-												int dbanklsb = (int) *it;
-												BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, dbanklsb };
-												presets.push_back( fex );
-											}
-										}
-										else
-										{
-											BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, 0 };
-											presets.push_back( fex );
-										}
-										sbank = -1; spreset = -1; dpreset = -1; dbank = 0; channels.clear();
-										pushed_back = true;
-									}
-								}
-								break;
-
-							case ';':
-								// separates preset items
-								break;
-
-							default:
-								// invalid command character
-								valid = false;
-								break;
-							}
-						}
-						if ( !pushed_back && valid )
-						{
-							if ( channels.size() )
-							{
-								for ( auto it = channels.begin(); it != channels.end(); ++it )
-								{
-									bank_lsb_override[ *it - 1 ] = *it;
-
-									int dbanklsb = (int) *it;
-									BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, dbanklsb };
-									presets.push_back( fex );
-								}
-							}
-							else
-							{
-								BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, 0 };
-								presets.push_back( fex );
-							}
-						}
-						if ( !valid )
-						{
-							presets.clear();
+                        std::vector<BASS_MIDI_FONTEX> nested_presets;
+                        std::vector<long> channels;
+                        bool valid = true;
+                        bool pushed_back = true;
+                        TCHAR *endchr;
+                        nameptr = cr + 1;
+                        *cr = 0;
+                        cr = name;
+                        while ( *cr && valid )
+                        {
+                            switch ( *cr++ )
+                            {
+                                case 'p':
+                                {
+                                    // patch override - "p[db#,]dp#=[sb#,]sp#" ex. "p0,5=0,1"
+                                    // may be used once per preset group
+                                    pushed_back = false;
+                                    long dbank = 0;
+                                    long dpreset = _tcstol( cr, &endchr, 10 );
+                                    if ( endchr == cr )
+                                    {
+                                        valid = false;
+                                        break;
+                                    }
+                                    if ( *endchr == ',' )
+                                    {
+                                        dbank = dpreset;
+                                        cr = endchr + 1;
+                                        dpreset = _tcstol( cr, &endchr, 10 );
+                                        if ( endchr == cr )
+                                        {
+                                            valid = false;
+                                            break;
+                                        }
+                                    }
+                                    if ( *endchr != '=' )
+                                    {
+                                        valid = false;
+                                        break;
+                                    }
+                                    cr = endchr + 1;
+                                    long sbank = -1;
+                                    long spreset = _tcstol( cr, &endchr, 10 );
+                                    if ( endchr == cr )
+                                    {
+                                        valid = false;
+                                        break;
+                                    }
+                                    if ( *endchr == ',' )
+                                    {
+                                        sbank = spreset;
+                                        cr = endchr + 1;
+                                        spreset = _tcstol( cr, &endchr, 10 );
+                                        if ( endchr == cr )
+                                        {
+                                            valid = false;
+                                            break;
+                                        }
+                                    }
+                                    if ( *endchr && *endchr != ';' && *endchr != '&' )
+                                    {
+                                        valid = false;
+                                        break;
+                                    }
+                                    cr = endchr;
+									BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, 0 };
+                                    nested_presets.push_back( fex );
+                                }
+                                break;
+                                    
+                                case 'c':
+                                {
+                                    // channel override - implemented using bank LSB, which is disabled from
+                                    // actual use. - format "c#[-#]" ex. "c16" (range is 1-48)
+                                    // may be used multiple times per preset group
+                                    pushed_back = false;
+                                    long channel_start = _tcstol(cr, &endchr, 10);
+                                    long channel_end;
+                                    if ( endchr == cr )
+                                    {
+                                        valid = false;
+                                        break;
+                                    }
+                                    if ( channel_start < 1 || channel_start > 48 )
+                                    {
+                                        valid = false;
+                                        break;
+                                    }
+                                    channel_end = channel_start;
+                                    if ( *endchr == '-' )
+                                    {
+                                        channel_end = _tcstol(cr, &endchr, 10);
+                                        if ( channel_end <= channel_start || channel_end > 48 )
+                                        {
+                                            valid = false;
+                                            break;
+                                        }
+                                    }
+                                    for ( auto it = channels.begin(); it != channels.end(); ++it )
+                                    {
+                                        if ( *it >= channel_start || *it <= channel_end )
+                                        {
+                                            valid = false;
+                                            break;
+                                        }
+                                    }
+                                    if ( *endchr && *endchr != ';' )
+                                    {
+                                        valid = false;
+                                        break;
+                                    }
+                                    cr = endchr;
+                                    for ( long channel = channel_start; channel <= channel_end; ++channel )
+                                        channels.push_back( channel );
+                                }
+                                break;
+                                    
+                                case '&':
+                                {
+                                    // separates preset groups per SoundFont bank
+                                    if ( !pushed_back )
+                                    {
+                                        compound_presets( presets, nested_presets, channels );
+                                        nested_presets.clear(); channels.clear();
+                                        pushed_back = true;
+                                    }
+                                }
+                                break;
+                                    
+                                case ';':
+                                    // separates preset items
+                                    break;
+                                    
+                                default:
+                                    // invalid command character
+                                    valid = false;
+                                    break;
+                            }
+                        }
+                        if ( !pushed_back && valid )
+                            compound_presets( presets, nested_presets, channels );
+                        if ( !valid )
+                        {
+                            presets.clear();
 							BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
-							presets.push_back( fex );
-							memset( bank_lsb_override, 0, sizeof( bank_lsb_override ) );
-						}
+                            presets.push_back( fex );
+                            memset( bank_lsb_override, 0, sizeof(bank_lsb_override) );
+                        }
 					}
 					else
 					{
