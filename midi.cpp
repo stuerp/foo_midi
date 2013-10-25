@@ -1,4 +1,4 @@
-#define MYVERSION "1.221"
+#define MYVERSION "1.223"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,14 @@
 
 /*
 	change log
+
+2013-10-25 22:09 UTC - kode54
+- Foolishly thought I could code sign BASS and company. Reverted to original versions.
+- Version is now 1.223
+
+2013-10-25 20:48 UTC - kode54
+- Added safety checks to the MIDI processing loaders
+- Version is now 1.222
 
 2013-10-21 00:22 UTC - kode54
 - BASSMIDI sflist preset command system now supports more than one preset (p) command
