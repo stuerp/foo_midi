@@ -1,4 +1,4 @@
-#define MYVERSION "1.223"
+#define MYVERSION "1.224"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2013-10-27 13:23 UTC - kode54
+- Added an extra range check to the Standard MIDI track parser
+- Fixed System Exclusive message parsing in the Standard MIDI track parser
+- Version is now 1.224
 
 2013-10-25 22:09 UTC - kode54
 - Foolishly thought I could code sign BASS and company. Reverted to original versions.
