@@ -98,6 +98,75 @@ static void cache_deinit()
     }
 }
 
+static void CALLBACK fb_close(void * user)
+{
+        delete (file::ptr*) user;
+}
+
+static QWORD CALLBACK fb_length(void * user)
+{
+        try
+        {
+                return (*((file::ptr*)user))->get_size_ex( abort_callback_dummy() );
+        }
+        catch (...)
+        {
+                return 0;
+        }
+}
+
+static DWORD CALLBACK fb_read(void * buffer, DWORD length, void * user)
+{
+        try
+        {
+                return (*((file::ptr*)user))->read( buffer, length, abort_callback_dummy() );
+        }
+        catch (...)
+        {
+                return 0;
+        }
+}
+
+static BOOL CALLBACK fb_seek(QWORD offset, void * user)
+{
+        try
+        {
+                (*((file::ptr*)user))->seek( offset, abort_callback_dummy() );
+                return TRUE;
+        }
+        catch (...)
+        {
+                return FALSE;
+        }
+}
+
+static BASS_FILEPROCS fb_fileprocs = { fb_close, fb_length, fb_read, fb_seek };
+
+static void * fb_open( const char * path )
+{
+        file::ptr * f = NULL;
+        try
+        {
+                f = new file::ptr;
+                pfc::string8 m_path, m_canonical_path;
+                if ( !strstr( path, "://" ) )
+                {
+                        m_path = "file://";
+                        m_path += path;
+                        path = m_path.get_ptr();
+                }
+                filesystem::g_get_canonical_path( path, m_canonical_path );
+                filesystem::g_open( *f, m_canonical_path, filesystem::open_mode_read, abort_callback_dummy() );
+                return (void *) f;
+        }
+        catch (std::exception & e)
+        {
+                uOutputDebugString( e.what() );
+                delete f;
+                return NULL;
+        }
+}
+
 static HSOUNDFONT cache_open( const char * path )
 {
     HSOUNDFONT font = NULL;
@@ -108,7 +177,10 @@ static HSOUNDFONT cache_open( const char * path )
     
     if ( !entry.handle )
     {
-        font = BASS_MIDI_FontInit( pfc::stringcvt::string_os_from_utf8( path ), BASS_UNICODE );
+		void * fb_file = fb_open( path );
+		if ( !fb_file ) return NULL;
+
+		font = BASS_MIDI_FontInitUser( &fb_fileprocs, fb_file, 0 );
         if ( font )
         {
             entry.handle = font;
@@ -116,6 +188,7 @@ static HSOUNDFONT cache_open( const char * path )
         }
         else
         {
+			fb_close( fb_file );
             Cache_List.erase( path );
         }
     }

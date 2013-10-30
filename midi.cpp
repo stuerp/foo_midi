@@ -1,4 +1,4 @@
-#define MYVERSION "1.224"
+#define MYVERSION "1.225"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-10-30 19:17 UTC - kode54
+- Re-added custom file accessor to SoundFont loading
+- Version is now 1.225
 
 2013-10-27 13:23 UTC - kode54
 - Added an extra range check to the Standard MIDI track parser
