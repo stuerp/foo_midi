@@ -1,4 +1,4 @@
-#define MYVERSION "1.226"
+#define MYVERSION "1.227"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2013-10-31 23:42 UTC - kode54
+- Odd Windows versions don't like forward slashes in local paths, now directory-specific
+  SoundFonts will preserve the last path separator
+- Version is now 1.227
 
 2013-10-31 00:12 UTC - kode54
 - Rewrote file- and directory-specific SoundFont handling
@@ -2016,11 +2021,15 @@ public:
 				}
 				if ( !exists )
 				{
-					temp.truncate( temp.scan_filename() - 1 );
+					// Bah. The things needed to keep the last path separator.
+					temp.truncate( temp.scan_filename() );
+					temp_out = "";
+					temp_out.add_byte( temp[ temp.length() - 1 ] );
+					temp.truncate( temp.length() - 1 );
 					size_t pos = temp.scan_filename();
 					if ( pos != pfc::infinite_size )
 					{
-						temp += "/";
+						temp += temp_out;
 						temp.add_string( &temp[pos], temp.length() - pos - 1 );
 						exists = test_soundfont_extension( temp, temp_out, p_abort );
 					}
