@@ -188,7 +188,6 @@ static HSOUNDFONT cache_open( const char * path )
         }
         else
         {
-			fb_close( fb_file );
             Cache_List.erase( path );
         }
     }
@@ -503,6 +502,238 @@ void BMPlayer::compound_presets( std::vector<BASS_MIDI_FONTEX> & out, std::vecto
 	}
 }
 
+bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::string in_path)
+{
+	std::string ext;
+	size_t dot = in_path.find_last_of('.');
+	if (dot != std::string::npos) ext.assign( in_path.begin() +  dot + 1, in_path.end() );
+	if ( !stricmp_utf8( ext.c_str(), "sf2" )
+#ifdef SF2PACK
+		|| !stricmp_utf8( ext.c_str(), "sf2pack" )
+#endif
+		)
+	{
+		HSOUNDFONT font = cache_open( in_path.c_str() );
+		if ( !font )
+		{
+			shutdown();
+			return false;
+		}
+		_soundFonts.push_back( font );
+		BASS_MIDI_FONTEX fex = {font, -1, -1, -1, 0, 0};
+		presetList.push_back( fex );
+		return true;
+	}
+	else if ( !stricmp_utf8( ext.c_str(), "sflist" ) )
+	{
+		FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( in_path.c_str() ), _T("r, ccs=UTF-8") );
+		if ( fl )
+		{
+			std::string path, temp;
+			pfc::stringcvt::string_utf8_from_os converter;
+			TCHAR name[32768];
+			TCHAR *nameptr;
+			size_t slash = in_path.find_last_of('\\');
+			if ( slash != std::string::npos ) path.assign( in_path.begin(), in_path.begin() + slash + 1 );
+			while ( !feof( fl ) )
+			{
+				std::vector<BASS_MIDI_FONTEX> presets;
+
+				if ( !_fgetts( name, 32767, fl ) ) break;
+				name[32767] = 0;
+				TCHAR * cr = _tcschr( name, _T('\n') );
+				if ( cr ) *cr = 0;
+				cr = _tcschr( name, _T('\r') );
+				if ( cr ) *cr = 0;
+				cr = _tcschr( name, '|' );
+				if ( cr )
+				{
+					std::vector<BASS_MIDI_FONTEX> nested_presets;
+					std::vector<long> channels;
+					bool valid = true;
+					bool pushed_back = true;
+					TCHAR *endchr;
+					nameptr = cr + 1;
+					*cr = 0;
+					cr = name;
+					while ( *cr && valid )
+					{
+						switch ( *cr++ )
+						{
+						case 'p':
+							{
+								// patch override - "p[db#,]dp#=[sb#,]sp#" ex. "p0,5=0,1"
+								// may be used once per preset group
+								pushed_back = false;
+								long dbank = 0;
+								long dpreset = _tcstol( cr, &endchr, 10 );
+								if ( endchr == cr )
+								{
+									valid = false;
+									break;
+								}
+								if ( *endchr == ',' )
+								{
+									dbank = dpreset;
+									cr = endchr + 1;
+									dpreset = _tcstol( cr, &endchr, 10 );
+									if ( endchr == cr )
+									{
+										valid = false;
+										break;
+									}
+								}
+								if ( *endchr != '=' )
+								{
+									valid = false;
+									break;
+								}
+								cr = endchr + 1;
+								long sbank = -1;
+								long spreset = _tcstol( cr, &endchr, 10 );
+								if ( endchr == cr )
+								{
+									valid = false;
+									break;
+								}
+								if ( *endchr == ',' )
+								{
+									sbank = spreset;
+									cr = endchr + 1;
+									spreset = _tcstol( cr, &endchr, 10 );
+									if ( endchr == cr )
+									{
+										valid = false;
+										break;
+									}
+								}
+								if ( *endchr && *endchr != ';' && *endchr != '&' )
+								{
+									valid = false;
+									break;
+								}
+								cr = endchr;
+								BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, 0 };
+								nested_presets.push_back( fex );
+							}
+							break;
+
+						case 'c':
+							{
+								// channel override - implemented using bank LSB, which is disabled from
+								// actual use. - format "c#[-#]" ex. "c16" (range is 1-48)
+								// may be used multiple times per preset group
+								pushed_back = false;
+								long channel_start = _tcstol(cr, &endchr, 10);
+								long channel_end;
+								if ( endchr == cr )
+								{
+									valid = false;
+									break;
+								}
+								if ( channel_start < 1 || channel_start > 48 )
+								{
+									valid = false;
+									break;
+								}
+								channel_end = channel_start;
+								if ( *endchr == '-' )
+								{
+									channel_end = _tcstol(cr, &endchr, 10);
+									if ( channel_end <= channel_start || channel_end > 48 )
+									{
+										valid = false;
+										break;
+									}
+								}
+								for ( auto it = channels.begin(); it != channels.end(); ++it )
+								{
+									if ( *it >= channel_start || *it <= channel_end )
+									{
+										valid = false;
+										break;
+									}
+								}
+								if ( *endchr && *endchr != ';' )
+								{
+									valid = false;
+									break;
+								}
+								cr = endchr;
+								for ( long channel = channel_start; channel <= channel_end; ++channel )
+									channels.push_back( channel );
+							}
+							break;
+
+						case '&':
+							{
+								// separates preset groups per SoundFont bank
+								if ( !pushed_back )
+								{
+									compound_presets( presets, nested_presets, channels );
+									nested_presets.clear(); channels.clear();
+									pushed_back = true;
+								}
+							}
+							break;
+
+						case ';':
+							// separates preset items
+							break;
+
+						default:
+							// invalid command character
+							valid = false;
+							break;
+						}
+					}
+					if ( !pushed_back && valid )
+						compound_presets( presets, nested_presets, channels );
+					if ( !valid )
+					{
+						presets.clear();
+						BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
+						presets.push_back( fex );
+						memset( bank_lsb_override, 0, sizeof(bank_lsb_override) );
+					}
+				}
+				else
+				{
+					BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
+					presets.push_back( fex );
+					nameptr = name;
+				}
+				converter.convert( nameptr );
+				if ( ( isalpha( nameptr[0] ) && nameptr[1] == _T(':') ) || nameptr[0] == '\\' )
+				{
+					temp = converter;
+				}
+				else
+				{
+					temp = path;
+					temp += converter;
+				}
+				HSOUNDFONT font = cache_open( temp.c_str() );
+				if ( !font )
+				{
+					fclose( fl );
+					shutdown();
+					return false;
+				}
+				for ( auto it = presets.begin(); it != presets.end(); ++it )
+				{
+					it->font = font;
+					presetList.push_back( *it );
+				}
+				_soundFonts.push_back( font );
+			}
+			fclose( fl );
+			return true;
+		}
+	}
+	return false;
+}
+
 bool BMPlayer::startup()
 {
 	if ( _stream ) return true;
@@ -516,246 +747,14 @@ bool BMPlayer::startup()
 	std::vector<BASS_MIDI_FONTEX> presetList;
 	if (sSoundFontName.length())
 	{
-        std::string ext;
-        size_t dot = sSoundFontName.find_last_of('.');
-        if (dot != std::string::npos) ext.assign( sSoundFontName.begin() +  dot + 1, sSoundFontName.end() );
-		if ( !stricmp_utf8( ext.c_str(), "sf2" )
-#ifdef SF2PACK
-			|| !stricmp_utf8( ext.c_str(), "sf2pack" )
-#endif
-			)
-		{
-			HSOUNDFONT font = cache_open( sSoundFontName.c_str() );
-			if ( !font )
-			{
-				shutdown();
-				return false;
-			}
-			_soundFonts.push_back( font );
-			BASS_MIDI_FONTEX fex = {font, -1, -1, -1, 0, 0};
-			presetList.push_back( fex );
-		}
-		else if ( !stricmp_utf8( ext.c_str(), "sflist" ) )
-		{
-			FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( sSoundFontName.c_str() ), _T("r, ccs=UTF-8") );
-			if ( fl )
-			{
-                std::string path, temp;
-				pfc::stringcvt::string_utf8_from_os converter;
-                TCHAR name[32768];
-				TCHAR *nameptr;
-                size_t slash = sSoundFontName.find_last_of('\\');
-                if ( slash != std::string::npos ) path.assign( sSoundFontName.begin(), sSoundFontName.begin() + slash + 1 );
-				while ( !feof( fl ) )
-				{
-					std::vector<BASS_MIDI_FONTEX> presets;
-                    
-					if ( !_fgetts( name, 32767, fl ) ) break;
-					name[32767] = 0;
-					TCHAR * cr = _tcschr( name, _T('\n') );
-					if ( cr ) *cr = 0;
-                    cr = _tcschr( name, _T('\r') );
-                    if ( cr ) *cr = 0;
-					cr = _tcschr( name, '|' );
-					if ( cr )
-					{
-                        std::vector<BASS_MIDI_FONTEX> nested_presets;
-                        std::vector<long> channels;
-                        bool valid = true;
-                        bool pushed_back = true;
-                        TCHAR *endchr;
-                        nameptr = cr + 1;
-                        *cr = 0;
-                        cr = name;
-                        while ( *cr && valid )
-                        {
-                            switch ( *cr++ )
-                            {
-                                case 'p':
-                                {
-                                    // patch override - "p[db#,]dp#=[sb#,]sp#" ex. "p0,5=0,1"
-                                    // may be used once per preset group
-                                    pushed_back = false;
-                                    long dbank = 0;
-                                    long dpreset = _tcstol( cr, &endchr, 10 );
-                                    if ( endchr == cr )
-                                    {
-                                        valid = false;
-                                        break;
-                                    }
-                                    if ( *endchr == ',' )
-                                    {
-                                        dbank = dpreset;
-                                        cr = endchr + 1;
-                                        dpreset = _tcstol( cr, &endchr, 10 );
-                                        if ( endchr == cr )
-                                        {
-                                            valid = false;
-                                            break;
-                                        }
-                                    }
-                                    if ( *endchr != '=' )
-                                    {
-                                        valid = false;
-                                        break;
-                                    }
-                                    cr = endchr + 1;
-                                    long sbank = -1;
-                                    long spreset = _tcstol( cr, &endchr, 10 );
-                                    if ( endchr == cr )
-                                    {
-                                        valid = false;
-                                        break;
-                                    }
-                                    if ( *endchr == ',' )
-                                    {
-                                        sbank = spreset;
-                                        cr = endchr + 1;
-                                        spreset = _tcstol( cr, &endchr, 10 );
-                                        if ( endchr == cr )
-                                        {
-                                            valid = false;
-                                            break;
-                                        }
-                                    }
-                                    if ( *endchr && *endchr != ';' && *endchr != '&' )
-                                    {
-                                        valid = false;
-                                        break;
-                                    }
-                                    cr = endchr;
-									BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, 0 };
-                                    nested_presets.push_back( fex );
-                                }
-                                break;
-                                    
-                                case 'c':
-                                {
-                                    // channel override - implemented using bank LSB, which is disabled from
-                                    // actual use. - format "c#[-#]" ex. "c16" (range is 1-48)
-                                    // may be used multiple times per preset group
-                                    pushed_back = false;
-                                    long channel_start = _tcstol(cr, &endchr, 10);
-                                    long channel_end;
-                                    if ( endchr == cr )
-                                    {
-                                        valid = false;
-                                        break;
-                                    }
-                                    if ( channel_start < 1 || channel_start > 48 )
-                                    {
-                                        valid = false;
-                                        break;
-                                    }
-                                    channel_end = channel_start;
-                                    if ( *endchr == '-' )
-                                    {
-                                        channel_end = _tcstol(cr, &endchr, 10);
-                                        if ( channel_end <= channel_start || channel_end > 48 )
-                                        {
-                                            valid = false;
-                                            break;
-                                        }
-                                    }
-                                    for ( auto it = channels.begin(); it != channels.end(); ++it )
-                                    {
-                                        if ( *it >= channel_start || *it <= channel_end )
-                                        {
-                                            valid = false;
-                                            break;
-                                        }
-                                    }
-                                    if ( *endchr && *endchr != ';' )
-                                    {
-                                        valid = false;
-                                        break;
-                                    }
-                                    cr = endchr;
-                                    for ( long channel = channel_start; channel <= channel_end; ++channel )
-                                        channels.push_back( channel );
-                                }
-                                break;
-                                    
-                                case '&':
-                                {
-                                    // separates preset groups per SoundFont bank
-                                    if ( !pushed_back )
-                                    {
-                                        compound_presets( presets, nested_presets, channels );
-                                        nested_presets.clear(); channels.clear();
-                                        pushed_back = true;
-                                    }
-                                }
-                                break;
-                                    
-                                case ';':
-                                    // separates preset items
-                                    break;
-                                    
-                                default:
-                                    // invalid command character
-                                    valid = false;
-                                    break;
-                            }
-                        }
-                        if ( !pushed_back && valid )
-                            compound_presets( presets, nested_presets, channels );
-                        if ( !valid )
-                        {
-                            presets.clear();
-							BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
-                            presets.push_back( fex );
-                            memset( bank_lsb_override, 0, sizeof(bank_lsb_override) );
-                        }
-					}
-					else
-					{
-						BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
-						presets.push_back( fex );
-						nameptr = name;
-					}
-					converter.convert( nameptr );
-					if ( ( isalpha( nameptr[0] ) && nameptr[1] == _T(':') ) || nameptr[0] == '\\' )
-					{
-						temp = converter;
-					}
-					else
-					{
-                        temp = path;
-                        temp += converter;
-					}
-					HSOUNDFONT font = cache_open( temp.c_str() );
-					if ( !font )
-					{
-						fclose( fl );
-						shutdown();
-						return false;
-					}
-					for ( auto it = presets.begin(); it != presets.end(); ++it )
-					{
-						it->font = font;
-						presetList.push_back( *it );
-					}
-					_soundFonts.push_back( font );
-				}
-				fclose( fl );
-			}
-			else
-			{
-				return false;
-			}
-		}
+		if ( !load_font_item( presetList, sSoundFontName ) )
+			return false;
 	}
 
 	if ( sFileSoundFontName.length() )
 	{
-		HSOUNDFONT font = cache_open( sFileSoundFontName.c_str() );
-		if ( !font )
-		{
-			shutdown();
+		if ( !load_font_item( presetList, sFileSoundFontName ) )
 			return false;
-		}
-		_soundFonts.push_back( font );
 	}
 
     std::vector< BASS_MIDI_FONTEX > fonts;

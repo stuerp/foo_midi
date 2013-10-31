@@ -1,4 +1,4 @@
-#define MYVERSION "1.225"
+#define MYVERSION "1.226"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2013-10-31 00:12 UTC - kode54
+- Rewrote file- and directory-specific SoundFont handling
+- Fixed SoundFont player actually using file- and directory-specific banks
+- SoundFont player is now capable of loading file- and directory-specific sflist files
+- Version is now 1.226
 
 2013-10-30 19:17 UTC - kode54
 - Re-added custom file accessor to SoundFont loading
@@ -1885,6 +1891,28 @@ public:
 		return m_stats;
 	}
 
+	static bool test_soundfont_extension( const char * base_path, pfc::string_base & path, abort_callback & p_abort )
+	{
+		static const char * extensions[] = {
+			"sflist",
+#ifdef SF2PACK
+			"sf2pack",
+#endif
+			"sf2"
+		};
+		path = base_path;
+		size_t length = path.length();
+		for (int i = 0; i < _countof(extensions); ++i)
+		{
+			path.truncate( length );
+			path += ".";
+			path += extensions[ i ];
+			if ( filesystem::g_exists( path, p_abort ) )
+				return true;
+		}
+		return false;
+	}
+
 	void decode_initialize( unsigned p_subsong, unsigned p_flags, abort_callback & p_abort )
 	{
 		if ( is_syx )
@@ -1975,56 +2003,33 @@ public:
 
 		/*if ( plugin == 2 || plugin == 4 )*/
 		{
-			pfc::string8_fast temp;
+			bool exists = false;
+			pfc::string8_fast temp = m_path, temp_out;
 
-			temp = m_path;
-			temp += ".sf2";
-			if ( !filesystem::g_exists( temp, p_abort ) )
+			if ( !(exists = test_soundfont_extension( temp, temp_out, p_abort ) ) )
 			{
-#ifdef SF2PACK
-				temp += "pack";
-				if ( !filesystem::g_exists( temp, p_abort ) )
+				size_t dot = temp.find_last( '.' );
+				if ( dot > temp.scan_filename() )
 				{
-#endif
-					temp = pfc::string_replace_extension( m_path, "sf2" );
-					if ( !filesystem::g_exists( temp, p_abort ) )
-					{
-#ifdef SF2PACK
-						temp += "pack";
-						if ( !filesystem::g_exists( temp, p_abort ) )
-#endif
-						{
-							pfc::string8 temp2;
-							t_size pos1, pos2;
-							temp = m_path;
-							temp.truncate( temp.scan_filename() );
-							pos2 = temp.length() - 1;
-							pos1 = temp.find_last( '\\', pos2 - 1 );
-							if ( pos1 > 0 && pos1 < pos2 )
-							{
-								temp.add_string( &temp[ pos1 + 1 ], pos2 - pos1 - 1 );
-								temp.add_byte( '.' );
-								temp += "sf2";
-								if ( !filesystem::g_exists( temp, p_abort ) )
-								{
-#ifdef SF2PACK
-									temp += "pack";
-									if ( !filesystem::g_exists( temp, p_abort ) )
-#endif
-										temp.reset();
-								}
-							}
-							else temp.reset();
-						}
-					}
-#ifdef SF2PACK
+					temp.truncate( dot );
+					exists = test_soundfont_extension( temp, temp_out, p_abort );
 				}
-#endif
+				if ( !exists )
+				{
+					temp.truncate( temp.scan_filename() - 1 );
+					size_t pos = temp.scan_filename();
+					if ( pos != pfc::infinite_size )
+					{
+						temp += "/";
+						temp.add_string( &temp[pos], temp.length() - pos - 1 );
+						exists = test_soundfont_extension( temp, temp_out, p_abort );
+					}
+				}
 			}
 
-			if ( temp.length() )
+			if ( exists )
 			{
-				file_soundfont = temp;
+				file_soundfont = temp_out;
 				plugin = 4;
 			}
 		}

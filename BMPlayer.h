@@ -32,6 +32,8 @@ private:
 
 	void reset_parameters();
 
+	bool load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::string path);
+
 	std::vector<HSOUNDFONT> _soundFonts;
     std::string        sSoundFontName;
     std::string        sFileSoundFontName;
