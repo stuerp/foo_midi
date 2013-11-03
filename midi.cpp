@@ -1,4 +1,4 @@
-#define MYVERSION "1.227"
+#define MYVERSION "1.228"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2013-11-03 07:07 UTC - kode54
+- Fixed MIDI loop end handling
+- Version is now 1.228
 
 2013-10-31 23:42 UTC - kode54
 - Odd Windows versions don't like forward slashes in local paths, now directory-specific
