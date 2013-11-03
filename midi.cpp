@@ -7,9 +7,12 @@
 /*
 	change log
 
+2013-11-03 07:20 UTC - kode54
+- Fixed finite looping when loop commands are found
+- Version is now 1.228
+
 2013-11-03 07:07 UTC - kode54
 - Fixed MIDI loop end handling
-- Version is now 1.228
 
 2013-10-31 23:42 UTC - kode54
 - Odd Windows versions don't like forward slashes in local paths, now directory-specific
@@ -2132,11 +2135,8 @@ public:
 
 					unsigned loop_mode = 0;
 
-					if ( loop_type )
-					{
-						loop_mode = MIDIPlayer::loop_mode_enable;
-						if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
-					}
+					loop_mode = MIDIPlayer::loop_mode_enable;
+					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 					if ( vstPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 					{
@@ -2207,11 +2207,8 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( loop_type )
-				{
-					loop_mode = MIDIPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
-				}
+				loop_mode = MIDIPlayer::loop_mode_enable;
+				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( bmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -2236,11 +2233,8 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( loop_type )
-				{
-					loop_mode = MIDIPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
-				}
+				loop_mode = MIDIPlayer::loop_mode_enable;
+				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( adlPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -2266,11 +2260,8 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( loop_type )
-				{
-					loop_mode = MIDIPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
-				}
+				loop_mode = MIDIPlayer::loop_mode_enable;
+				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( fmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -2293,11 +2284,8 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( loop_type )
-				{
-					loop_mode = MIDIPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
-				}
+				loop_mode = MIDIPlayer::loop_mode_enable;
+				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( oplPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -2329,11 +2317,8 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( loop_type )
-				{
-					loop_mode = MIDIPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
-				}
+				loop_mode = MIDIPlayer::loop_mode_enable;
+				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( mt32Player->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -2389,11 +2374,8 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( loop_type )
-				{
-					loop_mode = MIDIPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
-				}
+				loop_mode = MIDIPlayer::loop_mode_enable;
+				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( emidiPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
