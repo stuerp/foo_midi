@@ -1,4 +1,4 @@
-#define MYVERSION "1.228"
+#define MYVERSION "1.229"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+
+2013-12-15 05:04 UTC - kode54
+- Removed CC 111 from EMIDI track exclusion check
+- Added RPG Maker loop support, which is CC 111 with values of 0 for start and 1 for end,
+  so long as no other values are used with that control change throughout the same file
+- Implemented an option to disable BASSMIDI reverb and chorus processing
+- Version is now 1.229
 
 2013-11-03 07:20 UTC - kode54
 - Fixed finite looping when loop commands are found
@@ -903,12 +910,15 @@
 #define EMIDI_CONTROLLER_LOOP_BEGIN			XMIDI_CONTROLLER_FOR_LOOP
 #define EMIDI_CONTROLLER_LOOP_END			XMIDI_CONTROLLER_NEXT_BREAK
 
-// {49B4E0E6-E572-4d5d-88DB-78CEA20EADC1}
+// {4D11DD87-7A27-4ECC-BCB8-F018020BA2D5}
+static const GUID guid_cfg_rpgmloopz = 
+{ 0x4d11dd87, 0x7a27, 0x4ecc, { 0xbc, 0xb8, 0xf0, 0x18, 0x2, 0xb, 0xa2, 0xd5 } };
+// {0F580D09-D57B-450C-84A2-D60E34BD64F5}
 static const GUID guid_cfg_xmiloopz = 
-{ 0x49b4e0e6, 0xe572, 0x4d5d, { 0x88, 0xdb, 0x78, 0xce, 0xa2, 0xe, 0xad, 0xc1 } };
-// {D1E8D624-C2F8-4fe1-A13E-B1F19A6F2CB6}
+{ 0xf580d09, 0xd57b, 0x450c, { 0x84, 0xa2, 0xd6, 0xe, 0x34, 0xbd, 0x64, 0xf5 } };
+// {2E0DBDC2-7436-4B70-91FC-FD98378732B2}
 static const GUID guid_cfg_ff7loopz = 
-{ 0xd1e8d624, 0xc2f8, 0x4fe1, { 0xa1, 0x3e, 0xb1, 0xf1, 0x9a, 0x6f, 0x2c, 0xb6 } };
+{ 0x2e0dbdc2, 0x7436, 0x4b70, { 0x91, 0xfc, 0xfd, 0x98, 0x37, 0x87, 0x32, 0xb2 } };
 // {C090F9C7-47F9-4f6f-847A-27CD7596C9D4}
 static const GUID guid_cfg_emidi_exclusion = 
 { 0xc090f9c7, 0x47f9, 0x4f6f, { 0x84, 0x7a, 0x27, 0xcd, 0x75, 0x96, 0xc9, 0xd4 } };
@@ -990,6 +1000,9 @@ static const GUID guid_cfg_adl_panning =
 // {07257AC7-9901-4A5F-9D8B-C5B5F1B8CF5B}
 static const GUID guid_cfg_munt_gm = 
 { 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 0xc5, 0xb5, 0xf1, 0xb8, 0xcf, 0x5b } };
+// {62BF901B-9C51-45FE-BE8A-14FB56205E5E}
+static const GUID guid_cfg_bassmidi_effects = 
+{ 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };
 
 
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>> {
@@ -1035,8 +1048,9 @@ public:
 
 enum
 {
-	default_cfg_xmiloopz = 0,
-	default_cfg_ff7loopz = 0,
+	default_cfg_rpgmloopz = 1,
+	default_cfg_xmiloopz = 1,
+	default_cfg_ff7loopz = 1,
 	default_cfg_emidi_exclusion = 1,
 	default_cfg_filter_instruments = 0,
 	default_cfg_filter_banks = 0,
@@ -1059,7 +1073,7 @@ enum
 static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 #endif
 
-cfg_int cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
+cfg_int cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz), cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
 		cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion), /*cfg_hack_xg_drums("yam", 0),*/
 		cfg_filter_instruments(guid_cfg_filter_instruments, default_cfg_filter_instruments),
 		cfg_filter_banks(guid_cfg_filter_banks, default_cfg_filter_banks),
@@ -1098,6 +1112,8 @@ advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops pres
 advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
 advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 10, 30000);
 
+advconfig_checkbox_factory cfg_bassmidi_effects("BASSMIDI - Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_midi_parent, 0, true);
+
 static const char * munt_bank_names[] =
 {
 	"Roland",
@@ -1106,7 +1122,7 @@ static const char * munt_bank_names[] =
 
 struct midi_preset
 {
-	enum { version = 1 };
+	enum { version = 2 };
 
 	// version 0
 	unsigned int plugin;
@@ -1134,6 +1150,9 @@ struct midi_preset
 	// v1 - plug-in == 3 - MUNT
 	unsigned int munt_gm_set;
 
+	// v2 - plug-in == 2/4 - SoundFont synthesizer
+	bool effects;
+
 	midi_preset()
 	{
 		plugin = cfg_plugin;
@@ -1153,6 +1172,7 @@ struct midi_preset
 		}
 		delete vstPlayer;
 		soundfont_path = cfg_soundfont_path;
+		effects = cfg_bassmidi_effects;
 #ifdef DXISUPPORT
 		dxi_plugin = cfg_dxi_plugin;
 #endif
@@ -1188,6 +1208,10 @@ struct midi_preset
 			p_out += "|";
 
 			p_out += soundfont_path;
+
+			p_out += "|";
+
+			p_out += pfc::format_int( effects );
 		}
 #ifdef DXISUPPORT
 		else if ( plugin == 5 )
@@ -1254,6 +1278,7 @@ struct midi_preset
 		pfc::string8 in_vst_path;
 		std::vector<uint8_t> in_vst_config;
 		pfc::string8 in_soundfont_path;
+		bool in_effects;
 		GUID in_dxi_plugin;
 		unsigned in_adl_bank, in_adl_chips;
 		bool in_adl_panning;
@@ -1282,6 +1307,19 @@ struct midi_preset
 			else if ( in_plugin == 2 || in_plugin == 4 )
 			{
 				in_soundfont_path.set_string( p_in, bar_pos - p_in );
+
+				p_in = bar_pos + (*bar_pos == '|');
+				bar_pos = strchr( p_in, '|' );
+				if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+				if ( bar_pos > p_in )
+				{
+					in_effects = pfc::atodec<bool>( p_in, 1 );
+				}
+				else
+				{
+					in_effects = cfg_bassmidi_effects;
+				}
 			}
 #ifdef DXISUPPORT
 			else if ( in_plugin == 5 )
@@ -1362,6 +1400,7 @@ struct midi_preset
 		vst_path = in_vst_path;
 		vst_config = in_vst_config;
 		soundfont_path = in_soundfont_path;
+		effects = in_effects;
 #ifdef DXISUPPORT
 		dxi_plugin = in_dxi_plugin;
 #endif
@@ -1625,6 +1664,7 @@ class input_midi
 	unsigned plugin;
 	unsigned resampling;
 
+	bool b_rpgmloopz;
 	bool b_xmiloopz;
 	bool b_ff7loopz;
 	unsigned loop_type;
@@ -1676,7 +1716,7 @@ class input_midi
 
 public:
 	input_midi() : srate(cfg_srate), resampling(cfg_resampling),
-		loop_type(cfg_loop_type), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
+		loop_type(cfg_loop_type), b_rpgmloopz(!!cfg_rpgmloopz), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
 		dxiProxy = NULL;
@@ -1785,7 +1825,7 @@ public:
 
 		original_track_count = midi_file.get_track_count();
 
-		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz );
+		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz, b_rpgmloopz );
 
 		file_data.resize( 0 );
 
@@ -2204,6 +2244,7 @@ public:
 				if ( file_soundfont.length() ) bmPlayer->setFileSoundFont( file_soundfont );
 				bmPlayer->setSampleRate(srate);
 				bmPlayer->setSincInterpolation(!!resampling);
+				bmPlayer->setEffects(thePreset.effects);
 
 				unsigned loop_mode = 0;
 
@@ -2706,6 +2747,7 @@ public:
 		COMMAND_HANDLER_EX(IDC_FLUID_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
 #endif
 		COMMAND_HANDLER_EX(IDC_RESAMPLING, CBN_SELCHANGE, OnSelectionChange)
+		COMMAND_HANDLER_EX(IDC_RPGMLOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_EMIDI_EX, BN_CLICKED, OnButtonClick)
@@ -3088,6 +3130,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	::SendMessage( w, CB_SETCURSEL, cfg_loop_type, 0 );
 
+	SendDlgItemMessage( IDC_RPGMLOOPZ, BM_SETCHECK, cfg_rpgmloopz );
 	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, cfg_xmiloopz );
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, cfg_ff7loopz );
 
@@ -3386,6 +3429,7 @@ void CMyPreferences::reset() {
 		if ( g_running ) GetDlgItem( IDC_SAMPLERATE ).EnableWindow( FALSE );
 	}
 	SendDlgItemMessage( IDC_LOOP, CB_SETCURSEL, default_cfg_loop_type );
+	SendDlgItemMessage( IDC_RPGMLOOPZ, BM_SETCHECK, default_cfg_rpgmloopz );
 	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz );
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz );
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion );
@@ -3482,6 +3526,7 @@ void CMyPreferences::apply() {
 	cfg_soundfont_path = m_soundfont;
 	cfg_munt_base_path = m_munt_path;
 	cfg_loop_type = SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL );
+	cfg_rpgmloopz = SendDlgItemMessage( IDC_RPGMLOOPZ, BM_GETCHECK );
 	cfg_xmiloopz = SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK );
 	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK );
 	cfg_emidi_exclusion = SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK );
@@ -3501,6 +3546,7 @@ bool CMyPreferences::HasChanged() {
 	bool changed = false;
 	if ( !changed && GetDlgItemInt( IDC_SAMPLERATE, NULL, FALSE ) != cfg_srate ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL ) != cfg_loop_type ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_RPGMLOOPZ, BM_GETCHECK ) != cfg_rpgmloopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK ) != cfg_xmiloopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK ) != cfg_ff7loopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK ) != cfg_emidi_exclusion ) changed = true;

@@ -20,6 +20,7 @@ public:
 	void setSoundFont( const char * in );
 	void setFileSoundFont( const char * in );
 	void setSincInterpolation(bool enable = true);
+	void setEffects(bool enable = true);
 
 private:
 	virtual void send_event(uint32_t b);
@@ -41,6 +42,7 @@ private:
 	HSTREAM            _stream;
 
 	bool               bSincInterpolation;
+	bool               bEffects;
 
 	enum
 	{

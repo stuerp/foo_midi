@@ -345,6 +345,7 @@ BMPlayer::BMPlayer() : MIDIPlayer()
 {
 	_stream = 0;
 	bSincInterpolation = false;
+	bEffects = true;
 
 	if ( !g_initializer.initialize() ) throw std::runtime_error( "Unable to initialize BASS" );
 }
@@ -357,6 +358,13 @@ BMPlayer::~BMPlayer()
 void BMPlayer::setSincInterpolation(bool enable)
 {
 	bSincInterpolation = enable;
+
+	shutdown();
+}
+
+void BMPlayer::setEffects(bool enable)
+{
+	bEffects = enable;
 
 	shutdown();
 }
@@ -738,7 +746,7 @@ bool BMPlayer::startup()
 {
 	if ( _stream ) return true;
 
-	_stream = BASS_MIDI_StreamCreate( 48, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ), (unsigned int) uSampleRate );
+	_stream = BASS_MIDI_StreamCreate( 48, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ) | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
 	if (!_stream)
 	{
 		return false;
