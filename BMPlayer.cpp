@@ -269,6 +269,7 @@ static class Bass_Initializer
     critical_section lock;
 
 	bool initialized;
+	bool already;
     
     std::string base_path;
 
@@ -282,7 +283,8 @@ public:
 		if ( initialized )
 		{
             cache_deinit();
-			BASS_Free();
+			if ( !already )
+				BASS_Free();
 		}
 	}
 
@@ -319,7 +321,10 @@ public:
             load_plugin( "bass_mpc.dll" );
 #endif
 			BASS_SetConfig( BASS_CONFIG_UPDATEPERIOD, 0 );
+			BASS_SetConfig( BASS_CONFIG_UPDATETHREADS, 0 );
 			initialized = !!BASS_Init( 0, 44100, 0, NULL, NULL );
+			if ( !initialized )
+				initialized = already = BASS_ErrorGetCode() == BASS_ERROR_ALREADY;
 			if ( initialized )
 			{
 				BASS_SetConfigPtr( BASS_CONFIG_MIDI_DEFFONT, NULL );

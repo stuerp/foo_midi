@@ -1,4 +1,4 @@
-#define MYVERSION "1.229"
+#define MYVERSION "1.230"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2014-07-08 08:16 UTC - kode54
+- Updated BASSMIDI, now with support for SFZ instruments
+- Fixed initialization, in case there are multiple copies of BASS resident
+- Version is now 1.230
 
 2013-12-15 05:04 UTC - kode54
 - Removed CC 111 from EMIDI track exclusion check
