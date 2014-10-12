@@ -249,7 +249,7 @@ static void cache_run()
 			{
 				if ( it->second.ref_count == 0 )
 				{
-					if ( difftime( it->second.time_released, now ) >= 10.0 )
+					if ( difftime( now, it->second.time_released ) >= 10.0 )
 					{
 						BASS_MIDI_FontFree( it->second.handle );
 						it = Cache_List.erase( it );
