@@ -1,4 +1,4 @@
-#define MYVERSION "1.230"
+#define MYVERSION "1.231"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2014-10-12 23:52 UTC - kode54
+- Fixed BASSMIDI player to correctly release unused SoundFonts after 10 seconds, which
+  it wasn't due to misuse of the standard difftime function
+- Version is now 1.231
 
 2014-07-08 08:16 UTC - kode54
 - Updated BASSMIDI, now with support for SFZ instruments
