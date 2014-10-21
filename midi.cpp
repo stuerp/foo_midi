@@ -1,4 +1,4 @@
-#define MYVERSION "1.231"
+#define MYVERSION "1.232"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2014-10-21 00:56 UTC - kode54
+- Added some extra validity checks to LDS format parsing
+- Version is now 1.232
 
 2014-10-12 23:52 UTC - kode54
 - Fixed BASSMIDI player to correctly release unused SoundFonts after 10 seconds, which
