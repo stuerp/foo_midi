@@ -1,4 +1,4 @@
-#define MYVERSION "1.232"
+#define MYVERSION "1.233"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2014-11-21 04:47 UTC - kode54
+- Fixed SysEx relative path resolving to absolute path
+- Version is now 1.233
 
 2014-10-21 00:56 UTC - kode54
 - Added some extra validity checks to LDS format parsing
@@ -1459,12 +1463,11 @@ static void relative_path_create( const char * p_file, const char * p_base_path,
 
 static void relative_path_parse( const char * p_relative, const char * p_base_path, pfc::string_base & p_out )
 {
-	try
+	if ( strstr( p_relative, "://" ) )
 	{
-		filesystem::ptr fs = filesystem::g_get_interface( p_relative );
 		p_out = p_relative;
 	}
-	catch (...)
+	else
 	{
 		pfc::string8 temp = p_base_path;
 		temp.truncate( temp.scan_filename() );
