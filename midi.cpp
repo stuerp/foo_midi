@@ -1,4 +1,4 @@
-#define MYVERSION "1.233"
+#define MYVERSION "1.234"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2014-11-30 01:56 UTC - kode54
+- Fixed handling sequencer specific commands in adlmidi, Emu de MIDI, and BASSMIDI drivers
+- Fixed midi_processing to support sequencer specific commands on import, playback, and
+  export
+- Version is now 1.234
 
 2014-11-21 04:47 UTC - kode54
 - Fixed SysEx relative path resolving to absolute path

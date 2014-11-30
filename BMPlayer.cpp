@@ -385,7 +385,7 @@ void BMPlayer::send_event(uint32_t b)
 		unsigned port = (b >> 24) & 0x7F;
 		unsigned channel = b & 0x0F;
 		unsigned command = b & 0xF0;
-		unsigned event_length = ( command == 0xC0 || command == 0xD0 ) ? 2 : 3;
+		unsigned event_length = (command >= 0xF8 && command <= 0xFF) ? 1 : (( command == 0xC0 || command == 0xD0 ) ? 2 : 3);
 		channel += 16 * port;
         channel %= 48;
         if ( command == 0xB0 && event[ 1 ] == 0x20 ) return;

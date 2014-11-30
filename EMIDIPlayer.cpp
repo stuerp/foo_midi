@@ -44,8 +44,11 @@ void EMIDIPlayer::send_event( uint32_t b )
 		unsigned command = b & 0xF0;
 
 		mi.Interpret(event[ 0 ]);
-		mi.Interpret(event[ 1 ]);
-		if ((b & 0xF0) != 0xC0 && (b & 0xF0) != 0xD0) mi.Interpret(event[ 2 ]);
+		if ( event[ 0 ] < 0xF8 )
+		{
+			mi.Interpret(event[ 1 ]);
+			if ( ( b & 0xF0 ) != 0xC0 && ( b & 0xF0 ) != 0xD0 ) mi.Interpret(event[ 2 ]);
+		}
 
 		if ( command == 0xB0 && event[ 1 ] == 0 )
 		{
