@@ -1,4 +1,4 @@
-#define MYVERSION "1.234"
+#define MYVERSION "1.235"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2014-12-24 00:56 UTC - kode54
+- Updated BASS to version 2.4.11
+- Updated BASSMIDI to version 2.4.9
+- Updated BASSFLAC to version 2.4.2
+- Version is now 1.235
 
 2014-11-30 01:56 UTC - kode54
 - Fixed handling sequencer specific commands in adlmidi, Emu de MIDI, and BASSMIDI drivers
