@@ -14,25 +14,6 @@
 
 #define SF2PACK
 
-#define _countof(arr) (sizeof(arr) / sizeof((arr)[0]))
-
-static const uint8_t sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-static const uint8_t sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-static const uint8_t sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const uint8_t sysex_xg_reset[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
-
-static bool is_gs_reset(const unsigned char * data, unsigned long size)
-{
-	if ( size != _countof( sysex_gs_reset ) ) return false;
-
-	if ( memcmp( data, sysex_gs_reset, 5 ) != 0 ) return false;
-	if ( memcmp( data + 7, sysex_gs_reset + 7, 2 ) != 0 ) return false;
-	if ( ( ( data[ 5 ] + data[ 6 ] + 1 ) & 127 ) != data[ 9 ] ) return false;
-	if ( data[ 10 ] != sysex_gs_reset[ 10 ] ) return false;
-
-	return true;
-}
-
 struct Cached_SoundFont
 {
     unsigned long ref_count;
@@ -348,7 +329,7 @@ bool g_get_soundfont_stats( uint64_t & total_sample_size, uint64_t & samples_loa
 
 BMPlayer::BMPlayer() : MIDIPlayer()
 {
-	_stream = 0;
+	memset(_stream, 0, sizeof(_stream));
 	bSincInterpolation = false;
 	bEffects = true;
 
@@ -386,31 +367,9 @@ void BMPlayer::send_event(uint32_t b)
 		unsigned channel = b & 0x0F;
 		unsigned command = b & 0xF0;
 		unsigned event_length = (command >= 0xF8 && command <= 0xFF) ? 1 : (( command == 0xC0 || command == 0xD0 ) ? 2 : 3);
-		channel += 16 * port;
-        channel %= 48;
+		if ( port > 2 ) port = 2;
 		if ( bank_lsb_overridden && command == 0xB0 && event[1] == 0x20 ) return;
-		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW + 1 + channel, event, event_length );
-		if ( command == 0xB0 && event[ 1 ] == 0 )
-		{
-			if ( synth_mode == mode_xg )
-			{
-				if ( event[ 2 ] == 127 ) drum_channels[ channel ] = 1;
-				else drum_channels[ channel ] = 0;
-			}
-			else if ( synth_mode == mode_gm2 )
-			{
-				if ( event[ 2 ] == 120 ) drum_channels[ channel ] = 1;
-				else if ( event[ 2 ] == 121 ) drum_channels[ channel ] = 0;
-			}
-		}
-		else if ( command == 0xC0 )
-		{
-			unsigned channel_masked = channel & 0x0F;
-			unsigned drum_channel = drum_channels[ channel ];
-			if ( ( channel_masked == 9 && !drum_channel ) ||
-				( channel_masked != 9 && drum_channel ) )
-				BASS_MIDI_StreamEvent( _stream, channel, MIDI_EVENT_DRUMS, drum_channel );
-		}
+		BASS_MIDI_StreamEvents( _stream[port], BASS_MIDI_EVENTS_RAW, event, event_length );
 	}
 	else
 	{
@@ -419,45 +378,35 @@ void BMPlayer::send_event(uint32_t b)
         std::size_t size, port;
 		mSysexMap.get_entry( n, data, size, port );
 		if ( port > 2 ) port = 2;
-		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW, data, (unsigned int) size );
-		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
-			( size == _countof( sysex_gm2_reset ) && !memcmp( data, sysex_gm2_reset, _countof( sysex_gm2_reset ) ) ) ||
-			is_gs_reset( data, size ) ||
-			( size == _countof( sysex_xg_reset ) && !memcmp( data, sysex_xg_reset, _countof( sysex_xg_reset ) ) ) )
+		BASS_MIDI_StreamEvents( _stream[port], BASS_MIDI_EVENTS_RAW, data, (unsigned int) size );
+		if ( port == 0 )
 		{
-			reset_parameters();
-			synth_mode = ( size == _countof( sysex_xg_reset ) ) ? mode_xg :
-			             ( size == _countof( sysex_gs_reset ) ) ? mode_gs :
-			             ( data [4] == 0x01 )                   ? mode_gm :
-			                                                      mode_gm2;
-		}
-		else if ( synth_mode == mode_gs && size == 11 &&
-			data [0] == 0xF0 && data [1] == 0x41 && data [3] == 0x42 &&
-			data [4] == 0x12 && data [5] == 0x40 && (data [6] & 0xF0) == 0x10 &&
-			data [10] == 0xF7)
-		{
-			if (data [7] == 2)
-			{
-				// GS MIDI channel to part assign
-				gs_part_to_ch [ port ][ data [6] & 15 ] = data [8];
-			}
-			else if ( data [7] == 0x15 )
-			{
-				// GS part to rhythm allocation
-				unsigned int drum_channel = gs_part_to_ch [ port ][ data [6] & 15 ];
-				if ( drum_channel < 16 )
-				{
-					drum_channel += 16 * port;
-					drum_channels [ drum_channel ] = data [8];
-				}
-			}
+			BASS_MIDI_StreamEvents( _stream[1], BASS_MIDI_EVENTS_RAW, data, (unsigned int)size );
+			BASS_MIDI_StreamEvents( _stream[2], BASS_MIDI_EVENTS_RAW, data, (unsigned int)size );
 		}
 	}
 }
 
 void BMPlayer::render(float * out, unsigned long count)
 {
-	BASS_ChannelGetData( _stream, out, BASS_DATA_FLOAT | (unsigned int) ( count * sizeof( float ) * 2 ) );
+	float buffer[1024];
+	while (count)
+	{
+		unsigned long todo = count;
+		if (todo > 512)
+			todo = 512;
+		memset(out, 0, todo * sizeof(float) * 2);
+		for (int i = 0; i < 3; ++i)
+		{
+			BASS_ChannelGetData(_stream[i], buffer, BASS_DATA_FLOAT | (unsigned int)(todo * sizeof(float) * 2));
+			for (unsigned long j = 0; j < todo * 2; ++j)
+			{
+				out[j] += buffer[j];
+			}
+		}
+		out += todo * 2;
+		count -= todo;
+	}
 }
 
 void BMPlayer::setSoundFont( const char * in )
@@ -474,8 +423,10 @@ void BMPlayer::setFileSoundFont( const char * in )
 
 void BMPlayer::shutdown()
 {
-	if ( _stream ) BASS_StreamFree( _stream );
-	_stream = NULL;
+	if ( _stream[2] ) BASS_StreamFree( _stream[2] );
+	if ( _stream[1] ) BASS_StreamFree( _stream[1] );
+	if ( _stream[0] ) BASS_StreamFree( _stream[0] );
+	memset( _stream, 0, sizeof(_stream) );
 	for ( unsigned long i = 0; i < _soundFonts.size(); ++i )
 	{
 		cache_close( _soundFonts[i] );
@@ -539,7 +490,10 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
 	}
 	else if ( !stricmp_utf8( ext.c_str(), "sflist" ) )
 	{
-		FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( in_path.c_str() ), _T("r, ccs=UTF-8") );
+		size_t fn_offset = 0;
+		if (!stricmp_utf8_partial(in_path.c_str(), "file://"))
+			fn_offset = 7;
+		FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( in_path.c_str() + fn_offset ), _T("r, ccs=UTF-8") );
 		if ( fl )
 		{
 			std::string path, temp;
@@ -749,10 +703,12 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
 
 bool BMPlayer::startup()
 {
-	if ( _stream ) return true;
+	if ( _stream[0] && _stream[1] && _stream[2] ) return true;
 
-	_stream = BASS_MIDI_StreamCreate( 48, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ) | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
-	if (!_stream)
+	_stream[0] = BASS_MIDI_StreamCreate( 16, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ) | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
+	_stream[1] = BASS_MIDI_StreamCreate( 16, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ) | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
+	_stream[2] = BASS_MIDI_StreamCreate( 16, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ) | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
+	if (!_stream[0] || !_stream[1] || !_stream[2])
 	{
 		return false;
 	}
@@ -775,40 +731,22 @@ bool BMPlayer::startup()
 	{
 		fonts.push_back( presetList[ j - i - 1 ] );
 	}
-	BASS_MIDI_StreamSetFonts( _stream, &fonts[0], (unsigned int) fonts.size() | BASS_MIDI_FONT_EX );
+	BASS_MIDI_StreamSetFonts( _stream[0], &fonts[0], (unsigned int) fonts.size() | BASS_MIDI_FONT_EX );
+	BASS_MIDI_StreamSetFonts( _stream[1], &fonts[0], (unsigned int) fonts.size() | BASS_MIDI_FONT_EX );
+	BASS_MIDI_StreamSetFonts( _stream[2], &fonts[0], (unsigned int) fonts.size() | BASS_MIDI_FONT_EX );
 
 	reset_parameters();
-
-	synth_mode = mode_gm;
 
 	return true;
 }
 
 void BMPlayer::reset_parameters()
 {
-	static const uint8_t part_to_ch[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
-
-	memset( drum_channels, 0, sizeof( drum_channels ) );
-	drum_channels[ 9 ] = 1;
-	drum_channels[ 25 ] = 1;
-	drum_channels[ 41 ] = 1;
-
-	for ( unsigned long i = 0; i < 3; i++ )
-		memcpy( gs_part_to_ch[ i ], part_to_ch, sizeof( gs_part_to_ch[ i ] ) );
-
-	if ( _stream )
-	{
-		for ( unsigned i = 0; i < 48; ++i )
-		{
-			BASS_MIDI_StreamEvent( _stream, i, MIDI_EVENT_DRUMS, drum_channels[ i ] );
-		}
-	}
-
 	bank_lsb_overridden = false;
 	for ( unsigned int i = 0; i < 48; ++i )
 	{
 		if ( bank_lsb_override[i] )
 			bank_lsb_overridden = true;
-		BASS_MIDI_StreamEvent( _stream, i, MIDI_EVENT_BANK_LSB, bank_lsb_override[i] );
+		BASS_MIDI_StreamEvent( _stream[i / 16], i % 16, MIDI_EVENT_BANK_LSB, bank_lsb_override[i] );
 	}
 }

@@ -1,4 +1,4 @@
-#define MYVERSION "1.237"
+#define MYVERSION "1.239"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,14 @@
 
 /*
 	change log
+
+2015-02-22 21:58 UTC - kode54
+- Fixed loading song specific .sflist files
+- Version is now 1.239
+
+2015-02-22 07:01 UTC - kode54
+- Split up BASSMIDI into three streams, and apply port 0 SysEx messages to all ports
+- Version is now 1.238
 
 2015-02-22 01:57 UTC - kode54
 - Fixed lockups on MIDI files with loops that start on the end of the file
