@@ -388,7 +388,7 @@ void BMPlayer::send_event(uint32_t b)
 		unsigned event_length = (command >= 0xF8 && command <= 0xFF) ? 1 : (( command == 0xC0 || command == 0xD0 ) ? 2 : 3);
 		channel += 16 * port;
         channel %= 48;
-        if ( command == 0xB0 && event[ 1 ] == 0x20 ) return;
+		if ( bank_lsb_overridden && command == 0xB0 && event[1] == 0x20 ) return;
 		BASS_MIDI_StreamEvents( _stream, BASS_MIDI_EVENTS_RAW + 1 + channel, event, event_length );
 		if ( command == 0xB0 && event[ 1 ] == 0 )
 		{
@@ -804,6 +804,11 @@ void BMPlayer::reset_parameters()
 		}
 	}
 
+	bank_lsb_overridden = false;
 	for ( unsigned int i = 0; i < 48; ++i )
+	{
+		if ( bank_lsb_override[i] )
+			bank_lsb_overridden = true;
 		BASS_MIDI_StreamEvent( _stream, i, MIDI_EVENT_BANK_LSB, bank_lsb_override[i] );
+	}
 }

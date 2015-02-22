@@ -55,6 +55,8 @@ private:
 
 	uint8_t            gs_part_to_ch[3][16];
 	uint8_t            drum_channels[48];
+
+	bool               bank_lsb_overridden;
 	uint8_t            bank_lsb_override[48];
 };
 

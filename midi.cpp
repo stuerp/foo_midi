@@ -1,4 +1,4 @@
-#define MYVERSION "1.235"
+#define MYVERSION "1.237"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -7,7 +7,11 @@
 /*
 	change log
 
-2014-12-24 00:56 UTC - kode54
+2015-02-22 01:57 UTC - kode54
+- Fixed lockups on MIDI files with loops that start on the end of the file
+- Fixed bank/drum/bank LSB handling
+- Version is now 1.237
+
 - Updated BASS to version 2.4.11
 - Updated BASSMIDI to version 2.4.9
 - Updated BASSFLAC to version 2.4.2
