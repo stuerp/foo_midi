@@ -158,10 +158,18 @@ static HSOUNDFONT cache_open( const char * path )
     
     if ( !entry.handle )
     {
-		void * fb_file = fb_open( path );
-		if ( !fb_file ) return NULL;
+		if (!stricmp_utf8_partial(path, "file://") && !stricmp_utf8(pfc::string_extension(path), "sfz"))
+		{
+			font = BASS_MIDI_FontInit(pfc::stringcvt::string_wide_from_utf8(path), 0);
+		}
+		else
+		{
+			void * fb_file = fb_open(path);
+			if (!fb_file) return NULL;
 
-		font = BASS_MIDI_FontInitUser( &fb_fileprocs, fb_file, 0 );
+			font = BASS_MIDI_FontInitUser(&fb_fileprocs, fb_file, 0);
+		}
+
         if ( font )
         {
             entry.handle = font;

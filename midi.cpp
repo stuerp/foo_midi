@@ -1,4 +1,4 @@
-#define MYVERSION "1.239"
+#define MYVERSION "1.240"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2015-03-17 05:57 UTC - kode54
+- Changed BASSMIDI SoundFont loader to not use FontInitUser for local .sfz files
+- Version is now 1.240
 
 2015-02-22 21:58 UTC - kode54
 - Fixed loading song specific .sflist files
