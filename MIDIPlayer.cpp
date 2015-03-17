@@ -300,3 +300,7 @@ void MIDIPlayer::Seek(unsigned long sample)
 	}
 }
 
+bool MIDIPlayer::GetLastError(std::string & p_out)
+{
+	return get_last_error(p_out);
+}

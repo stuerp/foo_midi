@@ -7,6 +7,7 @@
 VSTiPlayer::VSTiPlayer() : MIDIPlayer()
 {
 	bInitialized = false;
+	bTerminating = false;
 	hProcess = NULL;
 	hThread = NULL;
 	hReadEvent = NULL;
@@ -224,6 +225,10 @@ bool VSTiPlayer::process_create()
 
 void VSTiPlayer::process_terminate()
 {
+	if (bTerminating) return;
+
+	bTerminating = true;
+
 	if ( hProcess )
 	{
 		process_write_code( 0 );
@@ -239,6 +244,7 @@ void VSTiPlayer::process_terminate()
 	if ( hReadEvent ) CloseHandle( hReadEvent );
 	if ( bInitialized ) CoUninitialize();
 	bInitialized = false;
+	bTerminating = false;
 	hProcess = NULL;
 	hThread = NULL;
 	hReadEvent = NULL;
@@ -272,7 +278,7 @@ uint32_t VSTiPlayer::process_read_bytes_pass( void * out, uint32_t size )
 	DWORD bytesDone;
 	SetLastError( NO_ERROR );
 	if ( ReadFile( hChildStd_OUT_Rd, out, size, &bytesDone, &ol ) ) return bytesDone;
-	if ( GetLastError() != ERROR_IO_PENDING ) return 0;
+	if ( ::GetLastError() != ERROR_IO_PENDING ) return 0;
 
 	const HANDLE handles[1] = {hReadEvent};
 	SetLastError( NO_ERROR );

@@ -158,9 +158,10 @@ static HSOUNDFONT cache_open( const char * path )
     
     if ( !entry.handle )
     {
-		if (!stricmp_utf8_partial(path, "file://") && !stricmp_utf8(pfc::string_extension(path), "sfz"))
+		if ((!stricmp_utf8_partial(path, "file://") || !strstr(path, "://")) && !stricmp_utf8(pfc::string_extension(path), "sfz"))
 		{
-			font = BASS_MIDI_FontInit(pfc::stringcvt::string_wide_from_utf8(path), 0);
+			size_t path_offset = !stricmp_utf8_partial(path, "file://") ? 7 : 0;
+			font = BASS_MIDI_FontInit(pfc::stringcvt::string_wide_from_utf8(path + path_offset), 0);
 		}
 		else
 		{
@@ -489,6 +490,8 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
 		if ( !font )
 		{
 			shutdown();
+			sLastError = "Unable to load SoundFont: ";
+			sLastError += in_path.c_str();
 			return false;
 		}
 		_soundFonts.push_back( font );
@@ -693,6 +696,8 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
 				{
 					fclose( fl );
 					shutdown();
+					sLastError = "Unable to load SoundFont: ";
+					sLastError += temp.c_str();
 					return false;
 				}
 				for ( auto it = presets.begin(); it != presets.end(); ++it )
@@ -757,4 +762,14 @@ void BMPlayer::reset_parameters()
 			bank_lsb_overridden = true;
 		BASS_MIDI_StreamEvent( _stream[i / 16], i % 16, MIDI_EVENT_BANK_LSB, bank_lsb_override[i] );
 	}
+}
+
+bool BMPlayer::get_last_error(std::string & p_out)
+{
+	if (sLastError.length())
+	{
+		p_out = sLastError;
+		return true;
+	}
+	return false;
 }

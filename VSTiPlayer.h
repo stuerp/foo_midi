@@ -58,6 +58,7 @@ private:
 	unsigned     uPluginPlatform;
 
 	bool         bInitialized;
+	bool         bTerminating;
 	HANDLE       hProcess;
 	HANDLE       hThread;
 	HANDLE       hReadEvent;

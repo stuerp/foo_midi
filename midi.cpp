@@ -1,4 +1,4 @@
-#define MYVERSION "1.240"
+#define MYVERSION "1.241"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2015-03-17 06:17 UTC - kode54
+- Fixed SFZ loading
+- Added SoundFont load error reporting
+- Adjusted VSTi player so process termination can't get in a recursive call loop
+- Version is now 1.241
 
 2015-03-17 05:57 UTC - kode54
 - Changed BASSMIDI SoundFont loader to not use FontInitUser for local .sfz files
@@ -2296,12 +2302,18 @@ public:
 				loop_mode = MIDIPlayer::loop_mode_enable;
 				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
-				if ( bmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
+				if (bmPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
 				{
 					eof = false;
 					dont_loop = true;
 
 					return;
+				}
+				else
+				{
+					std::string last_error;
+					if (bmPlayer->GetLastError(last_error))
+						throw exception_io_data(last_error.c_str());
 				}
 			}
 			else if ( plugin == 6 )
@@ -2591,6 +2603,9 @@ public:
 
 			if ( ! done )
 			{
+				std::string last_error;
+				if (midiPlayer->GetLastError(last_error))
+					throw exception_io_data(last_error.c_str());
 				return false;
 			}
 

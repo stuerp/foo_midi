@@ -29,11 +29,15 @@ private:
 	virtual void shutdown();
 	virtual bool startup();
 
+	virtual bool get_last_error(std::string & p_out);
+
 	void compound_presets( std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels );
 
 	void reset_parameters();
 
 	bool load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::string path);
+
+	std::string        sLastError;
 
 	std::vector<HSOUNDFONT> _soundFonts;
     std::string        sSoundFontName;
