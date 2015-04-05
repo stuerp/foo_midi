@@ -1,4 +1,4 @@
-#define MYVERSION "1.241"
+#define MYVERSION "1.242"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2015-04-05 05:54 UTC - kode54
+- Updated BASSMIDI to version 2.4.9.4
+- Version is now 1.242
 
 2015-03-17 06:17 UTC - kode54
 - Fixed SFZ loading
