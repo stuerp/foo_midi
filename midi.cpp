@@ -1,4 +1,4 @@
-#define MYVERSION "1.242"
+#define MYVERSION "1.243"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2015-07-16 00:21 UTC - kode54
+- Updated BASSMIDI to version 2.4.9.12
+- Relaxed XMI IFF validation
+- Fixed RPG Maker loop handling, since it appears to only indicate loop start
+- Version is now 1.243
 
 2015-04-05 05:54 UTC - kode54
 - Updated BASSMIDI to version 2.4.9.4
