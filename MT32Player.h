@@ -23,6 +23,8 @@ public:
 	void setBasePath( const char * in );
 	void setAbortCallback( abort_callback * in );
 
+	static int getSampleRate();
+
 protected:
 	virtual void send_event(uint32_t b);
 	virtual void render(float * out, unsigned long count);

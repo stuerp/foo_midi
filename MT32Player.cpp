@@ -51,7 +51,7 @@ void MT32Player::render(float * out, unsigned long count)
 {
 #if 1
 	pfc::static_assert_t<sizeof(audio_sample) == sizeof(float)>();
-	_synth->render_float( out, count );
+	_synth->render( out, count );
 #else
 	MT32Emu::Bit16s temp[512];
 	while ( count > 0 )
@@ -104,6 +104,8 @@ void MT32Player::shutdown()
 static const char * control_rom_names[] = { "CM32L_CONTROL.ROM", "MT32_CONTROL.ROM" };
 static const char * pcm_rom_names[] = { "CM32L_PCM.ROM", "MT32_PCM.ROM" };
 
+static const MT32Emu::AnalogOutputMode useMode = MT32Emu::AnalogOutputMode::AnalogOutputMode_ACCURATE;
+
 bool MT32Player::startup()
 {
 	if (_synth) return true;
@@ -123,7 +125,7 @@ bool MT32Player::startup()
 	pcmRom = MT32Emu::ROMImage::makeROMImage( pcmRomFile );
 	if ( !pcmRom ) return false;
 	_synth = new MT32Emu::Synth;
-	if ( !_synth->open( *controlRom, *pcmRom, bGM, true ) )
+	if ( !_synth->open( *controlRom, *pcmRom, bGM ? 256U : 32U, useMode, true ) )
 	{
 		delete _synth;
 		_synth = 0;
@@ -133,11 +135,16 @@ bool MT32Player::startup()
 	return true;
 }
 
+int MT32Player::getSampleRate()
+{
+	return MT32Emu::Synth::getStereoOutputSampleRate(useMode);
+}
+
 void MT32Player::reset()
 {
 	static const uint8_t mt32_reset[10] = {0xF0, MT32Emu::SYSEX_MANUFACTURER_ROLAND, 0x10, MT32Emu::SYSEX_MDL_MT32, MT32Emu::SYSEX_CMD_DT1, 0x7F, 0, 0, 0xF7};
 
-	_synth->playSysex( mt32_reset, sizeof( mt32_reset ) );
+	_synth->playSysexNow( mt32_reset, sizeof( mt32_reset ) );
 
 	if ( bGM )
 	{
@@ -158,7 +165,7 @@ void MT32Player::reset()
 		{
 			const unsigned char * sequence_end = start;
 			while ( sequence_end < end && *sequence_end != 0xF7 ) sequence_end++;
-			_synth->playSysex( start, sequence_end - start + 1 );
+			_synth->playSysexNow( start, sequence_end - start + 1 );
 			start = sequence_end + 1;
 		}
 	}

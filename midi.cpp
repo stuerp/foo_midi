@@ -1,4 +1,4 @@
-#define MYVERSION "1.243"
+#define MYVERSION "1.244"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2015-09-14 03:00 UTC - kode54
+- Fix MUNT by updating to the latest version and correcting how its API is used
+- Updated BASSMIDI to version 2.4.9.15
+- Version is now 1.244
 
 2015-07-16 00:21 UTC - kode54
 - Updated BASSMIDI to version 2.4.9.12
@@ -2151,7 +2156,7 @@ public:
 			}
 		}
 
-		if ( plugin == 3 ) srate = MT32Emu::SAMPLE_RATE;
+		if ( plugin == 3 ) srate = MT32Player::getSampleRate();
 
 		get_length(p_subsong);
 
