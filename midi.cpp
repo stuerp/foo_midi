@@ -1,4 +1,4 @@
-#define MYVERSION "1.244"
+#define MYVERSION "1.245"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2015-09-21 01:41 UTC - kode54
+- Fix accidental dependency that broke Windows XP compatibility
+- Version is now 1.245
 
 2015-09-14 03:00 UTC - kode54
 - Fix MUNT by updating to the latest version and correcting how its API is used
@@ -933,8 +937,6 @@
 - Version is now 1.0.1
 
 */
-
-#define _WIN32_WINNT 0x0501
 
 #include <foobar2000.h>
 #include "../helpers/dropdown_helper.h"
