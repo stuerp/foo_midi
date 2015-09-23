@@ -43,7 +43,7 @@ void MT32Player::send_event(uint32_t b)
 		const uint8_t * data;
 		size_t size, port;
 		mSysexMap.get_entry( n, data, size, port );
-		_synth->playSysex( data, size );
+		_synth->playSysexNow( data, size );
 	}
 }
 

@@ -1,4 +1,4 @@
-#define MYVERSION "1.245"
+#define MYVERSION "1.246"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2015-09-23 00:56 UTC - kode54
+- Hopefully fix MT-32 SysEx message handling
+- Version is now 1.246
 
 2015-09-21 01:41 UTC - kode54
 - Fix accidental dependency that broke Windows XP compatibility
