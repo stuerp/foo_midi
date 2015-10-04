@@ -1,4 +1,4 @@
-#define MYVERSION "1.246"
+#define MYVERSION "1.247"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2015-10-04 08:26 UTC - kode54
+- Rebuilt with MSVC 2010
+- Widened the AdLib baank selector control
+- Version is now 1.247
 
 2015-09-23 00:56 UTC - kode54
 - Hopefully fix MT-32 SysEx message handling
