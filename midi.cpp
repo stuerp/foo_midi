@@ -1,4 +1,4 @@
-#define MYVERSION "1.247"
+#define MYVERSION "1.249"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2016-03-24 01:49 UTC - kode54
+- Let's forget all about the secret sauce.
+- Updated VSTHost to work with Sound Canvas VA
+- Version is now 1.249
 
 2015-10-04 08:26 UTC - kode54
 - Rebuilt with MSVC 2010

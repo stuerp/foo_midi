@@ -3,11 +3,6 @@
 
 #include "stdafx.h"
 
-enum
-{
-	BUFFER_SIZE = 4096,
-};
-
 // #define LOG_EXCHANGE
 
 bool need_idle = false;
@@ -337,6 +332,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 	std::vector<uint8_t> chunk;
 	std::vector<float> sample_buffer;
+	unsigned int samples_buffered = 0;
 
 	null_file = CreateFile( _T("NUL"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
 
@@ -439,6 +435,8 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	float     ** float_list_out;
 	float      * float_null;
 	float      * float_out;
+
+	unsigned int BUFFER_SIZE;
 
 	for (;;)
 	{
@@ -616,6 +614,8 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 				if ( !blState.size() )
 				{
+					BUFFER_SIZE = sample_rate / 1000;
+
 					pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effSetSampleRate, 0, 0, 0, float(sample_rate) );
 					pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effSetBlockSize, 0, BUFFER_SIZE, 0, 0 );
 					pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effMainsChanged, 0, 1, 0, 0 );
@@ -647,7 +647,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 					memset( float_null, 0, sizeof(float) * BUFFER_SIZE );
 
-					sample_buffer.resize( BUFFER_SIZE * max_num_outputs );
+					sample_buffer.resize( (4096 + BUFFER_SIZE) * max_num_outputs );
 				}
 
 				if ( need_idle )
@@ -658,7 +658,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 					if ( !idle_started )
 					{
-						unsigned idle_run = BUFFER_SIZE * 128;
+						unsigned idle_run = BUFFER_SIZE * 1000;
 
 						while ( idle_run )
 						{
@@ -767,14 +767,15 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 				while( count )
 				{
-					unsigned count_to_do = min( count, BUFFER_SIZE );
+					unsigned count_to_do = BUFFER_SIZE;
 					unsigned num_outputs = pEffect[ 0 ]->numOutputs;
+					unsigned sample_start = 0;
 
-					pEffect[ 0 ]->processReplacing( pEffect[ 0 ], float_list_in, float_list_out, count_to_do );
-					pEffect[ 1 ]->processReplacing( pEffect[ 1 ], float_list_in, float_list_out + num_outputs, count_to_do );
-					pEffect[ 2 ]->processReplacing( pEffect[ 2 ], float_list_in, float_list_out + num_outputs * 2, count_to_do );
+					pEffect[ 0 ]->processReplacing( pEffect[ 0 ], float_list_in, float_list_out, BUFFER_SIZE );
+					pEffect[ 1 ]->processReplacing( pEffect[ 1 ], float_list_in, float_list_out + num_outputs, BUFFER_SIZE );
+					pEffect[ 2 ]->processReplacing( pEffect[ 2 ], float_list_in, float_list_out + num_outputs * 2, BUFFER_SIZE );
 
-					float * out = sample_buffer.data();
+					float * out = sample_buffer.data() + samples_buffered * max_num_outputs;
 
 					if ( max_num_outputs == 2 )
 					{
@@ -797,9 +798,17 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 						}
 					}
 
-					put_bytes( sample_buffer.data(), sizeof(float) * count_to_do * max_num_outputs );
-
-					count -= count_to_do;
+					samples_buffered += count_to_do;
+					unsigned samples_to_push = 4096;
+					if (samples_to_push > count)
+						samples_to_push = count;
+					if (samples_buffered >= samples_to_push)
+					{
+						put_bytes( sample_buffer.data(), sizeof(float) * samples_to_push * max_num_outputs );
+						samples_buffered -= samples_to_push;
+						memmove( sample_buffer.data(), sample_buffer.data() + samples_to_push * max_num_outputs, samples_buffered * sizeof(float) * max_num_outputs );
+						count -= samples_to_push;
+					}
 				}
 
 				if ( events[ 0 ] ) free( events[ 0 ] );
