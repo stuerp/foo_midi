@@ -1,4 +1,4 @@
-#define MYVERSION "1.249"
+#define MYVERSION "1.250"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2016-04-03 05:09 UTC - kode54
+- Added an option to start playback on the first note, enabled by default
+- Rearranged the preferences dialog a bit
+- Version is now 1.250
 
 2016-03-24 01:49 UTC - kode54
 - Let's forget all about the secret sauce.
@@ -1086,6 +1091,9 @@ static const GUID guid_cfg_munt_gm =
 // {62BF901B-9C51-45FE-BE8A-14FB56205E5E}
 static const GUID guid_cfg_bassmidi_effects = 
 { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };
+// {132FF0B6-731A-452B-9387-B1ED4244B4C5}
+static const GUID guid_cfg_skip_to_first_note = 
+{ 0x132ff0b6, 0x731a, 0x452b, { 0x93, 0x87, 0xb1, 0xed, 0x42, 0x44, 0xb4, 0xc5 } };
 
 
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>> {
@@ -1196,6 +1204,8 @@ advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_c
 advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 10, 30000);
 
 advconfig_checkbox_factory cfg_bassmidi_effects("BASSMIDI - Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_midi_parent, 0, true);
+
+advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, true);
 
 static const char * munt_bank_names[] =
 {
@@ -1920,6 +1930,9 @@ public:
 		hasher->process( hasher_state, &file_data[0], file_data.size() );
 
 		m_file_hash = hasher->get_result( hasher_state );
+
+		if ( cfg_skip_to_first_note )
+			midi_file.trim_start();
 	}
 
 	unsigned get_subsong_count()
@@ -2852,6 +2865,7 @@ public:
 		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_MUNT_GM, CBN_SELCHANGE, OnSelectionChange)
 		MSG_WM_TIMER(OnTimer)
+		COMMAND_HANDLER(IDC_ADL_CHIPS, CBN_SELCHANGE, OnCbnSelchangeAdlChips)
 	END_MSG_MAP()
 private:
 	BOOL OnInitDialog(CWindow, LPARAM);
@@ -2926,6 +2940,8 @@ private:
 	};
 
 	pfc::list_t<adl_bank> m_bank_list;
+public:
+	LRESULT OnCbnSelchangeAdlChips(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };
 
 void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
@@ -4018,3 +4034,11 @@ static initquit_factory_t         <initquit_midi>           g_initquit_midi_fact
 DECLARE_COMPONENT_VERSION("MIDI synthesizer host", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.");
 
 VALIDATE_COMPONENT_FILENAME("foo_midi.dll");
+
+
+LRESULT CMyPreferences::OnCbnSelchangeAdlChips(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	// TODO: Add your control notification handler code here
+
+	return 0;
+}
