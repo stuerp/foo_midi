@@ -1,4 +1,4 @@
-#define MYVERSION "1.251"
+#define MYVERSION "1.252"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2016-04-10 02:43 UTC - kode54
+- Fixed VSTi crashes with the latest Sound Canvas VA (v1.0.2.0+), but break
+  compatibility with older versions
+- Fix VSTi propagating saved settings to playback instances
+- Version is now 1.252
 
 2016-04-03 05:42 UTC - kode54
 - Now correctly handles invalid files that have no playable tracks

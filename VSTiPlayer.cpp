@@ -383,7 +383,7 @@ void VSTiPlayer::getChunk( std::vector<uint8_t> & out )
 
 void VSTiPlayer::setChunk( const void * in, unsigned long size )
 {
-	if ( blChunk.size() == size && size != 0 && in != (const void*)&blChunk[0] )
+	if ( blChunk.size() == 0 || ( blChunk.size() == size && size != 0 && in != (const void*)&blChunk[0] ) )
 	{
 		blChunk.resize( size );
 		if ( size )
