@@ -1,4 +1,4 @@
-#define MYVERSION "1.250"
+#define MYVERSION "1.251"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2016-04-03 05:42 UTC - kode54
+- Now correctly handles invalid files that have no playable tracks
+- Version is now 1.251
 
 2016-04-03 05:09 UTC - kode54
 - Added an option to start playback on the first note, enabled by default
@@ -1916,6 +1920,9 @@ public:
 			throw exception_io_data( "Invalid MIDI file" );
 
 		original_track_count = midi_file.get_track_count();
+
+		if ( ! original_track_count )
+			throw exception_io_data( "Invalid MIDI file" );
 
 		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz, b_rpgmloopz );
 
