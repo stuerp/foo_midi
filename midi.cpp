@@ -1,4 +1,4 @@
-#define MYVERSION "1.253"
+#define MYVERSION "1.254"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2016-04-10 06:19 UTC - kode54
+- Added an advanced preferences option to disable the chorus in adlmidi
+- Version is now 1.254
 
 2016-04-10 04:19 UTC - kode54
 - Fixed trimming some type 2 MIDI files, due to trimming non-existent tempo maps
@@ -1108,6 +1112,9 @@ static const GUID guid_cfg_bassmidi_effects =
 // {132FF0B6-731A-452B-9387-B1ED4244B4C5}
 static const GUID guid_cfg_skip_to_first_note = 
 { 0x132ff0b6, 0x731a, 0x452b, { 0x93, 0x87, 0xb1, 0xed, 0x42, 0x44, 0xb4, 0xc5 } };
+// {F56FA8C3-38A1-49E0-AD8B-D65166314719}
+static const GUID guid_cfg_adl_chorus = 
+{ 0xf56fa8c3, 0x38a1, 0x49e0, { 0xad, 0x8b, 0xd6, 0x51, 0x66, 0x31, 0x47, 0x19 } };
 
 
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>> {
@@ -1221,6 +1228,8 @@ advconfig_checkbox_factory cfg_bassmidi_effects("BASSMIDI - Enable reverb and ch
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, true);
 
+advconfig_checkbox_factory cfg_adl_chorus("Apply a little chorus to adlmidi two chip panning, as well as pseudo 2op voices", guid_cfg_adl_chorus, guid_cfg_midi_parent, 0, true);
+
 static const char * munt_bank_names[] =
 {
 	"Roland",
@@ -1229,7 +1238,7 @@ static const char * munt_bank_names[] =
 
 struct midi_preset
 {
-	enum { version = 2 };
+	enum { version = 3 };
 
 	// version 0
 	unsigned int plugin;
@@ -1253,6 +1262,8 @@ struct midi_preset
 	// v0 - plug-in == 6 - adlmidi
 	unsigned int adl_chips;
 	bool adl_panning;
+	// v3 - chorus
+	bool adl_chorus;
 
 	// v1 - plug-in == 3 - MUNT
 	unsigned int munt_gm_set;
@@ -1286,6 +1297,7 @@ struct midi_preset
 		adl_bank = cfg_adl_bank;
 		adl_chips = cfg_adl_chips;
 		adl_panning = !!cfg_adl_panning;
+		adl_chorus = !!cfg_adl_chorus;
 		munt_gm_set = cfg_munt_gm;
 	}
 
@@ -1353,6 +1365,9 @@ struct midi_preset
 			p_out += "|";
 
 			p_out += pfc::format_int( adl_panning );
+			p_out += "|";
+
+			p_out += pfc::format_int( adl_chorus );
 		}
 		else if ( plugin == 3 )
 		{
@@ -1389,6 +1404,7 @@ struct midi_preset
 		GUID in_dxi_plugin;
 		unsigned in_adl_bank, in_adl_chips;
 		bool in_adl_panning;
+		bool in_adl_chorus;
 		unsigned in_munt_gm_set;
 
 		if ( *bar_pos )
@@ -1472,6 +1488,20 @@ struct midi_preset
 
 				if ( !*p_in ) return;
 				in_adl_panning = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+
+				if ( version >= 3 )
+				{
+					p_in = bar_pos + (*bar_pos == '|');
+					bar_pos = strchr( p_in, '|' );
+					if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+					if ( !*p_in ) return;
+					in_adl_chorus = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+				}
+				else
+				{
+					in_adl_chorus = true;
+				}
 			}
 		}
 		else if ( in_plugin == 3 )
@@ -1514,6 +1544,7 @@ struct midi_preset
 		adl_bank = in_adl_bank;
 		adl_chips = in_adl_chips;
 		adl_panning = in_adl_panning;
+		adl_chorus = in_adl_chorus;
 		munt_gm_set = in_munt_gm_set;
 	}
 };
@@ -2388,6 +2419,7 @@ public:
 				adlPlayer->setChipCount( thePreset.adl_chips );
 				adlPlayer->setFullPanning( thePreset.adl_panning );
 				adlPlayer->set4OpCount( thePreset.adl_chips * 4 /*cfg_adl_4op*/ );
+				adlPlayer->setChorus( thePreset.adl_chorus );
 				adlPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;

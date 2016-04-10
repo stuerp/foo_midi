@@ -19,6 +19,7 @@ public:
 	void setChipCount( unsigned );
 	void set4OpCount( unsigned );
 	void setFullPanning( bool );
+	void setChorus( bool );
 
 protected:
 	virtual void send_event(uint32_t b);
@@ -40,6 +41,7 @@ private:
 	unsigned           uChipCount;
 	unsigned           u4OpCount;
 	bool               bFullPanning;
+	bool               bChorus;
 
 	enum
 	{

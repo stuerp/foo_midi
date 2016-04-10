@@ -425,9 +425,10 @@ class MIDIplay
 {
 	double arpeggio_cache;
 	unsigned arpeggio_counter;
+	bool Chorus;
 
 public:
-	MIDIplay() : arpeggio_cache(0.0), arpeggio_counter(0) { }
+	MIDIplay() : arpeggio_cache(0.0), arpeggio_counter(0), Chorus(true) { }
 
 private:
     // Persistent settings for each MIDI channel
@@ -535,6 +536,10 @@ public:
 
 	void setDrumMode( unsigned ch, bool mode ) {
 		Ch[ ch ].drum_mode = mode;
+	}
+
+	void setChorus( bool _Chorus ) {
+		Chorus = _Chorus;
 	}
 
     /* Periodic tick handler.
@@ -659,7 +664,7 @@ private:
                 {
                     double bend = Ch[MidCh].bend + adl[ins].finetune;
 					double phase = 0.0;
-					const double phase_offset = 0.125;
+					const double phase_offset = Chorus ? 0.125 : 0.0;
 					double hertz, hertz_phased;
 					if((adlins[insmeta].flags & 1) && ins == adlins[insmeta].adlno2)
 						phase = phase_offset;
@@ -1295,6 +1300,7 @@ ADLPlayer::ADLPlayer(): MIDIPlayer()
 {
 	midiplay = 0;
 	resampler = 0;
+	bChorus = true;
 }
 
 ADLPlayer::~ADLPlayer()
@@ -1492,6 +1498,11 @@ void ADLPlayer::setFullPanning( bool enable )
 	bFullPanning = enable;
 }
 
+void ADLPlayer::setChorus( bool enable )
+{
+	bChorus = enable;
+}
+
 void ADLPlayer::shutdown()
 {
 	if ( resampler ) lanczos_resampler_delete( resampler );
@@ -1511,6 +1522,7 @@ bool ADLPlayer::startup()
 	midiplay->opl.FullPan = bFullPanning;
 	midiplay->opl.PcmRate = 49716;
 	midiplay->opl.Reset();
+	midiplay->setChorus(bChorus);
 	midiplay->init();
 
 	if ( uSampleRate != 49716 )
