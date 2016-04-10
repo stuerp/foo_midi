@@ -1,4 +1,4 @@
-#define MYVERSION "1.252"
+#define MYVERSION "1.253"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2016-04-10 04:19 UTC - kode54
+- Fixed trimming some type 2 MIDI files, due to trimming non-existent tempo maps
+- Version is now 1.253
 
 2016-04-10 02:43 UTC - kode54
 - Fixed VSTi crashes with the latest Sound Canvas VA (v1.0.2.0+), but break
