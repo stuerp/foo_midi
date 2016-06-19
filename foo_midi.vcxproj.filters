@@ -19,6 +19,15 @@
     <ClCompile Include="oplmidiPlayer.cpp" />
     <ClCompile Include="lanczos_resampler.c" />
     <ClCompile Include="MIDIPlayer.cpp" />
+    <ClCompile Include="sflist\json.c">
+      <Filter>sflist</Filter>
+    </ClCompile>
+    <ClCompile Include="sflist\json-builder.c">
+      <Filter>sflist</Filter>
+    </ClCompile>
+    <ClCompile Include="sflist\sflist.c">
+      <Filter>sflist</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -38,6 +47,15 @@
     <ClInclude Include="kq6mtgm.h" />
     <ClInclude Include="lanczos_resampler.h" />
     <ClInclude Include="MIDIPlayer.h" />
+    <ClInclude Include="sflist\json.h">
+      <Filter>sflist</Filter>
+    </ClInclude>
+    <ClInclude Include="sflist\json-builder.h">
+      <Filter>sflist</Filter>
+    </ClInclude>
+    <ClInclude Include="sflist\sflist.h">
+      <Filter>sflist</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
@@ -50,5 +68,10 @@
   <ItemGroup>
     <Library Include="..\..\..\bass\c\bass.lib" />
     <Library Include="..\..\..\bass\c\bassmidi.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="sflist">
+      <UniqueIdentifier>{3611c29b-e316-401c-9c25-306cf31dffb4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

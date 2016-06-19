@@ -1,4 +1,4 @@
-#define MYVERSION "1.254"
+#define MYVERSION "1.255"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2016-06-19 22:07 UTC - kode54
+- Rewrote SFList parser, and added support for the new JSON format
+- Version is now 1.255
 
 2016-04-10 06:19 UTC - kode54
 - Added an advanced preferences option to disable the chorus in adlmidi
@@ -2089,6 +2093,7 @@ public:
 	static bool test_soundfont_extension( const char * base_path, pfc::string_base & path, abort_callback & p_abort )
 	{
 		static const char * extensions[] = {
+			"json",
 			"sflist",
 #ifdef SF2PACK
 			"sf2pack",
@@ -2914,7 +2919,6 @@ public:
 		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_MUNT_GM, CBN_SELCHANGE, OnSelectionChange)
 		MSG_WM_TIMER(OnTimer)
-		COMMAND_HANDLER(IDC_ADL_CHIPS, CBN_SELCHANGE, OnCbnSelchangeAdlChips)
 	END_MSG_MAP()
 private:
 	BOOL OnInitDialog(CWindow, LPARAM);
@@ -2989,8 +2993,6 @@ private:
 	};
 
 	pfc::list_t<adl_bank> m_bank_list;
-public:
-	LRESULT OnCbnSelchangeAdlChips(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };
 
 void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
@@ -3460,7 +3462,7 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 		directory = m_soundfont;
 		filename = m_soundfont;
 		directory.truncate( directory.scan_filename() );
-		if ( uGetOpenFileName( m_hWnd, "SoundFont and list files|*.sf2;"
+		if (uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;"
 #ifdef SF2PACK
 			"*.sf2pack;"
 #endif
@@ -3468,7 +3470,7 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 #ifdef SF2PACK
 			";*.sf2pack"
 #endif
-			"|SoundFont list files|*.sflist", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE ) )
+			"|SoundFont list files|*.sflist;*.json", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE))
 		{
 			m_soundfont = filename;
 			uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );
@@ -4080,14 +4082,88 @@ static service_factory_single_t   <midi_file_types>         g_input_file_type_mi
 static contextmenu_item_factory_t <context_midi>            g_contextmenu_item_midi_factory;
 static initquit_factory_t         <initquit_midi>           g_initquit_midi_factory;
 
-DECLARE_COMPONENT_VERSION("MIDI synthesizer host", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.");
+DECLARE_COMPONENT_VERSION("MIDI synthesizer host", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.\n\n"
+"Notice for json-parser:\n"
+"Copyright (C) 2012, 2013, 2014 James McLaughlin et al.  All rights reserved.\n"
+"https://github.com/udp/json-parser\n"
+"\n"
+"Redistribution and use in source and binary forms, with or without\n"
+"modification, are permitted provided that the following conditions\n"
+"are met :\n"
+"\n"
+"1. Redistributions of source code must retain the above copyright\n"
+" notice, this list of conditions and the following disclaimer.\n"
+"\n"
+"2. Redistributions in binary form must reproduce the above copyright\n"
+"  notice, this list of conditions and the following disclaimer in the\n"
+"  documentation and / or other materials provided with the distribution.\n"
+"\n"
+"THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND\n"
+"ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n"
+"IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\n"
+"ARE DISCLAIMED.IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE\n"
+"FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n"
+"DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS\n"
+"OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\n"
+"HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT\n"
+"LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY\n"
+"OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF\n"
+"SUCH DAMAGE.\n"
+"\n\n"
+"Notice for json-builder:\n"
+"Copyright(C) 2014 James McLaughlin.All rights reserved.\n"
+"https://github.com/udp/json-builder\n"
+"\n"
+"Redistribution and use in source and binary forms, with or without\n"
+"modification, are permitted provided that the following conditions\n"
+"are met :\n"
+"\n"
+"1. Redistributions of source code must retain the above copyright\n"
+" notice, this list of conditions and the following disclaimer.\n"
+"\n"
+"2. Redistributions in binary form must reproduce the above copyright\n"
+"  notice, this list of conditions and the following disclaimer in the\n"
+"  documentation and / or other materials provided with the distribution.\n"
+"\n"
+"THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND\n"
+"ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n"
+"IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\n"
+"ARE DISCLAIMED.IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE\n"
+"FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n"
+"DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS\n"
+"OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\n"
+"HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT\n"
+"LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY\n"
+"OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF\n"
+"SUCH DAMAGE.\n"
+"\n\n"
+"Notice for sflist loader:\n"
+"Copyright(C) 2016 Christopher Snowhill.All rights reserved.\n"
+"https://github.com/kode54/sflist\n"
+"https://gist.github.com/kode54/a7bb01a0db3f2e996145b77f0ca510d5\n"
+"\n"
+"Redistribution and use in source and binary forms, with or without\n"
+"modification, are permitted provided that the following conditions\n"
+"are met :\n"
+"\n"
+"1. Redistributions of source code must retain the above copyright\n"
+" notice, this list of conditions and the following disclaimer.\n"
+"\n"
+"2. Redistributions in binary form must reproduce the above copyright\n"
+"  notice, this list of conditions and the following disclaimer in the\n"
+"  documentation and / or other materials provided with the distribution.\n"
+"\n"
+"THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND\n"
+"ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n"
+"IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\n"
+"ARE DISCLAIMED.IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE\n"
+"FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n"
+"DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS\n"
+"OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\n"
+"HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT\n"
+"LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY\n"
+"OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF\n"
+"SUCH DAMAGE.\n"
+);
 
 VALIDATE_COMPONENT_FILENAME("foo_midi.dll");
-
-
-LRESULT CMyPreferences::OnCbnSelchangeAdlChips(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-{
-	// TODO: Add your control notification handler code here
-
-	return 0;
-}

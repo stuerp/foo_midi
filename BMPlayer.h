@@ -7,6 +7,8 @@
 
 extern bool g_get_soundfont_stats( uint64_t & total_sample_size, uint64_t & sample_loaded_size );
 
+typedef struct sflist_presets sflist_presets;
+
 class BMPlayer : public MIDIPlayer
 {
 public:
@@ -40,6 +42,7 @@ private:
 	std::string        sLastError;
 
 	std::vector<HSOUNDFONT> _soundFonts;
+	sflist_presets   * _presetList[2];
     std::string        sSoundFontName;
     std::string        sFileSoundFontName;
 

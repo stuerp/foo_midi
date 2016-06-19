@@ -2,6 +2,8 @@
 
 #include "BMPlayer.h"
 
+#include <sflist.h>
+
 #include <string>
 
 #include <map>
@@ -19,7 +21,8 @@ struct Cached_SoundFont
     unsigned long ref_count;
     time_t time_released;
     HSOUNDFONT handle;
-    Cached_SoundFont() : handle( 0 ) { }
+	sflist_presets * presetlist;
+    Cached_SoundFont() : handle( 0 ), presetlist( 0 ) { }
 };
 
 static critical_section Cache_Lock;
@@ -75,80 +78,14 @@ static void cache_deinit()
     
     for ( auto it = Cache_List.begin(); it != Cache_List.end(); ++it )
     {
-        BASS_MIDI_FontFree( it->second.handle );
+		if ( it->second.handle )
+			BASS_MIDI_FontFree( it->second.handle );
+		if ( it->second.presetlist )
+			sflist_free( it->second.presetlist );
     }
 }
 
-static void CALLBACK fb_close(void * user)
-{
-        delete (file::ptr*) user;
-}
-
-static QWORD CALLBACK fb_length(void * user)
-{
-        try
-        {
-                return (*((file::ptr*)user))->get_size_ex( abort_callback_dummy() );
-        }
-        catch (...)
-        {
-                return 0;
-        }
-}
-
-static DWORD CALLBACK fb_read(void * buffer, DWORD length, void * user)
-{
-        try
-        {
-                return (*((file::ptr*)user))->read( buffer, length, abort_callback_dummy() );
-        }
-        catch (...)
-        {
-                return 0;
-        }
-}
-
-static BOOL CALLBACK fb_seek(QWORD offset, void * user)
-{
-        try
-        {
-                (*((file::ptr*)user))->seek( offset, abort_callback_dummy() );
-                return TRUE;
-        }
-        catch (...)
-        {
-                return FALSE;
-        }
-}
-
-static BASS_FILEPROCS fb_fileprocs = { fb_close, fb_length, fb_read, fb_seek };
-
-static void * fb_open( const char * path )
-{
-        file::ptr * f = NULL;
-        try
-        {
-                f = new file::ptr;
-                pfc::string8 m_path, m_canonical_path;
-                if ( !strstr( path, "://" ) )
-                {
-                        m_path = "file://";
-                        m_path += path;
-                        path = m_path.get_ptr();
-                }
-                filesystem::g_get_canonical_path( path, m_canonical_path );
-                filesystem::g_open( *f, m_canonical_path, filesystem::open_mode_read, abort_callback_dummy() );
-                return (void *) f;
-        }
-        catch (std::exception & e)
-        {
-                uOutputDebugString( e.what() );
-                delete f;
-                return NULL;
-        }
-}
-
-static HSOUNDFONT cache_open( const char * path )
+static HSOUNDFONT cache_open_font( const char * path )
 {
     HSOUNDFONT font = NULL;
     
@@ -158,17 +95,14 @@ static HSOUNDFONT cache_open( const char * path )
     
     if ( !entry.handle )
     {
-		if ((!stricmp_utf8_partial(path, "file://") || !strstr(path, "://")) && !stricmp_utf8(pfc::string_extension(path), "sfz"))
+		if ((!stricmp_utf8_partial(path, "file://") || !strstr(path, "://")))
 		{
 			size_t path_offset = !stricmp_utf8_partial(path, "file://") ? 7 : 0;
 			font = BASS_MIDI_FontInit(pfc::stringcvt::string_wide_from_utf8(path + path_offset), 0);
 		}
 		else
 		{
-			void * fb_file = fb_open(path);
-			if (!fb_file) return NULL;
-
-			font = BASS_MIDI_FontInitUser(&fb_fileprocs, fb_file, 0);
+			return 0;
 		}
 
         if ( font )
@@ -190,7 +124,95 @@ static HSOUNDFONT cache_open( const char * path )
     return font;
 }
 
-static void cache_close( HSOUNDFONT handle )
+static sflist_presets * sflist_open_file(const char * path)
+{
+	sflist_presets * presetlist;
+	FILE * f;
+	char * sflist_file = 0;
+	char * separator;
+	size_t length;
+	char error[sflist_max_error];
+	pfc::string8 base_path;
+	pfc::string8 our_path = "";
+	size_t path_offset = (!stricmp_utf8_partial(path, "file://")) ? 7 : 0;
+
+	base_path = path + path_offset;
+	base_path.truncate( base_path.scan_filename() );
+
+	if (!path_offset)
+		our_path = "file://";
+	our_path += path;
+
+	try
+	{
+		abort_callback_dummy m_abort;
+		file::ptr f;
+		filesystem::g_open_read(f, our_path, m_abort);
+
+		length = f->get_size_ex(m_abort);
+
+		sflist_file = (char *)malloc(length + 1);
+		if (!sflist_file)
+		{
+			return 0;
+		}
+
+		f->read_object(sflist_file, length, m_abort);
+	}
+	catch (...)
+	{
+		if (sflist_file) free(sflist_file);
+		return 0;
+	}
+
+	sflist_file[length] = '\0';
+
+	presetlist = sflist_load(sflist_file, strlen(sflist_file), base_path, error);
+
+	free(sflist_file);
+
+	return presetlist;
+}
+
+static sflist_presets * cache_open_list(const char * path)
+{
+	sflist_presets * presetlist = NULL;
+
+	insync(Cache_Lock);
+
+	Cached_SoundFont & entry = Cache_List[path];
+
+	if (!entry.presetlist)
+	{
+		if ((!stricmp_utf8_partial(path, "file://") || !strstr(path, "://")))
+		{
+			presetlist = sflist_open_file(path);
+		}
+		else
+		{
+			return 0;
+		}
+
+		if (presetlist)
+		{
+			entry.presetlist = presetlist;
+			entry.ref_count = 1;
+		}
+		else
+		{
+			Cache_List.erase(path);
+		}
+	}
+	else
+	{
+		presetlist = entry.presetlist;
+		++entry.ref_count;
+	}
+
+	return presetlist;
+}
+
+static void cache_close_font( HSOUNDFONT handle )
 {
     insync( Cache_Lock );
     
@@ -205,8 +227,31 @@ static void cache_close( HSOUNDFONT handle )
     }
 }
 
+static void cache_close_list( sflist_presets * presetlist )
+{
+	insync(Cache_Lock);
+
+	for ( auto it = Cache_List.begin(); it != Cache_List.end(); ++it )
+	{
+		if ( it->second.presetlist == presetlist )
+		{
+			if (--it->second.ref_count == 0)
+				time( &it->second.time_released );
+			break;
+		}
+	}
+}
+
+struct has_font
+{
+	int has;
+	has_font() : has(0) { }
+};
+
 static void cache_get_stats( uint64_t & total_sample_size, uint64_t & samples_loaded_size )
 {
+	std::map<HSOUNDFONT, has_font> uniqueList;
+
 	insync( Cache_Lock );
 
 	total_sample_size = 0;
@@ -215,10 +260,36 @@ static void cache_get_stats( uint64_t & total_sample_size, uint64_t & samples_lo
 	for ( auto it = Cache_List.begin(); it != Cache_List.end(); ++it )
 	{
 		BASS_MIDI_FONTINFO info;
-		if ( BASS_MIDI_FontGetInfo( it->second.handle, &info ) )
+		if ( it->second.handle )
 		{
-			total_sample_size += info.samsize;
-			samples_loaded_size += info.samload;
+			has_font & h = uniqueList[it->second.handle];
+			if (!h.has)
+			{
+				h.has = 1;
+				if (BASS_MIDI_FontGetInfo(it->second.handle, &info))
+				{
+					total_sample_size += info.samsize;
+					samples_loaded_size += info.samload;
+				}
+			}
+		}
+		else if (it->second.presetlist)
+		{
+			sflist_presets * presetlist = it->second.presetlist;
+			for (unsigned int i = 0, j = presetlist->count; i < j; ++i)
+			{
+				HSOUNDFONT hfont = presetlist->presets[i].font;
+				has_font & h = uniqueList[hfont];
+				if (!h.has)
+				{
+					h.has = 1;
+					if (BASS_MIDI_FontGetInfo(hfont, &info))
+					{
+						total_sample_size += info.samsize;
+						samples_loaded_size += info.samload;
+					}
+				}
+			}
 		}
 	}
 }
@@ -241,7 +312,10 @@ static void cache_run()
 				{
 					if ( difftime( now, it->second.time_released ) >= 10.0 )
 					{
-						BASS_MIDI_FontFree( it->second.handle );
+						if (it->second.handle)
+							BASS_MIDI_FontFree( it->second.handle );
+						if (it->second.presetlist)
+							sflist_free(it->second.presetlist);
 						it = Cache_List.erase( it );
 						continue;
 					}
@@ -341,6 +415,8 @@ BMPlayer::BMPlayer() : MIDIPlayer()
 	memset(_stream, 0, sizeof(_stream));
 	bSincInterpolation = false;
 	bEffects = true;
+	_presetList[0] = 0;
+	_presetList[1] = 0;
 
 	if ( !g_initializer.initialize() ) throw std::runtime_error( "Unable to initialize BASS" );
 }
@@ -438,9 +514,19 @@ void BMPlayer::shutdown()
 	memset( _stream, 0, sizeof(_stream) );
 	for ( unsigned long i = 0; i < _soundFonts.size(); ++i )
 	{
-		cache_close( _soundFonts[i] );
+		cache_close_font( _soundFonts[i] );
     }
 	_soundFonts.resize( 0 );
+	if (_presetList[0])
+	{
+		cache_close_list(_presetList[0]);
+		_presetList[0] = 0;
+	}
+	if (_presetList[1])
+	{
+		cache_close_list(_presetList[1]);
+		_presetList[1] = 0;
+	}
 }
 
 void BMPlayer::compound_presets( std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels )
@@ -486,7 +572,7 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
 #endif
 		)
 	{
-		HSOUNDFONT font = cache_open( in_path.c_str() );
+		HSOUNDFONT font = cache_open_font( in_path.c_str() );
 		if ( !font )
 		{
 			shutdown();
@@ -499,217 +585,25 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
 		presetList.push_back( fex );
 		return true;
 	}
-	else if ( !stricmp_utf8( ext.c_str(), "sflist" ) )
+	else if ( !stricmp_utf8( ext.c_str(), "sflist" ) || !stricmp_utf8( ext.c_str(), "json" ) )
 	{
-		size_t fn_offset = 0;
-		if (!stricmp_utf8_partial(in_path.c_str(), "file://"))
-			fn_offset = 7;
-		FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( in_path.c_str() + fn_offset ), _T("r, ccs=UTF-8") );
-		if ( fl )
+		sflist_presets ** __presetList = &_presetList[0];
+		if (*__presetList)
+			__presetList = &_presetList[1];
+
+		*__presetList = cache_open_list(in_path.c_str());
+
+		if (!*__presetList)
+			return false;
+
+		BASS_MIDI_FONTEX * fontex = (*__presetList)->presets;
+
+		for (unsigned int i = 0, j = (*__presetList)->count; i < j; ++i)
 		{
-			std::string path, temp;
-			pfc::stringcvt::string_utf8_from_os converter;
-			TCHAR name[32768];
-			TCHAR *nameptr;
-			size_t slash = in_path.find_last_of('\\');
-			if ( slash != std::string::npos ) path.assign( in_path.begin(), in_path.begin() + slash + 1 );
-			while ( !feof( fl ) )
-			{
-				std::vector<BASS_MIDI_FONTEX> presets;
-
-				if ( !_fgetts( name, 32767, fl ) ) break;
-				name[32767] = 0;
-				TCHAR * cr = _tcschr( name, _T('\n') );
-				if ( cr ) *cr = 0;
-				cr = _tcschr( name, _T('\r') );
-				if ( cr ) *cr = 0;
-				cr = _tcschr( name, '|' );
-				if ( cr )
-				{
-					std::vector<BASS_MIDI_FONTEX> nested_presets;
-					std::vector<long> channels;
-					bool valid = true;
-					bool pushed_back = true;
-					TCHAR *endchr;
-					nameptr = cr + 1;
-					*cr = 0;
-					cr = name;
-					while ( *cr && valid )
-					{
-						switch ( *cr++ )
-						{
-						case 'p':
-							{
-								// patch override - "p[db#,]dp#=[sb#,]sp#" ex. "p0,5=0,1"
-								// may be used once per preset group
-								pushed_back = false;
-								long dbank = 0;
-								long dpreset = _tcstol( cr, &endchr, 10 );
-								if ( endchr == cr )
-								{
-									valid = false;
-									break;
-								}
-								if ( *endchr == ',' )
-								{
-									dbank = dpreset;
-									cr = endchr + 1;
-									dpreset = _tcstol( cr, &endchr, 10 );
-									if ( endchr == cr )
-									{
-										valid = false;
-										break;
-									}
-								}
-								if ( *endchr != '=' )
-								{
-									valid = false;
-									break;
-								}
-								cr = endchr + 1;
-								long sbank = -1;
-								long spreset = _tcstol( cr, &endchr, 10 );
-								if ( endchr == cr )
-								{
-									valid = false;
-									break;
-								}
-								if ( *endchr == ',' )
-								{
-									sbank = spreset;
-									cr = endchr + 1;
-									spreset = _tcstol( cr, &endchr, 10 );
-									if ( endchr == cr )
-									{
-										valid = false;
-										break;
-									}
-								}
-								if ( *endchr && *endchr != ';' && *endchr != '&' )
-								{
-									valid = false;
-									break;
-								}
-								cr = endchr;
-								BASS_MIDI_FONTEX fex = { 0, (int) spreset, (int) sbank, (int) dpreset, (int) dbank, 0 };
-								nested_presets.push_back( fex );
-							}
-							break;
-
-						case 'c':
-							{
-								// channel override - implemented using bank LSB, which is disabled from
-								// actual use. - format "c#[-#]" ex. "c16" (range is 1-48)
-								// may be used multiple times per preset group
-								pushed_back = false;
-								long channel_start = _tcstol(cr, &endchr, 10);
-								long channel_end;
-								if ( endchr == cr )
-								{
-									valid = false;
-									break;
-								}
-								if ( channel_start < 1 || channel_start > 48 )
-								{
-									valid = false;
-									break;
-								}
-								channel_end = channel_start;
-								if ( *endchr == '-' )
-								{
-									channel_end = _tcstol(cr, &endchr, 10);
-									if ( channel_end <= channel_start || channel_end > 48 )
-									{
-										valid = false;
-										break;
-									}
-								}
-								for ( auto it = channels.begin(); it != channels.end(); ++it )
-								{
-									if ( *it >= channel_start || *it <= channel_end )
-									{
-										valid = false;
-										break;
-									}
-								}
-								if ( *endchr && *endchr != ';' )
-								{
-									valid = false;
-									break;
-								}
-								cr = endchr;
-								for ( long channel = channel_start; channel <= channel_end; ++channel )
-									channels.push_back( channel );
-							}
-							break;
-
-						case '&':
-							{
-								// separates preset groups per SoundFont bank
-								if ( !pushed_back )
-								{
-									compound_presets( presets, nested_presets, channels );
-									nested_presets.clear(); channels.clear();
-									pushed_back = true;
-								}
-							}
-							break;
-
-						case ';':
-							// separates preset items
-							break;
-
-						default:
-							// invalid command character
-							valid = false;
-							break;
-						}
-					}
-					if ( !pushed_back && valid )
-						compound_presets( presets, nested_presets, channels );
-					if ( !valid )
-					{
-						presets.clear();
-						BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
-						presets.push_back( fex );
-						memset( bank_lsb_override, 0, sizeof(bank_lsb_override) );
-					}
-				}
-				else
-				{
-					BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
-					presets.push_back( fex );
-					nameptr = name;
-				}
-				converter.convert( nameptr );
-				if ( ( isalpha( nameptr[0] ) && nameptr[1] == _T(':') ) || nameptr[0] == '\\' )
-				{
-					temp = converter;
-				}
-				else
-				{
-					temp = path;
-					temp += converter;
-				}
-				HSOUNDFONT font = cache_open( temp.c_str() );
-				if ( !font )
-				{
-					fclose( fl );
-					shutdown();
-					sLastError = "Unable to load SoundFont: ";
-					sLastError += temp.c_str();
-					return false;
-				}
-				for ( auto it = presets.begin(); it != presets.end(); ++it )
-				{
-					it->font = font;
-					presetList.push_back( *it );
-				}
-				_soundFonts.push_back( font );
-			}
-			fclose( fl );
-			return true;
+			presetList.push_back(fontex[i]);
 		}
+
+		return true;
 	}
 	return false;
 }
@@ -727,26 +621,21 @@ bool BMPlayer::startup()
 	}
 	memset( bank_lsb_override, 0, sizeof( bank_lsb_override ) );
 	std::vector<BASS_MIDI_FONTEX> presetList;
+	if (sFileSoundFontName.length())
+	{
+		if (!load_font_item(presetList, sFileSoundFontName))
+			return false;
+	}
+
 	if (sSoundFontName.length())
 	{
 		if ( !load_font_item( presetList, sSoundFontName ) )
 			return false;
 	}
 
-	if ( sFileSoundFontName.length() )
-	{
-		if ( !load_font_item( presetList, sFileSoundFontName ) )
-			return false;
-	}
-
-    std::vector< BASS_MIDI_FONTEX > fonts;
-	for ( unsigned long i = 0, j = presetList.size(); i < j; ++i )
-	{
-		fonts.push_back( presetList[ j - i - 1 ] );
-	}
-	BASS_MIDI_StreamSetFonts( _stream[0], &fonts[0], (unsigned int) fonts.size() | BASS_MIDI_FONT_EX );
-	BASS_MIDI_StreamSetFonts( _stream[1], &fonts[0], (unsigned int) fonts.size() | BASS_MIDI_FONT_EX );
-	BASS_MIDI_StreamSetFonts( _stream[2], &fonts[0], (unsigned int) fonts.size() | BASS_MIDI_FONT_EX );
+	BASS_MIDI_StreamSetFonts( _stream[0], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX );
+	BASS_MIDI_StreamSetFonts( _stream[1], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX );
+	BASS_MIDI_StreamSetFonts( _stream[2], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX );
 
 	reset_parameters();
 
