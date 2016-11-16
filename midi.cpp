@@ -1,4 +1,4 @@
-#define MYVERSION "1.255"
+#define MYVERSION "1.256"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2016-11-16 22:50 UTC - kode54
+- Reworded one of the settings
+- Version is now 1.256
 
 2016-06-19 22:07 UTC - kode54
 - Rewrote SFList parser, and added support for the new JSON format
@@ -1232,7 +1236,7 @@ advconfig_checkbox_factory cfg_bassmidi_effects("BASSMIDI - Enable reverb and ch
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, true);
 
-advconfig_checkbox_factory cfg_adl_chorus("Apply a little chorus to adlmidi two chip panning, as well as pseudo 2op voices", guid_cfg_adl_chorus, guid_cfg_midi_parent, 0, true);
+advconfig_checkbox_factory cfg_adl_chorus("Apply a little detuning to adlmidi two chip panning, as well as pseudo 2op voices", guid_cfg_adl_chorus, guid_cfg_midi_parent, 0, true);
 
 static const char * munt_bank_names[] =
 {
