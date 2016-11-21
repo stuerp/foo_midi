@@ -997,19 +997,19 @@ const char * DoomOPL::midi_bank_name(unsigned int bank)
     {
         default:
         case 0:
-            return "DMX Default";
+            return "Default";
             
         case 1:
-            return "DMX Doom 1";
+            return "Doom 1";
             
         case 2:
-            return "DMX Doom 2";
+            return "Doom 2";
             
         case 3:
-            return "DMX Raptor";
+            return "Raptor";
             
         case 4:
-            return "DMX Strife";
+            return "Strife";
     }
 }
 
