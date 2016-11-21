@@ -152,8 +152,10 @@
     </ClCompile>
     <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
-    <ClCompile Include="lanczos_resampler.c" />
+    <ClCompile Include="fmopl3lib\opl3.cpp" />
+    <ClCompile Include="fmopl3lib\opl3class.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
+    <ClCompile Include="MSPlayer.cpp" />
     <ClCompile Include="MT32Player.cpp" />
     <ClCompile Include="DXiPlayer.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
@@ -187,6 +189,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="resampler.c" />
     <ClCompile Include="sflist\json-builder.c" />
     <ClCompile Include="sflist\json.c" />
     <ClCompile Include="sflist\sflist.c" />
@@ -216,6 +219,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="synthlib_doom\i_oplmusic.cpp" />
+    <ClCompile Include="synthlib_opl3w\opl3midi.cpp" />
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -229,9 +234,12 @@
     </ClInclude>
     <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="fmmidiPlayer.h" />
+    <ClInclude Include="fmopl3lib\opl3.h" />
+    <ClInclude Include="fmopl3lib\opl3class.h" />
+    <ClInclude Include="interface.h" />
     <ClInclude Include="kq6mtgm.h" />
-    <ClInclude Include="lanczos_resampler.h" />
     <ClInclude Include="MIDIPlayer.h" />
+    <ClInclude Include="MSPlayer.h" />
     <ClInclude Include="MT32Player.h" />
     <ClInclude Include="mtgm.h" />
     <CustomBuild Include="DXiPlayer.h">
@@ -244,6 +252,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </CustomBuild>
     <ClInclude Include="oplmidiPlayer.h" />
+    <ClInclude Include="resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sflist\json-builder.h" />
     <ClInclude Include="sflist\json.h" />
@@ -256,6 +265,15 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </CustomBuild>
+    <ClInclude Include="synthlib_doom\inst\dmx_dmx.h" />
+    <ClInclude Include="synthlib_doom\inst\dmx_doom1.h" />
+    <ClInclude Include="synthlib_doom\inst\dmx_doom2.h" />
+    <ClInclude Include="synthlib_doom\inst\dmx_raptor.h" />
+    <ClInclude Include="synthlib_doom\inst\dmx_strife.h" />
+    <ClInclude Include="synthlib_doom\i_oplmusic.h" />
+    <ClInclude Include="synthlib_opl3w\gmtimbre.h" />
+    <ClInclude Include="synthlib_opl3w\opl3midi.h" />
+    <ClInclude Include="synthlib_opl3w\opl3type.h" />
     <ClInclude Include="VSTiPlayer.h" />
   </ItemGroup>
   <ItemGroup>

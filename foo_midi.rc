@@ -93,6 +93,9 @@ BEGIN
     EDITTEXT        IDC_MUNT,240,81,79,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "GM set:",IDC_RESAMPLING_TEXT2,193,100,44,9
     COMBOBOX        IDC_MUNT_GM,240,97,79,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Nuclear Option",IDC_STATIC,188,119,139,30
+    RTEXT           "Preset:",IDC_MS_PRESET_TEXT,204,131,33,10
+    COMBOBOX        IDC_MS_PRESET,240,128,79,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 
@@ -113,12 +116,25 @@ BEGIN
         VERTGUIDE, 60
         VERTGUIDE, 176
         VERTGUIDE, 188
+        VERTGUIDE, 237
+        VERTGUIDE, 240
         VERTGUIDE, 318
         TOPMARGIN, 7
         BOTTOMMARGIN, 279
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_CONFIG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

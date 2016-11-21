@@ -31,13 +31,16 @@
 #define IDC_ADL_PANNING                 1025
 #define IDC_RESAMPLING_TEXT2            1026
 #define IDC_RESAMPLING2                 1027
+#define IDC_MS_PRESET_TEXT              1027
 #define IDC_MUNT_GM                     1028
+#define IDC_MUNT_GM2                    1029
+#define IDC_MS_PRESET                   1029
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        101
+#define _APS_NEXT_RESOURCE_VALUE        102
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1026
 #define _APS_NEXT_SYMED_VALUE           101

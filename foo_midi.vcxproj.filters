@@ -17,7 +17,6 @@
     <ClCompile Include="dbopl.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
     <ClCompile Include="oplmidiPlayer.cpp" />
-    <ClCompile Include="lanczos_resampler.c" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="sflist\json.c">
       <Filter>sflist</Filter>
@@ -28,6 +27,20 @@
     <ClCompile Include="sflist\sflist.c">
       <Filter>sflist</Filter>
     </ClCompile>
+    <ClCompile Include="MSPlayer.cpp" />
+    <ClCompile Include="fmopl3lib\opl3.cpp">
+      <Filter>fmopl3lib</Filter>
+    </ClCompile>
+    <ClCompile Include="fmopl3lib\opl3class.cpp">
+      <Filter>fmopl3lib</Filter>
+    </ClCompile>
+    <ClCompile Include="synthlib_doom\i_oplmusic.cpp">
+      <Filter>synthlib_doom</Filter>
+    </ClCompile>
+    <ClCompile Include="synthlib_opl3w\opl3midi.cpp">
+      <Filter>synthlib_opl3w</Filter>
+    </ClCompile>
+    <ClCompile Include="resampler.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -45,7 +58,6 @@
     <ClInclude Include="fmmidiPlayer.h" />
     <ClInclude Include="oplmidiPlayer.h" />
     <ClInclude Include="kq6mtgm.h" />
-    <ClInclude Include="lanczos_resampler.h" />
     <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="sflist\json.h">
       <Filter>sflist</Filter>
@@ -56,6 +68,42 @@
     <ClInclude Include="sflist\sflist.h">
       <Filter>sflist</Filter>
     </ClInclude>
+    <ClInclude Include="interface.h" />
+    <ClInclude Include="MSPlayer.h" />
+    <ClInclude Include="fmopl3lib\opl3.h">
+      <Filter>fmopl3lib</Filter>
+    </ClInclude>
+    <ClInclude Include="fmopl3lib\opl3class.h">
+      <Filter>fmopl3lib</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_doom\i_oplmusic.h">
+      <Filter>synthlib_doom</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_doom\inst\dmx_dmx.h">
+      <Filter>synthlib_doom\inst</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_doom\inst\dmx_doom1.h">
+      <Filter>synthlib_doom\inst</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_doom\inst\dmx_doom2.h">
+      <Filter>synthlib_doom\inst</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_doom\inst\dmx_raptor.h">
+      <Filter>synthlib_doom\inst</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_doom\inst\dmx_strife.h">
+      <Filter>synthlib_doom\inst</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_opl3w\gmtimbre.h">
+      <Filter>synthlib_opl3w</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_opl3w\opl3midi.h">
+      <Filter>synthlib_opl3w</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_opl3w\opl3type.h">
+      <Filter>synthlib_opl3w</Filter>
+    </ClInclude>
+    <ClInclude Include="resampler.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
@@ -72,6 +120,18 @@
   <ItemGroup>
     <Filter Include="sflist">
       <UniqueIdentifier>{3611c29b-e316-401c-9c25-306cf31dffb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fmopl3lib">
+      <UniqueIdentifier>{aaae5c50-9f68-469c-862a-d2885b6ee061}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synthlib_doom">
+      <UniqueIdentifier>{18c2fd9d-a8d5-4667-98fc-3f125312083a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synthlib_doom\inst">
+      <UniqueIdentifier>{c29e919f-26f8-4b8b-8248-20d64a7bfc42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synthlib_opl3w">
+      <UniqueIdentifier>{ce267110-84ca-4373-87f8-a4c1f2f16a49}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

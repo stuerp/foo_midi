@@ -1383,12 +1383,7 @@ void ADLPlayer::send_event(uint32_t b)
 	}
 }
 
-#include "lanczos_resampler.h"
-
-static struct init_lanczos
-{
-	init_lanczos() { lanczos_init(); }
-} g_lanczos_initializer;
+#include "resampler.h"
 
 void ADLPlayer::render( float * out, unsigned long count )
 {
@@ -1406,25 +1401,24 @@ void ADLPlayer::render( float * out, unsigned long count )
 
 			while ( todo )
 			{
-				int to_write = lanczos_resampler_get_free_count( resampler );
+				int to_write = resampler_get_min_fill( resampler );
 				if ( to_write )
 				{
 					render_internal( this, to_write, intermediate_buffer );
 					for ( unsigned i = 0; i < to_write; i++ )
 					{
-						lanczos_resampler_write_sample( resampler, intermediate_buffer[ i * 2 ], intermediate_buffer[ i * 2 + 1 ] );
+						resampler_write_pair( resampler, intermediate_buffer[ i * 2 ], intermediate_buffer[ i * 2 + 1 ] );
 					}
 				}
 				/* if ( !lanczos_resampler_ready( resampler ) ) break; */ /* We assume that by filling the input buffer completely every pass, there will always be samples ready. */
 				int ls, rs;
-				lanczos_resampler_get_sample( resampler, &ls, &rs );
-				lanczos_resampler_remove_sample( resampler );
+				resampler_read_pair( resampler, &ls, &rs );
 				resampled_buffer[ samples_written++ ] = ls;
 				resampled_buffer[ samples_written++ ] = rs;
 				--todo;
 			}
 
-			audio_math::convert_from_int32( resampled_buffer, samples_written, out, 1 << 9 );
+			audio_math::convert_from_int32( resampled_buffer, samples_written, out, 1 << 16 );
 
 			todo = samples_written / 2;
 		}
@@ -1505,7 +1499,7 @@ void ADLPlayer::setChorus( bool enable )
 
 void ADLPlayer::shutdown()
 {
-	if ( resampler ) lanczos_resampler_delete( resampler );
+	if ( resampler ) resampler_destroy( resampler );
 	resampler = NULL;
 	delete midiplay;
 	midiplay = NULL;
@@ -1527,10 +1521,10 @@ bool ADLPlayer::startup()
 
 	if ( uSampleRate != 49716 )
 	{
-		resampler = lanczos_resampler_create();
+		resampler = resampler_create();
 		if ( !resampler )
 			return false;
-		lanczos_resampler_set_rate( resampler, 49716.0 / (double)uSampleRate );
+		resampler_set_rate( resampler, 49716.0 / (double)uSampleRate );
 	}
 
 	reset_drum_channels();
