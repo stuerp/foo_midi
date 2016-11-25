@@ -1,4 +1,4 @@
-#define MYVERSION "2.0"
+#define MYVERSION "2.0.1"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+	
+2016-11-25 23:49 UTC - kode54
+- Fix new sflist parser:
+  - Handling Unicode byte order markers
+  - Handling patch mapping range checks from correct JSON variable
+  - Handling some miscellaneous warnings
+- Version is now 2.0.1
 
 2016-11-21 04:00 UTC - kode54
 - Nuclear Option!
