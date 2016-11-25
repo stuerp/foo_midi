@@ -810,6 +810,20 @@ sflist_presets * sflist_load(const char * sflist, size_t size, const char * base
    sflist_presets * rval;
 
    json_value * list = 0;
+   
+   /* Handle Unicode byte order markers */
+   if (size >= 2) {
+       if ((sflist[0] == 0xFF && sflist[1] == 0xFE) ||
+           (sflist[0] == 0xFE && sflist[1] == 0xFF)) {
+           strcpy(error, "UTF-16 encoding is not supported at this time");
+           return 0;
+        }
+        if (size >= 3 && sflist[0] == 0xEF &&
+            sflist[1] == 0xBB && sflist[2] == 0xBF) {
+            sflist += 3;
+            size -= 3;
+        }
+   }
 
    list = sflist_load_v2(sflist, size, error);
 
