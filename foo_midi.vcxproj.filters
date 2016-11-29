@@ -41,6 +41,8 @@
       <Filter>synthlib_opl3w</Filter>
     </ClCompile>
     <ClCompile Include="resampler.c" />
+    <ClCompile Include="SCCore.cpp" />
+    <ClCompile Include="SCPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -104,6 +106,8 @@
       <Filter>synthlib_opl3w</Filter>
     </ClInclude>
     <ClInclude Include="resampler.h" />
+    <ClInclude Include="SCCore.h" />
+    <ClInclude Include="SCPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

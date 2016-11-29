@@ -33,8 +33,11 @@
 #define IDC_RESAMPLING2                 1027
 #define IDC_MS_PRESET_TEXT              1027
 #define IDC_MUNT_GM                     1028
-#define IDC_MUNT_GM2                    1029
 #define IDC_MS_PRESET                   1029
+#define IDC_SC_FLAVOR_TEXT              1030
+#define IDC_MS_PRESET2                  1031
+#define IDC_SC_FLAVOR                   1031
+#define IDC_SC_GROUP                    1032
 
 // Next default values for new objects
 // 
@@ -42,7 +45,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1026
+#define _APS_NEXT_CONTROL_VALUE         1033
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

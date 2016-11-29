@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.1"
+#define MYVERSION "2.0.2"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2016-11-29 07:11 UTC - kode54
+- Unleash the Secret Sauce!
+- Version is now 2.0.2
 	
 2016-11-25 23:49 UTC - kode54
 - Fix new sflist parser:
@@ -1022,6 +1026,8 @@
 
 #include "MSPlayer.h"
 
+#include "SCPlayer.h"
+
 #ifdef DXISUPPORT
 #include "DXiProxy.h"
 #include "PlugInInventory.h"
@@ -1131,9 +1137,9 @@ static const GUID guid_cfg_munt_gm =
 // {62BF901B-9C51-45FE-BE8A-14FB56205E5E}
 static const GUID guid_cfg_bassmidi_effects = 
 { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };
-// {132FF0B6-731A-452B-9387-B1ED4244B4C5}
-static const GUID guid_cfg_skip_to_first_note = 
-{ 0x132ff0b6, 0x731a, 0x452b, { 0x93, 0x87, 0xb1, 0xed, 0x42, 0x44, 0xb4, 0xc5 } };
+// {F90C8ABF-68B5-474A-8D9C-FFD9CA80202F}
+static const GUID guid_cfg_skip_to_first_note =
+{ 0xf90c8abf, 0x68b5, 0x474a,{ 0x8d, 0x9c, 0xff, 0xd9, 0xca, 0x80, 0x20, 0x2f } };
 // {F56FA8C3-38A1-49E0-AD8B-D65166314719}
 static const GUID guid_cfg_adl_chorus = 
 { 0xf56fa8c3, 0x38a1, 0x49e0, { 0xad, 0x8b, 0xd6, 0x51, 0x66, 0x31, 0x47, 0x19 } };
@@ -1143,6 +1149,12 @@ static const GUID guid_cfg_ms_synth =
 // {A91D31F4-22AE-4C5C-A621-F6B6011F5DDC}
 static const GUID guid_cfg_ms_bank =
 { 0xa91d31f4, 0x22ae, 0x4c5c,{ 0xa6, 0x21, 0xf6, 0xb6, 0x1, 0x1f, 0x5d, 0xdc } };
+// {ABEE932A-2DAF-4A07-A64E-9B5A88DA0070}
+static const GUID guid_cfg_sc_flavor =
+{ 0xabee932a, 0x2daf, 0x4a07,{ 0xa6, 0x4e, 0x9b, 0x5a, 0x88, 0xda, 0x0, 0x70 } };
+// {1BF1799D-7691-4075-98AE-43AE82D8C9CF}
+static const GUID guid_cfg_sc_path =
+{ 0x1bf1799d, 0x7691, 0x4075,{ 0x98, 0xae, 0x43, 0xae, 0x82, 0xd8, 0xc9, 0xcf } };
 
 
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>> {
@@ -1206,6 +1218,7 @@ enum
 	default_cfg_munt_gm = 0,
 	default_cfg_ms_synth = 0,
 	default_cfg_ms_bank = 2,
+	default_cfg_sc_flavor = SCPlayer::sc_default,
 #ifdef FLUIDSYNTHSUPPORT
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
 #endif
@@ -1229,7 +1242,8 @@ cfg_int cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz), cfg_xmiloopz(g
 		cfg_munt_gm(guid_cfg_munt_gm, default_cfg_munt_gm),
 		/*cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op),*/
 		cfg_ms_synth(guid_cfg_ms_synth, default_cfg_ms_synth),
-		cfg_ms_bank(guid_cfg_ms_bank, default_cfg_ms_bank)
+		cfg_ms_bank(guid_cfg_ms_bank, default_cfg_ms_bank),
+		cfg_sc_flavor(guid_cfg_sc_flavor, default_cfg_sc_flavor)
 #ifdef FLUIDSYNTHSUPPORT
 		,cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
 #endif
@@ -1251,6 +1265,8 @@ advconfig_branch_factory cfg_midi_parent("MIDI Player", guid_cfg_midi_parent, ad
 
 advconfig_string_factory cfg_vsti_search_path("VSTi search path", guid_cfg_vsti_search_path, guid_cfg_midi_parent, 0, "");
 
+advconfig_string_factory_MT cfg_sc_path("Secret Sauce path", guid_cfg_sc_path, guid_cfg_midi_parent, 0, "");
+
 advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops present", guid_cfg_midi_timing_parent, guid_cfg_midi_parent, 1.0);
 
 advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
@@ -1258,7 +1274,7 @@ advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fad
 
 advconfig_checkbox_factory cfg_bassmidi_effects("BASSMIDI - Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_midi_parent, 0, true);
 
-advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, true);
+advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
 
 advconfig_checkbox_factory cfg_adl_chorus("Apply a little detuning to adlmidi two chip panning, as well as pseudo 2op voices", guid_cfg_adl_chorus, guid_cfg_midi_parent, 0, true);
 
@@ -1320,7 +1336,7 @@ void ms_get_preset(const char * name, unsigned int & synth, unsigned int & bank)
 
 struct midi_preset
 {
-	enum { version = 4 };
+	enum { version = 5 };
 
 	// version 0
 	unsigned int plugin;
@@ -1357,6 +1373,9 @@ struct midi_preset
 	unsigned int ms_synth;
 	unsigned int ms_bank;
 
+	// v5 - plug-in == 10 - Secret Sauce
+	unsigned int sc_flavor;
+
 	midi_preset()
 	{
 		plugin = cfg_plugin;
@@ -1387,6 +1406,7 @@ struct midi_preset
 		munt_gm_set = cfg_munt_gm;
 		ms_synth = cfg_ms_synth;
 		ms_bank = cfg_ms_bank;
+		sc_flavor = cfg_sc_flavor;
 	}
 
 	void serialize(pfc::string8 & p_out)
@@ -1474,6 +1494,11 @@ struct midi_preset
 			p_out += "|";
 			p_out += ms_get_preset_name( ms_synth, ms_bank );
 		}
+		else if ( plugin == 10 )
+		{
+			p_out += "|";
+			p_out += pfc::format_int( sc_flavor );
+		}
 	}
 
 	void unserialize( const char * p_in )
@@ -1500,6 +1525,7 @@ struct midi_preset
 		bool in_adl_chorus;
 		unsigned in_munt_gm_set;
 		unsigned in_ms_synth, in_ms_bank;
+		unsigned in_sc_flavor;
 
 		if ( *bar_pos )
 		{
@@ -1632,6 +1658,12 @@ struct midi_preset
 			temp.set_string(p_in, bar_pos - p_in);
 			ms_get_preset(temp, in_ms_synth, in_ms_bank);
 		}
+		else if ( in_plugin == 10 )
+		{
+			in_sc_flavor = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+			if ( in_sc_flavor > SCPlayer::sc_xg )
+				in_sc_flavor = SCPlayer::sc_default;
+		}
 
 		plugin = in_plugin;
 		vst_path = in_vst_path;
@@ -1648,6 +1680,7 @@ struct midi_preset
 		munt_gm_set = in_munt_gm_set;
 		ms_synth = in_ms_synth;
 		ms_bank = in_ms_bank;
+		sc_flavor = in_sc_flavor;
 	}
 };
 
@@ -2648,6 +2681,39 @@ public:
 					return;
 				}
 			}
+			else if (plugin == 10)
+			{
+				delete midiPlayer;
+
+				SCPlayer * scPlayer = new SCPlayer();
+				midiPlayer = scPlayer;
+
+				pfc::string8 p_path;
+				cfg_sc_path.get(p_path);
+				if (!strlen(p_path))
+				{
+					p_path = core_api::get_my_full_path();
+					p_path.truncate(p_path.scan_filename());
+				}
+
+				scPlayer->set_sccore_path(p_path);
+				scPlayer->set_mode((SCPlayer::sc_mode)(unsigned int)cfg_sc_flavor);
+
+				scPlayer->setSampleRate(srate);
+
+				unsigned loop_mode = 0;
+
+				loop_mode = MIDIPlayer::loop_mode_enable;
+				if (loop_type > 1) loop_mode |= MIDIPlayer::loop_mode_force;
+
+				if (scPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
+				{
+					eof = false;
+					dont_loop = true;
+
+					return;
+				}
+			}
 			else
 			{
 				/* oh boy, yank in an external service! */
@@ -3043,6 +3109,7 @@ public:
 		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_MUNT_GM, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_MS_PRESET, CBN_SELCHANGE, OnSelectionChange)
+		COMMAND_HANDLER_EX(IDC_SC_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
 		MSG_WM_TIMER(OnTimer)
 	END_MSG_MAP()
 private:
@@ -3059,9 +3126,11 @@ private:
 
 	void enum_vsti_plugins( const char * _path = 0, puFindFile _find = 0 );
 
+	bool check_secret_sauce();
+
 	const preferences_page_callback::ptr m_callback;
 
-	bool busy;
+	bool busy, secret_sauce_found;
 
 #ifdef DXISUPPORT
 	pfc::array_t< CLSID > dxi_plugins;
@@ -3208,11 +3277,70 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 	}
 }
 
+static const size_t g_sc_known_size = 27472384;
+static const hasher_md5_result g_sc_known_hash = { 0xd4, 0x4d, 0x1b, 0x8c, 0x9a, 0x6f, 0x95, 0x6c, 0xa2, 0x32, 0x4f, 0x2f, 0x5d, 0x34, 0x8c, 0x44 };
+
+bool CMyPreferences::check_secret_sauce()
+{
+	pfc::string8 path;
+	cfg_sc_path.get(path);
+
+	if (path.is_empty()) return false;
+
+	path += "\\";
+	path += g_sc_name;
+
+	pfc::stringcvt::string_os_from_utf8 pathnative(path);
+
+	FILE * f = _tfopen(pathnative, _T("rb"));
+	if (!f) return false;
+
+	fseek(f, 0, SEEK_END);
+	if (ftell(f) != g_sc_known_size)
+	{
+		fclose(f);
+		return false;
+	}
+	fseek(f, 0, SEEK_SET);
+
+	unsigned char buffer[1024];
+	static_api_ptr_t<hasher_md5> m_hasher;
+	hasher_md5_state m_hasher_state;
+	hasher_md5_result m_hasher_result;
+	size_t bytes_total = 0;
+
+	m_hasher->initialize(m_hasher_state);
+
+	while (!feof(f))
+	{
+		size_t bytes_read = fread(buffer, 1, 1024, f);
+		bytes_total += bytes_read;
+		if (bytes_read)
+		{
+			m_hasher->process(m_hasher_state, buffer, bytes_read);
+		}
+		if (bytes_read < 1024) break;
+	}
+
+	fclose(f);
+
+	if (bytes_total != g_sc_known_size) return false;
+
+	m_hasher_result = m_hasher->get_result(m_hasher_state);
+
+	return m_hasher_result == g_sc_known_hash;
+}
+
 static const char * chip_counts[] = {"1", "2", "5", "10", "25", "50", "100"};
 
 BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	CWindow w;
 	int plugin = cfg_plugin;
+
+	secret_sauce_found = check_secret_sauce();
+
+	if (!secret_sauce_found && plugin == 10)
+		plugin = default_cfg_plugin;
 	
 	w = GetDlgItem( IDC_PLUGIN );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Emu de MIDI" );
@@ -3225,6 +3353,8 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	uSendMessageText( w, CB_ADDSTRING, 0, "fmmidi" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "oplmidi" );
 	uSendMessageText(w, CB_ADDSTRING, 0, "Nuclear Option");
+
+	if (secret_sauce_found) uSendMessageText(w, CB_ADDSTRING, 0, "Secret Sauce");
 
 #ifndef FLUIDSYNTHSUPPORT
 	if ( plugin == 2 ) plugin = 4;
@@ -3315,6 +3445,19 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
 	}
 
+	if (!secret_sauce_found)
+	{
+		GetDlgItem(IDC_SC_GROUP).ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_SC_FLAVOR_TEXT).ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_SC_FLAVOR).ShowWindow(SW_HIDE);
+	}
+
+	if (plugin != 10)
+	{
+		GetDlgItem(IDC_SC_FLAVOR_TEXT).EnableWindow(FALSE);
+		GetDlgItem(IDC_SC_FLAVOR).EnableWindow(FALSE);
+	}
+
 	{
 		m_soundfont = cfg_soundfont_path;
 		const char * filename;
@@ -3358,7 +3501,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	CoUninitialize();
 #endif
-	if ( plugin == 1 ) plugin += vsti_selected + 6;
+	if ( plugin == 1 ) plugin += vsti_selected + 7 + (secret_sauce_found ? 1 : 0);
 	else if ( plugin >= 2 && plugin <= 4 )
 	{
 		plugin = plugin == 2 ? 1 : plugin == 4 ? 2 : 3;
@@ -3378,6 +3521,10 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	else if ( plugin == 9 )
 	{
 		plugin = 7;
+	}
+	else if ( plugin == 10 )
+	{
+		plugin = 8;
 	}
 #ifdef DXISUPPORT
 	else if ( plugin == 5 )
@@ -3500,6 +3647,20 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	::SendMessage(w, CB_SETCURSEL, preset_number, 0);
 
+	if ( secret_sauce_found )
+	{
+		w = GetDlgItem( IDC_SC_FLAVOR );
+		uSendMessageText( w, CB_ADDSTRING, 0, "Default" );
+		uSendMessageText( w, CB_ADDSTRING, 0, "G" );
+		uSendMessageText( w, CB_ADDSTRING, 0, "G2" );
+		uSendMessageText( w, CB_ADDSTRING, 0, "55");
+		uSendMessageText( w, CB_ADDSTRING, 0, "88" );
+		uSendMessageText( w, CB_ADDSTRING, 0, "88P" );
+		uSendMessageText( w, CB_ADDSTRING, 0, "885");
+		uSendMessageText( w, CB_ADDSTRING, 0, "X");
+		::SendMessage( w, CB_SETCURSEL, cfg_sc_flavor, 0 );
+	}
+
 	SetTimer( ID_REFRESH, 20 );
 
 	busy = false;
@@ -3521,16 +3682,17 @@ void CMyPreferences::OnButtonClick(UINT, int, CWindow) {
 
 void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 	int plugin = GetDlgItem( IDC_PLUGIN ).SendMessage( CB_GETCURSEL, 0, 0 );
+	int base = secret_sauce_found ? 9 : 8;
 #ifndef FLUIDSYNTHSUPPORT
 	if ( plugin > 0 ) ++plugin;
 #endif
-	if ( plugin >= 8 && plugin < 8 + vsti_plugins.get_count() )
+	if ( plugin >= base && plugin < base + vsti_plugins.get_count() )
 	{
 		busy = true;
 		OnChanged();
 
 		VSTiPlayer vstPlayer;
-		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - 8 ].path.c_str() ) )
+		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - base ].path.c_str() ) )
 		{
 			if ( vsti_config.size() )
 				vstPlayer.setChunk( &vsti_config[0], vsti_config.size() );
@@ -3565,6 +3727,8 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_ADL_PANNING ).EnableWindow( plugin == 4 );
 	GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( plugin == 7 );
 	GetDlgItem( IDC_MS_PRESET ).EnableWindow( plugin == 7 );
+	GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( plugin == 8 );
+	GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( plugin == 8 );
 
 #ifdef FLUIDSYNTHSUPPORT
 	GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 1 );
@@ -3592,11 +3756,13 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 
 	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
 
-	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= 8 && plugin < 8 + vsti_plugins.get_count() && vsti_plugins[ plugin - 8 ].has_editor );
+	int base = secret_sauce_found ? 9 : 8;
 
-	if ( plugin >= 8 && plugin < 8 + vsti_plugins.get_count() )
+	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= base && plugin < base + vsti_plugins.get_count() && vsti_plugins[ plugin - base ].has_editor );
+
+	if ( plugin >= base && plugin < base + vsti_plugins.get_count() )
 	{
-		vsti_config = cfg_vst_config[ vsti_plugins[ plugin - 8 ].unique_id ];
+		vsti_config = cfg_vst_config[ vsti_plugins[ plugin - base ].unique_id ];
 	}
 
 	OnChanged();
@@ -3679,7 +3845,7 @@ t_uint32 CMyPreferences::get_state() {
 }
 
 void CMyPreferences::reset() {
-	SendDlgItemMessage( IDC_PLUGIN, CB_SETCURSEL, default_cfg_plugin );
+	SendDlgItemMessage( IDC_PLUGIN, CB_SETCURSEL, 7 /* Nuclear Option */ );
 	if ( default_cfg_plugin != 2 && default_cfg_plugin != 4 )
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
@@ -3730,6 +3896,11 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_MS_PRESET ).EnableWindow( FALSE );
 	}
+	if ( default_cfg_plugin != 10 )
+	{
+		GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( FALSE );
+		GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( FALSE );
+	}
 
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
 	uSetDlgItemText( m_hWnd, IDC_MUNT, click_to_set );
@@ -3777,6 +3948,9 @@ void CMyPreferences::reset() {
 	}
 	SendDlgItemMessage( IDC_MS_PRESET, CB_SETCURSEL, preset_number );
 
+	if ( secret_sauce_found )
+		SendDlgItemMessage( IDC_SC_FLAVOR, CB_SETCURSEL, cfg_sc_flavor );
+
 	vsti_config.resize( 0 );
 
 	OnChanged();
@@ -3809,6 +3983,7 @@ void CMyPreferences::apply() {
 		cfg_ms_bank = preset.bank;
 	}
 	{
+		t_size base = secret_sauce_found ? 9 : 8;
 		t_size vsti_count = vsti_plugins.get_size();
 		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
 #ifdef DXISUPPORT
@@ -3844,17 +4019,21 @@ void CMyPreferences::apply() {
 		{
 			cfg_plugin = 9;
 		}
-		else if ( plugin <= vsti_count + 7 )
+		else if (secret_sauce_found && plugin == 8)
+		{
+			cfg_plugin = 10;
+		}
+		else if ( plugin <= vsti_count + base - 1 )
 		{
 			cfg_plugin = 1;
-			cfg_vst_path = vsti_plugins[ plugin - 8 ].path.c_str();
-			cfg_vst_config[ vsti_plugins[ plugin - 8 ].unique_id ] = vsti_config;
+			cfg_vst_path = vsti_plugins[ plugin - base ].path.c_str();
+			cfg_vst_config[ vsti_plugins[ plugin - base ].unique_id ] = vsti_config;
 		}
 #ifdef DXISUPPORT
-		else if ( plugin <= vsti_count + dxi_count + 7 )
+		else if ( plugin <= vsti_count + dxi_count + base - 2 )
 		{
 			cfg_plugin = 5;
-			cfg_dxi_plugin = dxi_plugins[ plugin - vsti_count - 8 ];
+			cfg_dxi_plugin = dxi_plugins[ plugin - vsti_count - base ];
 		}
 #endif
 	}
@@ -3872,6 +4051,8 @@ void CMyPreferences::apply() {
 	cfg_fluid_interp_method = interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ];
 #endif
 	cfg_resampling = SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL );
+	if (secret_sauce_found)
+		cfg_sc_flavor = SendDlgItemMessage( IDC_SC_FLAVOR, CB_GETCURSEL );
 	
 	OnChanged(); //our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
 }
@@ -3892,6 +4073,7 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ] != cfg_fluid_interp_method ) changed = true;
 #endif
 	if ( !changed && SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL ) != cfg_resampling ) changed = true;
+	if ( !changed && secret_sauce_found && SendDlgItemMessage( IDC_SC_FLAVOR, CB_GETCURSEL ) != cfg_sc_flavor ) changed = true;
 	if ( !changed )
 	{
 		unsigned int preset_number = SendDlgItemMessage( IDC_MS_PRESET, CB_GETCURSEL );
@@ -3910,6 +4092,7 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && SendDlgItemMessage( IDC_MUNT_GM, CB_GETCURSEL ) != cfg_munt_gm ) changed = true;
 	if ( !changed )
 	{
+		t_size base = secret_sauce_found ? 9 : 8;
 		t_size vsti_count = vsti_plugins.get_size();
 		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
 #ifdef DXISUPPORT
@@ -3944,19 +4127,23 @@ bool CMyPreferences::HasChanged() {
 		{
 			if ( cfg_plugin != 9 ) changed = true;
 		}
-		else if ( plugin <= vsti_count + 7 )
+		else if ( secret_sauce_found && plugin == 8 )
 		{
-			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - 8 ].path.c_str() ) ) changed = true;
+			if ( cfg_plugin != 10 ) changed = true;
+		}
+		else if ( plugin <= vsti_count + base - 1 )
+		{
+			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - base ].path.c_str() ) ) changed = true;
 			if ( !changed )
 			{
-				t_uint32 unique_id = vsti_plugins[ plugin - 8 ].unique_id;
+				t_uint32 unique_id = vsti_plugins[ plugin - base ].unique_id;
 				if ( vsti_config.size() != cfg_vst_config[ unique_id ].size() || (vsti_config.size() && memcmp( &vsti_config[0], &cfg_vst_config[ unique_id ][0], vsti_config.size() ) ) ) changed = true;
 			}
 		}
 #ifdef DXISUPPORT
-		else if ( plugin <= vsti_count + dxi_count + 7 )
+		else if ( plugin <= vsti_count + dxi_count + base - 1 )
 		{
-			if ( cfg_plugin != 5 || dxi_plugins[ plugin - vsti_count - 8 ] != cfg_dxi_plugin.get_value() ) changed = true;
+			if ( cfg_plugin != 5 || dxi_plugins[ plugin - vsti_count - base ] != cfg_dxi_plugin.get_value() ) changed = true;
 		}
 #endif
 	}
@@ -4271,6 +4458,7 @@ static contextmenu_item_factory_t <context_midi>            g_contextmenu_item_m
 static initquit_factory_t         <initquit_midi>           g_initquit_midi_factory;
 
 DECLARE_COMPONENT_VERSION("MIDI Player", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.\n\n"
+"My main man left the Crimson Lance to bring you the Secret Sauce!\n\n"
 "Notice for json-parser:\n"
 "Copyright (C) 2012, 2013, 2014 James McLaughlin et al.  All rights reserved.\n"
 "https://github.com/udp/json-parser\n"
