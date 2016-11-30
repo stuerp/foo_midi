@@ -177,7 +177,7 @@ void SCPlayer::reset_sc(uint32_t port)
 
 void SCPlayer::reset(uint32_t port)
 {
-	if (sampler[port].TG_initialize)
+	if (initialized)
 	{
 		switch (mode)
 		{
@@ -326,10 +326,15 @@ bool SCPlayer::startup()
 		sampler[i].TG_setSampleRate((float)uSampleRate);
 		sampler[i].TG_setSampleRate((float)uSampleRate);
 		sampler[i].TG_setMaxBlockSize(4096);
-		reset(i);
 	}
 	
 	initialized = true;
+    
+    for (int i = 0; i < 3; i++)
+    {
+        reset(i);
+        sampler[i].TG_flushMidi();
+    }
     
 	return true;
 }
