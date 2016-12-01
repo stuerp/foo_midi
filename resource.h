@@ -35,9 +35,11 @@
 #define IDC_MUNT_GM                     1028
 #define IDC_MS_PRESET                   1029
 #define IDC_SC_FLAVOR_TEXT              1030
-#define IDC_MS_PRESET2                  1031
 #define IDC_SC_FLAVOR                   1031
 #define IDC_SC_GROUP                    1032
+#define IDC_MS_PANNING                  1033
+#define IDC_MS_PANNING2                 1034
+#define IDC_SC_EFFECTS                  1034
 
 // Next default values for new objects
 // 

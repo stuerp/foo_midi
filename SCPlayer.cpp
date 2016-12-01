@@ -78,6 +78,14 @@ SCPlayer::~SCPlayer()
 	}
 }
 
+void SCPlayer::set_reverb(bool enable)
+{
+	reverb = enable;
+	reset(0);
+	reset(1);
+	reset(2);
+}
+
 void SCPlayer::set_sccore_path(const char *path)
 {
 	size_t len;
@@ -179,6 +187,10 @@ void SCPlayer::reset(uint32_t port)
 {
 	if (initialized)
 	{
+		sampler[port].TG_LongMidiIn(syx_reset_xg, 0); junk(port, 1024);
+		sampler[port].TG_LongMidiIn(syx_reset_gm2, 0); junk(port, 1024);
+		sampler[port].TG_LongMidiIn(syx_reset_gm, 0); junk(port, 1024);
+
 		switch (mode)
 		{
 			case sc_gm:
@@ -202,25 +214,50 @@ void SCPlayer::reset(uint32_t port)
 				break;
 		}
 
+		junk(port, 1024);
+
 		{
 			unsigned int i;
 			for (i = 0; i < 16; ++i)
 			{
 				sampler[port].TG_ShortMidiIn(0x78B0 + i, 0);
 				sampler[port].TG_ShortMidiIn(0x79B0 + i, 0);
+				sampler[port].TG_ShortMidiIn(0x20B0 + i, 0);
+				sampler[port].TG_ShortMidiIn(0x00B0 + i, 0);
+				sampler[port].TG_ShortMidiIn(0xC0 + i, 0);
 			}
 		}
 
+		if (!reverb)
 		{
-			float temp[1024];
-			unsigned int i, j;
-			for (i = 0, j = (uSampleRate / 1536 + 1); i < j; ++i)
+			unsigned int i;
+			for (i = 0; i < 16; ++i)
 			{
-				memset(temp, 0, sizeof(temp));
-				sampler[port].TG_setInterruptThreadIdAtThisTime();
-				sampler[port].TG_Process(temp, temp, 1024);
+				sampler[port].TG_ShortMidiIn(0x5BB0 + i, 0);
+				sampler[port].TG_ShortMidiIn(0x5DB0 + i, 0);
 			}
 		}
+
+		junk(port, uSampleRate * 2 / 3);
+	}
+}
+
+void SCPlayer::junk(uint32_t port, unsigned long count)
+{
+	float temp[2][1024];
+	unsigned long i, j;
+	for (i = 0, j = count / 1024; i < j; ++i)
+	{
+		memset(temp, 0, sizeof(temp));
+		sampler[port].TG_setInterruptThreadIdAtThisTime();
+		sampler[port].TG_Process(temp[0], temp[1], 1024);
+	}
+	count %= 1024;
+	if (count)
+	{
+		memset(temp, 0, sizeof(temp));
+		sampler[port].TG_setInterruptThreadIdAtThisTime();
+		sampler[port].TG_Process(temp[0], temp[1], count);
 	}
 }
 
@@ -238,6 +275,8 @@ void SCPlayer::send_event(uint32_t b)
 	{
 		unsigned port = (b >> 24) & 0x7F;
 		if ( port > 2 ) port = 2;
+		if (!reverb && (((b & 0x7FF0) == 0x5BB0) || ((b & 0x7FF0) == 0x5DB0)))
+			return;
 		sampler[port].TG_ShortMidiIn(b, 0);
 	}
 	else
@@ -333,7 +372,6 @@ bool SCPlayer::startup()
     for (int i = 0; i < 3; i++)
     {
         reset(i);
-        sampler[i].TG_flushMidi();
     }
     
 	return true;

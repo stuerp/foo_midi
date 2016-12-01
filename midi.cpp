@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.2"
+#define MYVERSION "2.0.3"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+
+2016-12-01 03:58 UTC - kode54
+- Improved Secret Sauce reset with even heavier resetting
+- Added Secret Sauce reverb/chorus disable
+- Added Nuclear Option soft panning control
+- Oops! Was reading Secret Sauce flavor from configuration rather than preset
+- Version is now 2.0.3
 
 2016-11-29 07:11 UTC - kode54
 - Unleash the Secret Sauce!
@@ -1155,6 +1162,12 @@ static const GUID guid_cfg_sc_flavor =
 // {1BF1799D-7691-4075-98AE-43AE82D8C9CF}
 static const GUID guid_cfg_sc_path =
 { 0x1bf1799d, 0x7691, 0x4075,{ 0x98, 0xae, 0x43, 0xae, 0x82, 0xd8, 0xc9, 0xcf } };
+// {849C5C09-520A-4D62-A6D1-E8B432664948}
+static const GUID guid_cfg_ms_panning =
+{ 0x849c5c09, 0x520a, 0x4d62,{ 0xa6, 0xd1, 0xe8, 0xb4, 0x32, 0x66, 0x49, 0x48 } };
+// {091C12A1-D42B-4F4E-8058-8B7F4C4DF3A1}
+static const GUID guid_cfg_sc_reverb =
+{ 0x91c12a1, 0xd42b, 0x4f4e,{ 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
 
 
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>> {
@@ -1219,6 +1232,8 @@ enum
 	default_cfg_ms_synth = 0,
 	default_cfg_ms_bank = 2,
 	default_cfg_sc_flavor = SCPlayer::sc_default,
+	default_cfg_ms_panning = 0,
+	default_cfg_sc_reverb = 1,
 #ifdef FLUIDSYNTHSUPPORT
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
 #endif
@@ -1243,7 +1258,9 @@ cfg_int cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz), cfg_xmiloopz(g
 		/*cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op),*/
 		cfg_ms_synth(guid_cfg_ms_synth, default_cfg_ms_synth),
 		cfg_ms_bank(guid_cfg_ms_bank, default_cfg_ms_bank),
-		cfg_sc_flavor(guid_cfg_sc_flavor, default_cfg_sc_flavor)
+		cfg_sc_flavor(guid_cfg_sc_flavor, default_cfg_sc_flavor),
+		cfg_ms_panning(guid_cfg_ms_panning, default_cfg_ms_panning),
+		cfg_sc_reverb(guid_cfg_sc_reverb, default_cfg_sc_reverb)
 #ifdef FLUIDSYNTHSUPPORT
 		,cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
 #endif
@@ -1336,7 +1353,7 @@ void ms_get_preset(const char * name, unsigned int & synth, unsigned int & bank)
 
 struct midi_preset
 {
-	enum { version = 5 };
+	enum { version = 6 };
 
 	// version 0
 	unsigned int plugin;
@@ -1372,9 +1389,13 @@ struct midi_preset
 	// v4 - plug-in == 9 - Nuclear Option
 	unsigned int ms_synth;
 	unsigned int ms_bank;
+	// v6 - panning
+	bool ms_panning;
 
 	// v5 - plug-in == 10 - Secret Sauce
 	unsigned int sc_flavor;
+	// v6 - reverb
+	bool sc_reverb;
 
 	midi_preset()
 	{
@@ -1407,6 +1428,8 @@ struct midi_preset
 		ms_synth = cfg_ms_synth;
 		ms_bank = cfg_ms_bank;
 		sc_flavor = cfg_sc_flavor;
+		ms_panning = cfg_ms_panning;
+		sc_reverb = cfg_sc_reverb;
 	}
 
 	void serialize(pfc::string8 & p_out)
@@ -1493,11 +1516,15 @@ struct midi_preset
 		{
 			p_out += "|";
 			p_out += ms_get_preset_name( ms_synth, ms_bank );
+			p_out += "|";
+			p_out += pfc::format_int( ms_panning );
 		}
 		else if ( plugin == 10 )
 		{
 			p_out += "|";
 			p_out += pfc::format_int( sc_flavor );
+			p_out += "|";
+			p_out += pfc::format_int( sc_reverb );
 		}
 	}
 
@@ -1526,6 +1553,8 @@ struct midi_preset
 		unsigned in_munt_gm_set;
 		unsigned in_ms_synth, in_ms_bank;
 		unsigned in_sc_flavor;
+		bool in_ms_panning;
+		bool in_sc_reverb;
 
 		if ( *bar_pos )
 		{
@@ -1657,12 +1686,38 @@ struct midi_preset
 			pfc::string8 temp;
 			temp.set_string(p_in, bar_pos - p_in);
 			ms_get_preset(temp, in_ms_synth, in_ms_bank);
+			if ( version >= 6 )
+			{
+				p_in = bar_pos + (*bar_pos == '|');
+				bar_pos = strchr(p_in, '|');
+				if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+				if (!*p_in) return;
+				in_ms_panning = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+			}
+			else
+			{
+				in_ms_panning = true;
+			}
 		}
 		else if ( in_plugin == 10 )
 		{
 			in_sc_flavor = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
 			if ( in_sc_flavor > SCPlayer::sc_xg )
 				in_sc_flavor = SCPlayer::sc_default;
+			if (version >= 6)
+			{
+				p_in = bar_pos + (*bar_pos == '|');
+				bar_pos = strchr(p_in, '|');
+				if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+				if (!*p_in) return;
+				in_sc_reverb = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+			}
+			else
+			{
+				in_sc_reverb = true;
+			}
 		}
 
 		plugin = in_plugin;
@@ -1681,6 +1736,8 @@ struct midi_preset
 		ms_synth = in_ms_synth;
 		ms_bank = in_ms_bank;
 		sc_flavor = in_sc_flavor;
+		ms_panning = in_ms_panning;
+		sc_reverb = in_sc_reverb;
 	}
 };
 
@@ -2664,7 +2721,7 @@ public:
 
 				msPlayer->set_synth(thePreset.ms_synth);
 				msPlayer->set_bank(thePreset.ms_bank);
-				msPlayer->set_extp(1);
+				msPlayer->set_extp(thePreset.ms_panning);
 
 				msPlayer->setSampleRate(srate);
 
@@ -2697,7 +2754,8 @@ public:
 				}
 
 				scPlayer->set_sccore_path(p_path);
-				scPlayer->set_mode((SCPlayer::sc_mode)(unsigned int)cfg_sc_flavor);
+				scPlayer->set_mode((SCPlayer::sc_mode)thePreset.sc_flavor);
+				scPlayer->set_reverb(thePreset.sc_reverb);
 
 				scPlayer->setSampleRate(srate);
 
@@ -3110,6 +3168,8 @@ public:
 		COMMAND_HANDLER_EX(IDC_MUNT_GM, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_MS_PRESET, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_SC_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
+		COMMAND_HANDLER_EX(IDC_MS_PANNING, BN_CLICKED, OnButtonClick)
+		COMMAND_HANDLER_EX(IDC_SC_EFFECTS, BN_CLICKED, OnButtonClick)
 		MSG_WM_TIMER(OnTimer)
 	END_MSG_MAP()
 private:
@@ -3443,6 +3503,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	{
 		GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
 		GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
+		GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
 	}
 
 	if (!secret_sauce_found)
@@ -3450,12 +3511,14 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem(IDC_SC_GROUP).ShowWindow(SW_HIDE);
 		GetDlgItem(IDC_SC_FLAVOR_TEXT).ShowWindow(SW_HIDE);
 		GetDlgItem(IDC_SC_FLAVOR).ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_SC_EFFECTS).ShowWindow(SW_HIDE);
 	}
 
 	if (plugin != 10)
 	{
 		GetDlgItem(IDC_SC_FLAVOR_TEXT).EnableWindow(FALSE);
 		GetDlgItem(IDC_SC_FLAVOR).EnableWindow(FALSE);
+		GetDlgItem(IDC_SC_EFFECTS).EnableWindow(FALSE);
 	}
 
 	{
@@ -3582,6 +3645,10 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, cfg_recover_tracks );
 	//SendDlgItemMessage( IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex );
 	//SendDlgItemMessage( IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums );
+
+	SendDlgItemMessage( IDC_MS_PANNING, BM_SETCHECK, cfg_ms_panning );
+	if (secret_sauce_found)
+		SendDlgItemMessage( IDC_SC_EFFECTS, BM_SETCHECK, !cfg_sc_reverb );
 
 	for ( unsigned i = 0; i < _countof( banknames ); i++ )
 	{
@@ -3727,8 +3794,13 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_ADL_PANNING ).EnableWindow( plugin == 4 );
 	GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( plugin == 7 );
 	GetDlgItem( IDC_MS_PRESET ).EnableWindow( plugin == 7 );
-	GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( plugin == 8 );
-	GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( plugin == 8 );
+	GetDlgItem( IDC_MS_PANNING ).EnableWindow( plugin == 7 );
+	if (secret_sauce_found)
+	{
+		GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( plugin == 8 );
+		GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( plugin == 8 );
+		GetDlgItem( IDC_SC_EFFECTS ).EnableWindow( plugin == 8 );
+	}
 
 #ifdef FLUIDSYNTHSUPPORT
 	GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 1 );
@@ -3895,11 +3967,13 @@ void CMyPreferences::reset() {
 	{
 		GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_MS_PRESET ).EnableWindow( FALSE );
+		GetDlgItem( IDC_MS_PANNING ).EnableWindow( FALSE );
 	}
 	if ( default_cfg_plugin != 10 )
 	{
 		GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( FALSE );
+		GetDlgItem( IDC_SC_EFFECTS ).EnableWindow( FALSE );
 	}
 
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
@@ -3918,6 +3992,8 @@ void CMyPreferences::reset() {
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion );
 	SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments );
 	SendDlgItemMessage( IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks );
+	SendDlgItemMessage( IDC_MS_PANNING, BM_SETCHECK, default_cfg_ms_panning );
+	SendDlgItemMessage( IDC_SC_EFFECTS, BM_SETCHECK, !default_cfg_sc_reverb );
 	unsigned bank_selected = 0;
 	for ( unsigned i = 0; i < m_bank_list.get_count(); i++ )
 	{
@@ -4046,13 +4122,17 @@ void CMyPreferences::apply() {
 	cfg_emidi_exclusion = SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK );
 	cfg_filter_instruments = SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_GETCHECK );
 	cfg_filter_banks = SendDlgItemMessage( IDC_FILTER_BANKS, BM_GETCHECK );
+	cfg_ms_panning = SendDlgItemMessage( IDC_MS_PANNING, BM_GETCHECK );
 	//cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
 #ifdef FLUIDSYNTHSUPPORT
 	cfg_fluid_interp_method = interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ];
 #endif
 	cfg_resampling = SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL );
 	if (secret_sauce_found)
+	{
 		cfg_sc_flavor = SendDlgItemMessage( IDC_SC_FLAVOR, CB_GETCURSEL );
+		cfg_sc_reverb = !SendDlgItemMessage( IDC_SC_EFFECTS, BM_GETCHECK );
+	}
 	
 	OnChanged(); //our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
 }
@@ -4068,12 +4148,17 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && SendDlgItemMessage( IDC_EMIDI_EX, BM_GETCHECK ) != cfg_emidi_exclusion ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_GETCHECK ) != cfg_filter_instruments ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_FILTER_BANKS, BM_GETCHECK ) != cfg_filter_banks ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_MS_PANNING, BM_GETCHECK ) != cfg_ms_panning ) changed = true;
 	//if ( !changed && SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK ) != cfg_recover_tracks ) changed = true;
 #ifdef FLUIDSYNTHSUPPORT
 	if ( !changed && interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ] != cfg_fluid_interp_method ) changed = true;
 #endif
 	if ( !changed && SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL ) != cfg_resampling ) changed = true;
-	if ( !changed && secret_sauce_found && SendDlgItemMessage( IDC_SC_FLAVOR, CB_GETCURSEL ) != cfg_sc_flavor ) changed = true;
+	if ( secret_sauce_found )
+	{
+		if ( !changed && SendDlgItemMessage( IDC_SC_FLAVOR, CB_GETCURSEL ) != cfg_sc_flavor ) changed = true;
+		if ( !changed && !SendDlgItemMessage( IDC_SC_EFFECTS, BM_GETCHECK ) != cfg_sc_reverb ) changed = true;
+	}
 	if ( !changed )
 	{
 		unsigned int preset_number = SendDlgItemMessage( IDC_MS_PRESET, CB_GETCURSEL );

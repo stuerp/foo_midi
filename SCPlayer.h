@@ -33,6 +33,8 @@ public:
 	
 	void set_mode(sc_mode m);
 
+	void set_reverb(bool enable);
+
 	void set_sccore_path(const char * path);
 
 protected:
@@ -49,11 +51,15 @@ private:
 
 	void reset(uint32_t port);
 
+	void junk(uint32_t port, unsigned long count);
+
 	unsigned int instance_id;
 	SCCore * sampler;
 	bool initialized;
 	
 	sc_mode mode;
+
+	bool reverb;
 
 	char * sccore_path;
 };
