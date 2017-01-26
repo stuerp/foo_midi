@@ -172,14 +172,14 @@ void SCPlayer::reset_sc(uint32_t port)
 	for (i = 0x41; i <= 0x49; ++i)
 	{
 		message[6] = i;
-		send_gs(port, message);
+		send_gs(port, message); junk(port, 128);
 	}
 	message[6] = 0x40;
-	send_gs(port, message);
+	send_gs(port, message); junk(port, 128);
 	for (i = 0x4A; i <= 0x4F; ++i)
 	{
 		message[6] = i;
-		send_gs(port, message);
+		send_gs(port, message); junk(port, 128);
 	}
 }
 
@@ -194,7 +194,7 @@ void SCPlayer::reset(uint32_t port)
 		switch (mode)
 		{
 			case sc_gm:
-				sampler[port].TG_LongMidiIn( syx_reset_gm, 0 );
+				/*sampler[port].TG_LongMidiIn( syx_reset_gm, 0 );*/
 				break;
 				
 			case sc_gm2:
@@ -206,6 +206,7 @@ void SCPlayer::reset(uint32_t port)
 			case sc_sc88pro:
 			case sc_sc8850:
 			case sc_default:
+				sampler[port].TG_LongMidiIn( syx_reset_gs, 0 ); junk( port, 1024 );
 				reset_sc(port);
 				break;
 				

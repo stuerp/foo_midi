@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.4"
+#define MYVERSION "2.0.5"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2017-01-26 01:46 UTC - kode54
+- Fixed Secret Sauce GS reset
+- Version is now 2.0.5
 
 2016-12-21 01:03 UTC - kode54
 - Fixed Secret Sauce seeking
