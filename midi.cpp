@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.7"
+#define MYVERSION "2.0.8"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2017-02-04 19:28 UTC - kode54
+- Updated BASS libraries
+- Version is now 2.0.8
 
 2017-02-04 04:51 UTC - kode54
 - Add link to about string
@@ -4559,9 +4563,13 @@ static service_factory_single_t   <midi_file_types>         g_input_file_type_mi
 static contextmenu_item_factory_t <context_midi>            g_contextmenu_item_midi_factory;
 static initquit_factory_t         <initquit_midi>           g_initquit_midi_factory;
 
+#include "../patrons.h"
+
 DECLARE_COMPONENT_VERSION("MIDI Player", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.\n\n"
 "My main man left the Crimson Lance to bring you the Secret Sauce!\n\n"
 "https://www.patreon.com/kode54""\n\n"
+MY_PATRONS
+"\n\n"
 "Notice for json-parser:\n"
 "Copyright (C) 2012, 2013, 2014 James McLaughlin et al.  All rights reserved.\n"
 "https://github.com/udp/json-parser\n"
@@ -4617,7 +4625,7 @@ DECLARE_COMPONENT_VERSION("MIDI Player", MYVERSION, "Special thanks go to DEATH'
 "SUCH DAMAGE.\n"
 "\n\n"
 "Notice for sflist loader:\n"
-"Copyright(C) 2016 Christopher Snowhill.All rights reserved.\n"
+"Copyright(C) 2017 Christopher Snowhill.All rights reserved.\n"
 "https://github.com/kode54/sflist\n"
 "https://gist.github.com/kode54/a7bb01a0db3f2e996145b77f0ca510d5\n"
 "\n"
