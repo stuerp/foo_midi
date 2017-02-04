@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.6"
+#define MYVERSION "2.0.7"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2017-02-04 04:51 UTC - kode54
+- Add link to about string
+- Version is now 2.0.7
 
 2017-01-27 22:20 UTC - kode54
 - Fixed Secret Sauce XG reset
@@ -4557,6 +4561,7 @@ static initquit_factory_t         <initquit_midi>           g_initquit_midi_fact
 
 DECLARE_COMPONENT_VERSION("MIDI Player", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.\n\n"
 "My main man left the Crimson Lance to bring you the Secret Sauce!\n\n"
+"https://www.patreon.com/kode54""\n\n"
 "Notice for json-parser:\n"
 "Copyright (C) 2012, 2013, 2014 James McLaughlin et al.  All rights reserved.\n"
 "https://github.com/udp/json-parser\n"
