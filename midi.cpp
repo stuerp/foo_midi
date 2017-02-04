@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.5"
+#define MYVERSION "2.0.6"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2017-01-27 22:20 UTC - kode54
+- Fixed Secret Sauce XG reset
+- Secret Sauce now prevents GS flavor setting if an override is in place
+- Version is now 2.0.6
 
 2017-01-26 01:46 UTC - kode54
 - Fixed Secret Sauce GS reset

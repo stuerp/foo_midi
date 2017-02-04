@@ -118,8 +118,29 @@ static bool syx_is_reset(const uint8_t * data)
 	return syx_equal(data, syx_reset_gm) || syx_equal(data, syx_reset_gm2) || syx_equal(data, syx_reset_gs) || syx_equal(data, syx_reset_xg);
 }
 
+static bool syx_is_gs_limit_bank_lsb(const uint8_t * data)
+{
+	const uint8_t * a = data, * b = syx_gs_limit_bank_lsb;
+	while (*a != 0xF7 && *b != 0xF7 && *a == *b && (a - data) < 6)
+	{
+		a++; b++;
+	}
+	if ((a - data) < 6) return false;
+	unsigned char checksum = 0;
+	unsigned int i;
+	for (i = 5; data[i + 1] != 0xF7; ++i)
+		checksum += data[i];
+	checksum = (128 - checksum) & 127;
+	if (i != 9 || data[9] != checksum) return false;
+	if (data[7] != 1) return false;
+	if (data[6] < 0x40 || data[6] > 0x4F) return false;
+	return true;
+}
+
 void SCPlayer::send_sysex(uint32_t port, const uint8_t * data)
 {
+	if (syx_is_gs_limit_bank_lsb(data) && mode != sc_default)
+		return;
 	sampler[port].TG_LongMidiIn( data, 0 );
 	if (syx_is_reset(data) && mode != sc_default)
 	{
@@ -223,10 +244,20 @@ void SCPlayer::reset(uint32_t port)
 			{
 				sampler[port].TG_ShortMidiIn(0x78B0 + i, 0);
 				sampler[port].TG_ShortMidiIn(0x79B0 + i, 0);
-				sampler[port].TG_ShortMidiIn(0x20B0 + i, 0);
-				sampler[port].TG_ShortMidiIn(0x00B0 + i, 0);
-				sampler[port].TG_ShortMidiIn(0xC0 + i, 0);
+				if (mode != sc_xg || i != 9)
+				{
+					sampler[port].TG_ShortMidiIn(0x20B0 + i, 0);
+					sampler[port].TG_ShortMidiIn(0x00B0 + i, 0);
+					sampler[port].TG_ShortMidiIn(0xC0 + i, 0);
+				}
 			}
+		}
+
+		if (mode == sc_xg)
+		{
+			sampler[port].TG_ShortMidiIn(0x20B9, 0);
+			sampler[port].TG_ShortMidiIn(0x7F00B9, 0);
+			sampler[port].TG_ShortMidiIn(0xC9, 0);
 		}
 
 		if (!reverb)
