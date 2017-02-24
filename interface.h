@@ -32,4 +32,5 @@ public:
 
 nomidisynth* getsynth_doom();
 nomidisynth* getsynth_opl3w();
+nomidisynth* getsynth_apogee();
 fm_chip* getchip();

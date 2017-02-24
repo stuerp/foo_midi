@@ -76,6 +76,10 @@ bool MSPlayer::startup()
         case 1:
             synth = getsynth_opl3w();
             break;
+
+		case 2:
+			synth = getsynth_apogee();
+			break;
     }
     
     if (!synth) return false;
@@ -138,4 +142,27 @@ void MSPlayer::enum_synthesizers(enum_callback callback)
     }
     
     delete synth;
+
+	synth = getsynth_apogee();
+
+	synth_name = synth->midi_synth_name();
+
+	count = synth->midi_bank_count();
+
+	if (count > 1)
+	{
+		for (i = 0; i < count; ++i)
+		{
+			strcpy(buffer, synth_name);
+			strcat(buffer, " ");
+			strcat(buffer, synth->midi_bank_name(i));
+			callback(2, i, buffer);
+		}
+	}
+	else
+	{
+		callback(2, 0, synth_name);
+	}
+
+	delete synth;
 }

@@ -303,6 +303,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="synthlib_apogee\al_midi.cpp" />
     <ClCompile Include="synthlib_doom\i_oplmusic.cpp" />
     <ClCompile Include="synthlib_opl3w\opl3midi.cpp" />
     <ClCompile Include="VSTiPlayer.cpp" />
@@ -356,6 +357,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|Win32'">true</ExcludedFromBuild>
     </CustomBuild>
+    <ClInclude Include="synthlib_apogee\al_midi.h" />
+    <ClInclude Include="synthlib_apogee\inst\apogee_blood.h" />
+    <ClInclude Include="synthlib_apogee\inst\apogee_duke3d.h" />
+    <ClInclude Include="synthlib_apogee\inst\apogee_lee.h" />
+    <ClInclude Include="synthlib_apogee\inst\apogee_nam.h" />
+    <ClInclude Include="synthlib_apogee\inst\apogee_sw.h" />
+    <ClInclude Include="synthlib_apogee\_al_midi.h" />
     <ClInclude Include="synthlib_doom\inst\dmx_dmx.h" />
     <ClInclude Include="synthlib_doom\inst\dmx_doom1.h" />
     <ClInclude Include="synthlib_doom\inst\dmx_doom2.h" />

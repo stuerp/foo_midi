@@ -2,10 +2,33 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #include "SCCore.h"
+
+#include "../shared/shared.h"
+
+static struct cleanup_proc
+{
+	cleanup_proc()
+	{
+		pfc::string8 temp_path;
+		pfc::string8_fast temp_file;
+		if (uGetTempPath(temp_path))
+		{
+			temp_file = temp_path;
+			temp_file += "SCC*.tmp";
+			uFindFile *file = uFindFirstFile(temp_file);
+			while (file)
+			{
+				temp_file = temp_path;
+				temp_file += file->GetFileName();
+				uDeleteFile(temp_file);
+				if (!file->FindNext()) break;
+			}
+		}
+	}
+} do_cleanup;
 
 SCCore::SCCore()
 {

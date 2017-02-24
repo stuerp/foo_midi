@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.8"
+#define MYVERSION "2.0.9"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2017-02-24 02:34 UTC - kode54
+- Updated BASSMIDI and BASSFLAC libraries
+- Added Apogee MIDI driver to Nuclear Option set
+- Added dumb cleanup to Secret Sauce startup
+- Version is now 2.0.9
 
 2017-02-04 19:28 UTC - kode54
 - Updated BASS libraries

@@ -43,6 +43,9 @@
     <ClCompile Include="resampler.c" />
     <ClCompile Include="SCCore.cpp" />
     <ClCompile Include="SCPlayer.cpp" />
+    <ClCompile Include="synthlib_apogee\al_midi.cpp">
+      <Filter>synthlib_apogee</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -108,6 +111,27 @@
     <ClInclude Include="resampler.h" />
     <ClInclude Include="SCCore.h" />
     <ClInclude Include="SCPlayer.h" />
+    <ClInclude Include="synthlib_apogee\_al_midi.h">
+      <Filter>synthlib_apogee</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_apogee\al_midi.h">
+      <Filter>synthlib_apogee</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_apogee\inst\apogee_blood.h">
+      <Filter>synthlib_apogee\inst</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_apogee\inst\apogee_duke3d.h">
+      <Filter>synthlib_apogee\inst</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_apogee\inst\apogee_lee.h">
+      <Filter>synthlib_apogee\inst</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_apogee\inst\apogee_nam.h">
+      <Filter>synthlib_apogee\inst</Filter>
+    </ClInclude>
+    <ClInclude Include="synthlib_apogee\inst\apogee_sw.h">
+      <Filter>synthlib_apogee\inst</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
@@ -136,6 +160,12 @@
     </Filter>
     <Filter Include="synthlib_opl3w">
       <UniqueIdentifier>{ce267110-84ca-4373-87f8-a4c1f2f16a49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synthlib_apogee">
+      <UniqueIdentifier>{2dee18c8-401c-461b-95dd-6f2b6bc2a984}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synthlib_apogee\inst">
+      <UniqueIdentifier>{1846ef8c-56c6-47b6-827d-213edf2f5262}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
