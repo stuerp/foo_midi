@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.9"
+#define MYVERSION "2.0.10"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2017-03-13 01:49 UTC - kode54
+- Fixed support for some VSTi synthesizers, as I was incorrectly testing for
+  sendVstMidiEvent instead of receiveVstMidiEvent
+- Version is now 2.0.10
 
 2017-02-24 02:34 UTC - kode54
 - Updated BASSMIDI and BASSFLAC libraries
