@@ -140,6 +140,11 @@ int MT32Player::getSampleRate()
 	return MT32Emu::Synth::getStereoOutputSampleRate(useMode);
 }
 
+bool MT32Player::isConfigValid()
+{
+	return startup();
+}
+
 void MT32Player::reset()
 {
 	static const uint8_t mt32_reset[10] = {0xF0, MT32Emu::SYSEX_MANUFACTURER_ROLAND, 0x10, MT32Emu::SYSEX_MDL_MT32, MT32Emu::SYSEX_CMD_DT1, 0x7F, 0, 0, 0xF7};

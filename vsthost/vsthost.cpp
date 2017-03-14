@@ -397,7 +397,7 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effOpen, 0, 0, 0, 0 );
 
 	if ( pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effGetPlugCategory, 0, 0, 0, 0 ) != kPlugCategSynth ||
-		pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effCanDo, 0, 0, "receiveVstMidiEvent", 0 ) == 0 )
+		pEffect[ 0 ]->dispatcher( pEffect[ 0 ], effCanDo, 0, 0, "receiveVstMidiEvent", 0 ) < 1 )
 	{
 		code = 9;
 		goto exit;

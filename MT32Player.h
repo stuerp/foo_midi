@@ -21,7 +21,9 @@ public:
 
 	// configuration
 	void setBasePath( const char * in );
-	void setAbortCallback( abort_callback * in );
+	void setAbortCallback( foobar2000_io::abort_callback * in );
+
+	bool isConfigValid();
 
 	static int getSampleRate();
 
@@ -35,7 +37,7 @@ protected:
 private:
 	MT32Emu::Synth   * _synth;
 	pfc::string8       sBasePath;
-	abort_callback   * _abort;
+	foobar2000_io::abort_callback   * _abort;
 
 	MT32Emu::File    * controlRomFile, * pcmRomFile;
 	const MT32Emu::ROMImage * controlRom, * pcmRom;

@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.10"
+#define MYVERSION "2.0.11"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2017-03-14 00:47 UTC - kode54
+- Added configuration validation for Munt driver
+- Fixed VSTHost to correctly check canDo features
+- Version is now 2.0.11
 
 2017-03-13 01:49 UTC - kode54
 - Fixed support for some VSTi synthesizers, as I was incorrectly testing for
@@ -2730,6 +2735,12 @@ public:
 				mt32Player->setBasePath( p_base_path );
 				mt32Player->setAbortCallback( &p_abort );
 				mt32Player->setSampleRate( srate );
+
+				if (!mt32Player->isConfigValid())
+				{
+					console::print("The Munt driver needs to be configured with a valid MT-32 or CM32L ROM set.");
+					throw exception_io_data();
+				}
 
 				unsigned loop_mode = 0;
 
