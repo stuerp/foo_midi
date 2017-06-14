@@ -668,7 +668,7 @@ private:
 					double phase = 0.0;
 					const double phase_offset = Chorus ? 0.125 : 0.0;
 					if (second_ins)
-						phase += (adl[ins].p4o_second_offset * (1.0 / 64.0));
+						phase += (adlins[insmeta].p4o_second_offset * (1.0 / 64.0));
 					double hertz, hertz_phased;
 					if(Ch[MidCh].vibrato && d.vibdelay >= Ch[MidCh].vibdelay)
 						bend += Ch[MidCh].vibrato * Ch[MidCh].vibdepth * std::sin(Ch[MidCh].vibpos);
