@@ -662,14 +662,16 @@ private:
                 // Don't bend a sustained note
                 if(!d.sustained)
                 {
-                    double bend = Ch[MidCh].bend + adl[ins].finetune;
+					const bool double_ins = (adlins[insmeta].flags & adlinsdata::Flag_Pseudo4op) != 0;
+					const bool second_ins = double_ins && ins == adlins[insmeta].adlno2;
+					double bend = Ch[MidCh].bend + adl[ins].finetune;
 					double phase = 0.0;
 					const double phase_offset = Chorus ? 0.125 : 0.0;
+					if (second_ins)
+						phase += (adl[ins].p4o_second_offset * (1.0 / 64.0));
 					double hertz, hertz_phased;
-					if((adlins[insmeta].flags & 1) && ins == adlins[insmeta].adlno2)
-						phase = phase_offset;
-                    if(Ch[MidCh].vibrato && d.vibdelay >= Ch[MidCh].vibdelay)
-                        bend += Ch[MidCh].vibrato * Ch[MidCh].vibdepth * std::sin(Ch[MidCh].vibpos);
+					if(Ch[MidCh].vibrato && d.vibdelay >= Ch[MidCh].vibdelay)
+						bend += Ch[MidCh].vibrato * Ch[MidCh].vibdepth * std::sin(Ch[MidCh].vibpos);
 					hertz = 172.00093 * std::exp(0.057762265 * (tone + bend + phase));
 					hertz_phased = 172.00093 * std::exp(0.057762265 * (tone + bend + phase + phase_offset));
 					if ( hertz == std::numeric_limits<double>::infinity() )
@@ -743,7 +745,7 @@ public:
                         tone -= adlins[meta].tone-128;
                 }
                 int i[2] = { adlins[meta].adlno1, adlins[meta].adlno2 };
-				bool pseudo_fourop = !!(adlins[meta].flags & 1);
+                bool pseudo_fourop = !!(adlins[meta].flags & adlinsdata::Flag_Pseudo4op);
 
                 if(opl.AdlPercussionMode && PercussionMap[midiins & 0xFF]) i[1] = i[0];
 

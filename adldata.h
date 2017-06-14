@@ -12,13 +12,14 @@ extern const struct adldata
 } adl[];
 extern const struct adlinsdata
 {
-    enum { Flag_Pseudo4op = 0x01 };
+    enum { Flag_Pseudo4op = 0x01, Flag_NoSound = 0x02 };
 
     Uint16 adlno1, adlno2;
     Uint8 tone;
     Uint8 flags;
+    signed char p4o_second_offset; // offset pitch of second voice, 64 = one semitone
     Uint16 ms_sound_kon;  // Number of milliseconds it produces sound;
     Uint16 ms_sound_koff;
 } adlins[];
 extern const unsigned short banks[][256];
-extern const char* const banknames[64];
+extern const char* const banknames[67];

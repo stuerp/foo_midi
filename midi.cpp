@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.11"
+#define MYVERSION "2.0.12"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2017-06-14 01:56 UTC - kode54
+- Implemented DMXOPL FM bank in both Nuclear Option and ADLmidi
+- Implemented support in ADLmidi for proper Doom pseudo 4op voice pitch offset
+- Version is now 2.0.12
 
 2017-03-14 00:47 UTC - kode54
 - Added configuration validation for Munt driver
