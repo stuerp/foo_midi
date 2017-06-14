@@ -364,6 +364,7 @@
     <ClInclude Include="synthlib_apogee\inst\apogee_nam.h" />
     <ClInclude Include="synthlib_apogee\inst\apogee_sw.h" />
     <ClInclude Include="synthlib_apogee\_al_midi.h" />
+    <ClInclude Include="synthlib_doom\inst\dmxopl.h" />
     <ClInclude Include="synthlib_doom\inst\dmx_dmx.h" />
     <ClInclude Include="synthlib_doom\inst\dmx_doom1.h" />
     <ClInclude Include="synthlib_doom\inst\dmx_doom2.h" />

@@ -132,6 +132,9 @@
     <ClInclude Include="synthlib_apogee\inst\apogee_sw.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
+    <ClInclude Include="synthlib_doom\inst\dmxopl.h">
+      <Filter>synthlib_doom\inst</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
