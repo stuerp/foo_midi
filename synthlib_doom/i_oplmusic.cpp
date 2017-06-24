@@ -1092,7 +1092,7 @@ const char * DoomOPL::midi_bank_name(unsigned int bank)
     }
 }
 
-midisynth *getsynth_doom() {
+nomidisynth *getsynth_doom() {
 	DoomOPL *synth = new DoomOPL;
 	return synth;
 }

@@ -329,11 +329,11 @@ const unsigned int channel_map_table[MIDI_CHANNELS_PER_TRACK] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 15, 9, 10, 11, 12, 13, 14
 };
 
-class DoomOPL : public midisynth {
+class DoomOPL : public nomidisynth {
 private:
     fm_chip *opl;
     opl_channel_data_t channels[MIDI_CHANNELS_PER_TRACK];
-    opl_driver_ver_t opl_drv_ver = opl_doom_1_9;
+	opl_driver_ver_t opl_drv_ver;// = opl_doom_1_9;
 
     // GENMIDI lump instrument data:
 
@@ -345,8 +345,8 @@ private:
     opl_voice_t voices[OPL_NUM_VOICES * 2];
     opl_voice_t *voice_free_list[OPL_NUM_VOICES * 2];
     opl_voice_t *voice_alloced_list[OPL_NUM_VOICES * 2];
-    unsigned int voice_free_num = 0;
-    unsigned int voice_alloced_num = 0;
+	unsigned int voice_free_num;// = 0;
+	unsigned int voice_alloced_num;// = 0;
 
     bool opl_new;
     bool opl_extp;
