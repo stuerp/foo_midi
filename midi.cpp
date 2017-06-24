@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.12"
+#define MYVERSION "2.0.13"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2017-06-24 00:03 UTC - kode54
+- Updated DMXOPL to version 1.8.2
+- Updated Nuclear Option Doom flavor synth
+- Version is now 2.0.13
 
 2017-06-14 01:56 UTC - kode54
 - Implemented DMXOPL FM bank in both Nuclear Option and ADLmidi
