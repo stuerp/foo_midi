@@ -391,7 +391,7 @@ public:
 				initialized = already = BASS_ErrorGetCode() == BASS_ERROR_ALREADY;
 			if ( initialized )
 			{
-				BASS_SetConfigPtr( BASS_CONFIG_MIDI_DEFFONT, NULL );
+				BASS_SetConfigPtr( BASS_CONFIG_MIDI_DEFFONT, (const void *) NULL );
 				BASS_SetConfig( BASS_CONFIG_MIDI_VOICES, 256 );
                 cache_init();
 			}

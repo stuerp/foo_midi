@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.13"
+#define MYVERSION "2.0.14"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,14 @@
 
 /*
 	change log
+
+2017-06-25 23:50 UTC - kode54
+- Updated BASS, BASSMIDI, and BASSFLAC
+- Version is now 2.0.14
+
+2017-06-25 23:41 UTC - kode54
+- Fixed EMIDI loops, forgot to pull a midi_processing change long implemented in
+  Cog, DeaDBeeF - Sorry, Duke Nukem 3D fans!
 
 2017-06-24 00:03 UTC - kode54
 - Updated DMXOPL to version 1.8.2
