@@ -22,4 +22,4 @@ extern const struct adlinsdata
     Uint16 ms_sound_koff;
 } adlins[];
 extern const unsigned short banks[][256];
-extern const char* const banknames[67];
+extern const char* const banknames[68];

@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.14"
+#define MYVERSION "2.0.15"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2017-07-18 02:03 UTC - kode54
+- Updated DMXOPL to version 1.9.1
+- Version is now 2.0.15
 
 2017-06-25 23:50 UTC - kode54
 - Updated BASS, BASSMIDI, and BASSFLAC
