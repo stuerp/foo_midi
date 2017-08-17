@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.15"
+#define MYVERSION "2.0.16"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2017-08-17 03:58 UTC - kode54
+- Updated DMXOPL to version 1.10 Final
+- Version is now 2.0.16
 
 2017-07-18 02:03 UTC - kode54
 - Updated DMXOPL to version 1.9.1
