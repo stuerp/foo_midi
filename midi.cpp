@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.17"
+#define MYVERSION "2.0.18"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2017-08-29 00:56 UTC - kode54
+- Added support for SC-VA version 1.0.7
+- Version is now 2.0.18
 
 2017-08-28 03:52 UTC - kode54
 - Updated DMXOPL to version 2.0b
@@ -3410,11 +3414,15 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 	}
 }
 
-static const size_t g_sc_known_size = 27472384;
-static const hasher_md5_result g_sc_known_hash = { 0xd4, 0x4d, 0x1b, 0x8c, 0x9a, 0x6f, 0x95, 0x6c, 0xa2, 0x32, 0x4f, 0x2f, 0x5d, 0x34, 0x8c, 0x44 };
+static const size_t g_sc_known_size_103 = 27472384;
+static const hasher_md5_result g_sc_known_hash_103 = { 0xd4, 0x4d, 0x1b, 0x8c, 0x9a, 0x6f, 0x95, 0x6c, 0xa2, 0x32, 0x4f, 0x2f, 0x5d, 0x34, 0x8c, 0x44 };
+
+static const size_t g_sc_known_size_107 = 27319296;
+static const hasher_md5_result g_sc_known_hash_107 = { 0x25, 0x83, 0x0a, 0x6c, 0x2f, 0xf5, 0x75, 0x1f, 0x3a, 0x55, 0x91, 0x5f, 0xb6, 0x07, 0x02, 0xf4 };
 
 bool CMyPreferences::check_secret_sauce()
 {
+	size_t real_size;
 	pfc::string8 path;
 	cfg_sc_path.get(path);
 
@@ -3429,7 +3437,8 @@ bool CMyPreferences::check_secret_sauce()
 	if (!f) return false;
 
 	fseek(f, 0, SEEK_END);
-	if (ftell(f) != g_sc_known_size)
+	real_size = ftell(f);
+	if (real_size != g_sc_known_size_103 && real_size != g_sc_known_size_107)
 	{
 		fclose(f);
 		return false;
@@ -3457,11 +3466,14 @@ bool CMyPreferences::check_secret_sauce()
 
 	fclose(f);
 
-	if (bytes_total != g_sc_known_size) return false;
+	if (bytes_total != real_size) return false;
 
 	m_hasher_result = m_hasher->get_result(m_hasher_state);
 
-	return m_hasher_result == g_sc_known_hash;
+	if (real_size == g_sc_known_size_103 && m_hasher_result == g_sc_known_hash_103) return true;
+	if (real_size == g_sc_known_size_107 && m_hasher_result == g_sc_known_hash_107) return true;
+
+	return false;
 }
 
 static const char * chip_counts[] = {"1", "2", "5", "10", "25", "50", "100"};
