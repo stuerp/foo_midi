@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.18"
+#define MYVERSION "2.0.19"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2017-10-05 19:35 UTC - kode54
+- Added support for running SysEx status in Standard MIDI files
+- Version is now 2.0.19
 
 2017-08-29 00:56 UTC - kode54
 - Added support for SC-VA version 1.0.7
