@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.19"
+#define MYVERSION "2.0.20"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2017-11-19 22:28 UTC - kode54
+- Fix SysEx adding a random extra byte when it shouldn't, which
+  broke synthesizers that observed the length, like Windows
+  drivers, or VST instruments in this case.
+- Version is now 2.0.20
 
 2017-10-05 19:35 UTC - kode54
 - Added support for running SysEx status in Standard MIDI files
