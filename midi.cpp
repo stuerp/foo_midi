@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.20"
+#define MYVERSION "2.0.21"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2017-12-31 04:30 UTC - kode54
+- Updated input API for player version 1.4
+- Version is now 2.0.21
 
 2017-11-19 22:28 UTC - kode54
 - Fix SysEx adding a random extra byte when it shouldn't, which
@@ -1089,7 +1093,8 @@
 
 #include <foobar2000.h>
 #include "../helpers/dropdown_helper.h"
-#include "../ATLHelpers/ATLHelpers.h"
+#include "../ATLHelpers/ATLHelpersLean.h"
+#include "../ATLHelpers/misc.h"
 
 #include <midi_processing/midi_processor.h>
 
@@ -2058,7 +2063,7 @@ static critical_section sync;
 static volatile int g_running = 0;
 static volatile int g_srate;
 
-class input_midi
+class input_midi : public input_stubs
 {
 #ifdef DXISUPPORT
 	DXiProxy * dxiProxy;
@@ -3191,6 +3196,30 @@ public:
 	static bool g_is_our_path( const char * p_full_path, const char * p_extension )
 	{
 		return g_test_extension( p_extension ) || g_test_extension_syx( p_extension );
+	}
+
+	static GUID g_get_guid()
+	{
+		// {AE29C554-EE59-4C1A-8211-320F2A1A992B}
+		static const GUID guid = { 0xae29c554, 0xee59, 0x4c1a,{ 0x82, 0x11, 0x32, 0xf, 0x2a, 0x1a, 0x99, 0x2b } };
+		return guid;
+	}
+
+	static const char * g_get_name()
+	{
+		return "MIDI Player";
+	}
+
+	static GUID g_get_preferences_guid()
+	{
+		// {1623AA03-BADC-4bab-8A17-C737CF782661}
+		static const GUID guid = { 0x1623aa03, 0xbadc, 0x4bab,{ 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } };
+		return guid;
+	}
+
+	static bool g_is_low_merit()
+	{
+		return false;
 	}
 };
 
@@ -4347,12 +4376,8 @@ void CMyPreferences::OnChanged() {
 class preferences_page_myimpl : public preferences_page_impl<CMyPreferences> {
 	// preferences_page_impl<> helper deals with instantiation of our dialog; inherits from preferences_page_v3.
 public:
-	const char * get_name() {return "MIDI Player";}
-	GUID get_guid() {
-		// {1623AA03-BADC-4bab-8A17-C737CF782661}
-		static const GUID guid = { 0x1623aa03, 0xbadc, 0x4bab, { 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } };
-		return guid;
-	}
+	const char * get_name() {return input_midi::g_get_name();}
+	GUID get_guid() {return input_midi::g_get_preferences_guid();}
 	GUID get_parent_guid() {return guid_input;}
 };
 

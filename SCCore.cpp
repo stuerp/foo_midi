@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <Windows.h>
+#include "../shared/shared.h"
 
 #include "SCCore.h"
-
-#include "../shared/shared.h"
 
 static struct cleanup_proc
 {
