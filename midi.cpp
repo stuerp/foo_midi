@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.21"
+#define MYVERSION "2.0.22"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2018-02-09 10:19 UTC - kode54
+- Fixed MUNT path activating the Apply button
+- Version is now 2.0.22
 
 2017-12-31 04:30 UTC - kode54
 - Updated input API for player version 1.4
@@ -4000,6 +4004,7 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 			if ( length ) display_path = m_munt_path;
 			else display_path = click_to_set;
 			uSetWindowText( w, display_path );
+			OnChanged();
 		}
 	}
 }
