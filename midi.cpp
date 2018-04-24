@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.22"
+#define MYVERSION "2.0.23"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2018-04-24 21:48 UTC - kode54
+- Fixed MUNT enabling Super / GM behavior for strictly MT-32 files
+- Version is now 2.0.23
 
 2018-02-09 10:19 UTC - kode54
 - Fixed MUNT path activating the Apply button

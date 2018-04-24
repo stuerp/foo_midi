@@ -125,7 +125,7 @@ bool MT32Player::startup()
 	pcmRom = MT32Emu::ROMImage::makeROMImage( pcmRomFile );
 	if ( !pcmRom ) return false;
 	_synth = new MT32Emu::Synth;
-	if ( !_synth->open( *controlRom, *pcmRom, bGM ? 256U : 32U, useMode, true ) )
+	if ( !_synth->open( *controlRom, *pcmRom, bGM ? 256U : 32U, useMode, bGM ) )
 	{
 		delete _synth;
 		_synth = 0;
