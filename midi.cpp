@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.23"
+#define MYVERSION "2.0.24"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2018-05-21 01:36 UTC - kode54
+- Updated Nuked OPL3 to version 1.8 and ported over my changes
+- Version is now 2.0.24
 
 2018-04-24 21:48 UTC - kode54
 - Fixed MUNT enabling Super / GM behavior for strictly MT-32 files

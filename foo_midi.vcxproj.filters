@@ -28,9 +28,6 @@
       <Filter>sflist</Filter>
     </ClCompile>
     <ClCompile Include="MSPlayer.cpp" />
-    <ClCompile Include="fmopl3lib\opl3.cpp">
-      <Filter>fmopl3lib</Filter>
-    </ClCompile>
     <ClCompile Include="fmopl3lib\opl3class.cpp">
       <Filter>fmopl3lib</Filter>
     </ClCompile>
@@ -45,6 +42,9 @@
     <ClCompile Include="SCPlayer.cpp" />
     <ClCompile Include="synthlib_apogee\al_midi.cpp">
       <Filter>synthlib_apogee</Filter>
+    </ClCompile>
+    <ClCompile Include="fmopl3lib\opl3.c">
+      <Filter>fmopl3lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

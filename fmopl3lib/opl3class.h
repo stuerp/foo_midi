@@ -20,11 +20,6 @@ class opl3class : public fm_chip {
 private:
     opl3_chip chip;
     Bit64u counter;
-    Bit64u lastwrite;
-    Bit16u command[8192][2];
-    Bit64u time[8192];
-    Bit16u strpos;
-    Bit16s endpos;
 	void *resampler;
     Bit16s samples[2];
     void fm_generate_one(signed short *buffer);

@@ -156,7 +156,7 @@
     </ClCompile>
     <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
-    <ClCompile Include="fmopl3lib\opl3.cpp" />
+    <ClCompile Include="fmopl3lib\opl3.c" />
     <ClCompile Include="fmopl3lib\opl3class.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MSPlayer.cpp" />
