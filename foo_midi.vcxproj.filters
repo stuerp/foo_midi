@@ -12,11 +12,8 @@
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="DXiProxy.cpp" />
     <ClCompile Include="EMIDIPlayer.cpp" />
-    <ClCompile Include="adldata.cpp" />
     <ClCompile Include="ADLPlayer.cpp" />
-    <ClCompile Include="dbopl.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
-    <ClCompile Include="oplmidiPlayer.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="sflist\json.c">
       <Filter>sflist</Filter>
@@ -28,9 +25,6 @@
       <Filter>sflist</Filter>
     </ClCompile>
     <ClCompile Include="MSPlayer.cpp" />
-    <ClCompile Include="fmopl3lib\opl3class.cpp">
-      <Filter>fmopl3lib</Filter>
-    </ClCompile>
     <ClCompile Include="synthlib_doom\i_oplmusic.cpp">
       <Filter>synthlib_doom</Filter>
     </ClCompile>
@@ -43,8 +37,8 @@
     <ClCompile Include="synthlib_apogee\al_midi.cpp">
       <Filter>synthlib_apogee</Filter>
     </ClCompile>
-    <ClCompile Include="fmopl3lib\opl3.c">
-      <Filter>fmopl3lib</Filter>
+    <ClCompile Include="fmopl3lib\opl3class.cpp">
+      <Filter>fmopl3</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -57,11 +51,8 @@
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="DXiProxy.h" />
     <ClInclude Include="EMIDIPlayer.h" />
-    <ClInclude Include="adldata.h" />
     <ClInclude Include="ADLPlayer.h" />
-    <ClInclude Include="dbopl.h" />
     <ClInclude Include="fmmidiPlayer.h" />
-    <ClInclude Include="oplmidiPlayer.h" />
     <ClInclude Include="kq6mtgm.h" />
     <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="sflist\json.h">
@@ -75,12 +66,6 @@
     </ClInclude>
     <ClInclude Include="interface.h" />
     <ClInclude Include="MSPlayer.h" />
-    <ClInclude Include="fmopl3lib\opl3.h">
-      <Filter>fmopl3lib</Filter>
-    </ClInclude>
-    <ClInclude Include="fmopl3lib\opl3class.h">
-      <Filter>fmopl3lib</Filter>
-    </ClInclude>
     <ClInclude Include="synthlib_doom\i_oplmusic.h">
       <Filter>synthlib_doom</Filter>
     </ClInclude>
@@ -135,6 +120,9 @@
     <ClInclude Include="synthlib_doom\inst\dmxopl.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
+    <ClInclude Include="fmopl3lib\opl3class.h">
+      <Filter>fmopl3</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
@@ -152,9 +140,6 @@
     <Filter Include="sflist">
       <UniqueIdentifier>{3611c29b-e316-401c-9c25-306cf31dffb4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="fmopl3lib">
-      <UniqueIdentifier>{aaae5c50-9f68-469c-862a-d2885b6ee061}</UniqueIdentifier>
-    </Filter>
     <Filter Include="synthlib_doom">
       <UniqueIdentifier>{18c2fd9d-a8d5-4667-98fc-3f125312083a}</UniqueIdentifier>
     </Filter>
@@ -169,6 +154,9 @@
     </Filter>
     <Filter Include="synthlib_apogee\inst">
       <UniqueIdentifier>{1846ef8c-56c6-47b6-827d-213edf2f5262}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fmopl3">
+      <UniqueIdentifier>{6c7c9704-78c6-4575-9731-efa7ee251557}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

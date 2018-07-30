@@ -353,6 +353,7 @@ private:
     unsigned int opl_voices;
 
     void OPL_WriteRegister(unsigned int reg, unsigned char data);
+	void OPL_WritePan(unsigned int reg, unsigned char data);
     void OPL_InitRegisters(bool opl_new);
     bool LoadInstrumentTable(unsigned int bank);
     void ReleaseVoice(unsigned int id);

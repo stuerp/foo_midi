@@ -22,6 +22,11 @@ void OPL3MIDI::opl_writereg(uint32_t reg, byte data)
     opl_chip->fm_writereg(reg, data);
 }
 
+void OPL3MIDI::opl_writepan(uint32_t reg, byte data)
+{
+	opl_chip->fm_writepan(reg, data);
+}
+
 uint32_t OPL3MIDI::opl_tofnum(double freq)
 {
     return (uint32_t)(((1 << 19) * freq) / opl_samplerate);
@@ -226,8 +231,7 @@ void OPL3MIDI::opl_midikeyon(opl_channel *channel, byte note, opl_timbre *timbre
     
     if (opl_extp)
     {
-        opl_writereg(0x107, (voice->num & 0xFF) + ((voice->num / 256) * 9));
-        opl_writereg(0x108, channel->panex * 2);
+		opl_writepan(voice->num, channel->panex);
     }
 
     voice->freq = freq;
@@ -314,8 +318,7 @@ void OPL3MIDI::opl_updatevolpan(opl_channel *channel)
             
             if (opl_extp)
             {
-                opl_writereg(0x107, (opl_voices[i].num & 0xFF) + ((opl_voices[i].num & 0x100) * 9 / 256));
-                opl_writereg(0x108, channel->panex * 2);
+				opl_writepan(opl_voices[i].num, channel->panex);
             }
         }
     }
@@ -447,9 +450,6 @@ int OPL3MIDI::midi_init(unsigned int rate, unsigned int bank, unsigned int extp)
     
     opl_extp = !!extp;
     
-    if (opl_extp)
-        opl_writereg(0x106, 0x17);
-
     opl_writereg(OPL_LSI, 0x00);
     opl_writereg(OPL_TIMER, 0x60);
     opl_writereg(OPL_NTS, 0x00);

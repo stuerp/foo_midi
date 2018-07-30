@@ -104,6 +104,7 @@ private:
     int32_t opl_downpitch;
 
     void opl_writereg(uint32_t reg, byte data);
+	void opl_writepan(uint32_t reg, byte data);
 
     uint32_t opl_tofnum(double freq);
     void opl_buildfreqtable(void);

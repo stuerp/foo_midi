@@ -1,4 +1,4 @@
-#define MYVERSION "2.0.24"
+#define MYVERSION "2.1"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2018-07-30 04:21 UTC - kode54
+- Replaced bundled copy of ADLMIDI with libADLMIDI
+- Adjusted Nuclear Option drivers to use libADLMIDI Nuked OPL, including panning
+- Version is now 2.1
 
 2018-05-21 01:36 UTC - kode54
 - Updated Nuked OPL3 to version 1.8 and ported over my changes
@@ -1124,10 +1129,9 @@
 #include "EMIDIPlayer.h"
 
 #include "ADLPlayer.h"
-#include "adldata.h"
+#include "../../../libADLMIDI/include/adlmidi.h"
 
 #include "fmmidiPlayer.h"
-#include "oplmidiPlayer.h"
 
 #include "MSPlayer.h"
 
@@ -1320,9 +1324,9 @@ enum
 	//default_cfg_recover_tracks = 0,
 	default_cfg_loop_type = 0,
 	default_cfg_srate = 44100,
-	default_cfg_plugin = 9,
+	default_cfg_plugin = 6,
 	default_cfg_resampling = 1,
-	default_cfg_adl_bank = 1,
+	default_cfg_adl_bank = 72,
 	default_cfg_adl_chips = 10,
 	default_cfg_adl_panning = 1,
 	//default_cfg_adl_4op = 14,
@@ -1390,8 +1394,6 @@ advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fad
 advconfig_checkbox_factory cfg_bassmidi_effects("BASSMIDI - Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_midi_parent, 0, true);
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
-
-advconfig_checkbox_factory cfg_adl_chorus("Apply a little detuning to adlmidi two chip panning, as well as pseudo 2op voices", guid_cfg_adl_chorus, guid_cfg_midi_parent, 0, true);
 
 static const char * munt_bank_names[] =
 {
@@ -1521,7 +1523,6 @@ struct midi_preset
 		adl_bank = cfg_adl_bank;
 		adl_chips = cfg_adl_chips;
 		adl_panning = !!cfg_adl_panning;
-		adl_chorus = !!cfg_adl_chorus;
 		munt_gm_set = cfg_munt_gm;
 		ms_synth = cfg_ms_synth;
 		ms_bank = cfg_ms_bank;
@@ -1532,6 +1533,8 @@ struct midi_preset
 
 	void serialize(pfc::string8 & p_out)
 	{
+		const char * const * banknames = adl_getBankNames();
+
 		p_out.reset();
 
 		p_out += pfc::format_int( version );
@@ -1603,12 +1606,6 @@ struct midi_preset
 			p_out += "|";
 
 			p_out += munt_bank_names[ munt_gm_set ];
-		}
-		else if ( plugin == 8 )
-		{
-			p_out += "|";
-
-			p_out += banknames[ adl_bank ];
 		}
 		else if ( plugin == 9 )
 		{
@@ -1710,8 +1707,10 @@ struct midi_preset
 #endif
 			else if ( in_plugin == 6 )
 			{
-				unsigned i, j;
-				for ( i = 0, j = _countof( banknames ); i < j; i++ )
+				const char * const * banknames = adl_getBankNames();
+				unsigned j = adl_getBanksCount();
+				unsigned i;
+				for ( i = 0; i < j; i++ )
 				{
 					size_t len = strlen( banknames[ i ] );
 					if ( len == bar_pos - p_in && !strncmp( p_in, banknames[ i ], len ) )
@@ -1735,20 +1734,6 @@ struct midi_preset
 
 				if ( !*p_in ) return;
 				in_adl_panning = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
-
-				if ( version >= 3 )
-				{
-					p_in = bar_pos + (*bar_pos == '|');
-					bar_pos = strchr( p_in, '|' );
-					if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
-
-					if ( !*p_in ) return;
-					in_adl_chorus = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
-				}
-				else
-				{
-					in_adl_chorus = true;
-				}
 			}
 		}
 		else if ( in_plugin == 3 )
@@ -1760,20 +1745,6 @@ struct midi_preset
 				if ( len == bar_pos - p_in && !strncmp( p_in, munt_bank_names[ i ], len ) )
 				{
 					in_munt_gm_set = i;
-					break;
-				}
-			}
-			if ( i == j ) return;
-		}
-		else if ( in_plugin == 8 )
-		{
-			unsigned i, j;
-			for ( i = 0, j = _countof( banknames ); i < j; i++ )
-			{
-				size_t len = strlen( banknames[ i ] );
-				if ( len == bar_pos - p_in && !strncmp( p_in, banknames[ i ], len ) )
-				{
-					in_adl_bank = i;
 					break;
 				}
 			}
@@ -2710,7 +2681,6 @@ public:
 				adlPlayer->setChipCount( thePreset.adl_chips );
 				adlPlayer->setFullPanning( thePreset.adl_panning );
 				adlPlayer->set4OpCount( thePreset.adl_chips * 4 /*cfg_adl_4op*/ );
-				adlPlayer->setChorus( thePreset.adl_chorus );
 				adlPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;
@@ -2746,30 +2716,6 @@ public:
 				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( fmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
-				{
-					eof = false;
-					dont_loop = true;
-
-					return;
-				}
-			}
-			else if ( plugin == 8 )
-			{
-				delete midiPlayer;
-
-				oplmidiPlayer * oplPlayer = new oplmidiPlayer;
-				midiPlayer = oplPlayer;
-
-				oplPlayer->setBank( thePreset.adl_bank );
-
-				oplPlayer->setSampleRate(srate);
-
-				unsigned loop_mode = 0;
-
-				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
-
-				if ( oplPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -3537,6 +3483,9 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 
 	if (!secret_sauce_found && plugin == 10)
 		plugin = default_cfg_plugin;
+
+	if (plugin == 8)
+		plugin = default_cfg_plugin;
 	
 	w = GetDlgItem( IDC_PLUGIN );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Emu de MIDI" );
@@ -3547,8 +3496,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	uSendMessageText( w, CB_ADDSTRING, 0, "Super MUNT GM" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "adlmidi" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "fmmidi" );
-	uSendMessageText( w, CB_ADDSTRING, 0, "oplmidi" );
-	uSendMessageText(w, CB_ADDSTRING, 0, "Nuclear Option");
+	uSendMessageText( w, CB_ADDSTRING, 0, "Nuclear Option");
 
 	if (secret_sauce_found) uSendMessageText(w, CB_ADDSTRING, 0, "Secret Sauce");
 
@@ -3612,14 +3560,10 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
 	}
 #endif
-	if ( plugin != 6 && plugin != 8 )
+	if ( plugin != 6 )
 	{
 		GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_BANK ).EnableWindow( FALSE );
-	}
-
-	if ( plugin != 6 )
-	{
 		GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_PANNING ).EnableWindow( FALSE );
@@ -3713,17 +3657,13 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	{
 		plugin = 5;
 	}
-	else if ( plugin == 8 )
+	else if ( plugin == 9 )
 	{
 		plugin = 6;
 	}
-	else if ( plugin == 9 )
-	{
-		plugin = 7;
-	}
 	else if ( plugin == 10 )
 	{
-		plugin = 8;
+		plugin = 7;
 	}
 #ifdef DXISUPPORT
 	else if ( plugin == 5 )
@@ -3786,7 +3726,10 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	if (secret_sauce_found)
 		SendDlgItemMessage( IDC_SC_EFFECTS, BM_SETCHECK, !cfg_sc_reverb );
 
-	for ( unsigned i = 0; i < _countof( banknames ); i++ )
+	const char * const * banknames = adl_getBankNames();
+	unsigned bank_count = adl_getBanksCount();
+
+	for ( unsigned i = 0; i < bank_count; i++ )
 	{
 		m_bank_list += adl_bank( i, banknames[ i ] );
 	}
@@ -3885,7 +3828,7 @@ void CMyPreferences::OnButtonClick(UINT, int, CWindow) {
 
 void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 	int plugin = GetDlgItem( IDC_PLUGIN ).SendMessage( CB_GETCURSEL, 0, 0 );
-	int base = secret_sauce_found ? 9 : 8;
+	int base = secret_sauce_found ? 8 : 7;
 #ifndef FLUIDSYNTHSUPPORT
 	if ( plugin > 0 ) ++plugin;
 #endif
@@ -3923,19 +3866,19 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_RESAMPLING ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_CACHED ).EnableWindow( plugin == 1 || plugin == 2 );
-	GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( plugin == 4 || plugin == 6 );
-	GetDlgItem( IDC_ADL_BANK ).EnableWindow( plugin == 4 || plugin == 6 );
+	GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( plugin == 4 );
+	GetDlgItem( IDC_ADL_BANK ).EnableWindow( plugin == 4 );
 	GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( plugin == 4 );
 	GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( plugin == 4 );
 	GetDlgItem( IDC_ADL_PANNING ).EnableWindow( plugin == 4 );
-	GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( plugin == 7 );
-	GetDlgItem( IDC_MS_PRESET ).EnableWindow( plugin == 7 );
-	GetDlgItem( IDC_MS_PANNING ).EnableWindow( plugin == 7 );
+	GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( plugin == 6 );
+	GetDlgItem( IDC_MS_PRESET ).EnableWindow( plugin == 6 );
+	GetDlgItem( IDC_MS_PANNING ).EnableWindow( plugin == 6 );
 	if (secret_sauce_found)
 	{
-		GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( plugin == 8 );
-		GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( plugin == 8 );
-		GetDlgItem( IDC_SC_EFFECTS ).EnableWindow( plugin == 8 );
+		GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( plugin == 7 );
+		GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( plugin == 7 );
+		GetDlgItem( IDC_SC_EFFECTS ).EnableWindow( plugin == 7 );
 	}
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -3964,7 +3907,7 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 
 	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
 
-	int base = secret_sauce_found ? 9 : 8;
+	int base = secret_sauce_found ? 8 : 7;
 
 	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= base && plugin < base + vsti_plugins.get_count() && vsti_plugins[ plugin - base ].has_editor );
 
@@ -4064,7 +4007,7 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_CACHED ).EnableWindow( FALSE );
 	}
-	if ( default_cfg_plugin != 6 && default_cfg_plugin != 8 )
+	if ( default_cfg_plugin != 6 )
 	{
 		GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_BANK ).EnableWindow( FALSE );
@@ -4196,7 +4139,7 @@ void CMyPreferences::apply() {
 		cfg_ms_bank = preset.bank;
 	}
 	{
-		t_size base = secret_sauce_found ? 9 : 8;
+		t_size base = secret_sauce_found ? 8 : 7;
 		t_size vsti_count = vsti_plugins.get_size();
 		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
 #ifdef DXISUPPORT
@@ -4224,15 +4167,11 @@ void CMyPreferences::apply() {
 		{
 			cfg_plugin = 7;
 		}
-		else if ( plugin == 6 )
-		{
-			cfg_plugin = 8;
-		}
-		else if (plugin == 7)
+		else if (plugin == 6)
 		{
 			cfg_plugin = 9;
 		}
-		else if (secret_sauce_found && plugin == 8)
+		else if (secret_sauce_found && plugin == 7)
 		{
 			cfg_plugin = 10;
 		}
@@ -4314,7 +4253,7 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && SendDlgItemMessage( IDC_MUNT_GM, CB_GETCURSEL ) != cfg_munt_gm ) changed = true;
 	if ( !changed )
 	{
-		t_size base = secret_sauce_found ? 9 : 8;
+		t_size base = secret_sauce_found ? 8 : 7;
 		t_size vsti_count = vsti_plugins.get_size();
 		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
 #ifdef DXISUPPORT
@@ -4343,13 +4282,9 @@ bool CMyPreferences::HasChanged() {
 		}
 		else if ( plugin == 6 )
 		{
-			if ( cfg_plugin != 8 ) changed = true;
-		}
-		else if ( plugin == 7 )
-		{
 			if ( cfg_plugin != 9 ) changed = true;
 		}
-		else if ( secret_sauce_found && plugin == 8 )
+		else if ( secret_sauce_found && plugin == 7 )
 		{
 			if ( cfg_plugin != 10 ) changed = true;
 		}

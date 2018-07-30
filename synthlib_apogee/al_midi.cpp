@@ -467,6 +467,25 @@ void ApogeeOPL::AL_SendOutputToPort
    chip->fm_writereg(reg, data);
    }
 
+/*---------------------------------------------------------------------
+   Function: AL_SendOutputToPanPort
+   
+   Sends data to the Adlib pan control using a specified port.
+   
+ --------------------------------------------------------------------*/
+
+void ApogeeOPL::AL_SendOutputToPanPort
+   (
+   int  port,
+   int  reg,
+   int  data
+   )
+
+   {
+   if(port)
+       reg |= 0x100;
+   chip->fm_writepan(reg, data);
+   }
 
 /*---------------------------------------------------------------------
    Function: AL_SendOutput
@@ -828,8 +847,7 @@ void ApogeeOPL::AL_SetVoicePan
    
    if ( opl_extp )
       {
-      AL_SendOutputToPort( 1, 0x7, vn );
-      AL_SendOutputToPort( 1, 0x8, pan * 2 );
+	  AL_SendOutputToPanPort( vn / 9, vn % 9, pan );
       }
    else
       {
@@ -1009,10 +1027,6 @@ void ApogeeOPL::AL_StereoOn
    {
    // Set card to OPL3 operation
    AL_SendOutputToPort( 1, 0x5, 1 );
-
-   // Enable extended operation, if requested
-   if (opl_extp)
-      AL_SendOutputToPort( 1, 0x6, 0x17 );
    }
 
 

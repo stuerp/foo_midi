@@ -13,8 +13,7 @@
 //
 
 #include "../interface.h"
-#include "opl3.h"
-
+#include "../../../libADLMIDI/src/chips/nuked/nukedopl3.h"
 
 class opl3class : public fm_chip {
 private:
@@ -26,5 +25,6 @@ private:
 public:
 	int fm_init(unsigned int rate);
 	void fm_writereg(unsigned short reg, unsigned char data);
+	void fm_writepan(unsigned short reg, unsigned char data);
 	void fm_generate(signed short *buffer, unsigned int length);
 };

@@ -57,6 +57,7 @@ private:
     VOICELIST Voice_Pool;
     CHANNEL   Channel[ NUM_CHANNELS ];
     void AL_SendOutputToPort( int port, int reg, int data );
+	void AL_SendOutputToPanPort( int port, int reg, int data );
     void AL_SendOutput( int  voice, int reg, int data );
     void AL_SetVoiceTimbre( int voice );
     void AL_SetVoiceVolume( int voice );

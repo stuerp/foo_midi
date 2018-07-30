@@ -16,6 +16,7 @@ class fm_chip {
 public:
 	virtual int fm_init(unsigned int rate) = 0;
 	virtual void fm_writereg(unsigned short reg, unsigned char data) = 0;
+	virtual void fm_writepan(unsigned short reg, unsigned char data) = 0;
 	virtual void fm_generate(signed short *buffer, unsigned int length) = 0;
 };
 

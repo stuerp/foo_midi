@@ -35,6 +35,10 @@ void opl3class::fm_writereg(unsigned short reg, unsigned char data) {
 	OPL3_WriteRegBuffered(&chip, reg, data);
 }
 
+void opl3class::fm_writepan(unsigned short reg, unsigned char data) {
+	OPL3_WritePan(&chip, reg, data);
+}
+
 
 
 void opl3class::fm_generate_one(signed short *buffer) {

@@ -146,17 +146,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="adldata.cpp" />
     <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="BMPlayer.cpp" />
-    <ClCompile Include="dbopl.cpp" />
     <ClCompile Include="DXiProxy.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="fmmidiPlayer.cpp" />
-    <ClCompile Include="fmopl3lib\opl3.c" />
     <ClCompile Include="fmopl3lib\opl3class.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MSPlayer.cpp" />
@@ -181,7 +178,6 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="oplmidiPlayer.cpp" />
     <ClCompile Include="PlugInInventory.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -233,17 +229,14 @@
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="adldata.h" />
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="BMPlayer.h" />
-    <ClInclude Include="dbopl.h" />
     <ClInclude Include="DXiProxy.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="fmmidiPlayer.h" />
-    <ClInclude Include="fmopl3lib\opl3.h" />
     <ClInclude Include="fmopl3lib\opl3class.h" />
     <ClInclude Include="interface.h" />
     <ClInclude Include="kq6mtgm.h" />
@@ -260,7 +253,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </CustomBuild>
-    <ClInclude Include="oplmidiPlayer.h" />
     <ClInclude Include="resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCCore.h" />
@@ -299,6 +291,9 @@
     <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\libADLMIDI\build\ADLMIDI_static.vcxproj">
+      <Project>{1a2df754-5d59-3517-850f-4015b0267c12}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\midisynth\midisynth.vcxproj">
       <Project>{987fc62d-eaf6-41ed-be12-d8f867581534}</Project>
     </ProjectReference>

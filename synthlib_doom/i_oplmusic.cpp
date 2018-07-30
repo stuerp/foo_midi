@@ -23,6 +23,10 @@ void DoomOPL::OPL_WriteRegister(unsigned int reg, unsigned char data) {
 	opl->fm_writereg(reg, data);
 }
 
+void DoomOPL::OPL_WritePan(unsigned int reg, unsigned char data) {
+	opl->fm_writepan(reg, data);
+}
+
 void DoomOPL::OPL_InitRegisters(bool opl_new)
 {
 	unsigned int r;
@@ -93,11 +97,6 @@ void DoomOPL::OPL_InitRegisters(bool opl_new)
 	{
 		OPL_WriteRegister(OPL_REG_NEW_MODE, 0x01);
 	}
-
-    if (opl_extp)
-    {
-        OPL_WriteRegister(0x106, 0x17);
-    }
 }
 
 // Load instrument table from GENMIDI lump:
@@ -338,9 +337,8 @@ void DoomOPL::SetVoicePanEx(opl_voice_t *voice, unsigned int pan)
     const genmidi_voice_t *opl_voice;
     
     opl_voice = &voice->current_instr->voices[voice->current_instr_voice];
-    
-    OPL_WriteRegister(0x107, voice->index + (voice->array * 9 / 256));
-    OPL_WriteRegister(0x108, pan * 2);
+
+	OPL_WritePan(voice->index + voice->array, pan);
 }
 
 // Initialize the voice table and freelist
