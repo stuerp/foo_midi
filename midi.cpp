@@ -1,4 +1,4 @@
-#define MYVERSION "2.1"
+#define MYVERSION "2.1.1"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2018-07-31 00:04 UTC - kode54
+- Updated libADLMIDI
+- Version is now 2.1.1
 
 2018-07-30 04:21 UTC - kode54
 - Replaced bundled copy of ADLMIDI with libADLMIDI
