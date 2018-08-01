@@ -1,4 +1,4 @@
-#define MYVERSION "2.1.2"
+#define MYVERSION "2.1.3"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2018-08-01 23:57 UTC - kode54
+- Fixed VSTi selection on opening preferences after removing oplmidi
+- Combined two cases on reset to defaults
+- Version is now 2.1.3
 
 2018-08-01 01:51 UTC - kode54
 - Updated libADLMIDI
@@ -3655,7 +3660,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	CoUninitialize();
 #endif
-	if ( plugin == 1 ) plugin += vsti_selected + 7 + (secret_sauce_found ? 1 : 0);
+	if ( plugin == 1 ) plugin += vsti_selected + 6 + (secret_sauce_found ? 1 : 0);
 	else if ( plugin >= 2 && plugin <= 4 )
 	{
 		plugin = plugin == 2 ? 1 : plugin == 4 ? 2 : 3;
@@ -4022,9 +4027,6 @@ void CMyPreferences::reset() {
 	{
 		GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_BANK ).EnableWindow( FALSE );
-	}
-	if ( default_cfg_plugin != 6 )
-	{
 		GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_PANNING ).EnableWindow( FALSE );
