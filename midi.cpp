@@ -1,4 +1,4 @@
-#define MYVERSION "2.1.1"
+#define MYVERSION "2.1.2"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+
+2018-08-01 01:51 UTC - kode54
+- Updated libADLMIDI
+- Fixed preferences dialog description for soft panning mode (no longer requires double chips)
+- Halved volume for Nuclear Option mode, since this version of NukedOPL is louder
+- Updated BASS to version 2.4.13.8, BASSFLAC to 2.4.4, and BASSOPUS to 2.4.1.10
+- Version is now 2.1.2
 
 2018-07-31 00:04 UTC - kode54
 - Updated libADLMIDI
