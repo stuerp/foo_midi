@@ -1,4 +1,4 @@
-#define MYVERSION "2.1.3"
+#define MYVERSION "2.1.4"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,15 @@
 
 /*
 	change log
+
+2018-08-28 11:18 UTC - kode54
+- Change optimization settings and profile optimize once again
+- Updated Munt
+- Updated libADLMIDI
+- Changed ADLMIDI player to embed full WOPL banks for two of the presets
+- Disabled VSTi player running a message pump during plugin enumeration
+- Removed effects from fmmidi, they were too slow
+- Version is now 2.1.4
 
 2018-08-01 23:57 UTC - kode54
 - Fixed VSTi selection on opening preferences after removing oplmidi
@@ -3384,7 +3393,7 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 				{
 					console::formatter() << "Trying " << npath;
 
-					VSTiPlayer vstPlayer;
+					VSTiPlayer vstPlayer(true);
 					if ( vstPlayer.LoadVST( npath ) )
 					{
 						vsti_info info;
@@ -3427,11 +3436,22 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 	}
 }
 
-static const size_t g_sc_known_size_103 = 27472384;
-static const hasher_md5_result g_sc_known_hash_103 = { 0xd4, 0x4d, 0x1b, 0x8c, 0x9a, 0x6f, 0x95, 0x6c, 0xa2, 0x32, 0x4f, 0x2f, 0x5d, 0x34, 0x8c, 0x44 };
+typedef struct sc_info
+{
+	size_t size;
+	hasher_md5_result hash;
+} sc_info;
 
-static const size_t g_sc_known_size_107 = 27319296;
-static const hasher_md5_result g_sc_known_hash_107 = { 0x25, 0x83, 0x0a, 0x6c, 0x2f, 0xf5, 0x75, 0x1f, 0x3a, 0x55, 0x91, 0x5f, 0xb6, 0x07, 0x02, 0xf4 };
+static const sc_info sc_hashes[] = {
+
+	// 1.0.3 - 32 bit
+	{ 27472384, { 0xd4, 0x4d, 0x1b, 0x8c, 0x9a, 0x6f, 0x95, 0x6c, 0xa2, 0x32, 0x4f, 0x2f, 0x5d, 0x34, 0x8c, 0x44 } },
+
+	// 1.0.7 - 32 bit
+	{ 27319296, { 0x25, 0x83, 0x0a, 0x6c, 0x2f, 0xf5, 0x75, 0x1f, 0x3a, 0x55, 0x91, 0x5f, 0xb6, 0x07, 0x02, 0xf4 } },
+
+	{ 0, { 0 } }
+};
 
 bool CMyPreferences::check_secret_sauce()
 {
@@ -3451,7 +3471,17 @@ bool CMyPreferences::check_secret_sauce()
 
 	fseek(f, 0, SEEK_END);
 	real_size = ftell(f);
-	if (real_size != g_sc_known_size_103 && real_size != g_sc_known_size_107)
+
+	bool found = false;
+	for (int i = 0; sc_hashes[i].size; ++i)
+	{
+		if (sc_hashes[i].size == real_size)
+		{
+			found = true;
+			break;
+		}
+	}
+	if (!found)
 	{
 		fclose(f);
 		return false;
@@ -3483,8 +3513,10 @@ bool CMyPreferences::check_secret_sauce()
 
 	m_hasher_result = m_hasher->get_result(m_hasher_state);
 
-	if (real_size == g_sc_known_size_103 && m_hasher_result == g_sc_known_hash_103) return true;
-	if (real_size == g_sc_known_size_107 && m_hasher_result == g_sc_known_hash_107) return true;
+	for (int i = 0; sc_hashes[i].size; ++i)
+	{
+		if (real_size == sc_hashes[i].size && m_hasher_result == sc_hashes[i].hash) return true;
+	}
 
 	return false;
 }

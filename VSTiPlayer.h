@@ -9,7 +9,7 @@ class VSTiPlayer : public MIDIPlayer
 {
 public:
 	// zero variables
-	VSTiPlayer();
+	VSTiPlayer(bool disableMessagePump = false);
 
 	// close, unload
 	virtual ~VSTiPlayer();
@@ -57,6 +57,7 @@ private:
 	std::string  sPlugin;
 	unsigned     uPluginPlatform;
 
+	bool         bDisableMessagePump;
 	bool         bInitialized;
 	bool         bTerminating;
 	HANDLE       hProcess;

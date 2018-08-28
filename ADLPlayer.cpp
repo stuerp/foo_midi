@@ -8,6 +8,9 @@
 
 #include "../../libADLMIDI/include/adlmidi.h"
 
+#include "gm_bank.h"
+#include "dmxopl3_bank.h"
+
 ADLPlayer::ADLPlayer(): MIDIPlayer()
 {
 	memset(midiplay, 0, sizeof(midiplay));
@@ -139,11 +142,33 @@ bool ADLPlayer::startup()
 		ADL_MIDIPlayer * midiplay = this->midiplay[i] = adl_init(uSampleRate);
 		if (!midiplay) return false;
 
-		adl_setBank(midiplay, uBankNumber);
+		const unsigned char * bank = NULL;
+		unsigned long bankSize = 0;
+
+		switch (uBankNumber)
+		{
+		case 68:
+			bank = g_gm_bank;
+			bankSize = sizeof(g_gm_bank);
+			break;
+
+		case 72:
+			bank = g_dmxopl3_bank;
+			bankSize = sizeof(g_dmxopl3_bank);
+			break;
+
+		default: break;
+		}
+
+		if (bank && bankSize)
+			adl_openBankData(midiplay, bank, bankSize);
+		else
+			adl_setBank(midiplay, uBankNumber);
 		adl_setNumChips(midiplay, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
 		adl_setNumFourOpsChn(midiplay, u4OpCount);
 		adl_setSoftPanEnabled(midiplay, bFullPanning);
 		adl_setDeviceIdentifier(midiplay, i);
+		adl_reset(midiplay);
 	}
 
 	return true;

@@ -176,54 +176,35 @@ void MT32Player::reset()
 	}
 }
 
-class FBFile : public MT32Emu::File
+class FBArrayFile : public MT32Emu::ArrayFile
 {
+	MT32Emu::Bit8u * keptData;
 public:
-	FBFile()
+	FBArrayFile(MT32Emu::Bit8u * data, size_t size)
+		: MT32Emu::ArrayFile(data, size), keptData(data) {}
+	virtual ~FBArrayFile()
 	{
-		data = NULL;
+		delete[] keptData;
 	}
-	~FBFile()
-	{
-		close();
-	}
-
-	bool open( const char *filename, abort_callback & p_abort )
-	{
-		try
-		{
-			service_ptr_t< file > p_temp;
-			filesystem::g_open( p_temp, filename, filesystem::open_mode_read, p_abort );
-			t_filesize length64 = p_temp->get_size_ex( p_abort );
-			if ( length64 > INT_MAX ) length64 = INT_MAX;
-			fileSize = length64;
-			data = new unsigned char[ length64 ];
-			p_temp->read_object( data, fileSize, p_abort );
-			return true;
-		}
-		catch ( ... )
-		{
-			return false;
-		}
-	}
-
-	void close()
-	{
-		delete [] data;
-		data = NULL;
-	}
-
-	size_t getSize() { return fileSize; }
-	const unsigned char *getData() { return data; }
 };
 
 MT32Emu::File * MT32Player::openFile( const char *filename )
 {
-	FBFile * ret = new FBFile;
-	if ( ! ret->open( pfc::string8() << sBasePath << filename, *_abort ) )
+	MT32Emu::Bit8u * data = NULL;
+	try
 	{
-		delete ret;
-		ret = 0;
+		service_ptr_t< file > p_temp;
+		filesystem::g_open(p_temp, pfc::string8() << sBasePath << filename, filesystem::open_mode_read, *_abort);
+		t_filesize length64 = p_temp->get_size_ex(*_abort);
+		if (length64 > INT_MAX) length64 = INT_MAX;
+		size_t fileSize = length64;
+		data = new MT32Emu::Bit8u[length64];
+		p_temp->read_object(data, fileSize, *_abort);
+		return new FBArrayFile(data, fileSize);
 	}
-	return ret;
+	catch (...)
+	{
+		delete[] data;
+		return NULL;
+	}
 }
