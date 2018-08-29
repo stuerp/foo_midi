@@ -4,9 +4,8 @@
 
 // #define LOG_EXCHANGE
 
-VSTiPlayer::VSTiPlayer(bool disableMessagePump) : MIDIPlayer()
+VSTiPlayer::VSTiPlayer() : MIDIPlayer()
 {
-	bDisableMessagePump = disableMessagePump;
 	bInitialized = false;
 	bTerminating = false;
 	hProcess = NULL;
@@ -287,11 +286,7 @@ uint32_t VSTiPlayer::process_read_bytes_pass( void * out, uint32_t size )
 	for (;;)
 	{
 		state = MsgWaitForMultipleObjects( _countof( handles ), handles, FALSE, INFINITE, QS_ALLEVENTS );
-		if (state == WAIT_OBJECT_0 + _countof(handles))
-		{
-			if (bDisableMessagePump) Sleep(10);
-			else ProcessPendingMessages();
-		}
+		if (state == WAIT_OBJECT_0 + _countof(handles)) ProcessPendingMessages();
 		else break;
 	}
 

@@ -1,4 +1,4 @@
-#define MYVERSION "2.1.4"
+#define MYVERSION "2.1.5"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,16 @@
 
 /*
 	change log
+
+2018-08-29 10:10 UTC - kode54
+- Re-enabled the VSTi enumeration message pump, as otherwise, the whole
+  process deadlocks, except when it's running under Wine.
+  - This was supposed to fix a bug where dialog creation could be interrupted
+    by a switch to other preferences panes while VSTi enumeration is still
+	happening, causing the MIDI prefpane to override the other. Apparently,
+	that's yet another bug that doesn't occur when running the process under
+	Wine.
+- Version is now 2.1.5
 
 2018-08-28 11:18 UTC - kode54
 - Change optimization settings and profile optimize once again
@@ -3393,7 +3403,7 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 				{
 					console::formatter() << "Trying " << npath;
 
-					VSTiPlayer vstPlayer(true);
+					VSTiPlayer vstPlayer;
 					if ( vstPlayer.LoadVST( npath ) )
 					{
 						vsti_info info;
