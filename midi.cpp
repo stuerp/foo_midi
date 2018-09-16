@@ -1,4 +1,4 @@
-#define MYVERSION "2.1.5"
+#define MYVERSION "2.1.6"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2018-09-16 03:11 UTC - kode54
+- Updated libADLMIDI
+- Version is now 2.1.6
 
 2018-08-29 10:10 UTC - kode54
 - Re-enabled the VSTi enumeration message pump, as otherwise, the whole
