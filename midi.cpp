@@ -1,4 +1,4 @@
-#define MYVERSION "2.1.6"
+#define MYVERSION "2.1.7"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2018-09-30 00:59 UTC - kode54
+- Implemented libADLMIDI core selection, defaulting to the fast Dosbox core
+- Version is now 2.1.7
 
 2018-09-16 03:11 UTC - kode54
 - Updated libADLMIDI
@@ -1309,6 +1313,18 @@ static const GUID guid_cfg_ms_panning =
 // {091C12A1-D42B-4F4E-8058-8B7F4C4DF3A1}
 static const GUID guid_cfg_sc_reverb =
 { 0x91c12a1, 0xd42b, 0x4f4e,{ 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
+// {715C6E5D-60BF-43AA-8DA3-F4F30B06FF48}
+static const GUID guid_cfg_adl_core_parent =
+{ 0x715c6e5d, 0x60bf, 0x43aa, { 0x8d, 0xa3, 0xf4, 0xf3, 0xb, 0x6, 0xff, 0x48 } };
+// {06B2C372-2D86-4368-B9D1-FC0BC89938B1}
+static const GUID guid_cfg_adl_core_nuked =
+{ 0x6b2c372, 0x2d86, 0x4368, { 0xb9, 0xd1, 0xfc, 0xb, 0xc8, 0x99, 0x38, 0xb1 } };
+// {68252066-2A7D-4D74-B7C4-D69B1D6768D1}
+static const GUID guid_cfg_adl_core_nuked_174 =
+{ 0x68252066, 0x2a7d, 0x4d74, { 0xb7, 0xc4, 0xd6, 0x9b, 0x1d, 0x67, 0x68, 0xd1 } };
+// {2A0290F8-805B-4109-AAD3-D5AE7F6235C7}
+static const GUID guid_cfg_adl_core_dosbox =
+{ 0x2a0290f8, 0x805b, 0x4109, { 0xaa, 0xd3, 0xd5, 0xae, 0x7f, 0x62, 0x35, 0xc7 } };
 
 
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>> {
@@ -1430,6 +1446,12 @@ advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops pres
 advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
 advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 10, 30000);
 
+advconfig_branch_factory cfg_adl_core_parent("libADLMIDI emulator core", guid_cfg_adl_core_parent, guid_cfg_midi_parent, 2.0);
+
+advconfig_checkbox_factory_t<true> cfg_adl_core_nuked("Nuked OPL3 (slowest, most accurate)", guid_cfg_adl_core_nuked, guid_cfg_adl_core_parent, 0.0, false);
+advconfig_checkbox_factory_t<true> cfg_adl_core_nuked_174("Nuked OPL3 v0.74 (slow, slightly less accurate)", guid_cfg_adl_core_nuked_174, guid_cfg_adl_core_parent, 1.0, false);
+advconfig_checkbox_factory_t<true> cfg_adl_core_dosbox("Dosbox OPL3 (really fast, mostly accurate)", guid_cfg_adl_core_dosbox, guid_cfg_adl_core_parent, 2.0, true);
+
 advconfig_checkbox_factory cfg_bassmidi_effects("BASSMIDI - Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_midi_parent, 0, true);
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
@@ -1492,7 +1514,7 @@ void ms_get_preset(const char * name, unsigned int & synth, unsigned int & bank)
 
 struct midi_preset
 {
-	enum { version = 6 };
+	enum { version = 7 };
 
 	// version 0
 	unsigned int plugin;
@@ -1518,6 +1540,8 @@ struct midi_preset
 	bool adl_panning;
 	// v3 - chorus
 	bool adl_chorus;
+	// v7 - emulator core
+	unsigned int adl_emu_core;
 
 	// v1 - plug-in == 3 - MUNT
 	unsigned int munt_gm_set;
@@ -1562,6 +1586,16 @@ struct midi_preset
 		adl_bank = cfg_adl_bank;
 		adl_chips = cfg_adl_chips;
 		adl_panning = !!cfg_adl_panning;
+		{
+			if (cfg_adl_core_dosbox)
+				adl_emu_core = ADLMIDI_EMU_DOSBOX;
+			else if (cfg_adl_core_nuked_174)
+				adl_emu_core = ADLMIDI_EMU_NUKED_174;
+			else if (cfg_adl_core_nuked)
+				adl_emu_core = ADLMIDI_EMU_NUKED;
+			else
+				adl_emu_core = ADLMIDI_EMU_DOSBOX;
+		}
 		munt_gm_set = cfg_munt_gm;
 		ms_synth = cfg_ms_synth;
 		ms_bank = cfg_ms_bank;
@@ -1639,6 +1673,9 @@ struct midi_preset
 			p_out += "|";
 
 			p_out += pfc::format_int( adl_chorus );
+			p_out += "|";
+
+			p_out += pfc::format_int( adl_emu_core );
 		}
 		else if ( plugin == 3 )
 		{
@@ -1684,6 +1721,7 @@ struct midi_preset
 		unsigned in_adl_bank, in_adl_chips;
 		bool in_adl_panning;
 		bool in_adl_chorus;
+		unsigned in_adl_emu_core;
 		unsigned in_munt_gm_set;
 		unsigned in_ms_synth, in_ms_bank;
 		unsigned in_sc_flavor;
@@ -1773,6 +1811,34 @@ struct midi_preset
 
 				if ( !*p_in ) return;
 				in_adl_panning = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+
+				if ( version >= 3 )
+				{
+					p_in = bar_pos + (*bar_pos == '|');
+					bar_pos = strchr( p_in, '|' );
+					if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+					if ( !*p_in ) return;
+					in_adl_chorus = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+
+					if ( version >= 7 )
+					{
+						p_in = bar_pos + (*bar_pos == '|');
+						bar_pos = strchr( p_in, '|' );
+						if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+						if ( !*p_in ) return;
+						in_adl_emu_core = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+					}
+					else
+					{
+						in_adl_emu_core = ADLMIDI_EMU_DOSBOX;
+					}
+				}
+				else
+				{
+					in_adl_emu_core = ADLMIDI_EMU_DOSBOX;
+				}
 			}
 		}
 		else if ( in_plugin == 3 )
@@ -1840,6 +1906,7 @@ struct midi_preset
 		adl_chips = in_adl_chips;
 		adl_panning = in_adl_panning;
 		adl_chorus = in_adl_chorus;
+		adl_emu_core = in_adl_emu_core;
 		munt_gm_set = in_munt_gm_set;
 		ms_synth = in_ms_synth;
 		ms_bank = in_ms_bank;
@@ -2720,6 +2787,7 @@ public:
 				adlPlayer->setChipCount( thePreset.adl_chips );
 				adlPlayer->setFullPanning( thePreset.adl_panning );
 				adlPlayer->set4OpCount( thePreset.adl_chips * 4 /*cfg_adl_4op*/ );
+				adlPlayer->setCore( thePreset.adl_emu_core );
 				adlPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;

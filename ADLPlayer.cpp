@@ -102,6 +102,11 @@ void ADLPlayer::render(float * out, unsigned long count)
 	}
 }
 
+void ADLPlayer::setCore( unsigned core )
+{
+	uEmuCore = core;
+}
+
 void ADLPlayer::setBank( unsigned bank )
 {
 	uBankNumber = bank;
@@ -168,6 +173,7 @@ bool ADLPlayer::startup()
 		adl_setNumFourOpsChn(midiplay, u4OpCount);
 		adl_setSoftPanEnabled(midiplay, bFullPanning);
 		adl_setDeviceIdentifier(midiplay, i);
+		adl_switchEmulator(midiplay, uEmuCore);
 		adl_reset(midiplay);
 	}
 

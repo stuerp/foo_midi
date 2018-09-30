@@ -12,7 +12,14 @@ public:
 	// close, unload
 	virtual ~ADLPlayer();
 
+	enum {
+		ADLMIDI_EMU_NUKED = 0,
+		ADLMIDI_EMU_NUKED_174,
+		ADLMIDI_EMU_DOSBOX
+	};
+
 	// configuration
+	void setCore( unsigned );
 	void setBank( unsigned );
 	void setChipCount( unsigned );
 	void set4OpCount( unsigned );
@@ -32,6 +39,7 @@ private:
 
 	struct ADL_MIDIPlayer * midiplay[3];
 
+	unsigned           uEmuCore;
 	unsigned           uBankNumber;
 	unsigned           uChipCount;
 	unsigned           u4OpCount;
