@@ -1,4 +1,4 @@
-#define MYVERSION "2.1.7"
+#define MYVERSION "2.1.8"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2019-01-29 01:15 UTC - kode54
+- Updated libADLMIDI
+- Version is now 2.1.8
 
 2018-09-30 00:59 UTC - kode54
 - Implemented libADLMIDI core selection, defaulting to the fast Dosbox core
