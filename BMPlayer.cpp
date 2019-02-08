@@ -413,7 +413,7 @@ bool g_get_soundfont_stats( uint64_t & total_sample_size, uint64_t & samples_loa
 BMPlayer::BMPlayer() : MIDIPlayer()
 {
 	memset(_stream, 0, sizeof(_stream));
-	bSincInterpolation = false;
+	iInterpolation = 0;
 	bEffects = true;
 	_presetList[0] = 0;
 	_presetList[1] = 0;
@@ -426,9 +426,9 @@ BMPlayer::~BMPlayer()
 	shutdown();
 }
 
-void BMPlayer::setSincInterpolation(bool enable)
+void BMPlayer::setInterpolation(int level)
 {
-	bSincInterpolation = enable;
+	iInterpolation = level;
 
 	shutdown();
 }
@@ -569,6 +569,7 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
 	if ( !stricmp_utf8( ext.c_str(), "sf2" )
 #ifdef SF2PACK
 		|| !stricmp_utf8( ext.c_str(), "sf2pack" )
+		|| !stricmp_utf8( ext.c_str(), "sfogg" )
 #endif
 		)
 	{
@@ -612,13 +613,16 @@ bool BMPlayer::startup()
 {
 	if ( _stream[0] && _stream[1] && _stream[2] ) return true;
 
-	_stream[0] = BASS_MIDI_StreamCreate( 16, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ) | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
-	_stream[1] = BASS_MIDI_StreamCreate( 16, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ) | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
-	_stream[2] = BASS_MIDI_StreamCreate( 16, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bSincInterpolation ? BASS_MIDI_SINCINTER : 0 ) | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
+	_stream[0] = BASS_MIDI_StreamCreate( 16, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
+	_stream[1] = BASS_MIDI_StreamCreate( 16, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
+	_stream[2] = BASS_MIDI_StreamCreate( 16, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | ( bEffects ? 0 : BASS_MIDI_NOFX ), (unsigned int) uSampleRate );
 	if (!_stream[0] || !_stream[1] || !_stream[2])
 	{
 		return false;
 	}
+	BASS_ChannelSetAttribute(_stream[0], BASS_ATTRIB_MIDI_SRC, (float)iInterpolation);
+	BASS_ChannelSetAttribute(_stream[1], BASS_ATTRIB_MIDI_SRC, (float)iInterpolation);
+	BASS_ChannelSetAttribute(_stream[2], BASS_ATTRIB_MIDI_SRC, (float)iInterpolation);
 	memset( bank_lsb_override, 0, sizeof( bank_lsb_override ) );
 	std::vector<BASS_MIDI_FONTEX> presetList;
 	if (sFileSoundFontName.length())

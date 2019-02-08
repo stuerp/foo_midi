@@ -21,7 +21,7 @@ public:
 	// configuration
 	void setSoundFont( const char * in );
 	void setFileSoundFont( const char * in );
-	void setSincInterpolation(bool enable = true);
+	void setInterpolation(int level);
 	void setEffects(bool enable = true);
 
 private:
@@ -48,7 +48,7 @@ private:
 
 	HSTREAM            _stream[3];
 
-	bool               bSincInterpolation;
+	int                iInterpolation;
 	bool               bEffects;
 
 	bool               bank_lsb_overridden;

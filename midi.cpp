@@ -1,4 +1,4 @@
-#define MYVERSION "2.1.8"
+#define MYVERSION "2.1.9"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+
+2019-02-08 01:56 UTC - kode54
+- Updated BASS and BASSMIDI
+- Added support for new BASSMIDI interpolation mode
+- Added support for .SFOGG extension, which is the same
+  format as sf2pack, only using Ogg Vorbis sample data
+- Version is now 2.1.9
 
 2019-01-29 01:15 UTC - kode54
 - Updated libADLMIDI
@@ -1330,6 +1337,36 @@ static const GUID guid_cfg_adl_core_nuked_174 =
 static const GUID guid_cfg_adl_core_dosbox =
 { 0x2a0290f8, 0x805b, 0x4109, { 0xaa, 0xd3, 0xd5, 0xae, 0x7f, 0x62, 0x35, 0xc7 } };
 
+#if defined(_M_IX86) || defined(__i386__)
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#elif defined(__clang__) || defined(__GNUC__)
+static inline void
+__cpuid(int *data, int selector)
+{
+	asm("cpuid"
+		: "=a" (data[0]),
+		"=b" (data[1]),
+		"=c" (data[2]),
+		"=d" (data[3])
+		: "a"(selector));
+}
+#else
+#define __cpuid(a,b) memset((a), 0, sizeof(int) * 4)
+#endif
+
+static int query_cpu_feature_sse2() {
+	int buffer[4];
+	__cpuid(buffer, 1);
+	if ((buffer[3] & (1 << 26)) == 0) return 0;
+	return 1;
+}
+
+static int _bassmidi_src2_avail = query_cpu_feature_sse2();
+#else
+enum { _bassmidi_src2_avail = 1 }; // No x86, either x86_64 or no SSE2 compiled in anyway
+#endif
 
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>> {
 public:
@@ -2248,6 +2285,9 @@ public:
 
 		loop_count = cfg_midi_loop_count.get();
 		fade_ms = cfg_midi_fade_time.get();
+
+		if (!_bassmidi_src2_avail && resampling > 1)
+			resampling = 1;
 	}
 
 	~input_midi()
@@ -2464,6 +2504,7 @@ public:
 			"sflist",
 #ifdef SF2PACK
 			"sf2pack",
+			"sfogg",
 #endif
 			"sf2"
 		};
@@ -2758,7 +2799,7 @@ public:
 				bmPlayer->setSoundFont(thePreset.soundfont_path);
 				if ( file_soundfont.length() ) bmPlayer->setFileSoundFont( file_soundfont );
 				bmPlayer->setSampleRate(srate);
-				bmPlayer->setSincInterpolation(!!resampling);
+				bmPlayer->setInterpolation(resampling);
 				bmPlayer->setEffects(thePreset.effects);
 
 				unsigned loop_mode = 0;
@@ -3906,8 +3947,13 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 
 	w = GetDlgItem( IDC_RESAMPLING );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Linear interpolation" );
-	uSendMessageText( w, CB_ADDSTRING, 0, "Sinc interpolation" );
-	::SendMessage( w, CB_SETCURSEL, cfg_resampling, 0 );
+	uSendMessageText( w, CB_ADDSTRING, 0, "8pt Sinc interpolation" );
+	if (_bassmidi_src2_avail)
+		uSendMessageText( w, CB_ADDSTRING, 0, "16pt Sinc interpolation" );
+	if (!_bassmidi_src2_avail && cfg_resampling > 1)
+		::SendMessage( w, CB_SETCURSEL, 1, 0 );
+	else
+		::SendMessage( w, CB_SETCURSEL, cfg_resampling, 0 );
 
 	w = GetDlgItem( IDC_MUNT_GM );
 	for ( unsigned i = 0, j = _countof( munt_bank_names ); i < j; i++ )
@@ -4064,11 +4110,11 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 		directory.truncate( directory.scan_filename() );
 		if (uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;"
 #ifdef SF2PACK
-			"*.sf2pack;"
+			"*.sf2pack;*.sfogg;"
 #endif
 			"*.sflist|SoundFont files|*.sf2"
 #ifdef SF2PACK
-			";*.sf2pack"
+			";*.sf2pack;*.sfogg;"
 #endif
 			"|SoundFont list files|*.sflist;*.json", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE))
 		{
