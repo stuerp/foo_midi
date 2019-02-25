@@ -1,4 +1,4 @@
-#define MYVERSION "2.1.9"
+#define MYVERSION "2.2"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2019-02-25 03:56 UTC - kode54
+- Rewrote Secret Sauce interface into a pipe exchange system, which allows:
+  - Both 32 and 64 bit modules
+  - Multiple instances without copying the DLL to a temporary file
+- Version is now 2.2
 
 2019-02-08 01:56 UTC - kode54
 - Updated BASS and BASSMIDI
@@ -3577,6 +3583,8 @@ static const sc_info sc_hashes[] = {
 	// 1.0.7 - 32 bit
 	{ 27319296, { 0x25, 0x83, 0x0a, 0x6c, 0x2f, 0xf5, 0x75, 0x1f, 0x3a, 0x55, 0x91, 0x5f, 0xb6, 0x07, 0x02, 0xf4 } },
 
+	// 1.1.3 - 64 bit
+	{ 27358208, { 0x80, 0xF1, 0xE6, 0x73, 0xD2, 0x49, 0xD1, 0xCD, 0xA6, 0x7A, 0x29, 0x36, 0x32, 0x6F, 0x86, 0x6B } },
 	{ 0, { 0 } }
 };
 

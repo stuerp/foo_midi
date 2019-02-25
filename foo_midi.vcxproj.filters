@@ -39,7 +39,6 @@
     <ClCompile Include="fmopl3lib\opl3class.cpp">
       <Filter>fmopl3</Filter>
     </ClCompile>
-    <ClCompile Include="SCCore.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -122,7 +121,6 @@
     <ClInclude Include="fmopl3lib\opl3class.h">
       <Filter>fmopl3</Filter>
     </ClInclude>
-    <ClInclude Include="SCCore.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

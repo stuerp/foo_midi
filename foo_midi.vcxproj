@@ -192,7 +192,6 @@
     <ClCompile Include="resampler.c">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MinSpace</Optimization>
     </ClCompile>
-    <ClCompile Include="SCCore.cpp" />
     <ClCompile Include="SCPlayer.cpp" />
     <ClCompile Include="sflist\json-builder.c" />
     <ClCompile Include="sflist\json.c" />
@@ -255,7 +254,6 @@
     </CustomBuild>
     <ClInclude Include="resampler.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="SCCore.h" />
     <ClInclude Include="SCPlayer.h" />
     <ClInclude Include="sflist\json-builder.h" />
     <ClInclude Include="sflist\json.h" />
