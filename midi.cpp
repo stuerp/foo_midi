@@ -1,4 +1,4 @@
-#define MYVERSION "2.2"
+#define MYVERSION "2.2.1"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2019-02-25 08:08 UTC - kode54
+- Changed Secret Sauce plugin interface to emit silence if the cores
+  have crashed
+- Version is now 2.2.1
 
 2019-02-25 04:21 UTC - kode54
 - Rewrote Secret Sauce interface into a pipe exchange system, which allows:

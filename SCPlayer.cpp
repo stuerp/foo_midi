@@ -394,7 +394,8 @@ void SCPlayer::send_sysex_simple(uint32_t port, const uint8_t * data, uint32_t s
 	process_write_code(port, 3);
 	process_write_code(port, size);
 	process_write_bytes(port, data, size);
-	process_read_code(port);
+	if (process_read_code(port) != 0)
+		process_terminate(port);
 }
 
 void SCPlayer::send_sysex(uint32_t port, const uint8_t * data, uint32_t size)
@@ -541,7 +542,11 @@ void SCPlayer::junk(uint32_t port, unsigned long count)
 		uint32_t do_count = (uint32_t)((unsigned long)(min(count, UINT_MAX)));
 		process_write_code(port, 5);
 		process_write_code(port, do_count);
-		process_read_code(port);
+		if (process_read_code(port) != 0)
+		{
+			process_terminate(port);
+			break;
+		}
 		count -= do_count;
 	}
 }
@@ -550,7 +555,8 @@ void SCPlayer::send_command(uint32_t port, uint32_t command)
 {
 	process_write_code(port, 2);
 	process_write_code(port, command);
-	process_read_code(port);
+	if (process_read_code(port) != 0)
+		process_terminate(port);
 }
 
 void SCPlayer::set_mode(sc_mode m)
@@ -591,7 +597,12 @@ void SCPlayer::render_port(uint32_t port, float * out, uint32_t count)
 {
 	process_write_code(port, 4);
 	process_write_code(port, count);
-	process_read_code(port);
+	if (process_read_code(port) != 0)
+	{
+		process_terminate(port);
+		memset(out, 0, count * sizeof(float) * 2);
+		return;
+	}
 	process_read_bytes(port, out, count * sizeof(float) * 2);
 }
 
