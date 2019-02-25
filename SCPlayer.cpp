@@ -101,8 +101,8 @@ bool SCPlayer::process_create(uint32_t port)
 	if (!iInitialized)
 	{
 		if (FAILED(CoInitialize(NULL))) return false;
-		iInitialized++;
 	}
+	iInitialized++;
 
 	hReadEvent[port] = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -466,7 +466,7 @@ void SCPlayer::reset_sc(uint32_t port)
 
 void SCPlayer::reset(uint32_t port)
 {
-	if (iInitialized >= 3)
+	if (initialized)
 	{
 		send_sysex_simple(port, syx_reset_xg, sizeof(syx_reset_xg)); junk(port, 1024);
 		send_sysex_simple(port, syx_reset_gm2, sizeof(syx_reset_gm2)); junk(port, 1024);
@@ -623,6 +623,7 @@ void SCPlayer::shutdown()
 	{
 		process_terminate(i);
 	}
+	initialized = false;
 }
 
 bool SCPlayer::startup()

@@ -7,7 +7,7 @@
 /*
 	change log
 
-2019-02-25 03:56 UTC - kode54
+2019-02-25 04:21 UTC - kode54
 - Rewrote Secret Sauce interface into a pipe exchange system, which allows:
   - Both 32 and 64 bit modules
   - Multiple instances without copying the DLL to a temporary file
