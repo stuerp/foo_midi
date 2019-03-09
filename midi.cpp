@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.1"
+#define MYVERSION "2.2.2"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2019-03-09 00:12 UTC - kode54
+- Added limited ANSI metadata handling
+- Version is now 2.2.2
 
 2019-02-25 08:08 UTC - kode54
 - Changed Secret Sauce plugin interface to emit silence if the cores
@@ -2204,6 +2208,55 @@ static critical_section sync;
 static volatile int g_running = 0;
 static volatile int g_srate;
 
+static t_size sjis_decode_char(const char * p_sjis, t_size max)
+{
+	const t_uint8 * sjis = (const t_uint8 *)p_sjis;
+
+	if (max == 0)
+		return 0;
+	else if (max > 2)
+		max = 2;
+
+	if (sjis[0] < 0x80)
+	{
+		return sjis[0] > 0 ? 1 : 0;
+	}
+
+	if (max >= 1)
+	{
+		// TODO: definitely weak
+		if (unsigned(sjis[0] - 0xA1) < 0x3F)
+			return 1;
+	}
+
+	if (max >= 2)
+	{
+		// TODO: probably very weak
+		if ((unsigned(sjis[0] - 0x81) < 0x1F || unsigned(sjis[0] - 0xE0) < 0x10) &&
+			unsigned(sjis[1] - 0x40) < 0xBD)
+			return 2;
+	}
+
+	return 0;
+}
+
+static bool is_valid_sjis(const char * param, t_size max = ~0)
+{
+	t_size walk = 0;
+	while (walk < max && param[walk] != 0)
+	{
+		t_size d;
+		d = sjis_decode_char(param + walk, max - walk);
+		if (d == 0) return false;
+		walk += d;
+		if (walk > max)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 class input_midi : public input_stubs
 {
 #ifdef DXISUPPORT
@@ -2269,6 +2322,27 @@ class input_midi : public input_stubs
 	unsigned sample_loop_start;
 	unsigned sample_loop_end;
 	*/
+
+	void meta_add(file_info & p_info, const char * name, const char * value, t_size max)
+	{
+		if (value[0])
+		{
+			pfc::string8 t;
+			if (max && value[max - 1])
+			{
+				// TODO: moo
+				t.set_string(value, max);
+				value = t;
+			}
+			else max = strlen(value);
+			if (pfc::is_lower_ascii(value) || pfc::is_valid_utf8(value, max))
+				p_info.meta_add(name, value);
+			else if (is_valid_sjis(value, max))
+				p_info.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
+			else
+				p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));
+		}
+	}
 
 public:
 	input_midi() : srate(cfg_srate), resampling(cfg_resampling),
@@ -2432,7 +2506,7 @@ public:
 			{
 				std::string name = item.m_name;
 				if ( remap_display_name && !pfc::stricmp_ascii( name.c_str(), "display_name" ) ) name = "title";
-				p_info.meta_add( name.c_str(), item.m_value.c_str() );
+				meta_add(p_info, name.c_str(), item.m_value.c_str(), 0);
 			}
 		}
 
