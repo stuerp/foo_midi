@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.2"
+#define MYVERSION "2.2.3"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2019-03-11 02:10 UTC - kode54
+- Added further checks to Secret Sauce and VSTi players for empty plugin paths
+- Added more console error notices for various states where outputs were selected
+  without configuring them with ROMs or instruments
+- Version is now 2.2.3
 
 2019-03-09 00:12 UTC - kode54
 - Added limited ANSI metadata handling
@@ -2804,6 +2810,12 @@ public:
 			{
 				delete midiPlayer;
 
+				if (thePreset.vst_path.is_empty())
+				{
+					console::print("No VST instrument configured");
+					throw exception_io_data();
+				}
+
 				VSTiPlayer * vstPlayer = new VSTiPlayer;
 				midiPlayer = vstPlayer;
 
@@ -2827,6 +2839,8 @@ public:
 						return;
 					}
 				}
+				console::formatter() << "Unable to load VSTi plugin: " <<
+					thePreset.vst_path;
 			}
 #ifdef FLUIDSYNTHSUPPORT
 			else if (plugin == 2)
@@ -2877,6 +2891,13 @@ public:
 				FreeLibrary( fsmod );*/
 
 				delete midiPlayer;
+
+				if (thePreset.soundfont_path.is_empty() &&
+					file_soundfont.is_empty())
+				{
+					console::print("No SoundFonts configured, and no file or directory SoundFont found");
+					throw exception_io_data();
+				}
 
 				BMPlayer * bmPlayer = new BMPlayer;
 				midiPlayer = bmPlayer;
@@ -2967,11 +2988,16 @@ public:
 
 				delete midiPlayer;
 
+				if (cfg_munt_base_path.is_empty())
+				{
+					console::print("No MUNT base path configured, attempting to load ROMs from plugin install path");
+				}
+
 				MT32Player * mt32Player = new MT32Player( !is_mt32, thePreset.munt_gm_set );
 				midiPlayer = mt32Player;
 
 				pfc::string8 p_base_path = cfg_munt_base_path;
-				if ( !strlen( p_base_path ) )
+				if ( p_base_path.is_empty() )
 				{
 					p_base_path = core_api::get_my_full_path();
 					p_base_path.truncate( p_base_path.scan_filename() );
@@ -3034,8 +3060,9 @@ public:
 
 				pfc::string8 p_path;
 				cfg_sc_path.get(p_path);
-				if (!strlen(p_path))
+				if (p_path.is_empty())
 				{
+					console::print("Secret Sauce path not configured, yet somehow enabled, trying plugin directory");
 					p_path = core_api::get_my_full_path();
 					p_path.truncate(p_path.scan_filename());
 				}

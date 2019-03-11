@@ -66,6 +66,8 @@ unsigned SCPlayer::test_plugin_platform() {
 
 bool SCPlayer::LoadCore(const char * path)
 {
+	if (!path || !path[0]) return false;
+
 	if (path != sPlugin) sPlugin = path;
 
 	uPluginPlatform = test_plugin_platform();

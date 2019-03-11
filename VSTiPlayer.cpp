@@ -73,6 +73,8 @@ unsigned VSTiPlayer::test_plugin_platform() {
 
 bool VSTiPlayer::LoadVST(const char * path)
 {
+	if (!path || !path[0]) return false;
+
 	if ( path != sPlugin ) sPlugin = path;
 
 	uPluginPlatform = test_plugin_platform();
