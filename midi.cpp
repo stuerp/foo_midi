@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.4"
+#define MYVERSION "2.2.5"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,16 @@
 
 /*
 	change log
+
+2019-08-19 03:23 UTC - kode54
+- Made external executables use static runtime again, since they can't import
+  bundled runtime like components can
+- Updated libADLMIDI
+- Removed unnecessary source file from repository
+- Fixed invalid MIDI files with division ticks count of 0 from slipping through
+  validation and causing division by zero errors on tick count to timestamp
+  calculations
+- Version is now 2.2.5
 
 2019-06-06 00:04 UTC - kode54
 - Added a new Secret Sauce hash, still looking for v1.0.7 64 bit

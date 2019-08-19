@@ -290,7 +290,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\libADLMIDI\build\ADLMIDI_static.vcxproj">
-      <Project>{02a5c6a9-549f-372a-8deb-e895fa0bc9a2}</Project>
+      <Project>{1a2df754-5d59-3517-850f-4015b0267c12}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\midisynth\midisynth.vcxproj">
       <Project>{987fc62d-eaf6-41ed-be12-d8f867581534}</Project>
