@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.6"
+#define MYVERSION "2.2.7"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+
+2019-09-26 01:53 UTC - kode54
+- Overhauled the looping and timing system, now with configurable presets
+  for both playback and conversion, and separating the indefinite playback
+  mode from the other looping modes, since it's also only applicable to
+  playback
+- Version is now 2.2.7
 
 2019-09-26 00:25 UTC - kode54
 - Added another Secret Sauce
@@ -1268,9 +1275,12 @@ static const GUID guid_cfg_filter_banks =
 // {FE5B24D8-C8A5-4b49-A163-972649217185}
 /*static const GUID guid_cfg_recover_tracks = 
 { 0xfe5b24d8, 0xc8a5, 0x4b49, { 0xa1, 0x63, 0x97, 0x26, 0x49, 0x21, 0x71, 0x85 } };*/
-// {DA3A7D23-BCEB-40f9-B594-2A9428A1E533}
-static const GUID guid_cfg_loop_type = 
-{ 0xda3a7d23, 0xbceb, 0x40f9, { 0xb5, 0x94, 0x2a, 0x94, 0x28, 0xa1, 0xe5, 0x33 } };
+// {64F6E918-45C3-4AC7-ABC0-474DD3989EA1}
+static const GUID guid_cfg_loop_type =
+{ 0x64f6e918, 0x45c3, 0x4ac7, { 0xab, 0xc0, 0x47, 0x4d, 0xd3, 0x98, 0x9e, 0xa1 } };
+// {AB5CC279-1C68-4824-B4B8-0656856A40A0}
+static const GUID guid_cfg_loop_type_other =
+{ 0xab5cc279, 0x1c68, 0x4824, { 0xb4, 0xb8, 0x6, 0x56, 0x85, 0x6a, 0x40, 0xa0 } };
 // {AE5BA73B-B0D4-4261-BFF2-11A1C44E57EA}
 static const GUID guid_cfg_srate = 
 { 0xae5ba73b, 0xb0d4, 0x4261, { 0xbf, 0xf2, 0x11, 0xa1, 0xc4, 0x4e, 0x57, 0xea } };
@@ -1459,6 +1469,7 @@ enum
 	default_cfg_filter_banks = 0,
 	//default_cfg_recover_tracks = 0,
 	default_cfg_loop_type = 0,
+	default_cfg_loop_type_other = 0,
 	default_cfg_srate = 44100,
 	default_cfg_plugin = 6,
 	default_cfg_resampling = 1,
@@ -1486,6 +1497,7 @@ cfg_int cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz), cfg_xmiloopz(g
 		cfg_filter_instruments(guid_cfg_filter_instruments, default_cfg_filter_instruments),
 		cfg_filter_banks(guid_cfg_filter_banks, default_cfg_filter_banks),
 		/*cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),*/ cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
+		cfg_loop_type_other(guid_cfg_loop_type_other, default_cfg_loop_type_other),
 		/*cfg_nosysex("sux", 0),*/ /*cfg_gm2(guid_cfg_gm2, 0),*/
 		cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
 		cfg_resampling(guid_cfg_resampling, default_cfg_resampling),
@@ -1525,7 +1537,7 @@ advconfig_string_factory_MT cfg_sc_path("Secret Sauce path", guid_cfg_sc_path, g
 advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops present", guid_cfg_midi_timing_parent, guid_cfg_midi_parent, 1.0);
 
 advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
-advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 10, 30000);
+advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 0, 30000);
 
 advconfig_branch_factory cfg_adl_core_parent("libADLMIDI emulator core", guid_cfg_adl_core_parent, guid_cfg_midi_parent, 2.0);
 
@@ -2302,6 +2314,8 @@ class input_midi : public input_stubs
 	bool b_xmiloopz;
 	bool b_ff7loopz;
 	unsigned loop_type;
+	unsigned loop_type_playback;
+	unsigned loop_type_other;
 	unsigned clean_flags;
 	//bool b_gm2;
 
@@ -2371,7 +2385,7 @@ class input_midi : public input_stubs
 
 public:
 	input_midi() : srate(cfg_srate), resampling(cfg_resampling),
-		loop_type(cfg_loop_type), b_rpgmloopz(!!cfg_rpgmloopz), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
+		loop_type_playback(cfg_loop_type), loop_type_other(cfg_loop_type_other), b_rpgmloopz(!!cfg_rpgmloopz), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
 		dxiProxy = NULL;
@@ -2419,14 +2433,18 @@ private:
 	double get_length( unsigned p_subsong )
 	{
 		length_ms = midi_file.get_timestamp_end( p_subsong, true );
-		double length = length_ms * .001 + 1.;
+		double length = length_ms * .001;
+		if (loop_type == 1)
+			length += 1.;
 		length_ticks = midi_file.get_timestamp_end( p_subsong ); //theSequence->m_tempoMap.Sample2Tick(len, 1000);
-		length_samples = (unsigned)(((__int64)length_ms * (__int64)srate) / 1000) + srate;
+		length_samples = (unsigned)(((__int64)length_ms * (__int64)srate) / 1000);
+		if (loop_type == 1)
+			length_samples += srate;
 		loop_begin = midi_file.get_timestamp_loop_start( p_subsong );
 		loop_end = midi_file.get_timestamp_loop_end( p_subsong );
 		loop_begin_ms = midi_file.get_timestamp_loop_start( p_subsong, true );
 		loop_end_ms = midi_file.get_timestamp_loop_end( p_subsong, true );
-		if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 1 )
+		if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 2 )
 		{
 			if ( loop_begin_ms == ~0 ) loop_begin_ms = 0;
 			if ( loop_end_ms == ~0 ) loop_end_ms = length_ms;
@@ -2552,8 +2570,10 @@ public:
 		if (loop_end_ms != ~0) p_info.info_set_int(field_loop_end_ms, loop_end_ms );
 		//p_info.info_set_int("samplerate", srate);
 		unsigned length_ms = midi_file.get_timestamp_end( p_subsong, true );
-		double length = double( length_ms ) * 0.001 + 1.0;
-		if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 1 )
+		double length = double( length_ms ) * 0.001;
+		if (loop_type_other == 1)
+			length += 1.;
+		if ( loop_begin != ~0 || loop_end != ~0 || loop_type_other > 2 )
 		{
 			if ( loop_begin_ms == ~0 ) loop_begin_ms = 0;
 			if ( loop_end_ms == ~0 ) loop_end_ms = length_ms;
@@ -2637,6 +2657,8 @@ public:
 		{
 			throw exception_io_data( "You cannot play SysEx dumps" );
 		}
+
+		loop_type = (p_flags & input_flag_playback) ? loop_type_playback : loop_type_other;
 
 		midi_preset thePreset;
 
@@ -2762,13 +2784,13 @@ public:
 
 		samples_played = 0;
 
-		if ( p_flags & input_flag_no_looping || !loop_type )
+		if ( p_flags & input_flag_no_looping || loop_type < 4 )
 		{
 			unsigned samples_length = length_samples;
 			samples_fade_begin = samples_length;
 			samples_fade_end = samples_length;
 
-			if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 1 )
+			if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 2 )
 			{
 				samples_fade_begin = MulDiv(loop_begin_ms + (loop_end_ms - loop_begin_ms) * loop_count, srate, 1000);
 				samples_fade_end = samples_fade_begin + srate * fade_ms / 1000;
@@ -2848,7 +2870,7 @@ public:
 					unsigned loop_mode = 0;
 
 					loop_mode = MIDIPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
+					if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 					if ( vstPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 					{
@@ -2930,7 +2952,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if (bmPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
 				{
@@ -2963,7 +2985,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( adlPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -2990,7 +3012,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( fmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -3034,7 +3056,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( mt32Player->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -3060,7 +3082,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if (loop_type > 1) loop_mode |= MIDIPlayer::loop_mode_force;
+				if (loop_type > 2) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if (msPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
 				{
@@ -3095,7 +3117,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if (loop_type > 1) loop_mode |= MIDIPlayer::loop_mode_force;
+				if (loop_type > 2) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if (scPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
 				{
@@ -3152,7 +3174,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( emidiPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -3464,7 +3486,12 @@ public:
 	}
 };
 
-static const char * loop_txt[] = {"Never", "When loop info detected", "Always"};
+static const char * loop_txt[] =
+{"Never loop",
+"Never, add 1s decay time",
+"Loop and fade when detected",
+"Always loop and fade",
+"Play indefinitely"};
 
 #ifdef FLUIDSYNTHSUPPORT
 static const char * interp_txt[] = {"None", "Linear", "Cubic", "7th Order Sinc"};
@@ -3506,6 +3533,7 @@ public:
 		COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_SELCHANGE, OnSelectionChange)
 		DROPDOWN_HISTORY_HANDLER(IDC_SAMPLERATE, cfg_history_rate)
 		COMMAND_HANDLER_EX(IDC_LOOP, CBN_SELCHANGE, OnSelectionChange)
+		COMMAND_HANDLER_EX(IDC_CLOOP, CBN_SELCHANGE, OnSelectionChange)
 #ifdef FLUIDSYNTHSUPPORT
 		COMMAND_HANDLER_EX(IDC_FLUID_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
 #endif
@@ -4025,6 +4053,13 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	::SendMessage( w, CB_SETCURSEL, cfg_loop_type, 0 );
 
+	w = GetDlgItem( IDC_CLOOP );
+	for (unsigned i = 0; i < _countof(loop_txt) - 1; i++)
+	{
+		uSendMessageText( w, CB_ADDSTRING, 0, loop_txt[i] );
+	}
+	::SendMessage( w, CB_SETCURSEL, cfg_loop_type_other, 0 );
+
 	SendDlgItemMessage( IDC_RPGMLOOPZ, BM_SETCHECK, cfg_rpgmloopz );
 	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, cfg_xmiloopz );
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, cfg_ff7loopz );
@@ -4383,6 +4418,7 @@ void CMyPreferences::reset() {
 		if ( g_running ) GetDlgItem( IDC_SAMPLERATE ).EnableWindow( FALSE );
 	}
 	SendDlgItemMessage( IDC_LOOP, CB_SETCURSEL, default_cfg_loop_type );
+	SendDlgItemMessage( IDC_CLOOP, CB_SETCURSEL, default_cfg_loop_type_other );
 	SendDlgItemMessage( IDC_RPGMLOOPZ, BM_SETCHECK, default_cfg_rpgmloopz );
 	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz );
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz );
@@ -4509,6 +4545,7 @@ void CMyPreferences::apply() {
 	cfg_soundfont_path = m_soundfont;
 	cfg_munt_base_path = m_munt_path;
 	cfg_loop_type = SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL );
+	cfg_loop_type_other = SendDlgItemMessage( IDC_CLOOP, CB_GETCURSEL );
 	cfg_rpgmloopz = SendDlgItemMessage( IDC_RPGMLOOPZ, BM_GETCHECK );
 	cfg_xmiloopz = SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK );
 	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK );
@@ -4535,6 +4572,7 @@ bool CMyPreferences::HasChanged() {
 	bool changed = false;
 	if ( !changed && GetDlgItemInt( IDC_SAMPLERATE, NULL, FALSE ) != cfg_srate ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL ) != cfg_loop_type ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_CLOOP, CB_GETCURSEL ) != cfg_loop_type_other ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_RPGMLOOPZ, BM_GETCHECK ) != cfg_rpgmloopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK ) != cfg_xmiloopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK ) != cfg_ff7loopz ) changed = true;

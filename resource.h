@@ -11,6 +11,8 @@
 #define IDC_FF7LOOPZ                    1005
 #define IDC_EMIDI_EX                    1006
 #define IDC_RECOVER                     1007
+#define IDC_LOOP2                       1007
+#define IDC_CLOOP                       1007
 #define IDC_NOSYSEX                     1008
 #define IDC_SOUNDFONT                   1009
 #define IDC_SOUNDFONT_TEXT              1010
