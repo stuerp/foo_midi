@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.8"
+#define MYVERSION "2.2.9"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2019-09-26 21:50 UTC - kode54
+- Fixed Secret Sauce not sending GS reset on Default mode
+- Version is now 2.2.9
 
 2019-09-26 03:06 UTC - kode54
 - Made Secret Sauce main and GS flavor separately configurable

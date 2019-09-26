@@ -485,6 +485,7 @@ void SCPlayer::reset(uint32_t port)
 				send_sysex_simple(port, syx_reset_gm2, sizeof(syx_reset_gm2));
 				break;
 
+			case sc_default:
 			case sc_gs:
 				send_sysex_simple(port, syx_reset_gs, sizeof(syx_reset_gs));
 				break;
@@ -493,7 +494,6 @@ void SCPlayer::reset(uint32_t port)
 				send_sysex_simple(port, syx_reset_xg, sizeof(syx_reset_xg));
 				break;
 		}
-
 
 		reset_sc(port);
 
