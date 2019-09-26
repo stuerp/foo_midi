@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.5"
+#define MYVERSION "2.2.6"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2019-09-26 00:25 UTC - kode54
+- Added another Secret Sauce
+- Version is now 2.2.6
 
 2019-08-19 03:23 UTC - kode54
 - Made external executables use static runtime again, since they can't import
@@ -3709,6 +3713,9 @@ static const sc_info sc_hashes[] = {
 
 	// 1.1.3 - 64 bit - 27,358,208 - 80f1e673d249d1cda67a2936326f866b
 	{ 27358208, { 0x80, 0xf1, 0xe6, 0x73, 0xd2, 0x49, 0xd1, 0xcd, 0xa6, 0x7a, 0x29, 0x36, 0x32, 0x6f, 0x86, 0x6b } },
+
+	// 1.10 (S) - 64 bit - 27,358,208 - 3703e0dc7bd93abd4c29e1a03f1f6c0a
+	{ 27358208, { 0x37, 0x03, 0xe0, 0xdc, 0x7b, 0xd9, 0x3a, 0xbd, 0x4c, 0x29, 0xe1, 0xa0, 0x3f, 0x1f, 0x6c, 0x0a } },
 
 	{ 0, { 0 } }
 };
