@@ -308,7 +308,7 @@ void SCPlayer::process_write_code(uint32_t port, uint32_t code)
 	process_write_bytes(port, &code, sizeof(code));
 }
 
-SCPlayer::SCPlayer() : MIDIPlayer(), mode(sc_default), sccore_path(0)
+SCPlayer::SCPlayer() : MIDIPlayer(), mode(sc_default), level(gs_default), sccore_path(0)
 {
 	initialized = false;
 	iInitialized = 0;
@@ -402,10 +402,10 @@ void SCPlayer::send_sysex_simple(uint32_t port, const uint8_t * data, uint32_t s
 
 void SCPlayer::send_sysex(uint32_t port, const uint8_t * data, uint32_t size)
 {
-	if (syx_is_gs_limit_bank_lsb(data) && mode != sc_default)
+	if (syx_is_gs_limit_bank_lsb(data) && level != gs_default)
 		return;
 	send_sysex_simple(port, data, size);
-	if (syx_is_reset(data) && mode != sc_default)
+	if (syx_is_reset(data) && level != gs_default)
 	{
 		reset(port);
 	}
@@ -431,24 +431,24 @@ void SCPlayer::reset_sc(uint32_t port)
 
 	message[7] = 1;
 
-	switch (mode)
+	switch (level)
 	{
 		default: break;
 			
-		case sc_sc55:
+		case gs_sc55:
 			message[8] = 1;
 			break;
 			
-		case sc_sc88:
+		case gs_sc88:
 			message[8] = 2;
 			break;
 			
-		case sc_sc88pro:
+		case gs_sc88pro:
 			message[8] = 3;
 			break;
 			
-		case sc_sc8850:
-		case sc_default:
+		case gs_default:
+		case gs_sc8820:
 			message[8] = 4;
 			break;
 	}
@@ -484,20 +484,18 @@ void SCPlayer::reset(uint32_t port)
 			case sc_gm2:
 				send_sysex_simple(port, syx_reset_gm2, sizeof(syx_reset_gm2));
 				break;
-				
-			case sc_sc55:
-			case sc_sc88:
-			case sc_sc88pro:
-			case sc_sc8850:
-			case sc_default:
+
+			case sc_gs:
 				send_sysex_simple(port, syx_reset_gs, sizeof(syx_reset_gs));
-				reset_sc(port);
 				break;
 				
 			case sc_xg:
 				send_sysex_simple(port, syx_reset_xg, sizeof(syx_reset_xg));
 				break;
 		}
+
+
+		reset_sc(port);
 
 		junk(port, 1024);
 
@@ -564,6 +562,14 @@ void SCPlayer::send_command(uint32_t port, uint32_t command)
 void SCPlayer::set_mode(sc_mode m)
 {
 	mode = m;
+	reset(0);
+	reset(1);
+	reset(2);
+}
+
+void SCPlayer::set_gs_level(sc_gs_level l)
+{
+	level = l;
 	reset(0);
 	reset(1);
 	reset(2);

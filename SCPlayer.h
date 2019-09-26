@@ -21,15 +21,24 @@ public:
 		sc_default = 0,
 		sc_gm,
 		sc_gm2,
-		sc_sc55,
-		sc_sc88,
-		sc_sc88pro,
-		sc_sc8850,
+		sc_gs,
 		sc_xg
 	}
 	sc_mode;
+
+	typedef enum
+	{
+		gs_default = 0,
+		gs_sc55,
+		gs_sc88,
+		gs_sc88pro,
+		gs_sc8820,
+	}
+	sc_gs_level;
 	
 	void set_mode(sc_mode m);
+
+	void set_gs_level(sc_gs_level l);
 
 	void set_reverb(bool enable);
 
@@ -85,6 +94,8 @@ private:
 	HANDLE       hChildStd_OUT_Wr[3];
 
 	sc_mode mode;
+
+	sc_gs_level level;
 
 	bool reverb;
 

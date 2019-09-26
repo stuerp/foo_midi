@@ -42,6 +42,8 @@
 #define IDC_MS_PANNING                  1033
 #define IDC_MS_PANNING2                 1034
 #define IDC_SC_EFFECTS                  1034
+#define IDC_SC_FLAVOR2                  1035
+#define IDC_GS_FLAVOR                   1035
 
 // Next default values for new objects
 // 
