@@ -1219,8 +1219,13 @@
 
 #include <foobar2000.h>
 #include "../helpers/dropdown_helper.h"
-#include "../ATLHelpers/ATLHelpersLean.h"
-#include "../ATLHelpers/misc.h"
+#include <atlbase.h>
+#include <atlapp.h>
+#include <atlctrls.h>
+#include <atlcrack.h>
+#include <atlmisc.h>
+#include "../helpers/atl-misc.h"
+#include "../../libPPUI/wtl-pp.h"
 
 #include <midi_processing/midi_processor.h>
 
