@@ -44,6 +44,8 @@
 #define IDC_SC_EFFECTS                  1034
 #define IDC_SC_FLAVOR2                  1035
 #define IDC_GS_FLAVOR                   1035
+#define IDC_CHECK1                      1036
+#define IDC_THLOOPZ                     1036
 
 // Next default values for new objects
 // 
@@ -51,7 +53,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1033
+#define _APS_NEXT_CONTROL_VALUE         1037
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

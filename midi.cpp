@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.9"
+#define MYVERSION "2.2.10"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2019-11-24 01:11 UTC - kode54
+- Implemented support for Touhou loops
+- Version is now 2.2.10
 
 2019-09-26 21:50 UTC - kode54
 - Fixed Secret Sauce not sending GS reset on Default mode
@@ -1267,6 +1271,9 @@
 #define EMIDI_CONTROLLER_LOOP_BEGIN			XMIDI_CONTROLLER_FOR_LOOP
 #define EMIDI_CONTROLLER_LOOP_END			XMIDI_CONTROLLER_NEXT_BREAK
 
+// {35A32D9E-DF99-4617-9FF3-312F9C206E00}
+static const GUID guid_cfg_thloopz =
+{ 0x35a32d9e, 0xdf99, 0x4617, { 0x9f, 0xf3, 0x31, 0x2f, 0x9c, 0x20, 0x6e, 0x0 } };
 // {4D11DD87-7A27-4ECC-BCB8-F018020BA2D5}
 static const GUID guid_cfg_rpgmloopz = 
 { 0x4d11dd87, 0x7a27, 0x4ecc, { 0xbc, 0xb8, 0xf0, 0x18, 0x2, 0xb, 0xa2, 0xd5 } };
@@ -1477,6 +1484,7 @@ public:
 
 enum
 {
+	default_cfg_thloopz = 1,
 	default_cfg_rpgmloopz = 1,
 	default_cfg_xmiloopz = 1,
 	default_cfg_ff7loopz = 1,
@@ -1509,7 +1517,8 @@ enum
 static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 #endif
 
-cfg_int cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz), cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
+cfg_int cfg_thloopz(guid_cfg_thloopz, default_cfg_thloopz), cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz),
+        cfg_xmiloopz(guid_cfg_xmiloopz,default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
 		cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion), /*cfg_hack_xg_drums("yam", 0),*/
 		cfg_filter_instruments(guid_cfg_filter_instruments, default_cfg_filter_instruments),
 		cfg_filter_banks(guid_cfg_filter_banks, default_cfg_filter_banks),
@@ -2374,6 +2383,7 @@ class input_midi : public input_stubs
 	unsigned plugin;
 	unsigned resampling;
 
+	bool b_thloopz;
 	bool b_rpgmloopz;
 	bool b_xmiloopz;
 	bool b_ff7loopz;
@@ -2449,7 +2459,7 @@ class input_midi : public input_stubs
 
 public:
 	input_midi() : srate(cfg_srate), resampling(cfg_resampling),
-		loop_type_playback(cfg_loop_type), loop_type_other(cfg_loop_type_other), b_rpgmloopz(!!cfg_rpgmloopz), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
+		loop_type_playback(cfg_loop_type), loop_type_other(cfg_loop_type_other), b_thloopz(!!cfg_thloopz), b_rpgmloopz(!!cfg_rpgmloopz), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
 		dxiProxy = NULL;
@@ -2568,7 +2578,7 @@ public:
 		if ( ! original_track_count )
 			throw exception_io_data( "Invalid MIDI file" );
 
-		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz, b_rpgmloopz );
+		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz, b_rpgmloopz, b_thloopz );
 
 		file_data.resize( 0 );
 
@@ -4128,6 +4138,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	::SendMessage( w, CB_SETCURSEL, cfg_loop_type_other, 0 );
 
+	SendDlgItemMessage( IDC_THLOOPZ, BM_SETCHECK, cfg_thloopz );
 	SendDlgItemMessage( IDC_RPGMLOOPZ, BM_SETCHECK, cfg_rpgmloopz );
 	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, cfg_xmiloopz );
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, cfg_ff7loopz );
@@ -4494,6 +4505,7 @@ void CMyPreferences::reset() {
 	}
 	SendDlgItemMessage( IDC_LOOP, CB_SETCURSEL, default_cfg_loop_type );
 	SendDlgItemMessage( IDC_CLOOP, CB_SETCURSEL, default_cfg_loop_type_other );
+	SendDlgItemMessage( IDC_THLOOPZ, BM_SETCHECK, default_cfg_thloopz );
 	SendDlgItemMessage( IDC_RPGMLOOPZ, BM_SETCHECK, default_cfg_rpgmloopz );
 	SendDlgItemMessage( IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz );
 	SendDlgItemMessage( IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz );
@@ -4625,6 +4637,7 @@ void CMyPreferences::apply() {
 	cfg_munt_base_path = m_munt_path;
 	cfg_loop_type = SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL );
 	cfg_loop_type_other = SendDlgItemMessage( IDC_CLOOP, CB_GETCURSEL );
+	cfg_thloopz = SendDlgItemMessage( IDC_THLOOPZ, BM_GETCHECK );
 	cfg_rpgmloopz = SendDlgItemMessage( IDC_RPGMLOOPZ, BM_GETCHECK );
 	cfg_xmiloopz = SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK );
 	cfg_ff7loopz = SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK );
@@ -4653,6 +4666,7 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && GetDlgItemInt( IDC_SAMPLERATE, NULL, FALSE ) != cfg_srate ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_LOOP, CB_GETCURSEL ) != cfg_loop_type ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_CLOOP, CB_GETCURSEL ) != cfg_loop_type_other ) changed = true;
+	if ( !changed && SendDlgItemMessage( IDC_THLOOPZ, BM_GETCHECK ) != cfg_thloopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_RPGMLOOPZ, BM_GETCHECK ) != cfg_rpgmloopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_XMILOOPZ, BM_GETCHECK ) != cfg_xmiloopz ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_FF7LOOPZ, BM_GETCHECK ) != cfg_ff7loopz ) changed = true;
