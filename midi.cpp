@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.11"
+#define MYVERSION "2.2.12"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2020-01-26 01:05 UTC - kode54
+- Remove message pumps from VST and SC pipe handlers
+- Version is now 2.2.12
 
 2020-01-02 03:31 UTC - kode54
 - Added new Secret Sauce version

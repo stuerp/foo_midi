@@ -266,12 +266,6 @@ bool VSTiPlayer::process_running()
 unsigned exchange_count = 0;
 #endif
 
-static void ProcessPendingMessages()
-{
-	MSG msg = {};
-	while ( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) ) DispatchMessage( &msg );
-}
-
 uint32_t VSTiPlayer::process_read_bytes_pass( void * out, uint32_t size )
 {
 	OVERLAPPED ol = {};
@@ -288,7 +282,7 @@ uint32_t VSTiPlayer::process_read_bytes_pass( void * out, uint32_t size )
 	for (;;)
 	{
 		state = MsgWaitForMultipleObjects( _countof( handles ), handles, FALSE, INFINITE, QS_ALLEVENTS );
-		if (state == WAIT_OBJECT_0 + _countof(handles)) ProcessPendingMessages();
+		if (state == WAIT_OBJECT_0 + _countof(handles)) Sleep(1);
 		else break;
 	}
 
