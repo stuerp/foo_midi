@@ -229,6 +229,18 @@ bool SCPlayer::process_running(uint32_t port)
 unsigned exchange_count = 0;
 #endif
 
+#ifdef MESSAGE_PUMP
+static void ProcessPendingMessages()
+{
+	MSG msg = {};
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+}
+#endif
+
 uint32_t SCPlayer::process_read_bytes_pass(uint32_t port, void * out, uint32_t size)
 {
 	OVERLAPPED ol = {};
@@ -242,12 +254,16 @@ uint32_t SCPlayer::process_read_bytes_pass(uint32_t port, void * out, uint32_t s
 	const HANDLE handles[1] = { hReadEvent[port] };
 	SetLastError(NO_ERROR);
 	DWORD state;
+#ifdef MESSAGE_PUMP
 	for (;;)
 	{
 		state = MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
-		if (state == WAIT_OBJECT_0 + _countof(handles)) Sleep(1);
+		if (state == WAIT_OBJECT_0 + _countof(handles)) ProcessPendingMessages();
 		else break;
 	}
+#else
+	state = WaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE);
+#endif
 
 	if (state == WAIT_OBJECT_0 && GetOverlappedResult(hChildStd_OUT_Rd[port], &ol, &bytesDone, TRUE)) return bytesDone;
 

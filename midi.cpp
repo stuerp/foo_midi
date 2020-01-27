@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.12"
+#define MYVERSION "2.2.13"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2020-01-27 02:51 UTC - kode54
+- Correctly process piped input and ignore messages
+- Version is now 2.2.13
 
 2020-01-26 01:05 UTC - kode54
 - Remove message pumps from VST and SC pipe handlers
