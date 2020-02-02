@@ -360,6 +360,10 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	SetUnhandledExceptionFilter( myExceptFilterProc );
 #endif
 
+#if 0
+	MessageBox(GetDesktopWindow(), argv[1], _T("HUUUURRRRRR"), 0);
+#endif
+
 	size_t dll_name_len = wcslen( argv[ 1 ] );
 	dll_dir = ( char * ) malloc( dll_name_len + 1 );
 	wcstombs( dll_dir, argv[ 1 ], dll_name_len );
@@ -377,13 +381,14 @@ int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	pMain = (main_func) GetProcAddress( hDll, "main" );
 	if ( !pMain )
 	{
-		code = 7;
-		goto exit;
+		// WTF Halion
+		pMain = (main_func) GetProcAddress( hDll, "MAIN" );
+		if ( !pMain )
+		{
+			code = 7;
+			goto exit;
+		}
 	}
-
-#if 0
-	MessageBox( GetDesktopWindow(), argv[ 1 ], _T("HUUUURRRRRR"), 0 );
-#endif
 
 	pEffect[ 0 ] = pMain( &audioMaster );
 	if ( !pEffect[ 0 ] || pEffect[ 0 ]->magic != kEffectMagic )

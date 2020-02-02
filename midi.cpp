@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.13"
+#define MYVERSION "2.2.14"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2020-02-02 03:54 UTC - kode54
+- Now possible to load Halion and Halion Sonic, and possibly
+  other plugins that had this weird quirk. No guarantees
+  that any of them will even work properly.
+- Version is now 2.2.14
 
 2020-01-27 02:51 UTC - kode54
 - Correctly process piped input and ignore messages
