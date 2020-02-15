@@ -1,4 +1,4 @@
-#define MYVERSION "2.2.14"
+#define MYVERSION "2.3"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2020-02-15 11:49 UTC - kode54
+- Rebuild everything with Clang! That makes the VirusTotal go away! Mostly!
+- Version is now 2.3
 
 2020-02-02 03:54 UTC - kode54
 - Now possible to load Halion and Halion Sonic, and possibly
