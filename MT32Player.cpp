@@ -194,7 +194,10 @@ MT32Emu::File * MT32Player::openFile( const char *filename )
 	try
 	{
 		service_ptr_t< file > p_temp;
-		filesystem::g_open(p_temp, pfc::string8() << sBasePath << filename, filesystem::open_mode_read, *_abort);
+		pfc::string8 tempname;
+		tempname = sBasePath;
+		tempname += filename;
+		filesystem::g_open(p_temp, tempname, filesystem::open_mode_read, *_abort);
 		t_filesize length64 = p_temp->get_size_ex(*_abort);
 		if (length64 > INT_MAX) length64 = INT_MAX;
 		size_t fileSize = length64;

@@ -2219,7 +2219,12 @@ struct midi_syx_dumps
 			{
 				pfc::string8 path;
 				filesystem::g_get_canonical_path( dumps[ i ], path );
-				throw exception_io_data( pfc::string_formatter() << "Error processing dump " << path << ": " << e.what() );
+				pfc::string8 temp;
+				temp = "Error processing dump ";
+				temp += path;
+				temp += ": ";
+				temp += e.what();
+				throw exception_io_data( temp );
 			}
 		}
 	}
@@ -2974,8 +2979,10 @@ public:
 						return;
 					}
 				}
-				console::formatter() << "Unable to load VSTi plugin: " <<
-					thePreset.vst_path;
+				pfc::string8 temp;
+				temp = "Unable to load VSTi plugin: ";
+				temp += thePreset.vst_path;
+				console::print(temp);
 			}
 #ifdef FLUIDSYNTHSUPPORT
 			else if (plugin == 2)
@@ -3745,7 +3752,7 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 			return;
 		}
 
-		console::formatter() << "Enumerating VSTi Plug-ins...";
+		console::print("Enumerating VSTi Plug-ins...");
 
 		if (ppath[ppath.length()-1] != '\\') ppath.add_byte( '\\' );
 		ppath += "*.*";
@@ -3773,7 +3780,12 @@ void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
 				npath += _find->GetFileName();
 				if ( npath.length() > 4 && !pfc::stricmp_ascii( npath.get_ptr() + npath.length() - 4, ".dll" ) )
 				{
-					console::formatter() << "Trying " << npath;
+					{
+						pfc::string8 temp;
+						temp = "Trying ";
+						temp += npath;
+						console::print(temp);
+					}
 
 					VSTiPlayer vstPlayer;
 					if ( vstPlayer.LoadVST( npath ) )
@@ -3827,22 +3839,22 @@ typedef struct sc_info
 static const sc_info sc_hashes[] = {
 
 	// 1.0.3 - 32 bit - 27,472,384 - d44d1b8c9a6f956ca2324f2f5d348c44
-	{ 27472384, { 0xd4, 0x4d, 0x1b, 0x8c, 0x9a, 0x6f, 0x95, 0x6c, 0xa2, 0x32, 0x4f, 0x2f, 0x5d, 0x34, 0x8c, 0x44 } },
+	{ 27472384, {(char)0xd4, 0x4d, 0x1b, (char)0x8c, (char)0x9a, 0x6f, (char)0x95, 0x6c, (char)0xa2, 0x32, 0x4f, 0x2f, 0x5d, 0x34, (char)0x8c, 0x44 } },
 
 	// 1.0.3 - 64 bit - 27,440,128 - f16b5eb9c7e204de7f9b3a829d2d5500
-	{ 27440128, { 0xf1, 0x6b, 0x5e, 0xb9, 0xc7, 0xe2, 0x04, 0xde, 0x7f, 0x9b, 0x3a, 0x82, 0x9d, 0x2d, 0x55, 0x00 } },
+	{ 27440128, { (char)0xf1, 0x6b, 0x5e, (char)0xb9, (char)0xc7, (char)0xe2, 0x04, (char)0xde, 0x7f, (char)0x9b, 0x3a, (char)0x82, (char)0x9d, 0x2d, 0x55, 0x00 } },
 
 	// 1.0.7 - 32 bit - 27,319,296 - 25830a6c2ff5751f3a55915fb60702f4
-	{ 27319296, { 0x25, 0x83, 0x0a, 0x6c, 0x2f, 0xf5, 0x75, 0x1f, 0x3a, 0x55, 0x91, 0x5f, 0xb6, 0x07, 0x02, 0xf4 } },
+	{ 27319296, { 0x25, (char)0x83, 0x0a, 0x6c, 0x2f, (char)0xf5, 0x75, 0x1f, 0x3a, 0x55, (char)0x91, 0x5f, (char)0xb6, 0x07, 0x02, (char)0xf4 } },
 
 	// 1.1.3 - 64 bit - 27,358,208 - 80f1e673d249d1cda67a2936326f866b
-	{ 27358208, { 0x80, 0xf1, 0xe6, 0x73, 0xd2, 0x49, 0xd1, 0xcd, 0xa6, 0x7a, 0x29, 0x36, 0x32, 0x6f, 0x86, 0x6b } },
+	{ 27358208, { (char)0x80, (char)0xf1, (char)0xe6, 0x73, (char)0xd2, 0x49, (char)0xd1, (char)0xcd, (char)0xa6, 0x7a, 0x29, 0x36, 0x32, 0x6f, (char)0x86, 0x6b } },
 
 	// 1.1.0 (S) - 64 bit - 27,358,208 - 3703e0dc7bd93abd4c29e1a03f1f6c0a
-	{ 27358208, { 0x37, 0x03, 0xe0, 0xdc, 0x7b, 0xd9, 0x3a, 0xbd, 0x4c, 0x29, 0xe1, 0xa0, 0x3f, 0x1f, 0x6c, 0x0a } },
+	{ 27358208, { 0x37, 0x03, (char)0xe0, (char)0xdc, 0x7b, (char)0xd9, 0x3a, (char)0xbd, 0x4c, 0x29, (char)0xe1, (char)0xa0, 0x3f, 0x1f, 0x6c, 0x0a } },
 
 	// 1.1.6 (S) - 64 bit - 27,347,456 - dbd9a30c168efef577d40a28d9adf37d
-	{ 27347456, { 0xdb, 0xd9, 0xa3, 0x0c, 0x16, 0x8e, 0xfe, 0xf5, 0x77, 0xd4, 0x0a, 0x28, 0xd9, 0xad, 0xf3, 0x7d } },
+	{ 27347456, { (char)0xdb, (char)0xd9, (char)0xa3, 0x0c, 0x16, (char)0x8e, (char)0xfe, (char)0xf5, 0x77, (char)0xd4, 0x0a, 0x28, (char)0xd9, (char)0xad, (char)0xf3, 0x7d } },
 
 	{ 0, { 0 } }
 };
@@ -3956,7 +3968,14 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	
 	enum_vsti_plugins();
 
-	if ( vsti_plugins.get_size() ) console::formatter() << "Found " << vsti_plugins.get_size() << " plug-ins";
+	if (vsti_plugins.get_size())
+	{
+		pfc::string8 temp;
+		temp = "Found ";
+		temp += pfc::format_int(vsti_plugins.get_size());
+		temp += " plug-ins";
+		console::print(temp);
+	}
 	
 	unsigned vsti_count = vsti_plugins.get_size(), vsti_selected = ~0;
 	

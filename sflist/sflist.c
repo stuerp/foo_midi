@@ -750,7 +750,7 @@ static sflist_presets * sflist_process(const json_value * sflist, const char * b
          else if (gain->type == json_double) {
             gain_value = gain->u.dbl;
          }
-         gain_value = pow(10.0, gain_value / 20.0);
+         gain_value = pow(10.0, (double)gain_value / 20.0);
          BASS_MIDI_FontSetVolume(hfont, gain_value);
       }
       fontex.font = hfont;
