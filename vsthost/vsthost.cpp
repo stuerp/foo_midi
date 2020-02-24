@@ -300,7 +300,7 @@ LONG __stdcall myExceptFilterProc( LPEXCEPTION_POINTERS param )
 	}
 }
 
-int CALLBACK _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow )
+int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
 	int argc = 0;
 	LPWSTR * argv = CommandLineToArgvW( GetCommandLineW(), &argc );

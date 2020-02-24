@@ -14,8 +14,8 @@
 
 // TODO: reference additional headers your program requires here
 
-#include <Windows.h>
-#include <CommCtrl.h>
+#include <windows.h>
+#include <commctrl.h>
 
 #include <stdint.h>
 
@@ -24,13 +24,25 @@
 
 #include <vector>
 
+#ifndef min
+#define min(a,b) (((a)<(b))?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) (((a)>(b))?(a):(b))
+#endif
+
 // #define VST_SDK_2_3
+#ifdef __GNUC__
+#include "../../../../vstsdk2.4/pluginterfaces/vst2.x/aeffect.h"
+#include "../../../../vstsdk2.4/pluginterfaces/vst2.x/aeffectx.h"
+#else
 #ifdef VST_SDK_2_3
 #include "..\\..\\..\\..\\vstsdk2.3\\source\\common\\aeffect.h"
 #include "..\\..\\..\\..\\vstsdk2.3\\source\\common\\aeffectx.h"
 #else
 #include "..\\..\\..\\..\\vstsdk2.4\\pluginterfaces\\vst2.x\\aeffect.h"
 #include "..\\..\\..\\..\\vstsdk2.4\\pluginterfaces\\vst2.x\\aeffectx.h"
+#endif
 #endif
 
 typedef AEffect * (*main_func)(audioMasterCallback audioMaster);
