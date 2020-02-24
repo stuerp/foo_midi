@@ -14,11 +14,14 @@ CC64 = x86_64-w64-mingw32-g++
 STRIP32 = i686-w64-mingw32-strip
 STRIP64 = x86_64-w64-mingw32-strip
 
+WINDRES32 = i686-w64-mingw32-windres
+WINDRES64 = x86_64-w64-mingw32-windres
+
 CFLAGS = -O2 -DUNICODE -D_UNICODE
 
-VSTHOST32_OBJS  = vsthost.32.o
+VSTHOST32_OBJS  = vsthost.32.o vsthost.res.32.o
 
-VSTHOST64_OBJS  = vsthost.64.o
+VSTHOST64_OBJS  = vsthost.64.o vsthost.res.64.o
 
 .PHONY: all clean
 
@@ -41,6 +44,9 @@ all: $(EXES) $(DEPS)
 vsthost.32.o: vsthost.cpp stdafx.h
 	$(CC32) -c $(CFLAGS) vsthost.cpp -o $@
 
+vsthost.res.32.o: vsthost.rc resource.h
+	$(WINDRES32) vsthost.rc -o $@
+
 64/vsthost64.exe: $(VSTHOST64_OBJS)
 	mkdir -p 64
 	$(CC64) $^ -o $@ -lole32 -lcomctl32
@@ -57,6 +63,9 @@ vsthost.32.o: vsthost.cpp stdafx.h
 
 vsthost.64.o: vsthost.cpp stdafx.h
 	$(CC64) -c $(CFLAGS) vsthost.cpp -o $@
+
+vsthost.res.64.o: vsthost.rc resource.h
+	$(WINDRES64) vsthost.rc -o $@
 
 clean:
 	rm -rf 32 64 $(VSTHOST32_OBJS) $(VSTHOST64_OBJS) > /dev/null
