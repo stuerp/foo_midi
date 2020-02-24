@@ -145,7 +145,7 @@ bool VSTiPlayer::process_create()
 	size_t slash = szCmdLine.find_last_of( '\\' );
 	if ( slash != std::string::npos )
 		szCmdLine.erase( szCmdLine.begin() + slash + 1, szCmdLine.end() );
- 	szCmdLine += (uPluginPlatform == 64) ? "vsthost64.exe" : "vsthost32.exe";
+ 	szCmdLine += (uPluginPlatform == 64) ? "64\\vsthost64.exe" : "32\\vsthost32.exe";
  	szCmdLine += "\" \"";
  	szCmdLine += sPlugin;
  	szCmdLine += "\" ";
