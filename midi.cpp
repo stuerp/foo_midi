@@ -1,4 +1,4 @@
-#define MYVERSION "2.3"
+#define MYVERSION "2.3.1"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2020-02-24 04:27 UTC - kode54
+- Attempt to cross compile external executables, to try to minimize
+  my own code footprint and just bundle widely distributed FOSS dependencies
+  instead
+- Version is now 2.3.1
 
 2020-02-15 11:49 UTC - kode54
 - Rebuild everything with Clang! That makes the VirusTotal go away! Mostly!
