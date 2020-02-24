@@ -142,7 +142,7 @@ bool SCPlayer::process_create(uint32_t port)
 	size_t slash = szCmdLine.find_last_of('\\');
 	if (slash != std::string::npos)
 		szCmdLine.erase(szCmdLine.begin() + slash + 1, szCmdLine.end());
-	szCmdLine += (uPluginPlatform == 64) ? "64\\scpipe64.exe" : "32\\scpipe32.exe";
+	szCmdLine += (uPluginPlatform == 64) ? "scpipe64.exe" : "scpipe32.exe";
 	szCmdLine += "\" \"";
 	szCmdLine += sPlugin;
 	szCmdLine += "\"";

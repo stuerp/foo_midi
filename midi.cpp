@@ -1,4 +1,4 @@
-#define MYVERSION "2.3.1"
+#define MYVERSION "2.3.2"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2020-02-24 12:05 UTC - kode54
+- Forget cross compiling, let's use old Visual Studio 2015 instead!
+- Version is now 2.3.2
 
 2020-02-24 04:27 UTC - kode54
 - Attempt to cross compile external executables, to try to minimize
