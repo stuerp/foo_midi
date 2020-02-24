@@ -29,7 +29,7 @@ all: $(EXES) $(DEPS)
 
 32/vsthost32.exe: $(VSTHOST32_OBJS)
 	mkdir -p 32
-	$(CC32) $^ -o $@ -lole32 -lcomctl32
+	$(CC32) $^ -o $@ -lole32 -lcomctl32 -Wl,--subsystem,windows
 	$(STRIP32) $@
 
 32/libstdc++-6.dll: $(BINS32)/libstdc++-6.dll
@@ -49,7 +49,7 @@ vsthost.res.32.o: vsthost.rc resource.h
 
 64/vsthost64.exe: $(VSTHOST64_OBJS)
 	mkdir -p 64
-	$(CC64) $^ -o $@ -lole32 -lcomctl32
+	$(CC64) $^ -o $@ -lole32 -lcomctl32 -Wl,--subsystem,windows
 	$(STRIP64) $@
 
 64/libstdc++-6.dll: $(BINS64)/libstdc++-6.dll
