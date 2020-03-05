@@ -1,4 +1,4 @@
-#define MYVERSION "2.3.2"
+#define MYVERSION "2.3.3"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2020-03-05 05:12 UTC - kode54
+- Add another Secret Sauce hash set
+- Version is now 2.3.3
 
 2020-02-24 12:05 UTC - kode54
 - Forget cross compiling, let's use old Visual Studio 2015 instead!
@@ -3857,6 +3861,12 @@ static const sc_info sc_hashes[] = {
 
 	// 1.0.3 - 64 bit - 27,440,128 - f16b5eb9c7e204de7f9b3a829d2d5500
 	{ 27440128, { (char)0xf1, 0x6b, 0x5e, (char)0xb9, (char)0xc7, (char)0xe2, 0x04, (char)0xde, 0x7f, (char)0x9b, 0x3a, (char)0x82, (char)0x9d, 0x2d, 0x55, 0x00 } },
+
+	// 1.0.6 - 32 bit - 27,319,296 - 6588e6aa17a57ba874e8b675114214f0
+	{ 27319296, { 0x65, (char)0x88, (char)0xe6, (char)0xaa, 0x17, (char)0xa5, 0x7b, (char)0xa8, 0x74, (char)0xe8, (char)0xb6, 0x75, 0x11, 0x42, 0x14, (char)0xf0 } },
+
+	// 1.0.6 - 64 bit - 27,358,208 - 6abfbf61869fc436d76c93d1bc7e2735
+	{ 27358208, { 0x6a, (char)0xbf, (char)0xbf, 0x61, (char)0x86, (char)0x9f, (char)0xc4, 0x36, (char)0xd7, 0x6c, (char)0x93, (char)0xd1, (char)0xbc, 0x7e, 0x27, 0x35 } },
 
 	// 1.0.7 - 32 bit - 27,319,296 - 25830a6c2ff5751f3a55915fb60702f4
 	{ 27319296, { 0x25, (char)0x83, 0x0a, 0x6c, 0x2f, (char)0xf5, 0x75, 0x1f, 0x3a, 0x55, (char)0x91, 0x5f, (char)0xb6, 0x07, 0x02, (char)0xf4 } },
