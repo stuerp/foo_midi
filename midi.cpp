@@ -1,4 +1,4 @@
-#define MYVERSION "2.3.3"
+#define MYVERSION "2.3.4"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2020-03-25 02:06 UTC - kode54
+- Added another VST plugin import function name
+- Version is now 2.3.4
 
 2020-03-05 05:12 UTC - kode54
 - Add another Secret Sauce hash set

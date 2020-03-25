@@ -17,6 +17,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -50,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,12
- PRODUCTVERSION 1,0,0,12
+ FILEVERSION 1,0,0,13
+ PRODUCTVERSION 1,0,0,13
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -68,12 +69,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "LoSno.co"
             VALUE "FileDescription", "foo_midi VST host bridge"
-            VALUE "FileVersion", "1.0.0.12"
+            VALUE "FileVersion", "1.0.0.13"
             VALUE "InternalName", "VST host bridge"
-            VALUE "LegalCopyright", "Copyright (C) 2017 Christopher Snowhill"
+            VALUE "LegalCopyright", "Copyright (C) 2020 Christopher Snowhill"
             VALUE "OriginalFilename", "vsthost.exe"
             VALUE "ProductName", "VST host bridge"
-            VALUE "ProductVersion", "1.0.0.12"
+            VALUE "ProductVersion", "1.0.0.13"
         END
     END
     BLOCK "VarFileInfo"

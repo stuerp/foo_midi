@@ -378,15 +378,18 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 		goto exit;
 	}
 
-	pMain = (main_func) GetProcAddress( hDll, "main" );
+	pMain = (main_func) GetProcAddress( hDll, "VSTPluginMain" );
 	if ( !pMain )
 	{
-		// WTF Halion
-		pMain = (main_func) GetProcAddress( hDll, "MAIN" );
+		pMain = (main_func) GetProcAddress( hDll, "main" );
 		if ( !pMain )
 		{
-			code = 7;
-			goto exit;
+			pMain = (main_func) GetProcAddress( hDll, "MAIN" );
+			if ( !pMain )
+			{
+				code = 7;
+				goto exit;
+			}
 		}
 	}
 
