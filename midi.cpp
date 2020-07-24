@@ -1,4 +1,4 @@
-#define MYVERSION "2.3.4"
+#define MYVERSION "2.3.5"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,13 @@
 
 /*
 	change log
+
+2020-07-24 00:29 UTC - kode54
+- Implemented BASSMIDI voices control in Advanced Preferences
+- Moved existing BASSMIDI Advanced Preferences option to its
+  own tree with the new option
+- Dynamic info now returns current and maximum BASSMIDI voices
+- Version is now 2.3.5
 
 2020-03-25 02:06 UTC - kode54
 - Added another VST plugin import function name
@@ -1451,6 +1458,13 @@ static const GUID guid_cfg_adl_core_nuked_174 =
 // {2A0290F8-805B-4109-AAD3-D5AE7F6235C7}
 static const GUID guid_cfg_adl_core_dosbox =
 { 0x2a0290f8, 0x805b, 0x4109, { 0xaa, 0xd3, 0xd5, 0xae, 0x7f, 0x62, 0x35, 0xc7 } };
+// {DD5ADCEB-9B31-47B6-AF57-3B15D2025D9F}
+static const GUID guid_cfg_bassmidi_parent =
+{ 0xdd5adceb, 0x9b31, 0x47b6, { 0xaf, 0x57, 0x3b, 0x15, 0xd2, 0x2, 0x5d, 0x9f } };
+// {9E0A5DAB-6786-4120-B737-85BB2DFAF307}
+static const GUID guid_cfg_bassmidi_voices =
+{ 0x9e0a5dab, 0x6786, 0x4120, { 0xb7, 0x37, 0x85, 0xbb, 0x2d, 0xfa, 0xf3, 0x7 } };
+
 
 #if defined(_M_IX86) || defined(__i386__)
 
@@ -1614,7 +1628,10 @@ advconfig_checkbox_factory_t<true> cfg_adl_core_nuked("Nuked OPL3 (slowest, most
 advconfig_checkbox_factory_t<true> cfg_adl_core_nuked_174("Nuked OPL3 v0.74 (slow, slightly less accurate)", guid_cfg_adl_core_nuked_174, guid_cfg_adl_core_parent, 1.0, false);
 advconfig_checkbox_factory_t<true> cfg_adl_core_dosbox("Dosbox OPL3 (really fast, mostly accurate)", guid_cfg_adl_core_dosbox, guid_cfg_adl_core_parent, 2.0, true);
 
-advconfig_checkbox_factory cfg_bassmidi_effects("BASSMIDI - Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_midi_parent, 0, true);
+advconfig_branch_factory cfg_bassmidi_parent("BASSMIDI", guid_cfg_bassmidi_parent, guid_cfg_midi_parent, 3.0);
+
+advconfig_checkbox_factory cfg_bassmidi_effects("Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_bassmidi_parent, 0, true);
+advconfig_integer_factory cfg_bassmidi_voices("Maximum voice count", guid_cfg_bassmidi_voices, guid_cfg_bassmidi_parent, 1, 256, 1, 100000);
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
 
@@ -1676,7 +1693,7 @@ void ms_get_preset(const char * name, unsigned int & synth, unsigned int & bank)
 
 struct midi_preset
 {
-	enum { version = 8 };
+	enum { version = 9 };
 
 	// version 0
 	unsigned int plugin;
@@ -1710,6 +1727,8 @@ struct midi_preset
 
 	// v2 - plug-in == 2/4 - SoundFont synthesizer
 	bool effects;
+	// v9 - plug-in == 2/4 - Maximum voices
+	unsigned int voices;
 
 	// v4 - plug-in == 9 - Nuclear Option
 	unsigned int ms_synth;
@@ -1744,6 +1763,7 @@ struct midi_preset
 		delete vstPlayer;
 		soundfont_path = cfg_soundfont_path;
 		effects = cfg_bassmidi_effects;
+		voices = (unsigned int)(int)cfg_bassmidi_voices;
 #ifdef DXISUPPORT
 		dxi_plugin = cfg_dxi_plugin;
 #endif
@@ -1801,6 +1821,10 @@ struct midi_preset
 			p_out += "|";
 
 			p_out += pfc::format_int( effects );
+
+			p_out += "|";
+
+			p_out += pfc::format_int( voices );
 		}
 #ifdef DXISUPPORT
 		else if ( plugin == 5 )
@@ -1884,6 +1908,7 @@ struct midi_preset
 		std::vector<uint8_t> in_vst_config;
 		pfc::string8 in_soundfont_path;
 		bool in_effects;
+		unsigned int in_voices;
 		GUID in_dxi_plugin;
 		unsigned in_adl_bank, in_adl_chips;
 		bool in_adl_panning;
@@ -1927,10 +1952,31 @@ struct midi_preset
 				if ( bar_pos > p_in )
 				{
 					in_effects = pfc::atodec<bool>( p_in, 1 );
+
+					if ( in_version >= 9 )
+					{
+						p_in = bar_pos + (*bar_pos == '|');
+						bar_pos = strchr( p_in, '|' );
+						if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+
+						if ( bar_pos > p_in )
+						{
+							in_voices = pfc::atodec<unsigned int>( p_in, bar_pos - p_in );
+						}
+						else
+						{
+							in_voices = (unsigned int)(int)cfg_bassmidi_voices;
+						}
+					}
+					else
+					{
+						in_voices = (unsigned int)(int)cfg_bassmidi_voices;
+					}
 				}
 				else
 				{
 					in_effects = cfg_bassmidi_effects;
+					in_voices = (unsigned int)(int)cfg_bassmidi_voices;
 				}
 			}
 #ifdef DXISUPPORT
@@ -2107,6 +2153,7 @@ struct midi_preset
 		vst_config = in_vst_config;
 		soundfont_path = in_soundfont_path;
 		effects = in_effects;
+		voices = in_voices;
 #ifdef DXISUPPORT
 		dxi_plugin = in_dxi_plugin;
 #endif
@@ -2462,6 +2509,9 @@ class input_midi : public input_stubs
 	unsigned original_track_count;
 
 	bool is_syx;
+
+	unsigned bassmidi_voices, bassmidi_voices_max;
+	double dynamic_time;
 
 	pfc::string8 m_path;
 
@@ -3056,6 +3106,9 @@ public:
 
 				delete midiPlayer;
 
+				bassmidi_voices = 0;
+				bassmidi_voices_max = 0;
+
 				if (thePreset.soundfont_path.is_empty() &&
 					file_soundfont.is_empty())
 				{
@@ -3071,6 +3124,7 @@ public:
 				bmPlayer->setSampleRate(srate);
 				bmPlayer->setInterpolation(resampling);
 				bmPlayer->setEffects(thePreset.effects);
+				bmPlayer->setVoices(thePreset.voices);
 
 				unsigned loop_mode = 0;
 
@@ -3466,6 +3520,8 @@ public:
 			}
 		}
 
+		dynamic_time = p_chunk.get_duration();
+
 		return rv;
 	}
 
@@ -3516,15 +3572,40 @@ public:
 
 	bool decode_get_dynamic_info( file_info & p_out, double & p_timestamp_delta )
 	{
+		int ret = false;
 		if ( first_block )
 		{
 			p_out.info_set_int( "samplerate", srate );
 			p_timestamp_delta = 0.;
 			first_block = false;
-			return true;
+			ret = true;
 		}
 
-		return false;
+#ifdef FLUIDSYNTHSUPPORT
+		if ( plugin == 4 )
+#else
+		if ( plugin == 2 || plugin == 4 )
+#endif
+		{
+			BMPlayer* bmPlayer = (BMPlayer*)midiPlayer;
+			unsigned voices = bmPlayer->getVoicesActive();
+			if (voices != bassmidi_voices)
+			{
+				p_out.info_set_int("bassmidi_voices", voices);
+				bassmidi_voices = voices;
+				ret = true;
+			}
+			if (voices > bassmidi_voices_max)
+			{
+				p_out.info_set_int("bassmidi_voices_max", voices);
+				bassmidi_voices_max = voices;
+				ret = true;
+			}
+			if (ret)
+				p_timestamp_delta = dynamic_time;
+		}
+
+		return ret;
 	}
 
 	bool decode_get_dynamic_info_track( file_info & p_out, double & p_timestamp_delta )

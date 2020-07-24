@@ -23,6 +23,10 @@ public:
 	void setFileSoundFont( const char * in );
 	void setInterpolation(int level);
 	void setEffects(bool enable = true);
+	void setVoices(int voices);
+
+	// status
+	unsigned int getVoicesActive();
 
 private:
 	virtual void send_event(uint32_t b);
@@ -50,6 +54,7 @@ private:
 
 	int                iInterpolation;
 	bool               bEffects;
+	int                iVoices;
 
 	bool               bank_lsb_overridden;
 	uint8_t            bank_lsb_override[48];

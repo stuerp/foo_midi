@@ -415,6 +415,7 @@ BMPlayer::BMPlayer() : MIDIPlayer()
 	memset(_stream, 0, sizeof(_stream));
 	iInterpolation = 0;
 	bEffects = true;
+	iVoices = 256;
 	_presetList[0] = 0;
 	_presetList[1] = 0;
 
@@ -438,6 +439,53 @@ void BMPlayer::setEffects(bool enable)
 	bEffects = enable;
 
 	shutdown();
+}
+
+void BMPlayer::setVoices(int voices)
+{
+	if (voices < 1) voices = 1;
+	else if (voices > 100000) voices = 100000;
+
+	iVoices = voices;
+
+	if ( _stream[0] ) BASS_ChannelSetAttribute( _stream[0], BASS_ATTRIB_MIDI_VOICES, (float)voices );
+	if ( _stream[1] ) BASS_ChannelSetAttribute( _stream[1], BASS_ATTRIB_MIDI_VOICES, (float)voices );
+	if ( _stream[2] ) BASS_ChannelSetAttribute( _stream[2], BASS_ATTRIB_MIDI_VOICES, (float)voices );
+}
+
+unsigned int BMPlayer::getVoicesActive()
+{
+	unsigned int voices = 0;
+	float voices_temp;
+
+	if (_stream[0])
+	{
+		voices_temp = 0.;
+		if (BASS_ChannelGetAttribute(_stream[0], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &voices_temp))
+		{
+			voices += (unsigned int)(int)(voices_temp);
+		}
+	}
+
+	if (_stream[1])
+	{
+		voices_temp = 0.;
+		if (BASS_ChannelGetAttribute(_stream[1], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &voices_temp))
+		{
+			voices += (unsigned int)(int)(voices_temp);
+		}
+	}
+
+	if (_stream[2])
+	{
+		voices_temp = 0.;
+		if (BASS_ChannelGetAttribute(_stream[2], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &voices_temp))
+		{
+			voices += (unsigned int)(int)(voices_temp);
+		}
+	}
+
+	return voices;
 }
 
 void BMPlayer::send_event(uint32_t b)
@@ -623,6 +671,7 @@ bool BMPlayer::startup()
 	BASS_ChannelSetAttribute(_stream[0], BASS_ATTRIB_MIDI_SRC, (float)iInterpolation);
 	BASS_ChannelSetAttribute(_stream[1], BASS_ATTRIB_MIDI_SRC, (float)iInterpolation);
 	BASS_ChannelSetAttribute(_stream[2], BASS_ATTRIB_MIDI_SRC, (float)iInterpolation);
+	setVoices(iVoices);
 	memset( bank_lsb_override, 0, sizeof( bank_lsb_override ) );
 	std::vector<BASS_MIDI_FONTEX> presetList;
 	if (sFileSoundFontName.length())
