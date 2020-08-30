@@ -1,5 +1,7 @@
 #include "VSTiPlayer.h"
 
+#define NOMINMAX
+
 #include <foobar2000.h>
 
 // #define LOG_EXCHANGE

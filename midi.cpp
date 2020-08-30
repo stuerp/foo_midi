@@ -1,4 +1,4 @@
-#define MYVERSION "2.3.5"
+#define MYVERSION "2.3.6"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2020-08-30 07:09 UTC - kode54
+- Hopefully fix end of file issues
+- Version is now 2.3.6
 
 2020-07-24 00:29 UTC - kode54
 - Implemented BASSMIDI voices control in Advanced Preferences
@@ -1268,6 +1272,8 @@
 - Version is now 1.0.1
 
 */
+
+#define NOMINMAX
 
 #include <foobar2000.h>
 #include "../helpers/dropdown_helper.h"
@@ -2955,7 +2961,7 @@ public:
 
 		samples_played = 0;
 
-		if ( p_flags & input_flag_no_looping || loop_type < 4 )
+		if ( ( p_flags & input_flag_no_looping ) || loop_type < 4 )
 		{
 			unsigned samples_length = length_samples;
 			samples_fade_begin = samples_length;
@@ -3500,11 +3506,14 @@ public:
 		if ( rv && samples_fade_begin != ~0 && samples_fade_end != ~0 )
 		{
 			unsigned samples_played_start = samples_played;
-			unsigned samples_played_end = samples_played += p_chunk.get_sample_count();
+			unsigned samples_played_end = samples_played + p_chunk.get_sample_count();
+
+			samples_played = samples_played_end;
 
 			if ( samples_played_end >= samples_fade_begin )
 			{
-				for ( unsigned i = (samples_fade_begin > samples_played_start) ? samples_fade_begin : samples_played_start; i < ((samples_played > samples_fade_end) ? samples_fade_end : samples_played); i++ )
+				for ( unsigned i = std::max(samples_fade_begin, samples_played_start),
+					j = std::min(samples_played_end, samples_fade_end); i < j; i++ )
 				{
 					audio_sample * sample = p_chunk.get_data() + ( i - samples_played_start ) * 2;
 					audio_sample scale = (audio_sample)( samples_fade_end - i ) / (audio_sample)( samples_fade_end - samples_fade_begin );
@@ -3514,8 +3523,13 @@ public:
 
 				if ( samples_played_end > samples_fade_end )
 				{
-					p_chunk.set_sample_count( samples_fade_end - samples_played_start );
+					unsigned samples_remain = 0;
+					if (samples_fade_end > samples_played_start)
+						samples_remain = samples_fade_end - samples_played_start;
+					p_chunk.set_sample_count( samples_remain );
 					eof = true;
+					if (!samples_remain)
+						return false;
 				}
 			}
 		}
