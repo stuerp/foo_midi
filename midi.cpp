@@ -1,4 +1,4 @@
-#define MYVERSION "2.3.6"
+#define MYVERSION "2.4.0"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2020-10-07 02:49 UTC - kode54
+- Replaced fmmidi/midisynth with libOPNMIDI
+- Updated BASS/BASSMIDI/BASSWV
+- Updated libADLMIDI
+- Version is now 2.4.0
 
 2020-08-30 07:09 UTC - kode54
 - Hopefully fix end of file issues
@@ -1304,7 +1310,8 @@
 #include "ADLPlayer.h"
 #include "../../../libADLMIDI/include/adlmidi.h"
 
-#include "fmmidiPlayer.h"
+#include "OPNPlayer.h"
+#include "../../../libOPNMIDI/include/opnmidi.h"
 
 #include "MSPlayer.h"
 
@@ -1470,6 +1477,36 @@ static const GUID guid_cfg_bassmidi_parent =
 // {9E0A5DAB-6786-4120-B737-85BB2DFAF307}
 static const GUID guid_cfg_bassmidi_voices =
 { 0x9e0a5dab, 0x6786, 0x4120, { 0xb7, 0x37, 0x85, 0xbb, 0x2d, 0xfa, 0xf3, 0x7 } };
+// {5223B5BC-41E8-4D5D-831F-477D9F8F3189}
+static const GUID guid_cfg_opn_core_parent =
+{ 0x5223b5bc, 0x41e8, 0x4d5d, { 0x83, 0x1f, 0x47, 0x7d, 0x9f, 0x8f, 0x31, 0x89 } };
+// {C5617B26-F011-4674-B85D-12DA2DA9D0DF}
+static const GUID guid_cfg_opn_core_mame =
+{ 0xc5617b26, 0xf011, 0x4674, { 0xb8, 0x5d, 0x12, 0xda, 0x2d, 0xa9, 0xd0, 0xdf } };
+// {8ABBAD90-4E76-4DD7-8777-2B7EE7E96953}
+static const GUID guid_cfg_opn_core_nuked =
+{ 0x8abbad90, 0x4e76, 0x4dd7, { 0x87, 0x77, 0x2b, 0x7e, 0xe7, 0xe9, 0x69, 0x53 } };
+// {0A74C885-E917-40CD-9A49-52A71B937B8A}
+static const GUID guid_cfg_opn_core_gens =
+{ 0xa74c885, 0xe917, 0x40cd, { 0x9a, 0x49, 0x52, 0xa7, 0x1b, 0x93, 0x7b, 0x8a } };
+// {7F53D374-9731-4321-922B-01463F197296}
+static const GUID guid_cfg_opn_bank_parent =
+{ 0x7f53d374, 0x9731, 0x4321, { 0x92, 0x2b, 0x1, 0x46, 0x3f, 0x19, 0x72, 0x96 } };
+// {6A6F56A9-513B-4AAD-9029-3246ECF02D93}
+static const GUID guid_cfg_opn_bank_xg =
+{ 0x6a6f56a9, 0x513b, 0x4aad, { 0x90, 0x29, 0x32, 0x46, 0xec, 0xf0, 0x2d, 0x93 } };
+// {ED7876AB-FCA3-4DFD-AF56-028DD9BF5480}
+static const GUID guid_cfg_opn_bank_gs =
+{ 0xed7876ab, 0xfca3, 0x4dfd, { 0xaf, 0x56, 0x2, 0x8d, 0xd9, 0xbf, 0x54, 0x80 } };
+// {792B2366-1768-4F30-87C0-C2EAB5E822D2}
+static const GUID guid_cfg_opn_bank_gems =
+{ 0x792b2366, 0x1768, 0x4f30, { 0x87, 0xc0, 0xc2, 0xea, 0xb5, 0xe8, 0x22, 0xd2 } };
+// {AD75FC74-C8D6-4399-89F2-EB7FF06233FE}
+static const GUID guid_cfg_opn_bank_tomsoft =
+{ 0xad75fc74, 0xc8d6, 0x4399, { 0x89, 0xf2, 0xeb, 0x7f, 0xf0, 0x62, 0x33, 0xfe } };
+// {47E69508-2CB7-4E32-8313-151A5F5AC779}
+static const GUID guid_cfg_opn_bank_fmmidi =
+{ 0x47e69508, 0x2cb7, 0x4e32, { 0x83, 0x13, 0x15, 0x1a, 0x5f, 0x5a, 0xc7, 0x79 } };
 
 
 #if defined(_M_IX86) || defined(__i386__)
@@ -1634,6 +1671,20 @@ advconfig_checkbox_factory_t<true> cfg_adl_core_nuked("Nuked OPL3 (slowest, most
 advconfig_checkbox_factory_t<true> cfg_adl_core_nuked_174("Nuked OPL3 v0.74 (slow, slightly less accurate)", guid_cfg_adl_core_nuked_174, guid_cfg_adl_core_parent, 1.0, false);
 advconfig_checkbox_factory_t<true> cfg_adl_core_dosbox("Dosbox OPL3 (really fast, mostly accurate)", guid_cfg_adl_core_dosbox, guid_cfg_adl_core_parent, 2.0, true);
 
+advconfig_branch_factory cfg_opn_core_parent("libOPNMIDI emulator core", guid_cfg_opn_core_parent, guid_cfg_midi_parent, 3.0);
+
+advconfig_checkbox_factory_t<true> cfg_opn_core_mame("MAME OPN", guid_cfg_opn_core_mame, guid_cfg_opn_core_parent, 0.0, true);
+advconfig_checkbox_factory_t<true> cfg_opn_core_nuked("NukedOPN", guid_cfg_opn_core_nuked, guid_cfg_opn_core_parent, 1.0, false);
+advconfig_checkbox_factory_t<true> cfg_opn_core_gens("Gens OPN", guid_cfg_opn_core_gens, guid_cfg_opn_core_parent, 2.0, false);
+
+advconfig_branch_factory cfg_opn_bank_parent("libOPNMIDI bank", guid_cfg_opn_bank_parent, guid_cfg_midi_parent, 4.0);
+
+advconfig_checkbox_factory_t<true> cfg_opn_bank_xg("XG", guid_cfg_opn_bank_xg, guid_cfg_opn_bank_parent, 0.0, true);
+advconfig_checkbox_factory_t<true> cfg_opn_bank_gs("GS (DMXOPN2)", guid_cfg_opn_bank_gs, guid_cfg_opn_bank_parent, 1.0, false);
+advconfig_checkbox_factory_t<true> cfg_opn_bank_gems("GEMS fmlib GM", guid_cfg_opn_bank_gems, guid_cfg_opn_bank_parent, 2.0, false);
+advconfig_checkbox_factory_t<true> cfg_opn_bank_tomsoft("Tomsoft's SegaMusic", guid_cfg_opn_bank_tomsoft, guid_cfg_opn_bank_parent, 3.0, false);
+advconfig_checkbox_factory_t<true> cfg_opn_bank_fmmidi("FMMIDI original bank", guid_cfg_opn_bank_fmmidi, guid_cfg_opn_bank_parent, 4.0, false);
+
 advconfig_branch_factory cfg_bassmidi_parent("BASSMIDI", guid_cfg_bassmidi_parent, guid_cfg_midi_parent, 3.0);
 
 advconfig_checkbox_factory cfg_bassmidi_effects("Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_bassmidi_parent, 0, true);
@@ -1699,7 +1750,7 @@ void ms_get_preset(const char * name, unsigned int & synth, unsigned int & bank)
 
 struct midi_preset
 {
-	enum { version = 9 };
+	enum { version = 10 };
 
 	// version 0
 	unsigned int plugin;
@@ -1749,22 +1800,26 @@ struct midi_preset
 	// v8 - GS flavor, also sc_flavor has new values
 	unsigned int gs_flavor;
 
+	// v10 - plug-in == 7 - libOPNMIDI (previously FMMIDI)
+	unsigned int opn_bank; // hard coded to fmmidi for previous versions
+	unsigned int opn_emu_core;
+
 	midi_preset()
 	{
 		plugin = cfg_plugin;
 		vst_path = cfg_vst_path;
-		VSTiPlayer * vstPlayer = NULL;
+		VSTiPlayer* vstPlayer = NULL;
 		try
 		{
 			vstPlayer = new VSTiPlayer;
 			if (vstPlayer->LoadVST(vst_path))
 			{
-				vst_config = cfg_vst_config[ vstPlayer->getUniqueID() ];
+				vst_config = cfg_vst_config[vstPlayer->getUniqueID()];
 			}
 		}
 		catch (...)
 		{
-			if ( plugin == 1 ) plugin = 0;
+			if (plugin == 1) plugin = 0;
 		}
 		delete vstPlayer;
 		soundfont_path = cfg_soundfont_path;
@@ -1793,32 +1848,54 @@ struct midi_preset
 		gs_flavor = cfg_gs_flavor;
 		ms_panning = cfg_ms_panning;
 		sc_reverb = cfg_sc_reverb;
+
+		{
+			if (cfg_opn_core_mame)
+				opn_emu_core = OPNMIDI_EMU_MAME;
+			else if (cfg_opn_core_nuked)
+				opn_emu_core = OPNMIDI_EMU_NUKED;
+			else
+				opn_emu_core = OPNMIDI_EMU_GENS;
+		}
+
+		{
+			if (cfg_opn_bank_xg)
+				opn_bank = 0;
+			else if (cfg_opn_bank_gs)
+				opn_bank = 1;
+			else if (cfg_opn_bank_gems)
+				opn_bank = 2;
+			else if (cfg_opn_bank_tomsoft)
+				opn_bank = 3;
+			else
+				opn_bank = 4;
+		}
 	}
 
-	void serialize(pfc::string8 & p_out)
+	void serialize(pfc::string8& p_out)
 	{
-		const char * const * banknames = adl_getBankNames();
+		const char* const* banknames = adl_getBankNames();
 
 		p_out.reset();
 
-		p_out += pfc::format_int( version );
+		p_out += pfc::format_int(version);
 		p_out += "|";
 
-		p_out += pfc::format_int( plugin );
+		p_out += pfc::format_int(plugin);
 
-		if ( plugin == 1 )
+		if (plugin == 1)
 		{
 			p_out += "|";
 
 			p_out += vst_path;
 			p_out += "|";
 
-			for ( unsigned i = 0; i < vst_config.size(); i++ )
+			for (unsigned i = 0; i < vst_config.size(); i++)
 			{
-				p_out += pfc::format_hex( vst_config[ i ], 2 );
+				p_out += pfc::format_hex(vst_config[i], 2);
 			}
 		}
-		else if ( plugin == 2 || plugin == 4 )
+		else if (plugin == 2 || plugin == 4)
 		{
 			p_out += "|";
 
@@ -1826,90 +1903,101 @@ struct midi_preset
 
 			p_out += "|";
 
-			p_out += pfc::format_int( effects );
+			p_out += pfc::format_int(effects);
 
 			p_out += "|";
 
-			p_out += pfc::format_int( voices );
+			p_out += pfc::format_int(voices);
 		}
 #ifdef DXISUPPORT
-		else if ( plugin == 5 )
+		else if (plugin == 5)
 		{
 			p_out += "|";
 
-			p_out += pfc::format_hex( dxi_plugin.Data1, 8 );
+			p_out += pfc::format_hex(dxi_plugin.Data1, 8);
 			p_out += "-";
-			p_out += pfc::format_hex( dxi_plugin.Data2, 4 );
+			p_out += pfc::format_hex(dxi_plugin.Data2, 4);
 			p_out += "-";
-			p_out += pfc::format_hex( dxi_plugin.Data3, 4 );
+			p_out += pfc::format_hex(dxi_plugin.Data3, 4);
 			p_out += "-";
-			p_out += pfc::format_hex( dxi_plugin.Data4[0], 2 );
-			p_out += pfc::format_hex( dxi_plugin.Data4[1], 2 );
+			p_out += pfc::format_hex(dxi_plugin.Data4[0], 2);
+			p_out += pfc::format_hex(dxi_plugin.Data4[1], 2);
 			p_out += "-";
-			p_out += pfc::format_hex( dxi_plugin.Data4[2], 2 );
-			p_out += pfc::format_hex( dxi_plugin.Data4[3], 2 );
-			p_out += pfc::format_hex( dxi_plugin.Data4[4], 2 );
-			p_out += pfc::format_hex( dxi_plugin.Data4[5], 2 );
-			p_out += pfc::format_hex( dxi_plugin.Data4[6], 2 );
-			p_out += pfc::format_hex( dxi_plugin.Data4[7], 2 );
+			p_out += pfc::format_hex(dxi_plugin.Data4[2], 2);
+			p_out += pfc::format_hex(dxi_plugin.Data4[3], 2);
+			p_out += pfc::format_hex(dxi_plugin.Data4[4], 2);
+			p_out += pfc::format_hex(dxi_plugin.Data4[5], 2);
+			p_out += pfc::format_hex(dxi_plugin.Data4[6], 2);
+			p_out += pfc::format_hex(dxi_plugin.Data4[7], 2);
 		}
 #endif
-		else if ( plugin == 6 )
+		else if (plugin == 6)
 		{
 			p_out += "|";
 
-			p_out += banknames[ adl_bank ];
+			p_out += banknames[adl_bank];
 			p_out += "|";
 
-			p_out += pfc::format_int( adl_chips );
+			p_out += pfc::format_int(adl_chips);
 			p_out += "|";
 
-			p_out += pfc::format_int( adl_panning );
+			p_out += pfc::format_int(adl_panning);
 			p_out += "|";
 
-			p_out += pfc::format_int( adl_chorus );
+			p_out += pfc::format_int(adl_chorus);
 			p_out += "|";
 
-			p_out += pfc::format_int( adl_emu_core );
+			p_out += pfc::format_int(adl_emu_core);
 		}
-		else if ( plugin == 3 )
+		else if (plugin == 3)
 		{
 			p_out += "|";
 
-			p_out += munt_bank_names[ munt_gm_set ];
+			p_out += munt_bank_names[munt_gm_set];
 		}
-		else if ( plugin == 9 )
+		else if (plugin == 9)
 		{
 			p_out += "|";
-			p_out += ms_get_preset_name( ms_synth, ms_bank );
+			p_out += ms_get_preset_name(ms_synth, ms_bank);
 			p_out += "|";
-			p_out += pfc::format_int( ms_panning );
+			p_out += pfc::format_int(ms_panning);
 		}
-		else if ( plugin == 10 )
+		else if (plugin == 10)
 		{
 			p_out += "|";
-			p_out += pfc::format_int( sc_flavor );
+			p_out += pfc::format_int(sc_flavor);
 			p_out += "|";
-			p_out += pfc::format_int( gs_flavor );
+			p_out += pfc::format_int(gs_flavor);
 			p_out += "|";
-			p_out += pfc::format_int( sc_reverb );
+			p_out += pfc::format_int(sc_reverb);
+		}
+		else if (plugin == 7)
+		{
+			p_out += "|";
+			p_out += pfc::format_int(opn_bank);
+			p_out += "|";
+			p_out += pfc::format_int(adl_chips);
+			p_out += "|";
+			p_out += pfc::format_int(adl_panning);
+			p_out += "|";
+			p_out += pfc::format_int(opn_emu_core);
 		}
 	}
 
-	void unserialize( const char * p_in )
+	void unserialize(const char* p_in)
 	{
-		const char * bar_pos = strchr( p_in, '|' );
-		if ( !bar_pos ) return;
+		const char* bar_pos = strchr(p_in, '|');
+		if (!bar_pos) return;
 
-		unsigned in_version = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
-		if ( in_version > version ) return;
+		unsigned in_version = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+		if (in_version > version) return;
 
 		p_in = bar_pos + 1;
 
-		bar_pos = strchr( p_in, '|' );
-		if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+		bar_pos = strchr(p_in, '|');
+		if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-		unsigned in_plugin = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+		unsigned in_plugin = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 		pfc::string8 in_vst_path;
 		std::vector<uint8_t> in_vst_config;
 		pfc::string8 in_soundfont_path;
@@ -1926,48 +2014,50 @@ struct midi_preset
 		unsigned in_gs_flavor;
 		bool in_ms_panning;
 		bool in_sc_reverb;
+		unsigned in_opn_bank;
+		unsigned in_opn_emu_core;
 
-		if ( *bar_pos )
+		if (*bar_pos)
 		{
 			p_in = bar_pos + 1;
-			bar_pos = strchr( p_in, '|' );
-			if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+			bar_pos = strchr(p_in, '|');
+			if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-			if ( in_plugin == 1 )
+			if (in_plugin == 1)
 			{
-				in_vst_path.set_string( p_in, bar_pos - p_in );
+				in_vst_path.set_string(p_in, bar_pos - p_in);
 
 				p_in = bar_pos + (*bar_pos == '|');
-				bar_pos = strchr( p_in, '|' );
-				if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+				bar_pos = strchr(p_in, '|');
+				if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-				while ( *p_in )
+				while (*p_in)
 				{
-					in_vst_config.push_back( pfc::atohex<unsigned char>( p_in, 2 ) );
+					in_vst_config.push_back(pfc::atohex<unsigned char>(p_in, 2));
 					p_in += 2;
 				}
 			}
-			else if ( in_plugin == 2 || in_plugin == 4 )
+			else if (in_plugin == 2 || in_plugin == 4)
 			{
-				in_soundfont_path.set_string( p_in, bar_pos - p_in );
+				in_soundfont_path.set_string(p_in, bar_pos - p_in);
 
 				p_in = bar_pos + (*bar_pos == '|');
-				bar_pos = strchr( p_in, '|' );
-				if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+				bar_pos = strchr(p_in, '|');
+				if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-				if ( bar_pos > p_in )
+				if (bar_pos > p_in)
 				{
-					in_effects = pfc::atodec<bool>( p_in, 1 );
+					in_effects = pfc::atodec<bool>(p_in, 1);
 
-					if ( in_version >= 9 )
+					if (in_version >= 9)
 					{
 						p_in = bar_pos + (*bar_pos == '|');
-						bar_pos = strchr( p_in, '|' );
-						if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+						bar_pos = strchr(p_in, '|');
+						if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-						if ( bar_pos > p_in )
+						if (bar_pos > p_in)
 						{
-							in_voices = pfc::atodec<unsigned int>( p_in, bar_pos - p_in );
+							in_voices = pfc::atodec<unsigned int>(p_in, bar_pos - p_in);
 						}
 						else
 						{
@@ -1986,69 +2076,69 @@ struct midi_preset
 				}
 			}
 #ifdef DXISUPPORT
-			else if ( in_plugin == 5 )
+			else if (in_plugin == 5)
 			{
-				if ( bar_pos - p_in < 8 + 1 + 4 + 1 + 4 + 1 + 4 + 1 + 12 ) return;
-				in_dxi_plugin.Data1 = pfc::atohex<t_uint32>( p_in, 8 );
-				in_dxi_plugin.Data2 = pfc::atohex<t_uint16>( p_in + 8 + 1, 4 );
-				in_dxi_plugin.Data3 = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1, 4 );
-				in_dxi_plugin.Data4[0] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1, 2 );
-				in_dxi_plugin.Data4[1] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2, 2 );
-				in_dxi_plugin.Data4[2] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1, 2 );
-				in_dxi_plugin.Data4[3] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2, 2 );
-				in_dxi_plugin.Data4[4] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2, 2 );
-				in_dxi_plugin.Data4[5] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2, 2 );
-				in_dxi_plugin.Data4[6] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2, 2 );
-				in_dxi_plugin.Data4[7] = pfc::atohex<t_uint16>( p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2 + 2, 2 );				
+				if (bar_pos - p_in < 8 + 1 + 4 + 1 + 4 + 1 + 4 + 1 + 12) return;
+				in_dxi_plugin.Data1 = pfc::atohex<t_uint32>(p_in, 8);
+				in_dxi_plugin.Data2 = pfc::atohex<t_uint16>(p_in + 8 + 1, 4);
+				in_dxi_plugin.Data3 = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1, 4);
+				in_dxi_plugin.Data4[0] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1, 2);
+				in_dxi_plugin.Data4[1] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2, 2);
+				in_dxi_plugin.Data4[2] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1, 2);
+				in_dxi_plugin.Data4[3] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2, 2);
+				in_dxi_plugin.Data4[4] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2, 2);
+				in_dxi_plugin.Data4[5] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2, 2);
+				in_dxi_plugin.Data4[6] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2, 2);
+				in_dxi_plugin.Data4[7] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2 + 2, 2);
 			}
 #endif
-			else if ( in_plugin == 6 )
+			else if (in_plugin == 6)
 			{
-				const char * const * banknames = adl_getBankNames();
+				const char* const* banknames = adl_getBankNames();
 				unsigned j = adl_getBanksCount();
 				unsigned i;
-				for ( i = 0; i < j; i++ )
+				for (i = 0; i < j; i++)
 				{
-					size_t len = strlen( banknames[ i ] );
-					if ( len == bar_pos - p_in && !strncmp( p_in, banknames[ i ], len ) )
+					size_t len = strlen(banknames[i]);
+					if (len == bar_pos - p_in && !strncmp(p_in, banknames[i], len))
 					{
 						in_adl_bank = i;
 						break;
 					}
 				}
-				if ( i == j ) return;
+				if (i == j) return;
 
 				p_in = bar_pos + (*bar_pos == '|');
-				bar_pos = strchr( p_in, '|' );
-				if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+				bar_pos = strchr(p_in, '|');
+				if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-				if ( !*p_in ) return;
-				in_adl_chips = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+				if (!*p_in) return;
+				in_adl_chips = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 
 				p_in = bar_pos + (*bar_pos == '|');
-				bar_pos = strchr( p_in, '|' );
-				if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+				bar_pos = strchr(p_in, '|');
+				if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-				if ( !*p_in ) return;
-				in_adl_panning = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+				if (!*p_in) return;
+				in_adl_panning = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 
-				if ( version >= 3 )
+				if (version >= 3)
 				{
 					p_in = bar_pos + (*bar_pos == '|');
-					bar_pos = strchr( p_in, '|' );
-					if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+					bar_pos = strchr(p_in, '|');
+					if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-					if ( !*p_in ) return;
-					in_adl_chorus = !!pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+					if (!*p_in) return;
+					in_adl_chorus = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 
-					if ( version >= 7 )
+					if (version >= 7)
 					{
 						p_in = bar_pos + (*bar_pos == '|');
-						bar_pos = strchr( p_in, '|' );
-						if ( !bar_pos ) bar_pos = p_in + strlen( p_in );
+						bar_pos = strchr(p_in, '|');
+						if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-						if ( !*p_in ) return;
-						in_adl_emu_core = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
+						if (!*p_in) return;
+						in_adl_emu_core = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 					}
 					else
 					{
@@ -2060,60 +2150,76 @@ struct midi_preset
 					in_adl_emu_core = ADLMIDI_EMU_DOSBOX;
 				}
 			}
-		}
-		else if ( in_plugin == 3 )
-		{
-			unsigned i, j;
-			for ( i = 0, j = _countof( munt_bank_names ); i < j; i++ )
+			else if (in_plugin == 3)
 			{
-				size_t len = strlen( munt_bank_names[ i ] );
-				if ( len == bar_pos - p_in && !strncmp( p_in, munt_bank_names[ i ], len ) )
+				unsigned i, j;
+				for (i = 0, j = _countof(munt_bank_names); i < j; i++)
 				{
-					in_munt_gm_set = i;
-					break;
+					size_t len = strlen(munt_bank_names[i]);
+					if (len == bar_pos - p_in && !strncmp(p_in, munt_bank_names[i], len))
+					{
+						in_munt_gm_set = i;
+						break;
+					}
 				}
+				if (i == j) return;
 			}
-			if ( i == j ) return;
-		}
-		else if ( in_plugin == 9 )
-		{
-			pfc::string8 temp;
-			temp.set_string(p_in, bar_pos - p_in);
-			ms_get_preset(temp, in_ms_synth, in_ms_bank);
-			if ( version >= 6 )
+			else if (in_plugin == 9)
 			{
-				p_in = bar_pos + (*bar_pos == '|');
-				bar_pos = strchr(p_in, '|');
-				if (!bar_pos) bar_pos = p_in + strlen(p_in);
-
-				if (!*p_in) return;
-				in_ms_panning = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
-			}
-			else
-			{
-				in_ms_panning = true;
-			}
-		}
-		else if ( in_plugin == 10 )
-		{
-			in_sc_flavor = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
-			if (version >= 6)
-			{
-				p_in = bar_pos + (*bar_pos == '|');
-				bar_pos = strchr(p_in, '|');
-				if (!bar_pos) bar_pos = p_in + strlen(p_in);
-
-				if (!*p_in) return;
-
-				if (version >= 8)
+				pfc::string8 temp;
+				temp.set_string(p_in, bar_pos - p_in);
+				ms_get_preset(temp, in_ms_synth, in_ms_bank);
+				if (version >= 6)
 				{
-					in_gs_flavor = pfc::atodec<unsigned>( p_in, bar_pos - p_in );
-
 					p_in = bar_pos + (*bar_pos == '|');
 					bar_pos = strchr(p_in, '|');
 					if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
 					if (!*p_in) return;
+					in_ms_panning = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+				}
+				else
+				{
+					in_ms_panning = true;
+				}
+			}
+			else if (in_plugin == 10)
+			{
+				in_sc_flavor = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+				if (version >= 6)
+				{
+					p_in = bar_pos + (*bar_pos == '|');
+					bar_pos = strchr(p_in, '|');
+					if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+					if (!*p_in) return;
+
+					if (version >= 8)
+					{
+						in_gs_flavor = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+
+						p_in = bar_pos + (*bar_pos == '|');
+						bar_pos = strchr(p_in, '|');
+						if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+						if (!*p_in) return;
+					}
+					else
+					{
+						if (in_sc_flavor >= 3 && in_sc_flavor <= 6)
+						{
+							// Legacy GS modes
+							in_gs_flavor = in_sc_flavor - 2;
+							in_sc_flavor = SCPlayer::sc_gs;
+						}
+						else if (in_sc_flavor == 7)
+						{
+							in_gs_flavor = SCPlayer::gs_default;
+							in_sc_flavor = SCPlayer::sc_xg;
+						}
+					}
+
+					in_sc_reverb = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 				}
 				else
 				{
@@ -2128,52 +2234,73 @@ struct midi_preset
 						in_gs_flavor = SCPlayer::gs_default;
 						in_sc_flavor = SCPlayer::sc_xg;
 					}
+					in_sc_reverb = true;
 				}
 
-				in_sc_reverb = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
-			}
-			else
-			{
-				if (in_sc_flavor >= 3 && in_sc_flavor <= 6)
-				{
-					// Legacy GS modes
-					in_gs_flavor = in_sc_flavor - 2;
-					in_sc_flavor = SCPlayer::sc_gs;
-				}
-				else if (in_sc_flavor == 7)
-				{
+				if (in_sc_flavor > SCPlayer::sc_xg)
+					in_sc_flavor = SCPlayer::sc_default;
+				if (in_gs_flavor > SCPlayer::gs_sc8820)
 					in_gs_flavor = SCPlayer::gs_default;
-					in_sc_flavor = SCPlayer::sc_xg;
+			}
+			else if (in_plugin == 7)
+			{
+				if (version >= 10)
+				{
+					in_opn_bank = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+
+					p_in = bar_pos + (*bar_pos == '|');
+					bar_pos = strchr(p_in, '|');
+					if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+					if (!*p_in) return;
+					in_adl_chips = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+
+					p_in = bar_pos + (*bar_pos == '|');
+					bar_pos = strchr(p_in, '|');
+					if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+					if (!*p_in) return;
+					in_adl_panning = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+
+					p_in = bar_pos + (*bar_pos == '|');
+					bar_pos = strchr(p_in, '|');
+					if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+					if (!*p_in) return;
+					in_opn_emu_core = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 				}
-				in_sc_reverb = true;
+				else
+				{
+					in_opn_bank = 4;
+					in_adl_chips = 10;
+					in_adl_panning = true;
+					in_opn_emu_core = 0;
+				}
 			}
 
-			if (in_sc_flavor > SCPlayer::sc_xg)
-				in_sc_flavor = SCPlayer::sc_default;
-			if (in_gs_flavor > SCPlayer::gs_sc8820)
-				in_gs_flavor = SCPlayer::gs_default;
-		}
-
-		plugin = in_plugin;
-		vst_path = in_vst_path;
-		vst_config = in_vst_config;
-		soundfont_path = in_soundfont_path;
-		effects = in_effects;
-		voices = in_voices;
+			plugin = in_plugin;
+			vst_path = in_vst_path;
+			vst_config = in_vst_config;
+			soundfont_path = in_soundfont_path;
+			effects = in_effects;
+			voices = in_voices;
 #ifdef DXISUPPORT
-		dxi_plugin = in_dxi_plugin;
+			dxi_plugin = in_dxi_plugin;
 #endif
-		adl_bank = in_adl_bank;
-		adl_chips = in_adl_chips;
-		adl_panning = in_adl_panning;
-		adl_chorus = in_adl_chorus;
-		adl_emu_core = in_adl_emu_core;
-		munt_gm_set = in_munt_gm_set;
-		ms_synth = in_ms_synth;
-		ms_bank = in_ms_bank;
-		sc_flavor = in_sc_flavor;
-		ms_panning = in_ms_panning;
-		sc_reverb = in_sc_reverb;
+			adl_bank = in_adl_bank;
+			adl_chips = in_adl_chips;
+			adl_panning = in_adl_panning;
+			adl_chorus = in_adl_chorus;
+			adl_emu_core = in_adl_emu_core;
+			munt_gm_set = in_munt_gm_set;
+			ms_synth = in_ms_synth;
+			ms_bank = in_ms_bank;
+			sc_flavor = in_sc_flavor;
+			ms_panning = in_ms_panning;
+			sc_reverb = in_sc_reverb;
+			opn_bank = in_opn_bank;
+			opn_emu_core = in_opn_emu_core;
+		}
 	}
 };
 
@@ -3182,22 +3309,21 @@ public:
 			{
 				delete midiPlayer;
 
-				fmmidiPlayer * fmPlayer = new fmmidiPlayer;
-				midiPlayer = fmPlayer;
+				OPNPlayer* opnPlayer = new OPNPlayer;
+				midiPlayer = opnPlayer;
 
-				pfc::string8 path;
-				path = core_api::get_my_full_path();
-				path.truncate( path.scan_filename() );
-				fmPlayer->setProgramPath( path );
-
-				fmPlayer->setSampleRate(srate);
+				opnPlayer->setBank( thePreset.opn_bank );
+				opnPlayer->setChipCount( thePreset.adl_chips );
+				opnPlayer->setFullPanning( thePreset.adl_panning );
+				opnPlayer->setCore( thePreset.opn_emu_core );
+				opnPlayer->setSampleRate(srate);
 
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
 				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
 
-				if ( fmPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
+				if ( opnPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
 					eof = false;
 					dont_loop = true;
@@ -4072,7 +4198,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	uSendMessageText( w, CB_ADDSTRING, 0, "BASSMIDI" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Super MUNT GM" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "adlmidi" );
-	uSendMessageText( w, CB_ADDSTRING, 0, "fmmidi" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "libOPNMIDI" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Nuclear Option");
 
 	if (secret_sauce_found) uSendMessageText(w, CB_ADDSTRING, 0, "Secret Sauce");
@@ -4148,6 +4274,10 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	{
 		GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_BANK ).EnableWindow( FALSE );
+	}
+
+	if ( plugin != 6 && plugin != 7 )
+	{
 		GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_PANNING ).EnableWindow( FALSE );
@@ -4321,7 +4451,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		SendDlgItemMessage( IDC_SC_EFFECTS, BM_SETCHECK, !cfg_sc_reverb );
 
 	const char * const * banknames = adl_getBankNames();
-	unsigned bank_count = adl_getBanksCount();
+	const unsigned bank_count = adl_getBanksCount();
 
 	for ( unsigned i = 0; i < bank_count; i++ )
 	{
@@ -4472,9 +4602,9 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_CACHED ).EnableWindow( plugin == 1 || plugin == 2 );
 	GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( plugin == 4 );
 	GetDlgItem( IDC_ADL_BANK ).EnableWindow( plugin == 4 );
-	GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( plugin == 4 );
-	GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( plugin == 4 );
-	GetDlgItem( IDC_ADL_PANNING ).EnableWindow( plugin == 4 );
+	GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( plugin == 4 || plugin == 5 );
+	GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( plugin == 4 || plugin == 5 );
+	GetDlgItem( IDC_ADL_PANNING ).EnableWindow( plugin == 4 || plugin == 5 );
 	GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( plugin == 6 );
 	GetDlgItem( IDC_MS_PRESET ).EnableWindow( plugin == 6 );
 	GetDlgItem( IDC_MS_PANNING ).EnableWindow( plugin == 6 );

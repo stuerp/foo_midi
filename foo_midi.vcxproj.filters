@@ -13,7 +13,6 @@
     <ClCompile Include="DXiProxy.cpp" />
     <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="ADLPlayer.cpp" />
-    <ClCompile Include="fmmidiPlayer.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="sflist\json.c">
       <Filter>sflist</Filter>
@@ -39,6 +38,7 @@
     <ClCompile Include="fmopl3lib\opl3class.cpp">
       <Filter>fmopl3</Filter>
     </ClCompile>
+    <ClCompile Include="OPNPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hypersonic2.h" />
@@ -51,7 +51,6 @@
     <ClInclude Include="DXiProxy.h" />
     <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="ADLPlayer.h" />
-    <ClInclude Include="fmmidiPlayer.h" />
     <ClInclude Include="kq6mtgm.h" />
     <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="sflist\json.h">
@@ -121,6 +120,7 @@
     <ClInclude Include="fmopl3lib\opl3class.h">
       <Filter>fmopl3</Filter>
     </ClInclude>
+    <ClInclude Include="OPNPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

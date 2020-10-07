@@ -152,7 +152,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="EMIDIPlayer.cpp" />
-    <ClCompile Include="fmmidiPlayer.cpp" />
     <ClCompile Include="fmopl3lib\opl3class.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MSPlayer.cpp" />
@@ -177,6 +176,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="OPNPlayer.cpp" />
     <ClCompile Include="PlugInInventory.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -234,7 +234,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="EMIDIPlayer.h" />
-    <ClInclude Include="fmmidiPlayer.h" />
     <ClInclude Include="fmopl3lib\opl3class.h" />
     <ClInclude Include="interface.h" />
     <ClInclude Include="kq6mtgm.h" />
@@ -251,6 +250,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </CustomBuild>
+    <ClInclude Include="OPNPlayer.h" />
     <ClInclude Include="resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCPlayer.h" />
@@ -291,8 +291,8 @@
     <ProjectReference Include="..\..\..\libADLMIDI\build\ADLMIDI_static.vcxproj">
       <Project>{02a5c6a9-549f-372a-8deb-e895fa0bc9a2}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\midisynth\midisynth.vcxproj">
-      <Project>{987fc62d-eaf6-41ed-be12-d8f867581534}</Project>
+    <ProjectReference Include="..\..\..\libOPNMIDI\build\OPNMIDI_static.vcxproj">
+      <Project>{180300b3-9ab7-3a88-bbd5-192dae550edc}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\midi_processing\midi_processing.vcxproj">
       <Project>{4573e081-973b-47f0-a67d-551761ba1678}</Project>
