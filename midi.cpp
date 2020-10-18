@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.0"
+#define MYVERSION "2.4.1"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2020-10-18 08:24 UTC - kode54
+- Fixed metadata service init
+- Version is now 2.4.1
 
 2020-10-07 02:49 UTC - kode54
 - Replaced fmmidi/midisynth with libOPNMIDI
@@ -2535,7 +2539,7 @@ class initquit_midi : public initquit
 public:
 	void on_init()
 	{
-		static_api_ptr_t<metadb_index_manager>()->add( new service_impl_t<metadb_index_client_midi>, guid_midi_index, 4 * 7 * 24 * 60 * 60 * 10000000 );
+		static_api_ptr_t<metadb_index_manager>()->add( new service_impl_t<metadb_index_client_midi>, guid_midi_index, system_time_periods::week * 4 );
 	}
 
 	void on_quit() { }
