@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.1"
+#define MYVERSION "2.4.2"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2020-12-09 02:34 UTC - kode54
+- Added HMQ extension for HMP format
+- Version is now 2.4.2
 
 2020-10-18 08:24 UTC - kode54
 - Fixed metadata service init
@@ -2446,7 +2450,7 @@ static const char * exts[]=
 //	"CMF",
 //	"GMF",
 	"HMI",
-	"HMP",
+	"HMP", "HMQ",
 	"MUS",
 	"XMI",
 	"LDS",
