@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.2"
+#define MYVERSION "2.4.3"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2021-01-11 08:57 UTC - kode54
+- Updated libADLMIDI and libOPNMIDI
+- Version is now 2.4.3
 
 2020-12-09 02:34 UTC - kode54
 - Added HMQ extension for HMP format
