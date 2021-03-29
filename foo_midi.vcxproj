@@ -289,7 +289,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\libADLMIDI\build\ADLMIDI_static.vcxproj">
-      <Project>{9898b741-66a5-3178-9164-cfaa357bd9cf}</Project>
+      <Project>{02a5c6a9-549f-372a-8deb-e895fa0bc9a2}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\libOPNMIDI\build\OPNMIDI_static.vcxproj">
       <Project>{180300b3-9ab7-3a88-bbd5-192dae550edc}</Project>

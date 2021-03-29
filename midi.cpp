@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.3"
+#define MYVERSION "2.4.4"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2021-03-29 07:37 UTC - kode54
+- Fix Standard MIDI file handling to support the edge case of
+  files with non-standard chunks in them
+- Updated libADLMIDI and libOPNMIDI
+- Version is now 2.4.4
 
 2021-01-11 08:57 UTC - kode54
 - Updated libADLMIDI and libOPNMIDI
