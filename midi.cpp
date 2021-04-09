@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.6"
+#define MYVERSION "2.4.7"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2021-04-09 07:02 UTC - kode54
+- Made Standard MIDI processor handle another bad file case better
+- Version is now 2.4.7
 
 2021-04-09 00:35 UTC - kode54
 - Made Standard MIDI processor way more lenient about broken files
