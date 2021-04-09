@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.8"
+#define MYVERSION "2.4.9"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2021-04-09 21:57 UTC - kode54
+- Fix Standard MIDI to truncate track ends to the last event in
+  the track, rather than the timestamp of the track end meta event
+- Version is now 2.4.9
 
 2021-04-09 21:08 UTC - kode54
 - Forgot to rebuild the project after making changes to the MIDI
