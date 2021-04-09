@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.7"
+#define MYVERSION "2.4.8"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,11 @@
 
 /*
 	change log
+
+2021-04-09 21:08 UTC - kode54
+- Forgot to rebuild the project after making changes to the MIDI
+  processor
+- Version is now 2.4.8
 
 2021-04-09 07:02 UTC - kode54
 - Made Standard MIDI processor handle another bad file case better
