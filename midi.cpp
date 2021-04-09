@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.5"
+#define MYVERSION "2.4.6"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2021-04-09 00:35 UTC - kode54
+- Made Standard MIDI processor way more lenient about broken files
+- Version is now 2.4.6
 
 2021-04-08 04:35 UTC - kode54
 - Updated libADLMIDI and libOPNMIDI
