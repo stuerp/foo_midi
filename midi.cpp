@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.9"
+#define MYVERSION "2.4.10"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2021-04-10 07:13 UTC - kode54
+- Finally attempt to fix Standard MIDI files with truncated tracks
+  causing inconsistent track length reporting due to uninitialized
+  data and other random factors
+- Version is now 2.4.10
 
 2021-04-09 21:57 UTC - kode54
 - Fix Standard MIDI to truncate track ends to the last event in
