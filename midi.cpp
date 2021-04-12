@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.10"
+#define MYVERSION "2.4.11"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,10 @@
 
 /*
 	change log
+
+2021-04-12 00:13 UTC - kode54
+- Fixed a potential crash from opening a file with no valid events
+- Version is now 2.4.11
 
 2021-04-10 07:13 UTC - kode54
 - Finally attempt to fix Standard MIDI files with truncated tracks
@@ -2854,6 +2858,12 @@ public:
 
 		if ( ! original_track_count )
 			throw exception_io_data( "Invalid MIDI file" );
+
+		for ( unsigned int i = 0; i < original_track_count; i++ )
+		{
+			if ( !midi_file.get_timestamp_end( i ) )
+				throw exception_io_data( "Invalid MIDI file" );
+		}
 
 		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz, b_rpgmloopz, b_thloopz );
 
