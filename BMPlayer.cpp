@@ -347,8 +347,6 @@ public:
 		if ( initialized )
 		{
             cache_deinit();
-			if ( !already )
-				BASS_Free();
 		}
 	}
 

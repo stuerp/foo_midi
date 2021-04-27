@@ -1,4 +1,4 @@
-#define MYVERSION "2.4.11"
+#define MYVERSION "2.4.12"
 
 // #define DXISUPPORT
 // #define FLUIDSYNTHSUPPORT
@@ -6,6 +6,12 @@
 
 /*
 	change log
+
+2021-04-27 02:35 UTC - kode54
+- Remove BASS_Free call, as it will most likely be happening during
+  application shutdown anyway
+- Update BASS and BASSMIDI versions, as well as decoder plugins
+- Version is now 2.4.12
 
 2021-04-12 00:13 UTC - kode54
 - Fixed a potential crash from opening a file with no valid events
