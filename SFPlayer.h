@@ -3,7 +3,6 @@
 
 #include "MIDIPlayer.h"
 
-#define FLUIDSYNTH_NOT_A_DLL
 #include <fluidsynth.h>
 
 class SFPlayer : public MIDIPlayer
@@ -32,6 +31,7 @@ private:
 	std::string       _last_error;
 
 	fluid_settings_t * _settings;
+	fluid_sfloader_t * _loader;
 	fluid_synth_t    * _synth;
 	std::string        sSoundFontName;
 	std::string        sFileSoundFontName;
@@ -48,9 +48,9 @@ private:
 	                   synth_mode;
 
 	void reset_drums();
-	uint8_t            drum_channels[32];
-	uint8_t            gs_part_to_ch[16];
-	unsigned short     channel_banks[32];
+	uint8_t            drum_channels[48];
+	uint8_t            gs_part_to_ch[48];
+	unsigned short     channel_banks[48];
 };
 
 #endif

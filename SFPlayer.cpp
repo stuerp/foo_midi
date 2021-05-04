@@ -1,5 +1,7 @@
 #include "SFPlayer.h"
 
+#include <foobar2000.h>
+
 static const uint8_t sysex_gm_reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
 static const uint8_t sysex_gm2_reset[]= { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
 static const uint8_t sysex_gs_reset[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
@@ -17,8 +19,104 @@ static bool is_gs_reset(const unsigned char * data, unsigned long size)
 	return true;
 }
 
+static void* g_sfloader_callback_open(const char* filename)
+{
+	file::ptr* ptr = NULL;
+	try
+	{
+		abort_callback_dummy _abort;
+		pfc::string8 _filename = "";
+		if (strstr(filename, "://") == 0)
+			_filename = "file://";
+		_filename += filename;
+
+		ptr = new file::ptr;
+		filesystem::g_open(*ptr, _filename, filesystem::open_mode_read, _abort);
+
+		return (void*)ptr;
+	}
+	catch (...)
+	{
+		return NULL;
+	}
+}
+
+static int g_sfloader_callback_read(void* buf, int count, void* handle)
+{
+	try
+	{
+		abort_callback_dummy _abort;
+		file::ptr* ptr = (file::ptr*)handle;
+		(*ptr)->read_object(buf, count, _abort);
+		return FLUID_OK;
+	}
+	catch (...)
+	{
+		return FLUID_FAILED;
+	}
+}
+
+static int g_sfloader_callback_seek(void* handle, long offset, int origin)
+{
+	try
+	{
+		abort_callback_dummy _abort;
+		file::ptr* ptr = (file::ptr*)handle;
+		(*ptr)->seek_ex(offset, (file::t_seek_mode)origin, _abort);
+		return FLUID_OK;
+	}
+	catch (...)
+	{
+		return FLUID_FAILED;
+	}
+}
+
+static int g_sfloader_callback_close(void* handle)
+{
+	try
+	{
+		file::ptr* ptr = (file::ptr*)handle;
+		delete ptr;
+		return FLUID_OK;
+	}
+	catch (...)
+	{
+		return FLUID_FAILED;
+	}
+}
+
+static long g_sfloader_callback_tell(void* handle)
+{
+	try
+	{
+		abort_callback_dummy _abort;
+		file::ptr* ptr = (file::ptr*)handle;
+		return (*ptr)->get_position(_abort);
+	}
+	catch (...)
+	{
+		return FLUID_FAILED;
+	}
+}
+
+
+
+static fluid_sfloader_t* g_get_sfloader(fluid_settings_t * settings)
+{
+	fluid_sfloader_t* ret = new_fluid_defsfloader(settings);
+	if (ret)
+	{
+		if (fluid_sfloader_set_callbacks(ret, g_sfloader_callback_open,
+			g_sfloader_callback_read, g_sfloader_callback_seek,
+			g_sfloader_callback_tell, g_sfloader_callback_close) == FLUID_OK)
+			return ret;
+	}
+	return NULL;
+}
+
 SFPlayer::SFPlayer() : MIDIPlayer()
 {
+	_loader = 0;
 	_synth = 0;
 	uInterpolationMethod = FLUID_INTERP_DEFAULT;
 
@@ -30,7 +128,7 @@ SFPlayer::SFPlayer() : MIDIPlayer()
 
 	fluid_settings_setnum(_settings, "synth.gain", 1.0);
 	fluid_settings_setnum(_settings, "synth.sample-rate", 44100);
-	fluid_settings_setint(_settings, "synth.midi-channels", 32);
+	fluid_settings_setint(_settings, "synth.midi-channels", 48);
 }
 
 SFPlayer::~SFPlayer()
@@ -55,7 +153,8 @@ void SFPlayer::send_event(uint32_t b)
 		int chan = b & 0x0F;
 		int port = (b >> 24) & 0x7F;
 
-		if ( port & 1 ) chan += 16;
+		if (port && port < 3)
+			chan += port * 16;
 
 		switch (cmd)
 		{
@@ -105,8 +204,10 @@ void SFPlayer::send_event(uint32_t b)
 	{
 		uint32_t n = b & 0xffffff;
 		const uint8_t * data;
-		size_t size;
-		mSysexMap.get_entry( n, data, size );
+		size_t size, port;
+		mSysexMap.get_entry( n, data, size, port );
+		if (port >= 3)
+			port = 0;
 		if ( ( size == _countof( sysex_gm_reset ) && !memcmp( data, sysex_gm_reset, _countof( sysex_gm_reset ) ) ) ||
 			( size == _countof( sysex_gm2_reset ) && !memcmp( data, sysex_gm2_reset, _countof( sysex_gm2_reset ) ) ) ||
 			is_gs_reset( data, size ) ||
@@ -127,16 +228,20 @@ void SFPlayer::send_event(uint32_t b)
 			if (data [7] == 2)
 			{
 				// GS MIDI channel to part assign
-				gs_part_to_ch [ data [6] & 15 ] = data [8];
+				gs_part_to_ch [ (port * 16) + (data [6] & 15) ] = data [8];
 			}
 			else if ( data [7] == 0x15 )
 			{
 				// GS part to rhythm allocation
-				unsigned int drum_channel = gs_part_to_ch [ data [6] & 15 ];
+				unsigned int drum_channel = gs_part_to_ch [ (port * 16) + (data [6] & 15) ];
 				if ( drum_channel < 16 )
 				{
-					drum_channels [ drum_channel ] = data [8];
-					drum_channels [ 16 + drum_channel ] = data [8];
+					drum_channels [ (port * 16) + drum_channel ] = data [8];
+					if (port == 0)
+					{
+						drum_channels [ 16 + drum_channel ] = data [8];
+						drum_channels [ 32 + drum_channel ] = data [8];
+					}
 				}
 			}
 		}
@@ -172,12 +277,20 @@ bool SFPlayer::startup()
 
 	fluid_settings_setnum(_settings, "synth.sample-rate", uSampleRate);
 
+	_loader = g_get_sfloader(_settings);
+	if (!_loader)
+	{
+		_last_error = "Out of memory";
+		return false;
+	}
+
 	_synth = new_fluid_synth(_settings);
 	if (!_synth)
 	{
 		_last_error = "Out of memory";
 		return false;
 	}
+	fluid_synth_add_sfloader(_synth, _loader);
 	fluid_synth_set_interp_method( _synth, -1, uInterpolationMethod );
 	reset_drums();
 	synth_mode = mode_gm;
@@ -187,9 +300,9 @@ bool SFPlayer::startup()
 		size_t dot = sSoundFontName.find_last_of( '.' );
 		if ( dot != std::string::npos )
 			ext.assign( sSoundFontName.begin() + dot + 1, sSoundFontName.end() );
-		if ( !stricmp_utf8( ext.c_str(), "sf2" ) )
+		if ( !stricmp( ext.c_str(), "sf2" ) || !stricmp( ext.c_str(), "sf3" ) )
 		{
-			if ( FLUID_FAILED == fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sSoundFontName.c_str() ), 1) )
+			if ( FLUID_FAILED == fluid_synth_sfload(_synth, sSoundFontName.c_str(), 1) )
 			{
 				shutdown();
 				_last_error = "Failed to load SoundFont bank: ";
@@ -199,10 +312,14 @@ bool SFPlayer::startup()
 		}
 		else if ( !stricmp_utf8( ext.c_str(), "sflist" ) )
 		{
-			FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( sSoundFontName ), _T("r, ccs=UTF-8") );
+			FILE * fl = _tfopen( pfc::stringcvt::string_os_from_utf8( sSoundFontName.c_str() ), _T("r, ccs=UTF-8") );
 			if ( fl )
 			{
+#ifdef UNICODE
+				std::wstring path, temp;
+#else
 				std::string path, temp;
+#endif
 				TCHAR name[32768];
 				size_t slash = sSoundFontName.find_last_of( '\\' );
 				if ( slash != std::string::npos )
@@ -224,7 +341,7 @@ bool SFPlayer::startup()
 						temp = path;
 						temp += name;
 					}
-					if ( FLUID_FAILED == fluid_synth_sfload( _synth, pfc::stringcvt::string_wide_from_utf8( temp.c_str() ), 1 ) )
+					if ( FLUID_FAILED == fluid_synth_sfload( _synth, pfc::stringcvt::string_utf8_from_os( temp.c_str() ), 1 ) )
 					{
 						fclose( fl );
 						shutdown();
@@ -246,7 +363,7 @@ bool SFPlayer::startup()
 
 	if ( sFileSoundFontName.length() )
 	{
-		if ( FLUID_FAILED == fluid_synth_sfload(_synth, pfc::stringcvt::string_wide_from_utf8( sFileSoundFontName.c_str() ), 1) )
+		if ( FLUID_FAILED == fluid_synth_sfload(_synth, sFileSoundFontName.c_str(), 1) )
 		{
 			shutdown();
 			_last_error = "Failed to load SoundFont bank: ";
@@ -255,7 +372,7 @@ bool SFPlayer::startup()
 		}
 	}
 
-	_last_error.reset();
+	_last_error = "";
 
 	return true;
 }
@@ -266,15 +383,18 @@ void SFPlayer::reset_drums()
 
 	memset( drum_channels, 0, sizeof( drum_channels ) );
 	drum_channels [9] = 1;
-	drum_channels [25] = 1;
+	drum_channels [9 + 16] = 1;
+	drum_channels [9 + 32] = 1;
 
 	memcpy( gs_part_to_ch, part_to_ch, sizeof( gs_part_to_ch ) );
+	memcpy( gs_part_to_ch + 16, part_to_ch, sizeof( gs_part_to_ch ) );
+	memcpy( gs_part_to_ch + 32, part_to_ch, sizeof( gs_part_to_ch ) );
 
 	memset( channel_banks, 0, sizeof( channel_banks ) );
 
 	if ( _synth )
 	{
-		for ( unsigned i = 0; i < 32; ++i )
+		for ( unsigned i = 0; i < 48; ++i )
 		{
 			if ( drum_channels [i] )
 			{

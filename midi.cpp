@@ -1,11 +1,17 @@
-#define MYVERSION "2.4.12"
+#define MYVERSION "2.5"
 
 // #define DXISUPPORT
-// #define FLUIDSYNTHSUPPORT
-#define SF2PACK
+// #define BASSMIDISUPPORT
+#define FLUIDSYNTHSUPPORT
+//#define SF2PACK
 
 /*
 	change log
+
+2021-05-04 09:13 UTC - kode54
+- Disabled BASSMIDI support and reinstated FluidSynth support
+- Refactored preferences dialog code
+- Version is now 2.5
 
 2021-04-27 02:35 UTC - kode54
 - Remove BASS_Free call, as it will most likely be happening during
@@ -1742,10 +1748,12 @@ advconfig_checkbox_factory_t<true> cfg_opn_bank_gems("GEMS fmlib GM", guid_cfg_o
 advconfig_checkbox_factory_t<true> cfg_opn_bank_tomsoft("Tomsoft's SegaMusic", guid_cfg_opn_bank_tomsoft, guid_cfg_opn_bank_parent, 3.0, false);
 advconfig_checkbox_factory_t<true> cfg_opn_bank_fmmidi("FMMIDI original bank", guid_cfg_opn_bank_fmmidi, guid_cfg_opn_bank_parent, 4.0, false);
 
+#ifdef BASSMIDISUPPORT
 advconfig_branch_factory cfg_bassmidi_parent("BASSMIDI", guid_cfg_bassmidi_parent, guid_cfg_midi_parent, 3.0);
 
 advconfig_checkbox_factory cfg_bassmidi_effects("Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_bassmidi_parent, 0, true);
 advconfig_integer_factory cfg_bassmidi_voices("Maximum voice count", guid_cfg_bassmidi_voices, guid_cfg_bassmidi_parent, 1, 256, 1, 100000);
+#endif
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
 
@@ -1880,8 +1888,10 @@ struct midi_preset
 		}
 		delete vstPlayer;
 		soundfont_path = cfg_soundfont_path;
+#ifdef BASSMIDISUPPORT
 		effects = cfg_bassmidi_effects;
 		voices = (unsigned int)(int)cfg_bassmidi_voices;
+#endif
 #ifdef DXISUPPORT
 		dxi_plugin = cfg_dxi_plugin;
 #endif
@@ -2118,18 +2128,31 @@ struct midi_preset
 						}
 						else
 						{
+#ifdef BASSMIDISUPPORT
 							in_voices = (unsigned int)(int)cfg_bassmidi_voices;
+#else
+							in_voices = 256;
+#endif
 						}
 					}
 					else
 					{
+#ifdef BASSMIDISUPPORT
 						in_voices = (unsigned int)(int)cfg_bassmidi_voices;
+#else
+						in_voices = 256;
+#endif
 					}
 				}
 				else
 				{
+#ifdef BASSMIDISUPPORT
 					in_effects = cfg_bassmidi_effects;
 					in_voices = (unsigned int)(int)cfg_bassmidi_voices;
+#else
+					in_effects = 1;
+					in_voices = 256;
+#endif
 				}
 			}
 #ifdef DXISUPPORT
@@ -2666,6 +2689,7 @@ class input_midi : public input_stubs
 	unsigned srate;
 	unsigned plugin;
 	unsigned resampling;
+	unsigned fluid_interp_method;
 
 	bool b_thloopz;
 	bool b_rpgmloopz;
@@ -2746,6 +2770,9 @@ class input_midi : public input_stubs
 
 public:
 	input_midi() : srate(cfg_srate), resampling(cfg_resampling),
+#ifdef FLUIDSYNTHSUPPORT
+		fluid_interp_method(cfg_fluid_interp_method),
+#endif
 		loop_type_playback(cfg_loop_type), loop_type_other(cfg_loop_type_other), b_thloopz(!!cfg_thloopz), b_rpgmloopz(!!cfg_rpgmloopz), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
 	{
 #ifdef DXISUPPORT
@@ -3253,7 +3280,7 @@ public:
 				console::print(temp);
 			}
 #ifdef FLUIDSYNTHSUPPORT
-			else if (plugin == 2)
+			else if (plugin == 2 || plugin == 4)
 			{
 				/*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
 				if ( !fsmod )
@@ -3270,7 +3297,7 @@ public:
 				sfPlayer->setSoundFont(thePreset.soundfont_path);
 				if ( file_soundfont.length() ) sfPlayer->setFileSoundFont( file_soundfont );
 				sfPlayer->setSampleRate(srate);
-				sfPlayer->setInterpolationMethod(cfg_fluid_interp_method);
+				sfPlayer->setInterpolationMethod(fluid_interp_method);
 
 				unsigned loop_mode = 0;
 
@@ -3288,10 +3315,13 @@ public:
 					return;
 				}
 			}
+#ifdef BASSMIDISUPPORT
 			else if (plugin == 4)
+#endif
 #else
 			else if (plugin == 2 || plugin == 4)
 #endif
+#ifdef BASSMIDISUPPORT
 			{
 				/*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
 				if ( !fsmod )
@@ -3341,6 +3371,7 @@ public:
 						throw exception_io_data(last_error.c_str());
 				}
 			}
+#endif
 			else if ( plugin == 6 )
 			{
 				delete midiPlayer;
@@ -3784,6 +3815,7 @@ public:
 			ret = true;
 		}
 
+#ifdef BASSMIDISUPPORT
 #ifdef FLUIDSYNTHSUPPORT
 		if ( plugin == 4 )
 #else
@@ -3807,6 +3839,7 @@ public:
 			if (ret)
 				p_timestamp_delta = dynamic_time;
 		}
+#endif
 
 		return ret;
 	}
@@ -3942,9 +3975,6 @@ public:
 		DROPDOWN_HISTORY_HANDLER(IDC_SAMPLERATE, cfg_history_rate)
 		COMMAND_HANDLER_EX(IDC_LOOP, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_CLOOP, CBN_SELCHANGE, OnSelectionChange)
-#ifdef FLUIDSYNTHSUPPORT
-		COMMAND_HANDLER_EX(IDC_FLUID_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
-#endif
 		COMMAND_HANDLER_EX(IDC_RESAMPLING, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_RPGMLOOPZ, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
@@ -3957,7 +3987,6 @@ public:
 		COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_EDITCHANGE, OnEditChange)
 		COMMAND_HANDLER_EX(IDC_ADL_PANNING, BN_CLICKED, OnButtonClick)
-		//COMMAND_HANDLER_EX(IDC_RECOVER, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_MUNT_GM, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_MS_PRESET, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_SC_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
@@ -3980,7 +4009,7 @@ private:
 
 	void enum_vsti_plugins( const char * _path = 0, puFindFile _find = 0 );
 
-	bool check_secret_sauce();
+	static bool check_secret_sauce();
 
 	const preferences_page_callback::ptr m_callback;
 
@@ -4003,7 +4032,9 @@ private:
 
 	pfc::string8 m_soundfont, m_munt_path;
 
+#ifdef BASSMIDISUPPORT
 	pfc::string8_fast m_cached, m_cached_current;
+#endif
 
 	struct adl_bank
 	{
@@ -4041,6 +4072,22 @@ private:
 	};
 
 	pfc::list_t<adl_bank> m_bank_list;
+
+	struct plugin_names_ids {
+		const char* name;
+		int plugin_number;
+		int plugin_number_alt;
+		bool (*plugin_present)(CMyPreferences *);
+	};
+
+	static bool plugin_always_present(CMyPreferences*) { return true; }
+	static bool plugin_never_present(CMyPreferences*) { return false; }
+	static bool plugin_sauce_present(CMyPreferences* pthis) { return pthis->secret_sauce_found; }
+
+	int plugins_reported;
+
+	static const plugin_names_ids plugins[];
+	std::map<int, int> plugins_reverse_map, plugins_present_map, plugins_present_reverse_map;
 };
 
 void CMyPreferences::enum_vsti_plugins( const char * _path, puFindFile _find )
@@ -4241,43 +4288,86 @@ bool CMyPreferences::check_secret_sauce()
 
 static const char * chip_counts[] = {"1", "2", "5", "10", "25", "50", "100"};
 
+const CMyPreferences::plugin_names_ids CMyPreferences::plugins[] = {
+	{"Emu de MIDI", 0, -1, plugin_always_present },
+#ifdef FLUIDSYNTHSUPPORT
+	{"FluidSynth",
+#ifdef BASSMIDISUPPORT
+		2, -1,
+#else
+		4, 2,
+#endif
+	plugin_always_present },
+#endif
+#ifdef BASSMIDISUPPORT
+	{"BASSMIDI",
+#ifdef FLUIDSYNTHSUPPORT
+		4, -1,
+#else
+		4, 2,
+#endif
+	plugin_always_present },
+#endif
+	{"Super MUNT GM", 3, -1, plugin_always_present },
+	{"libADLMIDI", 6, -1, plugin_always_present },
+	{"libOPNMIDI", 7, -1, plugin_always_present },
+	{"oplmidi", 8, -1, plugin_never_present },
+	{"Nuclear Option", 9, -1, plugin_always_present },
+	{"Secret Sauce", 10, -1, plugin_sauce_present }
+};
+
 BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	CWindow w;
 	int plugin = cfg_plugin;
+	int plugin_selected = -1;
 
 	secret_sauce_found = check_secret_sauce();
 
-	if (!secret_sauce_found && plugin == 10)
-		plugin = default_cfg_plugin;
+	plugins_reverse_map[plugin] = -1;
+	plugins_present_map[plugin] = -1;
+	plugins_present_reverse_map[-1] = -1;
 
-	if (plugin == 8)
-		plugin = default_cfg_plugin;
-	
-	w = GetDlgItem( IDC_PLUGIN );
-	uSendMessageText( w, CB_ADDSTRING, 0, "Emu de MIDI" );
-#ifdef FLUIDSYNTHSUPPORT
-	uSendMessageText( w, CB_ADDSTRING, 0, "FluidSynth" );
-#endif
-	uSendMessageText( w, CB_ADDSTRING, 0, "BASSMIDI" );
-	uSendMessageText( w, CB_ADDSTRING, 0, "Super MUNT GM" );
-	uSendMessageText( w, CB_ADDSTRING, 0, "adlmidi" );
-	uSendMessageText( w, CB_ADDSTRING, 0, "libOPNMIDI" );
-	uSendMessageText( w, CB_ADDSTRING, 0, "Nuclear Option");
-
-	if (secret_sauce_found) uSendMessageText(w, CB_ADDSTRING, 0, "Secret Sauce");
-
-#ifndef FLUIDSYNTHSUPPORT
-	if ( plugin == 2 ) plugin = 4;
-#endif
-	
-	/*
-	if (plugin == 1)
+	for (unsigned int i = 0, j = _countof(plugins); i < j; ++i)
 	{
-	if (!set_vsti(wnd, false)) plugin = 0;
+		plugins_reverse_map[plugins[i].plugin_number] = i;
+		if (plugins[i].plugin_number_alt >= 0)
+			plugins_reverse_map[plugins[i].plugin_number_alt] = i;
 	}
-	else uSendMessageText(w, CB_ADDSTRING, 0, "VST instrument");
-	*/
+
+	int plugin_reverse = -1;
 	
+	if (plugin != 1 && plugin != 5)
+	{
+		plugin_reverse = plugins_reverse_map[plugin];
+
+		if (plugin_reverse < 0 || !plugins[plugin_reverse].plugin_present(this))
+		{
+			plugin = default_cfg_plugin;
+			plugin_reverse = plugins_reverse_map[default_cfg_plugin];
+		}
+		else if (plugins[plugin_reverse].plugin_number_alt == plugin)
+		{
+			plugin = plugins[plugin_reverse].plugin_number;
+		}
+	}
+
+	plugins_reported = 0;
+
+	w = GetDlgItem( IDC_PLUGIN );
+	for (unsigned i = 0, j = _countof(plugins); i < j; ++i)
+	{
+		const plugin_names_ids& plugin = plugins[i];
+		if (plugin.plugin_present(this))
+		{
+			plugins_present_map[plugin.plugin_number] = plugins_reported;
+			if (plugin.plugin_number_alt >= 0)
+				plugins_present_map[plugin.plugin_number_alt] = plugins_reported;
+			plugins_present_reverse_map[plugins_reported] = plugin.plugin_number;
+			++plugins_reported;
+			uSendMessageText(w, CB_ADDSTRING, 0, plugin.name);
+		}
+	}
+
 	enum_vsti_plugins();
 
 	if (vsti_plugins.get_size())
@@ -4287,6 +4377,11 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		temp += pfc::format_int(vsti_plugins.get_size());
 		temp += " plug-ins";
 		console::print(temp);
+
+		for (unsigned i = 0, j = vsti_plugins.get_count(); i < j; ++i)
+		{
+			plugins_present_reverse_map[plugins_reported + i] = 1;
+		}
 	}
 	
 	unsigned vsti_count = vsti_plugins.get_size(), vsti_selected = ~0;
@@ -4298,17 +4393,12 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 			vsti_selected = i;
 	}
 
-	if ( plugin == 1 && vsti_selected == ~0 ) plugin = 0;
-
-	/*{
-	HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
-	if (fsmod)
+	if (plugin == 1 && vsti_selected == ~0)
 	{
-	FreeLibrary( fsmod );
-	uSendMessageText(w, CB_ADDSTRING, 0, "FluidSynth");
+		plugin = default_cfg_plugin;
+		plugin_reverse = plugins_reverse_map[default_cfg_plugin];
 	}
-	}*/
-	
+
 	if ( plugin != 2 && plugin != 4 )
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
@@ -4326,13 +4416,6 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_SHOW );
 	}
 
-#ifdef FLUIDSYNTHSUPPORT
-	if ( plugin != 2 )
-	{
-		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
-	}
-#endif
 	if ( plugin != 6 )
 	{
 		GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( FALSE );
@@ -4417,45 +4500,28 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 					uSendMessageText(w, CB_ADDSTRING, 0, name);
 
 					if ( theClsid == cfg_dxi_plugin.get_value() ) dxi_selected = i;
+
+					plugins_present_reverse_map[plugins_reported + vsti_count + i] = 5;
 				}
 			}
 		}
 	}
 	CoUninitialize();
 #endif
-	if ( plugin == 1 ) plugin += vsti_selected + 6 + (secret_sauce_found ? 1 : 0);
-	else if ( plugin >= 2 && plugin <= 4 )
-	{
-		plugin = plugin == 2 ? 1 : plugin == 4 ? 2 : 3;
-	}
-	else if ( plugin == 6 )
-	{
-		plugin = 4;
-	}
-	else if ( plugin == 7 )
-	{
-		plugin = 5;
-	}
-	else if ( plugin == 9 )
-	{
-		plugin = 6;
-	}
-	else if ( plugin == 10 )
-	{
-		plugin = 7;
-	}
+	if (plugin == 1) plugin_selected = plugins_reported + vsti_selected;
 #ifdef DXISUPPORT
-	else if ( plugin == 5 )
+	else if (plugin == 5)
 	{
-		if ( dxi_selected != ~0 ) plugin += vsti_count + dxi_selected - 1;
+		if (dxi_selected != ~0) plugin_selected = plugins_reported + vsti_count + dxi_selected;
 		else plugin = 0;
 	}
 #endif
-#ifndef FLUIDSYNTHSUPPORT
-	if ( plugin > 1 ) --plugin;
-#endif
+	else
+	{
+		plugin_selected = plugins_present_map[plugin];
+	}
 
-	::SendMessage( w, CB_SETCURSEL, plugin, 0 );
+	::SendMessage( w, CB_SETCURSEL, plugin_selected, 0 );
 	
 	{
 		char temp[16];
@@ -4480,8 +4546,6 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		if ( g_running ) GetDlgItem( IDC_SAMPLERATE ).EnableWindow( FALSE );
 	}
 	
-	//if ( plugin <= vsti_count ) GetDlgItem( IDC_GM2 ).EnableWindow( FALSE );
-	
 	w = GetDlgItem( IDC_LOOP );
 	for (unsigned i = 0; i < _countof(loop_txt); i++)
 	{
@@ -4504,10 +4568,6 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	SendDlgItemMessage( IDC_EMIDI_EX, BM_SETCHECK, cfg_emidi_exclusion );
 	SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_SETCHECK, cfg_filter_instruments );
 	SendDlgItemMessage( IDC_FILTER_BANKS, BM_SETCHECK, cfg_filter_banks );
-	//SendDlgItemMessage( IDC_GM2, BM_SETCHECK, cfg_gm2 );
-	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, cfg_recover_tracks );
-	//SendDlgItemMessage( IDC_NOSYSEX, BM_SETCHECK, cfg_nosysex );
-	//SendDlgItemMessage( IDC_HACK_XG_DRUMS, BM_SETCHECK, cfg_hack_xg_drums );
 
 	SendDlgItemMessage( IDC_MS_PANNING, BM_SETCHECK, cfg_ms_panning );
 	if (secret_sauce_found)
@@ -4540,23 +4600,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 
 	SendDlgItemMessage( IDC_ADL_PANNING, BM_SETCHECK, cfg_adl_panning );
 
-#ifdef FLUIDSYNTHSUPPORT
-	w = GetDlgItem( IDC_FLUID_INTERPOLATION );
-	for (unsigned i = 0; i < _countof(interp_txt); i++)
-	{
-		uSendMessageText( w, CB_ADDSTRING, 0, interp_txt[i] );
-	}
-
-	for (unsigned i = 0; i < _countof(interp_method); i++)
-	{
-		if ( cfg_fluid_interp_method == interp_method[i] )
-		{
-			::SendMessage( w, CB_SETCURSEL, i, 0 );
-			break;
-		}
-	}
-#endif
-
+#ifdef BASSMIDISUPPORT
 	w = GetDlgItem( IDC_RESAMPLING );
 	uSendMessageText( w, CB_ADDSTRING, 0, "Linear interpolation" );
 	uSendMessageText( w, CB_ADDSTRING, 0, "8pt Sinc interpolation" );
@@ -4566,6 +4610,24 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		::SendMessage( w, CB_SETCURSEL, 1, 0 );
 	else
 		::SendMessage( w, CB_SETCURSEL, cfg_resampling, 0 );
+#endif
+#ifdef FLUIDSYNTHSUPPORT
+	w = GetDlgItem( IDC_RESAMPLING );
+	uSendMessageText( w, CB_ADDSTRING, 0, "No interpolation" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "Linear interpolation" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "Cubic interpolation" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "7pt Sinc interpolation" );
+	if (cfg_fluid_interp_method == 0)
+		::SendMessage(w, CB_SETCURSEL, 0, 0);
+	else if (cfg_fluid_interp_method == 1)
+		::SendMessage(w, CB_SETCURSEL, 1, 0);
+	else if (cfg_fluid_interp_method == 4)
+		::SendMessage(w, CB_SETCURSEL, 2, 0);
+	else if (cfg_fluid_interp_method == 7)
+		::SendMessage(w, CB_SETCURSEL, 3, 0);
+	else
+		::SendMessage(w, CB_SETCURSEL, 3, 0);
+#endif
 
 	w = GetDlgItem( IDC_MUNT_GM );
 	for ( unsigned i = 0, j = _countof( munt_bank_names ); i < j; i++ )
@@ -4604,6 +4666,10 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		::SendMessage( w, CB_SETCURSEL, cfg_gs_flavor, 0 );
 	}
 
+#ifndef BASSMIDISUPPORT
+	uSetWindowText(GetDlgItem(IDC_CACHED), "No info.");
+#endif
+
 	SetTimer( ID_REFRESH, 20 );
 
 	busy = false;
@@ -4624,18 +4690,14 @@ void CMyPreferences::OnButtonClick(UINT, int, CWindow) {
 }
 
 void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
-	int plugin = GetDlgItem( IDC_PLUGIN ).SendMessage( CB_GETCURSEL, 0, 0 );
-	int base = secret_sauce_found ? 8 : 7;
-#ifndef FLUIDSYNTHSUPPORT
-	if ( plugin > 0 ) ++plugin;
-#endif
-	if ( plugin >= base && plugin < base + vsti_plugins.get_count() )
+	int plugin_selected = GetDlgItem( IDC_PLUGIN ).SendMessage( CB_GETCURSEL, 0, 0 );
+	if ( plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count() )
 	{
 		busy = true;
 		OnChanged();
 
 		VSTiPlayer vstPlayer;
-		if ( vstPlayer.LoadVST( vsti_plugins[ plugin - base ].path.c_str() ) )
+		if ( vstPlayer.LoadVST( vsti_plugins[ plugin_selected - plugins_reported ].path.c_str() ) )
 		{
 			if ( vsti_config.size() )
 				vstPlayer.setChunk( &vsti_config[0], vsti_config.size() );
@@ -4650,39 +4712,42 @@ void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 
 void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	//t_size vsti_count = vsti_plugins.get_size();
-	int plugin = ::SendMessage( w, CB_GETCURSEL, 0, 0 );
-#ifndef FLUIDSYNTHSUPPORT
-	if ( plugin > 0 ) ++plugin;
+	int plugin_selected = ::SendMessage( w, CB_GETCURSEL, 0, 0 );
+	int plugin_index = -1;
+	int plugin = 0;
+
+	if (plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count())
+		plugin = 1;
+#ifdef DXISUPPORT
+	else if (plugin_selected >= plugins_reported + vsti_plugins.get_count())
+		plugin = 5;
 #endif
+	else
+		plugin = plugins_present_reverse_map[plugin_selected];
 	
 	GetDlgItem( IDC_SAMPLERATE ).EnableWindow( plugin || !g_running );
 	
-	GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
-	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 1 || plugin == 2 );
-	GetDlgItem( IDC_RESAMPLING_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
-	GetDlgItem( IDC_RESAMPLING ).EnableWindow( plugin == 1 || plugin == 2 );
-	GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( plugin == 1 || plugin == 2 );
-	GetDlgItem( IDC_CACHED ).EnableWindow( plugin == 1 || plugin == 2 );
-	GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( plugin == 4 );
-	GetDlgItem( IDC_ADL_BANK ).EnableWindow( plugin == 4 );
-	GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( plugin == 4 || plugin == 5 );
-	GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( plugin == 4 || plugin == 5 );
-	GetDlgItem( IDC_ADL_PANNING ).EnableWindow( plugin == 4 || plugin == 5 );
-	GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( plugin == 6 );
-	GetDlgItem( IDC_MS_PRESET ).EnableWindow( plugin == 6 );
-	GetDlgItem( IDC_MS_PANNING ).EnableWindow( plugin == 6 );
+	GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( plugin == 2 || plugin == 4 );
+	GetDlgItem( IDC_SOUNDFONT ).EnableWindow( plugin == 2 || plugin == 4 );
+	GetDlgItem( IDC_RESAMPLING_TEXT ).EnableWindow( plugin == 2 || plugin == 4 );
+	GetDlgItem( IDC_RESAMPLING ).EnableWindow( plugin == 2 || plugin == 4 );
+	GetDlgItem( IDC_CACHED_TEXT ).EnableWindow( plugin == 2 || plugin == 4 );
+	GetDlgItem( IDC_CACHED ).EnableWindow( plugin == 2 || plugin == 4 );
+	GetDlgItem( IDC_ADL_BANK_TEXT ).EnableWindow( plugin == 6 );
+	GetDlgItem( IDC_ADL_BANK ).EnableWindow( plugin == 6 );
+	GetDlgItem( IDC_ADL_CHIPS_TEXT ).EnableWindow( plugin == 6 || plugin == 9 );
+	GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( plugin == 6 || plugin == 9 );
+	GetDlgItem( IDC_ADL_PANNING ).EnableWindow( plugin == 6 || plugin == 9 );
+	GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( plugin == 9 );
+	GetDlgItem( IDC_MS_PRESET ).EnableWindow( plugin == 9 );
+	GetDlgItem( IDC_MS_PANNING ).EnableWindow( plugin == 9 );
 	if (secret_sauce_found)
 	{
-		GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( plugin == 7 );
-		GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( plugin == 7 );
-		GetDlgItem( IDC_GS_FLAVOR ).EnableWindow( plugin == 7 );
-		GetDlgItem( IDC_SC_EFFECTS ).EnableWindow( plugin == 7 );
+		GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( plugin == 10 );
+		GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( plugin == 10 );
+		GetDlgItem( IDC_GS_FLAVOR ).EnableWindow( plugin == 10 );
+		GetDlgItem( IDC_SC_EFFECTS ).EnableWindow( plugin == 10 );
 	}
-
-#ifdef FLUIDSYNTHSUPPORT
-	GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( plugin == 1 );
-	GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( plugin == 1 );
-#endif
 
 	if ( plugin == 3 )
 	{
@@ -4703,15 +4768,11 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 		GetDlgItem( IDC_MUNT_WARNING ).ShowWindow( SW_HIDE );
 	}
 
-	//GetDlgItem( IDC_GM2 ).EnableWindow( plugin > vsti_count + 1 );
+	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin_selected >= plugins_reported && plugin < plugins_reported + vsti_plugins.get_count() && vsti_plugins[ plugin_selected - plugins_reported ].has_editor );
 
-	int base = secret_sauce_found ? 8 : 7;
-
-	GetDlgItem( IDC_PLUGIN_CONFIGURE ).EnableWindow( plugin >= base && plugin < base + vsti_plugins.get_count() && vsti_plugins[ plugin - base ].has_editor );
-
-	if ( plugin >= base && plugin < base + vsti_plugins.get_count() )
+	if ( plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count() )
 	{
-		vsti_config = cfg_vst_config[ vsti_plugins[ plugin - base ].unique_id ];
+		vsti_config = cfg_vst_config[ vsti_plugins[ plugin_selected - plugins_reported ].unique_id ];
 	}
 
 	OnChanged();
@@ -4727,6 +4788,9 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 		filename = m_soundfont;
 		directory.truncate( directory.scan_filename() );
 		if (uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;"
+#ifdef FLUIDSYNTHSUPPORT
+			"*.sf3;"
+#endif
 #ifdef SF2PACK
 			"*.sf2pack;*.sfogg;"
 #endif
@@ -4734,7 +4798,11 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w) {
 #ifdef SF2PACK
 			";*.sf2pack;*.sfogg;"
 #endif
-			"|SoundFont list files|*.sflist;*.json", 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE))
+			"|SoundFont list files|*.sflist"
+#ifdef BASSMIDISUPPORT
+			";*.json"
+#endif
+			, 0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE))
 		{
 			m_soundfont = filename;
 			uSetWindowText( w, filename.get_ptr() + filename.scan_filename() );
@@ -4764,6 +4832,7 @@ void CMyPreferences::OnTimer(UINT_PTR nIDEvent)
 	{
 		GetDlgItem( IDC_SAMPLERATE ).EnableWindow( cfg_plugin || !g_running );
 
+#ifdef BASSMIDISUPPORT
 		m_cached.reset();
 
 		uint64_t total_sample_size, samples_loaded_size;
@@ -4784,6 +4853,7 @@ void CMyPreferences::OnTimer(UINT_PTR nIDEvent)
 			m_cached_current = m_cached;
 			uSetWindowText( GetDlgItem( IDC_CACHED ), m_cached );
 		}
+#endif
 	}
 }
 
@@ -4795,7 +4865,9 @@ t_uint32 CMyPreferences::get_state() {
 }
 
 void CMyPreferences::reset() {
-	SendDlgItemMessage( IDC_PLUGIN, CB_SETCURSEL, 7 /* Nuclear Option */ );
+	int default_plugin_entry = plugins_reverse_map[default_cfg_plugin];
+	int plugin_selected = plugins_present_map[default_plugin_entry];
+	SendDlgItemMessage( IDC_PLUGIN, CB_SETCURSEL, plugin_selected );
 	if ( default_cfg_plugin != 2 && default_cfg_plugin != 4 )
 	{
 		GetDlgItem( IDC_SOUNDFONT_TEXT ).EnableWindow( FALSE );
@@ -4813,13 +4885,6 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_ADL_CHIPS ).EnableWindow( FALSE );
 		GetDlgItem( IDC_ADL_PANNING ).EnableWindow( FALSE );
 	}
-#ifdef FLUIDSYNTHSUPPORT
-	if ( default_cfg_plugin != 2 )
-	{
-		GetDlgItem( IDC_FLUID_INTERPOLATION_TEXT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_FLUID_INTERPOLATION ).EnableWindow( FALSE );
-	}
-#endif
 	if ( default_cfg_plugin == 3 )
 	{
 		GetDlgItem( IDC_VST_WARNING ).ShowWindow( SW_HIDE );
@@ -4887,9 +4952,10 @@ void CMyPreferences::reset() {
 	SetDlgItemInt( IDC_ADL_CHIPS, default_cfg_adl_chips, 0 );
 	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
 #ifdef FLUIDSYNTHSUPPORT
-	SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_SETCURSEL, interp_method_default );
-#endif
+	SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, 2 /* 4 */);
+#else
 	SendDlgItemMessage( IDC_RESAMPLING, CB_SETCURSEL, default_cfg_resampling );
+#endif
 
 	size_t preset_number = 0;
 	for (size_t i = 0, j = g_ms_presets.get_count(); i < j; i++)
@@ -4941,53 +5007,30 @@ void CMyPreferences::apply() {
 		cfg_ms_bank = preset.bank;
 	}
 	{
-		t_size base = secret_sauce_found ? 8 : 7;
-		t_size vsti_count = vsti_plugins.get_size();
-		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
+		int plugin_selected = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
+		int plugin = -1;
+		if (plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count())
+			plugin = 1;
 #ifdef DXISUPPORT
-		t_size dxi_count = dxi_plugins.get_count();
+		else if (plugin_selected >= plugins_reported + vsti_plugins.get_count())
+			plugin = 5;
 #endif
-#ifndef FLUIDSYNTHSUPPORT
-		if ( plugin > 0 ) ++plugin;
-#endif		
-		cfg_vst_path = "";
+		else
+			plugin = plugins_present_reverse_map[plugin_selected];
 		
-		if ( ! plugin )
+		cfg_vst_path = "";
+
+		cfg_plugin = plugin;
+		
+		if ( plugin == 1 )
 		{
-			cfg_plugin = 0;
+			cfg_vst_path = vsti_plugins[ plugin_selected - plugins_reported ].path.c_str();
+			cfg_vst_config[ vsti_plugins[ plugin_selected - plugins_reported ].unique_id ] = vsti_config;
 		}
-		else if ( plugin >= 1 && plugin <= 3 )
-		{
-			cfg_plugin = plugin == 1 ? 2 : plugin == 2 ? 4 : 3;
-			//cfg_plugin = plugin - vsti_count + 1;
-		}
-		else if ( plugin == 4 )
-		{
-			cfg_plugin = 6;
-		}
+#ifdef DXISUPPORT
 		else if ( plugin == 5 )
 		{
-			cfg_plugin = 7;
-		}
-		else if (plugin == 6)
-		{
-			cfg_plugin = 9;
-		}
-		else if (secret_sauce_found && plugin == 7)
-		{
-			cfg_plugin = 10;
-		}
-		else if ( plugin <= vsti_count + base - 1 )
-		{
-			cfg_plugin = 1;
-			cfg_vst_path = vsti_plugins[ plugin - base ].path.c_str();
-			cfg_vst_config[ vsti_plugins[ plugin - base ].unique_id ] = vsti_config;
-		}
-#ifdef DXISUPPORT
-		else if ( plugin <= vsti_count + dxi_count + base - 2 )
-		{
-			cfg_plugin = 5;
-			cfg_dxi_plugin = dxi_plugins[ plugin - vsti_count - base ];
+			cfg_dxi_plugin = dxi_plugins[ plugin_selected - vsti_plugins.get_count() - plugins_reported ];
 		}
 #endif
 	}
@@ -5005,9 +5048,18 @@ void CMyPreferences::apply() {
 	cfg_ms_panning = SendDlgItemMessage( IDC_MS_PANNING, BM_GETCHECK );
 	//cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
 #ifdef FLUIDSYNTHSUPPORT
-	cfg_fluid_interp_method = interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ];
+	{
+		int interp_method = SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
+		if (interp_method == 2)
+			interp_method = 4;
+		else if (interp_method == 3)
+			interp_method = 7;
+		cfg_fluid_interp_method = interp_method;
+	}
 #endif
+#ifdef BASSMIDISUPPORT
 	cfg_resampling = SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL );
+#endif
 	if (secret_sauce_found)
 	{
 		cfg_sc_flavor = SendDlgItemMessage( IDC_SC_FLAVOR, CB_GETCURSEL );
@@ -5032,11 +5084,20 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_GETCHECK ) != cfg_filter_instruments ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_FILTER_BANKS, BM_GETCHECK ) != cfg_filter_banks ) changed = true;
 	if ( !changed && SendDlgItemMessage( IDC_MS_PANNING, BM_GETCHECK ) != cfg_ms_panning ) changed = true;
-	//if ( !changed && SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK ) != cfg_recover_tracks ) changed = true;
 #ifdef FLUIDSYNTHSUPPORT
-	if ( !changed && interp_method[ SendDlgItemMessage( IDC_FLUID_INTERPOLATION, CB_GETCURSEL ) ] != cfg_fluid_interp_method ) changed = true;
+	if (!changed)
+	{
+		int interp_method = SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
+		if (interp_method == 2)
+			interp_method = 4;
+		else if (interp_method == 3)
+			interp_method = 7;
+		if (interp_method != cfg_fluid_interp_method) changed = true;
+	}
 #endif
+#ifdef BASSMIDISUPPORT
 	if ( !changed && SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL ) != cfg_resampling ) changed = true;
+#endif
 	if ( secret_sauce_found )
 	{
 		if ( !changed && SendDlgItemMessage( IDC_SC_FLAVOR, CB_GETCURSEL ) != cfg_sc_flavor ) changed = true;
@@ -5061,54 +5122,32 @@ bool CMyPreferences::HasChanged() {
 	if ( !changed && SendDlgItemMessage( IDC_MUNT_GM, CB_GETCURSEL ) != cfg_munt_gm ) changed = true;
 	if ( !changed )
 	{
-		t_size base = secret_sauce_found ? 8 : 7;
-		t_size vsti_count = vsti_plugins.get_size();
-		int plugin = SendDlgItemMessage( IDC_PLUGIN, CB_GETCURSEL );
+		int plugin_selected = SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
+		int plugin = -1;
+		if (plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count())
+			plugin = 1;
 #ifdef DXISUPPORT
-		t_size dxi_count = dxi_plugins.get_count();
+		else if (plugin_selected >= plugins_reported + vsti_plugins.get_count())
+			plugin = 5;
 #endif
-#ifndef FLUIDSYNTHSUPPORT
-		if ( plugin > 0 ) ++plugin;
-#endif
+		else
+			plugin = plugins_present_reverse_map[plugin_selected];
 
-		if ( ! plugin )
+		if (plugin != cfg_plugin) changed = true;
+
+		if (!changed && plugin == 1)
 		{
-			if ( cfg_plugin != 0 ) changed = true;
-		}
-		else if ( plugin >= 1 && plugin <= 3 )
-		{
-			int plugin_compare = plugin == 1 ? 2 : plugin == 2 ? 4 : 3;
-			if ( cfg_plugin != plugin_compare ) changed = true;
-		}
-		else if ( plugin == 4 )
-		{
-			if ( cfg_plugin != 6 ) changed = true;
-		}
-		else if ( plugin == 5 )
-		{
-			if ( cfg_plugin != 7 ) changed = true;
-		}
-		else if ( plugin == 6 )
-		{
-			if ( cfg_plugin != 9 ) changed = true;
-		}
-		else if ( secret_sauce_found && plugin == 7 )
-		{
-			if ( cfg_plugin != 10 ) changed = true;
-		}
-		else if ( plugin <= vsti_count + base - 1 )
-		{
-			if ( cfg_plugin != 1 || stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin - base ].path.c_str() ) ) changed = true;
+			if ( stricmp_utf8( cfg_vst_path, vsti_plugins[ plugin_selected - plugins_reported ].path.c_str() ) ) changed = true;
 			if ( !changed )
 			{
-				t_uint32 unique_id = vsti_plugins[ plugin - base ].unique_id;
+				t_uint32 unique_id = vsti_plugins[ plugin_selected - plugins_reported ].unique_id;
 				if ( vsti_config.size() != cfg_vst_config[ unique_id ].size() || (vsti_config.size() && memcmp( &vsti_config[0], &cfg_vst_config[ unique_id ][0], vsti_config.size() ) ) ) changed = true;
 			}
 		}
 #ifdef DXISUPPORT
-		else if ( plugin <= vsti_count + dxi_count + base - 1 )
+		else if (!changed && plugin == 5)
 		{
-			if ( cfg_plugin != 5 || dxi_plugins[ plugin - vsti_count - base ] != cfg_dxi_plugin.get_value() ) changed = true;
+			if ( dxi_plugins[ plugin_selected - vsti_plugins.get_count() - plugins_reported ] != cfg_dxi_plugin.get_value() ) changed = true;
 		}
 #endif
 	}
