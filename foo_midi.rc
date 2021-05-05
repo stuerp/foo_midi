@@ -67,8 +67,8 @@ BEGIN
     COMBOBOX        IDC_CLOOP,57,97,119,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "CC 111 V=0/1 (RPG Maker)",IDC_RPGMLOOPZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,112,163,8
     CONTROL         "CC 116/117 (XMI, EMIDI)",IDC_XMILOOPZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,125,94,8
-	CONTROL         "CC 2/4 (Touhou)", IDC_THLOOPZ, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 109, 125, 67, 8
-	CONTROL         "loopStart/loopEnd track markers (FF7 PC, HMI)",IDC_FF7LOOPZ,
+    CONTROL         "CC 2/4 (Touhou)",IDC_THLOOPZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,109,125,67,8
+    CONTROL         "loopStart/loopEnd track markers (FF7 PC, HMI)",IDC_FF7LOOPZ,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,138,163,8
     GROUPBOX        "Misc",IDC_STATIC,7,156,175,52
     CONTROL         "EMIDI device track exclusion (Duke3D, etc.)",IDC_EMIDI_EX,
@@ -76,7 +76,7 @@ BEGIN
     CONTROL         "Disable instrument changes",IDC_FILTER_INSTRUMENTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,180,107,8
     CONTROL         "Disable bank changes",IDC_FILTER_BANKS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,193,89,8
-    GROUPBOX        "BASSMIDI",IDC_STATIC,188,7,139,62
+    GROUPBOX        "FluidSynth",IDC_STATIC,188,7,139,62
     RTEXT           "SoundFont:",IDC_SOUNDFONT_TEXT,193,19,44,10
     EDITTEXT        IDC_SOUNDFONT,240,17,79,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Resampling:",IDC_RESAMPLING_TEXT,193,36,44,9

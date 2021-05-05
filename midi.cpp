@@ -1,4 +1,4 @@
-#define MYVERSION "2.5"
+#define MYVERSION "2.5.1"
 
 // #define DXISUPPORT
 // #define BASSMIDISUPPORT
@@ -7,6 +7,10 @@
 
 /*
 	change log
+
+2021-05-05 00:39 UTC - kode54
+- Fix preferences section name
+- Version is now 2.5.1
 
 2021-05-04 09:13 UTC - kode54
 - Disabled BASSMIDI support and reinstated FluidSynth support
