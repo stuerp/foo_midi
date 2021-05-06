@@ -1,4 +1,4 @@
-#define MYVERSION "2.5.1"
+#define MYVERSION "2.5.2"
 
 // #define DXISUPPORT
 // #define BASSMIDISUPPORT
@@ -7,6 +7,13 @@
 
 /*
 	change log
+
+2021-05-06 21:09 UTC - kode54
+- Rewrite FluidSynth handler a bit, implementing its own SysEx
+  handler, and changing the gain level
+- Implemented support for looping indefinitely on playback only
+  if a loop is detected
+- Version is now 2.5.2
 
 2021-05-05 00:39 UTC - kode54
 - Fix preferences section name
@@ -1424,9 +1431,9 @@ static const GUID guid_cfg_filter_banks =
 // {FE5B24D8-C8A5-4b49-A163-972649217185}
 /*static const GUID guid_cfg_recover_tracks = 
 { 0xfe5b24d8, 0xc8a5, 0x4b49, { 0xa1, 0x63, 0x97, 0x26, 0x49, 0x21, 0x71, 0x85 } };*/
-// {64F6E918-45C3-4AC7-ABC0-474DD3989EA1}
+// {460A84B6-910A-496C-BEB6-86FDEB41ABDC}
 static const GUID guid_cfg_loop_type =
-{ 0x64f6e918, 0x45c3, 0x4ac7, { 0xab, 0xc0, 0x47, 0x4d, 0xd3, 0x98, 0x9e, 0xa1 } };
+{ 0x460a84b6, 0x910a, 0x496c, { 0xbe, 0xb6, 0x86, 0xfd, 0xeb, 0x41, 0xab, 0xdc } };
 // {AB5CC279-1C68-4824-B4B8-0656856A40A0}
 static const GUID guid_cfg_loop_type_other =
 { 0xab5cc279, 0x1c68, 0x4824, { 0xb4, 0xb8, 0x6, 0x56, 0x85, 0x6a, 0x40, 0xa0 } };
@@ -2699,6 +2706,7 @@ class input_midi : public input_stubs
 	bool b_rpgmloopz;
 	bool b_xmiloopz;
 	bool b_ff7loopz;
+	bool doing_loop;
 	unsigned loop_type;
 	unsigned loop_type_playback;
 	unsigned loop_type_other;
@@ -3187,17 +3195,30 @@ public:
 			unsigned samples_length = length_samples;
 			samples_fade_begin = samples_length;
 			samples_fade_end = samples_length;
+			doing_loop = false;
 
 			if ( loop_begin != ~0 || loop_end != ~0 || loop_type > 2 )
 			{
 				samples_fade_begin = MulDiv(loop_begin_ms + (loop_end_ms - loop_begin_ms) * loop_count, srate, 1000);
 				samples_fade_end = samples_fade_begin + srate * fade_ms / 1000;
+				doing_loop = true;
 			}
 		}
 		else
 		{
-			samples_fade_begin = ~0;
-			samples_fade_end = ~0;
+			if (loop_type > 4 || loop_begin != ~0 || loop_end != ~0)
+			{
+				samples_fade_begin = ~0;
+				samples_fade_end = ~0;
+				doing_loop = true;
+			}
+			else
+			{
+				unsigned samples_length = length_samples;
+				samples_fade_begin = samples_length;
+				samples_fade_end = samples_length;
+				doing_loop = false;
+			}
 		}
 
 #ifdef DXISUPPORT
@@ -3223,19 +3244,9 @@ public:
 						eof = false;
 						dont_loop = true;
 
-						if (loop_type)
+						if (doing_loop)
 						{
-							if (loop_type == 1)
-							{
-								if (loop_begin != -1 || loop_end != -1)
-								{
-									set_loop();
-								}
-							}
-							else
-							{
-								set_loop();
-							}
+							set_loop();
 						}
 
 						return;
@@ -3268,7 +3279,7 @@ public:
 					unsigned loop_mode = 0;
 
 					loop_mode = MIDIPlayer::loop_mode_enable;
-					if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
+					if ( doing_loop ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 					if ( vstPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 					{
@@ -3305,11 +3316,8 @@ public:
 
 				unsigned loop_mode = 0;
 
-				if ( loop_type )
-				{
-					loop_mode = MIDIPlayer::loop_mode_enable;
-					if ( loop_type > 1 ) loop_mode |= MIDIPlayer::loop_mode_force;
-				}
+				loop_mode = MIDIPlayer::loop_mode_enable;
+				if ( doing_loop ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( sfPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -3359,7 +3367,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( doing_loop ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if (bmPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
 				{
@@ -3393,7 +3401,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( doing_loop ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( adlPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -3419,7 +3427,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( doing_loop ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( opnPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -3463,7 +3471,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( doing_loop ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( mt32Player->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -3489,7 +3497,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if (loop_type > 2) loop_mode |= MIDIPlayer::loop_mode_force;
+				if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if (msPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
 				{
@@ -3525,7 +3533,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if (loop_type > 2) loop_mode |= MIDIPlayer::loop_mode_force;
+				if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if (scPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
 				{
@@ -3537,43 +3545,6 @@ public:
 			}
 			else
 			{
-				/* oh boy, yank in an external service! */
-				/*
-				input * i = get_external_decoder();
-				if (i)
-				{
-				external_decoder = i;
-
-				mem_reader = new reader_mem_temp((void*)mf->data, mf->size);
-
-				file_info_i info;
-
-				if (i->open(mem_reader, &info, flags))
-				{
-				eof = false;
-				dont_loop = true;
-
-				if (!(flags & OPEN_FLAG_NO_LOOPING) && loop_type)
-				{
-				if (loop_type == 1)
-				{
-				if (loop_begin != -1 || loop_end != -1)
-				{
-				set_loop();
-				}
-				}
-				else
-				{
-				set_loop();
-				}
-				}
-
-				samples_done = 0;
-
-				return 1;
-				}
-				}
-				*/
 				delete midiPlayer;
 
 				EMIDIPlayer * emidiPlayer = new EMIDIPlayer;
@@ -3582,7 +3553,7 @@ public:
 				unsigned loop_mode = 0;
 
 				loop_mode = MIDIPlayer::loop_mode_enable;
-				if ( loop_type > 2 ) loop_mode |= MIDIPlayer::loop_mode_force;
+				if ( doing_loop ) loop_mode |= MIDIPlayer::loop_mode_force;
 
 				if ( emidiPlayer->Load( midi_file, p_subsong, loop_mode, clean_flags ) )
 				{
@@ -3936,6 +3907,7 @@ static const char * loop_txt[] =
 "Never, add 1s decay time",
 "Loop and fade when detected",
 "Always loop and fade",
+"Play indefinitely when detected",
 "Play indefinitely"};
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -4558,7 +4530,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	::SendMessage( w, CB_SETCURSEL, cfg_loop_type, 0 );
 
 	w = GetDlgItem( IDC_CLOOP );
-	for (unsigned i = 0; i < _countof(loop_txt) - 1; i++)
+	for (unsigned i = 0; i < _countof(loop_txt) - 2; i++)
 	{
 		uSendMessageText( w, CB_ADDSTRING, 0, loop_txt[i] );
 	}
