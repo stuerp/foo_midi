@@ -24,7 +24,7 @@ static void* g_sfloader_callback_open(const char* filename)
 	}
 }
 
-static int g_sfloader_callback_read(void* buf, int count, void* handle)
+static int g_sfloader_callback_read(void* buf, fluid_long_long_t count, void* handle)
 {
 	try
 	{
@@ -39,7 +39,7 @@ static int g_sfloader_callback_read(void* buf, int count, void* handle)
 	}
 }
 
-static int g_sfloader_callback_seek(void* handle, long offset, int origin)
+static int g_sfloader_callback_seek(void* handle, fluid_long_long_t offset, int origin)
 {
 	try
 	{
@@ -68,7 +68,7 @@ static int g_sfloader_callback_close(void* handle)
 	}
 }
 
-static long g_sfloader_callback_tell(void* handle)
+static fluid_long_long_t g_sfloader_callback_tell(void* handle)
 {
 	try
 	{
@@ -104,18 +104,24 @@ SFPlayer::SFPlayer() : MIDIPlayer()
 	_synth[2] = 0;
 	uInterpolationMethod = FLUID_INTERP_DEFAULT;
 
-	_settings = new_fluid_settings();
+	for (unsigned int i = 0; i < 3; ++i)
+	{
+		_settings[i] = new_fluid_settings();
 
-	fluid_settings_setnum(_settings, "synth.gain", 0.2);
-	fluid_settings_setnum(_settings, "synth.sample-rate", 44100);
-	fluid_settings_setint(_settings, "synth.midi-channels", 16);
+		fluid_settings_setnum(_settings[i], "synth.gain", 0.2);
+		fluid_settings_setnum(_settings[i], "synth.sample-rate", 44100);
+		fluid_settings_setint(_settings[i], "synth.midi-channels", 16);
+		fluid_settings_setint(_settings[i], "synth.device-id", 0x10 + i);
+	}
 }
 
 SFPlayer::~SFPlayer()
 {
 	for (unsigned int i = 0; i < 3; ++i)
+	{
 		if (_synth[i]) delete_fluid_synth(_synth[i]);
-	if (_settings) delete_fluid_settings(_settings);
+		if (_settings[i]) delete_fluid_settings(_settings[i]);
+	}
 }
 
 void SFPlayer::setInterpolationMethod(unsigned method)
@@ -232,19 +238,18 @@ bool SFPlayer::startup()
 {
 	if ( _synth[0] && _synth[1] && _synth[2] ) return true;
 
-	fluid_settings_setnum(_settings, "synth.sample-rate", uSampleRate);
-
 	for (unsigned int i = 0; i < 3; ++i)
 	{
-		fluid_sfloader_t* _loader = g_get_sfloader(_settings);
+		fluid_settings_setnum(_settings[i], "synth.sample-rate", uSampleRate);
+
+		fluid_sfloader_t* _loader = g_get_sfloader(_settings[i]);
 		if (!_loader)
 		{
 			_last_error = "Out of memory";
 			return false;
 		}
 
-		fluid_settings_setint(_settings, "synth.device-id", i);
-		_synth[i] = new_fluid_synth(_settings);
+		_synth[i] = new_fluid_synth(_settings[i]);
 		if (!_synth[i])
 		{
 			_last_error = "Out of memory";

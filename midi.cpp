@@ -1,4 +1,4 @@
-#define MYVERSION "2.5.2"
+#define MYVERSION "2.5.3"
 
 // #define DXISUPPORT
 // #define BASSMIDISUPPORT
@@ -7,6 +7,15 @@
 
 /*
 	change log
+
+2021-05-07 02:41 UTC - kode54
+- Switch FluidSynth to version 3.x from HEAD, with an important
+  change for support for GM/GS/XG reset messages
+- Change how FluidSynth is configured, so device-id is set
+  properly, so GS/XG reset messages are handled correctly
+- New version of FluidSynth supports SoundFont banks greater
+  than 4GB in size
+- Version is now 2.5.3
 
 2021-05-06 21:09 UTC - kode54
 - Rewrite FluidSynth handler a bit, implementing its own SysEx
