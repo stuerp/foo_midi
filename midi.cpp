@@ -1,4 +1,4 @@
-#define MYVERSION "2.5.3"
+#define MYVERSION "2.5.4"
 
 // #define DXISUPPORT
 // #define BASSMIDISUPPORT
@@ -7,6 +7,11 @@
 
 /*
 	change log
+
+2021-05-09 01:38 UTC - kode54
+- Implemented option for FluidSynth to load samples dynamically,
+  enabled by default
+- Version is now 2.5.4
 
 2021-05-07 02:41 UTC - kode54
 - Switch FluidSynth to version 3.x from HEAD, with an important
@@ -1512,9 +1517,11 @@ static const GUID guid_cfg_adl_panning =
 // {07257AC7-9901-4A5F-9D8B-C5B5F1B8CF5B}
 static const GUID guid_cfg_munt_gm = 
 { 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 0xc5, 0xb5, 0xf1, 0xb8, 0xcf, 0x5b } };
+#ifdef BASSMIDISUPPORT
 // {62BF901B-9C51-45FE-BE8A-14FB56205E5E}
 static const GUID guid_cfg_bassmidi_effects = 
 { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };
+#endif
 // {F90C8ABF-68B5-474A-8D9C-FFD9CA80202F}
 static const GUID guid_cfg_skip_to_first_note =
 { 0xf90c8abf, 0x68b5, 0x474a,{ 0x8d, 0x9c, 0xff, 0xd9, 0xca, 0x80, 0x20, 0x2f } };
@@ -1554,12 +1561,14 @@ static const GUID guid_cfg_adl_core_nuked_174 =
 // {2A0290F8-805B-4109-AAD3-D5AE7F6235C7}
 static const GUID guid_cfg_adl_core_dosbox =
 { 0x2a0290f8, 0x805b, 0x4109, { 0xaa, 0xd3, 0xd5, 0xae, 0x7f, 0x62, 0x35, 0xc7 } };
+#ifdef BASSMIDISUPPORT
 // {DD5ADCEB-9B31-47B6-AF57-3B15D2025D9F}
 static const GUID guid_cfg_bassmidi_parent =
 { 0xdd5adceb, 0x9b31, 0x47b6, { 0xaf, 0x57, 0x3b, 0x15, 0xd2, 0x2, 0x5d, 0x9f } };
 // {9E0A5DAB-6786-4120-B737-85BB2DFAF307}
 static const GUID guid_cfg_bassmidi_voices =
 { 0x9e0a5dab, 0x6786, 0x4120, { 0xb7, 0x37, 0x85, 0xbb, 0x2d, 0xfa, 0xf3, 0x7 } };
+#endif
 // {5223B5BC-41E8-4D5D-831F-477D9F8F3189}
 static const GUID guid_cfg_opn_core_parent =
 { 0x5223b5bc, 0x41e8, 0x4d5d, { 0x83, 0x1f, 0x47, 0x7d, 0x9f, 0x8f, 0x31, 0x89 } };
@@ -1590,10 +1599,17 @@ static const GUID guid_cfg_opn_bank_tomsoft =
 // {47E69508-2CB7-4E32-8313-151A5F5AC779}
 static const GUID guid_cfg_opn_bank_fmmidi =
 { 0x47e69508, 0x2cb7, 0x4e32, { 0x83, 0x13, 0x15, 0x1a, 0x5f, 0x5a, 0xc7, 0x79 } };
+// {4C455226-B107-4E04-A9EC-F8098F81E296}
+static const GUID guid_cfg_soundfont_dynamic =
+{ 0x4c455226, 0xb107, 0x4e04, { 0xa9, 0xec, 0xf8, 0x9, 0x8f, 0x81, 0xe2, 0x96 } };
 
 
+#ifdef BASSMIDISUPPORT
 #if defined(_M_IX86) || defined(__i386__)
 
+#if 1 /* SSE2 is my current minimum */
+{enum { _bassmidi_src2_avail = 1 };
+#else
 #ifdef _MSC_VER
 #include <intrin.h>
 #elif defined(__clang__) || defined(__GNUC__)
@@ -1617,10 +1633,12 @@ static int query_cpu_feature_sse2() {
 	if ((buffer[3] & (1 << 26)) == 0) return 0;
 	return 1;
 }
+#endif
 
 static int _bassmidi_src2_avail = query_cpu_feature_sse2();
 #else
 enum { _bassmidi_src2_avail = 1 }; // No x86, either x86_64 or no SSE2 compiled in anyway
+#endif
 #endif
 
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>> {
@@ -1774,6 +1792,8 @@ advconfig_branch_factory cfg_bassmidi_parent("BASSMIDI", guid_cfg_bassmidi_paren
 advconfig_checkbox_factory cfg_bassmidi_effects("Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_bassmidi_parent, 0, true);
 advconfig_integer_factory cfg_bassmidi_voices("Maximum voice count", guid_cfg_bassmidi_voices, guid_cfg_bassmidi_parent, 1, 256, 1, 100000);
 #endif
+
+advconfig_checkbox_factory cfg_soundfont_dynamic("Load SoundFont samples dynamically", guid_cfg_soundfont_dynamic, guid_cfg_midi_parent, 0, true);
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
 
@@ -2819,8 +2839,10 @@ public:
 		loop_count = cfg_midi_loop_count.get();
 		fade_ms = cfg_midi_fade_time.get();
 
+#ifdef BASSMIDISUPPORT
 		if (!_bassmidi_src2_avail && resampling > 1)
 			resampling = 1;
+#endif
 	}
 
 	~input_midi()
@@ -3322,6 +3344,7 @@ public:
 				if ( file_soundfont.length() ) sfPlayer->setFileSoundFont( file_soundfont );
 				sfPlayer->setSampleRate(srate);
 				sfPlayer->setInterpolationMethod(fluid_interp_method);
+				sfPlayer->setDynamicLoading(cfg_soundfont_dynamic.get());
 
 				unsigned loop_mode = 0;
 

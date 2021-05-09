@@ -18,6 +18,7 @@ public:
 	void setSoundFont( const char * in );
 	void setFileSoundFont( const char * in );
 	void setInterpolationMethod(unsigned method);
+	void setDynamicLoading(bool enabled);
 
 	const char * GetLastError() const;
 
@@ -36,6 +37,7 @@ private:
 	std::string        sFileSoundFontName;
 
 	unsigned           uInterpolationMethod;
+	bool               bDynamicLoading;
 };
 
 #endif
