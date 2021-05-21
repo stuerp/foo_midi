@@ -11,6 +11,8 @@
 2021-05-09 01:38 UTC - kode54
 - Implemented option for FluidSynth to load samples dynamically,
   enabled by default
+- Rebuild FluidSynth with libsndfile support, to enable compressed
+  SF3 support
 - Version is now 2.5.4
 
 2021-05-07 02:41 UTC - kode54
