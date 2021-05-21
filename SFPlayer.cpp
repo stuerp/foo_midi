@@ -104,6 +104,9 @@ SFPlayer::SFPlayer() : MIDIPlayer()
 	_synth[2] = 0;
 	uInterpolationMethod = FLUID_INTERP_DEFAULT;
 	bDynamicLoading = true;
+	bEffects = true;
+	uVoices = 256;
+	uThreads = 1;
 
 	for (unsigned int i = 0; i < 3; ++i)
 	{
@@ -114,6 +117,10 @@ SFPlayer::SFPlayer() : MIDIPlayer()
 		fluid_settings_setint(_settings[i], "synth.midi-channels", 16);
 		fluid_settings_setint(_settings[i], "synth.dynamic-sample-loading", bDynamicLoading ? 1 : 0);
 		fluid_settings_setint(_settings[i], "synth.device-id", 0x10 + i);
+		fluid_settings_setint(_settings[i], "synth.reverb.active", bEffects ? 1 : 0);
+		fluid_settings_setint(_settings[i], "synth.chorus.active", bEffects ? 1 : 0);
+		fluid_settings_setint(_settings[i], "synth.polyphony", uVoices);
+		fluid_settings_setint(_settings[i], "synth.cpu-cores", uThreads);
 	}
 }
 
@@ -138,6 +145,38 @@ void SFPlayer::setDynamicLoading(bool enabled)
 	if (bDynamicLoading != enabled)
 		shutdown();
 	bDynamicLoading = enabled;
+}
+
+void SFPlayer::setEffects(bool enabled)
+{
+	if (bEffects != enabled)
+	{
+		for (unsigned i = 0; i < 3; ++i)
+		{
+			fluid_settings_setint(_settings[i], "synth.reverb.active", enabled ? 1 : 0);
+			fluid_settings_setint(_settings[i], "synth.chorus.active", enabled ? 1 : 0);
+		}
+	}
+	bEffects = enabled;
+}
+
+void SFPlayer::setVoiceCount(unsigned int voices)
+{
+	if (uVoices != voices)
+	{
+		for (unsigned i = 0; i < 3; ++i)
+		{
+			fluid_settings_setint(_settings[i], "synth.polyphony", voices);
+		}
+	}
+	uVoices = voices;
+}
+
+void SFPlayer::setThreadCount(unsigned int threads)
+{
+	if (uThreads != threads)
+		shutdown();
+	uThreads = threads;
 }
 
 void SFPlayer::send_event(uint32_t b)
@@ -251,6 +290,7 @@ bool SFPlayer::startup()
 	{
 		fluid_settings_setnum(_settings[i], "synth.sample-rate", uSampleRate);
 		fluid_settings_setint(_settings[i], "synth.dynamic-sample-loading", bDynamicLoading ? 1 : 0);
+		fluid_settings_setint(_settings[i], "synth.cpu-cores", uThreads);
 
 		fluid_sfloader_t* _loader = g_get_sfloader(_settings[i]);
 		if (!_loader)

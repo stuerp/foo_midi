@@ -1,4 +1,4 @@
-#define MYVERSION "2.5.4"
+#define MYVERSION "2.5.5"
 
 // #define DXISUPPORT
 // #define BASSMIDISUPPORT
@@ -7,6 +7,11 @@
 
 /*
 	change log
+
+2021-05-21 07:16 UTC - kode54
+- Implemented options for FluidSynth to disable effects processing,
+  change the polyphony count, and increase the CPU core count
+- Version is now 2.5.5
 
 2021-05-09 01:38 UTC - kode54
 - Implemented option for FluidSynth to load samples dynamically,
@@ -1604,6 +1609,18 @@ static const GUID guid_cfg_opn_bank_fmmidi =
 // {4C455226-B107-4E04-A9EC-F8098F81E296}
 static const GUID guid_cfg_soundfont_dynamic =
 { 0x4c455226, 0xb107, 0x4e04, { 0xa9, 0xec, 0xf8, 0x9, 0x8f, 0x81, 0xe2, 0x96 } };
+// {F1AD51C5-4B04-4C8B-8465-6C861E81C669}
+static const GUID guid_cfg_fluidsynth_parent =
+{ 0xf1ad51c5, 0x4b04, 0x4c8b, { 0x84, 0x65, 0x6c, 0x86, 0x1e, 0x81, 0xc6, 0x69 } };
+// {996E95CA-CE4D-4BD5-B7E6-40613283C327}
+static const GUID guid_cfg_fluidsynth_effects =
+{ 0x996e95ca, 0xce4d, 0x4bd5, { 0xb7, 0xe6, 0x40, 0x61, 0x32, 0x83, 0xc3, 0x27 } };
+// {9114D64D-412C-42D3-AED5-A5521E8FE2A6}
+static const GUID guid_cfg_fluidsynth_voices =
+{ 0x9114d64d, 0x412c, 0x42d3, { 0xae, 0xd5, 0xa5, 0x52, 0x1e, 0x8f, 0xe2, 0xa6 } };
+// {6942F09B-4D5A-4FF9-BE5F-92C1EF555D33}
+static const GUID guid_cfg_fluidsynth_threads =
+{ 0x6942f09b, 0x4d5a, 0x4ff9, { 0xbe, 0x5f, 0x92, 0xc1, 0xef, 0x55, 0x5d, 0x33 } };
 
 
 #ifdef BASSMIDISUPPORT
@@ -1795,7 +1812,14 @@ advconfig_checkbox_factory cfg_bassmidi_effects("Enable reverb and chorus proces
 advconfig_integer_factory cfg_bassmidi_voices("Maximum voice count", guid_cfg_bassmidi_voices, guid_cfg_bassmidi_parent, 1, 256, 1, 100000);
 #endif
 
-advconfig_checkbox_factory cfg_soundfont_dynamic("Load SoundFont samples dynamically", guid_cfg_soundfont_dynamic, guid_cfg_midi_parent, 0, true);
+#ifdef FLUIDSYNTHSUPPORT
+advconfig_branch_factory cfg_fluidsynth_parent("FluidSynth", guid_cfg_fluidsynth_parent, guid_cfg_midi_parent, 3.0);
+
+advconfig_checkbox_factory cfg_soundfont_dynamic("Load SoundFont samples dynamically", guid_cfg_soundfont_dynamic, guid_cfg_fluidsynth_parent, 0, true);
+advconfig_checkbox_factory cfg_fluidsynth_effects("Render reverb and chorus effects", guid_cfg_fluidsynth_effects, guid_cfg_fluidsynth_parent, 1, true);
+advconfig_integer_factory cfg_fluidsynth_voices("Maximum voice count", guid_cfg_fluidsynth_voices, guid_cfg_fluidsynth_parent, 2, 256, 1, 65535);
+advconfig_integer_factory cfg_fluidsynth_cores("Threads per instance", guid_cfg_fluidsynth_threads, guid_cfg_fluidsynth_parent, 3, 1, 1, 256);
+#endif
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
 
@@ -1933,6 +1957,10 @@ struct midi_preset
 #ifdef BASSMIDISUPPORT
 		effects = cfg_bassmidi_effects;
 		voices = (unsigned int)(int)cfg_bassmidi_voices;
+#endif
+#ifdef FLUIDSYNTHSUPPORT
+		effects = cfg_fluidsynth_effects;
+		voices = (unsigned int)(int)cfg_fluidsynth_voices;
 #endif
 #ifdef DXISUPPORT
 		dxi_plugin = cfg_dxi_plugin;
@@ -2172,6 +2200,8 @@ struct midi_preset
 						{
 #ifdef BASSMIDISUPPORT
 							in_voices = (unsigned int)(int)cfg_bassmidi_voices;
+#elif defined(FLUIDSYNTHSUPPORT)
+							in_voices = (unsigned int)(int)cfg_fluidsynth_voices;
 #else
 							in_voices = 256;
 #endif
@@ -2181,6 +2211,8 @@ struct midi_preset
 					{
 #ifdef BASSMIDISUPPORT
 						in_voices = (unsigned int)(int)cfg_bassmidi_voices;
+#elif defined(FLUIDSYNTHSUPPORT)
+						in_voices = (unsigned int)(int)cfg_fluidsynth_voices;
 #else
 						in_voices = 256;
 #endif
@@ -2191,6 +2223,9 @@ struct midi_preset
 #ifdef BASSMIDISUPPORT
 					in_effects = cfg_bassmidi_effects;
 					in_voices = (unsigned int)(int)cfg_bassmidi_voices;
+#elif defined(FLUIDSYNTHSUPPORT)
+					in_effects = cfg_fluidsynth_effects;
+					in_voices = (unsigned int)(int)cfg_fluidsynth_voices;
 #else
 					in_effects = 1;
 					in_voices = 256;
@@ -2767,7 +2802,9 @@ class input_midi : public input_stubs
 
 	bool is_syx;
 
+#ifdef BASSMIDISUPPORT
 	unsigned bassmidi_voices, bassmidi_voices_max;
+#endif
 	double dynamic_time;
 
 	pfc::string8 m_path;
@@ -3347,6 +3384,9 @@ public:
 				sfPlayer->setSampleRate(srate);
 				sfPlayer->setInterpolationMethod(fluid_interp_method);
 				sfPlayer->setDynamicLoading(cfg_soundfont_dynamic.get());
+				sfPlayer->setEffects(thePreset.effects);
+				sfPlayer->setVoiceCount(thePreset.voices);
+				sfPlayer->setThreadCount((unsigned int)(int)cfg_fluidsynth_cores);
 
 				unsigned loop_mode = 0;
 
