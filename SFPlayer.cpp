@@ -106,7 +106,6 @@ SFPlayer::SFPlayer() : MIDIPlayer()
 	bDynamicLoading = true;
 	bEffects = true;
 	uVoices = 256;
-	uThreads = 1;
 
 	for (unsigned int i = 0; i < 3; ++i)
 	{
@@ -120,7 +119,6 @@ SFPlayer::SFPlayer() : MIDIPlayer()
 		fluid_settings_setint(_settings[i], "synth.reverb.active", bEffects ? 1 : 0);
 		fluid_settings_setint(_settings[i], "synth.chorus.active", bEffects ? 1 : 0);
 		fluid_settings_setint(_settings[i], "synth.polyphony", uVoices);
-		fluid_settings_setint(_settings[i], "synth.cpu-cores", uThreads);
 	}
 }
 
@@ -170,13 +168,6 @@ void SFPlayer::setVoiceCount(unsigned int voices)
 		}
 	}
 	uVoices = voices;
-}
-
-void SFPlayer::setThreadCount(unsigned int threads)
-{
-	if (uThreads != threads)
-		shutdown();
-	uThreads = threads;
 }
 
 void SFPlayer::send_event(uint32_t b)
@@ -290,7 +281,6 @@ bool SFPlayer::startup()
 	{
 		fluid_settings_setnum(_settings[i], "synth.sample-rate", uSampleRate);
 		fluid_settings_setint(_settings[i], "synth.dynamic-sample-loading", bDynamicLoading ? 1 : 0);
-		fluid_settings_setint(_settings[i], "synth.cpu-cores", uThreads);
 
 		fluid_sfloader_t* _loader = g_get_sfloader(_settings[i]);
 		if (!_loader)

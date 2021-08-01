@@ -21,7 +21,6 @@ public:
 	void setDynamicLoading(bool enabled);
 	void setEffects(bool enabled);
 	void setVoiceCount(unsigned int voices);
-	void setThreadCount(unsigned int threads);
 
 	const char * GetLastError() const;
 
@@ -43,7 +42,6 @@ private:
 	bool               bDynamicLoading;
 	bool               bEffects;
 	unsigned int       uVoices;
-	unsigned int       uThreads;
 };
 
 #endif
