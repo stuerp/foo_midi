@@ -1,4 +1,4 @@
-#define MYVERSION "2.5.6"
+#define MYVERSION "2.5.7"
 
 // #define DXISUPPORT
 // #define BASSMIDISUPPORT
@@ -7,6 +7,11 @@
 
 /*
 	change log
+
+2021-08-08 20:06 UTC - kode54
+- Changed zero duration check to require at least one track with a
+  valid duration
+- Version is now 2.5.7
 
 2021-08-01 20:27 UTC - kode54
 - Removed FluidSynth thread count option, as it's apparently broken
@@ -2975,11 +2980,19 @@ public:
 		if ( ! original_track_count )
 			throw exception_io_data( "Invalid MIDI file" );
 
+		bool has_duration = false;
+
 		for ( unsigned int i = 0; i < original_track_count; i++ )
 		{
-			if ( !midi_file.get_timestamp_end( i ) )
-				throw exception_io_data( "Invalid MIDI file" );
+			if (midi_file.get_timestamp_end(i))
+			{
+				has_duration = true;
+				break;
+			}
 		}
+
+		if (!has_duration)
+			throw exception_io_data("Invalid MIDI file");
 
 		midi_file.scan_for_loops( b_xmiloopz, b_ff7loopz, b_rpgmloopz, b_thloopz );
 
