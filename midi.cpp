@@ -8,13 +8,22 @@
 /*
 	change log
 
+2022-02-03 15:59 UTC - kode54
+- Actually get it working
+- Update SDK
+- Fix a fatal flaw in the 64 bit VST host, regarding event lists.
+  This presented itself as me using sizeof(long) for the two initial
+  members of the structure, which is plainly wrong, and only compiled
+  correctly for 32 bit architecture. This fixes Roland Sound Canvas VA,
+  and possibly any other 64 bit plugins.
+- Version is now 2.6.0
+
 2022-02-03 10:02 UTC - kode54
 - Replaced main MIDI player with common implementation from my other
   player, Cog. This implementation supports renderers that require a
   fixed block size, which I implemented for Secret Sauce and VSTi.
 - Replaced Secret Sauce flavor and reverb filtering with a generic
   filter that can be applied to all drivers.
-- Version is now 2.6.0
 
 2021-08-08 20:06 UTC - kode54
 - Changed zero duration check to require at least one track with a
@@ -3731,7 +3740,7 @@ public:
 #ifdef DXISUPPORT
 		if (plugin == 5)
 		{
-			unsigned todo = 1024;
+			unsigned todo = 4096;
 
 			if (dont_loop)
 			{
@@ -3769,7 +3778,7 @@ public:
 		{
 			VSTiPlayer * vstPlayer = (VSTiPlayer *) midiPlayer;
 
-			unsigned todo = 1024;
+			unsigned todo = 4096;
 			unsigned nch = vstPlayer->getChannelCount();
 
 			p_chunk.set_data_size( todo * nch );
@@ -3784,15 +3793,13 @@ public:
 			p_chunk.set_channels( nch );
 			p_chunk.set_sample_count( done );
 
-			if ( done < todo ) eof = true;
-
 			rv = true;
 		}
 		else if (plugin == 3)
 		{
 			MT32Player * mt32Player = (MT32Player *) midiPlayer;
 
-			unsigned todo = 1024;
+			unsigned todo = 4096;
 
 			p_chunk.set_data_size( todo * 2 );
 
@@ -3808,13 +3815,11 @@ public:
 			p_chunk.set_channels( 2 );
 			p_chunk.set_sample_count( done );
 
-			if ( done < todo ) eof = true;
-
 			rv = true;
 		}
 		else if (midiPlayer)
 		{
-			unsigned todo = 1024;
+			unsigned todo = 4096;
 
 			p_chunk.set_data_size( todo * 2 );
 
@@ -3833,8 +3838,6 @@ public:
 			p_chunk.set_srate( srate );
 			p_chunk.set_channels( 2 );
 			p_chunk.set_sample_count( done );
-
-			if ( done < todo ) eof = true;
 
 			rv = true;
 		}
@@ -4005,6 +4008,10 @@ public:
 	}
 
 	void retag_commit( abort_callback & p_abort )
+	{
+	}
+
+	void remove_tags( abort_callback & p_abort )
 	{
 	}
 
@@ -5358,7 +5365,7 @@ public:
 
 	virtual bool apply_filter(metadb_handle_ptr p_location,t_filestats p_stats,file_info & p_info)
 	{
-		pfc::string_extension m_ext( p_location->get_path() );
+		pfc::string8 m_ext = pfc::string_extension( p_location->get_path() );
 
 		for ( unsigned j = 0, k = _countof(exts_syx); j < k; j++ )
 		{
@@ -5434,7 +5441,7 @@ public:
 		for (matches = 0, matches_syx = 0, j = 0; j < i; j++)
 		{
 			const playable_location & foo = data.get_item(j)->get_location();
-			pfc::string_extension ext(foo.get_path());
+			pfc::string8 ext = pfc::string_extension(foo.get_path());
 			for ( k = ((n == 0) ? 3 : 0), l = _countof(exts); k < l; k++ )
 			{
 				if ( !pfc::stricmp_ascii( ext, exts[ k ] ) )

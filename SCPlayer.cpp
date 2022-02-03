@@ -357,7 +357,7 @@ void SCPlayer::send_event(uint32_t b)
 	uint32_t port = (b >> 24) & 0xFF;
 	if (port > 2) port = 0;
 	process_write_code(port, 2);
-	process_write_code(port, b);
+	process_write_code(port, b & 0xFFFFFF);
 	if (process_read_code(port) != 0)
 		process_terminate(port);
 }
@@ -376,7 +376,7 @@ void SCPlayer::send_event_time(uint32_t b, unsigned int time)
 	uint32_t port = (b >> 24) & 0xFF;
 	if (port > 2) port = 0;
 	process_write_code(port, 6);
-	process_write_code(port, b);
+	process_write_code(port, b & 0xFFFFFF);
 	process_write_code(port, time);
 	if (process_read_code(port) != 0)
 		process_terminate(port);
@@ -472,5 +472,5 @@ bool SCPlayer::startup()
 
 unsigned int SCPlayer::send_event_needs_time()
 {
-	return 4096;
+	return 0;// 4096; This doesn't work for some reason
 }

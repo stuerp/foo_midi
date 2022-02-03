@@ -140,7 +140,7 @@ unsigned long MIDIPlayer::Play(float * out, unsigned long count)
 	while ( uSamplesRemaining )
 	{
 		unsigned long todo = uSamplesRemaining;
-		if (todo > count) todo = count;
+		if (todo > done - count) todo = done - count;
         if (needs_block_size && todo > needs_block_size)
             todo = needs_block_size;
         if (todo < needs_block_size)
@@ -149,7 +149,7 @@ unsigned long MIDIPlayer::Play(float * out, unsigned long count)
             into_block = todo;
             break;
         }
-		render( out, todo );
+		render( out + done * 2, todo );
 		uSamplesRemaining -= todo;
 		done += todo;
         uTimeCurrent += todo;
@@ -171,7 +171,7 @@ unsigned long MIDIPlayer::Play(float * out, unsigned long count)
 			{
 				midi_stream_event * me = &mStream[uStreamPosition];
 				
-				unsigned long samples_todo = me->m_timestamp - uTimeCurrent;
+				unsigned long samples_todo = me->m_timestamp - uTimeCurrent - into_block;
 				if ( samples_todo )
 				{
 					if ( samples_todo > count - done )
@@ -193,6 +193,7 @@ unsigned long MIDIPlayer::Play(float * out, unsigned long count)
 					}
 				}
 
+
                 if (needs_block_size)
                 {
                     into_block += samples_todo;
@@ -207,20 +208,19 @@ unsigned long MIDIPlayer::Play(float * out, unsigned long count)
                 }
                 else
                     send_event_filtered( me->m_event );
-
-				uTimeCurrent = me->m_timestamp;
 			}
 		}
 
         if ( done < count )
         {
             unsigned long samples_todo;
-            if ( uStreamPosition < mStream.size() ) samples_todo =
-mStream[uStreamPosition].m_timestamp;
+            if ( uStreamPosition < mStream.size() ) samples_todo = mStream[uStreamPosition].m_timestamp;
             else samples_todo = uTimeEnd;
             samples_todo -= uTimeCurrent;
-            if ( samples_todo > count - done ) samples_todo = count
-- done;
+            if ( needs_block_size )
+                into_block = samples_todo;
+            if ( samples_todo > count - done )
+                samples_todo = count - done;
             if ( needs_block_size && samples_todo > needs_block_size )
                 samples_todo = needs_block_size;
             if ( samples_todo >= needs_block_size )
@@ -228,6 +228,8 @@ mStream[uStreamPosition].m_timestamp;
                 render( out + done * 2, samples_todo );
                 done += samples_todo;
                 uTimeCurrent += samples_todo;
+                if (needs_block_size)
+                    into_block -= samples_todo;
             }
         }
         

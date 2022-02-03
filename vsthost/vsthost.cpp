@@ -701,7 +701,7 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 					if ( event_count[ 0 ] )
 					{
-						events[ 0 ] = ( VstEvents * ) malloc( sizeof(long) + sizeof(long) + sizeof(VstEvent*) * event_count[ 0 ] );
+						events[ 0 ] = ( VstEvents * ) malloc( sizeof(VstInt32) + sizeof(VstIntPtr) + sizeof(VstEvent*) * event_count[ 0 ] );
 
 						events[ 0 ]->numEvents = event_count[ 0 ];
 						events[ 0 ]->reserved = 0;
@@ -719,7 +719,7 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 					if ( event_count[ 1 ] )
 					{
-						events[ 1 ] = ( VstEvents * ) malloc( sizeof(long) + sizeof(long) + sizeof(VstEvent*) * event_count[ 1 ] );
+						events[ 1 ] = ( VstEvents * ) malloc( sizeof(VstInt32) + sizeof(VstIntPtr) + sizeof(VstEvent*) * event_count[ 1 ] );
 
 						events[ 1 ]->numEvents = event_count[ 1 ];
 						events[ 1 ]->reserved = 0;
@@ -737,7 +737,7 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 					if ( event_count[ 2 ] )
 					{
-						events[ 2 ] = ( VstEvents * ) malloc( sizeof(long) + sizeof(long) + sizeof(VstEvent*) * event_count[ 2 ] );
+						events[ 2 ] = ( VstEvents * ) malloc( sizeof(VstInt32) + sizeof(VstIntPtr) + sizeof(VstEvent*) * event_count[ 2 ] );
 
 						events[ 2 ]->numEvents = event_count[ 2 ];
 						events[ 2 ]->reserved = 0;
