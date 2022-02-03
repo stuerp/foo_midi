@@ -664,3 +664,8 @@ void MIDIPlayer::send_sysex_time_filtered(const uint8_t *data, size_t size, size
         sysex_reset(port, time);
     }
 }
+
+bool MIDIPlayer::GetLastError(std::string& p_out)
+{
+    return get_last_error(p_out);
+}

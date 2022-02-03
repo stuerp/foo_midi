@@ -385,13 +385,23 @@ bool SFPlayer::startup()
 		}
 	}
 
+	for (unsigned int i = 0; i < 3; ++i)
+	{
+		sysex_reset(i, 0);
+	}
+
 	_last_error = "";
 
 	return true;
 }
 
-const char * SFPlayer::GetLastError() const
+bool SFPlayer::get_last_error(std::string& p_out)
 {
-	if ( _last_error.length() ) return _last_error.c_str();
-	return NULL;
+	if (_last_error.length())
+	{
+		p_out = _last_error;
+		return true;
+	}
+		
+	return false;
 }

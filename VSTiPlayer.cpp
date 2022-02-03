@@ -452,6 +452,11 @@ bool VSTiPlayer::startup()
 	uint32_t code = process_read_code();
 	if ( code != 0 ) process_terminate();
 
+	for (unsigned i = 0; i < 3; ++i)
+	{
+		sysex_reset(i, 0);
+	}
+
 	return true;
 }
 
@@ -518,4 +523,9 @@ void VSTiPlayer::render( float * out, unsigned long count )
 		out += count_to_do * uNumOutputs;
 		count -= count_to_do;
 	}
+}
+
+unsigned int VSTiPlayer::send_event_needs_time()
+{
+	return 4096;
 }

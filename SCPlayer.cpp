@@ -318,7 +318,7 @@ void SCPlayer::process_write_code(uint32_t port, uint32_t code)
 	process_write_bytes(port, &code, sizeof(code));
 }
 
-SCPlayer::SCPlayer() : MIDIPlayer(), mode(sc_default), level(gs_default), sccore_path(0)
+SCPlayer::SCPlayer() : MIDIPlayer(), sccore_path(0)
 {
 	initialized = false;
 	iInitialized = 0;
@@ -350,47 +350,6 @@ void SCPlayer::set_sccore_path(const char *path)
 	sccore_path = (char *)malloc(len + 1);
 	if (sccore_path)
 		memcpy(sccore_path, path, len + 1);
-}
-
-static const uint8_t syx_reset_gm[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-static const uint8_t syx_reset_gm2[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-static const uint8_t syx_reset_gs[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const uint8_t syx_reset_xg[] = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
-
-static const uint8_t syx_gs_limit_bank_lsb[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x41, 0x00, 0x03, 0x00, 0xF7 };
-
-static bool syx_equal(const uint8_t * a, const uint8_t * b)
-{
-	while (*a != 0xF7 && *b != 0xF7 && *a == *b)
-	{
-		a++; b++;
-	}
-	
-	return *a == *b;
-}
-
-static bool syx_is_reset(const uint8_t * data)
-{
-	return syx_equal(data, syx_reset_gm) || syx_equal(data, syx_reset_gm2) || syx_equal(data, syx_reset_gs) || syx_equal(data, syx_reset_xg);
-}
-
-static bool syx_is_gs_limit_bank_lsb(const uint8_t * data)
-{
-	const uint8_t * a = data, * b = syx_gs_limit_bank_lsb;
-	while (*a != 0xF7 && *b != 0xF7 && *a == *b && (a - data) < 6)
-	{
-		a++; b++;
-	}
-	if ((a - data) < 6) return false;
-	unsigned char checksum = 0;
-	unsigned int i;
-	for (i = 5; data[i + 1] != 0xF7; ++i)
-		checksum += data[i];
-	checksum = (128 - checksum) & 127;
-	if (i != 9 || data[9] != checksum) return false;
-	if (data[7] != 1) return false;
-	if (data[6] < 0x40 || data[6] > 0x4F) return false;
-	return true;
 }
 
 void SCPlayer::send_event(uint32_t b)
@@ -505,7 +464,7 @@ bool SCPlayer::startup()
     
     for (int i = 0; i < 3; i++)
     {
-        reset(i);
+		sysex_reset(i, 0);
     }
     
 	return true;

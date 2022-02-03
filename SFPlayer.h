@@ -22,14 +22,14 @@ public:
 	void setEffects(bool enabled);
 	void setVoiceCount(unsigned int voices);
 
-	const char * GetLastError() const;
-
 private:
 	virtual void send_event(uint32_t b);
 	virtual void render(float * out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();
+
+	virtual bool get_last_error(std::string& p_out);
 
 	std::string       _last_error;
 
