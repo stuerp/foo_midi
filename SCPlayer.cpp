@@ -342,14 +342,6 @@ SCPlayer::~SCPlayer()
 		free(sccore_path);
 }
 
-void SCPlayer::set_reverb(bool enable)
-{
-	reverb = enable;
-	reset(0);
-	reset(1);
-	reset(2);
-}
-
 void SCPlayer::set_sccore_path(const char *path)
 {
 	size_t len;
@@ -401,214 +393,44 @@ static bool syx_is_gs_limit_bank_lsb(const uint8_t * data)
 	return true;
 }
 
-void SCPlayer::send_sysex_simple(uint32_t port, const uint8_t * data, uint32_t size)
+void SCPlayer::send_event(uint32_t b)
+{
+	uint32_t port = (b >> 24) & 0xFF;
+	if (port > 2) port = 0;
+	process_write_code(port, 2);
+	process_write_code(port, b);
+	if (process_read_code(port) != 0)
+		process_terminate(port);
+}
+
+void SCPlayer::send_sysex(const uint8_t* event, uint32_t size, size_t port)
 {
 	process_write_code(port, 3);
 	process_write_code(port, size);
-	process_write_bytes(port, data, size);
+	process_write_bytes(port, event, size);
 	if (process_read_code(port) != 0)
 		process_terminate(port);
 }
 
-void SCPlayer::send_sysex(uint32_t port, const uint8_t * data, uint32_t size)
+void SCPlayer::send_event_time(uint32_t b, unsigned int time)
 {
-	if (syx_is_gs_limit_bank_lsb(data) && level != gs_default)
-		return;
-	send_sysex_simple(port, data, size);
-	if (syx_is_reset(data) && level != gs_default)
-	{
-		reset(port);
-	}
-}
-
-void SCPlayer::send_gs(uint32_t port, uint8_t * data, uint32_t size)
-{
-	unsigned long i;
-	unsigned char checksum = 0;
-	for (i = 5; data[i+1] != 0xF7; ++i)
-		checksum += data[i];
-	checksum = (128 - checksum) & 127;
-	data[i] = checksum;
-	send_sysex_simple(port, data, size);
-}
-
-void SCPlayer::reset_sc(uint32_t port)
-{
-	unsigned int i;
-	uint8_t message[11];
-	
-	memcpy(message, syx_gs_limit_bank_lsb, 11);
-
-	message[7] = 1;
-
-	switch (level)
-	{
-		default: break;
-			
-		case gs_sc55:
-			message[8] = 1;
-			break;
-			
-		case gs_sc88:
-			message[8] = 2;
-			break;
-			
-		case gs_sc88pro:
-			message[8] = 3;
-			break;
-			
-		case gs_default:
-		case gs_sc8820:
-			message[8] = 4;
-			break;
-	}
-	
-	for (i = 0x41; i <= 0x49; ++i)
-	{
-		message[6] = i;
-		send_gs(port, message, 11); junk(port, 128);
-	}
-	message[6] = 0x40;
-	send_gs(port, message, 11); junk(port, 128);
-	for (i = 0x4A; i <= 0x4F; ++i)
-	{
-		message[6] = i;
-		send_gs(port, message, 11); junk(port, 128);
-	}
-}
-
-void SCPlayer::reset(uint32_t port)
-{
-	if (initialized)
-	{
-		send_sysex_simple(port, syx_reset_xg, sizeof(syx_reset_xg)); junk(port, 1024);
-		send_sysex_simple(port, syx_reset_gm2, sizeof(syx_reset_gm2)); junk(port, 1024);
-		send_sysex_simple(port, syx_reset_gm, sizeof(syx_reset_gm)); junk(port, 1024);
-
-		switch (mode)
-		{
-			case sc_gm:
-				/*sampler[port].TG_LongMidiIn( syx_reset_gm, 0 );*/
-				break;
-				
-			case sc_gm2:
-				send_sysex_simple(port, syx_reset_gm2, sizeof(syx_reset_gm2));
-				break;
-
-			case sc_default:
-			case sc_gs:
-				send_sysex_simple(port, syx_reset_gs, sizeof(syx_reset_gs));
-				break;
-				
-			case sc_xg:
-				send_sysex_simple(port, syx_reset_xg, sizeof(syx_reset_xg));
-				break;
-		}
-
-		reset_sc(port);
-
-		junk(port, 1024);
-
-		{
-			unsigned int i;
-			for (i = 0; i < 16; ++i)
-			{
-				send_command(port, 0x78B0 + i);
-				send_command(port, 0x79B0 + i);
-				if (mode != sc_xg || i != 9)
-				{
-					send_command(port, 0x20B0 + i);
-					send_command(port, 0x00B0 + i);
-					send_command(port, 0xC0 + i);
-				}
-			}
-		}
-
-		if (mode == sc_xg)
-		{
-			send_command(port, 0x20B9);
-			send_command(port, 0x7F00B9);
-			send_command(port, 0xC9);
-		}
-
-		if (!reverb)
-		{
-			unsigned int i;
-			for (i = 0; i < 16; ++i)
-			{
-				send_command(port, 0x5BB0 + i);
-				send_command(port, 0x5DB0 + i);
-			}
-		}
-
-		junk(port, uSampleRate * 2 / 3);
-	}
-}
-
-void SCPlayer::junk(uint32_t port, unsigned long count)
-{
-	while (count)
-	{
-		uint32_t do_count = (uint32_t)((unsigned long)(min(count, UINT_MAX)));
-		process_write_code(port, 5);
-		process_write_code(port, do_count);
-		if (process_read_code(port) != 0)
-		{
-			process_terminate(port);
-			break;
-		}
-		count -= do_count;
-	}
-}
-
-void SCPlayer::send_command(uint32_t port, uint32_t command)
-{
-	process_write_code(port, 2);
-	process_write_code(port, command);
+	uint32_t port = (b >> 24) & 0xFF;
+	if (port > 2) port = 0;
+	process_write_code(port, 6);
+	process_write_code(port, b);
+	process_write_code(port, time);
 	if (process_read_code(port) != 0)
 		process_terminate(port);
 }
 
-void SCPlayer::set_mode(sc_mode m)
+void SCPlayer::send_sysex_time(const uint8_t* event, size_t size, size_t port, unsigned int time)
 {
-	mode = m;
-	reset(0);
-	reset(1);
-	reset(2);
-}
-
-void SCPlayer::set_gs_level(sc_gs_level l)
-{
-	level = l;
-	reset(0);
-	reset(1);
-	reset(2);
-}
-
-void SCPlayer::send_event(uint32_t b)
-{
-	if (!(b & 0x80000000))
-	{
-		unsigned port = (b >> 24) & 0x7F;
-		if ( port > 2 ) port = 2;
-		if (!reverb && (((b & 0x7FF0) == 0x5BB0) || ((b & 0x7FF0) == 0x5DB0)))
-			return;
-		send_command(port, b);
-	}
-	else
-	{
-		uint32_t n = b & 0xffffff;
-		const uint8_t * data;
-		std::size_t size, port;
-		mSysexMap.get_entry( n, data, size, port );
-		if ( port > 2 ) port = 2;
-		send_sysex( port, data, size );
-		if ( port == 0 )
-		{
-			send_sysex( 1, data, size );
-			send_sysex( 2, data, size );
-		}
-	}
+	process_write_code(port, 7);
+	process_write_code(port, size);
+	process_write_code(port, time);
+	process_write_bytes(port, event, size);
+	if (process_read_code(port) != 0)
+		process_terminate(port);
 }
 
 void SCPlayer::render_port(uint32_t port, float * out, uint32_t count)
@@ -689,7 +511,7 @@ bool SCPlayer::startup()
 	return true;
 }
 
-bool SCPlayer::send_event_needs_time()
+unsigned int SCPlayer::send_event_needs_time()
 {
-	return true;
+	return 4096;
 }

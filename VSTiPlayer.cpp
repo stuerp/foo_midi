@@ -381,7 +381,7 @@ void VSTiPlayer::getChunk( std::vector<uint8_t> & out )
 {
 	process_write_code( 1 );
 
-	t_uint32 code = process_read_code();
+	uint32_t code = process_read_code();
 
 	if ( code == 0 )
 	{
@@ -462,30 +462,47 @@ unsigned VSTiPlayer::getChannelCount()
 
 void VSTiPlayer::send_event( uint32_t b )
 {
-	if (!(b & 0x80000000))
-	{
-		process_write_code( 7 );
-		process_write_code( b );
-	}
-	else
-	{
-		uint32_t n = b & 0xffffff;
-		const uint8_t * data;
-		size_t size, port;
-		mSysexMap.get_entry( n, data, size, port );
-		process_write_code( 8 );
-		process_write_code( size );
-		process_write_bytes( data, size );
-	}
-	t_uint32 code = process_read_code();
+	process_write_code(7);
+	process_write_code(b);
+	uint32_t code = process_read_code();
 	if ( code != 0 ) process_terminate();
+}
+
+void VSTiPlayer::send_sysex(const uint8_t* event, size_t size, size_t port)
+{
+	uint32_t size_plus_port = (size & 0xFFFFFF) | (port << 24);
+	process_write_code(8);
+	process_write_code(size_plus_port);
+	process_write_bytes(event, size);
+	uint32_t code = process_read_code();
+	if (code != 0) process_terminate();
+}
+
+void VSTiPlayer::send_event_time(uint32_t b, unsigned int time)
+{
+	process_write_code(10);
+	process_write_code(b);
+	process_write_code(time);
+	uint32_t code = process_read_code();
+	if (code != 0) process_terminate();
+}
+
+void VSTiPlayer::send_sysex_time(const uint8_t* event, size_t size, size_t port, unsigned int time)
+{
+	uint32_t size_plus_port = (size & 0xFFFFFF) | (port << 24);
+	process_write_code(11);
+	process_write_code(size_plus_port);
+	process_write_code(time);
+	process_write_bytes(event, size);
+	uint32_t code = process_read_code();
+	if (code != 0) process_terminate();
 }
 
 void VSTiPlayer::render( float * out, unsigned long count )
 {
 	process_write_code( 9 );
 	process_write_code( count );
-	uint32_t code = process_read_code();
+	const uint32_t code = process_read_code();
 	if ( code != 0 )
 	{
 		process_terminate();

@@ -820,6 +820,54 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 			}
 			break;
 
+		case 10: // Send MIDI Event, with timestamp
+			{
+				myVstEvent* ev = (myVstEvent*)calloc(sizeof(myVstEvent), 1);
+				if (evTail) evTail->next = ev;
+				evTail = ev;
+				if (!evChain) evChain = ev;
+
+				uint32_t b = get_code();
+				uint32_t timestamp = get_code();
+
+				ev->port = (b & 0x7F000000) >> 24;
+				if (ev->port > 2) ev->port = 2;
+				ev->ev.midiEvent.type = kVstMidiType;
+				ev->ev.midiEvent.byteSize = sizeof(ev->ev.midiEvent);
+				memcpy(&ev->ev.midiEvent.midiData, &b, 3);
+				ev->ev.midiEvent.deltaFrames = timestamp;
+
+				put_code(0);
+			}
+			break;
+
+		case 11: // Send System Exclusive Event, with timestamp
+			{
+				myVstEvent* ev = (myVstEvent*)calloc(sizeof(myVstEvent), 1);
+				if (evTail) evTail->next = ev;
+				evTail = ev;
+				if (!evChain) evChain = ev;
+
+				uint32_t size = get_code();
+				uint32_t port = size >> 24;
+				size &= 0xFFFFFF;
+
+				uint32_t timestamp = get_code();
+
+				ev->port = port;
+				if (ev->port > 2) ev->port = 0;
+				ev->ev.sysexEvent.type = kVstSysExType;
+				ev->ev.sysexEvent.byteSize = sizeof(ev->ev.sysexEvent);
+				ev->ev.sysexEvent.dumpBytes = size;
+				ev->ev.sysexEvent.sysexDump = (char*)malloc(size);
+				ev->ev.sysexEvent.deltaFrames = timestamp;
+
+				get_bytes(ev->ev.sysexEvent.sysexDump, size);
+
+				put_code(0);
+			}
+			break;
+
 		default:
 			code = 12;
 			goto exit;

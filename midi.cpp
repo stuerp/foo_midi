@@ -1,4 +1,4 @@
-#define MYVERSION "2.5.7"
+#define MYVERSION "2.6.0"
 
 // #define DXISUPPORT
 // #define BASSMIDISUPPORT
@@ -7,6 +7,14 @@
 
 /*
 	change log
+
+2022-02-03 10:02 UTC - kode54
+- Replaced main MIDI player with common implementation from my other
+  player, Cog. This implementation supports renderers that require a
+  fixed block size, which I implemented for Secret Sauce and VSTi.
+- Replaced Secret Sauce flavor and reverb filtering with a generic
+  filter that can be applied to all drivers.
+- Version is now 2.6.0
 
 2021-08-08 20:06 UTC - kode54
 - Changed zero duration check to require at least one track with a
@@ -1551,12 +1559,6 @@ static const GUID guid_cfg_ms_synth =
 // {A91D31F4-22AE-4C5C-A621-F6B6011F5DDC}
 static const GUID guid_cfg_ms_bank =
 { 0xa91d31f4, 0x22ae, 0x4c5c,{ 0xa6, 0x21, 0xf6, 0xb6, 0x1, 0x1f, 0x5d, 0xdc } };
-// {EE448510-9253-424E-ACD3-F33AE2183123}
-static const GUID guid_cfg_sc_flavor =
-{ 0xee448510, 0x9253, 0x424e, { 0xac, 0xd3, 0xf3, 0x3a, 0xe2, 0x18, 0x31, 0x23 } };
-// {BF5107F5-7813-4835-AE91-A222E5E6B8E9}
-static const GUID guid_cfg_gs_flavor = 
-{ 0xbf5107f5, 0x7813, 0x4835, { 0xae, 0x91, 0xa2, 0x22, 0xe5, 0xe6, 0xb8, 0xe9 } };
 // {1BF1799D-7691-4075-98AE-43AE82D8C9CF}
 static const GUID guid_cfg_sc_path =
 { 0x1bf1799d, 0x7691, 0x4075,{ 0x98, 0xae, 0x43, 0xae, 0x82, 0xd8, 0xc9, 0xcf } };
@@ -1564,7 +1566,7 @@ static const GUID guid_cfg_sc_path =
 static const GUID guid_cfg_ms_panning =
 { 0x849c5c09, 0x520a, 0x4d62,{ 0xa6, 0xd1, 0xe8, 0xb4, 0x32, 0x66, 0x49, 0x48 } };
 // {091C12A1-D42B-4F4E-8058-8B7F4C4DF3A1}
-static const GUID guid_cfg_sc_reverb =
+static const GUID guid_cfg_midi_reverb =
 { 0x91c12a1, 0xd42b, 0x4f4e,{ 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
 // {715C6E5D-60BF-43AA-8DA3-F4F30B06FF48}
 static const GUID guid_cfg_adl_core_parent =
@@ -1628,6 +1630,9 @@ static const GUID guid_cfg_fluidsynth_effects =
 // {9114D64D-412C-42D3-AED5-A5521E8FE2A6}
 static const GUID guid_cfg_fluidsynth_voices =
 { 0x9114d64d, 0x412c, 0x42d3, { 0xae, 0xd5, 0xa5, 0x52, 0x1e, 0x8f, 0xe2, 0xa6 } };
+// {1A82A8DB-389E-44AA-9719-326A5A2D7E8E}
+static const GUID guid_cfg_midi_flavor =
+{ 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0x19, 0x32, 0x6a, 0x5a, 0x2d, 0x7e, 0x8e } };
 
 
 #ifdef BASSMIDISUPPORT
@@ -1730,10 +1735,9 @@ enum
 	default_cfg_munt_gm = 0,
 	default_cfg_ms_synth = 0,
 	default_cfg_ms_bank = 2,
-	default_cfg_sc_flavor = SCPlayer::sc_default,
-	default_cfg_gs_flavor = SCPlayer::gs_default,
+	default_cfg_midi_flavor = MIDIPlayer::filter_default,
 	default_cfg_ms_panning = 0,
-	default_cfg_sc_reverb = 1,
+	default_cfg_midi_reverb = 1,
 #ifdef FLUIDSYNTHSUPPORT
 	default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
 #endif
@@ -1760,10 +1764,9 @@ cfg_int cfg_thloopz(guid_cfg_thloopz, default_cfg_thloopz), cfg_rpgmloopz(guid_c
 		/*cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op),*/
 		cfg_ms_synth(guid_cfg_ms_synth, default_cfg_ms_synth),
 		cfg_ms_bank(guid_cfg_ms_bank, default_cfg_ms_bank),
-		cfg_sc_flavor(guid_cfg_sc_flavor, default_cfg_sc_flavor),
-		cfg_gs_flavor(guid_cfg_gs_flavor, default_cfg_gs_flavor),
+		cfg_midi_flavor(guid_cfg_midi_flavor, default_cfg_midi_flavor),
 		cfg_ms_panning(guid_cfg_ms_panning, default_cfg_ms_panning),
-		cfg_sc_reverb(guid_cfg_sc_reverb, default_cfg_sc_reverb)
+		cfg_midi_reverb(guid_cfg_midi_reverb, default_cfg_midi_reverb)
 #ifdef FLUIDSYNTHSUPPORT
 		,cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
 #endif
@@ -1887,7 +1890,7 @@ void ms_get_preset(const char * name, unsigned int & synth, unsigned int & bank)
 
 struct midi_preset
 {
-	enum { version = 10 };
+	enum { version = 11 };
 
 	// version 0
 	unsigned int plugin;
@@ -1931,11 +1934,14 @@ struct midi_preset
 	bool ms_panning;
 
 	// v5 - plug-in == 10 - Secret Sauce
-	unsigned int sc_flavor;
+	//unsigned int sc_flavor;
 	// v6 - reverb
-	bool sc_reverb;
+	//bool sc_reverb;
 	// v8 - GS flavor, also sc_flavor has new values
-	unsigned int gs_flavor;
+	//unsigned int gs_flavor;
+	// v11 - most plugins
+	unsigned int midi_flavor;
+	bool midi_reverb;
 
 	// v10 - plug-in == 7 - libOPNMIDI (previously FMMIDI)
 	unsigned int opn_bank; // hard coded to fmmidi for previous versions
@@ -1987,10 +1993,9 @@ struct midi_preset
 		munt_gm_set = cfg_munt_gm;
 		ms_synth = cfg_ms_synth;
 		ms_bank = cfg_ms_bank;
-		sc_flavor = cfg_sc_flavor;
-		gs_flavor = cfg_gs_flavor;
+		midi_flavor = cfg_midi_flavor;
 		ms_panning = cfg_ms_panning;
-		sc_reverb = cfg_sc_reverb;
+		midi_reverb = cfg_midi_reverb;
 
 		{
 			if (cfg_opn_core_mame)
@@ -2037,6 +2042,11 @@ struct midi_preset
 			{
 				p_out += pfc::format_hex(vst_config[i], 2);
 			}
+
+			p_out += "|";
+			p_out += pfc::format_int(midi_flavor);
+			p_out += "|";
+			p_out += pfc::format_int(midi_reverb);
 		}
 		else if (plugin == 2 || plugin == 4)
 		{
@@ -2051,6 +2061,14 @@ struct midi_preset
 			p_out += "|";
 
 			p_out += pfc::format_int(voices);
+
+			p_out += "|";
+
+			p_out += pfc::format_int(midi_flavor);
+
+			p_out += "|";
+
+			p_out += pfc::format_int(midi_reverb);
 		}
 #ifdef DXISUPPORT
 		else if (plugin == 5)
@@ -2108,11 +2126,9 @@ struct midi_preset
 		else if (plugin == 10)
 		{
 			p_out += "|";
-			p_out += pfc::format_int(sc_flavor);
+			p_out += pfc::format_int(midi_flavor);
 			p_out += "|";
-			p_out += pfc::format_int(gs_flavor);
-			p_out += "|";
-			p_out += pfc::format_int(sc_reverb);
+			p_out += pfc::format_int(midi_reverb);
 		}
 		else if (plugin == 7)
 		{
@@ -2156,9 +2172,10 @@ struct midi_preset
 		unsigned in_sc_flavor;
 		unsigned in_gs_flavor;
 		bool in_ms_panning;
-		bool in_sc_reverb;
 		unsigned in_opn_bank;
 		unsigned in_opn_emu_core;
+		unsigned in_midi_flavor = cfg_midi_flavor;
+		bool in_midi_reverb = cfg_midi_reverb;
 
 		if (*bar_pos)
 		{
@@ -2174,10 +2191,25 @@ struct midi_preset
 				bar_pos = strchr(p_in, '|');
 				if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
-				while (*p_in)
+				while (*p_in && p_in < bar_pos)
 				{
 					in_vst_config.push_back(pfc::atohex<unsigned char>(p_in, 2));
 					p_in += 2;
+				}
+
+				if (version >= 11 && *p_in == '|')
+				{
+					p_in = bar_pos + (*bar_pos == '|');
+					bar_pos = strchr(p_in, '|');
+					if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+					in_midi_flavor = pfc::atodec<unsigned int>(p_in, bar_pos - p_in);
+
+					p_in = bar_pos + (*bar_pos == '|');
+					bar_pos = strchr(p_in, '|');
+					if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+					in_midi_reverb = !!pfc::atodec<unsigned int>(p_in, bar_pos - p_in);
 				}
 			}
 			else if (in_plugin == 2 || in_plugin == 4)
@@ -2201,6 +2233,21 @@ struct midi_preset
 						if (bar_pos > p_in)
 						{
 							in_voices = pfc::atodec<unsigned int>(p_in, bar_pos - p_in);
+
+							if (version >= 11)
+							{
+								p_in = bar_pos + (*bar_pos == '|');
+								bar_pos = strchr(p_in, '|');
+								if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+								in_midi_flavor = pfc::atodec<unsigned int>(p_in, bar_pos - p_in);
+
+								p_in = bar_pos + (*bar_pos == '|');
+								bar_pos = strchr(p_in, '|');
+								if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+								in_midi_reverb = !!pfc::atodec<unsigned int>(p_in, bar_pos - p_in);
+							}
 						}
 						else
 						{
@@ -2357,7 +2404,17 @@ struct midi_preset
 
 					if (!*p_in) return;
 
-					if (version >= 8)
+					if (version >= 11)
+					{
+						in_midi_flavor = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+
+						p_in = bar_pos + (*bar_pos == '|');
+						bar_pos = strchr(p_in, '|');
+						if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+						if (!*p_in) return;
+					}
+					else if (version >= 8)
 					{
 						in_gs_flavor = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 
@@ -2366,44 +2423,36 @@ struct midi_preset
 						if (!bar_pos) bar_pos = p_in + strlen(p_in);
 
 						if (!*p_in) return;
+
+						if (in_sc_flavor == 4)
+							in_midi_flavor = MIDIPlayer::filter_xg;
+						else if (in_sc_flavor == 3)
+							in_midi_flavor = (in_gs_flavor == 0) ? MIDIPlayer::filter_sc8850 : MIDIPlayer::filter_sc55 + (in_gs_flavor - 1);
+						else if (in_sc_flavor >= 0 && in_sc_flavor <= 2)
+							in_midi_flavor = in_sc_flavor;
 					}
 					else
 					{
-						if (in_sc_flavor >= 3 && in_sc_flavor <= 6)
-						{
-							// Legacy GS modes
-							in_gs_flavor = in_sc_flavor - 2;
-							in_sc_flavor = SCPlayer::sc_gs;
-						}
-						else if (in_sc_flavor == 7)
-						{
-							in_gs_flavor = SCPlayer::gs_default;
-							in_sc_flavor = SCPlayer::sc_xg;
-						}
+						in_midi_flavor = in_sc_flavor;
 					}
 
-					in_sc_reverb = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+					in_midi_reverb = !!pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 				}
 				else
 				{
 					if (in_sc_flavor >= 3 && in_sc_flavor <= 6)
 					{
-						// Legacy GS modes
-						in_gs_flavor = in_sc_flavor - 2;
-						in_sc_flavor = SCPlayer::sc_gs;
+						in_midi_flavor = in_sc_flavor;
 					}
 					else if (in_sc_flavor == 7)
 					{
-						in_gs_flavor = SCPlayer::gs_default;
-						in_sc_flavor = SCPlayer::sc_xg;
+						in_midi_flavor = in_sc_flavor;
 					}
-					in_sc_reverb = true;
+					in_midi_reverb = true;
 				}
 
-				if (in_sc_flavor > SCPlayer::sc_xg)
-					in_sc_flavor = SCPlayer::sc_default;
-				if (in_gs_flavor > SCPlayer::gs_sc8820)
-					in_gs_flavor = SCPlayer::gs_default;
+				if (in_midi_flavor > MIDIPlayer::filter_xg)
+					in_midi_flavor = MIDIPlayer::filter_default;
 			}
 			else if (in_plugin == 7)
 			{
@@ -2458,9 +2507,9 @@ struct midi_preset
 			munt_gm_set = in_munt_gm_set;
 			ms_synth = in_ms_synth;
 			ms_bank = in_ms_bank;
-			sc_flavor = in_sc_flavor;
+			midi_flavor = in_midi_flavor;
 			ms_panning = in_ms_panning;
-			sc_reverb = in_sc_reverb;
+			midi_reverb = in_midi_reverb;
 			opn_bank = in_opn_bank;
 			opn_emu_core = in_opn_emu_core;
 		}
@@ -3360,6 +3409,8 @@ public:
 
 					vstPlayer->setSampleRate(srate);
 
+					vstPlayer->setFilterMode((MIDIPlayer::filter_mode)thePreset.midi_flavor, !thePreset.midi_reverb);
+
 					unsigned loop_mode = 0;
 
 					loop_mode = MIDIPlayer::loop_mode_enable;
@@ -3400,6 +3451,8 @@ public:
 				sfPlayer->setDynamicLoading(cfg_soundfont_dynamic.get());
 				sfPlayer->setEffects(thePreset.effects);
 				sfPlayer->setVoiceCount(thePreset.voices);
+
+				sfPlayer->setFilterMode((MIDIPlayer::filter_mode)thePreset.midi_flavor, !thePreset.midi_reverb);
 
 				unsigned loop_mode = 0;
 
@@ -3450,6 +3503,8 @@ public:
 				bmPlayer->setInterpolation(resampling);
 				bmPlayer->setEffects(thePreset.effects);
 				bmPlayer->setVoices(thePreset.voices);
+
+				bmPlayer->setFilterMode((MIDIPlayer::filter_mode)thePreset.midi_flavor, !thePreset.midi_reverb);
 
 				unsigned loop_mode = 0;
 
@@ -3611,9 +3666,8 @@ public:
 				}
 
 				scPlayer->set_sccore_path(p_path);
-				scPlayer->set_mode((SCPlayer::sc_mode)thePreset.sc_flavor);
-				scPlayer->set_gs_level((SCPlayer::sc_gs_level)thePreset.gs_flavor);
-				scPlayer->set_reverb(thePreset.sc_reverb);
+
+				scPlayer->setFilterMode((MIDIPlayer::filter_mode)thePreset.midi_flavor, !thePreset.midi_reverb);
 
 				scPlayer->setSampleRate(srate);
 
@@ -4052,10 +4106,9 @@ public:
 		COMMAND_HANDLER_EX(IDC_ADL_PANNING, BN_CLICKED, OnButtonClick)
 		COMMAND_HANDLER_EX(IDC_MUNT_GM, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_MS_PRESET, CBN_SELCHANGE, OnSelectionChange)
-		COMMAND_HANDLER_EX(IDC_SC_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
-		COMMAND_HANDLER_EX(IDC_GS_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
+		COMMAND_HANDLER_EX(IDC_FILTER_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
 		COMMAND_HANDLER_EX(IDC_MS_PANNING, BN_CLICKED, OnButtonClick)
-		COMMAND_HANDLER_EX(IDC_SC_EFFECTS, BN_CLICKED, OnButtonClick)
+		COMMAND_HANDLER_EX(IDC_FILTER_EFFECTS, BN_CLICKED, OnButtonClick)
 		MSG_WM_TIMER(OnTimer)
 	END_MSG_MAP()
 private:
@@ -4509,21 +4562,12 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 		GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
 	}
 
-	if (!secret_sauce_found)
+	if (plugin != 1 && plugin != 2 && plugin != 4 && plugin != 10)
 	{
-		GetDlgItem(IDC_SC_GROUP).ShowWindow(SW_HIDE);
-		GetDlgItem(IDC_SC_FLAVOR_TEXT).ShowWindow(SW_HIDE);
-		GetDlgItem(IDC_SC_FLAVOR).ShowWindow(SW_HIDE);
-		GetDlgItem(IDC_GS_FLAVOR).ShowWindow(SW_HIDE);
-		GetDlgItem(IDC_SC_EFFECTS).ShowWindow(SW_HIDE);
-	}
-
-	if (plugin != 10)
-	{
-		GetDlgItem(IDC_SC_FLAVOR_TEXT).EnableWindow(FALSE);
-		GetDlgItem(IDC_SC_FLAVOR).EnableWindow(FALSE);
-		GetDlgItem(IDC_GS_FLAVOR).EnableWindow(FALSE);
-		GetDlgItem(IDC_SC_EFFECTS).EnableWindow(FALSE);
+		GetDlgItem(IDC_FILTER_GROUP).EnableWindow(FALSE);
+		GetDlgItem(IDC_FILTER_FLAVOR_TEXT).EnableWindow(FALSE);
+		GetDlgItem(IDC_FILTER_FLAVOR).EnableWindow(FALSE);
+		GetDlgItem(IDC_FILTER_EFFECTS).EnableWindow(FALSE);
 	}
 
 	{
@@ -4633,8 +4677,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	SendDlgItemMessage( IDC_FILTER_BANKS, BM_SETCHECK, cfg_filter_banks );
 
 	SendDlgItemMessage( IDC_MS_PANNING, BM_SETCHECK, cfg_ms_panning );
-	if (secret_sauce_found)
-		SendDlgItemMessage( IDC_SC_EFFECTS, BM_SETCHECK, !cfg_sc_reverb );
+	SendDlgItemMessage( IDC_FILTER_EFFECTS, BM_SETCHECK, !cfg_midi_reverb );
 
 	const char * const * banknames = adl_getBankNames();
 	const unsigned bank_count = adl_getBanksCount();
@@ -4710,24 +4753,16 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 	}
 	::SendMessage(w, CB_SETCURSEL, preset_number, 0);
 
-	if ( secret_sauce_found )
-	{
-		w = GetDlgItem( IDC_SC_FLAVOR );
-		uSendMessageText( w, CB_ADDSTRING, 0, "Default" );
-		uSendMessageText( w, CB_ADDSTRING, 0, "G" );
-		uSendMessageText( w, CB_ADDSTRING, 0, "G2" );
-		uSendMessageText( w, CB_ADDSTRING, 0, "GS" );
-		uSendMessageText( w, CB_ADDSTRING, 0, "X");
-		::SendMessage( w, CB_SETCURSEL, cfg_sc_flavor, 0 );
-
-		w = GetDlgItem( IDC_GS_FLAVOR );
-		uSendMessageText( w, CB_ADDSTRING, 0, "Default" );
-		uSendMessageText( w, CB_ADDSTRING, 0, "55" );
-		uSendMessageText( w, CB_ADDSTRING, 0, "88" );
-		uSendMessageText( w, CB_ADDSTRING, 0, "88P" );
-		uSendMessageText( w, CB_ADDSTRING, 0, "882" );
-		::SendMessage( w, CB_SETCURSEL, cfg_gs_flavor, 0 );
-	}
+	w = GetDlgItem( IDC_FILTER_FLAVOR );
+	uSendMessageText( w, CB_ADDSTRING, 0, "Default" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "GM" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "GM2" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "GS SC-55" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "GS SC-88" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "GS SC-88 Pro" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "GS SC-8820" );
+	uSendMessageText( w, CB_ADDSTRING, 0, "XG" );
+	::SendMessage( w, CB_SETCURSEL, cfg_midi_flavor, 0 );
 
 #ifndef BASSMIDISUPPORT
 	uSetWindowText(GetDlgItem(IDC_CACHED), "No info.");
@@ -4804,12 +4839,12 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
 	GetDlgItem( IDC_MS_PRESET_TEXT ).EnableWindow( plugin == 9 );
 	GetDlgItem( IDC_MS_PRESET ).EnableWindow( plugin == 9 );
 	GetDlgItem( IDC_MS_PANNING ).EnableWindow( plugin == 9 );
-	if (secret_sauce_found)
 	{
-		GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( plugin == 10 );
-		GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( plugin == 10 );
-		GetDlgItem( IDC_GS_FLAVOR ).EnableWindow( plugin == 10 );
-		GetDlgItem( IDC_SC_EFFECTS ).EnableWindow( plugin == 10 );
+		bool enable = (plugin == 1) || (plugin == 2) || (plugin == 4) || (plugin == 10);
+		GetDlgItem( IDC_FILTER_GROUP ).EnableWindow( enable );
+		GetDlgItem( IDC_FILTER_FLAVOR_TEXT ).EnableWindow( enable );
+		GetDlgItem( IDC_FILTER_FLAVOR ).EnableWindow( enable );
+		GetDlgItem( IDC_FILTER_EFFECTS ).EnableWindow( enable );
 	}
 
 	if ( plugin == 3 )
@@ -4972,12 +5007,12 @@ void CMyPreferences::reset() {
 		GetDlgItem( IDC_MS_PRESET ).EnableWindow( FALSE );
 		GetDlgItem( IDC_MS_PANNING ).EnableWindow( FALSE );
 	}
-	if ( default_cfg_plugin != 10 )
 	{
-		GetDlgItem( IDC_SC_FLAVOR_TEXT ).EnableWindow( FALSE );
-		GetDlgItem( IDC_SC_FLAVOR ).EnableWindow( FALSE );
-		GetDlgItem( IDC_GS_FLAVOR ).EnableWindow( FALSE );
-		GetDlgItem( IDC_SC_EFFECTS ).EnableWindow( FALSE );
+		bool enable = (default_cfg_plugin == 1) || (default_cfg_plugin == 2) || (default_cfg_plugin == 4) || (default_cfg_plugin == 10);
+		GetDlgItem(IDC_FILTER_GROUP).EnableWindow(enable);
+		GetDlgItem(IDC_FILTER_FLAVOR_TEXT).EnableWindow(enable);
+		GetDlgItem(IDC_FILTER_FLAVOR).EnableWindow(enable);
+		GetDlgItem(IDC_FILTER_EFFECTS).EnableWindow(enable);
 	}
 
 	uSetDlgItemText( m_hWnd, IDC_SOUNDFONT, click_to_set );
@@ -4999,8 +5034,8 @@ void CMyPreferences::reset() {
 	SendDlgItemMessage( IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments );
 	SendDlgItemMessage( IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks );
 	SendDlgItemMessage( IDC_MS_PANNING, BM_SETCHECK, default_cfg_ms_panning );
-	if (secret_sauce_found)
-		SendDlgItemMessage( IDC_SC_EFFECTS, BM_SETCHECK, !default_cfg_sc_reverb );
+	SendDlgItemMessage( IDC_FILTER_FLAVOR, CB_SETCURSEL, default_cfg_midi_flavor );
+	SendDlgItemMessage( IDC_FILTER_EFFECTS, BM_SETCHECK, !default_cfg_midi_reverb );
 	unsigned bank_selected = 0;
 	for ( unsigned i = 0; i < m_bank_list.get_count(); i++ )
 	{
@@ -5032,11 +5067,7 @@ void CMyPreferences::reset() {
 	}
 	SendDlgItemMessage( IDC_MS_PRESET, CB_SETCURSEL, preset_number );
 
-	if (secret_sauce_found)
-	{
-		SendDlgItemMessage(IDC_SC_FLAVOR, CB_SETCURSEL, cfg_sc_flavor);
-		SendDlgItemMessage(IDC_GS_FLAVOR, CB_SETCURSEL, cfg_gs_flavor);
-	}
+	SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_SETCURSEL, cfg_midi_flavor);
 
 	vsti_config.resize( 0 );
 
@@ -5123,12 +5154,8 @@ void CMyPreferences::apply() {
 #ifdef BASSMIDISUPPORT
 	cfg_resampling = SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL );
 #endif
-	if (secret_sauce_found)
-	{
-		cfg_sc_flavor = SendDlgItemMessage( IDC_SC_FLAVOR, CB_GETCURSEL );
-		cfg_gs_flavor = SendDlgItemMessage( IDC_GS_FLAVOR, CB_GETCURSEL );
-		cfg_sc_reverb = !SendDlgItemMessage( IDC_SC_EFFECTS, BM_GETCHECK );
-	}
+	cfg_midi_flavor = SendDlgItemMessage( IDC_FILTER_FLAVOR, CB_GETCURSEL );
+	cfg_midi_reverb = !SendDlgItemMessage( IDC_FILTER_EFFECTS, BM_GETCHECK );
 	
 	OnChanged(); //our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
 }
@@ -5161,12 +5188,8 @@ bool CMyPreferences::HasChanged() {
 #ifdef BASSMIDISUPPORT
 	if ( !changed && SendDlgItemMessage( IDC_RESAMPLING, CB_GETCURSEL ) != cfg_resampling ) changed = true;
 #endif
-	if ( secret_sauce_found )
-	{
-		if ( !changed && SendDlgItemMessage( IDC_SC_FLAVOR, CB_GETCURSEL ) != cfg_sc_flavor ) changed = true;
-		if ( !changed && SendDlgItemMessage( IDC_GS_FLAVOR, CB_GETCURSEL ) != cfg_gs_flavor ) changed = true;
-		if ( !changed && !SendDlgItemMessage( IDC_SC_EFFECTS, BM_GETCHECK ) != cfg_sc_reverb ) changed = true;
-	}
+	if ( !changed && SendDlgItemMessage( IDC_FILTER_FLAVOR, CB_GETCURSEL ) != cfg_midi_flavor ) changed = true;
+	if ( !changed && !SendDlgItemMessage( IDC_FILTER_EFFECTS, BM_GETCHECK ) != cfg_midi_reverb ) changed = true;
 	if ( !changed )
 	{
 		unsigned int preset_number = SendDlgItemMessage( IDC_MS_PRESET, CB_GETCURSEL );

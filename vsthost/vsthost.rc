@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,13
- PRODUCTVERSION 1,0,0,13
+ FILEVERSION 1,0,0,14
+ PRODUCTVERSION 1,0,0,14
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,12 +69,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "LoSno.co"
             VALUE "FileDescription", "foo_midi VST host bridge"
-            VALUE "FileVersion", "1.0.0.13"
+            VALUE "FileVersion", "1.0.0.14"
             VALUE "InternalName", "VST host bridge"
-            VALUE "LegalCopyright", "Copyright (C) 2020 Christopher Snowhill"
+            VALUE "LegalCopyright", "Copyright (C) 2022 Christopher Snowhill"
             VALUE "OriginalFilename", "vsthost.exe"
             VALUE "ProductName", "VST host bridge"
-            VALUE "ProductVersion", "1.0.0.13"
+            VALUE "ProductVersion", "1.0.0.14"
         END
     END
     BLOCK "VarFileInfo"
