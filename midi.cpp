@@ -1,4 +1,4 @@
-#define MYVERSION "2.6.0"
+#define MYVERSION "2.6.1"
 
 // #define DXISUPPORT
 // #define BASSMIDISUPPORT
@@ -7,6 +7,12 @@
 
 /*
 	change log
+
+2022-02-05 12:52 UTC - kode54
+- Hopefully fix seeking in files with blocked decoding, like VSTi
+- Also fix seeking in non-blocked decoding files, because some
+  synthesizers need time rendered to accept timed events
+- Version is now 2.6.1
 
 2022-02-03 15:59 UTC - kode54
 - Actually get it working
