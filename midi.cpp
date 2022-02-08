@@ -1,4 +1,4 @@
-#define MYVERSION "2.6.1"
+#define MYVERSION "2.6.2"
 
 // #define DXISUPPORT
 // #define BASSMIDISUPPORT
@@ -7,6 +7,12 @@
 
 /*
 	change log
+
+2022-02-08 10:31 UTC - kode54
+- Implemented synthesizer reset support for seeking, which should
+  fix FluidSynth crashing when seeking around a lot, and should
+  also improve responsiveness of seeking backwards.
+- Version is now 2.6.2
 
 2022-02-05 12:52 UTC - kode54
 - Hopefully fix seeking in files with blocked decoding, like VSTi

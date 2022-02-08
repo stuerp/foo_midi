@@ -287,10 +287,9 @@ void MIDIPlayer::Seek(unsigned long sample)
 
 	if (uTimeCurrent > sample)
 	{
-		// hokkai, let's kill any hanging notes
 		uStreamPosition = 0;
 
-		shutdown();
+        if (!reset()) shutdown();
 	}
 
 	if (!startup()) return;

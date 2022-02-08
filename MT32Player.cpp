@@ -131,7 +131,7 @@ bool MT32Player::startup()
 		_synth = 0;
 		return false;
 	}
-	reset();
+	_reset();
 	return true;
 }
 
@@ -145,7 +145,7 @@ bool MT32Player::isConfigValid()
 	return startup();
 }
 
-void MT32Player::reset()
+void MT32Player::_reset()
 {
 	static const uint8_t mt32_reset[10] = {0xF0, MT32Emu::SYSEX_MANUFACTURER_ROLAND, 0x10, MT32Emu::SYSEX_MDL_MT32, MT32Emu::SYSEX_CMD_DT1, 0x7F, 0, 0, 0xF7};
 

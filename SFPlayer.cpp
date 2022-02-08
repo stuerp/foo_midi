@@ -264,6 +264,20 @@ void SFPlayer::setFileSoundFont( const char * in )
 	shutdown();
 }
 
+bool SFPlayer::reset()
+{
+	unsigned int synths_reset = 0;
+	for (unsigned int i = 0; i < 3; ++i)
+	{
+		if (_synth[i]) {
+			fluid_synth_system_reset(_synth[i]);
+			sysex_reset(i, 0);
+			++synths_reset;
+		}
+	}
+	return synths_reset == 3;
+}
+
 void SFPlayer::shutdown()
 {
 	for (unsigned int i = 0; i < 3; ++i)

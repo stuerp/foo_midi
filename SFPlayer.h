@@ -28,6 +28,7 @@ private:
 
 	virtual void shutdown();
 	virtual bool startup();
+	virtual bool reset();
 
 	virtual bool get_last_error(std::string& p_out);
 

@@ -45,7 +45,7 @@ private:
 	bool               bGM;
 	unsigned           uGMSet;
 
-	void               reset();
+	void               _reset();
 
 	MT32Emu::File * openFile( const char *filename );
 };

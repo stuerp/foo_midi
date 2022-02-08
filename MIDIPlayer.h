@@ -51,6 +51,7 @@ protected:
 
 	virtual void shutdown() {};
 	virtual bool startup() {return false;}
+    virtual bool reset() { return false; }
 
     virtual bool get_last_error(std::string& p_out) { return false; }
     
