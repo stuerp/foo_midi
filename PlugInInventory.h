@@ -16,22 +16,22 @@
 class IBaseFilter;
 struct REGFILTER;
 
-class CPlugInInventory  
-{
-public:
+class CPlugInInventory {
+	public:
 	CPlugInInventory();
 	virtual ~CPlugInInventory();
 
 	HRESULT EnumPlugIns();
-	ULONG GetCount() const { return m_cRegFilter; }
-	HRESULT GetInfo( ULONG ix, CLSID* pClsid, pfc::string_base & out ) const;
+	ULONG GetCount() const {
+		return m_cRegFilter;
+	}
+	HRESULT GetInfo(ULONG ix, CLSID* pClsid, pfc::string_base& out) const;
 
-	HRESULT CreatePlugIn( ULONG ix, IBaseFilter** ppFilter ) const;
+	HRESULT CreatePlugIn(ULONG ix, IBaseFilter** ppFilter) const;
 
-private:
-
-	REGFILTER*	m_aRegFilter;
-	ULONG			m_cRegFilter;
+	private:
+	REGFILTER* m_aRegFilter;
+	ULONG m_cRegFilter;
 };
 
 #endif // !defined(AFX_PLUGININVENTORY_H__166175C6_DB5D_456D_B228_685DD738B506__INCLUDED_)

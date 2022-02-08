@@ -23,75 +23,96 @@ struct IBaseFilter;
 static const UINT MIN_BUFFER_MSEC = 1;
 static const UINT MAX_BUFFER_MSEC = 2000;
 
-class CDXiPlayer
-{
-public:
-
+class CDXiPlayer {
+	public:
 	CDXiPlayer();
 	virtual ~CDXiPlayer();
 
 	HRESULT Initialize();
 	HRESULT Terminate();
 
-	CDxFilterGraph*	GetFilterGraph() const { return m_pFilterGraph; }
-	IMfxSoftSynth*		GetSoftSynth() const { return m_pMfxSynth; }
-	CMfxHostSite*		GetHostSite() const { return m_pMfxHostSite; }
+	CDxFilterGraph* GetFilterGraph() const {
+		return m_pFilterGraph;
+	}
+	IMfxSoftSynth* GetSoftSynth() const {
+		return m_pMfxSynth;
+	}
+	CMfxHostSite* GetHostSite() const {
+		return m_pMfxHostSite;
+	}
 
-	CMfxSeq* GetSeq() const { return m_pSeq; }
-	HRESULT SetSeq( CMfxSeq* pSeq );
-	
-	int GetCurrentTrack() const { return m_nCurrentTrack; }
-	void SetCurrentTrack( int n ) { m_nCurrentTrack = n; }
+	CMfxSeq* GetSeq() const {
+		return m_pSeq;
+	}
+	HRESULT SetSeq(CMfxSeq* pSeq);
 
-	HRESULT SetFilter( IBaseFilter* pFilter );
+	int GetCurrentTrack() const {
+		return m_nCurrentTrack;
+	}
+	void SetCurrentTrack(int n) {
+		m_nCurrentTrack = n;
+	}
 
-	HRESULT Play( BOOL bPlaySeq );
+	HRESULT SetFilter(IBaseFilter* pFilter);
+
+	HRESULT Play(BOOL bPlaySeq);
 	HRESULT Stop();
 	HRESULT Rewind();
 
 	LONG GetPosition();
-	HRESULT SetPosition( LONG lTicks );
+	HRESULT SetPosition(LONG lTicks);
 
-	HRESULT FillBuffer( void* pv, DWORD cs );
+	HRESULT FillBuffer(void* pv, DWORD cs);
 
-	BOOL IsPlaying() const { return m_bPlaying; }
+	BOOL IsPlaying() const {
+		return m_bPlaying;
+	}
 
-	BOOL IsLooping() const { return m_bLooping; }
-	void SetLooping( BOOL b );
+	BOOL IsLooping() const {
+		return m_bLooping;
+	}
+	void SetLooping(BOOL b);
 
-	LONG GetLoopStart() const { return m_tLoopStart; }	
-	HRESULT SetLoopStart( LONG t );
+	LONG GetLoopStart() const {
+		return m_tLoopStart;
+	}
+	HRESULT SetLoopStart(LONG t);
 
-	LONG GetLoopEnd() const { return m_tLoopEnd; }	
-	HRESULT SetLoopEnd( LONG t );
+	LONG GetLoopEnd() const {
+		return m_tLoopEnd;
+	}
+	HRESULT SetLoopEnd(LONG t);
 
-	unsigned GetSampleRate() const { return m_uSampleRate; }
-	HRESULT SetSampleRate(unsigned rate) { m_uSampleRate = rate; return S_OK; }
+	unsigned GetSampleRate() const {
+		return m_uSampleRate;
+	}
+	HRESULT SetSampleRate(unsigned rate) {
+		m_uSampleRate = rate;
+		return S_OK;
+	}
 
-private:
-
+	private:
 	HRESULT updateLoopSampleTimes();
 
-private:
+	private:
+	CDxFilterGraph* m_pFilterGraph;
+	IBaseFilter* m_pFilter;
+	IMfxSoftSynth* m_pMfxSynth;
+	CMfxHostSite* m_pMfxHostSite;
 
-	CDxFilterGraph*	m_pFilterGraph;
-	IBaseFilter*		m_pFilter;
-	IMfxSoftSynth*		m_pMfxSynth;
-	CMfxHostSite*		m_pMfxHostSite;
+	CMfxSeq* m_pSeq;
 
-	CMfxSeq*				m_pSeq;
+	BOOL m_bRunning;
+	BOOL m_bPlaying;
+	BOOL m_bLooping;
+	LONG m_tLoopStart;
+	LONG m_tLoopEnd;
+	LONGLONG m_llSampLoopStart;
+	LONGLONG m_llSampLoopEnd;
+	LONG m_tNow;
+	int m_nCurrentTrack;
 
-	BOOL					m_bRunning;
-	BOOL					m_bPlaying;
-	BOOL					m_bLooping;
-	LONG					m_tLoopStart;
-	LONG					m_tLoopEnd;
-	LONGLONG				m_llSampLoopStart;
-	LONGLONG				m_llSampLoopEnd;
-	LONG					m_tNow;
-	int					m_nCurrentTrack;
-
-	unsigned				m_uSampleRate;
+	unsigned m_uSampleRate;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

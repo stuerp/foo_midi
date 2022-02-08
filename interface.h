@@ -13,22 +13,23 @@
 //
 
 class fm_chip {
-public:
+	public:
 	virtual int fm_init(unsigned int rate) = 0;
 	virtual void fm_writereg(unsigned short reg, unsigned char data) = 0;
 	virtual void fm_writepan(unsigned short reg, unsigned char data) = 0;
-	virtual void fm_generate(signed short *buffer, unsigned int length) = 0;
+	virtual void fm_generate(signed short* buffer, unsigned int length) = 0;
 };
 
 class nomidisynth {
-public:
-    virtual ~nomidisynth() {}
-    virtual const char * midi_synth_name(void) = 0;
-    virtual unsigned int midi_bank_count(void) = 0;
-    virtual const char * midi_bank_name(unsigned int bank) = 0;
+	public:
+	virtual ~nomidisynth() {
+	}
+	virtual const char* midi_synth_name(void) = 0;
+	virtual unsigned int midi_bank_count(void) = 0;
+	virtual const char* midi_bank_name(unsigned int bank) = 0;
 	virtual int midi_init(unsigned int rate, unsigned int bank, unsigned int extp) = 0;
 	virtual void midi_write(unsigned int data) = 0;
-	virtual void midi_generate(signed short *buffer, unsigned int length) = 0;
+	virtual void midi_generate(signed short* buffer, unsigned int length) = 0;
 };
 
 nomidisynth* getsynth_doom();

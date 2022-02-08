@@ -3,18 +3,15 @@
 
 #include "MIDIPlayer.h"
 
-namespace midisynth
-{
-	namespace opn
-	{
+namespace midisynth {
+	namespace opn {
 		class fm_note_factory;
 	}
 	class synthesizer;
-}
+} // namespace midisynth
 
-class fmmidiPlayer : public MIDIPlayer
-{
-public:
+class fmmidiPlayer : public MIDIPlayer {
+	public:
 	// zero variables
 	fmmidiPlayer();
 
@@ -22,20 +19,20 @@ public:
 	virtual ~fmmidiPlayer();
 
 	// configuration
-	void setProgramPath( const char * );
+	void setProgramPath(const char*);
 
-private:
+	private:
 	virtual void send_event(uint32_t b);
-	virtual void render(float * out, unsigned long count);
+	virtual void render(float* out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();
 
-	std::string                       bank_path;
+	std::string bank_path;
 
-	midisynth::opn::fm_note_factory * factory;
+	midisynth::opn::fm_note_factory* factory;
 
-	midisynth::synthesizer     * synthesizers[4];
+	midisynth::synthesizer* synthesizers[4];
 };
 
 #endif

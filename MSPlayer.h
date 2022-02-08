@@ -7,35 +7,34 @@
 
 class nomidisynth;
 
-class MSPlayer : public MIDIPlayer
-{
-public:
+class MSPlayer : public MIDIPlayer {
+	public:
 	// zero variables
 	MSPlayer();
 
 	// close, unload
 	virtual ~MSPlayer();
 
-    void set_synth(unsigned int synth);
-    void set_bank(unsigned int bank);
-    void set_extp(unsigned int extp);
-    
-    typedef void (*enum_callback)(unsigned int synth, unsigned int bank, const char * name);
-    
-    static void enum_synthesizers(enum_callback callback);
-    
-protected:
+	void set_synth(unsigned int synth);
+	void set_bank(unsigned int bank);
+	void set_extp(unsigned int extp);
+
+	typedef void (*enum_callback)(unsigned int synth, unsigned int bank, const char* name);
+
+	static void enum_synthesizers(enum_callback callback);
+
+	protected:
 	virtual void send_event(uint32_t b);
-	virtual void render(float * out, unsigned long count);
+	virtual void render(float* out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();
-    
-private:
-    unsigned int synth_id;
-    unsigned int bank_id;
-    unsigned int extp;
-    nomidisynth * synth;
+
+	private:
+	unsigned int synth_id;
+	unsigned int bank_id;
+	unsigned int extp;
+	nomidisynth* synth;
 };
 
 #endif

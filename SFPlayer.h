@@ -5,9 +5,8 @@
 
 #include <fluidsynth.h>
 
-class SFPlayer : public MIDIPlayer
-{
-public:
+class SFPlayer : public MIDIPlayer {
+	public:
 	// zero variables
 	SFPlayer();
 
@@ -15,16 +14,16 @@ public:
 	virtual ~SFPlayer();
 
 	// configuration
-	void setSoundFont( const char * in );
-	void setFileSoundFont( const char * in );
+	void setSoundFont(const char* in);
+	void setFileSoundFont(const char* in);
 	void setInterpolationMethod(unsigned method);
 	void setDynamicLoading(bool enabled);
 	void setEffects(bool enabled);
 	void setVoiceCount(unsigned int voices);
 
-private:
+	private:
 	virtual void send_event(uint32_t b);
-	virtual void render(float * out, unsigned long count);
+	virtual void render(float* out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();
@@ -32,17 +31,17 @@ private:
 
 	virtual bool get_last_error(std::string& p_out);
 
-	std::string       _last_error;
+	std::string _last_error;
 
-	fluid_settings_t * _settings[3];
-	fluid_synth_t    * _synth[3];
-	std::string        sSoundFontName;
-	std::string        sFileSoundFontName;
+	fluid_settings_t* _settings[3];
+	fluid_synth_t* _synth[3];
+	std::string sSoundFontName;
+	std::string sFileSoundFontName;
 
-	unsigned           uInterpolationMethod;
-	bool               bDynamicLoading;
-	bool               bEffects;
-	unsigned int       uVoices;
+	unsigned uInterpolationMethod;
+	bool bDynamicLoading;
+	bool bEffects;
+	unsigned int uVoices;
 };
 
 #endif

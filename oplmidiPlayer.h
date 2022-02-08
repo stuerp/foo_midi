@@ -3,18 +3,15 @@
 
 #include "MIDIPlayer.h"
 
-namespace midisynth
-{
-	namespace opl
-	{
+namespace midisynth {
+	namespace opl {
 		class fm_note_factory;
 	}
 	class synthesizer;
-}
+} // namespace midisynth
 
-class oplmidiPlayer : public MIDIPlayer
-{
-public:
+class oplmidiPlayer : public MIDIPlayer {
+	public:
 	// zero variables
 	oplmidiPlayer();
 
@@ -22,20 +19,20 @@ public:
 	virtual ~oplmidiPlayer();
 
 	// configuration
-	void setBank( unsigned );
+	void setBank(unsigned);
 
-private:
+	private:
 	virtual void send_event(uint32_t b);
-	virtual void render(float * out, unsigned long count);
+	virtual void render(float* out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();
 
-	unsigned           uBankNumber;
+	unsigned uBankNumber;
 
-	midisynth::opl::fm_note_factory * factory;
+	midisynth::opl::fm_note_factory* factory;
 
-	midisynth::synthesizer     * synthesizers[4];
+	midisynth::synthesizer* synthesizers[4];
 };
 
 #endif

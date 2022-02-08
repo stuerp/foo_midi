@@ -12,17 +12,18 @@
 // GNU General Public License for more details.
 //
 
-#include "../interface.h"
 #include "../../../libADLMIDI/src/chips/nuked/nukedopl3.h"
+#include "../interface.h"
 
 class opl3class : public fm_chip {
-private:
-    opl3_chip chip;
-    Bit64u counter;
+	private:
+	opl3_chip chip;
+	Bit64u counter;
 	void *resampler;
-    Bit16s samples[2];
-    void fm_generate_one(signed short *buffer);
-public:
+	Bit16s samples[2];
+	void fm_generate_one(signed short *buffer);
+
+	public:
 	int fm_init(unsigned int rate);
 	void fm_writereg(unsigned short reg, unsigned char data);
 	void fm_writepan(unsigned short reg, unsigned char data);

@@ -4,29 +4,28 @@
 class CDXiPlayer;
 class CMfxSeq;
 
-class DXiProxy
-{
+class DXiProxy {
 	bool initialized;
-	CDXiPlayer * thePlayer;
-	CMfxSeq * theSequence;
+	CDXiPlayer *thePlayer;
+	CMfxSeq *theSequence;
 
-public:
+	public:
 	DXiProxy();
 	~DXiProxy();
 
 	HRESULT initialize();
-	void setSampleRate( unsigned );
-	HRESULT setSequence( unsigned char *, unsigned );
-	HRESULT setPlugin( CLSID );
+	void setSampleRate(unsigned);
+	HRESULT setSequence(unsigned char *, unsigned);
+	HRESULT setPlugin(CLSID);
 
-	void Play( BOOL );
+	void Play(BOOL);
 	void Stop();
 
-	void fillBuffer( float *, unsigned );
+	void fillBuffer(float *, unsigned);
 
-	void setPosition( unsigned msec );
+	void setPosition(unsigned msec);
 
-	void setLoop( unsigned loop_start, unsigned loop_end );
+	void setLoop(unsigned loop_start, unsigned loop_end);
 };
 
 #endif

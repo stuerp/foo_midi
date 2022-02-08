@@ -10,18 +10,18 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
+#define VC_EXTRALEAN // Exclude rarely-used stuff from Windows headers
 
-#include <afxwin.h>	// MFC core and standard components
-#include <afxext.h>	// MFC extensions
-#include <afxcmn.h>	// MFC support for Windows Common Controls
+#include <afxcmn.h> // MFC support for Windows Common Controls
+#include <afxext.h> // MFC extensions
+#include <afxwin.h> // MFC core and standard components
 
 #ifdef _DEBUG
-#define DEBUG (1)	// the DirectShow headers use this symbol
+#define DEBUG (1) // the DirectShow headers use this symbol
 #endif
 
-#include <strmif.h>
 #include <mmsystem.h>
+#include <strmif.h>
 
 #include <MidiFilter.h>
 
@@ -29,14 +29,14 @@
 #include <Templates.h>
 
 #ifndef WAVE_FORMAT_IEEE_FLOAT
-	#define WAVE_FORMAT_IEEE_FLOAT (3)
+#define WAVE_FORMAT_IEEE_FLOAT (3)
 #endif
 
-#pragma warning( disable: 4786 ) // identifier was trucated to '255' characters in the debug information
+#pragma warning(disable : 4786) // identifier was trucated to '255' characters in the debug information
 
-#include <vector>
 #include <algorithm>
 #include <map>
+#include <vector>
 
 using namespace std;
 
@@ -50,29 +50,41 @@ using namespace std;
 static const char BASED_CODE szCheckFmt[] = "%s(%ld) Runtime error %08lx\r\n";
 #define CHECK
 #undef CHECK
-#define CHECK(_fn) \
-	{	HRESULT __hr = _fn; \
-		if (!SUCCEEDED(__hr)) { \
-			TRACE( szCheckFmt, THIS_FILE, __LINE__, __hr ); \
-			return __hr; } }
-
+#define CHECK(_fn)                                        \
+	{                                                     \
+		HRESULT __hr = _fn;                               \
+		if(!SUCCEEDED(__hr)) {                            \
+			TRACE(szCheckFmt, THIS_FILE, __LINE__, __hr); \
+			return __hr;                                  \
+		}                                                 \
+	}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Release a pointer and set it to null
 
 #undef SAFE_RELEASE
-#define SAFE_RELEASE(_p) { if (_p) (_p)->Release(); (_p) = NULL; }
-
+#define SAFE_RELEASE(_p)        \
+	{                           \
+		if(_p) (_p)->Release(); \
+		(_p) = NULL;            \
+	}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Delete a pointer and set it to null
 
 #undef SAFE_DELETE
-#define SAFE_DELETE(_p) { if (_p) delete (_p); (_p) = NULL; }
+#define SAFE_DELETE(_p)    \
+	{                      \
+		if(_p) delete(_p); \
+		(_p) = NULL;       \
+	}
 
 #undef SAFE_ARRAY_DELETE
-#define SAFE_ARRAY_DELETE(_p) { if (_p) delete [] (_p); (_p) = NULL; }
-
+#define SAFE_ARRAY_DELETE(_p) \
+	{                         \
+		if(_p) delete[](_p);  \
+		(_p) = NULL;          \
+	}
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
