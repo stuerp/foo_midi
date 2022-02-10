@@ -1,4 +1,4 @@
-#define MYVERSION "2.7"
+#define MYVERSION "2.7.1"
 
 // #define DXISUPPORT
 #define BASSMIDISUPPORT
@@ -7,6 +7,10 @@
 
 /*
 	change log
+
+2022-02-10 02:19 UTC - kode54
+- Fix a heap overrun in the playback code's leftover samples handler
+- Version is now 2.7.1
 
 2022-02-09 22:08 UTC - kode54
 - Replace FluidSynth with BASSMIDI again. This is slightly
