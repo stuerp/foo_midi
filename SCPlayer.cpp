@@ -420,9 +420,7 @@ bool SCPlayer::startup() {
 
 	initialized = true;
 
-	for(int i = 0; i < 3; i++) {
-		sysex_reset(i, 0);
-	}
+	setFilterMode(mode, reverb_chorus_disabled);
 
 	return true;
 }

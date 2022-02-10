@@ -78,6 +78,7 @@ void MT32Player::shutdown() {
 	pcmRom = 0;
 	controlRomFile = 0;
 	pcmRomFile = 0;
+	initialized = false;
 }
 
 static const char *control_rom_names[] = { "CM32L_CONTROL.ROM", "MT32_CONTROL.ROM" };
@@ -108,6 +109,7 @@ bool MT32Player::startup() {
 		return false;
 	}
 	_reset();
+	initialized = true;
 	return true;
 }
 

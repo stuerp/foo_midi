@@ -111,6 +111,7 @@ void OPNPlayer::shutdown() {
 	for(unsigned i = 0; i < 3; i++)
 		opn2_close(midiplay[i]);
 	memset(midiplay, 0, sizeof(midiplay));
+	initialized = false;
 }
 
 bool OPNPlayer::startup() {
@@ -163,6 +164,10 @@ bool OPNPlayer::startup() {
 		opn2_switchEmulator(midiplay, uEmuCore);
 		opn2_reset(midiplay);
 	}
+
+	initialized = true;
+
+	setFilterMode(mode, reverb_chorus_disabled);
 
 	return true;
 }

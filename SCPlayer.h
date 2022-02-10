@@ -54,7 +54,6 @@ class SCPlayer : public MIDIPlayer {
 	std::string sPlugin;
 	unsigned uPluginPlatform;
 
-	bool initialized;
 	int iInitialized;
 	bool bTerminating[3];
 	HANDLE hProcess[3];

@@ -1,4 +1,4 @@
-#define MYVERSION "2.7.1"
+#define MYVERSION "2.7.2"
 
 // #define DXISUPPORT
 #define BASSMIDISUPPORT
@@ -7,6 +7,10 @@
 
 /*
 	change log
+
+2022-02-10 11:07 UTC - kode54
+- Fix the filtering subsystem to work properly
+- Version is now 2.7.2
 
 2022-02-10 02:19 UTC - kode54
 - Fix a heap overrun in the playback code's leftover samples handler
@@ -2333,7 +2337,7 @@ struct midi_preset {
 						if(in_sc_flavor == 4)
 							in_midi_flavor = MIDIPlayer::filter_xg;
 						else if(in_sc_flavor == 3)
-							in_midi_flavor = (in_gs_flavor == 0) ? MIDIPlayer::filter_sc8850 : MIDIPlayer::filter_sc55 + (in_gs_flavor - 1);
+							in_midi_flavor = (in_gs_flavor == 0) ? MIDIPlayer::filter_default : MIDIPlayer::filter_sc55 + (in_gs_flavor - 1);
 						else if(in_sc_flavor >= 0 && in_sc_flavor <= 2)
 							in_midi_flavor = in_sc_flavor;
 					} else {
@@ -3339,6 +3343,7 @@ class input_midi : public input_stubs {
 			adlPlayer->set4OpCount(thePreset.adl_chips * 4 /*cfg_adl_4op*/);
 			adlPlayer->setCore(thePreset.adl_emu_core);
 			adlPlayer->setSampleRate(srate);
+			adlPlayer->setFilterMode((MIDIPlayer::filter_mode)thePreset.midi_flavor, !thePreset.midi_reverb);
 
 			unsigned loop_mode = 0;
 
@@ -3362,6 +3367,7 @@ class input_midi : public input_stubs {
 			opnPlayer->setFullPanning(thePreset.adl_panning);
 			opnPlayer->setCore(thePreset.opn_emu_core);
 			opnPlayer->setSampleRate(srate);
+			opnPlayer->setFilterMode((MIDIPlayer::filter_mode)thePreset.midi_flavor, !thePreset.midi_reverb);
 
 			unsigned loop_mode = 0;
 

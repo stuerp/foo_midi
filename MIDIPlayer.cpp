@@ -359,6 +359,11 @@ void MIDIPlayer::setLoopMode(unsigned int mode) {
 
 void MIDIPlayer::send_event_filtered(uint32_t b) {
 	if(!(b & 0x80000000u)) {
+		if(reverb_chorus_disabled) {
+			const uint32_t _b = b & 0x7FF0;
+			if(_b == 0x5BB0 || _b == 0x5DB0)
+				return;
+		}
 		send_event(b);
 	} else {
 		const unsigned int p_index = b & 0xffffff;

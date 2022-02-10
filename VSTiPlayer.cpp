@@ -242,6 +242,7 @@ void VSTiPlayer::process_terminate() {
 	hChildStd_IN_Wr = NULL;
 	hChildStd_OUT_Rd = NULL;
 	hChildStd_OUT_Wr = NULL;
+	initialized = false;
 }
 
 bool VSTiPlayer::process_running() {
@@ -414,9 +415,9 @@ bool VSTiPlayer::startup() {
 	uint32_t code = process_read_code();
 	if(code != 0) process_terminate();
 
-	for(unsigned i = 0; i < 3; ++i) {
-		sysex_reset(i, 0);
-	}
+	initialized = true;
+
+	setFilterMode(mode, reverb_chorus_disabled);
 
 	return true;
 }

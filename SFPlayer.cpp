@@ -230,6 +230,7 @@ void SFPlayer::shutdown() {
 		if(_synth[i]) delete_fluid_synth(_synth[i]);
 		_synth[i] = 0;
 	}
+	initialized = false;
 }
 
 bool SFPlayer::startup() {
@@ -322,9 +323,9 @@ bool SFPlayer::startup() {
 		}
 	}
 
-	for(unsigned int i = 0; i < 3; ++i) {
-		sysex_reset(i, 0);
-	}
+	initialized = true;
+
+	setFilterMode(mode, reverb_chorus_disabled);
 
 	_last_error = "";
 

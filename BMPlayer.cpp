@@ -484,6 +484,7 @@ void BMPlayer::shutdown() {
 		cache_close_list(_presetList[1]);
 		_presetList[1] = 0;
 	}
+	initialized = false;
 }
 
 void BMPlayer::compound_presets(std::vector<BASS_MIDI_FONTEX> &out, std::vector<BASS_MIDI_FONTEX> &in, std::vector<long> &channels) {
@@ -581,6 +582,10 @@ bool BMPlayer::startup() {
 	BASS_MIDI_StreamSetFonts(_stream[2], &presetList[0], (unsigned int)presetList.size() | BASS_MIDI_FONT_EX);
 
 	reset_parameters();
+
+	initialized = true;
+
+	setFilterMode(mode, reverb_chorus_disabled);
 
 	return true;
 }

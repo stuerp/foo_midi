@@ -18,54 +18,50 @@ ADLPlayer::~ADLPlayer() {
 }
 
 void ADLPlayer::send_event(uint32_t b) {
-	if(!(b & 0x80000000)) {
-		unsigned char event[3];
-		event[0] = (unsigned char)b;
-		event[1] = (unsigned char)(b >> 8);
-		event[2] = (unsigned char)(b >> 16);
-		unsigned port = (b >> 24) & 3;
-		unsigned channel = b & 0x0F;
-		unsigned command = b & 0xF0;
-		if(port > 2)
-			port = 0;
-		switch(command) {
-			case 0x80:
-				adl_rt_noteOff(midiplay[port], channel, event[1]);
-				break;
+	uint8_t event[3];
+	event[0] = static_cast<uint8_t>(b);
+	event[1] = static_cast<uint8_t>(b >> 8);
+	event[2] = static_cast<uint8_t>(b >> 16);
+	unsigned port = (b >> 24) & 3;
+	const unsigned channel = b & 0x0F;
+	const unsigned command = b & 0xF0;
+	if(port > 2)
+		port = 0;
+	switch(command) {
+		case 0x80:
+			adl_rt_noteOff(midiplay[port], channel, event[1]);
+			break;
 
-			case 0x90:
-				adl_rt_noteOn(midiplay[port], channel, event[1], event[2]);
-				break;
+		case 0x90:
+			adl_rt_noteOn(midiplay[port], channel, event[1], event[2]);
+			break;
 
-			case 0xA0:
-				adl_rt_noteAfterTouch(midiplay[port], channel, event[1], event[2]);
-				break;
+		case 0xA0:
+			adl_rt_noteAfterTouch(midiplay[port], channel, event[1], event[2]);
+			break;
 
-			case 0xB0:
-				adl_rt_controllerChange(midiplay[port], channel, event[1], event[2]);
-				break;
+		case 0xB0:
+			adl_rt_controllerChange(midiplay[port], channel, event[1], event[2]);
+			break;
 
-			case 0xC0:
-				adl_rt_patchChange(midiplay[port], channel, event[1]);
-				break;
+		case 0xC0:
+			adl_rt_patchChange(midiplay[port], channel, event[1]);
+			break;
 
-			case 0xD0:
-				adl_rt_channelAfterTouch(midiplay[port], channel, event[1]);
-				break;
+		case 0xD0:
+			adl_rt_channelAfterTouch(midiplay[port], channel, event[1]);
+			break;
 
-			case 0xE0:
-				adl_rt_pitchBendML(midiplay[port], channel, event[2], event[1]);
-				break;
-		}
-	} else {
-		uint32_t n = b & 0xffffff;
-		const uint8_t* data;
-		size_t size, port;
-		mSysexMap.get_entry(n, data, size, port);
-		adl_rt_systemExclusive(midiplay[0], data, size);
-		adl_rt_systemExclusive(midiplay[1], data, size);
-		adl_rt_systemExclusive(midiplay[2], data, size);
+		case 0xE0:
+			adl_rt_pitchBendML(midiplay[port], channel, event[2], event[1]);
+			break;
 	}
+}
+
+void ADLPlayer::send_sysex(const uint8_t* event, uint32_t size, size_t port) {
+	adl_rt_systemExclusive(midiplay[0], event, size);
+	adl_rt_systemExclusive(midiplay[1], event, size);
+	adl_rt_systemExclusive(midiplay[2], event, size);
 }
 
 void ADLPlayer::render(float* out, unsigned long count) {
@@ -114,6 +110,7 @@ void ADLPlayer::shutdown() {
 	for(unsigned i = 0; i < 3; i++)
 		adl_close(midiplay[i]);
 	memset(midiplay, 0, sizeof(midiplay));
+	initialized = false;
 }
 
 bool ADLPlayer::startup() {
@@ -135,6 +132,10 @@ bool ADLPlayer::startup() {
 		adl_switchEmulator(midiplay, uEmuCore);
 		adl_reset(midiplay);
 	}
+
+	initialized = true;
+
+	setFilterMode(mode, reverb_chorus_disabled);
 
 	return true;
 }
