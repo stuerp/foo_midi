@@ -18,7 +18,8 @@ class EMIDIPlayer : public MIDIPlayer {
 
 	private:
 	virtual void send_event(uint32_t);
-	virtual void render(float *, unsigned long);
+	virtual void send_sysex(const uint8_t* event, uint32_t size, size_t port);
+	virtual void render(float*, unsigned long);
 
 	virtual void shutdown();
 	virtual bool startup();

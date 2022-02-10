@@ -31,64 +31,69 @@ EMIDIPlayer::~EMIDIPlayer() {
 void EMIDIPlayer::send_event(uint32_t b) {
 	dsa::CMIDIMsgInterpreter mi;
 
-	if(!(b & 0x80000000)) {
-		unsigned char event[3];
-		event[0] = (unsigned char)b;
-		event[1] = (unsigned char)(b >> 8);
-		event[2] = (unsigned char)(b >> 16);
-		unsigned channel = b & 0x0F;
-		unsigned command = b & 0xF0;
+	unsigned char event[3];
+	event[0] = (unsigned char)b;
+	event[1] = (unsigned char)(b >> 8);
+	event[2] = (unsigned char)(b >> 16);
+	unsigned channel = b & 0x0F;
+	unsigned command = b & 0xF0;
 
-		mi.Interpret(event[0]);
-		if(event[0] < 0xF8) {
-			mi.Interpret(event[1]);
-			if((b & 0xF0) != 0xC0 && (b & 0xF0) != 0xD0) mi.Interpret(event[2]);
+	mi.Interpret(event[0]);
+	if(event[0] < 0xF8) {
+		mi.Interpret(event[1]);
+		if((b & 0xF0) != 0xC0 && (b & 0xF0) != 0xD0) mi.Interpret(event[2]);
+	}
+
+	if(command == 0xB0 && event[1] == 0) {
+		if(synth_mode == mode_xg) {
+			if(event[2] == 127)
+				drum_channels[channel] = 1;
+			else
+				drum_channels[channel] = 0;
+		} else if(synth_mode == mode_gm2) {
+			if(event[2] == 120)
+				drum_channels[channel] = 1;
+			else if(event[2] == 121)
+				drum_channels[channel] = 0;
 		}
+	} else if(command == 0xC0) {
+		set_drum_channel(channel, drum_channels[channel]);
+	}
 
-		if(command == 0xB0 && event[1] == 0) {
-			if(synth_mode == mode_xg) {
-				if(event[2] == 127)
-					drum_channels[channel] = 1;
-				else
-					drum_channels[channel] = 0;
-			} else if(synth_mode == mode_gm2) {
-				if(event[2] == 120)
-					drum_channels[channel] = 1;
-				else if(event[2] == 121)
-					drum_channels[channel] = 0;
-			}
-		} else if(command == 0xC0) {
-			set_drum_channel(channel, drum_channels[channel]);
-		}
-	} else {
-		uint32_t n = b & 0xffffff;
-		const uint8_t* data;
-		size_t size, port;
-		mSysexMap.get_entry(n, data, size, port);
-		for(n = 0; n < size; ++n) mi.Interpret(data[n]);
+	while(mi.GetMsgCount()) {
+		const dsa::CMIDIMsg& msg = mi.GetMsg();
+		mModule[(msg.m_ch * 2) & 7].SendMIDIMsg(msg);
+		if(!drum_channels[msg.m_ch]) mModule[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
+		mi.PopMsg();
+	}
+}
 
-		if((size == _countof(sysex_gm_reset) && !memcmp(data, sysex_gm_reset, _countof(sysex_gm_reset))) ||
-		   (size == _countof(sysex_gm2_reset) && !memcmp(data, sysex_gm2_reset, _countof(sysex_gm2_reset))) ||
-		   is_gs_reset(data, size) ||
-		   (size == _countof(sysex_xg_reset) && !memcmp(data, sysex_xg_reset, _countof(sysex_xg_reset)))) {
-			reset_drum_channels();
-			synth_mode = (size == _countof(sysex_xg_reset)) ? mode_xg :
-			                                                  (size == _countof(sysex_gs_reset)) ? mode_gs :
-			                                                                                       (data[4] == 0x01) ? mode_gm :
-			                                                                                                           mode_gm2;
-		} else if(synth_mode == mode_gs && size == 11 &&
-		          data[0] == 0xF0 && data[1] == 0x41 && data[3] == 0x42 &&
-		          data[4] == 0x12 && data[5] == 0x40 && (data[6] & 0xF0) == 0x10 &&
-		          data[10] == 0xF7) {
-			if(data[7] == 2) {
-				// GS MIDI channel to part assign
-				gs_part_to_ch[data[6] & 15] = data[8];
-			} else if(data[7] == 0x15) {
-				// GS part to rhythm allocation
-				unsigned int drum_channel = gs_part_to_ch[data[6] & 15];
-				if(drum_channel < 16) {
-					drum_channels[drum_channel] = data[8];
-				}
+void EMIDIPlayer::send_sysex(const uint8_t* event, uint32_t size, size_t port) {
+	dsa::CMIDIMsgInterpreter mi;
+
+	for(uint32_t n = 0; n < size; ++n) mi.Interpret(event[n]);
+
+	if((size == _countof(sysex_gm_reset) && !memcmp(event, &sysex_gm_reset[0], _countof(sysex_gm_reset))) ||
+	   (size == _countof(sysex_gm2_reset) && !memcmp(event, &sysex_gm2_reset[0], _countof(sysex_gm2_reset))) ||
+	   is_gs_reset(event, size) ||
+	   (size == _countof(sysex_xg_reset) && !memcmp(event, &sysex_xg_reset[0], _countof(sysex_xg_reset)))) {
+		reset_drum_channels();
+		synth_mode = (size == _countof(sysex_xg_reset)) ? mode_xg :
+		                                                  (size == _countof(sysex_gs_reset)) ? mode_gs :
+		                                                                                       (event[4] == 0x01) ? mode_gm :
+		                                                                                                            mode_gm2;
+	} else if(synth_mode == mode_gs && size == 11 &&
+	          event[0] == 0xF0 && event[1] == 0x41 && event[3] == 0x42 &&
+	          event[4] == 0x12 && event[5] == 0x40 && (event[6] & 0xF0) == 0x10 &&
+	          event[10] == 0xF7) {
+		if(event[7] == 2) {
+			// GS MIDI channel to part assign
+			gs_part_to_ch[event[6] & 15] = event[8];
+		} else if(event[7] == 0x15) {
+			// GS part to rhythm allocation
+			unsigned int drum_channel = gs_part_to_ch[event[6] & 15];
+			if(drum_channel < 16) {
+				drum_channels[drum_channel] = event[8];
 			}
 		}
 	}

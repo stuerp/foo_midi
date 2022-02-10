@@ -27,15 +27,11 @@ MT32Player::~MT32Player() {
 }
 
 void MT32Player::send_event(uint32_t b) {
-	if(!(b & 0x80000000)) {
-		_synth->playMsg(b);
-	} else {
-		uint32_t n = b & 0xffffff;
-		const uint8_t *data;
-		size_t size, port;
-		mSysexMap.get_entry(n, data, size, port);
-		_synth->playSysexNow(data, size);
-	}
+	_synth->playMsg(b);
+}
+
+void MT32Player::send_sysex(const uint8_t *event, uint32_t size, size_t port) {
+	_synth->playSysexNow(event, size);
 }
 
 void MT32Player::render(float *out, unsigned long count) {

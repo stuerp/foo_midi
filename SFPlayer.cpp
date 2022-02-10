@@ -136,53 +136,49 @@ void SFPlayer::setVoiceCount(unsigned int voices) {
 }
 
 void SFPlayer::send_event(uint32_t b) {
-	if(!(b & 0x80000000)) {
-		int param2 = (b >> 16) & 0xFF;
-		int param1 = (b >> 8) & 0xFF;
-		int cmd = b & 0xF0;
-		int chan = b & 0x0F;
-		int port = (b >> 24) & 0x7F;
-		fluid_synth_t* _synth = this->_synth[0];
+	int param2 = (b >> 16) & 0xFF;
+	int param1 = (b >> 8) & 0xFF;
+	int cmd = b & 0xF0;
+	int chan = b & 0x0F;
+	int port = (b >> 24) & 0x7F;
+	fluid_synth_t* _synth = this->_synth[0];
 
-		if(port && port < 3)
-			_synth = this->_synth[port];
+	if(port && port < 3)
+		_synth = this->_synth[port];
 
-		switch(cmd) {
-			case 0x80:
-				fluid_synth_noteoff(_synth, chan, param1);
-				break;
-			case 0x90:
-				fluid_synth_noteon(_synth, chan, param1, param2);
-				break;
-			case 0xA0:
-				break;
-			case 0xB0:
-				fluid_synth_cc(_synth, chan, param1, param2);
-				break;
-			case 0xC0:
-				fluid_synth_program_change(_synth, chan, param1);
-				break;
-			case 0xD0:
-				fluid_synth_channel_pressure(_synth, chan, param1);
-				break;
-			case 0xE0:
-				fluid_synth_pitch_bend(_synth, chan, (param2 << 7) | param1);
-				break;
-		}
-	} else {
-		uint32_t n = b & 0xffffff;
-		const uint8_t* data;
-		size_t size, port;
-		mSysexMap.get_entry(n, data, size, port);
-		if(port >= 3)
-			port = 0;
-		if(data && size > 2 && data[0] == 0xF0 && data[size - 1] == 0xF7) {
-			++data;
-			size -= 2;
-			fluid_synth_sysex(_synth[0], (const char*)data, size, NULL, NULL, NULL, 0);
-			fluid_synth_sysex(_synth[1], (const char*)data, size, NULL, NULL, NULL, 0);
-			fluid_synth_sysex(_synth[2], (const char*)data, size, NULL, NULL, NULL, 0);
-		}
+	switch(cmd) {
+		case 0x80:
+			fluid_synth_noteoff(_synth, chan, param1);
+			break;
+		case 0x90:
+			fluid_synth_noteon(_synth, chan, param1, param2);
+			break;
+		case 0xA0:
+			break;
+		case 0xB0:
+			fluid_synth_cc(_synth, chan, param1, param2);
+			break;
+		case 0xC0:
+			fluid_synth_program_change(_synth, chan, param1);
+			break;
+		case 0xD0:
+			fluid_synth_channel_pressure(_synth, chan, param1);
+			break;
+		case 0xE0:
+			fluid_synth_pitch_bend(_synth, chan, (param2 << 7) | param1);
+			break;
+	}
+}
+
+void SFPlayer::send_sysex(const uint8_t* event, uint32_t size, size_t port) {
+	if(port >= 3)
+		port = 0;
+	if(event && size > 2 && event[0] == 0xF0 && event[size - 1] == 0xF7) {
+		++event;
+		size -= 2;
+		fluid_synth_sysex(_synth[0], (const char*)event, size, NULL, NULL, NULL, 0);
+		fluid_synth_sysex(_synth[1], (const char*)event, size, NULL, NULL, NULL, 0);
+		fluid_synth_sysex(_synth[2], (const char*)event, size, NULL, NULL, NULL, 0);
 	}
 }
 

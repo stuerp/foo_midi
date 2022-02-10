@@ -417,29 +417,25 @@ unsigned int BMPlayer::getVoicesActive() {
 }
 
 void BMPlayer::send_event(uint32_t b) {
-	if(!(b & 0x80000000)) {
-		unsigned char event[3];
-		event[0] = (unsigned char)b;
-		event[1] = (unsigned char)(b >> 8);
-		event[2] = (unsigned char)(b >> 16);
-		unsigned port = (b >> 24) & 0x7F;
-		unsigned channel = b & 0x0F;
-		unsigned command = b & 0xF0;
-		unsigned event_length = (command >= 0xF8 && command <= 0xFF) ? 1 : ((command == 0xC0 || command == 0xD0) ? 2 : 3);
-		if(port > 2) port = 2;
-		if(bank_lsb_overridden && command == 0xB0 && event[1] == 0x20) return;
-		BASS_MIDI_StreamEvents(_stream[port], BASS_MIDI_EVENTS_RAW, event, event_length);
-	} else {
-		uint32_t n = b & 0xffffff;
-		const uint8_t *data;
-		std::size_t size, port;
-		mSysexMap.get_entry(n, data, size, port);
-		if(port > 2) port = 2;
-		BASS_MIDI_StreamEvents(_stream[port], BASS_MIDI_EVENTS_RAW, data, (unsigned int)size);
-		if(port == 0) {
-			BASS_MIDI_StreamEvents(_stream[1], BASS_MIDI_EVENTS_RAW, data, (unsigned int)size);
-			BASS_MIDI_StreamEvents(_stream[2], BASS_MIDI_EVENTS_RAW, data, (unsigned int)size);
-		}
+	unsigned char event[3];
+	event[0] = static_cast<uint8_t>(b);
+	event[1] = static_cast<uint8_t>(b >> 8);
+	event[2] = static_cast<uint8_t>(b >> 16);
+	unsigned port = (b >> 24) & 0x7F;
+	const unsigned channel = b & 0x0F;
+	const unsigned command = b & 0xF0;
+	const unsigned event_length = (command >= 0xF8 && command <= 0xFF) ? 1 : ((command == 0xC0 || command == 0xD0) ? 2 : 3);
+	if(port > 2) port = 0;
+	if(bank_lsb_overridden && command == 0xB0 && event[1] == 0x20) return;
+	BASS_MIDI_StreamEvents(_stream[port], BASS_MIDI_EVENTS_RAW, event, event_length);
+}
+
+void BMPlayer::send_sysex(const uint8_t *event, uint32_t size, size_t port) {
+	if(port > 2) port = 0;
+	BASS_MIDI_StreamEvents(_stream[port], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
+	if(port == 0) {
+		BASS_MIDI_StreamEvents(_stream[1], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
+		BASS_MIDI_StreamEvents(_stream[2], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
 	}
 }
 
@@ -451,7 +447,7 @@ void BMPlayer::render(float *out, unsigned long count) {
 			todo = 512;
 		memset(out, 0, todo * sizeof(float) * 2);
 		for(int i = 0; i < 3; ++i) {
-			BASS_ChannelGetData(_stream[i], buffer, BASS_DATA_FLOAT | (unsigned int)(todo * sizeof(float) * 2));
+			BASS_ChannelGetData(_stream[i], &buffer[0], BASS_DATA_FLOAT | static_cast<unsigned int>(todo * sizeof(float) * 2));
 			for(unsigned long j = 0; j < todo * 2; ++j) {
 				out[j] += buffer[j];
 			}

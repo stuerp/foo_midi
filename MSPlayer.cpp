@@ -27,9 +27,10 @@ void MSPlayer::set_extp(unsigned int extp) {
 }
 
 void MSPlayer::send_event(uint32_t b) {
-	if(!(b & 0x80000000)) {
-		synth->midi_write(b);
-	}
+	synth->midi_write(b);
+}
+
+void MSPlayer::send_sysex(const uint8_t* event, size_t size, size_t port) {
 }
 
 void MSPlayer::render(float* out, unsigned long count) {
