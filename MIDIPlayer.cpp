@@ -119,9 +119,9 @@ unsigned long MIDIPlayer::Play(float *out, unsigned long count) {
 
 	// This should be a multiple of block size, and have leftover
 
-	while(uSamplesRemaining) {
+	while(uSamplesRemaining && done < count) {
 		unsigned long todo = uSamplesRemaining;
-		if(todo > done - count) todo = done - count;
+		if(todo > count - done) todo = count - done;
 		if(needs_block_size && todo > needs_block_size)
 			todo = needs_block_size;
 		if(todo < needs_block_size) {
