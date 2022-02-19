@@ -176,9 +176,11 @@ void SFPlayer::send_sysex(const uint8_t* event, uint32_t size, size_t port) {
 	if(event && size > 2 && event[0] == 0xF0 && event[size - 1] == 0xF7) {
 		++event;
 		size -= 2;
-		fluid_synth_sysex(_synth[0], (const char*)event, size, NULL, NULL, NULL, 0);
-		fluid_synth_sysex(_synth[1], (const char*)event, size, NULL, NULL, NULL, 0);
-		fluid_synth_sysex(_synth[2], (const char*)event, size, NULL, NULL, NULL, 0);
+		fluid_synth_sysex(_synth[port], (const char*)event, size, NULL, NULL, NULL, 0);
+		if(port == 0) {
+			fluid_synth_sysex(_synth[1], (const char*)event, size, NULL, NULL, NULL, 0);
+			fluid_synth_sysex(_synth[2], (const char*)event, size, NULL, NULL, NULL, 0);
+		}
 	}
 }
 

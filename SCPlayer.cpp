@@ -339,6 +339,10 @@ void SCPlayer::send_sysex(const uint8_t *event, uint32_t size, size_t port) {
 	process_write_bytes(port, event, size);
 	if(process_read_code(port) != 0)
 		process_terminate(port);
+	if (port == 0) {
+		send_sysex(event, size, 1);
+		send_sysex(event, size, 2);
+	}
 }
 
 void SCPlayer::send_event_time(uint32_t b, unsigned int time) {
@@ -358,6 +362,10 @@ void SCPlayer::send_sysex_time(const uint8_t *event, size_t size, size_t port, u
 	process_write_bytes(port, event, size);
 	if(process_read_code(port) != 0)
 		process_terminate(port);
+	if (port == 0) {
+		send_sysex_time(event, size, 1, time);
+		send_sysex_time(event, size, 2, time);
+	}
 }
 
 void SCPlayer::render_port(uint32_t port, float *out, uint32_t count) {

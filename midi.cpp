@@ -1,4 +1,4 @@
-#define MYVERSION "2.7.2"
+#define MYVERSION "2.7.3"
 
 // #define DXISUPPORT
 #define BASSMIDISUPPORT
@@ -7,6 +7,10 @@
 
 /*
 	change log
+
+2022-02-19 01:17 UTC - kode54
+- Fix System Exclusive messages across different ports
+- Version is now 2.7.3
 
 2022-02-10 11:07 UTC - kode54
 - Fix the filtering subsystem to work properly

@@ -64,9 +64,13 @@ void OPNPlayer::send_event(uint32_t b) {
 	}
 }
 void OPNPlayer::send_sysex(const uint8_t* event, uint32_t size, size_t port) {
-	opn2_rt_systemExclusive(midiplay[0], event, size);
-	opn2_rt_systemExclusive(midiplay[1], event, size);
-	opn2_rt_systemExclusive(midiplay[2], event, size);
+	if(port >= 3)
+		port = 0;
+	opn2_rt_systemExclusive(midiplay[port], event, size);
+	if(port == 0) {
+		opn2_rt_systemExclusive(midiplay[1], event, size);
+		opn2_rt_systemExclusive(midiplay[2], event, size);
+	}
 }
 
 void OPNPlayer::render(float* out, unsigned long count) {
