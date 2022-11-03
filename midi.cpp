@@ -6,7 +6,7 @@
 #define SF2PACK
 
 /*
-	change log
+    change log
 
 2022-02-19 01:17 UTC - kode54
 - Fix System Exclusive messages across different ports
@@ -301,9 +301,9 @@
   process deadlocks, except when it's running under Wine.
   - This was supposed to fix a bug where dialog creation could be interrupted
     by a switch to other preferences panes while VSTi enumeration is still
-	happening, causing the MIDI prefpane to override the other. Apparently,
-	that's yet another bug that doesn't occur when running the process under
-	Wine.
+    happening, causing the MIDI prefpane to override the other. Apparently,
+    that's yet another bug that doesn't occur when running the process under
+    Wine.
 - Version is now 2.1.5
 
 2018-08-28 11:18 UTC - kode54
@@ -443,7 +443,7 @@
 2016-11-29 07:11 UTC - kode54
 - Unleash the Secret Sauce!
 - Version is now 2.0.2
-	
+
 2016-11-25 23:49 UTC - kode54
 - Fix new sflist parser:
   - Handling Unicode byte order markers
@@ -1505,7 +1505,7 @@ static const GUID guid_cfg_filter_instruments = { 0x6d30c919, 0xb053, 0x43aa, { 
 // {3145963C-7322-4B48-99FF-75EAC5F4DACC}
 static const GUID guid_cfg_filter_banks = { 0x3145963c, 0x7322, 0x4b48, { 0x99, 0xff, 0x75, 0xea, 0xc5, 0xf4, 0xda, 0xcc } };
 // {FE5B24D8-C8A5-4b49-A163-972649217185}
-/*static const GUID guid_cfg_recover_tracks = 
+/*static const GUID guid_cfg_recover_tracks =
 { 0xfe5b24d8, 0xc8a5, 0x4b49, { 0xa1, 0x63, 0x97, 0x26, 0x49, 0x21, 0x71, 0x85 } };*/
 // {460A84B6-910A-496C-BEB6-86FDEB41ABDC}
 static const GUID guid_cfg_loop_type = { 0x460a84b6, 0x910a, 0x496c, { 0xbe, 0xb6, 0x86, 0xfd, 0xeb, 0x41, 0xab, 0xdc } };
@@ -1520,7 +1520,7 @@ static const GUID guid_cfg_resampling = { 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x
 // {408AA155-4C42-42b5-8C3E-D10C35DD5EF1}
 static const GUID guid_cfg_history_rate = { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
 // {F3EE2258-65D3-4219-B932-BF52119F2484}
-/*static const GUID guid_cfg_gm2 = 
+/*static const GUID guid_cfg_gm2 =
 { 0xf3ee2258, 0x65d3, 0x4219, { 0xb9, 0x32, 0xbf, 0x52, 0x11, 0x9f, 0x24, 0x84 } };*/
 // {1A6EA7E5-718A-485a-B167-CFDF3B406145}
 static const GUID guid_cfg_vst_path = { 0x1a6ea7e5, 0x718a, 0x485a, { 0xb1, 0x67, 0xcf, 0xdf, 0x3b, 0x40, 0x61, 0x45 } };
@@ -1554,7 +1554,7 @@ static const GUID guid_cfg_adl_chips = { 0x974365ed, 0xd4f9, 0x4daa, { 0xb4, 0x8
 // {AD6821B4-493F-4BB3-B7BB-E0A67C5D5907}
 static const GUID guid_cfg_adl_panning = { 0xad6821b4, 0x493f, 0x4bb3, { 0xb7, 0xbb, 0xe0, 0xa6, 0x7c, 0x5d, 0x59, 0x7 } };
 // {C5FB4053-75BF-4C0D-A1B1-7173863288A6}
-/*static const GUID guid_cfg_adl_4op = 
+/*static const GUID guid_cfg_adl_4op =
 { 0xc5fb4053, 0x75bf, 0x4c0d, { 0xa1, 0xb1, 0x71, 0x73, 0x86, 0x32, 0x88, 0xa6 } };*/
 // {07257AC7-9901-4A5F-9D8B-C5B5F1B8CF5B}
 static const GUID guid_cfg_munt_gm = { 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 0xc5, 0xb5, 0xf1, 0xb8, 0xcf, 0x5b } };
@@ -1708,7 +1708,7 @@ enum {
 	default_cfg_emidi_exclusion = 1,
 	default_cfg_filter_instruments = 0,
 	default_cfg_filter_banks = 0,
-	//default_cfg_recover_tracks = 0,
+	// default_cfg_recover_tracks = 0,
 	default_cfg_loop_type = 0,
 	default_cfg_loop_type_other = 0,
 	default_cfg_srate = 44100,
@@ -1717,7 +1717,7 @@ enum {
 	default_cfg_adl_bank = 72,
 	default_cfg_adl_chips = 10,
 	default_cfg_adl_panning = 1,
-	//default_cfg_adl_4op = 14,
+	// default_cfg_adl_4op = 14,
 	default_cfg_munt_gm = 0,
 	default_cfg_ms_synth = 0,
 	default_cfg_ms_bank = 2,
@@ -1910,11 +1910,11 @@ struct midi_preset {
 	bool ms_panning;
 
 	// v5 - plug-in == 10 - Secret Sauce
-	//unsigned int sc_flavor;
+	// unsigned int sc_flavor;
 	// v6 - reverb
-	//bool sc_reverb;
+	// bool sc_reverb;
 	// v8 - GS flavor, also sc_flavor has new values
-	//unsigned int gs_flavor;
+	// unsigned int gs_flavor;
 	// v11 - most plugins
 	unsigned int midi_flavor;
 	bool midi_reverb;
@@ -2699,7 +2699,7 @@ class input_midi : public input_stubs {
 	unsigned loop_type_playback;
 	unsigned loop_type_other;
 	unsigned clean_flags;
-	//bool b_gm2;
+	// bool b_gm2;
 
 	unsigned length_ms;
 	unsigned length_samples;
@@ -2732,6 +2732,7 @@ class input_midi : public input_stubs {
 	pfc::string8 m_path;
 
 	t_filestats m_stats;
+	t_filestats2 m_stats2;
 
 	metadb_index_hash m_index_hash;
 	hasher_md5_result m_file_hash;
@@ -2823,7 +2824,7 @@ class input_midi : public input_stubs {
 		double length = length_ms * .001;
 		if(loop_type == 1)
 			length += 1.;
-		length_ticks = midi_file.get_timestamp_end(p_subsong); //theSequence->m_tempoMap.Sample2Tick(len, 1000);
+		length_ticks = midi_file.get_timestamp_end(p_subsong); // theSequence->m_tempoMap.Sample2Tick(len, 1000);
 		length_samples = (unsigned)(((__int64)length_ms * (__int64)srate) / 1000);
 		if(loop_type == 1)
 			length_samples += srate;
@@ -2846,8 +2847,8 @@ class input_midi : public input_stubs {
 		}
 		/*else
 		{
-			sample_loop_start = theSequence->m_tempoMap.Tick2Sample(loop_begin != -1 ? loop_begin : 0, srate);
-			sample_loop_end = theSequence->m_tempoMap.Tick2Sample((loop_end != -1 ? loop_end : length_ticks) + 1, srate);
+		    sample_loop_start = theSequence->m_tempoMap.Tick2Sample(loop_begin != -1 ? loop_begin : 0, srate);
+		    sample_loop_end = theSequence->m_tempoMap.Tick2Sample((loop_end != -1 ? loop_end : length_ticks) + 1, srate);
 		}*/
 		else
 #endif
@@ -2865,6 +2866,9 @@ class input_midi : public input_stubs {
 
 		m_stats = p_file->get_stats(p_abort);
 		if(!m_stats.m_size || m_stats.m_size > (1 << 30)) throw exception_io_unsupported_format();
+
+		m_stats2 = p_file->get_stats2_(stats2_all, p_abort);
+		if(!m_stats2.m_size || m_stats2.m_size > (1 << 30)) throw exception_io_unsupported_format();
 
 		std::vector<uint8_t> file_data;
 
@@ -2956,7 +2960,7 @@ class input_midi : public input_stubs {
 		if(loop_end != ~0) p_info.info_set_int(field_loop_end, loop_end);
 		if(loop_begin_ms != ~0) p_info.info_set_int(field_loop_start_ms, loop_begin_ms);
 		if(loop_end_ms != ~0) p_info.info_set_int(field_loop_end_ms, loop_end_ms);
-		//p_info.info_set_int("samplerate", srate);
+		// p_info.info_set_int("samplerate", srate);
 		unsigned length_ms = midi_file.get_timestamp_end(p_subsong, true);
 		double length = double(length_ms) * 0.001;
 		if(loop_type_other == 1)
@@ -3004,6 +3008,10 @@ class input_midi : public input_stubs {
 				p_info.meta_remove_field(field_syx);
 			}
 		}
+	}
+
+	t_filestats2 get_stats2(uint32_t, abort_callback& p_abort) {
+		return m_stats2;
 	}
 
 	t_filestats get_file_stats(abort_callback& p_abort) {
@@ -3247,11 +3255,11 @@ class input_midi : public input_stubs {
 #ifdef FLUIDSYNTHSUPPORT
 		else if(plugin == 2 || plugin == 4) {
 			/*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
-				if ( !fsmod )
-				{
-					throw exception_io_data("Failed to load FluidSynth.dll");
-				}
-				FreeLibrary( fsmod );*/
+			    if ( !fsmod )
+			    {
+			        throw exception_io_data("Failed to load FluidSynth.dll");
+			    }
+			    FreeLibrary( fsmod );*/
 
 			delete midiPlayer;
 
@@ -3289,11 +3297,11 @@ class input_midi : public input_stubs {
 #ifdef BASSMIDISUPPORT
 		{
 			/*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
-				if ( !fsmod )
-				{
-					throw exception_io_data("Failed to load FluidSynth.dll");
-				}
-				FreeLibrary( fsmod );*/
+			    if ( !fsmod )
+			    {
+			        throw exception_io_data("Failed to load FluidSynth.dll");
+			    }
+			    FreeLibrary( fsmod );*/
 
 			delete midiPlayer;
 
@@ -3813,15 +3821,15 @@ static const int srate_tab[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100,
 
 class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_page_instance {
 	public:
-	//Constructor - invoked by preferences_page_impl helpers - don't do Create() in here, preferences_page_impl does this for us
+	// Constructor - invoked by preferences_page_impl helpers - don't do Create() in here, preferences_page_impl does this for us
 	CMyPreferences(preferences_page_callback::ptr callback)
 	: m_callback(callback), busy(false) {
 	}
 
-	//Note that we don't bother doing anything regarding destruction of our class.
-	//The host ensures that our dialog is destroyed first, then the last reference to our preferences_page_instance object is released, causing our object to be deleted.
+	// Note that we don't bother doing anything regarding destruction of our class.
+	// The host ensures that our dialog is destroyed first, then the last reference to our preferences_page_instance object is released, causing our object to be deleted.
 
-	//dialog resource ID
+	// dialog resource ID
 	enum { IDD = IDD_CONFIG };
 	// preferences_page_instance methods (not all of them - get_wnd() is supplied by preferences_page_impl helpers)
 	t_uint32 get_state();
@@ -3830,7 +3838,7 @@ class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_pa
 
 	enum { ID_REFRESH = 1000 };
 
-	//WTL message map
+	// WTL message map
 	BEGIN_MSG_MAP(CMyPreferences)
 	MSG_WM_INITDIALOG(OnInitDialog)
 	COMMAND_HANDLER_EX(IDC_PLUGIN, CBN_SELCHANGE, OnPluginChange)
@@ -4512,7 +4520,7 @@ void CMyPreferences::OnButtonConfig(UINT, int, CWindow) {
 }
 
 void CMyPreferences::OnPluginChange(UINT, int, CWindow w) {
-	//t_size vsti_count = vsti_plugins.get_size();
+	// t_size vsti_count = vsti_plugins.get_size();
 	int plugin_selected = ::SendMessage(w, CB_GETCURSEL, 0, 0);
 	int plugin_index = -1;
 	int plugin = 0;
@@ -4726,7 +4734,7 @@ void CMyPreferences::reset() {
 	SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, bank_selected);
 	SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, default_cfg_adl_panning);
 	SetDlgItemInt(IDC_ADL_CHIPS, default_cfg_adl_chips, 0);
-	//SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
+	// SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
 #ifdef FLUIDSYNTHSUPPORT
 	SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, 2 /* 4 */);
 #else
@@ -4816,7 +4824,7 @@ void CMyPreferences::apply() {
 	cfg_filter_instruments = SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
 	cfg_filter_banks = SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
 	cfg_ms_panning = SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK);
-	//cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
+	// cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
 #ifdef FLUIDSYNTHSUPPORT
 	{
 		int interp_method = SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
@@ -4833,11 +4841,11 @@ void CMyPreferences::apply() {
 	cfg_midi_flavor = SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_GETCURSEL);
 	cfg_midi_reverb = !SendDlgItemMessage(IDC_FILTER_EFFECTS, BM_GETCHECK);
 
-	OnChanged(); //our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
+	OnChanged(); // our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
 }
 
 bool CMyPreferences::HasChanged() {
-	//returns whether our dialog content is different from the current configuration (whether the apply button should be enabled or not)
+	// returns whether our dialog content is different from the current configuration (whether the apply button should be enabled or not)
 	bool changed = false;
 	if(!changed && GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != cfg_srate) changed = true;
 	if(!changed && SendDlgItemMessage(IDC_LOOP, CB_GETCURSEL) != cfg_loop_type) changed = true;
@@ -4917,7 +4925,7 @@ bool CMyPreferences::HasChanged() {
 	return changed;
 }
 void CMyPreferences::OnChanged() {
-	//tell the host that our state has changed to enable/disable the apply button appropriately.
+	// tell the host that our state has changed to enable/disable the apply button appropriately.
 	m_callback->on_state_changed();
 }
 
@@ -5053,7 +5061,7 @@ class context_midi : public contextmenu_item_simple {
 	/*
 	virtual void get_item_default_path( unsigned n, pfc::string_base & out )
 	{
-		out = "Utils";
+	    out = "Utils";
 	}
 	*/
 	GUID get_parent() {
@@ -5181,7 +5189,7 @@ static service_factory_single_t<midi_file_types> g_input_file_type_midi_factory;
 static contextmenu_item_factory_t<context_midi> g_contextmenu_item_midi_factory;
 static initquit_factory_t<initquit_midi> g_initquit_midi_factory;
 
-#include "../patrons.h"
+#include "patrons.h"
 
 DECLARE_COMPONENT_VERSION("MIDI Player", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.\n\n"
                                                     "My main man left the Crimson Lance to bring you the Secret Sauce!\n\n"

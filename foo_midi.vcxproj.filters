@@ -12,7 +12,6 @@
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="DXiProxy.cpp" />
     <ClCompile Include="EMIDIPlayer.cpp" />
-    <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="sflist\json.c">
       <Filter>sflist</Filter>
@@ -35,9 +34,8 @@
     <ClCompile Include="synthlib_apogee\al_midi.cpp">
       <Filter>synthlib_apogee</Filter>
     </ClCompile>
-    <ClCompile Include="fmopl3lib\opl3class.cpp">
-      <Filter>fmopl3</Filter>
-    </ClCompile>
+    <ClCompile Include="fmopl3lib\opl3class.cpp" />
+    <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="OPNPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -50,7 +48,6 @@
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="DXiProxy.h" />
     <ClInclude Include="EMIDIPlayer.h" />
-    <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="kq6mtgm.h" />
     <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="sflist\json.h">
@@ -117,22 +114,15 @@
     <ClInclude Include="synthlib_doom\inst\dmxopl.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="fmopl3lib\opl3class.h">
-      <Filter>fmopl3</Filter>
-    </ClInclude>
+    <ClInclude Include="config.h" />
+    <ClInclude Include="fmopl3lib\opl3class.h" />
+    <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="OPNPlayer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="DXiPlayer.h" />
     <CustomBuild Include="PlugInInventory.h" />
     <CustomBuild Include="StdAfx.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\..\..\bass\c\bass.lib" />
-    <Library Include="..\..\..\bass\c\bassmidi.lib" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="sflist">
@@ -156,5 +146,8 @@
     <Filter Include="fmopl3">
       <UniqueIdentifier>{6c7c9704-78c6-4575-9731-efa7ee251557}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
 </Project>

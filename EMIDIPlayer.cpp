@@ -106,14 +106,16 @@ void EMIDIPlayer::send_sysex(const uint8_t* event, uint32_t size, size_t port) {
 	}
 }
 
-void EMIDIPlayer::render(float* out, unsigned long count) {
-	INT32 b[512];
+void EMIDIPlayer::render(audio_sample* out, unsigned long count) {
+	INT32 b[256 * sizeof(audio_sample)];
 
 	while(count) {
 		unsigned todo = 256;
-		if(todo > count) todo = (unsigned)count;
 
-		memset(b, 0, todo * 4 * 2);
+		if(todo > count)
+			todo = (unsigned)count;
+
+		memset(b, 0, (todo * 2) * sizeof(audio_sample));
 
 		for(unsigned i = 0; i < 8; ++i) {
 			for(unsigned j = 0; j < todo; ++j) {
@@ -124,9 +126,9 @@ void EMIDIPlayer::render(float* out, unsigned long count) {
 			}
 		}
 
-		audio_math::convert_from_int32((const t_int32*)b, todo * 2, out, 1 << 16);
+		audio_math::convert_from_int32((const t_int32*)b, (todo * 2), out, 1 << 16);
 
-		out += todo * 2;
+		out += (todo * 2);
 		count -= todo;
 	}
 }

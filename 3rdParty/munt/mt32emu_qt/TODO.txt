@@ -1,0 +1,4 @@
+- RTP MIDI driver hopefully with full Bonjour support.
+- Context help
+- Code refactoring
+- Adding comments

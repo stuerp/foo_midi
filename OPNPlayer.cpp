@@ -6,7 +6,7 @@
 
 #include "OPNPlayer.h"
 
-#include "../../libOPNMIDI/include/opnmidi.h"
+#include "libOPNMIDI/include/opnmidi.h"
 
 #include "Tomsoft.wopn.h"
 #include "fmmidi.wopn.h"
@@ -73,24 +73,26 @@ void OPNPlayer::send_sysex(const uint8_t* event, uint32_t size, size_t port) {
 	}
 }
 
-void OPNPlayer::render(float* out, unsigned long count) {
-	signed short buffer[512];
+void OPNPlayer::render(audio_sample* out, unsigned long count) {
+	signed short buffer[256 * sizeof(audio_sample)];
 
 	while(count) {
 		unsigned todo = count;
-		if(todo > 256) todo = 256;
 
-		memset(out, 0, todo * sizeof(float) * 2);
+		if(todo > 256)
+			todo = 256;
+
+		memset(out, 0, (todo * 2) * sizeof(audio_sample));
 
 		for(unsigned i = 0; i < 3; i++) {
-			opn2_generate(midiplay[i], todo * 2, buffer);
+			opn2_generate(midiplay[i], (todo * 2), buffer);
 
-			for(unsigned j = 0, k = todo * 2; j < k; j++) {
-				out[j] += (float)buffer[j] * (1.0f / 32768.0f);
+			for(unsigned j = 0, k = (todo * 2); j < k; j++) {
+				out[j] += (audio_sample)buffer[j] * (1.0f / 32768.0f);
 			}
 		}
 
-		out += todo * 2;
+		out += (todo * 2);
 		count -= todo;
 	}
 }

@@ -3,6 +3,8 @@
 
 #include <midi_processing/midi_container.h>
 
+#include <foobar2000.h>
+
 class MIDIPlayer {
 	public:
 	enum {
@@ -33,7 +35,7 @@ class MIDIPlayer {
 	void setFilterMode(filter_mode m, bool disable_reverb_chorus);
 
 	bool Load(const midi_container& midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
-	unsigned long Play(float* out, unsigned long count);
+	unsigned long Play(audio_sample* out, unsigned long count);
 	void Seek(unsigned long sample);
 
 	bool GetLastError(std::string& p_out);
@@ -46,7 +48,7 @@ class MIDIPlayer {
 	virtual void send_event(uint32_t b) {
 	}
 	virtual void send_sysex(const uint8_t* event, size_t size, size_t port){};
-	virtual void render(float* out, unsigned long count) {
+	virtual void render(audio_sample* out, unsigned long count) {
 	}
 
 	virtual void shutdown(){};

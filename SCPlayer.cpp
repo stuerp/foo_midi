@@ -333,7 +333,7 @@ void SCPlayer::send_event(uint32_t b) {
 		process_terminate(port);
 }
 
-void SCPlayer::send_sysex(const uint8_t *event, uint32_t size, size_t port) {
+void SCPlayer::send_sysex(const uint8_t *event, size_t size, size_t port) {
 	process_write_code(port, 3);
 	process_write_code(port, size);
 	process_write_bytes(port, event, size);
@@ -379,11 +379,13 @@ void SCPlayer::render_port(uint32_t port, float *out, uint32_t count) {
 	process_read_bytes(port, out, count * sizeof(float) * 2);
 }
 
-void SCPlayer::render(float *out, unsigned long count) {
-	memset(out, 0, count * sizeof(float) * 2);
+void SCPlayer::render(audio_sample *out, unsigned long count) {
+	memset(out, 0, count * sizeof(audio_sample) * 2);
+
 	while(count) {
 		unsigned long todo = count > 4096 ? 4096 : count;
 		float buffer[4096 * 2];
+
 		for(unsigned long i = 0; i < 3; ++i) {
 			render_port(i, buffer, todo);
 
@@ -392,6 +394,7 @@ void SCPlayer::render(float *out, unsigned long count) {
 				out[j * 2 + 1] += buffer[j * 2 + 1];
 			}
 		}
+
 		out += todo * 2;
 		count -= todo;
 	}

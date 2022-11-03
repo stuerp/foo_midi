@@ -1,0 +1,42 @@
+cmake_minimum_required(VERSION 2.8.12)
+project(munt)
+set(munt_VERSION_MAJOR 2)
+set(munt_VERSION_MINOR 3)
+set(munt_VERSION_PATCH 0)
+
+option(munt_WITH_MT32EMU_SMF2WAV "Build command line standard MIDI file conversion tool" TRUE)
+option(munt_WITH_MT32EMU_QT "Build Qt-based UI-enabled application" TRUE)
+
+add_subdirectory(mt32emu)
+
+if(munt_WITH_MT32EMU_SMF2WAV)
+  add_subdirectory(mt32emu_smf2wav)
+  add_dependencies(mt32emu-smf2wav mt32emu)
+endif()
+
+if(munt_WITH_MT32EMU_QT)
+  add_subdirectory(mt32emu_qt)
+  add_dependencies(mt32emu-qt mt32emu)
+endif()
+
+# build a CPack driven installer package
+set(CPACK_PACKAGE_VERSION_MAJOR "${munt_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${munt_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${munt_VERSION_PATCH}")
+set(CPACK_PACKAGE_VENDOR "muntemu.org")
+set(CPACK_PACKAGE_CONTACT "sergm@muntemu.org")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Software synthesiser emulating pre-GM MIDI devices such as Roland MT-32, CM-32L, CM-64 and LAPC-I")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/mt32emu_qt/COPYING.txt")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
+set(CPACK_STRIP_FILES TRUE)
+set(CPACK_SOURCE_GENERATOR TGZ)
+set(CPACK_SOURCE_STRIP_FILES TRUE)
+# The default source package file name has "-Source" at the end, which doesn't match our previous releases
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+set(CPACK_RPM_PACKAGE_GROUP "Audio/Emulators")
+set(CPACK_RPM_PACKAGE_LICENSE "LGPLv2.1, GPLv3")
+set(CPACK_RPM_PACKAGE_URL "http://munt.sourceforge.net/")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS "ON")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://munt.sourceforge.net/")
+set(CPACK_DEBIAN_PACKAGE_SECTION "sound")
+include(CPack)

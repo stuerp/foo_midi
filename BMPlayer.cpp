@@ -439,20 +439,26 @@ void BMPlayer::send_sysex(const uint8_t *event, uint32_t size, size_t port) {
 	}
 }
 
-void BMPlayer::render(float *out, unsigned long count) {
-	float buffer[1024];
+void BMPlayer::render(audio_sample *out, unsigned long count) {
+	float buffer[512 * 2];
+
 	while(count) {
 		unsigned long todo = count;
+
 		if(todo > 512)
 			todo = 512;
-		memset(out, 0, todo * sizeof(float) * 2);
+
+		memset(out, 0, (todo * 2) * sizeof(audio_sample));
+
 		for(int i = 0; i < 3; ++i) {
-			BASS_ChannelGetData(_stream[i], &buffer[0], BASS_DATA_FLOAT | static_cast<unsigned int>(todo * sizeof(float) * 2));
-			for(unsigned long j = 0; j < todo * 2; ++j) {
-				out[j] += buffer[j];
+			BASS_ChannelGetData(_stream[i], buffer, BASS_DATA_FLOAT | static_cast<unsigned int>((todo * 2) * sizeof(float)));
+
+			for(unsigned long j = 0; j < (todo * 2); ++j) {
+				out[j] += (audio_sample)buffer[j];
 			}
 		}
-		out += todo * 2;
+
+		out += (todo * 2);
 		count -= todo;
 	}
 }

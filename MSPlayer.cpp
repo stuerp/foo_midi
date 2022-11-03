@@ -33,16 +33,21 @@ void MSPlayer::send_event(uint32_t b) {
 void MSPlayer::send_sysex(const uint8_t* event, size_t size, size_t port) {
 }
 
-void MSPlayer::render(float* out, unsigned long count) {
-	float const scaler = 1.0f / 16384.0f;
+void MSPlayer::render(audio_sample* out, unsigned long count) {
+	audio_sample const scaler = 1.0f / 16384.0f;
+
 	short buffer[512];
+
 	while(count) {
 		unsigned long todo = count > 256 ? 256 : count;
+
 		synth->midi_generate(buffer, (unsigned int)todo);
+
 		for(unsigned long i = 0; i < todo; ++i) {
 			*out++ = buffer[i * 2 + 0] * scaler;
 			*out++ = buffer[i * 2 + 1] * scaler;
 		}
+
 		count -= todo;
 	}
 }

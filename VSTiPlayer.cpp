@@ -160,7 +160,7 @@ bool VSTiPlayer::process_create() {
 	siStartInfo.hStdInput = hChildStd_IN_Rd;
 	siStartInfo.hStdOutput = hChildStd_OUT_Wr;
 	siStartInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-	//siStartInfo.wShowWindow = SW_HIDE;
+	// siStartInfo.wShowWindow = SW_HIDE;
 	siStartInfo.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
 
 	if(!CreateProcess(NULL, (LPTSTR)(LPCTSTR)pfc::stringcvt::string_os_from_utf8(szCmdLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo)) {
@@ -460,20 +460,25 @@ void VSTiPlayer::send_sysex_time(const uint8_t *event, size_t size, size_t port,
 	if(code != 0) process_terminate();
 }
 
-void VSTiPlayer::render(float *out, unsigned long count) {
+void VSTiPlayer::render(audio_sample *out, unsigned long count) {
 	process_write_code(9);
 	process_write_code(count);
+
 	const uint32_t code = process_read_code();
+
 	if(code != 0) {
 		process_terminate();
-		memset(out, 0, sizeof(float) * count * uNumOutputs);
+		memset(out, 0, sizeof(audio_sample) * count * uNumOutputs);
 		return;
 	}
 
 	while(count) {
 		unsigned count_to_do = 4096 * uNumOutputs;
+
 		if(count_to_do > count) count_to_do = count;
-		process_read_bytes(out, sizeof(float) * count_to_do * uNumOutputs);
+
+		process_read_bytes(out, sizeof(audio_sample) * count_to_do * uNumOutputs);
+
 		out += count_to_do * uNumOutputs;
 		count -= count_to_do;
 	}

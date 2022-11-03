@@ -27,7 +27,7 @@ class ADLPlayer : public MIDIPlayer {
 	protected:
 	virtual void send_event(uint32_t b);
 	virtual void send_sysex(const uint8_t* event, uint32_t size, size_t port);
-	virtual void render(float* out, unsigned long count);
+	virtual void render(audio_sample* out, unsigned long count);
 
 	virtual void shutdown();
 	virtual bool startup();

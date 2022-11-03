@@ -6,7 +6,7 @@
 
 #include "ADLPlayer.h"
 
-#include "../../libADLMIDI/include/adlmidi.h"
+#include "libADLMIDI/include/adlmidi.h"
 
 ADLPlayer::ADLPlayer()
 : MIDIPlayer() {
@@ -64,24 +64,24 @@ void ADLPlayer::send_sysex(const uint8_t* event, uint32_t size, size_t port) {
 	adl_rt_systemExclusive(midiplay[2], event, size);
 }
 
-void ADLPlayer::render(float* out, unsigned long count) {
-	signed short buffer[512];
+void ADLPlayer::render(audio_sample * out, unsigned long count) {
+	signed short buffer[256 * sizeof(audio_sample)];
 
 	while(count) {
 		unsigned todo = count;
 		if(todo > 256) todo = 256;
 
-		memset(out, 0, todo * sizeof(float) * 2);
+		memset(out, 0, (todo * 2) * sizeof(audio_sample));
 
 		for(unsigned i = 0; i < 3; i++) {
-			adl_generate(midiplay[i], todo * 2, buffer);
+			adl_generate(midiplay[i], (todo * 2), buffer);
 
-			for(unsigned j = 0, k = todo * 2; j < k; j++) {
-				out[j] += (float)buffer[j] * (1.0f / 32768.0f);
+			for(unsigned j = 0, k = (todo * 2); j < k; j++) {
+				out[j] += (audio_sample)buffer[j] * (1.0f / 32768.0f);
 			}
 		}
 
-		out += todo * 2;
+		out += (todo * 2);
 		count -= todo;
 	}
 }

@@ -1,0 +1,96 @@
+2017-12-25:
+
+	1.5.0 released.
+
+	* Fixed inappropriate implementation of MODM_GETDEVCAPS message that sometimes resulted in returning unreadable
+	  driver name to the consumer MIDI application.
+	* In Windows MIDI driver setup tool, implemented "repair" command. This command allows to restore the registry entry
+	  used by driver which may be overwritten by Windows or some other application.
+	* Reimplemented Windows MIDI driver setup tool for x64 platform. It no longer allows to install 32-bit and 64-bit
+	  drivers separately since this way doesn't seem to be supported by Windows. Instead, the setup tool now detects
+	  the platform it runs on and installs the drivers as appropriate. This should improve stability of the 32-bit driver
+	  on 64-bit systems.
+	* Added support for new synth profile option "Max Partials". It allows setting the maximum number of partials
+	  playing simultaneously.
+
+2017-07-29:
+
+	1.4.0 released.
+
+	* Added support for the synth profile setting "niceAmpRamp".
+	* Implemented selection of output audio device using the setting "DefaultAudioDevice".
+	  Note, that audio devices listed for WinMMAudio API (a.k.a. "waveout") are only guaranteed
+	  to have identical device names and to be engaged. Other audio deivces for other audio APIs
+	  may provide slightly different device names. In such a case (or if the selected device
+	  is no longer available), the default wave mapper is used.
+
+2017-04-09:
+
+	1.3.0 released.
+
+	* Updated mt32emu library to version 2.1.0.
+	* Added support for the synth profile setting "rendererType".
+
+2016-10-22:
+
+	1.2.0 released.
+
+	* Fixed possible crashes when reloading settings to the internal synth upon MIDI port re-opening in some cases.
+	* Updated mt32emu library to version 2.0.0.
+	* Added support for mt32emu_qt settings version 2.
+
+2015-01-11:
+
+	1.1.1 released.
+
+	* Fixed incorrect Analog emulation mode (and possibly samplerate) applied upon resetting the internal synth engine.
+
+2014-12-21:
+
+	1.1.0 released.
+
+	* Fixed long standing issue with Windows MIDI driver that prevented receiving SysEx fragments or multi-SysEx packets
+	  sent in a single buffer. Running status for short messages is also supported now.
+	* Fixed unreliable synth close which may lead to crashes client MIDI applications when mt32emu_qt app is started and MIDI data is rerouted.
+
+2014-06-09:
+
+	1.0.5 released.
+
+	* Updated mt32emu library to version 1.4.0.
+
+2013-09-21:
+
+	1.0.4 released.
+
+	* Updated mt32emu library to version 1.3.0.
+
+2013-03-24:
+
+	1.0.3 released.
+
+	* Updated mt32emu library to version 1.2.0.
+
+2013-03-10:
+
+	1.0.2 released.
+
+	* Fixed core WinMME driver for x64 compatibility.
+
+2013-02-11:
+
+	1.0.1 released.
+
+	* Updated mt32emu library to version 1.1.1.
+
+2012-12-25:
+
+	1.0.0 released.
+
+	* The driver doesn't rely on the deprecated DirectMusic interface any more.
+	* Removed the deprecated in Vista driver control panel. Emulation settings can be controlled via mt32emu_qt,
+	  the main synthesiser application, or directly via a registry editor.
+	* Added support for an external synthesiser application. If the application is found running, incoming MIDI events
+	  are directed to the external application for processing.
+	* Added a dedicated driver installation helper to include to a setup package.
+	* Both i386 and x86_64 platforms are supported.

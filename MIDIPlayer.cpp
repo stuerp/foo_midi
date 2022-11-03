@@ -107,7 +107,7 @@ bool MIDIPlayer::Load(const midi_container &midi_file, unsigned subsong, unsigne
 	return false;
 }
 
-unsigned long MIDIPlayer::Play(float *out, unsigned long count) {
+unsigned long MIDIPlayer::Play(audio_sample *out, unsigned long count) {
 	assert(mStream.size());
 
 	if(!startup()) return 0;
@@ -293,11 +293,11 @@ void MIDIPlayer::Seek(unsigned long sample) {
 			}
 		}
 
-		float *temp;
+		audio_sample *temp;
 		const unsigned int needs_time = send_event_needs_time();
 
 		if(needs_time) {
-			temp = new float[needs_time * 2];
+			temp = new audio_sample[needs_time * 2];
 			if(temp) {
 				render(temp, needs_time); // flush events
 				unsigned int render_junk = 0;
@@ -323,7 +323,7 @@ void MIDIPlayer::Seek(unsigned long sample) {
 				delete[] temp;
 			}
 		} else {
-			temp = new float[16 * 2];
+			temp = new audio_sample[16 * 2];
 			if(temp) {
 				render(temp, 16);
 				bool timestamp_set = false;
@@ -491,11 +491,11 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time) {
 		switch(mode) {
 			case filter_gm:
 				/*
-                if (time)
-                    send_sysex_time(syx_reset_gm, sizeof(syx_reset_gm), port, time);
-                else
-                    send_sysex(syx_reset_gm, sizeof(syx_reset_gm), port);
-                 */
+				if (time)
+				    send_sysex_time(syx_reset_gm, sizeof(syx_reset_gm), port, time);
+				else
+				    send_sysex(syx_reset_gm, sizeof(syx_reset_gm), port);
+				 */
 				break;
 
 			case filter_gm2:

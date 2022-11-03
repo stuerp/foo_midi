@@ -34,18 +34,24 @@ void MT32Player::send_sysex(const uint8_t *event, uint32_t size, size_t port) {
 	_synth->playSysexNow(event, size);
 }
 
-void MT32Player::render(float *out, unsigned long count) {
-#if 1
+void MT32Player::render(audio_sample *out, unsigned long count) {
+#if 0
 	pfc::static_assert_t<sizeof(audio_sample) == sizeof(float)>();
 	_synth->render(out, count);
 #else
-	MT32Emu::Bit16s temp[512];
+	MT32Emu::Bit16s temp[256 * 2];
+
 	while(count > 0) {
 		unsigned long todo = count;
-		if(todo > 256) todo = 256;
+
+		if(todo > 256)
+			todo = 256;
+
 		_synth->render(temp, (unsigned)todo);
-		audio_math::convert_from_int16(temp, todo * 2, out, 1.);
-		out += todo * 2;
+
+		audio_math::convert_from_int16(temp, (todo * 2), out, 1.);
+
+		out += (todo * 2);
 		count -= todo;
 	}
 #endif
