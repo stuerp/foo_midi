@@ -1439,6 +1439,7 @@
 #define NOMINMAX
 
 #include <foobar2000.h>
+#include <coreDarkMode.h>
 
 #include "../helpers/dropdown_helper.h"
 
@@ -3973,6 +3974,7 @@ class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_pa
 
 	static const plugin_names_ids plugins[];
 	std::map<int, int> plugins_reverse_map, plugins_present_map, plugins_present_reverse_map;
+	fb2k::CCoreDarkModeHooks m_hooks;
 };
 
 void CMyPreferences::enum_vsti_plugins(const char* _path, puFindFile _find) {
@@ -4489,6 +4491,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM) {
 
 	busy = false;
 
+	m_hooks.AddDialogWithControls(*this);
 	return FALSE;
 }
 
@@ -4657,7 +4660,7 @@ void CMyPreferences::OnTimer(UINT_PTR nIDEvent) {
 }
 
 t_uint32 CMyPreferences::get_state() {
-	t_uint32 state = preferences_state::resettable;
+	t_uint32 state = preferences_state::resettable | preferences_state::dark_mode_supported;
 	if(HasChanged()) state |= preferences_state::changed;
 	if(busy) state |= preferences_state::busy;
 	return state;
