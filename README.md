@@ -7,7 +7,7 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Requirements
 
-* [foobar2000][https://www.foobar2000.org/download] v2.0 or later
+* [foobar2000](https://www.foobar2000.org/download) v2.0 or later
 
 ## Change Log
 
