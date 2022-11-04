@@ -18,8 +18,11 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Getting started
 
-* Double-click *foo_midi.fbk2-component*.
-* Import *foo_midi.fbk2-component* into foobar2000 using "File / Preferences / Components / Install...".
+* Double-click `foo_midi.fbk2-component`.
+
+or
+
+* Import `foo_midi.fbk2-component` into foobar2000 using "File / Preferences / Components / Install...".
 
 ## Developing
 
@@ -50,7 +53,7 @@ Create the following directory structure:
 
 ### Building
 
-Open *foo_midi.sln* with Visual Studio and build the solution.
+Open `foo_midi.sln` with Visual Studio and build the solution.
 
 ## Contributing
 
