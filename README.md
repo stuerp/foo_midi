@@ -30,9 +30,15 @@ The code builds out-of-the box with Visual Studio.
 
 ### Requirements
 
+To build the code:
+
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/)
 * [foobar2000 SDK](https://www.foobar2000.org/SDK)
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
+
+To create the deployment package:
+
+* [PowerShell 7.2](https://github.com/PowerShell/PowerShell)
 
 ### Setup
 
