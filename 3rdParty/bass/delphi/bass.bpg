@@ -55,7 +55,7 @@ netradio.exe: netradio\netradio.dpr
 plugins.exe: plugins\plugins.dpr
   $(DCC)
 
-RecordTest.exe: RecordTest\RecordTest.dpr
+rectest.exe: rectest\rectest.dpr
   $(DCC)
 
 samplevis.exe: SampleVis\samplevis.dpr

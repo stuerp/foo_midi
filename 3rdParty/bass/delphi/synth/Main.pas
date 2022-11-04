@@ -156,7 +156,7 @@ begin
   if (trim(Sf2File) <> '') then
   begin
     BASS_MIDI_FontFree(MidiFont.Font); // free old soundfont
-    MidiFont.font := BASS_MIDI_FontInit(PChar(Sf2File), 0);
+    MidiFont.font := BASS_MIDI_FontInit(PChar(Sf2File), 0 {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
     if (MidiFont.font <> 0) then
     begin
 		  MidiFont.Preset := -1; //all presets
@@ -243,6 +243,10 @@ begin
 	// initialize default output device (and measure latency)
 	if not BASS_Init(-1, 44100, BASS_DEVICE_LATENCY, 0, nil) then
 		FatalError('Can''t initialize device,');
+
+	// load optional plugins for packed soundfonts (others may be used too)
+	BASS_PluginLoad('bassflac.dll', 0);
+	BASS_PluginLoad('basswv.dll',  0);
 
 	BASS_GetInfo(BASSInfo);
   //Default buffer size = update period + 'minbuf'

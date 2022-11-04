@@ -56,6 +56,8 @@ begin
   end;
 
   St := St + #13#10#9'flags:';
+  if (di.flags and BASS_DEVICE_LOOPBACK) = BASS_DEVICE_LOOPBACK then
+    St := St + ' loopback';
   if (di.flags and BASS_DEVICE_ENABLED) = BASS_DEVICE_ENABLED then
     St := St + ' enabled';
   if (di.flags and BASS_DEVICE_DEFAULT) = BASS_DEVICE_DEFAULT then

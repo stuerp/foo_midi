@@ -5,7 +5,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "BASSMIDI test"
 FONT 8, "MS Sans Serif"
 BEGIN
-    PUSHBUTTON      "click here to open a file...",10,5,7,260,14
+    PUSHBUTTON      "Open MIDI file...",10,5,7,260,14
     CTEXT           "",11,5,24,260,8
     RTEXT           "-",24,5,40,28,8
     CONTROL         "",21,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,33,36,122,15
@@ -17,7 +17,7 @@ BEGIN
     CTEXT           "",30,7,65,217,28
     GROUPBOX        "Soundfont",-1,5,97,221,32
     CONTROL         "",41,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,10,107,160,20
-    PUSHBUTTON      "Replace",40,175,108,45,14
+    PUSHBUTTON      "Open...",40,175,108,45,14
     GROUPBOX        "Performance",-1,5,131,260,29
     LTEXT           "Voices:",-1,10,144,24,8
     CONTROL         "",50,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,35,140,140,15

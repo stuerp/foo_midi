@@ -262,7 +262,7 @@ begin
   // Play the sample at default rate, volume=50%, random pan position
 	if i >= 0 then
   begin
-    ch := BASS_SampleGetChannel(sams[i], False);
+    ch := BASS_SampleGetChannel(sams[i], 0);
     BASS_ChannelSetAttribute(ch, BASS_ATTRIB_PAN, (Random(201) - 100) / 100);
     BASS_ChannelSetAttribute(ch, BASS_ATTRIB_VOL, 0.5);
 		if not BASS_ChannelPlay(ch, False) then

@@ -498,7 +498,7 @@ End Sub
 Private Sub cmdSamplePlay_Click()
     If (lstSamples.ListIndex >= 0) Then
         Dim ch As Long
-        ch = BASS_SampleGetChannel(lstSamples.ItemData(lstSamples.ListIndex), BASSFALSE)
+        ch = BASS_SampleGetChannel(lstSamples.ItemData(lstSamples.ListIndex), 0)
         Call BASS_ChannelSetAttribute(ch, BASS_ATTRIB_VOL, 0.5)
         Call BASS_ChannelSetAttribute(ch, BASS_ATTRIB_PAN, ((201 * Rnd) - 100) / 100)
         If (BASS_ChannelPlay(ch, BASSFALSE) = 0) Then Error_ ("Can't play sample")

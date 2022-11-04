@@ -1,17 +1,25 @@
 Attribute VB_Name = "BASSMIDI"
 ' BASSMIDI 2.4 Visual Basic module
-' Copyright (c) 2006-2016 Un4seen Developments Ltd.
+' Copyright (c) 2006-2022 Un4seen Developments Ltd.
 '
 ' See the BASSMIDI.CHM file for more detailed documentation
+
+' Additional error codes returned by BASS_ErrorGetCode
+Global Const BASS_ERROR_MIDI_INCLUDE = 7000 ' SFZ include file could not be opened
 
 ' Additional BASS_SetConfig options
 Global Const BASS_CONFIG_MIDI_COMPACT = &H10400
 Global Const BASS_CONFIG_MIDI_VOICES = &H10401
 Global Const BASS_CONFIG_MIDI_AUTOFONT = &H10402
 Global Const BASS_CONFIG_MIDI_IN_PORTS = &H10404
+Global Const BASS_CONFIG_MIDI_SAMPLETHREADS = &H10406
+Global Const BASS_CONFIG_MIDI_SAMPLEMEM = &H10407
+Global Const BASS_CONFIG_MIDI_SAMPLEREAD = &H10408
+Global Const BASS_CONFIG_MIDI_SAMPLELOADING = &H1040a
 
 ' Additional BASS_SetConfigPtr options
 Global Const BASS_CONFIG_MIDI_DEFFONT = &H10403
+Global Const BASS_CONFIG_MIDI_SFZHEAD = &H10409
 
 ' Additional sync types
 Global Const BASS_SYNC_MIDI_MARK = &H10000
@@ -25,12 +33,14 @@ Global Const BASS_SYNC_MIDI_TIMESIG = &H10006
 Global Const BASS_SYNC_MIDI_KEYSIG = &H10007
 
 ' Additional BASS_MIDI_StreamCreateFile/etc flags
+Global Const BASS_MIDI_NODRUMPARAM = &H400
 Global Const BASS_MIDI_NOSYSRESET = &H800
 Global Const BASS_MIDI_DECAYEND = &H1000
 Global Const BASS_MIDI_NOFX = &H2000
 Global Const BASS_MIDI_DECAYSEEK = &H4000
 Global Const BASS_MIDI_NOCROP = &H8000
 Global Const BASS_MIDI_NOTEOFF1 = &H10000
+Global Const BASS_MIDI_ASYNC = &H400000
 Global Const BASS_MIDI_SINCINTER = &H800000
 
 ' BASS_MIDI_FontInit flags
@@ -38,6 +48,11 @@ Global Const BASS_MIDI_FONT_MEM = &H10000
 Global Const BASS_MIDI_FONT_MMAP = &H20000
 Global Const BASS_MIDI_FONT_XGDRUMS = &H40000
 Global Const BASS_MIDI_FONT_NOFX = &H80000
+Global Const BASS_MIDI_FONT_LINATTMOD = &H100000
+Global Const BASS_MIDI_FONT_LINDECVOL = &H200000
+Global Const BASS_MIDI_FONT_NORAMPIN = &H400000
+Global Const BASS_MIDI_FONT_NOLIMITS = &H800000
+Global Const BASS_MIDI_FONT_MINFX = &H1000000
 
 Type BASS_MIDI_FONT
     font As Long            ' soundfont
@@ -54,8 +69,20 @@ Type BASS_MIDI_FONTEX
     dbanklsb As Long        ' destination bank number LSB
 End Type
 
+Type BASS_MIDI_FONTEX2
+    font As Long            ' soundfont
+    spreset As Long         ' source preset number
+    sbank As Long           ' source bank number
+    dpreset As Long         ' destination preset/program number
+    dbank As Long           ' destination bank number
+    dbanklsb As Long        ' destination bank number LSB
+    minchan As Long         ' minimum channel number
+    numchan As Long         ' number of channels from minchan
+End Type
+
 ' BASS_MIDI_StreamSet/GetFonts flag
 Global Const BASS_MIDI_FONT_EX = &H1000000 ' BASS_MIDI_FONTEX
+Global Const BASS_MIDI_FONT_EX2 = &H2000000 ' BASS_MIDI_FONTEX2
 
 Type BASS_MIDI_FONTINFO
     name As Long
@@ -163,12 +190,22 @@ Global Const MIDI_EVENT_SOSTENUTO = 76
 Global Const MIDI_EVENT_MOD_PITCH = 77
 Global Const MIDI_EVENT_MOD_FILTER = 78
 Global Const MIDI_EVENT_MOD_VOLUME = 79
+Global Const MIDI_EVENT_VIBRATO_RATE = 80
+Global Const MIDI_EVENT_VIBRATO_DEPTH = 81
+Global Const MIDI_EVENT_VIBRATO_DELAY = 82
+Global Const MIDI_EVENT_MASTER_FINETUNE = 83
+Global Const MIDI_EVENT_MASTER_COARSETUNE = 84
 Global Const MIDI_EVENT_MIXLEVEL = &H10000
 Global Const MIDI_EVENT_TRANSPOSE = &H10001
 Global Const MIDI_EVENT_SYSTEMEX = &H10002
+Global Const MIDI_EVENT_SPEED = &H10004
+Global Const MIDI_EVENT_DEFDRUMS = &H10006
 
 Global Const MIDI_EVENT_END = 0
 Global Const MIDI_EVENT_END_TRACK = &H10003
+
+Global Const MIDI_EVENT_NOTES = &H20000
+Global Const MIDI_EVENT_VOICES = &H20001
 
 Global Const MIDI_SYSTEM_DEFAULT = 0
 Global Const MIDI_SYSTEM_GM1 = 1
@@ -191,6 +228,10 @@ Global Const BASS_MIDI_EVENTS_SYNC = &H1000000 ' FLAG: trigger event syncs
 Global Const BASS_MIDI_EVENTS_NORSTATUS = &H2000000 ' FLAG: no running status
 Global Const BASS_MIDI_EVENTS_CANCEL = &H4000000 ' flag: cancel pending events
 Global Const BASS_MIDI_EVENTS_TIME = &H8000000 ' flag: delta-time info is present
+Global Const BASS_MIDI_EVENTS_ABSTIME = &H10000000 ' flag: absolute time info is present
+Global Const BASS_MIDI_EVENTS_ASYNC = &H20000000 ' flag: process asynchronously
+Global Const BASS_MIDI_EVENTS_FILTER = &H40000000 ' flag: apply filtering
+Global Const BASS_MIDI_EVENTS_FLUSH = &H80000000 ' flag: flush async events
 
 ' BASS_MIDI_StreamGetChannel special channels
 Global Const BASS_MIDI_CHAN_CHORUS = -1
@@ -208,6 +249,10 @@ Global Const BASS_ATTRIB_MIDI_VOICES = &H12003
 Global Const BASS_ATTRIB_MIDI_VOICES_ACTIVE = &H12004
 Global Const BASS_ATTRIB_MIDI_STATE = &H12005
 Global Const BASS_ATTRIB_MIDI_SRC = &H12006
+Global Const BASS_ATTRIB_MIDI_KILL = &H12007
+Global Const BASS_ATTRIB_MIDI_SPEED = &H12008
+Global Const BASS_ATTRIB_MIDI_REVERB = &H12009
+Global Const BASS_ATTRIB_MIDI_VOL = &H1200A
 Global Const BASS_ATTRIB_MIDI_TRACK_VOL = &H12100 ' + track #
 
 ' Additional BASS_ChannelGetTags type
@@ -216,15 +261,25 @@ Global Const BASS_TAG_MIDI_TRACK = &H11000 ' + track #, track text : array of nu
 ' BASS_ChannelGetLength/GetPosition/SetPosition mode
 Global Const BASS_POS_MIDI_TICK = 2 ' tick position
 
+' BASS_MIDI_FontLoadEx flags
+Global Const BASS_MIDI_FONTLOAD_NOWAIT = 1 ' don't want for the samples to load
+Global Const BASS_MIDI_FONTLOAD_COMPACT = 2 ' compact samples
+Global Const BASS_MIDI_FONTLOAD_NOLOAD = 4 ' don't load (only compact)
+Global Const BASS_MIDI_FONTLOAD_TIME = 8 ' length is in milliseconds
+Global Const BASS_MIDI_FONTLOAD_KEEPDEC = 16 ' keep decoders
+
 ' BASS_MIDI_FontPack flags
 Global Const BASS_MIDI_PACK_NOHEAD = 1 ' don't send a WAV header to the encoder
 Global Const BASS_MIDI_PACK_16BIT = 2 ' discard low 8 bits of 24-bit sample data
+Global Const BASS_MIDI_PACK_48KHZ = 4 ' set encoding rate to 48000 Hz (else 44100 Hz)
 
 Type BASS_MIDI_DEVICEINFO
 	name As Long	' description
 	id As Long
 	flags As Long
 End Type
+
+Declare Function BASS_MIDI_GetVersion Lib "bassmidi.dll" () As Long
 
 Declare Function BASS_MIDI_StreamCreate Lib "bassmidi.dll" (ByVal channels As Long, ByVal flags As Long, ByVal freq As Long) As Long
 Declare Function BASS_MIDI_StreamCreateFile64 Lib "bassmidi.dll" Alias "BASS_MIDI_StreamCreateFile" (ByVal mem As Long, ByVal file As Any, ByVal offset As Long, ByVal offsethi As Long, ByVal length As Long, ByVal lengthhi As Long, ByVal flags As Long, ByVal freq As Long) As Long
@@ -241,7 +296,9 @@ Declare Function BASS_MIDI_StreamEvents Lib "bassmidi.dll" (ByVal handle As Long
 Declare Function BASS_MIDI_StreamGetEvent Lib "bassmidi.dll" (ByVal handle As Long, ByVal chan As Long, ByVal event_ As Long) As Long
 Declare Function BASS_MIDI_StreamGetEvents Lib "bassmidi.dll" (ByVal handle As Long, ByVal track As Long, ByVal filter As Long, events As Any) As Long
 Declare Function BASS_MIDI_StreamGetEventsEx Lib "bassmidi.dll" (ByVal handle As Long, ByVal track As Long, ByVal filter As Long, ByVal events As Any, ByVal start As Long, ByVal count As Long) As Long
+Declare Function BASS_MIDI_StreamGetPreset Lib "bassmidi.dll" (ByVal handle As Long, ByVal chan As Long, ByRef font As BASS_MIDI_FONT) As Long
 Declare Function BASS_MIDI_StreamGetChannel Lib "bassmidi.dll" (ByVal handle As Long, ByVal chan As Long) As Long
+Declare Function BASS_MIDI_StreamSetFilter Lib "bassmidi.dll" (ByVal handle As Long, ByVal seeking As Long, ByVal proc As Long, ByVal user As Long) As Long
 
 Declare Function BASS_MIDI_FontInit Lib "bassmidi.dll" (ByVal file As Any, ByVal flags As Long) As Long
 Declare Function BASS_MIDI_FontInitUser Lib "bassmidi.dll" (ByVal procs As Long, ByVal user As Long, ByVal flags As Long) As Long
@@ -250,11 +307,13 @@ Declare Function BASS_MIDI_FontGetInfo Lib "bassmidi.dll" (ByVal handle As Long,
 Declare Function BASS_MIDI_FontGetPresets Lib "bassmidi.dll" (ByVal handle As Long, ByRef presets As Long) As Long
 Declare Function BASS_MIDI_FontGetPreset Lib "bassmidi.dll" (ByVal handle As Long, ByVal preset As Long, ByVal bank As Long) As Long
 Declare Function BASS_MIDI_FontLoad Lib "bassmidi.dll" (ByVal handle As Long, ByVal preset As Long, ByVal bank As Long) As Long
+Declare Function BASS_MIDI_FontLoadEx Lib "bassmidi.dll" (ByVal handle As Long, ByVal preset As Long, ByVal bank As Long, ByVal length As Long, ByVal flags As Long) As Long
 Declare Function BASS_MIDI_FontUnload Lib "bassmidi.dll" (ByVal handle As Long, ByVal preset As Long, ByVal bank As Long) As Long
 Declare Function BASS_MIDI_FontCompact Lib "bassmidi.dll" (ByVal handle As Long) As Long
 Declare Function BASS_MIDI_FontPack Lib "bassmidi.dll" (ByVal handle As Long, ByVal outfile As String, ByVal encoder As String, ByVal flags As Long) As Long
 Declare Function BASS_MIDI_FontUnpack Lib "bassmidi.dll" (ByVal handle As Long, ByVal outfile As String, ByVal flags As Long) As Long
-Declare Function BASS_MIDI_FontSetVolume Lib "bassmidi.dll" (ByVal handle As Long, ByVal handle As Single) As Long
+Declare Function BASS_MIDI_FontFlags Lib "bassmidi.dll" (ByVal handle As Long, ByVal flags As Long, ByVal mask As Long) As Long
+Declare Function BASS_MIDI_FontSetVolume Lib "bassmidi.dll" (ByVal handle As Long, ByVal volume As Single) As Long
 Declare Function BASS_MIDI_FontGetVolume Lib "bassmidi.dll" (ByVal handle As Long) As Single
 
 Declare Function BASS_MIDI_ConvertEvents Lib "bassmidi.dll" (ByVal data As Long, ByVal length As Long, events As Any, ByVal count As Long, ByVal flags As Long) As Long
@@ -271,11 +330,25 @@ BASS_MIDI_StreamCreateFile = BASS_MIDI_StreamCreateFile64(mem, file, offset, 0, 
 End Function
 
 ' callback functions
+Function MIDIFILTERPROC(ByVal handle As Long, ByVal track As Long, ByRef event_ As BASS_MIDI_EVENT, ByVal seeking As Long, ByVal user As Long) As Long
+
+    'CALLBACK FUNCTION !!!
+    
+    ' Event filtering callback function.
+    ' handle : MIDI stream handle
+    ' track  : Track containing the event
+    ' event_ : The event
+    ' seeking: BASSTRUE = the event is being processed while seeking, BASSFALSE = it is being played
+    ' user   : The 'user' parameter value given when calling BASS_MIDI_StreamSetFilter
+    ' RETURN : BASSTRUE = process the event, BASSFALSE = drop the event
+
+End Function
+
 Sub MIDIINPROC(ByVal device As Long, ByVal time As Double, ByVal buffer As Long, ByVal length As Long, ByVal user As Long)
     
     'CALLBACK FUNCTION !!!
     
-    ' User MIDI input callback function
+    ' MIDI input callback function
     ' device : MIDI input device
     ' time   : Timestamp
     ' buffer : Buffer containing MIDI data

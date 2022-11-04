@@ -73,8 +73,9 @@ begin
 	if (BASS_MIDI_StreamGetFonts(0, PBASS_MIDI_FONT(@sf), 1) >= 1) then
     	fSoundfont  := sf.font;
 
-	BASS_PluginLoad('bassflac.dll', 0);                           // load optional plugins for packed soundfonts (others may be used too)
-	BASS_PluginLoad('bass_wv.dll',  0);
+     // load optional plugins for packed soundfonts (others may be used too)
+	BASS_PluginLoad('bassflac.dll', 0);
+	BASS_PluginLoad('basswv.dll',  0);
 end; {FormCreate}
 
 {--------------------------------------------------------------------------------------------------}
@@ -119,7 +120,7 @@ begin
         BASS_StreamFree(fStream); // free old stream
         lbLyrics.Caption  := '';  // clear lyrics display
 
-        fStream := BASS_MIDI_StreamCreateFile(false, PChar(FileName), 0, 0, BASS_SAMPLE_LOOP, 1);
+        fStream := BASS_MIDI_StreamCreateFile(false, PChar(FileName), 0, 0, BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
 
         if (fStream = 0) then begin
           // it ain't a MIDI
@@ -176,7 +177,7 @@ begin
       Filter  := 'Soundfonts (sf2/sf2pack)|*.sf2;*.sf2pack|All files|*.*';
       if Execute then begin
         Update;
-        sf.font := BASS_MIDI_FontInit(PChar(FileName), 0);  // open new soundfont
+        sf.font := BASS_MIDI_FontInit(PChar(FileName), 0 {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});  // open new soundfont
         if (sf.font <> 0) then begin
           sf.preset := -1;                                  // use all presets
           sf.bank := 0;                                     // use default bank(s)

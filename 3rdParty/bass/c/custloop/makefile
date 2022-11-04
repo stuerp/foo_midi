@@ -2,7 +2,7 @@ include ..\makefile.in
 
 TARGET = custloop.exe
 FLAGS += -mwindows
-LIBS = -lcomdlg32 -lgdi32
+LIBS += -lcomdlg32 -lgdi32
 
 all: $(TARGET)
 

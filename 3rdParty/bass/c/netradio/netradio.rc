@@ -2,12 +2,12 @@
 
 1000 DIALOG DISCARDABLE  200, 50, 195, 185
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "BASS internet radio tuner"
+CAPTION "BASS internet radio example"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "Presets",-1,5,2,185,45
-    LTEXT           "High quality",-1,10,15,48,8
-    LTEXT           "Low quality",-1,10,30,48,8
+    LTEXT           "High bitrate",-1,10,15,48,8
+    LTEXT           "Low bitrate",-1,10,30,48,8
     PUSHBUTTON      "1",10,60,11,20,15
     PUSHBUTTON      "1",11,60,27,20,15
     PUSHBUTTON      "2",12,86,11,20,15

@@ -2,7 +2,7 @@ include ..\makefile.in
 
 TARGET = dsptest.exe
 FLAGS += -mwindows
-LIBS = -lcomdlg32
+LIBS += -lcomdlg32
 
 all: $(TARGET)
 

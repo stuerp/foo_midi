@@ -381,9 +381,9 @@ End Sub
 
 Private Sub chkSyncInterpolation_Click()
     If (chkSyncInterpolation.value = 1) Then
-        Call BASS_ChannelFlags(stream, BASS_MIDI_SINCINTER, BASS_MIDI_SINCINTER) ' enable sinc interpolation
+        Call BASS_ChannelSetAttribute(stream, BASS_ATTRIB_MIDI_SRC, 1); ' enable sinc interpolation
     Else
-        Call BASS_ChannelFlags(stream, 0, BASS_MIDI_SINCINTER) ' disable sinc interpolation
+        Call BASS_ChannelSetAttribute(stream, BASS_ATTRIB_MIDI_SRC, 0); ' disable sinc interpolation
     End If
 End Sub
 
@@ -472,7 +472,8 @@ Private Sub slideBufferLength_Scroll()
 
     ' recreate the MIDI stream with new buffer length
     Call BASS_StreamFree(stream)
-    stream = BASS_MIDI_StreamCreate(17, IIf(chkSyncInterpolation.value = 1, BASS_MIDI_SINCINTER, 0), 1)
+    stream = BASS_MIDI_StreamCreate(17, 0, 1)
+    If (chkSyncInterpolation.value = 1) Then Call BASS_ChannelSetAttribute(stream, BASS_ATTRIB_MIDI_SRC, 1); ' enable sinc interpolation
     Call BASS_ChannelSetAttribute(stream, BASS_ATTRIB_MIDI_CPU, 75)
     Call BASS_ChannelSetSync(stream, BASS_SYNC_MIDI_EVENT Or BASS_SYNC_MIXTIME, MIDI_EVENT_PROGRAM, AddressOf ProgramEventSync, 0)
     Call BASS_MIDI_StreamEvent(stream, 0, MIDI_EVENT_SYSTEM, MIDI_SYSTEM_GS) ' send GS system reset event

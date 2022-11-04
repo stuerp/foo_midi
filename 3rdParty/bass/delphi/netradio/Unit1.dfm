@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 109
   BorderStyle = bsToolWindow
   Caption = 'BASS internet radio tuner'
-  ClientHeight = 262
+  ClientHeight = 328
   ClientWidth = 277
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -11,7 +11,6 @@ object Form1: TForm1
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -21,9 +20,16 @@ object Form1: TForm1
     Left = 0
     Top = 0
     Width = 277
-    Height = 262
+    Height = 328
     Align = alClient
     TabOrder = 0
+    object Label7: TLabel
+      Left = 16
+      Top = 79
+      Width = 35
+      Height = 13
+      Caption = 'Custom'
+    end
     object GroupBox1: TGroupBox
       Left = 8
       Top = 0
@@ -145,52 +151,13 @@ object Form1: TForm1
         OnClick = Button1Click
       end
     end
-    object GroupBox2: TGroupBox
-      Left = 8
-      Top = 76
-      Width = 265
-      Height = 101
-      Caption = 'Currently playing'
-      TabOrder = 1
-      object Label3: TLabel
-        Left = 11
-        Top = 16
-        Width = 245
-        Height = 25
-        Alignment = taCenter
-        AutoSize = False
-        ShowAccelChar = False
-        WordWrap = True
-      end
-      object Label4: TLabel
-        Left = 8
-        Top = 40
-        Width = 241
-        Height = 41
-        Alignment = taCenter
-        AutoSize = False
-        Caption = 'not playing'
-        ShowAccelChar = False
-        WordWrap = True
-      end
-      object Label5: TLabel
-        Left = 8
-        Top = 80
-        Width = 249
-        Height = 13
-        Alignment = taCenter
-        AutoSize = False
-        ShowAccelChar = False
-        WordWrap = True
-      end
-    end
     object GroupBox3: TGroupBox
       Left = 8
-      Top = 176
+      Top = 239
       Width = 265
       Height = 81
       Caption = 'Proxy server'
-      TabOrder = 2
+      TabOrder = 1
       object Label6: TLabel
         Left = 10
         Top = 40
@@ -215,6 +182,65 @@ object Form1: TForm1
         Height = 17
         Caption = 'Direct connection'
         TabOrder = 1
+      end
+    end
+    object Edit1: TEdit
+      Left = 16
+      Top = 98
+      Width = 210
+      Height = 21
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+      Text = 'http://'
+    end
+    object Button11: TButton
+      Tag = 10
+      Left = 232
+      Top = 96
+      Width = 33
+      Height = 25
+      Caption = 'open'
+      TabOrder = 3
+      OnClick = Button1Click
+    end
+    object GroupBox2: TGroupBox
+      Left = 8
+      Top = 130
+      Width = 265
+      Height = 101
+      Caption = 'Currently playing'
+      TabOrder = 4
+      object Label3: TLabel
+        Left = 11
+        Top = 16
+        Width = 245
+        Height = 25
+        Alignment = taCenter
+        AutoSize = False
+        ShowAccelChar = False
+        WordWrap = True
+      end
+      object Label4: TLabel
+        Left = 3
+        Top = 33
+        Width = 241
+        Height = 41
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'not playing'
+        ShowAccelChar = False
+        WordWrap = True
+      end
+      object Label5: TLabel
+        Left = 8
+        Top = 80
+        Width = 249
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        ShowAccelChar = False
+        WordWrap = True
       end
     end
   end

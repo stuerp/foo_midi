@@ -2,7 +2,7 @@ include ..\makefile.in
 
 TARGET = rectest.exe
 FLAGS += -mwindows
-LIBS = -lcomdlg32 -lcomctl32
+LIBS += -lcomdlg32 -lcomctl32
 
 all: $(TARGET)
 

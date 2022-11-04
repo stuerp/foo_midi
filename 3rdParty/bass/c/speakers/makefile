@@ -2,7 +2,7 @@ include ..\makefile.in
 
 TARGET = speakers.exe
 FLAGS += -mwindows
-LIBS = -lcomdlg32
+LIBS += -lcomdlg32
 
 all: $(TARGET)
 

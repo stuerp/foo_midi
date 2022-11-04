@@ -1,6 +1,6 @@
 #include "windows.h"
 
-1000 DIALOG 100, 100, 190, 215
+1000 DIALOG 100, 100, 191, 264
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "BASSMIDI synth"
 FONT 8, "MS Sans Serif"
@@ -11,25 +11,35 @@ BEGIN
     CONTROL         "1 channel",12,"Button",BS_AUTORADIOBUTTON,11,35,47,10
     CONTROL         "16 channels",13,"Button",BS_AUTORADIOBUTTON,63,35,55,10
     PUSHBUTTON      "Reset",15,135,32,45,14
-    GROUPBOX        "Keyboard input",-1,5,54,180,39
-    CTEXT           " 2 3  5 6 7  9 0  = \nQ W ER T Y UI O P[ ]",20,10,64,169,23
-    GROUPBOX        "Soundfont",-1,5,95,180,47
-    PUSHBUTTON      "no soundfont",40,11,105,168,14
-    LTEXT           "Preset:",-1,11,126,23,8
-    COMBOBOX        42,36,123,102,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Drums",44,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,125,36,10
-    GROUPBOX        "Output",-1,5,144,180,67
-    LTEXT           "Buffer:",-1,11,157,22,8
-    CONTROL         "Slider1",30,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,36,155,110,12
-    LTEXT           "",31,149,157,30,8
-    LTEXT           "Interpolation points:",-1,11,171,62,8
-    CONTROL         "2",50,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,77,171,20,10
-    CONTROL         "8",51,"Button",BS_AUTORADIOBUTTON,102,171,20,10
-    CONTROL         "16",52,"Button",BS_AUTORADIOBUTTON,127,171,24,10
-    LTEXT           "Effects:",-1,11,185,25,8
-    CONTROL         "reverb",35,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,40,185,39,10
-    CONTROL         "echo",36,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,90,185,33,10
-    CONTROL         "chorus",37,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,140,185,38,10
-    CONTROL         "flanger",38,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,40,196,39,10
-    CONTROL         "distortion",39,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,90,196,45,10
+    GROUPBOX        "Keyboard input",-1,5,54,180,57
+    CTEXT           " 2 3   5 6 7   9 0   = \nQ W E R T Y U I O P [ ]",20,10,64,169,23
+    LTEXT           "Base key:",-1,11,95,32,8
+    COMBOBOX        21,45,92,34,100,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Velocity:",-1,115,95,28,8
+    EDITTEXT        22,145,92,34,13,ES_NUMBER
+    CONTROL         "Spin1",23,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,145,92,11,12
+    GROUPBOX        "Soundfont",-1,5,113,180,59
+    PUSHBUTTON      "Open...",40,11,123,168,14
+    LTEXT           "Preset:",-1,11,144,23,8
+    COMBOBOX        42,36,141,102,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Drums",44,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,143,36,10
+    LTEXT           "Loaded:",45,11,158,100,8
+    CONTROL         "Partial preload",46,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,157,61,10
+    GROUPBOX        "Output",-1,5,174,180,85
+    LTEXT           "Interpolation points:",-1,11,187,62,8
+    CONTROL         "2",50,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,77,187,20,10
+    CONTROL         "8",51,"Button",BS_AUTORADIOBUTTON,102,187,20,10
+    CONTROL         "16",52,"Button",BS_AUTORADIOBUTTON,127,187,24,10
+    LTEXT           "Reverb:",-1,11,203,26,8
+    COMBOBOX        30,40,201,70,100,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Slider1",31,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,112,201,65,12
+    LTEXT           "Chorus:",-1,11,219,26,8
+    COMBOBOX        32,40,217,70,100,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Slider1",33,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,112,217,65,12
+    LTEXT           "DX8 Effects:",-1,11,234,41,8
+    CONTROL         "reverb",35,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,55,233,39,10
+    CONTROL         "echo",36,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,233,33,10
+    CONTROL         "chorus",37,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,140,233,38,10
+    CONTROL         "flanger",38,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,55,244,39,10
+    CONTROL         "distortion",39,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,244,45,10
 END

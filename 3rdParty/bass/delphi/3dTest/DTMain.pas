@@ -126,7 +126,7 @@ begin
   New(p);
   FillChar(p^, SizeOf(P^), 0);
   p.Channel := newchan;
-  BASS_SampleGetChannel(newchan, False); // initialize sample channel
+  BASS_SampleGetChannel(newchan, 0); // initialize sample channel
   last := sources;
   if last <> nil then
     while (last.next <> nil) do

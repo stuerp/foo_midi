@@ -1,10 +1,9 @@
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
-Project("{5A55E56E-274E-4162-8A3E-60C2A5B816FF}") = "miditest", "miditest\miditest.vcproj", "{C48A40A2-1681-4872-B837-AE27214C53BD}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "miditest", "miditest\miditest.vcxproj", "{C48A40A2-1681-4872-B837-AE27214C53BD}"
 EndProject
-Project("{5A55E56E-274E-4162-8A3E-60C2A5B816FF}") = "sf2pack", "sf2pack\sf2pack.vcproj", "{4A1E4ACD-4674-4538-B970-0EAC42AD97A6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sf2pack", "sf2pack\sf2pack.vcxproj", "{4A1E4ACD-4674-4538-B970-0EAC42AD97A6}"
 EndProject
-Project("{5A55E56E-274E-4162-8A3E-60C2A5B816FF}") = "synth", "synth\synth.vcproj", "{8C2DEFD3-84FC-4409-B4AE-D2638DA72134}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "synth", "synth\synth.vcxproj", "{8C2DEFD3-84FC-4409-B4AE-D2638DA72134}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

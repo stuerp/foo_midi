@@ -2,7 +2,7 @@
 
 1000 DIALOG DISCARDABLE  100, 100, 350, 130
 STYLE WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "BASS - simple playback test"
+CAPTION "BASS simple playback test"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "Stream",-1,5,0,110,107
@@ -11,7 +11,7 @@ BEGIN
     PUSHBUTTON      "Play",11,10,50,30,12
     PUSHBUTTON      "Stop",12,45,50,30,12
     PUSHBUTTON      "Restart",13,80,50,30,12
-    PUSHBUTTON      "Add ...",14,10,65,48,16
+    PUSHBUTTON      "Add...",14,10,65,48,16
     PUSHBUTTON      "Remove",15,62,65,48,16
     LTEXT           "global volume:",-1,10,83,46,8
     CONTROL         "Slider1",16,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 
@@ -22,7 +22,7 @@ BEGIN
     PUSHBUTTON      "Play",21,125,50,30,12
     PUSHBUTTON      "Stop",22,160,50,30,12
     PUSHBUTTON      "Restart",23,195,50,30,12
-    PUSHBUTTON      "Add ...",24,125,65,48,16
+    PUSHBUTTON      "Add...",24,125,65,48,16
     PUSHBUTTON      "Remove",25,177,65,48,16
     LTEXT           "global volume:",-1,125,83,46,8
     CONTROL         "Slider1",26,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 
@@ -31,7 +31,7 @@ BEGIN
     LISTBOX         30,240,10,100,35,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | 
                     WS_TABSTOP
     PUSHBUTTON      "Play",31,240,50,100,12
-    PUSHBUTTON      "Add ...",32,240,65,48,16
+    PUSHBUTTON      "Add...",32,240,65,48,16
     PUSHBUTTON      "Remove",33,292,65,48,16
     LTEXT           "global volume:",-1,240,83,46,8
     CONTROL         "Slider1",34,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 

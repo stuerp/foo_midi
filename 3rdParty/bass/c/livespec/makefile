@@ -2,7 +2,7 @@ include ..\makefile.in
 
 TARGET = livespec.exe
 FLAGS += -mwindows
-LIBS = -lgdi32 -lwinmm
+LIBS += -lgdi32 -lwinmm
 
 all: $(TARGET)
 

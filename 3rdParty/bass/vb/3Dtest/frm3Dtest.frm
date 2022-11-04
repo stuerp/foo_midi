@@ -421,7 +421,7 @@ Private Sub cmdAdd_Click()
         ReDim Preserve chans(chanc) As channel
         chans(chanc).channel = newchan
         lstChannels.AddItem GetFileName(DLG.filename)
-        Call BASS_SampleGetChannel(newchan, BASSFALSE) ' initialize sample channel
+        Call BASS_SampleGetChannel(newchan, 0) ' initialize sample channel
         chanc = chanc + 1
     Else
         Call Error_("Can't load file (note samples must be mono)")
