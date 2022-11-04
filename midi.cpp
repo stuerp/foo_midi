@@ -1,4 +1,4 @@
-#define MYVERSION "2.7.4"
+#define MYVERSION "2.7.4.1"
 
 // #define DXISUPPORT
 #define BASSMIDISUPPORT
@@ -7,6 +7,12 @@
 
 /*
     change log
+
+2022-11-04 18:45 UTC - stuerp
+- Fixed x86 build.
+- Updated Bass to v2.4.17.
+- Added Dark Mode support for foobar2000 v2.0.
+- Version is now 2.7.4.1
 
 2022-11-03 01:17 UTC - stuerp
 - Created x64 version compatible with foobar2000 v2.0.
