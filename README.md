@@ -68,6 +68,16 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
+v2.7.4.2, 2022-10-05, *"The Temple of VeSTa"*
+
+* Added 32-bit VST plugin support for foobar2000 v2.0. 64-bit plugins don't work yet.
+
+v2.7.4.1, 2022-10-04, *"The Dark Side"*
+
+* Added Dark Mode support for foobar2000 v2.0.
+* Fixed 32-bit build.
+* Updated Bass to v2.4.17.
+
 v2.7.4, 2022-10-03, *"Scratchin' the itch"*
 
 * Initial release of x64 version for [foobar2000](https://www.foobar2000.org/) v2.0.

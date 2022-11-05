@@ -1,7 +1,9 @@
-// vsthost.cpp : Defines the entry point for the console application.
-//
-
 #include "stdafx.h"
+
+#include "pluginterfaces/vst2.x/aeffect.h"
+#include "pluginterfaces/vst2.x/aeffectx.h"
+
+typedef AEffect* (*main_func)(audioMasterCallback audioMaster);
 
 // #define LOG_EXCHANGE
 
@@ -210,12 +212,12 @@ static VstIntPtr VSTCALLBACK audioMaster(AEffect* effect, VstInt32 opcode, VstIn
 
 		case audioMasterGetVendorString:
 			strncpy((char*)ptr, "NoWork, Inc.", 64);
-			//strncpy((char *)ptr, "YAMAHA", 64);
+			// strncpy((char *)ptr, "YAMAHA", 64);
 			break;
 
 		case audioMasterGetProductString:
 			strncpy((char*)ptr, "VSTi Host Bridge", 64);
-			//strncpy((char *)ptr, "SOL/SQ01", 64);
+			// strncpy((char *)ptr, "SOL/SQ01", 64);
 			break;
 
 		case audioMasterGetVendorVersion:
@@ -252,13 +254,15 @@ LONG __stdcall myExceptFilterProc(LPEXCEPTION_POINTERS param) {
 	if(IsDebuggerPresent()) {
 		return UnhandledExceptionFilter(param);
 	} else {
-		//DumpCrashInfo( param );
+		// DumpCrashInfo( param );
 		TerminateProcess(GetCurrentProcess(), 0);
 		return 0; // never reached
 	}
 }
 
-int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd) {
+	UNREFERENCED_PARAMETER(hInstance), UNREFERENCED_PARAMETER(hPrevInstance), UNREFERENCED_PARAMETER(lpCmdLine), UNREFERENCED_PARAMETER(nShowCmd);
+
 	int argc = 0;
 	LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 

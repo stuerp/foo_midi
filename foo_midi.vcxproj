@@ -37,6 +37,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -119,26 +120,7 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>if $(Platform) == x64 (
-    md "../bin/profile/user-components-x64/$(TargetName)"
-    copy /B /Y "$(TargetPath)" "../bin/profile/user-components-x64/$(TargetName)/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bass.dll" "../bin/profile/user-components-x64/$(TargetName)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bassmidi.dll" "../bin/profile/user-components-x64/$(TargetName)"
-
-    md "../out/$(TargetName)/x64"
-    copy /B /Y "$(TargetPath)" "../out/$(TargetName)/x64/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bass.dll" "../out/$(TargetName)/x64/"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bassmidi.dll" "../out/$(TargetName)/x64/"
-)
-if $(Platform) == Win32 (
-    md "../out/$(TargetName)"
-    copy /B /Y "$(TargetPath)" "../out/$(TargetName)/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\bass.dll" "../out/$(TargetName)/"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\bassmidi.dll" "../out/$(TargetName)/"
-)
-
-pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../out/$(TargetName)/* -DestinationPath ../out/$(TargetName).fb2k-component; }"
-</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-Package.ps1 $(TargetName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -173,26 +155,7 @@ pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../o
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>if $(Platform) == x64 (
-    md "../bin/profile/user-components-x64/$(TargetName)"
-    copy /B /Y "$(TargetPath)" "../bin/profile/user-components-x64/$(TargetName)/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bass.dll" "../bin/profile/user-components-x64/$(TargetName)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bassmidi.dll" "../bin/profile/user-components-x64/$(TargetName)"
-
-    md "../out/$(TargetName)/x64"
-    copy /B /Y "$(TargetPath)" "../out/$(TargetName)/x64/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bass.dll" "../out/$(TargetName)/x64/"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bassmidi.dll" "../out/$(TargetName)/x64/"
-)
-if $(Platform) == Win32 (
-    md "../out/$(TargetName)"
-    copy /B /Y "$(TargetPath)" "../out/$(TargetName)/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\bass.dll" "../out/$(TargetName)/"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\bassmidi.dll" "../out/$(TargetName)/"
-)
-
-pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../out/$(TargetName)/* -DestinationPath ../out/$(TargetName).fb2k-component; }"
-</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-Package.ps1 $(TargetName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -207,21 +170,12 @@ pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../o
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
-      <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./sflist;../..;./DXiClasses;./include;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <ResourceCompile>
@@ -231,35 +185,14 @@ pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../o
     <Link>
       <AdditionalOptions>/force:multiple %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>if $(Platform) == x64 (
-    md "../bin/profile/user-components-x64/$(TargetName)"
-    copy /B /Y "$(TargetPath)" "../bin/profile/user-components-x64/$(TargetName)/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bass.dll" "../bin/profile/user-components-x64/$(TargetName)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bassmidi.dll" "../bin/profile/user-components-x64/$(TargetName)"
-
-    md "../out/$(TargetName)/x64"
-    copy /B /Y "$(TargetPath)" "../out/$(TargetName)/x64/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bass.dll" "../out/$(TargetName)/x64/"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bassmidi.dll" "../out/$(TargetName)/x64/"
-)
-if $(Platform) == Win32 (
-    md "../out/$(TargetName)"
-    copy /B /Y "$(TargetPath)" "../out/$(TargetName)/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\bass.dll" "../out/$(TargetName)/"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\bassmidi.dll" "../out/$(TargetName)/"
-)
-
-pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../out/$(TargetName)/* -DestinationPath ../out/$(TargetName).fb2k-component; }"
-</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-Package.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Creating component archive...</Message>
@@ -300,28 +233,10 @@ pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../o
       </DataExecutionPrevention>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>if $(Platform) == x64 (
-    md "../bin/profile/user-components-x64/$(TargetName)"
-    copy /B /Y "$(TargetPath)" "../bin/profile/user-components-x64/$(TargetName)/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bass.dll" "../bin/profile/user-components-x64/$(TargetName)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bassmidi.dll" "../bin/profile/user-components-x64/$(TargetName)"
-
-    md "../out/$(TargetName)/x64"
-    copy /B /Y "$(TargetPath)" "../out/$(TargetName)/x64/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bass.dll" "../out/$(TargetName)/x64/"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\x64\bassmidi.dll" "../out/$(TargetName)/x64/"
-)
-if $(Platform) == Win32 (
-    md "../out/$(TargetName)"
-    copy /B /Y "$(TargetPath)" "../out/$(TargetName)/$(TargetName)$(TargetExt)"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\bass.dll" "../out/$(TargetName)/"
-    copy /B /Y "$(SolutionDir)3rdParty\bass\bassmidi.dll" "../out/$(TargetName)/"
-)
-
-pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../out/$(TargetName)/* -DestinationPath ../out/$(TargetName).fb2k-component; }"
-</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-Package.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Creating component archive...</Message>
@@ -489,6 +404,7 @@ pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../o
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CustomBuild>
     <ClInclude Include="OPNPlayer.h" />
+    <ClInclude Include="patrons.h" />
     <ClInclude Include="resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCPlayer.h" />
@@ -557,9 +473,20 @@ pwsh.exe -NoLogo -NoProfile -Command "&amp; { Compress-Archive -Force -Path ../o
     <ProjectReference Include="3rdParty\scc\emidi_alpha\emidi.vcxproj">
       <Project>{69719831-d965-4aed-91c1-70c4ff01945d}</Project>
     </ProjectReference>
+    <ProjectReference Include="vsthost\vsthost.vcxproj">
+      <Project>{5d666f11-5e76-4653-8b5b-32988e4907a0}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".clang-format" />
+    <None Include=".gitignore" />
+    <None Include="Build-Package.ps1">
+      <DeploymentContent>false</DeploymentContent>
+    </None>
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

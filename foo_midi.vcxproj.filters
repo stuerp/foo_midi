@@ -118,6 +118,7 @@
     <ClInclude Include="fmopl3lib\opl3class.h" />
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="OPNPlayer.h" />
+    <ClInclude Include="patrons.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="DXiPlayer.h" />
@@ -149,5 +150,11 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="Build-Package.ps1" />
+    <None Include=".clang-format" />
+    <None Include=".gitignore" />
   </ItemGroup>
 </Project>

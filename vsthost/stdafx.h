@@ -5,6 +5,8 @@
 
 #pragma once
 
+#pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
+
 #include "targetver.h"
 
 #include <stdio.h>
@@ -12,8 +14,12 @@
 
 // TODO: reference additional headers your program requires here
 
-#include <commctrl.h>
+#define WIN32_LEAN_AND_MEAN
+
 #include <windows.h>
+#include <shellapi.h>
+#include <objbase.h>
+#include <commctrl.h>
 
 #include <stdint.h>
 
@@ -27,35 +33,6 @@
 #endif
 #ifndef max
 #define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-
-// #define VST_SDK_2_3
-#ifdef __GNUC__
-#include "../../../../vstsdk2.4/pluginterfaces/vst2.x/aeffect.h"
-#include "../../../../vstsdk2.4/pluginterfaces/vst2.x/aeffectx.h"
-#else
-#ifdef VST_SDK_2_3
-#include "..\\..\\..\\..\\vstsdk2.3\\source\\common\\aeffect.h"
-#include "..\\..\\..\\..\\vstsdk2.3\\source\\common\\aeffectx.h"
-#else
-#include "..\\..\\..\\..\\vstsdk2.4\\pluginterfaces\\vst2.x\\aeffect.h"
-#include "..\\..\\..\\..\\vstsdk2.4\\pluginterfaces\\vst2.x\\aeffectx.h"
-#endif
-#endif
-
-typedef AEffect *(*main_func)(audioMasterCallback audioMaster);
-
-#ifdef VST_SDK_2_3
-struct VstMidiSysexEvent {
-	long type; // kVstSysexType
-	long byteSize; // 24
-	long deltaFrames;
-	long flags; // none defined yet
-	long dumpBytes; // byte size of sysexDump
-	long resvd1; // zero
-	char *sysexDump;
-	long resvd2; // zero
-};
 #endif
 
 template <typename T>

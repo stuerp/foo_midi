@@ -266,19 +266,31 @@ static void ProcessPendingMessages() {
 
 uint32_t VSTiPlayer::process_read_bytes_pass(void *out, uint32_t size) {
 	OVERLAPPED ol = {};
+
 	ol.hEvent = hReadEvent;
+
 	ResetEvent(hReadEvent);
-	DWORD bytesDone;
+
+	DWORD BytesRead;
+
 	SetLastError(NO_ERROR);
-	if(ReadFile(hChildStd_OUT_Rd, out, size, &bytesDone, &ol)) return bytesDone;
-	if(::GetLastError() != ERROR_IO_PENDING) return 0;
+
+	if(ReadFile(hChildStd_OUT_Rd, out, size, &BytesRead, &ol))
+		return BytesRead;
+
+	if(::GetLastError() != ERROR_IO_PENDING)
+		return 0;
 
 	const HANDLE handles[1] = { hReadEvent };
+
 	SetLastError(NO_ERROR);
+
 	DWORD state;
+
 #ifdef MESSAGE_PUMP
 	for(;;) {
 		state = MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
+
 		if(state == WAIT_OBJECT_0 + _countof(handles))
 			ProcessPendingMessages();
 		else
@@ -288,7 +300,8 @@ uint32_t VSTiPlayer::process_read_bytes_pass(void *out, uint32_t size) {
 	state = WaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE);
 #endif
 
-	if(state == WAIT_OBJECT_0 && GetOverlappedResult(hChildStd_OUT_Rd, &ol, &bytesDone, TRUE)) return bytesDone;
+	if(state == WAIT_OBJECT_0 && GetOverlappedResult(hChildStd_OUT_Rd, &ol, &BytesRead, TRUE))
+		return BytesRead;
 
 #if _WIN32_WINNT >= 0x600
 	CancelIoEx(hChildStd_OUT_Rd, &ol);
@@ -300,15 +313,21 @@ uint32_t VSTiPlayer::process_read_bytes_pass(void *out, uint32_t size) {
 }
 
 void VSTiPlayer::process_read_bytes(void *out, uint32_t size) {
-	if(process_running() && size) {
+	if(size == 0)
+		return;
+
+	if(process_running()) {
 		uint8_t *ptr = (uint8_t *)out;
 		uint32_t done = 0;
+
 		while(done < size) {
 			uint32_t delta = process_read_bytes_pass(ptr + done, size - done);
+
 			if(delta == 0) {
 				memset(out, 0xFF, size);
 				break;
 			}
+
 			done += delta;
 		}
 	} else
@@ -317,16 +336,23 @@ void VSTiPlayer::process_read_bytes(void *out, uint32_t size) {
 
 uint32_t VSTiPlayer::process_read_code() {
 	uint32_t code;
+
 	process_read_bytes(&code, sizeof(code));
+
 	return code;
 }
 
 void VSTiPlayer::process_write_bytes(const void *in, uint32_t size) {
-	if(process_running()) {
-		if(size == 0) return;
-		DWORD bytesWritten;
-		if(!WriteFile(hChildStd_IN_Wr, in, size, &bytesWritten, NULL) || bytesWritten < size) process_terminate();
-	}
+	if(size == 0)
+		return;
+
+	if(!process_running())
+		return;
+
+	DWORD BytesWritten;
+
+	if(!WriteFile(hChildStd_IN_Wr, in, size, &BytesWritten, NULL) || (BytesWritten < size))
+		process_terminate();
 }
 
 void VSTiPlayer::process_write_code(uint32_t code) {
@@ -468,20 +494,42 @@ void VSTiPlayer::render(audio_sample *out, unsigned long count) {
 
 	if(code != 0) {
 		process_terminate();
+
 		memset(out, 0, sizeof(audio_sample) * count * uNumOutputs);
+
 		return;
 	}
+
+	float * tmp = NULL;
+
+	if (uPluginPlatform == 32)
+		tmp = (float *)calloc(4096 * uNumOutputs, sizeof(float));
 
 	while(count) {
 		unsigned count_to_do = 4096 * uNumOutputs;
 
-		if(count_to_do > count) count_to_do = count;
+		if(count_to_do > count)
+			count_to_do = count;
 
-		process_read_bytes(out, sizeof(audio_sample) * count_to_do * uNumOutputs);
+		if (uPluginPlatform == 32)
+		{
+			if (tmp != NULL)
+			{
+				process_read_bytes(tmp, sizeof(float) * count_to_do * uNumOutputs);
+
+				for (int i = 0; i < count_to_do * uNumOutputs; i++)
+					out[i] = (audio_sample)tmp[i];
+			}
+		}
+		else
+			process_read_bytes(out, sizeof(audio_sample) * count_to_do * uNumOutputs);
 
 		out += count_to_do * uNumOutputs;
 		count -= count_to_do;
 	}
+
+	if (tmp)
+		free(tmp), tmp = NULL;
 }
 
 unsigned int VSTiPlayer::send_event_needs_time() {
