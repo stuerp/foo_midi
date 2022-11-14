@@ -137,7 +137,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./sflist;../..;./DXiClasses;./include;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
@@ -467,8 +467,8 @@
     <ProjectReference Include="3rdParty\midi_processing\midi_processing.vcxproj">
       <Project>{4573e081-973b-47f0-a67d-551761ba1678}</Project>
     </ProjectReference>
-    <ProjectReference Include="3rdParty\munt\mt32emu\mt32emu_msvc7.vcxproj">
-      <Project>{063a149d-e48c-499b-b13f-7a70c140a662}</Project>
+    <ProjectReference Include="3rdParty\munt\mt32emu\mt32emu.vcxproj">
+      <Project>{e1a15ce7-2670-4e0b-b4e9-e6e36bb4a579}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\scc\emidi_alpha\emidi.vcxproj">
       <Project>{69719831-d965-4aed-91c1-70c4ff01945d}</Project>
