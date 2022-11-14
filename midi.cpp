@@ -1,4 +1,4 @@
-#define MYVERSION "2.7.4.2-alpha"
+#define MYVERSION "2.7.4.2"
 
 // #define DXISUPPORT
 #define BASSMIDISUPPORT
@@ -7,6 +7,10 @@
 
 /*
     change log
+
+2022-11-14 19:00 UTC - stuerp
+- Fixed VST support for foobar2000 v1.6.x and foobar2000 v2.0, both for the 32-bit and 64-bit executables and the plugins.
+- Version is now 2.7.4.2
 
 2022-11-04 18:45 UTC - stuerp
 - Fixed x86 build.
@@ -5204,10 +5208,14 @@ static initquit_factory_t<initquit_midi> g_initquit_midi_factory;
 
 #include "patrons.h"
 
-DECLARE_COMPONENT_VERSION("MIDI Player", MYVERSION, "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.\n\n"
+DECLARE_COMPONENT_VERSION("MIDI Player", MYVERSION, "foo_midi " MYVERSION "\n"
+                                                    "\n"
+                                                    "Special thanks go to DEATH's cat.\n\nEmu de MIDI alpha - Copyright (C) Mitsutaka Okazaki 2004\n\nVST Plug-In Technology by Steinberg.\n\n"
                                                     "My main man left the Crimson Lance to bring you the Secret Sauce!\n\n"
                                                     "https://www.patreon.com/kode54"
+
                                                     "\n\n" MY_PATRONS "\n\n"
+
                                                     "Notice for json-parser:\n"
                                                     "Copyright (C) 2012, 2013, 2014 James McLaughlin et al.  All rights reserved.\n"
                                                     "https://github.com/udp/json-parser\n"
@@ -5235,6 +5243,7 @@ DECLARE_COMPONENT_VERSION("MIDI Player", MYVERSION, "Special thanks go to DEATH'
                                                     "OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF\n"
                                                     "SUCH DAMAGE.\n"
                                                     "\n\n"
+
                                                     "Notice for json-builder:\n"
                                                     "Copyright(C) 2014 James McLaughlin.All rights reserved.\n"
                                                     "https://github.com/udp/json-builder\n"
@@ -5262,6 +5271,7 @@ DECLARE_COMPONENT_VERSION("MIDI Player", MYVERSION, "Special thanks go to DEATH'
                                                     "OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF\n"
                                                     "SUCH DAMAGE.\n"
                                                     "\n\n"
+
                                                     "Notice for sflist loader:\n"
                                                     "Copyright(C) 2017 Christopher Snowhill.All rights reserved.\n"
                                                     "https://github.com/kode54/sflist\n"

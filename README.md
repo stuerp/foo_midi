@@ -7,14 +7,18 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Features
 
-* Supports foobar2000 2.0
-* 32-bit and 64-bit version
+* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .LDS).
+* Supports several synthesizers, several of which do not require any additional files to play back music. The bundled synthesizers which do not require additional files may sound rather basic, though.
+* Supports FluidSynth SoundFont (.sf2) based synthesizer, including support for the newer compressed format. (.sf3). SoundFonts may be loaded in a simple, or even complex setup, using either basic .sflist text files encoded in UTF-8 format, but for now, it only supports a bare list of files.
+* Supports 32 and 64-bit VST instruments.
 * Supports dark mode.
+
+* Compatible with foobar 1.6.3 and foobar2000 2.0 or later (32 and 64-bit version).
 
 ## Requirements
 
 * Microsoft Windows 10 or later
-* [foobar2000](https://www.foobar2000.org/download) v2.0 or later
+* [foobar2000](https://www.foobar2000.org/download) v1.6.3 or later
 
 ## Getting started
 
@@ -47,12 +51,14 @@ Create the following directory structure:
     3rdParty
         WTL10_10320
     bin
+        x86
     foo_midi
     out
     sdk
 
 * `3rdParty/WTL10_10320` contains WTL 10.0.10320.
-* `bin` contains a portable version of foobar2000 for debugging purposes.
+* `bin` contains a portable version of foobar2000 64-bit for debugging purposes.
+* `bin/x86` contains a portable version of foobar2000 32-bit for debugging purposes.
 * `foo_midi` contains the [Git](https://github.com/stuerp/foo_midi) repository.
 * `out` receives a deployable version of the component.
 * `sdk` contains the foobar2000 SDK.
@@ -68,17 +74,18 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.7.4.2, 2022-10-05, *"The Temple of VeSTa"*
+v2.7.4.2, 2022-11-14, *"The Temple of VeSTa"*
 
-* Added 32-bit VST plugin support for foobar2000 v2.0. 64-bit plugins don't work yet.
+* Added 32-bit and 64-bit VST instrument support for foobar2000 v2.0.
+* Fixed 64-bit VST instrument support for foobar2000 v1.6.3.
 
-v2.7.4.1, 2022-10-04, *"The Dark Side"*
+v2.7.4.1, 2022-11-04, *"The Dark Side"*
 
 * Added Dark Mode support for foobar2000 v2.0.
 * Fixed 32-bit build.
 * Updated Bass to v2.4.17.
 
-v2.7.4, 2022-10-03, *"Scratchin' the itch"*
+v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 * Initial release of x64 version for [foobar2000](https://www.foobar2000.org/) v2.0.
 
