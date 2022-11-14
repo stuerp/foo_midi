@@ -49,11 +49,13 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
+    <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
+    <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -113,14 +115,13 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalOptions>/force:multiple %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-Package.ps1 $(TargetName) $(Platform) $(OutputPath)</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -134,20 +135,19 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./sflist;../..;./DXiClasses;./include;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalOptions>/force:multiple %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/x64/bass.lib;./3rdParty/bass/c/x64/bassmidi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -155,7 +155,7 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-Package.ps1 $(TargetName) $(Platform) $(OutputPath)</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -192,7 +192,7 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-Package.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Creating component archive...</Message>
@@ -236,7 +236,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-Package.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Creating component archive...</Message>
@@ -473,9 +473,6 @@
     <ProjectReference Include="3rdParty\scc\emidi_alpha\emidi.vcxproj">
       <Project>{69719831-d965-4aed-91c1-70c4ff01945d}</Project>
     </ProjectReference>
-    <ProjectReference Include="vsthost\vsthost.vcxproj">
-      <Project>{5d666f11-5e76-4653-8b5b-32988e4907a0}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
@@ -483,9 +480,7 @@
   <ItemGroup>
     <None Include=".clang-format" />
     <None Include=".gitignore" />
-    <None Include="Build-Package.ps1">
-      <DeploymentContent>false</DeploymentContent>
-    </None>
+    <None Include="Build-FB2KComponent.ps1" />
     <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

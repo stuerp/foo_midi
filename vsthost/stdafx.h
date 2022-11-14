@@ -2,7 +2,6 @@
 // or project specific include files that are used frequently, but
 // are changed infrequently
 //
-
 #pragma once
 
 #pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
@@ -36,30 +35,42 @@
 #endif
 
 template <typename T>
-static void append_be(std::vector<uint8_t> &out, const T &value) {
-	union {
-		T original;
-		uint8_t raw[sizeof(T)];
-	} carriage;
-	carriage.original = value;
-	for(unsigned i = 0; i < sizeof(T); ++i) {
-		out.push_back(carriage.raw[sizeof(T) - 1 - i]);
-	}
+static void append_be(std::vector<uint8_t> & out, const T & value)
+{
+    union
+    {
+        T original;
+        uint8_t raw[sizeof(T)];
+    } carriage;
+
+    carriage.original = value;
+
+    for (unsigned i = 0; i < sizeof(T); ++i)
+    {
+        out.push_back(carriage.raw[sizeof(T) - 1 - i]);
+    }
 }
 
 template <typename T>
-static void retrieve_be(T &out, const uint8_t *&in, unsigned &size) {
-	if(size < sizeof(T)) return;
+static void retrieve_be(T & out, const uint8_t *& in, unsigned & size)
+{
+    if (size < sizeof(T))
+        return;
 
-	size -= sizeof(T);
+    size -= sizeof(T);
 
-	union {
-		T original;
-		uint8_t raw[sizeof(T)];
-	} carriage;
-	for(unsigned i = 0; i < sizeof(T); ++i) {
-		carriage.raw[sizeof(T) - 1 - i] = *in++;
-	}
+    union
+    {
+        T original;
+        uint8_t raw[sizeof(T)];
+    } carriage;
 
-	out = carriage.original;
+    carriage.raw[0] = 0;
+
+    for (unsigned i = 0; i < sizeof(T); ++i)
+    {
+        carriage.raw[sizeof(T) - 1 - i] = *in++;
+    }
+
+    out = carriage.original;
 }

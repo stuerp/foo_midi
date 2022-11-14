@@ -4,7 +4,7 @@
 .DESCRIPTION
     
 .EXAMPLE
-    C:\PS> .\Build-Package.ps1
+    C:\PS> .\Build-FB2KComponent.ps1
 .OUTPUTS
     
 #>
@@ -56,16 +56,16 @@ if ($Platform -eq 'x64')
         Copy-Item "3rdParty/bass/x64/bassmidi.dll" -Destination "$PackagePath";
     }
 
-    if (Test-Path -Path "$OutputPath/../../Release/vsthost.exe")
+    if (Test-Path -Path "$OutputPath/../../Release/vsthost32.exe")
     {
-        Write-Host "Copying 32-bit vsthost.exe to `"$PackagePath/vsthost32.exe`"...";
-        Copy-Item "$OutputPath/../../Release//vsthost.exe" -Destination "$PackagePath/vsthost32.exe";
+        Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/vsthost32.exe`"...";
+        Copy-Item "$OutputPath/../../Release//vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
     }
 
-    if (Test-Path -Path "$OutputPath/vsthost.exe")
+    if (Test-Path -Path "$OutputPath/vsthost64.exe")
     {
-        Write-Host "Copying 64-bit vsthost.exe to `"$PackagePath/vsthost64.exe`"...";
-        Copy-Item "$OutputPath/vsthost.exe" -Destination "$PackagePath/vsthost64.exe";
+        Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/vsthost64.exe`"...";
+        Copy-Item "$OutputPath/vsthost64.exe" -Destination "$PackagePath/vsthost64.exe";
     }
 
     Copy-Item "$PackagePath\*" "../bin/profile/user-components-x64/$TargetName";
@@ -93,16 +93,16 @@ elseif ($Platform -eq 'Win32')
         Copy-Item "3rdParty/bass/bassmidi.dll" -Destination "$PackagePath";
     }
 
-    if (Test-Path -Path "$OutputPath/vsthost.exe")
+    if (Test-Path -Path "$OutputPath/vsthost32.exe")
     {
-        Write-Host "Copying 32-bit vsthost.exe to `"$PackagePath/vsthost32.exe`"...";
-        Copy-Item "$OutputPath/vsthost.exe" -Destination "$PackagePath/vsthost32.exe";
+        Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/vsthost32.exe`"...";
+        Copy-Item "$OutputPath/vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
     }
 
-    if (Test-Path -Path "$OutputPath/../x64/Release/vsthost.exe")
+    if (Test-Path -Path "$OutputPath/../x64/Release/vsthost64.exe")
     {
-        Write-Host "Copying 64-bit vsthost.exe to `"$PackagePath/vsthost64.exe`"...";
-        Copy-Item "$OutputPath/../x64/Release/vsthost.exe" -Destination "$PackagePath/vsthost64.exe";
+        Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/vsthost64.exe`"...";
+        Copy-Item "$OutputPath/../x64/Release/vsthost64.exe" -Destination "$PackagePath/vsthost64.exe";
     }
 }
 else
