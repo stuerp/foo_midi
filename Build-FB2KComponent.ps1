@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    
+    Builds the foobar2000 component package.
 .DESCRIPTION
-    
+    This script will be executed unconditionally during the Post-build step. It copies all the necessary files to an output directory and creates the zip archive.
 .EXAMPLE
     C:\PS> .\Build-FB2KComponent.ps1
 .OUTPUTS
-    
+    foo_midi.fb2k-component
 #>
 
 [CmdletBinding()]
@@ -60,15 +60,30 @@ if ($Platform -eq 'x64')
     {
         Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/vsthost32.exe`"...";
         Copy-Item "$OutputPath/../../Release//vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
+
+        Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/x64/vsthost32.exe`"...";
+        Copy-Item "$OutputPath/../../Release//vsthost32.exe" -Destination "$PackagePath/x64/vsthost32.exe";
     }
 
     if (Test-Path -Path "$OutputPath/vsthost64.exe")
     {
         Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/vsthost64.exe`"...";
         Copy-Item "$OutputPath/vsthost64.exe" -Destination "$PackagePath/vsthost64.exe";
+
+        Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/../vsthost64.exe`"...";
+        Copy-Item "$OutputPath/vsthost64.exe" -Destination "$PackagePath/../vsthost64.exe";
     }
 
-    Copy-Item "$PackagePath\*" "../bin/profile/user-components-x64/$TargetName";
+    if (Test-Path -Path "../bin")
+    {
+        Write-Host "Installing component in foobar2000 32-bit...";
+
+        Copy-Item "$PackagePath/../*" "../bin/x86/profile/user-components/$TargetName" -Force;
+
+        Write-Host "Installing component in foobar2000 64-bit...";
+
+        Copy-Item "$PackagePath/*" "../bin/profile/user-components-x64/$TargetName" -Force;
+    }
 }
 elseif ($Platform -eq 'Win32')
 {
@@ -77,7 +92,7 @@ elseif ($Platform -eq 'Win32')
     if (!(Test-Path -Path $PackagePath))
     {
         Write-Host "Creating directory `"$PackagePath`"...";
-        $null = New-Item -Path '../out/' -Name $TargetName -ItemType 'directory';
+        $null = New-Item -Path '../out/' -Name "$TargetName/x64" -ItemType 'directory';
     }
 
     if (Test-Path -Path "$OutputPath/$TargetFileName")
@@ -97,12 +112,29 @@ elseif ($Platform -eq 'Win32')
     {
         Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/vsthost32.exe`"...";
         Copy-Item "$OutputPath/vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
+
+        Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/x64/vsthost32.exe`"...";
+        Copy-Item "$OutputPath/vsthost32.exe" -Destination "$PackagePath/x64/vsthost32.exe";
     }
 
     if (Test-Path -Path "$OutputPath/../x64/Release/vsthost64.exe")
     {
         Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/vsthost64.exe`"...";
         Copy-Item "$OutputPath/../x64/Release/vsthost64.exe" -Destination "$PackagePath/vsthost64.exe";
+
+        Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/x64/vsthost64.exe`"...";
+        Copy-Item "$OutputPath/../x64/Release/vsthost64.exe" -Destination "$PackagePath/x64/vsthost64.exe";
+    }
+
+    if (Test-Path -Path "../bin")
+    {
+        Write-Host "Installing component in foobar2000 32-bit...";
+
+        Copy-Item "$PackagePath/*" "../bin/x86/profile/user-components/$TargetName" -Force;
+
+        Write-Host "Installing component in foobar2000 64-bit...";
+
+        Copy-Item "$PackagePath/x64/*" "../bin/profile/user-components-x64/$TargetName" -Force;
     }
 }
 else
