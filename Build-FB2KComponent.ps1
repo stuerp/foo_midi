@@ -62,7 +62,7 @@ if ($Platform -eq 'x64')
         Copy-Item "$OutputPath/../../Release//vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
 
         Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/x64/vsthost32.exe`"...";
-        Copy-Item "$OutputPath/../../Release//vsthost32.exe" -Destination "$PackagePath/x64/vsthost32.exe";
+        Copy-Item "$OutputPath/../../Release//vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
     }
 
     if (Test-Path -Path "$OutputPath/vsthost64.exe")
