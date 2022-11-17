@@ -9,7 +9,7 @@ class VSTiPlayer : public MIDIPlayer
 {
 public:
     // zero variables
-    VSTiPlayer();
+    VSTiPlayer() noexcept;
 
     // close, unload
     virtual ~VSTiPlayer();
@@ -18,10 +18,10 @@ public:
     bool LoadVST(const char * path);
 
     // must be loaded for the following to work
-    void getVendorString(std::string & out);
-    void getProductString(std::string & out);
-    long getVendorVersion();
-    long getUniqueID();
+    void getVendorString(std::string & out) const;
+    void getProductString(std::string & out) const;
+    long getVendorVersion() const noexcept;
+    long getUniqueID() const noexcept;
 
     // configuration
     void getChunk(std::vector<uint8_t> & out);
@@ -32,7 +32,7 @@ public:
     void displayEditorModal();
 
     // setup
-    unsigned getChannelCount();
+    unsigned getChannelCount() noexcept;
 
 protected:
     virtual unsigned int send_event_needs_time() noexcept override;
@@ -50,16 +50,18 @@ private:
     unsigned test_plugin_platform();
 
     bool process_create();
-    void process_terminate();
-    bool process_running();
-    uint32_t process_read_code();
-    void process_read_bytes(void * buffer, uint32_t size);
-    uint32_t process_read_bytes_pass(void * buffer, uint32_t size);
-    void process_write_code(uint32_t code);
-    void process_write_bytes(const void * buffer, uint32_t size);
+    void process_terminate() noexcept;
+    bool process_running() noexcept;
 
-    std::string sPlugin;
-    unsigned uPluginPlatform;
+    uint32_t process_read_code() noexcept;
+    void process_read_bytes(void * buffer, uint32_t size) noexcept;
+    uint32_t process_read_bytes_pass(void * buffer, uint32_t size) noexcept;
+
+    void process_write_code(uint32_t code) noexcept;
+    void process_write_bytes(const void * buffer, uint32_t size) noexcept;
+
+    std::string _PluginPathName;
+    unsigned _PluginPlatform;
 
     bool bInitialized;
     bool bTerminating;
@@ -71,15 +73,17 @@ private:
     HANDLE hChildStd_OUT_Rd;
     HANDLE hChildStd_OUT_Wr;
 
-    char * sName;
-    char * sVendor;
-    char * sProduct;
-    uint32_t uVendorVersion;
-    uint32_t uUniqueId;
+    char * _Name;
+    char * _Vendor;
+    char * _Product;
+    uint32_t _VendorVersion;
+    uint32_t _UniqueId;
 
-    unsigned uNumOutputs;
+    unsigned _ChannelCount;
 
-    std::vector<uint8_t> blChunk;
+    std::vector<uint8_t> _Chunk;
+
+    float * _VSTBuffer;
 };
 
 #endif
