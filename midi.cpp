@@ -1,4 +1,4 @@
-#define MYVERSION "2.7.4.2"
+#define MYVERSION "2.7.4.3"
 
 // #define DXISUPPORT
 #define BASSMIDISUPPORT
@@ -7,6 +7,10 @@
 
 /*
     change log
+
+2022-xx-xx 19:00 UTC - stuerp
+- Re-added missing BASS libraries.
+- Version is now 2.7.4.3
 
 2022-11-14 19:00 UTC - stuerp
 - Fixed VST support for foobar2000 v1.6.x and foobar2000 v2.0, both for the 32-bit and 64-bit executables and the plugins.

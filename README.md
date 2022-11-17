@@ -13,12 +13,12 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 * Supports 32 and 64-bit VST instruments.
 * Supports dark mode.
 
-* Compatible with foobar 1.6.3 and foobar2000 2.0 or later (32 and 64-bit version).
+* Compatible with foobar2000 1.6.13 and foobar2000 2.0 or later (32 and 64-bit version).
 
 ## Requirements
 
-* Microsoft Windows 10 or later
-* [foobar2000](https://www.foobar2000.org/download) v1.6.3 or later
+* Microsoft Windows 10 or later.
+* [foobar2000](https://www.foobar2000.org/download) v1.6.13 or later. ![foobar2000](https://www.foobar2000.org/button-small.png)
 
 ## Getting started
 
@@ -74,10 +74,14 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
+v2.7.4.3, 2022-11-xx, *""*
+
+* Re-added missing BASS libraries.
+
 v2.7.4.2, 2022-11-14, *"The Temple of VeSTa"*
 
 * Added 32-bit and 64-bit VST instrument support for foobar2000 v2.0.
-* Fixed 64-bit VST instrument support for foobar2000 v1.6.3.
+* Fixed 64-bit VST instrument support for foobar2000 v1.6.13.
 
 v2.7.4.1, 2022-11-04, *"The Dark Side"*
 
@@ -91,7 +95,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 ## Acknowledgements / Credits
 
-* Peter Pawlowski, for the  [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
+* Peter Pawlowski, for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
 * [kode54](https://gitlab.com/kode54), for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
 
 ## Links

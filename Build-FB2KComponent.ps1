@@ -53,7 +53,11 @@ if ($Platform -eq 'x64')
     {
         Write-Host "Copying BASS libaries to `"$PackagePath`"...";
         Copy-Item "3rdParty/bass/x64/bass.dll" -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/x64/bass_mpc.dll" -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/x64/bassflac.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/x64/bassmidi.dll" -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/x64/bassopus.dll" -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/x64/basswv.dll" -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "$OutputPath/../../Release/vsthost32.exe")
@@ -105,7 +109,11 @@ elseif ($Platform -eq 'Win32')
     {
         Write-Host "Copying BASS libaries to `"$PackagePath`"...";
         Copy-Item "3rdParty/bass/bass.dll" -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/bass_mpc.dll" -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/bassflac.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/bassmidi.dll" -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/bassopus.dll" -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/basswv.dll" -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "$OutputPath/vsthost32.exe")
