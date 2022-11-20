@@ -2,7 +2,7 @@
 
 #define NOMINMAX
 
-#include <foobar2000.h>
+#pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 
 // #define LOG_EXCHANGE
 
@@ -206,7 +206,7 @@ bool VSTiPlayer::process_create()
         const size_t slash = CommandLine.find_last_of('\\');
 
         if (slash != std::string::npos)
-            CommandLine.erase(CommandLine.begin() + slash + 1, CommandLine.end());
+            CommandLine.erase(CommandLine.begin() + (const __int64)(slash + 1), CommandLine.end());
 
         CommandLine += (_PluginPlatform == 64) ? "vsthost64.exe" : "vsthost32.exe";
         CommandLine += "\" \"";
@@ -348,7 +348,7 @@ void VSTiPlayer::process_terminate() noexcept
     hChildStd_OUT_Rd = NULL;
     hChildStd_OUT_Wr = NULL;
 
-    initialized = false;
+    _IsInitialized = false;
 }
 
 bool VSTiPlayer::process_running() noexcept
@@ -488,12 +488,12 @@ void VSTiPlayer::getProductString(std::string & out) const
 
 long VSTiPlayer::getVendorVersion() const noexcept
 {
-    return _VendorVersion;
+    return (long)_VendorVersion;
 }
 
 long VSTiPlayer::getUniqueID() const noexcept
 {
-    return _UniqueId;
+    return (long)_UniqueId;
 }
 
 void VSTiPlayer::getChunk(std::vector<uint8_t> & out)
@@ -577,7 +577,7 @@ bool VSTiPlayer::startup()
         return false;
 
     if (_Chunk.size())
-        setChunk(&_Chunk[0], _Chunk.size());
+        setChunk(&_Chunk[0], (unsigned long)_Chunk.size());
 
     process_write_code(5);
     process_write_code(sizeof(uint32_t));
@@ -588,7 +588,7 @@ bool VSTiPlayer::startup()
     if (code != 0)
         process_terminate();
 
-    initialized = true;
+    _IsInitialized = true;
 
     setFilterMode(mode, reverb_chorus_disabled);
 
@@ -613,11 +613,11 @@ void VSTiPlayer::send_event(uint32_t b)
 
 void VSTiPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
 {
-    const uint32_t size_plus_port = (size & 0xFFFFFF) | (port << 24);
+    const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
 
     process_write_code(8);
     process_write_code(size_plus_port);
-    process_write_bytes(event, size);
+    process_write_bytes(event, (uint32_t)size);
 
     const uint32_t code = process_read_code();
 
@@ -639,12 +639,12 @@ void VSTiPlayer::send_event_time(uint32_t b, unsigned int time)
 
 void VSTiPlayer::send_sysex_time(const uint8_t * event, size_t size, size_t port, unsigned int time)
 {
-    const uint32_t size_plus_port = (size & 0xFFFFFF) | (port << 24);
+    const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
 
     process_write_code(11);
     process_write_code(size_plus_port);
     process_write_code(time);
-    process_write_bytes(event, size);
+    process_write_bytes(event, (uint32_t)size);
 
     const uint32_t code = process_read_code();
 
@@ -679,7 +679,7 @@ void VSTiPlayer::render(audio_sample * out, unsigned long count)
         {
             process_read_bytes(_VSTBuffer, ToDo * _ChannelCount * sizeof(float));
 
-            for (int i = 0; i < ToDo * _ChannelCount; i++)
+            for (unsigned i = 0; i < ToDo * _ChannelCount; i++)
                 out[i] = (audio_sample) _VSTBuffer[i];
         }
 

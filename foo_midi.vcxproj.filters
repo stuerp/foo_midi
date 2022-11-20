@@ -114,7 +114,6 @@
     <ClInclude Include="synthlib_doom\inst\dmxopl.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="config.h" />
     <ClInclude Include="fmopl3lib\opl3class.h" />
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="OPNPlayer.h" />

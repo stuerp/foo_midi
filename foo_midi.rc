@@ -1,53 +1,13 @@
-// Microsoft Visual C++ generated resource script.
-//
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 2 resource.
-//
 #include "winres.h"
-
-/////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
-/////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
-
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE  
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE  
-BEGIN
-    "#include ""winres.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE  
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
 
 IDD_CONFIG DIALOGEX 0, 0, 334, 286
 STYLE DS_SETFONT | WS_CHILD
@@ -106,8 +66,8 @@ BEGIN
 END
 
 VS_VERSION_INFO versioninfo
-fileversion     2,7,4,2
-productversion  2,7,4,2
+fileversion     2,7,4,3
+productversion  2,7,4,3
 fileflagsmask   0x3FL
 #ifdef _DEBUG
 fileflags       VS_FF_DEBUG
@@ -124,12 +84,12 @@ filesubtype     VFT2_UNKNOWN
         {
             VALUE "CompanyName", "LoSno.co"
             VALUE "FileDescription", "A foobar2000 component"
-            VALUE "FileVersion", "2.7.4.2"
+            VALUE "FileVersion", "2.7.4.3"
             VALUE "InternalName", "foo_midi"
             VALUE "LegalCopyright", "Copyright (C) 2022 Christopher Snowhill, Peter Stuer"
             VALUE "OriginalFilename", "foo_midi.dll"
             VALUE "ProductName", "foo_midi"
-            VALUE "ProductVersion", "2.7.4.2"
+            VALUE "ProductVersion", "2.7.4.3"
         }
     }
 
@@ -139,54 +99,9 @@ filesubtype     VFT2_UNKNOWN
     }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO
-BEGIN
-    IDD_CONFIG, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 327
-        VERTGUIDE, 13
-        VERTGUIDE, 54
-        VERTGUIDE, 57
-        VERTGUIDE, 60
-        VERTGUIDE, 176
-        VERTGUIDE, 188
-        VERTGUIDE, 237
-        VERTGUIDE, 240
-        VERTGUIDE, 318
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 279
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// AFX_DIALOG_LAYOUT
-//
-
 IDD_CONFIG AFX_DIALOG_LAYOUT
-BEGIN
+{
     0
-END
+}
 
 #endif    // English (United States) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-#ifndef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 3 resource.
-//
-
-
-/////////////////////////////////////////////////////////////////////////////
-#endif    // not APSTUDIO_INVOKED

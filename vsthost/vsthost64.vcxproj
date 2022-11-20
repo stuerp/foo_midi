@@ -102,7 +102,7 @@
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalIncludeDirectories>../3rdParty/vstsdk</AdditionalIncludeDirectories>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
-      <ExternalWarningLevel>Level4</ExternalWarningLevel>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <SDLCheck>true</SDLCheck>
     </ClCompile>

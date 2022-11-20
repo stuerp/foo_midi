@@ -17,7 +17,7 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Requirements
 
-* Microsoft Windows 10 or later.
+* Tested on Microsoft Windows 10 or later.
 * [foobar2000](https://www.foobar2000.org/download) v1.6.13 or later. ![foobar2000](https://www.foobar2000.org/button-small.png)
 
 ## Getting started
@@ -74,9 +74,12 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.7.4.3, 2022-11-xx, *""*
+v2.7.4.3, 2022-11-20, *"Returning to BASS."*
 
 * Re-added missing BASS libraries.
+* Re-added recompiled versions of scpipe32 and scpipe64.
+* Started fixing compiler warnings.
+* No added functionality.
 
 v2.7.4.2, 2022-11-14, *"The Temple of VeSTa"*
 

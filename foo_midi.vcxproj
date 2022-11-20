@@ -374,7 +374,6 @@
   <ItemGroup>
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="BMPlayer.h" />
-    <ClInclude Include="config.h" />
     <ClInclude Include="DXiProxy.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

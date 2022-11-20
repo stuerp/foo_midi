@@ -1,6 +1,9 @@
 #ifndef __VSTiPlayer_h__
 #define __VSTiPlayer_h__
 
+#include <CppCoreCheck/Warnings.h>
+#pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
+
 #include "MIDIPlayer.h"
 
 typedef void * HANDLE;
@@ -65,6 +68,7 @@ private:
 
     bool bInitialized;
     bool bTerminating;
+
     HANDLE hProcess;
     HANDLE hThread;
     HANDLE hReadEvent;
