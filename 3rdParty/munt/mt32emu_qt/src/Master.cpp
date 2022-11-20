@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include "Master.h"
 #include "MasterClock.h"
 #include "MidiSession.h"
+#include "MidiPropertiesDialog.h"
 
 #ifdef WITH_WINMM_AUDIO_DRIVER
 #include "audiodrv/WinMMAudioDriver.h"
@@ -36,6 +37,9 @@
 #endif
 #ifdef WITH_PULSE_AUDIO_DRIVER
 #include "audiodrv/PulseAudioDriver.h"
+#endif
+#ifdef WITH_JACK_AUDIO_DRIVER
+#include "audiodrv/JACKAudioDriver.h"
 #endif
 #ifdef WITH_PORT_AUDIO_DRIVER
 #include "audiodrv/PortAudioDriver.h"
@@ -54,6 +58,10 @@
 #include "mididrv/CoreMidiDriver.h"
 #else
 #include "mididrv/OSSMidiPortDriver.h"
+#endif
+
+#ifdef WITH_JACK_MIDI_DRIVER
+#include "mididrv/JACKMidiDriver.h"
 #endif
 
 static const int ACTUAL_SETTINGS_VERSION = 2;
@@ -125,6 +133,12 @@ Master::~Master() {
 		midiDriver = NULL;
 	}
 
+#ifdef WITH_JACK_MIDI_DRIVER
+	jackMidiDriver->stop();
+	delete jackMidiDriver;
+	jackMidiDriver = NULL;
+#endif
+
 	QMutableListIterator<SynthRoute *> synthRouteIt(synthRoutes);
 	while (synthRouteIt.hasNext()) {
 		delete synthRouteIt.next();
@@ -162,6 +176,9 @@ void Master::initAudioDrivers() {
 #ifdef WITH_PULSE_AUDIO_DRIVER
 	audioDrivers.append(new PulseAudioDriver(this));
 #endif
+#ifdef WITH_JACK_AUDIO_DRIVER
+	audioDrivers.append(new JACKAudioDriver(this));
+#endif
 #ifdef WITH_PORT_AUDIO_DRIVER
 	audioDrivers.append(new PortAudioDriver(this));
 #endif
@@ -181,12 +198,20 @@ void Master::initMidiDrivers() {
 #else
 	midiDriver = new OSSMidiPortDriver(this);
 #endif
+
+#ifdef WITH_JACK_MIDI_DRIVER
+	jackMidiDriver = new JACKMidiDriver(this);
+#endif
 }
 
 void Master::startMidiProcessing() {
 	if (midiDriver != NULL) {
 		midiDriver->start();
 	}
+
+#ifdef WITH_JACK_MIDI_DRIVER
+	jackMidiDriver->start();
+#endif
 }
 
 Master *Master::getInstance() {
@@ -196,75 +221,242 @@ Master *Master::getInstance() {
 void Master::showCommandLineHelp() {
 	QString appName = QFileInfo(QCoreApplication::arguments().at(0)).fileName();
 	QMessageBox::information(NULL, "Information",
-		"Command line format:\n"
-		"	" + appName + " [option...] [<command> file...]\n"
-		"\n"
-		"Options:\n"
-		"-profile <profile name>\n"
-		"	override default synth profile with specified profile\n"
-		"	during this run only.\n"
-		"-max_sessions <number of sessions>\n"
-		"	exit after this number of MIDI sessions are finished.\n"
-		"\n"
-		"Commands:\n"
-		"play <SMF file...>\n"
-		"	enqueue specified standard MIDI files into the internal\n"
-		"	MIDI player for playback and start playing.\n"
-		"convert <output file> <SMF file...>\n"
-		"	convert specified standard MIDI files to a WAV/RAW wave\n"
-		"	output file and exit.\n"
+		"<h3>Command line format:</h3>"
+		"<pre><code>" + appName + " [option...] [&lt;command&gt; [parameters...]]</code></pre>"
+		"<h3>Options:</h3>"
+		"<p><code>-profile &lt;profile-name&gt;</code></p>"
+		"<p>override default synth profile with specified profile during this run only.</p>"
+		"<p><code>-max_sessions &lt;number of sessions&gt;</code></p>"
+		"<p>exit after this number of MIDI sessions are finished.</p>"
+#ifdef WITH_JACK_MIDI_DRIVER
+		"<p><code>-jack_midi_clients &lt;number of MIDI ports&gt;</code></p>"
+		"<p>create the specified number of JACK MIDI ports that may be connected to any synth.</p>"
+		"<p><code>-jack_sync_clients &lt;number of synchronous clients&gt;</code></p>"
+		"<p>create the specified number of synchronous JACK clients, each of which consists of a dedicated synth,"
+		" a MIDI input port (exclusive) and a couple of audio output ports.</p>"
+#endif
+		"<h3>Commands:</h3>"
+		"<p><code>play &lt;SMF file...&gt;</code></p>"
+		"<p>enqueue specified standard MIDI files into the internal MIDI player for playback and start playing.</p>"
+		"<p><code>convert &lt;output file&gt; &lt;SMF file...&gt;</code></p>"
+		"<p>convert specified standard MIDI files to a WAV/RAW wave output file and exit.</p>"
+		"<p><code>reset &lt;scope&gt;</code></p>"
+		"<p>restore settings within the defined scope to their factory defaults. The scope parameter may be one of:</p>"
+		"<ul>"
+		"<li><code>all</code>   - all settings, including any configured synth profiles;</li>"
+		"<li><code>no-profiles</code> - all settings, except configured synth profiles;</li>"
+		"<li><code>profiles</code> - delete all configured synth profiles;</li>"
+		"<li><code>audio</code> - reset the default audio device.</li>"
+		"</ul>"
+		"<p><code>connect_midi &lt;MIDI port name...&gt;</code></p>"
+		"<p>attempts to create one or more MIDI ports with the specified name(s) using the system MIDI driver. On Windows,"
+		" opens available MIDI input devices with names that contain (case-insensitively) one of the specified port names.</p>"
 	);
 }
 
-void Master::processCommandLine(QStringList args) {
+bool Master::processCommandLine(QStringList args) {
 	int argIx = 1;
 	QString command = args.at(argIx++);
 	while (command.startsWith('-')) {
 		if (QString::compare(command, "-profile", Qt::CaseInsensitive) == 0) {
-			if (args.count() > argIx) {
-				QString profile = args.at(argIx++);
-				if (enumSynthProfiles().contains(profile, Qt::CaseInsensitive)) {
-					synthProfileName = profile;
-				} else {
-					QMessageBox::warning(NULL, "Error", "The profile name specified in command line is invalid.\nOption \"-profile\" ignored.");
-				}
-			} else {
-				QMessageBox::warning(NULL, "Error", "The profile name must be specified in command line with \"-profile\" option.");
-				showCommandLineHelp();
-			}
+			handleCLIOptionProfile(args, argIx);
 		} else if (QString::compare(command, "-max_sessions", Qt::CaseInsensitive) == 0) {
-			if (args.count() > argIx) {
-				maxSessions = args.at(argIx++).toUInt();
-				if (maxSessions == 0) QMessageBox::warning(NULL, "Error", "The maximum number of sessions specified in command line is invalid.\nOption \"-max_sessions\" ignored.");
-			} else {
-				QMessageBox::warning(NULL, "Error", "The maximum number of sessions must be specified in command line with \"-max_sessions\" option.");
-				showCommandLineHelp();
-			}
+			handleCLIOptionMaxSessions(args, argIx);
+#ifdef WITH_JACK_MIDI_DRIVER
+		} else if (QString::compare(command, "-jack_midi_clients", Qt::CaseInsensitive) == 0) {
+			handleCLIOptionJackMidiClients(args, argIx);
+		} else if (QString::compare(command, "-jack_sync_clients", Qt::CaseInsensitive) == 0) {
+			handleCLIOptionJackSyncClients(args, argIx);
+#endif
 		} else {
 			QMessageBox::warning(NULL, "Error", "Illegal command line option " + command + " specified.");
 			showCommandLineHelp();
 		}
-		if (args.count() == argIx) return;
+		if (args.count() == argIx) return true;
 		command = args.at(argIx++);
 	}
-	if (args.count() == argIx) {
-		QMessageBox::warning(NULL, "Error", "The file list must be specified in command line with a command.");
-		showCommandLineHelp();
-		return;
-	}
-	QStringList files = args.mid(argIx);
 	if (QString::compare(command, "play", Qt::CaseInsensitive) == 0) {
-		emit playMidiFiles(files);
+		handleCLICommandPlay(args, argIx);
 	} else if (QString::compare(command, "convert", Qt::CaseInsensitive) == 0) {
-		if (args.count() > (argIx + 1)) {
-			emit convertMidiFiles(files);
-		} else {
-			QMessageBox::warning(NULL, "Error", "The file list must be specified in command line with " + command + " command.");
-			showCommandLineHelp();
-		}
+		handleCLICommandConvert(args, argIx);
+	} else if (QString::compare(command, "reset", Qt::CaseInsensitive) == 0) {
+		return handleCLICommandReset(args, argIx);
+	} else if (QString::compare(command, "connect_midi", Qt::CaseInsensitive) == 0) {
+		handleCLIConnectMidi(args, argIx);
 	} else {
 		QMessageBox::warning(NULL, "Error", "Illegal command " + command + " specified in command line.");
 		showCommandLineHelp();
+	}
+	return true;
+}
+
+void Master::handleCLIOptionProfile(const QStringList &args, int &argIx) {
+	if (args.count() == argIx) {
+		QMessageBox::warning(NULL, "Error", "The profile name must be specified in command line with \"-profile\" option.");
+		showCommandLineHelp();
+		return;
+	}
+	QString profile = args.at(argIx++);
+	if (enumSynthProfiles().contains(profile, Qt::CaseInsensitive)) {
+		synthProfileName = profile;
+	} else {
+		QMessageBox::warning(NULL, "Error", "The profile name specified in command line is invalid.\nOption \"-profile\" ignored.");
+	}
+}
+
+void Master::handleCLIOptionMaxSessions(const QStringList &args, int &argIx) {
+	if (args.count() == argIx) {
+		QMessageBox::warning(NULL, "Error", "The maximum number of sessions must be specified in command line\n"
+			"with \"-max_sessions\" option.");
+		showCommandLineHelp();
+		return;
+	}
+	maxSessions = args.at(argIx++).toUInt();
+	if (maxSessions == 0) QMessageBox::warning(NULL, "Error", "The maximum number of sessions specified in command line is invalid.\n"
+		"Option \"-max_sessions\" ignored.");
+}
+
+#ifdef WITH_JACK_MIDI_DRIVER
+
+void Master::handleCLIOptionJackMidiClients(const QStringList &args, int &argIx) {
+	if (args.count() == argIx) {
+		QMessageBox::warning(NULL, "Error", "The number of JACK MIDI clients must be specified in command line\n"
+			"with \"-jack_midi_clients\" option.");
+		showCommandLineHelp();
+		return;
+	}
+	int ports = args.at(argIx++).toInt();
+	if (ports <= 0) {
+		QMessageBox::warning(NULL, "Error", "The number of JACK MIDI clients specified in command line is invalid.\n"
+			"Option \"-jack_midi_clients\" ignored.");
+		return;
+	}
+	if (ports > 99) {
+		QMessageBox::warning(NULL, "Error", "The number of JACK MIDI clients specified in command line is too big.\n"
+			"Option \"-jack_midi_clients\" ignored.");
+		return;
+	}
+	startPinnedSynthRoute();
+	for (int i = 0; i < ports; i++) createJACKMidiPort(false);
+}
+
+void Master::handleCLIOptionJackSyncClients(const QStringList &args, int &argIx) {
+	if (args.count() == argIx) {
+		QMessageBox::warning(NULL, "Error", "The number of JACK sync clients must be specified in command line\n"
+			"with \"-jack_sync_clients\" option.");
+		showCommandLineHelp();
+		return;
+	}
+	int ports = args.at(argIx++).toInt();
+	if (ports <= 0) {
+		QMessageBox::warning(NULL, "Error", "The number of JACK sync clients specified in command line is invalid.\n"
+			"Option \"-jack_sync_clients\" ignored.");
+		return;
+	}
+	if (ports > 99) {
+		QMessageBox::warning(NULL, "Error", "The number of JACK sync clients specified in command line is too big.\n"
+			"Option \"-jack_sync_clients\" ignored.");
+		return;
+	}
+	for (int i = 0; i < ports; i++) createJACKMidiPort(true);
+}
+
+#endif
+
+void Master::handleCLICommandPlay(const QStringList &args, int &argIx) {
+	if (args.count() == argIx) {
+		QMessageBox::warning(NULL, "Error", "The file list must be specified in command line with play command.");
+		showCommandLineHelp();
+		return;
+	}
+	emit playMidiFiles(args.mid(argIx));
+}
+
+void Master::handleCLICommandConvert(const QStringList &args, int &argIx) {
+	if (args.count() > (argIx + 1)) {
+		emit convertMidiFiles(args.mid(argIx));
+		return;
+	}
+	QMessageBox::warning(NULL, "Error", "The file list must be specified in command line with convert command.");
+	showCommandLineHelp();
+}
+
+bool Master::handleCLICommandReset(const QStringList &args, int &argIx) {
+	if (args.count() != (argIx + 1)) {
+		QMessageBox::warning(NULL, "Error", "The settings scope must be specified in command line with reset command.");
+		showCommandLineHelp();
+		return true;
+	}
+	QString scope = args.at(argIx);
+	if (QString::compare(scope, "all", Qt::CaseInsensitive) == 0) {
+		settings->clear();
+		qDebug() << "All settings reset";
+	} else if (QString::compare(scope, "no-profiles", Qt::CaseInsensitive) == 0) {
+		settings->remove("Master");
+		settings->remove("Audio");
+		settings->remove("FloatingDisplay");
+		qDebug() << "All settings except synth profiles reset";
+	} else if (QString::compare(scope, "profiles", Qt::CaseInsensitive) == 0) {
+		settings->remove("Profiles");
+		qDebug() << "Synth profiles reset";
+	} else if (QString::compare(scope, "audio", Qt::CaseInsensitive) == 0) {
+		settings->remove("Master/DefaultAudioDriver");
+		settings->remove("Master/DefaultAudioDevice");
+		settings->remove("Audio");
+		qDebug() << "Audio devices settings reset";
+	} else {
+		QMessageBox::warning(NULL, "Error", "The settings scope specified in command line is invalid.\n"
+			"Command reset ignored.");
+		showCommandLineHelp();
+		return true;
+	}
+	QMessageBox::information(NULL, "Information", "Requested settings reset completed.\n"
+		"Please, restart the application.");
+	return false;
+}
+
+void Master::handleCLIConnectMidi(const QStringList &args, int &argIx) {
+	if (args.count() == argIx) {
+		QMessageBox::warning(NULL, "Error", "The MIDI port list must be specified in command line with connect_midi command.");
+		showCommandLineHelp();
+		return;
+	}
+	if (!midiDriver->canCreatePort()) {
+		QMessageBox::warning(NULL, "Error", "The MIDI driver does not support creation of MIDI ports.");
+		return;
+	}
+
+	startPinnedSynthRoute();
+	QStringList portNames = args.mid(argIx);
+	portNames.removeDuplicates();
+
+	if (MidiDriver::PortNamingPolicy_RESTRICTED == midiDriver->getPortNamingPolicy()) {
+		QStringList knownPortNames;
+		midiDriver->getNewPortNameHint(knownPortNames);
+		for (int knownPortIndex = 0; knownPortIndex < knownPortNames.size(); knownPortIndex++) {
+			const QString &knownPortName = knownPortNames.at(knownPortIndex);
+			foreach (const QString portName, portNames) {
+				if (knownPortName.contains(portName, Qt::CaseInsensitive)) {
+					createMidiPort(knownPortIndex, knownPortName);
+					break;
+				}
+			}
+			if (!midiDriver->canCreatePort()) break;
+		}
+		return;
+	}
+
+	if (MidiDriver::PortNamingPolicy_UNIQUE == midiDriver->getPortNamingPolicy()) {
+		QStringList knownPortNames;
+		midiDriver->getNewPortNameHint(knownPortNames);
+		foreach (const QString knownPortName, knownPortNames) {
+			portNames.removeOne(knownPortName);
+		}
+	}
+
+	foreach (const QString portName, portNames) {
+		createMidiPort(-1, portName);
+		if (!midiDriver->canCreatePort()) break;
 	}
 }
 
@@ -326,28 +518,28 @@ const QStringList Master::enumSynthProfiles() const {
 	return profiles;
 }
 
-const QString Master::getROMPathName(const QDir &romDir, QString romFileName) {
-	QString pathName = QDir::toNativeSeparators(romDir.absolutePath());
-	return pathName + QDir::separator() + romFileName;
+const QByteArray Master::getROMPathNameLocal(const QDir &romDir, const QString romFileName) {
+	return QDir::toNativeSeparators(romDir.absoluteFilePath(romFileName)).toLocal8Bit();
 }
 
 void Master::findROMImages(const SynthProfile &synthProfile, const MT32Emu::ROMImage *&controlROMImage, const MT32Emu::ROMImage *&pcmROMImage) const {
-	if (controlROMImage != NULL && pcmROMImage != NULL) return;
 	const MT32Emu::ROMImage *synthControlROMImage = NULL;
 	const MT32Emu::ROMImage *synthPCMROMImage = NULL;
-	if (audioFileWriterSynth != NULL) {
-		audioFileWriterSynth->getROMImages(controlROMImage, pcmROMImage);
-		if (controlROMImage == NULL) controlROMImage = synthControlROMImage;
-		if (pcmROMImage == NULL) controlROMImage = synthPCMROMImage;
-	}
-	foreach (SynthRoute *synthRoute, synthRoutes) {
+	for (int synthRouteIx = -1; synthRouteIx < synthRoutes.size(); synthRouteIx++) {
 		if (controlROMImage != NULL && pcmROMImage != NULL) return;
 		SynthProfile profile;
-		synthRoute->getSynthProfile(profile);
+		if (synthRouteIx == -1) {
+			if (audioFileWriterSynth == NULL) continue;
+			audioFileWriterSynth->getSynthProfile(profile);
+			audioFileWriterSynth->getROMImages(synthControlROMImage, synthPCMROMImage);
+		} else {
+			SynthRoute *synthRoute = synthRoutes.at(synthRouteIx);
+			synthRoute->getSynthProfile(profile);
+			synthRoute->getROMImages(synthControlROMImage, synthPCMROMImage);
+		}
 		if (synthProfile.romDir != profile.romDir) continue;
-		synthRoute->getROMImages(synthControlROMImage, synthPCMROMImage);
-		if (controlROMImage == NULL && synthProfile.controlROMFileName == profile.controlROMFileName) controlROMImage = synthControlROMImage;
-		if (pcmROMImage == NULL && synthProfile.pcmROMFileName == profile.pcmROMFileName) pcmROMImage = synthPCMROMImage;
+		if (controlROMImage == NULL && synthProfile.controlROMFileName == profile.controlROMFileName && synthProfile.controlROMFileName2 == profile.controlROMFileName2) controlROMImage = synthControlROMImage;
+		if (pcmROMImage == NULL && synthProfile.pcmROMFileName == profile.pcmROMFileName && synthProfile.pcmROMFileName2 == profile.pcmROMFileName2) pcmROMImage = synthPCMROMImage;
 	}
 }
 
@@ -359,22 +551,23 @@ void Master::freeROMImages(const MT32Emu::ROMImage *&controlROMImage, const MT32
 	const MT32Emu::ROMImage *synthPCMROMImage = NULL;
 	if (audioFileWriterSynth != NULL) {
 		audioFileWriterSynth->getROMImages(synthControlROMImage, synthPCMROMImage);
-		controlROMInUse = controlROMInUse || (synthControlROMImage == controlROMImage);
-		pcmROMInUse = pcmROMInUse || (synthPCMROMImage == pcmROMImage);
+		controlROMInUse = synthControlROMImage == controlROMImage;
+		pcmROMInUse = synthPCMROMImage == pcmROMImage;
+		if (controlROMInUse && pcmROMInUse) return;
 	}
 	foreach (SynthRoute *synthRoute, synthRoutes) {
-		if (controlROMInUse && pcmROMInUse) break;
 		synthRoute->getROMImages(synthControlROMImage, synthPCMROMImage);
 		controlROMInUse = controlROMInUse || (synthControlROMImage == controlROMImage);
 		pcmROMInUse = pcmROMInUse || (synthPCMROMImage == pcmROMImage);
+		if (controlROMInUse && pcmROMInUse) return;
 	}
 	if (!controlROMInUse && controlROMImage != NULL) {
-		delete controlROMImage->getFile();
+		if (controlROMImage->isFileUserProvided()) delete controlROMImage->getFile();
 		MT32Emu::ROMImage::freeROMImage(controlROMImage);
 		controlROMImage = NULL;
 	}
 	if (!pcmROMInUse && pcmROMImage != NULL) {
-		delete pcmROMImage->getFile();
+		if (pcmROMImage->isFileUserProvided()) delete pcmROMImage->getFile();
 		MT32Emu::ROMImage::freeROMImage(pcmROMImage);
 		pcmROMImage = NULL;
 	}
@@ -412,7 +605,9 @@ void Master::loadSynthProfile(SynthProfile &synthProfile, QString name) {
 	QString romPath = settings->value("romDir", "").toString();
 	synthProfile.romDir.setPath(romPath.isEmpty() ? getDefaultROMSearchPath(): romPath);
 	synthProfile.controlROMFileName = settings->value("controlROM", "MT32_CONTROL.ROM").toString();
+	synthProfile.controlROMFileName2 = settings->value("controlROM2", "").toString();
 	synthProfile.pcmROMFileName = settings->value("pcmROM", "MT32_PCM.ROM").toString();
+	synthProfile.pcmROMFileName2 = settings->value("pcmROM2", "").toString();
 	synthProfile.emuDACInputMode = (MT32Emu::DACInputMode)settings->value("emuDACInputMode", MT32Emu::DACInputMode_NICE).toInt();
 	synthProfile.midiDelayMode = (MT32Emu::MIDIDelayMode)settings->value("midiDelayMode", MT32Emu::MIDIDelayMode_DELAY_SHORT_MESSAGES_ONLY).toInt();
 	synthProfile.analogOutputMode = (MT32Emu::AnalogOutputMode)settings->value("analogOutputMode", MT32Emu::AnalogOutputMode_ACCURATE).toInt();
@@ -434,6 +629,9 @@ void Master::loadSynthProfile(SynthProfile &synthProfile, QString name) {
 	synthProfile.reversedStereoEnabled = settings->value("reversedStereoEnabled", false).toBool();
 	synthProfile.engageChannel1OnOpen = settings->value("engageChannel1OnOpen", false).toBool();
 	synthProfile.niceAmpRamp = settings->value("niceAmpRamp", true).toBool();
+	synthProfile.nicePanning = settings->value("nicePanning", false).toBool();
+	synthProfile.nicePartialMixing = settings->value("nicePartialMixing", false).toBool();
+	synthProfile.displayCompatibilityMode = DisplayCompatibilityMode(settings->value("displayCompatibilityMode", DisplayCompatibilityMode_DEFAULT).toInt());
 	settings->endGroup();
 }
 
@@ -442,7 +640,9 @@ void Master::storeSynthProfile(const SynthProfile &synthProfile, QString name) c
 	settings->beginGroup("Profiles/" + name);
 	settings->setValue("romDir", synthProfile.romDir.absolutePath());
 	settings->setValue("controlROM", synthProfile.controlROMFileName);
+	settings->setValue("controlROM2", synthProfile.controlROMFileName2);
 	settings->setValue("pcmROM", synthProfile.pcmROMFileName);
+	settings->setValue("pcmROM2", synthProfile.pcmROMFileName2);
 	settings->setValue("emuDACInputMode", synthProfile.emuDACInputMode);
 	settings->setValue("midiDelayMode", synthProfile.midiDelayMode);
 	settings->setValue("analogOutputMode", synthProfile.analogOutputMode);
@@ -459,6 +659,9 @@ void Master::storeSynthProfile(const SynthProfile &synthProfile, QString name) c
 	settings->setValue("reversedStereoEnabled", synthProfile.reversedStereoEnabled);
 	settings->setValue("engageChannel1OnOpen", synthProfile.engageChannel1OnOpen);
 	settings->setValue("niceAmpRamp", synthProfile.niceAmpRamp);
+	settings->setValue("nicePanning", synthProfile.nicePanning);
+	settings->setValue("nicePartialMixing", synthProfile.nicePartialMixing);
+	settings->setValue("displayCompatibilityMode", synthProfile.displayCompatibilityMode);
 	settings->endGroup();
 }
 
@@ -474,8 +677,9 @@ void Master::setPinned(SynthRoute *synthRoute) {
 }
 
 void Master::startPinnedSynthRoute() {
-	if (settings->value("Master/startPinnedSynthRoute", false).toBool())
+	if (settings->value("Master/startPinnedSynthRoute", false).toBool()) {
 		setPinned(startSynthRoute());
+	}
 }
 
 SynthRoute *Master::startSynthRoute() {
@@ -489,7 +693,7 @@ SynthRoute *Master::startSynthRoute() {
 			synthRoute->setAudioDevice(audioDevice);
 			synthRoute->open();
 			synthRoutes.append(synthRoute);
-			emit synthRouteAdded(synthRoute, audioDevice);
+			emit synthRouteAdded(synthRoute, audioDevice, true);
 		}
 	}
 	return synthRoute;
@@ -524,8 +728,8 @@ void Master::createMidiSession(MidiSession **returnVal, MidiDriver *midiDriver, 
 
 void Master::deleteMidiSession(MidiSession *midiSession) {
 	if ((maxSessions > 0) && (--maxSessions == 0)) {
-		qDebug() << "Exitting due to maximum number of sessions finished";
-		maxSessionsFinished();
+		qDebug() << "Exiting due to maximum number of sessions finished";
+		emit maxSessionsFinished();
 	}
 	SynthRoute *synthRoute = midiSession->getSynthRoute();
 	synthRoute->removeMidiSession(midiSession);
@@ -542,19 +746,37 @@ bool Master::canCreateMidiPort() {
 }
 
 bool Master::canDeleteMidiPort(MidiSession *midiSession) {
+#ifdef WITH_JACK_MIDI_DRIVER
+	if (jackMidiDriver->canDeletePort(midiSession)) return true;
+#endif
 	return midiDriver->canDeletePort(midiSession);
 }
 
-bool Master::canSetMidiPortProperties(MidiSession *midiSession) {
-	return midiDriver->canSetPortProperties(midiSession);
+bool Master::canReconnectMidiPort(MidiSession *midiSession) {
+	return midiDriver->canReconnectPort(midiSession);
 }
 
-void Master::createMidiPort(MidiPropertiesDialog *mpd, SynthRoute *synthRoute) {
-	QString portName = midiDriver->getNewPortName(mpd);
+void Master::configureMidiPropertiesDialog(MidiPropertiesDialog &mpd) {
+	MidiDriver::PortNamingPolicy portNamingPolicy = midiDriver->getPortNamingPolicy();
+	mpd.setMidiPortListEnabled(portNamingPolicy != MidiDriver::PortNamingPolicy_UNIQUE);
+	mpd.setMidiPortNameEditorEnabled(portNamingPolicy != MidiDriver::PortNamingPolicy_RESTRICTED);
+}
+
+void Master::createMidiPort(MidiPropertiesDialog &mpd, SynthRoute *synthRoute) {
+	QStringList knownPortNames;
+	QString portNameHint = midiDriver->getNewPortNameHint(knownPortNames);
+	mpd.setMidiList(knownPortNames);
+	mpd.setMidiPortName(portNameHint);
+	if (mpd.exec() != QDialog::Accepted) return;
+	QString portName = mpd.getMidiPortName();
 	if (portName.isEmpty()) return;
+	createMidiPort(mpd.getCurrentMidiPortIndex(), portName, synthRoute);
+}
+
+void Master::createMidiPort(int portIx, const QString &portName, SynthRoute *synthRoute) {
 	if (synthRoute == NULL) synthRoute = startSynthRoute();
 	MidiSession *midiSession = new MidiSession(this, midiDriver, portName, synthRoute);
-	if (midiDriver->createPort(mpd, midiSession)) {
+	if (midiDriver->createPort(portIx, portName, midiSession)) {
 		synthRoute->addMidiSession(midiSession);
 	} else {
 		deleteMidiSession(midiSession);
@@ -562,12 +784,27 @@ void Master::createMidiPort(MidiPropertiesDialog *mpd, SynthRoute *synthRoute) {
 }
 
 void Master::deleteMidiPort(MidiSession *midiSession) {
+#ifdef WITH_JACK_MIDI_DRIVER
+	if (jackMidiDriver->canDeletePort(midiSession)) {
+		jackMidiDriver->deletePort(midiSession);
+		deleteMidiSession(midiSession);
+		return;
+	}
+#endif
 	midiDriver->deletePort(midiSession);
 	deleteMidiSession(midiSession);
 }
 
-void Master::setMidiPortProperties(MidiPropertiesDialog *mpd, MidiSession *midiSession) {
-	midiDriver->setPortProperties(mpd, midiSession);
+void Master::reconnectMidiPort(MidiPropertiesDialog &mpd, MidiSession *midiSession) {
+	QStringList knownPortNames;
+	QString portNameHint = midiDriver->getNewPortNameHint(knownPortNames);
+	if (portNameHint.isEmpty()) portNameHint = midiSession->getName();
+	mpd.setMidiList(knownPortNames, knownPortNames.indexOf(portNameHint));
+	mpd.setMidiPortName(portNameHint);
+	if (mpd.exec() != QDialog::Accepted) return;
+	QString portName = mpd.getMidiPortName();
+	if (portName.isEmpty() || portName == midiSession->getName()) return;
+	midiDriver->reconnectPort(mpd.getCurrentMidiPortIndex(), portName, midiSession);
 }
 
 // A quick hack to prevent ROMImages used in SMF converter from being freed
@@ -609,7 +846,7 @@ QStringList Master::parseMidiListFromPathName(const QString pathName) {
 		if (!dir.isReadable()) return fileNames;
 		QStringList syxFileNames = dir.entryList(QStringList() << "*.syx");
 		QStringList midiFileNames = dir.entryList(QStringList() << "*.mid" << "*.smf");
-		foreach(QString midiFileName, syxFileNames + midiFileNames) {
+		foreach (QString midiFileName, syxFileNames + midiFileNames) {
 			fileNames += dir.absoluteFilePath(midiFileName);
 		}
 		return fileNames;
@@ -632,3 +869,35 @@ QStringList Master::parseMidiListFromPathName(const QString pathName) {
 	}
 	return fileNames;
 }
+
+#ifdef WITH_JACK_MIDI_DRIVER
+bool Master::createJACKMidiPort(bool exclusive) {
+	return static_cast<JACKMidiDriver *>(jackMidiDriver)->createJACKPort(exclusive);
+}
+
+void Master::deleteJACKMidiPort(MidiSession *midiSession) {
+	emit jackMidiPortDeleted(midiSession);
+}
+
+MidiSession *Master::createExclusiveJACKMidiPort(QString portName) {
+	getAudioDevices();
+	if (!audioDevices.isEmpty()) {
+		const AudioDevice *jackAudioDevice = findAudioDevice("jackaudio", "Default");
+		if (jackAudioDevice->driver.id == "jackaudio") {
+			SynthRoute *synthRoute = new SynthRoute(this);
+			synthRoute->setAudioDevice(jackAudioDevice);
+			synthRoutes.append(synthRoute);
+			emit synthRouteAdded(synthRoute, jackAudioDevice, false);
+			MidiSession *midiSession = new MidiSession(this, jackMidiDriver, portName, synthRoute);
+			synthRoute->enableExclusiveMidiMode(midiSession);
+			if (synthRoute->open(JACKAudioDefaultDevice::startAudioStream)) {
+				// This must be done asynchronously
+				connect(synthRoute, SIGNAL(exclusiveMidiSessionRemoved(MidiSession *)), jackMidiDriver, SLOT(onJACKMidiPortDeleted(MidiSession *)), Qt::QueuedConnection);
+				return midiSession;
+			}
+			deleteMidiSession(midiSession);
+		}
+	}
+	return NULL;
+}
+#endif

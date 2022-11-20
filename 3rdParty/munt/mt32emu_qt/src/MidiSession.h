@@ -6,7 +6,9 @@
 #include "SynthRoute.h"
 
 class MidiDriver;
+class MidiTrackRecorder;
 class QMidiStreamParser;
+class QMidiBuffer;
 
 class MidiSession : public QObject {
 	Q_OBJECT
@@ -16,6 +18,8 @@ private:
 	QString name;
 	SynthRoute *synthRoute;
 	QMidiStreamParser *qMidiStreamParser;
+	QMidiBuffer *qMidiBuffer;
+	MidiTrackRecorder *midiTrackRecorder;
 
 	MidiSession(QObject *parent, MidiDriver *useMidiDriver, QString useName, SynthRoute *useSynthRoute);
 	~MidiSession();
@@ -23,13 +27,16 @@ private:
 public:
 	QString getName();
 	void setName(const QString &newName);
-	SynthRoute *getSynthRoute();
+	SynthRoute *getSynthRoute() const;
 	QMidiStreamParser *getQMidiStreamParser();
+	QMidiBuffer *getQMidiBuffer();
+	MidiTrackRecorder *getMidiTrackRecorder();
+	MidiTrackRecorder *setMidiTrackRecorder(MidiTrackRecorder *midiTrackRecorder);
 };
 
 class QMidiStreamParser : public MT32Emu::MidiStreamParser {
 public:
-	QMidiStreamParser(SynthRoute &useSynthRoute);
+	QMidiStreamParser(MidiSession &midiSession);
 	void setTimestamp(MasterClockNanos newTimestamp);
 
 protected:
@@ -39,7 +46,7 @@ protected:
 	void printDebug(const char *debugMessage);
 
 private:
-	SynthRoute &synthRoute;
+	MidiSession &midiSession;
 	MasterClockNanos timestamp;
 };
 

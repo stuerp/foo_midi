@@ -1,7 +1,102 @@
-HEAD:
+2022-08-03:
+
+	1.11.1 released.
+
+	* Fixed compilation on macOS with SDK versions prior to 12.0. (#96)
+
+2022-07-23:
+
+	1.11.0 released.
+
+	* Updated mt32emu library to version 2.7.0.
+	* Updated for compatibility with the Qt framework versions 6.0 and above.
+	* Added possibility to view timbre banks and select a desired instrument on each voice part.
+	  The timbres are shown in a popup menu split by their "sound groups" which is displayed
+	  when the user clicks on the instrument name set on the related part in the Channel Status
+	  pane. (#70)
+	* Added submenu "Play Demo Songs" to the "Tools" menu. When a Synth profile exists that
+	  refers to one of the new-gen MT-32 ROMs, the list of demo songs contained within is shown,
+	  yet a few of special items to facilitate playback control. (#84)
+	* Fixed a few problems with management of the Floating Display on multi-screen systems.
+	  When the application is restarted, the position of the floating window should now be
+	  restored on the same screen where it was previously. Also, the window geometry is now
+	  adjusted to fit into the screen when the display it is show on is switched off, and each
+	  time the floating window shows up. (#94)
+	* Extended the command-line interface to provide for opening one or more MIDI port(s)
+	  at startup. The command "connect_midi" can be used to create ports using the system MIDI
+	  driver. By using the options "jack_midi_clients" and "jack_sync_clients", JACK MIDI ports
+	  can be created as long as the JACK support is compiled in. (#95)
+
+2022-03-06:
+
+	1.10.0 released.
+
+	* Updated mt32emu library to version 2.6.0.
+	* Improved emulation of the MT-32 display. It now behaves a lot closer to the real device.
+	  The new behaviour depends on the control ROM version, so that the most prominent quirks
+	  are now emulated. Additionally, the LCD shows the startup banner and the SysEx checksum
+	  error. The built-in LCD font has been reworked as well to closely match the hardware one
+	  yet the new appearance makes the grid of pixels visible. Clicking on the LCD now resets
+	  it to the main (Master Volume) mode. (#50, #66)
+	* Introduced a floating window that represents the emulated LCD and the MIDI MESSAGE LED
+	  only. It is implicitly configured to be always-on-top, can be freely moved and resized.
+	  Also, its opacity can be adjusted, if supported by the platform. By default, the new window
+	  shows up when the main window is hidden. This behaviour can be altered in the main menu
+	  / Options / Floating Display. (#50)
+	* Enabled the built-in Qt support for high-dpi displays which should improve the UI look
+	  on Windows systems mainly. The Qt library version 5.6 or above is required for this
+	  function to work. In order to explicitly disable UI scaling, the user may set environment
+	  variable QT_AUTO_SCREEN_SCALE_FACTOR to 0. (#79)
+	* Changed layout of partial state LEDs in the grid to ensure that no more than 8 LED widgets
+	  are placed in a column. Previously, the layout grew vertically for some configured partial
+	  counts, rendered the channel status grid looking weird. Additionally, this helps the Qt
+	  layout calculator to work correctly with a high-dpi UI scaling on some systems.
+	* Fixed the standard MIDI file player occasionally failing to send all-sound-off sequence
+	  when stopping playback; also, ensured that all played MIDI events get processed. (#80)
+	* In the synth details panel, added a small button to the left of the instrument name for
+	  each part, that allows to quickly mute this part. By clicking these buttons while holding
+	  Ctrl/Cmd, the part can be made playing solo. Holding the Alt key while clicking allows to
+	  quickly restore playback on all muted parts. Additionally, a right-click opens a popup
+	  menu that provides for more functions, including a volume slider, which can be used to
+	  override the current part volume level set by the received MIDI messages. The configured
+	  part volume level only persists while the synth remains open. (#77)
+	* A new command "reset" is now recognised if specified on the command line. It provides for
+	  a simple way to restore factory defaults of the application settings of some types. (#61)
+
+2021-05-22:
+
+	1.9.0 released.
+
+	* Updated mt32emu library to version 2.5.1.
+	* Added support for partial bitwise ROM dumps (#56). Now, the synth can operate with
+	  a pair of control ROM files and a pair of PCM ROM files, which are merged when needed.
+	* Reworked ROMSelectionDialog to permit selection of multiple ROM files of each type
+	  and to support known machine configurations to simplify ROM selection.
+	* Added a new option to the main menu to permit a choice whether to show native system
+	  file selection dialogs or internal dialogs provided by Qt. This may become in handy in
+	  case the native dialogs lack some functions or exhibit unwanted behaviour otherwise.
+
+2021-01-17:
+
+	1.8.0 released.
 
 	* Added mode "Hide to tray on close". When enabled, the application does not exit when the user closes the main window.
 	  To exit the application, the corresponding menu items can be used in menu "Tools" and the tray icon menu.
+	* Added possibility to select output device on macOS with the CoreAudio driver.
+	* Reworked internal MIDI message routing and buffering in case multiple MIDI streams are attached to a single (pinned)
+	  synth, so that the resulting stream supplied to the synth contains MIDI messages ordered by their timestamp frame-wise.
+	  This improves the timing accuracy to the best possible extent.
+	* Added support for integration with the JACK audio kit. Now the application may serve as one or more JACK clients
+	  providing either a single MIDI input port, a pair of output audio ports, or a combined synth client with the input
+	  and output ports. In the latter case, MIDI processing and audio rendering are performed synchronously without any
+	  explicit additional latency.
+	* Improved the MIDI recording function. It now allows recording from several MIDI sources simultaneously. When more
+	  than one MIDI session is attached to a Synth being recording MIDI, a standard MIDI file type 1 is created subsequently
+	  that contains recorded MIDI events of each session in a separate MIDI track, which may be helpful while editing
+	  the MIDI file further. Additionally, improved timing of the MIDI recorder wrt. memory allocations in the MIDI thread
+	  yet fixed a couple of bugs that may be revealed when a broken / unsupported MIDI event reaches the recorder,
+	  or in case MIDI events are received out of order (i.e. with decreasing timestamps).
+	* Added support for the two new synth properties NicePanning and NicePartialMixing introduced with mt32emu release 2.4.0.
 
 2017-12-25:
 

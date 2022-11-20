@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 #include "Win32Driver.h"
 
-#include "../MidiPropertiesDialog.h"
+#include "../Master.h"
 
 #if _WIN32_WINNT < 0x0500
 
@@ -160,7 +160,11 @@ LRESULT CALLBACK Win32MidiDriver::midiInProc(HWND hwnd, UINT uMsg, WPARAM wParam
 					return 0;
 				}
 				do
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+					midiSessionID = QRandomGenerator::global()->generate();
+#else
 					midiSessionID = (quint32)qrand();
+#endif
 				while (midiSessionID == 0 || driver->midiSessionIDs.indexOf(midiSessionID) >= 0);
 				driver->midiSessionIDs.append(midiSessionID);
 				driver->showBalloon("Connected application:", appName);
@@ -176,7 +180,7 @@ LRESULT CALLBACK Win32MidiDriver::midiInProc(HWND hwnd, UINT uMsg, WPARAM wParam
 				}
 				LARGE_INTEGER t = { { data[2], (LONG)data[3] } };
 //				qDebug() << "D" << 1e-6 * ((t.QuadPart - startMasterClock) - MasterClock::getClockNanos());
-				midiSession->getSynthRoute()->pushMIDIShortMessage(data[4], t.QuadPart - startMasterClock);
+				midiSession->getSynthRoute()->pushMIDIShortMessage(*midiSession, data[4], t.QuadPart - startMasterClock);
 				return 1;
 			}
 		} else {
@@ -186,10 +190,11 @@ LRESULT CALLBACK Win32MidiDriver::midiInProc(HWND hwnd, UINT uMsg, WPARAM wParam
 				qDebug() << "Win32MidiDriver: Invalid midiSession ID supplied:" << "0x" + QString::number(midiSessionID, 16);
 				return 0;
 			}
-			midiSession->getSynthRoute()->pushMIDISysex((MT32Emu::Bit8u *)cds->lpData, cds->cbData, MasterClock::getClockNanos());
+			midiSession->getSynthRoute()->pushMIDISysex(*midiSession, (MT32Emu::Bit8u *)cds->lpData, cds->cbData, MasterClock::getClockNanos());
 			return 1;
 		}
 	}
+	// Fall-through
 
 	default:
 		return DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -203,8 +208,16 @@ MidiSession *Win32MidiDriver::findMidiSession(quint32 midiSessionID) {
 
 void Win32MidiInProcessor::run() {
 	qDebug() << "Win32MidiDriver: Win32MidiInProcessor started";
-	HINSTANCE hInstance = GetModuleHandle(NULL);
+
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
 	LPCTSTR mt32emuClassName = "mt32emu_class";
+	LPCTSTR mt32emuWindowName = "mt32emu_message_window";
+#else
+	LPCTSTR mt32emuClassName = L"mt32emu_class";
+	LPCTSTR mt32emuWindowName = L"mt32emu_message_window";
+#endif
+
+	HINSTANCE hInstance = GetModuleHandle(NULL);
 	WNDCLASS wc;
 	wc.style = 0;
 	wc.lpfnWndProc = &Win32MidiDriver::midiInProc;
@@ -224,7 +237,7 @@ void Win32MidiInProcessor::run() {
 #define HWND_MESSAGE NULL
 #endif
 
-	hwnd = CreateWindow(mt32emuClassName, "mt32emu_message_window", 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
+	hwnd = CreateWindow(mt32emuClassName, mt32emuWindowName, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
 
 #if _WIN32_WINNT < 0x0500
 #undef HWND_MESSAGE
@@ -287,13 +300,19 @@ bool Win32MidiDriver::canDeletePort(MidiSession *midiSession) {
 	return midiInSessions.indexOf(midiSession) >= 0 || midiSessions.indexOf(midiSession) >= 0;
 }
 
-bool Win32MidiDriver::canSetPortProperties(MidiSession *midiSession) {
+bool Win32MidiDriver::canReconnectPort(MidiSession *midiSession) {
 	return midiInSessions.indexOf(midiSession) >= 0;
 }
 
-bool Win32MidiDriver::createPort(MidiPropertiesDialog *mpd, MidiSession *midiSession) {
+MidiDriver::PortNamingPolicy Win32MidiDriver::getPortNamingPolicy() {
+	return PortNamingPolicy_RESTRICTED;
+}
+
+bool Win32MidiDriver::createPort(int portIx, const QString &, MidiSession *midiSession) {
+	if (portIx < 0) return false;
+
 	Win32MidiIn *midiInPort = new Win32MidiIn;
-	if (midiInPort->open(midiSession, mpd->getCurrentMidiPortIndex())) {
+	if (midiInPort->open(midiSession, portIx)) {
 		midiInPorts.append(midiInPort);
 		midiInSessions.append(midiSession);
 		return true;
@@ -317,57 +336,39 @@ void Win32MidiDriver::deletePort(MidiSession *midiSession) {
 	midiInSessions.removeAt(portIx);
 }
 
-bool Win32MidiDriver::setPortProperties(MidiPropertiesDialog *mpd, MidiSession *midiSession) {
-	int id = -1;
-	Win32MidiIn *midiInPort = NULL;
-	if (midiSession != NULL) {
-		int portIx = midiInSessions.indexOf(midiSession);
-		if (portIx < 0) return false;
-		midiInPort = midiInPorts[portIx];
-		id = midiInPort->getID();
-	}
-	QList<QString> midiInPortNames;
-	Win32MidiDriver::enumPorts(midiInPortNames);
-	mpd->setMidiList(midiInPortNames, id);
-	mpd->setMidiPortNameEditorEnabled(false);
-	if (mpd->exec() != QDialog::Accepted) return false;
-	if (midiSession == NULL) {
-		if (mpd->getCurrentMidiPortIndex() < 0) return false;
-		return true;
-	}
-	if (id == mpd->getCurrentMidiPortIndex()) return false;
+void Win32MidiDriver::reconnectPort(int newPortIx, const QString &newPortName, MidiSession *midiSession) {
+	if (newPortIx < 0) return;
+
+	int midiInIx = midiInSessions.indexOf(midiSession);
+	if (midiInIx < 0) return;
+
+	Win32MidiIn *midiInPort = midiInPorts.at(midiInIx);
 	midiInPort->close();
-	if (midiInPort->open(midiSession, mpd->getCurrentMidiPortIndex())) {
-		midiSession->getSynthRoute()->setMidiSessionName(midiSession, mpd->getMidiPortName());
-		return true;
+	if (midiInPort->open(midiSession, newPortIx)) {
+		midiSession->getSynthRoute()->setMidiSessionName(midiSession, newPortName);
+	} else {
+		master->deleteMidiPort(midiSession);
 	}
-	master->deleteMidiPort(midiSession);
-	return false;
 }
 
-QString Win32MidiDriver::getNewPortName(MidiPropertiesDialog *mpd) {
-	mpd->setMidiPortNameEditorEnabled(false);
-	if (setPortProperties(mpd, NULL)) {
-		return mpd->getMidiPortName();
-	}
-	return "";
-}
-
-void Win32MidiDriver::enumPorts(QList<QString> &midiInPortNames) {
-	UINT inPortNum = midiInGetNumDevs();
-	for (UINT i = 0; i < inPortNum; i++) {
+QString Win32MidiDriver::getNewPortNameHint(QStringList &midiInPortNames) {
+	for (UINT i = 0; i < midiInGetNumDevs(); i++) {
 		MIDIINCAPS mic;
 		if (midiInGetDevCaps(i, &mic, sizeof(MIDIINCAPS)) != MMSYSERR_NOERROR) {
 			midiInPortNames.append("");
 		} else {
-			midiInPortNames.append("MidiIn" + QString().setNum(i) + ": " + QString().fromLocal8Bit(mic.szPname));
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+			QString midiInPortName = QString::fromLocal8Bit(mic.szPname);
+#else
+			QString midiInPortName = QString::fromWCharArray(mic.szPname);
+#endif
+			midiInPortNames.append("MidiIn" + QString::number(i) + ": " + midiInPortName);
 		}
 	}
+	return QString();
 }
 
-void CALLBACK Win32MidiIn::midiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
-	Q_UNUSED(dwParam2);
-
+void CALLBACK Win32MidiIn::midiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR) {
 	MidiSession *midiSession = (MidiSession *)dwInstance;
 
 	LPMIDIHDR pMIDIhdr = (LPMIDIHDR)dwParam1;
@@ -391,11 +392,11 @@ void CALLBACK Win32MidiIn::midiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwIn
 	if (wMsg == MIM_DATA) {
 		// No need to use QMidiStreamParser for short messages: they are guaranteed to have explicit status byte
 		// if ((dwParam1 & 0xF8) == 0xF8) // No support for System Realtime yet
-		midiSession->getSynthRoute()->pushMIDIShortMessage(dwParam1, MasterClock::getClockNanos());
+		midiSession->getSynthRoute()->pushMIDIShortMessage(*midiSession, dwParam1, MasterClock::getClockNanos());
 	}
 }
 
-bool Win32MidiIn::open(MidiSession *midiSession, unsigned int midiDevID) {
+bool Win32MidiIn::open(MidiSession *midiSession, uint midiDevID) {
 	int wResult;
 
 	// Init midiIn port
@@ -443,12 +444,6 @@ bool Win32MidiIn::close() {
 	}
 
 	return true;
-}
-
-UINT Win32MidiIn::getID() {
-	UINT id;
-	if (midiInGetID(hMidiIn, &id) == MMSYSERR_NOERROR) return id;
-	return -1;
 }
 
 Win32MidiIn::~Win32MidiIn() {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,11 +17,19 @@
 #include "PortAudioDriver.h"
 
 #include "../Master.h"
-#include "../QSynth.h"
 
 using namespace MT32Emu;
 
 static bool paInitialised = false;
+
+static inline QString portaudioDisplayNameToQString(const char *deviceName) {
+#ifdef _WIN32
+	// portaudio on Windows seems to imply Unicode, albeit it isn't clearly documented. See examples/pa_devs.c file.
+	return QString::fromUtf8(deviceName);
+#else
+	return QString::fromLocal8Bit(deviceName);
+#endif
+}
 
 static void dumpPortAudioDevices() {
 	PaHostApiIndex hostApiCount = Pa_GetHostApiCount();
@@ -40,7 +48,7 @@ static void dumpPortAudioDevices() {
 			qDebug() << "Pa_GetHostApiInfo() returned NULL for" << hostApiIndex;
 			continue;
 		}
-		qDebug() << "HostAPI: " << hostApiInfo->name;
+		qDebug() << "HostAPI: " << portaudioDisplayNameToQString(hostApiInfo->name);
 		qDebug() << " type =" << hostApiInfo->type;
 		qDebug() << " deviceCount =" << hostApiInfo->deviceCount;
 		qDebug() << " defaultInputDevice =" << hostApiInfo->defaultInputDevice;
@@ -53,13 +61,13 @@ static void dumpPortAudioDevices() {
 			}
 			if (deviceInfo->hostApi != hostApiIndex)
 				continue;
-			qDebug() << " Device:" << deviceIndex << QString().fromLocal8Bit(deviceInfo->name);
+			qDebug() << " Device:" << deviceIndex << portaudioDisplayNameToQString(deviceInfo->name);
 		}
 	}
 }
 
-PortAudioStream::PortAudioStream(const AudioDriverSettings &useSettings, QSynth &useSynth, quint32 useSampleRate) :
-	AudioStream(useSettings, useSynth, useSampleRate), stream(NULL) {}
+PortAudioStream::PortAudioStream(const AudioDriverSettings &useSettings, SynthRoute &useSynthRoute, quint32 useSampleRate) :
+  AudioStream(useSettings, useSynthRoute, useSampleRate), stream(NULL) {}
 
 PortAudioStream::~PortAudioStream() {
 	close();
@@ -82,7 +90,7 @@ bool PortAudioStream::start(PaDeviceIndex deviceIndex) {
 		return false;
 	}
 	const PaHostApiInfo *hostApiInfo = Pa_GetHostApiInfo(deviceInfo->hostApi);
-	qDebug() << "PortAudio: using audio device:" << deviceIndex << "API: " + QString(hostApiInfo->name) << QString().fromLocal8Bit(deviceInfo->name);
+	qDebug() << "PortAudio: using audio device:" << deviceIndex << "API: " + portaudioDisplayNameToQString(hostApiInfo->name) << portaudioDisplayNameToQString(deviceInfo->name);
 	/*
 	if (deviceInfo->maxOutputChannels < 2) {
 		qDebug() << "Device does not support stereo; maxOutputChannels =" << deviceInfo->maxOutputChannels;
@@ -135,25 +143,25 @@ int PortAudioStream::paCallback(const void *inputBuffer, void *outputBuffer, uns
 	} else {
 		framesInAudioBuffer = 0;
 	}
-	stream->updateTimeInfo(nanosNow, framesInAudioBuffer);
+	stream->renderAndUpdateState((Bit16s *)outputBuffer, quint32(frameCount), nanosNow, framesInAudioBuffer);
 
-	stream->synth.render((Bit16s *)outputBuffer, frameCount);
-	stream->renderedFramesCount += frameCount;
 	return paContinue;
 }
 
 void PortAudioStream::close() {
 	if (stream == NULL) return;
+	qDebug() << "PortAudio: Stopping output stream";
 	Pa_StopStream(stream);
 	Pa_CloseStream(stream);
+	qDebug() << "PortAudio: Output stream closed";
 	stream = NULL;
 }
 
 PortAudioDevice::PortAudioDevice(PortAudioDriver &driver, int useDeviceIndex, QString useDeviceName) :
-	AudioDevice(driver, useDeviceName), deviceIndex(useDeviceIndex) {}
+  AudioDevice(driver, useDeviceName), deviceIndex(useDeviceIndex) {}
 
-AudioStream *PortAudioDevice::startAudioStream(QSynth &synth, const uint sampleRate) const {
-	PortAudioStream *stream = new PortAudioStream(driver.getAudioSettings(), synth, sampleRate);
+AudioStream *PortAudioDevice::startAudioStream(SynthRoute &synthRoute, const uint sampleRate) const {
+	PortAudioStream *stream = new PortAudioStream(driver.getAudioSettings(), synthRoute, sampleRate);
 	if (stream->start(deviceIndex)) {
 		return stream;
 	}
@@ -211,9 +219,9 @@ const QList<const AudioDevice *> PortAudioDriver::createDeviceList() {
 			qDebug() << "Pa_GetHostApiInfo() returned NULL for" << deviceInfo->hostApi;
 			hostApiName = "#" + QString().setNum(deviceInfo->hostApi);
 		} else {
-			hostApiName = QString(hostApiInfo->name);
+			hostApiName = portaudioDisplayNameToQString(hostApiInfo->name);
 		}
-		QString deviceName = "(" + hostApiName + ") " + QString().fromLocal8Bit(deviceInfo->name);
+		QString deviceName = "(" + hostApiName + ") " + portaudioDisplayNameToQString(deviceInfo->name);
 		deviceList.append(new PortAudioDevice(*this, deviceIndex, deviceName));
 	}
 	return deviceList;

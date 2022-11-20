@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,10 +17,12 @@
 #include <QMessageBox>
 
 #include "AudioFileWriter.h"
+
 #include "MasterClock.h"
 #include "Master.h"
 #include "MidiParser.h"
 #include "QSynth.h"
+#include "audiodrv/AudioFileWriterDriver.h"
 
 static const unsigned int FRAME_SIZE = 4; // Stereo, 16-bit
 static const unsigned char WAVE_HEADER[] = {
@@ -120,21 +122,22 @@ void AudioFileWriter::close() {
 	file.close();
 }
 
-AudioFileRenderer::AudioFileRenderer() : synth(NULL), buffer(NULL), parsers(NULL) {
+AudioFileRenderer::AudioFileRenderer() : buffer(NULL), parsers(NULL) {
+	audioRenderer.synth = NULL;
 	connect(this, SIGNAL(parsingFailed(const QString &, const QString &)), Master::getInstance(), SLOT(showBalloon(const QString &, const QString &)));
 }
 
 AudioFileRenderer::~AudioFileRenderer() {
 	stop();
-	if (!realtimeMode && synth != NULL) {
-		synth->close();
-		delete synth;
+	if (!realtimeMode && audioRenderer.synth != NULL) {
+		audioRenderer.synth->close();
+		delete audioRenderer.synth;
 	}
 	delete[] parsers;
 	delete[] buffer;
 }
 
-bool AudioFileRenderer::convertMIDIFiles(QString useOutFileName, QStringList midiFileNameList, QString synthProfileName, unsigned int useBufferSize) {
+bool AudioFileRenderer::convertMIDIFiles(QString useOutFileName, QStringList midiFileNameList, QString synthProfileName, quint32 useBufferSize) {
 	if (useOutFileName.isEmpty() || midiFileNameList.isEmpty()) return false;
 	delete[] parsers;
 	parsersCount = midiFileNameList.size();
@@ -144,32 +147,32 @@ bool AudioFileRenderer::convertMIDIFiles(QString useOutFileName, QStringList mid
 			qDebug() << "AudioFileRenderer: Error parsing MIDI files";
 			const QMidiEventList &midiEvents = parsers[i].getMIDIEvents();
 			if (midiEvents.count() == 0) {
-				QMessageBox::critical(NULL, "Error", "Error occured while parsing MIDI files. No MIDI events to process.");
+				QMessageBox::critical(NULL, "Error", "Error occurred while parsing MIDI files. No MIDI events to process.");
 				delete[] parsers;
 				parsers = NULL;
 				return false;
 			}
-			emit parsingFailed("Warning", "Error occured while parsing MIDI files. Processing available MIDI events.");
+			emit parsingFailed("Warning", "Error occurred while parsing MIDI files. Processing available MIDI events.");
 		}
 	}
 	parsers[parsersCount - 1].addChannelsReset();
-	if (synth != NULL) {
-		synth->close();
-		delete synth;
+	if (audioRenderer.synth != NULL) {
+		audioRenderer.synth->close();
+		delete audioRenderer.synth;
 	}
-	synth = new QSynth(this);
+	audioRenderer.synth = new QSynth(this);
 	sampleRate = 0;
-	if (!synth->open(sampleRate, MT32Emu::SamplerateConversionQuality_BEST, synthProfileName)) {
-		synth->close();
-		delete synth;
-		synth = NULL;
+	if (!audioRenderer.synth->open(sampleRate, MT32Emu::SamplerateConversionQuality_BEST, synthProfileName)) {
+		audioRenderer.synth->close();
+		delete audioRenderer.synth;
+		audioRenderer.synth = NULL;
 		delete[] parsers;
 		parsers = NULL;
 		qDebug() << "AudioFileRenderer: Can't open synth";
 		QMessageBox::critical(NULL, "Error", "Failed to open synth");
 		return false;
 	}
-	Master::getInstance()->setAudioFileWriterSynth(synth);
+	Master::getInstance()->setAudioFileWriterSynth(audioRenderer.synth);
 	bufferSize = useBufferSize;
 	outFileName = useOutFileName;
 	realtimeMode = false;
@@ -180,9 +183,9 @@ bool AudioFileRenderer::convertMIDIFiles(QString useOutFileName, QStringList mid
 	return true;
 }
 
-void AudioFileRenderer::startRealtimeProcessing(QSynth *useSynth, unsigned int useSampleRate, QString useOutFileName, unsigned int useBufferSize) {
+void AudioFileRenderer::startRealtimeProcessing(AudioFileWriterStream *audioStream, quint32 useSampleRate, QString useOutFileName, quint32 useBufferSize) {
 	if (useOutFileName.isEmpty()) return;
-	synth = useSynth;
+	audioRenderer.audioStream = audioStream;
 	sampleRate = useSampleRate;
 	bufferSize = useBufferSize;
 	outFileName = useOutFileName;
@@ -198,10 +201,26 @@ void AudioFileRenderer::stop() {
 	wait();
 }
 
+inline void AudioFileRenderer::audioFileWriteFailed() {
+	if (realtimeMode) {
+		audioRenderer.audioStream->audioStreamFailed();
+	} else {
+		audioRenderer.synth->close();
+	}
+}
+
+inline void AudioFileRenderer::render(qint16 *buffer, uint length) {
+	if (realtimeMode) {
+		audioRenderer.audioStream->render(buffer, length);
+	} else {
+		audioRenderer.synth->render(buffer, length);
+	}
+}
+
 void AudioFileRenderer::run() {
 	AudioFileWriter writer(sampleRate, outFileName);
 	if (!writer.open(!realtimeMode)) {
-		synth->close();
+		audioFileWriteFailed();
 		if (!realtimeMode) Master::getInstance()->setAudioFileWriterSynth(NULL);
 		emit conversionFinished();
 		return;
@@ -243,10 +262,10 @@ void AudioFileRenderer::run() {
 				}
 				switch (e.getType()) {
 					case SHORT_MESSAGE:
-						eventPushed = synth->playMIDIShortMessage(e.getShortMessage(), nextEventFrames);
+						eventPushed = audioRenderer.synth->playMIDIShortMessage(e.getShortMessage(), nextEventFrames);
 						break;
 					case SYSEX:
-						eventPushed = synth->playMIDISysex(e.getSysexData(), e.getSysexLen(), nextEventFrames);
+						eventPushed = audioRenderer.synth->playMIDISysex(e.getSysexData(), e.getSysexLen(), nextEventFrames);
 						break;
 					case SET_TEMPO:
 						midiTick = parsers[parserIx].getMidiTick(e.getShortMessage());
@@ -270,16 +289,16 @@ void AudioFileRenderer::run() {
 					midiTick = parsers[parserIx].getMidiTick();
 					continue;
 				}
-				if (!synth->isActive() && frameCount == 0) break;
+				if (!audioRenderer.synth->isActive() && frameCount == 0) break;
 				frameCount += bufferSize;
 				qDebug() << "AudioFileRenderer: Rendering after the end of MIDI file, time:" << (double)midiNanos / MasterClock::NANOS_PER_SECOND;
 			}
 		}
 		while (frameCount > 0) {
 			uint framesToRender = qMin(bufferSize, frameCount);
-			synth->render(buffer, framesToRender);
+			render(buffer, framesToRender);
 			if (!writer.write(buffer, framesToRender)) {
-				synth->close();
+				audioFileWriteFailed();
 				if (!realtimeMode) Master::getInstance()->setAudioFileWriterSynth(NULL);
 				emit conversionFinished();
 				return;
@@ -290,9 +309,11 @@ void AudioFileRenderer::run() {
 		}
 	}
 	qDebug() << "AudioFileRenderer: Rendering finished";
-	if (!realtimeMode) qDebug() << "AudioFileRenderer: Elapsed seconds: " << 1e-9 * (MasterClock::getClockNanos() - startNanos);
+	if (!realtimeMode) {
+		qDebug() << "AudioFileRenderer: Elapsed seconds: " << 1e-9 * (MasterClock::getClockNanos() - startNanos);
+		audioRenderer.synth->close();
+		Master::getInstance()->setAudioFileWriterSynth(NULL);
+	}
 	writer.close();
-	synth->close();
-	if (!realtimeMode) Master::getInstance()->setAudioFileWriterSynth(NULL);
 	if (!stopProcessing) emit conversionFinished();
 }

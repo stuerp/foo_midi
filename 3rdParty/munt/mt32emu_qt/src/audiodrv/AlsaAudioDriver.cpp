@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include "AlsaAudioDriver.h"
 
 #include "../MasterClock.h"
-#include "../QSynth.h"
+#include "../SynthRoute.h"
 
 using namespace MT32Emu;
 
@@ -28,8 +28,8 @@ static const unsigned int DEFAULT_CHUNK_MS = 16;
 static const unsigned int DEFAULT_AUDIO_LATENCY = 64;
 static const unsigned int DEFAULT_MIDI_LATENCY = 32;
 
-AlsaAudioStream::AlsaAudioStream(const AudioDriverSettings &useSettings, QSynth &useSynth, const quint32 useSampleRate) :
-	AudioStream(useSettings, useSynth, useSampleRate), stream(NULL), processingThreadID(0), stopProcessing(false)
+AlsaAudioStream::AlsaAudioStream(const AudioDriverSettings &useSettings, SynthRoute &useSynthRoute, const quint32 useSampleRate) :
+  AudioStream(useSettings, useSynthRoute, useSampleRate), stream(NULL), processingThreadID(0), stopProcessing(false)
 {
 	bufferSize = settings.chunkLen * sampleRate / MasterClock::MILLIS_PER_SECOND;
 	buffer = new Bit16s[/* channels */ 2 * bufferSize];
@@ -42,7 +42,7 @@ AlsaAudioStream::~AlsaAudioStream() {
 
 void *AlsaAudioStream::processingThread(void *userData) {
 	int error;
-	bool isErrorOccured = false;
+	bool isErrorOccurred = false;
 	AlsaAudioStream &audioStream = *(AlsaAudioStream *)userData;
 	qDebug() << "ALSA audio: Processing thread started";
 	while (!audioStream.stopProcessing) {
@@ -53,35 +53,32 @@ void *AlsaAudioStream::processingThread(void *userData) {
 			error = snd_pcm_delay(audioStream.stream, &delayp);
 			if (error < 0) {
 				qDebug() << "snd_pcm_delay failed:" << snd_strerror(error);
-//				isErrorOccured = true;
+//				isErrorOccurred = true;
 //				break;
 			} else {
 				framesInAudioBuffer = (quint32)delayp;
 			}
 		}
-		audioStream.updateTimeInfo(nanosNow, framesInAudioBuffer);
-		audioStream.synth.render(audioStream.buffer, audioStream.bufferSize);
+		audioStream.renderAndUpdateState(audioStream.buffer, audioStream.bufferSize, nanosNow, framesInAudioBuffer);
 		error = snd_pcm_writei(audioStream.stream, audioStream.buffer, audioStream.bufferSize);
 		if (error < 0) {
 			qDebug() << "snd_pcm_writei failed:" << snd_strerror(error) << "-> recovering...";
 			error = snd_pcm_recover(audioStream.stream, error, 0);
 			if (error != 0) {
 				qDebug() << "snd_pcm_recover failed:" << snd_strerror(error) << "-> closing...";
-				isErrorOccured = true;
+				isErrorOccurred = true;
 				break;
 			}
 		} else if (error != (int)audioStream.bufferSize) {
 			qDebug() << "snd_pcm_writei failed. Written frames:" << error;
-//			isErrorOccured = true;
+//			isErrorOccurred = true;
 //			break;
 		}
-		audioStream.renderedFramesCount += audioStream.bufferSize;
 	}
-	qDebug() << "ALSA audio: Processing thread stopped";
-	if (isErrorOccured) {
+	if (isErrorOccurred) {
 		snd_pcm_close(audioStream.stream);
 		audioStream.stream = NULL;
-		audioStream.synth.close();
+		audioStream.synthRoute.audioStreamFailed();
 	} else {
 		audioStream.stopProcessing = false;
 	}
@@ -107,7 +104,7 @@ bool AlsaAudioStream::start(const char *deviceID) {
 
 	// Set Sample format to use
 	error = snd_pcm_set_params(stream, SND_PCM_FORMAT_S16, SND_PCM_ACCESS_RW_INTERLEAVED, /* channels */ 2,
-		sampleRate, /* allow resampling */ 1, settings.audioLatency * MasterClock::MICROS_PER_MILLISECOND);
+	  sampleRate, /* allow resampling */ 1, settings.audioLatency * MasterClock::MICROS_PER_MILLISECOND);
 	if (error < 0) {
 		qDebug() << "snd_pcm_set_params failed:" << snd_strerror(error);
 		snd_pcm_close(stream);
@@ -164,6 +161,7 @@ void AlsaAudioStream::close() {
 			pthread_join(processingThreadID, NULL);
 			stopProcessing = false;
 			processingThreadID = 0;
+			qDebug() << "ALSA audio: Processing thread stopped";
 		}
 		error = snd_pcm_close(stream);
 		stream = NULL;
@@ -176,8 +174,8 @@ void AlsaAudioStream::close() {
 
 AlsaAudioDevice::AlsaAudioDevice(AlsaAudioDriver &driver, const char *useDeviceID, const QString name) : AudioDevice(driver, name), deviceID(useDeviceID) {}
 
-AudioStream *AlsaAudioDevice::startAudioStream(QSynth &synth, const uint sampleRate) const {
-	AlsaAudioStream *stream = new AlsaAudioStream(driver.getAudioSettings(), synth, sampleRate);
+AudioStream *AlsaAudioDevice::startAudioStream(SynthRoute &synthRoute, const uint sampleRate) const {
+	AlsaAudioStream *stream = new AlsaAudioStream(driver.getAudioSettings(), synthRoute, sampleRate);
 	if (stream->start(deviceID)) return stream;
 	delete stream;
 	return NULL;

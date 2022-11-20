@@ -1,3 +1,144 @@
+2022-07-23:
+
+	2.7.0 released.
+
+	* Added support for MT-32 control ROM v.2.03. (#92)
+	* Provided two new functions for retrieving names of all standard timbres and their
+	  "sound groups". These also make it easier to retrieve names of custom timbres. (#91)
+
+2022-04-16:
+
+	2.6.3 released.
+
+	* To improve portability on some systems where multiple ABIs are supported with different
+	  calling conventions (notably 32-bit Windows), all the public C functions now declare
+	  the C calling convention explicitly, that makes a shared library build compatible with
+	  a project who utilises another calling convention. (#89)
+	* Function mt32emu_configure_midi_event_queue_sysex_storage from the C-compatible API
+	  is now correctly exported in the declaration. Previously, it was only accessible when
+	  building the library statically or via the plugin-like API. (#90)
+
+2022-03-06:
+
+	2.6.0 released.
+
+	* Added support for three more control ROMs: MT-32 v.2.06, v.2.07 and CM-32LN v.1.00.
+	* Improved CMake build script for mt32emu. Notably:
+	  * The build script now populates the relevant library target properties, so that linking
+	    the mt32emu target in a dependent project is sufficient for the build to succeed,
+	    without necessity to use any extra variables.
+	  * A complete CMake package with configuration, version and targets files is now installed
+	    onto the target system. This package simplifies configuration of the other projects,
+	    yet facilitates reliable builds with optional transitive library dependencies.
+	  * Rewritten find-modules for libraries soxr and samplerate from scratch, so that they now
+	    behave more uniformly yet can be used with added convenience.
+	  * Updated the description of the module FindMT32EMU.cmake. It now creates the IMPORTED
+	    target MT32Emu::mt32emu upon success, similarly to the other scripts. Note, this module
+	    is not recommended for use with mt32emu version 2.6 and above. (#65)
+	* Introduced display emulation support that goes beyond the existing low-level API intended
+	  for retrieving the synth state details. The startup banner and the SysEx checksum error
+	  are now shown. We now also take care of the control ROM version to emulate the most
+	  prominent quirks. Additionally, there is a limited support for displaying the emulated LCD
+	  on narrow hardware LCDs that have width of 16 characters only. (#66)
+	* Fixed emulation of a TVA quirk the old-gen devices exhibit when playing a partial with
+	  zero TVA ENV SUSTAIN LEVEL. (#82)
+	* Introduced support for configuring per-part volume levels that override the levels set via
+	  MIDI messages. (#85)
+
+2021-08-07:
+
+	2.5.3 released.
+
+	* Fixed possible access to uninitialised rhythm timbre memory when using MT-32 control ROM.
+	  With control ROMs 2.04 and above, the entire rhythm timbre memory is now initialised
+	  as the real devices do. Those timbres that do not exist in MT-32 models are now muted.
+	  With control ROMs 1.xx, the timbres 30..59 are mapped to 0..29 that should correspond
+	  to the behaviour of real units. The other 4 timbres are muted to avoid undefined behaviour
+	  the real hardware exhibits. (#72)
+
+2021-07-18:
+
+	2.5.2 released.
+
+	* Fixed compilation of client programs written in C when the automatic runtime version check
+	  is enabled with the preprocessor macro MT32EMU_RUNTIME_VERSION_CHECK 2. This may be needed
+	  on systems where symbol versioning is unavailable. (#71)
+	* Tweaked AUTHORS.txt to contain the entire license of embedded third-party code.
+
+2021-05-22:
+
+	2.5.1 released.
+
+	* Fixed incorrect delete statement in ROMImage dtor, affects memory deallocations
+	  of full ROMImages created by merging partial ones. (#60)
+
+2021-04-02:
+
+	2.5.0 released.
+
+	* Added support for partial ROM images that may be dumped from several supported hardware
+	  models. Previously, those had to be either concatenated or interleaved for the emulation
+	  engine to accept. (#44)
+	* Added a few API extensions to better handle ROM images that can now be either full and /
+	  or partial, including iteration over several ROM files to find ones compatible with
+	  particular model of hardware units. (#47)
+	* Various improvements in build and packaging, in particular:
+	  * added generation of pkg-config file; (#43)
+	  * started symbol versioning for fine-grained documenting API changes yet to simplify
+	    looking up the minimum version of the library required by a caller application; (#46)
+	  * a new build option libmt32emu_WITH_VERSION_TAGGING enables tagging the shared object
+	    with the library version and facilitates an automatic runtime version check
+	    in the client application; (#46)
+	  * for the GNU and Clang compilers, a new build option libmt32emu_WITH_SYMBOL_VERSIONING
+	    is now available that adds versions of version tags and C-compatible API symbols
+	    on supported platforms (e.g. Linux, FreeBSD, Solaris). (#46)
+	* Fixed undefined behaviour that the TVP emulation code may exhibit. (#51)
+
+2021-01-17:
+
+	2.4.2 released.
+
+	* Reworked the support for accessing ROM files with localised pathnames introduced in 2.3.0.
+	  Since it is not really necessary in majority of cases but may nevertheless update global
+	  C and C++ locale settings, it must now be explicitly enabled with the new CMake option
+	  libmt32emu_INSTALL_DEFAULT_LOCALE. Also, it no longer touches the global C++ locale
+	  even if enabled, since that appears to have no positive effect. So far, it has been found
+	  useful for building shared library with some old versions of MS VC when linking C runtime
+	  statically.
+
+2020-10-07:
+
+	2.4.1 released.
+
+	* Fixed a bug that caused loss of the least significant bit of PCM samples
+	  loaded from ROMs.
+
+2020-03-29:
+
+	2.4.0 released.
+
+	* In addition to already existing options intended to improve
+	  audio output quality in contrast to somewhat degrading emulation
+	  accuracy, the two more quirks of LA-32 are now configurable.
+	  NicePanning enlarges the allowed value range for the pan setting,
+	  providing for smoother panning.
+	  NicePartialMixing disables occasional counter-phase mixing of partials
+	  making the timbres that contain closely sounding partials be
+	  mixed in a more predictable way.
+	* Improved emulation of the pitch overflow quirks of the MT-32 GEN0
+	  by disabling the upper-bound check that is only applied during the base
+	  pitch calculations by modern units. Specifically, this fixes the "starfall"
+	  timbre playing at wrong pitch in the WILLY BEAMISH intro when using
+	  ROMs of the MT-32 GEN0 (discovered by eddieduff at Sourceforge).
+	* Fixed compilation errors when setting various preprocessor definitions
+	  intended for debugging.
+	* Converted compiler definition MT32EMU_REDUCE_REVERB_MEMORY to a runtime
+	  configuration option. This allows the client to ensure that reverb mode
+	  changes are safe for rendering in a realtime thread.
+	* Improved the implementation of the internal MIDI event queue. Notably,
+	  added a new storage mechanism for the payload of SysEx events that
+	  does not require memory allocations while pushing events to the queue.
+
 2017-12-24:
 
 	2.3.0 released.
@@ -65,7 +206,7 @@
 
 	2.0.1 released.
 
-	* Disamibugated names of classes ReportHandler and MidiReceiver. In cpp_interface.h, these classes are now named
+	* Disambiguated names of classes ReportHandler and MidiReceiver. In cpp_interface.h, these classes are now named
 	  IReportHandler and IMidiReceiver in accordance. This fixes linkage errors that may previously arise
 	  when an implementation attempted to extend one of these classes.
 	* Various other minor code improvements that render no functional changes.

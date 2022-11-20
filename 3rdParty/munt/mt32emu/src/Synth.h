@@ -1,5 +1,5 @@
 /* Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher
- * Copyright (C) 2011-2017 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
+ * Copyright (C) 2011-2022 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -53,7 +53,6 @@ struct ControlROMFeatureSet;
 struct ControlROMMap;
 struct PCMWaveEntry;
 struct MemParams;
-struct TimbreParam;
 
 const Bit8u SYSEX_MANUFACTURER_ROLAND = 0x41;
 
@@ -70,6 +69,9 @@ const Bit8u SYSEX_CMD_EOD = 0x45; // End of data
 const Bit8u SYSEX_CMD_ERR = 0x4E; // Communications error
 const Bit8u SYSEX_CMD_RJC = 0x4F; // Rejection
 
+// This value isn't quite correct: the new-gen MT-32 control ROMs (ver. 2.XX) are twice as big.
+// Nevertheless, this is still relevant for library internal usage because the higher half
+// of those ROMs only contains the demo songs in all cases.
 const Bit32u CONTROL_ROM_SIZE = 64 * 1024;
 
 // Set of multiplexed output streams appeared at the DAC entrance.
@@ -114,8 +116,22 @@ public:
 	virtual void onProgramChanged(Bit8u /* partNum */, const char * /* soundGroupName */, const char * /* patchName */) {}
 };
 
+// Extends ReportHandler, so that the client may supply callbacks for reporting signals about updated display state.
+class MT32EMU_EXPORT_V(2.6) ReportHandler2 : public ReportHandler {
+public:
+	virtual ~ReportHandler2() {}
+
+	// Invoked to signal about a change of the emulated LCD state. Use method Synth::getDisplayState to retrieve the actual data.
+	// This callback will not be invoked on further changes, until the client retrieves the LCD state.
+	virtual void onLCDStateUpdated() {}
+	// Invoked when the emulated MIDI MESSAGE LED changes state. The ledState parameter represents whether the LED is ON.
+	virtual void onMidiMessageLEDStateUpdated(bool /* ledState */) {}
+};
+
 class Synth {
 friend class DefaultMidiStreamParser;
+friend class Display;
+friend class MemoryRegion;
 friend class Part;
 friend class Partial;
 friend class PartialManager;
@@ -162,11 +178,6 @@ private:
 
 	MemParams &mt32ram, &mt32default;
 
-	// Super!
-	Bit8u chanAssignSuper[7];
-	void * patchTempSuper;
-	void * timbreTempSuper;
-
 	BReverbModel *reverbModels[4];
 	BReverbModel *reverbModel;
 	bool reverbOverridden;
@@ -180,14 +191,13 @@ private:
 	bool reversedStereoEnabled;
 
 	bool opened;
-	bool super;
 	bool activated;
 
-	bool isDefaultReportHandler;
+	bool isDefaultReportHandler; // No longer used, retained for binary compatibility only.
 	ReportHandler *reportHandler;
 
 	PartialManager *partialManager;
-	Part *parts[16];
+	Part *parts[9];
 
 	// When a partial needs to be aborted to free it up for use by a new Poly,
 	// the controller will busy-loop waiting for the sound to finish.
@@ -233,7 +243,11 @@ private:
 
 	void printPartialUsage(Bit32u sampleOffset = 0);
 
-	void newTimbreSet(Bit8u partNum, Bit8u timbreGroup, Bit8u timbreNumber, const char patchName[]);
+	void rhythmNotePlayed() const;
+	void voicePartStateChanged(Bit8u partNum, bool activated) const;
+	void newTimbreSet(Bit8u partNum) const;
+	const char *getSoundGroupName(const Part *part) const;
+	const char *getSoundGroupName(Bit8u timbreGroup, Bit8u timbreNumber) const;
 	void printDebug(const char *fmt, ...);
 
 	// partNum should be 0..7 for Part 1..8, or 8 for Rhythm
@@ -296,13 +310,16 @@ public:
 	MT32EMU_EXPORT explicit Synth(ReportHandler *useReportHandler = NULL);
 	MT32EMU_EXPORT ~Synth();
 
+	// Sets an implementation of ReportHandler2 interface for reporting various errors, information and debug messages.
+	// If the argument is NULL, the default implementation is installed as a fallback.
+	MT32EMU_EXPORT_V(2.6) void setReportHandler2(ReportHandler2 *reportHandler2);
+
 	// Used to initialise the MT-32. Must be called before any other function.
-	// Returns true if initialization was sucessful, otherwise returns false.
-	// controlROMImage and pcmROMImage represent Control and PCM ROM images for use by synth.
+	// Returns true if initialization was successful, otherwise returns false.
+	// controlROMImage and pcmROMImage represent full Control and PCM ROM images for use by synth.
 	// usePartialCount sets the maximum number of partials playing simultaneously for this session (optional).
 	// analogOutputMode sets the mode for emulation of analogue circuitry of the hardware units (optional).
-	// useSuper enables the "super" synthesis mode, which adds virtual channels to map up to 16 with spare partials
-	MT32EMU_EXPORT bool open(const ROMImage &controlROMImage, const ROMImage &pcmROMImage, Bit32u usePartialCount = DEFAULT_MAX_PARTIALS, AnalogOutputMode analogOutputMode = AnalogOutputMode_COARSE, bool useSuper = false);
+	MT32EMU_EXPORT bool open(const ROMImage &controlROMImage, const ROMImage &pcmROMImage, Bit32u usePartialCount = DEFAULT_MAX_PARTIALS, AnalogOutputMode analogOutputMode = AnalogOutputMode_COARSE);
 
 	// Overloaded method which opens the synth with default partial count.
 	MT32EMU_EXPORT bool open(const ROMImage &controlROMImage, const ROMImage &pcmROMImage, AnalogOutputMode analogOutputMode);
@@ -319,7 +336,18 @@ public:
 	// Sets size of the internal MIDI event queue. The queue size is set to the minimum power of 2 that is greater or equal to the size specified.
 	// The queue is flushed before reallocation.
 	// Returns the actual queue size being used.
-	MT32EMU_EXPORT Bit32u setMIDIEventQueueSize(Bit32u);
+	MT32EMU_EXPORT Bit32u setMIDIEventQueueSize(Bit32u requestedSize);
+
+	// Configures the SysEx storage of the internal MIDI event queue.
+	// Supplying 0 in the storageBufferSize argument makes the SysEx data stored
+	// in multiple dynamically allocated buffers per MIDI event. These buffers are only disposed
+	// when a new MIDI event replaces the SysEx event in the queue, thus never on the rendering thread.
+	// This is the default behaviour.
+	// In contrast, when a positive value is specified, SysEx data will be stored in a single preallocated buffer,
+	// which makes this kind of storage safe for use in a realtime thread. Additionally, the space retained
+	// by a SysEx event, that has been processed and thus is no longer necessary, is disposed instantly.
+	// Note, the queue is flushed and recreated in the process so that its size remains intact.
+	MT32EMU_EXPORT void configureMIDIEventQueueSysexStorage(Bit32u storageBufferSize);
 
 	// Returns current value of the global counter of samples rendered since the synth was created (at the native sample rate 32000 Hz).
 	// This method helps to compute accurate timestamp of a MIDI message to use with the methods below.
@@ -387,6 +415,10 @@ public:
 	MT32EMU_EXPORT bool isMT32ReverbCompatibilityMode() const;
 	// Returns whether default reverb compatibility mode is the old MT-32 compatibility mode.
 	MT32EMU_EXPORT bool isDefaultReverbMT32Compatible() const;
+	// If enabled, reverb buffers for all modes are kept around allocated all the time to avoid memory
+	// allocating/freeing in the rendering thread, which may be required for realtime operation.
+	// Otherwise, reverb buffers that are not in use are deleted to save memory (the default behaviour).
+	MT32EMU_EXPORT void preallocateReverbMemory(bool enabled);
 	// Sets new DAC input mode. See DACInputMode for details.
 	MT32EMU_EXPORT void setDACInputMode(DACInputMode mode);
 	// Returns current DAC input mode. See DACInputMode for details.
@@ -415,6 +447,22 @@ public:
 	// Returns current output gain factor for reverb wet output channels.
 	MT32EMU_EXPORT float getReverbOutputGain() const;
 
+	// Sets (or removes) an override for the current volume (output level) on a specific part.
+	// When the part volume is overridden, the MIDI controller Volume (7) on the MIDI channel this part is assigned to
+	// has no effect on the output level of this part. Similarly, the output level value set on this part via a SysEx that
+	// modifies the Patch temp structure is disregarded.
+	// To enable the override mode, argument volumeOverride should be in range 0..100, setting a value outside this range
+	// disables the previously set override, if any.
+	// Note: Setting volumeOverride to 0 mutes the part completely, meaning no sound is generated at all.
+	// This is unlike the behaviour of real devices - setting 0 volume on a part may leave it still producing
+	// sound at a very low level.
+	// Argument partNumber should be 0..7 for Part 1..8, or 8 for Rhythm.
+	MT32EMU_EXPORT_V(2.6) void setPartVolumeOverride(Bit8u partNumber, Bit8u volumeOverride);
+	// Returns the overridden volume previously set on a specific part; a value outside the range 0..100 means no override
+	// is currently in effect.
+	// Argument partNumber should be 0..7 for Part 1..8, or 8 for Rhythm.
+	MT32EMU_EXPORT_V(2.6) Bit8u getPartVolumeOverride(Bit8u partNumber) const;
+
 	// Swaps left and right output channels.
 	MT32EMU_EXPORT void setReversedStereoEnabled(bool enabled);
 	// Returns whether left and right output channels are swapped.
@@ -429,6 +477,29 @@ public:
 	MT32EMU_EXPORT void setNiceAmpRampEnabled(bool enabled);
 	// Returns whether NiceAmpRamp mode is enabled.
 	MT32EMU_EXPORT bool isNiceAmpRampEnabled() const;
+
+	// Allows to toggle the NicePanning mode.
+	// Despite the Roland's manual specifies allowed panpot values in range 0-14,
+	// the LA-32 only receives 3-bit pan setting in fact. In particular, this
+	// makes it impossible to set the "middle" panning for a single partial.
+	// In the NicePanning mode, we enlarge the pan setting accuracy to 4 bits
+	// making it smoother thus sacrificing the emulation accuracy.
+	// This mode is disabled by default.
+	MT32EMU_EXPORT void setNicePanningEnabled(bool enabled);
+	// Returns whether NicePanning mode is enabled.
+	MT32EMU_EXPORT bool isNicePanningEnabled() const;
+
+	// Allows to toggle the NicePartialMixing mode.
+	// LA-32 is known to mix partials either in-phase (so that they are added)
+	// or in counter-phase (so that they are subtracted instead).
+	// In some cases, this quirk isn't highly desired because a pair of closely
+	// sounding partials may occasionally cancel out.
+	// In the NicePartialMixing mode, the mixing is always performed in-phase,
+	// thus making the behaviour more predictable.
+	// This mode is disabled by default.
+	MT32EMU_EXPORT void setNicePartialMixingEnabled(bool enabled);
+	// Returns whether NicePartialMixing mode is enabled.
+	MT32EMU_EXPORT bool isNicePartialMixingEnabled() const;
 
 	// Selects new type of the wave generator and renderer to be used during subsequent calls to open().
 	// By default, RendererType_BIT16S is selected.
@@ -469,9 +540,6 @@ public:
 	// or the reverb is (somewhat unreliably) detected as being active.
 	MT32EMU_EXPORT bool isActive();
 
-	// Returns if in Super mode
-	bool isSuper() const;
-
 	// Returns the maximum number of partials playing simultaneously.
 	MT32EMU_EXPORT Bit32u getPartialCount() const;
 
@@ -501,10 +569,53 @@ public:
 
 	// Returns name of the patch set on the specified part.
 	// Argument partNumber should be 0..7 for Part 1..8, or 8 for Rhythm.
+	// The returned value is a null-terminated string which is guaranteed to remain valid until the next call to one of render methods.
 	MT32EMU_EXPORT const char *getPatchName(Bit8u partNumber) const;
+
+	// Retrieves the name of the sound group the timbre identified by arguments timbreGroup and timbreNumber is associated with.
+	// Values 0-3 of timbreGroup correspond to the timbre banks GROUP A, GROUP B, MEMORY and RHYTHM.
+	// For all but the RHYTHM timbre bank, allowed values of timbreNumber are in range 0-63. The number of timbres
+	// contained in the RHYTHM bank depends on the used control ROM version.
+	// The argument soundGroupName must point to an array of at least 8 characters. The result is a null-terminated string.
+	// Returns whether the specified timbre has been found and the result written in soundGroupName.
+	MT32EMU_EXPORT_V(2.7) bool getSoundGroupName(char *soundGroupName, Bit8u timbreGroup, Bit8u timbreNumber) const;
+	// Retrieves the name of the timbre identified by arguments timbreGroup and timbreNumber.
+	// Values 0-3 of timbreGroup correspond to the timbre banks GROUP A, GROUP B, MEMORY and RHYTHM.
+	// For all but the RHYTHM timbre bank, allowed values of timbreNumber are in range 0-63. The number of timbres
+	// contained in the RHYTHM bank depends on the used control ROM version.
+	// The argument soundName must point to an array of at least 11 characters. The result is a null-terminated string.
+	// Returns whether the specified timbre has been found and the result written in soundName.
+	MT32EMU_EXPORT_V(2.7) bool getSoundName(char *soundName, Bit8u timbreGroup, Bit8u timbreNumber) const;
 
 	// Stores internal state of emulated synth into an array provided (as it would be acquired from hardware).
 	MT32EMU_EXPORT void readMemory(Bit32u addr, Bit32u len, Bit8u *data);
+
+	// Retrieves the current state of the emulated MT-32 display facilities.
+	// Typically, the state is updated during the rendering. When that happens, a related callback from ReportHandler2 is invoked.
+	// However, there might be no need to invoke this method after each update, e.g. when the render buffer is just a few milliseconds
+	// long.
+	// The argument targetBuffer must point to an array of at least 21 characters. The result is a null-terminated string.
+	// The optional argument narrowLCD enables a condensed representation of the displayed information in some cases. This is mainly
+	// intended to route the result to a hardware LCD that is only 16 characters wide. Automatic scrolling of longer strings
+	// is not supported.
+	// Returns whether the MIDI MESSAGE LED is ON and fills the targetBuffer parameter.
+	MT32EMU_EXPORT_V(2.6) bool getDisplayState(char *targetBuffer, bool narrowLCD = false) const;
+
+	// Resets the emulated LCD to the main mode (Master Volume). This has the same effect as pressing the Master Volume button
+	// while the display shows some other message. Useful for the new-gen devices as those require a special Display Reset SysEx
+	// to return to the main mode e.g. from showing a custom display message or a checksum error.
+	MT32EMU_EXPORT_V(2.6) void setMainDisplayMode();
+
+	// Permits to select an arbitrary display emulation model that does not necessarily match the actual behaviour implemented
+	// in the control ROM version being used.
+	// Invoking this method with the argument set to true forces emulation of the old-gen MT-32 display features.
+	// Otherwise, emulation of the new-gen devices is enforced (these include CM-32L and LAPC-I as if these were connected to an LCD).
+	MT32EMU_EXPORT_V(2.6) void setDisplayCompatibility(bool oldMT32CompatibilityEnabled);
+	// Returns whether the currently configured features of the emulated display are compatible with the old-gen MT-32 devices.
+	MT32EMU_EXPORT_V(2.6) bool isDisplayOldMT32Compatible() const;
+	// Returns whether the emulated display features configured by default depending on the actual control ROM version
+	// are compatible with the old-gen MT-32 devices.
+	MT32EMU_EXPORT_V(2.6) bool isDefaultDisplayOldMT32Compatible() const;
 }; // class Synth
 
 } // namespace MT32Emu

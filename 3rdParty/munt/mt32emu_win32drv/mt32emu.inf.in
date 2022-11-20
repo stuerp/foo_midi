@@ -1,0 +1,68 @@
+[version]
+Signature = "$WINDOWS NT$"
+Class = MEDIA
+ClassGUID = "{4d36e96c-e325-11ce-bfc1-08002be10318}"
+Provider = %muntemuProvider%
+DriverVer = @mt32emu_win32drv_BUILD_DATE@, @mt32emu_win32drv_VERSION@.0
+CatalogFile = mt32emu.cat
+
+[Manufacturer]
+%muntemuMfg% = muntemuMfg, ntamd64
+
+[muntemuMfg]
+%mt32emu.DeviceDesc% = mt32emu, ROOT\mt32emu
+
+[muntemuMfg.ntamd64]
+%mt32emu.DeviceDesc% = mt32emu.ntamd64, ROOT\mt32emu
+
+[mt32emu.ntx86]
+DriverVer = @mt32emu_win32drv_BUILD_DATE@, @mt32emu_win32drv_VERSION@.0
+AddReg = mt32emu.AddReg
+CopyFiles = mt32emu.CopyFiles.User.x86
+
+[mt32emu.ntamd64]
+DriverVer = @mt32emu_win32drv_BUILD_DATE@, @mt32emu_win32drv_VERSION@.0
+AddReg = mt32emu.AddReg
+CopyFiles = mt32emu.CopyFiles.User.x64
+CopyFiles = mt32emu.CopyFiles.User.wow6432
+
+[mt32emu.ntx86.Services]
+AddService=, 0x2
+
+[mt32emu.ntamd64.Services]
+AddService=, 0x2
+
+[mt32emu.AddReg]
+HKR, Drivers, SubClasses,, "MIDI"
+HKR, "Drivers\MIDI\mt32emu.dll", Driver,, mt32emu.dll
+HKR, "Drivers\MIDI\mt32emu.dll", Description,, %mt32emu.DeviceDesc%
+
+[mt32emu.CopyFiles.User.x86]
+mt32emu.dll
+
+[mt32emu.CopyFiles.User.x64]
+mt32emu.dll, mt32emu_x64.dll
+
+[mt32emu.CopyFiles.User.wow6432]
+mt32emu.dll
+
+[DestinationDirs]
+mt32emu.CopyFiles.User.x86 = 11
+mt32emu.CopyFiles.User.x64 = 11
+mt32emu.CopyFiles.User.wow6432 = 10, SysWOW64
+
+[SourceDisksNames]
+1 = %mt32emuDiskName%
+
+[SourceDisksFiles.x86]
+mt32emu.dll = 1
+
+[SourceDisksFiles.amd64]
+mt32emu.dll = 1
+mt32emu_x64.dll = 1
+
+[Strings]
+mt32emu.DeviceDesc = "MT-32 Synth Emulator"
+muntemuProvider = "muntemu.org"
+muntemuMfg = "muntemu.org"
+mt32emuDiskName = "MT-32 Synth Emulator Files"

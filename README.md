@@ -74,6 +74,10 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
+v2.7.5, 2022-xx-xx
+
+* Updated MUNT to v2.7.0.
+
 v2.7.4.3, 2022-11-20, *"Returning to BASS."*
 
 * Re-added missing BASS libraries.
@@ -91,7 +95,7 @@ v2.7.4.1, 2022-11-04, *"The Dark Side"*
 
 * Added Dark Mode support for foobar2000 v2.0.
 * Fixed 32-bit build.
-* Updated Bass to v2.4.17.
+* Updated BASS to v2.4.17.
 
 v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 

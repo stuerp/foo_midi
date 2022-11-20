@@ -1,14 +1,15 @@
 #ifndef SYNTH_STATE_MONITOR_H
 #define SYNTH_STATE_MONITOR_H
 
-#include <QtCore>
+#include <QtGui>
+#include <QAbstractButton>
+#include <QWidget>
 
 #include <mt32emu/mt32emu.h>
 
 #include "SynthWidget.h"
 
 class SynthRoute;
-class QLabel;
 
 namespace Ui {
 	class SynthWidget;
@@ -17,16 +18,33 @@ namespace Ui {
 class LEDWidget : public QWidget {
 	Q_OBJECT
 
-public:
-	explicit LEDWidget(const QColor *, QWidget *parent = 0);
-	const QColor *color() const;
-	void setColor(const QColor *);
-
 protected:
+	explicit LEDWidget(QWidget *parent, const QColor *initialColor = NULL);
+
+	const QColor *color() const;
+	void setColor(const QColor *useColor);
 	void paintEvent(QPaintEvent *);
 
 private:
 	const QColor *colorProperty;
+};
+
+class MidiMessageLEDWidget : public LEDWidget {
+	Q_OBJECT
+
+public:
+	explicit MidiMessageLEDWidget(QWidget *parent);
+
+	void setState(bool state);
+};
+
+class PartialStateLEDWidget : public LEDWidget {
+	Q_OBJECT
+
+public:
+	explicit PartialStateLEDWidget(QWidget *parent);
+
+	void setState(MT32Emu::PartialState state);
 };
 
 class PartStateWidget : public QWidget {
@@ -46,79 +64,113 @@ private:
 class LCDWidget : public QWidget {
 	Q_OBJECT
 
-friend class SynthStateMonitor;
-
 public:
-	explicit LCDWidget(const SynthStateMonitor &monitor, QWidget *parent = 0);
-	void reset();
+	explicit LCDWidget(QWidget *parent = NULL);
+
+	void setSynthRoute(SynthRoute *synthRoute);
+	bool updateDisplayText();
+
+	QSize sizeHint() const;
+	QSize minimumSizeHint() const;
+	int heightForWidth(int) const;
 
 protected:
 	void paintEvent(QPaintEvent *);
+	void mousePressEvent(QMouseEvent *);
 
 private:
-	enum LCDState {
-		DISPLAYING_PART_STATE,
-		DISPLAYING_TIMBRE_NAME,
-		DISPLAYING_MESSAGE
-	};
-
-	const SynthStateMonitor &monitor;
+	SynthRoute *synthRoute;
 	const QPixmap lcdOffBackground;
 	const QPixmap lcdOnBackground;
-
-	QByteArray lcdText;
-	LCDState lcdState;
-	MasterClockNanos lcdStateStartNanos;
-	bool maskedChar[20];
-	int masterVolume;
-
-	void setPartStateLCDText();
-	void setProgramChangeLCDText(int partNum, QString bankName, QString timbreName);
+	char lcdText[21];
 
 private slots:
-	void handleLCDMessageDisplayed(const QString text);
-	void handleMasterVolumeChanged(int volume);
+	void handleLCDUpdate();
+};
+
+class PartVolumeButton : public QAbstractButton {
+	Q_OBJECT
+
+public:
+	explicit PartVolumeButton(QWidget *parent, const SynthStateMonitor &monitor, int partNum);
+
+private:
+	const SynthStateMonitor &monitor;
+	const int partNum;
+	// Non-positive values mean "part muted". Values above 100 imply "no volume override".
+	int volume;
+
+	void paintEvent(QPaintEvent *);
+	void contextMenuEvent (QContextMenuEvent *);
+	void toggleMutePart();
+	void mutePart();
+	void unmutePart();
+	void toggleSoloPart(bool enabled);
+
+private slots:
+	void handleClicked();
+	void handleVolumeChanged(int);
+	void handleResetVolumeTriggered();
+	void handleSoloTriggered();
+	void handleUnmuteAllTriggered();
+	void handleResetAllTriggered();
+};
+
+class PatchNameButton : public QAbstractButton {
+	Q_OBJECT
+
+public:
+	explicit PatchNameButton(QWidget *parent, SynthRoute &synthRoute, int partNum);
+
+private:
+	SynthRoute &synthRoute;
+	const int partNumber;
+
+	QSize sizeHint() const;
+	void paintEvent(QPaintEvent *);
+
+private slots:
+	void handleClicked();
 };
 
 class SynthStateMonitor : public QObject {
 	Q_OBJECT
 
 friend class PartStateWidget;
-friend class LCDWidget;
+friend class PartVolumeButton;
 
 public:
 	SynthStateMonitor(Ui::SynthWidget *ui, SynthRoute *useSynthRoute);
 	~SynthStateMonitor();
+
 	void enableMonitor(bool enable);
 
 private:
-	const SynthRoute * const synthRoute;
+	SynthRoute * const synthRoute;
 
 	const Ui::SynthWidget * const ui;
 	LCDWidget lcdWidget;
-	LEDWidget midiMessageLED;
-	LEDWidget **partialStateLED;
-	QLabel *patchNameLabel[9];
+	MidiMessageLEDWidget midiMessageLED;
+	PartialStateLEDWidget **partialStateLED;
+	PartVolumeButton *partVolumeButton[9];
+	PatchNameButton *patchNameButton[9];
 	PartStateWidget *partStateWidget[9];
 
 	MT32Emu::PartialState *partialStates;
 	MT32Emu::Bit8u *keysOfPlayingNotes;
 	MT32Emu::Bit8u *velocitiesOfPlayingNotes;
 
-	MasterClockNanos midiMessageLEDStartNanos;
-	MasterClockNanos previousUpdateNanos;
-	bool enabled;
 	uint partialCount;
 
 	void allocatePartialsData();
 	void freePartialsData();
 
 private slots:
-	void handleUpdate();
 	void handleSynthStateChange(SynthState);
-	void handleMIDIMessagePlayed();
 	void handlePolyStateChanged(int partNum);
 	void handleProgramChanged(int partNum, QString soundGroupName, QString patchName);
+	void handleMidiMessageLEDUpdate(bool);
+	void handleAudioBlockRendered();
 };
 
 #endif

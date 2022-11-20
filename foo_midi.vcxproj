@@ -104,7 +104,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;../json;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -137,7 +137,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
@@ -171,7 +171,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;../json;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -456,6 +456,18 @@
     </ProjectReference>
     <ProjectReference Include="3rdParty\scc\emidi_alpha\emidi.vcxproj">
       <Project>{69719831-d965-4aed-91c1-70c4ff01945d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="scpipe\scpipe32.vcxproj">
+      <Project>{6e35bb35-acba-40eb-8f63-bd153046677c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="scpipe\scpipe64.vcxproj">
+      <Project>{e1fcb978-5ac5-4e16-9573-dfb55d44acc2}</Project>
+    </ProjectReference>
+    <ProjectReference Include="vsthost\vsthost32.vcxproj">
+      <Project>{5d666f11-5e76-4653-8b5b-32988e4907a0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="vsthost\vsthost64.vcxproj">
+      <Project>{bcee3fd2-9a64-4740-8c69-19575bf6fbb0}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

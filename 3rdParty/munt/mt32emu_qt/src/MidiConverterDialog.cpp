@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,11 +80,14 @@ void MidiConverterDialog::on_addInitButton_clicked() {
 }
 
 QStringList MidiConverterDialog::showAddMidiFilesDialog() {
-	QString currentDir = Master::getInstance()->getSettings()->value("Master/LastAddMidiFileDir").toString();
-	QStringList fileNames = QFileDialog::getOpenFileNames(this, NULL, currentDir, "*.mid *.smf *.syx;;*.mid;;*.smf;;*.syx;;*.*");
+	QSettings *settings = Master::getInstance()->getSettings();
+	QString currentDir = settings->value("Master/LastAddMidiFileDir").toString();
+	QFileDialog::Options qFileDialogOptions = QFileDialog::Options(settings->value("Master/qFileDialogOptions", 0).toInt());
+	QStringList fileNames = QFileDialog::getOpenFileNames(this, NULL, currentDir, "*.mid *.smf *.syx;;*.mid;;*.smf;;*.syx;;*.*",
+		NULL, qFileDialogOptions);
 	if (!fileNames.isEmpty()) {
 		currentDir = QDir(fileNames.first()).absolutePath();
-		Master::getInstance()->getSettings()->setValue("Master/LastAddMidiFileDir", currentDir);
+		settings->setValue("Master/LastAddMidiFileDir", currentDir);
 	}
 	return fileNames;
 }
@@ -130,10 +133,13 @@ void MidiConverterDialog::on_editPcmButton_clicked() {
 	if (ui->pcmList->count() == 0) return;
 	QListWidgetItem *currentPcmItem = ui->pcmList->currentItem();
 	QString pcmFileName = currentPcmItem->text();
-	QString newFileName = QFileDialog::getSaveFileName(this, NULL, pcmFileName, "*.wav *.raw;;*.wav;;*.raw;;*.*");
+	QSettings *settings = Master::getInstance()->getSettings();
+	QFileDialog::Options qFileDialogOptions = QFileDialog::Options(settings->value("Master/qFileDialogOptions", 0).toInt());
+	QString newFileName = QFileDialog::getSaveFileName(this, NULL, pcmFileName, "*.wav *.raw;;*.wav;;*.raw;;*.*",
+		NULL, qFileDialogOptions);
 	if (newFileName.isEmpty()) return;
 	QString newPcmFileDir = QDir(newFileName).absolutePath();
-	Master::getInstance()->getSettings()->setValue("Master/LastAddPcmFileDir", newPcmFileDir);
+	settings->setValue("Master/LastAddPcmFileDir", newPcmFileDir);
 	currentPcmItem->setText(newFileName);
 }
 
@@ -311,7 +317,11 @@ void MidiConverterDialog::dropEvent(QDropEvent *e) {
 		return;
 	}
 
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
 	const QPoint pos = e->pos();
+#else
+	const QPoint pos = e->position().toPoint();
+#endif
 	const bool dropToMidiList = ui->midiList->geometry().contains(pos);
 	if (!dropToMidiList) {
 		newPcmFileGroup(fileNames);

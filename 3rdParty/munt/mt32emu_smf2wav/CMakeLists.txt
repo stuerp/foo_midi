@@ -1,26 +1,29 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 project(mt32emu-smf2wav CXX)
-set(mt32emu_smf2wav_VERSION_MAJOR 1)
-set(mt32emu_smf2wav_VERSION_MINOR 5)
-set(mt32emu_smf2wav_VERSION_PATCH 0)
-set(mt32emu_smf2wav_VERSION "${mt32emu_smf2wav_VERSION_MAJOR}.${mt32emu_smf2wav_VERSION_MINOR}.${mt32emu_smf2wav_VERSION_PATCH}")
 
-add_definitions(-DVERSION="${mt32emu_smf2wav_VERSION}")
+include(cmake/project_data.cmake)
 
-if(libmt32emu_SHARED)
-  add_definitions(-DMT32EMU_SHARED)
+if(BUILD_SNAPSHOTS AND libmt32emu_SNAPSHOT_VERSION)
+  include(../cmake/build_snapshots.cmake)
+  add_definitions(-DBUILD_MT32EMU_VERSION="${libmt32emu_SNAPSHOT_VERSION}")
 endif()
 
-find_package(GLIB2 REQUIRED)
-set(EXT_LIBS ${EXT_LIBS} ${GLIB2_LIBRARIES})
-include_directories(${GLIB2_INCLUDE_DIRS})
+include(GNUInstallDirs)
 
-find_package(MT32EMU REQUIRED)
-set(EXT_LIBS ${EXT_LIBS} ${MT32EMU_LIBRARIES})
-include_directories(${MT32EMU_INCLUDE_DIRS})
+add_definitions(-DMT32EMU_SMF2WAV_VERSION="${mt32emu_smf2wav_VERSION}")
+
+find_package(GLIB2 2.32 MODULE REQUIRED)
+list(APPEND EXT_LIBS GLib2::glib2)
+
+if(NOT(munt_SOURCE_DIR AND TARGET MT32Emu::mt32emu))
+  find_package(MT32Emu 2.7 CONFIG REQUIRED)
+endif()
+list(APPEND EXT_LIBS MT32Emu::mt32emu)
+
+set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Runtime)
 
 include_directories(libsmf/src)
 add_subdirectory(libsmf)
@@ -37,7 +40,7 @@ add_executable(mt32emu-smf2wav
   src/mt32emu-smf2wav.cpp
 )
 
-target_link_libraries(mt32emu-smf2wav
+target_link_libraries(mt32emu-smf2wav PRIVATE
   smf
   ${EXT_LIBS}
 )
@@ -50,12 +53,12 @@ endif()
 
 install(TARGETS
   mt32emu-smf2wav
-  DESTINATION bin
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 install(FILES
-  AUTHORS.txt COPYING.txt README.txt
-  DESTINATION share/doc/munt/smf2wav
+  AUTHORS.txt COPYING.txt README.md
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/munt/smf2wav
 )
 
 # build a CPack driven installer package
@@ -64,20 +67,21 @@ set(CPACK_PACKAGE_VERSION_MAJOR "${mt32emu_smf2wav_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${mt32emu_smf2wav_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${mt32emu_smf2wav_VERSION_PATCH}")
 set(CPACK_PACKAGE_VENDOR "muntemu.org")
-set(CPACK_PACKAGE_CONTACT "sergm@muntemu.org")
-set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../FreeBSD/usr/ports/audio/mt32emu_smf2wav/pkg-descr")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Experimental program for converting SMF (Standard MIDI File) to WAVE via libmt32emu")
+set(CPACK_PACKAGE_CONTACT "${mt32emu_smf2wav_CONTACT}")
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/info.txt")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${mt32emu_smf2wav_DESCRIPTION_SUMMARY}")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING.txt")
-set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 set(CPACK_STRIP_FILES TRUE)
+# The default package file name has "-${CPACK_SYSTEM_NAME}" at the end, which doesn't match our previous releases
+set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${mt32emu_smf2wav_VERSION}")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_SOURCE_STRIP_FILES TRUE)
-# The default source package file name has "-Source" at the end, which doesn't match our previous releases
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set(CPACK_RPM_PACKAGE_GROUP "Audio/Emulators")
-set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
-set(CPACK_RPM_PACKAGE_URL "http://munt.sourceforge.net/")
+set(CPACK_RPM_PACKAGE_LICENSE "GPLv3+")
+set(CPACK_RPM_PACKAGE_URL "${mt32emu_smf2wav_URL}")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS "ON")
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://munt.sourceforge.net/")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "${mt32emu_smf2wav_URL}")
 set(CPACK_DEBIAN_PACKAGE_SECTION "sound")
 include(CPack)

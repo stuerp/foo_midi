@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 
 #include "../Master.h"
 #include "../MasterClock.h"
-#include "../QSynth.h"
+#include "../SynthRoute.h"
 
 using namespace MT32Emu;
 
@@ -127,8 +127,8 @@ static bool loadLibrary(bool loadNeeded) {
 	return true;
 }
 
-PulseAudioStream::PulseAudioStream(const AudioDriverSettings &useSettings, QSynth &useSynth, const quint32 useSampleRate) :
-	AudioStream(useSettings, useSynth, useSampleRate), stream(NULL), processingThreadID(0), stopProcessing(false)
+PulseAudioStream::PulseAudioStream(const AudioDriverSettings &useSettings, SynthRoute &useSynthRoute, const quint32 useSampleRate) :
+	AudioStream(useSettings, useSynthRoute, useSampleRate), stream(NULL), processingThreadID(0), stopProcessing(false)
 {
 	bufferSize = settings.chunkLen * sampleRate / MasterClock::MILLIS_PER_SECOND;
 	buffer = new Bit16s[/* channels */ 2 * bufferSize];
@@ -151,18 +151,16 @@ void *PulseAudioStream::processingThread(void *userData) {
 		} else {
 			framesInAudioBuffer = 0;
 		}
-		audioStream.updateTimeInfo(nanosNow, framesInAudioBuffer);
-		audioStream.synth.render(audioStream.buffer, audioStream.bufferSize);
+		audioStream.renderAndUpdateState(audioStream.buffer, audioStream.bufferSize, nanosNow, framesInAudioBuffer);
 		if (_pa_simple_write(audioStream.stream, audioStream.buffer, audioStream.bufferSize * FRAME_SIZE, &error) < 0) {
 			qDebug() << "pa_simple_write() failed:" << _pa_strerror(error);
 			_pa_simple_free(audioStream.stream);
 			audioStream.stream = NULL;
 			qDebug() << "PulseAudio: Processing thread stopped";
-			audioStream.synth.close();
+			audioStream.synthRoute.audioStreamFailed();
 			audioStream.processingThreadID = 0;
 			return NULL;
 		}
-		audioStream.renderedFramesCount += audioStream.bufferSize;
 	}
 	audioStream.stopProcessing = false;
 	audioStream.processingThreadID = 0;
@@ -209,7 +207,7 @@ bool PulseAudioStream::start() {
 	while (initFrames > 0) {
 		if (_pa_simple_write(stream, buffer, FRAME_SIZE * bufferSize, &error) < 0) {
 			qDebug() << "pa_simple_write() failed:" << _pa_strerror(error);
-			_pa_simple_free(stream); 
+			_pa_simple_free(stream);
 			stream = NULL;
 			return false;
 		}
@@ -240,7 +238,7 @@ void PulseAudioStream::close() {
 		if (_pa_simple_drain(stream, &error) < 0) {
 			qDebug() << "pa_simple_drain() failed:" << _pa_strerror(error);
 		}
-		_pa_simple_free(stream); 
+		_pa_simple_free(stream);
 		stream = NULL;
 	}
 	return;
@@ -248,8 +246,8 @@ void PulseAudioStream::close() {
 
 PulseAudioDefaultDevice::PulseAudioDefaultDevice(PulseAudioDriver &driver) : AudioDevice(driver, "Default") {}
 
-AudioStream *PulseAudioDefaultDevice::startAudioStream(QSynth &synth, const uint sampleRate) const {
-	PulseAudioStream *stream = new PulseAudioStream(driver.getAudioSettings(), synth, sampleRate);
+AudioStream *PulseAudioDefaultDevice::startAudioStream(SynthRoute &synthRoute, const uint sampleRate) const {
+	PulseAudioStream *stream = new PulseAudioStream(driver.getAudioSettings(), synthRoute, sampleRate);
 	if (stream->start()) return stream;
 	delete stream;
 	return NULL;

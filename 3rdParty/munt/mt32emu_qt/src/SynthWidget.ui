@@ -302,7 +302,7 @@
      <item row="2" column="1">
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Times New Roman';&quot;&gt;←&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>←</string>
        </property>
       </widget>
      </item>
@@ -450,22 +450,6 @@
    </item>
   </layout>
  </widget>
- <tabstops>
-  <tabstop>midiList</tabstop>
-  <tabstop>midiAdd</tabstop>
-  <tabstop>midiRemove</tabstop>
-  <tabstop>midiProperties</tabstop>
-  <tabstop>midiRecord</tabstop>
-  <tabstop>masterVolumeSlider</tabstop>
-  <tabstop>pinCheckBox</tabstop>
-  <tabstop>synthPropertiesButton</tabstop>
-  <tabstop>audioDeviceComboBox</tabstop>
-  <tabstop>refreshButton</tabstop>
-  <tabstop>audioPropertiesButton</tabstop>
-  <tabstop>startButton</tabstop>
-  <tabstop>stopButton</tabstop>
-  <tabstop>detailsButton</tabstop>
- </tabstops>
  <resources>
   <include location="images.qrc"/>
  </resources>

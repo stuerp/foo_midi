@@ -7,7 +7,7 @@
 #include "../AudioFileWriter.h"
 
 class Master;
-class QSynth;
+class SynthRoute;
 class AudioFileWriterDriver;
 class AudioFileWriterDevice;
 
@@ -16,10 +16,11 @@ private:
 	AudioFileRenderer writer;
 
 public:
-	AudioFileWriterStream(const AudioDriverSettings &settings, QSynth &useSynth, const quint32 useSampleRate);
-	quint64 estimateMIDITimestamp(const MasterClockNanos refNanos = 0);
+	AudioFileWriterStream(const AudioDriverSettings &settings, SynthRoute &useSynthRoute, const quint32 useSampleRate);
+	quint64 estimateMIDITimestamp(const MasterClockNanos refNanos);
 	bool start();
-	void close();
+	void audioStreamFailed();
+	void render(qint16 *buffer, uint frameCount);
 };
 
 class AudioFileWriterDevice : public AudioDevice {
@@ -27,7 +28,7 @@ friend class AudioFileWriterDriver;
 private:
 	AudioFileWriterDevice(AudioFileWriterDriver &driver, QString useDeviceName);
 public:
-	AudioStream *startAudioStream(QSynth &synth, const uint sampleRate) const;
+	AudioStream *startAudioStream(SynthRoute &synthRoute, const uint sampleRate) const;
 };
 
 class AudioFileWriterDriver : public AudioDriver {

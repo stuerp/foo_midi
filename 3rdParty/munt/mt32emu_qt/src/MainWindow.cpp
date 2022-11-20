@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2018 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 #include <QtGui>
 #include <QMessageBox>
+#include <QFileDialog>
 
 #ifdef WITH_WINCONSOLE
 #if _WIN32_WINNT < 0x0500
@@ -41,18 +42,33 @@
 #include "mididrv/TestDriver.h"
 #include "MidiPlayerDialog.h"
 #include "MidiConverterDialog.h"
+#include "FloatingDisplay.h"
+#include "DemoPlayer.h"
 
-MainWindow::MainWindow(Master *master, QWidget *parent) :
-	QMainWindow(parent),
+enum FloatingDisplayVisibility {
+	FloatingDisplayVisibility_DEFAULT,
+	FloatingDisplayVisibility_ALWAYS_HIDDEN,
+	FloatingDisplayVisibility_ALWAYS_SHOWN
+};
+
+FloatingDisplayVisibility getFloatingDisplayVisibility() {
+	return FloatingDisplayVisibility(Master::getInstance()->getSettings()->value("FloatingDisplay/visibility",
+		FloatingDisplayVisibility_DEFAULT).toInt());
+}
+
+MainWindow::MainWindow(Master *master) :
+	QMainWindow(),
 	ui(new Ui::MainWindow),
 	master(master),
 	testMidiDriver(NULL),
 	audioFileWriter(NULL),
 	midiPlayerDialog(NULL),
-	midiConverterDialog(NULL)
+	midiConverterDialog(NULL),
+	floatingDisplay(NULL),
+	demoPlayer(NULL)
 {
 	ui->setupUi(this);
-	connect(master, SIGNAL(synthRouteAdded(SynthRoute *, const AudioDevice *)), SLOT(handleSynthRouteAdded(SynthRoute *, const AudioDevice *)));
+	connect(master, SIGNAL(synthRouteAdded(SynthRoute *, const AudioDevice *, bool)), SLOT(handleSynthRouteAdded(SynthRoute *, const AudioDevice *, bool)));
 	connect(master, SIGNAL(synthRouteRemoved(SynthRoute *)), SLOT(handleSynthRouteRemoved(SynthRoute *)));
 	connect(master, SIGNAL(synthRoutePinned()), SLOT(refreshTabNames()));
 	connect(master, SIGNAL(romsLoadFailed(bool &)), SLOT(handleROMSLoadFailed(bool &)), Qt::DirectConnection);
@@ -68,21 +84,71 @@ MainWindow::MainWindow(Master *master, QWidget *parent) :
 
 	setAcceptDrops(true);
 
-	QSettings *settings = Master::getInstance()->getSettings();
+	QSettings *settings = master->getSettings();
 	QRect rect = settings->value("Master/mainWindowGeometry", geometry()).toRect();
 	if (rect != geometry()) {
 		setGeometry(rect);
 	}
 
 #ifdef WITH_WINCONSOLE
-	if (!master->getSettings()->value("Master/showConsole", false).toBool())
+	if (!settings->value("Master/showConsole", false).toBool())
 		ShowWindow(GetConsoleWindow(), SW_HIDE);
 #endif
+
+#ifdef WITH_JACK_MIDI_DRIVER
+	ui->actionNew_JACK_MIDI_port->setVisible(true);
+	ui->actionNew_exclusive_JACK_MIDI_port->setVisible(true);
+#endif
+
+	QActionGroup *floatingDisplayGroup = new QActionGroup(this);
+	ui->actionFloating_display_Default_visibility->setData(FloatingDisplayVisibility_DEFAULT);
+	ui->actionFloating_display_Always_shown->setData(FloatingDisplayVisibility_ALWAYS_SHOWN);
+	ui->actionFloating_display_Never_shown->setData(FloatingDisplayVisibility_ALWAYS_HIDDEN);
+	floatingDisplayGroup->addAction(ui->actionFloating_display_Default_visibility);
+	floatingDisplayGroup->addAction(ui->actionFloating_display_Always_shown);
+	floatingDisplayGroup->addAction(ui->actionFloating_display_Never_shown);
+	connect(floatingDisplayGroup, SIGNAL(triggered(QAction *)), SLOT(handleFloatingDisplayVisibilityChanged(QAction *)));
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
+	delete floatingDisplay;
 	delete ui;
+}
+
+void MainWindow::updateFloatingDisplayVisibility() {
+	FloatingDisplayVisibility visibility = getFloatingDisplayVisibility();
+	bool visible = visibility == FloatingDisplayVisibility_ALWAYS_SHOWN
+		|| !(visibility == FloatingDisplayVisibility_ALWAYS_HIDDEN || isVisible());
+	if (floatingDisplay == NULL) {
+		if (visible) showFloatingDisplay();
+	} else {
+		floatingDisplay->setVisible(visible);
+	}
+}
+
+void MainWindow::showFloatingDisplay() {
+	if (floatingDisplay == NULL) {
+		floatingDisplay = new FloatingDisplay(this);
+		syncFloatingDisplay(ui->synthTabs->currentIndex());
+	}
+	floatingDisplay->setVisible(true);
+}
+
+void MainWindow::syncFloatingDisplay(int currentSynthTabsIndex) {
+	if(currentSynthTabsIndex < 0) {
+		floatingDisplay->setSynthRoute(NULL);
+	} else {
+		SynthWidget *synthWidget = (SynthWidget *)ui->synthTabs->widget(currentSynthTabsIndex);
+		floatingDisplay->setSynthRoute(synthWidget->getSynthRoute());
+	}
+}
+
+void MainWindow::showEvent(QShowEvent *) {
+	updateFloatingDisplayVisibility();
+}
+
+void MainWindow::hideEvent(QHideEvent *) {
+	updateFloatingDisplayVisibility();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -99,6 +165,13 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 void MainWindow::on_actionExit_triggered() {
 	QSettings *settings = Master::getInstance()->getSettings();
 	settings->setValue("Master/mainWindowGeometry", geometry());
+	if (demoPlayer != NULL) {
+		delete demoPlayer;
+		demoPlayer = NULL;
+	}
+	if (floatingDisplay != NULL) {
+		floatingDisplay->saveSettings();
+	}
 	if (testMidiDriver != NULL) {
 		delete testMidiDriver;
 		testMidiDriver = NULL;
@@ -115,44 +188,51 @@ void MainWindow::on_actionExit_triggered() {
 		delete midiConverterDialog;
 		midiConverterDialog = NULL;
 	}
-	QApplication::quit();
+	QApplication::exit();
 }
 
-void MainWindow::on_actionAbout_triggered()
-{
+void MainWindow::on_actionAbout_triggered() {
+#ifdef BUILD_MT32EMU_VERSION
+	QString mt32emuVersion = BUILD_MT32EMU_VERSION;
+#else
+	QString mt32emuVersion = MT32Emu::Synth::getLibraryVersionString();
+#endif
 	QMessageBox::about(this, "About",
 		"Munt - Roland (R) MT-32 sound module emulator\n"
 		"\n"
-		"Munt mt32emu_qt GUI Application Version " APP_VERSION "\n"
-		"Munt Library Version " + QString(MT32Emu::Synth::getLibraryVersionString()) + "\n"
+		"Munt mt32emu_qt GUI Application Version " MT32EMU_QT_VERSION "\n"
+		"Munt Library Version " + mt32emuVersion + "\n"
 		"Qt Library Version " + qVersion() + "\n"
 		"\n"
 		"Build Arch: " BUILD_SYSTEM " " + QString::number(QSysInfo::WordSize) + "-bit\n"
 		"Build Date: " BUILD_DATE "\n"
 		"\n"
-		"Copyright (C) 2011-2018 Jerome Fisher, Sergey V. Mikayev\n"
+		"Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev\n"
 		"\n"
 		"Licensed under GPL v3 or any later version."
 	);
 }
 
+void MainWindow::on_actionCommandLineHelp_triggered() {
+	Master::showCommandLineHelp();
+}
+
 void MainWindow::refreshTabNames()
 {
 	QWidget *widget;
-	QString tabName;
 	for(int i = 0;; i++) {
 		widget = ui->synthTabs->widget(i);
 		if (widget == NULL) return;
-		tabName.sprintf("Synth &%i", i + 1);
+		QString tabName = QString("Synth &%1").arg(i + 1);
 		if (master->isPinned(((SynthWidget *)widget)->getSynthRoute())) tabName = tabName + " *";
 		ui->synthTabs->setTabText(i, tabName);
 	}
 }
 
-void MainWindow::handleSynthRouteAdded(SynthRoute *synthRoute, const AudioDevice *audioDevice) {
-	SynthWidget *synthWidget = new SynthWidget(master, synthRoute, audioDevice, this);
+void MainWindow::handleSynthRouteAdded(SynthRoute *synthRoute, const AudioDevice *audioDevice, bool pinnable) {
+	SynthWidget *synthWidget = new SynthWidget(master, synthRoute, pinnable, audioDevice, this);
 	int newTabIx = ui->synthTabs->count();
-	ui->synthTabs->addTab(synthWidget, QString().sprintf("Synth &%i", ui->synthTabs->count() + 1));
+	ui->synthTabs->addTab(synthWidget, QString("Synth &%1").arg(ui->synthTabs->count() + 1));
 	ui->synthTabs->setCurrentIndex(newTabIx);
 }
 
@@ -178,13 +258,14 @@ void MainWindow::handleROMSLoadFailed(bool &recoveryAttempted) {
 	recoveryAttempted = showROMSelectionDialog();
 }
 
-void MainWindow::on_menuMIDI_aboutToShow() {
+void MainWindow::on_menuTools_aboutToShow() {
 	ui->actionNew_MIDI_port->setEnabled(master->canCreateMidiPort());
 }
 
 void MainWindow::on_actionNew_MIDI_port_triggered() {
 	MidiPropertiesDialog mpd(this);
-	master->createMidiPort(&mpd);
+	master->configureMidiPropertiesDialog(mpd);
+	master->createMidiPort(mpd);
 }
 
 void MainWindow::on_actionTest_MIDI_Driver_toggled(bool checked) {
@@ -217,11 +298,60 @@ void MainWindow::on_actionConvert_MIDI_to_Wave_triggered() {
 	midiConverterDialog->activateWindow();
 }
 
+void MainWindow::on_menuPlay_Demo_Songs_aboutToShow() {
+	if (demoPlayer == NULL) {
+		const MT32Emu::ROMImage *romImage = DemoPlayer::findSuitableROM(master);
+		if (romImage == NULL) return;
+		demoPlayer = new DemoPlayer(master, romImage);
+	}
+	ui->menuPlay_Demo_Songs->clear();
+	QActionGroup *group = new QActionGroup(this);
+	group->setExclusive(false);
+	connect(group, SIGNAL(triggered(QAction *)), SLOT(handleDemoPlay(QAction *)));
+	group->addAction(ui->menuPlay_Demo_Songs->addAction("&Chain Play"))->setData(-1);
+	group->addAction(ui->menuPlay_Demo_Songs->addAction("&Random Play"))->setData(-2);
+	ui->menuPlay_Demo_Songs->addSeparator();
+	const QStringList demoSongs = demoPlayer->getDemoSongs();
+	for (int demoSongIx = 0; demoSongIx < demoSongs.size(); demoSongIx++) {
+		QString actionName = '&' + QString().setNum(demoSongIx + 1) + ": " + demoSongs.at(demoSongIx);
+		group->addAction(ui->menuPlay_Demo_Songs->addAction(actionName))->setData(demoSongIx);
+	}
+	ui->menuPlay_Demo_Songs->addSeparator();
+	group->addAction(ui->menuPlay_Demo_Songs->addAction("&Stop Playback"))->setData(-3);
+}
+
+void MainWindow::on_actionSuitable_ROMs_unavailable_triggered() {
+	QMessageBox::information(this, "Info", "Demo songs are present in the new-gen MT-32 ROMs only.\n"
+		"None of the available Synth profiles is configured with such a model.");
+}
+
+void MainWindow::handleDemoPlay(QAction *action) {
+	if (demoPlayer == NULL) return;
+	int demoSongIx = action->data().toInt();
+	switch (demoSongIx) {
+	case -1:
+		demoPlayer->chainPlay();
+		break;
+	case -2:
+		demoPlayer->randomPlay();
+		break;
+	case -3:
+		demoPlayer->stop();
+		break;
+	default:
+		demoPlayer->playSong(demoSongIx);
+		break;
+	}
+}
+
 void MainWindow::on_menuOptions_aboutToShow() {
-	ui->actionStart_iconized->setChecked(master->getSettings()->value("Master/startIconized", false).toBool());
-	ui->actionHide_to_tray_on_close->setChecked(master->getSettings()->value("Master/hideToTrayOnClose", false).toBool());
-	ui->actionShow_LCD_balloons->setChecked(master->getSettings()->value("Master/showLCDBalloons", true).toBool());
-	ui->actionShow_connection_balloons->setChecked(master->getSettings()->value("Master/showConnectionBalloons", true).toBool());
+	QSettings *settings = master->getSettings();
+	ui->actionStart_iconized->setChecked(settings->value("Master/startIconized", false).toBool());
+	ui->actionHide_to_tray_on_close->setChecked(settings->value("Master/hideToTrayOnClose", false).toBool());
+	ui->actionShow_LCD_balloons->setChecked(settings->value("Master/showLCDBalloons", true).toBool());
+	ui->actionShow_connection_balloons->setChecked(settings->value("Master/showConnectionBalloons", true).toBool());
+	QFileDialog::Options qFileDialogOptions = QFileDialog::Options(settings->value("Master/qFileDialogOptions", 0).toInt());
+	ui->actionShow_native_file_dialog->setChecked(!qFileDialogOptions.testFlag(QFileDialog::DontUseNativeDialog));
 }
 
 void MainWindow::on_actionStart_iconized_toggled(bool checked) {
@@ -238,6 +368,45 @@ void MainWindow::on_actionShow_LCD_balloons_toggled(bool checked) {
 
 void MainWindow::on_actionShow_connection_balloons_toggled(bool checked) {
 	master->getSettings()->setValue("Master/showConnectionBalloons", checked);
+}
+
+void MainWindow::on_actionShow_native_file_dialog_toggled(bool checked) {
+	QSettings *settings = master->getSettings();
+	QFileDialog::Options qFileDialogOptions = QFileDialog::Options(settings->value("Master/qFileDialogOptions", 0).toInt());
+	qFileDialogOptions |= QFileDialog::DontUseNativeDialog;
+	if (checked) {
+		qFileDialogOptions ^= QFileDialog::DontUseNativeDialog;
+	}
+	settings->setValue("Master/qFileDialogOptions", int(qFileDialogOptions));
+}
+
+void MainWindow::on_menuFloating_Display_aboutToShow() {
+	switch (getFloatingDisplayVisibility()) {
+	case FloatingDisplayVisibility_ALWAYS_SHOWN:
+		ui->actionFloating_display_Always_shown->setChecked(true);
+		break;
+	case FloatingDisplayVisibility_ALWAYS_HIDDEN:
+		ui->actionFloating_display_Never_shown->setChecked(true);
+		break;
+	default:
+		ui->actionFloating_display_Default_visibility->setChecked(true);
+		break;
+	};
+	bool bypassWindowManager = Master::getInstance()->getSettings()->value("FloatingDisplay/bypassWindowManager", true).toBool();
+	ui->actionFloating_display_Bypass_window_manager->setChecked(bypassWindowManager);
+}
+
+void MainWindow::handleFloatingDisplayVisibilityChanged(QAction *triggeredAction) {
+	Master::getInstance()->getSettings()->setValue("FloatingDisplay/visibility", triggeredAction->data());
+	updateFloatingDisplayVisibility();
+}
+
+void MainWindow::on_actionFloating_display_Bypass_window_manager_toggled(bool checked) {
+	Master::getInstance()->getSettings()->setValue("FloatingDisplay/bypassWindowManager", checked);
+}
+
+void MainWindow::on_synthTabs_currentChanged(int index) {
+	if (floatingDisplay != NULL) syncFloatingDisplay(index);
 }
 
 void MainWindow::on_actionROM_Configuration_triggered() {
@@ -259,18 +428,28 @@ bool MainWindow::showROMSelectionDialog() {
 
 void MainWindow::trayIconContextMenu() {
 	QMenu *menu = new QMenu(this);
-	QFont bold;
-	bold.setBold(true);
-	menu->addAction("Show/Hide", this, SLOT(showHideMainWindow()))->setFont(bold);
+
+	trayIconMenuShowHideMainWindow = menu->addAction("Show/Hide Main Window", this, SLOT(showHideMainWindow()));
+	QFont boldFont(trayIconMenuShowHideMainWindow->font());
+	boldFont.setBold(true);
+	trayIconMenuShowHideMainWindow->setFont(boldFont);
+
+	trayIconMenuShowHideFloatingDisplay = menu->addAction("Show/Hide Floating Display", this, SLOT(showHideFloatingDisplay()));
+
 	menu->addAction("Show MIDI Player", this, SLOT(on_actionPlay_MIDI_file_triggered()));
+
 	menu->addAction(ui->actionStart_iconized);
-	ui->actionStart_iconized->setChecked(master->getSettings()->value("Master/startIconized", "0").toBool());
+	ui->actionStart_iconized->setChecked(master->getSettings()->value("Master/startIconized", false).toBool());
+
 #ifdef WITH_WINCONSOLE
 	QAction *a = menu->addAction("Show console", this, SLOT(toggleShowConsole()));
 	a->setCheckable(true);
 	a->setChecked(master->getSettings()->value("Master/showConsole", false).toBool());
 #endif
+
 	menu->addAction("Exit", this, SLOT(on_actionExit_triggered()));
+
+	connect(menu, SIGNAL(aboutToShow()), SLOT(handleTrayIconMenuAboutToShow()));
 	master->getTrayIcon()->setContextMenu(menu);
 }
 
@@ -286,6 +465,21 @@ void MainWindow::toggleShowConsole() {
 void MainWindow::showHideMainWindow() {
 	setVisible(!isVisible());
 	if (isVisible()) activateWindow();
+}
+
+void MainWindow::showHideFloatingDisplay() {
+	if (floatingDisplay != NULL) {
+		floatingDisplay->setVisible(!floatingDisplay->isVisible());
+	} else {
+		showFloatingDisplay();
+	}
+}
+
+void MainWindow::handleTrayIconMenuAboutToShow() {
+	trayIconMenuShowHideMainWindow->setText(QString(isVisible() ? "Hide" : "Show") + " Main Window");
+	trayIconMenuShowHideFloatingDisplay->setText(
+		QString(floatingDisplay != NULL && floatingDisplay->isVisible() ? "Hide" : "Show") + " Floating Display"
+	);
 }
 
 void MainWindow::handleTrayIconActivated(QSystemTrayIcon::ActivationReason reason) {
@@ -330,3 +524,15 @@ void MainWindow::dropEvent(QDropEvent *e) {
 		midiPlayerDialog->dropEvent(e);
 	}
 }
+
+#ifdef WITH_JACK_MIDI_DRIVER
+void MainWindow::on_actionNew_JACK_MIDI_port_triggered() {
+	if (master->createJACKMidiPort(false)) return;
+	QMessageBox::warning(this, "Error", "Failed to create JACK MIDI port");
+}
+
+void MainWindow::on_actionNew_exclusive_JACK_MIDI_port_triggered() {
+	if (master->createJACKMidiPort(true)) return;
+	QMessageBox::warning(this, "Error", "Failed to create JACK MIDI port");
+}
+#endif

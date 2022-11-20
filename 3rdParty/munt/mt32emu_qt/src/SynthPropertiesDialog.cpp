@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -169,6 +169,18 @@ void SynthPropertiesDialog::on_engageChannel1CheckBox_stateChanged(int state) {
 	synthRoute->setInitialMIDIChannelsAssignment(state == Qt::Checked);
 }
 
+void SynthPropertiesDialog::on_nicePanningCheckBox_stateChanged(int state) {
+	synthRoute->setNicePanningEnabled(state == Qt::Checked);
+}
+
+void SynthPropertiesDialog::on_nicePartialMixingCheckBox_stateChanged(int state) {
+	synthRoute->setNicePartialMixingEnabled(state == Qt::Checked);
+}
+
+void SynthPropertiesDialog::on_displayCompatibilityComboBox_currentIndexChanged(int index) {
+	synthRoute->setDisplayCompatibilityMode(DisplayCompatibilityMode(index));
+}
+
 void SynthPropertiesDialog::updateReverbSettings() {
 	if (ui->reverbCheckBox->checkState() == Qt::PartiallyChecked) return;
 	synthRoute->setReverbSettings(ui->reverbModeComboBox->currentIndex(),
@@ -224,7 +236,10 @@ void SynthPropertiesDialog::restoreDefaults() {
 	ui->reverbOutputGainSlider->setValue(100);
 	ui->reverseStereoCheckBox->setCheckState(Qt::Unchecked);
 	ui->niceAmpRampCheckBox->setCheckState(Qt::Checked);
+	ui->nicePanningCheckBox->setCheckState(Qt::Unchecked);
+	ui->nicePartialMixingCheckBox->setCheckState(Qt::Unchecked);
 	ui->engageChannel1CheckBox->setCheckState(Qt::Unchecked);
+	ui->displayCompatibilityComboBox->setCurrentIndex(0);
 }
 
 void SynthPropertiesDialog::loadSynthProfile(bool reloadFromSynthRoute) {
@@ -250,7 +265,10 @@ void SynthPropertiesDialog::loadSynthProfile(bool reloadFromSynthRoute) {
 	ui->reverbOutputGainSlider->setValue(synthProfile.reverbOutputGain * 100);
 	ui->reverseStereoCheckBox->setCheckState(synthProfile.reversedStereoEnabled ? Qt::Checked : Qt::Unchecked);
 	ui->niceAmpRampCheckBox->setCheckState(synthProfile.niceAmpRamp ? Qt::Checked : Qt::Unchecked);
+	ui->nicePanningCheckBox->setCheckState(synthProfile.nicePanning ? Qt::Checked : Qt::Unchecked);
+	ui->nicePartialMixingCheckBox->setCheckState(synthProfile.nicePartialMixing ? Qt::Checked : Qt::Unchecked);
 	ui->engageChannel1CheckBox->setCheckState(synthProfile.engageChannel1OnOpen ? Qt::Checked : Qt::Unchecked);
+	ui->displayCompatibilityComboBox->setCurrentIndex(synthProfile.displayCompatibilityMode);
 }
 
 void SynthPropertiesDialog::saveSynthProfile() {
@@ -258,7 +276,9 @@ void SynthPropertiesDialog::saveSynthProfile() {
 	synthRoute->getSynthProfile(newSynthProfile);
 	newSynthProfile.romDir = synthProfile.romDir;
 	newSynthProfile.controlROMFileName = synthProfile.controlROMFileName;
+	newSynthProfile.controlROMFileName2 = synthProfile.controlROMFileName2;
 	newSynthProfile.pcmROMFileName = synthProfile.pcmROMFileName;
+	newSynthProfile.pcmROMFileName2 = synthProfile.pcmROMFileName2;
 	Master &master = *Master::getInstance();
 	QString name = ui->profileComboBox->currentText();
 	master.storeSynthProfile(newSynthProfile, name);
@@ -287,7 +307,7 @@ void SynthPropertiesDialog::refreshProfileCombo(QString name) {
 
 QString SynthPropertiesDialog::getROMSetDescription() {
 	MT32Emu::FileStream file;
-	if (file.open(Master::getROMPathName(synthProfile.romDir, synthProfile.controlROMFileName).toLocal8Bit())) {
+	if (file.open(Master::getROMPathNameLocal(synthProfile.romDir, synthProfile.controlROMFileName))) {
 		const MT32Emu::ROMInfo *romInfo = MT32Emu::ROMInfo::getROMInfo(&file);
 		if (romInfo != NULL) {
 			QString des = romInfo->description;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ MidiPlayerDialog::MidiPlayerDialog(Master *master, QWidget *parent) : QDialog(pa
 	ui->setupUi(this);
 	standardTitle = windowTitle();
 	ui->playButton->setEnabled(false);
-	connect(&smfDriver, SIGNAL(playbackFinished()), SLOT(handlePlaybackFinished()));
+	connect(&smfDriver, SIGNAL(playbackFinished(bool)), SLOT(handlePlaybackFinished(bool)));
 	connect(&smfDriver, SIGNAL(playbackTimeChanged(quint64, quint32)), SLOT(handlePlaybackTimeChanged(quint64, quint32)));
 	connect(&smfDriver, SIGNAL(tempoUpdated(quint32)), SLOT(handleTempoSet(quint32)));
 	connect(this, SIGNAL(playbackStarted(const QString &, const QString &)), master, SLOT(showBalloon(const QString &, const QString &)));
@@ -49,11 +49,14 @@ void MidiPlayerDialog::on_playList_activated(const QModelIndex &) {
 }
 
 void MidiPlayerDialog::on_addButton_clicked() {
-	static QString currentDir = Master::getInstance()->getSettings()->value("Master/LastAddMidiFileDir").toString();
-	QStringList fileNames = QFileDialog::getOpenFileNames(this, NULL, currentDir, "*.mid *.smf *.syx;;*.mid;;*.smf;;*.syx;;*.*");
+	QSettings *settings = Master::getInstance()->getSettings();
+	static QString currentDir = settings->value("Master/LastAddMidiFileDir").toString();
+	QFileDialog::Options qFileDialogOptions = QFileDialog::Options(settings->value("Master/qFileDialogOptions", 0).toInt());
+	QStringList fileNames = QFileDialog::getOpenFileNames(this, NULL, currentDir, "*.mid *.smf *.syx;;*.mid;;*.smf;;*.syx;;*.*",
+		NULL, qFileDialogOptions);
 	if (fileNames.isEmpty()) return;
 	currentDir = QDir(fileNames.first()).absolutePath();
-	Master::getInstance()->getSettings()->setValue("Master/LastAddMidiFileDir", currentDir);
+	settings->setValue("Master/LastAddMidiFileDir", currentDir);
 	int row = ui->playList->currentRow();
 	ui->playList->insertItems(row + 1, fileNames);
 	ui->playList->setCurrentRow(row + fileNames.count());
@@ -61,11 +64,14 @@ void MidiPlayerDialog::on_addButton_clicked() {
 }
 
 void MidiPlayerDialog::on_addListButton_clicked() {
-	static QString currentDir = Master::getInstance()->getSettings()->value("Master/LastAddMidiFileListDir").toString();
-	QString fileName = QFileDialog::getOpenFileName(this, NULL, currentDir, "Play list files (*.*)");
+	QSettings *settings = Master::getInstance()->getSettings();
+	static QString currentDir = settings->value("Master/LastAddMidiFileListDir").toString();
+	QFileDialog::Options qFileDialogOptions = QFileDialog::Options(settings->value("Master/qFileDialogOptions", 0).toInt());
+	QString fileName = QFileDialog::getOpenFileName(this, NULL, currentDir, "Play list files (*.*)",
+		NULL, qFileDialogOptions);
 	if (fileName.isEmpty()) return;
 	currentDir = QDir(fileName).absolutePath();
-	Master::getInstance()->getSettings()->setValue("Master/LastAddMidiFileListDir", currentDir);
+	settings->setValue("Master/LastAddMidiFileListDir", currentDir);
 	QFile listFile(fileName);
 	if (!listFile.open(QIODevice::ReadOnly)) return;
 	QTextStream listStream(&listFile);
@@ -97,13 +103,18 @@ void MidiPlayerDialog::on_clearButton_clicked() {
 
 void MidiPlayerDialog::on_saveListButton_clicked() {
 	static QString currentDir = NULL;
-	QString fileName = QFileDialog::getSaveFileName(this, NULL, currentDir, "Play list files (*.*)");
+	QFileDialog::Options qFileDialogOptions = QFileDialog::Options(Master::getInstance()->getSettings()->value("Master/qFileDialogOptions", 0).toInt());
+	QString fileName = QFileDialog::getSaveFileName(this, NULL, currentDir, "Play list files (*.*)",
+		NULL, qFileDialogOptions);
 	if (!fileName.isEmpty()) {
 		currentDir = QDir(fileName).absolutePath();
 		QFile listFile(fileName);
 		if (!listFile.open(QIODevice::WriteOnly)) return;
 		QTextStream listStream(&listFile);
 		for (int i = 0; i < ui->playList->count(); i++) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+			using Qt::endl;
+#endif
 			listStream << ui->playList->item(i)->text() << endl;
 		}
 	}
@@ -141,7 +152,7 @@ void MidiPlayerDialog::on_playButton_clicked() {
 		smfDriver.stop();
 	}
 	stopped = true;
-	handlePlaybackFinished();
+	handlePlaybackFinished(true);
 	if (initialPosition != 0) smfDriver.jump(initialPosition);
 }
 
@@ -192,8 +203,12 @@ void MidiPlayerDialog::on_positionSlider_sliderReleased() {
 	smfDriver.jump(ui->positionSlider->value());
 }
 
-void MidiPlayerDialog::handlePlaybackFinished() {
+void MidiPlayerDialog::handlePlaybackFinished(bool successful) {
 	ui->tempoSpinBox->setValue(MidiParser::DEFAULT_BPM);
+	if (!successful) {
+		stopped = true;
+		return;
+	}
 	if (stopped) {
 		stopped = false;
 		ui->playList->setCurrentRow(ui->playList->row(currentItem));
@@ -253,7 +268,11 @@ void MidiPlayerDialog::dropEvent(QDropEvent *e) {
 		return;
 	}
 
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
 	const QPoint pos = e->pos();
+#else
+	const QPoint pos = e->position().toPoint();
+#endif
 	const bool dropToMidiList = ui->playList->geometry().contains(pos);
 	if (dropToMidiList) {
 		QListWidgetItem *dropItem = ui->playList->itemAt(ui->playList->mapFromParent(pos));

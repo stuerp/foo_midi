@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -335,11 +335,15 @@ bool MidiParser::parse(const QString fileName) {
 	return parseResult;
 }
 
-const QMidiEventList &MidiParser::getMIDIEvents() {
+const QString MidiParser::getStreamName() const {
+	return QFileInfo(file.fileName()).fileName();
+}
+
+const QMidiEventList &MidiParser::getMIDIEvents() const {
 	return midiEventList;
 }
 
-SynthTimestamp MidiParser::getMidiTick(uint tempo) {
+MasterClockNanos MidiParser::getMidiTick(uint tempo) const {
 	if (division & 0x8000) {
 		// SMPTE timebase
 		uint framesPerSecond = -(division >> 8);

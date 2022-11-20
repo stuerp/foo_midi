@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,16 @@
 #include "MidiSession.h"
 #include "SynthStateMonitor.h"
 
-SynthWidget::SynthWidget(Master *master, SynthRoute *useSynthRoute, const AudioDevice *useAudioDevice, QWidget *parent) :
+static void updateMidiAddActionEnabled(Ui::SynthWidget *ui) {
+	ui->midiAdd->setEnabled(ui->pinCheckBox->isEnabled() && Master::getInstance()->canCreateMidiPort());
+}
+
+static bool isAudioRecordingSupported(Ui::SynthWidget *ui) {
+	const AudioDevice *currentAudioDevice = ui->audioDeviceComboBox->itemData(ui->audioDeviceComboBox->currentIndex()).value<const AudioDevice *>();
+	return currentAudioDevice != NULL && currentAudioDevice->driver.id != "jackaudio";
+}
+
+SynthWidget::SynthWidget(Master *master, SynthRoute *useSynthRoute, bool pinnable, const AudioDevice *useAudioDevice, QWidget *parent) :
 	QWidget(parent),
 	synthRoute(useSynthRoute),
 	ui(new Ui::SynthWidget),
@@ -43,8 +52,10 @@ SynthWidget::SynthWidget(Master *master, SynthRoute *useSynthRoute, const AudioD
 
 	refreshAudioDeviceList(master, useAudioDevice);
 	ui->pinCheckBox->setChecked(master->isPinned(synthRoute));
+	ui->pinCheckBox->setEnabled(pinnable);
 
-	ui->midiAdd->setEnabled(master->canCreateMidiPort());
+	master->configureMidiPropertiesDialog(mpd);
+	updateMidiAddActionEnabled(ui);
 
 	connect(synthRoute, SIGNAL(stateChanged(SynthRouteState)), SLOT(handleSynthRouteState(SynthRouteState)));
 	connect(synthRoute, SIGNAL(midiSessionAdded(MidiSession *)), SLOT(handleMIDISessionAdded(MidiSession *)));
@@ -74,7 +85,7 @@ void SynthWidget::refreshAudioDeviceList(Master *master, const AudioDevice *useA
 	QListIterator<const AudioDevice *> audioDeviceIt(master->getAudioDevices());
 	while(audioDeviceIt.hasNext()) {
 		const AudioDevice *audioDevice = audioDeviceIt.next();
-		ui->audioDeviceComboBox->addItem(audioDevice->driver.name + ": " + audioDevice->name, qVariantFromValue(audioDevice));
+		ui->audioDeviceComboBox->addItem(audioDevice->driver.name + ": " + audioDevice->name, QVariant::fromValue(audioDevice));
 		if (useAudioDevice != NULL && useAudioDevice->driver.id == audioDevice->driver.id
 				&& useAudioDevice->name == audioDevice->name) ui->audioDeviceComboBox->setCurrentIndex(audioDeviceIndex);
 		audioDeviceIndex++;
@@ -104,6 +115,7 @@ void SynthWidget::handleSynthRouteState(SynthRouteState SynthRouteState) {
 		ui->audioDeviceComboBox->setEnabled(false);
 		ui->refreshButton->setEnabled(false);
 		ui->audioPropertiesButton->setEnabled(false);
+		ui->audioRecord->setEnabled(isAudioRecordingSupported(ui));
 		ui->statusLabel->setText("Open");
 		break;
 	case SynthRouteState_OPENING:
@@ -112,6 +124,8 @@ void SynthWidget::handleSynthRouteState(SynthRouteState SynthRouteState) {
 		ui->audioDeviceComboBox->setEnabled(false);
 		ui->refreshButton->setEnabled(false);
 		ui->audioPropertiesButton->setEnabled(false);
+		ui->audioRecord->setEnabled(false);
+		ui->midiRecord->setDisabled(synthRoute->isExclusiveMidiModeEnabled());
 		ui->statusLabel->setText("Opening");
 		break;
 	case SynthRouteState_CLOSING:
@@ -120,6 +134,8 @@ void SynthWidget::handleSynthRouteState(SynthRouteState SynthRouteState) {
 		ui->audioDeviceComboBox->setEnabled(false);
 		ui->refreshButton->setEnabled(false);
 		ui->audioPropertiesButton->setEnabled(false);
+		ui->audioRecord->setEnabled(false);
+		if (synthRoute->isRecordingAudio()) on_audioRecord_clicked();
 		ui->statusLabel->setText("Closing");
 		break;
 	case SynthRouteState_CLOSED:
@@ -128,6 +144,7 @@ void SynthWidget::handleSynthRouteState(SynthRouteState SynthRouteState) {
 		ui->audioDeviceComboBox->setEnabled(true);
 		ui->refreshButton->setEnabled(true);
 		ui->audioPropertiesButton->setEnabled(true);
+		ui->audioRecord->setEnabled(false);
 		ui->statusLabel->setText("Closed");
 		break;
 	}
@@ -186,12 +203,12 @@ void SynthWidget::handleMIDISessionAdded(MidiSession *midiSession) {
 	QListWidgetItem *item = new QListWidgetItem(midiSession->getName(), ui->midiList);
 	item->setData(Qt::UserRole, QVariant::fromValue((QObject *)midiSession));
 	ui->midiList->addItem(item);
-	ui->midiAdd->setEnabled(Master::getInstance()->canCreateMidiPort());
+	updateMidiAddActionEnabled(ui);
 }
 
 void SynthWidget::handleMIDISessionRemoved(MidiSession *midiSession) {
 	delete ui->midiList->takeItem(findMIDISession(midiSession));
-	ui->midiAdd->setEnabled(Master::getInstance()->canCreateMidiPort());
+	updateMidiAddActionEnabled(ui);
 }
 
 void SynthWidget::handleMIDISessionNameChanged(MidiSession *midiSession) {
@@ -209,7 +226,7 @@ void SynthWidget::on_midiList_itemSelectionChanged() {
 	MidiSession *midiSession = getSelectedMIDISession();
 	if (midiSession != NULL) {
 		ui->midiRemove->setEnabled(master->canDeleteMidiPort(midiSession));
-		ui->midiProperties->setEnabled(master->canSetMidiPortProperties(midiSession));
+		ui->midiProperties->setEnabled(master->canReconnectMidiPort(midiSession));
 	} else {
 		ui->midiRemove->setEnabled(false);
 		ui->midiProperties->setEnabled(false);
@@ -217,7 +234,7 @@ void SynthWidget::on_midiList_itemSelectionChanged() {
 }
 
 void SynthWidget::on_midiAdd_clicked() {
-	Master::getInstance()->createMidiPort(&mpd, synthRoute);
+	Master::getInstance()->createMidiPort(mpd, synthRoute);
 }
 
 void SynthWidget::on_midiRemove_clicked() {
@@ -225,23 +242,24 @@ void SynthWidget::on_midiRemove_clicked() {
 }
 
 void SynthWidget::on_midiProperties_clicked() {
-	Master::getInstance()->setMidiPortProperties(&mpd, getSelectedMIDISession());
+	Master::getInstance()->reconnectMidiPort(mpd, getSelectedMIDISession());
 }
 
 void SynthWidget::on_midiRecord_clicked() {
-	MidiRecorder &recorder = *synthRoute->getMidiRecorder();
-	if (recorder.isRecording()) {
+	if (synthRoute->isRecordingMidi()) {
+		bool isMidiDataRecorded = synthRoute->stopRecordingMidi();
 		ui->midiRecord->setText("Record");
-		recorder.stopRecording();
-		static QString currentDir = NULL;
-		QString fileName = QFileDialog::getSaveFileName(this, NULL, currentDir, "Standard MIDI files (*.mid)");
-		if (!fileName.isEmpty()) {
-			currentDir = QDir(fileName).absolutePath();
-			recorder.saveSMF(fileName, MasterClock::NANOS_PER_MILLISECOND);
+		if (isMidiDataRecorded) {
+			static QString currentDir = NULL;
+			QFileDialog::Options qFileDialogOptions = QFileDialog::Options(Master::getInstance()->getSettings()->value("Master/qFileDialogOptions", 0).toInt());
+			QString fileName = QFileDialog::getSaveFileName(this, NULL, currentDir, "Standard MIDI files (*.mid)",
+				NULL, qFileDialogOptions);
+			if (!fileName.isEmpty()) currentDir = QDir(fileName).absolutePath();
+			synthRoute->saveRecordedMidi(fileName, MasterClock::NANOS_PER_MILLISECOND);
 		}
 	} else {
 		ui->midiRecord->setText("Stop");
-		recorder.startRecording();
+		synthRoute->startRecordingMidi();
 	}
 }
 
@@ -251,7 +269,9 @@ void SynthWidget::on_audioRecord_clicked() {
 		synthRoute->stopRecordingAudio();
 	} else {
 		static QString currentDir = NULL;
-		QString fileName = QFileDialog::getSaveFileName(this, NULL, currentDir, "*.wav *.raw;;*.wav;;*.raw;;*.*");
+		QFileDialog::Options qFileDialogOptions = QFileDialog::Options(Master::getInstance()->getSettings()->value("Master/qFileDialogOptions", 0).toInt());
+		QString fileName = QFileDialog::getSaveFileName(this, NULL, currentDir, "*.wav *.raw;;*.wav;;*.raw;;*.*",
+			NULL, qFileDialogOptions);
 		if (!fileName.isEmpty()) {
 			currentDir = QDir(fileName).absolutePath();
 			ui->audioRecord->setText("Stop");

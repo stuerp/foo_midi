@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="src\Analog.cpp" />
     <ClCompile Include="src\BReverbModel.cpp" />
+    <ClCompile Include="src\Display.cpp" />
     <ClCompile Include="src\File.cpp" />
     <ClCompile Include="src\FileStream.cpp" />
     <ClCompile Include="src\LA32FloatWaveGenerator.cpp" />
@@ -39,11 +40,13 @@
     <ClCompile Include="src\TVA.cpp" />
     <ClCompile Include="src\TVF.cpp" />
     <ClCompile Include="src\TVP.cpp" />
+    <ClCompile Include="src\VersionTagging.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Analog.h" />
     <ClInclude Include="src\BReverbModel.h" />
     <ClInclude Include="src\config.h" />
+    <ClInclude Include="src\Display.h" />
     <ClInclude Include="src\Enumerations.h" />
     <ClInclude Include="src\File.h" />
     <ClInclude Include="src\FileStream.h" />
@@ -71,6 +74,7 @@
     <ClInclude Include="src\TVF.h" />
     <ClInclude Include="src\TVP.h" />
     <ClInclude Include="src\Types.h" />
+    <ClInclude Include="src\VersionTagging.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\config.h.in" />

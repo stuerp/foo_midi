@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2017 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,8 +18,10 @@
 
 #ifdef USE_QT_MULTIMEDIAKIT
 #include <QtMultimediaKit/QAudioOutput>
-#else
+#elif (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
 #include <QtMultimedia/QAudioOutput>
+#else
+#include <QtMultimedia/QAudioSink>
 #endif
 
 #include <mt32emu/mt32emu.h>
@@ -51,10 +53,8 @@ public:
 		} else {
 			framesInAudioBuffer = 0;
 		}
-		stream.updateTimeInfo(nanosNow, framesInAudioBuffer);
 		uint framesToRender = uint(len >> 2);
-		stream.synth.render((Bit16s *)data, framesToRender);
-		stream.renderedFramesCount += framesToRender;
+		stream.renderAndUpdateState((Bit16s *)data, framesToRender, nanosNow, framesInAudioBuffer);
 		return len;
 	}
 
@@ -79,8 +79,8 @@ public:
 	}
 };
 
-QtAudioStream::QtAudioStream(const AudioDriverSettings &useSettings, QSynth &useSynth, const quint32 useSampleRate) :
-	AudioStream(useSettings, useSynth, useSampleRate)
+QtAudioStream::QtAudioStream(const AudioDriverSettings &useSettings, SynthRoute &useSynthRoute, const quint32 useSampleRate) :
+	AudioStream(useSettings, useSynthRoute, useSampleRate)
 {
 	// Creating QAudioOutput in a thread leads to smooth rendering
 	// Rendering will be performed in the main thread otherwise
@@ -89,8 +89,10 @@ QtAudioStream::QtAudioStream(const AudioDriverSettings &useSettings, QSynth &use
 }
 
 QtAudioStream::~QtAudioStream() {
+	qDebug() << "QAudioDriver: Stopping processing thread";
 	processingThread->exit();
 	processingThread->wait();
+	qDebug() << "QAudioDriver: Processing thread stopped";
 	delete processingThread;
 }
 
@@ -98,18 +100,27 @@ void QtAudioStream::start() {
 	QAudioFormat format;
 	format.setSampleRate(sampleRate);
 	format.setChannelCount(2);
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
 	format.setSampleSize(16);
 	format.setCodec("audio/pcm");
 	// libmt32emu produces samples in native byte order which is the default byte order used in QAudioFormat
 	format.setSampleType(QAudioFormat::SignedInt);
 	audioOutput = new QAudioOutput(format);
+#else
+	format.setSampleFormat(QAudioFormat::Int16);
+	audioOutput = new QAudioSink(format);
+#endif
 	waveGenerator = new WaveGenerator(*this);
 	if (settings.audioLatency != 0) {
 		audioOutput->setBufferSize((sampleRate * settings.audioLatency << 2) / MasterClock::MILLIS_PER_SECOND);
 	}
 	audioOutput->start(waveGenerator);
 	MasterClockNanos audioLatency = MasterClock::NANOS_PER_SECOND * audioOutput->bufferSize() / (sampleRate << 2);
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
 	MasterClockNanos chunkSize = MasterClock::NANOS_PER_SECOND * audioOutput->periodSize() / (sampleRate << 2);
+#else
+	MasterClockNanos chunkSize = audioLatency / 5;
+#endif
 	audioLatencyFrames = quint32(audioOutput->bufferSize() >> 2);
 	qDebug() << "QAudioDriver: Latency set to:" << (double)audioLatency / MasterClock::NANOS_PER_SECOND << "sec." << "Chunk size:" << (double)chunkSize / MasterClock::NANOS_PER_SECOND;
 
@@ -126,8 +137,8 @@ void QtAudioStream::close() {
 
 QtAudioDefaultDevice::QtAudioDefaultDevice(QtAudioDriver &driver) : AudioDevice(driver, "Default") {}
 
-AudioStream *QtAudioDefaultDevice::startAudioStream(QSynth &synth, const uint sampleRate) const {
-	return new QtAudioStream(driver.getAudioSettings(), synth, sampleRate);
+AudioStream *QtAudioDefaultDevice::startAudioStream(SynthRoute &synthRoute, const uint sampleRate) const {
+	return new QtAudioStream(driver.getAudioSettings(), synthRoute, sampleRate);
 }
 
 QtAudioDriver::QtAudioDriver(Master *useMaster) : AudioDriver("qtaudio", "QtAudio") {

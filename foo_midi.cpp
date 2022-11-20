@@ -3631,9 +3631,11 @@ public:
                     return;
                 }
             }
-            else if (plugin == 3)
+            else
+            if (plugin == 3)
             {
                 midi_meta_data_item item;
+
                 bool is_mt32 = (meta_data.get_item("type", item) && !strcmp(item.m_value.c_str(), "MT-32"));
 
                 delete midiPlayer;
@@ -3644,15 +3646,18 @@ public:
                 }
 
                 MT32Player * mt32Player = new MT32Player(!is_mt32, thePreset.munt_gm_set);
+
                 midiPlayer = mt32Player;
 
-                pfc::string8 p_base_path = cfg_munt_base_path;
-                if (p_base_path.is_empty())
+                pfc::string8 BasePath = cfg_munt_base_path;
+
+                if (BasePath.is_empty())
                 {
-                    p_base_path = core_api::get_my_full_path();
-                    p_base_path.truncate(p_base_path.scan_filename());
+                    BasePath = core_api::get_my_full_path();
+                    BasePath.truncate(BasePath.scan_filename());
                 }
-                mt32Player->setBasePath(p_base_path);
+
+                mt32Player->setBasePath(BasePath);
                 mt32Player->setAbortCallback(&p_abort);
                 mt32Player->setSampleRate(srate);
 
@@ -3665,7 +3670,9 @@ public:
                 unsigned loop_mode = 0;
 
                 loop_mode = MIDIPlayer::loop_mode_enable;
-                if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
+
+                if (doing_loop)
+                    loop_mode |= MIDIPlayer::loop_mode_force;
 
                 if (mt32Player->Load(midi_file, p_subsong, loop_mode, clean_flags))
                 {
