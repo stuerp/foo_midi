@@ -1,128 +1,137 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="DXiPlayer.cpp" />
-    <ClCompile Include="midi.cpp" />
-    <ClCompile Include="PlugInInventory.cpp" />
-    <ClCompile Include="SFPlayer.cpp" />
-    <ClCompile Include="SMF.cpp" />
-    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="Experimental\DXiPlayer.cpp" />
+    <ClCompile Include="foo_midi.cpp" />
+    <ClCompile Include="Experimental\PlugInInventory.cpp" />
+    <ClCompile Include="Experimental\SFPlayer.cpp" />
+    <ClCompile Include="3rdParty\Twelve Tone Systems\SMF.cpp" />
     <ClCompile Include="VSTiPlayer.cpp" />
-    <ClCompile Include="MT32Player.cpp" />
+    <ClCompile Include="MT32Player\MT32Player.cpp" />
     <ClCompile Include="BMPlayer.cpp" />
-    <ClCompile Include="DXiProxy.cpp" />
+    <ClCompile Include="Experimental\DXiProxy.cpp" />
     <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
-    <ClCompile Include="sflist\json.c">
+    <ClCompile Include="3rdParty\json\json.c">
       <Filter>sflist</Filter>
     </ClCompile>
-    <ClCompile Include="sflist\json-builder.c">
+    <ClCompile Include="3rdParty\json\json-builder.c">
       <Filter>sflist</Filter>
     </ClCompile>
     <ClCompile Include="sflist\sflist.c">
       <Filter>sflist</Filter>
     </ClCompile>
     <ClCompile Include="MSPlayer.cpp" />
-    <ClCompile Include="synthlib_doom\i_oplmusic.cpp">
+    <ClCompile Include="3rdParty\synthlib_doom\i_oplmusic.cpp">
       <Filter>synthlib_doom</Filter>
     </ClCompile>
-    <ClCompile Include="synthlib_opl3w\opl3midi.cpp">
+    <ClCompile Include="3rdParty\synthlib_opl3w\opl3midi.cpp">
       <Filter>synthlib_opl3w</Filter>
     </ClCompile>
-    <ClCompile Include="resampler.c" />
+    <ClCompile Include="Resampler.c" />
     <ClCompile Include="SCPlayer.cpp" />
-    <ClCompile Include="synthlib_apogee\al_midi.cpp">
+    <ClCompile Include="3rdParty\synthlib_apogee\al_midi.cpp">
       <Filter>synthlib_apogee</Filter>
     </ClCompile>
-    <ClCompile Include="fmopl3lib\opl3class.cpp" />
     <ClCompile Include="ADLPlayer.cpp" />
-    <ClCompile Include="OPNPlayer.cpp" />
+    <ClCompile Include="OPNPlayer\OPNPlayer.cpp" />
+    <ClCompile Include="3rdParty\fmopl3lib\opl3class.cpp">
+      <Filter>fmopl3</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="hypersonic2.h" />
+    <ClInclude Include="Experimental\hypersonic2.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="SFPlayer.h" />
+    <ClInclude Include="Experimental\SFPlayer.h" />
     <ClInclude Include="VSTiPlayer.h" />
-    <ClInclude Include="MT32Player.h" />
-    <ClInclude Include="mtgm.h" />
+    <ClInclude Include="MT32Player\MT32Player.h" />
+    <ClInclude Include="MT32Player\mtgm.h" />
     <ClInclude Include="BMPlayer.h" />
-    <ClInclude Include="DXiProxy.h" />
+    <ClInclude Include="Experimental\DXiProxy.h" />
     <ClInclude Include="EMIDIPlayer.h" />
-    <ClInclude Include="kq6mtgm.h" />
+    <ClInclude Include="MT32Player\kq6mtgm.h" />
     <ClInclude Include="MIDIPlayer.h" />
-    <ClInclude Include="sflist\json.h">
+    <ClInclude Include="3rdParty\json\json.h">
       <Filter>sflist</Filter>
     </ClInclude>
-    <ClInclude Include="sflist\json-builder.h">
+    <ClInclude Include="3rdParty\json\json-builder.h">
       <Filter>sflist</Filter>
     </ClInclude>
     <ClInclude Include="sflist\sflist.h">
       <Filter>sflist</Filter>
     </ClInclude>
-    <ClInclude Include="interface.h" />
+    <ClInclude Include="3rdParty\interface.h" />
     <ClInclude Include="MSPlayer.h" />
-    <ClInclude Include="synthlib_doom\i_oplmusic.h">
+    <ClInclude Include="3rdParty\synthlib_doom\i_oplmusic.h">
       <Filter>synthlib_doom</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_doom\inst\dmx_dmx.h">
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_dmx.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_doom\inst\dmx_doom1.h">
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_doom1.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_doom\inst\dmx_doom2.h">
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_doom2.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_doom\inst\dmx_raptor.h">
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_raptor.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_doom\inst\dmx_strife.h">
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_strife.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_opl3w\gmtimbre.h">
+    <ClInclude Include="3rdParty\synthlib_opl3w\gmtimbre.h">
       <Filter>synthlib_opl3w</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_opl3w\opl3midi.h">
+    <ClInclude Include="3rdParty\synthlib_opl3w\opl3midi.h">
       <Filter>synthlib_opl3w</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_opl3w\opl3type.h">
+    <ClInclude Include="3rdParty\synthlib_opl3w\opl3type.h">
       <Filter>synthlib_opl3w</Filter>
     </ClInclude>
-    <ClInclude Include="resampler.h" />
+    <ClInclude Include="Resampler.h" />
     <ClInclude Include="SCPlayer.h" />
-    <ClInclude Include="synthlib_apogee\_al_midi.h">
+    <ClInclude Include="3rdParty\synthlib_apogee\_al_midi.h">
       <Filter>synthlib_apogee</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_apogee\al_midi.h">
+    <ClInclude Include="3rdParty\synthlib_apogee\al_midi.h">
       <Filter>synthlib_apogee</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_apogee\inst\apogee_blood.h">
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_blood.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_apogee\inst\apogee_duke3d.h">
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_duke3d.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_apogee\inst\apogee_lee.h">
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_lee.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_apogee\inst\apogee_nam.h">
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_nam.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_apogee\inst\apogee_sw.h">
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_sw.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="synthlib_doom\inst\dmxopl.h">
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmxopl.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="fmopl3lib\opl3class.h" />
     <ClInclude Include="ADLPlayer.h" />
-    <ClInclude Include="OPNPlayer.h" />
-    <ClInclude Include="patrons.h" />
+    <ClInclude Include="OPNPlayer\OPNPlayer.h" />
+    <ClInclude Include="Patrons.h" />
+    <ClInclude Include="3rdParty\fmopl3lib\opl3class.h">
+      <Filter>fmopl3</Filter>
+    </ClInclude>
+    <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
+    <ClInclude Include="OPNPlayer\gems-fmlib-gmize.wopn.h" />
+    <ClInclude Include="OPNPlayer\gs-by-papiezak-and-sneakernets.wopn.h" />
+    <ClInclude Include="OPNPlayer\xg.wopn.h" />
+    <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
+    <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="DXiPlayer.h" />
-    <CustomBuild Include="PlugInInventory.h" />
-    <CustomBuild Include="StdAfx.h" />
+    <CustomBuild Include="Experimental\DXiPlayer.h" />
+    <CustomBuild Include="Experimental\PlugInInventory.h" />
+    <CustomBuild Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="sflist">

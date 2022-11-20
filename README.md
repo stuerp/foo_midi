@@ -78,6 +78,7 @@ v2.7.4.3, 2022-11-20, *"Returning to BASS."*
 
 * Re-added missing BASS libraries.
 * Re-added recompiled versions of scpipe32 and scpipe64.
+* Upgraded JSON parser and build to latest version.
 * Started fixing compiler warnings.
 * No added functionality.
 

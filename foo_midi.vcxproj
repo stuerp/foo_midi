@@ -104,7 +104,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./sflist;../..;./DXiClasses;./include;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;../json;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -136,7 +136,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./sflist;../..;./DXiClasses;./include;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -171,7 +171,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./sflist;../..;./DXiClasses;./include;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;../json;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -211,7 +211,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./sflist;../..;./DXiClasses;./include;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -244,18 +244,18 @@
   <ItemGroup>
     <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="BMPlayer.cpp" />
-    <ClCompile Include="DXiProxy.cpp">
+    <ClCompile Include="Experimental\DXiProxy.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="EMIDIPlayer.cpp" />
-    <ClCompile Include="fmopl3lib\opl3class.cpp" />
+    <ClCompile Include="3rdParty\fmopl3lib\opl3class.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MSPlayer.cpp" />
-    <ClCompile Include="MT32Player.cpp" />
-    <ClCompile Include="DXiPlayer.cpp">
+    <ClCompile Include="MT32Player\MT32Player.cpp" />
+    <ClCompile Include="Experimental\DXiPlayer.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -275,7 +275,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="midi.cpp">
+    <ClCompile Include="foo_midi.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -291,8 +291,8 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="OPNPlayer.cpp" />
-    <ClCompile Include="PlugInInventory.cpp">
+    <ClCompile Include="OPNPlayer\OPNPlayer.cpp" />
+    <ClCompile Include="Experimental\PlugInInventory.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -312,21 +312,21 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="resampler.c">
+    <ClCompile Include="Resampler.c">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MinSpace</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MinSpace</Optimization>
     </ClCompile>
     <ClCompile Include="SCPlayer.cpp" />
-    <ClCompile Include="sflist\json-builder.c" />
-    <ClCompile Include="sflist\json.c" />
+    <ClCompile Include="3rdParty\json\json-builder.c" />
+    <ClCompile Include="3rdParty\json\json.c" />
     <ClCompile Include="sflist\sflist.c" />
-    <ClCompile Include="SFPlayer.cpp">
+    <ClCompile Include="Experimental\SFPlayer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="SMF.cpp">
+    <ClCompile Include="3rdParty\Twelve Tone Systems\SMF.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -346,98 +346,84 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="StdAfx.cpp">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MinSpace</Optimization>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MinSpace</Optimization>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="synthlib_apogee\al_midi.cpp" />
-    <ClCompile Include="synthlib_doom\i_oplmusic.cpp" />
-    <ClCompile Include="synthlib_opl3w\opl3midi.cpp" />
+    <ClCompile Include="3rdParty\synthlib_apogee\al_midi.cpp" />
+    <ClCompile Include="3rdParty\synthlib_doom\i_oplmusic.cpp" />
+    <ClCompile Include="3rdParty\synthlib_opl3w\opl3midi.cpp" />
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="BMPlayer.h" />
-    <ClInclude Include="DXiProxy.h">
+    <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
+    <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
+    <ClInclude Include="Experimental\DXiProxy.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="EMIDIPlayer.h" />
-    <ClInclude Include="fmopl3lib\opl3class.h" />
-    <ClInclude Include="interface.h" />
-    <ClInclude Include="kq6mtgm.h" />
+    <ClInclude Include="3rdParty\fmopl3lib\opl3class.h" />
+    <ClInclude Include="3rdParty\interface.h" />
+    <ClInclude Include="MT32Player\kq6mtgm.h" />
     <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="MSPlayer.h" />
-    <ClInclude Include="MT32Player.h" />
-    <ClInclude Include="mtgm.h" />
-    <CustomBuild Include="DXiPlayer.h">
+    <ClInclude Include="MT32Player\MT32Player.h" />
+    <ClInclude Include="MT32Player\mtgm.h" />
+    <ClInclude Include="OPNPlayer\xg.wopn.h" />
+    <CustomBuild Include="Experimental\DXiPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CustomBuild>
-    <ClInclude Include="hypersonic2.h" />
-    <CustomBuild Include="PlugInInventory.h">
+    <ClInclude Include="Experimental\hypersonic2.h" />
+    <CustomBuild Include="Experimental\PlugInInventory.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CustomBuild>
-    <ClInclude Include="OPNPlayer.h" />
-    <ClInclude Include="patrons.h" />
-    <ClInclude Include="resampler.h" />
+    <ClInclude Include="OPNPlayer\gems-fmlib-gmize.wopn.h" />
+    <ClInclude Include="OPNPlayer\gs-by-papiezak-and-sneakernets.wopn.h" />
+    <ClInclude Include="OPNPlayer\OPNPlayer.h" />
+    <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
+    <ClInclude Include="Patrons.h" />
+    <ClInclude Include="Resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCPlayer.h" />
-    <ClInclude Include="sflist\json-builder.h" />
-    <ClInclude Include="sflist\json.h" />
+    <ClInclude Include="3rdParty\json\json-builder.h" />
+    <ClInclude Include="3rdParty\json\json.h" />
     <ClInclude Include="sflist\sflist.h" />
-    <ClInclude Include="SFPlayer.h">
+    <ClInclude Include="Experimental\SFPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <CustomBuild Include="StdAfx.h">
+    <CustomBuild Include="stdafx.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CustomBuild>
-    <ClInclude Include="synthlib_apogee\al_midi.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_blood.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_duke3d.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_lee.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_nam.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_sw.h" />
-    <ClInclude Include="synthlib_apogee\_al_midi.h" />
-    <ClInclude Include="synthlib_doom\inst\dmxopl.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_dmx.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_doom1.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_doom2.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_raptor.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_strife.h" />
-    <ClInclude Include="synthlib_doom\i_oplmusic.h" />
-    <ClInclude Include="synthlib_opl3w\gmtimbre.h" />
-    <ClInclude Include="synthlib_opl3w\opl3midi.h" />
-    <ClInclude Include="synthlib_opl3w\opl3type.h" />
+    <ClInclude Include="3rdParty\synthlib_apogee\al_midi.h" />
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_blood.h" />
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_duke3d.h" />
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_lee.h" />
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_nam.h" />
+    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_sw.h" />
+    <ClInclude Include="3rdParty\synthlib_apogee\_al_midi.h" />
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmxopl.h" />
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_dmx.h" />
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_doom1.h" />
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_doom2.h" />
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_raptor.h" />
+    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_strife.h" />
+    <ClInclude Include="3rdParty\synthlib_doom\i_oplmusic.h" />
+    <ClInclude Include="3rdParty\synthlib_opl3w\gmtimbre.h" />
+    <ClInclude Include="3rdParty\synthlib_opl3w\opl3midi.h" />
+    <ClInclude Include="3rdParty\synthlib_opl3w\opl3type.h" />
     <ClInclude Include="VSTiPlayer.h" />
   </ItemGroup>
   <ItemGroup>
