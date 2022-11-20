@@ -38,9 +38,6 @@
     <ClCompile Include="3rdParty\fmopl3lib\opl3class.cpp">
       <Filter>fmopl3</Filter>
     </ClCompile>
-    <ClCompile Include="scpipe\sccore.cpp" />
-    <ClCompile Include="scpipe\scpipe.cpp" />
-    <ClCompile Include="scpipe\stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -130,10 +127,6 @@
     <ClInclude Include="OPNPlayer\xg.wopn.h" />
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
     <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
-    <ClInclude Include="scpipe\resource.h" />
-    <ClInclude Include="scpipe\sccore.h" />
-    <ClInclude Include="scpipe\stdafx.h" />
-    <ClInclude Include="scpipe\targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
@@ -165,15 +158,11 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
-    <ResourceCompile Include="scpipe\scpipe.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
     <None Include=".clang-format" />
     <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
-    <None Include="scpipe\.gitignore" />
-    <None Include="scpipe\LICENSE" />
-    <None Include="scpipe\README.md" />
   </ItemGroup>
 </Project>
