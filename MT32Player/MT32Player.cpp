@@ -17,27 +17,103 @@ MT32Player::MT32Player(bool gm, unsigned gm_set) : MIDIPlayer(), uGMSet(gm_set),
 
 MT32Player::~MT32Player()
 {
+    shutdown();
+}
+
+static const MT32Emu::AnalogOutputMode useMode = MT32Emu::AnalogOutputMode::AnalogOutputMode_ACCURATE;
+
+static const char * ControlROMNames[] =
+{
+    "CM32L_CONTROL.ROM",
+    "MT32_CONTROL.ROM"
+};
+
+static const char * PCMROMNames[] =
+{
+    "CM32L_PCM.ROM",
+    "MT32_PCM.ROM"
+};
+
+bool MT32Player::startup()
+{
+    if (_Synth)
+        return true;
+
+    unsigned rom_set = 0;
+
+    controlRomFile = openFile(ControlROMNames[0]);
+
+    if (!controlRomFile)
+    {
+        rom_set = 1;
+        controlRomFile = openFile(ControlROMNames[1]);
+    }
+
+    if (!controlRomFile)
+        return false;
+
+    pcmRomFile = openFile(PCMROMNames[rom_set]);
+
+    if (!pcmRomFile)
+        return false;
+
+    controlRom = MT32Emu::ROMImage::makeROMImage(controlRomFile);
+
+    if (!controlRom)
+        return false;
+
+    pcmRom = MT32Emu::ROMImage::makeROMImage(pcmRomFile);
+
+    if (!pcmRom)
+        return false;
+
+    _Synth = new MT32Emu::Synth;
+
+    MT32Emu::Bit32u UsePartialCount = bGM ? 256U : 32U;
+
+    if (!_Synth->open(*controlRom, *pcmRom, UsePartialCount, useMode))
+    {
+        delete _Synth;
+        _Synth = 0;
+        return false;
+    }
+
+    _reset();
+
+    _IsInitialized = true;
+
+    return true;
+}
+
+void MT32Player::shutdown()
+{
     if (_Synth)
     {
         _Synth->close();
+
         delete _Synth;
+        _Synth = nullptr;
     }
 
     if (controlRom)
     {
         MT32Emu::ROMImage::freeROMImage(controlRom);
+        controlRom = nullptr;
     }
 
     if (pcmRom)
     {
         MT32Emu::ROMImage::freeROMImage(pcmRom);
+        pcmRom = nullptr;
     }
 
-    if (controlRomFile)
-        delete controlRomFile;
+    delete controlRomFile;
+    controlRomFile = nullptr;
 
-    if (pcmRomFile)
-        delete pcmRomFile;
+    delete pcmRomFile;
+    pcmRomFile = nullptr;
+
+    _IsInitialized = false;
 }
 
 void MT32Player::send_event(uint32_t b)
@@ -80,100 +156,6 @@ void MT32Player::setBasePath(const char * in)
 void MT32Player::setAbortCallback(abort_callback * in)
 {
     _AbortCallback = in;
-}
-
-void MT32Player::shutdown()
-{
-    if (_Synth)
-    {
-        _Synth->close();
-        delete _Synth;
-    }
-
-    if (controlRom)
-    {
-        MT32Emu::ROMImage::freeROMImage(controlRom);
-    }
-
-    if (pcmRom)
-    {
-        MT32Emu::ROMImage::freeROMImage(pcmRom);
-    }
-
-    delete controlRomFile;
-    delete pcmRomFile;
-
-    _Synth = 0;
-    controlRom = 0;
-    pcmRom = 0;
-    controlRomFile = 0;
-    pcmRomFile = 0;
-    _IsInitialized = false;
-}
-
-static const char * control_rom_names[] =
-{
-    "CM32L_CONTROL.ROM",
-    "MT32_CONTROL.ROM"
-};
-
-static const char * pcm_rom_names[] =
-{
-    "CM32L_PCM.ROM",
-    "MT32_PCM.ROM"
-};
-
-static const MT32Emu::AnalogOutputMode useMode = MT32Emu::AnalogOutputMode::AnalogOutputMode_ACCURATE;
-
-bool MT32Player::startup()
-{
-    if (_Synth)
-        return true;
-
-    unsigned rom_set = 0;
-
-    controlRomFile = openFile(control_rom_names[0]);
-
-    if (!controlRomFile)
-    {
-        rom_set = 1;
-        controlRomFile = openFile(control_rom_names[1]);
-    }
-
-    if (!controlRomFile)
-        return false;
-
-    pcmRomFile = openFile(pcm_rom_names[rom_set]);
-
-    if (!pcmRomFile)
-        return false;
-
-    controlRom = MT32Emu::ROMImage::makeROMImage(controlRomFile);
-
-    if (!controlRom)
-        return false;
-
-    pcmRom = MT32Emu::ROMImage::makeROMImage(pcmRomFile);
-
-    if (!pcmRom)
-        return false;
-
-    _Synth = new MT32Emu::Synth;
-
-    MT32Emu::Bit32u UsePartialCount = bGM ? 256U : 32U;
-
-    if (!_Synth->open(*controlRom, *pcmRom, UsePartialCount, useMode))
-    {
-        delete _Synth;
-        _Synth = 0;
-        return false;
-    }
-
-    _reset();
-
-    _IsInitialized = true;
-
-    return true;
 }
 
 int MT32Player::getSampleRate()
@@ -223,17 +205,18 @@ void MT32Player::_reset()
 
 class FBArrayFile : public MT32Emu::ArrayFile
 {
-    MT32Emu::Bit8u * keptData;
-
 public:
-    FBArrayFile(MT32Emu::Bit8u * data, size_t size) : MT32Emu::ArrayFile(data, size), keptData(data)
+    FBArrayFile(MT32Emu::Bit8u * data, size_t size) : MT32Emu::ArrayFile(data, size), _Data(data)
     {
     }
 
     virtual ~FBArrayFile()
     {
-        delete[] keptData;
+        delete[] _Data;
     }
+
+private:
+    MT32Emu::Bit8u * _Data;
 };
 
 MT32Emu::File * MT32Player::openFile(const char * fileName)

@@ -76,7 +76,7 @@ branch. Pull requests are warmly welcome.
 
 v2.7.5, 2022-xx-xx
 
-* Updated MUNT to v2.7.0.
+* Updated Munt to v2.7.0.
 
 v2.7.4.3, 2022-11-20, *"Returning to BASS."*
 
@@ -105,6 +105,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 * Peter Pawlowski, for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
 * [kode54](https://gitlab.com/kode54), for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
+* [Munt](https://munt.sourceforge.net/), for a multi-platform software synthesiser emulating (somewhat inaccurately) pre-GM MIDI devices such as the Roland MT-32, CM-32L, CM-64 and LAPC-I.
 
 ## Links
 

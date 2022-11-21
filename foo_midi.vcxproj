@@ -370,6 +370,7 @@
     <ClInclude Include="MSPlayer.h" />
     <ClInclude Include="MT32Player\MT32Player.h" />
     <ClInclude Include="MT32Player\mtgm.h" />
+    <ClInclude Include="OPNPlayer\fmmidi.wopn.h" />
     <ClInclude Include="OPNPlayer\xg.wopn.h" />
     <CustomBuild Include="Experimental\DXiPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

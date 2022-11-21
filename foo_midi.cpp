@@ -1526,8 +1526,7 @@ static const GUID guid_cfg_filter_instruments = { 0x6d30c919, 0xb053, 0x43aa, { 
 // {3145963C-7322-4B48-99FF-75EAC5F4DACC}
 static const GUID guid_cfg_filter_banks = { 0x3145963c, 0x7322, 0x4b48, { 0x99, 0xff, 0x75, 0xea, 0xc5, 0xf4, 0xda, 0xcc } };
 // {FE5B24D8-C8A5-4b49-A163-972649217185}
-/*static const GUID guid_cfg_recover_tracks =
-{ 0xfe5b24d8, 0xc8a5, 0x4b49, { 0xa1, 0x63, 0x97, 0x26, 0x49, 0x21, 0x71, 0x85 } };*/
+/*static const GUID guid_cfg_recover_tracks = { 0xfe5b24d8, 0xc8a5, 0x4b49, { 0xa1, 0x63, 0x97, 0x26, 0x49, 0x21, 0x71, 0x85 } };*/
 // {460A84B6-910A-496C-BEB6-86FDEB41ABDC}
 static const GUID guid_cfg_loop_type = { 0x460a84b6, 0x910a, 0x496c, { 0xbe, 0xb6, 0x86, 0xfd, 0xeb, 0x41, 0xab, 0xdc } };
 // {AB5CC279-1C68-4824-B4B8-0656856A40A0}
@@ -1541,8 +1540,7 @@ static const GUID guid_cfg_resampling = { 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x
 // {408AA155-4C42-42b5-8C3E-D10C35DD5EF1}
 static const GUID guid_cfg_history_rate = { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
 // {F3EE2258-65D3-4219-B932-BF52119F2484}
-/*static const GUID guid_cfg_gm2 =
-{ 0xf3ee2258, 0x65d3, 0x4219, { 0xb9, 0x32, 0xbf, 0x52, 0x11, 0x9f, 0x24, 0x84 } };*/
+/*static const GUID guid_cfg_gm2 = { 0xf3ee2258, 0x65d3, 0x4219, { 0xb9, 0x32, 0xbf, 0x52, 0x11, 0x9f, 0x24, 0x84 } };*/
 // {1A6EA7E5-718A-485a-B167-CFDF3B406145}
 static const GUID guid_cfg_vst_path = { 0x1a6ea7e5, 0x718a, 0x485a, { 0xb1, 0x67, 0xcf, 0xdf, 0x3b, 0x40, 0x61, 0x45 } };
 // {696D12DD-AF32-43d9-8DF6-BDD11E818329}
@@ -1575,8 +1573,7 @@ static const GUID guid_cfg_adl_chips = { 0x974365ed, 0xd4f9, 0x4daa, { 0xb4, 0x8
 // {AD6821B4-493F-4BB3-B7BB-E0A67C5D5907}
 static const GUID guid_cfg_adl_panning = { 0xad6821b4, 0x493f, 0x4bb3, { 0xb7, 0xbb, 0xe0, 0xa6, 0x7c, 0x5d, 0x59, 0x7 } };
 // {C5FB4053-75BF-4C0D-A1B1-7173863288A6}
-/*static const GUID guid_cfg_adl_4op =
-{ 0xc5fb4053, 0x75bf, 0x4c0d, { 0xa1, 0xb1, 0x71, 0x73, 0x86, 0x32, 0x88, 0xa6 } };*/
+/*static const GUID guid_cfg_adl_4op = { 0xc5fb4053, 0x75bf, 0x4c0d, { 0xa1, 0xb1, 0x71, 0x73, 0x86, 0x32, 0x88, 0xa6 } };*/
 // {07257AC7-9901-4A5F-9D8B-C5B5F1B8CF5B}
 static const GUID guid_cfg_munt_gm = { 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 0xc5, 0xb5, 0xf1, 0xb8, 0xcf, 0x5b } };
 #ifdef BASSMIDISUPPORT
@@ -1689,21 +1686,26 @@ enum
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>>
 {
 public:
-    cfg_map(const GUID & guid)
-        : cfg_var(guid), std::map<t_uint32, std::vector<uint8_t>>()
+    cfg_map(const GUID & guid) : cfg_var(guid), std::map<t_uint32, std::vector<uint8_t>>()
     {
     }
 
     void get_data_raw(stream_writer * p_stream, abort_callback & p_abort)
     {
         stream_writer_formatter<> out(*p_stream, p_abort);
+
         out.write_int(size());
+
         for (auto it = begin(); it != end(); ++it)
         {
             out.write_int(it->first);
+
             const t_uint32 size = pfc::downcast_guarded<t_uint32>(it->second.size());
+
             out << size;
-            for (t_uint32 walk = 0; walk < size; ++walk) out << it->second[walk];
+
+            for (t_uint32 walk = 0; walk < size; ++walk)
+                out << it->second[walk];
         }
     }
 
@@ -1714,20 +1716,26 @@ public:
         clear();
 
         t_size count;
+
         in.read_int(count);
 
         for (t_size i = 0; i < count; i++)
         {
             t_uint32 p_key;
+
             std::vector<uint8_t> p_value;
 
             in.read_int(p_key);
 
             {
                 t_uint32 size;
+
                 in >> size;
+
                 p_value.resize(size);
-                for (t_uint32 walk = 0; walk < size; ++walk) in >> p_value[walk];
+
+                for (t_uint32 walk = 0; walk < size; ++walk)
+                    in >> p_value[walk];
             }
 
             operator[](p_key) = p_value;
@@ -1744,7 +1752,7 @@ enum
     default_cfg_emidi_exclusion = 1,
     default_cfg_filter_instruments = 0,
     default_cfg_filter_banks = 0,
-    // default_cfg_recover_tracks = 0,
+//  default_cfg_recover_tracks = 0,
     default_cfg_loop_type = 0,
     default_cfg_loop_type_other = 0,
     default_cfg_srate = 44100,
@@ -1753,7 +1761,7 @@ enum
     default_cfg_adl_bank = 72,
     default_cfg_adl_chips = 10,
     default_cfg_adl_panning = 1,
-    // default_cfg_adl_4op = 14,
+//  default_cfg_adl_4op = 14,
     default_cfg_munt_gm = 0,
     default_cfg_ms_synth = 0,
     default_cfg_ms_bank = 2,
@@ -1855,7 +1863,8 @@ advconfig_integer_factory cfg_fluidsynth_voices("Maximum voice count", guid_cfg_
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
 
-static const char * munt_bank_names[] = {
+static const char * munt_bank_names[] =
+{
     "Roland",
     "Sierra / King's Quest 6",
 };
@@ -1879,6 +1888,7 @@ static struct init_ms_presets
     static void enum_callback(unsigned int synth, unsigned int bank, const char * name)
     {
         ms_preset temp = { synth, bank, name };
+
         g_ms_presets.append_single(temp);
     }
 } g_init_ms_presets;
@@ -1888,6 +1898,7 @@ const char * ms_get_preset_name(unsigned int synth, unsigned int bank)
     for (size_t i = 0; i < g_ms_presets.get_count(); ++i)
     {
         const ms_preset & preset = g_ms_presets[i];
+
         if (preset.synth == synth && preset.bank == bank)
             return preset.name;
     }
@@ -1899,6 +1910,7 @@ void ms_get_preset(const char * name, unsigned int & synth, unsigned int & bank)
     for (size_t i = 0; i < g_ms_presets.get_count(); ++i)
     {
         const ms_preset & preset = g_ms_presets[i];
+
         if (strcmp(preset.name, name) == 0)
         {
             synth = preset.synth;
@@ -1906,6 +1918,7 @@ void ms_get_preset(const char * name, unsigned int & synth, unsigned int & bank)
             return;
         }
     }
+
     synth = default_cfg_ms_synth;
     bank = default_cfg_ms_bank;
 }
@@ -1976,7 +1989,9 @@ struct midi_preset
     {
         plugin = cfg_plugin;
         vst_path = cfg_vst_path;
+
         VSTiPlayer * vstPlayer = NULL;
+
         try
         {
             vstPlayer = new VSTiPlayer;
@@ -1989,19 +2004,25 @@ struct midi_preset
         {
             if (plugin == 1) plugin = 0;
         }
+
         delete vstPlayer;
+
         soundfont_path = cfg_soundfont_path;
+
     #ifdef BASSMIDISUPPORT
         effects = cfg_bassmidi_effects;
         voices = (unsigned int) (int) cfg_bassmidi_voices;
     #endif
+
     #ifdef FLUIDSYNTHSUPPORT
         effects = cfg_fluidsynth_effects;
         voices = (unsigned int) (int) cfg_fluidsynth_voices;
     #endif
+
     #ifdef DXISUPPORT
         dxi_plugin = cfg_dxi_plugin;
     #endif
+
         adl_bank = cfg_adl_bank;
         adl_chips = cfg_adl_chips;
         adl_panning = !!cfg_adl_panning;
@@ -2015,7 +2036,9 @@ struct midi_preset
             else
                 adl_emu_core = ADLMIDI_EMU_DOSBOX;
         }
+
         munt_gm_set = cfg_munt_gm;
+
         ms_synth = cfg_ms_synth;
         ms_bank = cfg_ms_bank;
         midi_flavor = cfg_midi_flavor;
@@ -2025,7 +2048,8 @@ struct midi_preset
         {
             if (cfg_opn_core_mame)
                 opn_emu_core = OPNMIDI_EMU_MAME;
-            else if (cfg_opn_core_nuked)
+            else
+            if (cfg_opn_core_nuked)
                 opn_emu_core = OPNMIDI_EMU_NUKED;
             else
                 opn_emu_core = OPNMIDI_EMU_GENS;
@@ -2034,11 +2058,14 @@ struct midi_preset
         {
             if (cfg_opn_bank_xg)
                 opn_bank = 0;
-            else if (cfg_opn_bank_gs)
+            else
+            if (cfg_opn_bank_gs)
                 opn_bank = 1;
-            else if (cfg_opn_bank_gems)
+            else
+            if (cfg_opn_bank_gems)
                 opn_bank = 2;
-            else if (cfg_opn_bank_tomsoft)
+            else
+            if (cfg_opn_bank_tomsoft)
                 opn_bank = 3;
             else
                 opn_bank = 4;
@@ -2073,7 +2100,8 @@ struct midi_preset
             p_out += "|";
             p_out += pfc::format_int(midi_reverb);
         }
-        else if (plugin == 2 || plugin == 4)
+        else
+        if (plugin == 2 || plugin == 4)
         {
             p_out += "|";
 
@@ -2096,7 +2124,8 @@ struct midi_preset
             p_out += pfc::format_int(midi_reverb);
         }
     #ifdef DXISUPPORT
-        else if (plugin == 5)
+        else
+        if (plugin == 5)
         {
             p_out += "|";
 
@@ -2117,7 +2146,8 @@ struct midi_preset
             p_out += pfc::format_hex(dxi_plugin.Data4[7], 2);
         }
     #endif
-        else if (plugin == 6)
+        else
+        if (plugin == 6)
         {
             p_out += "|";
 
@@ -2135,27 +2165,31 @@ struct midi_preset
 
             p_out += pfc::format_int(adl_emu_core);
         }
-        else if (plugin == 3)
+        else
+        if (plugin == 3)
         {
             p_out += "|";
 
             p_out += munt_bank_names[munt_gm_set];
         }
-        else if (plugin == 9)
+        else
+        if (plugin == 9)
         {
             p_out += "|";
             p_out += ms_get_preset_name(ms_synth, ms_bank);
             p_out += "|";
             p_out += pfc::format_int(ms_panning);
         }
-        else if (plugin == 10)
+        else
+        if (plugin == 10)
         {
             p_out += "|";
             p_out += pfc::format_int(midi_flavor);
             p_out += "|";
             p_out += pfc::format_int(midi_reverb);
         }
-        else if (plugin == 7)
+        else
+        if (plugin == 7)
         {
             p_out += "|";
             p_out += pfc::format_int(opn_bank);
@@ -2171,17 +2205,24 @@ struct midi_preset
     void unserialize(const char * p_in)
     {
         const char * bar_pos = strchr(p_in, '|');
-        if (!bar_pos) return;
+
+        if (!bar_pos)
+            return;
 
         unsigned in_version = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
-        if (in_version > version) return;
+
+        if (in_version > version)
+            return;
 
         p_in = bar_pos + 1;
 
         bar_pos = strchr(p_in, '|');
-        if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+        if (!bar_pos)
+            bar_pos = p_in + strlen(p_in);
 
         unsigned in_plugin = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+
         pfc::string8 in_vst_path;
         std::vector<uint8_t> in_vst_config;
         pfc::string8 in_soundfont_path;
@@ -2205,8 +2246,11 @@ struct midi_preset
         if (*bar_pos)
         {
             p_in = bar_pos + 1;
+
             bar_pos = strchr(p_in, '|');
-            if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+            if (!bar_pos)
+                bar_pos = p_in + strlen(p_in);
 
             if (in_plugin == 1)
             {
@@ -2214,11 +2258,14 @@ struct midi_preset
 
                 p_in = bar_pos + (*bar_pos == '|');
                 bar_pos = strchr(p_in, '|');
-                if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+                if (!bar_pos)
+                    bar_pos = p_in + strlen(p_in);
 
                 while (*p_in && p_in < bar_pos)
                 {
                     in_vst_config.push_back(pfc::atohex<unsigned char>(p_in, 2));
+
                     p_in += 2;
                 }
 
@@ -2237,13 +2284,17 @@ struct midi_preset
                     in_midi_reverb = !!pfc::atodec<unsigned int>(p_in, bar_pos - p_in);
                 }
             }
-            else if (in_plugin == 2 || in_plugin == 4)
+            else
+            if (in_plugin == 2 || in_plugin == 4)
             {
                 in_soundfont_path.set_string(p_in, bar_pos - p_in);
 
                 p_in = bar_pos + (*bar_pos == '|');
+
                 bar_pos = strchr(p_in, '|');
-                if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+                if (!bar_pos)
+                    bar_pos = p_in + strlen(p_in);
 
                 if (bar_pos > p_in)
                 {
@@ -2252,8 +2303,11 @@ struct midi_preset
                     if (in_version >= 9)
                     {
                         p_in = bar_pos + (*bar_pos == '|');
+
                         bar_pos = strchr(p_in, '|');
-                        if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+                        if (!bar_pos)
+                            bar_pos = p_in + strlen(p_in);
 
                         if (bar_pos > p_in)
                         {
@@ -2262,14 +2316,20 @@ struct midi_preset
                             if (version >= 11)
                             {
                                 p_in = bar_pos + (*bar_pos == '|');
+
                                 bar_pos = strchr(p_in, '|');
-                                if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+                                if (!bar_pos)
+                                    bar_pos = p_in + strlen(p_in);
 
                                 in_midi_flavor = pfc::atodec<unsigned int>(p_in, bar_pos - p_in);
 
                                 p_in = bar_pos + (*bar_pos == '|');
+
                                 bar_pos = strchr(p_in, '|');
-                                if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+                                if (!bar_pos)
+                                    bar_pos = p_in + strlen(p_in);
 
                                 in_midi_reverb = !!pfc::atodec<unsigned int>(p_in, bar_pos - p_in);
                             }
@@ -2311,7 +2371,8 @@ struct midi_preset
                 }
             }
         #ifdef DXISUPPORT
-            else if (in_plugin == 5)
+            else
+            if (in_plugin == 5)
             {
                 if (bar_pos - p_in < 8 + 1 + 4 + 1 + 4 + 1 + 4 + 1 + 12) return;
                 in_dxi_plugin.Data1 = pfc::atohex<t_uint32>(p_in, 8);
@@ -2327,21 +2388,26 @@ struct midi_preset
                 in_dxi_plugin.Data4[7] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2 + 2, 2);
             }
         #endif
-            else if (in_plugin == 6)
+            else
+            if (in_plugin == 6)
             {
                 const char * const * banknames = adl_getBankNames();
                 unsigned j = adl_getBanksCount();
                 unsigned i;
+
                 for (i = 0; i < j; i++)
                 {
                     size_t len = strlen(banknames[i]);
+
                     if (len == bar_pos - p_in && !strncmp(p_in, banknames[i], len))
                     {
                         in_adl_bank = i;
                         break;
                     }
                 }
-                if (i == j) return;
+
+                if (i == j)
+                    return;
 
                 p_in = bar_pos + (*bar_pos == '|');
                 bar_pos = strchr(p_in, '|');
@@ -2385,7 +2451,8 @@ struct midi_preset
                     in_adl_emu_core = ADLMIDI_EMU_DOSBOX;
                 }
             }
-            else if (in_plugin == 3)
+            else
+            if (in_plugin == 3)
             {
                 unsigned i, j;
                 for (i = 0, j = _countof(munt_bank_names); i < j; i++)
@@ -2397,13 +2464,18 @@ struct midi_preset
                         break;
                     }
                 }
-                if (i == j) return;
+
+                if (i == j)
+                    return;
             }
-            else if (in_plugin == 9)
+            else
+            if (in_plugin == 9)
             {
                 pfc::string8 temp;
+
                 temp.set_string(p_in, bar_pos - p_in);
                 ms_get_preset(temp, in_ms_synth, in_ms_bank);
+
                 if (version >= 6)
                 {
                     p_in = bar_pos + (*bar_pos == '|');
@@ -2418,9 +2490,11 @@ struct midi_preset
                     in_ms_panning = true;
                 }
             }
-            else if (in_plugin == 10)
+            else
+            if (in_plugin == 10)
             {
                 in_sc_flavor = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
+
                 if (version >= 6)
                 {
                     p_in = bar_pos + (*bar_pos == '|');
@@ -2439,7 +2513,8 @@ struct midi_preset
 
                         if (!*p_in) return;
                     }
-                    else if (version >= 8)
+                    else
+                    if (version >= 8)
                     {
                         in_gs_flavor = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 
@@ -2479,7 +2554,8 @@ struct midi_preset
                 if (in_midi_flavor > MIDIPlayer::filter_xg)
                     in_midi_flavor = MIDIPlayer::filter_default;
             }
-            else if (in_plugin == 7)
+            else
+            if (in_plugin == 7)
             {
                 if (version >= 10)
                 {
@@ -2550,14 +2626,18 @@ static void relative_path_create(const char * p_file, const char * p_base_path, 
     {
         p_out = p_file + p_file_fn;
     }
-    else if (p_file_fn > p_base_path_fn && !strncmp(p_file, p_base_path, p_base_path_fn) && pfc::is_path_separator(p_file[p_base_path_fn - 1]))
+    else
+    if (p_file_fn > p_base_path_fn && !strncmp(p_file, p_base_path, p_base_path_fn) && pfc::is_path_separator(p_file[p_base_path_fn - 1]))
     {
         p_out = p_file + p_base_path_fn;
     }
-    else if (p_base_path_fn > p_file_fn && !strncmp(p_file, p_base_path, p_file_fn) && pfc::is_path_separator(p_base_path[p_file_fn - 1]))
+    else
+    if (p_base_path_fn > p_file_fn && !strncmp(p_file, p_base_path, p_file_fn) && pfc::is_path_separator(p_base_path[p_file_fn - 1]))
     {
         p_out.reset();
+
         t_size p_base_path_search = p_file_fn;
+
         while (p_base_path_search < p_base_path_fn)
         {
             if (pfc::is_path_separator(p_base_path[p_base_path_search++]))
@@ -2565,6 +2645,7 @@ static void relative_path_create(const char * p_file, const char * p_base_path, 
                 p_out += "..\\";
             }
         }
+
         p_out += p_file + p_file_fn;
     }
     else
@@ -2582,8 +2663,10 @@ static void relative_path_parse(const char * p_relative, const char * p_base_pat
     else
     {
         pfc::string8 temp = p_base_path;
+
         temp.truncate(temp.scan_filename());
         temp += p_relative;
+
         filesystem::g_get_canonical_path(temp, p_out);
     }
 }
@@ -2595,6 +2678,7 @@ struct midi_syx_dumps
     midi_syx_dumps()
     {
     }
+
     midi_syx_dumps(const midi_syx_dumps & p_in)
         : dumps(p_in.dumps)
     {
@@ -2674,7 +2758,8 @@ struct midi_syx_dumps
     }
 };
 
-static const char * exts[] = {
+static const char * exts[] =
+{
     "MID",
     "MIDI",
     "KAR",
@@ -2691,7 +2776,8 @@ static const char * exts[] = {
     "LDS",
 };
 
-static const char * exts_syx[] = {
+static const char * exts_syx[] =
+{
     "SYX",
     "DMP"
 };
@@ -2699,20 +2785,26 @@ static const char * exts_syx[] = {
 static bool g_test_extension(const char * ext)
 {
     int n;
+
     for (n = 0; n < _countof(exts); n++)
     {
-        if (!stricmp(ext, exts[n])) return true;
+        if (!stricmp(ext, exts[n]))
+            return true;
     }
+
     return false;
 }
 
 static bool g_test_extension_syx(const char * ext)
 {
     int n;
+
     for (n = 0; n < _countof(exts_syx); n++)
     {
-        if (!stricmp(ext, exts_syx[n])) return true;
+        if (!stricmp(ext, exts_syx[n]))
+            return true;
     }
+
     return false;
 }
 
@@ -2738,7 +2830,8 @@ class metadb_index_client_midi : public metadb_index_client
     {
         const metadb_index_hash hash_null = 0;
 
-        if (!g_test_extension(pfc::string_extension(location.get_path()))) return hash_null;
+        if (!g_test_extension(pfc::string_extension(location.get_path())))
+            return hash_null;
 
         hasher_md5_state hasher_state;
         static_api_ptr_t<hasher_md5> hasher;
@@ -2750,6 +2843,7 @@ class metadb_index_client_midi : public metadb_index_client
         hasher->process(hasher_state, &subsong, sizeof(subsong));
 
         const char * str = info.info_get(field_hash);
+
         if (str)
             hasher->process_string(hasher_state, str);
         else
@@ -2796,7 +2890,8 @@ static t_size sjis_decode_char(const char * p_sjis, t_size max)
 
     if (max == 0)
         return 0;
-    else if (max > 2)
+    else
+    if (max > 2)
         max = 2;
 
     if (sjis[0] < 0x80)
@@ -2825,17 +2920,22 @@ static t_size sjis_decode_char(const char * p_sjis, t_size max)
 static bool is_valid_sjis(const char * param, t_size max = ~0)
 {
     t_size walk = 0;
+
     while (walk < max && param[walk] != 0)
     {
         t_size d;
+
         d = sjis_decode_char(param + walk, max - walk);
-        if (d == 0) return false;
-        walk += d;
-        if (walk > max)
-        {
+
+        if (d == 0)
             return false;
-        }
+
+        walk += d;
+
+        if (walk > max)
+            return false;
     }
+
     return true;
 }
 
@@ -2844,7 +2944,6 @@ class input_midi : public input_stubs
 #ifdef DXISUPPORT
     DXiProxy * dxiProxy;
 #endif
-
     bool is_emidi;
 
     MIDIPlayer * midiPlayer;
@@ -2921,6 +3020,7 @@ class input_midi : public input_stubs
         if (value[0])
         {
             pfc::string8 t;
+
             if (max && value[max - 1])
             {
                 // TODO: moo
@@ -2929,9 +3029,11 @@ class input_midi : public input_stubs
             }
             else
                 max = strlen(value);
+
             if (pfc::is_lower_ascii(value) || pfc::is_valid_utf8(value, max))
                 p_info.meta_add(name, value);
-            else if (is_valid_sjis(value, max))
+            else
+            if (is_valid_sjis(value, max))
                 p_info.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
             else
                 p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));
@@ -2956,15 +3058,11 @@ public:
 
         length_samples = 0;
         length_ticks = 0;
-
-        /*
+/*
         external_decoder = 0;
         mem_reader = 0;
-        */
-
-        clean_flags = (cfg_emidi_exclusion ? midi_container::clean_flag_emidi : 0) |
-            (cfg_filter_instruments ? midi_container::clean_flag_instruments : 0) |
-            (cfg_filter_banks ? midi_container::clean_flag_banks : 0);
+*/
+        clean_flags = (cfg_emidi_exclusion ? midi_container::clean_flag_emidi : 0) | (cfg_filter_instruments ? midi_container::clean_flag_instruments : 0) | (cfg_filter_banks ? midi_container::clean_flag_banks : 0);
 
         loop_count = cfg_midi_loop_count.get();
         fade_ms = cfg_midi_fade_time.get();
@@ -2977,16 +3075,18 @@ public:
 
     ~input_midi()
     {
-        /*if (external_decoder) external_decoder->service_release();
+/*      if (external_decoder) external_decoder->service_release();
         if (mem_reader) mem_reader->reader_release();*/
         delete midiPlayer;
+
         if (is_emidi)
         {
             insync(sync);
             g_running--;
         }
     #ifdef DXISUPPORT
-        if (dxiProxy) delete dxiProxy;
+        if (dxiProxy)
+            delete dxiProxy;
     #endif
     }
 
@@ -2994,23 +3094,30 @@ private:
     double get_length(unsigned p_subsong)
     {
         length_ms = midi_file.get_timestamp_end(p_subsong, true);
+
         double length = length_ms * .001;
+
         if (loop_type == 1)
             length += 1.;
+
         length_ticks = midi_file.get_timestamp_end(p_subsong); // theSequence->m_tempoMap.Sample2Tick(len, 1000);
         length_samples = (unsigned) (((__int64) length_ms * (__int64) srate) / 1000);
+
         if (loop_type == 1)
             length_samples += srate;
+
         loop_begin = midi_file.get_timestamp_loop_start(p_subsong);
         loop_end = midi_file.get_timestamp_loop_end(p_subsong);
         loop_begin_ms = midi_file.get_timestamp_loop_start(p_subsong, true);
         loop_end_ms = midi_file.get_timestamp_loop_end(p_subsong, true);
+
         if (loop_begin != ~0 || loop_end != ~0 || loop_type > 2)
         {
             if (loop_begin_ms == ~0) loop_begin_ms = 0;
             if (loop_end_ms == ~0) loop_end_ms = length_ms;
             length = (double) (loop_begin_ms + (loop_end_ms - loop_begin_ms) * loop_count + fade_ms) * 0.001;
         }
+
         return length;
     }
 
@@ -3118,21 +3225,28 @@ public:
 
     void get_info(t_uint32 p_subsong, file_info & p_info, abort_callback & p_abort)
     {
-        if (is_syx) return;
+        if (is_syx)
+            return;
 
         midi_meta_data meta_data;
+
         midi_file.get_meta_data(p_subsong, meta_data);
 
         midi_meta_data_item item;
+
         bool remap_display_name = !meta_data.get_item("title", item);
 
         for (t_size i = 0; i < meta_data.get_count(); ++i)
         {
             const midi_meta_data_item & item = meta_data[i];
+
             if (pfc::stricmp_ascii(item.m_name.c_str(), "type"))
             {
                 std::string name = item.m_name;
-                if (remap_display_name && !pfc::stricmp_ascii(name.c_str(), "display_name")) name = "title";
+
+                if (remap_display_name && !pfc::stricmp_ascii(name.c_str(), "display_name"))
+                    name = "title";
+
                 meta_add(p_info, name.c_str(), item.m_value.c_str(), 0);
             }
         }
@@ -3141,7 +3255,9 @@ public:
         p_info.info_set_int(field_tracks, midi_file.get_format() == 2 ? 1 : midi_file.get_track_count());
         p_info.info_set_int(field_channels, midi_file.get_channel_count(p_subsong));
         p_info.info_set_int(field_ticks, midi_file.get_timestamp_end(p_subsong));
-        if (meta_data.get_item("type", item)) p_info.info_set(field_type, item.m_value.c_str());
+
+        if (meta_data.get_item("type", item))
+            p_info.info_set(field_type, item.m_value.c_str());
 
         unsigned loop_begin = midi_file.get_timestamp_loop_start(p_subsong);
         unsigned loop_end = midi_file.get_timestamp_loop_end(p_subsong);
@@ -3155,14 +3271,17 @@ public:
         // p_info.info_set_int("samplerate", srate);
         unsigned length_ms = midi_file.get_timestamp_end(p_subsong, true);
         double length = double(length_ms) * 0.001;
+
         if (loop_type_other == 1)
             length += 1.;
+
         if (loop_begin != ~0 || loop_end != ~0 || loop_type_other > 2)
         {
             if (loop_begin_ms == ~0) loop_begin_ms = 0;
             if (loop_end_ms == ~0) loop_end_ms = length_ms;
             length = (double) (loop_begin_ms + (loop_end_ms - loop_begin_ms) * loop_count + fade_ms) * 0.001;
         }
+
         p_info.info_set_int("channels", 2);
         p_info.info_set("encoding", "synthesized");
         p_info.set_length(length);
@@ -3174,9 +3293,11 @@ public:
         p_info.info_set(field_hash, hash_string);
 
         service_ptr_t<metadb_index_client> index_client = new service_impl_t<metadb_index_client_midi>;
+
         m_index_hash = index_client->transform(p_info, playable_location_impl(m_path, p_subsong));
 
         pfc::array_t<t_uint8> tag;
+
         static_api_ptr_t<metadb_index_manager>()->get_user_data_t(guid_midi_index, m_index_hash, tag);
 
         if (tag.get_count())
@@ -3218,7 +3339,8 @@ public:
 
     static bool test_soundfont_extension(const char * base_path, pfc::string_base & path, abort_callback & p_abort)
     {
-        static const char * extensions[] = {
+        static const char * extensions[] =
+        {
             "json",
             "sflist",
 #ifdef SF2PACK
@@ -3227,25 +3349,28 @@ public:
 #endif
             "sf2"
         };
+
         path = base_path;
+
         size_t length = path.length();
+
         for (int i = 0; i < _countof(extensions); ++i)
         {
             path.truncate(length);
             path += ".";
             path += extensions[i];
+
             if (filesystem::g_exists(path, p_abort))
                 return true;
         }
+
         return false;
     }
 
     void decode_initialize(unsigned p_subsong, unsigned p_flags, abort_callback & p_abort)
     {
         if (is_syx)
-        {
             throw exception_io_data("You cannot play SysEx dumps");
-        }
 
         loop_type = (p_flags & input_flag_playback) ? loop_type_playback : loop_type_other;
 
@@ -3315,6 +3440,7 @@ public:
         }
 
         midi_file.set_track_count(original_track_count);
+
         theDumps.merge_into_file(midi_file, p_abort);
 
         plugin = thePreset.plugin;
@@ -3326,23 +3452,29 @@ public:
         midi_file.get_meta_data(p_subsong, meta_data);
 
         midi_meta_data_item item;
-        if (meta_data.get_item("type", item) && !strcmp(item.m_value.c_str(), "MT-32")) plugin = 3;
+
+        if (meta_data.get_item("type", item) && !strcmp(item.m_value.c_str(), "MT-32"))
+            plugin = 3;
 
         pfc::string8 file_soundfont;
 
         /*if ( plugin == 2 || plugin == 4 )*/
         {
             bool exists = false;
+
             pfc::string8_fast temp = m_path, temp_out;
 
             if (!(exists = test_soundfont_extension(temp, temp_out, p_abort)))
             {
                 size_t dot = temp.find_last('.');
+
                 if (dot > temp.scan_filename())
                 {
                     temp.truncate(dot);
+
                     exists = test_soundfont_extension(temp, temp_out, p_abort);
                 }
+
                 if (!exists)
                 {
                     // Bah. The things needed to keep the last path separator.
@@ -3350,7 +3482,9 @@ public:
                     temp_out = "";
                     temp_out.add_byte(temp[temp.length() - 1]);
                     temp.truncate(temp.length() - 1);
+
                     size_t pos = temp.scan_filename();
+
                     if (pos != pfc::infinite_size)
                     {
                         temp += temp_out;
@@ -3367,7 +3501,8 @@ public:
             }
         }
 
-        if (plugin == 3) srate = MT32Player::getSampleRate();
+        if (plugin == 3)
+            srate = MT32Player::getSampleRate();
 
         get_length(p_subsong);
 
@@ -3450,6 +3585,7 @@ public:
                 }
 
                 VSTiPlayer * vstPlayer = new VSTiPlayer;
+
                 midiPlayer = vstPlayer;
 
                 if (vstPlayer->LoadVST(thePreset.vst_path))
@@ -3464,7 +3600,9 @@ public:
                     unsigned loop_mode = 0;
 
                     loop_mode = MIDIPlayer::loop_mode_enable;
-                    if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
+
+                    if (doing_loop)
+                        loop_mode |= MIDIPlayer::loop_mode_force;
 
                     if (vstPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
                     {
@@ -3474,13 +3612,17 @@ public:
                         return;
                     }
                 }
+
                 pfc::string8 temp;
+
                 temp = "Unable to load VSTi plugin: ";
                 temp += thePreset.vst_path;
+
                 console::print(temp);
             }
     #ifdef FLUIDSYNTHSUPPORT
-            else if (plugin == 2 || plugin == 4)
+            else
+            if (plugin == 2 || plugin == 4)
             {
                 /*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
                     if ( !fsmod )
@@ -3521,34 +3663,31 @@ public:
             else if (plugin == 4)
             #endif
             #else
-            else if (plugin == 2 || plugin == 4)
-            #endif
-            #ifdef BASSMIDISUPPORT
+            else
+            if (plugin == 2 || plugin == 4)
+    #endif
+    #ifdef BASSMIDISUPPORT
             {
-                /*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
-                    if ( !fsmod )
-                    {
-                        throw exception_io_data("Failed to load FluidSynth.dll");
-                    }
-                    FreeLibrary( fsmod );*/
-
                 delete midiPlayer;
 
                 bassmidi_voices = 0;
                 bassmidi_voices_max = 0;
 
-                if (thePreset.soundfont_path.is_empty() &&
-                    file_soundfont.is_empty())
+                if (thePreset.soundfont_path.is_empty() && file_soundfont.is_empty())
                 {
                     console::print("No SoundFonts configured, and no file or directory SoundFont found");
                     throw exception_io_data();
                 }
 
                 BMPlayer * bmPlayer = new BMPlayer;
+
                 midiPlayer = bmPlayer;
 
                 bmPlayer->setSoundFont(thePreset.soundfont_path);
-                if (file_soundfont.length()) bmPlayer->setFileSoundFont(file_soundfont);
+
+                if (file_soundfont.length())
+                    bmPlayer->setFileSoundFont(file_soundfont);
+
                 bmPlayer->setSampleRate(srate);
                 bmPlayer->setInterpolation(resampling);
                 bmPlayer->setEffects(thePreset.effects);
@@ -3559,7 +3698,9 @@ public:
                 unsigned loop_mode = 0;
 
                 loop_mode = MIDIPlayer::loop_mode_enable;
-                if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
+
+                if (doing_loop)
+                    loop_mode |= MIDIPlayer::loop_mode_force;
 
                 if (bmPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
                 {
@@ -3571,16 +3712,19 @@ public:
                 else
                 {
                     std::string last_error;
+
                     if (bmPlayer->GetLastError(last_error))
                         throw exception_io_data(last_error.c_str());
                 }
             }
     #endif
-            else if (plugin == 6)
+            else
+            if (plugin == 6)
             {
                 delete midiPlayer;
 
                 ADLPlayer * adlPlayer = new ADLPlayer;
+
                 midiPlayer = adlPlayer;
 
                 adlPlayer->setBank(thePreset.adl_bank);
@@ -3594,7 +3738,9 @@ public:
                 unsigned loop_mode = 0;
 
                 loop_mode = MIDIPlayer::loop_mode_enable;
-                if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
+
+                if (doing_loop)
+                    loop_mode |= MIDIPlayer::loop_mode_force;
 
                 if (adlPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
                 {
@@ -3604,11 +3750,13 @@ public:
                     return;
                 }
             }
-            else if (plugin == 7)
+            else
+            if (plugin == 7)
             {
                 delete midiPlayer;
 
                 OPNPlayer * opnPlayer = new OPNPlayer;
+
                 midiPlayer = opnPlayer;
 
                 opnPlayer->setBank(thePreset.opn_bank);
@@ -3621,7 +3769,9 @@ public:
                 unsigned loop_mode = 0;
 
                 loop_mode = MIDIPlayer::loop_mode_enable;
-                if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
+
+                if (doing_loop)
+                    loop_mode |= MIDIPlayer::loop_mode_force;
 
                 if (opnPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
                 {
@@ -3682,7 +3832,8 @@ public:
                     return;
                 }
             }
-            else if (plugin == 9)
+            else
+            if (plugin == 9)
             {
                 delete midiPlayer;
 
@@ -3698,7 +3849,9 @@ public:
                 unsigned loop_mode = 0;
 
                 loop_mode = MIDIPlayer::loop_mode_enable;
-                if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
+
+                if (doing_loop)
+                    loop_mode |= MIDIPlayer::loop_mode_force;
 
                 if (msPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
                 {
@@ -3708,15 +3861,18 @@ public:
                     return;
                 }
             }
-            else if (plugin == 10)
+            else
+            if (plugin == 10)
             {
                 delete midiPlayer;
 
                 SCPlayer * scPlayer = new SCPlayer();
+
                 midiPlayer = scPlayer;
 
                 pfc::string8 p_path;
                 cfg_sc_path.get(p_path);
+
                 if (p_path.is_empty())
                 {
                     console::print("Secret Sauce path not configured, yet somehow enabled, trying plugin directory");
@@ -3725,15 +3881,15 @@ public:
                 }
 
                 scPlayer->set_sccore_path(p_path);
-
                 scPlayer->setFilterMode((MIDIPlayer::filter_mode) thePreset.midi_flavor, !thePreset.midi_reverb);
-
                 scPlayer->setSampleRate(srate);
 
                 unsigned loop_mode = 0;
 
                 loop_mode = MIDIPlayer::loop_mode_enable;
-                if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
+
+                if (doing_loop)
+                    loop_mode |= MIDIPlayer::loop_mode_force;
 
                 if (scPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
                 {
@@ -3748,23 +3904,29 @@ public:
                 delete midiPlayer;
 
                 EMIDIPlayer * emidiPlayer = new EMIDIPlayer;
+
                 midiPlayer = emidiPlayer;
 
                 unsigned loop_mode = 0;
 
                 loop_mode = MIDIPlayer::loop_mode_enable;
-                if (doing_loop) loop_mode |= MIDIPlayer::loop_mode_force;
+
+                if (doing_loop)
+                    loop_mode |= MIDIPlayer::loop_mode_force;
 
                 if (emidiPlayer->Load(midi_file, p_subsong, loop_mode, clean_flags))
                 {
                     {
                         insync(sync);
+
                         if (++g_running == 1)
                             g_srate = srate;
-                        else if (srate != g_srate)
+                        else
+                         if (srate != g_srate)
                         {
                             srate = g_srate;
                         }
+
                         is_emidi = true;
                     }
 
@@ -3784,7 +3946,8 @@ public:
     {
         p_abort.check();
 
-        if (eof) return false;
+        if (eof)
+            return false;
 
         bool rv = false;
 
@@ -3824,74 +3987,74 @@ public:
             rv = true;
         }
         else
-        #endif
-            if (plugin == 1)
+    #endif
+        if (plugin == 1)
+        {
+            VSTiPlayer * vstPlayer = (VSTiPlayer *) midiPlayer;
+
+            size_t todo = 4096;
+            unsigned nch = vstPlayer->getChannelCount();
+
+            p_chunk.set_data_size(todo * nch);
+
+            audio_sample * out = p_chunk.get_data();
+
+            unsigned done = vstPlayer->Play(out, todo);
+
+            if (!done) return false;
+
+            p_chunk.set_srate(srate);
+            p_chunk.set_channels(nch);
+            p_chunk.set_sample_count(done);
+
+            rv = true;
+        }
+        else if (plugin == 3)
+        {
+            MT32Player * mt32Player = (MT32Player *) midiPlayer;
+
+            size_t todo = 4096;
+
+            p_chunk.set_data_size(todo * 2);
+
+            audio_sample * out = p_chunk.get_data();
+
+            mt32Player->setAbortCallback(&p_abort);
+
+            unsigned done = mt32Player->Play(out, todo);
+
+            if (!done) return false;
+
+            p_chunk.set_srate(srate);
+            p_chunk.set_channels(2);
+            p_chunk.set_sample_count(done);
+
+            rv = true;
+        }
+        else if (midiPlayer)
+        {
+            size_t todo = 4096;
+
+            p_chunk.set_data_size(todo * 2);
+
+            audio_sample * out = p_chunk.get_data();
+
+            unsigned done = midiPlayer->Play(out, todo);
+
+            if (!done)
             {
-                VSTiPlayer * vstPlayer = (VSTiPlayer *) midiPlayer;
-
-                size_t todo = 4096;
-                unsigned nch = vstPlayer->getChannelCount();
-
-                p_chunk.set_data_size(todo * nch);
-
-                audio_sample * out = p_chunk.get_data();
-
-                unsigned done = vstPlayer->Play(out, todo);
-
-                if (!done) return false;
-
-                p_chunk.set_srate(srate);
-                p_chunk.set_channels(nch);
-                p_chunk.set_sample_count(done);
-
-                rv = true;
+                std::string last_error;
+                if (midiPlayer->GetLastError(last_error))
+                    throw exception_io_data(last_error.c_str());
+                return false;
             }
-            else if (plugin == 3)
-            {
-                MT32Player * mt32Player = (MT32Player *) midiPlayer;
 
-                size_t todo = 4096;
+            p_chunk.set_srate(srate);
+            p_chunk.set_channels(2);
+            p_chunk.set_sample_count(done);
 
-                p_chunk.set_data_size(todo * 2);
-
-                audio_sample * out = p_chunk.get_data();
-
-                mt32Player->setAbortCallback(&p_abort);
-
-                unsigned done = mt32Player->Play(out, todo);
-
-                if (!done) return false;
-
-                p_chunk.set_srate(srate);
-                p_chunk.set_channels(2);
-                p_chunk.set_sample_count(done);
-
-                rv = true;
-            }
-            else if (midiPlayer)
-            {
-                size_t todo = 4096;
-
-                p_chunk.set_data_size(todo * 2);
-
-                audio_sample * out = p_chunk.get_data();
-
-                unsigned done = midiPlayer->Play(out, todo);
-
-                if (!done)
-                {
-                    std::string last_error;
-                    if (midiPlayer->GetLastError(last_error))
-                        throw exception_io_data(last_error.c_str());
-                    return false;
-                }
-
-                p_chunk.set_srate(srate);
-                p_chunk.set_channels(2);
-                p_chunk.set_sample_count(done);
-
-                rv = true;
-            }
+            rv = true;
+        }
 
         if (rv && samples_fade_begin != ~0 && samples_fade_end != ~0)
         {
@@ -3962,12 +4125,12 @@ public:
             return;
         }
         else
-        #endif
-            if (midiPlayer)
-            {
-                midiPlayer->Seek(done);
-                return;
-            }
+    #endif
+        if (midiPlayer)
+        {
+            midiPlayer->Seek(done);
+            return;
+        }
     }
 
     bool decode_can_seek()
@@ -3978,6 +4141,7 @@ public:
     bool decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta)
     {
         int ret = false;
+
         if (first_block)
         {
             p_out.info_set_int("samplerate", srate);
@@ -3995,18 +4159,21 @@ public:
         {
             BMPlayer * bmPlayer = (BMPlayer *) midiPlayer;
             unsigned voices = bmPlayer->getVoicesActive();
+
             if (voices != bassmidi_voices)
             {
                 p_out.info_set_int("bassmidi_voices", voices);
                 bassmidi_voices = voices;
                 ret = true;
             }
+
             if (voices > bassmidi_voices_max)
             {
                 p_out.info_set_int("bassmidi_voices_max", voices);
                 bassmidi_voices_max = voices;
                 ret = true;
             }
+
             if (ret)
                 p_timestamp_delta = dynamic_time;
         }
@@ -4027,21 +4194,21 @@ public:
     void retag_set_info(t_uint32 p_subsong, const file_info & p_info, abort_callback & p_abort)
     {
         if (is_syx)
-        {
             throw exception_io_data("You cannot tag SysEx dumps");
-        }
 
         file_info_impl m_info(p_info);
 
         m_info.meta_remove_field(field_preset);
+
         const char * midi_preset = m_info.info_get(field_preset);
+
         if (midi_preset)
-        {
             m_info.meta_set(field_preset, midi_preset);
-        }
 
         m_info.meta_remove_field(field_syx);
+
         const char * midi_syx = m_info.info_get(field_syx);
+
         if (midi_syx)
         {
             m_info.meta_set(field_syx, midi_syx);
@@ -4049,9 +4216,11 @@ public:
 
         file::ptr tag_file;
         filesystem::g_open_tempmem(tag_file, p_abort);
+
         tag_processor::write_apev2(tag_file, m_info, p_abort);
 
         pfc::array_t<t_uint8> tag;
+
         tag_file->seek(0, p_abort);
         tag.set_count(tag_file->get_size_ex(p_abort));
         tag_file->read_object(tag.get_ptr(), tag.get_count(), p_abort);
@@ -4081,6 +4250,7 @@ public:
     {
         // {AE29C554-EE59-4C1A-8211-320F2A1A992B}
         static const GUID guid = { 0xae29c554, 0xee59, 0x4c1a, { 0x82, 0x11, 0x32, 0xf, 0x2a, 0x1a, 0x99, 0x2b } };
+
         return guid;
     }
 
@@ -4102,12 +4272,15 @@ public:
     }
 };
 
-static const char * loop_txt[] = { "Never loop",
-                                  "Never, add 1s decay time",
-                                  "Loop and fade when detected",
-                                  "Always loop and fade",
-                                  "Play indefinitely when detected",
-                                  "Play indefinitely" };
+static const char * loop_txt[] =
+{
+    "Never loop",
+    "Never, add 1s decay time",
+    "Loop and fade when detected",
+    "Always loop and fade",
+    "Play indefinitely when detected",
+    "Play indefinitely"
+};
 
 #ifdef FLUIDSYNTHSUPPORT
 static const char * interp_txt[] = { "None", "Linear", "Cubic", "7th Order Sinc" };
@@ -4128,8 +4301,7 @@ class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_pa
 {
 public:
     // Constructor - invoked by preferences_page_impl helpers - don't do Create() in here, preferences_page_impl does this for us
-    CMyPreferences(preferences_page_callback::ptr callback)
-        : m_callback(callback), busy(false)
+    CMyPreferences(preferences_page_callback::ptr callback) : m_callback(callback), busy(false)
     {
     }
 
@@ -4400,8 +4572,8 @@ typedef struct sc_info
     hasher_md5_result hash;
 } sc_info;
 
-static const sc_info sc_hashes[] = {
-
+static const sc_info sc_hashes[] =
+{
     // 1.0.3 - 32 bit - 27,472,384 - d44d1b8c9a6f956ca2324f2f5d348c44
     { 27472384, { (char) 0xd4, 0x4d, 0x1b, (char) 0x8c, (char) 0x9a, 0x6f, (char) 0x95, 0x6c, (char) 0xa2, 0x32, 0x4f, 0x2f, 0x5d, 0x34, (char) 0x8c, 0x44 } },
 
@@ -4499,7 +4671,8 @@ bool CMyPreferences::check_secret_sauce()
 
 static const char * chip_counts[] = { "1", "2", "5", "10", "25", "50", "100" };
 
-const CMyPreferences::plugin_names_ids CMyPreferences::plugins[] = {
+const CMyPreferences::plugin_names_ids CMyPreferences::plugins[] =
+{
     { "Emu de MIDI", 0, -1, plugin_always_present },
 #ifdef FLUIDSYNTHSUPPORT
     { "FluidSynth",
@@ -4908,11 +5081,13 @@ void CMyPreferences::OnButtonConfig(UINT, int, CWindow)
         {
             if (vsti_config.size())
                 vstPlayer.setChunk(&vsti_config[0], vsti_config.size());
+
             vstPlayer.displayEditorModal();
             vstPlayer.getChunk(vsti_config);
         }
 
         busy = false;
+
         OnChanged();
     }
 }
@@ -5081,7 +5256,9 @@ void CMyPreferences::reset()
 {
     int default_plugin_entry = plugins_reverse_map[default_cfg_plugin];
     int plugin_selected = plugins_present_map[default_plugin_entry];
+
     SendDlgItemMessage(IDC_PLUGIN, CB_SETCURSEL, plugin_selected);
+
     if (default_cfg_plugin != 2 && default_cfg_plugin != 4)
     {
         GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
@@ -5133,13 +5310,18 @@ void CMyPreferences::reset()
 
     uSetDlgItemText(m_hWnd, IDC_SOUNDFONT, click_to_set);
     uSetDlgItemText(m_hWnd, IDC_MUNT, click_to_set);
+
     m_soundfont.reset();
     m_munt_path.reset();
+
     SetDlgItemInt(IDC_SAMPLERATE, default_cfg_srate, FALSE);
+
     if (!default_cfg_plugin)
     {
-        if (g_running) GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
+        if (g_running)
+            GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
     }
+
     SendDlgItemMessage(IDC_LOOP, CB_SETCURSEL, default_cfg_loop_type);
     SendDlgItemMessage(IDC_CLOOP, CB_SETCURSEL, default_cfg_loop_type_other);
     SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, default_cfg_thloopz);
@@ -5152,7 +5334,9 @@ void CMyPreferences::reset()
     SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, default_cfg_ms_panning);
     SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_SETCURSEL, default_cfg_midi_flavor);
     SendDlgItemMessage(IDC_FILTER_EFFECTS, BM_SETCHECK, !default_cfg_midi_reverb);
+
     unsigned bank_selected = 0;
+
     for (unsigned i = 0; i < m_bank_list.get_count(); i++)
     {
         if (m_bank_list[i].number == default_cfg_adl_bank)
@@ -5161,10 +5345,12 @@ void CMyPreferences::reset()
             break;
         }
     }
+
     SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, bank_selected);
     SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, default_cfg_adl_panning);
     SetDlgItemInt(IDC_ADL_CHIPS, default_cfg_adl_chips, 0);
-    // SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
+//  SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
+
 #ifdef FLUIDSYNTHSUPPORT
     SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, 2 /* 4 */);
 #else
@@ -5172,9 +5358,11 @@ void CMyPreferences::reset()
 #endif
 
     size_t preset_number = 0;
+
     for (size_t i = 0, j = g_ms_presets.get_count(); i < j; i++)
     {
         const ms_preset & preset = g_ms_presets[i];
+
         if (preset.synth == default_cfg_ms_synth && preset.bank == default_cfg_ms_bank)
         {
             preset_number = i;
@@ -5193,11 +5381,15 @@ void CMyPreferences::reset()
 void CMyPreferences::apply()
 {
     char temp[16];
+
     int t = GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE);
+
     if (t < 6000)
         t = 6000;
-    else if (t > 192000)
+    else
+    if (t > 192000)
         t = 192000;
+
     SetDlgItemInt(IDC_SAMPLERATE, t, FALSE);
     itoa(t, temp, 10);
     cfg_history_rate.add_item(temp);
@@ -5260,7 +5452,7 @@ void CMyPreferences::apply()
     cfg_filter_instruments = SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
     cfg_filter_banks = SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
     cfg_ms_panning = SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK);
-    // cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
+//  cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
 #ifdef FLUIDSYNTHSUPPORT
     {
         int interp_method = SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
@@ -5567,38 +5759,55 @@ public:
 
     virtual bool get_item_description(unsigned n, pfc::string_base & out)
     {
-        if (n > 4) uBugCheck();
-        static const char * descriptions[5] = { "Converts the selected files into General MIDI files in the same path as the source.",
-                                               "Applies the current synthesizer setup to this track for future playback.",
-                                               "Removes a saved synthesizer preset from this track.",
-                                               "Assigns the selected SysEx dumps to the selected MIDI files.",
-                                               "Clears all assigned SysEx dumps from the selected MIDI files." };
+        if (n > 4)
+            uBugCheck();
+
+        static const char * descriptions[5] =
+        {
+            "Converts the selected files into General MIDI files in the same path as the source.",
+            "Applies the current synthesizer setup to this track for future playback.",
+            "Removes a saved synthesizer preset from this track.",
+            "Assigns the selected SysEx dumps to the selected MIDI files.",
+            "Clears all assigned SysEx dumps from the selected MIDI files."
+        };
+
         out = descriptions[n];
+
         return true;
     }
 
     virtual GUID get_item_guid(unsigned n)
     {
-        static const GUID guids[5] = {
+        static const GUID guids[5] =
+        {
             { 0x70985c72, 0xe77e, 0x4bbb, { 0xbf, 0x11, 0x3c, 0x90, 0x2b, 0x27, 0x39, 0x9d } },
             { 0xeb3f3ab4, 0x60b3, 0x4579, { 0x9f, 0xf8, 0x38, 0xda, 0xc0, 0x91, 0x2c, 0x82 } },
             { 0x5bcb6efe, 0x2eb5, 0x4331, { 0xb9, 0xc1, 0x92, 0x4b, 0x77, 0xba, 0xcc, 0x10 } },
             { 0xd0e4a166, 0x10c, 0x41f0, { 0xad, 0x5a, 0x51, 0x84, 0x44, 0xa3, 0x92, 0x9c } },
             { 0x2aa8c082, 0x5d84, 0x4982, { 0xb4, 0x5d, 0xde, 0x51, 0xcb, 0x75, 0xff, 0xf2 } }
         };
-        if (n > 4) uBugCheck();
+
+        if (n > 4)
+            uBugCheck();
+
         return guids[n];
     }
 
     virtual bool context_get_display(unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out, unsigned & displayflags, const GUID &)
     {
-        if (n > 4) uBugCheck();
+        if (n > 4)
+            uBugCheck();
+
         unsigned matches, matches_syx, i, j, k, l;
+
         i = data.get_count();
+
         for (matches = 0, matches_syx = 0, j = 0; j < i; j++)
         {
             const playable_location & foo = data.get_item(j)->get_location();
+
             pfc::string8 ext = pfc::string_extension(foo.get_path());
+
             for (k = ((n == 0) ? 3 : 0), l = _countof(exts); k < l; k++)
             {
                 if (!pfc::stricmp_ascii(ext, exts[k]))
@@ -5607,7 +5816,10 @@ public:
                     break;
                 }
             }
-            if (k < l) continue;
+
+            if (k < l)
+                continue;
+
             if (n == 3)
             {
                 for (unsigned k = 0, l = _countof(exts_syx); k < l; k++)
@@ -5620,22 +5832,28 @@ public:
                 }
             }
         }
+
         if ((n != 3 && matches == i) || (n == 3 && (matches + matches_syx) == i))
         {
             out = context_names[n];
             return true;
         }
+
         return false;
     }
 
     virtual void context_command(unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, const GUID &)
     {
-        if (n > 4) uBugCheck();
+        if (n > 4)
+            uBugCheck();
+
         if (!n)
         {
             unsigned i = data.get_count();
+
             abort_callback_dummy m_abort;
             std::vector<uint8_t> file_data;
+
             for (unsigned i = 0, j = data.get_count(); i < j; i++)
             {
                 const playable_location & loc = data.get_item(i)->get_location();
@@ -5661,7 +5879,8 @@ public:
                 p_file->write_object(&file_data[0], file_data.size(), m_abort);
             }
         }
-        else if (n < 3)
+        else
+        if (n < 3)
         {
             const char * p_midi_preset;
             pfc::string8 preset_serialized;
@@ -5677,6 +5896,7 @@ public:
 
             static_api_ptr_t<metadb_io_v2> p_imgr;
             service_ptr_t<midi_preset_filter> p_filter = new service_impl_t<midi_preset_filter>(data, p_midi_preset);
+
             p_imgr->update_info_async(data, p_filter, core_api::get_main_window(), 0, 0);
         }
         else

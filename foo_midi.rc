@@ -66,8 +66,8 @@ BEGIN
 END
 
 VS_VERSION_INFO versioninfo
-fileversion     2,7,4,3
-productversion  2,7,4,3
+fileversion     2,7,4,4
+productversion  2,7,4,4
 fileflagsmask   0x3FL
 #ifdef _DEBUG
 fileflags       VS_FF_DEBUG
@@ -84,12 +84,12 @@ filesubtype     VFT2_UNKNOWN
         {
             VALUE "CompanyName", "LoSno.co"
             VALUE "FileDescription", "A foobar2000 component"
-            VALUE "FileVersion", "2.7.4.3"
+            VALUE "FileVersion", "2.7.4.4"
             VALUE "InternalName", "foo_midi"
             VALUE "LegalCopyright", "Copyright (C) 2022 Christopher Snowhill, Peter Stuer"
             VALUE "OriginalFilename", "foo_midi.dll"
             VALUE "ProductName", "foo_midi"
-            VALUE "ProductVersion", "2.7.4.3"
+            VALUE "ProductVersion", "2.7.4.4"
         }
     }
 

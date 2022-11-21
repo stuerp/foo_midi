@@ -127,6 +127,7 @@
     <ClInclude Include="OPNPlayer\xg.wopn.h" />
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
     <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
+    <ClInclude Include="OPNPlayer\fmmidi.wopn.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
