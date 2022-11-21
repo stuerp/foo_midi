@@ -9,19 +9,20 @@ enum
     BUFFER_SIZE = 4096
 };
 
-static HANDLE hNUL = NULL;
-static HANDLE hPipeIn = NULL;
-static HANDLE hPipeOut = NULL;
+static HANDLE _hNUL = nullptr;
+static HANDLE _hPipeIn = nullptr;
+static HANDLE _hPipeOut = nullptr;
 
 #ifdef LOG_EXCHANGE
 unsigned exchange_count = 0;
+//{ WCHAR Text[1024]; ::_swprintf(Text, TEXT("size: %ld, MsgSize: %ld"), size, MsgSize); ::MessageBox(::GetDesktopWindow(), TEXT("Code 3"), TEXT("SCPipe"), MB_OK); }
 #endif
 
 void put_bytes(const void * out, uint32_t size)
 {
     DWORD BytesWritten;
 
-    ::WriteFile(hPipeOut, out, size, &BytesWritten, NULL);
+    ::WriteFile(_hPipeOut, out, size, &BytesWritten, NULL);
 
 #ifdef LOG_EXCHANGE
     TCHAR logfile[MAX_PATH];
@@ -41,7 +42,7 @@ void get_bytes(void * in, uint32_t size)
 {
     DWORD BytesRead;
 
-    if (!::ReadFile(hPipeIn, in, size, &BytesRead, NULL) || BytesRead < size)
+    if (!::ReadFile(_hPipeIn, in, size, &BytesRead, NULL) || BytesRead < size)
     {
         ::memset(in, 0, size);
     #ifdef LOG_EXCHANGE
@@ -92,33 +93,28 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
     if (argv == nullptr || argc != 2)
         return 1;
 
-#ifdef _DEBUG
-    MessageBox(GetDesktopWindow(), _T("Boop"), _T("meh"), 0);
-#endif
-
     unsigned code = 0;
 
     SCCore * Sampler = nullptr;
-
     uint32_t SampleRate = 44100;
-
     std::vector<float> SampleBuffer;
 
-    uint8_t * msgbuf = NULL;
-    size_t msgsize = 0;
+    uint8_t * MsgData = nullptr;
+    size_t MsgSize = 0;
 
-    hNUL = ::CreateFile(_T("NUL"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    _hNUL = ::CreateFile(_T("NUL"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
-    hPipeIn = ::GetStdHandle(STD_INPUT_HANDLE);
+    _hPipeIn = ::GetStdHandle(STD_INPUT_HANDLE);
+    ::SetStdHandle(STD_INPUT_HANDLE, _hNUL);
 
-    ::SetStdHandle(STD_INPUT_HANDLE, hNUL);
-
-    hPipeOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
-
-    ::SetStdHandle(STD_OUTPUT_HANDLE, hNUL);
+    _hPipeOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
+    ::SetStdHandle(STD_OUTPUT_HANDLE, _hNUL);
 
     if (FAILED(::CoInitialize(NULL)))
-        return 5;
+    {
+        code = 5;
+        goto exit;
+    }
 
 #ifndef _DEBUG
     ::SetUnhandledExceptionFilter(FilterUnhandledExceptions);
@@ -153,9 +149,9 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
         {
             case 1: // Set Sample Rate
             {
-                uint32_t size = get_code();
+                uint32_t Size = get_code();
 
-                if (size != sizeof(SampleRate))
+                if (Size != sizeof(SampleRate))
                 {
                     code = 10;
                     goto exit;
@@ -170,49 +166,45 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                 Sampler->TG_setMaxBlockSize(BUFFER_SIZE);
 
                 put_code(0);
+                break;
             }
-            break;
 
             case 2: // Send MIDI Event
             {
-                uint32_t b = get_code();
+                uint32_t Code = get_code();
 
-                Sampler->TG_ShortMidiIn(b, 0);
+                Sampler->TG_ShortMidiIn(Code, 0);
 
                 put_code(0);
+                break;
             }
-            break;
 
             case 3: // Send System Exclusive Event
             {
-                uint32_t size = get_code();
+                uint32_t Size = get_code();
 
-                if ((size_t) size + 1 > msgsize)
+                if ((size_t)(Size + 1) > MsgSize)
                 {
-                    msgsize = (size_t) size + 1024 & ~1023;
-
-                    uint8_t * msgbufnew = (uint8_t *) ::realloc(msgbuf, msgsize);
-
-                    if (msgbufnew == NULL)
-                        goto exit;
+                    MsgSize = (size_t)(Size + 1024) & ~1023;
+                    MsgData = (uint8_t *) ::realloc(MsgData, MsgSize);
                 }
 
-                if (!msgbuf)
+                if (MsgData == nullptr)
                 {
                     code = 3;
                     goto exit;
                 }
 
-                get_bytes(msgbuf, size);
+                get_bytes(MsgData, Size);
 
-                if (msgbuf[size - 1] != 0xF7)
-                    msgbuf[size] = 0xF7;
+                if (MsgData[Size - 1] != 0xF7)
+                    MsgData[Size] = 0xF7;
 
-                Sampler->TG_LongMidiIn(msgbuf, 0);
+                Sampler->TG_LongMidiIn(MsgData, 0);
 
                 put_code(0);
+                break;
             }
-            break;
 
             case 4: // Render Samples
             {
@@ -270,10 +262,10 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
             case 6: // Send event, with timestamp
             {
-                uint32_t b = get_code();
-                uint32_t timestamp = get_code();
+                uint32_t Code = get_code();
+                uint32_t Timestamp = get_code();
 
-                Sampler->TG_ShortMidiIn(b, timestamp);
+                Sampler->TG_ShortMidiIn(Code, Timestamp);
 
                 put_code(0);
                 break;
@@ -281,40 +273,35 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
             case 7: // Send System Exclusive, with timestamp
             {
-                uint32_t size = get_code();
-                uint32_t timestamp = get_code();
+                uint32_t Size = get_code();
+                uint32_t Timestamp = get_code();
 
-                if ((size_t) size + 1 > msgsize)
+                if ((size_t)(Size + 1) > MsgSize)
                 {
-                    msgsize = (size_t) size + 1024 & ~1023;
-
-                    uint8_t * msgbufnew = (uint8_t *) ::realloc(msgbuf, msgsize);
-
-                    if (msgbufnew == NULL)
-                        goto exit;
+                    MsgSize = (size_t)(Size + 1024) & ~1023;
+                    MsgData = (uint8_t *) ::realloc(MsgData, MsgSize);
                 }
 
-                if (!msgbuf)
+                if (MsgData == nullptr)
                 {
                     code = 3;
                     goto exit;
                 }
 
-                get_bytes(msgbuf, size);
+                get_bytes(MsgData, Size);
 
-                if (msgbuf[size - 1] != 0xF7)
-                    msgbuf[size] = 0xF7;
+                if (MsgData[Size - 1] != 0xF7)
+                    MsgData[Size] = 0xF7;
 
-                Sampler->TG_LongMidiIn(msgbuf, timestamp);
+                Sampler->TG_LongMidiIn(MsgData, Timestamp);
 
                 put_code(0);
+                break;
             }
-            break;
 
             default:
                 code = 4;
                 goto exit;
-                break;
         }
     }
 
@@ -328,12 +315,12 @@ exit:
 
     put_code(code);
 
-    if (hNUL)
+    if (_hNUL)
     {
-        ::CloseHandle(hNUL);
+        ::CloseHandle(_hNUL);
 
-        ::SetStdHandle(STD_INPUT_HANDLE, hPipeIn);
-        ::SetStdHandle(STD_OUTPUT_HANDLE, hPipeOut);
+        ::SetStdHandle(STD_INPUT_HANDLE, _hPipeIn);
+        ::SetStdHandle(STD_OUTPUT_HANDLE, _hPipeOut);
     }
 
     return (int) code;

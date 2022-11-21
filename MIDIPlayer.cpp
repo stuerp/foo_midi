@@ -130,7 +130,8 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
 {
     assert(mStream.size());
 
-    if (!startup()) return 0;
+    if (!startup())
+        return 0;
 
     unsigned long done = 0;
 
@@ -142,16 +143,22 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
     while (uSamplesRemaining && done < count)
     {
         unsigned long todo = uSamplesRemaining;
-        if (todo > count - done) todo = count - done;
+
+        if (todo > count - done)
+            todo = count - done;
+
         if (needs_block_size && todo > needs_block_size)
             todo = needs_block_size;
+
         if (todo < needs_block_size)
         {
             uSamplesRemaining = 0;
             into_block = todo;
             break;
         }
+
         render(out + done * 2, todo);
+
         uSamplesRemaining -= todo;
         done += todo;
         uTimeCurrent += todo;
@@ -160,12 +167,15 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
     while (done < count)
     {
         unsigned long todo = uTimeEnd - uTimeCurrent;
-        if (todo > count - done) todo = count - done;
+
+        if (todo > count - done)
+            todo = count - done;
 
         const unsigned long time_target = todo + uTimeCurrent;
         unsigned long stream_end = uStreamPosition;
 
-        while (stream_end < mStream.size() && mStream.at(stream_end).m_timestamp < time_target) stream_end++;
+        while (stream_end < mStream.size() && mStream.at(stream_end).m_timestamp < time_target)
+            stream_end++;
 
         if (stream_end > uStreamPosition)
         {
@@ -174,6 +184,7 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
                 const midi_stream_event & me = mStream.at(uStreamPosition);
 
                 unsigned long samples_todo = me.m_timestamp - uTimeCurrent - into_block;
+
                 if (samples_todo)
                 {
                     if (samples_todo > count - done)
@@ -181,6 +192,7 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
                         uSamplesRemaining = samples_todo - (count - done);
                         samples_todo = count - done;
                     }
+
                     if (!needs_block_size && samples_todo)
                     {
                         render(out + done * 2, samples_todo);
@@ -198,9 +210,11 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
                 if (needs_block_size)
                 {
                     into_block += samples_todo;
+
                     while (into_block >= needs_block_size)
                     {
                         render(out + done * 2, needs_block_size);
+
                         done += needs_block_size;
                         into_block -= needs_block_size;
                         uTimeCurrent += needs_block_size;
@@ -215,22 +229,30 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
         if (done < count)
         {
             unsigned long samples_todo;
+
             if (uStreamPosition < mStream.size())
                 samples_todo = mStream.at(uStreamPosition).m_timestamp;
             else
                 samples_todo = uTimeEnd;
+
             samples_todo -= uTimeCurrent;
+
             if (needs_block_size)
                 into_block = samples_todo;
+
             if (samples_todo > count - done)
                 samples_todo = count - done;
+
             if (needs_block_size && samples_todo > needs_block_size)
                 samples_todo = needs_block_size;
+
             if (samples_todo >= needs_block_size)
             {
                 render(out + done * 2, samples_todo);
+
                 done += samples_todo;
                 uTimeCurrent += samples_todo;
+
                 if (needs_block_size)
                     into_block -= samples_todo;
             }
@@ -281,7 +303,8 @@ void MIDIPlayer::Seek(unsigned long sample)
     {
         if ((uLoopMode & (loop_mode_enable | loop_mode_force)) == (loop_mode_enable | loop_mode_force))
         {
-            while (sample >= uTimeEnd) sample -= uTimeEnd - uTimeLoopStart;
+            while (sample >= uTimeEnd)
+                sample -= uTimeEnd - uTimeLoopStart;
         }
         else
         {

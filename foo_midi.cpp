@@ -1,4 +1,4 @@
-#define MYVERSION "2.7.4.3"
+#define MYVERSION "2.7.4.4"
 
 // #define DXISUPPORT
 #define BASSMIDISUPPORT
@@ -4603,67 +4603,78 @@ static const sc_info sc_hashes[] =
 
 bool CMyPreferences::check_secret_sauce()
 {
-    size_t real_size;
     pfc::string8 path;
+
     cfg_sc_path.get(path);
 
-    if (path.is_empty()) return false;
+    if (path.is_empty())
+        return false;
 
     path += "\\";
-    path += g_sc_name;
+    path += _DLLFileName;
 
     pfc::stringcvt::string_os_from_utf8 pathnative(path);
 
     FILE * f = _tfopen(pathnative, _T("rb"));
-    if (!f) return false;
+
+    if (!f)
+        return false;
 
     fseek(f, 0, SEEK_END);
-    real_size = ftell(f);
+
+    size_t FileSize = ftell(f);
 
     bool found = false;
+
     for (int i = 0; sc_hashes[i].size; ++i)
     {
-        if (sc_hashes[i].size == real_size)
+        if (sc_hashes[i].size == FileSize)
         {
             found = true;
             break;
         }
     }
+
     if (!found)
     {
         fclose(f);
         return false;
     }
+
     fseek(f, 0, SEEK_SET);
 
     unsigned char buffer[1024];
+    size_t BytesReadTotal = 0;
+
     static_api_ptr_t<hasher_md5> m_hasher;
     hasher_md5_state m_hasher_state;
-    hasher_md5_result m_hasher_result;
-    size_t bytes_total = 0;
 
     m_hasher->initialize(m_hasher_state);
 
     while (!feof(f))
     {
-        size_t bytes_read = fread(buffer, 1, 1024, f);
-        bytes_total += bytes_read;
-        if (bytes_read)
-        {
-            m_hasher->process(m_hasher_state, buffer, bytes_read);
-        }
-        if (bytes_read < 1024) break;
+        size_t BytesRead = fread(buffer, 1, 1024, f);
+
+        BytesReadTotal += BytesRead;
+
+        if (BytesRead)
+            m_hasher->process(m_hasher_state, buffer, BytesRead);
+
+        if (BytesRead < 1024)
+            break;
     }
 
     fclose(f);
 
-    if (bytes_total != real_size) return false;
+    if (BytesReadTotal != FileSize)
+        return false;
 
-    m_hasher_result = m_hasher->get_result(m_hasher_state);
+    hasher_md5_result m_hasher_result = m_hasher->get_result(m_hasher_state);
 
     for (int i = 0; sc_hashes[i].size; ++i)
     {
-        if (real_size == sc_hashes[i].size && m_hasher_result == sc_hashes[i].hash) return true;
+        if (FileSize == sc_hashes[i].size && m_hasher_result == sc_hashes[i].hash)
+            return true;
     }
 
     return false;

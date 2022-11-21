@@ -8,7 +8,7 @@
 
 #include <foobar2000.h>
 
-extern char g_sc_name[];
+extern char _DLLFileName[];
 
 class SCPlayer : public MIDIPlayer
 {
@@ -52,10 +52,10 @@ private:
     void process_write_bytes(uint32_t port, const void * buffer, uint32_t size);
 
 private:
-    unsigned uPluginPlatform;
+    unsigned _PluginArchitecture;
     int _COMInitialisationCount;
 
-    std::string sPlugin;
+    std::string PluginFilePath;
 
     HANDLE hProcess[3];
     HANDLE hThread[3];

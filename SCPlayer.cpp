@@ -5,7 +5,24 @@
 #pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 
 // It's a secret to everybody!
-char g_sc_name[] = { 'F', 'P', 'P', 'b', 'e', 'r', '.', 'q', 'y', 'y', 0 };
+char _DLLFileName[] = { 'F', 'P', 'P', 'b', 'e', 'r', '.', 'q', 'y', 'y', 0 };
+
+static struct init_sc_name
+{
+    init_sc_name() noexcept
+    {
+        char * p;
+
+        for (p = _DLLFileName; *p; ++p)
+        {
+            if (*p >= 'A' && *p <= 'Z')
+                *p = (((*p - 'A') + 13) % 26) + 'A';
+            else
+            if (*p >= 'a' && *p <= 'z')
+                *p = (((*p - 'a') + 13) % 26) + 'a';
+        }
+    }
+} _InitSCName;
 
 SCPlayer::SCPlayer() noexcept : MIDIPlayer(), _SCCorePathName(0)
 {
@@ -16,13 +33,13 @@ SCPlayer::SCPlayer() noexcept : MIDIPlayer(), _SCCorePathName(0)
     {
         _IsPortTerminating[i] = false;
 
-        hProcess[i] = NULL;
-        hThread[i] = NULL;
-        hReadEvent[i] = NULL;
-        hChildStd_IN_Rd[i] = NULL;
-        hChildStd_IN_Wr[i] = NULL;
-        hChildStd_OUT_Rd[i] = NULL;
-        hChildStd_OUT_Wr[i] = NULL;
+        hProcess[i] = nullptr;
+        hThread[i] = nullptr;
+        hReadEvent[i] = nullptr;
+        hChildStd_IN_Rd[i] = nullptr;
+        hChildStd_IN_Wr[i] = nullptr;
+        hChildStd_OUT_Rd[i] = nullptr;
+        hChildStd_OUT_Wr[i] = nullptr;
     }
 
     _Buffer = new(std::nothrow) float[4096 * 2];
@@ -45,22 +62,47 @@ SCPlayer::~SCPlayer()
     }
 }
 
-static struct init_sc_name
+bool SCPlayer::startup()
 {
-    init_sc_name() noexcept
-    {
-        char * p;
+    pfc::string8 path;
 
-        for (p = g_sc_name; *p; ++p)
-        {
-            if (*p >= 'A' && *p <= 'Z')
-                *p = (((*p - 'A') + 13) % 26) + 'A';
-            else
-            if (*p >= 'a' && *p <= 'z')
-                *p = (((*p - 'a') + 13) % 26) + 'a';
-        }
+    if (_IsInitialized)
+        return true;
+
+    if (!_SCCorePathName)
+        return false;
+
+    path = _SCCorePathName;
+    path += "\\";
+    path += _DLLFileName;
+
+    if (!LoadCore(path))
+        return false;
+
+    for (uint32_t i = 0; i < 3; ++i)
+    {
+        process_write_code(i, 1);
+        process_write_code(i, sizeof(uint32_t));
+        process_write_code(i, uSampleRate);
+
+        if (process_read_code(i) != 0)
+            return false;
     }
-} g_init_sc_name;
+
+    _IsInitialized = true;
+
+    setFilterMode(mode, reverb_chorus_disabled);
+
+    return true;
+}
+
+void SCPlayer::shutdown()
+{
+    for (uint32_t i = 0; i < 3; ++i)
+        process_terminate(i);
+
+    _IsInitialized = false;
+}
 
 static uint16_t getwordle(uint8_t * data)
 {
@@ -80,28 +122,40 @@ unsigned SCPlayer::test_plugin_platform()
     uint8_t peheader[iPEHeaderSize];
     uint32_t dwOffsetPE;
 
-    std::string plugin = "file://";
-    plugin += sPlugin;
+    std::string URI = "file://";
+
+    URI += PluginFilePath;
 
     file::ptr f;
     abort_callback_dummy m_abort;
 
     try
     {
-        filesystem::g_open(f, plugin.c_str(), filesystem::open_mode_read, m_abort);
+        filesystem::g_open(f, URI.c_str(), filesystem::open_mode_read, m_abort);
 
         f->read_object(peheader, iMZHeaderSize, m_abort);
-        if (getwordle(peheader) != 0x5A4D) return 0;
+
+        if (getwordle(peheader) != 0x5A4D)
+            return 0;
+
         dwOffsetPE = getdwordle(peheader + 0x3c);
+
         f->seek(dwOffsetPE, m_abort);
         f->read_object(peheader, iPEHeaderSize, m_abort);
-        if (getdwordle(peheader) != 0x00004550) return 0;
+
+        if (getdwordle(peheader) != 0x00004550)
+            return 0;
+
         switch (getwordle(peheader + 4))
         {
             case 0x014C:
                 return 32;
+
             case 0x8664:
                 return 64;
+
+            default:
+                return 0;
         }
     }
     catch (...)
@@ -111,27 +165,36 @@ unsigned SCPlayer::test_plugin_platform()
     return 0;
 }
 
-bool SCPlayer::LoadCore(const char * path)
+bool SCPlayer::LoadCore(const char * filePath)
 {
-    if (!path || !path[0]) return false;
+    if (!filePath || !filePath[0])
+        return false;
 
-    if (path != sPlugin) sPlugin = path;
+    if (filePath != PluginFilePath)
+        PluginFilePath = filePath;
 
-    uPluginPlatform = test_plugin_platform();
+    _PluginArchitecture = test_plugin_platform();
 
-    if (!uPluginPlatform) return false;
+    if (!_PluginArchitecture)
+        return false;
 
-    bool rval = process_create(0);
-    if (rval) rval = process_create(1);
-    if (rval) rval = process_create(2);
+    bool Success = process_create(0);
 
-    return rval;
+    if (Success)
+        Success = process_create(1);
+
+    if (Success)
+        Success = process_create(2);
+
+    return Success;
 }
 
 static bool create_pipe_name(pfc::string_base & out)
 {
     GUID guid;
-    if (FAILED(CoCreateGuid(&guid))) return false;
+
+    if (FAILED(::CoCreateGuid(&guid)))
+        return false;
 
     out = "\\\\.\\pipe\\";
     out += pfc::print_guid(guid);
@@ -154,11 +217,12 @@ bool SCPlayer::process_create(uint32_t port)
             return false;
     }
 
-    _COMInitialisationCount++;
+    ++_COMInitialisationCount;
 
-    hReadEvent[port] = CreateEvent(NULL, TRUE, FALSE, NULL);
+    hReadEvent[port] = ::CreateEvent(NULL, TRUE, FALSE, NULL);
 
     pfc::string8 pipe_name_in, pipe_name_out;
+
     if (!create_pipe_name(pipe_name_in) || !create_pipe_name(pipe_name_out))
     {
         process_terminate(port);
@@ -167,25 +231,31 @@ bool SCPlayer::process_create(uint32_t port)
 
     pfc::stringcvt::string_os_from_utf8 pipe_name_in_os(pipe_name_in), pipe_name_out_os(pipe_name_out);
 
-    HANDLE hPipe = CreateNamedPipe(pipe_name_in_os, PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &sa);
-    if (hPipe == INVALID_HANDLE_VALUE)
-    {
-        process_terminate(port);
-        return false;
-    }
-    hChildStd_IN_Rd[port] = CreateFile(pipe_name_in_os, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
-    DuplicateHandle(GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd_IN_Wr[port], 0, FALSE, DUPLICATE_SAME_ACCESS);
-    CloseHandle(hPipe);
+    HANDLE hPipe = ::CreateNamedPipe(pipe_name_in_os, PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &sa);
 
-    hPipe = CreateNamedPipe(pipe_name_out_os, PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &sa);
     if (hPipe == INVALID_HANDLE_VALUE)
     {
         process_terminate(port);
         return false;
     }
-    hChildStd_OUT_Wr[port] = CreateFile(pipe_name_out_os, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
-    DuplicateHandle(GetCurrentProcess(), hPipe, GetCurrentProcess(), &hChildStd_OUT_Rd[port], 0, FALSE, DUPLICATE_SAME_ACCESS);
-    CloseHandle(hPipe);
+
+    hChildStd_IN_Rd[port] = ::CreateFile(pipe_name_in_os, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
+
+    ::DuplicateHandle(::GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &hChildStd_IN_Wr[port], 0, FALSE, DUPLICATE_SAME_ACCESS);
+
+    ::CloseHandle(hPipe);
+
+    hPipe = ::CreateNamedPipe(pipe_name_out_os, PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &sa);
+
+    if (hPipe == INVALID_HANDLE_VALUE)
+    {
+        process_terminate(port);
+        return false;
+    }
+
+    hChildStd_OUT_Wr[port] = ::CreateFile(pipe_name_out_os, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
+    ::DuplicateHandle(GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &hChildStd_OUT_Rd[port], 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ::CloseHandle(hPipe);
 
     std::string CommandLine = "\"";
 
@@ -196,35 +266,36 @@ bool SCPlayer::process_create(uint32_t port)
     if (slash != std::string::npos)
         CommandLine.erase(CommandLine.begin() + (const __int64)(slash + 1), CommandLine.end());
 
-    CommandLine += (uPluginPlatform == 64) ? "scpipe64.exe" : "scpipe32.exe";
+    CommandLine += (_PluginArchitecture == 64) ? "scpipe64.exe" : "scpipe32.exe";
     CommandLine += "\" \"";
-    CommandLine += sPlugin;
+    CommandLine += PluginFilePath;
     CommandLine += "\"";
 
-    PROCESS_INFORMATION piProcInfo;
-    STARTUPINFO siStartInfo = { 0 };
+    STARTUPINFO si = { sizeof(si) };
 
-    siStartInfo.cb = sizeof(siStartInfo);
-    siStartInfo.hStdInput = hChildStd_IN_Rd[port];
-    siStartInfo.hStdOutput = hChildStd_OUT_Wr[port];
-    siStartInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-    //siStartInfo.wShowWindow = SW_HIDE;
-    siStartInfo.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
+    si.hStdInput = hChildStd_IN_Rd[port];
+    si.hStdOutput = hChildStd_OUT_Wr[port];
+    si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+//  si.wShowWindow = SW_HIDE;
+    si.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
 
-    if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo))
+    PROCESS_INFORMATION pi;
+
+    if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
     {
         process_terminate(port);
         return false;
     }
 
-    // Close remote handles so pipes will break when process terminates
-    CloseHandle(hChildStd_OUT_Wr[port]);
-    CloseHandle(hChildStd_IN_Rd[port]);
-    hChildStd_OUT_Wr[port] = NULL;
-    hChildStd_IN_Rd[port] = NULL;
+    // Close remote handles so pipes will break when process terminates.
+    ::CloseHandle(hChildStd_OUT_Wr[port]);
+    hChildStd_OUT_Wr[port] = nullptr;
 
-    hProcess[port] = piProcInfo.hProcess;
-    hThread[port] = piProcInfo.hThread;
+    ::CloseHandle(hChildStd_IN_Rd[port]);
+    hChildStd_IN_Rd[port] = nullptr;
+
+    hProcess[port] = pi.hProcess;
+    hThread[port] = pi.hThread;
 
 #ifdef NDEBUG
     SetPriorityClass(hProcess[port], GetPriorityClass(GetCurrentProcess()));
@@ -253,18 +324,42 @@ void SCPlayer::process_terminate(uint32_t port)
     {
         process_write_code(port, 0);
 
-        WaitForSingleObject(hProcess[port], 5000);
-        TerminateProcess(hProcess[port], 0);
+        ::WaitForSingleObject(hProcess[port], 5000);
+        ::TerminateProcess(hProcess[port], 0);
 
-        CloseHandle(hThread[port]);
-        CloseHandle(hProcess[port]);
+        ::CloseHandle(hThread[port]);
+        ::CloseHandle(hProcess[port]);
     }
 
-    if (hChildStd_IN_Rd[port]) CloseHandle(hChildStd_IN_Rd[port]);
-    if (hChildStd_IN_Wr[port]) CloseHandle(hChildStd_IN_Wr[port]);
-    if (hChildStd_OUT_Rd[port]) CloseHandle(hChildStd_OUT_Rd[port]);
-    if (hChildStd_OUT_Wr[port]) CloseHandle(hChildStd_OUT_Wr[port]);
-    if (hReadEvent[port]) CloseHandle(hReadEvent[port]);
+    if (hChildStd_IN_Rd[port])
+    {
+        ::CloseHandle(hChildStd_IN_Rd[port]);
+        hChildStd_IN_Rd[port] = nullptr;
+    }
+
+    if (hChildStd_IN_Wr[port])
+    {
+        ::CloseHandle(hChildStd_IN_Wr[port]);
+        hChildStd_IN_Wr[port] = nullptr;
+    }
+
+    if (hChildStd_OUT_Rd[port])
+    {
+        ::CloseHandle(hChildStd_OUT_Rd[port]);
+        hChildStd_OUT_Rd[port] = nullptr;
+    }
+
+    if (hChildStd_OUT_Wr[port])
+    {
+        ::CloseHandle(hChildStd_OUT_Wr[port]);
+        hChildStd_OUT_Wr[port] = nullptr;
+    }
+
+    if (hReadEvent[port])
+    {
+        ::CloseHandle(hReadEvent[port]);
+        hReadEvent[port] = nullptr;
+    }
 
     if (--_COMInitialisationCount == 0)
         ::CoUninitialize();
@@ -273,18 +368,16 @@ void SCPlayer::process_terminate(uint32_t port)
 
     _IsPortTerminating[port] = false;
 
-    hProcess[port] = NULL;
-    hThread[port] = NULL;
-    hReadEvent[port] = NULL;
-    hChildStd_IN_Rd[port] = NULL;
-    hChildStd_IN_Wr[port] = NULL;
-    hChildStd_OUT_Rd[port] = NULL;
-    hChildStd_OUT_Wr[port] = NULL;
+    hProcess[port] = nullptr;
+    hThread[port] = nullptr;
+
 }
 
 bool SCPlayer::process_running(uint32_t port)
 {
-    if (hProcess[port] && WaitForSingleObject(hProcess[port], 0) == WAIT_TIMEOUT) return true;
+    if (hProcess[port] && ::WaitForSingleObject(hProcess[port], 0) == WAIT_TIMEOUT)
+        return true;
+
     return false;
 }
 
@@ -307,35 +400,46 @@ static void ProcessPendingMessages()
 uint32_t SCPlayer::process_read_bytes_pass(uint32_t port, void * out, uint32_t size)
 {
     OVERLAPPED ol = {};
+
     ol.hEvent = hReadEvent[port];
-    ResetEvent(hReadEvent);
-    DWORD bytesDone;
-    SetLastError(NO_ERROR);
-    if (ReadFile(hChildStd_OUT_Rd[port], out, size, &bytesDone, &ol)) return bytesDone;
-    if (::GetLastError() != ERROR_IO_PENDING) return 0;
+
+    ::ResetEvent(hReadEvent);
+
+    DWORD BytesRead;
+
+    ::SetLastError(NO_ERROR);
+
+    if (::ReadFile(hChildStd_OUT_Rd[port], out, size, &BytesRead, &ol))
+        return BytesRead;
+
+    if (::GetLastError() != ERROR_IO_PENDING)
+        return 0;
 
     const HANDLE handles[1] = { hReadEvent[port] };
-    SetLastError(NO_ERROR);
+
+    ::SetLastError(NO_ERROR);
+
     DWORD state;
 #ifdef MESSAGE_PUMP
     for (;;)
     {
-        state = MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
+        state = ::MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
+
         if (state == WAIT_OBJECT_0 + _countof(handles))
             ProcessPendingMessages();
         else
             break;
     }
 #else
-    state = WaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE);
+    state = ::WaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE);
 #endif
 
-    if (state == WAIT_OBJECT_0 && GetOverlappedResult(hChildStd_OUT_Rd[port], &ol, &bytesDone, TRUE)) return bytesDone;
+    if (state == WAIT_OBJECT_0 && GetOverlappedResult(hChildStd_OUT_Rd[port], &ol, &BytesRead, TRUE)) return BytesRead;
 
 #if _WIN32_WINNT >= 0x600
-    CancelIoEx(hChildStd_OUT_Rd, &ol);
+    ::CancelIoEx(hChildStd_OUT_Rd, &ol);
 #else
-    CancelIo(hChildStd_OUT_Rd[port]);
+    ::CancelIo(hChildStd_OUT_Rd[port]);
 #endif
 
     return 0;
@@ -368,7 +472,9 @@ void SCPlayer::process_read_bytes(uint32_t port, void * out, uint32_t size)
 uint32_t SCPlayer::process_read_code(uint32_t port)
 {
     uint32_t code;
+
     process_read_bytes(port, &code, sizeof(code));
+
     return code;
 }
 
@@ -376,9 +482,13 @@ void SCPlayer::process_write_bytes(uint32_t port, const void * in, uint32_t size
 {
     if (process_running(port))
     {
-        if (size == 0) return;
-        DWORD bytesWritten;
-        if (!WriteFile(hChildStd_IN_Wr[port], in, size, &bytesWritten, NULL) || bytesWritten < size) process_terminate(port);
+        if (size == 0)
+            return;
+
+        DWORD BytesWritten;
+
+        if (!::WriteFile(hChildStd_IN_Wr[port], in, size, &BytesWritten, NULL) || BytesWritten < size)
+            process_terminate(port);
     }
 }
 
@@ -434,12 +544,21 @@ void SCPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
 void SCPlayer::send_event_time(uint32_t b, unsigned int time)
 {
     uint32_t port = (b >> 24) & 0xFF;
-    if (port > 2) port = 0;
+
+    if (port > 2)
+        port = 0;
+
     process_write_code(port, 6);
     process_write_code(port, b & 0xFFFFFF);
     process_write_code(port, time);
+
     if (process_read_code(port) != 0)
         process_terminate(port);
+}
+
+unsigned int SCPlayer::send_event_needs_time()
+{
+    return 0; // 4096; This doesn't work for some reason
 }
 
 void SCPlayer::send_sysex_time(const uint8_t * event, size_t size, size_t port, unsigned int time)
@@ -497,51 +616,4 @@ void SCPlayer::render(audio_sample * out, unsigned long count)
         out   += todo * 2;
         count -= todo;
     }
-}
-
-void SCPlayer::shutdown()
-{
-    for (uint32_t i = 0; i < 3; i++)
-        process_terminate(i);
-
-    _IsInitialized = false;
-}
-
-bool SCPlayer::startup()
-{
-    pfc::string8 path;
-
-    if (_IsInitialized)
-        return true;
-
-    if (!_SCCorePathName)
-        return false;
-
-    path = _SCCorePathName;
-    path += "\\";
-    path += g_sc_name;
-
-    if (!LoadCore(path))
-        return false;
-
-    for (uint32_t i = 0; i < 3; i++)
-    {
-        process_write_code(i, 1);
-        process_write_code(i, sizeof(uint32_t));
-        process_write_code(i, uSampleRate);
-
-        if (process_read_code(i) != 0)
-            return false;
-    }
-
-    _IsInitialized = true;
-
-    setFilterMode(mode, reverb_chorus_disabled);
-
-    return true;
-}
-
-unsigned int SCPlayer::send_event_needs_time()
-{
-    return 0; // 4096; This doesn't work for some reason
 }
