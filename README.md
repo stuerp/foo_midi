@@ -67,6 +67,10 @@ Create the following directory structure:
 
 Open `foo_midi.sln` with Visual Studio and build the solution.
 
+### Packaging
+
+To create the component first build the x86 configuration and next the x64 configuration.
+
 ## Contributing
 
 If you'd like to contribute, please fork the repository and use a feature
@@ -79,7 +83,7 @@ v2.7.4.4, 2022-11-21, *"I'm SoundFont of it"*
 * Bug Fix: The new scpipe32 and scpipe64 in the previous version had issues. Secret Sauce is back.
 * Added support for compressed SoundFonts (.sf3) to BASS MIDI player.
 * Updated Munt (MT32 emulator) to v2.7.0.
-* Optimized the component size a bit. Only one copy of vsthost and scpipe is included.
+* Reduced the component package size a bit. Only one copy of each vsthost and scpipe executable is included.
 
 v2.7.4.3, 2022-11-20, *"Returning to BASS."*
 

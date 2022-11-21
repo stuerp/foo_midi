@@ -60,50 +60,12 @@ if ($Platform -eq 'x64')
         Copy-Item "3rdParty/bass/x64/basswv.dll" -Destination "$PackagePath";
     }
 
-    if (Test-Path -Path "$OutputPath/../../Release/vsthost32.exe")
-    {
-        Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/vsthost32.exe`"...";
-        Copy-Item "$OutputPath/../../Release//vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
-
-        Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/x64/vsthost32.exe`"...";
-        Copy-Item "$OutputPath/../../Release//vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
-    }
-
-    if (Test-Path -Path "$OutputPath/vsthost64.exe")
-    {
-        Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/vsthost64.exe`"...";
-        Copy-Item "$OutputPath/vsthost64.exe" -Destination "$PackagePath/vsthost64.exe";
-
-        Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/../vsthost64.exe`"...";
-        Copy-Item "$OutputPath/vsthost64.exe" -Destination "$PackagePath/../vsthost64.exe";
-    }
-
-    if (Test-Path -Path "$OutputPath/../../Release/scpipe32.exe")
-    {
-        Write-Host "Copying 32-bit scpipe32.exe to `"$PackagePath/scpipe32.exe`"...";
-        Copy-Item "$OutputPath/../../Release//scpipe32.exe" -Destination "$PackagePath/scpipe32.exe";
-
-        Write-Host "Copying 32-bit scpipe32.exe to `"$PackagePath/x64/scpipe32.exe`"...";
-        Copy-Item "$OutputPath/../../Release//scpipe32.exe" -Destination "$PackagePath/scpipe32.exe";
-    }
-
-    if (Test-Path -Path "$OutputPath/scpipe64.exe")
-    {
-        Write-Host "Copying 64-bit scpipe64.exe to `"$PackagePath/scpipe64.exe`"...";
-        Copy-Item "$OutputPath/scpipe64.exe" -Destination "$PackagePath/scpipe64.exe";
-
-        Write-Host "Copying 64-bit scpipe64.exe to `"$PackagePath/../scpipe64.exe`"...";
-        Copy-Item "$OutputPath/scpipe64.exe" -Destination "$PackagePath/../scpipe64.exe";
-    }
-
     if (Test-Path -Path "../bin")
     {
         Write-Host "Installing component in foobar2000 32-bit...";
-
         Copy-Item "$PackagePath/../*" "../bin/x86/profile/user-components/$TargetName" -Force;
 
         Write-Host "Installing component in foobar2000 64-bit...";
-
         Copy-Item "$PackagePath/*" "../bin/profile/user-components-x64/$TargetName" -Force;
     }
 }
@@ -134,50 +96,12 @@ elseif ($Platform -eq 'Win32')
         Copy-Item "3rdParty/bass/basswv.dll" -Destination "$PackagePath";
     }
 
-    if (Test-Path -Path "$OutputPath/vsthost32.exe")
-    {
-        Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/vsthost32.exe`"...";
-        Copy-Item "$OutputPath/vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
-
-        Write-Host "Copying 32-bit vsthost32.exe to `"$PackagePath/x64/vsthost32.exe`"...";
-        Copy-Item "$OutputPath/vsthost32.exe" -Destination "$PackagePath/x64/vsthost32.exe";
-    }
-
-    if (Test-Path -Path "$OutputPath/../x64/Release/vsthost64.exe")
-    {
-        Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/vsthost64.exe`"...";
-        Copy-Item "$OutputPath/../x64/Release/vsthost64.exe" -Destination "$PackagePath/vsthost64.exe";
-
-        Write-Host "Copying 64-bit vsthost64.exe to `"$PackagePath/x64/vsthost64.exe`"...";
-        Copy-Item "$OutputPath/../x64/Release/vsthost64.exe" -Destination "$PackagePath/x64/vsthost64.exe";
-    }
-
-    if (Test-Path -Path "$OutputPath/scpipe32.exe")
-    {
-        Write-Host "Copying 32-bit scpipe32.exe to `"$PackagePath/scpipe32.exe`"...";
-        Copy-Item "$OutputPath/scpipe32.exe" -Destination "$PackagePath/scpipe32.exe";
-
-        Write-Host "Copying 32-bit scpipe32.exe to `"$PackagePath/x64/scpipe32.exe`"...";
-        Copy-Item "$OutputPath/scpipe32.exe" -Destination "$PackagePath/x64/scpipe32.exe";
-    }
-
-    if (Test-Path -Path "$OutputPath/../x64/Release/scpipe64.exe")
-    {
-        Write-Host "Copying 64-bit scpipe64.exe to `"$PackagePath/scpipe64.exe`"...";
-        Copy-Item "$OutputPath/../x64/Release/scpipe64.exe" -Destination "$PackagePath/scpipe64.exe";
-
-        Write-Host "Copying 64-bit scpipe64.exe to `"$PackagePath/x64/scpipe64.exe`"...";
-        Copy-Item "$OutputPath/../x64/Release/scpipe64.exe" -Destination "$PackagePath/x64/scpipe64.exe";
-    }
-
     if (Test-Path -Path "../bin")
     {
         Write-Host "Installing component in foobar2000 32-bit...";
-
         Copy-Item "$PackagePath/*" "../bin/x86/profile/user-components/$TargetName" -Force;
 
         Write-Host "Installing component in foobar2000 64-bit...";
-
         Copy-Item "$PackagePath/x64/*" "../bin/profile/user-components-x64/$TargetName" -Force;
     }
 }
@@ -185,6 +109,32 @@ else
 {
     Write-Host "Unknown platform: $Platform";
     exit;
+}
+
+$PackagePath = "../out/$TargetName";
+
+if (Test-Path -Path "$OutputPath/vsthost32.exe")
+{
+    Write-Host "Copying vsthost32.exe to `"$PackagePath/vsthost32.exe`"...";
+    Copy-Item "$OutputPath/vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
+}
+
+if (Test-Path -Path "$OutputPath/../x64/Release/vsthost64.exe")
+{
+    Write-Host "Copying vsthost64.exe to `"$PackagePath/vsthost64.exe`"...";
+    Copy-Item "$OutputPath/../x64/Release/vsthost64.exe" -Destination "$PackagePath/vsthost64.exe";
+}
+
+if (Test-Path -Path "$OutputPath/scpipe32.exe")
+{
+    Write-Host "Copying scpipe32.exe to `"$PackagePath/scpipe32.exe`"...";
+    Copy-Item "$OutputPath/scpipe32.exe" -Destination "$PackagePath/scpipe32.exe";
+}
+
+if (Test-Path -Path "$OutputPath/../x64/Release/scpipe64.exe")
+{
+    Write-Host "Copying scpipe64.exe to `"$PackagePath/scpipe64.exe`"...";
+    Copy-Item "$OutputPath/../x64/Release/scpipe64.exe" -Destination "$PackagePath/scpipe64.exe";
 }
 
 Compress-Archive -Force -Path ../out/$TargetName/* -DestinationPath ../out/$TargetName.fb2k-component;
