@@ -80,11 +80,12 @@ void EMIDIPlayer::send_event(uint32_t b)
     }
 }
 
-void EMIDIPlayer::send_sysex(const uint8_t * event, uint32_t size, size_t port)
+void EMIDIPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
 {
     dsa::CMIDIMsgInterpreter mi;
 
-    for (uint32_t n = 0; n < size; ++n) mi.Interpret(event[n]);
+    for (uint32_t n = 0; n < size; ++n)
+        mi.Interpret(event[n]);
 
     if ((size == _countof(sysex_gm_reset) && !memcmp(event, &sysex_gm_reset[0], _countof(sysex_gm_reset))) ||
         (size == _countof(sysex_gm2_reset) && !memcmp(event, &sysex_gm2_reset[0], _countof(sysex_gm2_reset))) ||
@@ -92,12 +93,14 @@ void EMIDIPlayer::send_sysex(const uint8_t * event, uint32_t size, size_t port)
         (size == _countof(sysex_xg_reset) && !memcmp(event, &sysex_xg_reset[0], _countof(sysex_xg_reset))))
     {
         reset_drum_channels();
+
         synth_mode = (size == _countof(sysex_xg_reset)) ? mode_xg :
             (size == _countof(sysex_gs_reset)) ? mode_gs :
             (event[4] == 0x01) ? mode_gm :
             mode_gm2;
     }
-    else if (synth_mode == mode_gs && size == 11 &&
+    else
+    if (synth_mode == mode_gs && size == 11 &&
         event[0] == 0xF0 && event[1] == 0x41 && event[3] == 0x42 &&
         event[4] == 0x12 && event[5] == 0x40 && (event[6] & 0xF0) == 0x10 &&
         event[10] == 0xF7)
@@ -107,7 +110,8 @@ void EMIDIPlayer::send_sysex(const uint8_t * event, uint32_t size, size_t port)
             // GS MIDI channel to part assign
             gs_part_to_ch[event[6] & 15] = event[8];
         }
-        else if (event[7] == 0x15)
+        else
+        if (event[7] == 0x15)
         {
             // GS part to rhythm allocation
             unsigned int drum_channel = gs_part_to_ch[event[6] & 15];
@@ -121,8 +125,12 @@ void EMIDIPlayer::send_sysex(const uint8_t * event, uint32_t size, size_t port)
     while (mi.GetMsgCount())
     {
         const dsa::CMIDIMsg & msg = mi.GetMsg();
+
         mModule[(msg.m_ch * 2) & 7].SendMIDIMsg(msg);
-        if (!drum_channels[msg.m_ch]) mModule[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
+
+        if (!drum_channels[msg.m_ch])
+            mModule[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
+
         mi.PopMsg();
     }
 }
@@ -165,9 +173,9 @@ bool EMIDIPlayer::startup()
     for (unsigned i = 0; i < 8; ++i)
     {
         if (i & 1)
-            mModule[i].AttachDevice(new dsa::CSccDevice(uSampleRate, 2));
+            mModule[i].AttachDevice(new dsa::CSccDevice(_SampleRate, 2));
         else
-            mModule[i].AttachDevice(new dsa::COpllDevice(uSampleRate, 2));
+            mModule[i].AttachDevice(new dsa::COpllDevice(_SampleRate, 2));
         mModule[i].Reset();
     }
 

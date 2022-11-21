@@ -69,6 +69,7 @@ private:
     float * _Buffer;
 
     bool _IsPortTerminating[3];
+    char _Padding[5];
 };
 
 #endif

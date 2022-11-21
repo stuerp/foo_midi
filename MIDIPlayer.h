@@ -1,5 +1,4 @@
-#ifndef __MIDIPlayer_h__
-#define __MIDIPlayer_h__
+#pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
@@ -29,13 +28,9 @@ public:
         filter_xg
     } filter_mode;
 
-    // zero variables
     MIDIPlayer();
 
-    // close, unload
-    virtual ~MIDIPlayer()
-    {
-    };
+    virtual ~MIDIPlayer() { };
 
     // setup
     void setSampleRate(unsigned long rate);
@@ -54,15 +49,9 @@ protected:
     {
         return 0;
     }
-    virtual void send_event(uint32_t b)
-    {
-    }
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port)
-    {
-    };
-    virtual void render(audio_sample * out, unsigned long count)
-    {
-    }
+    virtual void send_event(uint32_t) { }
+    virtual void send_sysex(const uint8_t *, size_t, size_t) { };
+    virtual void render(audio_sample *, unsigned long) { }
 
     virtual void shutdown()
     {
@@ -76,26 +65,30 @@ protected:
         return false;
     }
 
-    virtual bool get_last_error(std::string & p_out)
+    virtual bool get_last_error(std::string &)
     {
         return false;
     }
 
     // time should only be block level offset
-    virtual void send_event_time(uint32_t b, unsigned int time)
+    virtual void send_event_time(uint32_t, unsigned int)
     {
     };
-    virtual void send_sysex_time(const uint8_t * event, size_t size, size_t port, unsigned int time)
+    virtual void send_sysex_time(const uint8_t *, size_t, size_t, unsigned int)
     {
     };
-
-    unsigned long uSampleRate;
-    system_exclusive_table mSysexMap;
-    bool _IsInitialized;
-    filter_mode mode;
-    bool reverb_chorus_disabled;
 
     void sysex_reset(size_t port, unsigned int time);
+
+protected:
+#pragma warning(disable: 4820) // x bytes padding added after data member
+    unsigned long _SampleRate;
+    system_exclusive_table mSysexMap;
+    filter_mode mode;
+    bool _IsInitialized;
+    bool reverb_chorus_disabled;
+    char _Padding[2]; 
+#pragma warning(default: 4820)
 
 private:
     void send_event_filtered(uint32_t b);
@@ -120,5 +113,3 @@ private:
     unsigned long uTimeLoopStart;
     unsigned long uStreamEnd;
 };
-
-#endif

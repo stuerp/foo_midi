@@ -140,7 +140,7 @@ bool OPNPlayer::startup()
 
     for (unsigned i = 0; i < 3; i++)
     {
-        OPN2_MIDIPlayer * midiplay = this->midiplay[i] = opn2_init(uSampleRate);
+        OPN2_MIDIPlayer * midiplay = this->midiplay[i] = opn2_init(_SampleRate);
         if (!midiplay) return false;
 
         const void * _bank;

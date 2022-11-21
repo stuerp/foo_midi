@@ -581,7 +581,7 @@ bool VSTiPlayer::startup()
 
     process_write_code(5);
     process_write_code(sizeof(uint32_t));
-    process_write_code(uSampleRate);
+    process_write_code(_SampleRate);
 
     const uint32_t code = process_read_code();
 

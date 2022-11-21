@@ -31,7 +31,7 @@ public:
 
 protected:
     virtual void send_event(uint32_t b);
-    virtual void send_sysex(const uint8_t * event, uint32_t size, size_t port);
+    virtual void send_sysex(const uint8_t * event, size_t size, size_t port);
     virtual void render(audio_sample * out, unsigned long count);
 
     virtual void shutdown();
@@ -42,13 +42,16 @@ private:
 
     void reset_drum_channels();
 
+private:
     struct ADL_MIDIPlayer * midiplay[3];
 
     unsigned uEmuCore;
     unsigned uBankNumber;
     unsigned uChipCount;
     unsigned u4OpCount;
+
     bool bFullPanning;
+    char _Padding[7];
 };
 
 #endif

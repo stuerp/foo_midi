@@ -83,7 +83,7 @@ bool SCPlayer::startup()
     {
         process_write_code(i, 1);
         process_write_code(i, sizeof(uint32_t));
-        process_write_code(i, uSampleRate);
+        process_write_code(i, _SampleRate);
 
         if (process_read_code(i) != 0)
             return false;

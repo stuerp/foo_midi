@@ -64,10 +64,6 @@ private:
     void process_write_bytes(const void * buffer, uint32_t size) noexcept;
 
     std::string _PluginPathName;
-    unsigned _PluginPlatform;
-
-    bool bInitialized;
-    bool bTerminating;
 
     HANDLE hProcess;
     HANDLE hThread;
@@ -80,14 +76,20 @@ private:
     char * _Name;
     char * _Vendor;
     char * _Product;
+
     uint32_t _VendorVersion;
     uint32_t _UniqueId;
 
+    unsigned _PluginPlatform;
     unsigned _ChannelCount;
 
     std::vector<uint8_t> _Chunk;
 
     float * _VSTBuffer;
+
+    bool bInitialized;
+    bool bTerminating;
+    char _Padding[6];
 };
 
 #endif

@@ -1454,21 +1454,20 @@
 
 #define NOMINMAX
 
+#pragma warning(disable: 4310 5045 6326)
+
 #include <foobar2000.h>
 #include <coreDarkMode.h>
 
-#include "../helpers/dropdown_helper.h"
-
 #include <atlbase.h>
-
 #include <atlapp.h>
-
 #include <atlcrack.h>
 #include <atlctrls.h>
 #include <atlmisc.h>
 
-#include "../../libPPUI/wtl-pp.h"
-#include "../helpers/atl-misc.h"
+#include <libPPUI/wtl-pp.h>
+#include <helpers/atl-misc.h>
+#include <helpers/dropdown_helper.h>
 
 #include <midi_processing/midi_processor.h>
 
@@ -1477,23 +1476,27 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 
-#include "VSTiPlayer.h"
-#ifdef FLUIDSYNTHSUPPORT
-#include "SFPlayer.h"
-#endif
-#include "BMPlayer.h"
-#include "EMIDIPlayer.h"
-#include "MT32Player/MT32Player.h"
-
-#include "../../../libADLMIDI/include/adlmidi.h"
+#include <libADLMIDI/include/adlmidi.h>
 #include "ADLPlayer.h"
 
-#include "../../../libOPNMIDI/include/opnmidi.h"
-#include "OPNPlayer/OPNPlayer.h"
+#include "BMPlayer.h"
+
+#include "EMIDIPlayer.h"
 
 #include "MSPlayer.h"
 
+#include <MT32Player/MT32Player.h>
+
+#include <libOPNMIDI/include/opnmidi.h>
+#include <OPNPlayer/OPNPlayer.h>
+
 #include "SCPlayer.h"
+
+#ifdef FLUIDSYNTHSUPPORT
+#include "SFPlayer.h"
+#endif
+
+#include "VSTiPlayer.h"
 
 #ifdef DXISUPPORT
 #include "DXiProxy.h"
@@ -1577,13 +1580,13 @@ static const GUID guid_cfg_adl_panning = { 0xad6821b4, 0x493f, 0x4bb3, { 0xb7, 0
 // {07257AC7-9901-4A5F-9D8B-C5B5F1B8CF5B}
 static const GUID guid_cfg_munt_gm = { 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 0xc5, 0xb5, 0xf1, 0xb8, 0xcf, 0x5b } };
 #ifdef BASSMIDISUPPORT
-// {62BF901B-9C51-45FE-BE8A-14FB56205E5E}
-static const GUID guid_cfg_bassmidi_effects = { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };
+static const GUID guid_cfg_bassmidi_effects = { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };   // {62BF901B-9C51-45FE-BE8A-14FB56205E5E}
 #endif
 // {F90C8ABF-68B5-474A-8D9C-FFD9CA80202F}
 static const GUID guid_cfg_skip_to_first_note = { 0xf90c8abf, 0x68b5, 0x474a, { 0x8d, 0x9c, 0xff, 0xd9, 0xca, 0x80, 0x20, 0x2f } };
-// {F56FA8C3-38A1-49E0-AD8B-D65166314719}
-static const GUID guid_cfg_adl_chorus = { 0xf56fa8c3, 0x38a1, 0x49e0, { 0xad, 0x8b, 0xd6, 0x51, 0x66, 0x31, 0x47, 0x19 } };
+
+// static const GUID guid_cfg_adl_chorus = { 0xf56fa8c3, 0x38a1, 0x49e0, { 0xad, 0x8b, 0xd6, 0x51, 0x66, 0x31, 0x47, 0x19 } };      // {F56FA8C3-38A1-49E0-AD8B-D65166314719}
+
 // {7423A720-EB39-4D7D-9B85-524BC779B58B}
 static const GUID guid_cfg_ms_synth = { 0x7423a720, 0xeb39, 0x4d7d, { 0x9b, 0x85, 0x52, 0x4b, 0xc7, 0x79, 0xb5, 0x8b } };
 // {A91D31F4-22AE-4C5C-A621-F6B6011F5DDC}
@@ -1628,16 +1631,19 @@ static const GUID guid_cfg_opn_bank_gems = { 0x792b2366, 0x1768, 0x4f30, { 0x87,
 static const GUID guid_cfg_opn_bank_tomsoft = { 0xad75fc74, 0xc8d6, 0x4399, { 0x89, 0xf2, 0xeb, 0x7f, 0xf0, 0x62, 0x33, 0xfe } };
 // {47E69508-2CB7-4E32-8313-151A5F5AC779}
 static const GUID guid_cfg_opn_bank_fmmidi = { 0x47e69508, 0x2cb7, 0x4e32, { 0x83, 0x13, 0x15, 0x1a, 0x5f, 0x5a, 0xc7, 0x79 } };
-// {4C455226-B107-4E04-A9EC-F8098F81E296}
-static const GUID guid_cfg_soundfont_dynamic = { 0x4c455226, 0xb107, 0x4e04, { 0xa9, 0xec, 0xf8, 0x9, 0x8f, 0x81, 0xe2, 0x96 } };
+
+// static const GUID guid_cfg_soundfont_dynamic = { 0x4c455226, 0xb107, 0x4e04, { 0xa9, 0xec, 0xf8, 0x9, 0x8f, 0x81, 0xe2, 0x96 } };    // {4C455226-B107-4E04-A9EC-F8098F81E296}
+
+#ifdef FLUIDSYNTHSUPPORT
 // {F1AD51C5-4B04-4C8B-8465-6C861E81C669}
 static const GUID guid_cfg_fluidsynth_parent = { 0xf1ad51c5, 0x4b04, 0x4c8b, { 0x84, 0x65, 0x6c, 0x86, 0x1e, 0x81, 0xc6, 0x69 } };
 // {996E95CA-CE4D-4BD5-B7E6-40613283C327}
 static const GUID guid_cfg_fluidsynth_effects = { 0x996e95ca, 0xce4d, 0x4bd5, { 0xb7, 0xe6, 0x40, 0x61, 0x32, 0x83, 0xc3, 0x27 } };
 // {9114D64D-412C-42D3-AED5-A5521E8FE2A6}
 static const GUID guid_cfg_fluidsynth_voices = { 0x9114d64d, 0x412c, 0x42d3, { 0xae, 0xd5, 0xa5, 0x52, 0x1e, 0x8f, 0xe2, 0xa6 } };
-// {1A82A8DB-389E-44AA-9719-326A5A2D7E8E}
-static const GUID guid_cfg_midi_flavor = { 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0x19, 0x32, 0x6a, 0x5a, 0x2d, 0x7e, 0x8e } };
+#endif
+
+static const GUID guid_cfg_midi_flavor = { 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0x19, 0x32, 0x6a, 0x5a, 0x2d, 0x7e, 0x8e } };            // {1A82A8DB-389E-44AA-9719-326A5A2D7E8E}
 
 #ifdef BASSMIDISUPPORT
 #if defined(_M_IX86) || defined(__i386__)
@@ -1686,13 +1692,13 @@ enum
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>>
 {
 public:
-    cfg_map(const GUID & guid) : cfg_var(guid), std::map<t_uint32, std::vector<uint8_t>>()
+    cfg_map(const GUID& guid) : cfg_var(guid), std::map<t_uint32, std::vector<uint8_t>>()
     {
     }
 
-    void get_data_raw(stream_writer * p_stream, abort_callback & p_abort)
+    void get_data_raw(stream_writer * streamWriter, abort_callback & handleAbort)
     {
-        stream_writer_formatter<> out(*p_stream, p_abort);
+        stream_writer_formatter<> out(*streamWriter, handleAbort);
 
         out.write_int(size());
 
@@ -1709,9 +1715,9 @@ public:
         }
     }
 
-    void set_data_raw(stream_reader * p_stream, t_size p_sizehint, abort_callback & p_abort)
+    void set_data_raw(stream_reader * streamReader, t_size, abort_callback & handleAbort)
     {
-        stream_reader_formatter<> in(*p_stream, p_abort);
+        stream_reader_formatter<> in(*streamReader, handleAbort);
 
         clear();
 
@@ -1719,7 +1725,7 @@ public:
 
         in.read_int(count);
 
-        for (t_size i = 0; i < count; i++)
+        for (t_size i = 0; i < count; ++i)
         {
             t_uint32 p_key;
 
@@ -1778,28 +1784,37 @@ static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 }
 #endif
 
 cfg_int cfg_thloopz(guid_cfg_thloopz, default_cfg_thloopz), cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz),
-cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
-cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion), /*cfg_hack_xg_drums("yam", 0),*/
-cfg_filter_instruments(guid_cfg_filter_instruments, default_cfg_filter_instruments),
-cfg_filter_banks(guid_cfg_filter_banks, default_cfg_filter_banks),
-/*cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),*/ cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
-cfg_loop_type_other(guid_cfg_loop_type_other, default_cfg_loop_type_other),
-/*cfg_nosysex("sux", 0),*/ /*cfg_gm2(guid_cfg_gm2, 0),*/
-cfg_srate(guid_cfg_srate, default_cfg_srate), cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
-cfg_resampling(guid_cfg_resampling, default_cfg_resampling),
-cfg_adl_bank(guid_cfg_adl_bank, default_cfg_adl_bank),
-cfg_adl_chips(guid_cfg_adl_chips, default_cfg_adl_chips),
-cfg_adl_panning(guid_cfg_adl_panning, default_cfg_adl_panning),
-cfg_munt_gm(guid_cfg_munt_gm, default_cfg_munt_gm),
-/*cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op),*/
-cfg_ms_synth(guid_cfg_ms_synth, default_cfg_ms_synth),
-cfg_ms_bank(guid_cfg_ms_bank, default_cfg_ms_bank),
-cfg_midi_flavor(guid_cfg_midi_flavor, default_cfg_midi_flavor),
-cfg_ms_panning(guid_cfg_ms_panning, default_cfg_ms_panning),
-cfg_midi_reverb(guid_cfg_midi_reverb, default_cfg_midi_reverb)
+    cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz), cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
+
+    cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion), /*cfg_hack_xg_drums("yam", 0),*/
+
+    cfg_filter_instruments(guid_cfg_filter_instruments, default_cfg_filter_instruments),
+    cfg_filter_banks(guid_cfg_filter_banks, default_cfg_filter_banks),
+/*  cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),*/
+    cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
+    cfg_loop_type_other(guid_cfg_loop_type_other, default_cfg_loop_type_other),
+/*  cfg_nosysex("sux", 0),*/
+/*  cfg_gm2(guid_cfg_gm2, 0),*/
+    cfg_srate(guid_cfg_srate, default_cfg_srate),
+    cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
+    cfg_resampling(guid_cfg_resampling, default_cfg_resampling),
+
+    cfg_adl_bank(guid_cfg_adl_bank, default_cfg_adl_bank),
+    cfg_adl_chips(guid_cfg_adl_chips, default_cfg_adl_chips),
+    cfg_adl_panning(guid_cfg_adl_panning, default_cfg_adl_panning),
+/*  cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op),*/
+
+    cfg_munt_gm(guid_cfg_munt_gm, default_cfg_munt_gm),
+
+    cfg_ms_synth(guid_cfg_ms_synth, default_cfg_ms_synth),
+    cfg_ms_bank(guid_cfg_ms_bank, default_cfg_ms_bank),
+    cfg_ms_panning(guid_cfg_ms_panning, default_cfg_ms_panning),
+
+    cfg_midi_flavor(guid_cfg_midi_flavor, default_cfg_midi_flavor),
+    cfg_midi_reverb(guid_cfg_midi_reverb, default_cfg_midi_reverb)
 #ifdef FLUIDSYNTHSUPPORT
 ,
-cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
+    cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
 #endif
 ;
 
@@ -1863,7 +1878,7 @@ advconfig_integer_factory cfg_fluidsynth_voices("Maximum voice count", guid_cfg_
 
 advconfig_checkbox_factory cfg_skip_to_first_note("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
 
-static const char * munt_bank_names[] =
+static const char * MuntBankNames[] =
 {
     "Roland",
     "Sierra / King's Quest 6",
@@ -1987,22 +2002,24 @@ struct midi_preset
 
     midi_preset()
     {
-        plugin = cfg_plugin;
+        plugin = (unsigned int)cfg_plugin;
         vst_path = cfg_vst_path;
 
-        VSTiPlayer * vstPlayer = NULL;
+        VSTiPlayer * vstPlayer = nullptr;
 
         try
         {
             vstPlayer = new VSTiPlayer;
+
             if (vstPlayer->LoadVST(vst_path))
             {
-                vst_config = cfg_vst_config[vstPlayer->getUniqueID()];
+                vst_config = cfg_vst_config[(unsigned int)(vstPlayer->getUniqueID())];
             }
         }
         catch (...)
         {
-            if (plugin == 1) plugin = 0;
+            if (plugin == 1)
+                plugin = 0;
         }
 
         delete vstPlayer;
@@ -2023,27 +2040,30 @@ struct midi_preset
         dxi_plugin = cfg_dxi_plugin;
     #endif
 
-        adl_bank = cfg_adl_bank;
-        adl_chips = cfg_adl_chips;
+        adl_bank = (unsigned int)cfg_adl_bank;
+        adl_chips = (unsigned int)cfg_adl_chips;
         adl_panning = !!cfg_adl_panning;
         {
             if (cfg_adl_core_dosbox)
                 adl_emu_core = ADLMIDI_EMU_DOSBOX;
-            else if (cfg_adl_core_nuked_174)
+            else
+            if (cfg_adl_core_nuked_174)
                 adl_emu_core = ADLMIDI_EMU_NUKED_174;
-            else if (cfg_adl_core_nuked)
+            else
+            if (cfg_adl_core_nuked)
                 adl_emu_core = ADLMIDI_EMU_NUKED;
             else
                 adl_emu_core = ADLMIDI_EMU_DOSBOX;
         }
 
-        munt_gm_set = cfg_munt_gm;
+        munt_gm_set = (unsigned int)cfg_munt_gm;
 
-        ms_synth = cfg_ms_synth;
-        ms_bank = cfg_ms_bank;
-        midi_flavor = cfg_midi_flavor;
-        ms_panning = cfg_ms_panning;
-        midi_reverb = cfg_midi_reverb;
+        ms_synth = (unsigned int)cfg_ms_synth;
+        ms_bank = (unsigned int)cfg_ms_bank;
+        midi_flavor = (unsigned int)cfg_midi_flavor;
+
+        ms_panning = (bool)cfg_ms_panning;
+        midi_reverb = (bool)cfg_midi_reverb;
 
         {
             if (cfg_opn_core_mame)
@@ -2090,7 +2110,7 @@ struct midi_preset
             p_out += vst_path;
             p_out += "|";
 
-            for (unsigned i = 0; i < vst_config.size(); i++)
+            for (unsigned i = 0; i < vst_config.size(); ++i)
             {
                 p_out += pfc::format_hex(vst_config[i], 2);
             }
@@ -2170,7 +2190,7 @@ struct midi_preset
         {
             p_out += "|";
 
-            p_out += munt_bank_names[munt_gm_set];
+            p_out += MuntBankNames[munt_gm_set];
         }
         else
         if (plugin == 9)
@@ -2240,8 +2260,8 @@ struct midi_preset
         bool in_ms_panning;
         unsigned in_opn_bank;
         unsigned in_opn_emu_core;
-        unsigned in_midi_flavor = cfg_midi_flavor;
-        bool in_midi_reverb = cfg_midi_reverb;
+        unsigned in_midi_flavor = (unsigned)cfg_midi_flavor;
+        bool in_midi_reverb = (bool)cfg_midi_reverb;
 
         if (*bar_pos)
         {
@@ -2392,14 +2412,14 @@ struct midi_preset
             if (in_plugin == 6)
             {
                 const char * const * banknames = adl_getBankNames();
-                unsigned j = adl_getBanksCount();
+                unsigned j = (unsigned int)adl_getBanksCount();
                 unsigned i;
 
-                for (i = 0; i < j; i++)
+                for (i = 0; i < j; ++i)
                 {
                     size_t len = strlen(banknames[i]);
 
-                    if (len == bar_pos - p_in && !strncmp(p_in, banknames[i], len))
+                    if (len == (size_t)(bar_pos - p_in) && !strncmp(p_in, banknames[i], len))
                     {
                         in_adl_bank = i;
                         break;
@@ -2455,10 +2475,12 @@ struct midi_preset
             if (in_plugin == 3)
             {
                 unsigned i, j;
-                for (i = 0, j = _countof(munt_bank_names); i < j; i++)
+
+                for (i = 0, j = _countof(MuntBankNames); i < j; ++i)
                 {
-                    size_t len = strlen(munt_bank_names[i]);
-                    if (len == bar_pos - p_in && !strncmp(p_in, munt_bank_names[i], len))
+                    size_t len = strlen(MuntBankNames[i]);
+
+                    if (len == (size_t)(bar_pos - p_in) && !strncmp(p_in, MuntBankNames[i], len))
                     {
                         in_munt_gm_set = i;
                         break;
@@ -2519,16 +2541,21 @@ struct midi_preset
                         in_gs_flavor = pfc::atodec<unsigned>(p_in, bar_pos - p_in);
 
                         p_in = bar_pos + (*bar_pos == '|');
+
                         bar_pos = strchr(p_in, '|');
-                        if (!bar_pos) bar_pos = p_in + strlen(p_in);
+
+                        if (!bar_pos)
+                            bar_pos = p_in + strlen(p_in);
 
                         if (!*p_in) return;
 
                         if (in_sc_flavor == 4)
                             in_midi_flavor = MIDIPlayer::filter_xg;
-                        else if (in_sc_flavor == 3)
+                        else
+                         if (in_sc_flavor == 3)
                             in_midi_flavor = (in_gs_flavor == 0) ? MIDIPlayer::filter_default : MIDIPlayer::filter_sc55 + (in_gs_flavor - 1);
-                        else if (in_sc_flavor >= 0 && in_sc_flavor <= 2)
+                        else
+                        if (in_sc_flavor >= 0 && in_sc_flavor <= 2)
                             in_midi_flavor = in_sc_flavor;
                     }
                     else
@@ -2640,7 +2667,7 @@ static void relative_path_create(const char * p_file, const char * p_base_path, 
 
         while (p_base_path_search < p_base_path_fn)
         {
-            if (pfc::is_path_separator(p_base_path[p_base_path_search++]))
+            if (pfc::is_path_separator(p_base_path[++p_base_path_search]))
             {
                 p_out += "..\\";
             }
@@ -2690,7 +2717,7 @@ struct midi_syx_dumps
 
         p_out.reset();
 
-        for (unsigned i = 0; i < dumps.get_count(); i++)
+        for (unsigned i = 0; i < dumps.get_count(); ++i)
         {
             relative_path_create(dumps[i], p_midi_path, p_relative);
 
@@ -2708,15 +2735,20 @@ struct midi_syx_dumps
         while (p_in < end)
         {
             const char * lf_pos = strchr(p_in, '\n');
-            if (!lf_pos) lf_pos = end;
 
-            p_relative.set_string(p_in, lf_pos - p_in);
+            if (!lf_pos)
+                lf_pos = end;
+
+            p_relative.set_string(p_in, (t_size)(lf_pos - p_in));
+
             relative_path_parse(p_relative, p_midi_path, p_absolute);
 
             dumps.append_single(p_absolute);
 
             p_in = lf_pos;
-            while (*p_in == '\n') ++p_in;
+
+            while (*p_in == '\n')
+                ++p_in;
         }
     }
 
@@ -2724,7 +2756,7 @@ struct midi_syx_dumps
     {
         std::vector<uint8_t> file_data;
 
-        for (unsigned i = 0; i < dumps.get_count(); i++)
+        for (unsigned i = 0; i < dumps.get_count(); ++i)
         {
             file::ptr p_file;
             midi_container p_dump;
@@ -2758,7 +2790,7 @@ struct midi_syx_dumps
     }
 };
 
-static const char * exts[] =
+static const char * _FileExtension[] =
 {
     "MID",
     "MIDI",
@@ -2776,7 +2808,7 @@ static const char * exts[] =
     "LDS",
 };
 
-static const char * exts_syx[] =
+static const char * _SyxExtension[] =
 {
     "SYX",
     "DMP"
@@ -2784,11 +2816,9 @@ static const char * exts_syx[] =
 
 static bool g_test_extension(const char * ext)
 {
-    int n;
-
-    for (n = 0; n < _countof(exts); n++)
+    for (size_t n = 0; n < _countof(_FileExtension); ++n)
     {
-        if (!stricmp(ext, exts[n]))
+        if (!_stricmp(ext, _FileExtension[n]))
             return true;
     }
 
@@ -2797,11 +2827,9 @@ static bool g_test_extension(const char * ext)
 
 static bool g_test_extension_syx(const char * ext)
 {
-    int n;
-
-    for (n = 0; n < _countof(exts_syx); n++)
+    for (size_t n = 0; n < _countof(_SyxExtension); ++n)
     {
-        if (!stricmp(ext, exts_syx[n]))
+        if (!_stricmp(ext, _SyxExtension[n]))
             return true;
     }
 
@@ -2881,6 +2909,7 @@ public:
 };
 
 static critical_section sync;
+
 static volatile int g_running = 0;
 static volatile int g_srate;
 
@@ -2941,112 +2970,18 @@ static bool is_valid_sjis(const char * param, t_size max = ~0)
 
 class input_midi : public input_stubs
 {
-#ifdef DXISUPPORT
-    DXiProxy * dxiProxy;
-#endif
-    bool is_emidi;
-
-    MIDIPlayer * midiPlayer;
-
-    midi_container midi_file;
-
-    unsigned srate;
-    unsigned plugin;
-    unsigned resampling;
-    unsigned fluid_interp_method;
-
-    bool b_thloopz;
-    bool b_rpgmloopz;
-    bool b_xmiloopz;
-    bool b_ff7loopz;
-    bool doing_loop;
-    unsigned loop_type;
-    unsigned loop_type_playback;
-    unsigned loop_type_other;
-    unsigned clean_flags;
-    // bool b_gm2;
-
-    unsigned length_ms;
-    unsigned length_samples;
-    unsigned length_ticks;
-    unsigned samples_done;
-
-    unsigned loop_begin, loop_begin_ms;
-    unsigned loop_end, loop_end_ms;
-
-    unsigned loop_count, fade_ms;
-
-    unsigned samples_played;
-    unsigned samples_fade_begin;
-    unsigned samples_fade_end;
-
-    bool eof;
-    bool dont_loop;
-
-    bool first_block;
-
-    unsigned original_track_count;
-
-    bool is_syx;
-
-#ifdef BASSMIDISUPPORT
-    unsigned bassmidi_voices, bassmidi_voices_max;
-#endif
-    double dynamic_time;
-
-    pfc::string8 m_path;
-
-    t_filestats m_stats;
-    t_filestats2 m_stats2;
-
-    metadb_index_hash m_index_hash;
-    hasher_md5_result m_file_hash;
-
-#if audio_sample_size != 32
-    pfc::array_t<float> sample_buffer;
-#endif
-
-    /* crap for external input */
-    /*
-    input * external_decoder;
-    reader * mem_reader;
-
-    unsigned sample_loop_start;
-    unsigned sample_loop_end;
-    */
-
-    void meta_add(file_info & p_info, const char * name, const char * value, t_size max)
-    {
-        if (value[0])
-        {
-            pfc::string8 t;
-
-            if (max && value[max - 1])
-            {
-                // TODO: moo
-                t.set_string(value, max);
-                value = t;
-            }
-            else
-                max = strlen(value);
-
-            if (pfc::is_lower_ascii(value) || pfc::is_valid_utf8(value, max))
-                p_info.meta_add(name, value);
-            else
-            if (is_valid_sjis(value, max))
-                p_info.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
-            else
-                p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));
-        }
-    }
-
 public:
-    input_midi()
-        : srate(cfg_srate), resampling(cfg_resampling),
+    input_midi() : srate((unsigned int)cfg_srate), resampling((unsigned int)cfg_resampling),
     #ifdef FLUIDSYNTHSUPPORT
         fluid_interp_method(cfg_fluid_interp_method),
     #endif
-        loop_type_playback(cfg_loop_type), loop_type_other(cfg_loop_type_other), b_thloopz(!!cfg_thloopz), b_rpgmloopz(!!cfg_rpgmloopz), b_xmiloopz(!!cfg_xmiloopz), b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
+        loop_type_playback((unsigned int)cfg_loop_type),
+        loop_type_other((unsigned int)cfg_loop_type_other),
+
+        b_thloopz(!!cfg_thloopz),
+        b_rpgmloopz(!!cfg_rpgmloopz),
+        b_xmiloopz(!!cfg_xmiloopz),
+        b_ff7loopz(!!cfg_ff7loopz) //, b_gm2(!!cfg_gm2)
     {
     #ifdef DXISUPPORT
         dxiProxy = NULL;
@@ -3064,8 +2999,8 @@ public:
 */
         clean_flags = (cfg_emidi_exclusion ? midi_container::clean_flag_emidi : 0) | (cfg_filter_instruments ? midi_container::clean_flag_instruments : 0) | (cfg_filter_banks ? midi_container::clean_flag_banks : 0);
 
-        loop_count = cfg_midi_loop_count.get();
-        fade_ms = cfg_midi_fade_time.get();
+        loop_count = (unsigned int)cfg_midi_loop_count.get();
+        fade_ms = (unsigned int)cfg_midi_fade_time.get();
 
     #ifdef BASSMIDISUPPORT
         if (!_bassmidi_src2_avail && resampling > 1)
@@ -3090,56 +3025,8 @@ public:
     #endif
     }
 
-private:
-    double get_length(unsigned p_subsong)
-    {
-        length_ms = midi_file.get_timestamp_end(p_subsong, true);
-
-        double length = length_ms * .001;
-
-        if (loop_type == 1)
-            length += 1.;
-
-        length_ticks = midi_file.get_timestamp_end(p_subsong); // theSequence->m_tempoMap.Sample2Tick(len, 1000);
-        length_samples = (unsigned) (((__int64) length_ms * (__int64) srate) / 1000);
-
-        if (loop_type == 1)
-            length_samples += srate;
-
-        loop_begin = midi_file.get_timestamp_loop_start(p_subsong);
-        loop_end = midi_file.get_timestamp_loop_end(p_subsong);
-        loop_begin_ms = midi_file.get_timestamp_loop_start(p_subsong, true);
-        loop_end_ms = midi_file.get_timestamp_loop_end(p_subsong, true);
-
-        if (loop_begin != ~0 || loop_end != ~0 || loop_type > 2)
-        {
-            if (loop_begin_ms == ~0) loop_begin_ms = 0;
-            if (loop_end_ms == ~0) loop_end_ms = length_ms;
-            length = (double) (loop_begin_ms + (loop_end_ms - loop_begin_ms) * loop_count + fade_ms) * 0.001;
-        }
-
-        return length;
-    }
-
-    void set_loop()
-    {
-    #ifdef DXISUPPORT
-        if (plugin == 5 && dxiProxy)
-        {
-            dxiProxy->setLoop(loop_begin != ~0 ? loop_begin : 0, loop_end != ~0 ? loop_end : length_ticks);
-        }
-        /*else
-        {
-            sample_loop_start = theSequence->m_tempoMap.Tick2Sample(loop_begin != -1 ? loop_begin : 0, srate);
-            sample_loop_end = theSequence->m_tempoMap.Tick2Sample((loop_end != -1 ? loop_end : length_ticks) + 1, srate);
-        }*/
-        else
-        #endif
-            dont_loop = false;
-    }
-
 public:
-    void open(service_ptr_t<file> p_file, const char * p_path, t_input_open_reason p_reason, abort_callback & p_abort)
+    void open(service_ptr_t<file> p_file, const char * p_path, t_input_open_reason, abort_callback & p_abort)
     {
         if (p_file.is_empty())
         {
@@ -3154,7 +3041,7 @@ public:
         if (!m_stats.m_size || m_stats.m_size > (t_size)(1 << 30))
             throw exception_io_unsupported_format();
 
-        m_stats2 = p_file->get_stats2_(stats2_all, p_abort);
+        m_stats2 = p_file->get_stats2_((uint32_t)stats2_all, p_abort);
 
         if (!m_stats2.m_size || m_stats2.m_size > (t_size)(1 << 30))
             throw exception_io_unsupported_format();
@@ -3183,7 +3070,7 @@ public:
 
         bool has_duration = false;
 
-        for (unsigned int i = 0; i < original_track_count; i++)
+        for (unsigned int i = 0; i < original_track_count; ++i)
         {
             if (midi_file.get_timestamp_end(i))
             {
@@ -3238,7 +3125,7 @@ public:
 
         for (t_size i = 0; i < meta_data.get_count(); ++i)
         {
-            const midi_meta_data_item & item = meta_data[i];
+            const midi_meta_data_item& item = meta_data[i];
 
             if (pfc::stricmp_ascii(item.m_name.c_str(), "type"))
             {
@@ -3288,7 +3175,8 @@ public:
 
         pfc::string8 hash_string;
 
-        for (unsigned i = 0; i < 16; i++) hash_string += pfc::format_uint((t_uint8) m_file_hash.m_data[i], 2, 16);
+        for (unsigned i = 0; i < 16; ++i)
+            hash_string += pfc::format_uint((t_uint8) m_file_hash.m_data[i], 2, 16);
 
         p_info.info_set(field_hash, hash_string);
 
@@ -3327,17 +3215,17 @@ public:
         }
     }
 
-    t_filestats2 get_stats2(uint32_t, abort_callback & p_abort)
+    t_filestats2 get_stats2(uint32_t, abort_callback&)
     {
         return m_stats2;
     }
 
-    t_filestats get_file_stats(abort_callback & p_abort)
+    t_filestats get_file_stats(abort_callback&)
     {
         return m_stats;
     }
 
-    static bool test_soundfont_extension(const char * base_path, pfc::string_base & path, abort_callback & p_abort)
+    static bool test_soundfont_extension(const char * filePath, pfc::string_base & soundFontPath, abort_callback & p_abort)
     {
         static const char * extensions[] =
         {
@@ -3347,20 +3235,21 @@ public:
             "sf2pack",
             "sfogg",
 #endif
-            "sf2"
+            "sf2",
+            "sf3"
         };
 
-        path = base_path;
+        soundFontPath = filePath;
 
-        size_t length = path.length();
+        size_t length = soundFontPath.length();
 
         for (int i = 0; i < _countof(extensions); ++i)
         {
-            path.truncate(length);
-            path += ".";
-            path += extensions[i];
+            soundFontPath.truncate(length);
+            soundFontPath += ".";
+            soundFontPath += extensions[i];
 
-            if (filesystem::g_exists(path, p_abort))
+            if (filesystem::g_exists(soundFontPath, p_abort))
                 return true;
         }
 
@@ -3390,7 +3279,9 @@ public:
             p_info.info_set_int(field_tracks, midi_file.get_format() == 2 ? 1 : midi_file.get_track_count());
             p_info.info_set_int(field_channels, midi_file.get_channel_count(p_subsong));
             p_info.info_set_int(field_ticks, midi_file.get_timestamp_end(p_subsong));
-            if (meta_data.get_item("type", item)) p_info.info_set(field_type, item.m_value.c_str());
+
+            if (meta_data.get_item("type", item))
+                p_info.info_set(field_type, item.m_value.c_str());
 
             unsigned loop_begin = midi_file.get_timestamp_loop_start(p_subsong);
             unsigned loop_end = midi_file.get_timestamp_loop_end(p_subsong);
@@ -3404,7 +3295,8 @@ public:
 
             pfc::string8 hash_string;
 
-            for (unsigned i = 0; i < 16; i++) hash_string += pfc::format_uint((t_uint8) m_file_hash.m_data[i], 2, 16);
+            for (unsigned i = 0; i < 16; ++i)
+                hash_string += pfc::format_uint((t_uint8) m_file_hash.m_data[i], 2, 16);
 
             p_info.info_set(field_hash, hash_string);
 
@@ -3443,7 +3335,7 @@ public:
 
         theDumps.merge_into_file(midi_file, p_abort);
 
-        plugin = thePreset.plugin;
+        _PluginID = thePreset.plugin;
 
         first_block = true;
 
@@ -3451,20 +3343,22 @@ public:
 
         midi_file.get_meta_data(p_subsong, meta_data);
 
-        midi_meta_data_item item;
+        {
+            midi_meta_data_item item;
 
-        if (meta_data.get_item("type", item) && !strcmp(item.m_value.c_str(), "MT-32"))
-            plugin = 3;
+            if (meta_data.get_item("type", item) && !strcmp(item.m_value.c_str(), "MT-32"))
+                _PluginID= 3;
+        }
 
         pfc::string8 file_soundfont;
 
-        /*if ( plugin == 2 || plugin == 4 )*/
+        /*if (_SelectedPluginIndex == 2 || _SelectedPluginIndex == 4 )*/
         {
-            bool exists = false;
-
             pfc::string8_fast temp = m_path, temp_out;
 
-            if (!(exists = test_soundfont_extension(temp, temp_out, p_abort)))
+            bool exists = test_soundfont_extension(temp, temp_out, p_abort);
+
+            if (!exists)
             {
                 size_t dot = temp.find_last('.');
 
@@ -3489,6 +3383,7 @@ public:
                     {
                         temp += temp_out;
                         temp.add_string(&temp[pos], temp.length() - pos - 1);
+
                         exists = test_soundfont_extension(temp, temp_out, p_abort);
                     }
                 }
@@ -3497,11 +3392,11 @@ public:
             if (exists)
             {
                 file_soundfont = temp_out;
-                plugin = 4;
+                _PluginID = 4;
             }
         }
 
-        if (plugin == 3)
+        if (_PluginID == 3)
             srate = MT32Player::getSampleRate();
 
         get_length(p_subsong);
@@ -3511,6 +3406,7 @@ public:
         if ((p_flags & input_flag_no_looping) || loop_type < 4)
         {
             unsigned samples_length = length_samples;
+
             samples_fade_begin = samples_length;
             samples_fade_end = samples_length;
             doing_loop = false;
@@ -3526,13 +3422,14 @@ public:
         {
             if (loop_type > 4 || loop_begin != ~0 || loop_end != ~0)
             {
-                samples_fade_begin = ~0;
-                samples_fade_end = ~0;
+                samples_fade_begin = (unsigned int)~0;
+                samples_fade_end = (unsigned)~0;
                 doing_loop = true;
             }
             else
             {
                 unsigned samples_length = length_samples;
+
                 samples_fade_begin = samples_length;
                 samples_fade_end = samples_length;
                 doing_loop = false;
@@ -3540,7 +3437,7 @@ public:
         }
 
     #ifdef DXISUPPORT
-        if (plugin == 5)
+        if (_SelectedPluginIndex == 5)
         {
             pfc::array_t<t_uint8> serialized_midi_file;
             midi_file.serialize_as_standard_midi_file(serialized_midi_file);
@@ -3574,7 +3471,7 @@ public:
         }
         else
         #endif
-            if (plugin == 1)
+            if (_PluginID == 1)
             {
                 delete midiPlayer;
 
@@ -3622,7 +3519,7 @@ public:
             }
     #ifdef FLUIDSYNTHSUPPORT
             else
-            if (plugin == 2 || plugin == 4)
+            if (_SelectedPluginIndex == 2 || _SelectedPluginIndex == 4)
             {
                 /*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
                     if ( !fsmod )
@@ -3637,7 +3534,10 @@ public:
                 midiPlayer = sfPlayer;
 
                 sfPlayer->setSoundFont(thePreset.soundfont_path);
-                if (file_soundfont.length()) sfPlayer->setFileSoundFont(file_soundfont);
+
+                if (file_soundfont.length())
+                    sfPlayer->setFileSoundFont(file_soundfont);
+
                 sfPlayer->setSampleRate(srate);
                 sfPlayer->setInterpolationMethod(fluid_interp_method);
                 sfPlayer->setDynamicLoading(cfg_soundfont_dynamic.get());
@@ -3660,11 +3560,11 @@ public:
                 }
             }
     #ifdef BASSMIDISUPPORT
-            else if (plugin == 4)
+            else if (_SelectedPluginIndex == 4)
             #endif
             #else
             else
-            if (plugin == 2 || plugin == 4)
+            if (_PluginID == 2 || _PluginID == 4)
     #endif
     #ifdef BASSMIDISUPPORT
             {
@@ -3719,7 +3619,7 @@ public:
             }
     #endif
             else
-            if (plugin == 6)
+            if (_PluginID == 6)
             {
                 delete midiPlayer;
 
@@ -3751,7 +3651,7 @@ public:
                 }
             }
             else
-            if (plugin == 7)
+            if (_PluginID == 7)
             {
                 delete midiPlayer;
 
@@ -3782,7 +3682,7 @@ public:
                 }
             }
             else
-            if (plugin == 3)
+            if (_PluginID == 3)
             {
                 midi_meta_data_item item;
 
@@ -3833,7 +3733,7 @@ public:
                 }
             }
             else
-            if (plugin == 9)
+            if (_PluginID == 9)
             {
                 delete midiPlayer;
 
@@ -3862,7 +3762,7 @@ public:
                 }
             }
             else
-            if (plugin == 10)
+            if (_PluginID == 10)
             {
                 delete midiPlayer;
 
@@ -3922,10 +3822,8 @@ public:
                         if (++g_running == 1)
                             g_srate = srate;
                         else
-                         if (srate != g_srate)
-                        {
-                            srate = g_srate;
-                        }
+                        if (srate != (unsigned int)g_srate)
+                            srate = (unsigned int)g_srate;
 
                         is_emidi = true;
                     }
@@ -3952,7 +3850,7 @@ public:
         bool rv = false;
 
     #ifdef DXISUPPORT
-        if (plugin == 5)
+        if (_SelectedPluginIndex == 5)
         {
             unsigned todo = 4096;
 
@@ -3988,7 +3886,7 @@ public:
         }
         else
     #endif
-        if (plugin == 1)
+        if (_PluginID == 1)
         {
             VSTiPlayer * vstPlayer = (VSTiPlayer *) midiPlayer;
 
@@ -4009,7 +3907,8 @@ public:
 
             rv = true;
         }
-        else if (plugin == 3)
+        else
+        if (_PluginID == 3)
         {
             MT32Player * mt32Player = (MT32Player *) midiPlayer;
 
@@ -4023,7 +3922,8 @@ public:
 
             unsigned done = mt32Player->Play(out, todo);
 
-            if (!done) return false;
+            if (!done)
+                return false;
 
             p_chunk.set_srate(srate);
             p_chunk.set_channels(2);
@@ -4031,7 +3931,8 @@ public:
 
             rv = true;
         }
-        else if (midiPlayer)
+        else
+        if (midiPlayer)
         {
             size_t todo = 4096;
 
@@ -4044,8 +3945,10 @@ public:
             if (!done)
             {
                 std::string last_error;
+
                 if (midiPlayer->GetLastError(last_error))
                     throw exception_io_data(last_error.c_str());
+
                 return false;
             }
 
@@ -4067,10 +3970,11 @@ public:
             {
                 for (unsigned i = std::max(samples_fade_begin, samples_played_start),
                     j = std::min(samples_played_end, samples_fade_end);
-                    i < j; i++)
+                    i < j; ++i)
                 {
                     audio_sample * sample = p_chunk.get_data() + (i - samples_played_start) * 2;
                     audio_sample scale = (audio_sample) (samples_fade_end - i) / (audio_sample) (samples_fade_end - samples_fade_begin);
+
                     sample[0] *= scale;
                     sample[1] *= scale;
                 }
@@ -4078,10 +3982,14 @@ public:
                 if (samples_played_end > samples_fade_end)
                 {
                     unsigned samples_remain = 0;
+
                     if (samples_fade_end > samples_played_start)
                         samples_remain = samples_fade_end - samples_played_start;
+
                     p_chunk.set_sample_count(samples_remain);
+
                     eof = true;
+
                     if (!samples_remain)
                         return false;
                 }
@@ -4093,7 +4001,7 @@ public:
         return rv;
     }
 
-    void decode_seek(double p_seconds, abort_callback & p_abort)
+    void decode_seek(double p_seconds, abort_callback&)
     {
         unsigned seek_msec = unsigned(audio_math::time_to_samples(p_seconds, 1000));
 
@@ -4116,7 +4024,7 @@ public:
         }
 
     #ifdef DXISUPPORT
-        if (plugin == 5)
+        if (_SelectedPluginIndex == 5)
         {
             dxiProxy->setPosition(seek_msec);
 
@@ -4152,9 +4060,9 @@ public:
 
     #ifdef BASSMIDISUPPORT
     #ifdef FLUIDSYNTHSUPPORT
-        if (plugin == 4)
+        if (_SelectedPluginIndex == 4)
         #else
-        if (plugin == 2 || plugin == 4)
+        if (_PluginID == 2 || _PluginID == 4)
         #endif
         {
             BMPlayer * bmPlayer = (BMPlayer *) midiPlayer;
@@ -4179,19 +4087,19 @@ public:
         }
     #endif
 
-        return ret;
+        return (bool)ret;
     }
 
-    bool decode_get_dynamic_info_track(file_info & p_out, double & p_timestamp_delta)
+    bool decode_get_dynamic_info_track(file_info&, double&)
     {
         return false;
     }
 
-    void decode_on_idle(abort_callback & p_abort)
+    void decode_on_idle(abort_callback&)
     {
     }
 
-    void retag_set_info(t_uint32 p_subsong, const file_info & p_info, abort_callback & p_abort)
+    void retag_set_info(t_uint32, const file_info& p_info, abort_callback & p_abort)
     {
         if (is_syx)
             throw exception_io_data("You cannot tag SysEx dumps");
@@ -4228,11 +4136,11 @@ public:
         static_api_ptr_t<metadb_index_manager>()->set_user_data(guid_midi_index, m_index_hash, tag.get_ptr(), tag.get_count());
     }
 
-    void retag_commit(abort_callback & p_abort)
+    void retag_commit(abort_callback&)
     {
     }
 
-    void remove_tags(abort_callback & p_abort)
+    void remove_tags(abort_callback&)
     {
     }
 
@@ -4241,15 +4149,14 @@ public:
         return !strcmp(p_content_type, "audio/midi");
     }
 
-    static bool g_is_our_path(const char * p_full_path, const char * p_extension)
+    static bool g_is_our_path(const char *, const char * p_extension)
     {
         return g_test_extension(p_extension) || g_test_extension_syx(p_extension);
     }
 
     static GUID g_get_guid()
     {
-        // {AE29C554-EE59-4C1A-8211-320F2A1A992B}
-        static const GUID guid = { 0xae29c554, 0xee59, 0x4c1a, { 0x82, 0x11, 0x32, 0xf, 0x2a, 0x1a, 0x99, 0x2b } };
+        static const GUID guid = { 0xae29c554, 0xee59, 0x4c1a, { 0x82, 0x11, 0x32, 0xf, 0x2a, 0x1a, 0x99, 0x2b } }; // {AE29C554-EE59-4C1A-8211-320F2A1A992B}
 
         return guid;
     }
@@ -4261,8 +4168,8 @@ public:
 
     static GUID g_get_preferences_guid()
     {
-        // {1623AA03-BADC-4bab-8A17-C737CF782661}
-        static const GUID guid = { 0x1623aa03, 0xbadc, 0x4bab, { 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } };
+        static const GUID guid = { 0x1623aa03, 0xbadc, 0x4bab, { 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } }; // {1623AA03-BADC-4bab-8A17-C737CF782661}
+
         return guid;
     }
 
@@ -4270,6 +4177,157 @@ public:
     {
         return false;
     }
+
+private:
+    double get_length(unsigned p_subsong)
+    {
+        length_ms = midi_file.get_timestamp_end(p_subsong, true);
+
+        double length = length_ms * .001;
+
+        if (loop_type == 1)
+            length += 1.;
+
+        length_ticks = midi_file.get_timestamp_end(p_subsong); // theSequence->m_tempoMap.Sample2Tick(len, 1000);
+        length_samples = (unsigned) (((__int64) length_ms * (__int64) srate) / 1000);
+
+        if (loop_type == 1)
+            length_samples += srate;
+
+        loop_begin = midi_file.get_timestamp_loop_start(p_subsong);
+        loop_end = midi_file.get_timestamp_loop_end(p_subsong);
+        loop_begin_ms = midi_file.get_timestamp_loop_start(p_subsong, true);
+        loop_end_ms = midi_file.get_timestamp_loop_end(p_subsong, true);
+
+        if (loop_begin != ~0 || loop_end != ~0 || loop_type > 2)
+        {
+            if (loop_begin_ms == ~0) loop_begin_ms = 0;
+            if (loop_end_ms == ~0) loop_end_ms = length_ms;
+            length = (double) (loop_begin_ms + (loop_end_ms - loop_begin_ms) * loop_count + fade_ms) * 0.001;
+        }
+
+        return length;
+    }
+
+    void set_loop()
+    {
+    #ifdef DXISUPPORT
+        if (_SelectedPluginIndex == 5 && dxiProxy)
+        {
+            dxiProxy->setLoop(loop_begin != ~0 ? loop_begin : 0, loop_end != ~0 ? loop_end : length_ticks);
+        }
+        /*else
+        {
+            sample_loop_start = theSequence->m_tempoMap.Tick2Sample(loop_begin != -1 ? loop_begin : 0, srate);
+            sample_loop_end = theSequence->m_tempoMap.Tick2Sample((loop_end != -1 ? loop_end : length_ticks) + 1, srate);
+        }*/
+        else
+        #endif
+            dont_loop = false;
+    }
+
+    void meta_add(file_info & p_info, const char * name, const char * value, t_size max)
+    {
+        if (value[0])
+        {
+            pfc::string8 t;
+
+            if (max && value[max - 1])
+            {
+                // TODO: moo
+                t.set_string(value, max);
+                value = t;
+            }
+            else
+                max = strlen(value);
+
+            if (pfc::is_lower_ascii(value) || pfc::is_valid_utf8(value, max))
+                p_info.meta_add(name, value);
+            else
+            if (is_valid_sjis(value, max))
+                p_info.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
+            else
+                p_info.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));
+        }
+    }
+
+private:
+    MIDIPlayer * midiPlayer;
+    midi_container midi_file;
+
+    unsigned _PluginID;
+    unsigned srate;
+    unsigned resampling;
+#ifdef FLUIDSYNTHSUPPORT
+    unsigned fluid_interp_method;
+#endif
+
+    bool is_emidi;
+
+    bool b_thloopz;
+    bool b_rpgmloopz;
+    bool b_xmiloopz;
+    bool b_ff7loopz;
+
+    bool doing_loop;
+
+    unsigned loop_type;
+    unsigned loop_type_playback;
+    unsigned loop_type_other;
+    unsigned clean_flags;
+//  bool b_gm2;
+
+    unsigned length_ms;
+    unsigned length_samples;
+    unsigned length_ticks;
+    unsigned samples_done;
+
+    unsigned loop_begin, loop_begin_ms;
+    unsigned loop_end, loop_end_ms;
+
+    unsigned loop_count, fade_ms;
+
+    unsigned samples_played;
+    unsigned samples_fade_begin;
+    unsigned samples_fade_end;
+
+    bool eof;
+    bool dont_loop;
+
+    bool first_block;
+
+    unsigned original_track_count;
+
+    bool is_syx;
+
+#ifdef BASSMIDISUPPORT
+    unsigned bassmidi_voices, bassmidi_voices_max;
+#endif
+    double dynamic_time;
+
+    pfc::string8 m_path;
+
+    t_filestats m_stats;
+    t_filestats2 m_stats2;
+
+    metadb_index_hash m_index_hash;
+    hasher_md5_result m_file_hash;
+
+#ifdef DXISUPPORT
+    DXiProxy * dxiProxy;
+
+#if audio_sample_size != 32
+    pfc::array_t<float> sample_buffer;
+#endif
+#endif
+    // Crap for external input
+/*
+    input * external_decoder;
+    reader * mem_reader;
+
+    unsigned sample_loop_start;
+    unsigned sample_loop_end;
+*/
 };
 
 static const char * loop_txt[] =
@@ -4455,10 +4513,12 @@ private:
     {
         return true;
     }
+
     static bool plugin_never_present(CMyPreferences *)
     {
         return false;
     }
+
     static bool plugin_sauce_present(CMyPreferences * pthis)
     {
         return pthis->secret_sauce_found;
@@ -4466,7 +4526,7 @@ private:
 
     int plugins_reported;
 
-    static const plugin_names_ids plugins[];
+    static const plugin_names_ids Plugins[];
     std::map<int, int> plugins_reverse_map, plugins_present_map, plugins_present_reverse_map;
     fb2k::CCoreDarkModeHooks m_hooks;
 };
@@ -4552,7 +4612,7 @@ void CMyPreferences::enum_vsti_plugins(const char * _path, puFindFile _find)
                         else
                             info.display_name = _find->GetFileName();
 
-                        info.unique_id = vstPlayer.getUniqueID();
+                        info.unique_id = (uint32_t)vstPlayer.getUniqueID();
 
                         info.has_editor = vstPlayer.hasEditor();
 
@@ -4682,9 +4742,10 @@ bool CMyPreferences::check_secret_sauce()
 
 static const char * chip_counts[] = { "1", "2", "5", "10", "25", "50", "100" };
 
-const CMyPreferences::plugin_names_ids CMyPreferences::plugins[] =
+const CMyPreferences::plugin_names_ids CMyPreferences::Plugins[] =
 {
     { "Emu de MIDI", 0, -1, plugin_always_present },
+
 #ifdef FLUIDSYNTHSUPPORT
     { "FluidSynth",
 #ifdef BASSMIDISUPPORT
@@ -4694,6 +4755,7 @@ const CMyPreferences::plugin_names_ids CMyPreferences::plugins[] =
 #endif
       plugin_always_present },
 #endif
+
 #ifdef BASSMIDISUPPORT
     { "BASSMIDI",
 #ifdef FLUIDSYNTHSUPPORT
@@ -4703,7 +4765,9 @@ const CMyPreferences::plugin_names_ids CMyPreferences::plugins[] =
 #endif
       plugin_always_present },
 #endif
+
     { "Super MUNT GM", 3, -1, plugin_always_present },
+
     { "libADLMIDI", 6, -1, plugin_always_present },
     { "libOPNMIDI", 7, -1, plugin_always_present },
     { "oplmidi", 8, -1, plugin_never_present },
@@ -4723,11 +4787,11 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM)
     plugins_present_map[plugin] = -1;
     plugins_present_reverse_map[-1] = -1;
 
-    for (unsigned int i = 0, j = _countof(plugins); i < j; ++i)
+    for (unsigned int i = 0, j = _countof(Plugins); i < j; ++i)
     {
-        plugins_reverse_map[plugins[i].plugin_number] = i;
-        if (plugins[i].plugin_number_alt >= 0)
-            plugins_reverse_map[plugins[i].plugin_number_alt] = i;
+        plugins_reverse_map[Plugins[i].plugin_number] = i;
+        if (Plugins[i].plugin_number_alt >= 0)
+            plugins_reverse_map[Plugins[i].plugin_number_alt] = i;
     }
 
     int plugin_reverse = -1;
@@ -4736,30 +4800,35 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM)
     {
         plugin_reverse = plugins_reverse_map[plugin];
 
-        if (plugin_reverse < 0 || !plugins[plugin_reverse].plugin_present(this))
+        if (plugin_reverse < 0 || !Plugins[plugin_reverse].plugin_present(this))
         {
             plugin = default_cfg_plugin;
             plugin_reverse = plugins_reverse_map[default_cfg_plugin];
         }
-        else if (plugins[plugin_reverse].plugin_number_alt == plugin)
+        else if (Plugins[plugin_reverse].plugin_number_alt == plugin)
         {
-            plugin = plugins[plugin_reverse].plugin_number;
+            plugin = Plugins[plugin_reverse].plugin_number;
         }
     }
 
     plugins_reported = 0;
 
     w = GetDlgItem(IDC_PLUGIN);
-    for (unsigned i = 0, j = _countof(plugins); i < j; ++i)
+
+    for (unsigned i = 0, j = _countof(Plugins); i < j; ++i)
     {
-        const plugin_names_ids & plugin = plugins[i];
+        const plugin_names_ids& plugin = Plugins[i];
+
         if (plugin.plugin_present(this))
         {
             plugins_present_map[plugin.plugin_number] = plugins_reported;
+
             if (plugin.plugin_number_alt >= 0)
                 plugins_present_map[plugin.plugin_number_alt] = plugins_reported;
+
             plugins_present_reverse_map[plugins_reported] = plugin.plugin_number;
             ++plugins_reported;
+
             uSendMessageText(w, CB_ADDSTRING, 0, plugin.name);
         }
     }
@@ -4780,11 +4849,12 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM)
         }
     }
 
-    unsigned vsti_count = vsti_plugins.get_size(), vsti_selected = ~0;
+    unsigned vsti_count = vsti_plugins.get_size(), vsti_selected = (unsigned int)~0;
 
     for (unsigned i = 0; i < vsti_count; ++i)
     {
         uSendMessageText(w, CB_ADDSTRING, 0, vsti_plugins[i].display_name.c_str());
+
         if (plugin == 1 && !stricmp_utf8(vsti_plugins[i].path.c_str(), cfg_vst_path))
             vsti_selected = i;
     }
@@ -4875,29 +4945,35 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM)
 
     dxi_plugins.set_count(0);
 
-    CoInitialize(NULL);
+    ::CoInitialize(NULL);
+
     {
         CPlugInInventory theInventory;
+
         if (SUCCEEDED(theInventory.EnumPlugIns()))
         {
             unsigned count = theInventory.GetCount();
             pfc::string8_fastalloc name;
             CLSID theClsid;
-            for (unsigned i = 0; i < count; i++)
+
+            for (unsigned i = 0; i < count; ++i)
             {
                 if (SUCCEEDED(theInventory.GetInfo(i, &theClsid, name)))
                 {
                     dxi_plugins.append_single(theClsid);
                     uSendMessageText(w, CB_ADDSTRING, 0, name);
 
-                    if (theClsid == cfg_dxi_plugin.get_value()) dxi_selected = i;
+                    if (theClsid == cfg_dxi_plugin.get_value())
+                        dxi_selected = i;
 
                     plugins_present_reverse_map[plugins_reported + vsti_count + i] = 5;
                 }
             }
         }
     }
-    CoUninitialize();
+
+    ::CoUninitialize();
+
 #endif
     if (plugin == 1) plugin_selected = plugins_reported + vsti_selected;
 #ifdef DXISUPPORT
@@ -4914,23 +4990,27 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM)
         plugin_selected = plugins_present_map[plugin];
     }
 
-    ::SendMessage(w, CB_SETCURSEL, plugin_selected, 0);
+    ::SendMessage(w, CB_SETCURSEL, plugin_selected, (WPARAM)0);
 
     {
         char temp[16];
-        int n;
-        for (n = _countof(srate_tab); n--;)
+
+        for (size_t n = _countof(srate_tab); n--;)
         {
             if (srate_tab[n] != cfg_srate)
             {
-                itoa(srate_tab[n], temp, 10);
+                _itoa_s(srate_tab[n], temp, _countof(temp), 10);
                 cfg_history_rate.add_item(temp);
             }
         }
-        itoa(cfg_srate, temp, 10);
+
+        _itoa_s(cfg_srate, temp, _countof(temp), 10);
         cfg_history_rate.add_item(temp);
+
         w = GetDlgItem(IDC_SAMPLERATE);
+
         cfg_history_rate.setup_dropdown(w);
+
         ::SendMessage(w, CB_SETCURSEL, 0, 0);
     }
 
@@ -4940,57 +5020,67 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM)
     }
 
     w = GetDlgItem(IDC_LOOP);
-    for (unsigned i = 0; i < _countof(loop_txt); i++)
+
+    for (unsigned i = 0; i < _countof(loop_txt); ++i)
     {
         uSendMessageText(w, CB_ADDSTRING, 0, loop_txt[i]);
     }
-    ::SendMessage(w, CB_SETCURSEL, cfg_loop_type, 0);
+    ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_loop_type, 0);
 
     w = GetDlgItem(IDC_CLOOP);
-    for (unsigned i = 0; i < _countof(loop_txt) - 2; i++)
+
+    for (unsigned i = 0; i < _countof(loop_txt) - 2; ++i)
     {
         uSendMessageText(w, CB_ADDSTRING, 0, loop_txt[i]);
     }
-    ::SendMessage(w, CB_SETCURSEL, cfg_loop_type_other, 0);
+    ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_loop_type_other, 0);
 
-    SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, cfg_thloopz);
-    SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, cfg_rpgmloopz);
-    SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, cfg_xmiloopz);
-    SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, cfg_ff7loopz);
+    SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, (WPARAM)cfg_thloopz);
+    SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, (WPARAM)cfg_rpgmloopz);
+    SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, (WPARAM)cfg_xmiloopz);
+    SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, (WPARAM)cfg_ff7loopz);
 
-    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, cfg_emidi_exclusion);
-    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, cfg_filter_instruments);
-    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, cfg_filter_banks);
+    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, (WPARAM)cfg_emidi_exclusion);
+    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM)cfg_filter_instruments);
+    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, (WPARAM)cfg_filter_banks);
 
-    SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, cfg_ms_panning);
+    SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, (WPARAM)cfg_ms_panning);
     SendDlgItemMessage(IDC_FILTER_EFFECTS, BM_SETCHECK, !cfg_midi_reverb);
 
     const char * const * banknames = adl_getBankNames();
     const unsigned bank_count = adl_getBanksCount();
 
-    for (unsigned i = 0; i < bank_count; i++)
+    for (unsigned i = 0; i < bank_count; ++i)
     {
         m_bank_list += adl_bank(i, banknames[i]);
     }
+
     m_bank_list.sort();
 
     unsigned bank_selected = 0;
+
     w = GetDlgItem(IDC_ADL_BANK);
-    for (unsigned i = 0; i < m_bank_list.get_count(); i++)
+
+    for (unsigned i = 0; i < m_bank_list.get_count(); ++i)
     {
         uSendMessageText(w, CB_ADDSTRING, 0, m_bank_list[i].name);
-        if (m_bank_list[i].number == cfg_adl_bank) bank_selected = i;
+
+        if (m_bank_list[i].number == cfg_adl_bank)
+            bank_selected = i;
     }
+
     w.SendMessage(CB_SETCURSEL, bank_selected);
 
     w = GetDlgItem(IDC_ADL_CHIPS);
-    for (unsigned i = 0; i < _countof(chip_counts); i++)
+
+    for (unsigned i = 0; i < _countof(chip_counts); ++i)
     {
         uSendMessageText(w, CB_ADDSTRING, 0, chip_counts[i]);
     }
-    SetDlgItemInt(IDC_ADL_CHIPS, cfg_adl_chips, 0);
 
-    SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, cfg_adl_panning);
+    SetDlgItemInt(IDC_ADL_CHIPS, (UINT)cfg_adl_chips, 0);
+
+    SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, (WPARAM)cfg_adl_panning);
 
 #ifdef BASSMIDISUPPORT
     w = GetDlgItem(IDC_RESAMPLING);
@@ -5001,7 +5091,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM)
     if (!_bassmidi_src2_avail && cfg_resampling > 1)
         ::SendMessage(w, CB_SETCURSEL, 1, 0);
     else
-        ::SendMessage(w, CB_SETCURSEL, cfg_resampling, 0);
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_resampling, 0);
 #endif
 #ifdef FLUIDSYNTHSUPPORT
     w = GetDlgItem(IDC_RESAMPLING);
@@ -5020,26 +5110,37 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM)
     else
         ::SendMessage(w, CB_SETCURSEL, 3, 0);
 #endif
-
-    w = GetDlgItem(IDC_MUNT_GM);
-    for (unsigned i = 0, j = _countof(munt_bank_names); i < j; i++)
     {
-        uSendMessageText(w, CB_ADDSTRING, 0, munt_bank_names[i]);
-    }
-    ::SendMessage(w, CB_SETCURSEL, cfg_munt_gm, 0);
+        w = GetDlgItem(IDC_MUNT_GM);
 
-    size_t preset_number = 0;
-    w = GetDlgItem(IDC_MS_PRESET);
-    for (size_t i = 0, j = g_ms_presets.get_count(); i < j; i++)
-    {
-        const ms_preset & preset = g_ms_presets[i];
-        uSendMessageText(w, CB_ADDSTRING, 0, preset.name);
-        if (preset.synth == cfg_ms_synth && preset.bank == cfg_ms_bank)
-            preset_number = i;
+        for (unsigned i = 0, j = _countof(MuntBankNames); i < j; ++i)
+        {
+            uSendMessageText(w, CB_ADDSTRING, 0, MuntBankNames[i]);
+        }
+
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_munt_gm, 0);
     }
-    ::SendMessage(w, CB_SETCURSEL, preset_number, 0);
+
+    {
+        size_t preset_number = 0;
+
+        w = GetDlgItem(IDC_MS_PRESET);
+
+        for (size_t i = 0, j = g_ms_presets.get_count(); i < j; ++i)
+        {
+            const ms_preset & preset = g_ms_presets[i];
+
+            uSendMessageText(w, CB_ADDSTRING, 0, preset.name);
+
+            if (preset.synth == (unsigned int)cfg_ms_synth && preset.bank == (unsigned int)cfg_ms_bank)
+                preset_number = i;
+        }
+
+        ::SendMessage(w, CB_SETCURSEL, preset_number, 0);
+    }
 
     w = GetDlgItem(IDC_FILTER_FLAVOR);
+
     uSendMessageText(w, CB_ADDSTRING, 0, "Default");
     uSendMessageText(w, CB_ADDSTRING, 0, "GM");
     uSendMessageText(w, CB_ADDSTRING, 0, "GM2");
@@ -5048,7 +5149,7 @@ BOOL CMyPreferences::OnInitDialog(CWindow, LPARAM)
     uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-88 Pro");
     uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-8820");
     uSendMessageText(w, CB_ADDSTRING, 0, "XG");
-    ::SendMessage(w, CB_SETCURSEL, cfg_midi_flavor, 0);
+    ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_midi_flavor, 0);
 
 #ifndef BASSMIDISUPPORT
     uSetWindowText(GetDlgItem(IDC_CACHED), "No info.");
@@ -5079,9 +5180,9 @@ void CMyPreferences::OnButtonClick(UINT, int, CWindow)
 
 void CMyPreferences::OnButtonConfig(UINT, int, CWindow)
 {
-    int plugin_selected = GetDlgItem(IDC_PLUGIN).SendMessage(CB_GETCURSEL, 0, 0);
+    int plugin_selected = (int)GetDlgItem(IDC_PLUGIN).SendMessage(CB_GETCURSEL, 0, 0);
 
-    if (plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count())
+    if ((plugin_selected >= plugins_reported) && plugin_selected < (int)(plugins_reported + vsti_plugins.get_count()))
     {
         busy = true;
         OnChanged();
@@ -5106,11 +5207,11 @@ void CMyPreferences::OnButtonConfig(UINT, int, CWindow)
 void CMyPreferences::OnPluginChange(UINT, int, CWindow w)
 {
     // t_size vsti_count = vsti_plugins.get_size();
-    int plugin_selected = ::SendMessage(w, CB_GETCURSEL, 0, 0);
-    int plugin_index = -1;
+    int plugin_selected = (int)::SendMessage(w, CB_GETCURSEL, 0, 0);
+//  int plugin_index = -1;
     int plugin = 0;
 
-    if (plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count())
+    if ((plugin_selected >= plugins_reported) && (plugin_selected < (int)(plugins_reported + vsti_plugins.get_count())))
         plugin = 1;
 #ifdef DXISUPPORT
     else if (plugin_selected >= plugins_reported + vsti_plugins.get_count())
@@ -5164,7 +5265,7 @@ void CMyPreferences::OnPluginChange(UINT, int, CWindow w)
 
     GetDlgItem(IDC_PLUGIN_CONFIGURE).EnableWindow(plugin_selected >= plugins_reported && plugin < plugins_reported + vsti_plugins.get_count() && vsti_plugins[(size_t)(plugin_selected - plugins_reported)].has_editor);
 
-    if (plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count())
+    if ((plugin_selected >= plugins_reported) && (plugin_selected < (int)(plugins_reported + vsti_plugins.get_count())))
     {
         vsti_config = cfg_vst_config[vsti_plugins[(size_t)(plugin_selected - plugins_reported)].unique_id];
     }
@@ -5179,13 +5280,13 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w)
     if (w == GetDlgItem(IDC_SOUNDFONT))
     {
         pfc::string8 directory, filename;
+
         directory = m_soundfont;
         filename = m_soundfont;
+
         directory.truncate(directory.scan_filename());
-        if (uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;"
-        #ifdef FLUIDSYNTHSUPPORT
-            "*.sf3;"
-        #endif
+
+        if (uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;*.sf3;"
         #ifdef SF2PACK
             "*.sf2pack;*.sfogg;"
         #endif
@@ -5201,23 +5302,31 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w)
             0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE))
         {
             m_soundfont = filename;
+
             uSetWindowText(w, filename.get_ptr() + filename.scan_filename());
             OnChanged();
         }
     }
-    else if (w == GetDlgItem(IDC_MUNT))
+    else
+    if (w == GetDlgItem(IDC_MUNT))
     {
         pfc::string8 path;
         if (uBrowseForFolder(m_hWnd, "Locate MT-32 or CM-32L ROM set...", path))
         {
             m_munt_path = path;
-            unsigned length = m_munt_path.length();
-            if (length >= 1 && !pfc::is_path_separator(*(m_munt_path.get_ptr() + length - 1))) m_munt_path.add_byte('\\');
+
+            t_size length = m_munt_path.length();
+
+            if (length >= 1 && !pfc::is_path_separator((unsigned int)*(m_munt_path.get_ptr() + length - 1)))
+                m_munt_path.add_byte('\\');
+
             const char * display_path;
+
             if (length)
                 display_path = m_munt_path;
             else
                 display_path = click_to_set;
+
             uSetWindowText(w, display_path);
             OnChanged();
         }
@@ -5235,7 +5344,7 @@ void CMyPreferences::OnTimer(UINT_PTR nIDEvent)
 
         uint64_t total_sample_size, samples_loaded_size;
 
-        if (g_get_soundfont_stats(total_sample_size, samples_loaded_size))
+        if (GetSoundFontStatistics(total_sample_size, samples_loaded_size))
         {
             m_cached = pfc::format_file_size_short(samples_loaded_size);
             m_cached += " / ";
@@ -5268,7 +5377,7 @@ void CMyPreferences::reset()
     int default_plugin_entry = plugins_reverse_map[default_cfg_plugin];
     int plugin_selected = plugins_present_map[default_plugin_entry];
 
-    SendDlgItemMessage(IDC_PLUGIN, CB_SETCURSEL, plugin_selected);
+    SendDlgItemMessage(IDC_PLUGIN, CB_SETCURSEL, (WPARAM)plugin_selected);
 
     if (default_cfg_plugin != 2 && default_cfg_plugin != 4)
     {
@@ -5346,18 +5455,21 @@ void CMyPreferences::reset()
     SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_SETCURSEL, default_cfg_midi_flavor);
     SendDlgItemMessage(IDC_FILTER_EFFECTS, BM_SETCHECK, !default_cfg_midi_reverb);
 
-    unsigned bank_selected = 0;
-
-    for (unsigned i = 0; i < m_bank_list.get_count(); i++)
     {
-        if (m_bank_list[i].number == default_cfg_adl_bank)
+        unsigned bank_selected = 0;
+
+        for (unsigned i = 0; i < m_bank_list.get_count(); ++i)
         {
-            bank_selected = i;
-            break;
+            if (m_bank_list[i].number == default_cfg_adl_bank)
+            {
+                bank_selected = i;
+                break;
+            }
         }
+
+        SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, bank_selected);
     }
 
-    SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, bank_selected);
     SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, default_cfg_adl_panning);
     SetDlgItemInt(IDC_ADL_CHIPS, default_cfg_adl_chips, 0);
 //  SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
@@ -5367,22 +5479,24 @@ void CMyPreferences::reset()
 #else
     SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, default_cfg_resampling);
 #endif
-
-    size_t preset_number = 0;
-
-    for (size_t i = 0, j = g_ms_presets.get_count(); i < j; i++)
     {
-        const ms_preset & preset = g_ms_presets[i];
+        size_t preset_number = 0;
 
-        if (preset.synth == default_cfg_ms_synth && preset.bank == default_cfg_ms_bank)
+        for (size_t i = 0, j = g_ms_presets.get_count(); i < j; ++i)
         {
-            preset_number = i;
-            break;
-        }
-    }
-    SendDlgItemMessage(IDC_MS_PRESET, CB_SETCURSEL, preset_number);
+            const ms_preset & preset = g_ms_presets[i];
 
-    SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_SETCURSEL, cfg_midi_flavor);
+            if (preset.synth == default_cfg_ms_synth && preset.bank == default_cfg_ms_bank)
+            {
+                preset_number = i;
+                break;
+            }
+        }
+
+        SendDlgItemMessage(IDC_MS_PRESET, CB_SETCURSEL, preset_number);
+    }
+
+    SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_SETCURSEL, (WPARAM)cfg_midi_flavor);
 
     vsti_config.resize(0);
 
@@ -5391,9 +5505,7 @@ void CMyPreferences::reset()
 
 void CMyPreferences::apply()
 {
-    char temp[16];
-
-    int t = GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE);
+    int t = (int)GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE);
 
     if (t < 6000)
         t = 6000;
@@ -5401,31 +5513,60 @@ void CMyPreferences::apply()
     if (t > 192000)
         t = 192000;
 
-    SetDlgItemInt(IDC_SAMPLERATE, t, FALSE);
-    itoa(t, temp, 10);
-    cfg_history_rate.add_item(temp);
-    cfg_srate = t;
-    t = SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
-    if (t < 0 || t >= m_bank_list.get_count()) t = 0;
-    cfg_adl_bank = m_bank_list[t].number;
-    t = GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE);
-    if (t < 1) t = 1;
-    if (t > 100) t = 100;
-    SetDlgItemInt(IDC_ADL_CHIPS, t, FALSE);
-    cfg_adl_chips = t;
-    cfg_adl_panning = SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
-    cfg_munt_gm = SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL);
+    SetDlgItemInt(IDC_SAMPLERATE, (UINT)t, FALSE);
+
     {
-        unsigned int preset_number = SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
-        if (preset_number >= g_ms_presets.get_count()) preset_number = 0;
-        const ms_preset & preset = g_ms_presets[preset_number];
-        cfg_ms_synth = preset.synth;
-        cfg_ms_bank = preset.bank;
+        char temp[16];
+
+        _itoa_s(t, temp, _countof(temp), 10);
+
+        cfg_history_rate.add_item(temp);
+        cfg_srate = t;
     }
+
     {
-        int plugin_selected = SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
+        t = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
+
+        if (t < 0 || t >= (int)m_bank_list.get_count())
+            t = 0;
+
+        cfg_adl_bank = m_bank_list[(t_size)t].number;
+    }
+
+    {
+        t = (int)GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE);
+
+        if (t < 1)
+            t = 1;
+        else
+        if (t > 100)
+            t = 100;
+
+        SetDlgItemInt(IDC_ADL_CHIPS, (UINT)t, FALSE);
+
+        cfg_adl_chips = t;
+    }
+
+    cfg_adl_panning = (t_int32)SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
+    cfg_munt_gm = (t_int32)SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL);
+
+    {
+        unsigned int preset_number = (unsigned int)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
+
+        if (preset_number >= g_ms_presets.get_count())
+            preset_number = 0;
+
+        const ms_preset & preset = g_ms_presets[preset_number];
+
+        cfg_ms_synth = (t_int32)preset.synth;
+        cfg_ms_bank = (t_int32)preset.bank;
+    }
+
+    {
+        int plugin_selected = (int)SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
         int plugin = -1;
-        if (plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count())
+
+        if (plugin_selected >= plugins_reported && plugin_selected < (int)(plugins_reported + vsti_plugins.get_count()))
             plugin = 1;
     #ifdef DXISUPPORT
         else if (plugin_selected >= plugins_reported + vsti_plugins.get_count())
@@ -5451,19 +5592,22 @@ void CMyPreferences::apply()
         }
     #endif
     }
+
     cfg_soundfont_path = m_soundfont;
     cfg_munt_base_path = m_munt_path;
-    cfg_loop_type = SendDlgItemMessage(IDC_LOOP, CB_GETCURSEL);
-    cfg_loop_type_other = SendDlgItemMessage(IDC_CLOOP, CB_GETCURSEL);
-    cfg_thloopz = SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK);
-    cfg_rpgmloopz = SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK);
-    cfg_xmiloopz = SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK);
-    cfg_ff7loopz = SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK);
-    cfg_emidi_exclusion = SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK);
-    cfg_filter_instruments = SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
-    cfg_filter_banks = SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
-    cfg_ms_panning = SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK);
+
+    cfg_loop_type = (t_int32)SendDlgItemMessage(IDC_LOOP, CB_GETCURSEL);
+    cfg_loop_type_other = (t_int32)SendDlgItemMessage(IDC_CLOOP, CB_GETCURSEL);
+    cfg_thloopz = (t_int32)SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK);
+    cfg_rpgmloopz = (t_int32)SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK);
+    cfg_xmiloopz = (t_int32)SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK);
+    cfg_ff7loopz = (t_int32)SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK);
+    cfg_emidi_exclusion = (t_int32)SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK);
+    cfg_filter_instruments = (t_int32)SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
+    cfg_filter_banks = (t_int32)SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
+    cfg_ms_panning = (t_int32)SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK);
 //  cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
+
 #ifdef FLUIDSYNTHSUPPORT
     {
         int interp_method = SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
@@ -5474,10 +5618,11 @@ void CMyPreferences::apply()
         cfg_fluid_interp_method = interp_method;
     }
 #endif
+
 #ifdef BASSMIDISUPPORT
-    cfg_resampling = SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
+    cfg_resampling = (t_int32)SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
 #endif
-    cfg_midi_flavor = SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_GETCURSEL);
+    cfg_midi_flavor = (t_int32)SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_GETCURSEL);
     cfg_midi_reverb = !SendDlgItemMessage(IDC_FILTER_EFFECTS, BM_GETCHECK);
 
     OnChanged(); // our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
@@ -5488,7 +5633,7 @@ bool CMyPreferences::HasChanged()
     // returns whether our dialog content is different from the current configuration (whether the apply button should be enabled or not)
     bool changed = false;
 
-    if (!changed && GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != cfg_srate) changed = true;
+    if (!changed && GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT)cfg_srate) changed = true;
     if (!changed && SendDlgItemMessage(IDC_LOOP, CB_GETCURSEL) != cfg_loop_type) changed = true;
     if (!changed && SendDlgItemMessage(IDC_CLOOP, CB_GETCURSEL) != cfg_loop_type_other) changed = true;
     if (!changed && SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK) != cfg_thloopz) changed = true;
@@ -5524,29 +5669,43 @@ bool CMyPreferences::HasChanged()
 
     if (!changed)
     {
-        unsigned int preset_number = SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
-        if (preset_number >= g_ms_presets.get_count()) preset_number = 0;
+        unsigned int preset_number = (unsigned int)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
+
+        if (preset_number >= g_ms_presets.get_count())
+            preset_number = 0;
+
         const ms_preset & preset = g_ms_presets[preset_number];
-        if (!(preset.synth == cfg_ms_synth && preset.bank == cfg_ms_bank)) changed = true;
+
+        if (!(preset.synth == (unsigned int)cfg_ms_synth && preset.bank == (unsigned int)cfg_ms_bank))
+            changed = true;
     }
 
     if (!changed)
     {
-        int t = SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
-        if (t < 0 || t >= m_bank_list.get_count()) t = 0;
-        if (m_bank_list[t].number != cfg_adl_bank) changed = true;
+        int t = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
+
+        if (t < 0 || t >= (int)m_bank_list.get_count())
+            t = 0;
+
+        if (m_bank_list[(t_size)t].number != (int)cfg_adl_bank)
+            changed = true;
     }
 
-    if (!changed && GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE) != cfg_adl_chips) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != cfg_adl_panning) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL) != cfg_munt_gm) changed = true;
+    if (!changed && GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE) != (UINT)cfg_adl_chips)
+        changed = true;
+
+    if (!changed && SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != cfg_adl_panning)
+        changed = true;
+
+    if (!changed && SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL) != cfg_munt_gm)
+        changed = true;
 
     if (!changed)
     {
-        int plugin_selected = SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
+        int plugin_selected = (int)SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
         int plugin = -1;
 
-        if (plugin_selected >= plugins_reported && plugin_selected < plugins_reported + vsti_plugins.get_count())
+        if ((plugin_selected >= plugins_reported) && (plugin_selected < plugins_reported + (int)vsti_plugins.get_count()))
             plugin = 1;
     #ifdef DXISUPPORT
         else if (plugin_selected >= plugins_reported + vsti_plugins.get_count())
@@ -5634,19 +5793,27 @@ class midi_file_types : public input_file_type
 
     virtual bool get_mask(unsigned idx, pfc::string_base & out)
     {
-        if (idx > 1) return false;
+        if (idx > 1)
+            return false;
+
         out.reset();
-        int count = idx == 0 ? _countof(exts) : _countof(exts_syx);
-        const char ** the_exts = idx == 0 ? exts : exts_syx;
-        for (int n = 0; n < count; n++)
+
+        size_t count = (idx == 0) ? _countof(_FileExtension) : _countof(_SyxExtension);
+
+        const char ** the_exts = idx == 0 ? _FileExtension : _SyxExtension;
+
+        for (size_t n = 0; n < count; ++n)
         {
-            if (n) out.add_byte(';');
+            if (n)
+                out.add_byte(';');
+
             out << "*." << the_exts[n];
         }
+
         return true;
     }
 
-    virtual bool is_associatable(unsigned idx)
+    virtual bool is_associatable(unsigned)
     {
         return true;
     }
@@ -5666,17 +5833,22 @@ public:
         m_midi_preset = p_midi_preset ? p_midi_preset : "";
 
         pfc::array_t<t_size> order;
+
         order.set_size(p_list.get_count());
+
         order_helper::g_fill(order.get_ptr(), order.get_size());
+
         p_list.sort_get_permutation_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, order.get_ptr());
+
         m_handles.set_count(order.get_size());
-        for (t_size n = 0; n < order.get_size(); n++)
+
+        for (t_size n = 0; n < order.get_size(); ++n)
         {
             m_handles[n] = p_list[order[n]];
         }
     }
 
-    virtual bool apply_filter(metadb_handle_ptr p_location, t_filestats p_stats, file_info & p_info)
+    virtual bool apply_filter(metadb_handle_ptr p_location, t_filestats, file_info & p_info)
     {
         t_size index;
         if (m_handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, p_location, index))
@@ -5706,34 +5878,44 @@ public:
         m_dumps = p_dumps;
 
         pfc::array_t<t_size> order;
+
         order.set_size(p_list.get_count());
+
         order_helper::g_fill(order.get_ptr(), order.get_size());
+
         p_list.sort_get_permutation_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, order.get_ptr());
+
         m_handles.set_count(order.get_size());
-        for (t_size n = 0; n < order.get_size(); n++)
+
+        for (t_size n = 0; n < order.get_size(); ++n)
         {
             m_handles[n] = p_list[order[n]];
         }
     }
 
-    virtual bool apply_filter(metadb_handle_ptr p_location, t_filestats p_stats, file_info & p_info)
+    virtual bool apply_filter(metadb_handle_ptr p_location, t_filestats, file_info & p_info)
     {
         pfc::string8 m_ext = pfc::string_extension(p_location->get_path());
 
-        for (unsigned j = 0, k = _countof(exts_syx); j < k; j++)
+        for (unsigned j = 0, k = _countof(_SyxExtension); j < k; ++j)
         {
-            if (!pfc::stricmp_ascii(m_ext, exts_syx[j])) return false;
+            if (!pfc::stricmp_ascii(m_ext, _SyxExtension[j]))
+                return false;
         }
 
         t_size index;
+
         if (m_handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, p_location, index))
         {
             pfc::string8 m_dump_serialized;
+
             m_dumps.serialize(p_location->get_path(), m_dump_serialized);
+
             if (m_dump_serialized.get_length())
                 p_info.info_set(field_syx, m_dump_serialized);
             else
                 p_info.info_remove(field_syx);
+
             return true;
         }
         else
@@ -5804,40 +5986,42 @@ public:
         return guids[n];
     }
 
-    virtual bool context_get_display(unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out, unsigned & displayflags, const GUID &)
+    virtual bool context_get_display(unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out, unsigned &, const GUID &)
     {
         if (n > 4)
             uBugCheck();
 
-        unsigned matches, matches_syx, i, j, k, l;
+        size_t j, matches, matches_syx;
 
-        i = data.get_count();
+        size_t i = data.get_count();
 
-        for (matches = 0, matches_syx = 0, j = 0; j < i; j++)
+        for (matches = 0, matches_syx = 0, j = 0; j < i; ++j)
         {
-            const playable_location & foo = data.get_item(j)->get_location();
+            const playable_location& Location = data.get_item(j)->get_location();
 
-            pfc::string8 ext = pfc::string_extension(foo.get_path());
+            pfc::string8 Extension = pfc::string_extension(Location.get_path());
 
-            for (k = ((n == 0) ? 3 : 0), l = _countof(exts); k < l; k++)
+            size_t FileExtensionIndex, FileExtensionCount;
+
+            for (FileExtensionIndex = (unsigned)((n == 0) ? 3 : 0), FileExtensionCount = (unsigned)_countof(_FileExtension); FileExtensionIndex < FileExtensionCount; ++FileExtensionIndex)
             {
-                if (!pfc::stricmp_ascii(ext, exts[k]))
+                if (!pfc::stricmp_ascii(Extension, _FileExtension[FileExtensionIndex]))
                 {
-                    matches++;
+                    ++matches;
                     break;
                 }
             }
 
-            if (k < l)
+            if (FileExtensionIndex < FileExtensionCount)
                 continue;
 
             if (n == 3)
             {
-                for (unsigned k = 0, l = _countof(exts_syx); k < l; k++)
+                for (size_t SyxExtensionIndex = 0, SyxExtensionCount = _countof(_SyxExtension); SyxExtensionIndex < SyxExtensionCount; ++SyxExtensionIndex)
                 {
-                    if (!pfc::stricmp_ascii(ext, exts_syx[k]))
+                    if (!pfc::stricmp_ascii(Extension, _SyxExtension[SyxExtensionIndex]))
                     {
-                        matches_syx++;
+                        ++matches_syx;
                         break;
                     }
                 }
@@ -5847,6 +6031,7 @@ public:
         if ((n != 3 && matches == i) || (n == 3 && (matches + matches_syx) == i))
         {
             out = context_names[n];
+
             return true;
         }
 
@@ -5860,12 +6045,12 @@ public:
 
         if (!n)
         {
-            unsigned i = data.get_count();
+        //  unsigned i = data.get_count();
 
             abort_callback_dummy m_abort;
             std::vector<uint8_t> file_data;
 
-            for (unsigned i = 0, j = data.get_count(); i < j; i++)
+            for (t_size i = 0, j = data.get_count(); i < j; ++i)
             {
                 const playable_location & loc = data.get_item(i)->get_location();
                 pfc::string8 out_path = loc.get_path();
@@ -5916,9 +6101,10 @@ public:
 
             if (n == 3)
             {
-                for (unsigned i = 0; i < data.get_count(); i++)
+                for (t_size i = 0; i < data.get_count(); ++i)
                 {
                     const char * path = data[i]->get_path();
+
                     if (g_test_extension_syx(pfc::string_extension(path)))
                     {
                         m_dumps.dumps.append_single(path);
@@ -5928,6 +6114,7 @@ public:
 
             static_api_ptr_t<metadb_io_v2> p_imgr;
             service_ptr_t<midi_syx_filter> p_filter = new service_impl_t<midi_syx_filter>(data, m_dumps);
+
             p_imgr->update_info_async(data, p_filter, core_api::get_main_window(), 0, 0);
         }
     }

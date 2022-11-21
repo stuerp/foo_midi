@@ -289,7 +289,7 @@ bool SFPlayer::startup()
 
     for (unsigned int i = 0; i < 3; ++i)
     {
-        fluid_settings_setnum(_settings[i], "synth.sample-rate", uSampleRate);
+        fluid_settings_setnum(_settings[i], "synth.sample-rate", _SampleRate);
         fluid_settings_setint(_settings[i], "synth.dynamic-sample-loading", bDynamicLoading ? 1 : 0);
 
         fluid_sfloader_t * _loader = g_get_sfloader(_settings[i]);

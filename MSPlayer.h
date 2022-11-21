@@ -36,10 +36,13 @@ protected:
     virtual bool startup();
 
 private:
+    nomidisynth * synth;
+
     unsigned int synth_id;
     unsigned int bank_id;
     unsigned int extp;
-    nomidisynth * synth;
+
+    char _Padding[4];
 };
 
 #endif

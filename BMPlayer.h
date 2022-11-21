@@ -1,39 +1,38 @@
-#ifndef __BMPlayer_h__
-#define __BMPlayer_h__
+#pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
 
+#pragma warning(disable: 4625 4626 5045)
+
 #include "MIDIPlayer.h"
 
+#pragma warning(push)
+#pragma warning(disable: 4820 5039)
 #include "bassmidi.h"
+#pragma warning(pop)
 
-extern bool g_get_soundfont_stats(uint64_t & total_sample_size, uint64_t & sample_loaded_size);
+extern bool GetSoundFontStatistics(uint64_t & total_sample_size, uint64_t & sample_loaded_size); // Called by foo_midi
 
 typedef struct sflist_presets sflist_presets;
 
 class BMPlayer : public MIDIPlayer
 {
 public:
-    // zero variables
     BMPlayer();
-
-    // close, unload
     virtual ~BMPlayer();
 
-    // configuration
     void setSoundFont(const char * in);
     void setFileSoundFont(const char * in);
     void setInterpolation(int level);
     void setEffects(bool enable = true);
     void setVoices(int voices);
 
-    // status
     unsigned int getVoicesActive();
 
 private:
     virtual void send_event(uint32_t b);
-    virtual void send_sysex(const uint8_t * event, uint32_t size, size_t port);
+    virtual void send_sysex(const uint8_t * event, size_t size, size_t port);
     virtual void render(audio_sample * out, unsigned long count);
 
     virtual void shutdown();
@@ -51,17 +50,18 @@ private:
 
     std::vector<HSOUNDFONT> _soundFonts;
     sflist_presets * _presetList[2];
-    std::string sSoundFontName;
+
+    std::string _SoundFontFilePath;
     std::string sFileSoundFontName;
 
     HSTREAM _stream[3];
 
-    int iInterpolation;
-    bool bEffects;
-    int iVoices;
+    int _InterpolationLevel;
+    int _VoiceCount;
 
-    bool bank_lsb_overridden;
     uint8_t bank_lsb_override[48];
-};
 
-#endif
+    bool _AreEffectsEnabled;
+    bool bank_lsb_overridden;
+    char _Padding[2];
+};

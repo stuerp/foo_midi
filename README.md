@@ -74,9 +74,12 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.7.5, 2022-xx-xx
+v2.7.4.4, 2022-11-21, *"I'm SoundFont of it"*
 
-* Updated Munt to v2.7.0.
+* Bug Fix: The new scpipe32 and scpipe64 in the previous version had issues. Secret Sauce is back.
+* Added support for compressed SoundFonts (.sf3) to BASS MIDI player.
+* Updated Munt (MT32 emulator) to v2.7.0.
+* Optimized the component size a bit. Only one copy of vsthost and scpipe is included.
 
 v2.7.4.3, 2022-11-20, *"Returning to BASS."*
 
@@ -106,6 +109,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * Peter Pawlowski, for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
 * [kode54](https://gitlab.com/kode54), for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
 * [Munt](https://munt.sourceforge.net/), for a multi-platform software synthesiser emulating (somewhat inaccurately) pre-GM MIDI devices such as the Roland MT-32, CM-32L, CM-64 and LAPC-I.
+* [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
 
 ## Links
 

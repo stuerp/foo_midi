@@ -90,7 +90,7 @@ bool MSPlayer::startup()
 
     if (!synth) return false;
 
-    if (!synth->midi_init((unsigned int) uSampleRate, bank_id, extp))
+    if (!synth->midi_init((unsigned int) _SampleRate, bank_id, extp))
         return false;
 
     return true;

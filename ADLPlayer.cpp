@@ -60,7 +60,7 @@ void ADLPlayer::send_event(uint32_t b)
     }
 }
 
-void ADLPlayer::send_sysex(const uint8_t * event, uint32_t size, size_t)
+void ADLPlayer::send_sysex(const uint8_t * event, size_t size, size_t)
 {
     adl_rt_systemExclusive(midiplay[0], event, size);
     adl_rt_systemExclusive(midiplay[1], event, size);
@@ -136,7 +136,7 @@ bool ADLPlayer::startup()
 
     for (unsigned i = 0; i < 3; i++)
     {
-        ADL_MIDIPlayer * midiplay = this->midiplay[i] = adl_init(uSampleRate);
+        ADL_MIDIPlayer * midiplay = this->midiplay[i] = adl_init(_SampleRate);
         if (!midiplay) return false;
 
         adl_setBank(midiplay, uBankNumber);
