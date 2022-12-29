@@ -456,6 +456,7 @@ bool GetSoundFontStatistics(uint64_t & total_sample_size, uint64_t & samples_loa
 
 #pragma endregion
 
+#pragma region("BASS Player")
 BMPlayer::BMPlayer() : MIDIPlayer()
 {
     ::memset(_stream, 0, sizeof(_stream));
@@ -475,15 +476,15 @@ BMPlayer::~BMPlayer()
     shutdown();
 }
 
-void BMPlayer::setSoundFont(const char * in)
+void BMPlayer::setSoundFont(const char * directoryPath)
 {
-    _SoundFontFilePath = in;
+    _SoundFontDirectoryPath = directoryPath;
     shutdown();
 }
 
-void BMPlayer::setFileSoundFont(const char * in)
+void BMPlayer::setFileSoundFont(const char * filePath)
 {
-    sFileSoundFontName = in;
+    _SoundFontFilePath = filePath;
     shutdown();
 }
 
@@ -555,7 +556,6 @@ unsigned int BMPlayer::getVoicesActive()
 }
 
 #pragma region("Private")
-
 bool BMPlayer::startup()
 {
     if (_stream[0] && _stream[1] && _stream[2])
@@ -577,15 +577,15 @@ bool BMPlayer::startup()
 
     std::vector<BASS_MIDI_FONTEX> presetList;
 
-    if (sFileSoundFontName.length())
-    {
-        if (!load_font_item(presetList, sFileSoundFontName))
-            return false;
-    }
-
     if (_SoundFontFilePath.length())
     {
         if (!load_font_item(presetList, _SoundFontFilePath))
+            return false;
+    }
+
+    if (_SoundFontDirectoryPath.length())
+    {
+        if (!load_font_item(presetList, _SoundFontDirectoryPath))
             return false;
     }
 
@@ -597,7 +597,7 @@ bool BMPlayer::startup()
 
     _IsInitialized = true;
 
-    setFilterMode(mode, reverb_chorus_disabled);
+    setFilterMode(_FilterMode, _IsReverbChorusDisabled);
 
     return true;
 }
@@ -815,5 +815,6 @@ bool BMPlayer::get_last_error(std::string & p_out)
 
     return false;
 }
+#pragma endregion
 
 #pragma endregion

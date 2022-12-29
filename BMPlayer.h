@@ -51,8 +51,8 @@ private:
     std::vector<HSOUNDFONT> _soundFonts;
     sflist_presets * _presetList[2];
 
+    std::string _SoundFontDirectoryPath;
     std::string _SoundFontFilePath;
-    std::string sFileSoundFontName;
 
     HSTREAM _stream[3];
 

@@ -254,7 +254,7 @@ void SFPlayer::setSoundFont(const char * in)
 
 void SFPlayer::setFileSoundFont(const char * in)
 {
-    sFileSoundFontName = in;
+    _SoundFontFilePath = in;
     shutdown();
 }
 
@@ -381,15 +381,15 @@ bool SFPlayer::startup()
         }
     }
 
-    if (sFileSoundFontName.length())
+    if (_SoundFontFilePath.length())
     {
         for (unsigned int i = 0; i < 3; ++i)
         {
-            if (FLUID_FAILED == fluid_synth_sfload(_synth[i], sFileSoundFontName.c_str(), 1))
+            if (FLUID_FAILED == fluid_synth_sfload(_synth[i], _SoundFontFilePath.c_str(), 1))
             {
                 shutdown();
                 _last_error = "Failed to load SoundFont bank: ";
-                _last_error += sFileSoundFontName;
+                _last_error += _SoundFontFilePath;
                 return false;
             }
         }
@@ -397,7 +397,7 @@ bool SFPlayer::startup()
 
     initialized = true;
 
-    setFilterMode(mode, reverb_chorus_disabled);
+    setFilterMode(mode, _IsReverbChorusDisabled);
 
     _last_error = "";
 

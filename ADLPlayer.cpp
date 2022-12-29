@@ -150,7 +150,7 @@ bool ADLPlayer::startup()
 
     _IsInitialized = true;
 
-    setFilterMode(mode, reverb_chorus_disabled);
+    setFilterMode(_FilterMode, _IsReverbChorusDisabled);
 
     return true;
 }

@@ -65,12 +65,11 @@ protected:
     void sysex_reset(size_t port, unsigned int time);
 
 protected:
-    unsigned long _SampleRate;
-    system_exclusive_table mSysexMap;
-    filter_mode mode;
     bool _IsInitialized;
-    bool reverb_chorus_disabled;
-    char _Padding[2]; 
+    unsigned long _SampleRate;
+    system_exclusive_table _SysExMap;
+    filter_mode _FilterMode;
+    bool _IsReverbChorusDisabled;
 
 private:
     void send_event_filtered(uint32_t b);
@@ -84,16 +83,16 @@ private:
 
     unsigned long uSamplesRemaining;
 
-    unsigned uLoopMode;
+    std::vector<midi_stream_event> _Stream;
 
-    std::vector<midi_stream_event> mStream;
+    unsigned long _StreamCurrent;
+    unsigned long _TimeCurrent;
+    unsigned long _TimeEnd;
 
-    unsigned long uStreamPosition;
-    unsigned long uTimeCurrent;
-    unsigned long uTimeEnd;
+    unsigned _LoopMode;
 
-    unsigned long uStreamLoopStart;
-    unsigned long uTimeLoopStart;
-    unsigned long uStreamEnd;
+    unsigned long _LoopStart;
+    unsigned long _LoopEnd;
+    unsigned long _LoopStartTime;
 };
 #pragma warning(default: 4820)

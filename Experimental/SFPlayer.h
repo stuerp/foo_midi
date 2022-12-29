@@ -41,7 +41,7 @@ private:
     fluid_settings_t * _settings[3];
     fluid_synth_t * _synth[3];
     std::string sSoundFontName;
-    std::string sFileSoundFontName;
+    std::string _SoundFontFilePath;
 
     unsigned uInterpolationMethod;
     bool bDynamicLoading;
