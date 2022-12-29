@@ -1,22 +1,19 @@
-#ifndef __MSPlayer_h__
-#define __MSPlayer_h__
+#pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
 
-#include "interface.h"
+#include <interface.h>
 
 class nomidisynth;
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 class MSPlayer : public MIDIPlayer
 {
 public:
-    // zero variables
     MSPlayer();
-
-    // close, unload
     virtual ~MSPlayer();
 
     void set_synth(unsigned int synth);
@@ -44,5 +41,4 @@ private:
 
     char _Padding[4];
 };
-
-#endif
+#pragma warning(default: 4820) // x bytes padding added after data member

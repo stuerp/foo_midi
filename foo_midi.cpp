@@ -1,9 +1,9 @@
 #define MYVERSION "2.7.4.4"
 
-// #define DXISUPPORT
 #define BASSMIDISUPPORT
-// #define FLUIDSYNTHSUPPORT
 #define SF2PACK
+// #define FLUIDSYNTHSUPPORT
+// #define DXISUPPORT
 
 /*
     change log

@@ -1,4 +1,4 @@
-#ifndef __ADLPlayer_h__
+#pragma once
 #define __ADLPlayer_h__
 
 #include <CppCoreCheck/Warnings.h>
@@ -6,6 +6,7 @@
 
 #include "MIDIPlayer.h"
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 class ADLPlayer : public MIDIPlayer
 {
 public:
@@ -53,5 +54,4 @@ private:
     bool bFullPanning;
     char _Padding[7];
 };
-
-#endif
+#pragma warning(default: 4820) // x bytes padding added after data member

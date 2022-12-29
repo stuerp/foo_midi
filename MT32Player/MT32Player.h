@@ -1,5 +1,4 @@
-#ifndef __MT32Player_h__
-#define __MT32Player_h__
+#pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
@@ -13,6 +12,7 @@ namespace foobar2000_io
     class abort_callback;
 };
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 class MT32Player : public MIDIPlayer
 {
 public:
@@ -50,5 +50,4 @@ private:
     unsigned uGMSet;
     bool bGM;
 };
-
-#endif
+#pragma warning(default: 4820) // x bytes padding added after data member

@@ -7,16 +7,17 @@
 
 #include <foobar2000.h>
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 class MIDIPlayer
 {
 public:
-    enum
+    enum LoopMode
     {
         loop_mode_enable = 1 << 0,
         loop_mode_force = 1 << 1
     };
 
-    typedef enum
+    enum filter_mode
     {
         filter_default = 0,
         filter_gm,
@@ -26,16 +27,10 @@ public:
         filter_sc88pro,
         filter_sc8850,
         filter_xg
-    } filter_mode;
+    };
 
     MIDIPlayer();
-
     virtual ~MIDIPlayer() { };
-
-    // setup
-    void setSampleRate(unsigned long rate);
-    void setLoopMode(unsigned int mode);
-    void setFilterMode(filter_mode m, bool disable_reverb_chorus);
 
     bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
     unsigned long Play(audio_sample * out, unsigned long count);
@@ -43,56 +38,44 @@ public:
 
     bool GetLastError(std::string & p_out);
 
+    void setSampleRate(unsigned long rate);
+    void setLoopMode(unsigned int mode);
+    void setFilterMode(filter_mode m, bool disable_reverb_chorus);
+
 protected:
-    // this should return the block size that the renderer expects, otherwise 0
-    virtual unsigned int send_event_needs_time()
-    {
-        return 0;
-    }
+    virtual bool startup() { return false; }
+    virtual void shutdown() { };
+
+    virtual void render(audio_sample *, unsigned long) { }
+    virtual bool reset() { return false; }
+
+    virtual bool get_last_error(std::string &) { return false; }
+
+    // Should return the block size that the renderer expects, otherwise 0.
+    virtual unsigned int send_event_needs_time() { return 0; }
+
     virtual void send_event(uint32_t) { }
     virtual void send_sysex(const uint8_t *, size_t, size_t) { };
-    virtual void render(audio_sample *, unsigned long) { }
-
-    virtual void shutdown()
-    {
-    };
-    virtual bool startup()
-    {
-        return false;
-    }
-    virtual bool reset()
-    {
-        return false;
-    }
-
-    virtual bool get_last_error(std::string &)
-    {
-        return false;
-    }
 
     // time should only be block level offset
-    virtual void send_event_time(uint32_t, unsigned int)
-    {
-    };
-    virtual void send_sysex_time(const uint8_t *, size_t, size_t, unsigned int)
-    {
-    };
+    virtual void send_event_time(uint32_t, unsigned int) { };
+
+    virtual void send_sysex_time(const uint8_t *, size_t, size_t, unsigned int) { };
 
     void sysex_reset(size_t port, unsigned int time);
 
 protected:
-#pragma warning(disable: 4820) // x bytes padding added after data member
     unsigned long _SampleRate;
     system_exclusive_table mSysexMap;
     filter_mode mode;
     bool _IsInitialized;
     bool reverb_chorus_disabled;
     char _Padding[2]; 
-#pragma warning(default: 4820)
 
 private:
     void send_event_filtered(uint32_t b);
     void send_sysex_filtered(const uint8_t * event, size_t size, size_t port);
+
     void send_event_time_filtered(uint32_t b, unsigned int time);
     void send_sysex_time_filtered(const uint8_t * event, size_t size, size_t port, unsigned int time);
 
@@ -113,3 +96,4 @@ private:
     unsigned long uTimeLoopStart;
     unsigned long uStreamEnd;
 };
+#pragma warning(default: 4820)

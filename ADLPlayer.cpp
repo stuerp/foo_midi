@@ -4,7 +4,7 @@
 
 #include "ADLPlayer.h"
 
-#include "libADLMIDI/include/adlmidi.h"
+#include <libADLMIDI/include/adlmidi.h>
 
 ADLPlayer::ADLPlayer()
     : MIDIPlayer()

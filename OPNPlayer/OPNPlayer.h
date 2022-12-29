@@ -1,11 +1,11 @@
-#ifndef __OPNPlayer_h__
-#define __OPNPlayer_h__
+#pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
 
 #include "../MIDIPlayer.h"
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 class OPNPlayer : public MIDIPlayer
 {
 public:
@@ -52,5 +52,4 @@ private:
     unsigned u4OpCount;
     bool bFullPanning;
 };
-
-#endif
+#pragma warning(default: 4820) // x bytes padding added after data member

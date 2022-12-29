@@ -475,7 +475,6 @@
     <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include=".clang-format" />
     <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
     <None Include="README.md" />

@@ -12,36 +12,6 @@ MIDIPlayer::MIDIPlayer()
     _IsInitialized = false;
 }
 
-void MIDIPlayer::setSampleRate(unsigned long rate)
-{
-    if (mStream.size())
-    {
-        for (unsigned long i = 0; i < mStream.size(); i++)
-        {
-            mStream.at(i).m_timestamp = (unsigned long) ((uint64_t) mStream.at(i).m_timestamp * rate / _SampleRate);
-        }
-    }
-
-    if (uTimeCurrent)
-    {
-        uTimeCurrent = static_cast<unsigned long>(static_cast<uint64_t>(uTimeCurrent) * rate / _SampleRate);
-    }
-
-    if (uTimeEnd)
-    {
-        uTimeEnd = static_cast<unsigned long>(static_cast<uint64_t>(uTimeEnd) * rate / _SampleRate);
-    }
-
-    if (uTimeLoopStart)
-    {
-        uTimeLoopStart = static_cast<unsigned long>(static_cast<uint64_t>(uTimeLoopStart) * rate / _SampleRate);
-    }
-
-    _SampleRate = rate;
-
-    shutdown();
-}
-
 bool MIDIPlayer::Load(const midi_container & midiContainer, unsigned subsong, unsigned loopMode, unsigned cleanFlags)
 {
     assert(!mStream.size());
@@ -450,6 +420,41 @@ void MIDIPlayer::Seek(unsigned long sample)
     }
 }
 
+bool MIDIPlayer::GetLastError(std::string & p_out)
+{
+    return get_last_error(p_out);
+}
+
+void MIDIPlayer::setSampleRate(unsigned long rate)
+{
+    if (mStream.size())
+    {
+        for (unsigned long i = 0; i < mStream.size(); i++)
+        {
+            mStream.at(i).m_timestamp = (unsigned long) ((uint64_t) mStream.at(i).m_timestamp * rate / _SampleRate);
+        }
+    }
+
+    if (uTimeCurrent)
+    {
+        uTimeCurrent = static_cast<unsigned long>(static_cast<uint64_t>(uTimeCurrent) * rate / _SampleRate);
+    }
+
+    if (uTimeEnd)
+    {
+        uTimeEnd = static_cast<unsigned long>(static_cast<uint64_t>(uTimeEnd) * rate / _SampleRate);
+    }
+
+    if (uTimeLoopStart)
+    {
+        uTimeLoopStart = static_cast<unsigned long>(static_cast<uint64_t>(uTimeLoopStart) * rate / _SampleRate);
+    }
+
+    _SampleRate = rate;
+
+    shutdown();
+}
+
 void MIDIPlayer::setLoopMode(unsigned int loopMode)
 {
     if (uLoopMode != loopMode)
@@ -461,6 +466,18 @@ void MIDIPlayer::setLoopMode(unsigned int loopMode)
     }
 
     uLoopMode = loopMode;
+}
+
+void MIDIPlayer::setFilterMode(filter_mode m, bool disable_reverb_chorus)
+{
+    mode = m;
+    reverb_chorus_disabled = disable_reverb_chorus;
+    if (_IsInitialized)
+    {
+        sysex_reset(0, 0);
+        sysex_reset(1, 0);
+        sysex_reset(2, 0);
+    }
 }
 
 void MIDIPlayer::send_event_filtered(uint32_t b)
@@ -504,18 +521,6 @@ void MIDIPlayer::send_event_time_filtered(uint32_t b, unsigned int time)
         size_t p_size, p_port;
         mSysexMap.get_entry(p_index, p_data, p_size, p_port);
         send_sysex_time_filtered(p_data, p_size, p_port, time);
-    }
-}
-
-void MIDIPlayer::setFilterMode(filter_mode m, bool disable_reverb_chorus)
-{
-    mode = m;
-    reverb_chorus_disabled = disable_reverb_chorus;
-    if (_IsInitialized)
-    {
-        sysex_reset(0, 0);
-        sysex_reset(1, 0);
-        sysex_reset(2, 0);
     }
 }
 
@@ -757,8 +762,3 @@ void MIDIPlayer::send_sysex_time_filtered(const uint8_t * data, size_t size, siz
     }
 }
 #pragma endregion
-
-bool MIDIPlayer::GetLastError(std::string & p_out)
-{
-    return get_last_error(p_out);
-}

@@ -162,7 +162,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
-    <None Include=".clang-format" />
     <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
   </ItemGroup>

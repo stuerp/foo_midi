@@ -13,12 +13,10 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 * Supports 32 and 64-bit VST instruments.
 * Supports dark mode.
 
-* Compatible with foobar2000 1.6.13 and foobar2000 2.0 or later (32 and 64-bit version).
-
 ## Requirements
 
 * Tested on Microsoft Windows 10 or later.
-* [foobar2000](https://www.foobar2000.org/download) v1.6.13 or later. ![foobar2000](https://www.foobar2000.org/button-small.png)
+* [foobar2000](https://www.foobar2000.org/download) v1.6.13 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)
 
 ## Getting started
 
@@ -34,15 +32,21 @@ The code builds out-of-the box with Visual Studio.
 
 ### Requirements
 
-To build the code:
+To build the code you need:
 
-* [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/)
-* [foobar2000 SDK](https://www.foobar2000.org/SDK)
+* [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
+* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2022-10-20
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
+* [BASS](https://www.un4seen.com/) 2.4.17
+* [BASSFLAC](https://www.un4seen.com/) 2.4.5
+* [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
+* [BASSWV](https://www.un4seen.com/) 2.4.7.3
+* [BASSOPUS](https://www.un4seen.com/) 2.4.2.1
+* [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 
-To create the deployment package:
+To create the deployment package you need:
 
-* [PowerShell 7.2](https://github.com/PowerShell/PowerShell)
+* [PowerShell 7.2](https://github.com/PowerShell/PowerShell) or later
 
 ### Setup
 
@@ -114,6 +118,19 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [kode54](https://gitlab.com/kode54), for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
 * [Munt](https://munt.sourceforge.net/), for a multi-platform software synthesiser emulating (somewhat inaccurately) pre-GM MIDI devices such as the Roland MT-32, CM-32L, CM-64 and LAPC-I.
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
+
+## Reference Material
+
+* foobar2000
+  * [foobar2000 Development](https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Development:Overview)
+
+* Windows User Interface
+  * [Desktop App User Interface](https://learn.microsoft.com/en-us/windows/win32/windows-application-ui-development)
+  * [Windows User Experience Interaction Guidelines](https://learn.microsoft.com/en-us/windows/win32/uxguide/guidelines)
+  * [Windows Controls](https://learn.microsoft.com/en-us/windows/win32/controls/window-controls)
+  * [Control Library](https://learn.microsoft.com/en-us/windows/win32/controls/individual-control-info)
+  * [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
+  * [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
 
 ## Links
 

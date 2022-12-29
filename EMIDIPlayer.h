@@ -1,23 +1,20 @@
-#ifndef __EMIDIPlayer_h__
-#define __EMIDIPlayer_h__
+#pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
 
-#include "CMIDIModule.hpp"
-#include "COpllDevice.hpp"
-#include "CSMF.hpp"
-#include "CSccDevice.hpp"
+#include <CMIDIModule.hpp>
+#include <COpllDevice.hpp>
+#include <CSMF.hpp>
+#include <CSccDevice.hpp>
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 class EMIDIPlayer : public MIDIPlayer
 {
 public:
-    // zero variables
     EMIDIPlayer();
-
-    // close, unload
     virtual ~EMIDIPlayer();
 
 private:
@@ -48,5 +45,4 @@ private:
     bool bInitialized;
     char _Padding[3];
 };
-
-#endif
+#pragma warning(default: 4820) // x bytes padding added after data member

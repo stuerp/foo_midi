@@ -1,0 +1,173 @@
+BASSWV 2.4
+Copyright (c) 2007-2022 Un4seen Developments Ltd. All rights reserved.
+
+Files that you should have found in the BASSWV package
+======================================================
+Win32 version
+-------------
+BASSWV.TXT      This file
+BASSWV.DLL      BASSWV module
+BASSWV.CHM      BASSWV documentation
+X64\
+  BASSWV.DLL      64-bit BASSWV module
+C\              C/C++ API...
+  BASSWV.H        BASSWV C/C++ header file
+  BASSWV.LIB      BASSWV import library
+  X64\
+    BASSWV.LIB      64-bit BASSWV import library
+VB\             Visual Basic API...
+  BASSWV.BAS      BASSWV Visual Basic module
+DELPHI\         Delphi API...
+  BASSWV.PAS      BASSWV Delphi unit
+
+macOS version
+-------------
+BASSWV.TXT      This file
+LIBBASSWV.DYLIB BASSWV module
+BASSWV.CHM      BASSWV documentation
+BASSWV.H        BASSWV C/C++ header file
+
+Linux version
+-------------
+BASSWV.TXT      This file
+BASSWV.CHM      BASSWV documentation
+BASSWV.H        BASSWV C/C++ header file
+LIBS\           BASSWV modules
+  ...
+
+Android version
+---------------
+BASSWV.TXT      This file
+BASSWV.CHM      BASSWV documentation
+LIBS\           BASSWV modules
+  ...
+C\              C/C++ API...
+  BASSWV.H        BASSWV C/C++ header file
+JAVA\COM\UN4SEEN\BASS\
+  BASSWV.JAVA     BASSWV Java class
+
+iOS version
+-----------
+BASSWV.TXT      This file
+BASSWV.XCFRAMEWORK  BASSWV framework
+BASSWV.CHM      BASSWV documentation
+BASSWV.H        BASSWV C/C++ header file
+
+
+What's the point?
+=================
+BASSWV is an extension to the BASS audio library, enabling the playing of
+WavPack encoded files.
+
+
+Requirements
+============
+BASS 2.4 is required. The BASSDSD add-on can also be used to add support for
+WavPack DSD files.
+
+
+Using BASSWV
+============
+The plugin system (see BASS_PluginLoad) can be used to add WavPack support to
+the standard BASS stream (and sample) creation functions. Dedicated WavPack
+stream creation functions are also provided by BASSWV.
+
+The usage information in the BASS.TXT file (from the BASS package) is also
+applicable to BASSWV and other add-ons.
+
+TIP: The BASSWV.CHM file should be put in the same directory as the BASS.CHM
+     file, so that the BASSWV documentation can be accessed from within the
+     BASS documentation.
+
+
+Latest Version
+==============
+The latest versions of BASSWV & BASS can be found at the BASS website:
+
+	www.un4seen.com
+
+
+Licence
+=======
+BASSWV is free to use with BASS.
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, BASSWV IS PROVIDED
+"AS IS", WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND/OR FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS SHALL NOT BE HELD
+LIABLE FOR ANY DAMAGE THAT MAY RESULT FROM THE USE OF BASSWV. YOU USE
+BASSWV ENTIRELY AT YOUR OWN RISK.
+
+Usage of BASSWV indicates that you agree to the above conditions.
+
+All trademarks and other registered names contained in the BASSWV
+package are the property of their respective owners.
+
+
+Credits
+=======
+WavPack decoding is based on the WavPack library,
+Copyright (c) 1998-2022 David Bryant
+
+
+History
+=======
+These are the major (and not so major) changes in each release, along with the
+functions/options that are introduced/affected by them. There are other little
+tweaks and fixes made along the way too.
+
+2.4.7.3 - 22/12/2022
+--------------------
+* Updated for WavPack 5.6.0
+
+2.4.7.2 - 3/11/2022
+-------------------
+* Updated for WavPack 5.5.0
+
+2.4.7 - 3/9/2020
+----------------
+* Updated for WavPack 5.3.0
+* Custom hybrid correction file support
+	BASS_WV_StreamCreateFileUserEx
+
+2.4.6 - 13/1/2017
+-----------------
+* Updated for WavPack 5.0.0
+* Support for WavPack DSD files together with the BASSDSD add-on
+
+2.4.5 - 22/7/2014
+-----------------
+* Updated for WavPack 4.70.0
+
+2.4.4 - 5/12/2012
+-----------------
+* Support for self-extracting EXE WavPack files
+	BASS_WV_StreamCreateFile/User/URL
+
+2.4.3 - 10/4/2012
+-----------------
+* Internet and buffered file streaming support
+	BASS_WV_StreamCreateURL
+	BASS_WV_StreamCreateUser
+* Support for 32-bit integer files
+* Built-in APE tag support removed (BASS handles them)
+
+2.4.2 - 16/3/2010
+-----------------
+* Updated for WavPack 4.60.1
+* Fix for potential stack overflow with large APE tags
+
+2.4.1 - 22/6/2008
+-----------------
+* Updated for WavPack 4.50
+
+2.4 - 2/4/2008
+--------------
+* First release
+
+
+Bug reports, Suggestions, Comments, Enquiries, etc
+==================================================
+If you have any of the aforementioned please visit the BASS forum at the
+website.
+
