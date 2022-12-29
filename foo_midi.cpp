@@ -5286,14 +5286,20 @@ void CMyPreferences::OnSetFocus(UINT, int, CWindow w)
 
         directory.truncate(directory.scan_filename());
 
-        if (uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;*.sf3;"
+        if (uGetOpenFileName(m_hWnd,
+            "SoundFont and list files|*.sf2;*.sf3;*.sflist"
         #ifdef SF2PACK
             "*.sf2pack;*.sfogg;"
         #endif
-            "*.sflist|SoundFont files|*.sf2"
+        #ifdef BASSMIDISUPPORT
+            ";*.json"
+        #endif
+
+            "*.sflist|SoundFont files|*.sf2;*.sf3"
         #ifdef SF2PACK
             ";*.sf2pack;*.sfogg;"
         #endif
+
             "|SoundFont list files|*.sflist"
         #ifdef BASSMIDISUPPORT
             ";*.json"
