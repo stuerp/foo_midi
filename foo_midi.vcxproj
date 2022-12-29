@@ -352,6 +352,12 @@
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="3rdParty\bass\c\bass.h" />
+    <ClInclude Include="3rdParty\bass\c\bassflac.h" />
+    <ClInclude Include="3rdParty\bass\c\bassmidi.h" />
+    <ClInclude Include="3rdParty\bass\c\bassopus.h" />
+    <ClInclude Include="3rdParty\bass\c\basswv.h" />
+    <ClInclude Include="3rdParty\bass\c\bass_mpc.h" />
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
@@ -475,9 +481,30 @@
     <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitattributes" />
     <None Include=".gitignore" />
+    <None Include="3rdParty\bass\bass.dll" />
+    <None Include="3rdParty\bass\bassflac.dll" />
+    <None Include="3rdParty\bass\bassmidi.dll" />
+    <None Include="3rdParty\bass\bassopus.dll" />
+    <None Include="3rdParty\bass\basswv.dll" />
+    <None Include="3rdParty\bass\bass_mpc.dll" />
     <None Include="Build-FB2KComponent.ps1" />
     <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="3rdParty\bass\c\bass.lib" />
+    <Library Include="3rdParty\bass\c\bassflac.lib" />
+    <Library Include="3rdParty\bass\c\bassmidi.lib" />
+    <Library Include="3rdParty\bass\c\bassopus.lib" />
+    <Library Include="3rdParty\bass\c\basswv.lib" />
+    <Library Include="3rdParty\bass\c\bass_mpc.lib" />
+    <Library Include="3rdParty\bass\c\x64\bass.lib" />
+    <Library Include="3rdParty\bass\c\x64\bassflac.lib" />
+    <Library Include="3rdParty\bass\c\x64\bassmidi.lib" />
+    <Library Include="3rdParty\bass\c\x64\bassopus.lib" />
+    <Library Include="3rdParty\bass\c\x64\basswv.lib" />
+    <Library Include="3rdParty\bass\c\x64\bass_mpc.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -128,6 +128,12 @@
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
     <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
     <ClInclude Include="OPNPlayer\fmmidi.wopn.h" />
+    <ClInclude Include="3rdParty\bass\c\bass.h" />
+    <ClInclude Include="3rdParty\bass\c\bass_mpc.h" />
+    <ClInclude Include="3rdParty\bass\c\bassflac.h" />
+    <ClInclude Include="3rdParty\bass\c\bassmidi.h" />
+    <ClInclude Include="3rdParty\bass\c\bassopus.h" />
+    <ClInclude Include="3rdParty\bass\c\basswv.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
@@ -164,5 +170,26 @@
     <None Include="README.md" />
     <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
+    <None Include=".gitattributes" />
+    <None Include="3rdParty\bass\bass.dll" />
+    <None Include="3rdParty\bass\bass_mpc.dll" />
+    <None Include="3rdParty\bass\bassflac.dll" />
+    <None Include="3rdParty\bass\bassmidi.dll" />
+    <None Include="3rdParty\bass\bassopus.dll" />
+    <None Include="3rdParty\bass\basswv.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="3rdParty\bass\c\bass.lib" />
+    <Library Include="3rdParty\bass\c\bass_mpc.lib" />
+    <Library Include="3rdParty\bass\c\bassflac.lib" />
+    <Library Include="3rdParty\bass\c\bassmidi.lib" />
+    <Library Include="3rdParty\bass\c\bassopus.lib" />
+    <Library Include="3rdParty\bass\c\basswv.lib" />
+    <Library Include="3rdParty\bass\c\x64\bass.lib" />
+    <Library Include="3rdParty\bass\c\x64\bass_mpc.lib" />
+    <Library Include="3rdParty\bass\c\x64\bassflac.lib" />
+    <Library Include="3rdParty\bass\c\x64\bassmidi.lib" />
+    <Library Include="3rdParty\bass\c\x64\bassopus.lib" />
+    <Library Include="3rdParty\bass\c\x64\basswv.lib" />
   </ItemGroup>
 </Project>
