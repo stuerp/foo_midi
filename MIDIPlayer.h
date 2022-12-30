@@ -1,11 +1,14 @@
+
+/** $VER: MIDIPlayer.h (2022.12.30) **/
+
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
 
-#include <midi_processing/midi_container.h>
+#include <sdk/foobar2000-lite.h>
 
-#include <foobar2000.h>
+#include <midi_processing/midi_container.h>
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class MIDIPlayer

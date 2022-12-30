@@ -5,6 +5,8 @@
 
 #include "MIDIPlayer.h"
 
+#include <libADLMIDI/include/adlmidi.h>
+
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class ADLPlayer : public MIDIPlayer
 {

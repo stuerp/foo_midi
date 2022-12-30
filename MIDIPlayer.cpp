@@ -1,3 +1,6 @@
+
+/** $VER: MIDIPlayer.cpp (2022.12.30) **/
+
 #include "MIDIPlayer.h"
 
 #pragma warning(disable: 5045)

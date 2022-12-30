@@ -15,8 +15,6 @@
 #include <thread>
 #endif
 
-#define SF2PACK
-
 #pragma region("Cache")
 
 struct Cached_SoundFont
@@ -819,3 +817,4 @@ bool BMPlayer::get_last_error(std::string & p_out)
 #pragma endregion
 
 #pragma endregion
+

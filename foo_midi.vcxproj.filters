@@ -38,6 +38,15 @@
     <ClCompile Include="3rdParty\fmopl3lib\opl3class.cpp">
       <Filter>fmopl3</Filter>
     </ClCompile>
+    <ClCompile Include="ContextMenu.cpp" />
+    <ClCompile Include="MIDIPreset.h" />
+    <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="InitQuit.cpp" />
+    <ClCompile Include="Preferences.cpp" />
+    <ClCompile Include="MIDIPreset.cpp" />
+    <ClCompile Include="FileTypeRegistrar.cpp" />
+    <ClCompile Include="InputDecoder.cpp" />
+    <ClCompile Include="MIDISysExDumps.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -135,6 +144,13 @@
     <ClInclude Include="3rdParty\bass\c\bassopus.h" />
     <ClInclude Include="3rdParty\bass\c\basswv.h" />
     <ClInclude Include="History.h" />
+    <ClInclude Include="Configuration.h" />
+    <ClInclude Include="ConfigurationMap.h" />
+    <ClInclude Include="TrackHasher.h" />
+    <ClInclude Include="Fields.h" />
+    <ClInclude Include="MIDIPresetFilter.h" />
+    <ClInclude Include="MIDISysExDumps.h" />
+    <ClInclude Include="MIDISysExFilter.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

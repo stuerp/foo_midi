@@ -3,6 +3,8 @@
 
 #include "SCPlayer.h"
 
+#include <sdk/foobar2000-lite.h>
+
 #include <vector>
 
 #pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified

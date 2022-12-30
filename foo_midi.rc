@@ -4,65 +4,91 @@
 #include "winres.h"
 #undef APSTUDIO_READONLY_SYMBOLS
 
-// English (United States) resources
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
 IDD_CONFIG DIALOGEX 0, 0, 334, 286
 STYLE DS_SETFONT | WS_CHILD
-FONT 8, "Tahoma", 0, 0, 0x0
+font 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
-    GROUPBOX        "Output",IDC_STATIC,7,7,175,62
-    RTEXT           "Plug-in:",IDC_STATIC,27,19,30,10
-    COMBOBOX        IDC_PLUGIN,60,17,116,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "No VST path configured in advanced preferences.",IDC_VST_WARNING,13,35,163,10,NOT WS_VISIBLE
-    CTEXT           "Regular MUNT will already be used automatically.",IDC_MUNT_WARNING,13,35,163,10,NOT WS_VISIBLE
-    PUSHBUTTON      "Configure",IDC_PLUGIN_CONFIGURE,60,34,116,12
-    RTEXT           "Sample rate:",IDC_STATIC,13,53,44,10
-    COMBOBOX        IDC_SAMPLERATE,60,51,116,54,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Looping",IDC_STATIC,7,72,175,81
-    COMBOBOX        IDC_LOOP,57,82,119,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_CLOOP,57,97,119,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "CC 111 V=0/1 (RPG Maker)",IDC_RPGMLOOPZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,112,163,8
-    CONTROL         "CC 116/117 (XMI, EMIDI)",IDC_XMILOOPZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,125,94,8
-    CONTROL         "CC 2/4 (Touhou)",IDC_THLOOPZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,109,125,67,8
-    CONTROL         "loopStart/loopEnd track markers (FF7 PC, HMI)",IDC_FF7LOOPZ,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,138,163,8
-    GROUPBOX        "Misc",IDC_STATIC,7,156,175,52
-    CONTROL         "EMIDI device track exclusion (Duke3D, etc.)",IDC_EMIDI_EX,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,167,157,8
-    CONTROL         "Disable instrument changes",IDC_FILTER_INSTRUMENTS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,180,107,8
-    CONTROL         "Disable bank changes",IDC_FILTER_BANKS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,193,89,8
-    GROUPBOX        "FluidSynth",IDC_STATIC,188,7,139,62
-    RTEXT           "SoundFont:",IDC_SOUNDFONT_TEXT,193,19,44,10
-    EDITTEXT        IDC_SOUNDFONT,240,17,79,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Resampling:",IDC_RESAMPLING_TEXT,193,36,44,9
-    COMBOBOX        IDC_RESAMPLING,240,33,79,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Cached:",IDC_CACHED_TEXT,193,52,44,10
-    EDITTEXT        IDC_CACHED,239,51,79,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX        "MUNT",IDC_STATIC,188,72,139,44
-    RTEXT           "Data path:",IDC_STATIC,193,84,44,10
-    EDITTEXT        IDC_MUNT,240,81,79,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "GM set:",IDC_RESAMPLING_TEXT2,193,100,44,9
-    COMBOBOX        IDC_MUNT_GM,240,97,79,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Nuclear Option",IDC_STATIC,188,119,139,43
-    RTEXT           "Preset:",IDC_MS_PRESET_TEXT,204,131,33,10
-    COMBOBOX        IDC_MS_PRESET,240,128,79,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Enable soft panning",IDC_MS_PANNING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,146,87,8
-    GROUPBOX        "MIDI Filter",IDC_FILTER_GROUP,188,165,139,43
-    RTEXT           "Flavor:",IDC_FILTER_FLAVOR_TEXT,204,177,33,10
-    COMBOBOX        IDC_FILTER_FLAVOR,240,174,78,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Disable reverb and chorus",IDC_FILTER_EFFECTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,192,100,8
-    GROUPBOX        "adlmidi",IDC_STATIC,7,211,320,52
-    RTEXT           "Bank:",IDC_ADL_BANK_TEXT,14,224,23,10
-    COMBOBOX        IDC_ADL_BANK,42,222,276,68,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Chips:",IDC_ADL_CHIPS_TEXT,15,241,22,9
-    COMBOBOX        IDC_ADL_CHIPS,42,240,134,56,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Enable soft panning",IDC_ADL_PANNING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,188,242,83,10
-    RTEXT           "Playback:",IDC_STATIC,13,84,41,8
-    RTEXT           "Other:",IDC_STATIC,13,99,41,8
+    // Left Part
+    GROUPBOX "Output", IDC_STATIC, 7, 7, 175, 62
+        RTEXT           "Plug-in:",     IDC_STATIC, 27, 19,  30,  8
+        COMBOBOX                        IDC_PLUGIN, 60, 17, 116, 14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+        CTEXT           "No VST path configured in advanced preferences.",  IDC_VST_WARNING,13,35,163,  8,NOT WS_VISIBLE
+        CTEXT           "Regular MUNT will already be used automatically.", IDC_MUNT_WARNING,13,35,163, 8,NOT WS_VISIBLE
+
+        PUSHBUTTON      "Configure",    IDC_PLUGIN_CONFIGURE,60, 34, 50, 14
+
+        RTEXT           "Sample rate:", IDC_STATIC,     13, 53,  44,  8
+        COMBOBOX                        IDC_SAMPLERATE, 60, 51,  40, 14, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+
+    GROUPBOX "Looping",IDC_STATIC, 7, 72, 175, 62
+        RTEXT       "Playback:",    IDC_STATIC,         13, 84,  41,  8
+        COMBOBOX                    IDC_LOOP,           57, 82, 119, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+        RTEXT       "Other:",       IDC_STATIC,         13, 99,  41,  8
+        COMBOBOX                    IDC_CLOOP,          57, 97, 119, 14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMLOOPZ, "Button",    BS_AUTOCHECKBOX | WS_TABSTOP, 13, 112, 163, 10
+    CONTROL     "CC 116/117 (XMI, EMIDI)",                          IDC_XMILOOPZ, "Button",     BS_AUTOCHECKBOX | WS_TABSTOP, 13, 125, 163, 10
+    CONTROL     "CC 2/4 (Touhou)",                                  IDC_THLOOPZ, "Button",      BS_AUTOCHECKBOX | WS_TABSTOP, 13, 138, 163, 10
+    CONTROL     "loopStart/loopEnd track markers (FF7 PC, HMI)",    IDC_FF7LOOPZ, "Button",     BS_AUTOCHECKBOX | WS_TABSTOP, 13, 151, 163, 10
+
+    GROUPBOX "Misc", IDC_STATIC, 7, 168, 175, 52
+        CONTROL         "EMIDI device track exclusion (Duke3D, etc.)",  IDC_EMIDI_EX, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, 13, 179, 157, 10
+        CONTROL         "Disable instrument changes",                   IDC_FILTER_INSTRUMENTS, "Button",   BS_AUTOCHECKBOX | WS_TABSTOP, 13, 192, 157, 10
+        CONTROL         "Disable bank changes",                         IDC_FILTER_BANKS,"Button",          BS_AUTOCHECKBOX | WS_TABSTOP, 13, 204, 157, 10
+
+    // Right Part
+    GROUPBOX "SoundFont", IDC_STATIC, 188, 7,139, 62
+        RTEXT           "File:",                        IDC_SOUNDFONT_TEXT,     193, 19, 44,  8
+        EDITTEXT                                        IDC_SOUNDFONT,          240, 17, 79, 14, ES_AUTOHSCROLL | ES_READONLY
+        RTEXT           "Resampling:",                  IDC_RESAMPLING_TEXT,    193, 36, 44,  8
+        COMBOBOX                                        IDC_RESAMPLING,         240 ,34, 79, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        RTEXT           "Cached:",                      IDC_CACHED_TEXT,        193, 52, 44,  8
+        EDITTEXT                                        IDC_CACHED,             239, 50, 79, 14, ES_AUTOHSCROLL | ES_READONLY
+
+    GROUPBOX "MUNT", IDC_STATIC, 188, 72, 139, 44
+        RTEXT           "ROM:",                         IDC_STATIC,             193,  84, 44,  8
+        EDITTEXT                                        IDC_MUNT,               240,  82, 79, 14, ES_AUTOHSCROLL | ES_READONLY
+        RTEXT           "GM Set:",                      IDC_MUNT_GM_TEXT,       193, 100, 44,  8
+        COMBOBOX                                        IDC_MUNT_GM,            240,  98, 79, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    GROUPBOX "Nuclear Option", IDC_STATIC, 188, 119, 139, 43
+        RTEXT           "Preset:",                      IDC_MS_PRESET_TEXT,     204, 131, 33,  8
+        COMBOBOX                                        IDC_MS_PRESET,          240, 128, 79, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        CONTROL         "Enable soft panning",          IDC_MS_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 194, 146, 87, 8
+
+    GROUPBOX "Common", IDC_FILTER_GROUP, 188, 165, 139, 43
+        RTEXT           "Standard:",                    IDC_FILTER_FLAVOR_TEXT, 204, 177, 33, 8
+        COMBOBOX                                        IDC_FILTER_FLAVOR,      240, 174, 78, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        CONTROL         "Disable reverb and chorus",    IDC_FILTER_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 194, 192, 100, 8
+
+    // ADL
+    #define X_ADL       188
+    #define Y_ADL       211
+
+    #define X_BANK      X_ADL + 4
+    #define Y_BANK      Y_ADL + 11
+    #define H_BANK      14
+
+    #define X_CHIPS     X_BANK
+    #define Y_CHIPS     Y_BANK + H_BANK + 4
+    #define H_CHIPS     14
+
+    #define X_PANNING   X_CHIPS
+    #define Y_PANNING   Y_CHIPS + H_CHIPS + 4
+    #define H_PANNING   10
+
+    GROUPBOX "ADL", IDC_STATIC, X_ADL, Y_ADL, 139, 60
+        RTEXT       "Bank:",                IDC_ADL_BANK_TEXT,  X_BANK,           Y_BANK + 2,   20, 8
+        COMBOBOX                            IDC_ADL_BANK,       X_BANK  + 20 + 3, Y_BANK,  104, H_BANK, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        RTEXT       "Chips:",               IDC_ADL_CHIPS_TEXT, X_CHIPS,          Y_CHIPS + 2,  20, 8
+        COMBOBOX                            IDC_ADL_CHIPS,      X_CHIPS + 20 + 3, Y_CHIPS, 40, H_CHIPS, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+        CONTROL     "Enable soft panning",  IDC_ADL_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_PANNING, Y_PANNING, 100, H_PANNING
 END
 
 VS_VERSION_INFO versioninfo
@@ -85,10 +111,10 @@ filesubtype     VFT2_UNKNOWN
             VALUE "CompanyName", "LoSno.co"
             VALUE "FileDescription", "A foobar2000 component"
             VALUE "FileVersion", "2.7.4.4"
-            VALUE "InternalName", "foo_midi"
+            VALUE "InternalName", COMPONENT_BASENAME
             VALUE "LegalCopyright", "Copyright (C) 2022 Christopher Snowhill, Peter Stuer"
-            VALUE "OriginalFilename", "foo_midi.dll"
-            VALUE "ProductName", "foo_midi"
+            VALUE "OriginalFilename", COMPONENT_FILENAME
+            VALUE "ProductName", COMPONENT_BASENAME
             VALUE "ProductVersion", "2.7.4.4"
         }
     }
@@ -104,4 +130,4 @@ IDD_CONFIG AFX_DIALOG_LAYOUT
     0
 }
 
-#endif    // English (United States) resources
+#endif

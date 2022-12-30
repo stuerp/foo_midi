@@ -1,3 +1,6 @@
+
+/** Emu de MIDI **/
+
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>

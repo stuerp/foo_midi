@@ -1446,6 +1446,8 @@
 
 */
 
+#include "Patrons.h"
+
 #define COMPONENT_DESCRIPTION \
     "Special thanks go to DEATH's cat.\n" \
     "\n" \
@@ -1455,7 +1457,7 @@
     "\n" \
     "https://www.patreon.com/kode54" "\n" \
     "\n" \
-    MY_PATRONS "\n" \
+    KODE54_PATRONS \
     "\n" \
     "Notice for json-parser:\n" \
     "Copyright (C) 2012, 2013, 2014 James McLaughlin et al.  All rights reserved.\n" \

@@ -105,7 +105,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -137,7 +137,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
@@ -172,7 +172,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -212,7 +212,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/bass/c;./3rdParty/scc/emidi_alpha;./3rdParty/munt/mt32emu/src;./3rdParty/json;./DXiClasses;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -244,6 +244,8 @@
   <ItemGroup>
     <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="BMPlayer.cpp" />
+    <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="ContextMenu.cpp" />
     <ClCompile Include="Experimental\DXiProxy.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -252,7 +254,13 @@
     </ClCompile>
     <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="3rdParty\fmopl3lib\opl3class.cpp" />
+    <ClCompile Include="InitQuit.cpp" />
+    <ClCompile Include="FileTypeRegistrar.cpp" />
+    <ClCompile Include="InputDecoder.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
+    <ClCompile Include="MIDIPreset.cpp" />
+    <ClCompile Include="MIDIPreset.h" />
+    <ClCompile Include="MIDISysExDumps.cpp" />
     <ClCompile Include="MSPlayer.cpp" />
     <ClCompile Include="MT32Player\MT32Player.cpp" />
     <ClCompile Include="Experimental\DXiPlayer.cpp">
@@ -312,6 +320,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Preferences.cpp" />
     <ClCompile Include="Resampler.c">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MinSpace</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MinSpace</Optimization>
@@ -362,6 +371,8 @@
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
     <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
+    <ClInclude Include="ConfigurationMap.h" />
+    <ClInclude Include="TrackHasher.h" />
     <ClInclude Include="Experimental\DXiProxy.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -371,7 +382,12 @@
     <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="3rdParty\fmopl3lib\opl3class.h" />
     <ClInclude Include="3rdParty\interface.h" />
+    <ClInclude Include="Configuration.h" />
+    <ClInclude Include="Fields.h" />
+    <ClInclude Include="MIDISysExFilter.h" />
     <ClInclude Include="History.h" />
+    <ClInclude Include="MIDIPresetFilter.h" />
+    <ClInclude Include="MIDISysExDumps.h" />
     <ClInclude Include="MT32Player\kq6mtgm.h" />
     <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="MSPlayer.h" />

@@ -1,7 +1,12 @@
-//{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by foo_midi.rc
-//
+#pragma once
+
+#define COMPONENT_NAME "MIDI Player"
+#define COMPONENT_VERSION "2.7.4.4"
+#define COMPONENT_GUID { 0x1623aa03, 0xbadc, 0x4bab, { 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } }
+
+#define COMPONENT_BASENAME "foo_midi"
+#define COMPONENT_FILENAME COMPONENT_BASENAME ".dll"
+
 #define IDD_CONFIG 106
 #define IDC_PLUGIN 1000
 #define IDC_SAMPLERATE 1001
@@ -31,7 +36,7 @@
 #define IDC_ADL_CHIPS 1023
 #define IDC_ADL_CHIPS_TEXT 1024
 #define IDC_ADL_PANNING 1025
-#define IDC_RESAMPLING_TEXT2 1026
+#define IDC_MUNT_GM_TEXT 1026
 #define IDC_RESAMPLING2 1027
 #define IDC_MS_PRESET_TEXT 1027
 #define IDC_MUNT_GM 1028

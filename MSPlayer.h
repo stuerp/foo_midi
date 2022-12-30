@@ -1,3 +1,6 @@
+
+/** $VER: MSPlayer.h (2022.12.30) **/
+
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
@@ -9,6 +12,9 @@
 
 class nomidisynth;
 
+/// <summary>
+/// Implements the Nuclear Option player.
+/// </summary>
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class MSPlayer : public MIDIPlayer
 {
@@ -16,9 +22,9 @@ public:
     MSPlayer();
     virtual ~MSPlayer();
 
-    void set_synth(unsigned int synth);
-    void set_bank(unsigned int bank);
-    void set_extp(unsigned int extp);
+    void SetSynth(unsigned int synth);
+    void SetBank(unsigned int bank);
+    void SetExtp(unsigned int extp);
 
     typedef void (*enum_callback)(unsigned int synth, unsigned int bank, const char * name);
 

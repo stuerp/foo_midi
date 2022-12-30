@@ -9,7 +9,7 @@
 
 #include <bassmidi.h>
 
-extern bool GetSoundFontStatistics(uint64_t & total_sample_size, uint64_t & sample_loaded_size); // Called by foo_midi
+extern bool GetSoundFontStatistics(uint64_t & total_sample_size, uint64_t & sample_loaded_size);
 
 typedef struct sflist_presets sflist_presets;
 
@@ -61,3 +61,47 @@ private:
     bool bank_lsb_overridden;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member
+
+#ifdef BASSMIDISUPPORT
+#if defined(_M_IX86) || defined(__i386__) // x86, either x86_64 or no SSE2 compiled in?
+
+#if 1 /* SSE2 is my current minimum */
+enum
+{
+    _bassmidi_src2_avail = 1
+};
+#else
+#ifdef _MSC_VER
+#include <intrin.h>
+#elif defined(__clang__) || defined(__GNUC__)
+static inline void
+__cpuid(int * data, int selector)
+{
+    asm("cpuid"
+        : "=a"(data[0]),
+        "=b"(data[1]),
+        "=c"(data[2]),
+        "=d"(data[3])
+        : "a"(selector));
+}
+#else
+#define __cpuid(a, b) memset((a), 0, sizeof(int) * 4)
+#endif
+
+static int query_cpu_feature_sse2()
+{
+    int buffer[4];
+    __cpuid(buffer, 1);
+    if ((buffer[3] & (1 << 26)) == 0) return 0;
+    return 1;
+}
+
+static int _bassmidi_src2_avail = query_cpu_feature_sse2();
+#endif
+#else
+enum
+{
+    _bassmidi_src2_avail = 1
+};
+#endif
+#endif

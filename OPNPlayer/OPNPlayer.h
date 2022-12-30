@@ -1,9 +1,14 @@
+
+/** OPN Player **/
+
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
 
-#include "../MIDIPlayer.h"
+#include <MIDIPlayer.h>
+
+#include <libOPNMIDI/include/opnmidi.h>
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class OPNPlayer : public MIDIPlayer

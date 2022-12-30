@@ -1,7 +1,12 @@
+
+/** $VER: MSPlayer.cpp (2022.12.30) **/
+
 #include "MSPlayer.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+#pragma warning(disable: 5045)
 
 MSPlayer::MSPlayer()
 {
@@ -13,19 +18,19 @@ MSPlayer::~MSPlayer()
     shutdown();
 }
 
-void MSPlayer::set_synth(unsigned int synthId)
+void MSPlayer::SetSynth(unsigned int synthId)
 {
     shutdown();
     _SynthId = synthId;
 }
 
-void MSPlayer::set_bank(unsigned int bankId)
+void MSPlayer::SetBank(unsigned int bankId)
 {
     shutdown();
     _BankId = bankId;
 }
 
-void MSPlayer::set_extp(unsigned int extp)
+void MSPlayer::SetExtp(unsigned int extp)
 {
     shutdown();
     _Extp = extp;

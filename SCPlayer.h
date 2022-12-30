@@ -1,13 +1,12 @@
+
+/** Secret Sauce **/
+
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
-
-#include <foobar2000.h>
-
-extern char _DLLFileName[];
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class SCPlayer : public MIDIPlayer

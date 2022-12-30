@@ -1,6 +1,7 @@
-#include "OPNPlayer.h"
 
-#include <libOPNMIDI/include/opnmidi.h>
+/** OPN Player **/
+
+#include "OPNPlayer.h"
 
 #include "Tomsoft.wopn.h"
 #include "fmmidi.wopn.h"
