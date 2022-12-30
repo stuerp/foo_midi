@@ -221,7 +221,7 @@ void SFPlayer::send_sysex(const uint8_t * event, uint32_t size, size_t port)
     }
 }
 
-void SFPlayer::render(float * out, unsigned long count)
+void SFPlayer::render(audio_sample * out, unsigned long count)
 {
     unsigned long done = 0;
     memset(out, 0, sizeof(float) * 2 * count);

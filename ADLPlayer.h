@@ -1,5 +1,4 @@
 #pragma once
-#define __ADLPlayer_h__
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
@@ -10,10 +9,7 @@
 class ADLPlayer : public MIDIPlayer
 {
 public:
-    // zero variables
     ADLPlayer();
-
-    // close, unload
     virtual ~ADLPlayer();
 
     enum
@@ -23,35 +19,27 @@ public:
         ADLMIDI_EMU_DOSBOX
     };
 
-    // configuration
     void setCore(unsigned);
     void setBank(unsigned);
     void setChipCount(unsigned);
-    void set4OpCount(unsigned);
     void setFullPanning(bool);
+    void set4OpCount(unsigned);
 
 protected:
-    virtual void send_event(uint32_t b);
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port);
-    virtual void render(audio_sample * out, unsigned long count);
+    virtual bool startup() override;
+    virtual void shutdown() override;
+    virtual void render(audio_sample *, unsigned long) override;
 
-    virtual void shutdown();
-    virtual bool startup();
-
-private:
-    static void render_internal(void * context, int count, short * out);
-
-    void reset_drum_channels();
+    virtual void send_event(uint32_t) override;
+    virtual void send_sysex(const uint8_t *, size_t, size_t) override;
 
 private:
-    struct ADL_MIDIPlayer * midiplay[3];
+    struct ADL_MIDIPlayer * _Player[3];
 
-    unsigned uEmuCore;
-    unsigned uBankNumber;
-    unsigned uChipCount;
-    unsigned u4OpCount;
-
-    bool bFullPanning;
-    char _Padding[7];
+    unsigned _EmuCore;
+    unsigned _BankNumber;
+    unsigned _ChipCount;
+    unsigned _4OpCount;
+    bool _FullPanning;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

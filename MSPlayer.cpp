@@ -5,7 +5,7 @@
 
 MSPlayer::MSPlayer()
 {
-    synth = 0;
+    _Synth = 0;
 }
 
 MSPlayer::~MSPlayer()
@@ -13,30 +13,30 @@ MSPlayer::~MSPlayer()
     shutdown();
 }
 
-void MSPlayer::set_synth(unsigned int synth_id)
+void MSPlayer::set_synth(unsigned int synthId)
 {
     shutdown();
-    this->synth_id = synth_id;
+    _SynthId = synthId;
 }
 
-void MSPlayer::set_bank(unsigned int bank_id)
+void MSPlayer::set_bank(unsigned int bankId)
 {
     shutdown();
-    this->bank_id = bank_id;
+    _BankId = bankId;
 }
 
 void MSPlayer::set_extp(unsigned int extp)
 {
     shutdown();
-    this->extp = extp;
+    _Extp = extp;
 }
 
-void MSPlayer::send_event(uint32_t b)
+void MSPlayer::send_event(uint32_t message)
 {
-    synth->midi_write(b);
+    _Synth->midi_write(message);
 }
 
-void MSPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
+void MSPlayer::send_sysex(const uint8_t *, size_t, size_t)
 {
 }
 
@@ -50,7 +50,7 @@ void MSPlayer::render(audio_sample * out, unsigned long count)
     {
         unsigned long todo = count > 256 ? 256 : count;
 
-        synth->midi_generate(buffer, (unsigned int) todo);
+        _Synth->midi_generate(buffer, (unsigned int) todo);
 
         for (unsigned long i = 0; i < todo; ++i)
         {
@@ -64,33 +64,33 @@ void MSPlayer::render(audio_sample * out, unsigned long count)
 
 void MSPlayer::shutdown()
 {
-    delete synth;
-    synth = 0;
+    delete _Synth;
+    _Synth = 0;
 }
 
 bool MSPlayer::startup()
 {
-    if (synth) return true;
+    if (_Synth) return true;
 
-    switch (synth_id)
+    switch (_SynthId)
     {
         default:
         case 0:
-            synth = getsynth_doom();
+            _Synth = getsynth_doom();
             break;
 
         case 1:
-            synth = getsynth_opl3w();
+            _Synth = getsynth_opl3w();
             break;
 
         case 2:
-            synth = getsynth_apogee();
+            _Synth = getsynth_apogee();
             break;
     }
 
-    if (!synth) return false;
+    if (!_Synth) return false;
 
-    if (!synth->midi_init((unsigned int) _SampleRate, bank_id, extp))
+    if (!_Synth->midi_init((unsigned int) _SampleRate, _BankId, _Extp))
         return false;
 
     return true;
@@ -113,9 +113,9 @@ void MSPlayer::enum_synthesizers(enum_callback callback)
     {
         for (i = 0; i < count; ++i)
         {
-            strcpy(buffer, synth_name);
-            strcat(buffer, " ");
-            strcat(buffer, synth->midi_bank_name(i));
+            ::strcpy_s(buffer, synth_name);
+            ::strcat_s(buffer, " ");
+            ::strcat_s(buffer, synth->midi_bank_name(i));
             callback(0, i, buffer);
         }
     }
@@ -136,9 +136,9 @@ void MSPlayer::enum_synthesizers(enum_callback callback)
     {
         for (i = 0; i < count; ++i)
         {
-            strcpy(buffer, synth_name);
-            strcat(buffer, " ");
-            strcat(buffer, synth->midi_bank_name(i));
+            ::strcpy_s(buffer, synth_name);
+            ::strcat_s(buffer, " ");
+            ::strcat_s(buffer, synth->midi_bank_name(i));
             callback(1, i, buffer);
         }
     }
@@ -159,9 +159,9 @@ void MSPlayer::enum_synthesizers(enum_callback callback)
     {
         for (i = 0; i < count; ++i)
         {
-            strcpy(buffer, synth_name);
-            strcat(buffer, " ");
-            strcat(buffer, synth->midi_bank_name(i));
+            ::strcpy_s(buffer, synth_name);
+            ::strcat_s(buffer, " ");
+            ::strcat_s(buffer, synth->midi_bank_name(i));
             callback(2, i, buffer);
         }
     }

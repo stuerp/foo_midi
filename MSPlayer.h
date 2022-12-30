@@ -25,20 +25,18 @@ public:
     static void enum_synthesizers(enum_callback callback);
 
 protected:
-    virtual void send_event(uint32_t b);
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port);
-    virtual void render(audio_sample * out, unsigned long count);
+    virtual bool startup() override;
+    virtual void shutdown() override;
+    virtual void render(audio_sample * out, unsigned long count) override;
 
-    virtual void shutdown();
-    virtual bool startup();
+    virtual void send_event(uint32_t b) override;
+    virtual void send_sysex(const uint8_t * event, size_t size, size_t port) override;
 
 private:
-    nomidisynth * synth;
+    nomidisynth * _Synth;
 
-    unsigned int synth_id;
-    unsigned int bank_id;
-    unsigned int extp;
-
-    char _Padding[4];
+    unsigned int _SynthId;
+    unsigned int _BankId;
+    unsigned int _Extp;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

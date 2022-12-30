@@ -26,15 +26,15 @@ public:
     void setVoiceCount(unsigned int voices);
 
 private:
-    virtual void send_event(uint32_t b);
-    virtual void send_sysex(const uint8_t * event, uint32_t size, size_t port);
-    virtual void render(float * out, unsigned long count);
+    virtual bool startup() override;
+    virtual void shutdown() override;
+    virtual void render(audio_sample *, unsigned long) override;
+    virtual bool reset() override;
 
-    virtual void shutdown();
-    virtual bool startup();
-    virtual bool reset();
+    virtual bool get_last_error(std::string & p_out) override;
 
-    virtual bool get_last_error(std::string & p_out);
+    virtual void send_event(uint32_t b) override;
+    virtual void send_sysex(const uint8_t * event, size_t size, size_t port) override;
 
     std::string _last_error;
 

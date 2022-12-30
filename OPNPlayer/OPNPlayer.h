@@ -9,47 +9,35 @@
 class OPNPlayer : public MIDIPlayer
 {
 public:
-    // zero variables
     OPNPlayer();
-
-    // close, unload
     virtual ~OPNPlayer();
 
     enum
     {
-        /*! Mame YM2612 */
-        OPNMIDI_EMU_MAME = 0,
-        /*! Nuked OPN2 */
-        OPNMIDI_EMU_NUKED,
-        /*! GENS */
-        OPNMIDI_EMU_GENS,
+        OPNMIDI_EMU_MAME = 0,   // MAME YM2612
+        OPNMIDI_EMU_NUKED,      // Nuked OPN2
+        OPNMIDI_EMU_GENS,       // GENS
     };
 
-    // configuration
     void setCore(unsigned);
     void setBank(unsigned);
     void setChipCount(unsigned);
     void setFullPanning(bool);
 
 protected:
-    virtual void send_event(uint32_t b);
-    virtual void send_sysex(const uint8_t * event, uint32_t size, size_t port);
-    virtual void render(audio_sample * out, unsigned long count);
+    virtual bool startup() override;
+    virtual void shutdown() override;
+    virtual void render(audio_sample *, unsigned long);
 
-    virtual void shutdown();
-    virtual bool startup();
+    virtual void send_event(uint32_t) override;
+    virtual void send_sysex(const uint8_t *, size_t, size_t) override;
 
 private:
-    static void render_internal(void * context, int count, short * out);
+    struct OPN2_MIDIPlayer * _Player[3];
 
-    void reset_drum_channels();
-
-    struct OPN2_MIDIPlayer * midiplay[3];
-
-    unsigned uEmuCore;
-    unsigned uBankNumber;
-    unsigned uChipCount;
-    unsigned u4OpCount;
-    bool bFullPanning;
+    unsigned _EmuCore;
+    unsigned _BankNumber;
+    unsigned _ChipCount;
+    bool _FullPanning;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

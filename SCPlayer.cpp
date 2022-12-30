@@ -1,3 +1,6 @@
+
+/** Secret Sauce **/
+
 #include "SCPlayer.h"
 
 #include <vector>

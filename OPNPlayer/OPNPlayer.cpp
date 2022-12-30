@@ -1,6 +1,6 @@
 #include "OPNPlayer.h"
 
-#include "libOPNMIDI/include/opnmidi.h"
+#include <libOPNMIDI/include/opnmidi.h>
 
 #include "Tomsoft.wopn.h"
 #include "fmmidi.wopn.h"
@@ -10,7 +10,7 @@
 
 OPNPlayer::OPNPlayer() : MIDIPlayer()
 {
-    memset(midiplay, 0, sizeof(midiplay));
+    ::memset(_Player, 0, sizeof(_Player));
 }
 
 OPNPlayer::~OPNPlayer()
@@ -18,65 +18,84 @@ OPNPlayer::~OPNPlayer()
     shutdown();
 }
 
-void OPNPlayer::send_event(uint32_t b)
+bool OPNPlayer::startup()
 {
-    uint8_t event[3]
+    if (_Player[0] && _Player[1] && _Player[2])
+        return true;
+
+    int chips_per_port = _ChipCount / 3;
+    int chips_round = (_ChipCount % 3) != 0;
+    int chips_min = _ChipCount < 3;
+
+    for (size_t i = 0; i < 3; i++)
     {
-        static_cast<uint8_t>(b),
-        static_cast<uint8_t>(b >> 8),
-        static_cast<uint8_t>(b >> 16)
-    };
-    unsigned port = (b >> 24) & 3;
-    const unsigned channel = b & 0x0F;
-    const unsigned command = b & 0xF0;
-    if (port > 2)
-        port = 0;
-    switch (command)
-    {
-        case 0x80:
-            opn2_rt_noteOff(midiplay[port], channel, event[1]);
-            break;
+        OPN2_MIDIPlayer * Player = this->_Player[i] = ::opn2_init(_SampleRate);
+        
+        if (Player == nullptr)
+            return false;
 
-        case 0x90:
-            opn2_rt_noteOn(midiplay[port], channel, event[1], event[2]);
-            break;
+        const void * Bank;
+        size_t BankSize;
 
-        case 0xA0:
-            opn2_rt_noteAfterTouch(midiplay[port], channel, event[1], event[2]);
-            break;
+        switch (_BankNumber)
+        {
+            default:
+            case 0:
+                Bank = bnk_xg;
+                BankSize = sizeof(bnk_xg);
+                break;
 
-        case 0xB0:
-            opn2_rt_controllerChange(midiplay[port], channel, event[1], event[2]);
-            break;
+            case 1:
+                Bank = bnk_gs;
+                BankSize = sizeof(bnk_gs);
+                break;
 
-        case 0xC0:
-            opn2_rt_patchChange(midiplay[port], channel, event[1]);
-            break;
+            case 2:
+                Bank = bnk_gems;
+                BankSize = sizeof(bnk_gems);
+                break;
 
-        case 0xD0:
-            opn2_rt_channelAfterTouch(midiplay[port], channel, event[1]);
-            break;
+            case 3:
+                Bank = bnk_Tomsoft;
+                BankSize = sizeof(bnk_Tomsoft);
+                break;
 
-        case 0xE0:
-            opn2_rt_pitchBendML(midiplay[port], channel, event[2], event[1]);
-            break;
+            case 4:
+                Bank = bnk_fmmidi;
+                BankSize = sizeof(bnk_fmmidi);
+                break;
+        }
+
+        ::opn2_openBankData(Player, Bank, BankSize);
+
+        ::opn2_setNumChips(Player, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
+        ::opn2_setSoftPanEnabled(Player, _FullPanning);
+        ::opn2_setDeviceIdentifier(Player, i);
+        ::opn2_switchEmulator(Player, _EmuCore);
+        ::opn2_reset(Player);
     }
+
+    _IsInitialized = true;
+
+    setFilterMode(_FilterMode, _IsReverbChorusDisabled);
+
+    return true;
 }
-void OPNPlayer::send_sysex(const uint8_t * event, uint32_t size, size_t port)
+
+void OPNPlayer::shutdown()
 {
-    if (port >= 3)
-        port = 0;
-    opn2_rt_systemExclusive(midiplay[port], event, size);
-    if (port == 0)
+    for (size_t i = 0; i < 3; i++)
     {
-        opn2_rt_systemExclusive(midiplay[1], event, size);
-        opn2_rt_systemExclusive(midiplay[2], event, size);
+        ::opn2_close(_Player[i]);
+        _Player[i] = nullptr;
     }
+
+    _IsInitialized = false;
 }
 
 void OPNPlayer::render(audio_sample * out, unsigned long count)
 {
-    signed short buffer[256 * sizeof(audio_sample)];
+    int16_t buffer[256 * sizeof(audio_sample)];
 
     while (count)
     {
@@ -87,14 +106,12 @@ void OPNPlayer::render(audio_sample * out, unsigned long count)
 
         ::memset(out, 0, (todo * 2) * sizeof(audio_sample));
 
-        for (unsigned i = 0; i < 3; i++)
+        for (size_t i = 0; i < 3; i++)
         {
-            opn2_generate(midiplay[i], (todo * 2), buffer);
+            ::opn2_generate(_Player[i], (todo * 2), buffer);
 
-            for (unsigned j = 0, k = (todo * 2); j < k; j++)
-            {
+            for (size_t j = 0, k = (todo * 2); j < k; j++)
                 out[j] += (audio_sample) buffer[j] * (1.0f / 32768.0f);
-            }
         }
 
         out += (todo * 2);
@@ -102,91 +119,85 @@ void OPNPlayer::render(audio_sample * out, unsigned long count)
     }
 }
 
-void OPNPlayer::setCore(unsigned core)
+void OPNPlayer::setCore(unsigned emuCore)
 {
-    uEmuCore = core;
+    _EmuCore = emuCore;
 }
 
-void OPNPlayer::setBank(unsigned bank)
+void OPNPlayer::setBank(unsigned bankNumber)
 {
-    uBankNumber = bank;
+    _BankNumber = bankNumber;
 }
 
-void OPNPlayer::setChipCount(unsigned count)
+void OPNPlayer::setChipCount(unsigned chipCount)
 {
-    uChipCount = count;
+    _ChipCount = chipCount;
 }
 
-void OPNPlayer::setFullPanning(bool enable)
+void OPNPlayer::setFullPanning(bool enabled)
 {
-    bFullPanning = enable;
+    _FullPanning = enabled;
 }
 
-void OPNPlayer::shutdown()
+void OPNPlayer::send_event(uint32_t message)
 {
-    for (unsigned i = 0; i < 3; i++)
-        opn2_close(midiplay[i]);
-    memset(midiplay, 0, sizeof(midiplay));
-    _IsInitialized = false;
-}
-
-bool OPNPlayer::startup()
-{
-    if (midiplay[0] && midiplay[1] && midiplay[2]) return true;
-
-    int chips_per_port = uChipCount / 3;
-    int chips_round = (uChipCount % 3) != 0;
-    int chips_min = uChipCount < 3;
-
-    for (unsigned i = 0; i < 3; i++)
+    OPN2_UInt8 Event[3]
     {
-        OPN2_MIDIPlayer * midiplay = this->midiplay[i] = opn2_init(_SampleRate);
-        if (!midiplay) return false;
+        static_cast<OPN2_UInt8>(message),
+        static_cast<OPN2_UInt8>(message >> 8),
+        static_cast<OPN2_UInt8>(message >> 16)
+    };
 
-        const void * _bank;
-        size_t _banksize;
+    unsigned Port = (message >> 24) & 3;
 
-        switch (uBankNumber)
-        {
-            default:
-            case 0:
-                _bank = bnk_xg;
-                _banksize = sizeof(bnk_xg);
-                break;
+    const OPN2_UInt8 Channel = message & 0x0F;
+    const OPN2_UInt8 Command = message & 0xF0;
 
-            case 1:
-                _bank = bnk_gs;
-                _banksize = sizeof(bnk_gs);
-                break;
+    if (Port > 2)
+        Port = 0;
 
-            case 2:
-                _bank = bnk_gems;
-                _banksize = sizeof(bnk_gems);
-                break;
+    switch (Command)
+    {
+        case 0x80:
+            ::opn2_rt_noteOff(_Player[Port], Channel, Event[1]);
+            break;
 
-            case 3:
-                _bank = bnk_Tomsoft;
-                _banksize = sizeof(bnk_Tomsoft);
-                break;
+        case 0x90:
+            ::opn2_rt_noteOn(_Player[Port], Channel, Event[1], Event[2]);
+            break;
 
-            case 4:
-                _bank = bnk_fmmidi;
-                _banksize = sizeof(bnk_fmmidi);
-                break;
-        }
+        case 0xA0:
+            ::opn2_rt_noteAfterTouch(_Player[Port], Channel, Event[1], Event[2]);
+            break;
 
-        opn2_openBankData(midiplay, _bank, _banksize);
+        case 0xB0:
+            ::opn2_rt_controllerChange(_Player[Port], Channel, Event[1], Event[2]);
+            break;
 
-        opn2_setNumChips(midiplay, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
-        opn2_setSoftPanEnabled(midiplay, bFullPanning);
-        opn2_setDeviceIdentifier(midiplay, i);
-        opn2_switchEmulator(midiplay, uEmuCore);
-        opn2_reset(midiplay);
+        case 0xC0:
+            ::opn2_rt_patchChange(_Player[Port], Channel, Event[1]);
+            break;
+
+        case 0xD0:
+            ::opn2_rt_channelAfterTouch(_Player[Port], Channel, Event[1]);
+            break;
+
+        case 0xE0:
+            ::opn2_rt_pitchBendML(_Player[Port], Channel, Event[2], Event[1]);
+            break;
     }
+}
 
-    _IsInitialized = true;
+void OPNPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
+{
+    if (port >= 3)
+        port = 0;
 
-    setFilterMode(_FilterMode, _IsReverbChorusDisabled);
+    ::opn2_rt_systemExclusive(_Player[port], event, size);
 
-    return true;
+    if (port == 0)
+    {
+        ::opn2_rt_systemExclusive(_Player[1], event, size);
+        ::opn2_rt_systemExclusive(_Player[2], event, size);
+    }
 }

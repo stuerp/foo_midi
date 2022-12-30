@@ -4,7 +4,7 @@
 
 MIDIPlayer::MIDIPlayer()
 {
-    uSamplesRemaining = 0;
+    _SamplesRemaining = 0;
     _SampleRate = 1000;
     _TimeCurrent = 0;
     _TimeEnd = 0;
@@ -119,9 +119,9 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
 
     // This should be a multiple of block size, and have leftover
 
-    while (uSamplesRemaining && done < count)
+    while (_SamplesRemaining && done < count)
     {
-        unsigned long todo = uSamplesRemaining;
+        unsigned long todo = _SamplesRemaining;
 
         if (todo > count - done)
             todo = count - done;
@@ -131,14 +131,14 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
 
         if (todo < needs_block_size)
         {
-            uSamplesRemaining = 0;
+            _SamplesRemaining = 0;
             into_block = todo;
             break;
         }
 
         render(out + done * 2, todo);
 
-        uSamplesRemaining -= todo;
+        _SamplesRemaining -= todo;
         done += todo;
         _TimeCurrent += todo;
     }
@@ -168,7 +168,7 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
                 {
                     if (samples_todo > count - done)
                     {
-                        uSamplesRemaining = samples_todo - (count - done);
+                        _SamplesRemaining = samples_todo - (count - done);
                         samples_todo = count - done;
                     }
 
@@ -179,9 +179,9 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
                         _TimeCurrent += samples_todo;
                     }
 
-                    if (uSamplesRemaining)
+                    if (_SamplesRemaining)
                     {
-                        uSamplesRemaining += into_block;
+                        _SamplesRemaining += into_block;
                         return done;
                     }
                 }
@@ -271,7 +271,7 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
         }
     }
 
-    uSamplesRemaining = into_block;
+    _SamplesRemaining = into_block;
 
     return done;
 }
@@ -312,9 +312,9 @@ void MIDIPlayer::Seek(unsigned long sample)
         ;
 
     if (_StreamCurrent == _Stream.size())
-        uSamplesRemaining = _TimeEnd - _TimeCurrent;
+        _SamplesRemaining = _TimeEnd - _TimeCurrent;
     else
-        uSamplesRemaining = _Stream.at(_StreamCurrent).m_timestamp - _TimeCurrent;
+        _SamplesRemaining = _Stream.at(_StreamCurrent).m_timestamp - _TimeCurrent;
 
     if (_StreamCurrent > stream_start)
     {
@@ -443,7 +443,7 @@ bool MIDIPlayer::GetLastError(std::string & p_out)
 void MIDIPlayer::setSampleRate(unsigned long sampleRate)
 {
     if (_Stream.size())
-        for (unsigned long i = 0; i < _Stream.size(); i++)
+        for (size_t i = 0; i < _Stream.size(); i++)
             _Stream.at(i).m_timestamp = (unsigned long) ((uint64_t) _Stream.at(i).m_timestamp * sampleRate / _SampleRate);
 
     if (_TimeCurrent)
@@ -486,23 +486,23 @@ void MIDIPlayer::setFilterMode(filter_mode filterMode, bool isReverbChorusDisabl
     }
 }
 
-void MIDIPlayer::send_event_filtered(uint32_t b)
+void MIDIPlayer::send_event_filtered(uint32_t message)
 {
-    if (!(b & 0x80000000u))
+    if (!(message & 0x80000000u))
     {
         if (_IsReverbChorusDisabled)
         {
-            const uint32_t _b = b & 0x7FF0;
+            const uint32_t _b = message & 0x7FF0;
 
             if (_b == 0x5BB0 || _b == 0x5DB0)
                 return;
         }
 
-        send_event(b);
+        send_event(message);
     }
     else
     {
-        const unsigned int p_index = b & 0xffffff;
+        const unsigned int p_index = message & 0xffffff;
         const uint8_t * p_data;
         size_t p_size, p_port;
 
@@ -511,23 +511,23 @@ void MIDIPlayer::send_event_filtered(uint32_t b)
     }
 }
 
-void MIDIPlayer::send_event_time_filtered(uint32_t b, unsigned int time)
+void MIDIPlayer::send_event_time_filtered(uint32_t message, unsigned int time)
 {
-    if (!(b & 0x80000000u))
+    if (!(message & 0x80000000u))
     {
         if (_IsReverbChorusDisabled)
         {
-            const uint32_t _b = b & 0x7FF0;
+            const uint32_t _b = message & 0x7FF0;
 
             if (_b == 0x5BB0 || _b == 0x5DB0)
                 return;
         }
 
-        send_event_time(b, time);
+        send_event_time(message, time);
     }
     else
     {
-        const unsigned int p_index = b & 0xffffff;
+        const unsigned int p_index = message & 0xffffff;
         const uint8_t * p_data;
         size_t p_size, p_port;
 
@@ -577,11 +577,11 @@ void MIDIPlayer::sysex_send_gs(size_t port, uint8_t * data, size_t size, unsigne
         send_sysex(data, size, port);
 }
 
-void MIDIPlayer::sysex_reset_sc(uint32_t port, unsigned int time)
+void MIDIPlayer::sysex_reset_sc(size_t port, unsigned int time)
 {
     uint8_t message[11];
 
-    memcpy(&message[0], &syx_gs_limit_bank_lsb[0], sizeof(message));
+    ::memcpy(&message[0], &syx_gs_limit_bank_lsb[0], sizeof(message));
 
     message[7] = 1;
 
@@ -674,7 +674,7 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
                 send_sysex_time(&syx_reset_gs[0], sizeof(syx_reset_gs), port, time);
             else
                 send_sysex(&syx_reset_gs[0], sizeof(syx_reset_gs), port);
-            sysex_reset_sc((uint32_t)port, time);
+            sysex_reset_sc(port, time);
             break;
 
         case filter_xg:
@@ -686,9 +686,7 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
     }
 
     {
-        unsigned int i;
-
-        for (i = 0; i < 16; ++i)
+        for (size_t i = 0; i < 16; ++i)
         {
             if (time)
             {
@@ -735,11 +733,9 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
 
     if (_IsReverbChorusDisabled)
     {
-        unsigned int i;
-
         if (time)
         {
-            for (i = 0; i < 16; ++i)
+            for (size_t i = 0; i < 16; ++i)
             {
                 send_event_time((uint32_t)(0x5BB0 + i + (port << 24)), time);
                 send_event_time((uint32_t)(0x5DB0 + i + (port << 24)), time);
@@ -747,7 +743,7 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
         }
         else
         {
-            for (i = 0; i < 16; ++i)
+            for (size_t i = 0; i < 16; ++i)
             {
                 send_event((uint32_t)(0x5BB0 + i + (port << 24)));
                 send_event((uint32_t)(0x5DB0 + i + (port << 24)));

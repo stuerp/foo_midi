@@ -1,5 +1,4 @@
-#ifndef __VSTiPlayer_h__
-#define __VSTiPlayer_h__
+#pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
@@ -8,6 +7,7 @@
 
 typedef void * HANDLE;
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 class VSTiPlayer : public MIDIPlayer
 {
 public:
@@ -38,16 +38,16 @@ public:
     unsigned getChannelCount() noexcept;
 
 protected:
+    virtual bool startup() override;
+    virtual void shutdown() override;
+    virtual void render(audio_sample *, unsigned long) override;
+
     virtual unsigned int send_event_needs_time() noexcept override;
-    virtual void send_event(uint32_t);
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port);
-    virtual void render(audio_sample *, unsigned long);
+    virtual void send_event(uint32_t) override;
+    virtual void send_sysex(const uint8_t *, size_t, size_t) override;
 
-    virtual void shutdown();
-    virtual bool startup();
-
-    virtual void send_event_time(uint32_t b, unsigned int time);
-    virtual void send_sysex_time(const uint8_t * event, size_t size, size_t port, unsigned int time);
+    virtual void send_event_time(uint32_t, unsigned int) override;
+    virtual void send_sysex_time(const uint8_t *, size_t, size_t, unsigned int) override;
 
 private:
     unsigned test_plugin_platform();
@@ -89,7 +89,5 @@ private:
 
     bool bInitialized;
     bool bTerminating;
-    char _Padding[6];
 };
-
-#endif
+#pragma warning(default: 4820) // x bytes padding added after data member

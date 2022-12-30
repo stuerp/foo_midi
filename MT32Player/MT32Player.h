@@ -27,12 +27,12 @@ public:
     static int getSampleRate();
 
 protected:
-    virtual void send_event(uint32_t b);
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port);
-    virtual void render(audio_sample * out, unsigned long count);
+    virtual bool startup() override;
+    virtual void shutdown() override;
+    virtual void render(audio_sample * out, unsigned long count) override;
 
-    virtual void shutdown();
-    virtual bool startup();
+    virtual void send_event(uint32_t b) override;
+    virtual void send_sysex(const uint8_t * event, size_t size, size_t port) override;
 
 private:
     void _reset();

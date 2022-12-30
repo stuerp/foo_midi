@@ -7,15 +7,13 @@
 
 #include "MIDIPlayer.h"
 
-#pragma warning(push)
-#pragma warning(disable: 4820 5039)
-#include "bassmidi.h"
-#pragma warning(pop)
+#include <bassmidi.h>
 
 extern bool GetSoundFontStatistics(uint64_t & total_sample_size, uint64_t & sample_loaded_size); // Called by foo_midi
 
 typedef struct sflist_presets sflist_presets;
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 class BMPlayer : public MIDIPlayer
 {
 public:
@@ -31,19 +29,17 @@ public:
     unsigned int getVoicesActive();
 
 private:
-    virtual void send_event(uint32_t b);
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port);
-    virtual void render(audio_sample * out, unsigned long count);
+    virtual bool startup() override;
+    virtual void shutdown() override;
+    virtual void render(audio_sample * out, unsigned long count) override;
 
-    virtual void shutdown();
-    virtual bool startup();
+    virtual void send_event(uint32_t b) override;
+    virtual void send_sysex(const uint8_t * event, size_t size, size_t port) override;
 
-    virtual bool get_last_error(std::string & p_out);
+    virtual bool get_last_error(std::string & p_out) override;
 
     void compound_presets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels);
-
     void reset_parameters();
-
     bool load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::string path);
 
     std::string sLastError;
@@ -63,5 +59,5 @@ private:
 
     bool _AreEffectsEnabled;
     bool bank_lsb_overridden;
-    char _Padding[2];
 };
+#pragma warning(default: 4820) // x bytes padding added after data member

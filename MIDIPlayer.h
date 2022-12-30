@@ -57,7 +57,7 @@ protected:
     virtual void send_event(uint32_t) { }
     virtual void send_sysex(const uint8_t *, size_t, size_t) { };
 
-    // time should only be block level offset
+    // Time should only be block level offset
     virtual void send_event_time(uint32_t, unsigned int) { };
 
     virtual void send_sysex_time(const uint8_t *, size_t, size_t, unsigned int) { };
@@ -79,9 +79,7 @@ private:
     void send_sysex_time_filtered(const uint8_t * event, size_t size, size_t port, unsigned int time);
 
     void sysex_send_gs(size_t port, uint8_t * data, size_t size, unsigned int time);
-    void sysex_reset_sc(uint32_t port, unsigned int time);
-
-    unsigned long uSamplesRemaining;
+    void sysex_reset_sc(size_t port, unsigned int time);
 
     std::vector<midi_stream_event> _Stream;
 
@@ -94,5 +92,7 @@ private:
     unsigned long _LoopStart;
     unsigned long _LoopEnd;
     unsigned long _LoopStartTime;
+
+    unsigned long _SamplesRemaining;
 };
 #pragma warning(default: 4820)

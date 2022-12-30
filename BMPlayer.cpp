@@ -135,6 +135,7 @@ static void CacheRun()
 
 #pragma region("BASS Initializer")
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 static class Bass_Initializer
 {
 public:
@@ -214,8 +215,8 @@ private:
 
     bool _IsInitialized;
     bool _Already;
-    char _Padding[6];
 } _BASSInitializer;
+#pragma warning(default: 4820) // x bytes padding added after data member
 
 #pragma endregion
 

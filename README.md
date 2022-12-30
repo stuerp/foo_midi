@@ -43,6 +43,7 @@ To build the code you need:
 * [BASSWV](https://www.un4seen.com/) 2.4.7.3
 * [BASSOPUS](https://www.un4seen.com/) 2.4.2.1
 * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
+* [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1
 
 To create the deployment package you need:
 

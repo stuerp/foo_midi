@@ -1,5 +1,4 @@
-#ifndef __SCPlayer_h__
-#define __SCPlayer_h__
+#pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
@@ -10,26 +9,26 @@
 
 extern char _DLLFileName[];
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
 class SCPlayer : public MIDIPlayer
 {
 public:
     SCPlayer() noexcept;
-
     virtual ~SCPlayer();
 
     void set_sccore_path(const char * path);
 
 protected:
-    virtual unsigned int send_event_needs_time();
-    virtual void send_event(uint32_t b);
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port);
-    virtual void render(audio_sample * out, unsigned long count);
+    virtual bool startup() override;
+    virtual void shutdown() override;
+    virtual void render(audio_sample *, unsigned long) override;
 
-    virtual void shutdown();
-    virtual bool startup();
+    virtual unsigned int send_event_needs_time() override;
+    virtual void send_event(uint32_t) override;
+    virtual void send_sysex(const uint8_t *, size_t, size_t) override;
 
-    virtual void send_event_time(uint32_t b, unsigned int time);
-    virtual void send_sysex_time(const uint8_t * event, size_t size, size_t port, unsigned int time);
+    virtual void send_event_time(uint32_t, unsigned int) override;
+    virtual void send_sysex_time(const uint8_t *, size_t, size_t, unsigned int) override;
 
 private:
     bool LoadCore(const char * path);
@@ -69,7 +68,5 @@ private:
     float * _Buffer;
 
     bool _IsPortTerminating[3];
-    char _Padding[5];
 };
-
-#endif
+#pragma warning(default: 4820) // x bytes padding added after data member
