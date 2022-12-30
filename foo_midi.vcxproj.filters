@@ -134,6 +134,7 @@
     <ClInclude Include="3rdParty\bass\c\bassmidi.h" />
     <ClInclude Include="3rdParty\bass\c\bassopus.h" />
     <ClInclude Include="3rdParty\bass\c\basswv.h" />
+    <ClInclude Include="History.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

@@ -371,6 +371,7 @@
     <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="3rdParty\fmopl3lib\opl3class.h" />
     <ClInclude Include="3rdParty\interface.h" />
+    <ClInclude Include="History.h" />
     <ClInclude Include="MT32Player\kq6mtgm.h" />
     <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="MSPlayer.h" />
