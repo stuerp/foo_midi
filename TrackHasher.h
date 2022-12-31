@@ -1,5 +1,5 @@
 
-/** $VER: DBIndexClient.h (2022.12.30) **/
+/** $VER: TrackHasher.h (2022.12.31) **/
 
 #pragma once
 
@@ -8,18 +8,7 @@
 #include <sdk/metadb_index.h>
 #include <sdk/hasher_md5.h>
 
-#include "Fields.h"
-
-static bool g_test_extension(const char * ext)
-{
-    for (size_t n = 0; n < _countof(_FileExtension); ++n)
-    {
-        if (!_stricmp(ext, _FileExtension[n]))
-            return true;
-    }
-
-    return false;
-}
+#include "Configuration.h"
 
 class TrackHasher : public metadb_index_client
 {
@@ -35,7 +24,7 @@ public:
     {
         const metadb_index_hash hash_null = 0;
 
-        if (!g_test_extension(pfc::string_extension(location.get_path())))
+        if (!IsFileExtensionSupported(pfc::string_extension(location.get_path())))
             return hash_null;
 
         hasher_md5_state hasher_state;
@@ -71,3 +60,5 @@ public:
         return from_md5(hasher->get_result(hasher_state));
     }
 };
+
+const GUID GUIDTrackHasher = { 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0x61, 0xc3, 0x26, 0x87, 0xd0 } };

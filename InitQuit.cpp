@@ -9,6 +9,7 @@
 #include <sdk/metadb_index.h>
 #include <sdk/system_time_keeper.h>
 
+#include "Configuration.h"
 #include "TrackHasher.h"
 
 #pragma warning(disable: 26409)
@@ -25,7 +26,7 @@ public:
 
     void on_init() override
     {
-        static_api_ptr_t<metadb_index_manager>()->add(new service_impl_t<TrackHasher>, guid_midi_index, system_time_periods::week * 4);
+        static_api_ptr_t<metadb_index_manager>()->add(new service_impl_t<TrackHasher>, GUIDTrackHasher, system_time_periods::week * 4);
     }
 
     void on_quit() noexcept override

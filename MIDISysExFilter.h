@@ -40,7 +40,7 @@ public:
     {
         pfc::string8 m_ext = pfc::string_extension(p_location->get_path());
 
-        for (unsigned j = 0, k = _countof(_SyxExtension); j < k; ++j)
+        for (unsigned j = 0, k = _SyxExtensionCount; j < k; ++j)
         {
             if (!pfc::stricmp_ascii(m_ext, _SyxExtension[j]))
                 return false;

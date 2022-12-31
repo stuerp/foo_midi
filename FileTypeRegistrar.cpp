@@ -4,7 +4,7 @@
 #include <sdk/foobar2000-lite.h>
 #include <sdk/input_file_type.h>
 
-#include "Fields.h"
+#include "Configuration.h"
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -44,8 +44,8 @@ private:
 
         mask.reset();
 
-        const size_t Count = (index == 0) ? _countof(_FileExtension) : _countof(_SyxExtension);
-        const char * const * Extensions = (index == 0) ? _FileExtension : _SyxExtension;
+        const size_t Count = (index == 0) ? _FileExtensionCount : _SyxExtensionCount;
+        const char * const * Extensions = (index == 0) ? _FileExtensions : _SyxExtension;
 
         if (Extensions == nullptr)
             return false;

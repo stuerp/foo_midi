@@ -7,7 +7,6 @@
 #include "VSTiPlayer.h"
 
 #include "Configuration.h"
-#include "Fields.h"
 
 #pragma warning(disable: 5045)
 
@@ -103,7 +102,7 @@ public:
 
     // v11 - most plugins
     unsigned int _MIDIStandard;
-    bool _UseMIDIReverb;
+    bool _UseMIDIEffects;
 
 private:
     const char * GetMSPresetName(unsigned int synth, unsigned int bank);

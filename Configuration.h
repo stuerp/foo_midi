@@ -9,47 +9,53 @@
 
 enum
 {
-    EmuDeMIDIPluginId = 0,
-
-    FluidSynthPluginId = 2,
-    SuperMUNTPluginId = 3,
+    EmuDeMIDIPlugInId = 0,
+    VSTiPlugInId = 1,
+    FluidSynthPlugInId = 2,
+    SuperMUNTPlugInId = 3,
     BASSMIDIPlugInId = 4,
-
-    ADLPluginId = 6,
-    OPNPluginId = 7,
-    OPLPluginId = 8,
-    NuclearOptionPluginId = 9,
-    SecretSaucePluginId = 10,
+    UnknownPlugInId = 5,
+    ADLPlugInId = 6,
+    OPNPlugInId = 7,
+    OPLPlugInId = 8,
+    NuclearOptionPlugInId = 9,
+    SecretSaucePlugInId = 10,
 };
 
 enum
 {
-    DefaultPluginId = ADLPluginId,
+    DefaultPlugInId = ADLPlugInId,
+    DefaultSampleRate = 44100,
+    DefaultPlaybackLoopType = 0,
+    DefaultOtherLoopType = 0,
 
     default_cfg_thloopz = 1,
     default_cfg_rpgmloopz = 1,
     default_cfg_xmiloopz = 1,
     default_cfg_ff7loopz = 1,
+
     default_cfg_emidi_exclusion = 1,
+
     default_cfg_filter_instruments = 0,
     default_cfg_filter_banks = 0,
+
 //  default_cfg_recover_tracks = 0,
-    default_cfg_loop_type = 0,
-    default_cfg_loop_type_other = 0,
-    default_cfg_srate = 44100,
-    default_cfg_resampling = 1,
-    default_cfg_adl_bank = 72,
-    default_cfg_adl_chips = 10,
-    default_cfg_adl_panning = 1,
-//  default_cfg_adl_4op = 14,
+
+    DefaultResamplingMode = 1,
+
     default_cfg_munt_gm = 0,
+
+    DefaultADLBank = 72,
+    DefaultADLChipCount = 10,
+    DefaultADLPanning = 1,
+//  DefaultADL4Op = 14,
 
     // MS Player
     DefaultMSSynth = 0,
     DefaultMSBank = 2,
+    DefaultMSPanning = 0,
 
     default_cfg_midi_flavor = MIDIPlayer::filter_default,
-    default_cfg_ms_panning = 0,
     default_cfg_midi_reverb = 1,
 #ifdef FLUIDSYNTHSUPPORT
     default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
@@ -57,6 +63,9 @@ enum
 };
 
 extern cfg_int
+    CfgPlugInId,
+    CfgSampleRate,
+
     cfg_thloopz,
     cfg_rpgmloopz,
     cfg_xmiloopz,
@@ -70,35 +79,33 @@ extern cfg_int
     cfg_loop_type,
     cfg_loop_type_other,
 
-    cfg_srate,
-    CfgPluginId,
-    cfg_resampling,
+    CfgResamplingMode,
 
-    cfg_adl_bank,
-    cfg_adl_chips,
-    cfg_adl_panning,
+    CfgADLBank,
+    CfgADLChipCount,
+    CfgADLPanning,
 
-    cfg_munt_gm,
+    CfgMUNTGMSet,
 
-    cfg_ms_synth,
-    cfg_ms_bank,
-    cfg_ms_panning,
+    CfgMSSynthesizer,
+    CfgMSBank,
+    CfgMSPanning,
 
-    cfg_midi_flavor,
-    cfg_midi_reverb
+    CfgMIDIFlavor,
+    CfgAllowMIDIEffects
 #ifdef FLUIDSYNTHSUPPORT
 ,
-    cfg_fluid_interp_method
+    Cfg_FluidSynthInterpolationMethod
 #endif
 ;
 
 extern cfg_string
-    cfg_vst_path,
-    cfg_soundfont_path,
-    cfg_munt_base_path;
+    CfgVSTiPath,
+    CfgSoundFontPath,
+    CfgMUNTPath;
 
 extern cfg_map
-    cfg_vst_config;
+    CfgVSTiConfig;
 
 extern advconfig_string_factory CfgVSTiSearchPath;
 
@@ -134,5 +141,32 @@ extern advconfig_checkbox_factory cfg_SkipToFirstNote;
 #ifdef BASSMIDISUPPORT
 extern advconfig_checkbox_factory cfg_bassmidi_effects;
 extern advconfig_integer_factory cfg_bassmidi_voices;
+
+extern const bool _HASSSE2;
 #endif
+
+extern const char * _MUNTGMSets[];
+extern const size_t _MUNTGMSetCount;
+
+extern const char * _FileExtensions[];
+extern const size_t _FileExtensionCount;
+
+extern const char * _SyxExtension[];
+extern const size_t _SyxExtensionCount;
+
+extern const char field_hash[];
+extern const char field_format[];
+extern const char field_tracks[];
+extern const char field_channels[];
+extern const char field_ticks[];
+extern const char field_type[];
+extern const char field_loop_start[];
+extern const char field_loop_end[];
+extern const char field_loop_start_ms[];
+extern const char field_loop_end_ms[];
+extern const char field_preset[];
+extern const char field_syx[];
+
+extern bool IsFileExtensionSupported(const char * fileExtension);
+extern bool g_test_extension_syx(const char * ext);
 

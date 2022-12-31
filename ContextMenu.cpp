@@ -6,7 +6,8 @@
 
 #include <midi_processing/midi_processor.h>
 
-#include "Fields.h"
+#include "Configuration.h"
+
 #include "MIDIPreset.h"
 #include "MIDIPresetFilter.h"
 #include "MIDISysExDumps.h"
@@ -106,11 +107,12 @@ public:
 
             pfc::string8 Extension = pfc::string_extension(Location.get_path());
 
-            size_t FileExtensionIndex, FileExtensionCount;
+            size_t FileExtensionIndex;
+            size_t FileExtensionCount;
 
-            for (FileExtensionIndex = (unsigned)((n == 0) ? 3 : 0), FileExtensionCount = (unsigned)_countof(_FileExtension); FileExtensionIndex < FileExtensionCount; ++FileExtensionIndex)
+            for (FileExtensionIndex = (unsigned)((n == 0) ? 3 : 0), FileExtensionCount = _FileExtensionCount; FileExtensionIndex < FileExtensionCount; ++FileExtensionIndex)
             {
-                if (!pfc::stricmp_ascii(Extension, _FileExtension[FileExtensionIndex]))
+                if (pfc::stricmp_ascii(Extension, _FileExtensions[FileExtensionIndex]) == 0)
                 {
                     ++matches;
                     break;
@@ -122,7 +124,7 @@ public:
 
             if (n == 3)
             {
-                for (size_t SyxExtensionIndex = 0, SyxExtensionCount = _countof(_SyxExtension); SyxExtensionIndex < SyxExtensionCount; ++SyxExtensionIndex)
+                for (size_t SyxExtensionIndex = 0, SyxExtensionCount = _SyxExtensionCount; SyxExtensionIndex < SyxExtensionCount; ++SyxExtensionIndex)
                 {
                     if (!pfc::stricmp_ascii(Extension, _SyxExtension[SyxExtensionIndex]))
                     {

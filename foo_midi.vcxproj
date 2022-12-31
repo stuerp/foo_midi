@@ -364,7 +364,6 @@
     <ClInclude Include="3rdParty\fmopl3lib\opl3class.h" />
     <ClInclude Include="3rdParty\interface.h" />
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="Fields.h" />
     <ClInclude Include="MIDISysExFilter.h" />
     <ClInclude Include="History.h" />
     <ClInclude Include="MIDIPresetFilter.h" />

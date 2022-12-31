@@ -18,9 +18,9 @@ static const GUID guid_cfg_filter_banks = { 0x3145963c, 0x7322, 0x4b48, { 0x99, 
 //static const GUID guid_cfg_recover_tracks = { 0xfe5b24d8, 0xc8a5, 0x4b49, { 0xa1, 0x63, 0x97, 0x26, 0x49, 0x21, 0x71, 0x85 } };
 static const GUID guid_cfg_loop_type = { 0x460a84b6, 0x910a, 0x496c, { 0xbe, 0xb6, 0x86, 0xfd, 0xeb, 0x41, 0xab, 0xdc } };
 static const GUID guid_cfg_loop_type_other = { 0xab5cc279, 0x1c68, 0x4824, { 0xb4, 0xb8, 0x6, 0x56, 0x85, 0x6a, 0x40, 0xa0 } };
-static const GUID guid_cfg_srate = { 0xae5ba73b, 0xb0d4, 0x4261, { 0xbf, 0xf2, 0x11, 0xa1, 0xc4, 0x4e, 0x57, 0xea } };
-static const GUID guid_cfg_plugin = { 0x1253bac2, 0x9193, 0x420c, { 0xa9, 0x19, 0x9a, 0x1c, 0xf8, 0x70, 0x6e, 0x2c } };
-static const GUID guid_cfg_resampling = { 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } };
+static const GUID GUIDSampleRate = { 0xae5ba73b, 0xb0d4, 0x4261, { 0xbf, 0xf2, 0x11, 0xa1, 0xc4, 0x4e, 0x57, 0xea } };
+static const GUID GUIDPlugInId = { 0x1253bac2, 0x9193, 0x420c, { 0xa9, 0x19, 0x9a, 0x1c, 0xf8, 0x70, 0x6e, 0x2c } };
+static const GUID GUIDResamplingMode = { 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } };
 //static const GUID guid_cfg_gm2 = { 0xf3ee2258, 0x65d3, 0x4219, { 0xb9, 0x32, 0xbf, 0x52, 0x11, 0x9f, 0x24, 0x84 } };
 static const GUID guid_cfg_vst_path = { 0x1a6ea7e5, 0x718a, 0x485a, { 0xb1, 0x67, 0xcf, 0xdf, 0x3b, 0x40, 0x61, 0x45 } };
 static const GUID guid_cfg_soundfont_path = { 0x696d12dd, 0xaf32, 0x43d9, { 0x8d, 0xf6, 0xbd, 0xd1, 0x1e, 0x81, 0x83, 0x29 } };
@@ -42,11 +42,14 @@ static const GUID GUIDSCCorePath = { 0x1bf1799d, 0x7691, 0x4075, { 0x98, 0xae, 0
 static const GUID guid_cfg_midi_timing_parent = { 0x851583f7, 0x98b4, 0x44c7, { 0x9d, 0xf4, 0x4c, 0x7f, 0x85, 0x9d, 0x13, 0xba } };
 static const GUID guid_cfg_midi_loop_count = { 0xd8492ad0, 0x3b70, 0x4768, { 0x8d, 0x7, 0x97, 0xf5, 0x50, 0x8c, 0x8, 0xe8 } };
 static const GUID guid_cfg_midi_fade_time = { 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
+
 static const GUID guid_cfg_adl_bank = { 0xa62a00a7, 0xdbf, 0x4475, { 0xbe, 0xca, 0xed, 0xbf, 0x5d, 0x6, 0x4a, 0x80 } };
 static const GUID guid_cfg_adl_chips = { 0x974365ed, 0xd4f9, 0x4daa, { 0xb4, 0x89, 0xad, 0x7a, 0xd2, 0x91, 0xfa, 0x94 } };
 static const GUID guid_cfg_adl_panning = { 0xad6821b4, 0x493f, 0x4bb3, { 0xb7, 0xbb, 0xe0, 0xa6, 0x7c, 0x5d, 0x59, 0x7 } };
 //static const GUID guid_cfg_adl_4op = { 0xc5fb4053, 0x75bf, 0x4c0d, { 0xa1, 0xb1, 0x71, 0x73, 0x86, 0x32, 0x88, 0xa6 } };
+
 static const GUID guid_cfg_munt_gm = { 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 0xc5, 0xb5, 0xf1, 0xb8, 0xcf, 0x5b } };
+
 #ifdef BASSMIDISUPPORT
 static const GUID guid_cfg_bassmidi_effects = { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };   // {62BF901B-9C51-45FE-BE8A-14FB56205E5E}
 #endif
@@ -60,20 +63,19 @@ static const GUID guid_cfg_ms_bank = { 0xa91d31f4, 0x22ae, 0x4c5c, { 0xa6, 0x21,
 static const GUID guid_cfg_ms_panning = { 0x849c5c09, 0x520a, 0x4d62, { 0xa6, 0xd1, 0xe8, 0xb4, 0x32, 0x66, 0x49, 0x48 } };
 // {091C12A1-D42B-4F4E-8058-8B7F4C4DF3A1}
 static const GUID guid_cfg_midi_reverb = { 0x91c12a1, 0xd42b, 0x4f4e, { 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
-// {715C6E5D-60BF-43AA-8DA3-F4F30B06FF48}
+
 static const GUID guid_cfg_adl_core_parent = { 0x715c6e5d, 0x60bf, 0x43aa, { 0x8d, 0xa3, 0xf4, 0xf3, 0xb, 0x6, 0xff, 0x48 } };
-// {06B2C372-2D86-4368-B9D1-FC0BC89938B1}
 static const GUID guid_cfg_adl_core_nuked = { 0x6b2c372, 0x2d86, 0x4368, { 0xb9, 0xd1, 0xfc, 0xb, 0xc8, 0x99, 0x38, 0xb1 } };
-// {68252066-2A7D-4D74-B7C4-D69B1D6768D1}
 static const GUID guid_cfg_adl_core_nuked_174 = { 0x68252066, 0x2a7d, 0x4d74, { 0xb7, 0xc4, 0xd6, 0x9b, 0x1d, 0x67, 0x68, 0xd1 } };
-// {2A0290F8-805B-4109-AAD3-D5AE7F6235C7}
 static const GUID guid_cfg_adl_core_dosbox = { 0x2a0290f8, 0x805b, 0x4109, { 0xaa, 0xd3, 0xd5, 0xae, 0x7f, 0x62, 0x35, 0xc7 } };
+
 #ifdef BASSMIDISUPPORT
 // {DD5ADCEB-9B31-47B6-AF57-3B15D2025D9F}
 static const GUID guid_cfg_bassmidi_parent = { 0xdd5adceb, 0x9b31, 0x47b6, { 0xaf, 0x57, 0x3b, 0x15, 0xd2, 0x2, 0x5d, 0x9f } };
 // {9E0A5DAB-6786-4120-B737-85BB2DFAF307}
 static const GUID guid_cfg_bassmidi_voices = { 0x9e0a5dab, 0x6786, 0x4120, { 0xb7, 0x37, 0x85, 0xbb, 0x2d, 0xfa, 0xf3, 0x7 } };
 #endif
+
 // {5223B5BC-41E8-4D5D-831F-477D9F8F3189}
 static const GUID guid_cfg_opn_core_parent = { 0x5223b5bc, 0x41e8, 0x4d5d, { 0x83, 0x1f, 0x47, 0x7d, 0x9f, 0x8f, 0x31, 0x89 } };
 // {C5617B26-F011-4674-B85D-12DA2DA9D0DF}
@@ -110,7 +112,8 @@ static const GUID guid_cfg_midi_flavor = { 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0
 #pragma endregion
 
 cfg_int
-    CfgPluginId(guid_cfg_plugin, DefaultPluginId),
+    CfgPlugInId(GUIDPlugInId, DefaultPlugInId),
+    CfgSampleRate(GUIDSampleRate, DefaultSampleRate),
 
     cfg_thloopz(guid_cfg_thloopz, default_cfg_thloopz),
     cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz),
@@ -120,32 +123,32 @@ cfg_int
     cfg_emidi_exclusion(guid_cfg_emidi_exclusion, default_cfg_emidi_exclusion),
 //  cfg_hack_xg_drums("yam", 0),
 
+    CfgResamplingMode(GUIDResamplingMode, DefaultResamplingMode),
+
     cfg_filter_instruments(guid_cfg_filter_instruments, default_cfg_filter_instruments),
     cfg_filter_banks(guid_cfg_filter_banks, default_cfg_filter_banks),
 //  cfg_recover_tracks(guid_cfg_recover_tracks, default_cfg_recover_tracks),
-    cfg_loop_type(guid_cfg_loop_type, default_cfg_loop_type),
-    cfg_loop_type_other(guid_cfg_loop_type_other, default_cfg_loop_type_other),
+    cfg_loop_type(guid_cfg_loop_type, DefaultPlaybackLoopType),
+    cfg_loop_type_other(guid_cfg_loop_type_other, DefaultOtherLoopType),
 //  cfg_nosysex("sux", 0),
 //  cfg_gm2(guid_cfg_gm2, 0),
-    cfg_srate(guid_cfg_srate, default_cfg_srate),
-    cfg_resampling(guid_cfg_resampling, default_cfg_resampling),
 
-    cfg_adl_bank(guid_cfg_adl_bank, default_cfg_adl_bank),
-    cfg_adl_chips(guid_cfg_adl_chips, default_cfg_adl_chips),
-    cfg_adl_panning(guid_cfg_adl_panning, default_cfg_adl_panning),
-//  cfg_adl_4op(guid_cfg_adl_4op, default_cfg_adl_4op),
+    CfgADLBank(guid_cfg_adl_bank, DefaultADLBank),
+    CfgADLChipCount(guid_cfg_adl_chips, DefaultADLChipCount),
+    CfgADLPanning(guid_cfg_adl_panning, DefaultADLPanning),
+//  cfg_adl_4op(guid_cfg_adl_4op, DefaultADL4Op),
 
-    cfg_munt_gm(guid_cfg_munt_gm, default_cfg_munt_gm),
+    CfgMUNTGMSet(guid_cfg_munt_gm, default_cfg_munt_gm),
 
-    cfg_ms_synth(guid_cfg_ms_synth, DefaultMSSynth),
-    cfg_ms_bank(guid_cfg_ms_bank, DefaultMSBank),
-    cfg_ms_panning(guid_cfg_ms_panning, default_cfg_ms_panning),
+    CfgMSSynthesizer(guid_cfg_ms_synth, DefaultMSSynth),
+    CfgMSBank(guid_cfg_ms_bank, DefaultMSBank),
+    CfgMSPanning(guid_cfg_ms_panning, DefaultMSPanning),
 
-    cfg_midi_flavor(guid_cfg_midi_flavor, default_cfg_midi_flavor),
-    cfg_midi_reverb(guid_cfg_midi_reverb, default_cfg_midi_reverb)
+    CfgMIDIFlavor(guid_cfg_midi_flavor, default_cfg_midi_flavor),
+    CfgAllowMIDIEffects(guid_cfg_midi_reverb, default_cfg_midi_reverb)
 #ifdef FLUIDSYNTHSUPPORT
 ,
-    cfg_fluid_interp_method(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
+    Cfg_FluidSynthInterpolationMethod(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
 #endif
 ;
 
@@ -156,11 +159,11 @@ cfg_guid cfg_dxi_plugin(guid_cfg_dxi_plugin, default_cfg_dxi_plugin);
 #endif
 
 cfg_string
-    cfg_vst_path(guid_cfg_vst_path, ""),
-    cfg_soundfont_path(guid_cfg_soundfont_path, ""),
-    cfg_munt_base_path(guid_cfg_munt_base_path, "");
+    CfgVSTiPath(guid_cfg_vst_path, ""),
+    CfgSoundFontPath(guid_cfg_soundfont_path, ""),
+    CfgMUNTPath(guid_cfg_munt_base_path, "");
 
-cfg_map cfg_vst_config(guid_cfg_vst_config);
+cfg_map CfgVSTiConfig(guid_cfg_vst_config);
 
 /** Advanced Configuration **/
 
@@ -211,3 +214,66 @@ advconfig_checkbox_factory cfg_soundfont_dynamic("Load SoundFont samples dynamic
 advconfig_checkbox_factory cfg_fluidsynth_effects("Render reverb and chorus effects", guid_cfg_fluidsynth_effects, guid_cfg_fluidsynth_parent, 1, true);
 advconfig_integer_factory cfg_fluidsynth_voices("Maximum voice count", guid_cfg_fluidsynth_voices, guid_cfg_fluidsynth_parent, 2, 256, 1, 65535);
 #endif
+
+const char * _FileExtensions[] =
+{
+    "MID",
+    "MIDI",
+    "KAR",
+    "RMI",
+    "MIDS",
+    "MDS",
+    //	"CMF",
+    //	"GMF",
+    "HMI",
+    "HMP",
+    "HMQ",
+    "MUS",
+    "XMI",
+    "LDS",
+};
+
+const size_t _FileExtensionCount = _countof(_FileExtensions);
+
+const char * _SyxExtension[] =
+{
+    "SYX",
+    "DMP"
+};
+
+const size_t _SyxExtensionCount = _countof(_SyxExtension);
+
+const char field_hash[] = "midi_hash";
+const char field_format[] = "midi_format";
+const char field_tracks[] = "midi_tracks";
+const char field_channels[] = "midi_channels";
+const char field_ticks[] = "midi_ticks";
+const char field_type[] = "midi_type";
+const char field_loop_start[] = "midi_loop_start";
+const char field_loop_end[] = "midi_loop_end";
+const char field_loop_start_ms[] = "midi_loop_start_ms";
+const char field_loop_end_ms[] = "midi_loop_end_ms";
+const char field_preset[] = "midi_preset";
+const char field_syx[] = "midi_sysex_dumps";
+
+bool IsFileExtensionSupported(const char * fileExtension)
+{
+    for (size_t i = 0; i < _FileExtensionCount; ++i)
+    {
+        if (::_stricmp(fileExtension, _FileExtensions[i]) == 0)
+            return true;
+    }
+
+    return false;
+}
+
+bool g_test_extension_syx(const char * ext)
+{
+    for (size_t i = 0; i < _SyxExtensionCount; ++i)
+    {
+        if (::_stricmp(ext, _SyxExtension[i]) == 0)
+            return true;
+    }
+
+    return false;
+}

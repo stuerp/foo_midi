@@ -476,10 +476,10 @@ void MIDIPlayer::setLoopMode(unsigned int loopMode)
     _LoopMode = loopMode;
 }
 
-void MIDIPlayer::setFilterMode(filter_mode filterMode, bool isReverbChorusDisabled)
+void MIDIPlayer::setFilterMode(filter_mode filterMode, bool useMIDIEffects)
 {
     _FilterMode = filterMode;
-    _IsReverbChorusDisabled = isReverbChorusDisabled;
+    _UseMIDIEffects = useMIDIEffects;
 
     if (_IsInitialized)
     {
@@ -493,7 +493,7 @@ void MIDIPlayer::send_event_filtered(uint32_t message)
 {
     if (!(message & 0x80000000u))
     {
-        if (_IsReverbChorusDisabled)
+        if (_UseMIDIEffects)
         {
             const uint32_t _b = message & 0x7FF0;
 
@@ -518,7 +518,7 @@ void MIDIPlayer::send_event_time_filtered(uint32_t message, unsigned int time)
 {
     if (!(message & 0x80000000u))
     {
-        if (_IsReverbChorusDisabled)
+        if (_UseMIDIEffects)
         {
             const uint32_t _b = message & 0x7FF0;
 
@@ -734,7 +734,7 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
         }
     }
 
-    if (_IsReverbChorusDisabled)
+    if (_UseMIDIEffects)
     {
         if (time)
         {

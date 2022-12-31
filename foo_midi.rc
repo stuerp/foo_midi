@@ -102,10 +102,10 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     groupbox "Looping", IDC_STATIC, X_20, Y_20, W_20, H_20
         rtext       "Playback:",    IDC_STATIC,         X_21, Y_21, W_21, H_21
-        combobox                    IDC_LOOP,           X_22, Y_22, W_22, H_22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        combobox                    IDC_LOOP_PLAYBACK,  X_22, Y_22, W_22, H_22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
         rtext       "Other:",       IDC_STATIC,         X_23, Y_23, W_23, H_23
-        combobox                    IDC_CLOOP,          X_24, Y_24, W_24, H_24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        combobox                    IDC_LOOP_OTHER,     X_24, Y_24, W_24, H_24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     #define X_30    7
     #define Y_30    Y_20 + H_20 + 4
@@ -206,7 +206,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
         rtext             "File:",  IDC_SOUNDFONT_TEXT,     X_51, Y_51 + 2, W_51, H_51
         edittext                    IDC_SOUNDFONT,          X_52, Y_52,     W_52, H_52, ES_AUTOHSCROLL | ES_READONLY
         rtext       "Resampling:",  IDC_RESAMPLING_TEXT,    X_53, Y_53 + 2, W_53, H_53
-        combobox                    IDC_RESAMPLING,         X_54, Y_54,     W_54, H_54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        combobox                    IDC_RESAMPLING_MODE,    X_54, Y_54,     W_54, H_54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext           "Cached:",  IDC_CACHED_TEXT,        X_55, Y_55 + 2, W_55, H_55
         edittext                    IDC_CACHED,             X_56, Y_56,     W_56, H_56, ES_AUTOHSCROLL | ES_READONLY
 
@@ -290,10 +290,10 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     #define H_80    11 + H_82 + 4 + H_83 + 4
 
-    groupbox "Common", IDC_FILTER_GROUP, X_80, Y_80, W_80, H_80
-        rtext       "Standard:",                    IDC_FILTER_FLAVOR_TEXT, X_81, Y_81 + 2, W_81, H_81
-        combobox                                    IDC_FILTER_FLAVOR,      X_82, Y_82,     W_82, H_82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        control     "Disable reverb and chorus",    IDC_FILTER_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_83, Y_83, W_83, H_83
+    groupbox "MIDI Filter", IDC_FILTER_GROUP, X_80, Y_80, W_80, H_80
+        rtext       "Flavor:",                     IDC_MIDI_FLAVOR_TEXT, X_81, Y_81 + 2, W_81, H_81
+        combobox                                   IDC_MIDI_FLAVOR,      X_82, Y_82,     W_82, H_82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        control     "Effects (Reverb and Chorus)", IDC_MIDI_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_83, Y_83, W_83, H_83
 
     // ADL
     #define X_90    X_80

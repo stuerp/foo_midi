@@ -1,6 +1,8 @@
 
 /** $VER: MIDIPreset.cpp (2022.12.30) **/
 
+#pragma warning(disable: 5045)
+
 #include "MIDIPreset.h"
 
 #include "MSPlayer.h"
@@ -8,8 +10,8 @@
 MIDIPreset::MIDIPreset() noexcept
 {
     {
-        _PluginId = (unsigned int)CfgPluginId;
-        _VSTPathName = cfg_vst_path;
+        _PluginId = (unsigned int)CfgPlugInId;
+        _VSTPathName = CfgVSTiPath;
 
         {
             VSTiPlayer * Player = nullptr;
@@ -20,7 +22,7 @@ MIDIPreset::MIDIPreset() noexcept
 
                 if (Player->LoadVST(_VSTPathName))
                 {
-                    vst_config = cfg_vst_config[(unsigned int)(Player->getUniqueID())];
+                    vst_config = CfgVSTiConfig[(unsigned int)(Player->getUniqueID())];
                 }
             }
             catch (...)
@@ -32,7 +34,7 @@ MIDIPreset::MIDIPreset() noexcept
             delete Player;
         }
 
-        _SoundFontPathName = cfg_soundfont_path;
+        _SoundFontPathName = CfgSoundFontPath;
     }
 
 #ifdef BASSMIDISUPPORT
@@ -56,9 +58,9 @@ MIDIPreset::MIDIPreset() noexcept
 #endif
 
     {
-        _ADLBankNumber = (unsigned int)cfg_adl_bank;
-        _ADLChipCount = (unsigned int)cfg_adl_chips;
-        _ADLUsePanning = !!cfg_adl_panning;
+        _ADLBankNumber = (unsigned int)CfgADLBank;
+        _ADLChipCount = (unsigned int)CfgADLChipCount;
+        _ADLUsePanning = !!CfgADLPanning;
 
         if (cfg_adl_core_dosbox)
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
@@ -96,18 +98,18 @@ MIDIPreset::MIDIPreset() noexcept
     }
 
     {
-        munt_gm_set = (unsigned int)cfg_munt_gm;
+        munt_gm_set = (unsigned int)CfgMUNTGMSet;
     }
 
     {
-        ms_synth = (unsigned int)cfg_ms_synth;
-        ms_bank = (unsigned int)cfg_ms_bank;
-        ms_panning = (bool)cfg_ms_panning;
+        ms_synth = (unsigned int)CfgMSSynthesizer;
+        ms_bank = (unsigned int)CfgMSBank;
+        ms_panning = (bool)CfgMSPanning;
     }
 
     {
-        _MIDIStandard = (unsigned int)cfg_midi_flavor;
-        _UseMIDIReverb = (bool)cfg_midi_reverb;
+        _MIDIStandard = (unsigned int)CfgMIDIFlavor;
+        _UseMIDIEffects = (bool)CfgAllowMIDIEffects;
     }
 }
 
@@ -153,7 +155,7 @@ void MIDIPreset::serialize(pfc::string8 & p_out)
             p_out += "|";
             p_out += pfc::format_int(_MIDIStandard);
             p_out += "|";
-            p_out += pfc::format_int(_UseMIDIReverb);
+            p_out += pfc::format_int(_UseMIDIEffects);
         }
         else
         if (_PluginId == 2 || _PluginId == 4)
@@ -176,7 +178,7 @@ void MIDIPreset::serialize(pfc::string8 & p_out)
 
             p_out += "|";
 
-            p_out += pfc::format_int(_UseMIDIReverb);
+            p_out += pfc::format_int(_UseMIDIEffects);
         }
     #ifdef DXISUPPORT
         else
@@ -225,7 +227,7 @@ void MIDIPreset::serialize(pfc::string8 & p_out)
         {
             p_out += "|";
 
-            p_out += MuntBankNames[munt_gm_set];
+            p_out += _MUNTGMSets[munt_gm_set];
         }
         else
         if (_PluginId == 9)
@@ -241,7 +243,7 @@ void MIDIPreset::serialize(pfc::string8 & p_out)
             p_out += "|";
             p_out += pfc::format_int(_MIDIStandard);
             p_out += "|";
-            p_out += pfc::format_int(_UseMIDIReverb);
+            p_out += pfc::format_int(_UseMIDIEffects);
         }
         else
         if (_PluginId == 7)
@@ -300,8 +302,8 @@ void MIDIPreset::unserialize(const char * data)
         bool in_ms_panning;
         unsigned in_opn_bank;
         unsigned in_opn_emu_core;
-        unsigned in_midi_flavor = (unsigned)cfg_midi_flavor;
-        bool in_midi_reverb = (bool)cfg_midi_reverb;
+        unsigned in_midi_flavor = (unsigned)CfgMIDIFlavor;
+        bool in_midi_reverb = (bool)CfgAllowMIDIEffects;
 
         if (*Separator)
         {
@@ -561,11 +563,11 @@ void MIDIPreset::unserialize(const char * data)
             {
                 unsigned i, j;
 
-                for (i = 0, j = _countof(MuntBankNames); i < j; ++i)
+                for (i = 0, j = _MUNTGMSetCount; i < j; ++i)
                 {
-                    size_t len = ::strlen(MuntBankNames[i]);
+                    size_t len = ::strlen(_MUNTGMSets[i]);
 
-                    if (len == (size_t)(Separator - data) && !strncmp(data, MuntBankNames[i], len))
+                    if (len == (size_t)(Separator - data) && (::strncmp(data, _MUNTGMSets[i], len) == 0))
                     {
                         in_munt_gm_set = i;
                         break;
@@ -761,7 +763,7 @@ void MIDIPreset::unserialize(const char * data)
             ms_panning = in_ms_panning;
 
             _MIDIStandard = in_midi_flavor;
-            _UseMIDIReverb = in_midi_reverb;
+            _UseMIDIEffects = in_midi_reverb;
         }
     }
 

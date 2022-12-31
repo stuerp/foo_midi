@@ -14,11 +14,24 @@
 class MIDIPlayer
 {
 public:
+    MIDIPlayer();
+    virtual ~MIDIPlayer() { };
+
+    bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
+    unsigned long Play(audio_sample * out, unsigned long count);
+    void Seek(unsigned long sample);
+
+    bool GetLastError(std::string & p_out);
+
+    void setSampleRate(unsigned long rate);
+
     enum LoopMode
     {
         loop_mode_enable = 1 << 0,
         loop_mode_force = 1 << 1
     };
+
+    void setLoopMode(unsigned int mode);
 
     enum filter_mode
     {
@@ -32,17 +45,6 @@ public:
         filter_xg
     };
 
-    MIDIPlayer();
-    virtual ~MIDIPlayer() { };
-
-    bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
-    unsigned long Play(audio_sample * out, unsigned long count);
-    void Seek(unsigned long sample);
-
-    bool GetLastError(std::string & p_out);
-
-    void setSampleRate(unsigned long rate);
-    void setLoopMode(unsigned int mode);
     void setFilterMode(filter_mode m, bool disable_reverb_chorus);
 
 protected:
@@ -72,7 +74,7 @@ protected:
     unsigned long _SampleRate;
     system_exclusive_table _SysExMap;
     filter_mode _FilterMode;
-    bool _IsReverbChorusDisabled;
+    bool _UseMIDIEffects;
 
 private:
     void send_event_filtered(uint32_t b);

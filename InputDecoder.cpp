@@ -11,11 +11,9 @@
 #include <midi_processing/midi_processor.h>
 
 #include "Configuration.h"
+#include "TrackHasher.h"
 #include "MIDIPreset.h"
 #include "MIDISysExDumps.h"
-#include "Configuration.h"
-#include "Fields.h"
-#include "TrackHasher.h"
 
 /** Players **/
 
@@ -54,9 +52,9 @@ bool IsValidShiftJIS(const char * text, t_size size= ~0);
 class input_midi : public input_stubs
 {
 public:
-    input_midi() : _SampleRate((unsigned int)cfg_srate), resampling((unsigned int)cfg_resampling),
+    input_midi() : _SampleRate((unsigned int)CfgSampleRate), _ResamplingMode((unsigned int)CfgResamplingMode),
     #ifdef FLUIDSYNTHSUPPORT
-        fluid_interp_method(cfg_fluid_interp_method),
+        fluid_interp_method(Cfg_FluidSynthInterpolationMethod),
     #endif
         loop_type_playback((unsigned int)cfg_loop_type),
         loop_type_other((unsigned int)cfg_loop_type_other),
@@ -86,8 +84,8 @@ public:
         fade_ms = (unsigned int)cfg_midi_fade_time.get();
 
     #ifdef BASSMIDISUPPORT
-        if (!_bassmidi_src2_avail && resampling > 1)
-            resampling = 1;
+        if (!_HASSSE2 && _ResamplingMode > 1)
+            _ResamplingMode = 1;
     #endif
     }
 
@@ -291,7 +289,7 @@ public:
 
         pfc::array_t<t_uint8> tag;
 
-        static_api_ptr_t<metadb_index_manager>()->get_user_data_t(guid_midi_index, m_index_hash, tag);
+        static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTrackHasher, m_index_hash, tag);
 
         if (tag.get_count())
         {
@@ -414,7 +412,7 @@ public:
             m_index_hash = index_client->transform(FileInfo, playable_location_impl(_FilePath, subsongIndex));
 
             pfc::array_t<t_uint8> tag;
-            static_api_ptr_t<metadb_index_manager>()->get_user_data_t(guid_midi_index, m_index_hash, tag);
+            static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTrackHasher, m_index_hash, tag);
 
             if (tag.get_count())
             {
@@ -618,7 +616,7 @@ public:
 
                 {
                     _Player->setSampleRate(_SampleRate);
-                    _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIReverb);
+                    _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
                     unsigned LoopMode = MIDIPlayer::loop_mode_enable;
 
@@ -668,7 +666,7 @@ public:
                 sfPlayer->setEffects(thePreset.effects);
                 sfPlayer->setVoiceCount(thePreset.voices);
 
-                sfPlayer->setFilterMode((MIDIPlayer::filter_mode) thePreset.midi_flavor, !thePreset.midi_reverb);
+                sfPlayer->setFilterMode((MIDIPlayer::filter_mode) thePreset.MIDIStandard, !thePreset._UseMIDIEffects);
 
                 unsigned LoopMode = 0;
 
@@ -714,7 +712,7 @@ public:
                     if (file_soundfont.length())
                         Player->setFileSoundFont(file_soundfont);
 
-                    Player->setInterpolation(resampling);
+                    Player->setInterpolation(_ResamplingMode);
                     Player->setEffects(Preset._BASSMIDIEffects);
                     Player->setVoices(Preset._BASSMIDIVoices);
 
@@ -723,7 +721,7 @@ public:
 
                 {
                     _Player->setSampleRate(_SampleRate);
-                    _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIReverb);
+                    _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
                     unsigned LoopMode = MIDIPlayer::loop_mode_enable;
 
@@ -761,7 +759,7 @@ public:
                     Player->setFullPanning(Preset._ADLUsePanning);
                     Player->set4OpCount(Preset._ADLChipCount * 4 /*cfg_adl_4op*/);
                     Player->setCore(Preset._ADLEmulatorCore);
-                    Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIReverb);
+                    Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
                     _Player = Player;
                 }
@@ -802,7 +800,7 @@ public:
 
                 {
                     _Player->setSampleRate(_SampleRate);
-                    _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIReverb);
+                    _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
                     unsigned LoopMode = MIDIPlayer::loop_mode_enable;
 
@@ -832,13 +830,13 @@ public:
 
                         IsMT32 = (MetaData.get_item("type", Item) && (::strcmp(Item.m_value.c_str(), "MT-32") == 0));
 
-                        if (cfg_munt_base_path.is_empty())
+                        if (CfgMUNTPath.is_empty())
                             console::print("No MUNT base path configured, attempting to load ROMs from plugin install path");
                     }
 
                     MT32Player * Player = new MT32Player(!IsMT32, Preset.munt_gm_set);
 
-                    pfc::string8 BasePath = cfg_munt_base_path;
+                    pfc::string8 BasePath = CfgMUNTPath;
 
                     if (BasePath.is_empty())
                     {
@@ -934,7 +932,7 @@ public:
                 }
 
                 {
-                    _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIReverb);
+                    _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
                     _Player->setSampleRate(_SampleRate);
 
                     unsigned LoopMode = MIDIPlayer::loop_mode_enable;
@@ -1287,7 +1285,7 @@ public:
         tag.set_count(tag_file->get_size_ex(p_abort));
         tag_file->read_object(tag.get_ptr(), tag.get_count(), p_abort);
 
-        static_api_ptr_t<metadb_index_manager>()->set_user_data(guid_midi_index, m_index_hash, tag.get_ptr(), tag.get_count());
+        static_api_ptr_t<metadb_index_manager>()->set_user_data(GUIDTrackHasher, m_index_hash, tag.get_ptr(), tag.get_count());
     }
 
     void retag_commit(abort_callback&)
@@ -1305,7 +1303,7 @@ public:
 
     static bool g_is_our_path(const char *, const char * p_extension)
     {
-        return g_test_extension(p_extension) || g_test_extension_syx(p_extension);
+        return IsFileExtensionSupported(p_extension) || g_test_extension_syx(p_extension);
     }
 
     static GUID g_get_guid()
@@ -1423,7 +1421,7 @@ private:
 
     unsigned _PluginID;
     unsigned _SampleRate;
-    unsigned resampling;
+    unsigned _ResamplingMode;
 
     bool is_emidi;
 
@@ -1523,6 +1521,7 @@ static bool IsValidShiftJIS(const char * data, size_t size)
 
     return true;
 }
+
 /*
 #define XMIDI_CONTROLLER_FOR_LOOP 0x74 // For Loop
 #define XMIDI_CONTROLLER_NEXT_BREAK 0x75 // Next/Break

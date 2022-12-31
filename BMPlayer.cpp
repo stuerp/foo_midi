@@ -596,7 +596,7 @@ bool BMPlayer::startup()
 
     _IsInitialized = true;
 
-    setFilterMode(_FilterMode, _IsReverbChorusDisabled);
+    setFilterMode(_FilterMode, _UseMIDIEffects);
 
     return true;
 }

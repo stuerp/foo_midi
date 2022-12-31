@@ -30,7 +30,7 @@
 
 #pragma warning(disable: 4820)
 
-#define DEBUG_DIALOG
+//#define DEBUG_DIALOG
 
 #pragma hdrstop
 
@@ -40,19 +40,18 @@ extern volatile int g_running;
 static const GUID GUIDCfgSampleRateHistory = { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
 static cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
 
-static const char * click_to_set = "Click to set.";
+static const char * DefaultPathMessage = "Click to set.";
 
 static const int SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
 
-static const char * loop_txt[] =
+#pragma region("MUNT")
+const char * _MUNTGMSets[] =
 {
-    "Never loop",
-    "Never, add 1s decay time",
-    "Loop and fade when detected",
-    "Always loop and fade",
-    "Play indefinitely when detected",
-    "Play indefinitely"
+    "Roland",
+    "Sierra / King's Quest 6",
 };
+const size_t _MUNTGMSetCount = _countof(_MUNTGMSets);
+#pragma endregion
 
 #ifdef FLUIDSYNTHSUPPORT
 static const char * interp_txt[] = { "None", "Linear", "Cubic", "7th Order Sinc" };
@@ -66,7 +65,7 @@ enum
 class Preferences : public CDialogImpl<Preferences>, public preferences_page_instance
 {
 public:
-    Preferences(preferences_page_callback::ptr callback) noexcept : m_callback(callback), busy(false) { }
+    Preferences(preferences_page_callback::ptr callback) noexcept : m_callback(callback), _IsBusy(false) { }
     Preferences(const Preferences&) = delete;
     Preferences(const Preferences&&) = delete;
     Preferences& operator=(const Preferences&) = delete;
@@ -83,17 +82,19 @@ public:
         MSG_WM_TIMER(OnTimer)
 
         COMMAND_HANDLER_EX(IDC_PLUGIN, CBN_SELCHANGE, OnPluginChange)
+
         DROPDOWN_HISTORY_HANDLER(IDC_SAMPLERATE, CfgSampleRateHistory)
         COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_EDITCHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_SELCHANGE, OnSelectionChange)
 
         COMMAND_HANDLER_EX(IDC_SOUNDFONT, EN_SETFOCUS, OnSetFocus)
+        COMMAND_HANDLER_EX(IDC_RESAMPLING_MODE, CBN_SELCHANGE, OnSelectionChange)
 
         COMMAND_HANDLER_EX(IDC_MUNT, EN_SETFOCUS, OnSetFocus)
 
-        COMMAND_HANDLER_EX(IDC_LOOP, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_CLOOP, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_RESAMPLING, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_LOOP_PLAYBACK, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_LOOP_OTHER, CBN_SELCHANGE, OnSelectionChange)
+
         COMMAND_HANDLER_EX(IDC_RPGMLOOPZ, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
@@ -114,8 +115,8 @@ public:
         COMMAND_HANDLER_EX(IDC_MS_PRESET, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_MS_PANNING, BN_CLICKED, OnButtonClick)
 
-        COMMAND_HANDLER_EX(IDC_FILTER_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_FILTER_EFFECTS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS, BN_CLICKED, OnButtonClick)
 
 #ifdef DEBUG_DIALOG
         MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
@@ -156,7 +157,7 @@ private:
 private:
     const preferences_page_callback::ptr m_callback;
 
-    bool busy;
+    bool _IsBusy;
 
     struct BuiltInPlugin
     {
@@ -181,16 +182,16 @@ private:
         bool HasEditor;
     };
 
-    pfc::array_t<VSTiPlugin> _VSTiPlugins;
-    std::vector<uint8_t> vsti_config;
+    pfc::array_t<VSTiPlugin> _VSTiPlugIns;
+    std::vector<uint8_t> _VSTiConfig;
 #pragma endregion
 
 #pragma region("SoundFont")
-    pfc::string8 m_soundfont;
+    pfc::string8 _SoundFontPath;
 #pragma endregion
 
 #pragma region("MUNT")
-    pfc::string8 m_munt_path;
+    pfc::string8 _MUNTPath;
 #pragma endregion
 
 #pragma region("Secret Sauce")
@@ -249,7 +250,7 @@ private:
         }
     };
 
-    pfc::list_t<adl_bank> m_bank_list;
+    pfc::list_t<adl_bank> _ADLBanks;
 
     static bool IsPluginAlwaysPresent(Preferences *)
     {
@@ -266,7 +267,7 @@ private:
         return p->_HasSecretSauce;
     }
 
-    int _ReportedPluginCount;
+    int _ReportedPlugInCount;
 
     static const BuiltInPlugin BuiltInPlugins[];
 
@@ -282,7 +283,7 @@ private:
 /// </summary>
 const Preferences::BuiltInPlugin Preferences::BuiltInPlugins[] =
 {
-    { "Emu de MIDI",    EmuDeMIDIPluginId,      -1, IsPluginAlwaysPresent },
+    { "Emu de MIDI",    EmuDeMIDIPlugInId,      -1, IsPluginAlwaysPresent },
 
 #ifdef FLUIDSYNTHSUPPORT
     { "FluidSynth",
@@ -299,21 +300,19 @@ const Preferences::BuiltInPlugin Preferences::BuiltInPlugins[] =
     #ifdef FLUIDSYNTHSUPPORT
           BASSMIDIPlugInId, -1,
     #else
-          BASSMIDIPlugInId, FluidSynthPluginId,
+          BASSMIDIPlugInId, FluidSynthPlugInId,
     #endif
       IsPluginAlwaysPresent },
 #endif
 
-    { "Super MUNT GM",  SuperMUNTPluginId,      -1, IsPluginAlwaysPresent },
+    { "Super MUNT GM",  SuperMUNTPlugInId,      -1, IsPluginAlwaysPresent },
 
-    { "libADLMIDI",     ADLPluginId,            -1, IsPluginAlwaysPresent },
-    { "libOPNMIDI",     OPNPluginId,            -1, IsPluginAlwaysPresent },
-    { "oplmidi",        OPLPluginId,            -1, IsPluginNeverPresent },
-    { "Nuclear Option", NuclearOptionPluginId,  -1, IsPluginAlwaysPresent },
-    { "Secret Sauce",   SecretSaucePluginId,    -1, IsSecretSaucePresent }
+    { "libADLMIDI",     ADLPlugInId,            -1, IsPluginAlwaysPresent },
+    { "libOPNMIDI",     OPNPlugInId,            -1, IsPluginAlwaysPresent },
+    { "oplmidi",        OPLPlugInId,            -1, IsPluginNeverPresent },
+    { "Nuclear Option", NuclearOptionPlugInId,  -1, IsPluginAlwaysPresent },
+    { "Secret Sauce",   SecretSaucePlugInId,    -1, IsSecretSaucePresent }
 };
-
-static const char * chip_counts[] = { "1", "2", "5", "10", "25", "50", "100" };
 
 /// <summary>
 /// Initializes the dialog.
@@ -329,10 +328,9 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
     _HasSecretSauce = HasSecretSauce();
 
-    int Plugin = CfgPluginId;
-    int plugin_selected = -1;
+    int PlugInId = CfgPlugInId;
 
-    _PluginIdToIndex[Plugin] = -1;
+    _PluginIdToIndex[PlugInId] = -1;
     _PluginPresentReverseMap[-1] = -1;
 
     for (size_t i = 0; i < _countof(BuiltInPlugins); ++i)
@@ -343,151 +341,100 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
             _PluginIdToIndex[BuiltInPlugins[i].plugin_number_alt] = i;
     }
 
-    int PluginIndex = -1;
+    int PlugInIndex = -1;
 
-    if (Plugin != 1 && Plugin != 5)
+    if (PlugInId != VSTiPlugInId && PlugInId != UnknownPlugInId)
     {
-        PluginIndex = _PluginIdToIndex[Plugin];
+        PlugInIndex = _PluginIdToIndex[PlugInId];
 
-        if (PluginIndex < 0 || !BuiltInPlugins[PluginIndex].IsPresent(this))
+        if (PlugInIndex < 0 || !BuiltInPlugins[PlugInIndex].IsPresent(this))
         {
-            Plugin = DefaultPluginId;
-            PluginIndex = _PluginIdToIndex[DefaultPluginId];
+            PlugInId = DefaultPlugInId;
+            PlugInIndex = _PluginIdToIndex[DefaultPlugInId];
         }
         else
-        if (BuiltInPlugins[PluginIndex].plugin_number_alt == Plugin)
-            Plugin = BuiltInPlugins[PluginIndex].Id;
+        if (BuiltInPlugins[PlugInIndex].plugin_number_alt == PlugInId)
+            PlugInId = BuiltInPlugins[PlugInIndex].Id;
     }
 
     CWindow w = GetDlgItem(IDC_PLUGIN);
 
     {
-        _ReportedPluginCount = 0;
+        _ReportedPlugInCount = 0;
 
-        _PluginPresentMap[Plugin] = -1;
+        _PluginPresentMap[PlugInId] = -1;
 
         for (size_t i = 0; i < _countof(BuiltInPlugins); ++i)
         {
-            const BuiltInPlugin& Plugin = BuiltInPlugins[i];
+            const BuiltInPlugin& bip = BuiltInPlugins[i];
 
-            if (Plugin.IsPresent(this))
+            if (bip.IsPresent(this))
             {
-                _PluginPresentMap[Plugin.Id] = _ReportedPluginCount;
+                _PluginPresentMap[bip.Id] = _ReportedPlugInCount;
 
-                if (Plugin.plugin_number_alt >= 0)
-                    _PluginPresentMap[Plugin.plugin_number_alt] = _ReportedPluginCount;
+                if (bip.plugin_number_alt >= 0)
+                    _PluginPresentMap[bip.plugin_number_alt] = _ReportedPlugInCount;
 
-                _PluginPresentReverseMap[_ReportedPluginCount] = Plugin.Id;
-                ++_ReportedPluginCount;
+                _PluginPresentReverseMap[_ReportedPlugInCount] = bip.Id;
+                ++_ReportedPlugInCount;
 
-                uSendMessageText(w, CB_ADDSTRING, 0, Plugin.Name);
+                ::uSendMessageText(w, CB_ADDSTRING, 0, bip.Name);
             }
         }
     }
 
  #pragma region("VSTi")
-    size_t vsti_selected = (unsigned int)~0;
+    size_t SelectedVSTiPluginIndex = ~0;
 
     GetVSTiPlugins();
 
-    size_t VSTiCount = _VSTiPlugins.get_size();
+    size_t VSTiCount = _VSTiPlugIns.get_size();
 
     if (VSTiCount > 0)
     {
-        console::formatter() << "Found " << pfc::format_int(_VSTiPlugins.get_size()) << " plug-ins";
+        console::formatter() << "Found " << pfc::format_int(_VSTiPlugIns.get_size()) << " VSTi plug-ins.";
 
-        for (unsigned i = 0, j = VSTiCount; i < j; ++i)
-            _PluginPresentReverseMap[_ReportedPluginCount + i] = 1;
-
-        for (unsigned i = 0; i < VSTiCount; ++i)
+        for (size_t i = 0, j = VSTiCount; i < j; ++i)
         {
-            uSendMessageText(w, CB_ADDSTRING, 0, _VSTiPlugins[i].Name.c_str());
+            _PluginPresentReverseMap[_ReportedPlugInCount + i] = 1;
 
-            if (Plugin == 1 && !stricmp_utf8(_VSTiPlugins[i].PathName.c_str(), cfg_vst_path))
-                vsti_selected = i;
+            ::uSendMessageText(w, CB_ADDSTRING, 0, _VSTiPlugIns[i].Name.c_str());
+
+            if ((PlugInId == VSTiPlugInId) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiPath) == 0))
+                SelectedVSTiPluginIndex = i;
         }
     }
 #pragma endregion
 
-    if (Plugin == 1 && vsti_selected == ~0)
+#pragma region("SoundFont")
     {
-        Plugin = DefaultPluginId;
-        PluginIndex = _PluginIdToIndex[DefaultPluginId];
-    }
+        _SoundFontPath = CfgSoundFontPath;
 
-    if (Plugin != 2 && Plugin != 4)
-    {
-        GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_SOUNDFONT).EnableWindow(FALSE);
-        GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_RESAMPLING).EnableWindow(FALSE);
-        GetDlgItem(IDC_CACHED_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_CACHED).EnableWindow(FALSE);
-    }
+        const char * FileName;
 
-    if (Plugin == 3)
-    {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
-    }
-
-    if (Plugin != 6)
-    {
-        GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_ADL_BANK).EnableWindow(FALSE);
-    }
-
-    if (Plugin != 6 && Plugin != 7)
-    {
-        GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_ADL_CHIPS).EnableWindow(FALSE);
-        GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
-    }
-
-    if (Plugin != 1)
-    {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
-    }
-    else
-    {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(_VSTiPlugins[vsti_selected].HasEditor);
-        vsti_config = cfg_vst_config[_VSTiPlugins[vsti_selected].Id];
-    }
-
-    if (Plugin != 9)
-    {
-        GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
-        GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
-    }
-
-    if (Plugin != 1 && Plugin != 2 && Plugin != 4 && Plugin != 10)
-    {
-        GetDlgItem(IDC_FILTER_GROUP).EnableWindow(FALSE);
-        GetDlgItem(IDC_FILTER_FLAVOR_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_FILTER_FLAVOR).EnableWindow(FALSE);
-        GetDlgItem(IDC_FILTER_EFFECTS).EnableWindow(FALSE);
-    }
-
-    {
-        m_soundfont = cfg_soundfont_path;
-        const char * filename;
-        if (m_soundfont.is_empty())
-            filename = click_to_set;
+        if (_SoundFontPath.is_empty())
+            FileName = DefaultPathMessage;
         else
-            filename = m_soundfont.get_ptr() + m_soundfont.scan_filename();
-        uSetDlgItemText(m_hWnd, IDC_SOUNDFONT, filename);
-    }
+            FileName = _SoundFontPath.get_ptr() + _SoundFontPath.scan_filename();
 
-    {
-        m_munt_path = cfg_munt_base_path;
-        const char * path;
-        if (m_munt_path.is_empty())
-            path = click_to_set;
-        else
-            path = m_munt_path;
-        uSetDlgItemText(m_hWnd, IDC_MUNT, path);
+        ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT, FileName);
     }
+#pragma endregion
+
+#pragma region("MUNT")
+    {
+        _MUNTPath = CfgMUNTPath;
+
+        const char * FileName;
+
+        if (_MUNTPath.is_empty())
+            FileName = DefaultPathMessage;
+        else
+            FileName = _MUNTPath;
+
+        ::uSetDlgItemText(m_hWnd, IDC_MUNT, FileName);
+    }
+#pragma endregion
 
 #ifdef DXISUPPORT
     unsigned dxi_selected = ~0;
@@ -524,64 +471,141 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     ::CoUninitialize();
 
 #endif
-    if (Plugin == 1) plugin_selected = _ReportedPluginCount + vsti_selected;
-#ifdef DXISUPPORT
-    else if (plugin == 5)
+
+    if ((PlugInId == VSTiPlugInId) && (SelectedVSTiPluginIndex == ~0))
     {
-        if (dxi_selected != ~0)
-            plugin_selected = plugins_reported + vsti_count + dxi_selected;
-        else
-            plugin = 0;
+        PlugInId = DefaultPlugInId;
+        PlugInIndex = _PluginIdToIndex[DefaultPlugInId];
     }
-#endif
-    else
-        plugin_selected = _PluginPresentMap[Plugin];
 
-    ::SendMessage(w, CB_SETCURSEL, plugin_selected, (WPARAM)0);
+    if ((PlugInId == EmuDeMIDIPlugInId) && g_running)
+        GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
+    if ((PlugInId != FluidSynthPlugInId) && (PlugInId != BASSMIDIPlugInId))
     {
-        char temp[16];
+        GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_SOUNDFONT).EnableWindow(FALSE);
+        GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(FALSE);
+        GetDlgItem(IDC_CACHED_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_CACHED).EnableWindow(FALSE);
+    }
 
-        for (size_t n = _countof(SampleRates); n--;)
+    if (PlugInId != SuperMUNTPlugInId)
+    {
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
+    }
+
+    if (PlugInId != ADLPlugInId)
+    {
+        GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_ADL_BANK).EnableWindow(FALSE);
+    }
+
+    if (PlugInId != ADLPlugInId && PlugInId != OPNPlugInId)
+    {
+        GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_ADL_CHIPS).EnableWindow(FALSE);
+        GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
+    }
+
+    if (PlugInId != VSTiPlugInId)
+    {
+        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+    }
+    else
+    {
+        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(_VSTiPlugIns[SelectedVSTiPluginIndex].HasEditor);
+        _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[SelectedVSTiPluginIndex].Id];
+    }
+
+    if (PlugInId != NuclearOptionPlugInId)
+    {
+        GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
+        GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
+    }
+
+    if ((PlugInId != VSTiPlugInId) && (PlugInId != FluidSynthPlugInId) && (PlugInId != BASSMIDIPlugInId) && (PlugInId != SecretSaucePlugInId))
+    {
+        GetDlgItem(IDC_FILTER_GROUP).EnableWindow(FALSE);
+
+        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(FALSE);
+        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(FALSE);
+    }
+
+    // Set the selected plug-in.
+    {
+        int SelectedPlugInIndex = -1;
+
+        if (PlugInId == VSTiPlugInId)
+            SelectedPlugInIndex = _ReportedPlugInCount + SelectedVSTiPluginIndex;
+    #ifdef DXISUPPORT
+        else
+        if (PlugInId == DirectXPlugInId)
         {
-            if (SampleRates[n] != cfg_srate)
+            if (dxi_selected != ~0)
+                SelectedPlugInIndex = _ReportedPlugInCount + vsti_count + dxi_selected;
+            else
+                plugin = 0;
+        }
+    #endif
+        else
+            SelectedPlugInIndex = _PluginPresentMap[PlugInId];
+
+        ::SendMessage(w, CB_SETCURSEL, SelectedPlugInIndex, (WPARAM)0);
+    }
+
+    // Set the selected sample rate.
+    {
+        char Text[16];
+
+        for (size_t i = _countof(SampleRates); i--;)
+        {
+            if (SampleRates[i] != CfgSampleRate)
             {
-                _itoa_s(SampleRates[n], temp, _countof(temp), 10);
-                CfgSampleRateHistory.add_item(temp);
+                _itoa_s(SampleRates[i], Text, _countof(Text), 10);
+                CfgSampleRateHistory.add_item(Text);
             }
         }
 
-        _itoa_s(cfg_srate, temp, _countof(temp), 10);
-        CfgSampleRateHistory.add_item(temp);
+        _itoa_s(CfgSampleRate, Text, _countof(Text), 10);
+        CfgSampleRateHistory.add_item(Text);
 
-        w = GetDlgItem(IDC_SAMPLERATE);
+        auto w = GetDlgItem(IDC_SAMPLERATE);
 
         CfgSampleRateHistory.setup_dropdown(w);
 
         ::SendMessage(w, CB_SETCURSEL, 0, 0);
     }
 
-    if (!Plugin)
+    // Set the selected loop types.
     {
-        if (g_running)
-            GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
+        static const char * LoopTypeDescription[] =
+        {
+            "Never loop",
+            "Never, add 1s decay time",
+            "Loop and fade when detected",
+            "Always loop and fade",
+            "Play indefinitely when detected",
+            "Play indefinitely"
+        };
+
+        {
+            auto w1 = GetDlgItem(IDC_LOOP_PLAYBACK);
+            auto w2 = GetDlgItem(IDC_LOOP_OTHER);
+
+            for (size_t i = 0; i < _countof(LoopTypeDescription); ++i)
+            {
+                ::uSendMessageText(w1, CB_ADDSTRING, 0, LoopTypeDescription[i]);
+                ::uSendMessageText(w2, CB_ADDSTRING, 0, LoopTypeDescription[i]);
+            }
+ 
+            ::SendMessage(w1, CB_SETCURSEL, (WPARAM)cfg_loop_type, 0);
+            ::SendMessage(w2, CB_SETCURSEL, (WPARAM)cfg_loop_type_other, 0);
+        }
     }
-
-    w = GetDlgItem(IDC_LOOP);
-
-    for (unsigned i = 0; i < _countof(loop_txt); ++i)
-    {
-        uSendMessageText(w, CB_ADDSTRING, 0, loop_txt[i]);
-    }
-    ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_loop_type, 0);
-
-    w = GetDlgItem(IDC_CLOOP);
-
-    for (unsigned i = 0; i < _countof(loop_txt) - 2; ++i)
-    {
-        uSendMessageText(w, CB_ADDSTRING, 0, loop_txt[i]);
-    }
-    ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_loop_type_other, 0);
 
     SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, (WPARAM)cfg_thloopz);
     SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, (WPARAM)cfg_rpgmloopz);
@@ -589,115 +613,141 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, (WPARAM)cfg_ff7loopz);
 
     SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, (WPARAM)cfg_emidi_exclusion);
+
     SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM)cfg_filter_instruments);
     SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, (WPARAM)cfg_filter_banks);
 
-    SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, (WPARAM)cfg_ms_panning);
-    SendDlgItemMessage(IDC_FILTER_EFFECTS, BM_SETCHECK, !cfg_midi_reverb);
+    SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, (WPARAM)CfgMSPanning);
 
-    const char * const * banknames = adl_getBankNames();
-    const unsigned bank_count = adl_getBanksCount();
-
-    for (unsigned i = 0; i < bank_count; ++i)
+#pragma region("ADL")
     {
-        m_bank_list += adl_bank(i, banknames[i]);
-    }
+        const char * const * BankNames = adl_getBankNames();
+        const size_t BankCount = (size_t)adl_getBanksCount();
 
-    m_bank_list.sort();
-
-    unsigned bank_selected = 0;
-
-    w = GetDlgItem(IDC_ADL_BANK);
-
-    for (unsigned i = 0; i < m_bank_list.get_count(); ++i)
-    {
-        uSendMessageText(w, CB_ADDSTRING, 0, m_bank_list[i].name);
-
-        if (m_bank_list[i].number == cfg_adl_bank)
-            bank_selected = i;
-    }
-
-    w.SendMessage(CB_SETCURSEL, bank_selected);
-
-    w = GetDlgItem(IDC_ADL_CHIPS);
-
-    for (unsigned i = 0; i < _countof(chip_counts); ++i)
-    {
-        uSendMessageText(w, CB_ADDSTRING, 0, chip_counts[i]);
-    }
-
-    SetDlgItemInt(IDC_ADL_CHIPS, (UINT)cfg_adl_chips, 0);
-
-    SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, (WPARAM)cfg_adl_panning);
-
-#ifdef BASSMIDISUPPORT
-    w = GetDlgItem(IDC_RESAMPLING);
-    uSendMessageText(w, CB_ADDSTRING, 0, "Linear interpolation");
-    uSendMessageText(w, CB_ADDSTRING, 0, "8pt Sinc interpolation");
-    if (_bassmidi_src2_avail)
-        uSendMessageText(w, CB_ADDSTRING, 0, "16pt Sinc interpolation");
-    if (!_bassmidi_src2_avail && cfg_resampling > 1)
-        ::SendMessage(w, CB_SETCURSEL, 1, 0);
-    else
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_resampling, 0);
-#endif
-#ifdef FLUIDSYNTHSUPPORT
-    w = GetDlgItem(IDC_RESAMPLING);
-    uSendMessageText(w, CB_ADDSTRING, 0, "No interpolation");
-    uSendMessageText(w, CB_ADDSTRING, 0, "Linear interpolation");
-    uSendMessageText(w, CB_ADDSTRING, 0, "Cubic interpolation");
-    uSendMessageText(w, CB_ADDSTRING, 0, "7pt Sinc interpolation");
-    if (cfg_fluid_interp_method == 0)
-        ::SendMessage(w, CB_SETCURSEL, 0, 0);
-    else if (cfg_fluid_interp_method == 1)
-        ::SendMessage(w, CB_SETCURSEL, 1, 0);
-    else if (cfg_fluid_interp_method == 4)
-        ::SendMessage(w, CB_SETCURSEL, 2, 0);
-    else if (cfg_fluid_interp_method == 7)
-        ::SendMessage(w, CB_SETCURSEL, 3, 0);
-    else
-        ::SendMessage(w, CB_SETCURSEL, 3, 0);
-#endif
-    {
-        w = GetDlgItem(IDC_MUNT_GM);
-
-        for (unsigned i = 0, j = _countof(MuntBankNames); i < j; ++i)
+        if (BankNames && (BankCount > 0))
         {
-            uSendMessageText(w, CB_ADDSTRING, 0, MuntBankNames[i]);
+            for (unsigned i = 0; i < BankCount; ++i)
+                _ADLBanks += adl_bank(i, BankNames[i]);
+
+            _ADLBanks.sort();
         }
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_munt_gm, 0);
+        {
+            size_t SelectedBank = 0;
+
+            auto w = GetDlgItem(IDC_ADL_BANK);
+
+            for (unsigned i = 0; i < _ADLBanks.get_count(); ++i)
+            {
+                ::uSendMessageText(w, CB_ADDSTRING, 0, _ADLBanks[i].name);
+
+                if (_ADLBanks[i].number == CfgADLBank)
+                    SelectedBank = i;
+            }
+
+            w.SendMessage(CB_SETCURSEL, SelectedBank);
+        }
+
+        {
+            static const char * ChipCounts[] = { "1", "2", "5", "10", "25", "50", "100" };
+
+            w = GetDlgItem(IDC_ADL_CHIPS);
+
+            for (size_t i = 0; i < _countof(ChipCounts); ++i)
+                ::uSendMessageText(w, CB_ADDSTRING, 0, ChipCounts[i]);
+
+            SetDlgItemInt(IDC_ADL_CHIPS, (UINT)CfgADLChipCount, 0);
+        }
+
+        SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, (WPARAM)CfgADLPanning);
+    }
+#pragma endregion
+
+#ifdef BASSMIDISUPPORT
+    {
+        auto w = GetDlgItem(IDC_RESAMPLING_MODE);
+
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "Linear interpolation");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "8pt Sinc interpolation");
+
+        if (_HASSSE2)
+            ::uSendMessageText(w, CB_ADDSTRING, 0, "16pt Sinc interpolation");
+
+        if (!_HASSSE2 && CfgResamplingMode > 1)
+            ::SendMessage(w, CB_SETCURSEL, 1, 0);
+        else
+            ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgResamplingMode, 0);
+    }
+#endif
+
+#ifdef FLUIDSYNTHSUPPORT
+    {
+        auto w = GetDlgItem(IDC_RESAMPLING);
+
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "No interpolation");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "Linear interpolation");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "Cubic interpolation");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "7pt Sinc interpolation");
+
+        if (Cfg_FluidSynthInterpolationMethod == 0)
+            ::SendMessage(w, CB_SETCURSEL, 0, 0);
+        else
+        if (Cfg_FluidSynthInterpolationMethod == 1)
+            ::SendMessage(w, CB_SETCURSEL, 1, 0);
+        else
+        if (Cfg_FluidSynthInterpolationMethod == 4)
+            ::SendMessage(w, CB_SETCURSEL, 2, 0);
+        else
+        if (Cfg_FluidSynthInterpolationMethod == 7)
+            ::SendMessage(w, CB_SETCURSEL, 3, 0);
+        else
+            ::SendMessage(w, CB_SETCURSEL, 3, 0);
+    }
+#endif
+
+    {
+        auto w = GetDlgItem(IDC_MUNT_GM);
+
+        for (size_t i = 0; i < _countof(_MUNTGMSets); ++i)
+            ::uSendMessageText(w, CB_ADDSTRING, 0, _MUNTGMSets[i]);
+
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMUNTGMSet, 0);
     }
 
     {
         size_t PresetNumber = 0;
 
-        w = GetDlgItem(IDC_MS_PRESET);
+        auto w = GetDlgItem(IDC_MS_PRESET);
 
-        for (size_t i = 0, j = _MSPresets.get_count(); i < j; ++i)
+        for (size_t i = 0; i < _MSPresets.get_count(); ++i)
         {
-            const MSPreset & preset = _MSPresets[i];
+            const MSPreset & Preset = _MSPresets[i];
 
-            uSendMessageText(w, CB_ADDSTRING, 0, preset.name);
+            ::uSendMessageText(w, CB_ADDSTRING, 0, Preset.name);
 
-            if (preset.synth == (unsigned int)cfg_ms_synth && preset.bank == (unsigned int)cfg_ms_bank)
+            if (Preset.synth == (unsigned int)CfgMSSynthesizer && Preset.bank == (unsigned int)CfgMSBank)
                 PresetNumber = i;
         }
 
         ::SendMessage(w, CB_SETCURSEL, PresetNumber, 0);
     }
 
-    w = GetDlgItem(IDC_FILTER_FLAVOR);
+    {
+        w = GetDlgItem(IDC_MIDI_FLAVOR);
 
-    uSendMessageText(w, CB_ADDSTRING, 0, "Default");
-    uSendMessageText(w, CB_ADDSTRING, 0, "GM");
-    uSendMessageText(w, CB_ADDSTRING, 0, "GM2");
-    uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-55");
-    uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-88");
-    uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-88 Pro");
-    uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-8820");
-    uSendMessageText(w, CB_ADDSTRING, 0, "XG");
-    ::SendMessage(w, CB_SETCURSEL, (WPARAM)cfg_midi_flavor, 0);
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "Default");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "GM");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "GM2");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-55");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-88");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-88 Pro");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-8820");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "XG");
+
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMIDIFlavor, 0);
+
+        SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !CfgAllowMIDIEffects);
+    }
 
 #ifndef BASSMIDISUPPORT
     uSetWindowText(GetDlgItem(IDC_CACHED), "No info.");
@@ -705,7 +755,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
     SetTimer(ID_REFRESH, 20);
 
-    busy = false;
+    _IsBusy = false;
 
     _DarkModeHooks.AddDialogWithControls(*this);
 
@@ -731,23 +781,23 @@ void Preferences::OnButtonConfig(UINT, int, CWindow)
 {
     int plugin_selected = (int)GetDlgItem(IDC_PLUGIN).SendMessage(CB_GETCURSEL, 0, 0);
 
-    if ((plugin_selected >= _ReportedPluginCount) && plugin_selected < (int)(_ReportedPluginCount + _VSTiPlugins.get_count()))
+    if ((plugin_selected >= _ReportedPlugInCount) && plugin_selected < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count()))
     {
-        busy = true;
+        _IsBusy = true;
         OnChanged();
 
         VSTiPlayer vstPlayer;
 
-        if (vstPlayer.LoadVST(_VSTiPlugins[(size_t)(plugin_selected - _ReportedPluginCount)].PathName.c_str()))
+        if (vstPlayer.LoadVST(_VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].PathName.c_str()))
         {
-            if (vsti_config.size())
-                vstPlayer.setChunk(&vsti_config[0], vsti_config.size());
+            if (_VSTiConfig.size())
+                vstPlayer.setChunk(&_VSTiConfig[0], _VSTiConfig.size());
 
             vstPlayer.displayEditorModal();
-            vstPlayer.getChunk(vsti_config);
+            vstPlayer.getChunk(_VSTiConfig);
         }
 
-        busy = false;
+        _IsBusy = false;
 
         OnChanged();
     }
@@ -760,7 +810,7 @@ void Preferences::OnPluginChange(UINT, int, CWindow w)
 //  int plugin_index = -1;
     int plugin = 0;
 
-    if ((plugin_selected >= _ReportedPluginCount) && (plugin_selected < (int)(_ReportedPluginCount + _VSTiPlugins.get_count())))
+    if ((plugin_selected >= _ReportedPlugInCount) && (plugin_selected < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count())))
         plugin = 1;
 #ifdef DXISUPPORT
     else if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
@@ -774,7 +824,7 @@ void Preferences::OnPluginChange(UINT, int, CWindow w)
     GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(plugin == 2 || plugin == 4);
     GetDlgItem(IDC_SOUNDFONT).EnableWindow(plugin == 2 || plugin == 4);
     GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(plugin == 2 || plugin == 4);
-    GetDlgItem(IDC_RESAMPLING).EnableWindow(plugin == 2 || plugin == 4);
+    GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(plugin == 2 || plugin == 4);
     GetDlgItem(IDC_CACHED_TEXT).EnableWindow(plugin == 2 || plugin == 4);
     GetDlgItem(IDC_CACHED).EnableWindow(plugin == 2 || plugin == 4);
     GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(plugin == 6);
@@ -788,9 +838,9 @@ void Preferences::OnPluginChange(UINT, int, CWindow w)
     {
         bool enable = (plugin == 1) || (plugin == 2) || (plugin == 4) || (plugin == 10);
         GetDlgItem(IDC_FILTER_GROUP).EnableWindow(enable);
-        GetDlgItem(IDC_FILTER_FLAVOR_TEXT).EnableWindow(enable);
-        GetDlgItem(IDC_FILTER_FLAVOR).EnableWindow(enable);
-        GetDlgItem(IDC_FILTER_EFFECTS).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
     }
 
     if (plugin == 3)
@@ -799,7 +849,7 @@ void Preferences::OnPluginChange(UINT, int, CWindow w)
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
     }
     else
-    if (_VSTiPlugins.get_count() == 0)
+    if (_VSTiPlugIns.get_count() == 0)
     {
         GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
@@ -810,11 +860,11 @@ void Preferences::OnPluginChange(UINT, int, CWindow w)
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
     }
 
-    GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(plugin_selected >= _ReportedPluginCount && plugin < _ReportedPluginCount + _VSTiPlugins.get_count() && _VSTiPlugins[(size_t)(plugin_selected - _ReportedPluginCount)].HasEditor);
+    GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(plugin_selected >= _ReportedPlugInCount && plugin < _ReportedPlugInCount + _VSTiPlugIns.get_count() && _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].HasEditor);
 
-    if ((plugin_selected >= _ReportedPluginCount) && (plugin_selected < (int)(_ReportedPluginCount + _VSTiPlugins.get_count())))
+    if ((plugin_selected >= _ReportedPlugInCount) && (plugin_selected < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count())))
     {
-        vsti_config = cfg_vst_config[_VSTiPlugins[(size_t)(plugin_selected - _ReportedPluginCount)].Id];
+        _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].Id];
     }
 
     OnChanged();
@@ -828,8 +878,8 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
     {
         pfc::string8 directory, filename;
 
-        directory = m_soundfont;
-        filename = m_soundfont;
+        directory = _SoundFontPath;
+        filename = _SoundFontPath;
 
         directory.truncate(directory.scan_filename());
 
@@ -854,7 +904,7 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
             ,
             0, "sf2", "Choose a SoundFont bank or list...", directory, filename, FALSE))
         {
-            m_soundfont = filename;
+            _SoundFontPath = filename;
 
             uSetWindowText(w, filename.get_ptr() + filename.scan_filename());
             OnChanged();
@@ -866,19 +916,19 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
         pfc::string8 path;
         if (uBrowseForFolder(m_hWnd, "Locate MT-32 or CM-32L ROM set...", path))
         {
-            m_munt_path = path;
+            _MUNTPath = path;
 
-            t_size length = m_munt_path.length();
+            t_size length = _MUNTPath.length();
 
-            if (length >= 1 && !pfc::is_path_separator((unsigned int)*(m_munt_path.get_ptr() + length - 1)))
-                m_munt_path.add_byte('\\');
+            if (length >= 1 && !pfc::is_path_separator((unsigned int)*(_MUNTPath.get_ptr() + length - 1)))
+                _MUNTPath.add_byte('\\');
 
             const char * display_path;
 
             if (length)
-                display_path = m_munt_path;
+                display_path = _MUNTPath;
             else
-                display_path = click_to_set;
+                display_path = DefaultPathMessage;
 
             uSetWindowText(w, display_path);
             OnChanged();
@@ -890,7 +940,7 @@ void Preferences::OnTimer(UINT_PTR nIDEvent)
 {
     if (nIDEvent == ID_REFRESH)
     {
-        GetDlgItem(IDC_SAMPLERATE).EnableWindow(CfgPluginId || !g_running);
+        GetDlgItem(IDC_SAMPLERATE).EnableWindow(CfgPlugInId || !g_running);
 
     #ifdef BASSMIDISUPPORT
         m_cached.reset();
@@ -919,29 +969,34 @@ void Preferences::OnTimer(UINT_PTR nIDEvent)
 
 t_uint32 Preferences::get_state()
 {
-    t_uint32 state = preferences_state::resettable | preferences_state::dark_mode_supported;
-    if (HasChanged()) state |= preferences_state::changed;
-    if (busy) state |= preferences_state::busy;
-    return state;
+    t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
+
+    if (HasChanged())
+        State |= preferences_state::changed;
+
+    if (_IsBusy)
+        State |= preferences_state::busy;
+
+    return State;
 }
 
 void Preferences::reset()
 {
-    int default_plugin_entry = _PluginIdToIndex[DefaultPluginId];
+    int default_plugin_entry = _PluginIdToIndex[DefaultPlugInId];
     int plugin_selected = _PluginPresentMap[default_plugin_entry];
 
     SendDlgItemMessage(IDC_PLUGIN, CB_SETCURSEL, (WPARAM)plugin_selected);
 
-    if (DefaultPluginId != 2 && DefaultPluginId != 4)
+    if (DefaultPlugInId != 2 && DefaultPlugInId != 4)
     {
         GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_SOUNDFONT).EnableWindow(FALSE);
         GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_RESAMPLING).EnableWindow(FALSE);
+        GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(FALSE);
         GetDlgItem(IDC_CACHED_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_CACHED).EnableWindow(FALSE);
     }
-    if (DefaultPluginId != 6)
+    if (DefaultPlugInId != 6)
     {
         GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_BANK).EnableWindow(FALSE);
@@ -949,13 +1004,13 @@ void Preferences::reset()
         GetDlgItem(IDC_ADL_CHIPS).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
     }
-    if (DefaultPluginId == 3)
+    if (DefaultPlugInId == 3)
     {
         GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
     }
     else
-    if (_VSTiPlugins.get_count() == 0)
+    if (_VSTiPlugIns.get_count() == 0)
     {
         GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
@@ -965,36 +1020,36 @@ void Preferences::reset()
         GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
     }
-    if (DefaultPluginId != 9)
+    if (DefaultPlugInId != 9)
     {
         GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
         GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
     }
     {
-        bool enable = (DefaultPluginId == 1) || (DefaultPluginId == 2) || (DefaultPluginId == 4) || (DefaultPluginId == 10);
+        bool enable = (DefaultPlugInId == 1) || (DefaultPlugInId == 2) || (DefaultPlugInId == 4) || (DefaultPlugInId == 10);
         GetDlgItem(IDC_FILTER_GROUP).EnableWindow(enable);
-        GetDlgItem(IDC_FILTER_FLAVOR_TEXT).EnableWindow(enable);
-        GetDlgItem(IDC_FILTER_FLAVOR).EnableWindow(enable);
-        GetDlgItem(IDC_FILTER_EFFECTS).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
     }
 
-    uSetDlgItemText(m_hWnd, IDC_SOUNDFONT, click_to_set);
-    uSetDlgItemText(m_hWnd, IDC_MUNT, click_to_set);
+    uSetDlgItemText(m_hWnd, IDC_SOUNDFONT, DefaultPathMessage);
+    uSetDlgItemText(m_hWnd, IDC_MUNT, DefaultPathMessage);
 
-    m_soundfont.reset();
-    m_munt_path.reset();
+    _SoundFontPath.reset();
+    _MUNTPath.reset();
 
-    SetDlgItemInt(IDC_SAMPLERATE, default_cfg_srate, FALSE);
+    SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
 
-    if (!DefaultPluginId)
+    if (!DefaultPlugInId)
     {
         if (g_running)
             GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
     }
 
-    SendDlgItemMessage(IDC_LOOP, CB_SETCURSEL, default_cfg_loop_type);
-    SendDlgItemMessage(IDC_CLOOP, CB_SETCURSEL, default_cfg_loop_type_other);
+    SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_SETCURSEL, DefaultPlaybackLoopType);
+    SendDlgItemMessage(IDC_LOOP_OTHER, CB_SETCURSEL, DefaultOtherLoopType);
     SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, default_cfg_thloopz);
     SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, default_cfg_rpgmloopz);
     SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz);
@@ -1002,16 +1057,16 @@ void Preferences::reset()
     SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion);
     SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments);
     SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks);
-    SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, default_cfg_ms_panning);
-    SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_SETCURSEL, default_cfg_midi_flavor);
-    SendDlgItemMessage(IDC_FILTER_EFFECTS, BM_SETCHECK, !default_cfg_midi_reverb);
+    SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, DefaultMSPanning);
+    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, default_cfg_midi_flavor);
+    SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !default_cfg_midi_reverb);
 
     {
         unsigned bank_selected = 0;
 
-        for (unsigned i = 0; i < m_bank_list.get_count(); ++i)
+        for (unsigned i = 0; i < _ADLBanks.get_count(); ++i)
         {
-            if (m_bank_list[i].number == default_cfg_adl_bank)
+            if (_ADLBanks[i].number == DefaultADLBank)
             {
                 bank_selected = i;
                 break;
@@ -1021,14 +1076,14 @@ void Preferences::reset()
         SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, bank_selected);
     }
 
-    SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, default_cfg_adl_panning);
-    SetDlgItemInt(IDC_ADL_CHIPS, default_cfg_adl_chips, 0);
+    SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, DefaultADLPanning);
+    SetDlgItemInt(IDC_ADL_CHIPS, DefaultADLChipCount, 0);
 //  SendDlgItemMessage( IDC_RECOVER, BM_SETCHECK, default_cfg_recover_tracks );
 
 #ifdef FLUIDSYNTHSUPPORT
     SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, 2 /* 4 */);
 #else
-    SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, default_cfg_resampling);
+    SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultResamplingMode);
 #endif
     {
         size_t preset_number = 0;
@@ -1047,9 +1102,9 @@ void Preferences::reset()
         SendDlgItemMessage(IDC_MS_PRESET, CB_SETCURSEL, preset_number);
     }
 
-    SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_SETCURSEL, (WPARAM)cfg_midi_flavor);
+    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, (WPARAM)CfgMIDIFlavor);
 
-    vsti_config.resize(0);
+    _VSTiConfig.resize(0);
 
     OnChanged();
 }
@@ -1072,16 +1127,16 @@ void Preferences::apply()
         _itoa_s(t, temp, _countof(temp), 10);
 
         CfgSampleRateHistory.add_item(temp);
-        cfg_srate = t;
+        CfgSampleRate = t;
     }
 
     {
         t = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
 
-        if (t < 0 || t >= (int)m_bank_list.get_count())
+        if (t < 0 || t >= (int)_ADLBanks.get_count())
             t = 0;
 
-        cfg_adl_bank = m_bank_list[(t_size)t].number;
+        CfgADLBank = _ADLBanks[(t_size)t].number;
     }
 
     {
@@ -1095,11 +1150,11 @@ void Preferences::apply()
 
         SetDlgItemInt(IDC_ADL_CHIPS, (UINT)t, FALSE);
 
-        cfg_adl_chips = t;
+        CfgADLChipCount = t;
     }
 
-    cfg_adl_panning = (t_int32)SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
-    cfg_munt_gm = (t_int32)SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL);
+    CfgADLPanning = (t_int32)SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
+    CfgMUNTGMSet = (t_int32)SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL);
 
     {
         unsigned int preset_number = (unsigned int)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
@@ -1109,15 +1164,15 @@ void Preferences::apply()
 
         const MSPreset & preset = _MSPresets[preset_number];
 
-        cfg_ms_synth = (t_int32)preset.synth;
-        cfg_ms_bank = (t_int32)preset.bank;
+        CfgMSSynthesizer = (t_int32)preset.synth;
+        CfgMSBank = (t_int32)preset.bank;
     }
 
     {
         int plugin_selected = (int)SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
         int plugin = -1;
 
-        if (plugin_selected >= _ReportedPluginCount && plugin_selected < (int)(_ReportedPluginCount + _VSTiPlugins.get_count()))
+        if (plugin_selected >= _ReportedPlugInCount && plugin_selected < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count()))
             plugin = 1;
     #ifdef DXISUPPORT
         else if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
@@ -1126,15 +1181,15 @@ void Preferences::apply()
         else
             plugin = _PluginPresentReverseMap[plugin_selected];
 
-        cfg_vst_path = "";
+        CfgVSTiPath = "";
 
-        CfgPluginId = plugin;
+        CfgPlugInId = plugin;
 
         if (plugin == 1)
         {
-            cfg_vst_path = _VSTiPlugins[(size_t)(plugin_selected - _ReportedPluginCount)].PathName.c_str();
+            CfgVSTiPath = _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].PathName.c_str();
 
-            cfg_vst_config[_VSTiPlugins[(size_t)(plugin_selected - _ReportedPluginCount)].Id] = vsti_config;
+            CfgVSTiConfig[_VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].Id] = _VSTiConfig;
         }
     #ifdef DXISUPPORT
         else if (plugin == 5)
@@ -1144,11 +1199,11 @@ void Preferences::apply()
     #endif
     }
 
-    cfg_soundfont_path = m_soundfont;
-    cfg_munt_base_path = m_munt_path;
+    CfgSoundFontPath = _SoundFontPath;
+    CfgMUNTPath = _MUNTPath;
 
-    cfg_loop_type = (t_int32)SendDlgItemMessage(IDC_LOOP, CB_GETCURSEL);
-    cfg_loop_type_other = (t_int32)SendDlgItemMessage(IDC_CLOOP, CB_GETCURSEL);
+    cfg_loop_type = (t_int32)SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
+    cfg_loop_type_other = (t_int32)SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
     cfg_thloopz = (t_int32)SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK);
     cfg_rpgmloopz = (t_int32)SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK);
     cfg_xmiloopz = (t_int32)SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK);
@@ -1156,7 +1211,7 @@ void Preferences::apply()
     cfg_emidi_exclusion = (t_int32)SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK);
     cfg_filter_instruments = (t_int32)SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
     cfg_filter_banks = (t_int32)SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
-    cfg_ms_panning = (t_int32)SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK);
+    CfgMSPanning = (t_int32)SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK);
 //  cfg_recover_tracks = SendDlgItemMessage( IDC_RECOVER, BM_GETCHECK );
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -1166,15 +1221,15 @@ void Preferences::apply()
             interp_method = 4;
         else if (interp_method == 3)
             interp_method = 7;
-        cfg_fluid_interp_method = interp_method;
+        Cfg_FluidSynthInterpolationMethod = interp_method;
     }
 #endif
 
 #ifdef BASSMIDISUPPORT
-    cfg_resampling = (t_int32)SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
+    CfgResamplingMode = (t_int32)SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
 #endif
-    cfg_midi_flavor = (t_int32)SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_GETCURSEL);
-    cfg_midi_reverb = !SendDlgItemMessage(IDC_FILTER_EFFECTS, BM_GETCHECK);
+    CfgMIDIFlavor = (t_int32)SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
+    CfgAllowMIDIEffects = !SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK);
 
     OnChanged(); // our dialog content has not changed but the flags have - our currently shown values now match the settings so the apply button can be disabled
 }
@@ -1184,9 +1239,9 @@ bool Preferences::HasChanged()
     // returns whether our dialog content is different from the current configuration (whether the apply button should be enabled or not)
     bool changed = false;
 
-    if (!changed && GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT)cfg_srate) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_LOOP, CB_GETCURSEL) != cfg_loop_type) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_CLOOP, CB_GETCURSEL) != cfg_loop_type_other) changed = true;
+    if (!changed && GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT)CfgSampleRate) changed = true;
+    if (!changed && SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL) != cfg_loop_type) changed = true;
+    if (!changed && SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL) != cfg_loop_type_other) changed = true;
     if (!changed && SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK) != cfg_thloopz) changed = true;
     if (!changed && SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK) != cfg_rpgmloopz) changed = true;
     if (!changed && SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK) != cfg_xmiloopz) changed = true;
@@ -1194,7 +1249,7 @@ bool Preferences::HasChanged()
     if (!changed && SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK) != cfg_emidi_exclusion) changed = true;
     if (!changed && SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK) != cfg_filter_instruments) changed = true;
     if (!changed && SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK) != cfg_filter_banks) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK) != cfg_ms_panning) changed = true;
+    if (!changed && SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK) != CfgMSPanning) changed = true;
 
 #ifdef FLUIDSYNTHSUPPORT
     if (!changed)
@@ -1204,18 +1259,18 @@ bool Preferences::HasChanged()
             interp_method = 4;
         else if (interp_method == 3)
             interp_method = 7;
-        if (interp_method != cfg_fluid_interp_method) changed = true;
+        if (interp_method != Cfg_FluidSynthInterpolationMethod) changed = true;
     }
 #endif
 
 #ifdef BASSMIDISUPPORT
-    if (!changed && SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL) != cfg_resampling)
+    if (!changed && SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgResamplingMode)
         changed = true;
 #endif
-    if (!changed && SendDlgItemMessage(IDC_FILTER_FLAVOR, CB_GETCURSEL) != cfg_midi_flavor)
+    if (!changed && SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIFlavor)
         changed = true;
 
-    if (!changed && !SendDlgItemMessage(IDC_FILTER_EFFECTS, BM_GETCHECK) != cfg_midi_reverb)
+    if (!changed && !SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != CfgAllowMIDIEffects)
         changed = true;
 
     if (!changed)
@@ -1227,7 +1282,7 @@ bool Preferences::HasChanged()
 
         const MSPreset & preset = _MSPresets[preset_number];
 
-        if (!(preset.synth == (unsigned int)cfg_ms_synth && preset.bank == (unsigned int)cfg_ms_bank))
+        if (!(preset.synth == (unsigned int)CfgMSSynthesizer && preset.bank == (unsigned int)CfgMSBank))
             changed = true;
     }
 
@@ -1235,20 +1290,20 @@ bool Preferences::HasChanged()
     {
         int t = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
 
-        if (t < 0 || t >= (int)m_bank_list.get_count())
+        if (t < 0 || t >= (int)_ADLBanks.get_count())
             t = 0;
 
-        if (m_bank_list[(t_size)t].number != (int)cfg_adl_bank)
+        if (_ADLBanks[(t_size)t].number != (int)CfgADLBank)
             changed = true;
     }
 
-    if (!changed && GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE) != (UINT)cfg_adl_chips)
+    if (!changed && GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE) != (UINT)CfgADLChipCount)
         changed = true;
 
-    if (!changed && SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != cfg_adl_panning)
+    if (!changed && SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != CfgADLPanning)
         changed = true;
 
-    if (!changed && SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL) != cfg_munt_gm)
+    if (!changed && SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL) != CfgMUNTGMSet)
         changed = true;
 
     if (!changed)
@@ -1256,7 +1311,7 @@ bool Preferences::HasChanged()
         int plugin_selected = (int)SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
         int plugin = -1;
 
-        if ((plugin_selected >= _ReportedPluginCount) && (plugin_selected < _ReportedPluginCount + (int)_VSTiPlugins.get_count()))
+        if ((plugin_selected >= _ReportedPlugInCount) && (plugin_selected < _ReportedPlugInCount + (int)_VSTiPlugIns.get_count()))
             plugin = 1;
     #ifdef DXISUPPORT
         else if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
@@ -1265,19 +1320,19 @@ bool Preferences::HasChanged()
         else
             plugin = _PluginPresentReverseMap[plugin_selected];
 
-        if (plugin != CfgPluginId)
+        if (plugin != CfgPlugInId)
             changed = true;
 
         if (!changed && plugin == 1)
         {
-            if (stricmp_utf8(cfg_vst_path, _VSTiPlugins[(size_t)(plugin_selected - _ReportedPluginCount)].PathName.c_str()))
+            if (stricmp_utf8(CfgVSTiPath, _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].PathName.c_str()))
                 changed = true;
 
             if (!changed)
             {
-                t_uint32 unique_id = _VSTiPlugins[(size_t)(plugin_selected - _ReportedPluginCount)].Id;
+                t_uint32 unique_id = _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].Id;
 
-                if (vsti_config.size() != cfg_vst_config[unique_id].size() || (vsti_config.size() && memcmp(&vsti_config[0], &cfg_vst_config[unique_id][0], vsti_config.size())))
+                if (_VSTiConfig.size() != CfgVSTiConfig[unique_id].size() || (_VSTiConfig.size() && memcmp(&_VSTiConfig[0], &CfgVSTiConfig[unique_id][0], _VSTiConfig.size())))
                     changed = true;
             }
         }
@@ -1291,13 +1346,13 @@ bool Preferences::HasChanged()
 
     if (!changed)
     {
-        if (stricmp_utf8(m_soundfont, cfg_soundfont_path))
+        if (stricmp_utf8(_SoundFontPath, CfgSoundFontPath))
             changed = true;
     }
 
     if (!changed)
     {
-        if (stricmp_utf8(m_munt_path, cfg_munt_base_path))
+        if (stricmp_utf8(_MUNTPath, CfgMUNTPath))
             changed = true;
     }
 
@@ -1320,7 +1375,7 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
 
     if (findFile == nullptr)
     {
-        _VSTiPlugins.set_size(0);
+        _VSTiPlugIns.set_size(0);
 
         CfgVSTiSearchPath.get(VSTiSearchPath);
 
@@ -1372,13 +1427,7 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
             // Examine all files.
             if (findFile->GetFileSize())
             {
-                {
-                    pfc::string8 Text;
-
-                    Text << "Examining \"" << PathName << "\"...";
-
-                    console::print(Text);
-                }
+                console::formatter() << "Examining \"" << PathName << "\"...";
 
                 VSTiPlayer Player;
 
@@ -1420,7 +1469,7 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
                     Plugin.Id = (uint32_t)Player.getUniqueID();
                     Plugin.HasEditor = Player.hasEditor();
 
-                    _VSTiPlugins.append_single(Plugin);
+                    _VSTiPlugIns.append_single(Plugin);
                 }
             }
         }
@@ -1545,6 +1594,44 @@ bool Preferences::HasSecretSauce()
     return rc;
 }
 #pragma endregion
+
+#ifdef BASSMIDISUPPORT
+#if defined(_M_IX86) || defined(__i386__) // x86, either x86_64 or no SSE2 compiled in?
+#if 1 /* SSE2 is my current minimum */
+const bool _HASSSE2 = true;
+#else
+#ifdef _MSC_VER
+#include <intrin.h>
+#elif defined(__clang__) || defined(__GNUC__)
+static inline void
+__cpuid(int * data, int selector)
+{
+    asm("cpuid"
+        : "=a"(data[0]),
+        "=b"(data[1]),
+        "=c"(data[2]),
+        "=d"(data[3])
+        : "a"(selector));
+}
+#else
+#define __cpuid(a, b) memset((a), 0, sizeof(int) * 4)
+#endif
+
+static bool query_cpu_feature_sse2()
+{
+    int buffer[4];
+
+    __cpuid(buffer, 1);
+ 
+   return ((buffer[3] & (1 << 26)) == 0) ? false : true;
+}
+
+bool _HASSSE2 = query_cpu_feature_sse2();
+#endif
+#else
+const bool _HASSSE2 = true;
+#endif
+#endif
 
 class PreferencesPage : public preferences_page_impl<Preferences>
 {

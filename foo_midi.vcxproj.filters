@@ -146,7 +146,6 @@
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="ConfigurationMap.h" />
     <ClInclude Include="TrackHasher.h" />
-    <ClInclude Include="Fields.h" />
     <ClInclude Include="MIDIPresetFilter.h" />
     <ClInclude Include="MIDISysExDumps.h" />
     <ClInclude Include="MIDISysExFilter.h" />
