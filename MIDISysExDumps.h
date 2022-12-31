@@ -1,5 +1,5 @@
 
-/** $VER: MIDISyxDumps.h (2022.12.30) **/
+/** $VER: MIDISysExDumps.h (2022.12.31) **/
 
 #pragma once
 
@@ -13,7 +13,11 @@ class MIDISysExDumps
 {
 public:
     MIDISysExDumps() noexcept { }
-    MIDISysExDumps(const MIDISysExDumps & p_in) noexcept : Items(p_in.Items) { }
+    MIDISysExDumps(const MIDISysExDumps & p_in) : Items(p_in.Items) { }
+//  MIDISysExDumps(const MIDISysExDumps &&) = delete;
+//  MIDISysExDumps & operator=(const MIDISysExDumps &) = delete;
+//  MIDISysExDumps & operator=(MIDISysExDumps &&) = delete;
+    virtual ~MIDISysExDumps() { };
 
     void serialize(const char * filePath, pfc::string8 & p_out);
     void unserialize(const char * p_in, const char * filePath);
@@ -21,8 +25,7 @@ public:
     void Merge(midi_container & container, abort_callback & abortHandler);
 
 private:
-
-    static void relative_path_create(const char * filePath, const char * directoryPath, pfc::string_base & p_out);
+    static void CreateRelativePath(const char * filePath, const char * directoryPath, pfc::string_base & p_out);
     static void relative_path_parse(const char * relativePath, const char * directoryPath, pfc::string_base & p_out);
 
 public:

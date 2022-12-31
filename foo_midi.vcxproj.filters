@@ -46,6 +46,8 @@
     <ClCompile Include="InputDecoder.cpp" />
     <ClCompile Include="MIDISysExDumps.cpp" />
     <ClCompile Include="MIDIPreset.cpp" />
+    <ClCompile Include="MIDISysExFilter.cpp" />
+    <ClCompile Include="MIDIPresetFilter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />

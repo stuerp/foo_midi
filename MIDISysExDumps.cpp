@@ -1,56 +1,56 @@
 
-/** $VER: MIDISysExDumps.cpp (2022.12.30) **/
+/** $VER: MIDISysExDumps.cpp (2022.12.31) **/
+
+#pragma warning(disable: 26446 26481 26493)
 
 #include "MIDISysExDumps.h"
 
-#include "Fields.h"
-
-void MIDISysExDumps::serialize(const char * filePath, pfc::string8 & p_out)
+void MIDISysExDumps::serialize(const char * filePath, pfc::string8 & text)
 {
     if (filePath == nullptr)
         return;
 
-    pfc::string8_fast p_relative;
+    pfc::string8_fast RelativePath;
 
-    p_out.reset();
+    text.reset();
 
-    for (unsigned i = 0; i < Items.get_count(); ++i)
+    for (size_t i = 0; i < Items.get_count(); ++i)
     {
-        relative_path_create(Items[i], filePath, p_relative);
+        CreateRelativePath(Items[i], filePath, RelativePath);
 
         if (i)
-            p_out += "\n";
+            text += "\n";
 
-        p_out += p_relative;
+        text += RelativePath;
     }
 }
 
-void MIDISysExDumps::unserialize(const char * p_in, const char * filePath)
+void MIDISysExDumps::unserialize(const char * text, const char * filePath)
 {
-    if ((p_in == nullptr) || (filePath == nullptr))
+    if ((text == nullptr) || (filePath == nullptr))
         return;
 
-    pfc::string8_fast p_relative, p_absolute;
+    pfc::string8_fast RelativePath, AbsolutePath;
 
-    const char * end = p_in + ::strlen(p_in);
+    const char * end = text + ::strlen(text);
 
-    while (p_in < end)
+    while (text < end)
     {
-        const char * LineFeed = ::strchr(p_in, '\n');
+        const char * LineFeed = ::strchr(text, '\n');
 
         if (LineFeed == nullptr)
             LineFeed = end;
 
-        p_relative.set_string(p_in, (t_size)(LineFeed - p_in));
+        RelativePath.set_string(text, (t_size)(LineFeed - text));
 
-        relative_path_parse(p_relative, filePath, p_absolute);
+        relative_path_parse(RelativePath, filePath, AbsolutePath);
 
-        Items.append_single(p_absolute);
+        Items.append_single(AbsolutePath);
 
-        p_in = LineFeed;
+        text = LineFeed;
 
-        while (*p_in == '\n')
-            ++p_in;
+        while (*text == '\n')
+            ++text;
     }
 }
 
@@ -69,7 +69,7 @@ void MIDISysExDumps::Merge(midi_container & container, abort_callback & abortHan
 
             filesystem::g_open(File, Items[i], filesystem::open_mode_read, abortHandler);
 
-            t_filesize FileSize = File->get_size_ex(abortHandler);
+            const t_filesize FileSize = File->get_size_ex(abortHandler);
 
             Data.resize(FileSize);
 
@@ -101,25 +101,25 @@ void MIDISysExDumps::Merge(midi_container & container, abort_callback & abortHan
     }
 }
 
-void MIDISysExDumps::relative_path_create(const char * filePath, const char * directoryPath, pfc::string_base & p_out)
+void MIDISysExDumps::CreateRelativePath(const char * filePath, const char * directoryPath, pfc::string_base & p_out)
 {
     if ((filePath ==nullptr) || (directoryPath == nullptr))
         return;
 
-    t_size p_file_fn = pfc::scan_filename(filePath);
-    t_size p_base_path_fn = pfc::scan_filename(directoryPath);
+    const t_size p_file_fn = pfc::scan_filename(filePath);
+    const t_size p_base_path_fn = pfc::scan_filename(directoryPath);
 
     if (p_file_fn == p_base_path_fn && !strncmp(filePath, directoryPath, p_file_fn))
     {
         p_out = filePath + p_file_fn;
     }
     else
-    if (p_file_fn > p_base_path_fn && !strncmp(filePath, directoryPath, p_base_path_fn) && pfc::is_path_separator(filePath[p_base_path_fn - 1]))
+    if ((p_file_fn > p_base_path_fn) && (::strncmp(filePath, directoryPath, p_base_path_fn) == 0) && pfc::is_path_separator((unsigned int)filePath[p_base_path_fn - 1]))
     {
         p_out = filePath + p_base_path_fn;
     }
     else
-    if (p_base_path_fn > p_file_fn && !strncmp(filePath, directoryPath, p_file_fn) && pfc::is_path_separator(directoryPath[p_file_fn - 1]))
+    if ((p_base_path_fn > p_file_fn) && (::strncmp(filePath, directoryPath, p_file_fn) == 0) && pfc::is_path_separator((unsigned int)directoryPath[p_file_fn - 1]))
     {
         p_out.reset();
 
@@ -127,7 +127,7 @@ void MIDISysExDumps::relative_path_create(const char * filePath, const char * di
 
         while (p_base_path_search < p_base_path_fn)
         {
-            if (pfc::is_path_separator(directoryPath[++p_base_path_search]))
+            if (pfc::is_path_separator((unsigned int)directoryPath[++p_base_path_search]))
             {
                 p_out += "..\\";
             }

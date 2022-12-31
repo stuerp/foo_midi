@@ -1,6 +1,8 @@
 
 /** $VER: foo_midi.cpp (2022.12.30) **/
 
+#pragma warning(disable: 5045)
+
 #include <sdk/foobar2000-lite.h>
 #include <sdk/componentversion.h>
 

@@ -199,7 +199,7 @@ public:
                 p_midi_preset = 0;
 
             static_api_ptr_t<metadb_io_v2> p_imgr;
-            service_ptr_t<midi_preset_filter> p_filter = new service_impl_t<midi_preset_filter>(data, p_midi_preset);
+            service_ptr_t<MIDIPresetFilter> p_filter = new service_impl_t<MIDIPresetFilter>(data, p_midi_preset);
 
             p_imgr->update_info_async(data, p_filter, core_api::get_main_window(), 0, 0);
         }
@@ -221,7 +221,7 @@ public:
             }
 
             static_api_ptr_t<metadb_io_v2> p_imgr;
-            service_ptr_t<midi_syx_filter> p_filter = new service_impl_t<midi_syx_filter>(data, Dumps);
+            service_ptr_t<MIDISysExFilter> p_filter = new service_impl_t<MIDISysExFilter>(data, Dumps);
 
             p_imgr->update_info_async(data, p_filter, core_api::get_main_window(), 0, 0);
         }

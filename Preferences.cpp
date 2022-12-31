@@ -21,7 +21,6 @@
 #include "resource.h"
 
 #include "Configuration.h"
-#include "Fields.h"
 #include "MIDIPreset.h"
 
 #include "ADLPlayer.h"

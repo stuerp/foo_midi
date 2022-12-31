@@ -260,7 +260,9 @@
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MIDIPreset.cpp" />
     <ClCompile Include="MIDIPreset.h" />
+    <ClCompile Include="MIDIPresetFilter.cpp" />
     <ClCompile Include="MIDISysExDumps.cpp" />
+    <ClCompile Include="MIDISysExFilter.cpp" />
     <ClCompile Include="MSPlayer.cpp" />
     <ClCompile Include="MT32Player\MT32Player.cpp" />
     <ClCompile Include="Experimental\DXiPlayer.cpp">
