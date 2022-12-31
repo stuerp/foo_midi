@@ -8,7 +8,7 @@
 MIDIPreset::MIDIPreset() noexcept
 {
     {
-        _PluginId = (unsigned int)cfg_plugin;
+        _PluginId = (unsigned int)CfgPluginId;
         _VSTPathName = cfg_vst_path;
 
         {

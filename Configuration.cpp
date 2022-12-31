@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2022.12.30) **/
+/** $VER: Configuration.cpp (2022.12.31) **/
 
 #include "Configuration.h"
 
@@ -32,8 +32,13 @@ static const GUID guid_cfg_vst_config = { 0x44e7c715, 0xd256, 0x44c4, { 0x8f, 0x
 #ifdef DXISUPPORT
 static const GUID guid_cfg_dxi_plugin = { 0xd5c87282, 0xa9e6, 0x40f3, { 0x93, 0x82, 0x95, 0x68, 0xe6, 0x54, 0x1a, 0x46 } };
 #endif
-static const GUID guid_cfg_midi_parent = { 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0xfd, 0xc0, 0xfb, 0xae, 0x74, 0xe5, 0xfc } };
-static const GUID guid_cfg_vsti_search_path = { 0xbb4c61a1, 0x3c4, 0x4b62, { 0xb0, 0x4d, 0x2c, 0x86, 0xce, 0xde, 0x0, 0x5d } };
+
+// Advanced Configuration
+static const GUID GUIDMIDIPlayerBranch = { 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0xfd, 0xc0, 0xfb, 0xae, 0x74, 0xe5, 0xfc } };
+
+static const GUID GUIDVSTiSearchPath = { 0xbb4c61a1, 0x3c4, 0x4b62, { 0xb0, 0x4d, 0x2c, 0x86, 0xce, 0xde, 0x0, 0x5d } };
+static const GUID GUIDSCCorePath = { 0x1bf1799d, 0x7691, 0x4075, { 0x98, 0xae, 0x43, 0xae, 0x82, 0xd8, 0xc9, 0xcf } };
+
 static const GUID guid_cfg_midi_timing_parent = { 0x851583f7, 0x98b4, 0x44c7, { 0x9d, 0xf4, 0x4c, 0x7f, 0x85, 0x9d, 0x13, 0xba } };
 static const GUID guid_cfg_midi_loop_count = { 0xd8492ad0, 0x3b70, 0x4768, { 0x8d, 0x7, 0x97, 0xf5, 0x50, 0x8c, 0x8, 0xe8 } };
 static const GUID guid_cfg_midi_fade_time = { 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
@@ -50,10 +55,7 @@ static const GUID guid_cfg_skip_to_first_note = { 0xf90c8abf, 0x68b5, 0x474a, { 
 //static const GUID guid_cfg_adl_chorus = { 0xf56fa8c3, 0x38a1, 0x49e0, { 0xad, 0x8b, 0xd6, 0x51, 0x66, 0x31, 0x47, 0x19 } };      // {F56FA8C3-38A1-49E0-AD8B-D65166314719}
 
 static const GUID guid_cfg_ms_synth = { 0x7423a720, 0xeb39, 0x4d7d, { 0x9b, 0x85, 0x52, 0x4b, 0xc7, 0x79, 0xb5, 0x8b } };
-// {A91D31F4-22AE-4C5C-A621-F6B6011F5DDC}
 static const GUID guid_cfg_ms_bank = { 0xa91d31f4, 0x22ae, 0x4c5c, { 0xa6, 0x21, 0xf6, 0xb6, 0x1, 0x1f, 0x5d, 0xdc } };
-// {1BF1799D-7691-4075-98AE-43AE82D8C9CF}
-static const GUID guid_cfg_sc_path = { 0x1bf1799d, 0x7691, 0x4075, { 0x98, 0xae, 0x43, 0xae, 0x82, 0xd8, 0xc9, 0xcf } };
 // {849C5C09-520A-4D62-A6D1-E8B432664948}
 static const GUID guid_cfg_ms_panning = { 0x849c5c09, 0x520a, 0x4d62, { 0xa6, 0xd1, 0xe8, 0xb4, 0x32, 0x66, 0x49, 0x48 } };
 // {091C12A1-D42B-4F4E-8058-8B7F4C4DF3A1}
@@ -108,6 +110,8 @@ static const GUID guid_cfg_midi_flavor = { 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0
 #pragma endregion
 
 cfg_int
+    CfgPluginId(guid_cfg_plugin, DefaultPluginId),
+
     cfg_thloopz(guid_cfg_thloopz, default_cfg_thloopz),
     cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz),
     cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz),
@@ -124,7 +128,6 @@ cfg_int
 //  cfg_nosysex("sux", 0),
 //  cfg_gm2(guid_cfg_gm2, 0),
     cfg_srate(guid_cfg_srate, default_cfg_srate),
-    cfg_plugin(guid_cfg_plugin, default_cfg_plugin),
     cfg_resampling(guid_cfg_resampling, default_cfg_resampling),
 
     cfg_adl_bank(guid_cfg_adl_bank, default_cfg_adl_bank),
@@ -161,30 +164,30 @@ cfg_map cfg_vst_config(guid_cfg_vst_config);
 
 /** Advanced Configuration **/
 
-advconfig_branch_factory cfg_midi_parent(COMPONENT_NAME, guid_cfg_midi_parent, advconfig_branch::guid_branch_playback, 0);
+advconfig_branch_factory CfgMIDIPlayer(COMPONENT_NAME, GUIDMIDIPlayerBranch, advconfig_branch::guid_branch_playback, 0);
 
-advconfig_string_factory cfg_vsti_search_path("VSTi search path", guid_cfg_vsti_search_path, guid_cfg_midi_parent, 0, "");
+advconfig_string_factory CfgVSTiSearchPath("VSTi search path", GUIDVSTiSearchPath, GUIDMIDIPlayerBranch, 0, "");
 
-advconfig_string_factory_MT cfg_sc_path("Secret Sauce path", guid_cfg_sc_path, guid_cfg_midi_parent, 0, "");
+advconfig_string_factory_MT CfgSecretSaucePath("Secret Sauce path", GUIDSCCorePath, GUIDMIDIPlayerBranch, 0, "");
 
-advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops present", guid_cfg_midi_timing_parent, guid_cfg_midi_parent, 1.0);
+advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops present", guid_cfg_midi_timing_parent, GUIDMIDIPlayerBranch, 1.0);
 
 advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
 advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 0, 30000);
 
-advconfig_branch_factory cfg_adl_core_parent("libADLMIDI emulator core", guid_cfg_adl_core_parent, guid_cfg_midi_parent, 2.0);
+advconfig_branch_factory cfg_adl_core_parent("libADLMIDI emulator core", guid_cfg_adl_core_parent, GUIDMIDIPlayerBranch, 2.0);
 
 advconfig_checkbox_factory_t<true> cfg_adl_core_nuked("Nuked OPL3 (slowest, most accurate)", guid_cfg_adl_core_nuked, guid_cfg_adl_core_parent, 0.0, false);
 advconfig_checkbox_factory_t<true> cfg_adl_core_nuked_174("Nuked OPL3 v0.74 (slow, slightly less accurate)", guid_cfg_adl_core_nuked_174, guid_cfg_adl_core_parent, 1.0, false);
 advconfig_checkbox_factory_t<true> cfg_adl_core_dosbox("Dosbox OPL3 (really fast, mostly accurate)", guid_cfg_adl_core_dosbox, guid_cfg_adl_core_parent, 2.0, true);
 
-advconfig_branch_factory cfg_opn_core_parent("libOPNMIDI emulator core", guid_cfg_opn_core_parent, guid_cfg_midi_parent, 3.0);
+advconfig_branch_factory cfg_opn_core_parent("libOPNMIDI emulator core", guid_cfg_opn_core_parent, GUIDMIDIPlayerBranch, 3.0);
 
 advconfig_checkbox_factory_t<true> cfg_opn_core_mame("MAME OPN", guid_cfg_opn_core_mame, guid_cfg_opn_core_parent, 0.0, true);
 advconfig_checkbox_factory_t<true> cfg_opn_core_nuked("NukedOPN", guid_cfg_opn_core_nuked, guid_cfg_opn_core_parent, 1.0, false);
 advconfig_checkbox_factory_t<true> cfg_opn_core_gens("Gens OPN", guid_cfg_opn_core_gens, guid_cfg_opn_core_parent, 2.0, false);
 
-advconfig_branch_factory cfg_opn_bank_parent("libOPNMIDI bank", guid_cfg_opn_bank_parent, guid_cfg_midi_parent, 4.0);
+advconfig_branch_factory cfg_opn_bank_parent("libOPNMIDI bank", guid_cfg_opn_bank_parent, GUIDMIDIPlayerBranch, 4.0);
 
 advconfig_checkbox_factory_t<true> cfg_opn_bank_xg("XG", guid_cfg_opn_bank_xg, guid_cfg_opn_bank_parent, 0.0, true);
 advconfig_checkbox_factory_t<true> cfg_opn_bank_gs("GS (DMXOPN2)", guid_cfg_opn_bank_gs, guid_cfg_opn_bank_parent, 1.0, false);
@@ -192,17 +195,17 @@ advconfig_checkbox_factory_t<true> cfg_opn_bank_gems("GEMS fmlib GM", guid_cfg_o
 advconfig_checkbox_factory_t<true> cfg_opn_bank_tomsoft("Tomsoft's SegaMusic", guid_cfg_opn_bank_tomsoft, guid_cfg_opn_bank_parent, 3.0, false);
 advconfig_checkbox_factory_t<true> cfg_opn_bank_fmmidi("FMMIDI original bank", guid_cfg_opn_bank_fmmidi, guid_cfg_opn_bank_parent, 4.0, false);
 
-advconfig_checkbox_factory cfg_SkipToFirstNote("Skip to first note", guid_cfg_skip_to_first_note, guid_cfg_midi_parent, 0, false);
+advconfig_checkbox_factory cfg_SkipToFirstNote("Skip to first note", guid_cfg_skip_to_first_note, GUIDMIDIPlayerBranch, 0, false);
 
 #ifdef BASSMIDISUPPORT
-advconfig_branch_factory cfg_bassmidi_parent("BASSMIDI", guid_cfg_bassmidi_parent, guid_cfg_midi_parent, 3.0);
+advconfig_branch_factory cfg_bassmidi_parent("BASSMIDI", guid_cfg_bassmidi_parent, GUIDMIDIPlayerBranch, 3.0);
 
 advconfig_checkbox_factory cfg_bassmidi_effects("Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_bassmidi_parent, 0, true);
 advconfig_integer_factory cfg_bassmidi_voices("Maximum voice count", guid_cfg_bassmidi_voices, guid_cfg_bassmidi_parent, 1, 256, 1, 100000);
 #endif
 
 #ifdef FLUIDSYNTHSUPPORT
-advconfig_branch_factory cfg_fluidsynth_parent("FluidSynth", guid_cfg_fluidsynth_parent, guid_cfg_midi_parent, 3.0);
+advconfig_branch_factory cfg_fluidsynth_parent("FluidSynth", guid_cfg_fluidsynth_parent, GUIDMIDIPlayerBranch, 3.0);
 
 advconfig_checkbox_factory cfg_soundfont_dynamic("Load SoundFont samples dynamically", guid_cfg_soundfont_dynamic, guid_cfg_fluidsynth_parent, 0, true);
 advconfig_checkbox_factory cfg_fluidsynth_effects("Render reverb and chorus effects", guid_cfg_fluidsynth_effects, guid_cfg_fluidsynth_parent, 1, true);

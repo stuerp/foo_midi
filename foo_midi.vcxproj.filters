@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClCompile Include="Experimental\DXiPlayer.cpp" />
     <ClCompile Include="foo_midi.cpp" />
-    <ClCompile Include="Experimental\PlugInInventory.cpp" />
     <ClCompile Include="Experimental\SFPlayer.cpp" />
     <ClCompile Include="3rdParty\Twelve Tone Systems\SMF.cpp" />
     <ClCompile Include="VSTiPlayer.cpp" />
@@ -151,11 +150,11 @@
     <ClInclude Include="MIDIPresetFilter.h" />
     <ClInclude Include="MIDISysExDumps.h" />
     <ClInclude Include="MIDISysExFilter.h" />
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
     <CustomBuild Include="Experimental\PlugInInventory.h" />
-    <CustomBuild Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="sflist">

@@ -5,91 +5,335 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+language LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
-IDD_CONFIG DIALOGEX 0, 0, 334, 286
-STYLE DS_SETFONT | WS_CHILD
+#define W_00    249 // Dialog width as set by foobar2000, in dialog units
+#define H_00    234 // Dialog height as set by foobar2000, in dialog units
+
+IDD_CONFIG dialogex 0, 0, 0, 0
+style DS_SETFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 0x0
-BEGIN
+{
     // Left Part
-    GROUPBOX "Output", IDC_STATIC, 7, 7, 175, 62
-        RTEXT           "Plug-in:",     IDC_STATIC, 27, 19,  30,  8
-        COMBOBOX                        IDC_PLUGIN, 60, 17, 116, 14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    #define X_10    7
+    #define Y_10    7
+    #define W_10    158
 
-        CTEXT           "No VST path configured in advanced preferences.",  IDC_VST_WARNING,13,35,163,  8,NOT WS_VISIBLE
-        CTEXT           "Regular MUNT will already be used automatically.", IDC_MUNT_WARNING,13,35,163, 8,NOT WS_VISIBLE
+    #define X_11    X_10 + 5
+    #define Y_11    Y_10 + 11
+    #define W_11    40
+    #define H_11    8
 
-        PUSHBUTTON      "Configure",    IDC_PLUGIN_CONFIGURE,60, 34, 50, 14
+    #define X_12    X_11 + W_11 + 3
+    #define Y_12    Y_11
+    #define W_12    W_10 - 5 - W_11 - 3 - 6
+    #define H_12    14
 
-        RTEXT           "Sample rate:", IDC_STATIC,     13, 53,  44,  8
-        COMBOBOX                        IDC_SAMPLERATE, 60, 51,  40, 14, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    #define X_13    X_10 + 4
+    #define Y_13    Y_12 + H_12 + 4
+    #define W_13    W_11
+    #define H_13    8
 
-    GROUPBOX "Looping",IDC_STATIC, 7, 72, 175, 62
-        RTEXT       "Playback:",    IDC_STATIC,         13, 84,  41,  8
-        COMBOBOX                    IDC_LOOP,           57, 82, 119, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    #define X_14    X_13 + W_13 + 3
+    #define Y_14    Y_13
+    #define W_14    40
+    #define H_14    14
 
-        RTEXT       "Other:",       IDC_STATIC,         13, 99,  41,  8
-        COMBOBOX                    IDC_CLOOP,          57, 97, 119, 14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    #define H_10    11 + H_12 + 4 + H_14 + 4
 
-    CONTROL     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMLOOPZ, "Button",    BS_AUTOCHECKBOX | WS_TABSTOP, 13, 112, 163, 10
-    CONTROL     "CC 116/117 (XMI, EMIDI)",                          IDC_XMILOOPZ, "Button",     BS_AUTOCHECKBOX | WS_TABSTOP, 13, 125, 163, 10
-    CONTROL     "CC 2/4 (Touhou)",                                  IDC_THLOOPZ, "Button",      BS_AUTOCHECKBOX | WS_TABSTOP, 13, 138, 163, 10
-    CONTROL     "loopStart/loopEnd track markers (FF7 PC, HMI)",    IDC_FF7LOOPZ, "Button",     BS_AUTOCHECKBOX | WS_TABSTOP, 13, 151, 163, 10
+    groupbox "Output", IDC_STATIC, X_10, Y_10, W_10, H_10
+        rtext           "Plug-in:",     IDC_STATIC,     X_11, Y_11 + 2, W_11, H_11
+        combobox                        IDC_PLUGIN,     X_12, Y_12,     W_12, H_12, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext           "Sample rate:", IDC_STATIC,     X_13, Y_13 + 2, W_13, H_13
+        combobox                        IDC_SAMPLERATE, X_14, Y_14,     W_14, H_14, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
-    GROUPBOX "Misc", IDC_STATIC, 7, 168, 175, 52
-        CONTROL         "EMIDI device track exclusion (Duke3D, etc.)",  IDC_EMIDI_EX, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, 13, 179, 157, 10
-        CONTROL         "Disable instrument changes",                   IDC_FILTER_INSTRUMENTS, "Button",   BS_AUTOCHECKBOX | WS_TABSTOP, 13, 192, 157, 10
-        CONTROL         "Disable bank changes",                         IDC_FILTER_BANKS,"Button",          BS_AUTOCHECKBOX | WS_TABSTOP, 13, 204, 157, 10
+    #define X_A0    X_10
+    #define Y_A0    Y_10 + H_10 + 4
+    #define W_A0    W_10
+
+    #define X_A1    X_A0 + 5
+    #define Y_A1    Y_A0 + 11
+    #define W_A1    18
+    #define H_A1    8
+
+    #define X_A2    X_A1 + W_A1 + 3
+    #define Y_A2    Y_A1
+    #define W_A2    W_A0 - X_A1 - W_A1 - 6
+    #define H_A2    14
+
+    #define X_A3    X_A2
+    #define Y_A3    Y_A2 + H_A2 + 4
+    #define W_A3    50
+    #define H_A3    14
+
+    #define H_A0    11 + H_A2 + 4 + H_A3 + 4
+
+    groupbox "VST", IDC_STATIC, X_A0, Y_A0, W_A0, H_A0
+        rtext       "Path:",     IDC_STATIC,        X_A1, Y_A1 + 2, W_A1, H_A1
+        edittext                 IDC_VST_PATH,      X_A2, Y_A2,     W_A2, H_A2, ES_AUTOHSCROLL | ES_READONLY
+        pushbutton  "Configure", IDC_VST_CONFIGURE, X_A3, Y_A3,     W_A3, H_A3
+
+    #define X_20    7
+    #define Y_20    Y_A0 + H_A0 + 4
+    #define W_20    W_10
+
+    #define X_21    X_20 + 5
+    #define Y_21    Y_20 + 11 + 2
+    #define W_21    W_11
+    #define H_21    8
+
+    #define X_22    X_21 + W_21 + 3
+    #define Y_22    Y_21 - 2
+    #define W_22    W_12
+    #define H_22    14
+
+    #define X_23    X_20 + 4
+    #define Y_23    Y_22 + H_22 + 4 + 2
+    #define W_23    W_11
+    #define H_23    8
+
+    #define X_24    X_23 + W_23 + 3
+    #define Y_24    Y_23 - 2
+    #define W_24    W_22
+    #define H_24    14
+
+    #define H_20    11 + H_22 + 4 + H_24 + 4
+
+    groupbox "Looping", IDC_STATIC, X_20, Y_20, W_20, H_20
+        rtext       "Playback:",    IDC_STATIC,         X_21, Y_21, W_21, H_21
+        combobox                    IDC_LOOP,           X_22, Y_22, W_22, H_22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+        rtext       "Other:",       IDC_STATIC,         X_23, Y_23, W_23, H_23
+        combobox                    IDC_CLOOP,          X_24, Y_24, W_24, H_24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    #define X_30    7
+    #define Y_30    Y_20 + H_20 + 4
+    #define W_30    W_20
+
+    #define X_31    X_30 + 5
+    #define Y_31    Y_30 + 11
+    #define W_31    W_30 - 5 - 6
+    #define H_31    10
+
+    #define X_32    X_31
+    #define Y_32    Y_31 + H_31 + 4
+    #define W_32    W_31
+    #define H_32    10
+
+    #define X_33    X_32
+    #define Y_33    Y_32 + H_32 + 4
+    #define W_33    W_31
+    #define H_33    10
+
+    #define H_30    11 + H_31 + 4 + H_32 + 4 + H_33 + 4
+
+    groupbox "Miscellaneous", IDC_STATIC, X_30, Y_30, W_30, H_30
+        control         "EMIDI device track exclusion (Duke3D, etc.)",  IDC_EMIDI_EX, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_31, Y_31, W_31, H_31
+        control         "Disable instrument changes",                   IDC_FILTER_INSTRUMENTS, "Button",   BS_AUTOCHECKBOX | WS_TABSTOP, X_32, Y_32, W_32, H_32
+        control         "Disable bank changes",                         IDC_FILTER_BANKS, "Button",         BS_AUTOCHECKBOX | WS_TABSTOP, X_33, Y_33, W_33, H_33
+
+    #define X_41    7 + 5
+    #define Y_41    Y_30 + H_30 + 4
+    #define W_41    W_30 - 5 - 6
+    #define H_41    10
+
+    #define X_42    X_41
+    #define Y_42    Y_41 + H_41 + 4
+    #define W_42    W_41
+    #define H_42    H_41
+
+    #define X_43    X_42
+    #define Y_43    Y_42 + H_42 + 4
+    #define W_43    W_42
+    #define H_43    H_42
+
+    #define X_44    X_43
+    #define Y_44    Y_43 + H_43 + 4
+    #define W_44    W_43
+    #define H_44    H_43
+
+    #define X_45    X_44
+    #define Y_45    Y_44 + H_44 + 7
+    #define W_45    W_44
+    #define H_45    8
+
+    control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMLOOPZ, "Button",    BS_AUTOCHECKBOX | WS_TABSTOP, X_41, Y_41, W_41, H_41
+    control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMILOOPZ, "Button",     BS_AUTOCHECKBOX | WS_TABSTOP, X_42, Y_42, W_42, H_42
+    control     "CC 2/4 (Touhou)",                                  IDC_THLOOPZ, "Button",      BS_AUTOCHECKBOX | WS_TABSTOP, X_43, Y_43, W_43, H_43
+    control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7LOOPZ, "Button",     BS_AUTOCHECKBOX | WS_TABSTOP, X_44, Y_44, W_44, H_44
+
+    ltext       "Regular MUNT is used by default.", IDC_MUNT_WARNING, X_45, Y_45, W_45, H_45, NOT WS_VISIBLE
 
     // Right Part
-    GROUPBOX "SoundFont", IDC_STATIC, 188, 7,139, 62
-        RTEXT           "File:",                        IDC_SOUNDFONT_TEXT,     193, 19, 44,  8
-        EDITTEXT                                        IDC_SOUNDFONT,          240, 17, 79, 14, ES_AUTOHSCROLL | ES_READONLY
-        RTEXT           "Resampling:",                  IDC_RESAMPLING_TEXT,    193, 36, 44,  8
-        COMBOBOX                                        IDC_RESAMPLING,         240 ,34, 79, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        RTEXT           "Cached:",                      IDC_CACHED_TEXT,        193, 52, 44,  8
-        EDITTEXT                                        IDC_CACHED,             239, 50, 79, 14, ES_AUTOHSCROLL | ES_READONLY
+    #define X_50    X_10 + W_10 + 4
+    #define Y_50    7
+    #define W_50    W_10
 
-    GROUPBOX "MUNT", IDC_STATIC, 188, 72, 139, 44
-        RTEXT           "ROM:",                         IDC_STATIC,             193,  84, 44,  8
-        EDITTEXT                                        IDC_MUNT,               240,  82, 79, 14, ES_AUTOHSCROLL | ES_READONLY
-        RTEXT           "GM Set:",                      IDC_MUNT_GM_TEXT,       193, 100, 44,  8
-        COMBOBOX                                        IDC_MUNT_GM,            240,  98, 79, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    #define X_51    X_50 + 5
+    #define Y_51    Y_50 + 11
+    #define W_51    39
+    #define H_51    8
 
-    GROUPBOX "Nuclear Option", IDC_STATIC, 188, 119, 139, 43
-        RTEXT           "Preset:",                      IDC_MS_PRESET_TEXT,     204, 131, 33,  8
-        COMBOBOX                                        IDC_MS_PRESET,          240, 128, 79, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        CONTROL         "Enable soft panning",          IDC_MS_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 194, 146, 87, 8
+    #define X_52    X_51 + W_51 + 3
+    #define Y_52    Y_51
+    #define W_52    W_50 - 5 - W_51 - 3 - 6
+    #define H_52    14
 
-    GROUPBOX "Common", IDC_FILTER_GROUP, 188, 165, 139, 43
-        RTEXT           "Standard:",                    IDC_FILTER_FLAVOR_TEXT, 204, 177, 33, 8
-        COMBOBOX                                        IDC_FILTER_FLAVOR,      240, 174, 78, 14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        CONTROL         "Disable reverb and chorus",    IDC_FILTER_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 194, 192, 100, 8
+    #define X_53    X_51
+    #define Y_53    Y_52 + H_52 + 4
+    #define W_53    W_51
+    #define H_53    8
+
+    #define X_54    X_53 + W_53 + 3
+    #define Y_54    Y_53
+    #define W_54    W_52
+    #define H_54    14
+
+    #define X_55    X_51
+    #define Y_55    Y_54 + H_54 + 4
+    #define W_55    W_53
+    #define H_55    8
+
+    #define X_56    X_55 + W_55 + 3
+    #define Y_56    Y_55
+    #define W_56    W_54
+    #define H_56    14
+
+    #define H_50    11 + H_52 + 4 + H_54 + 4 + H_56 + 4
+
+    groupbox "SoundFont", IDC_STATIC, X_50, Y_50, W_50, H_50
+        rtext             "File:",  IDC_SOUNDFONT_TEXT,     X_51, Y_51 + 2, W_51, H_51
+        edittext                    IDC_SOUNDFONT,          X_52, Y_52,     W_52, H_52, ES_AUTOHSCROLL | ES_READONLY
+        rtext       "Resampling:",  IDC_RESAMPLING_TEXT,    X_53, Y_53 + 2, W_53, H_53
+        combobox                    IDC_RESAMPLING,         X_54, Y_54,     W_54, H_54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext           "Cached:",  IDC_CACHED_TEXT,        X_55, Y_55 + 2, W_55, H_55
+        edittext                    IDC_CACHED,             X_56, Y_56,     W_56, H_56, ES_AUTOHSCROLL | ES_READONLY
+
+    #define X_60    X_50
+    #define Y_60    Y_50 + H_50 + 4
+    #define W_60    W_50
+
+    #define X_61    X_51
+    #define Y_61    Y_60 + 11
+    #define W_61    40
+    #define H_61    8
+
+    #define X_62    X_61 + W_61 + 3
+    #define Y_62    Y_61
+    #define W_62    W_60 - 5 - W_61 - 3 - 6
+    #define H_62    14
+
+    #define X_63    X_61
+    #define Y_63    Y_62 + H_62 + 4
+    #define W_63    40
+    #define H_63    8
+
+    #define X_64    X_63 + W_63 + 3
+    #define Y_64    Y_63
+    #define W_64    W_62
+    #define H_64    14
+
+    #define H_60    11 + H_62 + 4 + H_64 + 4
+
+    groupbox "MUNT", IDC_STATIC, X_60, Y_60, W_60, H_60
+        rtext           "ROM:",                         IDC_STATIC,             X_61, Y_61 + 2, W_61, H_61
+        edittext                                        IDC_MUNT,               X_62, Y_62,     W_62, H_62, ES_AUTOHSCROLL | ES_READONLY
+        rtext           "GM Set:",                      IDC_MUNT_GM_TEXT,       X_63, Y_63 + 2, W_63, H_63
+        combobox                                        IDC_MUNT_GM,            X_64, Y_64,     W_64, H_64, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    #define X_70    X_60
+    #define Y_70    Y_60 + H_60 + 4
+    #define W_70    W_60
+
+    #define X_71    X_61
+    #define Y_71    Y_70 + 11
+    #define W_71    30
+    #define H_71    8
+
+    #define X_72    X_71 + W_71 + 3
+    #define Y_72    Y_71
+    #define W_72    W_70 - 5 - W_71 - 3 - 6
+    #define H_72    14
+
+    #define X_73    X_71
+    #define Y_73    Y_72 + H_72 + 4
+    #define W_73    W_70 - 5 - 6
+    #define H_73    8
+
+    #define H_70    11 + H_72 + 4 + H_73 + 4
+
+    groupbox "Nuclear Option", IDC_STATIC, X_70, Y_70, W_70, H_70
+        rtext       "Preset:",              IDC_MS_PRESET_TEXT,     X_71, Y_71 + 2, W_71, H_71
+        combobox                            IDC_MS_PRESET,          X_72, Y_72,     W_72, H_72, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        control     "Enable soft panning",  IDC_MS_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_73, Y_73, W_73, H_73
+
+    // Common
+    #define X_80    X_70
+    #define Y_80    Y_70 + H_70 + 4
+    #define W_80    W_70
+
+    #define X_81    X_71
+    #define Y_81    Y_80 + 11
+    #define W_81    31
+    #define H_81    8
+
+    #define X_82    X_81 + W_81 + 3
+    #define Y_82    Y_81
+    #define W_82    W_80 - 5 - W_81 - 3 - 6
+    #define H_82    14
+
+    #define X_83    X_81
+    #define Y_83    Y_82 + H_82 + 4
+    #define W_83    W_80 - 5 - 6
+    #define H_83    8
+
+    #define H_80    11 + H_82 + 4 + H_83 + 4
+
+    groupbox "Common", IDC_FILTER_GROUP, X_80, Y_80, W_80, H_80
+        rtext       "Standard:",                    IDC_FILTER_FLAVOR_TEXT, X_81, Y_81 + 2, W_81, H_81
+        combobox                                    IDC_FILTER_FLAVOR,      X_82, Y_82,     W_82, H_82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        control     "Disable reverb and chorus",    IDC_FILTER_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_83, Y_83, W_83, H_83
 
     // ADL
-    #define X_ADL       188
-    #define Y_ADL       211
+    #define X_90    X_80
+    #define Y_90    Y_80 + H_80 + 4
+    #define W_90    W_80
 
-    #define X_BANK      X_ADL + 4
-    #define Y_BANK      Y_ADL + 11
-    #define H_BANK      14
+    #define X_91    X_81
+    #define Y_91    Y_90 + 11
+    #define W_91    20
+    #define H_91    8
 
-    #define X_CHIPS     X_BANK
-    #define Y_CHIPS     Y_BANK + H_BANK + 4
-    #define H_CHIPS     14
+    #define X_92    X_91 + W_91 + 3
+    #define Y_92    Y_91
+    #define W_92    W_90 - 5 - W_91 - 3 - 6
+    #define H_92    14
 
-    #define X_PANNING   X_CHIPS
-    #define Y_PANNING   Y_CHIPS + H_CHIPS + 4
-    #define H_PANNING   10
+    #define X_93    X_91
+    #define Y_93    Y_92 + H_92 + 4
+    #define W_93    20
+    #define H_93    8
 
-    GROUPBOX "ADL", IDC_STATIC, X_ADL, Y_ADL, 139, 60
-        RTEXT       "Bank:",                IDC_ADL_BANK_TEXT,  X_BANK,           Y_BANK + 2,   20, 8
-        COMBOBOX                            IDC_ADL_BANK,       X_BANK  + 20 + 3, Y_BANK,  104, H_BANK, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        RTEXT       "Chips:",               IDC_ADL_CHIPS_TEXT, X_CHIPS,          Y_CHIPS + 2,  20, 8
-        COMBOBOX                            IDC_ADL_CHIPS,      X_CHIPS + 20 + 3, Y_CHIPS, 40, H_CHIPS, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-        CONTROL     "Enable soft panning",  IDC_ADL_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_PANNING, Y_PANNING, 100, H_PANNING
-END
+    #define X_94    X_93 + W_93 + 3
+    #define Y_94    Y_93
+    #define W_94    40
+    #define H_94    14
+
+    #define X_95    X_93
+    #define Y_95    Y_94 + H_94 + 4
+    #define W_95    W_90 - 5 - 6
+    #define H_95    10
+
+    #define H_90    11 + H_92 + 4 + H_94 + 4 + H_95 + 4
+
+    groupbox "ADL", IDC_STATIC, X_90, Y_90, W_90, H_90
+        rtext       "Bank:",                IDC_ADL_BANK_TEXT,  X_91, Y_91 + 2, W_91, H_91
+        combobox                            IDC_ADL_BANK,       X_92, Y_92,     W_92, H_92, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Chips:",               IDC_ADL_CHIPS_TEXT, X_93, Y_93 + 2, W_93, H_93
+        combobox                            IDC_ADL_CHIPS,      X_94, Y_94,     W_94, H_94, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+        control     "Enable soft panning",  IDC_ADL_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_95, Y_95, W_95, H_95
+}
 
 VS_VERSION_INFO versioninfo
 fileversion     2,7,4,4
@@ -108,14 +352,14 @@ filesubtype     VFT2_UNKNOWN
     {
         block "040904b0"
         {
-            VALUE "CompanyName", "LoSno.co"
-            VALUE "FileDescription", "A foobar2000 component"
-            VALUE "FileVersion", "2.7.4.4"
-            VALUE "InternalName", COMPONENT_BASENAME
-            VALUE "LegalCopyright", "Copyright (C) 2022 Christopher Snowhill, Peter Stuer"
-            VALUE "OriginalFilename", COMPONENT_FILENAME
-            VALUE "ProductName", COMPONENT_BASENAME
-            VALUE "ProductVersion", "2.7.4.4"
+            value "CompanyName", "LoSno.co"
+            value "FileDescription", "A foobar2000 component"
+            value "FileVersion", "2.7.4.4"
+            value "InternalName", COMPONENT_BASENAME
+            value "LegalCopyright", "Copyright (C) 2022 Christopher Snowhill, Peter Stuer"
+            value "OriginalFilename", COMPONENT_FILENAME
+            value "ProductName", COMPONENT_BASENAME
+            value "ProductVersion", "2.7.4.4"
         }
     }
 

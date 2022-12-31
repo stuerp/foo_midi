@@ -276,7 +276,7 @@ public:
         }
 
         fileInfo.info_set_int("channels", 2);
-        fileInfo.info_set("encoding", "synthesized");
+        fileInfo.info_set("encoding", "Synthesized");
 
         pfc::string8 hash_string;
 
@@ -919,7 +919,7 @@ public:
 
                     pfc::string8 p_path;
 
-                    cfg_sc_path.get(p_path);
+                    CfgSecretSaucePath.get(p_path);
 
                     if (p_path.is_empty())
                     {

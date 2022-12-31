@@ -1,3 +1,6 @@
+
+/** $VER: Configuration.h (2022.12.31) **/
+
 #pragma once
 
 #include "MIDIPlayer.h"
@@ -6,6 +9,23 @@
 
 enum
 {
+    EmuDeMIDIPluginId = 0,
+
+    FluidSynthPluginId = 2,
+    SuperMUNTPluginId = 3,
+    BASSMIDIPlugInId = 4,
+
+    ADLPluginId = 6,
+    OPNPluginId = 7,
+    OPLPluginId = 8,
+    NuclearOptionPluginId = 9,
+    SecretSaucePluginId = 10,
+};
+
+enum
+{
+    DefaultPluginId = ADLPluginId,
+
     default_cfg_thloopz = 1,
     default_cfg_rpgmloopz = 1,
     default_cfg_xmiloopz = 1,
@@ -17,7 +37,6 @@ enum
     default_cfg_loop_type = 0,
     default_cfg_loop_type_other = 0,
     default_cfg_srate = 44100,
-    default_cfg_plugin = 6,
     default_cfg_resampling = 1,
     default_cfg_adl_bank = 72,
     default_cfg_adl_chips = 10,
@@ -52,7 +71,7 @@ extern cfg_int
     cfg_loop_type_other,
 
     cfg_srate,
-    cfg_plugin,
+    CfgPluginId,
     cfg_resampling,
 
     cfg_adl_bank,
@@ -81,11 +100,9 @@ extern cfg_string
 extern cfg_map
     cfg_vst_config;
 
-extern advconfig_branch_factory cfg_midi_parent;
+extern advconfig_string_factory CfgVSTiSearchPath;
 
-extern advconfig_string_factory cfg_vsti_search_path;
-
-extern advconfig_string_factory_MT cfg_sc_path;
+extern advconfig_string_factory_MT CfgSecretSaucePath;
 
 extern advconfig_branch_factory cfg_midi_timing_parent;
 

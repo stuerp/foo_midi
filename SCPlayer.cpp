@@ -1,13 +1,13 @@
 
-/** Secret Sauce **/
+/** $VER: SCPlayer.cpp (2022.12.31) Secret Sauce **/
+
+#pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 
 #include "SCPlayer.h"
 
 #include <sdk/foobar2000-lite.h>
 
 #include <vector>
-
-#pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 
 // It's a secret to everybody!
 char _DLLFileName[] = { 'F', 'P', 'P', 'b', 'e', 'r', '.', 'q', 'y', 'y', 0 };
