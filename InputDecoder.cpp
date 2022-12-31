@@ -119,7 +119,7 @@ public:
 
         _FilePath = filePath;
 
-        _IsSyxFile = g_test_extension_syx(pfc::string_extension(filePath));
+        _IsSyxFile = IsSysExFileExtension(pfc::string_extension(filePath));
 
         {
             _FileStats = file->get_stats(p_abort);
@@ -1303,7 +1303,7 @@ public:
 
     static bool g_is_our_path(const char *, const char * p_extension)
     {
-        return IsFileExtensionSupported(p_extension) || g_test_extension_syx(p_extension);
+        return IsMIDIFileExtension(p_extension) || IsSysExFileExtension(p_extension);
     }
 
     static GUID g_get_guid()

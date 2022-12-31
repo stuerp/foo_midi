@@ -213,7 +213,7 @@ public:
                 {
                     const char * path = data[i]->get_path();
 
-                    if (g_test_extension_syx(pfc::string_extension(path)))
+                    if (IsSysExFileExtension(pfc::string_extension(path)))
                     {
                         Dumps.Items.append_single(path);
                     }

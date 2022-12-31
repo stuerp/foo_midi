@@ -59,7 +59,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     #define X_A2    X_A1 + W_A1 + 3
     #define Y_A2    Y_A1
-    #define W_A2    W_A0 - X_A1 - W_A1 - 6
+    #define W_A2    W_A0 - 5 - W_A1 - 3 - 6
     #define H_A2    14
 
     #define X_A3    X_A2
@@ -248,7 +248,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     #define X_71    X_61
     #define Y_71    Y_70 + 11
-    #define W_71    30
+    #define W_71    22
     #define H_71    8
 
     #define X_72    X_71 + W_71 + 3
@@ -275,7 +275,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     #define X_81    X_71
     #define Y_81    Y_80 + 11
-    #define W_81    31
+    #define W_81    22
     #define H_81    8
 
     #define X_82    X_81 + W_81 + 3
@@ -293,7 +293,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
     groupbox "MIDI Filter", IDC_FILTER_GROUP, X_80, Y_80, W_80, H_80
         rtext       "Flavor:",                     IDC_MIDI_FLAVOR_TEXT, X_81, Y_81 + 2, W_81, H_81
         combobox                                   IDC_MIDI_FLAVOR,      X_82, Y_82,     W_82, H_82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        control     "Effects (Reverb and Chorus)", IDC_MIDI_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_83, Y_83, W_83, H_83
+        control     "Filter effects (Reverb and Chorus)", IDC_MIDI_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_83, Y_83, W_83, H_83
 
     // ADL
     #define X_90    X_80

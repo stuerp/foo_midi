@@ -1,12 +1,10 @@
 #pragma once
 
-#include <sdk/foobar2000-lite.h>
+#include <pfc/pfc-lite.h>
 
 #include "ADLPlayer.h"
 #include <OPNPlayer/OPNPlayer.h>
 #include "VSTiPlayer.h"
-
-#include "Configuration.h"
 
 #pragma warning(disable: 5045)
 

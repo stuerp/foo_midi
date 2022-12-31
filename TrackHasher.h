@@ -24,7 +24,7 @@ public:
     {
         const metadb_index_hash hash_null = 0;
 
-        if (!IsFileExtensionSupported(pfc::string_extension(location.get_path())))
+        if (!IsMIDIFileExtension(pfc::string_extension(location.get_path())))
             return hash_null;
 
         hasher_md5_state hasher_state;

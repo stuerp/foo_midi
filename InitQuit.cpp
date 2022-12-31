@@ -1,5 +1,7 @@
 
-/** $VER: InitQuit.cpp (2022.12.30) **/
+/** $VER: InitQuit.cpp (2022.12.31) **/
+
+#pragma warning(disable: 5045)
 
 #include <sdk/foobar2000-lite.h>
 

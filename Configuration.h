@@ -167,6 +167,6 @@ extern const char field_loop_end_ms[];
 extern const char field_preset[];
 extern const char field_syx[];
 
-extern bool IsFileExtensionSupported(const char * fileExtension);
-extern bool g_test_extension_syx(const char * ext);
+extern bool IsMIDIFileExtension(const char * fileExtension);
+extern bool IsSysExFileExtension(const char * ext);
 

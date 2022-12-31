@@ -1,10 +1,11 @@
 
-/** $VER: MIDIPreset.cpp (2022.12.30) **/
+/** $VER: MIDIPreset.cpp (2022.12.31) **/
 
 #pragma warning(disable: 5045)
 
 #include "MIDIPreset.h"
 
+#include "Configuration.h"
 #include "MSPlayer.h"
 
 MIDIPreset::MIDIPreset() noexcept

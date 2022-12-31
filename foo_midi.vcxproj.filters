@@ -42,10 +42,10 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="InitQuit.cpp" />
     <ClCompile Include="Preferences.cpp" />
-    <ClCompile Include="MIDIPreset.cpp" />
     <ClCompile Include="FileTypeRegistrar.cpp" />
     <ClCompile Include="InputDecoder.cpp" />
     <ClCompile Include="MIDISysExDumps.cpp" />
+    <ClCompile Include="MIDIPreset.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />

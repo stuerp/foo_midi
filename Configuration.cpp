@@ -1,9 +1,11 @@
 
 /** $VER: Configuration.cpp (2022.12.31) **/
 
-#include "Configuration.h"
+#pragma warning(disable: 5045)
 
-#include <foobar2000.h>
+#include <sdk/foobar2000-lite.h>
+
+#include "Configuration.h"
 
 #include "resource.h"
 
@@ -256,7 +258,7 @@ const char field_loop_end_ms[] = "midi_loop_end_ms";
 const char field_preset[] = "midi_preset";
 const char field_syx[] = "midi_sysex_dumps";
 
-bool IsFileExtensionSupported(const char * fileExtension)
+bool IsMIDIFileExtension(const char * fileExtension)
 {
     for (size_t i = 0; i < _FileExtensionCount; ++i)
     {
@@ -267,11 +269,11 @@ bool IsFileExtensionSupported(const char * fileExtension)
     return false;
 }
 
-bool g_test_extension_syx(const char * ext)
+bool IsSysExFileExtension(const char * fileExtension)
 {
     for (size_t i = 0; i < _SyxExtensionCount; ++i)
     {
-        if (::_stricmp(ext, _SyxExtension[i]) == 0)
+        if (::_stricmp(fileExtension, _SyxExtension[i]) == 0)
             return true;
     }
 
