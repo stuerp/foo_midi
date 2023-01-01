@@ -246,25 +246,24 @@
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="ContextMenu.cpp" />
+    <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="Experimental\DXiProxy.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="3rdParty\fmopl3lib\opl3class.cpp" />
-    <ClCompile Include="InitQuit.cpp" />
     <ClCompile Include="FileTypeRegistrar.cpp" />
+    <ClCompile Include="foo_midi.cpp" />
+    <ClCompile Include="InitQuit.cpp" />
     <ClCompile Include="InputDecoder.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MIDIPreset.cpp" />
-    <ClCompile Include="MIDIPreset.h" />
     <ClCompile Include="MIDIPresetFilter.cpp" />
     <ClCompile Include="MIDISysExDumps.cpp" />
     <ClCompile Include="MIDISysExFilter.cpp" />
     <ClCompile Include="MSPlayer.cpp" />
-    <ClCompile Include="MT32Player\MT32Player.cpp" />
     <ClCompile Include="Experimental\DXiPlayer.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
@@ -285,31 +284,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="foo_midi.cpp">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MinSpace</Optimization>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MinSpace</Optimization>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="OPNPlayer\OPNPlayer.cpp" />
-    <ClCompile Include="Preferences.cpp" />
-    <ClCompile Include="Resampler.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MinSpace</Optimization>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MinSpace</Optimization>
-    </ClCompile>
-    <ClCompile Include="SCPlayer.cpp" />
     <ClCompile Include="3rdParty\json\json-builder.c" />
     <ClCompile Include="3rdParty\json\json.c" />
+    <ClCompile Include="MT32Player\MT32Player.cpp" />
+    <ClCompile Include="OPNPlayer\OPNPlayer.cpp" />
+    <ClCompile Include="Preferences.cpp" />
+    <ClCompile Include="Resampler.c" />
+    <ClCompile Include="SCPlayer.cpp" />
     <ClCompile Include="sflist\sflist.c" />
     <ClCompile Include="Experimental\SFPlayer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -340,6 +321,7 @@
     <ClCompile Include="3rdParty\synthlib_apogee\al_midi.cpp" />
     <ClCompile Include="3rdParty\synthlib_doom\i_oplmusic.cpp" />
     <ClCompile Include="3rdParty\synthlib_opl3w\opl3midi.cpp" />
+    <ClCompile Include="TrackHasher.cpp" />
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -349,34 +331,43 @@
     <ClInclude Include="3rdParty\bass\c\bassopus.h" />
     <ClInclude Include="3rdParty\bass\c\basswv.h" />
     <ClInclude Include="3rdParty\bass\c\bass_mpc.h" />
-    <ClInclude Include="ADLPlayer.h" />
-    <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
     <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
-    <ClInclude Include="ConfigurationMap.h" />
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="TrackHasher.h" />
+    <ClInclude Include="ADLPlayer.h" />
+    <ClInclude Include="BMPlayer.h" />
+    <ClInclude Include="cfg_map.h" />
+    <ClInclude Include="Configuration.h" />
+    <ClInclude Include="ContextMenu.h" />
+    <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="Experimental\DXiProxy.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="EMIDIPlayer.h" />
     <ClInclude Include="3rdParty\fmopl3lib\opl3class.h" />
     <ClInclude Include="3rdParty\interface.h" />
-    <ClInclude Include="Configuration.h" />
-    <ClInclude Include="MIDISysExFilter.h" />
+    <ClInclude Include="FileTypeRegistrar.h" />
     <ClInclude Include="History.h" />
+    <ClInclude Include="InputDecoder.h" />
+    <ClInclude Include="MIDIPlayer.h" />
+    <ClInclude Include="MIDIPreset.h" />
     <ClInclude Include="MIDIPresetFilter.h" />
     <ClInclude Include="MIDISysExDumps.h" />
-    <ClInclude Include="MT32Player\kq6mtgm.h" />
-    <ClInclude Include="MIDIPlayer.h" />
+    <ClInclude Include="MIDISysExFilter.h" />
     <ClInclude Include="MSPlayer.h" />
+    <ClInclude Include="MT32Player\kq6mtgm.h" />
     <ClInclude Include="MT32Player\MT32Player.h" />
     <ClInclude Include="MT32Player\mtgm.h" />
     <ClInclude Include="OPNPlayer\fmmidi.wopn.h" />
+    <ClInclude Include="OPNPlayer\gems-fmlib-gmize.wopn.h" />
+    <ClInclude Include="OPNPlayer\gs-by-papiezak-and-sneakernets.wopn.h" />
+    <ClInclude Include="OPNPlayer\OPNPlayer.h" />
+    <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
     <ClInclude Include="OPNPlayer\xg.wopn.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="TrackHasher.h" />
+    <ClInclude Include="VSTiPlayer.h" />
     <CustomBuild Include="Experimental\DXiPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -390,16 +381,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CustomBuild>
-    <ClInclude Include="OPNPlayer\gems-fmlib-gmize.wopn.h" />
-    <ClInclude Include="OPNPlayer\gs-by-papiezak-and-sneakernets.wopn.h" />
-    <ClInclude Include="OPNPlayer\OPNPlayer.h" />
-    <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
+    <ClInclude Include="3rdParty\json\json-builder.h" />
+    <ClInclude Include="3rdParty\json\json.h" />
     <ClInclude Include="Patrons.h" />
+    <ClInclude Include="Preferences.h" />
     <ClInclude Include="Resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCPlayer.h" />
-    <ClInclude Include="3rdParty\json\json-builder.h" />
-    <ClInclude Include="3rdParty\json\json.h" />
     <ClInclude Include="sflist\sflist.h" />
     <ClInclude Include="Experimental\SFPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -424,7 +412,6 @@
     <ClInclude Include="3rdParty\synthlib_opl3w\gmtimbre.h" />
     <ClInclude Include="3rdParty\synthlib_opl3w\opl3midi.h" />
     <ClInclude Include="3rdParty\synthlib_opl3w\opl3type.h" />
-    <ClInclude Include="VSTiPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
@@ -471,33 +458,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="foo_midi.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
-    <None Include="3rdParty\bass\bass.dll" />
     <None Include="3rdParty\bass\bassflac.dll" />
-    <None Include="3rdParty\bass\bassmidi.dll" />
-    <None Include="3rdParty\bass\bassopus.dll" />
-    <None Include="3rdParty\bass\basswv.dll" />
-    <None Include="3rdParty\bass\bass_mpc.dll" />
     <None Include="Build-FB2KComponent.ps1" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="3rdParty\bass\c\bass.lib" />
-    <Library Include="3rdParty\bass\c\bassflac.lib" />
-    <Library Include="3rdParty\bass\c\bassmidi.lib" />
-    <Library Include="3rdParty\bass\c\bassopus.lib" />
-    <Library Include="3rdParty\bass\c\basswv.lib" />
-    <Library Include="3rdParty\bass\c\bass_mpc.lib" />
-    <Library Include="3rdParty\bass\c\x64\bass.lib" />
-    <Library Include="3rdParty\bass\c\x64\bassflac.lib" />
-    <Library Include="3rdParty\bass\c\x64\bassmidi.lib" />
-    <Library Include="3rdParty\bass\c\x64\bassopus.lib" />
-    <Library Include="3rdParty\bass\c\x64\basswv.lib" />
-    <Library Include="3rdParty\bass\c\x64\bass_mpc.lib" />
+    <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

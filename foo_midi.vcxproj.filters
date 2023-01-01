@@ -2,15 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="Experimental\DXiPlayer.cpp" />
-    <ClCompile Include="foo_midi.cpp" />
     <ClCompile Include="Experimental\SFPlayer.cpp" />
     <ClCompile Include="3rdParty\Twelve Tone Systems\SMF.cpp" />
-    <ClCompile Include="VSTiPlayer.cpp" />
-    <ClCompile Include="MT32Player\MT32Player.cpp" />
-    <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="Experimental\DXiProxy.cpp" />
-    <ClCompile Include="EMIDIPlayer.cpp" />
-    <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="3rdParty\json\json.c">
       <Filter>sflist</Filter>
     </ClCompile>
@@ -20,47 +14,45 @@
     <ClCompile Include="sflist\sflist.c">
       <Filter>sflist</Filter>
     </ClCompile>
-    <ClCompile Include="MSPlayer.cpp" />
     <ClCompile Include="3rdParty\synthlib_doom\i_oplmusic.cpp">
       <Filter>synthlib_doom</Filter>
     </ClCompile>
     <ClCompile Include="3rdParty\synthlib_opl3w\opl3midi.cpp">
       <Filter>synthlib_opl3w</Filter>
     </ClCompile>
-    <ClCompile Include="Resampler.c" />
-    <ClCompile Include="SCPlayer.cpp" />
     <ClCompile Include="3rdParty\synthlib_apogee\al_midi.cpp">
       <Filter>synthlib_apogee</Filter>
     </ClCompile>
-    <ClCompile Include="ADLPlayer.cpp" />
-    <ClCompile Include="OPNPlayer\OPNPlayer.cpp" />
     <ClCompile Include="3rdParty\fmopl3lib\opl3class.cpp">
       <Filter>fmopl3</Filter>
     </ClCompile>
-    <ClCompile Include="ContextMenu.cpp" />
-    <ClCompile Include="MIDIPreset.h" />
+    <ClCompile Include="ADLPlayer.cpp" />
+    <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="Configuration.cpp" />
-    <ClCompile Include="InitQuit.cpp" />
-    <ClCompile Include="Preferences.cpp" />
+    <ClCompile Include="ContextMenu.cpp" />
+    <ClCompile Include="EMIDIPlayer.cpp" />
     <ClCompile Include="FileTypeRegistrar.cpp" />
+    <ClCompile Include="foo_midi.cpp" />
+    <ClCompile Include="InitQuit.cpp" />
     <ClCompile Include="InputDecoder.cpp" />
-    <ClCompile Include="MIDISysExDumps.cpp" />
+    <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MIDIPreset.cpp" />
-    <ClCompile Include="MIDISysExFilter.cpp" />
     <ClCompile Include="MIDIPresetFilter.cpp" />
+    <ClCompile Include="MIDISysExDumps.cpp" />
+    <ClCompile Include="MIDISysExFilter.cpp" />
+    <ClCompile Include="MSPlayer.cpp" />
+    <ClCompile Include="Preferences.cpp" />
+    <ClCompile Include="Resampler.c" />
+    <ClCompile Include="SCPlayer.cpp" />
+    <ClCompile Include="TrackHasher.cpp" />
+    <ClCompile Include="VSTiPlayer.cpp" />
+    <ClCompile Include="OPNPlayer\OPNPlayer.cpp" />
+    <ClCompile Include="MT32Player\MT32Player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="Experimental\SFPlayer.h" />
-    <ClInclude Include="VSTiPlayer.h" />
-    <ClInclude Include="MT32Player\MT32Player.h" />
-    <ClInclude Include="MT32Player\mtgm.h" />
-    <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="Experimental\DXiProxy.h" />
-    <ClInclude Include="EMIDIPlayer.h" />
-    <ClInclude Include="MT32Player\kq6mtgm.h" />
-    <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="3rdParty\json\json.h">
       <Filter>sflist</Filter>
     </ClInclude>
@@ -71,7 +63,6 @@
       <Filter>sflist</Filter>
     </ClInclude>
     <ClInclude Include="3rdParty\interface.h" />
-    <ClInclude Include="MSPlayer.h" />
     <ClInclude Include="3rdParty\synthlib_doom\i_oplmusic.h">
       <Filter>synthlib_doom</Filter>
     </ClInclude>
@@ -99,8 +90,6 @@
     <ClInclude Include="3rdParty\synthlib_opl3w\opl3type.h">
       <Filter>synthlib_opl3w</Filter>
     </ClInclude>
-    <ClInclude Include="Resampler.h" />
-    <ClInclude Include="SCPlayer.h" />
     <ClInclude Include="3rdParty\synthlib_apogee\_al_midi.h">
       <Filter>synthlib_apogee</Filter>
     </ClInclude>
@@ -125,33 +114,49 @@
     <ClInclude Include="3rdParty\synthlib_doom\inst\dmxopl.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="ADLPlayer.h" />
-    <ClInclude Include="OPNPlayer\OPNPlayer.h" />
-    <ClInclude Include="Patrons.h" />
     <ClInclude Include="3rdParty\fmopl3lib\opl3class.h">
       <Filter>fmopl3</Filter>
     </ClInclude>
-    <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
-    <ClInclude Include="OPNPlayer\gems-fmlib-gmize.wopn.h" />
-    <ClInclude Include="OPNPlayer\gs-by-papiezak-and-sneakernets.wopn.h" />
-    <ClInclude Include="OPNPlayer\xg.wopn.h" />
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
     <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
-    <ClInclude Include="OPNPlayer\fmmidi.wopn.h" />
     <ClInclude Include="3rdParty\bass\c\bass.h" />
     <ClInclude Include="3rdParty\bass\c\bass_mpc.h" />
     <ClInclude Include="3rdParty\bass\c\bassflac.h" />
     <ClInclude Include="3rdParty\bass\c\bassmidi.h" />
     <ClInclude Include="3rdParty\bass\c\bassopus.h" />
     <ClInclude Include="3rdParty\bass\c\basswv.h" />
-    <ClInclude Include="History.h" />
+    <ClInclude Include="ADLPlayer.h" />
+    <ClInclude Include="BMPlayer.h" />
+    <ClInclude Include="cfg_map.h" />
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="ConfigurationMap.h" />
-    <ClInclude Include="TrackHasher.h" />
+    <ClInclude Include="ContextMenu.h" />
+    <ClInclude Include="EMIDIPlayer.h" />
+    <ClInclude Include="FileTypeRegistrar.h" />
+    <ClInclude Include="History.h" />
+    <ClInclude Include="InputDecoder.h" />
+    <ClInclude Include="MIDIPlayer.h" />
+    <ClInclude Include="MIDIPreset.h" />
     <ClInclude Include="MIDIPresetFilter.h" />
     <ClInclude Include="MIDISysExDumps.h" />
     <ClInclude Include="MIDISysExFilter.h" />
+    <ClInclude Include="MSPlayer.h" />
+    <ClInclude Include="Patrons.h" />
+    <ClInclude Include="Preferences.h" />
+    <ClInclude Include="Resampler.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="SCPlayer.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="TrackHasher.h" />
+    <ClInclude Include="VSTiPlayer.h" />
+    <ClInclude Include="OPNPlayer\fmmidi.wopn.h" />
+    <ClInclude Include="OPNPlayer\gems-fmlib-gmize.wopn.h" />
+    <ClInclude Include="OPNPlayer\gs-by-papiezak-and-sneakernets.wopn.h" />
+    <ClInclude Include="OPNPlayer\OPNPlayer.h" />
+    <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
+    <ClInclude Include="OPNPlayer\xg.wopn.h" />
+    <ClInclude Include="MT32Player\kq6mtgm.h" />
+    <ClInclude Include="MT32Player\MT32Player.h" />
+    <ClInclude Include="MT32Player\mtgm.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
@@ -181,32 +186,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="foo_midi.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="README.md" />
+    <None Include="3rdParty\bass\bassflac.dll" />
+    <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
-    <None Include=".gitattributes" />
-    <None Include="3rdParty\bass\bass.dll" />
-    <None Include="3rdParty\bass\bass_mpc.dll" />
-    <None Include="3rdParty\bass\bassflac.dll" />
-    <None Include="3rdParty\bass\bassmidi.dll" />
-    <None Include="3rdParty\bass\bassopus.dll" />
-    <None Include="3rdParty\bass\basswv.dll" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="3rdParty\bass\c\bass.lib" />
-    <Library Include="3rdParty\bass\c\bass_mpc.lib" />
-    <Library Include="3rdParty\bass\c\bassflac.lib" />
-    <Library Include="3rdParty\bass\c\bassmidi.lib" />
-    <Library Include="3rdParty\bass\c\bassopus.lib" />
-    <Library Include="3rdParty\bass\c\basswv.lib" />
-    <Library Include="3rdParty\bass\c\x64\bass.lib" />
-    <Library Include="3rdParty\bass\c\x64\bass_mpc.lib" />
-    <Library Include="3rdParty\bass\c\x64\bassflac.lib" />
-    <Library Include="3rdParty\bass\c\x64\bassmidi.lib" />
-    <Library Include="3rdParty\bass\c\x64\bassopus.lib" />
-    <Library Include="3rdParty\bass\c\x64\basswv.lib" />
+    <ResourceCompile Include="foo_midi.rc" />
   </ItemGroup>
 </Project>

@@ -1,11 +1,49 @@
+
+/** $VER: Resource.h (2022.12.31) **/
+
 #pragma once
 
-#define COMPONENT_NAME "MIDI Player"
-#define COMPONENT_VERSION "2.7.4.4"
+#define TOSTRING_IMPL(x) #x
+#define TOSTRING(x) TOSTRING_IMPL(x)
+
+/** Component specific **/
+
+#define STR_COMPONENT_NAME      "MIDI Player"
+#define STR_COMPONENT_VERSION   TOSTRING(NUM_FILE_MAJOR) "." TOSTRING(NUM_FILE_MINOR) "." TOSTRING(NUM_FILE_PATCH) "." TOSTRING(NUM_FILE_PRERELEASE)
+#define STR_COMPONENT_BASENAME  "foo_midi"
+#define STR_COMPONENT_FILENAME  STR_COMPONENT_BASENAME ".dll"
+
+/** Generic **/
+
+#define STR_COMPANY_NAME        TEXT("LoSno.co")
+#define STR_INTERNAL_NAME       TEXT(STR_COMPONENT_NAME)
+#define STR_COMMENTS            TEXT("Written by Christopher Snowhill, P. Stuer")
+#define STR_COPYRIGHT           TEXT("Copyright (c) 2022 ") STR_COMPANY_NAME TEXT(". All rights reserved.")
+
+#define NUM_FILE_MAJOR          2
+#define NUM_FILE_MINOR          8
+#define NUM_FILE_PATCH          0
+#define NUM_FILE_PRERELEASE     0
+
+#define STR_FILE_NAME           TEXT(STR_COMPONENT_FILENAME)
+#define STR_FILE_VERSION        TOSTRING(NUM_FILE_MAJOR) TEXT(".") TOSTRING(NUM_FILE_MINOR) TEXT(".") TOSTRING(NUM_FILE_PATCH) TEXT(".") TOSTRING(NUM_FILE_PRERELEASE)
+#define STR_FILE_DESCRIPTION    TEXT("Adds playback of MIDI files to foobar2000")
+
+#define NUM_PRODUCT_MAJOR       2
+#define NUM_PRODUCT_MINOR       8
+#define NUM_PRODUCT_PATCH       0
+#define NUM_PRODUCT_PRERELEASE  0
+
+#define STR_PRODUCT_NAME        STR_COMPANY_NAME TEXT(" ") STR_INTERNAL_NAME
+#define STR_PRODUCT_VERSION     TOSTRING(NUM_PRODUCT_MAJOR) TEXT(".") TOSTRING(NUM_PRODUCT_MINOR) TEXT(".") TOSTRING(NUM_PRODUCT_PATCH) TEXT(".") TOSTRING(NUM_PRODUCT_PRERELEASE)
+
+#define STR_ABOUT_NAME          STR_INTERNAL_NAME
+#define STR_ABOUT_WEB           TEXT("https://github.com/stuerp/foo_midi")
+#define STR_ABOUT_EMAIL         TEXT("mailto:peter.stuer@outlook.com")
+
 #define COMPONENT_GUID { 0x1623aa03, 0xbadc, 0x4bab, { 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } }
 
-#define COMPONENT_BASENAME "foo_midi"
-#define COMPONENT_FILENAME COMPONENT_BASENAME ".dll"
+/** Dialog **/
 
 #define IDD_CONFIG 106
 
@@ -61,14 +99,3 @@
 #define IDC_GS_FLAVOR 1035
 #define IDC_CHECK1 1036
 #define IDC_THLOOPZ 1036
-
-// Next default values for new objects
-//
-#ifdef APSTUDIO_INVOKED
-#ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE 102
-#define _APS_NEXT_COMMAND_VALUE 40001
-#define _APS_NEXT_CONTROL_VALUE 1037
-#define _APS_NEXT_SYMED_VALUE 101
-#endif
-#endif

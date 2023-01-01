@@ -3,9 +3,15 @@
 
 #pragma once
 
+#pragma warning(disable: 5045)
+
+#include <sdk/foobar2000-lite.h>
+#include <sdk/cfg_var.h>
+#include <sdk/advconfig_impl.h>
+
 #include "MIDIPlayer.h"
 
-#include "ConfigurationMap.h"
+#include "cfg_map.h"
 
 enum
 {
@@ -14,7 +20,7 @@ enum
     FluidSynthPlugInId = 2,
     SuperMUNTPlugInId = 3,
     BASSMIDIPlugInId = 4,
-    UnknownPlugInId = 5,
+    DirectXPlugInId = 5,
     ADLPlugInId = 6,
     OPNPlugInId = 7,
     OPLPlugInId = 8,
@@ -66,6 +72,9 @@ extern cfg_int
     CfgPlugInId,
     CfgSampleRate,
 
+    CfgLoopTypePlayback,
+    CfgLoopTypeOther,
+
     cfg_thloopz,
     cfg_rpgmloopz,
     cfg_xmiloopz,
@@ -75,9 +84,6 @@ extern cfg_int
 
     cfg_filter_instruments,
     cfg_filter_banks,
-
-    cfg_loop_type,
-    cfg_loop_type_other,
 
     CfgResamplingMode,
 
@@ -151,8 +157,8 @@ extern const size_t _MUNTGMSetCount;
 extern const char * _FileExtensions[];
 extern const size_t _FileExtensionCount;
 
-extern const char * _SyxExtension[];
-extern const size_t _SyxExtensionCount;
+extern const char * _SysExFileExtensions[];
+extern const size_t _SysExFileExtensionCount;
 
 extern const char field_hash[];
 extern const char field_format[];

@@ -1,7 +1,9 @@
 
-/** Emu de MIDI **/
+/** $VER: EMIDIPlayer.h (2022.12.31) **/
 
 #pragma once
+
+#pragma warning(disable: 5045)
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)

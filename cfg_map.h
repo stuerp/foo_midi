@@ -1,8 +1,18 @@
+
+/** $VER: cfg_map (2022.12.31) **/
+
 #pragma once
 
-#include <foobar2000.h>
+#pragma warning(disable: 5045)
+
+#include <sdk/foobar2000-lite.h>
+#include <sdk/cfg_var.h>
+
 #include <map>
 
+/// <summary>
+/// Implements a configuration variable for maps.
+/// </summary>
 class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>>
 {
 public:
@@ -13,7 +23,8 @@ public:
     cfg_map& operator=(cfg_map&&) = delete;
     virtual ~cfg_map() { };
 
-    void get_data_raw(stream_writer * streamWriter, abort_callback & handleAbort)
+    #pragma region("cfg_var_writer")
+    virtual void get_data_raw(stream_writer * streamWriter, abort_callback & handleAbort)
     {
         stream_writer_formatter<> out(*streamWriter, handleAbort);
 
@@ -31,8 +42,10 @@ public:
                 out << it->second[walk];
         }
     }
+    #pragma endregion
 
-    void set_data_raw(stream_reader * streamReader, t_size, abort_callback & handleAbort)
+    #pragma region("cfg_var_reader")
+    virtual void set_data_raw(stream_reader * streamReader, t_size, abort_callback & handleAbort)
     {
         stream_reader_formatter<> in(*streamReader, handleAbort);
 
@@ -64,4 +77,5 @@ public:
             operator[](p_key) = p_value;
         }
     }
+    #pragma endregion
 };

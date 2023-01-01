@@ -3,10 +3,14 @@
 
 #pragma once
 
+#pragma warning(disable: 5045)
+
 #include <sdk/foobar2000-lite.h>
 
-#include <sdk/metadb_index.h>
 #include <sdk/hasher_md5.h>
+#include <sdk/metadb_index.h>
+#include <sdk/file_info.h>
+#include <sdk/playable_location.h>
 
 #include "Configuration.h"
 

@@ -1,10 +1,10 @@
+
+/** $VER: foo_midi.rc (2022.12.31) **/
+
 #include "resource.h"
 
-#define APSTUDIO_READONLY_SYMBOLS
-#include "winres.h"
-#undef APSTUDIO_READONLY_SYMBOLS
+#include <winres.h>
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 language LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
@@ -336,30 +336,32 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 }
 
 VS_VERSION_INFO versioninfo
-fileversion     2,7,4,4
-productversion  2,7,4,4
+fileversion     NUM_FILE_MAJOR,    NUM_FILE_MINOR,    NUM_FILE_PATCH,    NUM_FILE_PRERELEASE
+productversion  NUM_PRODUCT_MAJOR, NUM_PRODUCT_MINOR, NUM_PRODUCT_PATCH, NUM_PRODUCT_PRERELEASE
 fileflagsmask   0x3FL
 #ifdef _DEBUG
 fileflags       VS_FF_DEBUG
 #else
-fileflags       0x0L
+fileflags       0
 #endif
-fileOS          VOS_NT_WINDOWS32
+fileos          VOS_NT_WINDOWS32
 filetype        VFT_DLL
 filesubtype     VFT2_UNKNOWN
 {
     block "StringFileInfo"
     {
-        block "040904b0"
+        block "040904E4" // U.S. English, Multilingual character set
         {
-            value "CompanyName", "LoSno.co"
-            value "FileDescription", "A foobar2000 component"
-            value "FileVersion", "2.7.4.4"
-            value "InternalName", COMPONENT_BASENAME
-            value "LegalCopyright", "Copyright (C) 2022 Christopher Snowhill, Peter Stuer"
-            value "OriginalFilename", COMPONENT_FILENAME
-            value "ProductName", COMPONENT_BASENAME
-            value "ProductVersion", "2.7.4.4"
+            value "FileVersion",      STR_FILE_VERSION     "\0"
+            value "FileDescription",  STR_FILE_DESCRIPTION "\0"
+            value "LegalCopyright",   STR_COPYRIGHT        "\0"
+            value "LegalTrademarks",                       "\0"
+            value "Comments",         STR_COMMENTS         "\0"
+            value "CompanyName",      STR_COMPANY_NAME     "\0"
+            value "InternalName",     STR_INTERNAL_NAME    "\0"
+            value "OriginalFilename", STR_FILE_NAME        "\0"
+            value "ProductName",      STR_PRODUCT_NAME     "\0"
+            value "ProductVersion",   STR_PRODUCT_VERSION  "\0"
         }
     }
 
@@ -368,10 +370,4 @@ filesubtype     VFT2_UNKNOWN
         value "Translation", 0x409, 1252    // U.S. English, Multilingual character set
     }
 }
-
-IDD_CONFIG AFX_DIALOG_LAYOUT
-{
-    0
-}
-
-#endif
+*/

@@ -17,7 +17,7 @@ public:
     MIDIPlayer();
     virtual ~MIDIPlayer() { };
 
-    bool Load(const midi_container & midi_file, unsigned subsong, unsigned loop_mode, unsigned clean_flags);
+    bool Load(const midi_container & container, unsigned int subsongIndex, unsigned int  loopMode, unsigned int cleanFlags);
     unsigned long Play(audio_sample * out, unsigned long count);
     void Seek(unsigned long sample);
 

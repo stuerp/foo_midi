@@ -1,5 +1,7 @@
 
-/** Emu de MIDI **/
+/** $VER: EMIDIPlayer.cpp (2022.12.31) **/
+
+#pragma warning(disable: 26446 26481 26493)
 
 #include "EMIDIPlayer.h"
 

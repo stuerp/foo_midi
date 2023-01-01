@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.cpp (2022.12.30) **/
+/** $VER: foo_midi.cpp (2022.12.31) **/
 
 #pragma warning(disable: 5045)
 
@@ -10,14 +10,26 @@
 
 #include "resource.h"
 
-#pragma warning(disable: 4265 4625 4626 5026 5027 26433 26436 26455)
-DECLARE_COMPONENT_VERSION
-(
-    COMPONENT_NAME, COMPONENT_VERSION,
-    COMPONENT_BASENAME " " COMPONENT_VERSION "\n"
-    "\n"
-    COMPONENT_DESCRIPTION
-);
+#pragma hdrstop
 
-VALIDATE_COMPONENT_FILENAME(COMPONENT_FILENAME);
+namespace
+{
+    #pragma warning(disable: 4265 4625 4626 5026 5027 26433 26436 26455)
+    DECLARE_COMPONENT_VERSION
+    (
+        STR_COMPONENT_NAME,
+        STR_COMPONENT_VERSION,
+        STR_COMPONENT_BASENAME " " STR_COMPONENT_VERSION "\n"
+            "Copyright (c) 2022 LoSno.co. All rights reserved.\n"
+            "Written by kode54, P. Stuer\n"
+            "\n"
+            "Adds playback of MIDI files.\n"
+            "\n"
+            "Built with foobar2000 SDK " TOSTRING(FOOBAR2000_SDK_VERSION) "\n"
+            "on " __DATE__ " " __TIME__ ".\n"
+        "\n"
+        COMPONENT_DESCRIPTION
+    );
 
+    VALIDATE_COMPONENT_FILENAME(STR_COMPONENT_FILENAME);
+}

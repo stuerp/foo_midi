@@ -1,21 +1,12 @@
 #pragma once
 
+#pragma warning(disable: 5045)
+
 #include <pfc/pfc-lite.h>
 
 #include "ADLPlayer.h"
 #include <OPNPlayer/OPNPlayer.h>
 #include "VSTiPlayer.h"
-
-#pragma warning(disable: 5045)
-
-struct MSPreset
-{
-    unsigned int synth;
-    unsigned int bank;
-    pfc::string8 name;
-};
-
-extern pfc::array_t<MSPreset> _MSPresets;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class MIDIPreset
@@ -107,3 +98,14 @@ private:
     void GetMSPreset(const char * name, unsigned int & synth, unsigned int & bank);
 };
 #pragma warning(default: 4820) // x bytes padding added after data member
+
+#pragma region("MSPresets")
+struct MSPreset
+{
+    unsigned int synth;
+    unsigned int bank;
+    pfc::string8 name;
+};
+
+extern pfc::array_t<MSPreset> _MSPresets;
+#pragma endregion

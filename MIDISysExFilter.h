@@ -27,9 +27,9 @@ public:
     {
         pfc::string8 FileExtension = pfc::string_extension(location->get_path());
 
-        for (size_t i = 0; i < _SyxExtensionCount; ++i)
+        for (size_t i = 0; i < _SysExFileExtensionCount; ++i)
         {
-            if (pfc::stricmp_ascii(FileExtension, _SyxExtension[i]) == 0)
+            if (pfc::stricmp_ascii(FileExtension, _SysExFileExtensions[i]) == 0)
                 return false;
         }
 
