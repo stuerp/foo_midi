@@ -14,18 +14,6 @@
     <ClCompile Include="sflist\sflist.c">
       <Filter>sflist</Filter>
     </ClCompile>
-    <ClCompile Include="3rdParty\synthlib_doom\i_oplmusic.cpp">
-      <Filter>synthlib_doom</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdParty\synthlib_opl3w\opl3midi.cpp">
-      <Filter>synthlib_opl3w</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdParty\synthlib_apogee\al_midi.cpp">
-      <Filter>synthlib_apogee</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdParty\fmopl3lib\opl3class.cpp">
-      <Filter>fmopl3</Filter>
-    </ClCompile>
     <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="Configuration.cpp" />
@@ -40,9 +28,8 @@
     <ClCompile Include="MIDIPresetFilter.cpp" />
     <ClCompile Include="MIDISysExDumps.cpp" />
     <ClCompile Include="MIDISysExFilter.cpp" />
-    <ClCompile Include="MSPlayer.cpp" />
+    <ClCompile Include="NukePlayer.cpp" />
     <ClCompile Include="Preferences.cpp" />
-    <ClCompile Include="Resampler.c" />
     <ClCompile Include="SCPlayer.cpp" />
     <ClCompile Include="TrackHasher.cpp" />
     <ClCompile Include="VSTiPlayer.cpp" />
@@ -62,69 +49,69 @@
     <ClInclude Include="sflist\sflist.h">
       <Filter>sflist</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\interface.h" />
-    <ClInclude Include="3rdParty\synthlib_doom\i_oplmusic.h">
+    <ClInclude Include="3rdParty\Nuke\interface.h" />
+    <ClInclude Include="3rdParty\Nuke\synthlib_doom\i_oplmusic.h">
       <Filter>synthlib_doom</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_dmx.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_dmx.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_doom1.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_doom1.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_doom2.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_doom2.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_raptor.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_raptor.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_doom\inst\dmx_strife.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_strife.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_opl3w\gmtimbre.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_opl3w\gmtimbre.h">
       <Filter>synthlib_opl3w</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_opl3w\opl3midi.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_opl3w\opl3midi.h">
       <Filter>synthlib_opl3w</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_opl3w\opl3type.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_opl3w\opl3type.h">
       <Filter>synthlib_opl3w</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_apogee\_al_midi.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_apogee\_al_midi.h">
       <Filter>synthlib_apogee</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_apogee\al_midi.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_apogee\al_midi.h">
       <Filter>synthlib_apogee</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_blood.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_blood.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_duke3d.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_duke3d.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_lee.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_lee.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_nam.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_nam.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_apogee\inst\apogee_sw.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_sw.h">
       <Filter>synthlib_apogee\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\synthlib_doom\inst\dmxopl.h">
+    <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmxopl.h">
       <Filter>synthlib_doom\inst</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\fmopl3lib\opl3class.h">
+    <ClInclude Include="3rdParty\Nuke\fmopl3lib\opl3class.h">
       <Filter>fmopl3</Filter>
     </ClInclude>
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
     <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
-    <ClInclude Include="3rdParty\bass\c\bass.h" />
-    <ClInclude Include="3rdParty\bass\c\bass_mpc.h" />
-    <ClInclude Include="3rdParty\bass\c\bassflac.h" />
-    <ClInclude Include="3rdParty\bass\c\bassmidi.h" />
-    <ClInclude Include="3rdParty\bass\c\bassopus.h" />
-    <ClInclude Include="3rdParty\bass\c\basswv.h" />
+    <ClInclude Include="3rdParty\Bass\c\bass.h" />
+    <ClInclude Include="3rdParty\Bass\c\bass_mpc.h" />
+    <ClInclude Include="3rdParty\Bass\c\bassflac.h" />
+    <ClInclude Include="3rdParty\Bass\c\bassmidi.h" />
+    <ClInclude Include="3rdParty\Bass\c\bassopus.h" />
+    <ClInclude Include="3rdParty\Bass\c\basswv.h" />
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="cfg_map.h" />
@@ -139,10 +126,10 @@
     <ClInclude Include="MIDIPresetFilter.h" />
     <ClInclude Include="MIDISysExDumps.h" />
     <ClInclude Include="MIDISysExFilter.h" />
-    <ClInclude Include="MSPlayer.h" />
+    <ClInclude Include="NukePlayer.h" />
     <ClInclude Include="Patrons.h" />
     <ClInclude Include="Preferences.h" />
-    <ClInclude Include="Resampler.h" />
+    <ClInclude Include="3rdParty\Nuke\resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCPlayer.h" />
     <ClInclude Include="stdafx.h" />
@@ -157,6 +144,7 @@
     <ClInclude Include="MT32Player\kq6mtgm.h" />
     <ClInclude Include="MT32Player\MT32Player.h" />
     <ClInclude Include="MT32Player\mtgm.h" />
+    <ClInclude Include="3rdParty\libNuke\interface.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
@@ -186,7 +174,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="3rdParty\bass\bassflac.dll" />
+    <None Include="3rdParty\Bass\bassflac.dll" />
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />

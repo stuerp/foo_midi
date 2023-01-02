@@ -72,8 +72,8 @@ public:
     unsigned int _BASSMIDIVoices;
 #pragma endregion
 
- #pragma region("Nuclear Option")
-    // v4 - plug-in == 9 - Nuclear Option
+ #pragma region("Nuke")
+    // v4 - plug-in == 9 - Nuke
     unsigned int ms_synth;
     unsigned int ms_bank;
     // v6 - panning
@@ -95,17 +95,17 @@ public:
 
 private:
     const char * GetMSPresetName(unsigned int synth, unsigned int bank);
-    void GetMSPreset(const char * name, unsigned int & synth, unsigned int & bank);
+    void GetNukePreset(const char * name, unsigned int & synth, unsigned int & bank);
 };
 #pragma warning(default: 4820) // x bytes padding added after data member
 
 #pragma region("MSPresets")
-struct MSPreset
+struct NukePreset
 {
     unsigned int synth;
     unsigned int bank;
     pfc::string8 name;
 };
 
-extern pfc::array_t<MSPreset> _MSPresets;
+extern pfc::array_t<NukePreset> _NukePresets;
 #pragma endregion

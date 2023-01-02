@@ -263,7 +263,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     #define H_70    11 + H_72 + 4 + H_73 + 4
 
-    groupbox "Nuclear Option", IDC_STATIC, X_70, Y_70, W_70, H_70
+    groupbox "Nuke", IDC_STATIC, X_70, Y_70, W_70, H_70
         rtext       "Preset:",              IDC_MS_PRESET_TEXT,     X_71, Y_71 + 2, W_71, H_71
         combobox                            IDC_MS_PRESET,          X_72, Y_72,     W_72, H_72, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         control     "Enable soft panning",  IDC_MS_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_73, Y_73, W_73, H_73

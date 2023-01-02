@@ -108,26 +108,26 @@ bool MIDIPlayer::Load(const midi_container & midiContainer, unsigned subsong, un
     return true;
 }
 
-unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
+unsigned long MIDIPlayer::Play(audio_sample * samples, unsigned long samplesToDo)
 {
     assert(_Stream.size());
 
     if (!startup())
         return 0;
 
-    unsigned long done = 0;
+    unsigned long SamplesDone = 0;
 
     const unsigned int needs_block_size = send_event_needs_time();
     unsigned int into_block = 0;
 
     // This should be a multiple of block size, and have leftover
 
-    while (_SamplesRemaining && done < count)
+    while (_SamplesRemaining && SamplesDone < samplesToDo)
     {
         unsigned long todo = _SamplesRemaining;
 
-        if (todo > count - done)
-            todo = count - done;
+        if (todo > samplesToDo - SamplesDone)
+            todo = samplesToDo - SamplesDone;
 
         if (needs_block_size && todo > needs_block_size)
             todo = needs_block_size;
@@ -139,19 +139,19 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
             break;
         }
 
-        render(out + done * 2, todo);
+        render(samples + SamplesDone * 2, todo);
 
         _SamplesRemaining -= todo;
-        done += todo;
+        SamplesDone += todo;
         _TimeCurrent += todo;
     }
 
-    while (done < count)
+    while (SamplesDone < samplesToDo)
     {
         unsigned long todo = _TimeEnd - _TimeCurrent;
 
-        if (todo > count - done)
-            todo = count - done;
+        if (todo > samplesToDo - SamplesDone)
+            todo = samplesToDo - SamplesDone;
 
         const unsigned long time_target = todo + _TimeCurrent;
         unsigned long stream_end = _StreamCurrent;
@@ -169,23 +169,23 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
 
                 if (samples_todo)
                 {
-                    if (samples_todo > count - done)
+                    if (samples_todo > samplesToDo - SamplesDone)
                     {
-                        _SamplesRemaining = samples_todo - (count - done);
-                        samples_todo = count - done;
+                        _SamplesRemaining = samples_todo - (samplesToDo - SamplesDone);
+                        samples_todo = samplesToDo - SamplesDone;
                     }
 
                     if (!needs_block_size && samples_todo)
                     {
-                        render(out + done * 2, samples_todo);
-                        done += samples_todo;
+                        render(samples + SamplesDone * 2, samples_todo);
+                        SamplesDone += samples_todo;
                         _TimeCurrent += samples_todo;
                     }
 
                     if (_SamplesRemaining)
                     {
                         _SamplesRemaining += into_block;
-                        return done;
+                        return SamplesDone;
                     }
                 }
 
@@ -195,9 +195,9 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
 
                     while (into_block >= needs_block_size)
                     {
-                        render(out + done * 2, needs_block_size);
+                        render(samples + SamplesDone * 2, needs_block_size);
 
-                        done += needs_block_size;
+                        SamplesDone += needs_block_size;
                         into_block -= needs_block_size;
                         _TimeCurrent += needs_block_size;
                     }
@@ -208,7 +208,7 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
             }
         }
 
-        if (done < count)
+        if (SamplesDone < samplesToDo)
         {
             unsigned long samples_todo;
 
@@ -222,17 +222,17 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
             if (needs_block_size)
                 into_block = samples_todo;
 
-            if (samples_todo > count - done)
-                samples_todo = count - done;
+            if (samples_todo > samplesToDo - SamplesDone)
+                samples_todo = samplesToDo - SamplesDone;
 
             if (needs_block_size && samples_todo > needs_block_size)
                 samples_todo = needs_block_size;
 
             if (samples_todo >= needs_block_size)
             {
-                render(out + done * 2, samples_todo);
+                render(samples + SamplesDone * 2, samples_todo);
 
-                done += samples_todo;
+                SamplesDone += samples_todo;
                 _TimeCurrent += samples_todo;
 
                 if (needs_block_size)
@@ -276,7 +276,7 @@ unsigned long MIDIPlayer::Play(audio_sample * out, unsigned long count)
 
     _SamplesRemaining = into_block;
 
-    return done;
+    return SamplesDone;
 }
 
 void MIDIPlayer::Seek(unsigned long sample)

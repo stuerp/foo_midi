@@ -1,12 +1,12 @@
 
-/** $VER: MIDIPreset.cpp (2022.12.31) **/
+/** $VER: MIDIPreset.cpp (2023.01.02) **/
 
 #pragma warning(disable: 5045)
 
 #include "MIDIPreset.h"
 
 #include "Configuration.h"
-#include "MSPlayer.h"
+#include "NukePlayer.h"
 
 MIDIPreset::MIDIPreset() noexcept
 {
@@ -119,9 +119,9 @@ MIDIPreset::MIDIPreset() noexcept
 /// </summary>
 const char * MIDIPreset::GetMSPresetName(unsigned int synth, unsigned int bank)
 {
-    for (size_t i = 0; i < _MSPresets.get_count(); ++i)
+    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
     {
-        const MSPreset & Preset = _MSPresets[i];
+        const NukePreset & Preset = _NukePresets[i];
 
         if ((Preset.synth == synth) && (Preset.bank == bank))
             return Preset.name;
@@ -585,7 +585,7 @@ void MIDIPreset::unserialize(const char * data)
 
                 temp.set_string(data, Separator - data);
 
-                GetMSPreset(temp, in_ms_synth, in_ms_bank);
+                GetNukePreset(temp, in_ms_synth, in_ms_bank);
 
                 if (Version >= 6)
                 {
@@ -769,13 +769,13 @@ void MIDIPreset::unserialize(const char * data)
     }
 
 /// <summary>
-/// Gets the MSPreset with the specified name.
+/// Gets the Nuke preset with the specified name.
 /// </summary>
-void MIDIPreset::GetMSPreset(const char * name, unsigned int & synth, unsigned int & bank)
+void MIDIPreset::GetNukePreset(const char * name, unsigned int & synth, unsigned int & bank)
 {
-    for (size_t i = 0; i < _MSPresets.get_count(); ++i)
+    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
     {
-        const MSPreset & Preset = _MSPresets[i];
+        const NukePreset & Preset = _NukePresets[i];
 
         if (::strcmp(Preset.name, name) == 0)
         {
@@ -790,28 +790,28 @@ void MIDIPreset::GetMSPreset(const char * name, unsigned int & synth, unsigned i
     bank = DefaultMSBank;
 }
 
-#pragma region("MSPresets")
-pfc::array_t<MSPreset> _MSPresets;
+#pragma region("NukePresets")
+pfc::array_t<NukePreset> _NukePresets;
 
 /// <summary>
-/// Imports the synthesizer settings from the MS player.
+/// Imports the synthesizer settings from the Nuke player.
 /// </summary>
 class MSPresetsImporter
 {
 public:
     MSPresetsImporter()
     {
-        MSPlayer::enum_synthesizers(EnumCallback);
+        NukePlayer::EnumerateSynthesizers(EnumCallback);
     }
 
 private:
     static void EnumCallback(unsigned int synth, unsigned int bank, const char * name)
     {
-        MSPreset t = { synth, bank, name };
+        NukePreset Preset = { synth, bank, name };
 
-        _MSPresets.append_single(t);
+        _NukePresets.append_single(Preset);
     }
 };
 
-MSPresetsImporter _MSPresetsImporter;
+MSPresetsImporter _NukePresetsImporter;
 #pragma endregion

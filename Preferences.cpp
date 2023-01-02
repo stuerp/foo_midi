@@ -70,7 +70,7 @@ const Preferences::BuiltInPlugin Preferences::BuiltInPlugins[] =
     { "libADLMIDI",     ADLPlugInId,            -1, IsPluginAlwaysPresent },
     { "libOPNMIDI",     OPNPlugInId,            -1, IsPluginAlwaysPresent },
     { "oplmidi",        OPLPlugInId,            -1, IsPluginNeverPresent },
-    { "Nuclear Option", NuclearOptionPlugInId,  -1, IsPluginAlwaysPresent },
+    { "Nuke",           NukePlugInId,           -1, IsPluginAlwaysPresent },
     { "Secret Sauce",   SecretSaucePlugInId,    -1, IsSecretSaucePresent }
 };
 
@@ -134,7 +134,7 @@ void Preferences::reset()
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
     }
 
-    if (DefaultPlugInId != NuclearOptionPlugInId)
+    if (DefaultPlugInId != NukePlugInId)
     {
         GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
@@ -201,9 +201,9 @@ void Preferences::reset()
     {
         size_t PresetIndex = 0;
 
-        for (size_t i = 0, j = _MSPresets.get_count(); i < j; ++i)
+        for (size_t i = 0, j = _NukePresets.get_count(); i < j; ++i)
         {
-            const MSPreset & Preset = _MSPresets[i];
+            const NukePreset & Preset = _NukePresets[i];
 
             if (Preset.synth == DefaultMSSynth && Preset.bank == DefaultMSBank)
             {
@@ -307,10 +307,10 @@ void Preferences::apply()
     {
         size_t PresetIndex = (size_t)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
 
-        if (PresetIndex >= _MSPresets.get_count())
+        if (PresetIndex >= _NukePresets.get_count())
             PresetIndex = 0;
 
-        const MSPreset & Preset = _MSPresets[PresetIndex];
+        const NukePreset & Preset = _NukePresets[PresetIndex];
 
         CfgMSSynthesizer = (t_int32)Preset.synth;
         CfgMSBank = (t_int32)Preset.bank;
@@ -566,7 +566,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[SelectedVSTiPluginIndex].Id];
     }
 
-    if (PlugInId != NuclearOptionPlugInId)
+    if (PlugInId != NukePlugInId)
     {
         GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
@@ -768,9 +768,9 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
         auto w = GetDlgItem(IDC_MS_PRESET);
 
-        for (size_t i = 0; i < _MSPresets.get_count(); ++i)
+        for (size_t i = 0; i < _NukePresets.get_count(); ++i)
         {
-            const MSPreset & Preset = _MSPresets[i];
+            const NukePreset & Preset = _NukePresets[i];
 
             ::uSendMessageText(w, CB_ADDSTRING, 0, Preset.name);
 
@@ -1076,10 +1076,10 @@ bool Preferences::HasChanged()
     {
         unsigned int preset_number = (unsigned int)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
 
-        if (preset_number >= _MSPresets.get_count())
+        if (preset_number >= _NukePresets.get_count())
             preset_number = 0;
 
-        const MSPreset & preset = _MSPresets[preset_number];
+        const NukePreset & preset = _NukePresets[preset_number];
 
         if (!(preset.synth == (unsigned int)CfgMSSynthesizer && preset.bank == (unsigned int)CfgMSBank))
             changed = true;

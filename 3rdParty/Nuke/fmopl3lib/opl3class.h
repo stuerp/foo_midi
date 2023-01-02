@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 
-#include "libADLMIDI/src/chips/nuked/nukedopl3.h"
+#include "../../libADLMIDI/src/chips/nuked/nukedopl3.h"
 #include "../interface.h"
 
 class opl3class : public fm_chip {

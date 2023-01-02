@@ -24,7 +24,7 @@ enum
     ADLPlugInId = 6,
     OPNPlugInId = 7,
     OPLPlugInId = 8,
-    NuclearOptionPlugInId = 9,
+    NukePlugInId = 9,
     SecretSaucePlugInId = 10,
 };
 

@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2022.12.31) **/
+/** $VER: InputDecoder.h (2023.01.02) **/
 
 #pragma once
 
@@ -28,7 +28,7 @@
 #include "ADLPlayer.h"
 #include "BMPlayer.h"
 #include "EMIDIPlayer.h"
-#include "MSPlayer.h"
+#include "NukePlayer.h"
 #include <MT32Player/MT32Player.h>
 #include <OPNPlayer/OPNPlayer.h>
 #include "SCPlayer.h"
@@ -121,22 +121,22 @@ public:
     }
 
 public:
-    void open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & p_abort)
+    void open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler)
     {
         if (file.is_empty())
-            filesystem::g_open(file, filePath, filesystem::open_mode_read, p_abort);
+            filesystem::g_open(file, filePath, filesystem::open_mode_read, abortHandler);
 
         _FilePath = filePath;
 
         _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
 
         {
-            _FileStats = file->get_stats(p_abort);
+            _FileStats = file->get_stats(abortHandler);
 
             if (!_FileStats.m_size || _FileStats.m_size > (t_size)(1 << 30))
                 throw exception_io_unsupported_format();
 
-            _FileStats2 = file->get_stats2_((uint32_t)stats2_all, p_abort);
+            _FileStats2 = file->get_stats2_((uint32_t)stats2_all, abortHandler);
 
             if (!_FileStats2.m_size || _FileStats2.m_size > (t_size)(1 << 30))
                 throw exception_io_unsupported_format();
@@ -146,7 +146,7 @@ public:
 
         Data.resize(_FileStats.m_size);
 
-        file->read_object(&Data[0], _FileStats.m_size, p_abort);
+        file->read_object(&Data[0], _FileStats.m_size, abortHandler);
 
         if (_IsSysExFile)
         {
@@ -344,7 +344,7 @@ public:
         return _FileStats;
     }
 
-    static bool test_soundfont_extension(const char * filePath, pfc::string_base & soundFontPath, abort_callback & p_abort)
+    static bool test_soundfont_extension(const char * filePath, pfc::string_base & soundFontPath, abort_callback & abortHandler)
     {
         static const char * extensions[] =
         {
@@ -368,7 +368,7 @@ public:
             soundFontPath += ".";
             soundFontPath += extensions[i];
 
-            if (filesystem::g_exists(soundFontPath, p_abort))
+            if (filesystem::g_exists(soundFontPath, abortHandler))
                 return true;
         }
 
@@ -522,24 +522,24 @@ public:
         }
 
         if (_PluginID == 3)
-            _SampleRate = MT32Player::getSampleRate();
+            _SampleRate = (unsigned int)MT32Player::getSampleRate();
 
         get_length(subsongIndex);
 
-        samples_played = 0;
+        _SamplesPlayed = 0;
 
         if ((flags & input_flag_no_looping) || _LoopType < 4)
         {
             unsigned samples_length = _LengthInSamples;
 
-            samples_fade_begin = samples_length;
-            samples_fade_end = samples_length;
+            _SamplesFadeBegin = samples_length;
+            _SamplesFadeEnd = samples_length;
             doing_loop = false;
 
             if (loop_begin != ~0 || loop_end != ~0 || _LoopType > 2)
             {
-                samples_fade_begin = MulDiv(loop_begin_ms + (loop_end_ms - loop_begin_ms) * _LoopCount, _SampleRate, 1000);
-                samples_fade_end = samples_fade_begin + _SampleRate * _FadeTimeInMs / 1000;
+                _SamplesFadeBegin = (unsigned int)::MulDiv((int)(loop_begin_ms + (loop_end_ms - loop_begin_ms) * _LoopCount), (int)_SampleRate, 1000);
+                _SamplesFadeEnd = _SamplesFadeBegin + _SampleRate * _FadeTimeInMs / 1000;
                 doing_loop = true;
             }
         }
@@ -547,22 +547,22 @@ public:
         {
             if (_LoopType > 4 || loop_begin != ~0 || loop_end != ~0)
             {
-                samples_fade_begin = (unsigned int)~0;
-                samples_fade_end = (unsigned)~0;
+                _SamplesFadeBegin = (unsigned int)~0;
+                _SamplesFadeEnd = (unsigned)~0;
                 doing_loop = true;
             }
             else
             {
                 unsigned samples_length = _LengthInSamples;
 
-                samples_fade_begin = samples_length;
-                samples_fade_end = samples_length;
+                _SamplesFadeBegin = samples_length;
+                _SamplesFadeEnd = samples_length;
                 doing_loop = false;
             }
         }
 
     #ifdef DXISUPPORT
-        if (_SelectedPluginIndex == 5)
+        if (_SelectedPluginIndex == DirectXPlugInId)
         {
             pfc::array_t<t_uint8> serialized_midi_file;
             midi_file.serialize_as_standard_midi_file(serialized_midi_file);
@@ -597,7 +597,7 @@ public:
         else
         #endif
             // VSTi
-            if (_PluginID == 1)
+            if (_PluginID == VSTiPlugInId)
             {
                 {
                     delete _Player;
@@ -622,7 +622,7 @@ public:
                     }
             
                     if (Preset.vst_config.size())
-                        Player->setChunk(&Preset.vst_config[0], Preset.vst_config.size());
+                        Player->setChunk(&Preset.vst_config[0], (unsigned long)Preset.vst_config.size());
 
                     _Player = Player;
                 }
@@ -654,7 +654,7 @@ public:
             }
     #ifdef FLUIDSYNTHSUPPORT
             else
-            if (_SelectedPluginIndex == 2 || _SelectedPluginIndex == 4)
+            if (_SelectedPluginIndex == FluidSynthPlugInId || _SelectedPluginIndex == BASSMIDIPlugInId)
             {
                 /*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, NULL, LOAD_LIBRARY_AS_DATAFILE );
                     if ( !fsmod )
@@ -695,12 +695,12 @@ public:
                 }
             }
     #ifdef BASSMIDISUPPORT
-            else if (_SelectedPluginIndex == 4)
+            else if (_SelectedPluginIndex == BASSMIDIPlugInId)
             #endif
             #else
             else
             // BASS MIDI
-            if (_PluginID == 2 || _PluginID == 4)
+            if (_PluginID == FluidSynthPlugInId || _PluginID == BASSMIDIPlugInId)
     #endif
     #ifdef BASSMIDISUPPORT
             {
@@ -725,9 +725,9 @@ public:
                     if (file_soundfont.length())
                         Player->setFileSoundFont(file_soundfont);
 
-                    Player->setInterpolation(_ResamplingMode);
+                    Player->setInterpolation((int)_ResamplingMode);
                     Player->setEffects(Preset._BASSMIDIEffects);
-                    Player->setVoices(Preset._BASSMIDIVoices);
+                    Player->setVoices((int)Preset._BASSMIDIVoices);
 
                     _Player = Player;
                 }
@@ -759,8 +759,7 @@ public:
             }
     #endif
             else
-            // libADLMIDI
-            if (_PluginID == 6)
+            if (_PluginID == ADLPlugInId)
             {
                 {
                     delete _Player;
@@ -795,8 +794,7 @@ public:
                 }
             }
             else
-            // libOPNMIDI
-            if (_PluginID == 7)
+            if (_PluginID == OPNPlugInId)
             {
                 {
                     delete _Player;
@@ -831,7 +829,7 @@ public:
             }
             else
             // MUNT (MT32)
-            if (_PluginID == 3)
+            if (_PluginID == SuperMUNTPlugInId)
             {
                 {
                     delete _Player;
@@ -847,7 +845,7 @@ public:
                             console::print("No MUNT base path configured, attempting to load ROMs from plugin install path");
                     }
 
-                    MT32Player * Player = new MT32Player(!IsMT32, Preset.munt_gm_set);
+                    auto * Player = new MT32Player(!IsMT32, Preset.munt_gm_set);
 
                     pfc::string8 BasePath = CfgMUNTPath;
 
@@ -887,13 +885,13 @@ public:
                 }
             }
             else
-            // Nuclear Option
-            if (_PluginID == 9)
+            // Nuke
+            if (_PluginID == NukePlugInId)
             {
                 {
                     delete _Player;
 
-                    MSPlayer * Player = new MSPlayer();
+                    auto * Player = new NukePlayer();
 
                     Player->SetSynth(Preset.ms_synth);
                     Player->SetBank(Preset.ms_bank);
@@ -921,7 +919,7 @@ public:
             }
             else
             // Secret Sauce
-            if (_PluginID == 10)
+            if (_PluginID == SecretSaucePlugInId)
             {
                 {
                     delete _Player;
@@ -964,7 +962,7 @@ public:
             }
             else
             // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413 ))
-            if (_PluginID == 0)
+            if (_PluginID == EmuDeMIDIPlugInId)
             {
                 {
                     delete _Player;
@@ -1007,14 +1005,14 @@ public:
         throw exception_io_data();
     }
 
-    bool decode_run(audio_chunk & p_chunk, abort_callback & p_abort)
+    bool decode_run(audio_chunk & audioChunk, abort_callback & abortHandler)
     {
-        p_abort.check();
+        abortHandler.check();
 
         if (eof)
             return false;
 
-        bool rv = false;
+        bool Success = false;
 
     #ifdef DXISUPPORT
         if (_SelectedPluginIndex == 5)
@@ -1037,14 +1035,14 @@ public:
 
             thePlayer->FillBuffer(ptr, todo);
 
-            p_chunk.set_data_32(ptr, todo, 2, srate);
+            audioChunk.set_data_32(ptr, todo, 2, srate);
         #else
-            p_chunk.set_data_size(todo * 2);
-            float * ptr = p_chunk.get_data();
+            audioChunk.set_data_size(todo * 2);
+            float * ptr = audioChunk.get_data();
             dxiProxy->fillBuffer(ptr, todo);
-            p_chunk.set_srate(srate);
-            p_chunk.set_channels(2);
-            p_chunk.set_sample_count(todo);
+            audioChunk.set_srate(srate);
+            audioChunk.set_channels(2);
+            audioChunk.set_sample_count(todo);
         #endif
 
             samples_done += todo;
@@ -1053,117 +1051,121 @@ public:
         }
         else
     #endif
-        if (_PluginID == 1)
+        if (_PluginID == VSTiPlugInId)
         {
-            VSTiPlayer * vstPlayer = (VSTiPlayer *) _Player;
+            auto * Player = (VSTiPlayer *) _Player;
 
-            size_t todo = 4096;
-            unsigned nch = vstPlayer->getChannelCount();
+            const size_t SamplesTodo = 4096;
+            const size_t ChannelCount = Player->getChannelCount();
 
-            p_chunk.set_data_size(todo * nch);
+            audioChunk.set_data_size(SamplesTodo * ChannelCount);
 
-            audio_sample * out = p_chunk.get_data();
+            audio_sample * Samples = audioChunk.get_data();
 
-            unsigned done = vstPlayer->Play(out, todo);
+            size_t SamplesDone = Player->Play(Samples, (unsigned long)SamplesTodo);
 
-            if (!done) return false;
-
-            p_chunk.set_srate(_SampleRate);
-            p_chunk.set_channels(nch);
-            p_chunk.set_sample_count(done);
-
-            rv = true;
-        }
-        else
-        if (_PluginID == 3)
-        {
-            MT32Player * mt32Player = (MT32Player *) _Player;
-
-            size_t todo = 4096;
-
-            p_chunk.set_data_size(todo * 2);
-
-            audio_sample * out = p_chunk.get_data();
-
-            mt32Player->setAbortCallback(&p_abort);
-
-            unsigned done = mt32Player->Play(out, todo);
-
-            if (!done)
+            if (SamplesDone == 0)
                 return false;
 
-            p_chunk.set_srate(_SampleRate);
-            p_chunk.set_channels(2);
-            p_chunk.set_sample_count(done);
+            audioChunk.set_srate(_SampleRate);
+            audioChunk.set_channels((unsigned int)ChannelCount);
+            audioChunk.set_sample_count(SamplesDone);
 
-            rv = true;
+            Success = true;
+        }
+        else
+        if (_PluginID == SuperMUNTPlugInId)
+        {
+            auto * mt32Player = (MT32Player *) _Player;
+
+            const size_t SamplesToDo = 4096;
+            const size_t ChannelCount = 2;
+
+            audioChunk.set_data_size(SamplesToDo * ChannelCount);
+
+            audio_sample * Samples = audioChunk.get_data();
+
+            mt32Player->setAbortCallback(&abortHandler);
+
+            size_t SamplesDone = mt32Player->Play(Samples, (unsigned long)SamplesToDo);
+
+            if (SamplesDone == 0)
+                return false;
+
+            audioChunk.set_srate(_SampleRate);
+            audioChunk.set_channels((unsigned int)ChannelCount);
+            audioChunk.set_sample_count(SamplesDone);
+
+            Success = true;
         }
         else
         if (_Player)
         {
-            size_t todo = 4096;
+            const size_t SamplesToDo = 4096;
+            const size_t ChannelCount = 2;
 
-            p_chunk.set_data_size(todo * 2);
+            audioChunk.set_data_size(SamplesToDo * ChannelCount);
 
-            audio_sample * out = p_chunk.get_data();
+            audio_sample * Samples = audioChunk.get_data();
 
-            unsigned done = _Player->Play(out, todo);
+            size_t SamplesDone = _Player->Play(Samples, (unsigned long)SamplesToDo);
 
-            if (!done)
+            if (SamplesDone == 0)
             {
-                std::string last_error;
+                std::string LastError;
 
-                if (_Player->GetLastError(last_error))
-                    throw exception_io_data(last_error.c_str());
+                if (_Player->GetLastError(LastError) != 0)
+                    throw exception_io_data(LastError.c_str());
 
                 return false;
             }
 
-            p_chunk.set_srate(_SampleRate);
-            p_chunk.set_channels(2);
-            p_chunk.set_sample_count(done);
+            audioChunk.set_srate(_SampleRate);
+            audioChunk.set_channels((unsigned int)ChannelCount);
+            audioChunk.set_sample_count(SamplesDone);
 
-            rv = true;
+            Success = true;
         }
 
-        if (rv && samples_fade_begin != ~0 && samples_fade_end != ~0)
+        // Scale the samples if fading was requaested.
+        if (Success && (_SamplesFadeBegin != ~0) && (_SamplesFadeEnd != ~0))
         {
-            unsigned samples_played_start = samples_played;
-            unsigned samples_played_end = samples_played + (unsigned int)p_chunk.get_sample_count();
+            unsigned int SamplesPlayedBegin = _SamplesPlayed;
+            unsigned int SamplesPlayedEnd   = _SamplesPlayed + (unsigned int)audioChunk.get_sample_count();
 
-            samples_played = samples_played_end;
+            _SamplesPlayed = SamplesPlayedEnd;
 
-            if (samples_played_end >= samples_fade_begin)
+            if (SamplesPlayedEnd >= _SamplesFadeBegin)
             {
-                for (unsigned i = std::max(samples_fade_begin, samples_played_start), j = std::min(samples_played_end, samples_fade_end); i < j; ++i)
+                for (unsigned i = std::max(_SamplesFadeBegin, SamplesPlayedBegin), j = std::min(SamplesPlayedEnd, _SamplesFadeEnd); i < j; ++i)
                 {
-                    audio_sample * sample = p_chunk.get_data() + (i - samples_played_start) * 2;
-                    audio_sample scale = (audio_sample) (samples_fade_end - i) / (audio_sample) (samples_fade_end - samples_fade_begin);
+                    audio_sample * Sample = audioChunk.get_data() + (i - SamplesPlayedBegin) * 2;
+                    audio_sample Scale = (audio_sample) (_SamplesFadeEnd - i) / (audio_sample) (_SamplesFadeEnd - _SamplesFadeBegin);
 
-                    sample[0] *= scale;
-                    sample[1] *= scale;
+                    Sample[0] *= Scale;
+                    Sample[1] *= Scale;
                 }
 
-                if (samples_played_end > samples_fade_end)
+                if (SamplesPlayedEnd > _SamplesFadeEnd)
                 {
-                    unsigned samples_remain = 0;
+                    unsigned SamplesRemaining = 0;
 
-                    if (samples_fade_end > samples_played_start)
-                        samples_remain = samples_fade_end - samples_played_start;
+                    if (_SamplesFadeEnd > SamplesPlayedBegin)
+                        SamplesRemaining = _SamplesFadeEnd - SamplesPlayedBegin;
 
-                    p_chunk.set_sample_count(samples_remain);
+                    audioChunk.set_sample_count(SamplesRemaining);
 
                     eof = true;
 
-                    if (!samples_remain)
+                    if (SamplesRemaining == 0)
                         return false;
                 }
             }
         }
 
-        dynamic_time = p_chunk.get_duration();
+        _AudioChunkDuration = audioChunk.get_duration();
 
-        return rv;
+        return Success;
     }
 
     void decode_seek(double p_seconds, abort_callback&)
@@ -1171,7 +1173,7 @@ public:
         unsigned seek_msec = unsigned(audio_math::time_to_samples(p_seconds, 1000));
 
         // This value should not be wrapped to within the loop range
-        samples_played = unsigned((t_int64(seek_msec) * t_int64(_SampleRate)) / 1000);
+        _SamplesPlayed = unsigned((t_int64(seek_msec) * t_int64(_SampleRate)) / 1000);
 
         if (seek_msec > loop_end_ms)
         {
@@ -1248,7 +1250,7 @@ public:
             }
 
             if (ret)
-                p_timestamp_delta = dynamic_time;
+                p_timestamp_delta = _AudioChunkDuration;
         }
     #endif
 
@@ -1264,7 +1266,7 @@ public:
     {
     }
 
-    void retag_set_info(t_uint32, const file_info& p_info, abort_callback & p_abort)
+    void retag_set_info(t_uint32, const file_info& p_info, abort_callback & abortHandler)
     {
         if (_IsSysExFile)
             throw exception_io_data("You cannot tag SysEx dumps");
@@ -1288,15 +1290,15 @@ public:
         }
 
         file::ptr tag_file;
-        filesystem::g_open_tempmem(tag_file, p_abort);
+        filesystem::g_open_tempmem(tag_file, abortHandler);
 
-        tag_processor::write_apev2(tag_file, m_info, p_abort);
+        tag_processor::write_apev2(tag_file, m_info, abortHandler);
 
         pfc::array_t<t_uint8> tag;
 
-        tag_file->seek(0, p_abort);
-        tag.set_count(tag_file->get_size_ex(p_abort));
-        tag_file->read_object(tag.get_ptr(), tag.get_count(), p_abort);
+        tag_file->seek(0, abortHandler);
+        tag.set_count(tag_file->get_size_ex(abortHandler));
+        tag_file->read_object(tag.get_ptr(), tag.get_count(), abortHandler);
 
         static_api_ptr_t<metadb_index_manager>()->set_user_data(GUIDTrackHasher, m_index_hash, tag.get_ptr(), tag.get_count());
     }
@@ -1440,10 +1442,6 @@ private:
     unsigned _SampleRate;
     unsigned _ResamplingMode;
 
-    bool _IsEMIDI;
-
-    bool doing_loop;
-
     unsigned _LoopType;
     unsigned _LoopTypePlayback;
     unsigned _LoopTypeOther;
@@ -1458,17 +1456,19 @@ private:
     unsigned _LengthInSamples;
     unsigned _LengthInTicks;
 
-    unsigned samples_done;
-
     unsigned loop_begin, loop_begin_ms;
     unsigned loop_end, loop_end_ms;
 
-    unsigned _LoopCount, _FadeTimeInMs;
+    unsigned _LoopCount;
+    unsigned _FadeTimeInMs;
 
-    unsigned samples_played;
-    unsigned samples_fade_begin;
-    unsigned samples_fade_end;
+    unsigned _SamplesPlayed;
+    unsigned _SamplesDone;
+    unsigned _SamplesFadeBegin;
+    unsigned _SamplesFadeEnd;
 
+    bool _IsEMIDI;
+    bool doing_loop;
     bool eof;
     bool dont_loop;
 
@@ -1477,7 +1477,7 @@ private:
 #ifdef BASSMIDISUPPORT
     unsigned bassmidi_voices, bassmidi_voices_max;
 #endif
-    double dynamic_time;
+    double _AudioChunkDuration;
 
 #ifdef DXISUPPORT
     DXiProxy * dxiProxy;
