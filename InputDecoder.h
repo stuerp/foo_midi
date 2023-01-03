@@ -212,7 +212,7 @@ public:
     #ifdef FLUIDSYNTHSUPPORT
         if (_SelectedPluginIndex == 4)
         #else
-        if (_PluginID == 2 || _PluginID == 4)
+        if (_PlugInId == 2 || _PlugInId == 4)
         #endif
         {
             BMPlayer * bmPlayer = (BMPlayer *) _Player;
@@ -251,6 +251,9 @@ public:
     #pragma endregion
 
     #pragma region("input_info_writer")
+    /// <summary>
+    /// Set the tags for the specified file.
+    /// </summary>
     void retag_set_info(t_uint32, const file_info& fileInfo, abort_callback & abortHandler)
     {
         if (_IsSysExFile)
@@ -258,19 +261,23 @@ public:
 
         file_info_impl fi(fileInfo);
 
-        fi.meta_remove_field(MetaDataPreset);
+        {
+            fi.meta_remove_field(MetaDataPreset);
 
-        const char * Preset = fi.info_get(MetaDataPreset);
+            const char * Preset = fi.info_get(MetaDataPreset);
 
-        if (Preset)
-            fi.meta_set(MetaDataPreset, Preset);
+            if (Preset)
+                fi.meta_set(MetaDataPreset, Preset);
+        }
 
-        fi.meta_remove_field(MetaDataSysExDumps);
+        {
+            fi.meta_remove_field(MetaDataSysExDumps);
 
-        const char * SysExDumps = fi.info_get(MetaDataSysExDumps);
+            const char * SysExDumps = fi.info_get(MetaDataSysExDumps);
 
-        if (SysExDumps)
-            fi.meta_set(MetaDataSysExDumps, SysExDumps);
+            if (SysExDumps)
+                fi.meta_set(MetaDataSysExDumps, SysExDumps);
+        }
 
         {
             file::ptr TagFile;
@@ -337,26 +344,12 @@ public:
 private:
     double InitializeTime(unsigned subsongIndex);
 
-    #ifdef DXISUPPORT
-    void set_loop()
-    {
-        if (_SelectedPluginIndex == 5 && dxiProxy)
-        {
-            dxiProxy->setLoop(loop_begin != ~0 ? loop_begin : 0, loop_end != ~0 ? loop_end : length_ticks);
-        }
-        /*else
-        {
-            sample_loop_start = theSequence->m_tempoMap.Tick2Sample(loop_begin != -1 ? loop_begin : 0, srate);
-            sample_loop_end = theSequence->m_tempoMap.Tick2Sample((loop_end != -1 ? loop_end : length_ticks) + 1, srate);
-        }*/
-        else
-            _DontLoop = false;
-    }
-    #endif
-
     void AddMetaData(file_info & fileInfo, const char * name, const char * value, t_size max);
 
-    static bool IsSoundFontFile(const char * filePath, pfc::string_base & soundFontPath, abort_callback & abortHandler) noexcept
+    /// <summary>
+    /// Gets the path name of the matching SoundFont file for the specified file, if any.
+    /// </summary>
+    static bool GetSoundFontFilePath(const char * filePath, pfc::string_base & soundFontPath, abort_callback & abortHandler) noexcept
     {
         static const char * Extensions[] =
         {
@@ -387,6 +380,23 @@ private:
         return false;
     }
 
+    #ifdef DXISUPPORT
+    void set_loop()
+    {
+        if (_SelectedPluginIndex == 5 && dxiProxy)
+        {
+            dxiProxy->setLoop(loop_begin != ~0 ? loop_begin : 0, loop_end != ~0 ? loop_end : length_ticks);
+        }
+        /*else
+        {
+            sample_loop_start = theSequence->m_tempoMap.Tick2Sample(loop_begin != -1 ? loop_begin : 0, srate);
+            sample_loop_end = theSequence->m_tempoMap.Tick2Sample((loop_end != -1 ? loop_end : length_ticks) + 1, srate);
+        }*/
+        else
+            _DontLoop = false;
+    }
+    #endif
+
 private:
     MIDIPlayer * _Player;
     midi_container _Container;
@@ -403,7 +413,7 @@ private:
 
     unsigned _TrackCount;
 
-    unsigned _PluginID;
+    unsigned _PlugInId;
     unsigned _SampleRate;
     unsigned _ResamplingMode;
 

@@ -13,10 +13,12 @@ class MIDIPreset
 {
 public:
     MIDIPreset() noexcept;
+
     MIDIPreset(const MIDIPreset&) = delete;
     MIDIPreset(const MIDIPreset&&) = delete;
     MIDIPreset& operator=(const MIDIPreset&) = delete;
     MIDIPreset& operator=(MIDIPreset&&) = delete;
+
     virtual ~MIDIPreset() { };
 
     void serialize(pfc::string8 & p_out);

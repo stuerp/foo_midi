@@ -158,7 +158,7 @@ void MT32Player::setAbortCallback(abort_callback * in)
     _AbortCallback = in;
 }
 
-int MT32Player::getSampleRate()
+int MT32Player::GetSampleRate()
 {
     return (int)MT32Emu::Synth::getStereoOutputSampleRate(useMode);
 }

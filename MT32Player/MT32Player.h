@@ -24,7 +24,7 @@ public:
 
     bool isConfigValid();
 
-    static int getSampleRate();
+    static int GetSampleRate();
 
 protected:
     virtual bool startup() override;

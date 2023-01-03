@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.01.02) **/
+/** $VER: InputDecoder.cpp (2023.01.03) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -106,9 +106,11 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
     if (_IsSysExFile)
         return;
 
+    // General tags
     fileInfo.info_set_int("channels", 2);
     fileInfo.info_set("encoding", "Synthesized");
 
+    // Specific tags
     {
         pfc::string8 FileHashString;
 
@@ -422,7 +424,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         SysExDumps.Merge(_Container, abortHandler);
     }
 
-    _PluginID = Preset._PluginId;
+    _PlugInId = Preset._PluginId;
     _IsFirstBlock = true;
 
     midi_meta_data MetaData;
@@ -434,58 +436,59 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             midi_meta_data_item Item;
 
             if (MetaData.get_item("type", Item) && (strcmp(Item.m_value.c_str(), "MT-32") == 0))
-                _PluginID= SuperMUNTPlugInId;
+                _PlugInId= SuperMUNTPlugInId;
         }
     }
 
-    pfc::string8 file_soundfont;
+    pfc::string8 SoundFontFilePath;
 
+    // Gets a SoundFont file that has been configured for the file, if any.
     {
-        pfc::string8_fast temp = _FilePath;
-        pfc::string8_fast temp_out;
+        pfc::string8_fast FilePath = _FilePath;
+        pfc::string8_fast TempSoundFontFilePath;
 
-        bool exists = IsSoundFontFile(temp, temp_out, abortHandler);
+        bool FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
 
-        if (!exists)
+        if (!FoundSoundFile)
         {
-            size_t FileExtensionIndex = temp.find_last('.');
+            size_t FileExtensionIndex = FilePath.find_last('.');
 
-            if (FileExtensionIndex > temp.scan_filename())
+            if (FileExtensionIndex > FilePath.scan_filename())
             {
-                temp.truncate(FileExtensionIndex);
+                FilePath.truncate(FileExtensionIndex);
 
-                exists = IsSoundFontFile(temp, temp_out, abortHandler);
+                FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
             }
 
-            if (!exists)
+            if (!FoundSoundFile)
             {
-                // Bah. The things needed to keep the last path separator.
-                temp.truncate(temp.scan_filename());
-                temp_out = "";
-                temp_out.add_byte(temp[temp.length() - 1]);
-                temp.truncate(temp.length() - 1);
+                FilePath.truncate(FilePath.scan_filename());
 
-                size_t FileNameIndex = temp.scan_filename();
+                TempSoundFontFilePath = "";
+                TempSoundFontFilePath.add_byte(FilePath[FilePath.length() - 1]);
+                FilePath.truncate(FilePath.length() - 1);
+
+                size_t FileNameIndex = FilePath.scan_filename();
 
                 if (FileNameIndex != pfc::infinite_size)
                 {
-                    temp += temp_out;
-                    temp.add_string(&temp[FileNameIndex], temp.length() - FileNameIndex - 1);
+                    FilePath += TempSoundFontFilePath;
+                    FilePath.add_string(&FilePath[FileNameIndex], FilePath.length() - FileNameIndex - 1);
 
-                    exists = IsSoundFontFile(temp, temp_out, abortHandler);
+                    FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
                 }
             }
         }
 
-        if (exists)
+        if (FoundSoundFile)
         {
-            file_soundfont = temp_out;
-            _PluginID = BASSMIDIPlugInId;
+            SoundFontFilePath = TempSoundFontFilePath;
+            _PlugInId = BASSMIDIPlugInId;
         }
     }
 
-    if (_PluginID == SuperMUNTPlugInId)
-        _SampleRate = (unsigned int)MT32Player::getSampleRate();
+    if (_PlugInId == SuperMUNTPlugInId)
+        _SampleRate = (unsigned int)MT32Player::GetSampleRate();
 
     if ((flags & input_flag_no_looping) || (_LoopType < 4))
     {
@@ -520,43 +523,8 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
     }
 
-#ifdef DXISUPPORT
-    if (_SelectedPluginIndex == DirectXPlugInId)
-    {
-        pfc::array_t<t_uint8> serialized_midi_file;
-        midi_file.serialize_as_standard_midi_file(serialized_midi_file);
-
-        delete dxiProxy;
-        dxiProxy = nullptr;
-
-        dxiProxy = new DXiProxy;
-        if (SUCCEEDED(dxiProxy->initialize()))
-        {
-            dxiProxy->setSampleRate(srate);
-            if (SUCCEEDED(dxiProxy->setSequence(serialized_midi_file.get_ptr(), serialized_midi_file.get_count())))
-            {
-                if (SUCCEEDED(dxiProxy->setPlugin(thePreset.dxi_plugin)))
-                {
-                    dxiProxy->Stop();
-                    dxiProxy->Play(TRUE);
-
-                    eof = false;
-                    _DontLoop = true;
-
-                    if (doing_loop)
-                    {
-                        set_loop();
-                    }
-
-                    return;
-                }
-            }
-        }
-    }
-    else
-    #endif
     // VSTi
-    if (_PluginID == VSTiPlugInId)
+    if (_PlugInId == VSTiPlugInId)
     {
         {
             delete _Player;
@@ -613,7 +581,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
 #ifdef FLUIDSYNTHSUPPORT
     else
-    if (_SelectedPluginIndex == FluidSynthPlugInId || _SelectedPluginIndex == BASSMIDIPlugInId)
+    if (_PlugInId == FluidSynthPlugInId || _PlugInId == BASSMIDIPlugInId)
     {
         /*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, nullptr, LOAD_LIBRARY_AS_DATAFILE );
             if ( !fsmod )
@@ -654,12 +622,13 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
     }
 #ifdef BASSMIDISUPPORT
-    else if (_SelectedPluginIndex == BASSMIDIPlugInId)
+    else
+     if (_PlugInId == BASSMIDIPlugInId)
     #endif
-    #else
+#else
     else
     // BASS MIDI
-    if (_PluginID == FluidSynthPlugInId || _PluginID == BASSMIDIPlugInId)
+    if (_PlugInId == FluidSynthPlugInId || _PlugInId == BASSMIDIPlugInId)
 #endif
 #ifdef BASSMIDISUPPORT
     {
@@ -670,7 +639,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
                 bassmidi_voices = 0;
                 bassmidi_voices_max = 0;
 
-                if (Preset._SoundFontPathName.is_empty() && file_soundfont.is_empty())
+                if (Preset._SoundFontPathName.is_empty() && SoundFontFilePath.is_empty())
                 {
                     console::print("No SoundFonts configured, and no file or directory SoundFont found");
                     throw exception_io_data();
@@ -681,8 +650,8 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
             Player->setSoundFont(Preset._SoundFontPathName);
 
-            if (file_soundfont.length())
-                Player->setFileSoundFont(file_soundfont);
+            if (SoundFontFilePath.length())
+                Player->setFileSoundFont(SoundFontFilePath);
 
             Player->setInterpolation((int)_ResamplingMode);
             Player->setEffects(Preset._BASSMIDIEffects);
@@ -718,7 +687,42 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
 #endif
     else
-    if (_PluginID == ADLPlugInId)
+#ifdef DXISUPPORT
+    if (_PlugInId == DirectXPlugInId)
+    {
+        pfc::array_t<t_uint8> serialized_midi_file;
+        midi_file.serialize_as_standard_midi_file(serialized_midi_file);
+
+        delete dxiProxy;
+        dxiProxy = nullptr;
+
+        dxiProxy = new DXiProxy;
+        if (SUCCEEDED(dxiProxy->initialize()))
+        {
+            dxiProxy->setSampleRate(srate);
+            if (SUCCEEDED(dxiProxy->setSequence(serialized_midi_file.get_ptr(), serialized_midi_file.get_count())))
+            {
+                if (SUCCEEDED(dxiProxy->setPlugin(thePreset.dxi_plugin)))
+                {
+                    dxiProxy->Stop();
+                    dxiProxy->Play(TRUE);
+
+                    eof = false;
+                    _DontLoop = true;
+
+                    if (doing_loop)
+                    {
+                        set_loop();
+                    }
+
+                    return;
+                }
+            }
+        }
+    }
+    else
+#endif
+    if (_PlugInId == ADLPlugInId)
     {
         {
             delete _Player;
@@ -753,7 +757,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
     }
     else
-    if (_PluginID == OPNPlugInId)
+    if (_PlugInId == OPNPlugInId)
     {
         {
             delete _Player;
@@ -788,7 +792,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
     // MUNT (MT32)
-    if (_PluginID == SuperMUNTPlugInId)
+    if (_PlugInId == SuperMUNTPlugInId)
     {
         {
             delete _Player;
@@ -845,7 +849,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
     // Nuke
-    if (_PluginID == NukePlugInId)
+    if (_PlugInId == NukePlugInId)
     {
         {
             delete _Player;
@@ -878,7 +882,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
     // Secret Sauce
-    if (_PluginID == SecretSaucePlugInId)
+    if (_PlugInId == SecretSaucePlugInId)
     {
         {
             delete _Player;
@@ -922,7 +926,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
     // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413 ))
-    if (_PluginID == EmuDeMIDIPlugInId)
+    if (_PlugInId == EmuDeMIDIPlugInId)
     {
         {
             delete _Player;
@@ -978,7 +982,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     bool Success = false;
 
 #ifdef DXISUPPORT
-    if (_SelectedPluginIndex == 5)
+    if (_PlugInId == 5)
     {
         unsigned todo = 4096;
 
@@ -1014,7 +1018,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     }
     else
 #endif
-    if (_PluginID == VSTiPlugInId)
+    if (_PlugInId == VSTiPlugInId)
     {
         auto * Player = (VSTiPlayer *) _Player;
 
@@ -1037,7 +1041,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         Success = true;
     }
     else
-    if (_PluginID == SuperMUNTPlugInId)
+    if (_PlugInId == SuperMUNTPlugInId)
     {
         auto * mt32Player = (MT32Player *) _Player;
 
