@@ -315,7 +315,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="TrackHasher.cpp" />
+    <ClCompile Include="FileHasher.cpp" />
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -361,7 +361,7 @@
     <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
     <ClInclude Include="OPNPlayer\xg.wopn.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="TrackHasher.h" />
+    <ClInclude Include="FileHasher.h" />
     <ClInclude Include="VSTiPlayer.h" />
     <CustomBuild Include="Experimental\DXiPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

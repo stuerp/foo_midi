@@ -42,9 +42,9 @@ public:
             _SysExDumps.serialize(location->get_path(), Text);
 
             if (Text.get_length())
-                fileInfo.info_set(MetaDataSysExDumps, Text);
+                fileInfo.info_set(TagSysExDumps, Text);
             else
-                fileInfo.info_remove(MetaDataSysExDumps);
+                fileInfo.info_remove(TagSysExDumps);
 
             return true;
         }

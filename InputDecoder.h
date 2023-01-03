@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.01.02) **/
+/** $VER: InputDecoder.h (2023.01.03) **/
 
 #pragma once
 
@@ -19,7 +19,7 @@
 #include <midi_processing/midi_processor.h>
 
 #include "Configuration.h"
-#include "TrackHasher.h"
+#include "FileHasher.h"
 #include "MIDIPreset.h"
 #include "MIDISysExDumps.h"
 
@@ -87,11 +87,6 @@ public:
         fluid_interp_method(Cfg_FluidSynthInterpolationMethod),
     #endif
 
-    #ifdef BASSMIDISUPPORT
-        if (!_HASSSE2 && _ResamplingMode > 1)
-            _ResamplingMode = 1;
-    #endif
-
     #ifdef DXISUPPORT
         dxiProxy = nullptr;
     #endif
@@ -118,7 +113,10 @@ public:
     }
 
 public:
+
+    #pragma region("input_impl")
     void open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler);
+    #pragma endregion
 
     #pragma region("input_info_reader")
     unsigned get_subsong_count()
@@ -151,94 +149,14 @@ public:
 
     bool decode_run(audio_chunk & audioChunk, abort_callback & abortHandler);
 
-    void decode_seek(double p_seconds, abort_callback&)
-    {
-        unsigned seek_msec = unsigned(audio_math::time_to_samples(p_seconds, 1000));
-
-        // This value should not be wrapped to within the loop range
-        _SamplesPlayed = unsigned((t_int64(seek_msec) * t_int64(_SampleRate)) / 1000);
-
-        if (seek_msec > _LoopEndInMS)
-        {
-            seek_msec = (seek_msec - _LoopBeginInMS) % (_LoopEndInMS - _LoopBeginInMS) + _LoopBeginInMS;
-        }
-
-        _IsFirstBlock = true;
-        eof = false;
-
-        unsigned done = unsigned((t_int64(seek_msec) * t_int64(_SampleRate)) / 1000);
-        if (_LengthInSamples && done >= (_LengthInSamples - _SampleRate))
-        {
-            eof = true;
-            return;
-        }
-
-    #ifdef DXISUPPORT
-        if (_SelectedPluginIndex == 5)
-        {
-            dxiProxy->setPosition(seek_msec);
-
-            samples_done = done;
-
-            return;
-        }
-        else
-    #endif
-        if (_Player)
-        {
-            _Player->Seek(done);
-            return;
-        }
-    }
+    void decode_seek(double p_seconds, abort_callback&);
 
     bool decode_can_seek()
     {
         return true;
     }
 
-    bool decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta)
-    {
-        int ret = false;
-
-        if (_IsFirstBlock)
-        {
-            p_out.info_set_int("samplerate", _SampleRate);
-            p_timestamp_delta = 0.;
-            _IsFirstBlock = false;
-            ret = true;
-        }
-
-    #ifdef BASSMIDISUPPORT
-    #ifdef FLUIDSYNTHSUPPORT
-        if (_SelectedPluginIndex == 4)
-        #else
-        if (_PlugInId == 2 || _PlugInId == 4)
-        #endif
-        {
-            BMPlayer * bmPlayer = (BMPlayer *) _Player;
-            unsigned voices = bmPlayer->getVoicesActive();
-
-            if (voices != bassmidi_voices)
-            {
-                p_out.info_set_int("bassmidi_voices", voices);
-                bassmidi_voices = voices;
-                ret = true;
-            }
-
-            if (voices > bassmidi_voices_max)
-            {
-                p_out.info_set_int("bassmidi_voices_max", voices);
-                bassmidi_voices_max = voices;
-                ret = true;
-            }
-
-            if (ret)
-                p_timestamp_delta = _AudioChunkDuration;
-        }
-    #endif
-
-        return (bool)ret;
-    }
+    bool decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta);
 
     bool decode_get_dynamic_info_track(file_info&, double&)
     {
@@ -251,60 +169,11 @@ public:
     #pragma endregion
 
     #pragma region("input_info_writer")
-    /// <summary>
-    /// Set the tags for the specified file.
-    /// </summary>
-    void retag_set_info(t_uint32, const file_info& fileInfo, abort_callback & abortHandler)
-    {
-        if (_IsSysExFile)
-            throw exception_io_data("You cannot tag SysEx dumps");
+    void retag_set_info(t_uint32, const file_info& fileInfo, abort_callback & abortHandler);
 
-        file_info_impl fi(fileInfo);
+    void retag_commit(abort_callback&) { }
 
-        {
-            fi.meta_remove_field(MetaDataPreset);
-
-            const char * Preset = fi.info_get(MetaDataPreset);
-
-            if (Preset)
-                fi.meta_set(MetaDataPreset, Preset);
-        }
-
-        {
-            fi.meta_remove_field(MetaDataSysExDumps);
-
-            const char * SysExDumps = fi.info_get(MetaDataSysExDumps);
-
-            if (SysExDumps)
-                fi.meta_set(MetaDataSysExDumps, SysExDumps);
-        }
-
-        {
-            file::ptr TagFile;
-
-            filesystem::g_open_tempmem(TagFile, abortHandler);
-
-            tag_processor::write_apev2(TagFile, fi, abortHandler);
-
-            pfc::array_t<t_uint8> Tag;
-
-            TagFile->seek(0, abortHandler);
-
-            Tag.set_count(TagFile->get_size_ex(abortHandler));
-
-            TagFile->read_object(Tag.get_ptr(), Tag.get_count(), abortHandler);
-
-            static_api_ptr_t<metadb_index_manager>()->set_user_data(GUIDTrackHasher, _Hash, Tag.get_ptr(), Tag.get_count());
-        }
-    }
-
-    void retag_commit(abort_callback&)
-    {
-    }
-
-    void remove_tags(abort_callback&)
-    {
-    }
+    void remove_tags(abort_callback&) { }
     #pragma endregion
 
     static bool g_is_our_content_type(const char * p_content_type)
@@ -346,39 +215,7 @@ private:
 
     void AddMetaData(file_info & fileInfo, const char * name, const char * value, t_size max);
 
-    /// <summary>
-    /// Gets the path name of the matching SoundFont file for the specified file, if any.
-    /// </summary>
-    static bool GetSoundFontFilePath(const char * filePath, pfc::string_base & soundFontPath, abort_callback & abortHandler) noexcept
-    {
-        static const char * Extensions[] =
-        {
-            "json",
-            "sflist",
-#ifdef SF2PACK
-            "sf2pack",
-            "sfogg",
-#endif
-            "sf2",
-            "sf3"
-        };
-
-        soundFontPath = filePath;
-
-        size_t length = soundFontPath.length();
-
-        for (size_t i = 0; i < _countof(Extensions); ++i)
-        {
-            soundFontPath.truncate(length);
-            soundFontPath += ".";
-            soundFontPath += Extensions[i];
-
-            if (filesystem::g_exists(soundFontPath, abortHandler))
-                return true;
-        }
-
-        return false;
-    }
+    static bool GetSoundFontFilePath(const pfc::string8 filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept;
 
     #ifdef DXISUPPORT
     void set_loop()
@@ -411,9 +248,7 @@ private:
     metadb_index_hash _Hash;
     hasher_md5_result _FileHash;
 
-    unsigned _TrackCount;
-
-    unsigned _PlugInId;
+    unsigned _PlayerType;
     unsigned _SampleRate;
     unsigned _ResamplingMode;
 
@@ -427,6 +262,8 @@ private:
     bool _UseFF7Loops;
     bool _UseRPGMLoops;
     bool _UseThLoops;
+
+    unsigned _TrackCount;
 
     unsigned _LengthInMS;
     unsigned _LengthInTicks;

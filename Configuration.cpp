@@ -101,7 +101,7 @@ static const GUID guid_cfg_midi_reverb = { 0x91c12a1, 0xd42b, 0x4f4e, { 0x80, 0x
 #pragma endregion
 
 cfg_int
-    CfgPlugInId(GUIDPlugInId, DefaultPlugInId),
+    CfgPlugInId(GUIDPlugInId, DefaultPlayerType),
     CfgSampleRate(GUIDSampleRate, DefaultSampleRate),
 
     CfgLoopTypePlayback(guid_cfg_loop_type, DefaultPlaybackLoopType),
@@ -124,18 +124,18 @@ cfg_int
     CfgADLPanning(guid_cfg_adl_panning, DefaultADLPanning),
 //  CfgADL4Op(guid_cfg_adl_4op, DefaultADL4Op),
 
-    CfgMUNTGMSet(guid_cfg_munt_gm, default_cfg_munt_gm),
+    CfgMUNTGMSet(guid_cfg_munt_gm, DefaultGMSet),
 
     CfgMSSynthesizer(guid_cfg_ms_synth, DefaultMSSynth),
     CfgMSBank(guid_cfg_ms_bank, DefaultMSBank),
     CfgMSPanning(guid_cfg_ms_panning, DefaultMSPanning),
 
-    CfgMIDIFlavor(guid_cfg_midi_flavor, default_cfg_midi_flavor),
-    CfgAllowMIDIEffects(guid_cfg_midi_reverb, default_cfg_midi_reverb)
+    CfgMIDIFlavor(guid_cfg_midi_flavor, DefaultMIDIFlavor),
+    CfgAllowMIDIEffects(guid_cfg_midi_reverb, DefaultMIDIEffects)
 
 #ifdef FLUIDSYNTHSUPPORT
 ,
-    Cfg_FluidSynthInterpolationMethod(guid_cfg_fluid_interp_method, default_cfg_fluid_interp_method)
+    Cfg_FluidSynthInterpolationMethod(guid_cfg_fluid_interp_method, DefaultFluidSynthInterpolationMethod)
 #endif
 ;
 
@@ -231,18 +231,18 @@ const char * _SysExFileExtensions[] =
 const size_t _SysExFileExtensionCount = _countof(_SysExFileExtensions);
 
 // Names of the meta data fields
-const char MetaDataHash[] = "midi_hash";
-const char MetaDataFormat[] = "midi_format";
-const char MetaDataTracks[] = "midi_tracks";
-const char MetaDataChannels[] = "midi_channels";
-const char MetaDataTicks[] = "midi_ticks";
-const char MetaDataType[] = "midi_type";
-const char MetaDataLoopStart[] = "midi_loop_start";
-const char MetaDataLoopEnd[] = "midi_loop_end";
-const char MetaDataLoopStartInMS[] = "midi_loop_start_ms";
-const char MetaDataLoopEndInMS[] = "midi_loop_end_ms";
-const char MetaDataPreset[] = "midi_preset";
-const char MetaDataSysExDumps[] = "midi_sysex_dumps";
+const char TagHash[] = "midi_hash";
+const char TagMIDIFormat[] = "midi_format";
+const char TagTrackCount[] = "midi_tracks";
+const char TagChannelCount[] = "midi_channels";
+const char TagTicks[] = "midi_ticks";
+const char TagMIDIType[] = "midi_type";
+const char TagLoopStart[] = "midi_loop_start";
+const char TagLoopEnd[] = "midi_loop_end";
+const char TagLoopStartInMs[] = "midi_loop_start_ms";
+const char TagLoopEndInMs[] = "midi_loop_end_ms";
+const char TagMIDIPreset[] = "midi_preset";
+const char TagSysExDumps[] = "midi_sysex_dumps";
 
 bool IsMIDIFileExtension(const char * fileExtension)
 {

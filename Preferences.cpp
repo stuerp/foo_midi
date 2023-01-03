@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2023.01.02) **/
+/** $VER: Preferences.cpp (2023.01.03) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -45,14 +45,14 @@ const size_t _MUNTGMSetCount = _countof(_MUNTGMSets);
 /// </summary>
 const Preferences::BuiltInPlugin Preferences::BuiltInPlugins[] =
 {
-    { "Emu de MIDI",    EmuDeMIDIPlugInId,      -1, IsPluginAlwaysPresent },
+    { "Emu de MIDI",    PlayerTypeEmuDeMIDI,      -1, IsPluginAlwaysPresent },
 
 #ifdef FLUIDSYNTHSUPPORT
     { "FluidSynth",
     #ifdef BASSMIDISUPPORT
           FluidSynthPluginId, -1,
     #else
-          BASSMIDIPlugInId, FluidSynthPluginId,
+          PlayerTypeBASSMIDI, FluidSynthPluginId,
     #endif
       IsPluginAlwaysPresent },
 #endif
@@ -60,20 +60,20 @@ const Preferences::BuiltInPlugin Preferences::BuiltInPlugins[] =
 #ifdef BASSMIDISUPPORT
     { "BASSMIDI",
     #ifdef FLUIDSYNTHSUPPORT
-          BASSMIDIPlugInId, -1,
+          PlayerTypeBASSMIDI, -1,
     #else
-          BASSMIDIPlugInId, FluidSynthPlugInId,
+          PlayerTypeBASSMIDI, PlayerTypeFluidSynth,
     #endif
       IsPluginAlwaysPresent },
 #endif
 
-    { "Super MUNT GM",  SuperMUNTPlugInId,      -1, IsPluginAlwaysPresent },
+    { "Super MUNT GM",  PlayerTypeSuperMunt,      -1, IsPluginAlwaysPresent },
 
-    { "libADLMIDI",     ADLPlugInId,            -1, IsPluginAlwaysPresent },
-    { "libOPNMIDI",     OPNPlugInId,            -1, IsPluginAlwaysPresent },
-    { "oplmidi",        OPLPlugInId,            -1, IsPluginNeverPresent },
-    { "Nuke",           NukePlugInId,           -1, IsPluginAlwaysPresent },
-    { "Secret Sauce",   SecretSaucePlugInId,    -1, IsSecretSaucePresent }
+    { "libADLMIDI",     PlayerTypeADL,            -1, IsPluginAlwaysPresent },
+    { "libOPNMIDI",     PlayerTypeOPN,            -1, IsPluginAlwaysPresent },
+    { "oplmidi",        PlayerTypeOPL,            -1, IsPluginNeverPresent },
+    { "Nuke",           PlayerTypeNuke,           -1, IsPluginAlwaysPresent },
+    { "Secret Sauce",   PlayerTypeSecretSauce,    -1, IsSecretSaucePresent }
 };
 
 #pragma region("preferences_page_instance")
@@ -95,12 +95,12 @@ t_uint32 Preferences::get_state()
 
 void Preferences::reset()
 {
-    int PlugInIndex = _PlugInIdToIndex[DefaultPlugInId];
+    int PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
     int SelectedItem = _PluginPresentMap[PlugInIndex];
 
     SendDlgItemMessage(IDC_PLUGIN, CB_SETCURSEL, (WPARAM)SelectedItem);
 
-    if ((DefaultPlugInId != FluidSynthPlugInId) && (DefaultPlugInId != BASSMIDIPlugInId))
+    if ((DefaultPlayerType != PlayerTypeFluidSynth) && (DefaultPlayerType != PlayerTypeBASSMIDI))
     {
         GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_SOUNDFONT).EnableWindow(FALSE);
@@ -110,7 +110,7 @@ void Preferences::reset()
         GetDlgItem(IDC_CACHED).EnableWindow(FALSE);
     }
 
-    if (DefaultPlugInId != ADLPlugInId)
+    if (DefaultPlayerType != PlayerTypeADL)
     {
         GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_BANK).EnableWindow(FALSE);
@@ -119,7 +119,7 @@ void Preferences::reset()
         GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
     }
 
-    if (DefaultPlugInId == SuperMUNTPlugInId)
+    if (DefaultPlayerType == PlayerTypeSuperMunt)
     {
         GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
@@ -136,7 +136,7 @@ void Preferences::reset()
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
     }
 
-    if (DefaultPlugInId != NukePlugInId)
+    if (DefaultPlayerType != PlayerTypeNuke)
     {
         GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
@@ -144,7 +144,7 @@ void Preferences::reset()
     }
 
     {
-        bool enable = (DefaultPlugInId == VSTiPlugInId) || (DefaultPlugInId == FluidSynthPlugInId) || (DefaultPlugInId == BASSMIDIPlugInId) || (DefaultPlugInId == SecretSaucePlugInId);
+        bool enable = (DefaultPlayerType == PlayerTypeVSTi) || (DefaultPlayerType == PlayerTypeFluidSynth) || (DefaultPlayerType == PlayerTypeBASSMIDI) || (DefaultPlayerType == PlayerTypeSecretSauce);
 
         GetDlgItem(IDC_FILTER_GROUP).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
@@ -161,7 +161,7 @@ void Preferences::reset()
 
     SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
 
-    if ((DefaultPlugInId == EmuDeMIDIPlugInId) && _IsRunning)
+    if ((DefaultPlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
     SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_SETCURSEL, DefaultPlaybackLoopType);
@@ -174,8 +174,8 @@ void Preferences::reset()
     SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments);
     SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks);
     SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, DefaultMSPanning);
-    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, default_cfg_midi_flavor);
-    SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !default_cfg_midi_reverb);
+    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, DefaultMIDIFlavor);
+    SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !DefaultMIDIEffects);
 
     {
         SelectedItem = 0;
@@ -232,11 +232,11 @@ void Preferences::apply()
         int SelectedItem = (int)SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
 
         if (SelectedItem >= _ReportedPlugInCount && SelectedItem < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count()))
-            PlugInId = VSTiPlugInId;
+            PlugInId = PlayerTypeVSTi;
     #ifdef DXISUPPORT
         else
         if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
-            plugin = DirectXPlugInId;
+            plugin = PlayerTypeDirectX;
     #endif
         else
             PlugInId = _IndexToPlugInId[SelectedItem];
@@ -244,7 +244,7 @@ void Preferences::apply()
         CfgVSTiPath = "";
         CfgPlugInId = PlugInId;
 
-        if (PlugInId == VSTiPlugInId)
+        if (PlugInId == PlayerTypeVSTi)
         {
             CfgVSTiPath = _VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].PathName.c_str();
 
@@ -252,7 +252,7 @@ void Preferences::apply()
         }
     #ifdef DXISUPPORT
         else
-        if (plugin == DirectXPlugInId)
+        if (plugin == PlayerTypeDirectX)
         {
             cfg_dxi_plugin = dxi_plugins[plugin_selected - _VSTiPlugins.get_count() - plugins_reported];
         }
@@ -391,14 +391,14 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
     int PlugInIndex = -1;
 
-    if (PlugInId != VSTiPlugInId && PlugInId != DirectXPlugInId)
+    if (PlugInId != PlayerTypeVSTi && PlugInId != PlayerTypeDirectX)
     {
         PlugInIndex = _PlugInIdToIndex[PlugInId];
 
         if (PlugInIndex < 0 || !BuiltInPlugins[PlugInIndex].IsPresent(this))
         {
-            PlugInId = DefaultPlugInId;
-            PlugInIndex = _PlugInIdToIndex[DefaultPlugInId];
+            PlugInId = DefaultPlayerType;
+            PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
         }
         else
         if (BuiltInPlugins[PlugInIndex].plugin_number_alt == PlugInId)
@@ -449,7 +449,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
                 ::uSendMessageText(w, CB_ADDSTRING, 0, _VSTiPlugIns[i].Name.c_str());
 
-                if ((PlugInId == VSTiPlugInId) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiPath) == 0))
+                if ((PlugInId == PlayerTypeVSTi) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiPath) == 0))
                     SelectedVSTiPluginIndex = i;
             }
         }
@@ -521,16 +521,16 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 #endif
     }
 
-    if ((PlugInId == VSTiPlugInId) && (SelectedVSTiPluginIndex == ~0))
+    if ((PlugInId == PlayerTypeVSTi) && (SelectedVSTiPluginIndex == ~0))
     {
-        PlugInId = DefaultPlugInId;
-        PlugInIndex = _PlugInIdToIndex[DefaultPlugInId];
+        PlugInId = DefaultPlayerType;
+        PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
     }
 
-    if ((PlugInId == EmuDeMIDIPlugInId) && _IsRunning)
+    if ((PlugInId == PlayerTypeEmuDeMIDI) && _IsRunning)
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
-    if ((PlugInId != FluidSynthPlugInId) && (PlugInId != BASSMIDIPlugInId))
+    if ((PlugInId != PlayerTypeFluidSynth) && (PlugInId != PlayerTypeBASSMIDI))
     {
         GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_SOUNDFONT).EnableWindow(FALSE);
@@ -540,25 +540,25 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         GetDlgItem(IDC_CACHED).EnableWindow(FALSE);
     }
 
-    if (PlugInId != SuperMUNTPlugInId)
+    if (PlugInId != PlayerTypeSuperMunt)
     {
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
     }
 
-    if (PlugInId != ADLPlugInId)
+    if (PlugInId != PlayerTypeADL)
     {
         GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_BANK).EnableWindow(FALSE);
     }
 
-    if (PlugInId != ADLPlugInId && PlugInId != OPNPlugInId)
+    if (PlugInId != PlayerTypeADL && PlugInId != PlayerTypeOPN)
     {
         GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_CHIPS).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
     }
 
-    if (PlugInId != VSTiPlugInId)
+    if (PlugInId != PlayerTypeVSTi)
     {
         GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
     }
@@ -568,14 +568,14 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[SelectedVSTiPluginIndex].Id];
     }
 
-    if (PlugInId != NukePlugInId)
+    if (PlugInId != PlayerTypeNuke)
     {
         GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
         GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
     }
 
-    if ((PlugInId != VSTiPlugInId) && (PlugInId != FluidSynthPlugInId) && (PlugInId != BASSMIDIPlugInId) && (PlugInId != SecretSaucePlugInId))
+    if ((PlugInId != PlayerTypeVSTi) && (PlugInId != PlayerTypeFluidSynth) && (PlugInId != PlayerTypeBASSMIDI) && (PlugInId != PlayerTypeSecretSauce))
     {
         GetDlgItem(IDC_FILTER_GROUP).EnableWindow(FALSE);
 
@@ -590,11 +590,11 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
         int SelectedPlugInIndex = -1;
 
-        if (PlugInId == VSTiPlugInId)
+        if (PlugInId == PlayerTypeVSTi)
             SelectedPlugInIndex = _ReportedPlugInCount + (int)SelectedVSTiPluginIndex;
     #ifdef DXISUPPORT
         else
-        if (PlugInId == DirectXPlugInId)
+        if (PlugInId == PlayerTypeDirectX)
         {
             if (dxi_selected != ~0)
                 SelectedPlugInIndex = _ReportedPlugInCount + vsti_count + dxi_selected;
@@ -720,14 +720,9 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
         ::uSendMessageText(w, CB_ADDSTRING, 0, "Linear interpolation");
         ::uSendMessageText(w, CB_ADDSTRING, 0, "8pt Sinc interpolation");
+        ::uSendMessageText(w, CB_ADDSTRING, 0, "16pt Sinc interpolation");
 
-        if (_HASSSE2)
-            ::uSendMessageText(w, CB_ADDSTRING, 0, "16pt Sinc interpolation");
-
-        if (!_HASSSE2 && CfgResamplingMode > 1)
-            ::SendMessage(w, CB_SETCURSEL, 1, 0);
-        else
-            ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgResamplingMode, 0);
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgResamplingMode, 0);
     }
 #endif
 
@@ -861,11 +856,11 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
 
     {
         if ((SelectedIndex >= _ReportedPlugInCount) && (SelectedIndex < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count())))
-            PlugInId = VSTiPlugInId;
+            PlugInId = PlayerTypeVSTi;
     #ifdef DXISUPPORT
         else
         if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
-            PlugInId = DirectXPlugInId;
+            PlugInId = PlayerTypeDirectX;
     #endif
         else
             PlugInId = _IndexToPlugInId[SelectedIndex];
@@ -1279,46 +1274,6 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
 
     delete findFile;
 }
-#pragma endregion
-
-#pragma region("BASS MIDI")
-#ifdef BASSMIDISUPPORT
-#if defined(_M_IX86) || defined(__i386__) // x86, either x86_64 or no SSE2 compiled in?
-#if 1 /* SSE2 is my current minimum */
-const bool _HASSSE2 = true;
-#else
-#ifdef _MSC_VER
-#include <intrin.h>
-#elif defined(__clang__) || defined(__GNUC__)
-static inline void
-__cpuid(int * data, int selector)
-{
-    asm("cpuid"
-        : "=a"(data[0]),
-        "=b"(data[1]),
-        "=c"(data[2]),
-        "=d"(data[3])
-        : "a"(selector));
-}
-#else
-#define __cpuid(a, b) memset((a), 0, sizeof(int) * 4)
-#endif
-
-static bool query_cpu_feature_sse2()
-{
-    int buffer[4];
-
-    __cpuid(buffer, 1);
- 
-   return ((buffer[3] & (1 << 26)) == 0) ? false : true;
-}
-
-bool _HASSSE2 = query_cpu_feature_sse2();
-#endif
-#else
-const bool _HASSSE2 = true;
-#endif
-#endif
 #pragma endregion
 
 #pragma region("Secret Sauce")

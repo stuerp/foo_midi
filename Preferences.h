@@ -39,10 +39,12 @@ class Preferences : public CDialogImpl<Preferences>, public preferences_page_ins
 {
 public:
     Preferences(preferences_page_callback::ptr callback) noexcept : _Callback(callback), _IsBusy(false) { }
+
     Preferences(const Preferences&) = delete;
     Preferences(const Preferences&&) = delete;
     Preferences& operator=(const Preferences&) = delete;
     Preferences& operator=(Preferences&&) = delete;
+
     virtual ~Preferences() { };
 
     t_uint32 get_state() override;
@@ -168,20 +170,15 @@ private:
     pfc::string8 _SoundFontPath;
 #pragma endregion
 
-#pragma region("MUNT")
-    pfc::string8 _MUNTPath;
-#pragma endregion
-
-#pragma region("Secret Sauce")
-    bool _HasSecretSauce;
-    static bool HasSecretSauce();
-#pragma endregion
-
 #pragma region("BASS MIDI")
 #ifdef BASSMIDISUPPORT
-    pfc::string8_fast _CacheStatusText;
-    pfc::string8_fast _CacheStatusTextCurrent;
+    pfc::string8 _CacheStatusText;
+    pfc::string8 _CacheStatusTextCurrent;
 #endif
+#pragma endregion
+
+#pragma region("Munt")
+    pfc::string8 _MUNTPath;
 #pragma endregion
 
 #pragma region("ADL")
@@ -190,16 +187,15 @@ private:
         int number;
         const char * name;
 
-        adl_bank()
-            : number(-1), name("")
+        adl_bank() : number(-1), name("")
         {
         }
-        adl_bank(const adl_bank & b)
-            : number(b.number), name(b.name)
+
+        adl_bank(const adl_bank & b) : number(b.number), name(b.name)
         {
         }
-        adl_bank(int _number, const char * _name)
-            : number(_number), name(_name)
+
+        adl_bank(int _number, const char * _name) : number(_number), name(_name)
         {
         }
 
@@ -207,6 +203,7 @@ private:
         {
             number = b.number;
             name = b.name;
+
             return *this;
         }
 
@@ -214,18 +211,24 @@ private:
         {
             return number == b.number;
         }
+
         bool operator<(const adl_bank & b) const
         {
-            int c = stricmp_utf8(name, b.name);
+            int c = ::stricmp_utf8(name, b.name);
             if (c) return c < 0;
             return 0;
         }
+
         bool operator>(const adl_bank & b) const
         {
-            int c = stricmp_utf8(name, b.name);
-            if (c) return c > 0;
-            return 0;
+            int c = ::stricmp_utf8(name, b.name);
+
+            if (c == 0)
+                return 0;
+
+            return c > 0;
         }
+
         bool operator!=(const adl_bank & b) const
         {
             return !operator==(b);
@@ -233,6 +236,11 @@ private:
     };
 
     pfc::list_t<adl_bank> _ADLBanks;
+#pragma endregion
+
+#pragma region("Secret Sauce")
+    bool _HasSecretSauce;
+    static bool HasSecretSauce();
 #pragma endregion
 
     static bool IsPluginAlwaysPresent(Preferences *)
@@ -265,10 +273,12 @@ class PreferencesPage : public preferences_page_impl<Preferences>
 {
 public:
     PreferencesPage() noexcept { };
+
     PreferencesPage(const PreferencesPage & p_in) = delete;
     PreferencesPage(const PreferencesPage &&) = delete;
     PreferencesPage & operator=(const PreferencesPage &) = delete;
     PreferencesPage & operator=(PreferencesPage &&) = delete;
+
     virtual ~PreferencesPage() noexcept { };
 
     const char * get_name() noexcept

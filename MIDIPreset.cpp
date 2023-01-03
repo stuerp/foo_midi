@@ -328,7 +328,7 @@ void MIDIPreset::unserialize(const char * data)
                 Separator = data + ::strlen(data);
         }
 
-        if (PlugInId == VSTiPlugInId)
+        if (PlugInId == PlayerTypeVSTi)
         {
             VSTPath.set_string(data, (t_size)(Separator - data));
 
@@ -374,7 +374,7 @@ void MIDIPreset::unserialize(const char * data)
             }
         }
         else
-        if (PlugInId == FluidSynthPlugInId || PlugInId == BASSMIDIPlugInId)
+        if (PlugInId == PlayerTypeFluidSynth || PlugInId == PlayerTypeBASSMIDI)
         {
             SoundFontPath.set_string(data, (t_size)(Separator - data));
 
@@ -468,7 +468,7 @@ void MIDIPreset::unserialize(const char * data)
             }
         }
         else
-        if (PlugInId == SuperMUNTPlugInId)
+        if (PlugInId == PlayerTypeSuperMunt)
         {
             size_t i;
 
@@ -489,7 +489,7 @@ void MIDIPreset::unserialize(const char * data)
         else
     #ifdef DXISUPPORT
         else
-        if (in_plugin == DirectXPlugInId)
+        if (in_plugin == PlayerTypeDirectX)
         {
             if (bar_pos - p_in < 8 + 1 + 4 + 1 + 4 + 1 + 4 + 1 + 12) return;
             in_dxi_plugin.Data1 = pfc::atohex<t_uint32>(p_in, 8);
@@ -505,7 +505,7 @@ void MIDIPreset::unserialize(const char * data)
             in_dxi_plugin.Data4[7] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2 + 2, 2);
         }
     #endif
-        if (PlugInId == ADLPlugInId)
+        if (PlugInId == PlayerTypeADL)
         {
             const char * const * banknames = adl_getBankNames();
             unsigned j = (unsigned int)adl_getBanksCount();
@@ -590,7 +590,7 @@ void MIDIPreset::unserialize(const char * data)
                 ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
         }
         else
-        if (PlugInId == OPNPlugInId)
+        if (PlugInId == PlayerTypeOPN)
         {
             if (CurrentSchemaVersion >= 10)
             {
@@ -637,7 +637,7 @@ void MIDIPreset::unserialize(const char * data)
             }
         }
         else
-        if (PlugInId == NukePlugInId)
+        if (PlugInId == PlayerTypeNuke)
         {
             pfc::string8 temp;
 
@@ -667,7 +667,7 @@ void MIDIPreset::unserialize(const char * data)
             }
         }
         else
-        if (PlugInId == SecretSaucePlugInId)
+        if (PlugInId == PlayerTypeSecretSauce)
         {
             SCFlavor = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
 

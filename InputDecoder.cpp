@@ -117,7 +117,7 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
         for (size_t i = 0; i < 16; ++i)
             FileHashString += pfc::format_uint((t_uint8)_FileHash.m_data[i], 2, 16);
 
-        fileInfo.info_set(MetaDataHash, FileHashString);
+        fileInfo.info_set(TagHash, FileHashString);
     }
 
     midi_meta_data MetaData;
@@ -151,13 +151,13 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
         }
     }
 
-    fileInfo.info_set_int(MetaDataFormat,   _Container.get_format());
-    fileInfo.info_set_int(MetaDataTracks,  (_Container.get_format() == 2) ? 1 : _Container.get_track_count());
-    fileInfo.info_set_int(MetaDataChannels, _Container.get_channel_count(subsongIndex));
-    fileInfo.info_set_int(MetaDataTicks,    _Container.get_timestamp_end(subsongIndex));
+    fileInfo.info_set_int(TagMIDIFormat,   _Container.get_format());
+    fileInfo.info_set_int(TagTrackCount,  (_Container.get_format() == 2) ? 1 : _Container.get_track_count());
+    fileInfo.info_set_int(TagChannelCount, _Container.get_channel_count(subsongIndex));
+    fileInfo.info_set_int(TagTicks,    _Container.get_timestamp_end(subsongIndex));
 
     if (MetaData.get_item("type", Item))
-        fileInfo.info_set(MetaDataType, Item.m_value.c_str());
+        fileInfo.info_set(TagMIDIType, Item.m_value.c_str());
 
     {
         unsigned long LoopBegin = _Container.get_timestamp_loop_start(subsongIndex);
@@ -165,10 +165,10 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
         unsigned long LoopBeginInMS = _Container.get_timestamp_loop_start(subsongIndex, true);
         unsigned long LoopEndInMS = _Container.get_timestamp_loop_end(subsongIndex, true);
 
-        if (LoopBegin != ~0) fileInfo.info_set_int(MetaDataLoopStart, LoopBegin);
-        if (LoopEnd != ~0) fileInfo.info_set_int(MetaDataLoopEnd, LoopEnd);
-        if (LoopBeginInMS != ~0) fileInfo.info_set_int(MetaDataLoopStartInMS, LoopBeginInMS);
-        if (LoopEndInMS != ~0) fileInfo.info_set_int(MetaDataLoopEndInMS, LoopEndInMS);
+        if (LoopBegin != ~0) fileInfo.info_set_int(TagLoopStart, LoopBegin);
+        if (LoopEnd != ~0) fileInfo.info_set_int(TagLoopEnd, LoopEnd);
+        if (LoopBeginInMS != ~0) fileInfo.info_set_int(TagLoopStartInMs, LoopBeginInMS);
+        if (LoopEndInMS != ~0) fileInfo.info_set_int(TagLoopEndInMs, LoopEndInMS);
     }
 
     {
@@ -194,7 +194,7 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
     }
 
     {
-        service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<TrackHasher>;
+        service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<FileHasher>;
 
         _Hash = IndexClient->transform(fileInfo, playable_location_impl(_FilePath, subsongIndex));
     }
@@ -202,7 +202,7 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
     {
         pfc::array_t<t_uint8> Tag;
 
-        static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTrackHasher, _Hash, Tag);
+        static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTagHash, _Hash, Tag);
 
         if (Tag.get_count())
         {
@@ -219,108 +219,26 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
             fileInfo.info_set("tagtype", "apev2 db");
 
             {
-                const char * MIDIPreset = fileInfo.meta_get(MetaDataPreset, 0);
+                const char * MIDIPreset = fileInfo.meta_get(TagMIDIPreset, 0);
 
                 if (MIDIPreset)
                 {
-                    fileInfo.info_set(MetaDataPreset, MIDIPreset);
-                    fileInfo.meta_remove_field(MetaDataPreset);
+                    fileInfo.info_set(TagMIDIPreset, MIDIPreset);
+                    fileInfo.meta_remove_field(TagMIDIPreset);
                 }
             }
 
             {
-                const char * MIDISysExDumps = fileInfo.meta_get(MetaDataSysExDumps, 0);
+                const char * MIDISysExDumps = fileInfo.meta_get(TagSysExDumps, 0);
 
                 if (MIDISysExDumps)
                 {
-                    fileInfo.info_set(MetaDataSysExDumps, MIDISysExDumps);
-                    fileInfo.meta_remove_field(MetaDataSysExDumps);
+                    fileInfo.info_set(TagSysExDumps, MIDISysExDumps);
+                    fileInfo.meta_remove_field(TagSysExDumps);
                 }
             }
         }
     }
-}
-
-/// <summary>
-/// 
-/// </summary>
-static size_t DecodeShiftJISChar(const uint8_t * data, size_t size)
-{
-    if (size == 0)
-        return 0;
-
-    if (size > 2)
-        size = 2;
-
-    if (data[0] < 0x80)
-        return (size_t)((data[0] > 0) ? 1 : 0);
-
-    if (size >= 1)
-    {
-        // TODO: definitely weak
-        if (unsigned(data[0] - 0xA1) < 0x3F)
-            return 1;
-    }
-
-    if (size >= 2)
-    {
-        // TODO: probably very weak
-        if ((unsigned(data[0] - 0x81) < 0x1F || unsigned(data[0] - 0xE0) < 0x10) && unsigned(data[1] - 0x40) < 0xBD)
-            return 2;
-    }
-
-    return 0;
-}
-
-/// <summary>
-/// 
-/// </summary>
-bool IsValidShiftJIS(const char * data, size_t size)
-{
-    for (size_t i = 0; (i < size) && (data[i] != 0);)
-    {
-        size_t n = ::DecodeShiftJISChar((const uint8_t *)data + i, size - i);
-
-        if (n == 0)
-            return false;
-
-        i += n;
-
-        if (i > size)
-            return false;
-    }
-
-    return true;
-}
-
-/// <summary>
-/// Adds the specified name and value to the meta data.
-/// </summary>
-void InputDecoder::AddMetaData(file_info & fileInfo, const char * name, const char * value, t_size maxLength)
-{
-    if ((name == nullptr) || (value == nullptr))
-        return;
-
-    if (value[0] == '\0')
-        return;
-
-    pfc::string8 NewValue;
-
-    if ((maxLength != 0) && value[maxLength - 1])
-    {
-        NewValue.set_string(value, maxLength);
-        value = NewValue;
-    }
-    else
-        maxLength = ::strlen(value);
-
-    if (pfc::is_lower_ascii(value) || pfc::is_valid_utf8(value, maxLength))
-        fileInfo.meta_add(name, value);
-    else
-    if (IsValidShiftJIS(value, maxLength))
-        fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
-    else
-        fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));
 }
 
 /// <summary>
@@ -347,13 +265,13 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
         midi_meta_data_item item;
 
-        FileInfo.info_set_int(MetaDataFormat, _Container.get_format());
-        FileInfo.info_set_int(MetaDataTracks, _Container.get_format() == 2 ? 1 : _Container.get_track_count());
-        FileInfo.info_set_int(MetaDataChannels, _Container.get_channel_count(subsongIndex));
-        FileInfo.info_set_int(MetaDataTicks, _Container.get_timestamp_end(subsongIndex));
+        FileInfo.info_set_int(TagMIDIFormat, _Container.get_format());
+        FileInfo.info_set_int(TagTrackCount, _Container.get_format() == 2 ? 1 : _Container.get_track_count());
+        FileInfo.info_set_int(TagChannelCount, _Container.get_channel_count(subsongIndex));
+        FileInfo.info_set_int(TagTicks, _Container.get_timestamp_end(subsongIndex));
 
         if (MetaData.get_item("type", item))
-            FileInfo.info_set(MetaDataType, item.m_value.c_str());
+            FileInfo.info_set(TagMIDIType, item.m_value.c_str());
 
         {
             unsigned long LoopBegin = _Container.get_timestamp_loop_start(subsongIndex);
@@ -361,10 +279,10 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             unsigned long LoopBeginInMS = _Container.get_timestamp_loop_start(subsongIndex, true);
             unsigned long LoopEndInMS = _Container.get_timestamp_loop_end(subsongIndex, true);
 
-            if (LoopBegin != ~0) FileInfo.info_set_int(MetaDataLoopStart, LoopBegin);
-            if (LoopEnd != ~0) FileInfo.info_set_int(MetaDataLoopEnd, LoopEnd);
-            if (LoopBeginInMS != ~0) FileInfo.info_set_int(MetaDataLoopStartInMS, LoopBeginInMS);
-            if (LoopEndInMS != ~0) FileInfo.info_set_int(MetaDataLoopEndInMS, LoopEndInMS);
+            if (LoopBegin != ~0) FileInfo.info_set_int(TagLoopStart, LoopBegin);
+            if (LoopEnd != ~0) FileInfo.info_set_int(TagLoopEnd, LoopEnd);
+            if (LoopBeginInMS != ~0) FileInfo.info_set_int(TagLoopStartInMs, LoopBeginInMS);
+            if (LoopEndInMS != ~0) FileInfo.info_set_int(TagLoopEndInMs, LoopEndInMS);
         }
 
         {
@@ -373,11 +291,11 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             for (size_t i = 0; i < 16; ++i)
                 FileHasString += pfc::format_uint((t_uint8) _FileHash.m_data[i], 2, 16);
 
-            FileInfo.info_set(MetaDataHash, FileHasString);
+            FileInfo.info_set(TagHash, FileHasString);
         }
 
         {
-            service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<TrackHasher>;
+            service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<FileHasher>;
 
             _Hash = IndexClient->transform(FileInfo, playable_location_impl(_FilePath, subsongIndex));
         }
@@ -385,7 +303,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         {
             pfc::array_t<t_uint8> Tag;
 
-            static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTrackHasher, _Hash, Tag);
+            static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTagHash, _Hash, Tag);
 
             if (Tag.get_count())
             {
@@ -404,7 +322,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
 
         {
-            const char * MIDIPreset = FileInfo.meta_get(MetaDataPreset, 0);
+            const char * MIDIPreset = FileInfo.meta_get(TagMIDIPreset, 0);
 
             if (MIDIPreset)
                 Preset.unserialize(MIDIPreset);
@@ -413,7 +331,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         MIDISysExDumps SysExDumps;
 
         {
-            const char * MIDISysExDumps = FileInfo.meta_get(MetaDataSysExDumps, 0);
+            const char * MIDISysExDumps = FileInfo.meta_get(TagSysExDumps, 0);
 
             if (MIDISysExDumps)
                 SysExDumps.unserialize(MIDISysExDumps, _FilePath);
@@ -424,7 +342,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         SysExDumps.Merge(_Container, abortHandler);
     }
 
-    _PlugInId = Preset._PluginId;
+    _PlayerType = Preset._PluginId;
     _IsFirstBlock = true;
 
     midi_meta_data MetaData;
@@ -436,7 +354,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             midi_meta_data_item Item;
 
             if (MetaData.get_item("type", Item) && (strcmp(Item.m_value.c_str(), "MT-32") == 0))
-                _PlugInId= SuperMUNTPlugInId;
+                _PlayerType= PlayerTypeSuperMunt;
         }
     }
 
@@ -444,8 +362,8 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
     // Gets a SoundFont file that has been configured for the file, if any.
     {
-        pfc::string8_fast FilePath = _FilePath;
-        pfc::string8_fast TempSoundFontFilePath;
+        pfc::string8 FilePath = _FilePath;
+        pfc::string8 TempSoundFontFilePath;
 
         bool FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
 
@@ -483,11 +401,11 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         if (FoundSoundFile)
         {
             SoundFontFilePath = TempSoundFontFilePath;
-            _PlugInId = BASSMIDIPlugInId;
+            _PlayerType = PlayerTypeBASSMIDI;
         }
     }
 
-    if (_PlugInId == SuperMUNTPlugInId)
+    if (_PlayerType == PlayerTypeSuperMunt)
         _SampleRate = (unsigned int)MT32Player::GetSampleRate();
 
     if ((flags & input_flag_no_looping) || (_LoopType < 4))
@@ -524,7 +442,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
 
     // VSTi
-    if (_PlugInId == VSTiPlugInId)
+    if (_PlayerType == PlayerTypeVSTi)
     {
         {
             delete _Player;
@@ -581,7 +499,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
 #ifdef FLUIDSYNTHSUPPORT
     else
-    if (_PlugInId == FluidSynthPlugInId || _PlugInId == BASSMIDIPlugInId)
+    if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
     {
         /*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, nullptr, LOAD_LIBRARY_AS_DATAFILE );
             if ( !fsmod )
@@ -623,12 +541,12 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
 #ifdef BASSMIDISUPPORT
     else
-     if (_PlugInId == BASSMIDIPlugInId)
+     if (_PlayerType == PlayerTypeBASSMIDI)
     #endif
 #else
     else
     // BASS MIDI
-    if (_PlugInId == FluidSynthPlugInId || _PlugInId == BASSMIDIPlugInId)
+    if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
 #endif
 #ifdef BASSMIDISUPPORT
     {
@@ -688,7 +606,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 #endif
     else
 #ifdef DXISUPPORT
-    if (_PlugInId == DirectXPlugInId)
+    if (_PlayerType == PlayerTypeDirectX)
     {
         pfc::array_t<t_uint8> serialized_midi_file;
         midi_file.serialize_as_standard_midi_file(serialized_midi_file);
@@ -722,7 +640,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
 #endif
-    if (_PlugInId == ADLPlugInId)
+    if (_PlayerType == PlayerTypeADL)
     {
         {
             delete _Player;
@@ -757,7 +675,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
     }
     else
-    if (_PlugInId == OPNPlugInId)
+    if (_PlayerType == PlayerTypeOPN)
     {
         {
             delete _Player;
@@ -792,7 +710,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
     // MUNT (MT32)
-    if (_PlugInId == SuperMUNTPlugInId)
+    if (_PlayerType == PlayerTypeSuperMunt)
     {
         {
             delete _Player;
@@ -849,7 +767,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
     // Nuke
-    if (_PlugInId == NukePlugInId)
+    if (_PlayerType == PlayerTypeNuke)
     {
         {
             delete _Player;
@@ -882,7 +800,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
     // Secret Sauce
-    if (_PlugInId == SecretSaucePlugInId)
+    if (_PlayerType == PlayerTypeSecretSauce)
     {
         {
             delete _Player;
@@ -926,7 +844,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
     // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413 ))
-    if (_PlugInId == EmuDeMIDIPlugInId)
+    if (_PlayerType == PlayerTypeEmuDeMIDI)
     {
         {
             delete _Player;
@@ -982,7 +900,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     bool Success = false;
 
 #ifdef DXISUPPORT
-    if (_PlugInId == 5)
+    if (_PlayerType == PlayerTypeDirectX)
     {
         unsigned todo = 4096;
 
@@ -1018,7 +936,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     }
     else
 #endif
-    if (_PlugInId == VSTiPlugInId)
+    if (_PlayerType == PlayerTypeVSTi)
     {
         auto * Player = (VSTiPlayer *) _Player;
 
@@ -1041,7 +959,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         Success = true;
     }
     else
-    if (_PlugInId == SuperMUNTPlugInId)
+    if (_PlayerType == PlayerTypeSuperMunt)
     {
         auto * mt32Player = (MT32Player *) _Player;
 
@@ -1136,6 +1054,147 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 }
 
 /// <summary>
+/// 
+/// </summary>
+void InputDecoder::decode_seek(double p_seconds, abort_callback&)
+{
+    unsigned seek_msec = unsigned(audio_math::time_to_samples(p_seconds, 1000));
+
+    // This value should not be wrapped to within the loop range
+    _SamplesPlayed = unsigned((t_int64(seek_msec) * t_int64(_SampleRate)) / 1000);
+
+    if (seek_msec > _LoopEndInMS)
+    {
+        seek_msec = (seek_msec - _LoopBeginInMS) % (_LoopEndInMS - _LoopBeginInMS) + _LoopBeginInMS;
+    }
+
+    _IsFirstBlock = true;
+    eof = false;
+
+    unsigned done = unsigned((t_int64(seek_msec) * t_int64(_SampleRate)) / 1000);
+    if (_LengthInSamples && done >= (_LengthInSamples - _SampleRate))
+    {
+        eof = true;
+        return;
+    }
+
+#ifdef DXISUPPORT
+    if (_SelectedPluginIndex == 5)
+    {
+        dxiProxy->setPosition(seek_msec);
+
+        samples_done = done;
+
+        return;
+    }
+    else
+#endif
+    if (_Player)
+    {
+        _Player->Seek(done);
+        return;
+    }
+}
+
+/// <summary>
+/// 
+/// </summary>
+bool InputDecoder::decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta)
+{
+    int ret = false;
+
+    if (_IsFirstBlock)
+    {
+        p_out.info_set_int("samplerate", _SampleRate);
+        p_timestamp_delta = 0.;
+        _IsFirstBlock = false;
+        ret = true;
+    }
+
+#ifdef BASSMIDISUPPORT
+#ifdef FLUIDSYNTHSUPPORT
+    if (_SelectedPluginIndex == 4)
+    #else
+    if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
+    #endif
+    {
+        BMPlayer * bmPlayer = (BMPlayer *) _Player;
+        unsigned voices = bmPlayer->getVoicesActive();
+
+        if (voices != bassmidi_voices)
+        {
+            p_out.info_set_int("bassmidi_voices", voices);
+            bassmidi_voices = voices;
+            ret = true;
+        }
+
+        if (voices > bassmidi_voices_max)
+        {
+            p_out.info_set_int("bassmidi_voices_max", voices);
+            bassmidi_voices_max = voices;
+            ret = true;
+        }
+
+        if (ret)
+            p_timestamp_delta = _AudioChunkDuration;
+    }
+#endif
+
+    return (bool)ret;
+}
+
+#pragma region("input_info_writer")
+/// <summary>
+/// Set the tags for the specified file.
+/// </summary>
+void InputDecoder::retag_set_info(t_uint32, const file_info& fileInfo, abort_callback & abortHandler)
+{
+    if (_IsSysExFile)
+        throw exception_io_data("You cannot tag SysEx dumps");
+
+    file_info_impl fi(fileInfo);
+
+    {
+        fi.meta_remove_field(TagMIDIPreset);
+
+        const char * Preset = fi.info_get(TagMIDIPreset);
+
+        if (Preset)
+            fi.meta_set(TagMIDIPreset, Preset);
+    }
+
+    {
+        fi.meta_remove_field(TagSysExDumps);
+
+        const char * SysExDumps = fi.info_get(TagSysExDumps);
+
+        if (SysExDumps)
+            fi.meta_set(TagSysExDumps, SysExDumps);
+    }
+
+    {
+        file::ptr TagFile;
+
+        filesystem::g_open_tempmem(TagFile, abortHandler);
+
+        tag_processor::write_apev2(TagFile, fi, abortHandler);
+
+        {
+            pfc::array_t<t_uint8> Tag;
+
+            TagFile->seek(0, abortHandler);
+
+            Tag.set_count(TagFile->get_size_ex(abortHandler));
+
+            TagFile->read_object(Tag.get_ptr(), Tag.get_count(), abortHandler);
+
+            static_api_ptr_t<metadb_index_manager>()->set_user_data(GUIDTagHash, _Hash, Tag.get_ptr(), Tag.get_count());
+        }
+    }
+}
+#pragma endregion
+
+/// <summary>
 /// Initialize the time parameters.
 /// </summary>
 double InputDecoder::InitializeTime(unsigned subsongIndex)
@@ -1170,6 +1229,122 @@ double InputDecoder::InitializeTime(unsigned subsongIndex)
     }
 
     return Length;
+}
+
+/// <summary>
+/// Gets the path name of the matching SoundFont file for the specified file, if any.
+/// </summary>
+bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept
+{
+    static const char * Extensions[] =
+    {
+        "json",
+        "sflist",
+#ifdef SF2PACK
+        "sf2pack",
+        "sfogg",
+#endif
+        "sf2",
+        "sf3"
+    };
+
+    soundFontPath = filePath;
+
+    size_t length = soundFontPath.length();
+
+    for (size_t i = 0; i < _countof(Extensions); ++i)
+    {
+        soundFontPath.truncate(length);
+        soundFontPath += ".";
+        soundFontPath += Extensions[i];
+
+        if (filesystem::g_exists(soundFontPath, abortHandler))
+            return true;
+    }
+
+    return false;
+}
+
+/// <summary>
+/// 
+/// </summary>
+static size_t DecodeShiftJISChar(const uint8_t * data, size_t size)
+{
+    if (size == 0)
+        return 0;
+
+    if (size > 2)
+        size = 2;
+
+    if (data[0] < 0x80)
+        return (size_t)((data[0] > 0) ? 1 : 0);
+
+    if (size >= 1)
+    {
+        // TODO: definitely weak
+        if (unsigned(data[0] - 0xA1) < 0x3F)
+            return 1;
+    }
+
+    if (size >= 2)
+    {
+        // TODO: probably very weak
+        if ((unsigned(data[0] - 0x81) < 0x1F || unsigned(data[0] - 0xE0) < 0x10) && unsigned(data[1] - 0x40) < 0xBD)
+            return 2;
+    }
+
+    return 0;
+}
+
+/// <summary>
+/// 
+/// </summary>
+bool IsValidShiftJIS(const char * data, size_t size)
+{
+    for (size_t i = 0; (i < size) && (data[i] != 0);)
+    {
+        size_t n = ::DecodeShiftJISChar((const uint8_t *)data + i, size - i);
+
+        if (n == 0)
+            return false;
+
+        i += n;
+
+        if (i > size)
+            return false;
+    }
+
+    return true;
+}
+
+/// <summary>
+/// Adds the specified name and value to the meta data.
+/// </summary>
+void InputDecoder::AddMetaData(file_info & fileInfo, const char * name, const char * value, t_size maxLength)
+{
+    if ((name == nullptr) || (value == nullptr))
+        return;
+
+    if (value[0] == '\0')
+        return;
+
+    pfc::string8 NewValue;
+
+    if ((maxLength != 0) && value[maxLength - 1])
+    {
+        NewValue.set_string(value, maxLength);
+        value = NewValue;
+    }
+    else
+        maxLength = ::strlen(value);
+
+    if (pfc::is_lower_ascii(value) || pfc::is_valid_utf8(value, maxLength))
+        fileInfo.meta_add(name, value);
+    else
+    if (IsValidShiftJIS(value, maxLength))
+        fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
+    else
+        fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));
 }
 
 /*

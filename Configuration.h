@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2022.12.31) **/
+/** $VER: Configuration.h (2023.01.03) **/
 
 #pragma once
 
@@ -15,22 +15,22 @@
 
 enum
 {
-    EmuDeMIDIPlugInId = 0,
-    VSTiPlugInId = 1,
-    FluidSynthPlugInId = 2,
-    SuperMUNTPlugInId = 3,
-    BASSMIDIPlugInId = 4,
-    DirectXPlugInId = 5,
-    ADLPlugInId = 6,
-    OPNPlugInId = 7,
-    OPLPlugInId = 8,
-    NukePlugInId = 9,
-    SecretSaucePlugInId = 10,
+    PlayerTypeEmuDeMIDI = 0,
+    PlayerTypeVSTi = 1,
+    PlayerTypeFluidSynth = 2,
+    PlayerTypeSuperMunt = 3,
+    PlayerTypeBASSMIDI = 4,
+    PlayerTypeDirectX = 5,
+    PlayerTypeADL = 6,
+    PlayerTypeOPN = 7,
+    PlayerTypeOPL = 8,
+    PlayerTypeNuke = 9,
+    PlayerTypeSecretSauce = 10,
 };
 
 enum
 {
-    DefaultPlugInId = ADLPlugInId,
+    DefaultPlayerType = PlayerTypeADL,
     DefaultSampleRate = 44100,
     DefaultPlaybackLoopType = 0,
     DefaultOtherLoopType = 0,
@@ -49,7 +49,7 @@ enum
 
     DefaultResamplingMode = 1,
 
-    default_cfg_munt_gm = 0,
+    DefaultGMSet = 0,
 
     DefaultADLBank = 72,
     DefaultADLChipCount = 10,
@@ -61,10 +61,10 @@ enum
     DefaultMSBank = 2,
     DefaultMSPanning = 0,
 
-    default_cfg_midi_flavor = MIDIPlayer::filter_default,
-    default_cfg_midi_reverb = 1,
+    DefaultMIDIFlavor = MIDIPlayer::filter_default,
+    DefaultMIDIEffects = 1,
 #ifdef FLUIDSYNTHSUPPORT
-    default_cfg_fluid_interp_method = FLUID_INTERP_DEFAULT
+    DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT
 #endif
 };
 
@@ -147,8 +147,6 @@ extern advconfig_checkbox_factory cfg_SkipToFirstNote;
 #ifdef BASSMIDISUPPORT
 extern advconfig_checkbox_factory CfgBASSMIDIEffects;
 extern advconfig_integer_factory CfgBASSMIDIVoices;
-
-extern const bool _HASSSE2;
 #endif
 
 extern const char * _MUNTGMSets[];
@@ -160,18 +158,18 @@ extern const size_t _FileExtensionCount;
 extern const char * _SysExFileExtensions[];
 extern const size_t _SysExFileExtensionCount;
 
-extern const char MetaDataHash[];
-extern const char MetaDataFormat[];
-extern const char MetaDataTracks[];
-extern const char MetaDataChannels[];
-extern const char MetaDataTicks[];
-extern const char MetaDataType[];
-extern const char MetaDataLoopStart[];
-extern const char MetaDataLoopEnd[];
-extern const char MetaDataLoopStartInMS[];
-extern const char MetaDataLoopEndInMS[];
-extern const char MetaDataPreset[];
-extern const char MetaDataSysExDumps[];
+extern const char TagHash[];
+extern const char TagMIDIFormat[];
+extern const char TagTrackCount[];
+extern const char TagChannelCount[];
+extern const char TagTicks[];
+extern const char TagMIDIType[];
+extern const char TagLoopStart[];
+extern const char TagLoopEnd[];
+extern const char TagLoopStartInMs[];
+extern const char TagLoopEndInMs[];
+extern const char TagMIDIPreset[];
+extern const char TagSysExDumps[];
 
 extern bool IsMIDIFileExtension(const char * fileExtension);
 extern bool IsSysExFileExtension(const char * ext);

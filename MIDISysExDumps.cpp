@@ -10,7 +10,7 @@ void MIDISysExDumps::serialize(const char * filePath, pfc::string8 & text)
     if (filePath == nullptr)
         return;
 
-    pfc::string8_fast RelativePath;
+    pfc::string8 RelativePath;
 
     text.reset();
 
@@ -30,7 +30,7 @@ void MIDISysExDumps::unserialize(const char * text, const char * filePath)
     if ((text == nullptr) || (filePath == nullptr))
         return;
 
-    pfc::string8_fast RelativePath, AbsolutePath;
+    pfc::string8 RelativePath, AbsolutePath;
 
     const char * end = text + ::strlen(text);
 
