@@ -42,9 +42,9 @@ public:
             _SysExDumps.serialize(location->get_path(), Text);
 
             if (Text.get_length())
-                fileInfo.info_set(field_syx, Text);
+                fileInfo.info_set(MetaDataSysExDumps, Text);
             else
-                fileInfo.info_remove(field_syx);
+                fileInfo.info_remove(MetaDataSysExDumps);
 
             return true;
         }

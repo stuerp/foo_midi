@@ -1,4 +1,9 @@
+
+/** $VER: ADLPlayer.h (2022.01.02) **/
+
 #pragma once
+
+#pragma warning(disable: 5045)
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)

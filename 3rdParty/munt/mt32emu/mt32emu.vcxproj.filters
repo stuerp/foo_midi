@@ -182,5 +182,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\config.h.in" />
+    <None Include="src\mt32emu.pc.in" />
   </ItemGroup>
 </Project>

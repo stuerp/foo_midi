@@ -162,14 +162,14 @@ advconfig_string_factory_MT CfgSecretSaucePath("Secret Sauce path", GUIDSCCorePa
 
 advconfig_branch_factory cfg_midi_timing_parent("Playback timing when loops present", guid_cfg_midi_timing_parent, GUIDMIDIPlayerBranch, 1.0);
 
-advconfig_integer_factory cfg_midi_loop_count("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
-advconfig_integer_factory cfg_midi_fade_time("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 0, 30000);
+advconfig_integer_factory CfgLoopCount("Loop count", guid_cfg_midi_loop_count, guid_cfg_midi_timing_parent, 0, 2, 1, 10);
+advconfig_integer_factory CfgFadeTimeInMS("Fade time (ms)", guid_cfg_midi_fade_time, guid_cfg_midi_timing_parent, 1, 5000, 0, 30000);
 
 advconfig_branch_factory cfg_adl_core_parent("libADLMIDI emulator core", guid_cfg_adl_core_parent, GUIDMIDIPlayerBranch, 2.0);
 
 advconfig_checkbox_factory_t<true> cfg_adl_core_nuked("Nuked OPL3 (slowest, most accurate)", guid_cfg_adl_core_nuked, guid_cfg_adl_core_parent, 0.0, false);
 advconfig_checkbox_factory_t<true> cfg_adl_core_nuked_174("Nuked OPL3 v0.74 (slow, slightly less accurate)", guid_cfg_adl_core_nuked_174, guid_cfg_adl_core_parent, 1.0, false);
-advconfig_checkbox_factory_t<true> cfg_adl_core_dosbox("Dosbox OPL3 (really fast, mostly accurate)", guid_cfg_adl_core_dosbox, guid_cfg_adl_core_parent, 2.0, true);
+advconfig_checkbox_factory_t<true> CfgADLCoreDOSBox("Dosbox OPL3 (really fast, mostly accurate)", guid_cfg_adl_core_dosbox, guid_cfg_adl_core_parent, 2.0, true);
 
 advconfig_branch_factory cfg_opn_core_parent("libOPNMIDI emulator core", guid_cfg_opn_core_parent, GUIDMIDIPlayerBranch, 3.0);
 
@@ -190,8 +190,8 @@ advconfig_checkbox_factory cfg_SkipToFirstNote("Skip to first note", guid_cfg_sk
 #ifdef BASSMIDISUPPORT
 advconfig_branch_factory cfg_bassmidi_parent("BASSMIDI", guid_cfg_bassmidi_parent, GUIDMIDIPlayerBranch, 3.0);
 
-advconfig_checkbox_factory cfg_bassmidi_effects("Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_bassmidi_parent, 0, true);
-advconfig_integer_factory cfg_bassmidi_voices("Maximum voice count", guid_cfg_bassmidi_voices, guid_cfg_bassmidi_parent, 1, 256, 1, 100000);
+advconfig_checkbox_factory CfgBASSMIDIEffects("Enable reverb and chorus processing", guid_cfg_bassmidi_effects, guid_cfg_bassmidi_parent, 0, true);
+advconfig_integer_factory CfgBASSMIDIVoices("Maximum voice count", guid_cfg_bassmidi_voices, guid_cfg_bassmidi_parent, 1, 256, 1, 100000);
 #endif
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -230,18 +230,19 @@ const char * _SysExFileExtensions[] =
 
 const size_t _SysExFileExtensionCount = _countof(_SysExFileExtensions);
 
-const char field_hash[] = "midi_hash";
-const char field_format[] = "midi_format";
-const char field_tracks[] = "midi_tracks";
-const char field_channels[] = "midi_channels";
-const char field_ticks[] = "midi_ticks";
-const char field_type[] = "midi_type";
-const char field_loop_start[] = "midi_loop_start";
-const char field_loop_end[] = "midi_loop_end";
-const char field_loop_start_ms[] = "midi_loop_start_ms";
-const char field_loop_end_ms[] = "midi_loop_end_ms";
-const char field_preset[] = "midi_preset";
-const char field_syx[] = "midi_sysex_dumps";
+// Names of the meta data fields
+const char MetaDataHash[] = "midi_hash";
+const char MetaDataFormat[] = "midi_format";
+const char MetaDataTracks[] = "midi_tracks";
+const char MetaDataChannels[] = "midi_channels";
+const char MetaDataTicks[] = "midi_ticks";
+const char MetaDataType[] = "midi_type";
+const char MetaDataLoopStart[] = "midi_loop_start";
+const char MetaDataLoopEnd[] = "midi_loop_end";
+const char MetaDataLoopStartInMS[] = "midi_loop_start_ms";
+const char MetaDataLoopEndInMS[] = "midi_loop_end_ms";
+const char MetaDataPreset[] = "midi_preset";
+const char MetaDataSysExDumps[] = "midi_sysex_dumps";
 
 bool IsMIDIFileExtension(const char * fileExtension)
 {

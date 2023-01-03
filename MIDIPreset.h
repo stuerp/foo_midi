@@ -23,14 +23,14 @@ public:
     void unserialize(const char * data);
 
 public:
-    const int Version = 11;
+    const unsigned int CurrentSchemaVersion = 11;
 
     // version 0
     unsigned int _PluginId;
 
     // v0 - plug-in == 1 - VSTi
     pfc::string8 _VSTPathName;
-    std::vector<uint8_t> vst_config;
+    std::vector<uint8_t> _VSTConfig;
 
     // v0 - plug-in == 2/4 - SoundFont synthesizer
     pfc::string8 _SoundFontPathName;
@@ -56,13 +56,13 @@ public:
 
  #pragma region("OPN")
     // v10 - plug-in == 7 - libOPNMIDI (previously FMMIDI)
-    unsigned int opn_bank; // hard coded to fmmidi for previous versions
-    unsigned int opn_emu_core;
+    unsigned int _OPNBankNumber; // hard coded to fmmidi for previous versions
+    unsigned int _OPNEmulatorCore;
 #pragma endregion
 
  #pragma region("MUNT")
     // v1 - plug-in == 3 - MUNT
-    unsigned int munt_gm_set;
+    unsigned int _MuntGMSet;
 #pragma endregion
 
  #pragma region("BASS MIDI")
@@ -74,10 +74,10 @@ public:
 
  #pragma region("Nuke")
     // v4 - plug-in == 9 - Nuke
-    unsigned int ms_synth;
-    unsigned int ms_bank;
+    unsigned int _NukeSynth;
+    unsigned int _NukeBank;
     // v6 - panning
-    bool ms_panning;
+    bool _NukePanning;
 #pragma endregion
 
     // v5 - plug-in == 10 - Secret Sauce
@@ -106,6 +106,4 @@ struct NukePreset
     unsigned int bank;
     pfc::string8 name;
 };
-
-extern pfc::array_t<NukePreset> _NukePresets;
 #pragma endregion

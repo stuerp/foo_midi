@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2022.12.31) **/
+/** $VER: Preferences.cpp (2023.01.02) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -12,20 +12,13 @@ extern volatile int _IsRunning;
 
 static const GUID GUIDCfgSampleRateHistory = { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
 
-cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
-
 static const char * DefaultPathMessage = "Click to set.";
 
 static const int SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
 
-#pragma region("MUNT")
-const char * _MUNTGMSets[] =
-{
-    "Roland",
-    "Sierra / King's Quest 6",
-};
-const size_t _MUNTGMSetCount = _countof(_MUNTGMSets);
-#pragma endregion
+extern pfc::array_t<NukePreset> _NukePresets;
+
+cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
 
 #pragma region("FluidSynth")
 #ifdef FLUIDSYNTHSUPPORT
@@ -36,6 +29,15 @@ enum
     interp_method_default = 2
 };
 #endif
+#pragma endregion
+
+#pragma region("Munt")
+const char * _MUNTGMSets[] =
+{
+    "Roland",
+    "Sierra / King's Quest 6",
+};
+const size_t _MUNTGMSetCount = _countof(_MUNTGMSets);
 #pragma endregion
 
 /// <summary>
@@ -201,7 +203,7 @@ void Preferences::reset()
     {
         size_t PresetIndex = 0;
 
-        for (size_t i = 0, j = _NukePresets.get_count(); i < j; ++i)
+        for (size_t i = 0; i < _NukePresets.get_count(); ++i)
         {
             const NukePreset & Preset = _NukePresets[i];
 
@@ -439,7 +441,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
         if (VSTiCount > 0)
         {
-            console::formatter() << "Found " << pfc::format_int((t_int64)_VSTiPlugIns.get_size()).c_str() << " VSTi plug-ins.";
+            pfc::string8 Text; Text << "Found " << pfc::format_int((t_int64)_VSTiPlugIns.get_size()).c_str() << " VSTi plug-ins."; console::print(Text);
 
             for (size_t i = 0, j = VSTiCount; i < j; ++i)
             {
@@ -1074,25 +1076,25 @@ bool Preferences::HasChanged()
 
     if (!changed)
     {
-        unsigned int preset_number = (unsigned int)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
+        t_size PresetNumber = (t_size)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
 
-        if (preset_number >= _NukePresets.get_count())
-            preset_number = 0;
+        if (PresetNumber >= _NukePresets.get_count())
+            PresetNumber = 0;
 
-        const NukePreset & preset = _NukePresets[preset_number];
+        const NukePreset & Preset = _NukePresets[PresetNumber];
 
-        if (!(preset.synth == (unsigned int)CfgMSSynthesizer && preset.bank == (unsigned int)CfgMSBank))
+        if (!(Preset.synth == (unsigned int)CfgMSSynthesizer && Preset.bank == (unsigned int)CfgMSBank))
             changed = true;
     }
 
     if (!changed)
     {
-        int t = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
+        int SelectedIndex = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
 
-        if (t < 0 || t >= (int)_ADLBanks.get_count())
-            t = 0;
+        if ((SelectedIndex < 0) || (SelectedIndex >= (int)_ADLBanks.get_count()))
+            SelectedIndex = 0;
 
-        if (_ADLBanks[(t_size)t].number != (int)CfgADLBank)
+        if (_ADLBanks[(t_size)SelectedIndex].number != (int)CfgADLBank)
             changed = true;
     }
 
@@ -1226,7 +1228,7 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
             // Examine all files.
             if (findFile->GetFileSize())
             {
-                console::formatter() << "Examining \"" << PathName << "\"...";
+                pfc::string8 Text; Text << "Examining \"" << PathName << "\"..."; console::print(Text);
 
                 VSTiPlayer Player;
 

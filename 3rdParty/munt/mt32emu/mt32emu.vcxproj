@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\config.h.in" />
+    <None Include="src\mt32emu.pc.in" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

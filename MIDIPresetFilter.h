@@ -29,9 +29,9 @@ public:
         if (_Handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, location, index))
         {
             if (_MIDIPreset.get_length())
-                fileInfo.info_set(field_preset, _MIDIPreset);
+                fileInfo.info_set(MetaDataPreset, _MIDIPreset);
             else
-                fileInfo.info_remove(field_preset);
+                fileInfo.info_remove(MetaDataPreset);
 
             return true;
         }

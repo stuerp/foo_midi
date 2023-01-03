@@ -1,3 +1,6 @@
+
+/** $VER: ADLPlayer.cpp (2023.01.02) **/
+
 #include "ADLPlayer.h"
 
 ADLPlayer::ADLPlayer() : MIDIPlayer()
@@ -15,23 +18,23 @@ bool ADLPlayer::startup()
     if (_Player[0] && _Player[1] && _Player[2])
         return true;
 
-    int chips_per_port = _ChipCount / 3;
+    int chips_per_port = (int)(_ChipCount / 3);
     int chips_round = (_ChipCount % 3) != 0;
     int chips_min = _ChipCount < 3;
 
     for (size_t i = 0; i < 3; i++)
     {
-        ADL_MIDIPlayer * Player = this->_Player[i] = adl_init(_SampleRate);
+        ADL_MIDIPlayer * Player = this->_Player[i] = adl_init((long)_SampleRate);
 
         if (Player == nullptr)
             return false;
 
-        ::adl_setBank(Player, _BankNumber);
+        ::adl_setBank(Player, (int)_BankNumber);
         ::adl_setNumChips(Player, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
-        ::adl_setNumFourOpsChn(Player, _4OpCount);
+        ::adl_setNumFourOpsChn(Player, (int)_4OpCount);
         ::adl_setSoftPanEnabled(Player, _FullPanning);
-        ::adl_setDeviceIdentifier(Player, i);
-        ::adl_switchEmulator(Player, _EmuCore);
+        ::adl_setDeviceIdentifier(Player, (unsigned int)i);
+        ::adl_switchEmulator(Player, (int)_EmuCore);
         ::adl_reset(Player);
     }
 
@@ -53,29 +56,29 @@ void ADLPlayer::shutdown()
     _IsInitialized = false;
 }
 
-void ADLPlayer::render(audio_sample * out, unsigned long count)
+void ADLPlayer::render(audio_sample * samples, unsigned long samplesToDo)
 {
     int16_t buffer[256 * sizeof(audio_sample)];
 
-    while (count)
+    while (samplesToDo)
     {
-        size_t todo = count;
+        size_t ToDo = samplesToDo;
 
-        if (todo > 256)
-            todo = 256;
+        if (ToDo > 256)
+            ToDo = 256;
 
-        ::memset(out, 0, (todo * 2) * sizeof(audio_sample));
+        ::memset(samples, 0, (ToDo * 2) * sizeof(audio_sample));
 
         for (size_t i = 0; i < 3; i++)
         {
-            ::adl_generate(_Player[i], (todo * 2), buffer);
+            ::adl_generate(_Player[i], (int)(ToDo * 2), buffer);
 
-            for (size_t j = 0, k = (todo * 2); j < k; j++)
-                out[j] += (audio_sample) buffer[j] * (1.0f / 32768.0f);
+            for (size_t j = 0, k = (ToDo * 2); j < k; j++)
+                samples[j] += (audio_sample) buffer[j] * (1.0f / 32768.0f);
         }
 
-        out += (todo * 2);
-        count -= todo;
+        samples     += (ToDo * 2);
+        samplesToDo -= (unsigned long)ToDo;
     }
 }
 

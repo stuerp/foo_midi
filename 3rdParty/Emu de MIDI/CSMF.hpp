@@ -46,7 +46,7 @@ public:
   CSMF_Exception(ExceptionID id) : m_id(id) {}
   ExceptionID m_id;
   const char *c_str () const { 
-    static char *Msg[] = {"Track buffer is end.", "Invalid Track number.", "Unknown Error"};
+    static const char *Msg[] = {"Track buffer is end.", "Invalid Track number.", "Unknown Error"};
     return Msg[m_id]; 
   }
 };

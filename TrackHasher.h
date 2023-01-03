@@ -1,5 +1,5 @@
 
-/** $VER: TrackHasher.h (2022.12.31) **/
+/** $VER: TrackHasher.h (2023.01.02) **/
 
 #pragma once
 
@@ -18,50 +18,50 @@ class TrackHasher : public metadb_index_client
 {
 public:
     TrackHasher() noexcept { };
+
     TrackHasher(const TrackHasher&) = delete;
     TrackHasher(const TrackHasher&&) = delete;
     TrackHasher& operator=(const TrackHasher&) = delete;
     TrackHasher& operator=(TrackHasher&&) = delete;
+
     virtual ~TrackHasher() { };
 
-    virtual metadb_index_hash transform(const file_info & info, const playable_location & location)
+    virtual metadb_index_hash transform(const file_info & fileInfo, const playable_location & location)
     {
         const metadb_index_hash hash_null = 0;
 
         if (!IsMIDIFileExtension(pfc::string_extension(location.get_path())))
             return hash_null;
 
-        hasher_md5_state hasher_state;
-        static_api_ptr_t<hasher_md5> hasher;
+        hasher_md5_state HasherState;
+        static_api_ptr_t<hasher_md5> Hasher;
 
-        t_uint32 subsong = location.get_subsong();
+        t_uint32 SubsongIndex = location.get_subsong();
 
-        hasher->initialize(hasher_state);
+        Hasher->initialize(HasherState);
 
-        hasher->process(hasher_state, &subsong, sizeof(subsong));
+        Hasher->process(HasherState, &SubsongIndex, sizeof(SubsongIndex));
 
-        const char * str = info.info_get(field_hash);
+        const char * Info = fileInfo.info_get(MetaDataHash);
 
-        if (str)
-            hasher->process_string(hasher_state, str);
+        if (Info)
+            Hasher->process_string(HasherState, Info);
         else
-            hasher->process_string(hasher_state, location.get_path());
+            Hasher->process_string(HasherState, location.get_path());
 
-    #define HASH_STRING(s)      \
-	str = info.info_get(s); \
-	if(str) hasher->process_string(hasher_state, str);
+    #define HASH_STRING(s)  Info = fileInfo.info_get(s); if (Info) Hasher->process_string(HasherState, Info);
 
-        HASH_STRING(field_format);
-        HASH_STRING(field_tracks);
-        HASH_STRING(field_channels);
-        HASH_STRING(field_ticks);
-        HASH_STRING(field_type);
-        HASH_STRING(field_loop_start);
-        HASH_STRING(field_loop_end);
-        HASH_STRING(field_loop_start_ms);
-        HASH_STRING(field_loop_end_ms);
+        HASH_STRING(MetaDataFormat);
+        HASH_STRING(MetaDataTracks);
+        HASH_STRING(MetaDataChannels);
+        HASH_STRING(MetaDataTicks);
+        HASH_STRING(MetaDataType);
+        HASH_STRING(MetaDataLoopStart);
+        HASH_STRING(MetaDataLoopEnd);
+        HASH_STRING(MetaDataLoopStartInMS);
+        HASH_STRING(MetaDataLoopEndInMS);
 
-        return from_md5(hasher->get_result(hasher_state));
+        return from_md5(Hasher->get_result(HasherState));
     }
 };
 

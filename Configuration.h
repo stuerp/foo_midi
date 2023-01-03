@@ -119,14 +119,14 @@ extern advconfig_string_factory_MT CfgSecretSaucePath;
 
 extern advconfig_branch_factory cfg_midi_timing_parent;
 
-extern advconfig_integer_factory cfg_midi_loop_count;
-extern advconfig_integer_factory cfg_midi_fade_time;
+extern advconfig_integer_factory CfgLoopCount;
+extern advconfig_integer_factory CfgFadeTimeInMS;
 
 extern advconfig_branch_factory cfg_adl_core_parent;
 
 extern advconfig_checkbox_factory_t<true> cfg_adl_core_nuked;
 extern advconfig_checkbox_factory_t<true> cfg_adl_core_nuked_174;
-extern advconfig_checkbox_factory_t<true> cfg_adl_core_dosbox;
+extern advconfig_checkbox_factory_t<true> CfgADLCoreDOSBox;
 
 extern advconfig_branch_factory cfg_opn_core_parent;
 
@@ -145,8 +145,8 @@ extern advconfig_checkbox_factory_t<true> cfg_opn_bank_fmmidi;
 extern advconfig_checkbox_factory cfg_SkipToFirstNote;
 
 #ifdef BASSMIDISUPPORT
-extern advconfig_checkbox_factory cfg_bassmidi_effects;
-extern advconfig_integer_factory cfg_bassmidi_voices;
+extern advconfig_checkbox_factory CfgBASSMIDIEffects;
+extern advconfig_integer_factory CfgBASSMIDIVoices;
 
 extern const bool _HASSSE2;
 #endif
@@ -160,18 +160,18 @@ extern const size_t _FileExtensionCount;
 extern const char * _SysExFileExtensions[];
 extern const size_t _SysExFileExtensionCount;
 
-extern const char field_hash[];
-extern const char field_format[];
-extern const char field_tracks[];
-extern const char field_channels[];
-extern const char field_ticks[];
-extern const char field_type[];
-extern const char field_loop_start[];
-extern const char field_loop_end[];
-extern const char field_loop_start_ms[];
-extern const char field_loop_end_ms[];
-extern const char field_preset[];
-extern const char field_syx[];
+extern const char MetaDataHash[];
+extern const char MetaDataFormat[];
+extern const char MetaDataTracks[];
+extern const char MetaDataChannels[];
+extern const char MetaDataTicks[];
+extern const char MetaDataType[];
+extern const char MetaDataLoopStart[];
+extern const char MetaDataLoopEnd[];
+extern const char MetaDataLoopStartInMS[];
+extern const char MetaDataLoopEndInMS[];
+extern const char MetaDataPreset[];
+extern const char MetaDataSysExDumps[];
 
 extern bool IsMIDIFileExtension(const char * fileExtension);
 extern bool IsSysExFileExtension(const char * ext);

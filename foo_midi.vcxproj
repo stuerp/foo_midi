@@ -104,7 +104,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/Bass/c;./3rdParty/JSON;./3rdParty/Nuke;./3rdParty/Munt/mt32emu/src;./3rdParty/scc/emidi_alpha;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/Bass/c;./3rdParty/JSON;./3rdParty/Nuke;./3rdParty/Munt/mt32emu/src;"./3rdParty/Emu de MIDI";./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>EnableAllWarnings</WarningLevel>
@@ -135,7 +135,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/Bass/c;./3rdParty/JSON;./3rdParty/Nuke;./3rdParty/Munt/mt32emu/src;./3rdParty/scc/emidi_alpha;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/Bass/c;./3rdParty/JSON;./3rdParty/Nuke;./3rdParty/Munt/mt32emu/src;"./3rdParty/Emu de MIDI";./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -170,7 +170,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/Bass/c;./3rdParty/JSON;./3rdParty/Nuke;./3rdParty/Munt/mt32emu/src;./3rdParty/scc/emidi_alpha;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/Bass/c;./3rdParty/JSON;./3rdParty/Nuke;./3rdParty/Munt/mt32emu/src;"./3rdParty/Emu de MIDI";./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -210,7 +210,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/Bass/c;./3rdParty/JSON;./3rdParty/Nuke;./3rdParty/Munt/mt32emu/src;./3rdParty/scc/emidi_alpha;./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/Bass/c;./3rdParty/JSON;./3rdParty/Nuke;./3rdParty/Munt/mt32emu/src;"./3rdParty/Emu de MIDI";./include;./sflist;./;../..;../../..;../../../midisynth;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FOO_MIDI_EXPORTS;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -245,7 +245,7 @@
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="ContextMenu.cpp" />
-    <ClCompile Include="EMIDIPlayer.cpp" />
+    <ClCompile Include="EdMPlayer.cpp" />
     <ClCompile Include="Experimental\DXiProxy.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -319,12 +319,12 @@
     <ClCompile Include="VSTiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="3rdParty\Bass\c\bass.h" />
-    <ClInclude Include="3rdParty\Bass\c\bassflac.h" />
-    <ClInclude Include="3rdParty\Bass\c\bassmidi.h" />
-    <ClInclude Include="3rdParty\Bass\c\bassopus.h" />
-    <ClInclude Include="3rdParty\Bass\c\basswv.h" />
-    <ClInclude Include="3rdParty\Bass\c\bass_mpc.h" />
+    <ClInclude Include="3rdParty\BASS\c\bass.h" />
+    <ClInclude Include="3rdParty\BASS\c\bassflac.h" />
+    <ClInclude Include="3rdParty\BASS\c\bassmidi.h" />
+    <ClInclude Include="3rdParty\BASS\c\bassopus.h" />
+    <ClInclude Include="3rdParty\BASS\c\basswv.h" />
+    <ClInclude Include="3rdParty\BASS\c\bass_mpc.h" />
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
     <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
@@ -333,7 +333,7 @@
     <ClInclude Include="cfg_map.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="ContextMenu.h" />
-    <ClInclude Include="EMIDIPlayer.h" />
+    <ClInclude Include="EdMPlayer.h" />
     <ClInclude Include="Experimental\DXiProxy.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -424,6 +424,9 @@
     <ProjectReference Include="..\sdk\pfc\pfc.vcxproj">
       <Project>{ebfffb4e-261d-44d3-b89c-957b31a0bf9c}</Project>
     </ProjectReference>
+    <ProjectReference Include="3rdParty\Emu de MIDI\Emu de MIDI.vcxproj">
+      <Project>{69719831-d965-4aed-91c1-70c4ff01945d}</Project>
+    </ProjectReference>
     <ProjectReference Include="3rdParty\libADLMIDI\windows\libadlmidi.vcxproj">
       <Project>{f6039eec-6f65-493b-b007-512550690f03}</Project>
     </ProjectReference>
@@ -438,9 +441,6 @@
     </ProjectReference>
     <ProjectReference Include="3rdParty\Nuke\Nuke.vcxproj">
       <Project>{388eb9a8-764e-4a90-be37-fb28cae70d03}</Project>
-    </ProjectReference>
-    <ProjectReference Include="3rdParty\scc\emidi_alpha\emidi.vcxproj">
-      <Project>{69719831-d965-4aed-91c1-70c4ff01945d}</Project>
     </ProjectReference>
     <ProjectReference Include="scpipe\scpipe32.vcxproj">
       <Project>{6e35bb35-acba-40eb-8f63-bd153046677c}</Project>
@@ -458,7 +458,7 @@
   <ItemGroup>
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
-    <None Include="3rdParty\Bass\bassflac.dll" />
+    <None Include="3rdParty\BASS\bassflac.dll" />
     <None Include="Build-FB2KComponent.ps1" />
     <None Include="README.md" />
   </ItemGroup>

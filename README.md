@@ -38,21 +38,26 @@ To build the code you need:
 * [foobar2000 SDK](https://www.foobar2000.org/SDK) 2022-10-20
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 * [BASS](https://www.un4seen.com/) 2.4.17
-* [BASSFLAC](https://www.un4seen.com/) 2.4.5
-* [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
-* [BASSWV](https://www.un4seen.com/) 2.4.7.3
-* [BASSOPUS](https://www.un4seen.com/) 2.4.2.1
-* [BASSMPC](https://www.un4seen.com/) 2.4.1.2
-* [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1
-* [MUNT win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) 1.8.1
+  * [BASSFLAC](https://www.un4seen.com/) 2.4.5
+  * [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
+  * [BASSWV](https://www.un4seen.com/) 2.4.7.3
+  * [BASSOPUS](https://www.un4seen.com/) 2.4.2.1
+  * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
+* [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
+* [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2)
+* [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) 1.8.1
 * [Nuke.YKT](http://nukeykt.retrohost.net/)
   * [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver)
     * [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) Yamaha YMF262 and CT1747 (OPL3)
-    * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL) Yamaha YM2413 and VRC7
+    * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL) Yamaha YM2413 and VRC7 (OPLL)
     * [Nuked-OPM](https://github.com/nukeykt/Nuked-OPM) Yamaha YM2151
     * [Nuked-OPN2](https://github.com/nukeykt/Nuked-OPN2) Yamaha YM3438 (YM2612)
     * [Nuked-OPNB](https://github.com/nukeykt/Nuked-OPNB) Yamaha YM2610
     * [Nuked-PSG](https://github.com/nukeykt/Nuked-PSG) Yamaha YM7101
+* [emu2149](https://github.com/digital-sound-antiques/emu2149)
+* [emu2212](https://github.com/digital-sound-antiques/emu2212)
+* [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
+* [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 
 To create the deployment package you need:
 
@@ -134,6 +139,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [kode54](https://gitlab.com/kode54/) for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
 * [Munt](https://github.com/munt/munt/) for a multi-platform software synthesiser emulating pre-GM MIDI devices such as the Roland MT-32, CM-32L, CM-64 and LAPC-I.
 * [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) for Nuked OPL3 (https://github.com/nukeykt/Nuked-OPL3).
+* [Mitsutaka Okazaki]() for Emu de MIDI.
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
 
 ## Reference Material

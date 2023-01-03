@@ -18,7 +18,7 @@
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="ContextMenu.cpp" />
-    <ClCompile Include="EMIDIPlayer.cpp" />
+    <ClCompile Include="EdMPlayer.cpp" />
     <ClCompile Include="FileTypeRegistrar.cpp" />
     <ClCompile Include="foo_midi.cpp" />
     <ClCompile Include="InitQuit.cpp" />
@@ -106,18 +106,18 @@
     </ClInclude>
     <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
     <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
-    <ClInclude Include="3rdParty\Bass\c\bass.h" />
-    <ClInclude Include="3rdParty\Bass\c\bass_mpc.h" />
-    <ClInclude Include="3rdParty\Bass\c\bassflac.h" />
-    <ClInclude Include="3rdParty\Bass\c\bassmidi.h" />
-    <ClInclude Include="3rdParty\Bass\c\bassopus.h" />
-    <ClInclude Include="3rdParty\Bass\c\basswv.h" />
+    <ClInclude Include="3rdParty\BASS\c\bass.h" />
+    <ClInclude Include="3rdParty\BASS\c\bass_mpc.h" />
+    <ClInclude Include="3rdParty\BASS\c\bassflac.h" />
+    <ClInclude Include="3rdParty\BASS\c\bassmidi.h" />
+    <ClInclude Include="3rdParty\BASS\c\bassopus.h" />
+    <ClInclude Include="3rdParty\BASS\c\basswv.h" />
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="BMPlayer.h" />
     <ClInclude Include="cfg_map.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="ContextMenu.h" />
-    <ClInclude Include="EMIDIPlayer.h" />
+    <ClInclude Include="EdMPlayer.h" />
     <ClInclude Include="FileTypeRegistrar.h" />
     <ClInclude Include="History.h" />
     <ClInclude Include="InputDecoder.h" />
@@ -174,7 +174,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="3rdParty\Bass\bassflac.dll" />
+    <None Include="3rdParty\BASS\bassflac.dll" />
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
