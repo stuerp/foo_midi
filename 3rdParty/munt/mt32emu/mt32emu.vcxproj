@@ -155,6 +155,7 @@
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -189,6 +190,7 @@
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>

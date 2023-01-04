@@ -4,7 +4,7 @@
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
-#pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
+#pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
 

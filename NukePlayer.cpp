@@ -1,7 +1,5 @@
 
-/** $VER: NukePlayer.cpp (2023.01.04) Nuke **/
-
-#pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
+/** $VER: NukePlayer.cpp (2023.01.04) **/
 
 #include "NukePlayer.h"
 

@@ -1,8 +1,6 @@
 
 /** $VER: SCPlayer.cpp (2022.12.31) Secret Sauce **/
 
-#pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
-
 #include "SCPlayer.h"
 
 #include <sdk/foobar2000-lite.h>
