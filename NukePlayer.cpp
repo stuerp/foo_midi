@@ -1,5 +1,5 @@
 
-/** $VER: NukePlayer.cpp (2023.01.02) Nuke **/
+/** $VER: NukePlayer.cpp (2023.01.04) Nuke **/
 
 #pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 
@@ -9,6 +9,10 @@
 #include <string.h>
 
 #include <Nuke/interface.h>
+
+#include "Configuration.h"
+
+static pfc::array_t<NukePreset> _NukePresets;
 
 NukePlayer::NukePlayer()
 {
@@ -106,22 +110,22 @@ void NukePlayer::send_sysex(const uint8_t *, size_t, size_t)
 }
 
 /// <summary>
-/// Enumerates all the supported synthesizers.
+/// Initializes the presets list.
 /// </summary>
-void NukePlayer::EnumerateSynthesizers(SynthesizerEnumerator callback)
+void NukePlayer::InitializePresets(std::function<void (const pfc::string8 name, unsigned int synth, unsigned int bank)> functor) noexcept
 {
     nomidisynth * Synthsizers[] =
     {
-        getsynth_doom(),
-        getsynth_opl3w(),
-        getsynth_apogee()
+        ::getsynth_doom(),
+        ::getsynth_opl3w(),
+        ::getsynth_apogee()
     };
 
     for (size_t j = 0; j < _countof(Synthsizers); j++)
     {
         nomidisynth * Synth = Synthsizers[j];
 
-        const char * Name = Synth->midi_synth_name();
+        const pfc::string8 Name = Synth->midi_synth_name();
 
         const size_t BankCount = Synth->midi_bank_count();
 
@@ -129,18 +133,118 @@ void NukePlayer::EnumerateSynthesizers(SynthesizerEnumerator callback)
         {
             for (size_t i = 0; i < BankCount; ++i)
             {
-                char Text[512];
+                pfc::string8 Text;
 
-                ::strcpy_s(Text, Name);
-                ::strcat_s(Text, " ");
-                ::strcat_s(Text, Synth->midi_bank_name((unsigned int)i));
+                Text.prealloc(512);
 
-                callback((unsigned int)j, (unsigned int)i, Text);
+                Text << Name << " " << Synth->midi_bank_name((unsigned int)i);
+
+                functor(Text, (unsigned int)j, (unsigned int)i);
             }
         }
         else
-            callback((unsigned int)j, 0, Name);
+            functor(Name, (unsigned int)j, 0);
 
         delete Synth;
     }
 }
+
+/// <summary>
+/// Enumerates the presets of this instance.
+/// </summary>
+void NukePlayer::EnumeratePresets(std::function<void (const pfc::string8 name, unsigned int synthId, unsigned int bankId)> functor) noexcept
+{
+    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
+    {
+        const NukePreset & Preset = _NukePresets[i];
+
+        functor(Preset.Name, Preset.SynthId, Preset.BankId);
+    }
+}
+
+/// <summary>
+/// Gets the Nuke preset with the specified name.
+/// </summary>
+void NukePlayer::GetPreset(pfc::string8 name, unsigned int & synth, unsigned int & bank)
+{
+    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
+    {
+        const NukePreset & Preset = _NukePresets[i];
+
+        if (pfc::stricmp_ascii(Preset.Name, name) == 0)
+        {
+            synth = Preset.SynthId;
+            bank = Preset.BankId;
+
+            return;
+        }
+    }
+
+    synth = DefaultMSSynth;
+    bank = DefaultMSBank;
+}
+
+/// <summary>
+/// Gets the Nuke preset at the specified index.
+/// </summary>
+void NukePlayer::GetPreset(size_t index, unsigned int & synth, unsigned int & bank)
+{
+    if (index >= _NukePresets.get_count())
+        index = 0;
+
+    synth = _NukePresets[index].SynthId;
+    bank = _NukePresets[index].BankId;
+}
+
+/// <summary>
+/// Gets the name of the Nuke preset for the specified synthesizer and bank.
+/// </summary>
+pfc::string8 NukePlayer::GetPresetName(unsigned int synth, unsigned int bank)
+{
+    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
+    {
+        const NukePreset & Preset = _NukePresets[i];
+
+        if ((Preset.SynthId == synth) && (Preset.BankId == bank))
+            return Preset.Name;
+    }
+
+    return "Unknown Preset";
+}
+
+/// <summary>
+/// Gets the index of the Nuke preset for the specified synthesizer and bank.
+/// </summary>
+size_t NukePlayer::GetPresetIndex(unsigned int synth, unsigned int bank)
+{
+    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
+    {
+        const NukePreset & Preset = _NukePresets[i];
+
+        if (Preset.SynthId == synth && Preset.BankId == bank)
+            return i;
+    }
+
+    return 0;
+}
+
+#pragma region("Nuke Preset Importer")
+/// <summary>
+/// Imports the presets of the Nuke player.
+/// </summary>
+class NukePresetsImporter
+{
+public:
+    NukePresetsImporter()
+    {
+        NukePlayer::InitializePresets([] (pfc::string8 name, unsigned int synth, unsigned int bank)
+        {
+            NukePreset Preset = { name, synth, bank };
+
+            _NukePresets.append_single(Preset);
+        });
+    }
+};
+
+NukePresetsImporter _NukePresetsImporter;
+#pragma endregion

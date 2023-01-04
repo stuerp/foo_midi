@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.cpp (2023.01.02) **/
+/** $VER: MIDIPreset.cpp (2023.01.04) **/
 
 #pragma warning(disable: 5045)
 
@@ -8,12 +8,10 @@
 #include "Configuration.h"
 #include "NukePlayer.h"
 
-pfc::array_t<NukePreset> _NukePresets;
-
 MIDIPreset::MIDIPreset() noexcept
 {
     {
-        _PluginId = (unsigned int)CfgPlugInId;
+        _PlayerType = (unsigned int)CfgPlayerType;
         _VSTPathName = CfgVSTiPath;
 
         {
@@ -30,8 +28,8 @@ MIDIPreset::MIDIPreset() noexcept
             }
             catch (...)
             {
-                if (_PluginId == 1)
-                    _PluginId = 0;
+                if (_PlayerType == 1)
+                    _PlayerType = 0;
             }
 
             delete Player;
@@ -116,72 +114,56 @@ MIDIPreset::MIDIPreset() noexcept
     }
 }
 
-/// <summary>
-/// Gets the name of the MSPreset for the specified synthesizer and bank.
-/// </summary>
-const char * MIDIPreset::GetMSPresetName(unsigned int synth, unsigned int bank)
-{
-    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
-    {
-        const NukePreset & Preset = _NukePresets[i];
-
-        if ((Preset.synth == synth) && (Preset.bank == bank))
-            return Preset.name;
-    }
-
-    return "Unknown Preset";
-}
-
-void MIDIPreset::serialize(pfc::string8 & p_out)
+void MIDIPreset::serialize(pfc::string8 & text)
     {
         const char * const * banknames = adl_getBankNames();
 
-        p_out.reset();
+        text.reset();
 
-        p_out += pfc::format_int(CurrentSchemaVersion);
-        p_out += "|";
+        text += pfc::format_int(CurrentSchemaVersion);
+        text += "|";
 
-        p_out += pfc::format_int(_PluginId);
+        text += pfc::format_int(_PlayerType);
 
-        if (_PluginId == 1)
+        if (_PlayerType == 1)
         {
-            p_out += "|";
+            text += "|";
 
-            p_out += _VSTPathName;
-            p_out += "|";
+            text += _VSTPathName;
+            text += "|";
 
             for (unsigned i = 0; i < _VSTConfig.size(); ++i)
             {
-                p_out += pfc::format_hex(_VSTConfig[i], 2);
+                text += pfc::format_hex(_VSTConfig[i], 2);
             }
 
-            p_out += "|";
-            p_out += pfc::format_int(_MIDIStandard);
-            p_out += "|";
-            p_out += pfc::format_int(_UseMIDIEffects);
+            text += "|";
+            text += pfc::format_int(_MIDIStandard);
+            text += "|";
+            text += pfc::format_int(_UseMIDIEffects);
         }
         else
-        if (_PluginId == 2 || _PluginId == 4)
+        if (_PlayerType == 2 || _PlayerType == 4)
         {
-            p_out += "|";
+            text += "|";
 
-            p_out += _SoundFontPathName;
+            text += _SoundFontPathName;
 
-            p_out += "|";
+            text += "|";
 
-            p_out += pfc::format_int(_BASSMIDIEffects);
+            text += pfc::format_int(_BASSMIDIEffects);
 
-            p_out += "|";
+            text += "|";
 
-            p_out += pfc::format_int(_BASSMIDIVoices);
+            text += pfc::format_int(_BASSMIDIVoices);
 
-            p_out += "|";
+            text += "|";
 
-            p_out += pfc::format_int(_MIDIStandard);
+            text += pfc::format_int(_MIDIStandard);
 
-            p_out += "|";
+            text += "|";
 
-            p_out += pfc::format_int(_UseMIDIEffects);
+            text += pfc::format_int(_UseMIDIEffects);
         }
     #ifdef DXISUPPORT
         else
@@ -207,86 +189,86 @@ void MIDIPreset::serialize(pfc::string8 & p_out)
         }
     #endif
         else
-        if (_PluginId == 6)
+        if (_PlayerType == 6)
         {
-            p_out += "|";
+            text += "|";
 
-            p_out += banknames[_ADLBankNumber];
-            p_out += "|";
+            text += banknames[_ADLBankNumber];
+            text += "|";
 
-            p_out += pfc::format_int(_ADLChipCount);
-            p_out += "|";
+            text += pfc::format_int(_ADLChipCount);
+            text += "|";
 
-            p_out += pfc::format_int(_ADLUsePanning);
-            p_out += "|";
+            text += pfc::format_int(_ADLUsePanning);
+            text += "|";
 
-            p_out += pfc::format_int(_ADLChorus);
-            p_out += "|";
+            text += pfc::format_int(_ADLChorus);
+            text += "|";
 
-            p_out += pfc::format_int(_ADLEmulatorCore);
+            text += pfc::format_int(_ADLEmulatorCore);
         }
         else
-        if (_PluginId == 3)
+        if (_PlayerType == 3)
         {
-            p_out += "|";
+            text += "|";
 
-            p_out += _MUNTGMSets[_MuntGMSet];
+            text += _MUNTGMSets[_MuntGMSet];
         }
         else
-        if (_PluginId == 9)
+        if (_PlayerType == 9)
         {
-            p_out += "|";
-            p_out += GetMSPresetName(_NukeSynth, _NukeBank);
-            p_out += "|";
-            p_out += pfc::format_int(_NukePanning);
+            text += "|";
+            text += NukePlayer::GetPresetName(_NukeSynth, _NukeBank);
+            text += "|";
+            text += pfc::format_int(_NukePanning);
         }
         else
-        if (_PluginId == 10)
+        if (_PlayerType == 10)
         {
-            p_out += "|";
-            p_out += pfc::format_int(_MIDIStandard);
-            p_out += "|";
-            p_out += pfc::format_int(_UseMIDIEffects);
+            text += "|";
+            text += pfc::format_int(_MIDIStandard);
+            text += "|";
+            text += pfc::format_int(_UseMIDIEffects);
         }
         else
-        if (_PluginId == 7)
+        if (_PlayerType == 7)
         {
-            p_out += "|";
-            p_out += pfc::format_int(_OPNBankNumber);
-            p_out += "|";
-            p_out += pfc::format_int(_ADLChipCount);
-            p_out += "|";
-            p_out += pfc::format_int(_ADLUsePanning);
-            p_out += "|";
-            p_out += pfc::format_int(_OPNEmulatorCore);
+            text += "|";
+            text += pfc::format_int(_OPNBankNumber);
+            text += "|";
+            text += pfc::format_int(_ADLChipCount);
+            text += "|";
+            text += pfc::format_int(_ADLUsePanning);
+            text += "|";
+            text += pfc::format_int(_OPNEmulatorCore);
         }
     }
 
-void MIDIPreset::unserialize(const char * data)
+void MIDIPreset::unserialize(const char * text)
     {
-        if (data == nullptr)
+        if (text == nullptr)
             return;
 
-        const char * Separator = ::strchr(data, '|');
+        const char * Separator = ::strchr(text, '|');
 
         if (Separator == nullptr)
             return;
 
-        unsigned SchemaVersion = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+        unsigned SchemaVersion = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
         if (SchemaVersion > CurrentSchemaVersion)
             return;
 
         {
-            data = Separator + 1;
+            text = Separator + 1;
 
-            Separator = ::strchr(data, '|');
+            Separator = ::strchr(text, '|');
 
             if (Separator == nullptr)
-                Separator = data += ::strlen(data);
+                Separator = text += ::strlen(text);
         }
 
-        unsigned PlugInId = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+        unsigned PlugInId = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
         if (*Separator == '\0')
             return;
@@ -320,115 +302,115 @@ void MIDIPreset::unserialize(const char * data)
         bool AllowMIDIEffects = (bool)CfgAllowMIDIEffects;
 
         {
-            data = Separator + 1;
+            text = Separator + 1;
 
-            Separator = ::strchr(data, '|');
+            Separator = ::strchr(text, '|');
 
             if (Separator == nullptr)
-                Separator = data + ::strlen(data);
+                Separator = text + ::strlen(text);
         }
 
         if (PlugInId == PlayerTypeVSTi)
         {
-            VSTPath.set_string(data, (t_size)(Separator - data));
+            VSTPath.set_string(text, (t_size)(Separator - text));
 
             {
-                data = Separator + (*Separator == '|');
+                text = Separator + (*Separator == '|');
 
-                Separator = ::strchr(data, '|');
+                Separator = ::strchr(text, '|');
 
                 if (Separator == nullptr)
-                    Separator = data + ::strlen(data);
+                    Separator = text + ::strlen(text);
             }
 
-            while (*data && data < Separator)
+            while (*text && text < Separator)
             {
-                VSTConfig.push_back(pfc::atohex<unsigned char>(data, 2));
+                VSTConfig.push_back(pfc::atohex<unsigned char>(text, 2));
 
-                data += 2;
+                text += 2;
             }
 
-            if (CurrentSchemaVersion >= 11 && *data == '|')
+            if (CurrentSchemaVersion >= 11 && *text == '|')
             {
                 {
-                    data = Separator + (*Separator == '|');
+                    text = Separator + (*Separator == '|');
 
-                    Separator = ::strchr(data, '|');
+                    Separator = ::strchr(text, '|');
 
                     if (Separator == nullptr)
-                        Separator = data + ::strlen(data);
+                        Separator = text + ::strlen(text);
                 }
 
-                MIDIFlavor = pfc::atodec<unsigned int>(data, (t_size)(Separator - data));
+                MIDIFlavor = pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
 
                 {
-                    data = Separator + (*Separator == '|');
+                    text = Separator + (*Separator == '|');
 
-                    Separator = ::strchr(data, '|');
+                    Separator = ::strchr(text, '|');
 
                     if (Separator == nullptr)
-                        Separator = data + ::strlen(data);
+                        Separator = text + ::strlen(text);
                 }
 
-                AllowMIDIEffects = !!pfc::atodec<unsigned int>(data, (t_size)(Separator - data));
+                AllowMIDIEffects = !!pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
             }
         }
         else
         if (PlugInId == PlayerTypeFluidSynth || PlugInId == PlayerTypeBASSMIDI)
         {
-            SoundFontPath.set_string(data, (t_size)(Separator - data));
+            SoundFontPath.set_string(text, (t_size)(Separator - text));
 
             {
-                data = Separator + (*Separator == '|');
+                text = Separator + (*Separator == '|');
 
-                Separator = ::strchr(data, '|');
+                Separator = ::strchr(text, '|');
 
                 if (Separator == nullptr)
-                    Separator = data + ::strlen(data);
+                    Separator = text + ::strlen(text);
             }
 
-            if (Separator > data)
+            if (Separator > text)
             {
-                BASSMIDIEffects = pfc::atodec<bool>(data, 1);
+                BASSMIDIEffects = pfc::atodec<bool>(text, 1);
 
                 if (SchemaVersion >= 9)
                 {
                     {
-                        data = Separator + (*Separator == '|');
+                        text = Separator + (*Separator == '|');
 
-                        Separator = ::strchr(data, '|');
+                        Separator = ::strchr(text, '|');
 
                         if (Separator == nullptr)
-                            Separator = data + ::strlen(data);
+                            Separator = text + ::strlen(text);
                     }
 
-                    if (Separator > data)
+                    if (Separator > text)
                     {
-                        BASSMIDIVoices = pfc::atodec<unsigned int>(data, (t_size)(Separator - data));
+                        BASSMIDIVoices = pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
 
                         if (CurrentSchemaVersion >= 11)
                         {
                             {
-                                data = Separator + (*Separator == '|');
+                                text = Separator + (*Separator == '|');
 
-                                Separator = ::strchr(data, '|');
+                                Separator = ::strchr(text, '|');
 
                                 if (Separator == nullptr)
-                                    Separator = data + ::strlen(data);
+                                    Separator = text + ::strlen(text);
                             }
 
-                            MIDIFlavor = pfc::atodec<unsigned int>(data, (t_size)(Separator - data));
+                            MIDIFlavor = pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
 
                             {
-                                data = Separator + (*Separator == '|');
+                                text = Separator + (*Separator == '|');
 
-                                Separator = ::strchr(data, '|');
+                                Separator = ::strchr(text, '|');
 
                                 if (Separator == nullptr)
-                                    Separator = data + ::strlen(data);
+                                    Separator = text + ::strlen(text);
                             }
 
-                            AllowMIDIEffects = !!pfc::atodec<unsigned int>(data, (t_size)(Separator - data));
+                            AllowMIDIEffects = !!pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
                         }
                     }
                     else
@@ -476,7 +458,7 @@ void MIDIPreset::unserialize(const char * data)
             {
                 size_t len = ::strlen(_MUNTGMSets[i]);
 
-                if (len == (size_t)(Separator - data) && (::strncmp(data, _MUNTGMSets[i], len) == 0))
+                if (len == (size_t)(Separator - text) && (::strncmp(text, _MUNTGMSets[i], len) == 0))
                 {
                     MuntGMSet = (unsigned int)i;
                     break;
@@ -515,7 +497,7 @@ void MIDIPreset::unserialize(const char * data)
             {
                 size_t len = ::strlen(banknames[i]);
 
-                if (len == (size_t)(Separator - data) && !strncmp(data, banknames[i], len))
+                if (len == (size_t)(Separator - text) && !strncmp(text, banknames[i], len))
                 {
                     ADLBankNumber = i;
                     break;
@@ -526,62 +508,62 @@ void MIDIPreset::unserialize(const char * data)
                 return;
 
             {
-                data = Separator + (*Separator == '|');
+                text = Separator + (*Separator == '|');
 
-                Separator = ::strchr(data, '|');
+                Separator = ::strchr(text, '|');
 
                 if (Separator == nullptr)
-                    Separator = data + ::strlen(data);
+                    Separator = text + ::strlen(text);
 
-                if (!*data) return;
+                if (!*text) return;
             }
 
-            ADLChipCount = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+            ADLChipCount = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
             {
-                data = Separator + (*Separator == '|');
+                text = Separator + (*Separator == '|');
 
-                Separator = ::strchr(data, '|');
+                Separator = ::strchr(text, '|');
 
                 if (Separator == nullptr)
-                    Separator = data + ::strlen(data);
+                    Separator = text + ::strlen(text);
 
-                if (!*data) return;
+                if (!*text) return;
             }
 
-            ADLUsePanning = !!pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+            ADLUsePanning = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
             if (CurrentSchemaVersion >= 3)
             {
                 {
-                    data = Separator + (*Separator == '|');
+                    text = Separator + (*Separator == '|');
 
-                    Separator = ::strchr(data, '|');
+                    Separator = ::strchr(text, '|');
 
                     if (Separator == nullptr)
-                        Separator = data + ::strlen(data);
+                        Separator = text + ::strlen(text);
 
-                    if (!*data)
+                    if (!*text)
                         return;
                 }
 
-                ADLChorus = !!pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                ADLChorus = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
                 if (CurrentSchemaVersion >= 7)
                 {
                     {
-                        data = Separator + (*Separator == '|');
+                        text = Separator + (*Separator == '|');
 
-                        Separator = ::strchr(data, '|');
+                        Separator = ::strchr(text, '|');
 
                         if (Separator == nullptr)
-                            Separator = data + ::strlen(data);
+                            Separator = text + ::strlen(text);
 
-                        if (!*data)
+                        if (!*text)
                             return;
                     }
 
-                    ADLEmulatorCore = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                    ADLEmulatorCore = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
                 }
                 else
                     ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
@@ -594,39 +576,39 @@ void MIDIPreset::unserialize(const char * data)
         {
             if (CurrentSchemaVersion >= 10)
             {
-                OPNBankNumber = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                OPNBankNumber = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
                 {
-                    data = Separator + (*Separator == '|');
+                    text = Separator + (*Separator == '|');
 
-                    Separator = ::strchr(data, '|');
+                    Separator = ::strchr(text, '|');
 
                     if (Separator == nullptr)
-                        Separator = data + ::strlen(data);
+                        Separator = text + ::strlen(text);
 
-                    if (!*data)
+                    if (!*text)
                         return;
                 }
 
-                ADLChipCount = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                ADLChipCount = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
                 {
-                    data = Separator + (*Separator == '|');
-                    Separator = ::strchr(data, '|');
-                    if (!Separator) Separator = data + ::strlen(data);
-                    if (!*data) return;
+                    text = Separator + (*Separator == '|');
+                    Separator = ::strchr(text, '|');
+                    if (!Separator) Separator = text + ::strlen(text);
+                    if (!*text) return;
                 }
 
-                ADLUsePanning = !!pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                ADLUsePanning = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
                 {
-                    data = Separator + (*Separator == '|');
-                    Separator = ::strchr(data, '|');
-                    if (!Separator) Separator = data + ::strlen(data);
-                    if (!*data) return;
+                    text = Separator + (*Separator == '|');
+                    Separator = ::strchr(text, '|');
+                    if (!Separator) Separator = text + ::strlen(text);
+                    if (!*text) return;
                 }
 
-                OPNEmulatorCore = !!pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                OPNEmulatorCore = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
             }
             else
             {
@@ -641,25 +623,25 @@ void MIDIPreset::unserialize(const char * data)
         {
             pfc::string8 temp;
 
-            temp.set_string(data, (t_size)(Separator - data));
+            temp.set_string(text, (t_size)(Separator - text));
 
-            GetNukePreset(temp, NukeSynth, NukeBank);
+            NukePlayer::GetPreset(temp, NukeSynth, NukeBank);
 
             if (CurrentSchemaVersion >= 6)
             {
                 {
-                    data = Separator + (*Separator == '|');
+                    text = Separator + (*Separator == '|');
 
-                    Separator = ::strchr(data, '|');
+                    Separator = ::strchr(text, '|');
 
                     if (Separator == nullptr)
-                        Separator = data + ::strlen(data);
+                        Separator = text + ::strlen(text);
 
-                    if (!*data)
+                    if (!*text)
                         return;
                 }
 
-                NukePanning = !!pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                NukePanning = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
             }
             else
             {
@@ -669,52 +651,52 @@ void MIDIPreset::unserialize(const char * data)
         else
         if (PlugInId == PlayerTypeSecretSauce)
         {
-            SCFlavor = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+            SCFlavor = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
             if (CurrentSchemaVersion >= 6)
             {
                 {
-                    data = Separator + (*Separator == '|');
+                    text = Separator + (*Separator == '|');
 
-                    Separator = ::strchr(data, '|');
+                    Separator = ::strchr(text, '|');
 
                     if (Separator == nullptr)
-                        Separator = data + ::strlen(data);
+                        Separator = text + ::strlen(text);
 
-                    if (!*data)
+                    if (!*text)
                         return;
                 }
 
                 if (CurrentSchemaVersion >= 11)
                 {
-                    MIDIFlavor = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                    MIDIFlavor = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
                     {
-                        data = Separator + (*Separator == '|');
+                        text = Separator + (*Separator == '|');
 
-                        Separator = ::strchr(data, '|');
+                        Separator = ::strchr(text, '|');
 
                         if (Separator == nullptr)
-                            Separator = data + ::strlen(data);
+                            Separator = text + ::strlen(text);
 
-                        if (!*data)
+                        if (!*text)
                             return;
                     }
                 }
                 else
                 if (CurrentSchemaVersion >= 8)
                 {
-                    unsigned GSFlavor = pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                    unsigned GSFlavor = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
                     {
-                        data = Separator + (*Separator == '|');
+                        text = Separator + (*Separator == '|');
 
-                        Separator = ::strchr(data, '|');
+                        Separator = ::strchr(text, '|');
 
                         if (Separator == nullptr)
-                            Separator = data + ::strlen(data);
+                            Separator = text + ::strlen(text);
 
-                        if (*data == '\0')
+                        if (*text == '\0')
                             return;
                     }
 
@@ -730,7 +712,7 @@ void MIDIPreset::unserialize(const char * data)
                 else
                     MIDIFlavor = SCFlavor;
 
-                AllowMIDIEffects = !!pfc::atodec<unsigned>(data, (t_size)(Separator - data));
+                AllowMIDIEffects = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
             }
             else
             {
@@ -747,7 +729,7 @@ void MIDIPreset::unserialize(const char * data)
                 MIDIFlavor = MIDIPlayer::filter_default;
         }
 
-        _PluginId = PlugInId;
+        _PlayerType = PlugInId;
 
         _VSTPathName = VSTPath;
         _VSTConfig = VSTConfig;
@@ -779,49 +761,3 @@ void MIDIPreset::unserialize(const char * data)
         _MIDIStandard = MIDIFlavor;
         _UseMIDIEffects = AllowMIDIEffects;
     }
-
-#pragma region("NukePresets")
-/// <summary>
-/// Gets the Nuke preset with the specified name.
-/// </summary>
-void MIDIPreset::GetNukePreset(const char * name, unsigned int & synth, unsigned int & bank)
-{
-    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
-    {
-        const NukePreset & Preset = _NukePresets[i];
-
-        if (::strcmp(Preset.name, name) == 0)
-        {
-            synth = Preset.synth;
-            bank = Preset.bank;
-
-            return;
-        }
-    }
-
-    synth = DefaultMSSynth;
-    bank = DefaultMSBank;
-}
-
-/// <summary>
-/// Imports the synthesizer settings from the Nuke player.
-/// </summary>
-class NukePresetsImporter
-{
-public:
-    NukePresetsImporter()
-    {
-        NukePlayer::EnumerateSynthesizers(EnumCallback);
-    }
-
-private:
-    static void EnumCallback(unsigned int synth, unsigned int bank, const char * name)
-    {
-        NukePreset Preset = { synth, bank, name };
-
-        _NukePresets.append_single(Preset);
-    }
-};
-
-NukePresetsImporter _NukePresetsImporter;
-#pragma endregion

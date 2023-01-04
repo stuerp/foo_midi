@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.01.03) **/
+/** $VER: Configuration.h (2023.01.04) **/
 
 #pragma once
 
@@ -69,7 +69,7 @@ enum
 };
 
 extern cfg_int
-    CfgPlugInId,
+    CfgPlayerType,
     CfgSampleRate,
 
     CfgLoopTypePlayback,
@@ -158,19 +158,21 @@ extern const size_t _FileExtensionCount;
 extern const char * _SysExFileExtensions[];
 extern const size_t _SysExFileExtensionCount;
 
-extern const char TagHash[];
+extern const char TagChannels[];
+extern const char TagEncoding[];
+
+extern const char TagMIDIHash[];
 extern const char TagMIDIFormat[];
-extern const char TagTrackCount[];
-extern const char TagChannelCount[];
-extern const char TagTicks[];
+extern const char TagMIDITrackCount[];
+extern const char TagMIDIChannelCount[];
+extern const char TagMIDITicks[];
 extern const char TagMIDIType[];
-extern const char TagLoopStart[];
-extern const char TagLoopEnd[];
-extern const char TagLoopStartInMs[];
-extern const char TagLoopEndInMs[];
+extern const char TagMIDILoopStart[];
+extern const char TagMIDILoopEnd[];
+extern const char TagMIDILoopStartInMs[];
+extern const char TagMIDILoopEndInMs[];
 extern const char TagMIDIPreset[];
-extern const char TagSysExDumps[];
+extern const char TagMIDISysExDumps[];
 
 extern bool IsMIDIFileExtension(const char * fileExtension);
 extern bool IsSysExFileExtension(const char * ext);
-

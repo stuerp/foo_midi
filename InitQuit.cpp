@@ -1,5 +1,5 @@
 
-/** $VER: InitQuit.cpp (2022.12.31) **/
+/** $VER: InitQuit.cpp (2023.01.04) **/
 
 #pragma warning(disable: 5045)
 
@@ -26,9 +26,13 @@ public:
     InitQuitHandler& operator=(InitQuitHandler&&) = delete;
     virtual ~InitQuitHandler() { };
 
-    void on_init() override
+    void on_init() noexcept override
     {
-        static_api_ptr_t<metadb_index_manager>()->add(new service_impl_t<FileHasher>, GUIDTagHash, system_time_periods::week * 4);
+        try
+        {       
+            static_api_ptr_t<metadb_index_manager>()->add(new service_impl_t<FileHasher>, GUIDTagMIDIHash, system_time_periods::week * 4);
+        }
+        catch (...) { }
     }
 
     void on_quit() noexcept override

@@ -21,7 +21,7 @@ metadb_index_hash FileHasher::transform(const file_info & fileInfo, const playab
 
     Hasher->process(HasherState, &SubsongIndex, sizeof(SubsongIndex));
 
-    const char * Info = fileInfo.info_get(TagHash);
+    const char * Info = fileInfo.info_get(TagMIDIHash);
 
     if (Info)
         Hasher->process_string(HasherState, Info);
@@ -31,14 +31,14 @@ metadb_index_hash FileHasher::transform(const file_info & fileInfo, const playab
 #define HASH_STRING(s)  Info = fileInfo.info_get(s); if (Info) Hasher->process_string(HasherState, Info);
 
     HASH_STRING(TagMIDIFormat);
-    HASH_STRING(TagTrackCount);
-    HASH_STRING(TagChannelCount);
-    HASH_STRING(TagTicks);
+    HASH_STRING(TagMIDITrackCount);
+    HASH_STRING(TagMIDIChannelCount);
+    HASH_STRING(TagMIDITicks);
     HASH_STRING(TagMIDIType);
-    HASH_STRING(TagLoopStart);
-    HASH_STRING(TagLoopEnd);
-    HASH_STRING(TagLoopStartInMs);
-    HASH_STRING(TagLoopEndInMs);
+    HASH_STRING(TagMIDILoopStart);
+    HASH_STRING(TagMIDILoopEnd);
+    HASH_STRING(TagMIDILoopStartInMs);
+    HASH_STRING(TagMIDILoopEndInMs);
 
     return from_md5(Hasher->get_result(HasherState));
 }

@@ -1,5 +1,5 @@
 
-/** $VER: NukePlayer.h (2023.01.02) Nuke **/
+/** $VER: NukePlayer.h (2023.01.04) **/
 
 #pragma once
 
@@ -7,6 +7,8 @@
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
+
+#include <functional>
 
 class nomidisynth;
 
@@ -24,9 +26,13 @@ public:
     void SetBank(unsigned int bank);
     void SetExtp(unsigned int extp);
 
-    typedef void (*SynthesizerEnumerator)(unsigned int synth, unsigned int bank, const char * name);
+    static void GetPreset(const pfc::string8 name, unsigned int & synth, unsigned int & bank);
+    static void GetPreset(size_t index, unsigned int & synth, unsigned int & bank);
+    static pfc::string8 GetPresetName(unsigned int synth, unsigned int bank);
+    static size_t GetPresetIndex(unsigned int synth, unsigned int bank);
 
-    static void EnumerateSynthesizers(SynthesizerEnumerator callback);
+    static void InitializePresets(std::function<void (const pfc::string8 name, unsigned int synth, unsigned int bank)> functor) noexcept;
+    static void EnumeratePresets(std::function<void (const pfc::string8 name, unsigned int synth, unsigned int bank)> functor) noexcept;
 
 protected:
     virtual bool startup() override;
@@ -43,3 +49,12 @@ private:
     unsigned int _Extp;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member
+
+#pragma region("Nuke Presets")
+struct NukePreset
+{
+    pfc::string8 Name;
+    unsigned int SynthId;
+    unsigned int BankId;
+};
+#pragma endregion

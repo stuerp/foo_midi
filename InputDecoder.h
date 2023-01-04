@@ -58,20 +58,31 @@ class InputDecoder : public input_stubs
 {
 public:
     InputDecoder() :
-        _SampleRate((unsigned int)CfgSampleRate),
-        _ResamplingMode((unsigned int)CfgResamplingMode),
-
-        _LoopTypePlayback((unsigned int)CfgLoopTypePlayback),
-        _LoopTypeOther((unsigned int)CfgLoopTypeOther),
+        _IsSysExFile(false),
+        _TrackCount(0),
 
         _UseXMILoops(!!cfg_xmiloopz),
         _UseFF7Loops(!!cfg_ff7loopz),
         _UseRPGMLoops(!!cfg_rpgmloopz),
-        _UseThLoops(!!cfg_thloopz)
-    {
-        _IsEmuDeMIDI = false;
+        _UseThLoops(!!cfg_thloopz),
 
-        _Player = nullptr;
+        _LoopBegin(pfc::infinite32),
+        _LoopBeginInMS(pfc::infinite32),
+        _LoopEnd(pfc::infinite32),
+        _LoopEndInMS(pfc::infinite32),
+
+        _Player(nullptr),
+
+        _SampleRate((unsigned int)CfgSampleRate),
+        _ResamplingMode((unsigned int)CfgResamplingMode),
+
+        _LoopTypePlayback((unsigned int)CfgLoopTypePlayback),
+        _LoopTypeOther((unsigned int)CfgLoopTypeOther)
+    {
+        _FileStats = { 0 };
+        _FileStats2 = { 0 };
+
+        _IsEmuDeMIDI = false;
 
         _LengthInSamples = 0;
         _LengthInTicks = 0;
@@ -113,7 +124,6 @@ public:
     }
 
 public:
-
     #pragma region("input_impl")
     void open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler);
     #pragma endregion
@@ -213,7 +223,7 @@ public:
 private:
     double InitializeTime(unsigned subsongIndex);
 
-    void AddMetaData(file_info & fileInfo, const char * name, const char * value, t_size max);
+    void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
 
     static bool GetSoundFontFilePath(const pfc::string8 filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept;
 
@@ -235,18 +245,32 @@ private:
     #endif
 
 private:
-    MIDIPlayer * _Player;
-    midi_container _Container;
-
+    // File Properties
     pfc::string8 _FilePath;
 
     t_filestats _FileStats;
     t_filestats2 _FileStats2;
 
+    midi_container _Container;
+
     bool _IsSysExFile;
+    size_t _TrackCount;
 
     metadb_index_hash _Hash;
     hasher_md5_result _FileHash;
+
+    bool _UseXMILoops;
+    bool _UseFF7Loops;
+    bool _UseRPGMLoops;
+    bool _UseThLoops;
+
+    unsigned _LoopBegin;
+    unsigned _LoopBeginInMS;
+    unsigned _LoopEnd;
+    unsigned _LoopEndInMS;
+
+    // Player Properties
+    MIDIPlayer * _Player;
 
     unsigned _PlayerType;
     unsigned _SampleRate;
@@ -258,20 +282,10 @@ private:
 
     unsigned _CleanFlags;
 
-    bool _UseXMILoops;
-    bool _UseFF7Loops;
-    bool _UseRPGMLoops;
-    bool _UseThLoops;
-
-    unsigned _TrackCount;
 
     unsigned _LengthInMS;
     unsigned _LengthInTicks;
     unsigned _LengthInSamples;
-    unsigned _LoopBegin;
-    unsigned _LoopBeginInMS;
-    unsigned _LoopEnd;
-    unsigned _LoopEndInMS;
 
     unsigned _LoopCount;
     unsigned _FadeTimeInMs;

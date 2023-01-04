@@ -1,9 +1,11 @@
 
-/** $VER: Preferences.cpp (2023.01.03) **/
+/** $VER: Preferences.cpp (2023.01.04) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
 #include "Preferences.h"
+
+#include "NukePlayer.h"
 
 //#define DEBUG_DIALOG
 
@@ -15,8 +17,6 @@ static const GUID GUIDCfgSampleRateHistory = { 0x408aa155, 0x4c42, 0x42b5, { 0x8
 static const char * DefaultPathMessage = "Click to set.";
 
 static const int SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
-
-extern pfc::array_t<NukePreset> _NukePresets;
 
 cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
 
@@ -200,22 +200,8 @@ void Preferences::reset()
 #else
     SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultResamplingMode);
 #endif
-    {
-        size_t PresetIndex = 0;
 
-        for (size_t i = 0; i < _NukePresets.get_count(); ++i)
-        {
-            const NukePreset & Preset = _NukePresets[i];
-
-            if (Preset.synth == DefaultMSSynth && Preset.bank == DefaultMSBank)
-            {
-                PresetIndex = i;
-                break;
-            }
-        }
-
-        SendDlgItemMessage(IDC_MS_PRESET, CB_SETCURSEL, PresetIndex);
-    }
+    SendDlgItemMessage(IDC_MS_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultMSSynth, DefaultMSBank));
 
     SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, (WPARAM)CfgMIDIFlavor);
 
@@ -242,7 +228,7 @@ void Preferences::apply()
             PlugInId = _IndexToPlugInId[SelectedItem];
 
         CfgVSTiPath = "";
-        CfgPlugInId = PlugInId;
+        CfgPlayerType = PlugInId;
 
         if (PlugInId == PlayerTypeVSTi)
         {
@@ -309,13 +295,13 @@ void Preferences::apply()
     {
         size_t PresetIndex = (size_t)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
 
-        if (PresetIndex >= _NukePresets.get_count())
-            PresetIndex = 0;
+        unsigned int Synth;
+        unsigned int Bank;
 
-        const NukePreset & Preset = _NukePresets[PresetIndex];
+        NukePlayer::GetPreset(PresetIndex, Synth, Bank);
 
-        CfgMSSynthesizer = (t_int32)Preset.synth;
-        CfgMSBank = (t_int32)Preset.bank;
+        CfgMSSynthesizer = (t_int32)Synth;
+        CfgMSBank = (t_int32)Bank;
     }
 
     CfgSoundFontPath = _SoundFontPath;
@@ -376,7 +362,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
     _HasSecretSauce = HasSecretSauce();
 
-    int PlugInId = CfgPlugInId;
+    int PlugInId = CfgPlayerType;
 
     _PlugInIdToIndex[PlugInId] = -1;
     _IndexToPlugInId[-1] = -1;
@@ -761,21 +747,19 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     }
 
     {
-        size_t PresetNumber = 0;
-
         auto w = GetDlgItem(IDC_MS_PRESET);
 
-        for (size_t i = 0; i < _NukePresets.get_count(); ++i)
+        size_t PresetNumber = 0;
+
+        NukePlayer::EnumeratePresets([w, PresetNumber] (const pfc::string8 name, unsigned int synth, unsigned int bank) mutable noexcept
         {
-            const NukePreset & Preset = _NukePresets[i];
+            ::uSendMessageText(w, CB_ADDSTRING, 0, name.c_str());
 
-            ::uSendMessageText(w, CB_ADDSTRING, 0, Preset.name);
+            if ((synth == (unsigned int)CfgMSSynthesizer) && (bank == (unsigned int)CfgMSBank))
+                ::SendMessage(w, CB_SETCURSEL, PresetNumber, 0);
 
-            if (Preset.synth == (unsigned int)CfgMSSynthesizer && Preset.bank == (unsigned int)CfgMSBank)
-                PresetNumber = i;
-        }
-
-        ::SendMessage(w, CB_SETCURSEL, PresetNumber, 0);
+            PresetNumber++;
+        });
     }
 
     {
@@ -1009,7 +993,7 @@ void Preferences::OnTimer(UINT_PTR eventId)
     if (eventId != ID_REFRESH)
         return;
  
-    GetDlgItem(IDC_SAMPLERATE).EnableWindow(CfgPlugInId || !_IsRunning);
+    GetDlgItem(IDC_SAMPLERATE).EnableWindow(CfgPlayerType || !_IsRunning);
 
 #ifdef BASSMIDISUPPORT
     _CacheStatusText.reset();
@@ -1071,15 +1055,14 @@ bool Preferences::HasChanged()
 
     if (!changed)
     {
-        t_size PresetNumber = (t_size)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
+        size_t PresetNumber = (size_t)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
 
-        if (PresetNumber >= _NukePresets.get_count())
-            PresetNumber = 0;
+        unsigned int Synth;
+        unsigned int Bank;
 
-        const NukePreset & Preset = _NukePresets[PresetNumber];
+        NukePlayer::GetPreset(PresetNumber, Synth, Bank);
 
-        if (!(Preset.synth == (unsigned int)CfgMSSynthesizer && Preset.bank == (unsigned int)CfgMSBank))
-            changed = true;
+        changed = (!(Synth == (unsigned int)CfgMSSynthesizer && Bank == (unsigned int)CfgMSBank));
     }
 
     if (!changed)
@@ -1116,12 +1099,12 @@ bool Preferences::HasChanged()
         else
             plugin = _IndexToPlugInId[plugin_selected];
 
-        if (plugin != CfgPlugInId)
+        if (plugin != CfgPlayerType)
             changed = true;
 
         if (!changed && plugin == 1)
         {
-            if (stricmp_utf8(CfgVSTiPath, _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].PathName.c_str()))
+            if (::stricmp_utf8(CfgVSTiPath, _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].PathName.c_str()))
                 changed = true;
 
             if (!changed)
@@ -1140,17 +1123,11 @@ bool Preferences::HasChanged()
     #endif
     }
 
-    if (!changed)
-    {
-        if (stricmp_utf8(_SoundFontPath, CfgSoundFontPath))
-            changed = true;
-    }
+    if (!changed && (::stricmp_utf8(_SoundFontPath, CfgSoundFontPath) != 0))
+        changed = true;
 
-    if (!changed)
-    {
-        if (stricmp_utf8(_MUNTPath, CfgMUNTPath))
-            changed = true;
-    }
+    if (!changed && (::stricmp_utf8(_MUNTPath, CfgMUNTPath) != 0))
+        changed = true;
 
     return changed;
 }

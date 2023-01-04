@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2022.12.31) **/
+/** $VER: Configuration.cpp (2023.01.04) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -101,7 +101,7 @@ static const GUID guid_cfg_midi_reverb = { 0x91c12a1, 0xd42b, 0x4f4e, { 0x80, 0x
 #pragma endregion
 
 cfg_int
-    CfgPlugInId(GUIDPlugInId, DefaultPlayerType),
+    CfgPlayerType(GUIDPlugInId, DefaultPlayerType),
     CfgSampleRate(GUIDSampleRate, DefaultSampleRate),
 
     CfgLoopTypePlayback(guid_cfg_loop_type, DefaultPlaybackLoopType),
@@ -231,18 +231,21 @@ const char * _SysExFileExtensions[] =
 const size_t _SysExFileExtensionCount = _countof(_SysExFileExtensions);
 
 // Names of the meta data fields
-const char TagHash[] = "midi_hash";
+const char TagChannels[] = "channels";
+const char TagEncoding[] = "encoding";
+
+const char TagMIDIHash[] = "midi_hash";
 const char TagMIDIFormat[] = "midi_format";
-const char TagTrackCount[] = "midi_tracks";
-const char TagChannelCount[] = "midi_channels";
-const char TagTicks[] = "midi_ticks";
+const char TagMIDITrackCount[] = "midi_tracks";
+const char TagMIDIChannelCount[] = "midi_channels";
+const char TagMIDITicks[] = "midi_ticks";
 const char TagMIDIType[] = "midi_type";
-const char TagLoopStart[] = "midi_loop_start";
-const char TagLoopEnd[] = "midi_loop_end";
-const char TagLoopStartInMs[] = "midi_loop_start_ms";
-const char TagLoopEndInMs[] = "midi_loop_end_ms";
+const char TagMIDILoopStart[] = "midi_loop_start";
+const char TagMIDILoopEnd[] = "midi_loop_end";
+const char TagMIDILoopStartInMs[] = "midi_loop_start_ms";
+const char TagMIDILoopEndInMs[] = "midi_loop_end_ms";
 const char TagMIDIPreset[] = "midi_preset";
-const char TagSysExDumps[] = "midi_sysex_dumps";
+const char TagMIDISysExDumps[] = "midi_sysex_dumps";
 
 bool IsMIDIFileExtension(const char * fileExtension)
 {

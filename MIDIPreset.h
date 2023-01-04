@@ -1,3 +1,6 @@
+
+/** $VER: MIDIPreset.h (2022.01.04) **/
+
 #pragma once
 
 #pragma warning(disable: 5045)
@@ -21,14 +24,14 @@ public:
 
     virtual ~MIDIPreset() { };
 
-    void serialize(pfc::string8 & p_out);
+    void serialize(pfc::string8 & text);
     void unserialize(const char * data);
 
 public:
     const unsigned int CurrentSchemaVersion = 11;
 
     // version 0
-    unsigned int _PluginId;
+    unsigned int _PlayerType;
 
     // v0 - plug-in == 1 - VSTi
     pfc::string8 _VSTPathName;
@@ -94,18 +97,5 @@ public:
     // v11 - most plugins
     unsigned int _MIDIStandard;
     bool _UseMIDIEffects;
-
-private:
-    const char * GetMSPresetName(unsigned int synth, unsigned int bank);
-    void GetNukePreset(const char * name, unsigned int & synth, unsigned int & bank);
 };
 #pragma warning(default: 4820) // x bytes padding added after data member
-
-#pragma region("MSPresets")
-struct NukePreset
-{
-    unsigned int synth;
-    unsigned int bank;
-    pfc::string8 name;
-};
-#pragma endregion

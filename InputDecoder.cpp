@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.01.03) **/
+/** $VER: InputDecoder.cpp (2023.01.04) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -11,7 +11,7 @@ critical_section _Lock;
 volatile unsigned int _CurrentSampleRate;
 
 /// <summary>
-/// 
+/// Opens the specified file and parses it.
 /// </summary>
 void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler)
 {
@@ -19,8 +19,6 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         filesystem::g_open(file, filePath, filesystem::open_mode_read, abortHandler);
 
     _FilePath = filePath;
-
-    _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
 
     {
         _FileStats = file->get_stats(abortHandler);
@@ -40,36 +38,43 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
     file->read_object(&Data[0], _FileStats.m_size, abortHandler);
 
-    if (_IsSysExFile)
     {
-        if (!midi_processor::process_syx_file(Data, _Container))
-            throw exception_io_data("Invalid SysEx dump");
+        _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
 
-        return;
+        if (_IsSysExFile)
+        {
+            if (!midi_processor::process_syx_file(Data, _Container))
+                throw exception_io_data("Invalid SysEx dump");
+
+            return;
+        }
     }
-    else
+
     if (!midi_processor::process_file(Data, pfc::string_extension(filePath), _Container))
         throw exception_io_data("Invalid MIDI file");
 
     {
-        _TrackCount = _Container.get_track_count();
+        _TrackCount = (size_t)_Container.get_track_count();
 
         if (_TrackCount == 0)
             throw exception_io_data("Invalid MIDI file");
 
-        bool HasDuration = false;
-
-        for (unsigned int i = 0; i < _TrackCount; ++i)
+        // Check if we read a valid MIDI file.
         {
-            if (_Container.get_timestamp_end(i))
-            {
-                HasDuration = true;
-                break;
-            }
-        }
+            bool HasDuration = false;
 
-        if (!HasDuration)
-            throw exception_io_data("Invalid MIDI file");
+            for (size_t i = 0; i < _TrackCount; ++i)
+            {
+                if (_Container.get_timestamp_end((unsigned long)i))
+                {
+                    HasDuration = true;
+                    break;
+                }
+            }
+
+            if (!HasDuration)
+                throw exception_io_data("Invalid MIDI file");
+        }
 
         _Container.scan_for_loops(_UseXMILoops, _UseFF7Loops, _UseRPGMLoops, _UseThLoops);
     }
@@ -93,9 +98,9 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         _Container.trim_start();
 
     _LoopBegin = 
-    _LoopBeginInMS =
+    _LoopBeginInMS = 
     _LoopEnd =
-    _LoopEndInMS = (unsigned int)~0;
+    _LoopEndInMS = pfc::infinite32;
 }
 
 /// <summary>
@@ -107,19 +112,10 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
         return;
 
     // General tags
-    fileInfo.info_set_int("channels", 2);
-    fileInfo.info_set("encoding", "Synthesized");
+    fileInfo.info_set_int(TagChannels, 2);
+    fileInfo.info_set(TagEncoding, "Synthesized");
 
     // Specific tags
-    {
-        pfc::string8 FileHashString;
-
-        for (size_t i = 0; i < 16; ++i)
-            FileHashString += pfc::format_uint((t_uint8)_FileHash.m_data[i], 2, 16);
-
-        fileInfo.info_set(TagHash, FileHashString);
-    }
-
     midi_meta_data MetaData;
 
     _Container.get_meta_data(subsongIndex, MetaData);
@@ -146,15 +142,15 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
                 if (!HasTitle && (pfc::stricmp_ascii(Name.c_str(), "display_name") == 0))
                     Name = "title";
 
-                AddMetaData(fileInfo, Name.c_str(), mdi.m_value.c_str(), 0);
+                AddTag(fileInfo, Name.c_str(), mdi.m_value.c_str(), 0);
             }
         }
     }
 
-    fileInfo.info_set_int(TagMIDIFormat,   _Container.get_format());
-    fileInfo.info_set_int(TagTrackCount,  (_Container.get_format() == 2) ? 1 : _Container.get_track_count());
-    fileInfo.info_set_int(TagChannelCount, _Container.get_channel_count(subsongIndex));
-    fileInfo.info_set_int(TagTicks,    _Container.get_timestamp_end(subsongIndex));
+    fileInfo.info_set_int(TagMIDIFormat,       _Container.get_format());
+    fileInfo.info_set_int(TagMIDITrackCount,  (_Container.get_format() == 2) ? 1 : _Container.get_track_count());
+    fileInfo.info_set_int(TagMIDIChannelCount, _Container.get_channel_count(subsongIndex));
+    fileInfo.info_set_int(TagMIDITicks,        _Container.get_timestamp_end(subsongIndex));
 
     if (MetaData.get_item("type", Item))
         fileInfo.info_set(TagMIDIType, Item.m_value.c_str());
@@ -165,10 +161,10 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
         unsigned long LoopBeginInMS = _Container.get_timestamp_loop_start(subsongIndex, true);
         unsigned long LoopEndInMS = _Container.get_timestamp_loop_end(subsongIndex, true);
 
-        if (LoopBegin != ~0) fileInfo.info_set_int(TagLoopStart, LoopBegin);
-        if (LoopEnd != ~0) fileInfo.info_set_int(TagLoopEnd, LoopEnd);
-        if (LoopBeginInMS != ~0) fileInfo.info_set_int(TagLoopStartInMs, LoopBeginInMS);
-        if (LoopEndInMS != ~0) fileInfo.info_set_int(TagLoopEndInMs, LoopEndInMS);
+        if (LoopBegin != ~0) fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
+        if (LoopEnd != ~0) fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
+        if (LoopBeginInMS != ~0) fileInfo.info_set_int(TagMIDILoopStartInMs, LoopBeginInMS);
+        if (LoopEndInMS != ~0) fileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
     }
 
     {
@@ -194,55 +190,62 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
     }
 
     {
-        service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<FileHasher>;
+        pfc::string8 FileHashString;
 
-        _Hash = IndexClient->transform(fileInfo, playable_location_impl(_FilePath, subsongIndex));
+        for (size_t i = 0; i < 16; ++i)
+            FileHashString += pfc::format_uint((t_uint8)_FileHash.m_data[i], 2, 16);
+
+        fileInfo.info_set(TagMIDIHash, FileHashString);
     }
 
     {
-        pfc::array_t<t_uint8> Tag;
+        service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<FileHasher>;
 
-        static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTagHash, _Hash, Tag);
+        _Hash = IndexClient->transform(fileInfo, playable_location_impl(_FilePath, subsongIndex));
 
-        if (Tag.get_count())
+        pfc::array_t<t_uint8> Tags;
+
+        static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTagMIDIHash, _Hash, Tags);
+
+        if (Tags.get_count())
         {
             file::ptr File;
 
             filesystem::g_open_tempmem(File, abortHandler);
 
-            File->write_object(Tag.get_ptr(), Tag.get_count(), abortHandler);
+            File->write_object(Tags.get_ptr(), Tags.get_count(), abortHandler);
 
             fileInfo.meta_remove_all();
 
             tag_processor::read_trailing(File, fileInfo, abortHandler);
 
             fileInfo.info_set("tagtype", "apev2 db");
+        }
+    }
 
-            {
-                const char * MIDIPreset = fileInfo.meta_get(TagMIDIPreset, 0);
+    {
+        const char * MIDIPreset = fileInfo.meta_get(TagMIDIPreset, 0);
 
-                if (MIDIPreset)
-                {
-                    fileInfo.info_set(TagMIDIPreset, MIDIPreset);
-                    fileInfo.meta_remove_field(TagMIDIPreset);
-                }
-            }
+        if (MIDIPreset)
+        {
+            fileInfo.info_set(TagMIDIPreset, MIDIPreset);
+            fileInfo.meta_remove_field(TagMIDIPreset);
+        }
+    }
 
-            {
-                const char * MIDISysExDumps = fileInfo.meta_get(TagSysExDumps, 0);
+    {
+        const char * MIDISysExDumps = fileInfo.meta_get(TagMIDISysExDumps, 0);
 
-                if (MIDISysExDumps)
-                {
-                    fileInfo.info_set(TagSysExDumps, MIDISysExDumps);
-                    fileInfo.meta_remove_field(TagSysExDumps);
-                }
-            }
+        if (MIDISysExDumps)
+        {
+            fileInfo.info_set(TagMIDISysExDumps, MIDISysExDumps);
+            fileInfo.meta_remove_field(TagMIDISysExDumps);
         }
     }
 }
 
 /// <summary>
-/// 
+/// Initializes the decoder before playing a song.
 /// </summary>
 void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abort_callback & abortHandler)
 {
@@ -265,10 +268,10 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
         midi_meta_data_item item;
 
-        FileInfo.info_set_int(TagMIDIFormat, _Container.get_format());
-        FileInfo.info_set_int(TagTrackCount, _Container.get_format() == 2 ? 1 : _Container.get_track_count());
-        FileInfo.info_set_int(TagChannelCount, _Container.get_channel_count(subsongIndex));
-        FileInfo.info_set_int(TagTicks, _Container.get_timestamp_end(subsongIndex));
+        FileInfo.info_set_int(TagMIDIFormat,       _Container.get_format());
+        FileInfo.info_set_int(TagMIDITrackCount,   _Container.get_format() == 2 ? 1 : _Container.get_track_count());
+        FileInfo.info_set_int(TagMIDIChannelCount, _Container.get_channel_count(subsongIndex));
+        FileInfo.info_set_int(TagMIDITicks,        _Container.get_timestamp_end(subsongIndex));
 
         if (MetaData.get_item("type", item))
             FileInfo.info_set(TagMIDIType, item.m_value.c_str());
@@ -279,39 +282,37 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             unsigned long LoopBeginInMS = _Container.get_timestamp_loop_start(subsongIndex, true);
             unsigned long LoopEndInMS = _Container.get_timestamp_loop_end(subsongIndex, true);
 
-            if (LoopBegin != ~0) FileInfo.info_set_int(TagLoopStart, LoopBegin);
-            if (LoopEnd != ~0) FileInfo.info_set_int(TagLoopEnd, LoopEnd);
-            if (LoopBeginInMS != ~0) FileInfo.info_set_int(TagLoopStartInMs, LoopBeginInMS);
-            if (LoopEndInMS != ~0) FileInfo.info_set_int(TagLoopEndInMs, LoopEndInMS);
+            if (LoopBegin != ~0) FileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
+            if (LoopEnd != ~0) FileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
+            if (LoopBeginInMS != ~0) FileInfo.info_set_int(TagMIDILoopStartInMs, LoopBeginInMS);
+            if (LoopEndInMS != ~0) FileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
         }
 
         {
-            pfc::string8 FileHasString;
+            pfc::string8 FileHashString;
 
             for (size_t i = 0; i < 16; ++i)
-                FileHasString += pfc::format_uint((t_uint8) _FileHash.m_data[i], 2, 16);
+                FileHashString += pfc::format_uint((t_uint8) _FileHash.m_data[i], 2, 16);
 
-            FileInfo.info_set(TagHash, FileHasString);
+            FileInfo.info_set(TagMIDIHash, FileHashString);
         }
 
         {
             service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<FileHasher>;
 
             _Hash = IndexClient->transform(FileInfo, playable_location_impl(_FilePath, subsongIndex));
-        }
 
-        {
-            pfc::array_t<t_uint8> Tag;
+            pfc::array_t<t_uint8> Tags;
 
-            static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTagHash, _Hash, Tag);
+            static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTagMIDIHash, _Hash, Tags);
 
-            if (Tag.get_count())
+            if (Tags.get_count())
             {
                 file::ptr File;
 
                 filesystem::g_open_tempmem(File, abortHandler);
 
-                File->write_object(Tag.get_ptr(), Tag.get_count(), abortHandler);
+                File->write_object(Tags.get_ptr(), Tags.get_count(), abortHandler);
 
                 FileInfo.meta_remove_all();
 
@@ -320,7 +321,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
                 FileInfo.info_set("tagtype", "apev2 db");
             }
         }
-
+    
         {
             const char * MIDIPreset = FileInfo.meta_get(TagMIDIPreset, 0);
 
@@ -331,19 +332,19 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         MIDISysExDumps SysExDumps;
 
         {
-            const char * MIDISysExDumps = FileInfo.meta_get(TagSysExDumps, 0);
+            const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
 
             if (MIDISysExDumps)
                 SysExDumps.unserialize(MIDISysExDumps, _FilePath);
         }
 
-        _Container.set_track_count(_TrackCount);
+        _Container.set_track_count((unsigned int)_TrackCount);
 
         SysExDumps.Merge(_Container, abortHandler);
-    }
 
-    _PlayerType = Preset._PluginId;
-    _IsFirstBlock = true;
+        _PlayerType = Preset._PlayerType;
+        _IsFirstBlock = true;
+    }
 
     midi_meta_data MetaData;
 
@@ -353,7 +354,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         {
             midi_meta_data_item Item;
 
-            if (MetaData.get_item("type", Item) && (strcmp(Item.m_value.c_str(), "MT-32") == 0))
+            if (MetaData.get_item("type", Item) && (pfc::stricmp_ascii(Item.m_value.c_str(), "MT-32") == 0))
                 _PlayerType= PlayerTypeSuperMunt;
         }
     }
@@ -1164,12 +1165,12 @@ void InputDecoder::retag_set_info(t_uint32, const file_info& fileInfo, abort_cal
     }
 
     {
-        fi.meta_remove_field(TagSysExDumps);
+        fi.meta_remove_field(TagMIDISysExDumps);
 
-        const char * SysExDumps = fi.info_get(TagSysExDumps);
+        const char * SysExDumps = fi.info_get(TagMIDISysExDumps);
 
         if (SysExDumps)
-            fi.meta_set(TagSysExDumps, SysExDumps);
+            fi.meta_set(TagMIDISysExDumps, SysExDumps);
     }
 
     {
@@ -1188,7 +1189,7 @@ void InputDecoder::retag_set_info(t_uint32, const file_info& fileInfo, abort_cal
 
             TagFile->read_object(Tag.get_ptr(), Tag.get_count(), abortHandler);
 
-            static_api_ptr_t<metadb_index_manager>()->set_user_data(GUIDTagHash, _Hash, Tag.get_ptr(), Tag.get_count());
+            static_api_ptr_t<metadb_index_manager>()->set_user_data(GUIDTagMIDIHash, _Hash, Tag.get_ptr(), Tag.get_count());
         }
     }
 }
@@ -1266,7 +1267,7 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string
 }
 
 /// <summary>
-/// 
+/// Returns the number of bytes required to represent a Shift-JIS character.
 /// </summary>
 static size_t DecodeShiftJISChar(const uint8_t * data, size_t size)
 {
@@ -1297,7 +1298,7 @@ static size_t DecodeShiftJISChar(const uint8_t * data, size_t size)
 }
 
 /// <summary>
-/// 
+/// Is the data Shift-JIS string?
 /// </summary>
 bool IsValidShiftJIS(const char * data, size_t size)
 {
@@ -1318,9 +1319,9 @@ bool IsValidShiftJIS(const char * data, size_t size)
 }
 
 /// <summary>
-/// Adds the specified name and value to the meta data.
+/// Adds the specified tag.
 /// </summary>
-void InputDecoder::AddMetaData(file_info & fileInfo, const char * name, const char * value, t_size maxLength)
+void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * value, t_size maxLength)
 {
     if ((name == nullptr) || (value == nullptr))
         return;
