@@ -163,7 +163,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
     control     "CC 2/4 (Touhou)",                                  IDC_THLOOPZ, "Button",      BS_AUTOCHECKBOX | WS_TABSTOP, X_43, Y_43, W_43, H_43
     control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7LOOPZ, "Button",     BS_AUTOCHECKBOX | WS_TABSTOP, X_44, Y_44, W_44, H_44
 
-    ltext       "Regular MUNT is used by default.", IDC_MUNT_WARNING, X_45, Y_45, W_45, H_45, NOT WS_VISIBLE
+    ltext       "Regular Munt is used by default.", IDC_MUNT_WARNING, X_45, Y_45, W_45, H_45, NOT WS_VISIBLE
 
     // Right Part
     #define X_50    X_10 + W_10 + 4
@@ -236,11 +236,11 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     #define H_60    11 + H_62 + 4 + H_64 + 4
 
-    groupbox "MUNT", IDC_STATIC, X_60, Y_60, W_60, H_60
+    groupbox "Munt", IDC_STATIC, X_60, Y_60, W_60, H_60
         rtext           "ROM:",                         IDC_STATIC,             X_61, Y_61 + 2, W_61, H_61
-        edittext                                        IDC_MUNT,               X_62, Y_62,     W_62, H_62, ES_AUTOHSCROLL | ES_READONLY
+        edittext                                        IDC_Munt,               X_62, Y_62,     W_62, H_62, ES_AUTOHSCROLL | ES_READONLY
         rtext           "GM Set:",                      IDC_MUNT_GM_TEXT,       X_63, Y_63 + 2, W_63, H_63
-        combobox                                        IDC_MUNT_GM,            X_64, Y_64,     W_64, H_64, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        combobox                                        IDC_Munt_GM,            X_64, Y_64,     W_64, H_64, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     #define X_70    X_60
     #define Y_70    Y_60 + H_60 + 4

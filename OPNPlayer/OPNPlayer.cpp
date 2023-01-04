@@ -24,13 +24,13 @@ bool OPNPlayer::startup()
     if (_Player[0] && _Player[1] && _Player[2])
         return true;
 
-    int chips_per_port = _ChipCount / 3;
+    int chips_per_port = (int)_ChipCount / 3;
     int chips_round = (_ChipCount % 3) != 0;
     int chips_min = _ChipCount < 3;
 
     for (size_t i = 0; i < 3; i++)
     {
-        OPN2_MIDIPlayer * Player = this->_Player[i] = ::opn2_init(_SampleRate);
+        OPN2_MIDIPlayer * Player = this->_Player[i] = ::opn2_init((long)_SampleRate);
         
         if (Player == nullptr)
             return false;
@@ -67,18 +67,18 @@ bool OPNPlayer::startup()
                 break;
         }
 
-        ::opn2_openBankData(Player, Bank, BankSize);
+        ::opn2_openBankData(Player, Bank, (long)BankSize);
 
         ::opn2_setNumChips(Player, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
         ::opn2_setSoftPanEnabled(Player, _FullPanning);
-        ::opn2_setDeviceIdentifier(Player, i);
-        ::opn2_switchEmulator(Player, _EmuCore);
+        ::opn2_setDeviceIdentifier(Player, (unsigned int)i);
+        ::opn2_switchEmulator(Player, (int)_EmuCore);
         ::opn2_reset(Player);
     }
 
     _IsInitialized = true;
 
-    setFilterMode(_FilterMode, _UseMIDIEffects);
+    SetFilter(_FilterType, _UseMIDIEffects);
 
     return true;
 }
@@ -109,14 +109,14 @@ void OPNPlayer::render(audio_sample * out, unsigned long count)
 
         for (size_t i = 0; i < 3; i++)
         {
-            ::opn2_generate(_Player[i], (todo * 2), buffer);
+            ::opn2_generate(_Player[i], (int)(todo * 2), buffer);
 
             for (size_t j = 0, k = (todo * 2); j < k; j++)
                 out[j] += (audio_sample) buffer[j] * (1.0f / 32768.0f);
         }
 
         out += (todo * 2);
-        count -= todo;
+        count -= (unsigned long)todo;
     }
 }
 

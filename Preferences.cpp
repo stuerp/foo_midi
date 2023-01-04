@@ -32,12 +32,12 @@ enum
 #pragma endregion
 
 #pragma region("Munt")
-const char * _MUNTGMSets[] =
+const char * _MuntGMSets[] =
 {
     "Roland",
     "Sierra / King's Quest 6",
 };
-const size_t _MUNTGMSetCount = _countof(_MUNTGMSets);
+const size_t _MuntGMSetCount = _countof(_MuntGMSets);
 #pragma endregion
 
 /// <summary>
@@ -67,7 +67,7 @@ const Preferences::BuiltInPlugin Preferences::BuiltInPlugins[] =
       IsPluginAlwaysPresent },
 #endif
 
-    { "Super MUNT GM",  PlayerTypeSuperMunt,      -1, IsPluginAlwaysPresent },
+    { "Super Munt GM",  PlayerTypeSuperMunt,      -1, IsPluginAlwaysPresent },
 
     { "libADLMIDI",     PlayerTypeADL,            -1, IsPluginAlwaysPresent },
     { "libOPNMIDI",     PlayerTypeOPN,            -1, IsPluginAlwaysPresent },
@@ -153,11 +153,11 @@ void Preferences::reset()
     }
 
     ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT, DefaultPathMessage);
-    ::uSetDlgItemText(m_hWnd, IDC_MUNT, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_Munt, DefaultPathMessage);
 
     _VSTiPath.reset();
     _SoundFontPath.reset();
-    _MUNTPath.reset();
+    _MuntPath.reset();
 
     SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
 
@@ -290,7 +290,7 @@ void Preferences::apply()
     }
 
     CfgADLPanning = (t_int32)SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
-    CfgMUNTGMSet = (t_int32)SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL);
+    CfgMuntGMSet = (t_int32)SendDlgItemMessage(IDC_Munt_GM, CB_GETCURSEL);
 
     {
         size_t PresetIndex = (size_t)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
@@ -305,7 +305,7 @@ void Preferences::apply()
     }
 
     CfgSoundFontPath = _SoundFontPath;
-    CfgMUNTPath = _MUNTPath;
+    CfgMuntPath = _MuntPath;
 
     CfgLoopTypePlayback = (t_int32)SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
     CfgLoopTypeOther = (t_int32)SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
@@ -456,18 +456,18 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         }
 #pragma endregion
 
-#pragma region("MUNT")
+#pragma region("Munt")
         {
-            _MUNTPath = CfgMUNTPath;
+            _MuntPath = CfgMuntPath;
 
             const char * FileName;
 
-            if (_MUNTPath.is_empty())
+            if (_MuntPath.is_empty())
                 FileName = DefaultPathMessage;
             else
-                FileName = _MUNTPath;
+                FileName = _MuntPath;
 
-            ::uSetDlgItemText(m_hWnd, IDC_MUNT, FileName);
+            ::uSetDlgItemText(m_hWnd, IDC_Munt, FileName);
         }
 #pragma endregion
 
@@ -738,12 +738,12 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 #endif
 
     {
-        auto w = GetDlgItem(IDC_MUNT_GM);
+        auto w = GetDlgItem(IDC_Munt_GM);
 
-        for (size_t i = 0; i < _countof(_MUNTGMSets); ++i)
-            ::uSendMessageText(w, CB_ADDSTRING, 0, _MUNTGMSets[i]);
+        for (size_t i = 0; i < _countof(_MuntGMSets); ++i)
+            ::uSendMessageText(w, CB_ADDSTRING, 0, _MuntGMSets[i]);
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMUNTGMSet, 0);
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMuntGMSet, 0);
     }
 
     {
@@ -968,20 +968,20 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
         }
     }
     else
-    if (w == GetDlgItem(IDC_MUNT))
+    if (w == GetDlgItem(IDC_Munt))
     {
         pfc::string8 DirectoryPath;
 
         if (::uBrowseForFolder(m_hWnd, "Locate MT-32 or CM-32L ROM sets...", DirectoryPath))
         {
-            _MUNTPath = DirectoryPath;
+            _MuntPath = DirectoryPath;
 
-            t_size Length = _MUNTPath.length();
+            t_size Length = _MuntPath.length();
 
-            if ((Length >= 1) && !pfc::is_path_separator((unsigned int)*(_MUNTPath.get_ptr() + Length - 1)))
-                _MUNTPath.add_byte('\\');
+            if ((Length >= 1) && !pfc::is_path_separator((unsigned int)*(_MuntPath.get_ptr() + Length - 1)))
+                _MuntPath.add_byte('\\');
 
-            ::uSetWindowText(w, (Length != 0) ? _MUNTPath : DefaultPathMessage);
+            ::uSetWindowText(w, (Length != 0) ? _MuntPath : DefaultPathMessage);
 
             OnChanged();
         }
@@ -1035,11 +1035,15 @@ bool Preferences::HasChanged()
     if (!changed)
     {
         int interp_method = SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
+
         if (interp_method == 2)
             interp_method = 4;
-        else if (interp_method == 3)
+        else
+        if (interp_method == 3)
             interp_method = 7;
-        if (interp_method != Cfg_FluidSynthInterpolationMethod) changed = true;
+
+        if (interp_method != Cfg_FluidSynthInterpolationMethod)
+            changed = true;
     }
 #endif
 
@@ -1082,7 +1086,7 @@ bool Preferences::HasChanged()
     if (!changed && SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != CfgADLPanning)
         changed = true;
 
-    if (!changed && SendDlgItemMessage(IDC_MUNT_GM, CB_GETCURSEL) != CfgMUNTGMSet)
+    if (!changed && SendDlgItemMessage(IDC_Munt_GM, CB_GETCURSEL) != CfgMuntGMSet)
         changed = true;
 
     if (!changed)
@@ -1093,7 +1097,8 @@ bool Preferences::HasChanged()
         if ((plugin_selected >= _ReportedPlugInCount) && (plugin_selected < _ReportedPlugInCount + (int)_VSTiPlugIns.get_count()))
             plugin = 1;
     #ifdef DXISUPPORT
-        else if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
+        else
+        if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
             plugin = 5;
     #endif
         else
@@ -1116,7 +1121,8 @@ bool Preferences::HasChanged()
             }
         }
     #ifdef DXISUPPORT
-        else if (!changed && plugin == 5)
+        else
+        if (!changed && plugin == 5)
         {
             if (dxi_plugins[plugin_selected - _VSTiPlugins.get_count() - plugins_reported] != cfg_dxi_plugin.get_value()) changed = true;
         }
@@ -1126,7 +1132,7 @@ bool Preferences::HasChanged()
     if (!changed && (::stricmp_utf8(_SoundFontPath, CfgSoundFontPath) != 0))
         changed = true;
 
-    if (!changed && (::stricmp_utf8(_MUNTPath, CfgMUNTPath) != 0))
+    if (!changed && (::stricmp_utf8(_MuntPath, CfgMuntPath) != 0))
         changed = true;
 
     return changed;

@@ -397,7 +397,7 @@ bool SFPlayer::startup()
 
     initialized = true;
 
-    setFilterMode(mode, _IsReverbChorusDisabled);
+    SetFilter(mode, _IsReverbChorusDisabled);
 
     _last_error = "";
 

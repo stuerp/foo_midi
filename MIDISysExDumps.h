@@ -19,8 +19,8 @@ public:
 //  MIDISysExDumps & operator=(MIDISysExDumps &&) = delete;
     virtual ~MIDISysExDumps() { };
 
-    void serialize(const char * filePath, pfc::string8 & p_out);
-    void unserialize(const char * p_in, const char * filePath);
+    void Serialize(const char * filePath, pfc::string8 & text);
+    void Deserialize(const char * text, const char * filePath);
 
     void Merge(midi_container & container, abort_callback & abortHandler);
 

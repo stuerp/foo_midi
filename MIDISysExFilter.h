@@ -1,5 +1,5 @@
 
-/** $VER: MIDISysExFilter.h (2022.12.31) **/
+/** $VER: MIDISysExFilter.h (2023.04.01) **/
 
 #pragma once
 
@@ -15,42 +15,17 @@ class MIDISysExFilter : public file_info_filter
 {
 public:
     MIDISysExFilter() = delete;
+
     MIDISysExFilter(const MIDISysExFilter & p_in) = delete;
     MIDISysExFilter(const MIDISysExFilter &&) = delete;
     MIDISysExFilter & operator=(const MIDISysExFilter &) = delete;
     MIDISysExFilter & operator=(MIDISysExFilter &&) = delete;
+
     virtual ~MIDISysExFilter() { };
 
-    MIDISysExFilter(const pfc::list_base_const_t<metadb_handle_ptr> & p_list, const MIDISysExDumps & p_dumps);
+    MIDISysExFilter(const pfc::list_base_const_t<metadb_handle_ptr> & list, const MIDISysExDumps & dumps);
 
-    virtual bool apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo)
-    {
-        pfc::string8 FileExtension = pfc::string_extension(location->get_path());
-
-        for (size_t i = 0; i < _SysExFileExtensionCount; ++i)
-        {
-            if (pfc::stricmp_ascii(FileExtension, _SysExFileExtensions[i]) == 0)
-                return false;
-        }
-
-        t_size Index;
-
-        if (_Handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, location, Index))
-        {
-            pfc::string8 Text;
-
-            _SysExDumps.serialize(location->get_path(), Text);
-
-            if (Text.get_length())
-                fileInfo.info_set(TagMIDISysExDumps, Text);
-            else
-                fileInfo.info_remove(TagMIDISysExDumps);
-
-            return true;
-        }
-
-        return false;
-    }
+    bool apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo) override;
 
 private:
     MIDISysExDumps _SysExDumps;

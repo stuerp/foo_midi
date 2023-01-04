@@ -355,11 +355,11 @@
 - Version is now 2.0.24
 
 2018-04-24 21:48 UTC - kode54
-- Fixed MUNT enabling Super / GM behavior for strictly MT-32 files
+- Fixed Munt enabling Super / GM behavior for strictly MT-32 files
 - Version is now 2.0.23
 
 2018-02-09 10:19 UTC - kode54
-- Fixed MUNT path activating the Apply button
+- Fixed Munt path activating the Apply button
 - Version is now 2.0.22
 
 2017-12-31 04:30 UTC - kode54
@@ -520,7 +520,7 @@
 - Version is now 1.245
 
 2015-09-14 03:00 UTC - kode54
-- Fix MUNT by updating to the latest version and correcting how its API is used
+- Fix Munt by updating to the latest version and correcting how its API is used
 - Updated BASSMIDI to version 2.4.9.15
 - Version is now 1.244
 
@@ -759,7 +759,7 @@
 - Verson is now 1.201
 
 2013-04-28 03:31 UTC - kode54
-- Rebased MUNT to version 1.2.0
+- Rebased Munt to version 1.2.0
 
 2013-04-28 01:04 UTC - kode54
 - Implemented support for applying external SysEx dumps to files
@@ -881,7 +881,7 @@
 - Version is now 1.179
 
 2012-12-14 03:38 UTC - kode54
-- Renamed MUNT output setting and added a warning
+- Renamed Munt output setting and added a warning
 - Fixed enabling and disabling of BASSMIDI cache status
 - Version is now 1.178
 
@@ -969,12 +969,12 @@
 - Version is now 1.159
 
 2012-07-27 03:36 UTC - kode54
-- Added direct floating point output to MUNT
-- Added "Super" mode to MUNT for non-MT-32 files
+- Added direct floating point output to Munt
+- Added "Super" mode to Munt for non-MT-32 files
 - Version is now 1.158
 
 2012-07-22 15:48 UTC - kode54
-- Updated MUNT to git revision munt_0_1_3-484-g6807408
+- Updated Munt to git revision munt_0_1_3-484-g6807408
 - Version is now 1.157
 
 2012-07-14 02:15 UTC - kode54
@@ -1184,7 +1184,7 @@
 - Completed MUS file processor
 
 2011-02-11 17:14 UTC - kode54
-- Fixed VSTi, FluidSynth, and MUNT players to correctly handle note on with velocity of zero
+- Fixed VSTi, FluidSynth, and Munt players to correctly handle note on with velocity of zero
   when seeking
 
 2011-02-11 17:05 UTC - kode54
@@ -1194,11 +1194,11 @@
 - Completed XMI file processor
 
 2011-02-11 13:43 UTC - kode54
-- Fixed loop end truncation in VSTi, FluidSynth, and MUNT players adding note off commands
+- Fixed loop end truncation in VSTi, FluidSynth, and Munt players adding note off commands
   for the wrong channel numbers
 
 2011-02-11 13:22 UTC - kode54
-- Fixed loop end truncation in VSTi, FluidSynth, and MUNT players
+- Fixed loop end truncation in VSTi, FluidSynth, and Munt players
 
 2011-02-11 13:03 UTC - kode54
 - Completed HMI file processor
@@ -1232,7 +1232,7 @@
 - Version is now 1.116
 
 2011-01-24 10:40 UTC - kode54
-- Updated MUNT with MMX/3DNow!/SSE acceleration from the DOSBox Development forum
+- Updated Munt with MMX/3DNow!/SSE acceleration from the DOSBox Development forum
 - Version is now 1.115
 
 2011-01-23 09:04 UTC - kode54
@@ -1260,8 +1260,8 @@
 - Version is now 1.111
 
 2010-09-10 19:39 UTC - kode54
-- Made MUNT data file path configurable
-- Made MUNT debug info configurable, disabled by default
+- Made Munt data file path configurable
+- Made Munt debug info configurable, disabled by default
 - Version is now 1.110
 
 2010-09-06 21:13 UTC - kode54
@@ -1308,7 +1308,7 @@
 - Implemented GM support for MT-32 player
 
 2010-05-13 12:48 UTC - kode54
-- Implemented MT-32 player based on MUNT, triggered by MT-32 SysEx autodetection
+- Implemented MT-32 player based on Munt, triggered by MT-32 SysEx autodetection
 
 2010-05-01 06:55 UTC - kode54
 - Removed full path from the SoundFont selection box display, and made the file selection

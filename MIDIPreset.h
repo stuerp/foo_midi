@@ -24,8 +24,8 @@ public:
 
     virtual ~MIDIPreset() { };
 
-    void serialize(pfc::string8 & text);
-    void unserialize(const char * data);
+    void Serialize(pfc::string8 & text);
+    void Deserialize(const char * text);
 
 public:
     const unsigned int CurrentSchemaVersion = 11;
@@ -65,8 +65,8 @@ public:
     unsigned int _OPNEmulatorCore;
 #pragma endregion
 
- #pragma region("MUNT")
-    // v1 - plug-in == 3 - MUNT
+ #pragma region("Munt")
+    // v1 - plug-in == 3 - Munt
     unsigned int _MuntGMSet;
 #pragma endregion
 

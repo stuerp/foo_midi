@@ -61,7 +61,7 @@ enum
     DefaultMSBank = 2,
     DefaultMSPanning = 0,
 
-    DefaultMIDIFlavor = MIDIPlayer::filter_default,
+    DefaultMIDIFlavor = MIDIPlayer::FilterNone,
     DefaultMIDIEffects = 1,
 #ifdef FLUIDSYNTHSUPPORT
     DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT
@@ -91,7 +91,7 @@ extern cfg_int
     CfgADLChipCount,
     CfgADLPanning,
 
-    CfgMUNTGMSet,
+    CfgMuntGMSet,
 
     CfgMSSynthesizer,
     CfgMSBank,
@@ -108,7 +108,7 @@ extern cfg_int
 extern cfg_string
     CfgVSTiPath,
     CfgSoundFontPath,
-    CfgMUNTPath;
+    CfgMuntPath;
 
 extern cfg_map
     CfgVSTiConfig;
@@ -149,8 +149,8 @@ extern advconfig_checkbox_factory CfgBASSMIDIEffects;
 extern advconfig_integer_factory CfgBASSMIDIVoices;
 #endif
 
-extern const char * _MUNTGMSets[];
-extern const size_t _MUNTGMSetCount;
+extern const char * _MuntGMSets[];
+extern const size_t _MuntGMSetCount;
 
 extern const char * _FileExtensions[];
 extern const size_t _FileExtensionCount;
@@ -160,6 +160,7 @@ extern const size_t _SysExFileExtensionCount;
 
 extern const char TagChannels[];
 extern const char TagEncoding[];
+extern const char TagSampleRate[];
 
 extern const char TagMIDIHash[];
 extern const char TagMIDIFormat[];
@@ -173,6 +174,9 @@ extern const char TagMIDILoopStartInMs[];
 extern const char TagMIDILoopEndInMs[];
 extern const char TagMIDIPreset[];
 extern const char TagMIDISysExDumps[];
+
+extern const char TagBASSMIDIVoiceCount[];
+extern const char TagBASSMIDIVoicesMax[];
 
 extern bool IsMIDIFileExtension(const char * fileExtension);
 extern bool IsSysExFileExtension(const char * ext);

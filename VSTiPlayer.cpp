@@ -590,7 +590,7 @@ bool VSTiPlayer::startup()
 
     _IsInitialized = true;
 
-    setFilterMode(_FilterMode, _UseMIDIEffects);
+    SetFilter(_FilterType, _UseMIDIEffects);
 
     return true;
 }

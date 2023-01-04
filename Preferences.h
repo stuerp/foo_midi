@@ -81,14 +81,14 @@ public:
         COMMAND_HANDLER_EX(IDC_SOUNDFONT, EN_SETFOCUS, OnSetFocus)
         COMMAND_HANDLER_EX(IDC_RESAMPLING_MODE, CBN_SELCHANGE, OnSelectionChange)
 
-        COMMAND_HANDLER_EX(IDC_MUNT, EN_SETFOCUS, OnSetFocus)
+        COMMAND_HANDLER_EX(IDC_Munt, EN_SETFOCUS, OnSetFocus)
 
         COMMAND_HANDLER_EX(IDC_ADL_BANK, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_EDITCHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_ADL_PANNING, BN_CLICKED, OnButtonClick)
 
-        COMMAND_HANDLER_EX(IDC_MUNT_GM, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_Munt_GM, CBN_SELCHANGE, OnSelectionChange)
 
         COMMAND_HANDLER_EX(IDC_MS_PRESET, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_MS_PANNING, BN_CLICKED, OnButtonClick)
@@ -178,7 +178,7 @@ private:
 #pragma endregion
 
 #pragma region("Munt")
-    pfc::string8 _MUNTPath;
+    pfc::string8 _MuntPath;
 #pragma endregion
 
 #pragma region("ADL")

@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPresetFilter.h (2022.12.31) **/
+/** $VER: MIDIPresetFilter.h (2023.01.04) **/
 
 #pragma once
 
@@ -14,30 +14,17 @@ class MIDIPresetFilter : public file_info_filter
 {
 public:
     MIDIPresetFilter() = delete;
+
     MIDIPresetFilter(const MIDIPresetFilter & p_in) = delete;
     MIDIPresetFilter(const MIDIPresetFilter &&) = delete;
     MIDIPresetFilter & operator=(const MIDIPresetFilter &) = delete;
     MIDIPresetFilter & operator=(MIDIPresetFilter &&) = delete;
+
     virtual ~MIDIPresetFilter() { };
 
     MIDIPresetFilter(const pfc::list_base_const_t<metadb_handle_ptr> & list, const char * midiPreset);
 
-    virtual bool apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo)
-    {
-        t_size index;
-
-        if (_Handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, location, index))
-        {
-            if (_MIDIPreset.get_length())
-                fileInfo.info_set(TagMIDIPreset, _MIDIPreset);
-            else
-                fileInfo.info_remove(TagMIDIPreset);
-
-            return true;
-        }
-
-        return false;
-    }
+    bool apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo) override;
 
 private:
     pfc::string8 _MIDIPreset;

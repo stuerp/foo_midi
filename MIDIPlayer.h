@@ -1,10 +1,10 @@
 
-/** $VER: MIDIPlayer.h (2022.12.30) **/
+/** $VER: MIDIPlayer.h (2023.01.04) **/
 
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
-#pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
+#pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include <sdk/foobar2000-lite.h>
 
@@ -27,16 +27,16 @@ public:
 
     enum LoopMode
     {
-        loop_mode_enable = 1 << 0,
-        loop_mode_force = 1 << 1
+        LoopModeEnabled = 0x01,
+        LoopModeForced = 0x02
     };
 
-    void setLoopMode(unsigned int mode);
+    void SetLoopMode(LoopMode loopMode);
 
-    enum filter_mode
+    enum FilterType
     {
-        filter_default = 0,
-        filter_gm,
+        FilterNone = 0,
+        FilterGM,
         filter_gm2,
         filter_sc55,
         filter_sc88,
@@ -45,7 +45,7 @@ public:
         filter_xg
     };
 
-    void setFilterMode(filter_mode m, bool disable_reverb_chorus);
+    void SetFilter(FilterType m, bool disable_reverb_chorus);
 
 protected:
     virtual bool startup() { return false; }
@@ -73,7 +73,8 @@ protected:
     bool _IsInitialized;
     unsigned long _SampleRate;
     system_exclusive_table _SysExMap;
-    filter_mode _FilterMode;
+
+    FilterType _FilterType;
     bool _UseMIDIEffects;
 
 private:
@@ -92,7 +93,7 @@ private:
     unsigned long _TimeCurrent;
     unsigned long _TimeEnd;
 
-    unsigned _LoopMode;
+    unsigned int _LoopMode;
 
     unsigned long _LoopStart;
     unsigned long _LoopEnd;

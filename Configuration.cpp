@@ -124,7 +124,7 @@ cfg_int
     CfgADLPanning(guid_cfg_adl_panning, DefaultADLPanning),
 //  CfgADL4Op(guid_cfg_adl_4op, DefaultADL4Op),
 
-    CfgMUNTGMSet(guid_cfg_munt_gm, DefaultGMSet),
+    CfgMuntGMSet(guid_cfg_munt_gm, DefaultGMSet),
 
     CfgMSSynthesizer(guid_cfg_ms_synth, DefaultMSSynth),
     CfgMSBank(guid_cfg_ms_bank, DefaultMSBank),
@@ -148,7 +148,7 @@ cfg_guid cfg_dxi_plugin(guid_cfg_dxi_plugin, default_cfg_dxi_plugin);
 cfg_string
     CfgVSTiPath(guid_cfg_vst_path, ""),
     CfgSoundFontPath(guid_cfg_soundfont_path, ""),
-    CfgMUNTPath(guid_cfg_munt_base_path, "");
+    CfgMuntPath(guid_cfg_munt_base_path, "");
 
 cfg_map CfgVSTiConfig(guid_cfg_vst_config);
 
@@ -202,6 +202,27 @@ advconfig_checkbox_factory cfg_fluidsynth_effects("Render reverb and chorus effe
 advconfig_integer_factory cfg_fluidsynth_voices("Maximum voice count", guid_cfg_fluidsynth_voices, guid_cfg_fluidsynth_parent, 2, 256, 1, 65535);
 #endif
 
+// Names of the meta data fields
+const char TagChannels[] = "channels";
+const char TagEncoding[] = "encoding";
+const char TagSampleRate[] = "samplerate";
+
+const char TagMIDIHash[] = "midi_hash";
+const char TagMIDIFormat[] = "midi_format";
+const char TagMIDITrackCount[] = "midi_tracks";
+const char TagMIDIChannelCount[] = "midi_channels";
+const char TagMIDITicks[] = "midi_ticks";
+const char TagMIDIType[] = "midi_type";
+const char TagMIDILoopStart[] = "midi_loop_start";
+const char TagMIDILoopEnd[] = "midi_loop_end";
+const char TagMIDILoopStartInMs[] = "midi_loop_start_ms";
+const char TagMIDILoopEndInMs[] = "midi_loop_end_ms";
+const char TagMIDIPreset[] = "midi_preset";
+const char TagMIDISysExDumps[] = "midi_sysex_dumps";
+
+const char TagBASSMIDIVoiceCount[] = "bassmidi_voices";
+const char TagBASSMIDIVoicesMax[] = "bassmidi_voices_max";
+
 const char * _FileExtensions[] =
 {
     "MID",
@@ -229,23 +250,6 @@ const char * _SysExFileExtensions[] =
 };
 
 const size_t _SysExFileExtensionCount = _countof(_SysExFileExtensions);
-
-// Names of the meta data fields
-const char TagChannels[] = "channels";
-const char TagEncoding[] = "encoding";
-
-const char TagMIDIHash[] = "midi_hash";
-const char TagMIDIFormat[] = "midi_format";
-const char TagMIDITrackCount[] = "midi_tracks";
-const char TagMIDIChannelCount[] = "midi_channels";
-const char TagMIDITicks[] = "midi_ticks";
-const char TagMIDIType[] = "midi_type";
-const char TagMIDILoopStart[] = "midi_loop_start";
-const char TagMIDILoopEnd[] = "midi_loop_end";
-const char TagMIDILoopStartInMs[] = "midi_loop_start_ms";
-const char TagMIDILoopEndInMs[] = "midi_loop_end_ms";
-const char TagMIDIPreset[] = "midi_preset";
-const char TagMIDISysExDumps[] = "midi_sysex_dumps";
 
 bool IsMIDIFileExtension(const char * fileExtension)
 {

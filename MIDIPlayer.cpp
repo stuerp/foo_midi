@@ -3,8 +3,6 @@
 
 #include "MIDIPlayer.h"
 
-#pragma warning(disable: 5045)
-
 MIDIPlayer::MIDIPlayer()
 {
     _SamplesRemaining = 0;
@@ -28,16 +26,16 @@ bool MIDIPlayer::Load(const midi_container & midiContainer, unsigned subsong, un
     _TimeCurrent = 0;
     _TimeEnd = midiContainer.get_timestamp_end(subsong, true) + 1000;
 
-    _LoopMode = loopMode;
+    _LoopMode = (LoopMode)loopMode;
 
-    if (_LoopMode & loop_mode_enable)
+    if (_LoopMode & LoopModeEnabled)
     {
         _LoopStartTime = midiContainer.get_timestamp_loop_start(subsong, true);
 
         unsigned long LoopEndTime = midiContainer.get_timestamp_loop_end(subsong, true);
 
         if (_LoopStartTime != ~0UL || LoopEndTime != ~0UL)
-            _LoopMode |= loop_mode_force;
+            _LoopMode |= LoopModeForced;
 
         if (_LoopStartTime == ~0UL)
             _LoopStartTime = 0;
@@ -45,7 +43,7 @@ bool MIDIPlayer::Load(const midi_container & midiContainer, unsigned subsong, un
         if (LoopEndTime == ~0UL)
             LoopEndTime = _TimeEnd - 1000;
 
-        if ((_LoopMode & loop_mode_force))
+        if ((_LoopMode & LoopModeForced))
         {
             unsigned long i;
             uint8_t nullByte = 0;
@@ -256,7 +254,7 @@ unsigned long MIDIPlayer::Play(audio_sample * samples, unsigned long samplesToDo
                 }
             }
 
-            if ((_LoopMode & (loop_mode_enable | loop_mode_force)) == (loop_mode_enable | loop_mode_force))
+            if ((_LoopMode & (LoopModeEnabled | LoopModeForced)) == (LoopModeEnabled | LoopModeForced))
             {
                 if (_LoopStart == ~0)
                 {
@@ -283,7 +281,7 @@ void MIDIPlayer::Seek(unsigned long sample)
 {
     if (sample >= _TimeEnd)
     {
-        if ((_LoopMode & (loop_mode_enable | loop_mode_force)) == (loop_mode_enable | loop_mode_force))
+        if ((_LoopMode & (LoopModeEnabled | LoopModeForced)) == (LoopModeEnabled | LoopModeForced))
         {
             while (sample >= _TimeEnd)
                 sample -= _TimeEnd - _LoopStartTime;
@@ -463,12 +461,12 @@ void MIDIPlayer::setSampleRate(unsigned long sampleRate)
     shutdown();
 }
 
-void MIDIPlayer::setLoopMode(unsigned int loopMode)
+void MIDIPlayer::SetLoopMode(LoopMode loopMode)
 {
-    if (_LoopMode == loopMode)
+    if (_LoopMode == (unsigned int)loopMode)
         return;
 
-    if (loopMode & loop_mode_enable)
+    if (loopMode & LoopModeEnabled)
         _TimeEnd -= _SampleRate;
     else
         _TimeEnd += _SampleRate;
@@ -476,9 +474,9 @@ void MIDIPlayer::setLoopMode(unsigned int loopMode)
     _LoopMode = loopMode;
 }
 
-void MIDIPlayer::setFilterMode(filter_mode filterMode, bool useMIDIEffects)
+void MIDIPlayer::SetFilter(FilterType filterType, bool useMIDIEffects)
 {
-    _FilterMode = filterMode;
+    _FilterType = filterType;
     _UseMIDIEffects = useMIDIEffects;
 
     if (_IsInitialized)
@@ -588,7 +586,7 @@ void MIDIPlayer::sysex_reset_sc(size_t port, unsigned int time)
 
     message[7] = 1;
 
-    switch (_FilterMode)
+    switch (_FilterType)
     {
         case filter_sc55:
             message[8] = 1;
@@ -603,11 +601,11 @@ void MIDIPlayer::sysex_reset_sc(size_t port, unsigned int time)
             break;
 
         case filter_sc8850:
-        case filter_default:
+        case FilterNone:
             message[8] = 4;
             break;
 
-        case filter_gm:
+        case FilterGM:
         case filter_gm2:
         case filter_xg:
         default:
@@ -650,9 +648,9 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
         send_sysex(&syx_reset_gm[0], sizeof(syx_reset_gm), port);
     }
 
-    switch (_FilterMode)
+    switch (_FilterType)
     {
-        case filter_gm:
+        case FilterGM:
             /*
             if (time)
                 send_sysex_time(syx_reset_gm, sizeof(syx_reset_gm), port, time);
@@ -672,11 +670,12 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
         case filter_sc88:
         case filter_sc88pro:
         case filter_sc8850:
-        case filter_default:
+        case FilterNone:
             if (time)
                 send_sysex_time(&syx_reset_gs[0], sizeof(syx_reset_gs), port, time);
             else
                 send_sysex(&syx_reset_gs[0], sizeof(syx_reset_gs), port);
+
             sysex_reset_sc(port, time);
             break;
 
@@ -696,7 +695,7 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
                 send_event_time((uint32_t)(0x78B0 + i + (port << 24)), time);
                 send_event_time((uint32_t)(0x79B0 + i + (port << 24)), time);
 
-                if (_FilterMode != filter_xg || i != 9)
+                if (_FilterType != filter_xg || i != 9)
                 {
                     send_event_time((uint32_t)(0x20B0 + i + (port << 24)), time);
                     send_event_time((uint32_t)(0x00B0 + i + (port << 24)), time);
@@ -708,7 +707,7 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
                 send_event((uint32_t)(0x78B0 + i + (port << 24)));
                 send_event((uint32_t)(0x79B0 + i + (port << 24)));
 
-                if (_FilterMode != filter_xg || i != 9)
+                if (_FilterType != filter_xg || i != 9)
                 {
                     send_event((uint32_t)(0x20B0 + i + (port << 24)));
                     send_event((uint32_t)(0x00B0 + i + (port << 24)));
@@ -718,7 +717,7 @@ void MIDIPlayer::sysex_reset(size_t port, unsigned int time)
         }
     }
 
-    if (_FilterMode == filter_xg)
+    if (_FilterType == filter_xg)
     {
         if (time)
         {
@@ -759,7 +758,7 @@ void MIDIPlayer::send_sysex_filtered(const uint8_t * data, size_t size, size_t p
 {
     send_sysex(data, size, port);
 
-    if (syx_is_reset(data) && _FilterMode != filter_default)
+    if (syx_is_reset(data) && (_FilterType != FilterNone))
         sysex_reset(port, 0);
 }
 
@@ -767,7 +766,7 @@ void MIDIPlayer::send_sysex_time_filtered(const uint8_t * data, size_t size, siz
 {
     send_sysex_time(data, size, port, time);
 
-    if (syx_is_reset(data) && _FilterMode != filter_default)
+    if (syx_is_reset(data) && (_FilterType != FilterNone))
         sysex_reset(port, time);
 }
 #pragma endregion

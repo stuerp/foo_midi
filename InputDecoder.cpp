@@ -97,10 +97,8 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     if (cfg_SkipToFirstNote)
         _Container.trim_start();
 
-    _LoopBegin = 
-    _LoopBeginInMS = 
-    _LoopEnd =
-    _LoopEndInMS = pfc::infinite32;
+    _LoopRange.Clear();
+    _LoopInMs.Clear();
 }
 
 /// <summary>
@@ -175,15 +173,15 @@ void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_c
         if (_LoopTypeOther == 1)
             LengthInSeconds += 1.;
 
-        if (_LoopBegin != ~0 || _LoopEnd != ~0 || (_LoopTypeOther > 2))
+        if ((_LoopTypeOther > 2) || !_LoopRange.IsEmpty())
         {
-            if (_LoopBeginInMS == ~0)
-                _LoopBeginInMS = 0;
+            if (!_LoopInMs.HasBegin())
+                _LoopInMs.SetBegin(0);
 
-            if (_LoopEndInMS == ~0)
-                _LoopEndInMS = LengthInMs;
+            if (!_LoopInMs.HasEnd())
+                _LoopInMs.SetEnd(LengthInMs);
 
-            LengthInSeconds = (double) (_LoopBeginInMS + (_LoopEndInMS - _LoopBeginInMS) * _LoopCount + _FadeTimeInMs) * 0.001;
+            LengthInSeconds = (double) (_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * 0.001;
         }
 
         fileInfo.set_length(LengthInSeconds);
@@ -326,7 +324,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             const char * MIDIPreset = FileInfo.meta_get(TagMIDIPreset, 0);
 
             if (MIDIPreset)
-                Preset.unserialize(MIDIPreset);
+                Preset.Deserialize(MIDIPreset);
         }
 
         MIDISysExDumps SysExDumps;
@@ -335,7 +333,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
 
             if (MIDISysExDumps)
-                SysExDumps.unserialize(MIDISysExDumps, _FilePath);
+                SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
         }
 
         _Container.set_track_count((unsigned int)_TrackCount);
@@ -343,7 +341,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         SysExDumps.Merge(_Container, abortHandler);
 
         _PlayerType = Preset._PlayerType;
-        _IsFirstBlock = true;
+        _IsFirstChunk = true;
     }
 
     midi_meta_data MetaData;
@@ -409,36 +407,34 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     if (_PlayerType == PlayerTypeSuperMunt)
         _SampleRate = (unsigned int)MT32Player::GetSampleRate();
 
+    // Initialize the fade-out range.
     if ((flags & input_flag_no_looping) || (_LoopType < 4))
     {
-        unsigned samples_length = _LengthInSamples;
-
-        _SamplesFadeBegin = samples_length;
-        _SamplesFadeEnd = samples_length;
-        doing_loop = false;
-
-        if (_LoopBegin != ~0 || _LoopEnd != ~0 || (_LoopType > 2))
+        if ((_LoopType > 2) || !_LoopRange.IsEmpty())
         {
-            _SamplesFadeBegin = (unsigned int)::MulDiv((int)(_LoopBeginInMS + (_LoopEndInMS - _LoopBeginInMS) * _LoopCount), (int)_SampleRate, 1000);
-            _SamplesFadeEnd = _SamplesFadeBegin + _SampleRate * _FadeTimeInMs / 1000;
-            doing_loop = true;
+            unsigned int Begin = (unsigned int)::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int)_SampleRate, 1000);
+            unsigned int End = Begin + _SampleRate * _FadeDuration / 1000;
+
+            _FadeRange.Set(Begin, End);
+            _IsLooping = true;
+        }
+        else
+        {
+            _FadeRange.Set(_LengthInSamples, _LengthInSamples);
+            _IsLooping = false;
         }
     }
     else
     {
-        if (_LoopType > 4 || _LoopBegin != ~0 || _LoopEnd != ~0)
+        if ((_LoopType > 4) || !_LoopRange.IsEmpty())
         {
-            _SamplesFadeBegin = (unsigned int)~0;
-            _SamplesFadeEnd = (unsigned)~0;
-            doing_loop = true;
+            _FadeRange.Clear();
+            _IsLooping = true;
         }
         else
         {
-            unsigned samples_length = _LengthInSamples;
-
-            _SamplesFadeBegin = samples_length;
-            _SamplesFadeEnd = samples_length;
-            doing_loop = false;
+            _FadeRange.Set(_LengthInSamples, _LengthInSamples);
+            _IsLooping = false;
         }
     }
 
@@ -475,16 +471,16 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
         {
             _Player->setSampleRate(_SampleRate);
-            _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+            _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-            unsigned LoopMode = MIDIPlayer::loop_mode_enable;
+            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
-            if (doing_loop)
-                LoopMode |= MIDIPlayer::loop_mode_force;
+            if (_IsLooping)
+                LoopMode |= MIDIPlayer::LoopModeForced;
 
             if (_Player->Load(_Container, subsongIndex, LoopMode, _CleanFlags))
             {
-                eof = false;
+                _IsEndOfContainer = false;
                 _DontLoop = true;
 
                 return;
@@ -511,7 +507,8 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
         delete midiPlayer;
 
-        SFPlayer * sfPlayer = new SFPlayer;
+        auto sfPlayer = new SFPlayer;
+
         midiPlayer = sfPlayer;
 
         sfPlayer->setSoundFont(thePreset.soundfont_path);
@@ -520,21 +517,21 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             sfPlayer->setFileSoundFont(file_soundfont);
 
         sfPlayer->setSampleRate(srate);
-        sfPlayer->setInterpolationMethod(fluid_interp_method);
+        sfPlayer->setInterpolationMethod(_FluidSynthInterpolationMethod);
         sfPlayer->setDynamicLoading(cfg_soundfont_dynamic.get());
         sfPlayer->setEffects(thePreset.effects);
         sfPlayer->setVoiceCount(thePreset.voices);
 
-        sfPlayer->setFilterMode((MIDIPlayer::filter_mode) thePreset.MIDIStandard, !thePreset._UseMIDIEffects);
+        sfPlayer->SetFilter((MIDIPlayer::filter_mode) thePreset.MIDIStandard, !thePreset._UseMIDIEffects);
 
-        unsigned LoopMode = 0;
+        unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
-        LoopMode = MIDIPlayer::loop_mode_enable;
-        if (doing_loop) LoopMode |= MIDIPlayer::loop_mode_force;
+        if (_IsLooping)
+            LoopMode |= MIDIPlayer::loop_mode_force;
 
         if (sfPlayer->Load(midi_file, p_subsong, LoopMode, _CleanFlags))
         {
-            eof = false;
+            _IsEndOfContainer = false;
             _DontLoop = true;
 
             return;
@@ -555,8 +552,8 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             delete _Player;
 
             {
-                bassmidi_voices = 0;
-                bassmidi_voices_max = 0;
+                _BASSMIDIVoiceCount = 0;
+                _BASSMIDIVoiceMax = 0;
 
                 if (Preset._SoundFontPathName.is_empty() && SoundFontFilePath.is_empty())
                 {
@@ -565,14 +562,14 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
                 }
             }
 
-            BMPlayer * Player = new BMPlayer;
+            auto Player = new BMPlayer;
 
             Player->setSoundFont(Preset._SoundFontPathName);
 
             if (SoundFontFilePath.length())
                 Player->setFileSoundFont(SoundFontFilePath);
 
-            Player->setInterpolation((int)_ResamplingMode);
+            Player->setInterpolation((int)_BASSMIDIResamplingMode);
             Player->setEffects(Preset._BASSMIDIEffects);
             Player->setVoices((int)Preset._BASSMIDIVoices);
 
@@ -581,16 +578,16 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
         {
             _Player->setSampleRate(_SampleRate);
-            _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+            _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-            unsigned LoopMode = MIDIPlayer::loop_mode_enable;
+            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
-            if (doing_loop)
-                LoopMode |= MIDIPlayer::loop_mode_force;
+            if (_IsLooping)
+                LoopMode |= MIDIPlayer::LoopModeForced;
 
             if (_Player->Load(_Container, subsongIndex, LoopMode, _CleanFlags))
             {
-                eof = false;
+                _IsEndOfContainer = false;
                 _DontLoop = true;
 
                 return;
@@ -606,6 +603,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
 #endif
     else
+    // DirectX
 #ifdef DXISUPPORT
     if (_PlayerType == PlayerTypeDirectX)
     {
@@ -641,6 +639,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
     }
     else
 #endif
+    // ADL
     if (_PlayerType == PlayerTypeADL)
     {
         {
@@ -653,7 +652,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             Player->setFullPanning(Preset._ADLUsePanning);
             Player->set4OpCount(Preset._ADLChipCount * 4 /*cfg_adl_4op*/);
             Player->setCore(Preset._ADLEmulatorCore);
-            Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+            Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
             _Player = Player;
         }
@@ -661,14 +660,14 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         {
             _Player->setSampleRate(_SampleRate);
 
-            unsigned LoopMode = MIDIPlayer::loop_mode_enable;
+            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
-            if (doing_loop)
-                LoopMode |= MIDIPlayer::loop_mode_force;
+            if (_IsLooping)
+                LoopMode |= MIDIPlayer::LoopModeForced;
 
             if (_Player->Load(_Container, subsongIndex, LoopMode, _CleanFlags))
             {
-                eof = false;
+                _IsEndOfContainer = false;
                 _DontLoop = true;
 
                 return;
@@ -676,6 +675,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
     }
     else
+    // OPN
     if (_PlayerType == PlayerTypeOPN)
     {
         {
@@ -693,16 +693,16 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
         {
             _Player->setSampleRate(_SampleRate);
-            _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+            _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-            unsigned LoopMode = MIDIPlayer::loop_mode_enable;
+            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
-            if (doing_loop)
-                LoopMode |= MIDIPlayer::loop_mode_force;
+            if (_IsLooping)
+                LoopMode |= MIDIPlayer::LoopModeForced;
 
             if (_Player->Load(_Container, subsongIndex, LoopMode, _CleanFlags))
             {
-                eof = false;
+                _IsEndOfContainer = false;
                 _DontLoop = true;
 
                 return;
@@ -710,7 +710,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
     }
     else
-    // MUNT (MT32)
+    // Munt (MT32)
     if (_PlayerType == PlayerTypeSuperMunt)
     {
         {
@@ -723,13 +723,13 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
                 IsMT32 = (MetaData.get_item("type", Item) && (::strcmp(Item.m_value.c_str(), "MT-32") == 0));
 
-                if (CfgMUNTPath.is_empty())
-                    console::print("No MUNT base path configured, attempting to load ROMs from plugin install path");
+                if (CfgMuntPath.is_empty())
+                    console::print("No Munt base path configured, attempting to load ROMs from plugin install path");
             }
 
             auto * Player = new MT32Player(!IsMT32, Preset._MuntGMSet);
 
-            pfc::string8 BasePath = CfgMUNTPath;
+            pfc::string8 BasePath = CfgMuntPath;
 
             if (BasePath.is_empty())
             {
@@ -752,14 +752,14 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         {
             _Player->setSampleRate(_SampleRate);
 
-            unsigned LoopMode = MIDIPlayer::loop_mode_enable;
+            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
-            if (doing_loop)
-                LoopMode |= MIDIPlayer::loop_mode_force;
+            if (_IsLooping)
+                LoopMode |= MIDIPlayer::LoopModeForced;
 
             if (_Player->Load(_Container, subsongIndex, LoopMode, _CleanFlags))
             {
-                eof = false;
+                _IsEndOfContainer = false;
                 _DontLoop = true;
 
                 return;
@@ -785,14 +785,14 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         {
             _Player->setSampleRate(_SampleRate);
 
-            unsigned LoopMode = MIDIPlayer::loop_mode_enable;
+            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
-            if (doing_loop)
-                LoopMode |= MIDIPlayer::loop_mode_force;
+            if (_IsLooping)
+                LoopMode |= MIDIPlayer::LoopModeForced;
 
             if (_Player->Load(_Container, subsongIndex, LoopMode, _CleanFlags))
             {
-                eof = false;
+                _IsEndOfContainer = false;
                 _DontLoop = true;
 
                 return;
@@ -826,17 +826,17 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
 
         {
-            _Player->setFilterMode((MIDIPlayer::filter_mode) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+            _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
             _Player->setSampleRate(_SampleRate);
 
-            unsigned LoopMode = MIDIPlayer::loop_mode_enable;
+            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
-            if (doing_loop)
-                LoopMode |= MIDIPlayer::loop_mode_force;
+            if (_IsLooping)
+                LoopMode |= MIDIPlayer::LoopModeForced;
 
             if (_Player->Load(_Container, subsongIndex, LoopMode, _CleanFlags))
             {
-                eof = false;
+                _IsEndOfContainer = false;
                 _DontLoop = true;
 
                 return;
@@ -844,7 +844,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
     }
     else
-    // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413 ))
+    // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413))
     if (_PlayerType == PlayerTypeEmuDeMIDI)
     {
         {
@@ -856,10 +856,10 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
 
         {
-            unsigned LoopMode = MIDIPlayer::loop_mode_enable;
+            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
-            if (doing_loop)
-                LoopMode |= MIDIPlayer::loop_mode_force;
+            if (_IsLooping)
+                LoopMode |= MIDIPlayer::LoopModeForced;
 
             if (_Player->Load(_Container, subsongIndex, LoopMode, _CleanFlags))
             {
@@ -877,7 +877,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
                 _Player->setSampleRate(_SampleRate);
 
-                eof = false;
+                _IsEndOfContainer = false;
                 _DontLoop = true;
 
                 return;
@@ -895,48 +895,11 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 {
     abortHandler.check();
 
-    if (eof)
+    if (_IsEndOfContainer)
         return false;
 
     bool Success = false;
 
-#ifdef DXISUPPORT
-    if (_PlayerType == PlayerTypeDirectX)
-    {
-        unsigned todo = 4096;
-
-        if (_DontLoop)
-        {
-            if (length_samples && samples_done + todo > length_samples)
-            {
-                todo = length_samples - samples_done;
-                if (!todo) return false;
-            }
-        }
-
-    #if audio_sample_size != 32
-        sample_buffer.grow_size(todo * 2);
-
-        float * ptr = sample_buffer.get_ptr();
-
-        thePlayer->FillBuffer(ptr, todo);
-
-        audioChunk.set_data_32(ptr, todo, 2, srate);
-    #else
-        audioChunk.set_data_size(todo * 2);
-        float * ptr = audioChunk.get_data();
-        dxiProxy->fillBuffer(ptr, todo);
-        audioChunk.set_srate(srate);
-        audioChunk.set_channels(2);
-        audioChunk.set_sample_count(todo);
-    #endif
-
-        samples_done += todo;
-
-        rv = true;
-    }
-    else
-#endif
     if (_PlayerType == PlayerTypeVSTi)
     {
         auto * Player = (VSTiPlayer *) _Player;
@@ -985,6 +948,43 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         Success = true;
     }
     else
+#ifdef DXISUPPORT
+    if (_PlayerType == PlayerTypeDirectX)
+    {
+        unsigned todo = 4096;
+
+        if (_DontLoop)
+        {
+            if (length_samples && samples_done + todo > length_samples)
+            {
+                todo = length_samples - samples_done;
+                if (!todo) return false;
+            }
+        }
+
+    #if audio_sample_size != 32
+        sample_buffer.grow_size(todo * 2);
+
+        float * ptr = sample_buffer.get_ptr();
+
+        thePlayer->FillBuffer(ptr, todo);
+
+        audioChunk.set_data_32(ptr, todo, 2, srate);
+    #else
+        audioChunk.set_data_size(todo * 2);
+        float * ptr = audioChunk.get_data();
+        dxiProxy->fillBuffer(ptr, todo);
+        audioChunk.set_srate(srate);
+        audioChunk.set_channels(2);
+        audioChunk.set_sample_count(todo);
+    #endif
+
+        samples_done += todo;
+
+        rv = true;
+    }
+    else
+#endif
     if (_Player)
     {
         const size_t SamplesToDo = 4096;
@@ -1014,34 +1014,34 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     }
 
     // Scale the samples if fading was requaested.
-    if (Success && (_SamplesFadeBegin != ~0) && (_SamplesFadeEnd != ~0))
+    if (Success && _FadeRange.IsSet())
     {
-        unsigned int SamplesPlayedBegin = _SamplesPlayed;
-        unsigned int SamplesPlayedEnd   = _SamplesPlayed + (unsigned int)audioChunk.get_sample_count();
+        unsigned int BeginOfChunk = _SamplesPlayed;
+        unsigned int EndOfChunk   = _SamplesPlayed + (unsigned int)audioChunk.get_sample_count();
 
-        _SamplesPlayed = SamplesPlayedEnd;
+        _SamplesPlayed = EndOfChunk;
 
-        if (SamplesPlayedEnd >= _SamplesFadeBegin)
+        if (EndOfChunk >= _FadeRange.Begin())
         {
-            for (unsigned i = std::max(_SamplesFadeBegin, SamplesPlayedBegin), j = std::min(SamplesPlayedEnd, _SamplesFadeEnd); i < j; ++i)
+            for (unsigned int i = std::max(_FadeRange.Begin(), BeginOfChunk), j = std::min(EndOfChunk, _FadeRange.End()); i < j; ++i)
             {
-                audio_sample * Sample = audioChunk.get_data() + (i - SamplesPlayedBegin) * 2;
-                audio_sample Scale = (audio_sample) (_SamplesFadeEnd - i) / (audio_sample) (_SamplesFadeEnd - _SamplesFadeBegin);
+                audio_sample * Sample = audioChunk.get_data() + (i - BeginOfChunk) * 2;
+                audio_sample Scale = (audio_sample) (_FadeRange.End() - i) / (audio_sample) _FadeRange.Size();
 
                 Sample[0] *= Scale;
                 Sample[1] *= Scale;
             }
 
-            if (SamplesPlayedEnd > _SamplesFadeEnd)
+            if (EndOfChunk > _FadeRange.End())
             {
-                unsigned SamplesRemaining = 0;
+                unsigned int SamplesRemaining = 0;
 
-                if (_SamplesFadeEnd > SamplesPlayedBegin)
-                    SamplesRemaining = _SamplesFadeEnd - SamplesPlayedBegin;
+                if (_FadeRange.End() > BeginOfChunk)
+                    SamplesRemaining = _FadeRange.End() - BeginOfChunk;
 
                 audioChunk.set_sample_count(SamplesRemaining);
 
-                eof = true;
+                _IsEndOfContainer = true;
 
                 if (SamplesRemaining == 0)
                     return false;
@@ -1057,30 +1057,27 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 /// <summary>
 /// 
 /// </summary>
-void InputDecoder::decode_seek(double p_seconds, abort_callback&)
+void InputDecoder::decode_seek(double timeInSeconds, abort_callback&)
 {
-    unsigned seek_msec = unsigned(audio_math::time_to_samples(p_seconds, 1000));
+    unsigned int OffsetInSamples = (unsigned int)audio_math::time_to_samples(timeInSeconds, 1000);
 
-    // This value should not be wrapped to within the loop range
-    _SamplesPlayed = unsigned((t_int64(seek_msec) * t_int64(_SampleRate)) / 1000);
+    _SamplesPlayed = (unsigned int)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000);
+    _IsFirstChunk = true;
+    _IsEndOfContainer = false;
 
-    if (seek_msec > _LoopEndInMS)
+    if (OffsetInSamples > _LoopInMs.End())
+        OffsetInSamples = (OffsetInSamples - _LoopInMs.Begin()) % _LoopInMs.Size() + _LoopInMs.Begin();
+
+    unsigned int PositionInSamples = (unsigned int)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000);
+
+    if ((_LengthInSamples != 0) && (PositionInSamples >= (_LengthInSamples - _SampleRate)))
     {
-        seek_msec = (seek_msec - _LoopBeginInMS) % (_LoopEndInMS - _LoopBeginInMS) + _LoopBeginInMS;
-    }
-
-    _IsFirstBlock = true;
-    eof = false;
-
-    unsigned done = unsigned((t_int64(seek_msec) * t_int64(_SampleRate)) / 1000);
-    if (_LengthInSamples && done >= (_LengthInSamples - _SampleRate))
-    {
-        eof = true;
+        _IsEndOfContainer = true;
         return;
     }
 
 #ifdef DXISUPPORT
-    if (_SelectedPluginIndex == 5)
+    if (_PlayerType == PlayerTypeDirectX)
     {
         dxiProxy->setPosition(seek_msec);
 
@@ -1092,7 +1089,7 @@ void InputDecoder::decode_seek(double p_seconds, abort_callback&)
 #endif
     if (_Player)
     {
-        _Player->Seek(done);
+        _Player->Seek(PositionInSamples);
         return;
     }
 }
@@ -1100,48 +1097,55 @@ void InputDecoder::decode_seek(double p_seconds, abort_callback&)
 /// <summary>
 /// 
 /// </summary>
-bool InputDecoder::decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta)
+bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timestampDelta)
 {
-    int ret = false;
+    bool Success = false;
 
-    if (_IsFirstBlock)
+    if (_IsFirstChunk)
     {
-        p_out.info_set_int("samplerate", _SampleRate);
-        p_timestamp_delta = 0.;
-        _IsFirstBlock = false;
-        ret = true;
+        fileInfo.info_set_int(TagSampleRate, _SampleRate);
+        timestampDelta = 0.;
+
+        _IsFirstChunk = false;
+
+        Success = true;
     }
 
 #ifdef BASSMIDISUPPORT
 #ifdef FLUIDSYNTHSUPPORT
-    if (_SelectedPluginIndex == 4)
-    #else
+    if (_PlayerType == PlayerTypeBASSMIDI)
+#else
     if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
-    #endif
+#endif
     {
-        BMPlayer * bmPlayer = (BMPlayer *) _Player;
-        unsigned voices = bmPlayer->getVoicesActive();
+        auto Player = (BMPlayer *)_Player;
 
-        if (voices != bassmidi_voices)
+        unsigned int VoiceCount = Player->getVoicesActive();
+
+        if (VoiceCount != _BASSMIDIVoiceCount)
         {
-            p_out.info_set_int("bassmidi_voices", voices);
-            bassmidi_voices = voices;
-            ret = true;
+            fileInfo.info_set_int(TagBASSMIDIVoiceCount, VoiceCount);
+
+            _BASSMIDIVoiceCount = VoiceCount;
+
+            Success = true;
         }
 
-        if (voices > bassmidi_voices_max)
+        if (VoiceCount > _BASSMIDIVoiceMax)
         {
-            p_out.info_set_int("bassmidi_voices_max", voices);
-            bassmidi_voices_max = voices;
-            ret = true;
+            fileInfo.info_set_int(TagBASSMIDIVoicesMax, VoiceCount);
+
+            _BASSMIDIVoiceMax = VoiceCount;
+
+            Success = true;
         }
 
-        if (ret)
-            p_timestamp_delta = _AudioChunkDuration;
+        if (Success)
+            timestampDelta = _AudioChunkDuration;
     }
 #endif
 
-    return (bool)ret;
+    return Success;
 }
 
 #pragma region("input_info_writer")
@@ -1208,25 +1212,23 @@ double InputDecoder::InitializeTime(unsigned subsongIndex)
         Length += 1.;
 
     _LengthInTicks = _Container.get_timestamp_end(subsongIndex); // theSequence->m_tempoMap.Sample2Tick(len, 1000);
-    _LengthInSamples = (unsigned) (((__int64) _LengthInMS * (__int64) _SampleRate) / 1000);
+    _LengthInSamples = (unsigned int) (((__int64) _LengthInMS * (__int64) _SampleRate) / 1000);
 
     if (_LoopType == 1)
         _LengthInSamples += _SampleRate;
 
-    _LoopBegin = _Container.get_timestamp_loop_start(subsongIndex);
-    _LoopEnd = _Container.get_timestamp_loop_end(subsongIndex);
-    _LoopBeginInMS = _Container.get_timestamp_loop_start(subsongIndex, true);
-    _LoopEndInMS = _Container.get_timestamp_loop_end(subsongIndex, true);
+    _LoopRange.Set(_Container.get_timestamp_loop_start(subsongIndex), _Container.get_timestamp_loop_end(subsongIndex));
+    _LoopInMs.Set(_Container.get_timestamp_loop_start(subsongIndex, true), _Container.get_timestamp_loop_end(subsongIndex, true));
 
-    if (_LoopBegin != ~0 || _LoopEnd != ~0 || (_LoopType > 2))
+    if ((_LoopType > 2) || !_LoopRange.IsEmpty())
     {
-        if (_LoopBeginInMS == ~0)
-            _LoopBeginInMS = 0;
+        if (!_LoopInMs.HasBegin())
+            _LoopInMs.SetBegin(0);
 
-        if (_LoopEndInMS == ~0)
-            _LoopEndInMS = _LengthInMS;
+        if (!_LoopInMs.HasEnd())
+            _LoopInMs.SetEnd(_LengthInMS);
 
-        Length = (double) (_LoopBeginInMS + (_LoopEndInMS - _LoopBeginInMS) * _LoopCount + _FadeTimeInMs) * 0.001;
+        Length = (double) (_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * 0.001;
     }
 
     return Length;

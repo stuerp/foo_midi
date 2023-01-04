@@ -51,6 +51,35 @@ extern critical_section _Lock;
 extern volatile unsigned int _CurrentSampleRate;
 
 /// <summary>
+/// Represents a range.
+/// </summary>
+class Range
+{
+public:
+    Range() noexcept  { Clear(); }
+    virtual ~Range() noexcept { }
+
+    unsigned int Begin() const noexcept { return _Begin; }
+    unsigned int End() const noexcept { return _End; }
+
+    void Set(unsigned int begin, unsigned int end) noexcept { _Begin = begin; _End = end; }
+    void SetBegin(unsigned int begin) noexcept { _Begin = begin; }
+    void SetEnd(unsigned int end) noexcept { _End = end; }
+    void Clear() { Set(pfc::infinite32, pfc::infinite32); }
+
+    unsigned int Size() const noexcept { return _End - _Begin; }
+
+    bool IsEmpty() const noexcept { return (_Begin == pfc::infinite32) && (_End == pfc::infinite32); }
+    bool IsSet() const noexcept { return  (_Begin != pfc::infinite32) && (_End != pfc::infinite32); }
+    bool HasBegin() const noexcept { return _Begin != pfc::infinite32; }
+    bool HasEnd() const noexcept { return _End != pfc::infinite32; }
+
+private:
+    unsigned int _Begin;
+    unsigned int _End;
+};
+
+/// <summary>
 /// Implements an input decoder.
 /// </summary>
 #pragma warning(disable: 4820) // x bytes padding added after data member
@@ -66,18 +95,17 @@ public:
         _UseRPGMLoops(!!cfg_rpgmloopz),
         _UseThLoops(!!cfg_thloopz),
 
-        _LoopBegin(pfc::infinite32),
-        _LoopBeginInMS(pfc::infinite32),
-        _LoopEnd(pfc::infinite32),
-        _LoopEndInMS(pfc::infinite32),
+        _LoopRange(),
+        _LoopInMs(),
 
         _Player(nullptr),
 
         _SampleRate((unsigned int)CfgSampleRate),
-        _ResamplingMode((unsigned int)CfgResamplingMode),
 
         _LoopTypePlayback((unsigned int)CfgLoopTypePlayback),
-        _LoopTypeOther((unsigned int)CfgLoopTypeOther)
+        _LoopTypeOther((unsigned int)CfgLoopTypeOther),
+
+        _BASSMIDIResamplingMode((unsigned int)CfgResamplingMode)
     {
         _FileStats = { 0 };
         _FileStats2 = { 0 };
@@ -92,10 +120,10 @@ public:
                                     (cfg_filter_banks ? midi_container::clean_flag_banks : 0);
 
         _LoopCount = (unsigned int)CfgLoopCount.get();
-        _FadeTimeInMs = (unsigned int)CfgFadeTimeInMS.get();
+        _FadeDuration = (unsigned int)CfgFadeTimeInMS.get();
 
     #ifdef FLUIDSYNTHSUPPORT
-        fluid_interp_method(Cfg_FluidSynthInterpolationMethod),
+        _FluidSynthInterpolationMethod(Cfg_FluidSynthInterpolationMethod),
     #endif
 
     #ifdef DXISUPPORT
@@ -159,7 +187,7 @@ public:
 
     bool decode_run(audio_chunk & audioChunk, abort_callback & abortHandler);
 
-    void decode_seek(double p_seconds, abort_callback&);
+    void decode_seek(double p_seconds, abort_callback &);
 
     bool decode_can_seek()
     {
@@ -168,22 +196,17 @@ public:
 
     bool decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta);
 
-    bool decode_get_dynamic_info_track(file_info&, double&)
-    {
-        return false;
-    }
+    bool decode_get_dynamic_info_track(file_info &, double &) noexcept { return false; }
 
-    void decode_on_idle(abort_callback&)
-    {
-    }
+    void decode_on_idle(abort_callback &) noexcept { }
     #pragma endregion
 
     #pragma region("input_info_writer")
     void retag_set_info(t_uint32, const file_info& fileInfo, abort_callback & abortHandler);
 
-    void retag_commit(abort_callback&) { }
+    void retag_commit(abort_callback &) { }
 
-    void remove_tags(abort_callback&) { }
+    void remove_tags(abort_callback &) { }
     #pragma endregion
 
     static bool g_is_our_content_type(const char * p_content_type)
@@ -264,17 +287,14 @@ private:
     bool _UseRPGMLoops;
     bool _UseThLoops;
 
-    unsigned _LoopBegin;
-    unsigned _LoopBeginInMS;
-    unsigned _LoopEnd;
-    unsigned _LoopEndInMS;
+    Range _LoopRange;
+    Range _LoopInMs;
 
     // Player Properties
     MIDIPlayer * _Player;
 
     unsigned _PlayerType;
     unsigned _SampleRate;
-    unsigned _ResamplingMode;
 
     unsigned _LoopType;
     unsigned _LoopTypePlayback;
@@ -282,33 +302,35 @@ private:
 
     unsigned _CleanFlags;
 
-
     unsigned _LengthInMS;
     unsigned _LengthInTicks;
     unsigned _LengthInSamples;
 
     unsigned _LoopCount;
-    unsigned _FadeTimeInMs;
 
     unsigned _SamplesPlayed;
     unsigned _SamplesDone;
-    unsigned _SamplesFadeBegin;
-    unsigned _SamplesFadeEnd;
+
+    unsigned _FadeDuration; // in ms
+    Range _FadeRange;
 
     bool _IsEmuDeMIDI;
-    bool doing_loop;
-    bool eof;
+    bool _IsLooping;
+    bool _IsEndOfContainer;
     bool _DontLoop;
-    bool _IsFirstBlock;
+    bool _IsFirstChunk;
 
     double _AudioChunkDuration;
 
 #ifdef BASSMIDISUPPORT
-    unsigned bassmidi_voices, bassmidi_voices_max;
+    unsigned int _BASSMIDIResamplingMode;
+
+    unsigned int _BASSMIDIVoiceCount;
+    unsigned int _BASSMIDIVoiceMax;
 #endif
 
 #ifdef FLUIDSYNTHSUPPORT
-    unsigned fluid_interp_method;
+    unsigned int _FluidSynthInterpolationMethod;
 #endif
 
 #ifdef DXISUPPORT

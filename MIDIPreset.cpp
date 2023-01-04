@@ -53,7 +53,7 @@ MIDIPreset::MIDIPreset() noexcept
 #endif
 
     {
-        _MuntGMSet = (unsigned int)CfgMUNTGMSet;
+        _MuntGMSet = (unsigned int)CfgMuntGMSet;
     }
 
 #ifdef DXISUPPORT
@@ -114,11 +114,12 @@ MIDIPreset::MIDIPreset() noexcept
     }
 }
 
-void MIDIPreset::serialize(pfc::string8 & text)
+void MIDIPreset::Serialize(pfc::string8 & text)
     {
         const char * const * banknames = adl_getBankNames();
 
         text.reset();
+        text.prealloc(512);
 
         text += pfc::format_int(CurrentSchemaVersion);
         text += "|";
@@ -212,7 +213,7 @@ void MIDIPreset::serialize(pfc::string8 & text)
         {
             text += "|";
 
-            text += _MUNTGMSets[_MuntGMSet];
+            text += _MuntGMSets[_MuntGMSet];
         }
         else
         if (_PlayerType == 9)
@@ -244,7 +245,7 @@ void MIDIPreset::serialize(pfc::string8 & text)
         }
     }
 
-void MIDIPreset::unserialize(const char * text)
+void MIDIPreset::Deserialize(const char * text)
     {
         if (text == nullptr)
             return;
@@ -254,7 +255,7 @@ void MIDIPreset::unserialize(const char * text)
         if (Separator == nullptr)
             return;
 
-        unsigned SchemaVersion = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
+        unsigned int SchemaVersion = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
 
         if (SchemaVersion > CurrentSchemaVersion)
             return;
@@ -454,18 +455,18 @@ void MIDIPreset::unserialize(const char * text)
         {
             size_t i;
 
-            for (i = 0; i < _MUNTGMSetCount; ++i)
+            for (i = 0; i < _MuntGMSetCount; ++i)
             {
-                size_t len = ::strlen(_MUNTGMSets[i]);
+                size_t len = ::strlen(_MuntGMSets[i]);
 
-                if (len == (size_t)(Separator - text) && (::strncmp(text, _MUNTGMSets[i], len) == 0))
+                if (len == (size_t)(Separator - text) && (::strncmp(text, _MuntGMSets[i], len) == 0))
                 {
                     MuntGMSet = (unsigned int)i;
                     break;
                 }
             }
 
-            if (i == _MUNTGMSetCount)
+            if (i == _MuntGMSetCount)
                 return;
         }
         else
@@ -704,7 +705,7 @@ void MIDIPreset::unserialize(const char * text)
                         MIDIFlavor = MIDIPlayer::filter_xg;
                     else
                     if (SCFlavor == 3)
-                        MIDIFlavor = (GSFlavor == 0) ? MIDIPlayer::filter_default : MIDIPlayer::filter_sc55 + (GSFlavor - 1);
+                        MIDIFlavor = (GSFlavor == 0) ? MIDIPlayer::FilterNone : MIDIPlayer::filter_sc55 + (GSFlavor - 1);
                     else
                     if (SCFlavor <= 2)
                         MIDIFlavor = SCFlavor;
@@ -726,7 +727,7 @@ void MIDIPreset::unserialize(const char * text)
             }
 
             if (MIDIFlavor > MIDIPlayer::filter_xg)
-                MIDIFlavor = MIDIPlayer::filter_default;
+                MIDIFlavor = MIDIPlayer::FilterNone;
         }
 
         _PlayerType = PlugInId;

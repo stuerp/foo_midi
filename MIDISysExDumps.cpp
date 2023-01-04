@@ -5,7 +5,7 @@
 
 #include "MIDISysExDumps.h"
 
-void MIDISysExDumps::serialize(const char * filePath, pfc::string8 & text)
+void MIDISysExDumps::Serialize(const char * filePath, pfc::string8 & text)
 {
     if (filePath == nullptr)
         return;
@@ -25,7 +25,7 @@ void MIDISysExDumps::serialize(const char * filePath, pfc::string8 & text)
     }
 }
 
-void MIDISysExDumps::unserialize(const char * text, const char * filePath)
+void MIDISysExDumps::Deserialize(const char * text, const char * filePath)
 {
     if ((text == nullptr) || (filePath == nullptr))
         return;
