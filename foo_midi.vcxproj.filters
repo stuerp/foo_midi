@@ -21,7 +21,7 @@
     <ClCompile Include="EdMPlayer.cpp" />
     <ClCompile Include="FileTypeRegistrar.cpp" />
     <ClCompile Include="foo_midi.cpp" />
-    <ClCompile Include="InitQuit.cpp" />
+    <ClCompile Include="InitQuitHandler.cpp" />
     <ClCompile Include="InputDecoder.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MIDIPreset.cpp" />

@@ -243,6 +243,8 @@ public:
         return false;
     }
 
+    static void InitializeIndexManager();
+
 private:
     double InitializeTime(unsigned subsongIndex);
 

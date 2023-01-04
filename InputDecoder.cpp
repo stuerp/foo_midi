@@ -5,10 +5,16 @@
 
 #include "InputDecoder.h"
 
+#include <sdk/hasher_md5.h>
+#include <sdk/metadb_index.h>
+#include <sdk/system_time_keeper.h>
+
 volatile int _IsRunning = 0;
 
 critical_section _Lock;
 volatile unsigned int _CurrentSampleRate;
+
+const GUID GUIDTagMIDIHash = { 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0x61, 0xc3, 0x26, 0x87, 0xd0 } };
 
 /// <summary>
 /// Opens the specified file and parses it.
@@ -1348,6 +1354,15 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
         fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
     else
         fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));
+}
+
+void InputDecoder::InitializeIndexManager()
+{
+    try
+    {       
+        static_api_ptr_t<metadb_index_manager>()->add(new service_impl_t<FileHasher>, GUIDTagMIDIHash, system_time_periods::week * 4);
+    }
+    catch (...) { }
 }
 
 /*

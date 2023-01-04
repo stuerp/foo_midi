@@ -28,5 +28,3 @@ public:
 
     metadb_index_hash transform(const file_info & fileInfo, const playable_location & location) override;
 };
-
-const GUID GUIDTagMIDIHash = { 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0x61, 0xc3, 0x26, 0x87, 0xd0 } };
