@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2022.12.31) **/
+/** $VER: foo_midi.rc (2023.01.05) **/
 
 #include "resource.h"
 
@@ -266,7 +266,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
     groupbox "Nuke", IDC_STATIC, X_70, Y_70, W_70, H_70
         rtext       "Preset:",              IDC_NUKE_PRESET_TEXT,     X_71, Y_71 + 2, W_71, H_71
         combobox                            IDC_NUKE_PRESET,          X_72, Y_72,     W_72, H_72, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        control     "Enable soft panning",  IDC_MS_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_73, Y_73, W_73, H_73
+        control     "Enable soft panning",  IDC_NUKE_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_73, Y_73, W_73, H_73
 
     // Common
     #define X_80    X_70
@@ -333,6 +333,12 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
         rtext       "Chips:",               IDC_ADL_CHIPS_TEXT, X_93, Y_93 + 2, W_93, H_93
         combobox                            IDC_ADL_CHIPS,      X_94, Y_94,     W_94, H_94, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
         control     "Enable soft panning",  IDC_ADL_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_95, Y_95, W_95, H_95
+}
+
+IDD_PREFERENCES_PATHS dialogex 0, 0, 0, 0
+style DS_SETFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 0x0
+{
 }
 
 VS_VERSION_INFO versioninfo

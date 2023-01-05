@@ -140,7 +140,7 @@ void Preferences::reset()
     {
         GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
-        GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
+        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(FALSE);
     }
 
     {
@@ -173,7 +173,7 @@ void Preferences::reset()
     SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion);
     SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments);
     SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks);
-    SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, DefaultMSPanning);
+    SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultMSPanning);
     SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, DefaultMIDIFlavor);
     SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !DefaultMIDIEffects);
 
@@ -320,7 +320,7 @@ void Preferences::apply()
     cfg_filter_instruments = (t_int32)SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
     cfg_filter_banks = (t_int32)SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
 
-    CfgMSPanning = (t_int32)SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK);
+    CfgMSPanning = (t_int32)SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK);
 
 #ifdef FLUIDSYNTHSUPPORT
     {
@@ -558,7 +558,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     {
         GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
-        GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
+        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(FALSE);
     }
 
     if ((PlugInId != PlayerTypeVSTi) && (PlugInId != PlayerTypeFluidSynth) && (PlugInId != PlayerTypeBASSMIDI) && (PlugInId != PlayerTypeSecretSauce))
@@ -654,7 +654,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM)cfg_filter_instruments);
     SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, (WPARAM)cfg_filter_banks);
 
-    SendDlgItemMessage(IDC_MS_PANNING, BM_SETCHECK, (WPARAM)CfgMSPanning);
+    SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, (WPARAM)CfgMSPanning);
 
 #pragma region("ADL")
     {
@@ -869,7 +869,7 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
 
     GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlugInId == 9);
     GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlugInId == 9);
-    GetDlgItem(IDC_MS_PANNING).EnableWindow(PlugInId == 9);
+    GetDlgItem(IDC_NUKE_PANNING).EnableWindow(PlugInId == 9);
 
     {
         bool enable = (PlugInId == 1) || (PlugInId == 2) || (PlugInId == 4) || (PlugInId == 10);
@@ -1029,7 +1029,7 @@ bool Preferences::HasChanged()
     if (!changed && SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK) != cfg_emidi_exclusion) changed = true;
     if (!changed && SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK) != cfg_filter_instruments) changed = true;
     if (!changed && SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK) != cfg_filter_banks) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_MS_PANNING, BM_GETCHECK) != CfgMSPanning) changed = true;
+    if (!changed && SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK) != CfgMSPanning) changed = true;
 
 #ifdef FLUIDSYNTHSUPPORT
     if (!changed)
