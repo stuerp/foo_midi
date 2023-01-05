@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2022.12.31) **/
+/** $VER: Preferences.h (2023.01.05) **/
 
 #pragma warning(disable: 5045)
 
@@ -47,12 +47,14 @@ public:
 
     virtual ~Preferences() { };
 
-    t_uint32 get_state() override;
-    void apply() override;
-    void reset() override;
+    #pragma region("preferences_page_instance")
+    t_uint32 get_state() final;
+    void apply() final;
+    void reset() final;
+    #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP(Preferences)
+    BEGIN_MSG_MAP_EX(Preferences)
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_TIMER(OnTimer)
 
@@ -149,13 +151,14 @@ private:
 
 #pragma region("VSTi")
     pfc::string8 _VSTiPath;
+    pfc::string8 _VSTiSearchPath;
 
     void GetVSTiPlugins(const char * pathName = nullptr, puFindFile findFile = nullptr);
 
     struct VSTiPlugin
     {
-        std::string Name;
-        std::string PathName;
+        pfc::string8 Name;
+        pfc::string8 PathName;
         uint32_t Id;
         bool HasEditor;
     };
@@ -286,7 +289,9 @@ public:
 
     GUID get_guid() noexcept
     {
-        return COMPONENT_GUID;
+        static const GUID GUID = {0x08390b0c,0x5ba7,0x4abc,{0xb5,0x29,0x70,0x79,0x17,0x27,0x12,0xa4}};
+
+        return GUID;
     }
 
     GUID get_parent_guid() noexcept

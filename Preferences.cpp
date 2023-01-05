@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2023.01.04) **/
+/** $VER: Preferences.cpp (2023.01.05) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -8,6 +8,8 @@
 #include "NukePlayer.h"
 
 //#define DEBUG_DIALOG
+
+#pragma hdrstop
 
 extern char _DLLFileName[];
 extern volatile int _IsRunning;
@@ -69,9 +71,9 @@ const Preferences::BuiltInPlugin Preferences::BuiltInPlugins[] =
 
     { "Super Munt GM",  PlayerTypeSuperMunt,      -1, IsPluginAlwaysPresent },
 
-    { "libADLMIDI",     PlayerTypeADL,            -1, IsPluginAlwaysPresent },
-    { "libOPNMIDI",     PlayerTypeOPN,            -1, IsPluginAlwaysPresent },
-    { "oplmidi",        PlayerTypeOPL,            -1, IsPluginNeverPresent },
+    { "LibADLMIDI",     PlayerTypeADL,            -1, IsPluginAlwaysPresent },
+    { "LibOPNMIDI",     PlayerTypeOPN,            -1, IsPluginAlwaysPresent },
+    { "OPL MIDI",       PlayerTypeOPL,            -1, IsPluginNeverPresent },
     { "Nuke",           PlayerTypeNuke,           -1, IsPluginAlwaysPresent },
     { "Secret Sauce",   PlayerTypeSecretSauce,    -1, IsSecretSaucePresent }
 };
@@ -93,156 +95,45 @@ t_uint32 Preferences::get_state()
     return State;
 }
 
-void Preferences::reset()
-{
-    int PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
-    int SelectedItem = _PluginPresentMap[PlugInIndex];
-
-    SendDlgItemMessage(IDC_PLUGIN, CB_SETCURSEL, (WPARAM)SelectedItem);
-
-    if ((DefaultPlayerType != PlayerTypeFluidSynth) && (DefaultPlayerType != PlayerTypeBASSMIDI))
-    {
-        GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_SOUNDFONT_FILE_PATH).EnableWindow(FALSE);
-        GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(FALSE);
-        GetDlgItem(IDC_CACHED_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_CACHED).EnableWindow(FALSE);
-    }
-
-    if (DefaultPlayerType != PlayerTypeADL)
-    {
-        GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_ADL_BANK).EnableWindow(FALSE);
-        GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_ADL_CHIPS).EnableWindow(FALSE);
-        GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
-    }
-
-    if (DefaultPlayerType == PlayerTypeSuperMunt)
-    {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
-    }
-    else
-    if (_VSTiPlugIns.get_count() == 0)
-    {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
-    }
-    else
-    {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
-    }
-
-    if (DefaultPlayerType != PlayerTypeNuke)
-    {
-        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
-        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(FALSE);
-    }
-
-    {
-        bool enable = (DefaultPlayerType == PlayerTypeVSTi) || (DefaultPlayerType == PlayerTypeFluidSynth) || (DefaultPlayerType == PlayerTypeBASSMIDI) || (DefaultPlayerType == PlayerTypeSecretSauce);
-
-        GetDlgItem(IDC_FILTER_GROUP).EnableWindow(enable);
-        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
-        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
-        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
-    }
-
-    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, DefaultPathMessage);
-    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, DefaultPathMessage);
-
-    _VSTiPath.reset();
-    _SoundFontPath.reset();
-    _MuntPath.reset();
-
-    SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
-
-    if ((DefaultPlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
-        GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
-
-    SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_SETCURSEL, DefaultPlaybackLoopType);
-    SendDlgItemMessage(IDC_LOOP_OTHER, CB_SETCURSEL, DefaultOtherLoopType);
-    SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, default_cfg_thloopz);
-    SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, default_cfg_rpgmloopz);
-    SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz);
-    SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz);
-    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion);
-    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments);
-    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks);
-    SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultMSPanning);
-    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, DefaultMIDIFlavor);
-    SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !DefaultMIDIEffects);
-
-    {
-        SelectedItem = 0;
-
-        for (size_t i = 0; i < _ADLBanks.get_count(); ++i)
-        {
-            if (_ADLBanks[i].number == DefaultADLBank)
-            {
-                SelectedItem = (int)i;
-                break;
-            }
-        }
-
-        SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, (WPARAM)SelectedItem);
-    }
-
-    SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, DefaultADLPanning);
-    SetDlgItemInt(IDC_ADL_CHIPS, DefaultADLChipCount, 0);
-
-#ifdef FLUIDSYNTHSUPPORT
-    SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, 2);
-#else
-    SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultResamplingMode);
-#endif
-
-    SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultMSSynth, DefaultMSBank));
-
-    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, (WPARAM)CfgMIDIFlavor);
-
-    _VSTiConfig.resize(0);
-
-    OnChanged();
-}
-
 void Preferences::apply()
 {
     {
-        int PlugInId = -1;
+        int PlayerType = -1;
 
         int SelectedItem = (int)SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
 
-        if (SelectedItem >= _ReportedPlugInCount && SelectedItem < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count()))
-            PlugInId = PlayerTypeVSTi;
-    #ifdef DXISUPPORT
-        else
-        if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
-            plugin = PlayerTypeDirectX;
-    #endif
-        else
-            PlugInId = _IndexToPlugInId[SelectedItem];
-
-        CfgVSTiFilePath = "";
-        CfgPlayerType = PlugInId;
-
-        if (PlugInId == PlayerTypeVSTi)
         {
-            CfgVSTiFilePath = _VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].PathName.c_str();
+            if (SelectedItem >= _ReportedPlugInCount && SelectedItem < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count()))
+                PlayerType = PlayerTypeVSTi;
+        #ifdef DXISUPPORT
+            else
+            if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
+                PlayerType = PlayerTypeDirectX;
+        #endif
+            else
+                PlayerType = _IndexToPlugInId[SelectedItem];
 
-            CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].Id] = _VSTiConfig;
+            CfgPlayerType = PlayerType;
         }
-    #ifdef DXISUPPORT
-        else
-        if (plugin == PlayerTypeDirectX)
+
         {
-            cfg_dxi_plugin = dxi_plugins[plugin_selected - _VSTiPlugins.get_count() - plugins_reported];
+            CfgVSTiFilePath = "";
+
+            if (PlayerType == PlayerTypeVSTi)
+            {
+                CfgVSTiFilePath = _VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].PathName.c_str();
+
+                CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].Id] = _VSTiConfig;
+            }
         }
-    #endif
+
+        #ifdef DXISUPPORT
+            else
+            if (PlayerType == PlayerTypeDirectX)
+            {
+                cfg_dxi_plugin = dxi_plugins[plugin_selected - _VSTiPlugins.get_count() - plugins_reported];
+            }
+        #endif
     }
 
     {
@@ -345,6 +236,133 @@ Cfg_FluidSynthInterpolationMethod = interp_method;
 
     OnChanged();
 }
+
+void Preferences::reset()
+{
+    int PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
+    int SelectedItem = _PluginPresentMap[PlugInIndex];
+
+    SendDlgItemMessage(IDC_PLUGIN, CB_SETCURSEL, (WPARAM)SelectedItem);
+
+    if ((DefaultPlayerType != PlayerTypeFluidSynth) && (DefaultPlayerType != PlayerTypeBASSMIDI))
+    {
+        const int ControlId[] =
+        {
+            IDC_VST_PATH,
+            IDC_SOUNDFONT_TEXT, IDC_SOUNDFONT_FILE_PATH,
+            IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
+            IDC_CACHED_TEXT, IDC_CACHED
+        };
+
+        for (size_t i = 0; i < _countof(ControlId); ++i)
+            GetDlgItem(ControlId[i]).EnableWindow(FALSE);
+    }
+
+    if (DefaultPlayerType != PlayerTypeADL)
+    {
+        const int ControlId[] =
+        {
+            IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
+            IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
+            IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
+            IDC_ADL_PANNING
+        };
+
+        for (size_t i = 0; i < _countof(ControlId); ++i)
+            GetDlgItem(ControlId[i]).EnableWindow(FALSE);
+    }
+
+    if (DefaultPlayerType == PlayerTypeSuperMunt)
+    {
+        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
+    }
+    else
+    if (_VSTiPlugIns.get_count() == 0)
+    {
+        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
+    }
+    else
+    {
+        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
+    }
+
+    if (DefaultPlayerType != PlayerTypeNuke)
+    {
+        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
+        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(FALSE);
+    }
+
+    {
+        bool enable = (DefaultPlayerType == PlayerTypeVSTi) || (DefaultPlayerType == PlayerTypeFluidSynth) || (DefaultPlayerType == PlayerTypeBASSMIDI) || (DefaultPlayerType == PlayerTypeSecretSauce);
+
+        GetDlgItem(IDC_FILTER_GROUP).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
+    }
+
+    ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, DefaultPathMessage);
+
+    _VSTiPath.reset();
+    _SoundFontPath.reset();
+    _MuntPath.reset();
+
+    SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
+
+    if ((DefaultPlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
+        GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
+
+    SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_SETCURSEL, DefaultPlaybackLoopType);
+    SendDlgItemMessage(IDC_LOOP_OTHER, CB_SETCURSEL, DefaultOtherLoopType);
+    SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, default_cfg_thloopz);
+    SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, default_cfg_rpgmloopz);
+    SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz);
+    SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz);
+    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion);
+    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments);
+    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks);
+    SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultMSPanning);
+    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, DefaultMIDIFlavor);
+    SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !DefaultMIDIEffects);
+
+    {
+        SelectedItem = 0;
+
+        for (size_t i = 0; i < _ADLBanks.get_count(); ++i)
+        {
+            if (_ADLBanks[i].number == DefaultADLBank)
+            {
+                SelectedItem = (int)i;
+                break;
+            }
+        }
+
+        SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, (WPARAM)SelectedItem);
+    }
+
+    SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, DefaultADLPanning);
+    SetDlgItemInt(IDC_ADL_CHIPS, DefaultADLChipCount, 0);
+
+#ifdef FLUIDSYNTHSUPPORT
+    SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, 2);
+#else
+    SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultResamplingMode);
+#endif
+
+    SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultMSSynth, DefaultMSBank));
+
+    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, (WPARAM)CfgMIDIFlavor);
+
+    _VSTiConfig.resize(0);
+
+    OnChanged();
+}
 #pragma endregion
 
 #pragma region("CDialogImpl")
@@ -360,11 +378,9 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     int TemplateUnitY = ::MulDiv(468, 8, HIWORD(BaseUnits));
 #endif
 
-    _HasSecretSauce = HasSecretSauce();
+    int PlayerType = CfgPlayerType;
 
-    int PlugInId = CfgPlayerType;
-
-    _PlugInIdToIndex[PlugInId] = -1;
+    _PlugInIdToIndex[PlayerType] = -1;
     _IndexToPlugInId[-1] = -1;
 
     for (size_t i = 0; i < _countof(BuiltInPlugins); ++i)
@@ -377,21 +393,21 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
     int PlugInIndex = -1;
 
-    if (PlugInId != PlayerTypeVSTi && PlugInId != PlayerTypeDirectX)
+    if (PlayerType != PlayerTypeVSTi && PlayerType != PlayerTypeDirectX)
     {
-        PlugInIndex = _PlugInIdToIndex[PlugInId];
+        PlugInIndex = _PlugInIdToIndex[PlayerType];
 
         if (PlugInIndex < 0 || !BuiltInPlugins[PlugInIndex].IsPresent(this))
         {
-            PlugInId = DefaultPlayerType;
+            PlayerType = DefaultPlayerType;
             PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
         }
         else
-        if (BuiltInPlugins[PlugInIndex].plugin_number_alt == PlugInId)
-            PlugInId = BuiltInPlugins[PlugInIndex].Id;
+        if (BuiltInPlugins[PlugInIndex].plugin_number_alt == PlayerType)
+            PlayerType = BuiltInPlugins[PlugInIndex].Id;
     }
 
-    size_t SelectedVSTiPluginIndex = (size_t)~0;
+    size_t VSTiPluginIndex = (size_t)~0;
 
     {
         CWindow w = GetDlgItem(IDC_PLUGIN);
@@ -399,7 +415,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         {
             _ReportedPlugInCount = 0;
 
-            _PluginPresentMap[PlugInId] = -1;
+            _PluginPresentMap[PlayerType] = -1;
 
             for (size_t i = 0; i < _countof(BuiltInPlugins); ++i)
             {
@@ -419,14 +435,24 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
                 }
             }
         }
+    }
 
  #pragma region("VSTi")
+    {
+        {
+            CfgVSTiSearchPath.get(_VSTiSearchPath);
+
+            ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, !_VSTiSearchPath.is_empty() ? _VSTiSearchPath : DefaultPathMessage);
+        }
+
         GetVSTiPlugins();
 
         size_t VSTiCount = _VSTiPlugIns.get_size();
 
         if (VSTiCount > 0)
         {
+            CWindow w = GetDlgItem(IDC_PLUGIN);
+
             pfc::string8 Text; Text << "Found " << pfc::format_int((t_int64)_VSTiPlugIns.get_size()).c_str() << " VSTi plug-ins."; console::print(Text);
 
             for (size_t i = 0, j = VSTiCount; i < j; ++i)
@@ -435,8 +461,8 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
                 ::uSendMessageText(w, CB_ADDSTRING, 0, _VSTiPlugIns[i].Name.c_str());
 
-                if ((PlugInId == PlayerTypeVSTi) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiFilePath) == 0))
-                    SelectedVSTiPluginIndex = i;
+                if ((PlayerType == PlayerTypeVSTi) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiFilePath) == 0))
+                    VSTiPluginIndex = i;
             }
         }
 #pragma endregion
@@ -507,16 +533,16 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 #endif
     }
 
-    if ((PlugInId == PlayerTypeVSTi) && (SelectedVSTiPluginIndex == ~0))
+    if ((PlayerType == PlayerTypeVSTi) && (VSTiPluginIndex == ~0))
     {
-        PlugInId = DefaultPlayerType;
+        PlayerType = DefaultPlayerType;
         PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
     }
 
-    if ((PlugInId == PlayerTypeEmuDeMIDI) && _IsRunning)
+    if ((PlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
-    if ((PlugInId != PlayerTypeFluidSynth) && (PlugInId != PlayerTypeBASSMIDI))
+    if ((PlayerType != PlayerTypeFluidSynth) && (PlayerType != PlayerTypeBASSMIDI))
     {
         GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_SOUNDFONT_FILE_PATH).EnableWindow(FALSE);
@@ -526,42 +552,42 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         GetDlgItem(IDC_CACHED).EnableWindow(FALSE);
     }
 
-    if (PlugInId != PlayerTypeSuperMunt)
+    if (PlayerType != PlayerTypeSuperMunt)
     {
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
     }
 
-    if (PlugInId != PlayerTypeADL)
+    if (PlayerType != PlayerTypeADL)
     {
         GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_BANK).EnableWindow(FALSE);
     }
 
-    if (PlugInId != PlayerTypeADL && PlugInId != PlayerTypeOPN)
+    if (PlayerType != PlayerTypeADL && PlayerType != PlayerTypeOPN)
     {
         GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_CHIPS).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
     }
 
-    if (PlugInId != PlayerTypeVSTi)
+    if (PlayerType != PlayerTypeVSTi)
     {
         GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
     }
     else
     {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(_VSTiPlugIns[SelectedVSTiPluginIndex].HasEditor);
-        _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[SelectedVSTiPluginIndex].Id];
+        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(_VSTiPlugIns[VSTiPluginIndex].HasEditor);
+        _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[VSTiPluginIndex].Id];
     }
 
-    if (PlugInId != PlayerTypeNuke)
+    if (PlayerType != PlayerTypeNuke)
     {
         GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
         GetDlgItem(IDC_NUKE_PANNING).EnableWindow(FALSE);
     }
 
-    if ((PlugInId != PlayerTypeVSTi) && (PlugInId != PlayerTypeFluidSynth) && (PlugInId != PlayerTypeBASSMIDI) && (PlugInId != PlayerTypeSecretSauce))
+    if ((PlayerType != PlayerTypeVSTi) && (PlayerType != PlayerTypeFluidSynth) && (PlayerType != PlayerTypeBASSMIDI) && (PlayerType != PlayerTypeSecretSauce))
     {
         GetDlgItem(IDC_FILTER_GROUP).EnableWindow(FALSE);
 
@@ -576,8 +602,8 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
         int SelectedPlugInIndex = -1;
 
-        if (PlugInId == PlayerTypeVSTi)
-            SelectedPlugInIndex = _ReportedPlugInCount + (int)SelectedVSTiPluginIndex;
+        if (PlayerType == PlayerTypeVSTi)
+            SelectedPlugInIndex = _ReportedPlugInCount + (int)VSTiPluginIndex;
     #ifdef DXISUPPORT
         else
         if (PlugInId == PlayerTypeDirectX)
@@ -589,7 +615,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         }
     #endif
         else
-            SelectedPlugInIndex = _PluginPresentMap[PlugInId];
+            SelectedPlugInIndex = _PluginPresentMap[PlayerType];
 
         ::SendMessage(w, CB_SETCURSEL, (WPARAM)SelectedPlugInIndex, (LPARAM)0);
     }
@@ -783,6 +809,8 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     uSetWindowText(GetDlgItem(IDC_CACHED), "No info.");
 #endif
 
+    _HasSecretSauce = HasSecretSauce();
+
     SetTimer(ID_REFRESH, 20);
 
     _IsBusy = false;
@@ -915,20 +943,15 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
 
     if (w == GetDlgItem(IDC_VST_PATH))
     {
-        pfc::string8 DirectoryPath;
+        pfc::string8 DirectoryPath = _VSTiSearchPath;
+
+        DirectoryPath.truncate_to_parent_path();
 
         if (::uBrowseForFolder(m_hWnd, "Locate VSTi plug-ins...", DirectoryPath))
         {
-            _VSTiPath = DirectoryPath;
+            _VSTiSearchPath = DirectoryPath;
 
-            t_size Length = _VSTiPath.length();
-
-            if ((Length >= 1) && !pfc::is_path_separator((unsigned int)*(_VSTiPath.get_ptr() + Length - 1)))
-                _VSTiPath.add_byte('\\');
-
-            ::uSetWindowText(w, (Length != 0) ? _VSTiPath : DefaultPathMessage);
-
-            OnChanged();
+            ::uSetWindowText(w, !_VSTiSearchPath.is_empty() ? _VSTiSearchPath : DefaultPathMessage);
         }
     }
     else
@@ -936,7 +959,7 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
     {
         pfc::string8 DirectoryPath = _SoundFontPath;
 
-        DirectoryPath.truncate(DirectoryPath.scan_filename());
+        DirectoryPath.truncate_to_parent_path();
 
         pfc::string8 FilePath = _SoundFontPath;
 
@@ -962,7 +985,7 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
         {
             _SoundFontPath = FilePath;
 
-            ::uSetWindowText(w, FilePath.get_ptr() + FilePath.scan_filename());
+            ::uSetWindowText(w, !_SoundFontPath.isEmpty() ? _SoundFontPath : DefaultPathMessage);
 
             OnChanged();
         }
@@ -972,16 +995,13 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
     {
         pfc::string8 DirectoryPath;
 
+        DirectoryPath.truncate_to_parent_path();
+
         if (::uBrowseForFolder(m_hWnd, "Locate MT-32 or CM-32L ROM sets...", DirectoryPath))
         {
             _MuntPath = DirectoryPath;
 
-            t_size Length = _MuntPath.length();
-
-            if ((Length >= 1) && !pfc::is_path_separator((unsigned int)*(_MuntPath.get_ptr() + Length - 1)))
-                _MuntPath.add_byte('\\');
-
-            ::uSetWindowText(w, (Length != 0) ? _MuntPath : DefaultPathMessage);
+            ::uSetWindowText(w, !_MuntPath.isEmpty() ? _MuntPath : DefaultPathMessage);
 
             OnChanged();
         }
@@ -1150,15 +1170,13 @@ void Preferences::OnChanged()
 /// </summary>
 void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
 {
-    pfc::string8 VSTiSearchPath;
-
     if (findFile == nullptr)
     {
         _VSTiPlugIns.set_size(0);
 
-        CfgVSTiSearchPath.get(VSTiSearchPath);
+        CfgVSTiSearchPath.get(_VSTiSearchPath);
 
-        if (VSTiSearchPath.is_empty())
+        if (_VSTiSearchPath.is_empty())
         {
             GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
 
@@ -1167,14 +1185,14 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
 
         console::print("Enumerating VSTi plug-ins...");
 
-        if (VSTiSearchPath[VSTiSearchPath.length() - 1] != '\\')
-            VSTiSearchPath.add_byte('\\');
+        if (_VSTiSearchPath[_VSTiSearchPath.length() - 1] != '\\')
+            _VSTiSearchPath.add_byte('\\');
 
-        VSTiSearchPath += "*.*";
+        _VSTiSearchPath += "*.*";
 
-        pathName = VSTiSearchPath;
+        pathName = _VSTiSearchPath;
 
-        findFile = ::uFindFirstFile(VSTiSearchPath);
+        findFile = ::uFindFirstFile(_VSTiSearchPath);
     }
 
     if (findFile == nullptr)
@@ -1229,17 +1247,14 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
                     {
                         if ((VendorName.length() == 0) || ((ProductName.length() >= VendorName.length()) && (::strncmp(VendorName.c_str(), ProductName.c_str(), VendorName.length()) == 0)))
                         {
-                            Plugin.Name += ProductName;
+                            Plugin.Name.add_string(ProductName);
                         }
                         else
                         {
                             Plugin.Name += VendorName;
 
                             if (ProductName.length())
-                            {
-                                Plugin.Name += ' ';
-                                Plugin.Name += ProductName;
-                            }
+                                Plugin.Name.add_string(' ' + ProductName);
                         }
                     }
                     else

@@ -46,6 +46,7 @@
 /** Dialog Preferences Root **/
 
 #define IDD_CONFIG 106
+#define IDD_PREFERENCES_ROOT_NAME STR_COMPONENT_NAME
 
 #define IDC_PLUGIN 1000
 #define IDC_SAMPLERATE 1001
@@ -112,3 +113,4 @@
 /** Dialog: Preferences Paths **/
 
 #define IDD_PREFERENCES_PATHs 2000
+#define IDD_PREFERENCES_PATHS "Paths"
