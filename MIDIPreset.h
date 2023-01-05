@@ -34,11 +34,11 @@ public:
     unsigned int _PlayerType;
 
     // v0 - plug-in == 1 - VSTi
-    pfc::string8 _VSTPathName;
+    pfc::string8 _VSTiFilePath;
     std::vector<uint8_t> _VSTConfig;
 
     // v0 - plug-in == 2/4 - SoundFont synthesizer
-    pfc::string8 _SoundFontPathName;
+    pfc::string8 _SoundFontFilePath;
 
 #ifdef DXISUPPORT
     // v0 - plug-in == 5 - DXi

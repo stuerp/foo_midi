@@ -103,7 +103,7 @@ void Preferences::reset()
     if ((DefaultPlayerType != PlayerTypeFluidSynth) && (DefaultPlayerType != PlayerTypeBASSMIDI))
     {
         GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_SOUNDFONT).EnableWindow(FALSE);
+        GetDlgItem(IDC_SOUNDFONT_FILE_PATH).EnableWindow(FALSE);
         GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(FALSE);
         GetDlgItem(IDC_CACHED_TEXT).EnableWindow(FALSE);
@@ -138,8 +138,8 @@ void Preferences::reset()
 
     if (DefaultPlayerType != PlayerTypeNuke)
     {
-        GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
+        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
         GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
     }
 
@@ -152,8 +152,8 @@ void Preferences::reset()
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
     }
 
-    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT, DefaultPathMessage);
-    ::uSetDlgItemText(m_hWnd, IDC_Munt, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, DefaultPathMessage);
 
     _VSTiPath.reset();
     _SoundFontPath.reset();
@@ -201,7 +201,7 @@ void Preferences::reset()
     SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultResamplingMode);
 #endif
 
-    SendDlgItemMessage(IDC_MS_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultMSSynth, DefaultMSBank));
+    SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultMSSynth, DefaultMSBank));
 
     SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, (WPARAM)CfgMIDIFlavor);
 
@@ -290,10 +290,10 @@ void Preferences::apply()
     }
 
     CfgADLPanning = (t_int32)SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
-    CfgMuntGMSet = (t_int32)SendDlgItemMessage(IDC_Munt_GM, CB_GETCURSEL);
+    CfgMuntGMSet = (t_int32)SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL);
 
     {
-        size_t PresetIndex = (size_t)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
+        size_t PresetIndex = (size_t)SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
 
         unsigned int Synth;
         unsigned int Bank;
@@ -452,7 +452,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
             else
                 FileName = _SoundFontPath.get_ptr() + _SoundFontPath.scan_filename();
 
-            ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT, FileName);
+            ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, FileName);
         }
 #pragma endregion
 
@@ -467,7 +467,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
             else
                 FileName = _MuntPath;
 
-            ::uSetDlgItemText(m_hWnd, IDC_Munt, FileName);
+            ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, FileName);
         }
 #pragma endregion
 
@@ -519,7 +519,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     if ((PlugInId != PlayerTypeFluidSynth) && (PlugInId != PlayerTypeBASSMIDI))
     {
         GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_SOUNDFONT).EnableWindow(FALSE);
+        GetDlgItem(IDC_SOUNDFONT_FILE_PATH).EnableWindow(FALSE);
         GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(FALSE);
         GetDlgItem(IDC_CACHED_TEXT).EnableWindow(FALSE);
@@ -556,8 +556,8 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
     if (PlugInId != PlayerTypeNuke)
     {
-        GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_MS_PRESET).EnableWindow(FALSE);
+        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
+        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
         GetDlgItem(IDC_MS_PANNING).EnableWindow(FALSE);
     }
 
@@ -738,7 +738,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 #endif
 
     {
-        auto w = GetDlgItem(IDC_Munt_GM);
+        auto w = GetDlgItem(IDC_MUNT_GM_SET);
 
         for (size_t i = 0; i < _countof(_MuntGMSets); ++i)
             ::uSendMessageText(w, CB_ADDSTRING, 0, _MuntGMSets[i]);
@@ -747,7 +747,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     }
 
     {
-        auto w = GetDlgItem(IDC_MS_PRESET);
+        auto w = GetDlgItem(IDC_NUKE_PRESET);
 
         size_t PresetNumber = 0;
 
@@ -853,7 +853,7 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
     GetDlgItem(IDC_SAMPLERATE).EnableWindow(PlugInId || !_IsRunning);
 
     GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(PlugInId == 2 || PlugInId == 4);
-    GetDlgItem(IDC_SOUNDFONT).EnableWindow(PlugInId == 2 || PlugInId == 4);
+    GetDlgItem(IDC_SOUNDFONT_FILE_PATH).EnableWindow(PlugInId == 2 || PlugInId == 4);
 
     GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(PlugInId == 2 || PlugInId == 4);
     GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(PlugInId == 2 || PlugInId == 4);
@@ -867,8 +867,8 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
     GetDlgItem(IDC_ADL_CHIPS).EnableWindow(PlugInId == 6 || PlugInId == 9);
     GetDlgItem(IDC_ADL_PANNING).EnableWindow(PlugInId == 6 || PlugInId == 9);
 
-    GetDlgItem(IDC_MS_PRESET_TEXT).EnableWindow(PlugInId == 9);
-    GetDlgItem(IDC_MS_PRESET).EnableWindow(PlugInId == 9);
+    GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlugInId == 9);
+    GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlugInId == 9);
     GetDlgItem(IDC_MS_PANNING).EnableWindow(PlugInId == 9);
 
     {
@@ -932,7 +932,7 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
         }
     }
     else
-    if (w == GetDlgItem(IDC_SOUNDFONT))
+    if (w == GetDlgItem(IDC_SOUNDFONT_FILE_PATH))
     {
         pfc::string8 DirectoryPath = _SoundFontPath;
 
@@ -968,7 +968,7 @@ void Preferences::OnSetFocus(UINT, int, CWindow w)
         }
     }
     else
-    if (w == GetDlgItem(IDC_Munt))
+    if (w == GetDlgItem(IDC_MUNT_FILE_PATH))
     {
         pfc::string8 DirectoryPath;
 
@@ -1059,7 +1059,7 @@ bool Preferences::HasChanged()
 
     if (!changed)
     {
-        size_t PresetNumber = (size_t)SendDlgItemMessage(IDC_MS_PRESET, CB_GETCURSEL);
+        size_t PresetNumber = (size_t)SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
 
         unsigned int Synth;
         unsigned int Bank;
@@ -1086,7 +1086,7 @@ bool Preferences::HasChanged()
     if (!changed && SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != CfgADLPanning)
         changed = true;
 
-    if (!changed && SendDlgItemMessage(IDC_Munt_GM, CB_GETCURSEL) != CfgMuntGMSet)
+    if (!changed && SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL) != CfgMuntGMSet)
         changed = true;
 
     if (!changed)

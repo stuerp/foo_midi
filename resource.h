@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2022.12.31) **/
+/** $VER: Resource.h (2022.01.05) **/
 
 #pragma once
 
@@ -43,7 +43,7 @@
 
 #define COMPONENT_GUID { 0x1623aa03, 0xbadc, 0x4bab, { 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } }
 
-/** Dialog **/
+/** Dialog Preferences Root **/
 
 #define IDD_CONFIG 106
 
@@ -58,14 +58,17 @@
 #define IDC_LOOP2 1007
 #define IDC_LOOP_OTHER 1007
 #define IDC_NOSYSEX 1008
-#define IDC_SOUNDFONT 1009
+
+#define IDC_SOUNDFONT_FILE_PATH 1009
 #define IDC_SOUNDFONT_TEXT 1010
-#define IDC_Munt 1011
+
+#define IDC_MUNT_FILE_PATH 1011
 
 #define IDC_VST_PATH 1012
 #define IDC_VST_CONFIGURE 1013
 
 #define IDC_MUNT_WARNING 1014
+
 #define IDC_FILTER_INSTRUMENTS 1015
 #define IDC_FILTER_BANKS 1016
 
@@ -74,21 +77,27 @@
 
 #define IDC_CACHED 1019
 #define IDC_CACHED_TEXT 1020
+
 #define IDC_ADL_BANK 1021
 #define IDC_ADL_BANK_TEXT 1022
 #define IDC_ADL_CHIPS 1023
 #define IDC_ADL_CHIPS_TEXT 1024
 #define IDC_ADL_PANNING 1025
+
 #define IDC_MUNT_GM_TEXT 1026
+
 #define IDC_RESAMPLING2 1027
-#define IDC_MS_PRESET_TEXT 1027
-#define IDC_Munt_GM 1028
-#define IDC_MS_PRESET 1029
+
+#define IDC_NUKE_PRESET_TEXT 1027
+#define IDC_MUNT_GM_SET 1028
+#define IDC_NUKE_PRESET 1029
 #define IDC_SC_FLAVOR_TEXT 1030
 #define IDC_MIDI_FLAVOR_TEXT 1030
 #define IDC_SC_FLAVOR 1031
+
 #define IDC_MIDI_FLAVOR 1031
 #define IDC_MIDI_FLAVOR 1031
+
 #define IDC_SC_GROUP 1032
 #define IDC_FILTER_GROUP 1032
 #define IDC_MS_PANNING 1033

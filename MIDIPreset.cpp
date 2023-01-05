@@ -12,16 +12,14 @@ MIDIPreset::MIDIPreset() noexcept
 {
     {
         _PlayerType = (unsigned int)CfgPlayerType;
-        _VSTPathName = CfgVSTiFilePath;
+        _VSTiFilePath = CfgVSTiFilePath;
 
         {
-            VSTiPlayer * Player = nullptr;
-
             try
             {
-                Player = new VSTiPlayer;
+                auto Player = new VSTiPlayer;
 
-                if (Player->LoadVST(_VSTPathName))
+                if (Player->LoadVST(_VSTiFilePath))
                 {
                     _VSTConfig = CfgVSTiConfig[(unsigned int)(Player->getUniqueID())];
                 }
@@ -31,11 +29,9 @@ MIDIPreset::MIDIPreset() noexcept
                 if (_PlayerType == 1)
                     _PlayerType = 0;
             }
-
-            delete Player;
         }
 
-        _SoundFontPathName = CfgSoundFontFilePath;
+        _SoundFontFilePath = CfgSoundFontFilePath;
     }
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -130,7 +126,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
         {
             text += "|";
 
-            text += _VSTPathName;
+            text += _VSTiFilePath;
             text += "|";
 
             for (unsigned i = 0; i < _VSTConfig.size(); ++i)
@@ -148,7 +144,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
         {
             text += "|";
 
-            text += _SoundFontPathName;
+            text += _SoundFontFilePath;
 
             text += "|";
 
@@ -732,10 +728,10 @@ void MIDIPreset::Deserialize(const char * text)
 
         _PlayerType = PlugInId;
 
-        _VSTPathName = VSTPath;
+        _VSTiFilePath = VSTPath;
         _VSTConfig = VSTConfig;
 
-        _SoundFontPathName = SoundFontPath;
+        _SoundFontFilePath = SoundFontPath;
 
         _BASSMIDIEffects = BASSMIDIEffects;
         _BASSMIDIVoices = BASSMIDIVoices;

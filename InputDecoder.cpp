@@ -450,7 +450,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         {
             delete _Player;
 
-            if (Preset._VSTPathName.is_empty())
+            if (Preset._VSTiFilePath.is_empty())
             {
                 console::print("No VST instrument configured.");
                 throw exception_io_data();
@@ -458,11 +458,11 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
             VSTiPlayer * Player = new VSTiPlayer;
 
-            if (!Player->LoadVST(Preset._VSTPathName))
+            if (!Player->LoadVST(Preset._VSTiFilePath))
             {
                 pfc::string8 Text = "Unable to load VSTi plugin: ";
 
-                Text += Preset._VSTPathName;
+                Text += Preset._VSTiFilePath;
 
                 console::print(Text);
 
@@ -561,7 +561,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
                 _BASSMIDIVoiceCount = 0;
                 _BASSMIDIVoiceMax = 0;
 
-                if (Preset._SoundFontPathName.is_empty() && SoundFontFilePath.is_empty())
+                if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
                 {
                     console::print("No SoundFonts configured, and no file or directory SoundFont found");
                     throw exception_io_data();
@@ -570,7 +570,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
             auto Player = new BMPlayer;
 
-            Player->setSoundFont(Preset._SoundFontPathName);
+            Player->setSoundFont(Preset._SoundFontFilePath);
 
             if (SoundFontFilePath.length())
                 Player->setFileSoundFont(SoundFontFilePath);

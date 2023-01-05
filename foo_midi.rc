@@ -204,7 +204,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     groupbox "SoundFont", IDC_STATIC, X_50, Y_50, W_50, H_50
         rtext             "File:",  IDC_SOUNDFONT_TEXT,     X_51, Y_51 + 2, W_51, H_51
-        edittext                    IDC_SOUNDFONT,          X_52, Y_52,     W_52, H_52, ES_AUTOHSCROLL | ES_READONLY
+        edittext                    IDC_SOUNDFONT_FILE_PATH,          X_52, Y_52,     W_52, H_52, ES_AUTOHSCROLL | ES_READONLY
         rtext       "Resampling:",  IDC_RESAMPLING_TEXT,    X_53, Y_53 + 2, W_53, H_53
         combobox                    IDC_RESAMPLING_MODE,    X_54, Y_54,     W_54, H_54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext           "Cached:",  IDC_CACHED_TEXT,        X_55, Y_55 + 2, W_55, H_55
@@ -238,9 +238,9 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     groupbox "Munt", IDC_STATIC, X_60, Y_60, W_60, H_60
         rtext           "ROM:",                         IDC_STATIC,             X_61, Y_61 + 2, W_61, H_61
-        edittext                                        IDC_Munt,               X_62, Y_62,     W_62, H_62, ES_AUTOHSCROLL | ES_READONLY
+        edittext                                        IDC_MUNT_FILE_PATH,               X_62, Y_62,     W_62, H_62, ES_AUTOHSCROLL | ES_READONLY
         rtext           "GM Set:",                      IDC_MUNT_GM_TEXT,       X_63, Y_63 + 2, W_63, H_63
-        combobox                                        IDC_Munt_GM,            X_64, Y_64,     W_64, H_64, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        combobox                                        IDC_MUNT_GM_SET,            X_64, Y_64,     W_64, H_64, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     #define X_70    X_60
     #define Y_70    Y_60 + H_60 + 4
@@ -264,8 +264,8 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
     #define H_70    11 + H_72 + 4 + H_73 + 4
 
     groupbox "Nuke", IDC_STATIC, X_70, Y_70, W_70, H_70
-        rtext       "Preset:",              IDC_MS_PRESET_TEXT,     X_71, Y_71 + 2, W_71, H_71
-        combobox                            IDC_MS_PRESET,          X_72, Y_72,     W_72, H_72, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Preset:",              IDC_NUKE_PRESET_TEXT,     X_71, Y_71 + 2, W_71, H_71
+        combobox                            IDC_NUKE_PRESET,          X_72, Y_72,     W_72, H_72, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         control     "Enable soft panning",  IDC_MS_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_73, Y_73, W_73, H_73
 
     // Common
