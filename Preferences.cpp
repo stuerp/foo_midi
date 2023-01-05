@@ -1217,11 +1217,11 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
                     Plugin.Name = "VST ";
                     Plugin.PathName = PathName;
 
-                    std::string VendorName;
+                    pfc::string8 VendorName;
 
                     Player.getVendorString(VendorName);
 
-                    std::string ProductName;
+                    pfc::string8 ProductName;
 
                     Player.getProductString(ProductName);
 

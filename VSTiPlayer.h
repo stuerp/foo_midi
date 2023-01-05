@@ -21,8 +21,8 @@ public:
     bool LoadVST(const char * path);
 
     // must be loaded for the following to work
-    void getVendorString(std::string & out) const;
-    void getProductString(std::string & out) const;
+    void getVendorString(pfc::string8 & out) const;
+    void getProductString(pfc::string8 & out) const;
     long getVendorVersion() const noexcept;
     long getUniqueID() const noexcept;
 

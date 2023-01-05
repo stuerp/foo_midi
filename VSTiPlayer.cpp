@@ -476,12 +476,12 @@ void VSTiPlayer::process_write_code(uint32_t code) noexcept
     process_write_bytes(&code, sizeof(code));
 }
 
-void VSTiPlayer::getVendorString(std::string & out) const
+void VSTiPlayer::getVendorString(pfc::string8 & out) const
 {
     out = _Vendor;
 }
 
-void VSTiPlayer::getProductString(std::string & out) const 
+void VSTiPlayer::getProductString(pfc::string8 & out) const 
 {
     out = _Product;
 }
