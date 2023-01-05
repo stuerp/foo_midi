@@ -45,7 +45,7 @@
 
 /** Dialog Preferences Root **/
 
-#define IDD_CONFIG 106
+#define IDD_PREFERENCES_ROOT 106
 #define IDD_PREFERENCES_ROOT_NAME STR_COMPONENT_NAME
 
 #define IDC_PLUGIN 1000

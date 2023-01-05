@@ -103,7 +103,7 @@ public:
 
     enum
     {
-        IDD = IDD_CONFIG
+        IDD = IDD_PREFERENCES_ROOT
     };
 
     const UINT_PTR ID_REFRESH = 1000;

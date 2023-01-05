@@ -11,7 +11,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 #define W_00    249 // Dialog width as set by foobar2000, in dialog units
 #define H_00    234 // Dialog height as set by foobar2000, in dialog units
 
-IDD_CONFIG dialogex 0, 0, 0, 0
+IDD_PREFERENCES_ROOT dialogex 0, 0, 0, 0
 style DS_SETFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 0x0
 {
