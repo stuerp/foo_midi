@@ -227,12 +227,12 @@ void Preferences::apply()
         else
             PlugInId = _IndexToPlugInId[SelectedItem];
 
-        CfgVSTiPath = "";
+        CfgVSTiFilePath = "";
         CfgPlayerType = PlugInId;
 
         if (PlugInId == PlayerTypeVSTi)
         {
-            CfgVSTiPath = _VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].PathName.c_str();
+            CfgVSTiFilePath = _VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].PathName.c_str();
 
             CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].Id] = _VSTiConfig;
         }
@@ -304,8 +304,8 @@ void Preferences::apply()
         CfgMSBank = (t_int32)Bank;
     }
 
-    CfgSoundFontPath = _SoundFontPath;
-    CfgMuntPath = _MuntPath;
+    CfgSoundFontFilePath = _SoundFontPath;
+    CfgMuntFilePath = _MuntPath;
 
     CfgLoopTypePlayback = (t_int32)SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
     CfgLoopTypeOther = (t_int32)SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
@@ -435,7 +435,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
                 ::uSendMessageText(w, CB_ADDSTRING, 0, _VSTiPlugIns[i].Name.c_str());
 
-                if ((PlugInId == PlayerTypeVSTi) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiPath) == 0))
+                if ((PlugInId == PlayerTypeVSTi) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiFilePath) == 0))
                     SelectedVSTiPluginIndex = i;
             }
         }
@@ -443,7 +443,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
 #pragma region("SoundFont")
         {
-            _SoundFontPath = CfgSoundFontPath;
+            _SoundFontPath = CfgSoundFontFilePath;
 
             const char * FileName;
 
@@ -458,7 +458,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
 #pragma region("Munt")
         {
-            _MuntPath = CfgMuntPath;
+            _MuntPath = CfgMuntFilePath;
 
             const char * FileName;
 
@@ -1109,7 +1109,7 @@ bool Preferences::HasChanged()
 
         if (!changed && plugin == 1)
         {
-            if (::stricmp_utf8(CfgVSTiPath, _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].PathName.c_str()))
+            if (::stricmp_utf8(CfgVSTiFilePath, _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].PathName.c_str()))
                 changed = true;
 
             if (!changed)
@@ -1129,10 +1129,10 @@ bool Preferences::HasChanged()
     #endif
     }
 
-    if (!changed && (::stricmp_utf8(_SoundFontPath, CfgSoundFontPath) != 0))
+    if (!changed && (::stricmp_utf8(_SoundFontPath, CfgSoundFontFilePath) != 0))
         changed = true;
 
-    if (!changed && (::stricmp_utf8(_MuntPath, CfgMuntPath) != 0))
+    if (!changed && (::stricmp_utf8(_MuntPath, CfgMuntFilePath) != 0))
         changed = true;
 
     return changed;

@@ -101,7 +101,8 @@ v2.8.0.0, 2023-xx-xx, *""*
 
 * Major refactoring of the source code.
 * Tried to make the preferences page a bit more accessible to new users.
-* Moved the configuration of the VTSi plugin path to the preferences page.
+  * Moved the configuration of the VTSi plugin path to the preferences page.
+  * Moved all the path controls to a separate page.
 
 v2.7.4.4, 2022-11-21, *"I'm SoundFont of it"*
 

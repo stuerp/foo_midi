@@ -360,6 +360,7 @@
     <ClInclude Include="OPNPlayer\OPNPlayer.h" />
     <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
     <ClInclude Include="OPNPlayer\xg.wopn.h" />
+    <ClInclude Include="Preferences.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="FileHasher.h" />
     <ClInclude Include="VSTiPlayer.h" />
@@ -379,7 +380,6 @@
     <ClInclude Include="3rdParty\json\json-builder.h" />
     <ClInclude Include="3rdParty\json\json.h" />
     <ClInclude Include="Patrons.h" />
-    <ClInclude Include="Preferences.h" />
     <ClInclude Include="3rdParty\Nuke\resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCPlayer.h" />

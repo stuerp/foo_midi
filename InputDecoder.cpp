@@ -729,13 +729,13 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
                 IsMT32 = (MetaData.get_item("type", Item) && (::strcmp(Item.m_value.c_str(), "MT-32") == 0));
 
-                if (CfgMuntPath.is_empty())
+                if (CfgMuntFilePath.is_empty())
                     console::print("No Munt base path configured, attempting to load ROMs from plugin install path");
             }
 
             auto * Player = new MT32Player(!IsMT32, Preset._MuntGMSet);
 
-            pfc::string8 BasePath = CfgMuntPath;
+            pfc::string8 BasePath = CfgMuntFilePath;
 
             if (BasePath.is_empty())
             {

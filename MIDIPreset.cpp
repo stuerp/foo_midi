@@ -12,7 +12,7 @@ MIDIPreset::MIDIPreset() noexcept
 {
     {
         _PlayerType = (unsigned int)CfgPlayerType;
-        _VSTPathName = CfgVSTiPath;
+        _VSTPathName = CfgVSTiFilePath;
 
         {
             VSTiPlayer * Player = nullptr;
@@ -35,7 +35,7 @@ MIDIPreset::MIDIPreset() noexcept
             delete Player;
         }
 
-        _SoundFontPathName = CfgSoundFontPath;
+        _SoundFontPathName = CfgSoundFontFilePath;
     }
 
 #ifdef FLUIDSYNTHSUPPORT

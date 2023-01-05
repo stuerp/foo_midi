@@ -106,9 +106,9 @@ extern cfg_int
 ;
 
 extern cfg_string
-    CfgVSTiPath,
-    CfgSoundFontPath,
-    CfgMuntPath;
+    CfgVSTiFilePath,
+    CfgSoundFontFilePath,
+    CfgMuntFilePath;
 
 extern cfg_map
     CfgVSTiConfig;
