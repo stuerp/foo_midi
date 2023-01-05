@@ -1,7 +1,7 @@
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
-#pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
+#pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
 
@@ -11,30 +11,25 @@ typedef void * HANDLE;
 class VSTiPlayer : public MIDIPlayer
 {
 public:
-    // zero variables
     VSTiPlayer() noexcept;
-
-    // close, unload
     virtual ~VSTiPlayer();
 
-    // load, open, verify type
     bool LoadVST(const char * path);
 
-    // must be loaded for the following to work
     void getVendorString(pfc::string8 & out) const;
     void getProductString(pfc::string8 & out) const;
     long getVendorVersion() const noexcept;
     long getUniqueID() const noexcept;
 
-    // configuration
+    // Configuration
     void getChunk(std::vector<uint8_t> & out);
     void setChunk(const void * in, unsigned long size);
 
-    // editor
+    // Editor
     bool hasEditor();
     void displayEditorModal();
 
-    // setup
+    // Setup
     unsigned getChannelCount() noexcept;
 
 protected:

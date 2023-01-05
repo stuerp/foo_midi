@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2022.01.05) **/
+/** $VER: Resource.h (2023.01.05) **/
 
 #pragma once
 
@@ -108,3 +108,7 @@
 #define IDC_GS_FLAVOR 1035
 #define IDC_CHECK1 1036
 #define IDC_THLOOPZ 1036
+
+/** Dialog: Preferences Paths **/
+
+#define IDD_PREFERENCES_PATHs 2000
