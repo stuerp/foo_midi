@@ -248,8 +248,6 @@ void Preferences::reset()
     {
         const int ControlId[] =
         {
-            IDC_VST_PATH,
-            IDC_SOUNDFONT_TEXT, IDC_SOUNDFONT_FILE_PATH,
             IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
             IDC_CACHED_TEXT, IDC_CACHED
         };
@@ -274,18 +272,18 @@ void Preferences::reset()
 
     if (DefaultPlayerType == PlayerTypeSuperMunt)
     {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
     }
     else
     if (_VSTiPlugIns.get_count() == 0)
     {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
     }
     else
     {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
     }
 
@@ -304,14 +302,6 @@ void Preferences::reset()
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
     }
-
-    ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, DefaultPathMessage);
-    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, DefaultPathMessage);
-    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, DefaultPathMessage);
-
-    _VSTiPath.reset();
-    _SoundFontPath.reset();
-    _MuntPath.reset();
 
     SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
 
@@ -439,12 +429,6 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
  #pragma region("VSTi")
     {
-        {
-            CfgVSTiPluginDirectoryPath.get(_VSTiSearchPath);
-
-            ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, !_VSTiSearchPath.is_empty() ? _VSTiSearchPath : DefaultPathMessage);
-        }
-
         GetVSTiPlugins();
 
         size_t VSTiCount = _VSTiPlugIns.get_size();
@@ -464,36 +448,6 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
                 if ((PlayerType == PlayerTypeVSTi) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiFilePath) == 0))
                     VSTiPluginIndex = i;
             }
-        }
-#pragma endregion
-
-#pragma region("SoundFont")
-        {
-            _SoundFontPath = CfgSoundFontFilePath;
-
-            const char * FileName;
-
-            if (_SoundFontPath.is_empty())
-                FileName = DefaultPathMessage;
-            else
-                FileName = _SoundFontPath.get_ptr() + _SoundFontPath.scan_filename();
-
-            ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, FileName);
-        }
-#pragma endregion
-
-#pragma region("Munt")
-        {
-            _MuntPath = CfgMT32ROMDirectoryPath;
-
-            const char * FileName;
-
-            if (_MuntPath.is_empty())
-                FileName = DefaultPathMessage;
-            else
-                FileName = _MuntPath;
-
-            ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, FileName);
         }
 #pragma endregion
 
@@ -544,8 +498,6 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
     if ((PlayerType != PlayerTypeFluidSynth) && (PlayerType != PlayerTypeBASSMIDI))
     {
-        GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_SOUNDFONT_FILE_PATH).EnableWindow(FALSE);
         GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(FALSE);
         GetDlgItem(IDC_CACHED_TEXT).EnableWindow(FALSE);
@@ -572,11 +524,11 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
     if (PlayerType != PlayerTypeVSTi)
     {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
     }
     else
     {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(_VSTiPlugIns[VSTiPluginIndex].HasEditor);
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(_VSTiPlugIns[VSTiPluginIndex].HasEditor);
         _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[VSTiPluginIndex].Id];
     }
 
@@ -880,9 +832,6 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
 
     GetDlgItem(IDC_SAMPLERATE).EnableWindow(PlugInId || !_IsRunning);
 
-    GetDlgItem(IDC_SOUNDFONT_TEXT).EnableWindow(PlugInId == 2 || PlugInId == 4);
-    GetDlgItem(IDC_SOUNDFONT_FILE_PATH).EnableWindow(PlugInId == 2 || PlugInId == 4);
-
     GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(PlugInId == 2 || PlugInId == 4);
     GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(PlugInId == 2 || PlugInId == 4);
 
@@ -910,25 +859,25 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
 
     if (PlugInId == 3)
     {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
     }
     else
     if (_VSTiPlugIns.get_count() == 0)
     {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
     }
     else
     {
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
     }
 
     {
         bool Enable = (SelectedIndex >= _ReportedPlugInCount) && (PlugInId < _ReportedPlugInCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _ReportedPlugInCount)].HasEditor;
 
-        GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(Enable);
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
     }
 
     if ((SelectedIndex >= _ReportedPlugInCount) && (SelectedIndex < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count())))
@@ -940,72 +889,6 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
 void Preferences::OnSetFocus(UINT, int, CWindow w)
 {
     SetFocus();
-
-    if (w == GetDlgItem(IDC_VST_PATH))
-    {
-        pfc::string8 DirectoryPath = _VSTiSearchPath;
-
-        DirectoryPath.truncate_to_parent_path();
-
-        if (::uBrowseForFolder(m_hWnd, "Locate VSTi plug-ins...", DirectoryPath))
-        {
-            _VSTiSearchPath = DirectoryPath;
-
-            ::uSetWindowText(w, !_VSTiSearchPath.is_empty() ? _VSTiSearchPath : DefaultPathMessage);
-        }
-    }
-    else
-    if (w == GetDlgItem(IDC_SOUNDFONT_FILE_PATH))
-    {
-        pfc::string8 DirectoryPath = _SoundFontPath;
-
-        DirectoryPath.truncate_to_parent_path();
-
-        pfc::string8 FilePath = _SoundFontPath;
-
-        if (::uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;*.sf3;*.sflist"
-        #ifdef SF2PACK
-            "*.sf2pack;*.sfogg;"
-        #endif
-        #ifdef BASSMIDISUPPORT
-            ";*.json"
-        #endif
-
-            "*.sflist|SoundFont files|*.sf2;*.sf3"
-        #ifdef SF2PACK
-            ";*.sf2pack;*.sfogg;"
-        #endif
-
-            "|SoundFont list files|*.sflist"
-        #ifdef BASSMIDISUPPORT
-            ";*.json"
-        #endif
-            ,
-            0, "sf2", "Choose a SoundFont bank or list...", DirectoryPath, FilePath, FALSE))
-        {
-            _SoundFontPath = FilePath;
-
-            ::uSetWindowText(w, !_SoundFontPath.isEmpty() ? _SoundFontPath : DefaultPathMessage);
-
-            OnChanged();
-        }
-    }
-    else
-    if (w == GetDlgItem(IDC_MUNT_FILE_PATH))
-    {
-        pfc::string8 DirectoryPath;
-
-        DirectoryPath.truncate_to_parent_path();
-
-        if (::uBrowseForFolder(m_hWnd, "Locate MT-32 or CM-32L ROM sets...", DirectoryPath))
-        {
-            _MuntPath = DirectoryPath;
-
-            ::uSetWindowText(w, !_MuntPath.isEmpty() ? _MuntPath : DefaultPathMessage);
-
-            OnChanged();
-        }
-    }
 }
 
 void Preferences::OnTimer(UINT_PTR eventId)
@@ -1178,7 +1061,7 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
 
         if (_VSTiSearchPath.is_empty())
         {
-            GetDlgItem(IDC_VST_CONFIGURE).EnableWindow(FALSE);
+            GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
 
             return;
         }

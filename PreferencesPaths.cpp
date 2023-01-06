@@ -44,6 +44,10 @@ void PreferencesPaths::apply()
 
 void PreferencesPaths::reset()
 {
+    ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, DefaultPathMessage);
+
     _VSTiSearchPath.reset();
     _SoundFontPath.reset();
     _MT32ROMDirectoryPath.reset();
