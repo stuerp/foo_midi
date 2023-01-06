@@ -97,7 +97,7 @@ BOOL PreferencesPaths::OnInitDialog(CWindow, LPARAM)
     return FALSE;
 }
 
-void PreferencesPaths::OnButtonClicked(UINT id, int, CWindow w)
+void PreferencesPaths::OnButtonClicked(UINT, int, CWindow w)
 {
     if (w == GetDlgItem(IDC_VST_PATH_SELECT))
     {

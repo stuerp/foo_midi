@@ -271,10 +271,12 @@ void Preferences::apply()
 /// </summary>
 void Preferences::reset()
 {
-    int PlayerIndex = _PlayerTypeToPlayerIndex[DefaultPlayerType];
+    int PlayerType = DefaultPlayerType;
+
+    int PlayerIndex = _PlayerTypeToPlayerIndex[PlayerType];
     int SelectedItem = _PlayerPresentMap[PlayerIndex];
 
-    if ((DefaultPlayerType != PlayerTypeFluidSynth) && (DefaultPlayerType != PlayerTypeBASSMIDI))
+    if ((PlayerType != PlayerTypeFluidSynth) && (PlayerType != PlayerTypeBASSMIDI))
     {
         const int ControlId[] =
         {
@@ -286,7 +288,7 @@ void Preferences::reset()
             GetDlgItem(ControlId[i]).EnableWindow(FALSE);
     }
 
-    if (DefaultPlayerType != PlayerTypeADL)
+    if (PlayerType != PlayerTypeADL)
     {
         const int ControlId[] =
         {
@@ -301,9 +303,9 @@ void Preferences::reset()
     }
 
     GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-    GetDlgItem(IDC_MUNT_WARNING).ShowWindow((DefaultPlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
+    GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
 
-    if (DefaultPlayerType != PlayerTypeNuke)
+    if (PlayerType != PlayerTypeNuke)
     {
         GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
@@ -311,14 +313,14 @@ void Preferences::reset()
     }
 
     {
-        bool enable = (DefaultPlayerType == PlayerTypeVSTi) || (DefaultPlayerType == PlayerTypeFluidSynth) || (DefaultPlayerType == PlayerTypeBASSMIDI) || (DefaultPlayerType == PlayerTypeSecretSauce);
+        bool enable = (PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce);
 
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
     }
 
-    if ((DefaultPlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
+    if ((PlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
     #pragma region("Output")
@@ -943,8 +945,6 @@ void Preferences::OnTimer(UINT_PTR eventId)
 /// </summary>
 bool Preferences::HasChanged()
 {
-    bool changed = false;
-
     if (GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT)CfgSampleRate)
         return true;
 
@@ -966,7 +966,7 @@ bool Preferences::HasChanged()
     if (SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK) != cfg_xmiloopz)
         return true;
 
-    if (SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK) != cfg_ff7loopz);
+    if (SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK) != cfg_ff7loopz)
         return true;
 
     if (SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK) != cfg_filter_instruments)

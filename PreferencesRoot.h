@@ -38,7 +38,7 @@ extern cfg_dropdown_history CfgSampleRateHistory;
 class Preferences : public CDialogImpl<Preferences>, public preferences_page_instance
 {
 public:
-    Preferences(preferences_page_callback::ptr callback) noexcept : _Callback(callback), _IsBusy(false) { }
+    Preferences(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _Callback(callback) { }
 
     Preferences(const Preferences&) = delete;
     Preferences(const Preferences&&) = delete;
