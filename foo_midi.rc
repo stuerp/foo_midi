@@ -339,6 +339,62 @@ IDD_PREFERENCES_PATHS dialogex 0, 0, 0, 0
 style DS_SETFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 0x0
 {
+    #define X_11    7
+    #define Y_11    7
+    #define W_11    44
+    #define H_11    8
+
+    #define X_12    X_11 + W_11 + 3
+    #define Y_12    Y_11
+    #define W_12    316 - 7 - W_11 - 3 - 16 - 3
+    #define H_12    14
+
+    #define X_13    X_12 + W_12 + 3
+    #define Y_13    Y_12
+    #define W_13    16
+    #define H_13    14
+
+    rtext       "VSTi Plugins:",    IDC_STATIC,     X_11, Y_11 + 2, W_11, H_11
+    edittext                        IDC_VST_PATH,   X_12, Y_12,     W_12, H_12, ES_AUTOHSCROLL | ES_READONLY
+    pushbutton  "...",              IDC_STATIC ,    X_13, Y_13,     W_13, H_13
+
+    #define X_21    X_11
+    #define Y_21    Y_12 + H_12 + 4
+    #define W_21    W_11
+    #define H_21    8
+
+    #define X_22    X_21 + W_21 + 3
+    #define Y_22    Y_21
+    #define W_22    316- 7 - W_21 - 3 - 16 - 3
+    #define H_22    14
+
+    #define X_23    X_22 + W_22 + 3
+    #define Y_23    Y_22
+    #define W_23    16
+    #define H_23    14
+
+    rtext       "SoundFont:",       IDC_SOUNDFONT_TEXT,         X_21, Y_21 + 2, W_21, H_21
+    edittext                        IDC_SOUNDFONT_FILE_PATH,    X_22, Y_22,     W_22, H_22, ES_AUTOHSCROLL | ES_READONLY
+    pushbutton  "...",              IDC_STATIC ,                X_23, Y_23,     W_23, H_23
+
+    #define X_31    X_21
+    #define Y_31    Y_22 + H_22 + 4
+    #define W_31    W_21
+    #define H_31    8
+
+    #define X_32    X_31 + W_31 + 3
+    #define Y_32    Y_31
+    #define W_32    316- 7 - W_31 - 3 - 16 - 3
+    #define H_32    14
+
+    #define X_33    X_32 + W_32 + 3
+    #define Y_33    Y_32
+    #define W_33    16
+    #define H_33    14
+
+    rtext       "MT-32 ROMs:",      IDC_STATIC,         X_31, Y_31 + 2, W_31, H_31
+    edittext                        IDC_MUNT_FILE_PATH, X_32, Y_32,     W_32, H_32, ES_AUTOHSCROLL | ES_READONLY
+    pushbutton  "...",              IDC_STATIC ,        X_33, Y_33,     W_33, H_33
 }
 
 VS_VERSION_INFO versioninfo

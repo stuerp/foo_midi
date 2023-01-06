@@ -286,7 +286,8 @@
     <ClCompile Include="3rdParty\json\json.c" />
     <ClCompile Include="MT32Player\MT32Player.cpp" />
     <ClCompile Include="OPNPlayer\OPNPlayer.cpp" />
-    <ClCompile Include="Preferences.cpp" />
+    <ClCompile Include="PreferencesRoot.cpp" />
+    <ClCompile Include="PreferencesPaths.cpp" />
     <ClCompile Include="SCPlayer.cpp" />
     <ClCompile Include="sflist\sflist.c" />
     <ClCompile Include="Experimental\SFPlayer.cpp">
@@ -360,7 +361,8 @@
     <ClInclude Include="OPNPlayer\OPNPlayer.h" />
     <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
     <ClInclude Include="OPNPlayer\xg.wopn.h" />
-    <ClInclude Include="Preferences.h" />
+    <ClInclude Include="PreferencesRoot.h" />
+    <ClInclude Include="PreferencesPaths.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="FileHasher.h" />
     <ClInclude Include="VSTiPlayer.h" />

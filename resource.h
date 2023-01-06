@@ -112,5 +112,5 @@
 
 /** Dialog: Preferences Paths **/
 
-#define IDD_PREFERENCES_PATHs 2000
-#define IDD_PREFERENCES_PATHS "Paths"
+#define IDD_PREFERENCES_PATHS 2000
+#define IDD_PREFERENCES_PATHS_NAME "Paths"

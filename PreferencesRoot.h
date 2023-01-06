@@ -284,14 +284,12 @@ public:
 
     const char * get_name() noexcept
     {
-        return STR_COMPONENT_NAME;
+        return IDD_PREFERENCES_ROOT_NAME;
     }
 
     GUID get_guid() noexcept
     {
-        static const GUID GUID = {0x08390b0c,0x5ba7,0x4abc,{0xb5,0x29,0x70,0x79,0x17,0x27,0x12,0xa4}};
-
-        return GUID;
+        return PreferencesPageGUID;
     }
 
     GUID get_parent_guid() noexcept

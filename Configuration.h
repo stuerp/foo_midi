@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.01.04) **/
+/** $VER: Configuration.h (2023.01.06) **/
 
 #pragma once
 
@@ -12,6 +12,9 @@
 #include "MIDIPlayer.h"
 
 #include "cfg_map.h"
+
+extern const GUID PreferencesPageGUID;
+extern const GUID PreferencesPathsPageGUID;
 
 enum
 {
@@ -108,12 +111,12 @@ extern cfg_int
 extern cfg_string
     CfgVSTiFilePath,
     CfgSoundFontFilePath,
-    CfgMuntFilePath;
+    CfgMT32ROMDirectoryPath;
 
 extern cfg_map
     CfgVSTiConfig;
 
-extern advconfig_string_factory CfgVSTiSearchPath;
+extern advconfig_string_factory CfgVSTiPluginDirectoryPath;
 
 extern advconfig_string_factory_MT CfgSecretSaucePath;
 

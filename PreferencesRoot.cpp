@@ -1,9 +1,9 @@
 
-/** $VER: Preferences.cpp (2023.01.05) **/
+/** $VER: Preferences.cpp (2023.01.06) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
-#include "Preferences.h"
+#include "PreferencesRoot.h"
 
 #include "NukePlayer.h"
 
@@ -196,7 +196,7 @@ void Preferences::apply()
     }
 
     CfgSoundFontFilePath = _SoundFontPath;
-    CfgMuntFilePath = _MuntPath;
+    CfgMT32ROMDirectoryPath = _MuntPath;
 
     CfgLoopTypePlayback = (t_int32)SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
     CfgLoopTypeOther = (t_int32)SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
@@ -440,7 +440,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
  #pragma region("VSTi")
     {
         {
-            CfgVSTiSearchPath.get(_VSTiSearchPath);
+            CfgVSTiPluginDirectoryPath.get(_VSTiSearchPath);
 
             ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, !_VSTiSearchPath.is_empty() ? _VSTiSearchPath : DefaultPathMessage);
         }
@@ -484,7 +484,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
 #pragma region("Munt")
         {
-            _MuntPath = CfgMuntFilePath;
+            _MuntPath = CfgMT32ROMDirectoryPath;
 
             const char * FileName;
 
@@ -1152,7 +1152,7 @@ bool Preferences::HasChanged()
     if (!changed && (::stricmp_utf8(_SoundFontPath, CfgSoundFontFilePath) != 0))
         changed = true;
 
-    if (!changed && (::stricmp_utf8(_MuntPath, CfgMuntFilePath) != 0))
+    if (!changed && (::stricmp_utf8(_MuntPath, CfgMT32ROMDirectoryPath) != 0))
         changed = true;
 
     return changed;
@@ -1174,7 +1174,7 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
     {
         _VSTiPlugIns.set_size(0);
 
-        CfgVSTiSearchPath.get(_VSTiSearchPath);
+        CfgVSTiPluginDirectoryPath.get(_VSTiSearchPath);
 
         if (_VSTiSearchPath.is_empty())
         {
