@@ -7,6 +7,8 @@
 
 #include "NukePlayer.h"
 
+#include <pfc/pathUtils.h>
+
 //#define DEBUG_DIALOG
 
 #pragma hdrstop
@@ -27,29 +29,26 @@ t_uint32 PreferencesPaths::get_state()
     if (HasChanged())
         State |= preferences_state::changed;
 
-    if (_IsBusy)
-        State |= preferences_state::busy;
-
     return State;
 }
 
 void PreferencesPaths::apply()
 {
-    CfgVSTiPluginDirectoryPath.set(_VSTiSearchPath);
-    CfgSoundFontFilePath = _SoundFontPath;
-    CfgMT32ROMDirectoryPath = _MT32ROMDirectoryPath;
+    CfgVSTiPluginDirectoryPath.set(_VSTiPluginDirectoryPath);
+    CfgSoundFontFilePath = _SoundFontFilePath;
+    CfgMuntDirectoryPath = _MT32ROMDirectoryPath;
 
     OnChanged();
 }
 
 void PreferencesPaths::reset()
 {
-    ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, DefaultPathMessage);
-    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, DefaultPathMessage);
-    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_VST_PATH_SELECT, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH_SELECT, DefaultPathMessage);
+    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH_SELECT, DefaultPathMessage);
 
-    _VSTiSearchPath.reset();
-    _SoundFontPath.reset();
+    _VSTiPluginDirectoryPath.reset();
+    _SoundFontFilePath.reset();
     _MT32ROMDirectoryPath.reset();
 
     OnChanged();
@@ -71,23 +70,23 @@ BOOL PreferencesPaths::OnInitDialog(CWindow, LPARAM)
 
  #pragma region("VSTi")
     {
-        CfgVSTiPluginDirectoryPath.get(_VSTiSearchPath);
+        CfgVSTiPluginDirectoryPath.get(_VSTiPluginDirectoryPath);
 
-        ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, !_VSTiSearchPath.is_empty() ? _VSTiSearchPath : DefaultPathMessage);
+        ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, !_VSTiPluginDirectoryPath.is_empty() ? _VSTiPluginDirectoryPath : DefaultPathMessage);
     }
 #pragma endregion
 
 #pragma region("SoundFont")
     {
-        _SoundFontPath = CfgSoundFontFilePath;
+        _SoundFontFilePath = CfgSoundFontFilePath;
 
-        ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, !_SoundFontPath.is_empty() ? _SoundFontPath : DefaultPathMessage);
+        ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, !_SoundFontFilePath.is_empty() ? _SoundFontFilePath : DefaultPathMessage);
     }
 #pragma endregion
 
 #pragma region("Munt")
     {
-        _MT32ROMDirectoryPath = CfgMT32ROMDirectoryPath;
+        _MT32ROMDirectoryPath = CfgMuntDirectoryPath;
 
         ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, !_MT32ROMDirectoryPath.is_empty() ? _MT32ROMDirectoryPath : DefaultPathMessage);
     }
@@ -98,54 +97,29 @@ BOOL PreferencesPaths::OnInitDialog(CWindow, LPARAM)
     return FALSE;
 }
 
-void PreferencesPaths::OnEditChange(UINT, int, CWindow)
+void PreferencesPaths::OnButtonClicked(UINT id, int, CWindow w)
 {
-    OnChanged();
-}
-
-void PreferencesPaths::OnSelectionChange(UINT, int, CWindow)
-{
-    OnChanged();
-}
-
-void PreferencesPaths::OnButtonClick(UINT, int, CWindow)
-{
-    OnChanged();
-}
-
-void PreferencesPaths::OnButtonConfig(UINT, int, CWindow)
-{
-}
-
-void PreferencesPaths::OnPlugInChange(UINT, int, CWindow)
-{
-}
-
-void PreferencesPaths::OnSetFocus(UINT, int, CWindow w)
-{
-    SetFocus();
-
-    if (w == GetDlgItem(IDC_VST_PATH))
+    if (w == GetDlgItem(IDC_VST_PATH_SELECT))
     {
-        pfc::string8 DirectoryPath = _VSTiSearchPath;
-
-        DirectoryPath.truncate_to_parent_path();
+        pfc::string8 DirectoryPath = _VSTiPluginDirectoryPath;
 
         if (::uBrowseForFolder(m_hWnd, "Locate VSTi plug-ins...", DirectoryPath))
         {
-            _VSTiSearchPath = DirectoryPath;
+            _VSTiPluginDirectoryPath = DirectoryPath;
 
-            ::uSetWindowText(w, !_VSTiSearchPath.is_empty() ? _VSTiSearchPath : DefaultPathMessage);
+            ::uSetWindowText(w, !_VSTiPluginDirectoryPath.is_empty() ? _VSTiPluginDirectoryPath : DefaultPathMessage);
+
+            OnChanged();
         }
     }
     else
-    if (w == GetDlgItem(IDC_SOUNDFONT_FILE_PATH))
+    if (w == GetDlgItem(IDC_SOUNDFONT_FILE_PATH_SELECT))
     {
-        pfc::string8 DirectoryPath = _SoundFontPath;
+        pfc::string8 DirectoryPath = _SoundFontFilePath;
 
-        DirectoryPath.truncate_to_parent_path();
+        DirectoryPath.truncate_filename();
 
-        pfc::string8 FilePath = _SoundFontPath;
+        pfc::string8 FilePath = _SoundFontFilePath;
 
         if (::uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;*.sf3;*.sflist"
         #ifdef SF2PACK
@@ -167,19 +141,17 @@ void PreferencesPaths::OnSetFocus(UINT, int, CWindow w)
             ,
             0, "sf2", "Choose a SoundFont bank or list...", DirectoryPath, FilePath, FALSE))
         {
-            _SoundFontPath = FilePath;
+            _SoundFontFilePath = FilePath;
 
-            ::uSetWindowText(w, !_SoundFontPath.isEmpty() ? _SoundFontPath : DefaultPathMessage);
+            ::uSetWindowText(w, !_SoundFontFilePath.isEmpty() ? _SoundFontFilePath : DefaultPathMessage);
 
             OnChanged();
         }
     }
     else
-    if (w == GetDlgItem(IDC_MUNT_FILE_PATH))
+    if (w == GetDlgItem(IDC_MUNT_FILE_PATH_SELECT))
     {
         pfc::string8 DirectoryPath = _MT32ROMDirectoryPath;
-
-        DirectoryPath.truncate_to_parent_path();
 
         if (::uBrowseForFolder(m_hWnd, "Locate MT-32 or CM-32L ROM sets...", DirectoryPath))
         {
@@ -192,28 +164,30 @@ void PreferencesPaths::OnSetFocus(UINT, int, CWindow w)
     }
 }
 
-void PreferencesPaths::OnTimer(UINT_PTR)
-{
-}
-
+/// <summary>
+/// Returns true if the dialog state has changed.
+/// </summary>
 bool PreferencesPaths::HasChanged()
 {
-    bool changed = false;
+    pfc::string8 DirectoryPath;
 
-    pfc::string8 VSTiSearchPath; CfgVSTiPluginDirectoryPath.get(VSTiSearchPath);
+    CfgVSTiPluginDirectoryPath.get(DirectoryPath);
 
-    if (!changed && (_VSTiSearchPath != VSTiSearchPath))
-        changed = true;
+    if (_VSTiPluginDirectoryPath != DirectoryPath)
+        return true;
 
-    if (!changed && (_SoundFontPath != CfgSoundFontFilePath))
-        changed = true;
+    if (_SoundFontFilePath != CfgSoundFontFilePath)
+        return true;
 
-    if (!changed && (_MT32ROMDirectoryPath != CfgMT32ROMDirectoryPath))
-        changed = true;
+    if (_MT32ROMDirectoryPath != CfgMuntDirectoryPath)
+        return true;
 
-    return changed;
+    return false;
 }
 
+/// <summary>
+/// Notifies the parent that the dialog state has changed.
+/// </summary>
 void PreferencesPaths::OnChanged()
 {
     _Callback->on_state_changed();

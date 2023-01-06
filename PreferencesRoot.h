@@ -58,43 +58,57 @@ public:
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_TIMER(OnTimer)
 
-        COMMAND_HANDLER_EX(IDC_PLUGIN, CBN_SELCHANGE, OnPlugInChange)
+        #pragma region("Output")
+        COMMAND_HANDLER_EX(IDC_PLAYER_TYPE, CBN_SELCHANGE, OnPlugInChange)
+
+        COMMAND_HANDLER_EX(IDC_CONFIGURE, BN_CLICKED, OnButtonConfig)
 
         DROPDOWN_HISTORY_HANDLER(IDC_SAMPLERATE, CfgSampleRateHistory)
         COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_EDITCHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_SELCHANGE, OnSelectionChange)
+        #pragma endregion
 
-        COMMAND_HANDLER_EX(IDC_VST_PATH, EN_SETFOCUS, OnSetFocus)
-        COMMAND_HANDLER_EX(IDC_CONFIGURE, BN_CLICKED, OnButtonConfig)
-
+        #pragma region("Looping")
         COMMAND_HANDLER_EX(IDC_LOOP_PLAYBACK, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_LOOP_OTHER, CBN_SELCHANGE, OnSelectionChange)
+        #pragma endregion
 
-        COMMAND_HANDLER_EX(IDC_RPGMLOOPZ, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
+        #pragma region("MIDI")
+        COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS, BN_CLICKED, OnButtonClick)
+        #pragma endregion
+
+        #pragma region("Miscellaneous")
         COMMAND_HANDLER_EX(IDC_EMIDI_EX, BN_CLICKED, OnButtonClick)
 
         COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_FILTER_BANKS, BN_CLICKED, OnButtonClick)
 
-        COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH, EN_SETFOCUS, OnSetFocus)
+        COMMAND_HANDLER_EX(IDC_RPGMLOOPZ, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_THLOOPZ, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
+        #pragma endregion
+
+        #pragma region("SoundFont")
         COMMAND_HANDLER_EX(IDC_RESAMPLING_MODE, CBN_SELCHANGE, OnSelectionChange)
+        #pragma endregion
 
-        COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH, EN_SETFOCUS, OnSetFocus)
+        #pragma region("Munt")
+        COMMAND_HANDLER_EX(IDC_MUNT_GM_SET, CBN_SELCHANGE, OnSelectionChange)
+        #pragma endregion
 
+        #pragma region("Nuke")
+        COMMAND_HANDLER_EX(IDC_NUKE_PRESET, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_NUKE_PANNING, BN_CLICKED, OnButtonClick)
+        #pragma endregion
+
+        #pragma region("ADL")
         COMMAND_HANDLER_EX(IDC_ADL_BANK, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_EDITCHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_ADL_PANNING, BN_CLICKED, OnButtonClick)
-
-        COMMAND_HANDLER_EX(IDC_MUNT_GM_SET, CBN_SELCHANGE, OnSelectionChange)
-
-        COMMAND_HANDLER_EX(IDC_NUKE_PRESET, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_NUKE_PANNING, BN_CLICKED, OnButtonClick)
-
-        COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS, BN_CLICKED, OnButtonClick)
+        #pragma endregion
 
 #ifdef DEBUG_DIALOG
         MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
@@ -117,7 +131,6 @@ private:
     void OnSelectionChange(UINT, int, CWindow);
     void OnButtonClick(UINT, int, CWindow);
     void OnButtonConfig(UINT, int, CWindow);
-    void OnSetFocus(UINT, int, CWindow);
 
     bool HasChanged();
     void OnChanged();
@@ -133,15 +146,13 @@ private:
 #endif
 
 private:
-    const preferences_page_callback::ptr _Callback;
-
     bool _IsBusy;
 
-    struct BuiltInPlugin
+    struct BuiltInPlayer
     {
         const char * Name;
-        int Id;
-        int plugin_number_alt;
+        int Type;
+        int PlayerTypeAlternate;
         bool (*IsPresent)(Preferences *);
     };
 
@@ -151,7 +162,6 @@ private:
 
 #pragma region("VSTi")
     pfc::string8 _VSTiPath;
-    pfc::string8 _VSTiSearchPath;
 
     void GetVSTiPlugins(const char * pathName = nullptr, puFindFile findFile = nullptr);
 
@@ -167,19 +177,11 @@ private:
     std::vector<uint8_t> _VSTiConfig;
 #pragma endregion
 
-#pragma region("SoundFont")
-    pfc::string8 _SoundFontPath;
-#pragma endregion
-
 #pragma region("BASS MIDI")
 #ifdef BASSMIDISUPPORT
     pfc::string8 _CacheStatusText;
     pfc::string8 _CacheStatusTextCurrent;
 #endif
-#pragma endregion
-
-#pragma region("Munt")
-    pfc::string8 _MuntPath;
 #pragma endregion
 
 #pragma region("ADL")
@@ -259,13 +261,15 @@ private:
         return p->_HasSecretSauce;
     }
 
-    int _ReportedPlugInCount;
+    int _PlayerPresentCount;
 
-    static const BuiltInPlugin BuiltInPlugins[];
+    static const BuiltInPlayer BuiltInPlayers[];
 
-    std::map<int, int> _PlugInIdToIndex;
-    std::map<int, int> _PluginPresentMap;
-    std::map<int, int> _IndexToPlugInId;
+    std::map<int, int> _PlayerTypeToPlayerIndex;
+    std::map<int, int> _PlayerPresentMap;
+    std::map<int, int> _PlayerIndexToPlayerType;
+
+    const preferences_page_callback::ptr _Callback;
 
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
 };

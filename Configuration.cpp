@@ -128,9 +128,9 @@ cfg_int
 
     CfgMuntGMSet(guid_cfg_munt_gm, DefaultGMSet),
 
-    CfgMSSynthesizer(guid_cfg_ms_synth, DefaultMSSynth),
-    CfgMSBank(guid_cfg_ms_bank, DefaultMSBank),
-    CfgMSPanning(guid_cfg_ms_panning, DefaultMSPanning),
+    CfgNukeSynthesizer(guid_cfg_ms_synth, DefaultMSSynth),
+    CfgNukeBank(guid_cfg_ms_bank, DefaultMSBank),
+    CfgNukePanning(guid_cfg_ms_panning, DefaultMSPanning),
 
     CfgMIDIFlavor(guid_cfg_midi_flavor, DefaultMIDIFlavor),
     CfgAllowMIDIEffects(guid_cfg_midi_reverb, DefaultMIDIEffects)
@@ -150,7 +150,7 @@ cfg_guid cfg_dxi_plugin(guid_cfg_dxi_plugin, default_cfg_dxi_plugin);
 cfg_string
     CfgVSTiFilePath(GUIDCfgVSTiFilePath, ""),
     CfgSoundFontFilePath(GUIDCfgSoundFontFilePath, ""),
-    CfgMT32ROMDirectoryPath(GUIDCfgMT32ROMDirectoryPath, "");
+    CfgMuntDirectoryPath(GUIDCfgMT32ROMDirectoryPath, "");
 
 cfg_map CfgVSTiConfig(guid_cfg_vst_config);
 

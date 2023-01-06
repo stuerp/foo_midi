@@ -39,13 +39,14 @@ const char * _MuntGMSets[] =
     "Roland",
     "Sierra / King's Quest 6",
 };
+
 const size_t _MuntGMSetCount = _countof(_MuntGMSets);
 #pragma endregion
 
 /// <summary>
 /// Contains all the plugins that are build into the component.
 /// </summary>
-const Preferences::BuiltInPlugin Preferences::BuiltInPlugins[] =
+const Preferences::BuiltInPlayer Preferences::BuiltInPlayers[] =
 {
     { "Emu de MIDI",    PlayerTypeEmuDeMIDI,      -1, IsPluginAlwaysPresent },
 
@@ -95,15 +96,19 @@ t_uint32 Preferences::get_state()
     return State;
 }
 
+/// <summary>
+/// Applies the changes made in the dialog.
+/// </summary>
 void Preferences::apply()
 {
+    #pragma region("Output")
     {
         int PlayerType = -1;
 
-        int SelectedItem = (int)SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
+        int SelectedItem = (int)SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
 
         {
-            if (SelectedItem >= _ReportedPlugInCount && SelectedItem < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count()))
+            if ((SelectedItem >= _PlayerPresentCount) && (SelectedItem < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
                 PlayerType = PlayerTypeVSTi;
         #ifdef DXISUPPORT
             else
@@ -111,78 +116,96 @@ void Preferences::apply()
                 PlayerType = PlayerTypeDirectX;
         #endif
             else
-                PlayerType = _IndexToPlugInId[SelectedItem];
+                PlayerType = _PlayerIndexToPlayerType[SelectedItem];
 
             CfgPlayerType = PlayerType;
         }
 
         {
-            CfgVSTiFilePath = "";
-
             if (PlayerType == PlayerTypeVSTi)
             {
-                CfgVSTiFilePath = _VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].PathName.c_str();
+                CfgVSTiFilePath = _VSTiPlugIns[(size_t)(SelectedItem - _PlayerPresentCount)].PathName.c_str();
 
-                CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedItem - _ReportedPlugInCount)].Id] = _VSTiConfig;
+                CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedItem - _PlayerPresentCount)].Id] = _VSTiConfig;
             }
+            else
+                CfgVSTiFilePath = "";
         }
 
         #ifdef DXISUPPORT
-            else
+        {
             if (PlayerType == PlayerTypeDirectX)
             {
                 cfg_dxi_plugin = dxi_plugins[plugin_selected - _VSTiPlugins.get_count() - plugins_reported];
             }
+        }
         #endif
     }
 
     {
-        int SampleRate = (int)GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE);
+        int t = (int)GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE);
 
-        if (SampleRate < 6000)
-            SampleRate = 6000;
+        if (t < 6000)
+            t = 6000;
         else
-        if (SampleRate > 192000)
-            SampleRate = 192000;
+        if (t > 192000)
+            t = 192000;
 
-        SetDlgItemInt(IDC_SAMPLERATE, (UINT)SampleRate, FALSE);
+        SetDlgItemInt(IDC_SAMPLERATE, (UINT)t, FALSE);
 
         {
             char Text[16];
 
-            _itoa_s(SampleRate, Text, _countof(Text), 10);
+            _itoa_s(t, Text, _countof(Text), 10);
 
             CfgSampleRateHistory.add_item(Text);
-            CfgSampleRate = SampleRate;
+            CfgSampleRate = t;
         }
     }
+    #pragma endregion
 
+    #pragma region("Looping")
     {
-        int t = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
-
-        if (t < 0 || t >= (int)_ADLBanks.get_count())
-            t = 0;
-
-        CfgADLBank = _ADLBanks[(t_size)t].number;
+        CfgLoopTypePlayback = (t_int32)SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
+        CfgLoopTypeOther = (t_int32)SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
     }
+    #pragma endregion
 
+    #pragma region("MIDI Flavor")
+    CfgMIDIFlavor = (t_int32)SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
+    CfgAllowMIDIEffects = !SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK);
+    #pragma endregion
+
+    #pragma region("Miscellaneous")
     {
-        int t = (int)GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE);
+        cfg_emidi_exclusion = (t_int32)SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK);
 
-        if (t < 1)
-            t = 1;
-        else
-        if (t > 100)
-            t = 100;
+        cfg_filter_instruments = (t_int32)SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
+        cfg_filter_banks = (t_int32)SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
 
-        SetDlgItemInt(IDC_ADL_CHIPS, (UINT)t, FALSE);
+        cfg_thloopz = (t_int32)SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK);
+        cfg_rpgmloopz = (t_int32)SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK);
+        cfg_xmiloopz = (t_int32)SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK);
+        cfg_ff7loopz = (t_int32)SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK);
 
-        CfgADLChipCount = t;
     }
+    #pragma endregion
 
-    CfgADLPanning = (t_int32)SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
-    CfgMuntGMSet = (t_int32)SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL);
+    #pragma region("SoundFont")
+    {
+#ifdef BASSMIDISUPPORT
+        CfgResamplingMode = (t_int32)SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
+#endif
+    }
+    #pragma endregion
 
+    #pragma region("Munt")
+    {
+        CfgMuntGMSet = (t_int32)SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL);
+    }
+    #pragma endregion
+
+    #pragma region("Nuke")
     {
         size_t PresetIndex = (size_t)SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
 
@@ -191,27 +214,40 @@ void Preferences::apply()
 
         NukePlayer::GetPreset(PresetIndex, Synth, Bank);
 
-        CfgMSSynthesizer = (t_int32)Synth;
-        CfgMSBank = (t_int32)Bank;
+        CfgNukeSynthesizer = (t_int32)Synth;
+        CfgNukeBank = (t_int32)Bank;
+        CfgNukePanning = (t_int32)SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK);
     }
+    #pragma endregion
 
-    CfgSoundFontFilePath = _SoundFontPath;
-    CfgMT32ROMDirectoryPath = _MuntPath;
+    #pragma region("ADL")
+    {
+        {
+            int t = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
 
-    CfgLoopTypePlayback = (t_int32)SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
-    CfgLoopTypeOther = (t_int32)SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
+            if (t < 0 || t >= (int)_ADLBanks.get_count())
+                t = 0;
 
-    cfg_thloopz = (t_int32)SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK);
-    cfg_rpgmloopz = (t_int32)SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK);
-    cfg_xmiloopz = (t_int32)SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK);
-    cfg_ff7loopz = (t_int32)SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK);
+            CfgADLBank = _ADLBanks[(size_t)t].number;
+        }
 
-    cfg_emidi_exclusion = (t_int32)SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK);
+        {
+            int t = (int)GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE);
 
-    cfg_filter_instruments = (t_int32)SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
-    cfg_filter_banks = (t_int32)SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
+            if (t < 1)
+                t = 1;
+            else
+            if (t > 100)
+                t = 100;
 
-    CfgMSPanning = (t_int32)SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK);
+            SetDlgItemInt(IDC_ADL_CHIPS, (UINT)t, FALSE);
+
+            CfgADLChipCount = t;
+        }
+
+        CfgADLPanning = (t_int32)SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
+    }
+    #pragma endregion
 
 #ifdef FLUIDSYNTHSUPPORT
     {
@@ -223,26 +259,20 @@ void Preferences::apply()
         if (interp_method == 3)
             interp_method = 7;
         
-Cfg_FluidSynthInterpolationMethod = interp_method;
+        Cfg_FluidSynthInterpolationMethod = interp_method;
     }
 #endif
-
-#ifdef BASSMIDISUPPORT
-    CfgResamplingMode = (t_int32)SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
-#endif
-
-    CfgMIDIFlavor = (t_int32)SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
-    CfgAllowMIDIEffects = !SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK);
 
     OnChanged();
 }
 
+/// <summary>
+/// Resets the configuration to a default state.
+/// </summary>
 void Preferences::reset()
 {
-    int PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
-    int SelectedItem = _PluginPresentMap[PlugInIndex];
-
-    SendDlgItemMessage(IDC_PLUGIN, CB_SETCURSEL, (WPARAM)SelectedItem);
+    int PlayerIndex = _PlayerTypeToPlayerIndex[DefaultPlayerType];
+    int SelectedItem = _PlayerPresentMap[PlayerIndex];
 
     if ((DefaultPlayerType != PlayerTypeFluidSynth) && (DefaultPlayerType != PlayerTypeBASSMIDI))
     {
@@ -270,22 +300,8 @@ void Preferences::reset()
             GetDlgItem(ControlId[i]).EnableWindow(FALSE);
     }
 
-    if (DefaultPlayerType == PlayerTypeSuperMunt)
-    {
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
-    }
-    else
-    if (_VSTiPlugIns.get_count() == 0)
-    {
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
-    }
-    else
-    {
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
-    }
+    GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
+    GetDlgItem(IDC_MUNT_WARNING).ShowWindow((DefaultPlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
 
     if (DefaultPlayerType != PlayerTypeNuke)
     {
@@ -297,57 +313,74 @@ void Preferences::reset()
     {
         bool enable = (DefaultPlayerType == PlayerTypeVSTi) || (DefaultPlayerType == PlayerTypeFluidSynth) || (DefaultPlayerType == PlayerTypeBASSMIDI) || (DefaultPlayerType == PlayerTypeSecretSauce);
 
-        GetDlgItem(IDC_FILTER_GROUP).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
     }
 
-    SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
-
     if ((DefaultPlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
+    #pragma region("Output")
+    SendDlgItemMessage(IDC_PLAYER_TYPE, CB_SETCURSEL, (WPARAM)SelectedItem);
+    SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
+    #pragma endregion
+
+    #pragma region("Looping")
     SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_SETCURSEL, DefaultPlaybackLoopType);
     SendDlgItemMessage(IDC_LOOP_OTHER, CB_SETCURSEL, DefaultOtherLoopType);
+    #pragma endregion
+
+    #pragma region("MIDI")
+    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, DefaultMIDIFlavor);
+    SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !DefaultMIDIEffects);
+    #pragma endregion
+
+    #pragma region("Miscellaneous")
+    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion);
+    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments);
+    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks);
     SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, default_cfg_thloopz);
     SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, default_cfg_rpgmloopz);
     SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz);
     SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz);
-    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion);
-    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments);
-    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks);
-    SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultMSPanning);
-    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, DefaultMIDIFlavor);
-    SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !DefaultMIDIEffects);
+    #pragma endregion
 
-    {
-        SelectedItem = 0;
-
-        for (size_t i = 0; i < _ADLBanks.get_count(); ++i)
-        {
-            if (_ADLBanks[i].number == DefaultADLBank)
-            {
-                SelectedItem = (int)i;
-                break;
-            }
-        }
-
-        SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, (WPARAM)SelectedItem);
-    }
-
-    SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, DefaultADLPanning);
-    SetDlgItemInt(IDC_ADL_CHIPS, DefaultADLChipCount, 0);
-
+    #pragma region("SoundFont")
 #ifdef FLUIDSYNTHSUPPORT
     SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, 2);
 #else
     SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultResamplingMode);
 #endif
+    #pragma endregion
 
+    #pragma region("Munt")
+    SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)DefaultGMSet);
+    #pragma endregion
+
+    #pragma region("Nuke")
     SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultMSSynth, DefaultMSBank));
+    SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultMSPanning);
+    #pragma endregion
 
-    SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, (WPARAM)CfgMIDIFlavor);
+    #pragma region("ADL")
+    {
+        size_t BankIndex = 0;
+
+        for (size_t i = 0; i < _ADLBanks.get_count(); ++i)
+        {
+            if (_ADLBanks[i].number == DefaultADLBank)
+            {
+                BankIndex = i;
+                break;
+            }
+        }
+
+        SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, (WPARAM)BankIndex);
+        SetDlgItemInt(IDC_ADL_CHIPS, DefaultADLChipCount, 0);
+        SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, DefaultADLPanning);
+    }
+    #pragma endregion
 
     _VSTiConfig.resize(0);
 
@@ -361,65 +394,58 @@ void Preferences::reset()
 /// </summary>
 BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 {
-#ifdef DEBUG_DIALOG
-    long BaseUnits = ::GetDialogBaseUnits();
-
-    int TemplateUnitX = ::MulDiv(498, 4, LOWORD(BaseUnits));
-    int TemplateUnitY = ::MulDiv(468, 8, HIWORD(BaseUnits));
-#endif
-
     int PlayerType = CfgPlayerType;
 
-    _PlugInIdToIndex[PlayerType] = -1;
-    _IndexToPlugInId[-1] = -1;
+    _PlayerTypeToPlayerIndex[PlayerType] = -1;
+    _PlayerIndexToPlayerType[-1] = -1;
 
-    for (size_t i = 0; i < _countof(BuiltInPlugins); ++i)
+    for (size_t i = 0; i < _countof(BuiltInPlayers); ++i)
     {
-        _PlugInIdToIndex[BuiltInPlugins[i].Id] = (int)i;
+        _PlayerTypeToPlayerIndex[BuiltInPlayers[i].Type] = (int)i;
 
-        if (BuiltInPlugins[i].plugin_number_alt >= 0)
-            _PlugInIdToIndex[BuiltInPlugins[i].plugin_number_alt] = (int)i;
+        if (BuiltInPlayers[i].PlayerTypeAlternate >= 0)
+            _PlayerTypeToPlayerIndex[BuiltInPlayers[i].PlayerTypeAlternate] = (int)i;
     }
 
-    int PlugInIndex = -1;
+    int PlayerIndex = -1;
 
-    if (PlayerType != PlayerTypeVSTi && PlayerType != PlayerTypeDirectX)
+    if ((PlayerType != PlayerTypeVSTi) && (PlayerType != PlayerTypeDirectX))
     {
-        PlugInIndex = _PlugInIdToIndex[PlayerType];
+        PlayerIndex = _PlayerTypeToPlayerIndex[PlayerType];
 
-        if (PlugInIndex < 0 || !BuiltInPlugins[PlugInIndex].IsPresent(this))
+        if ((PlayerIndex < 0) || !BuiltInPlayers[PlayerIndex].IsPresent(this))
         {
-            PlayerType = DefaultPlayerType;
-            PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
+            PlayerType  = DefaultPlayerType;
+            PlayerIndex = _PlayerTypeToPlayerIndex[DefaultPlayerType];
         }
         else
-        if (BuiltInPlugins[PlugInIndex].plugin_number_alt == PlayerType)
-            PlayerType = BuiltInPlugins[PlugInIndex].Id;
+        if (BuiltInPlayers[PlayerIndex].PlayerTypeAlternate == PlayerType)
+            PlayerType = BuiltInPlayers[PlayerIndex].Type;
     }
 
     size_t VSTiPluginIndex = (size_t)~0;
 
     {
-        CWindow w = GetDlgItem(IDC_PLUGIN);
+        CWindow w = GetDlgItem(IDC_PLAYER_TYPE);
 
         {
-            _ReportedPlugInCount = 0;
+            _PlayerPresentCount = 0;
 
-            _PluginPresentMap[PlayerType] = -1;
+            _PlayerPresentMap[PlayerType] = -1;
 
-            for (size_t i = 0; i < _countof(BuiltInPlugins); ++i)
+            for (size_t i = 0; i < _countof(BuiltInPlayers); ++i)
             {
-                const BuiltInPlugin& bip = BuiltInPlugins[i];
+                const BuiltInPlayer& bip = BuiltInPlayers[i];
 
                 if (bip.IsPresent(this))
                 {
-                    _PluginPresentMap[bip.Id] = _ReportedPlugInCount;
+                    _PlayerPresentMap[bip.Type] = _PlayerPresentCount;
 
-                    if (bip.plugin_number_alt >= 0)
-                        _PluginPresentMap[bip.plugin_number_alt] = _ReportedPlugInCount;
+                    if (bip.PlayerTypeAlternate >= 0)
+                        _PlayerPresentMap[bip.PlayerTypeAlternate] = _PlayerPresentCount;
 
-                    _IndexToPlugInId[_ReportedPlugInCount] = bip.Id;
-                    ++_ReportedPlugInCount;
+                    _PlayerIndexToPlayerType[_PlayerPresentCount] = bip.Type;
+                    _PlayerPresentCount++;
 
                     ::uSendMessageText(w, CB_ADDSTRING, 0, bip.Name);
                 }
@@ -435,13 +461,13 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
         if (VSTiCount > 0)
         {
-            CWindow w = GetDlgItem(IDC_PLUGIN);
+            CWindow w = GetDlgItem(IDC_PLAYER_TYPE);
 
             pfc::string8 Text; Text << "Found " << pfc::format_int((t_int64)_VSTiPlugIns.get_size()).c_str() << " VSTi plug-ins."; console::print(Text);
 
             for (size_t i = 0, j = VSTiCount; i < j; ++i)
             {
-                _IndexToPlugInId[_ReportedPlugInCount + (int)i] = 1;
+                _PlayerIndexToPlayerType[_PlayerPresentCount + (int)i] = 1;
 
                 ::uSendMessageText(w, CB_ADDSTRING, 0, _VSTiPlugIns[i].Name.c_str());
 
@@ -487,14 +513,14 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 #endif
     }
 
+    if ((PlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
+        GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
+
     if ((PlayerType == PlayerTypeVSTi) && (VSTiPluginIndex == ~0))
     {
         PlayerType = DefaultPlayerType;
-        PlugInIndex = _PlugInIdToIndex[DefaultPlayerType];
+        PlayerIndex = _PlayerTypeToPlayerIndex[DefaultPlayerType];
     }
-
-    if ((PlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
-        GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
     if ((PlayerType != PlayerTypeFluidSynth) && (PlayerType != PlayerTypeBASSMIDI))
     {
@@ -504,10 +530,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         GetDlgItem(IDC_CACHED).EnableWindow(FALSE);
     }
 
-    if (PlayerType != PlayerTypeSuperMunt)
-    {
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
-    }
+    GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
 
     if (PlayerType != PlayerTypeADL)
     {
@@ -541,35 +564,33 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
     if ((PlayerType != PlayerTypeVSTi) && (PlayerType != PlayerTypeFluidSynth) && (PlayerType != PlayerTypeBASSMIDI) && (PlayerType != PlayerTypeSecretSauce))
     {
-        GetDlgItem(IDC_FILTER_GROUP).EnableWindow(FALSE);
-
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(FALSE);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(FALSE);
     }
 
-    // Set the selected plug-in.
+    // Set the selected player.
     {
-        CWindow w = GetDlgItem(IDC_PLUGIN);
+        CWindow w = GetDlgItem(IDC_PLAYER_TYPE);
 
-        int SelectedPlugInIndex = -1;
+        int SelectedIndex = -1;
 
         if (PlayerType == PlayerTypeVSTi)
-            SelectedPlugInIndex = _ReportedPlugInCount + (int)VSTiPluginIndex;
+            SelectedIndex = _PlayerPresentCount + (int)VSTiPluginIndex;
     #ifdef DXISUPPORT
         else
-        if (PlugInId == PlayerTypeDirectX)
+        if (PlayerType == PlayerTypeDirectX)
         {
             if (dxi_selected != ~0)
-                SelectedPlugInIndex = _ReportedPlugInCount + vsti_count + dxi_selected;
+                SelectedIndex = _PlayerPresentCount + vsti_count + dxi_selected;
             else
-                plugin = 0;
+                SelectedIndex = 0;
         }
     #endif
         else
-            SelectedPlugInIndex = _PluginPresentMap[PlayerType];
+            SelectedIndex = _PlayerPresentMap[PlayerType];
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)SelectedPlugInIndex, (LPARAM)0);
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)SelectedIndex, (LPARAM)0);
     }
 
     // Set the selected sample rate.
@@ -622,19 +643,17 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         }
     }
 
-    SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, (WPARAM)cfg_thloopz);
-    SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, (WPARAM)cfg_rpgmloopz);
-    SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, (WPARAM)cfg_xmiloopz);
-    SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, (WPARAM)cfg_ff7loopz);
-
     SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, (WPARAM)cfg_emidi_exclusion);
 
     SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM)cfg_filter_instruments);
     SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, (WPARAM)cfg_filter_banks);
 
-    SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, (WPARAM)CfgMSPanning);
+    SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, (WPARAM)cfg_thloopz);
+    SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, (WPARAM)cfg_rpgmloopz);
+    SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, (WPARAM)cfg_xmiloopz);
+    SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, (WPARAM)cfg_ff7loopz);
 
-#pragma region("ADL")
+    #pragma region("ADL")
     {
         const char * const * BankNames = adl_getBankNames();
         const size_t BankCount = (size_t)adl_getBanksCount();
@@ -676,7 +695,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
         SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, (WPARAM)CfgADLPanning);
     }
-#pragma endregion
+    #pragma endregion
 
 #ifdef BASSMIDISUPPORT
     {
@@ -715,6 +734,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     }
 #endif
 
+    #pragma region("Munt")
     {
         auto w = GetDlgItem(IDC_MUNT_GM_SET);
 
@@ -723,7 +743,9 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
         ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMuntGMSet, 0);
     }
+    #pragma endregion
 
+    #pragma region("Nuke")
     {
         auto w = GetDlgItem(IDC_NUKE_PRESET);
 
@@ -733,13 +755,17 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         {
             ::uSendMessageText(w, CB_ADDSTRING, 0, name.c_str());
 
-            if ((synth == (unsigned int)CfgMSSynthesizer) && (bank == (unsigned int)CfgMSBank))
+            if ((synth == (unsigned int)CfgNukeSynthesizer) && (bank == (unsigned int)CfgNukeBank))
                 ::SendMessage(w, CB_SETCURSEL, PresetNumber, 0);
 
             PresetNumber++;
         });
-    }
 
+        SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, (WPARAM)CfgNukePanning);
+    }
+    #pragma endregion
+
+    #pragma region("MIDI")
     {
         auto w = GetDlgItem(IDC_MIDI_FLAVOR);
 
@@ -756,6 +782,7 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
 
         SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !CfgAllowMIDIEffects);
     }
+    #pragma endregion
 
 #ifndef BASSMIDISUPPORT
     uSetWindowText(GetDlgItem(IDC_CACHED), "No info.");
@@ -789,16 +816,16 @@ void Preferences::OnButtonClick(UINT, int, CWindow)
 
 void Preferences::OnButtonConfig(UINT, int, CWindow)
 {
-    int SelectedIndex = (int)GetDlgItem(IDC_PLUGIN).SendMessage(CB_GETCURSEL, 0, 0);
+    int SelectedIndex = (int)GetDlgItem(IDC_PLAYER_TYPE).SendMessage(CB_GETCURSEL, 0, 0);
 
-    if ((SelectedIndex >= _ReportedPlugInCount) && SelectedIndex < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count()))
+    if ((SelectedIndex >= _PlayerPresentCount) && SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count()))
     {
         _IsBusy = true;
         OnChanged();
 
         VSTiPlayer Player;
 
-        if (Player.LoadVST(_VSTiPlugIns[(size_t)(SelectedIndex - _ReportedPlugInCount)].PathName.c_str()))
+        if (Player.LoadVST(_VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].PathName.c_str()))
         {
             if (_VSTiConfig.size())
                 Player.setChunk(&_VSTiConfig[0], (unsigned long)_VSTiConfig.size());
@@ -819,7 +846,7 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
     int SelectedIndex = (int)::SendMessage(w, CB_GETCURSEL, 0, 0);
 
     {
-        if ((SelectedIndex >= _ReportedPlugInCount) && (SelectedIndex < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count())))
+        if ((SelectedIndex >= _PlayerPresentCount) && (SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
             PlugInId = PlayerTypeVSTi;
     #ifdef DXISUPPORT
         else
@@ -827,7 +854,7 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
             PlugInId = PlayerTypeDirectX;
     #endif
         else
-            PlugInId = _IndexToPlugInId[SelectedIndex];
+            PlugInId = _PlayerIndexToPlayerType[SelectedIndex];
     }
 
     GetDlgItem(IDC_SAMPLERATE).EnableWindow(PlugInId || !_IsRunning);
@@ -851,7 +878,6 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
     {
         bool enable = (PlugInId == 1) || (PlugInId == 2) || (PlugInId == 4) || (PlugInId == 10);
 
-        GetDlgItem(IDC_FILTER_GROUP).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
@@ -875,20 +901,15 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
     }
 
     {
-        bool Enable = (SelectedIndex >= _ReportedPlugInCount) && (PlugInId < _ReportedPlugInCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _ReportedPlugInCount)].HasEditor;
+        bool Enable = (SelectedIndex >= _PlayerPresentCount) && (PlugInId < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].HasEditor;
 
         GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
     }
 
-    if ((SelectedIndex >= _ReportedPlugInCount) && (SelectedIndex < (int)(_ReportedPlugInCount + _VSTiPlugIns.get_count())))
-        _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedIndex - _ReportedPlugInCount)].Id];
+    if ((SelectedIndex >= _PlayerPresentCount) && (SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
+        _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].Id];
 
     OnChanged();
-}
-
-void Preferences::OnSetFocus(UINT, int, CWindow w)
-{
-    SetFocus();
 }
 
 void Preferences::OnTimer(UINT_PTR eventId)
@@ -917,25 +938,52 @@ void Preferences::OnTimer(UINT_PTR eventId)
 #endif
 }
 
+/// <summary>
+/// Returns true if the dialog state has changed.
+/// </summary>
 bool Preferences::HasChanged()
 {
-    // returns whether our dialog content is different from the current configuration (whether the apply button should be enabled or not)
     bool changed = false;
 
-    if (!changed && GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT)CfgSampleRate) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL) != CfgLoopTypePlayback) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL) != CfgLoopTypeOther) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK) != cfg_thloopz) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK) != cfg_rpgmloopz) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK) != cfg_xmiloopz) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK) != cfg_ff7loopz) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK) != cfg_emidi_exclusion) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK) != cfg_filter_instruments) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK) != cfg_filter_banks) changed = true;
-    if (!changed && SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK) != CfgMSPanning) changed = true;
+    if (GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT)CfgSampleRate)
+        return true;
+
+    if (SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL) != CfgLoopTypePlayback)
+        return true;
+
+    if (SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL) != CfgLoopTypeOther)
+        return true;
+
+    if (SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK) != cfg_emidi_exclusion)
+        return true;
+
+    if (SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK) != cfg_thloopz)
+        return true;
+
+    if (SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK) != cfg_rpgmloopz)
+        return true;
+
+    if (SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK) != cfg_xmiloopz)
+        return true;
+
+    if (SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK) != cfg_ff7loopz);
+        return true;
+
+    if (SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK) != cfg_filter_instruments)
+        return true;
+
+    if (SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK) != cfg_filter_banks)
+        return true;
+
+    if (SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK) != CfgNukePanning)
+        return true;
+
+#ifdef BASSMIDISUPPORT
+    if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgResamplingMode)
+        return true;
+#endif
 
 #ifdef FLUIDSYNTHSUPPORT
-    if (!changed)
     {
         int interp_method = SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
 
@@ -946,21 +994,16 @@ bool Preferences::HasChanged()
             interp_method = 7;
 
         if (interp_method != Cfg_FluidSynthInterpolationMethod)
-            changed = true;
+            return true;
     }
 #endif
 
-#ifdef BASSMIDISUPPORT
-    if (!changed && SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgResamplingMode)
-        changed = true;
-#endif
-    if (!changed && SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIFlavor)
-        changed = true;
+    if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIFlavor)
+        return true;
 
-    if (!changed && !SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != CfgAllowMIDIEffects)
-        changed = true;
+    if (SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != CfgAllowMIDIEffects)
+        return true;
 
-    if (!changed)
     {
         size_t PresetNumber = (size_t)SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
 
@@ -969,10 +1012,10 @@ bool Preferences::HasChanged()
 
         NukePlayer::GetPreset(PresetNumber, Synth, Bank);
 
-        changed = (!(Synth == (unsigned int)CfgMSSynthesizer && Bank == (unsigned int)CfgMSBank));
+        if (!(Synth == (unsigned int)CfgNukeSynthesizer && Bank == (unsigned int)CfgNukeBank))
+            return true;
     }
 
-    if (!changed)
     {
         int SelectedIndex = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
 
@@ -980,67 +1023,59 @@ bool Preferences::HasChanged()
             SelectedIndex = 0;
 
         if (_ADLBanks[(t_size)SelectedIndex].number != (int)CfgADLBank)
-            changed = true;
+            return true;
     }
 
-    if (!changed && GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE) != (UINT)CfgADLChipCount)
-        changed = true;
+    if (GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE) != (UINT)CfgADLChipCount)
+        return true;
 
-    if (!changed && SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != CfgADLPanning)
-        changed = true;
+    if (SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != CfgADLPanning)
+        return true;
 
-    if (!changed && SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL) != CfgMuntGMSet)
-        changed = true;
+    if (SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL) != CfgMuntGMSet)
+        return true;
 
-    if (!changed)
     {
-        int plugin_selected = (int)SendDlgItemMessage(IDC_PLUGIN, CB_GETCURSEL);
-        int plugin = -1;
+        int PlayerIndex = (int)SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
+        int PlayerType = -1;
 
-        if ((plugin_selected >= _ReportedPlugInCount) && (plugin_selected < _ReportedPlugInCount + (int)_VSTiPlugIns.get_count()))
-            plugin = 1;
+        if ((PlayerIndex >= _PlayerPresentCount) && (PlayerIndex < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()))
+            PlayerType = PlayerTypeVSTi;
     #ifdef DXISUPPORT
         else
-        if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
-            plugin = 5;
+        if (SelectedIndex >= plugins_reported + _VSTiPlugins.get_count())
+            PlayerType = PlayerTypeDirectX;
     #endif
         else
-            plugin = _IndexToPlugInId[plugin_selected];
+            PlayerType = _PlayerIndexToPlayerType[PlayerIndex];
 
-        if (plugin != CfgPlayerType)
-            changed = true;
+        if (CfgPlayerType != PlayerType)
+            return true;
 
-        if (!changed && plugin == 1)
+        if (PlayerType == PlayerTypeVSTi)
         {
-            if (::stricmp_utf8(CfgVSTiFilePath, _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].PathName.c_str()))
-                changed = true;
+            if (CfgVSTiFilePath != _VSTiPlugIns[(size_t)(PlayerIndex - _PlayerPresentCount)].PathName)
+                return true;
 
-            if (!changed)
-            {
-                t_uint32 unique_id = _VSTiPlugIns[(size_t)(plugin_selected - _ReportedPlugInCount)].Id;
+            t_uint32 unique_id = _VSTiPlugIns[(size_t)(PlayerIndex - _PlayerPresentCount)].Id;
 
-                if (_VSTiConfig.size() != CfgVSTiConfig[unique_id].size() || (_VSTiConfig.size() && memcmp(&_VSTiConfig[0], &CfgVSTiConfig[unique_id][0], _VSTiConfig.size())))
-                    changed = true;
-            }
+            if (_VSTiConfig.size() != CfgVSTiConfig[unique_id].size() || (_VSTiConfig.size() && memcmp(&_VSTiConfig[0], &CfgVSTiConfig[unique_id][0], _VSTiConfig.size())))
+                return true;
         }
     #ifdef DXISUPPORT
         else
-        if (!changed && plugin == 5)
-        {
-            if (dxi_plugins[plugin_selected - _VSTiPlugins.get_count() - plugins_reported] != cfg_dxi_plugin.get_value()) changed = true;
-        }
+        if (PlayerType == PlayerTypeDirectX)
+            if (dxi_plugins[PlayerIndex - _VSTiPlugins.get_count() - plugins_reported] != cfg_dxi_plugin.get_value())
+                return true;
     #endif
     }
 
-    if (!changed && (::stricmp_utf8(_SoundFontPath, CfgSoundFontFilePath) != 0))
-        changed = true;
-
-    if (!changed && (::stricmp_utf8(_MuntPath, CfgMT32ROMDirectoryPath) != 0))
-        changed = true;
-
-    return changed;
+    return false;
 }
 
+/// <summary>
+/// Notifies the parent that the dialog state has changed.
+/// </summary>
 void Preferences::OnChanged()
 {
     _Callback->on_state_changed();
@@ -1053,29 +1088,27 @@ void Preferences::OnChanged()
 /// </summary>
 void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
 {
+    pfc::string8 DirectoryPath;
+
     if (findFile == nullptr)
     {
         _VSTiPlugIns.set_size(0);
 
-        CfgVSTiPluginDirectoryPath.get(_VSTiSearchPath);
+        CfgVSTiPluginDirectoryPath.get(DirectoryPath);
 
-        if (_VSTiSearchPath.is_empty())
-        {
-            GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-
+        if (DirectoryPath.is_empty())
             return;
-        }
 
         console::print("Enumerating VSTi plug-ins...");
 
-        if (_VSTiSearchPath[_VSTiSearchPath.length() - 1] != '\\')
-            _VSTiSearchPath.add_byte('\\');
+        if (DirectoryPath[DirectoryPath.length() - 1] != '\\')
+            DirectoryPath.add_byte('\\');
 
-        _VSTiSearchPath += "*.*";
+        DirectoryPath += "*.*";
 
-        pathName = _VSTiSearchPath;
+        pathName = DirectoryPath;
 
-        findFile = ::uFindFirstFile(_VSTiSearchPath);
+        findFile = ::uFindFirstFile(DirectoryPath);
     }
 
     if (findFile == nullptr)

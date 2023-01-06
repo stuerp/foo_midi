@@ -99,9 +99,9 @@ MIDIPreset::MIDIPreset() noexcept
     }
 
     {
-        _NukeSynth = (unsigned int)CfgMSSynthesizer;
-        _NukeBank = (unsigned int)CfgMSBank;
-        _NukePanning = (bool)CfgMSPanning;
+        _NukeSynth = (unsigned int)CfgNukeSynthesizer;
+        _NukeBank = (unsigned int)CfgNukeBank;
+        _NukePanning = (bool)CfgNukePanning;
     }
 
     {

@@ -59,7 +59,7 @@ enum
     DefaultADLPanning = 1,
 //  DefaultADL4Op = 14,
 
-    // MS Player
+    // Munt
     DefaultMSSynth = 0,
     DefaultMSBank = 2,
     DefaultMSPanning = 0,
@@ -96,9 +96,9 @@ extern cfg_int
 
     CfgMuntGMSet,
 
-    CfgMSSynthesizer,
-    CfgMSBank,
-    CfgMSPanning,
+    CfgNukeSynthesizer,
+    CfgNukeBank,
+    CfgNukePanning,
 
     CfgMIDIFlavor,
     CfgAllowMIDIEffects
@@ -111,7 +111,7 @@ extern cfg_int
 extern cfg_string
     CfgVSTiFilePath,
     CfgSoundFontFilePath,
-    CfgMT32ROMDirectoryPath;
+    CfgMuntDirectoryPath;
 
 extern cfg_map
     CfgVSTiConfig;

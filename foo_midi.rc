@@ -57,7 +57,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     groupbox "Output", IDC_STATIC, X_10, Y_10, W_10, H_10
         rtext       "Player:",      IDC_STATIC,     X_11, Y_11 + 2, W_11, H_11
-        combobox                    IDC_PLUGIN,     X_12, Y_12,     W_12, H_12, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        combobox                    IDC_PLAYER_TYPE,X_12, Y_12,     W_12, H_12, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         pushbutton  "Configure",    IDC_CONFIGURE,  X_13, Y_13,     W_13, H_13, WS_TABSTOP
         rtext       "Sample rate:", IDC_STATIC,     X_14, Y_14 + 2, W_14, H_14
         combobox                    IDC_SAMPLERATE, X_15, Y_15,     W_15, H_15, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
@@ -125,7 +125,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
     #define H_80    11 + H_82 + 4 + H_83 + 4
 
-    groupbox "MIDI Filter", IDC_FILTER_GROUP, X_80, Y_80, W_80, H_80
+    groupbox "MIDI", IDC_STATIC, X_80, Y_80, W_80, H_80
         rtext       "Flavor:",                     IDC_MIDI_FLAVOR_TEXT, X_81, Y_81 + 2, W_81, H_81
         combobox                                   IDC_MIDI_FLAVOR,      X_82, Y_82,     W_82, H_82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         control     "Filter effects (Reverb and Chorus)", IDC_MIDI_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_83, Y_83, W_83, H_83
@@ -324,7 +324,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 {
     #define X_11    7
     #define Y_11    7
-    #define W_11    44
+    #define W_11    48
     #define H_11    8
 
     #define X_12    X_11 + W_11 + 3
@@ -337,9 +337,9 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
     #define W_13    16
     #define H_13    14
 
-    rtext       "VSTi Plugins:",    IDC_STATIC,     X_11, Y_11 + 2, W_11, H_11
-    edittext                        IDC_VST_PATH,   X_12, Y_12,     W_12, H_12, ES_AUTOHSCROLL | ES_READONLY
-    pushbutton  "...",              IDC_STATIC ,    X_13, Y_13,     W_13, H_13
+    rtext       "VSTi Plugins:",    IDC_STATIC,             X_11, Y_11 + 2, W_11, H_11
+    edittext                        IDC_VST_PATH,           X_12, Y_12,     W_12, H_12, ES_AUTOHSCROLL | ES_READONLY
+    pushbutton  "...",              IDC_VST_PATH_SELECT,    X_13, Y_13,     W_13, H_13
 
     #define X_21    X_11
     #define Y_21    Y_12 + H_12 + 4
@@ -356,9 +356,9 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
     #define W_23    16
     #define H_23    14
 
-    rtext       "SoundFont:",       IDC_SOUNDFONT_TEXT,         X_21, Y_21 + 2, W_21, H_21
-    edittext                        IDC_SOUNDFONT_FILE_PATH,    X_22, Y_22,     W_22, H_22, ES_AUTOHSCROLL | ES_READONLY
-    pushbutton  "...",              IDC_STATIC ,                X_23, Y_23,     W_23, H_23
+    rtext       "SoundFont:",       IDC_STATIC,                         X_21, Y_21 + 2, W_21, H_21
+    edittext                        IDC_SOUNDFONT_FILE_PATH,            X_22, Y_22,     W_22, H_22, ES_AUTOHSCROLL | ES_READONLY
+    pushbutton  "...",              IDC_SOUNDFONT_FILE_PATH_SELECT ,    X_23, Y_23,     W_23, H_23
 
     #define X_31    X_21
     #define Y_31    Y_22 + H_22 + 4
@@ -375,9 +375,9 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
     #define W_33    16
     #define H_33    14
 
-    rtext       "MT-32 ROMs:",      IDC_STATIC,         X_31, Y_31 + 2, W_31, H_31
-    edittext                        IDC_MUNT_FILE_PATH, X_32, Y_32,     W_32, H_32, ES_AUTOHSCROLL | ES_READONLY
-    pushbutton  "...",              IDC_STATIC ,        X_33, Y_33,     W_33, H_33
+    rtext       "MT-32 ROMs:",      IDC_STATIC,                 X_31, Y_31 + 2, W_31, H_31
+    edittext                        IDC_MUNT_FILE_PATH,         X_32, Y_32,     W_32, H_32, ES_AUTOHSCROLL | ES_READONLY
+    pushbutton  "...",              IDC_MUNT_FILE_PATH_SELECT,  X_33, Y_33,     W_33, H_33
 }
 
 VS_VERSION_INFO versioninfo
