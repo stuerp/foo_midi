@@ -727,10 +727,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             {
                 midi_meta_data_item Item;
 
-                IsMT32 = (MetaData.get_item("type", Item) && (::strcmp(Item.m_value.c_str(), "MT-32") == 0));
-
-                if (CfgMuntDirectoryPath.is_empty())
-                    console::print("No Munt base path configured, attempting to load ROMs from plugin install path");
+                IsMT32 = (MetaData.get_item("type", Item) && (Item.m_value == "MT-32"));
             }
 
             auto * Player = new MT32Player(!IsMT32, Preset._MuntGMSet);
@@ -739,6 +736,8 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
             if (BasePath.is_empty())
             {
+                console::print("No Munt base path configured, attempting to load ROMs from plugin install path.");
+
                 BasePath = core_api::get_my_full_path();
                 BasePath.truncate(BasePath.scan_filename());
             }
@@ -816,7 +815,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
             pfc::string8 PathName;
 
-            AdvCfgSecretSaucePath.get(PathName);
+            AdvCfgSecretSauceDirectoryPath.get(PathName);
 
             if (PathName.is_empty())
             {

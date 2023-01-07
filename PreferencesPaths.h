@@ -32,23 +32,23 @@
 #pragma hdrstop
 
 #pragma warning(disable: 4820)
-class PreferencesPaths : public CDialogImpl<PreferencesPaths>, public preferences_page_instance
+class PreferencesPathsPage : public CDialogImpl<PreferencesPathsPage>, public preferences_page_instance
 {
 public:
-    PreferencesPaths(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
+    PreferencesPathsPage(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
     {
         AdvCfgVSTiPluginDirectoryPath.get(_VSTiPluginDirectoryPath);
         _SoundFontFilePath = CfgSoundFontFilePath;
         _MT32ROMDirectoryPath = CfgMuntDirectoryPath;
-        AdvCfgSecretSaucePath.get(_SecretSauceDirectoryPath);
+        AdvCfgSecretSauceDirectoryPath.get(_SecretSauceDirectoryPath);
     }
 
-    PreferencesPaths(const PreferencesPaths&) = delete;
-    PreferencesPaths(const PreferencesPaths&&) = delete;
-    PreferencesPaths& operator=(const PreferencesPaths&) = delete;
-    PreferencesPaths& operator=(PreferencesPaths&&) = delete;
+    PreferencesPathsPage(const PreferencesPathsPage&) = delete;
+    PreferencesPathsPage(const PreferencesPathsPage&&) = delete;
+    PreferencesPathsPage& operator=(const PreferencesPathsPage&) = delete;
+    PreferencesPathsPage& operator=(PreferencesPathsPage&&) = delete;
 
-    virtual ~PreferencesPaths() { };
+    virtual ~PreferencesPathsPage() { };
 
     #pragma region("preferences_page_instance")
     t_uint32 get_state() final;
@@ -57,7 +57,7 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(PreferencesPaths)
+    BEGIN_MSG_MAP_EX(PreferencesPathsPage)
         MSG_WM_INITDIALOG(OnInitDialog)
 
         COMMAND_HANDLER_EX(IDC_VST_PATH, EN_KILLFOCUS, OnLostFocus)
@@ -68,10 +68,6 @@ public:
         COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH, EN_KILLFOCUS, OnLostFocus)
         COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
-
-#ifdef DEBUG_DIALOG
-        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
-#endif
     END_MSG_MAP()
 
     enum
@@ -89,16 +85,6 @@ private:
 
     bool HasChanged() const noexcept;
     void OnChanged() const noexcept;
-
-#ifdef DEBUG_DIALOG
-    /// <summary>
-    /// Returns a brush that the system uses to draw the dialog background.
-    /// </summary>
-    HBRUSH OnCtlColorDlg(HDC, HWND)
-    {
-        return (HBRUSH)::GetStockObject(DKGRAY_BRUSH);
-    }
-#endif
 
 private:
 #pragma region("VSTi")
@@ -122,17 +108,17 @@ private:
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
 };
 
-class PreferencesPathsPage : public preferences_page_impl<PreferencesPaths>
+class PreferencesPathsPageImpl : public preferences_page_impl<PreferencesPathsPage>
 {
 public:
-    PreferencesPathsPage() noexcept { };
+    PreferencesPathsPageImpl() noexcept { };
 
-    PreferencesPathsPage(const PreferencesPathsPage & p_in) = delete;
-    PreferencesPathsPage(const PreferencesPathsPage &&) = delete;
-    PreferencesPathsPage & operator=(const PreferencesPathsPage &) = delete;
-    PreferencesPathsPage & operator=(PreferencesPathsPage &&) = delete;
+    PreferencesPathsPageImpl(const PreferencesPathsPageImpl &) = delete;
+    PreferencesPathsPageImpl(const PreferencesPathsPageImpl &&) = delete;
+    PreferencesPathsPageImpl & operator=(const PreferencesPathsPageImpl &) = delete;
+    PreferencesPathsPageImpl & operator=(PreferencesPathsPageImpl &&) = delete;
 
-    virtual ~PreferencesPathsPage() noexcept { };
+    virtual ~PreferencesPathsPageImpl() noexcept { };
 
     const char * get_name() noexcept
     {

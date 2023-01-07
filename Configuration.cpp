@@ -159,9 +159,9 @@ cfg_map CfgVSTiConfig(guid_cfg_vst_config);
 
 advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, GUIDMIDIPlayerBranch, advconfig_branch::guid_branch_playback, 0);
 
-    advconfig_string_factory AdvCfgVSTiPluginDirectoryPath  ("VSTi search path", GUIDVSTiPluginDirectoryPath, GUIDMIDIPlayerBranch, 0.1, "");
-    advconfig_string_factory_MT AdvCfgSecretSaucePath       ("Secret Sauce path", GUIDSCCorePath, GUIDMIDIPlayerBranch, 0.2, "");
-    advconfig_checkbox_factory AdvCfgSkipToFirstNote        ("Skip to first note", guid_cfg_skip_to_first_note, GUIDMIDIPlayerBranch, 0.3, false);
+    advconfig_string_factory AdvCfgVSTiPluginDirectoryPath      ("VSTi search path", GUIDVSTiPluginDirectoryPath, GUIDMIDIPlayerBranch, 0.1, "");
+    advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath  ("Secret Sauce path", GUIDSCCorePath, GUIDMIDIPlayerBranch, 0.2, "");
+    advconfig_checkbox_factory AdvCfgSkipToFirstNote            ("Skip to first note", guid_cfg_skip_to_first_note, GUIDMIDIPlayerBranch, 0.3, false);
 
     advconfig_branch_factory AdvCfgMIDITimingBranch("Playback timing when loops present", GUIDAdvCfgMIDITimingBranch, GUIDMIDIPlayerBranch, 1.0);
 

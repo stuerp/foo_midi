@@ -20,7 +20,7 @@ extern volatile int _IsRunning;
 /// <summary>
 /// Gets the state of the Preference dialog.
 /// </summary>
-t_uint32 PreferencesPaths::get_state()
+t_uint32 PreferencesPathsPage::get_state()
 {
     t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
 
@@ -33,12 +33,12 @@ t_uint32 PreferencesPaths::get_state()
 /// <summary>
 /// Applies the changes to the preferences.
 /// </summary>
-void PreferencesPaths::apply()
+void PreferencesPathsPage::apply()
 {
     AdvCfgVSTiPluginDirectoryPath.set(_VSTiPluginDirectoryPath);
     CfgSoundFontFilePath = _SoundFontFilePath;
     CfgMuntDirectoryPath = _MT32ROMDirectoryPath;
-    AdvCfgSecretSaucePath.set(_SecretSauceDirectoryPath);
+    AdvCfgSecretSauceDirectoryPath.set(_SecretSauceDirectoryPath);
 
     OnChanged();
 }
@@ -46,7 +46,7 @@ void PreferencesPaths::apply()
 /// <summary>
 /// Resets this page's content to the default values. Does not apply any changes - lets user preview the changes before hitting "apply".
 /// </summary>
-void PreferencesPaths::reset()
+void PreferencesPathsPage::reset()
 {
     _VSTiPluginDirectoryPath.reset();
     _SoundFontFilePath.reset();
@@ -63,7 +63,7 @@ void PreferencesPaths::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL PreferencesPaths::OnInitDialog(CWindow, LPARAM) noexcept
+BOOL PreferencesPathsPage::OnInitDialog(CWindow, LPARAM) noexcept
 {
     _DarkModeHooks.AddDialogWithControls(*this);
 
@@ -75,14 +75,14 @@ BOOL PreferencesPaths::OnInitDialog(CWindow, LPARAM) noexcept
 /// <summary>
 /// Handles the notification when a control loses focus.
 /// </summary>
-void PreferencesPaths::OnLostFocus(UINT code, int id, CWindow) noexcept
+void PreferencesPathsPage::OnLostFocus(UINT code, int id, CWindow) noexcept
 {
     if (code != EN_KILLFOCUS)
         return;
 
     WCHAR Text[MAX_PATH];
 
-    GetDlgItemText(id, Text, sizeof(Text));
+    GetDlgItemText(id, Text, _countof(Text));
 
     switch (id)
     {
@@ -112,7 +112,7 @@ void PreferencesPaths::OnLostFocus(UINT code, int id, CWindow) noexcept
 /// <summary>
 /// Handles a click on a button.
 /// </summary>
-void PreferencesPaths::OnButtonClicked(UINT, int id, CWindow) noexcept
+void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 {
     if (id == IDC_VST_PATH_SELECT)
     {
@@ -122,7 +122,9 @@ void PreferencesPaths::OnButtonClicked(UINT, int id, CWindow) noexcept
         {
             _VSTiPluginDirectoryPath = DirectoryPath;
 
-            SetDlgItemText(IDC_VST_PATH, (LPCTSTR)(LPCSTR)_VSTiPluginDirectoryPath);
+            pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
+
+            SetDlgItemText(IDC_VST_PATH, w);
 
             OnChanged();
         }
@@ -158,7 +160,9 @@ void PreferencesPaths::OnButtonClicked(UINT, int id, CWindow) noexcept
         {
             _SoundFontFilePath = FilePath;
 
-            SetDlgItemText(IDC_SOUNDFONT_FILE_PATH, (LPCTSTR)(LPCSTR)_SoundFontFilePath);
+            pfc::wstringLite w = pfc::wideFromUTF8(FilePath);
+
+            SetDlgItemText(IDC_SOUNDFONT_FILE_PATH, w);
 
             OnChanged();
         }
@@ -172,7 +176,9 @@ void PreferencesPaths::OnButtonClicked(UINT, int id, CWindow) noexcept
         {
             _MT32ROMDirectoryPath = DirectoryPath;
 
-            SetDlgItemText(IDC_MUNT_FILE_PATH, (LPCTSTR)(LPCSTR)_MT32ROMDirectoryPath);
+            pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
+
+            SetDlgItemText(IDC_MUNT_FILE_PATH, w);
 
             OnChanged();
         }
@@ -186,7 +192,9 @@ void PreferencesPaths::OnButtonClicked(UINT, int id, CWindow) noexcept
         {
             _SecretSauceDirectoryPath = DirectoryPath;
 
-            SetDlgItemText(IDC_SECRET_SAUCE_PATH, (LPCTSTR)(LPCSTR)_SecretSauceDirectoryPath);
+            pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
+
+            SetDlgItemText(IDC_SECRET_SAUCE_PATH, w);
 
             OnChanged();
         }
@@ -196,7 +204,7 @@ void PreferencesPaths::OnButtonClicked(UINT, int id, CWindow) noexcept
 /// <summary>
 /// Returns whether our dialog content is different from the current configuration (whether the Apply button should be enabled or not)
 /// </summary>
-bool PreferencesPaths::HasChanged() const noexcept
+bool PreferencesPathsPage::HasChanged() const noexcept
 {
     pfc::string8 DirectoryPath;
 
@@ -211,13 +219,18 @@ bool PreferencesPaths::HasChanged() const noexcept
     if (_MT32ROMDirectoryPath != CfgMuntDirectoryPath)
         return true;
 
+    AdvCfgSecretSauceDirectoryPath.get(DirectoryPath);
+
+    if (_SecretSauceDirectoryPath != DirectoryPath)
+        return true;
+
     return false;
 }
 
 /// <summary>
 /// Tells the host that our state has changed to enable/disable the Apply button appropriately.
 /// </summary>
-void PreferencesPaths::OnChanged() const noexcept
+void PreferencesPathsPage::OnChanged() const noexcept
 {
     _Callback->on_state_changed();
 }
@@ -225,7 +238,7 @@ void PreferencesPaths::OnChanged() const noexcept
 /// <summary>
 /// Updates the appearance of the dialog according to the values of the settings.
 /// </summary>
-void PreferencesPaths::UpdateDialog() const noexcept
+void PreferencesPathsPage::UpdateDialog() const noexcept
 {
     ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, _VSTiPluginDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, _SoundFontFilePath);
@@ -234,4 +247,4 @@ void PreferencesPaths::UpdateDialog() const noexcept
 }
 #pragma endregion
 
-static preferences_page_factory_t<PreferencesPathsPage> PreferencesPageFactory;
+static preferences_page_factory_t<PreferencesPathsPageImpl> PreferencesPageFactory;

@@ -7,7 +7,7 @@
 
 #include "NukePlayer.h"
 
-//#define DEBUG_DIALOG
+#include <pfc/pathUtils.h>
 
 #pragma hdrstop
 
@@ -46,7 +46,7 @@ const size_t _MuntGMSetCount = _countof(_MuntGMSets);
 /// <summary>
 /// Contains all the plugins that are build into the component.
 /// </summary>
-const Preferences::BuiltInPlayer Preferences::BuiltInPlayers[] =
+const PreferencesRootPage::BuiltInPlayer PreferencesRootPage::BuiltInPlayers[] =
 {
     { "Emu de MIDI",    PlayerTypeEmuDeMIDI,      -1, IsPluginAlwaysPresent },
 
@@ -83,7 +83,7 @@ const Preferences::BuiltInPlayer Preferences::BuiltInPlayers[] =
 /// <summary>
 /// Gets the state of the Preference dialog.
 /// </summary>
-t_uint32 Preferences::get_state()
+t_uint32 PreferencesRootPage::get_state()
 {
     t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
 
@@ -99,7 +99,7 @@ t_uint32 Preferences::get_state()
 /// <summary>
 /// Applies the dialog state to the configuration variables.
 /// </summary>
-void Preferences::apply()
+void PreferencesRootPage::apply()
 {
     #pragma region("Output")
     {
@@ -269,7 +269,7 @@ void Preferences::apply()
 /// <summary>
 /// Resets the dialog state to default.
 /// </summary>
-void Preferences::reset()
+void PreferencesRootPage::reset()
 {
     int PlayerType = DefaultPlayerType;
 
@@ -394,7 +394,7 @@ void Preferences::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL Preferences::OnInitDialog(CWindow, LPARAM)
+BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 {
     int PlayerType = CfgPlayerType;
 
@@ -801,22 +801,22 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
     return FALSE;
 }
 
-void Preferences::OnEditChange(UINT, int, CWindow)
+void PreferencesRootPage::OnEditChange(UINT, int, CWindow)
 {
     OnChanged();
 }
 
-void Preferences::OnSelectionChange(UINT, int, CWindow)
+void PreferencesRootPage::OnSelectionChange(UINT, int, CWindow)
 {
     OnChanged();
 }
 
-void Preferences::OnButtonClick(UINT, int, CWindow)
+void PreferencesRootPage::OnButtonClick(UINT, int, CWindow)
 {
     OnChanged();
 }
 
-void Preferences::OnButtonConfig(UINT, int, CWindow)
+void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 {
     int SelectedIndex = (int)GetDlgItem(IDC_PLAYER_TYPE).SendMessage(CB_GETCURSEL, 0, 0);
 
@@ -841,7 +841,7 @@ void Preferences::OnButtonConfig(UINT, int, CWindow)
     }
 }
 
-void Preferences::OnPlugInChange(UINT, int, CWindow w)
+void PreferencesRootPage::OnPlugInChange(UINT, int, CWindow w)
 {
     int PlugInId = 0;
 
@@ -914,7 +914,7 @@ void Preferences::OnPlugInChange(UINT, int, CWindow w)
     OnChanged();
 }
 
-void Preferences::OnTimer(UINT_PTR eventId)
+void PreferencesRootPage::OnTimer(UINT_PTR eventId)
 {
     if (eventId != ID_REFRESH)
         return;
@@ -943,7 +943,7 @@ void Preferences::OnTimer(UINT_PTR eventId)
 /// <summary>
 /// Returns true if the dialog state has changed.
 /// </summary>
-bool Preferences::HasChanged()
+bool PreferencesRootPage::HasChanged()
 {
     if (GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT)CfgSampleRate)
         return true;
@@ -1076,9 +1076,15 @@ bool Preferences::HasChanged()
 /// <summary>
 /// Notifies the parent that the dialog state has changed.
 /// </summary>
-void Preferences::OnChanged()
+void PreferencesRootPage::OnChanged()
 {
     _Callback->on_state_changed();
+}
+/// <summary>
+/// Updates the appearance of the dialog according to the values of the settings.
+/// </summary>
+void PreferencesRootPage::UpdateDialog() const noexcept
+{
 }
 #pragma endregion
 
@@ -1086,7 +1092,7 @@ void Preferences::OnChanged()
 /// <summary>
 /// Gets all the VTSi plugins if a root directory has been specified.
 /// </summary>
-void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
+void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findFile)
 {
     pfc::string8 DirectoryPath;
 
@@ -1101,10 +1107,7 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
 
         console::print("Enumerating VSTi plug-ins...");
 
-        if (DirectoryPath[DirectoryPath.length() - 1] != '\\')
-            DirectoryPath.add_byte('\\');
-
-        DirectoryPath += "*.*";
+        DirectoryPath = pfc::io::path::combine(DirectoryPath, "*.*");
 
         pathName = DirectoryPath;
 
@@ -1124,8 +1127,7 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
         // Enter all subdirectories to look voor plug-ins.
         if (findFile->IsDirectory() && ::strcmp(findFile->GetFileName(), ".") && ::strcmp(findFile->GetFileName(), ".."))
         {
-            PathName.add_byte('\\');
-            PathName += "*.*";
+            PathName = pfc::io::path::combine(PathName, "*.*");
 
             puFindFile FindFile = ::uFindFirstFile(PathName);
 
@@ -1229,24 +1231,23 @@ static const SecretSauceInfo SecretSauceInfos[] =
 /// <summary>
 /// Is a compatible SecretSauce DLL available?
 /// </summary>
-bool Preferences::HasSecretSauce()
+bool PreferencesRootPage::HasSecretSauce()
 {
     FILE * fp = nullptr;
 
     {
         pfc::string8 PathName;
 
-        AdvCfgSecretSaucePath.get(PathName);
+        AdvCfgSecretSauceDirectoryPath.get(PathName);
 
         if (PathName.is_empty())
             return false;
 
-        PathName += "\\";
-        PathName += _DLLFileName;
+        pfc::string8 FilePath = pfc::io::path::combine(PathName, _DLLFileName);
 
-        pfc::stringcvt::string_os_from_utf8 FilePath(PathName);
+        pfc::stringcvt::string_os_from_utf8 FilePathW(PathName);
 
-        _tfopen_s(&fp, FilePath, _T("rb"));
+        _tfopen_s(&fp, FilePathW, _T("rb"));
     }
 
     bool rc = false;
@@ -1304,4 +1305,4 @@ bool Preferences::HasSecretSauce()
 }
 #pragma endregion
 
-static preferences_page_factory_t<PreferencesPage> PreferencesPageFactory;
+static preferences_page_factory_t<PreferencesRootPageImpl> PreferencesPageFactory;

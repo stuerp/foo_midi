@@ -117,8 +117,8 @@ extern cfg_map
     CfgVSTiConfig;
 
 extern advconfig_string_factory AdvCfgVSTiPluginDirectoryPath;
-
-extern advconfig_string_factory_MT AdvCfgSecretSaucePath;
+extern advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath;
+extern advconfig_checkbox_factory AdvCfgSkipToFirstNote;
 
 extern advconfig_branch_factory CfgMIDITimingBranch;
 
@@ -144,8 +144,6 @@ extern advconfig_branch_factory AdvCfgOPNBankBranch;
     extern advconfig_radio_factory AdvCfgOPNBankGEMS;
     extern advconfig_radio_factory AdvCfgOPNBankTomSoft;
     extern advconfig_radio_factory AdvCfgOPNBankFMMIDI;
-
-extern advconfig_checkbox_factory AdvCfgSkipToFirstNote;
 
 #ifdef BASSMIDISUPPORT
 extern advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled;

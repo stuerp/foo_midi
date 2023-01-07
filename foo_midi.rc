@@ -35,15 +35,15 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
         rtext       "Flavor:",                     IDC_MIDI_FLAVOR_TEXT, X_A81, Y_A81 + 2, W_A81, H_A81
         combobox                                   IDC_MIDI_FLAVOR,      X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         control     "Filter effects (Reverb and Chorus)", IDC_MIDI_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
+        control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMLOOPZ, "Button",            BS_AUTOCHECKBOX | WS_TABSTOP, X_A41, Y_A41, W_A41, H_A41
+        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMILOOPZ, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A42, Y_A42, W_A42, H_A42
+        control     "CC 2/4 (Touhou)",                                  IDC_THLOOPZ, "Button",              BS_AUTOCHECKBOX | WS_TABSTOP, X_A43, Y_A43, W_A43, H_A43
+        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7LOOPZ, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A44, Y_A44, W_A44, H_A44
 
     groupbox "Miscellaneous", IDC_STATIC, X_A30, Y_A30, W_A30, H_A30
         control "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EX, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
         control "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS, "Button",   BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
         control "Disable bank changes",                             IDC_FILTER_BANKS, "Button",         BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
-        control "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMLOOPZ, "Button",            BS_AUTOCHECKBOX | WS_TABSTOP, X_A41, Y_A41, W_A41, H_A41
-        control "CC 116/117 (XMI, EMIDI)",                          IDC_XMILOOPZ, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A42, Y_A42, W_A42, H_A42
-        control "CC 2/4 (Touhou)",                                  IDC_THLOOPZ, "Button",              BS_AUTOCHECKBOX | WS_TABSTOP, X_A43, Y_A43, W_A43, H_A43
-        control "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7LOOPZ, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A44, Y_A44, W_A44, H_A44
 
     ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, 7, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 

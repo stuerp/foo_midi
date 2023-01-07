@@ -5,6 +5,8 @@
 
 #pragma warning(disable: 5045)
 
+#include <pfc/pathUtils.h>
+
 MT32Player::MT32Player(bool gm, unsigned gm_set) : MIDIPlayer(), uGMSet(gm_set), bGM(gm)
 {
     _Synth = nullptr;
@@ -227,10 +229,7 @@ MT32Emu::File * MT32Player::openFile(const char * fileName)
     {
         service_ptr_t<file> File;
 
-        pfc::string8 FilePath;
-
-        FilePath = _BasePathName;
-        FilePath += fileName;
+        pfc::string8 FilePath = pfc::io::path::combine(_BasePathName, fileName);
 
         filesystem::g_open(File, FilePath, filesystem::open_mode_read, *_AbortCallback);
 
@@ -249,6 +248,6 @@ MT32Emu::File * MT32Player::openFile(const char * fileName)
     {
         delete[] Data;
 
-        return NULL;
+        return nullptr;
     }
 }

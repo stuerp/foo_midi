@@ -1,9 +1,10 @@
 
-/** $VER: SCPlayer.cpp (2022.12.31) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2023.01.07) Secret Sauce **/
 
 #include "SCPlayer.h"
 
 #include <sdk/foobar2000-lite.h>
+#include <pfc/pathUtils.h>
 
 #include <vector>
 
@@ -75,9 +76,7 @@ bool SCPlayer::startup()
     if (!_SCCorePathName)
         return false;
 
-    path = _SCCorePathName;
-    path += "\\";
-    path += _DLLFileName;
+    path = pfc::io::path::combine(_SCCorePathName, _DLLFileName);
 
     if (!LoadCore(path))
         return false;

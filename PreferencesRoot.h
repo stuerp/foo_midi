@@ -35,17 +35,17 @@
 
 extern cfg_dropdown_history CfgSampleRateHistory;
 
-class Preferences : public CDialogImpl<Preferences>, public preferences_page_instance
+class PreferencesRootPage : public CDialogImpl<PreferencesRootPage>, public preferences_page_instance
 {
 public:
-    Preferences(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _Callback(callback) { }
+    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _Callback(callback) { }
 
-    Preferences(const Preferences&) = delete;
-    Preferences(const Preferences&&) = delete;
-    Preferences& operator=(const Preferences&) = delete;
-    Preferences& operator=(Preferences&&) = delete;
+    PreferencesRootPage(const PreferencesRootPage&) = delete;
+    PreferencesRootPage(const PreferencesRootPage&&) = delete;
+    PreferencesRootPage& operator=(const PreferencesRootPage&) = delete;
+    PreferencesRootPage& operator=(PreferencesRootPage&&) = delete;
 
-    virtual ~Preferences() { };
+    virtual ~PreferencesRootPage() { };
 
     #pragma region("preferences_page_instance")
     t_uint32 get_state() final;
@@ -54,7 +54,7 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(Preferences)
+    BEGIN_MSG_MAP_EX(PreferencesRootPage)
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_TIMER(OnTimer)
 
@@ -131,6 +131,8 @@ private:
     bool HasChanged();
     void OnChanged();
 
+    void UpdateDialog() const noexcept;
+
 private:
     bool _IsBusy;
 
@@ -139,7 +141,7 @@ private:
         const char * Name;
         int Type;
         int PlayerTypeAlternate;
-        bool (*IsPresent)(Preferences *);
+        bool (*IsPresent)(PreferencesRootPage *);
     };
 
 #ifdef DXISUPPORT
@@ -232,17 +234,17 @@ private:
     static bool HasSecretSauce();
 #pragma endregion
 
-    static bool IsPluginAlwaysPresent(Preferences *)
+    static bool IsPluginAlwaysPresent(PreferencesRootPage *)
     {
         return true;
     }
 
-    static bool IsPluginNeverPresent(Preferences *)
+    static bool IsPluginNeverPresent(PreferencesRootPage *)
     {
         return false;
     }
 
-    static bool IsSecretSaucePresent(Preferences * p)
+    static bool IsSecretSaucePresent(PreferencesRootPage * p)
     {
         return p->_HasSecretSauce;
     }
@@ -260,17 +262,17 @@ private:
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
 };
 
-class PreferencesPage : public preferences_page_impl<Preferences>
+class PreferencesRootPageImpl : public preferences_page_impl<PreferencesRootPage>
 {
 public:
-    PreferencesPage() noexcept { };
+    PreferencesRootPageImpl() noexcept { };
 
-    PreferencesPage(const PreferencesPage & p_in) = delete;
-    PreferencesPage(const PreferencesPage &&) = delete;
-    PreferencesPage & operator=(const PreferencesPage &) = delete;
-    PreferencesPage & operator=(PreferencesPage &&) = delete;
+    PreferencesRootPageImpl(const PreferencesRootPageImpl &) = delete;
+    PreferencesRootPageImpl(const PreferencesRootPageImpl &&) = delete;
+    PreferencesRootPageImpl & operator=(const PreferencesRootPageImpl &) = delete;
+    PreferencesRootPageImpl & operator=(PreferencesRootPageImpl &&) = delete;
 
-    virtual ~PreferencesPage() noexcept { };
+    virtual ~PreferencesRootPageImpl() noexcept { };
 
     const char * get_name() noexcept
     {
