@@ -3,7 +3,7 @@
 
 #include "BMPlayer.h"
 
-#include <sflist.h>
+#include <SFList.h>
 
 #include <string>
 
@@ -22,7 +22,7 @@ struct Cached_SoundFont
     HSOUNDFONT hSoundFont;
     unsigned long _ReferenceCount;
 
-    sflist_presets * _Presets;
+    PresetArray * _Presets;
     time_t _TimeReleased;
 
     Cached_SoundFont() : hSoundFont(0), _Presets(nullptr)
@@ -87,7 +87,7 @@ static void CacheDispose()
             BASS_MIDI_FontFree(it->second.hSoundFont);
 
         if (it->second._Presets)
-            sflist_free(it->second._Presets);
+            DeletePresetArray(it->second._Presets);
     }
 }
 
@@ -114,7 +114,7 @@ static void CacheRun()
                             BASS_MIDI_FontFree(it->second.hSoundFont);
 
                         if (it->second._Presets)
-                            sflist_free(it->second._Presets);
+                            DeletePresetArray(it->second._Presets);
 
                         it = _CacheList.erase(it);
                         continue;
@@ -260,61 +260,63 @@ static HSOUNDFONT cache_open_font(const char * filePath)
     return font;
 }
 
-static sflist_presets * sflist_open_file(const char * filePath)
+static PresetArray * sflist_open_file(const char * url)
 {
-    size_t path_offset = (size_t)(!stricmp_utf8_partial(filePath, "file://") ? 7 : 0);
+    size_t PathOffset = (size_t)(!stricmp_utf8_partial(url, "file://") ? 7 : 0);
 
-    pfc::string8 base_path = filePath + path_offset;
+    pfc::string8 DirectoryPath = url + PathOffset;
 
-    base_path.truncate(base_path.scan_filename());
+    DirectoryPath.truncate(DirectoryPath.scan_filename());
 
-    pfc::string8 our_path = "";
+    pfc::string8 FilePath = "";
 
-    if (!path_offset)
-        our_path = "file://";
+    if (PathOffset == 0)
+        FilePath = "file://";
 
-    our_path += filePath;
+    FilePath += url;
 
-    char * sflist_file = nullptr;
+    char * Data = nullptr;
 
     try
     {
-        abort_callback_dummy m_abort;
-        file::ptr f;
+        abort_callback_dummy abortHandler;
+        file::ptr File;
 
-        filesystem::g_open_read(f, our_path, m_abort);
+        filesystem::g_open_read(File, FilePath, abortHandler);
 
-        size_t length = f->get_size_ex(m_abort);
+        size_t Size = File->get_size_ex(abortHandler);
 
-        sflist_file = (char *) ::malloc(length + 1);
+        Data = (char *) ::malloc(Size + 1);
 
-        if (!sflist_file)
+        if (Data)
+        {
+            File->read_object(Data, Size, abortHandler);
+
+            Data[Size] = '\0';
+
+            char error[sflist_max_error];
+
+            PresetArray * presetlist = LoadPresetArray(Data, Size, DirectoryPath, error);
+
+            ::free(Data);
+
+            return presetlist;
+        }
+        else
             return 0;
-
-        f->read_object(sflist_file, length, m_abort);
-
-        sflist_file[length] = '\0';
-
-        char error[sflist_max_error];
-
-        sflist_presets * presetlist = sflist_load(sflist_file, strlen(sflist_file), base_path, error);
-
-        ::free(sflist_file);
-
-        return presetlist;
     }
     catch (...)
     {
-        if (sflist_file)
-            ::free(sflist_file);
+        if (Data)
+            ::free(Data);
 
         return 0;
     }
 }
 
-static sflist_presets * cache_open_list(const char * path)
+static PresetArray * cache_open_list(const char * path)
 {
-    sflist_presets * presetlist = nullptr;
+    PresetArray * presetlist = nullptr;
 
     insync(_CacheLock);
 
@@ -365,7 +367,7 @@ static void cache_close_font(HSOUNDFONT handle)
     }
 }
 
-static void cache_close_list(sflist_presets * presetlist)
+static void cache_close_list(PresetArray * presetlist)
 {
     insync(_CacheLock);
 
@@ -420,11 +422,11 @@ static void cache_get_stats(uint64_t & total_sample_size, uint64_t & samples_loa
         else
         if (it->second._Presets)
         {
-            sflist_presets * presetlist = it->second._Presets;
+            PresetArray * presetlist = it->second._Presets;
 
-            for (unsigned int i = 0, j = presetlist->count; i < j; ++i)
+            for (unsigned int i = 0, j = presetlist->Count; i < j; ++i)
             {
-                HSOUNDFONT hfont = presetlist->presets[i].font;
+                HSOUNDFONT hfont = presetlist->Items[i].font;
 
                 has_font& h = uniqueList[hfont];
 
@@ -475,33 +477,33 @@ BMPlayer::~BMPlayer()
     shutdown();
 }
 
-void BMPlayer::setSoundFont(const char * directoryPath)
+void BMPlayer::SetSoundFontDirectory(const char * directoryPath)
 {
     _SoundFontDirectoryPath = directoryPath;
     shutdown();
 }
 
-void BMPlayer::setFileSoundFont(const char * filePath)
+void BMPlayer::SetSoundFontFile(const char * filePath)
 {
     _SoundFontFilePath = filePath;
     shutdown();
 }
 
-void BMPlayer::setInterpolation(int interpolationLevel)
+void BMPlayer::SetInterpolation(int interpolationLevel)
 {
     _InterpolationLevel = interpolationLevel;
 
     shutdown();
 }
 
-void BMPlayer::setEffects(bool enableEffects)
+void BMPlayer::SetEffects(bool enableEffects)
 {
     _AreEffectsEnabled = enableEffects;
 
     shutdown();
 }
 
-void BMPlayer::setVoices(int voiceCount)
+void BMPlayer::SetVoices(int voiceCount)
 {
     if (voiceCount < 1)
         voiceCount = 1;
@@ -570,27 +572,30 @@ bool BMPlayer::startup()
     BASS_ChannelSetAttribute(_stream[0], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
     BASS_ChannelSetAttribute(_stream[1], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
     BASS_ChannelSetAttribute(_stream[2], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
-    setVoices(_VoiceCount);
+
+    SetVoices(_VoiceCount);
 
     ::memset(bank_lsb_override, 0, sizeof(bank_lsb_override));
 
-    std::vector<BASS_MIDI_FONTEX> presetList;
-
-    if (_SoundFontFilePath.length())
     {
-        if (!load_font_item(presetList, _SoundFontFilePath))
-            return false;
-    }
+        std::vector<BASS_MIDI_FONTEX> Presets;
 
-    if (_SoundFontDirectoryPath.length())
-    {
-        if (!load_font_item(presetList, _SoundFontDirectoryPath))
-            return false;
-    }
+        if (_SoundFontFilePath.length())
+        {
+            if (LoadSoundFont(Presets, _SoundFontFilePath) == 0)
+                return false;
+        }
 
-    BASS_MIDI_StreamSetFonts(_stream[0], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
-    BASS_MIDI_StreamSetFonts(_stream[1], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
-    BASS_MIDI_StreamSetFonts(_stream[2], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
+        if (_SoundFontDirectoryPath.length())
+        {
+            if (LoadSoundFont(Presets, _SoundFontDirectoryPath) == 0)
+                return false;
+        }
+
+        BASS_MIDI_StreamSetFonts(_stream[0], &Presets[0], (DWORD) Presets.size() | BASS_MIDI_FONT_EX);
+        BASS_MIDI_StreamSetFonts(_stream[1], &Presets[0], (DWORD) Presets.size() | BASS_MIDI_FONT_EX);
+        BASS_MIDI_StreamSetFonts(_stream[2], &Presets[0], (DWORD) Presets.size() | BASS_MIDI_FONT_EX);
+    }
 
     reset_parameters();
 
@@ -614,12 +619,12 @@ void BMPlayer::shutdown()
 
     ::memset(_stream, 0, sizeof(_stream));
 
-    for (unsigned long i = 0; i < _soundFonts.size(); ++i)
+    for (unsigned long i = 0; i < _SoundFonts.size(); ++i)
     {
-        cache_close_font(_soundFonts[i]);
+        cache_close_font(_SoundFonts[i]);
     }
 
-    _soundFonts.resize(0);
+    _SoundFonts.resize(0);
 
     if (_presetList[0])
     {
@@ -638,11 +643,12 @@ void BMPlayer::shutdown()
 
 void BMPlayer::send_event(uint32_t b)
 {
-    unsigned char event[3];
-
-    event[0] = static_cast<uint8_t>(b);
-    event[1] = static_cast<uint8_t>(b >> 8);
-    event[2] = static_cast<uint8_t>(b >> 16);
+    unsigned char event[3]
+    {
+        static_cast<uint8_t>(b),
+        static_cast<uint8_t>(b >> 8),
+        static_cast<uint8_t>(b >> 16)
+    };
 
     unsigned port = (b >> 24) & 0x7F;
 //  const unsigned channel = b & 0x0F;
@@ -678,25 +684,25 @@ void BMPlayer::render(audio_sample * out, unsigned long count)
 
     while (count)
     {
-        unsigned long todo = count;
+        size_t ToDo = (size_t)count;
 
-        if (todo > 512)
-            todo = 512;
+        if (ToDo > 512)
+            ToDo = 512;
 
-        memset(out, 0, (todo * 2) * sizeof(audio_sample));
+        ::memset(out, 0, (ToDo * 2) * sizeof(audio_sample));
 
         for (int i = 0; i < 3; ++i)
         {
-            BASS_ChannelGetData(_stream[i], buffer, BASS_DATA_FLOAT | static_cast<unsigned int>((todo * 2) * sizeof(float)));
+            BASS_ChannelGetData(_stream[i], buffer, BASS_DATA_FLOAT | static_cast<unsigned int>((ToDo * 2) * sizeof(float)));
 
-            for (unsigned long j = 0; j < (todo * 2); ++j)
+            for (unsigned long j = 0; j < (ToDo * 2); ++j)
             {
                 out[j] += (audio_sample) buffer[j];
             }
         }
 
-        out += (todo * 2);
-        count -= todo;
+        out += (ToDo * 2);
+        count -= (unsigned long)ToDo;
     }
 }
 
@@ -732,58 +738,58 @@ void BMPlayer::compound_presets(std::vector<BASS_MIDI_FONTEX> & out, std::vector
     }
 }
 
-bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::string in_path)
+bool BMPlayer::LoadSoundFont(std::vector<BASS_MIDI_FONTEX> & presets, std::string filePath)
 {
-    std::string ext;
+    std::string Extension;
 
-    size_t dot = in_path.find_last_of('.');
+    size_t dot = filePath.find_last_of('.');
 
     if (dot != std::string::npos)
-        ext.assign(in_path.begin() + (const __int64)(dot + 1), in_path.end());
+        Extension.assign(filePath.begin() + (const __int64)(dot + 1), filePath.end());
 
-    if (!stricmp_utf8(ext.c_str(), "sf2") || !stricmp_utf8(ext.c_str(), "sf3")
+    if ((::stricmp_utf8(Extension.c_str(), "sf2") == 0) || (::stricmp_utf8(Extension.c_str(), "sf3") == 0)
     #ifdef SF2PACK
-        || !stricmp_utf8(ext.c_str(), "sf2pack") || !stricmp_utf8(ext.c_str(), "sfogg")
+        || (::stricmp_utf8(Extension.c_str(), "sf2pack") == 0) || (::stricmp_utf8(Extension.c_str(), "sfogg") == 0)
     #endif
         )
     {
-        HSOUNDFONT font = cache_open_font(in_path.c_str());
+        HSOUNDFONT hSoundFont = cache_open_font(filePath.c_str());
 
-        if (!font)
+        if (hSoundFont == 0)
         {
             shutdown();
 
             sLastError = "Unable to load SoundFont: ";
-            sLastError += in_path.c_str();
+            sLastError += filePath.c_str();
 
             return false;
         }
 
-        _soundFonts.push_back(font);
+        _SoundFonts.push_back(hSoundFont);
 
-        BASS_MIDI_FONTEX fex = { font, -1, -1, -1, 0, 0 };
+        BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, 0, 0 };
 
-        presetList.push_back(fex);
+        presets.push_back(fex);
 
         return true;
     }
-    else
-    if (!stricmp_utf8(ext.c_str(), "sflist") || !stricmp_utf8(ext.c_str(), "json"))
+
+    if ((::stricmp_utf8(Extension.c_str(), "sflist") == 0) || (::stricmp_utf8(Extension.c_str(), "json") == 0))
     {
-        sflist_presets ** __presetList = &_presetList[0];
+        PresetArray ** __Presets = &_presetList[0];
 
-        if (*__presetList)
-            __presetList = &_presetList[1];
+        if (*__Presets)
+            __Presets = &_presetList[1];
 
-        *__presetList = cache_open_list(in_path.c_str());
+        *__Presets = cache_open_list(filePath.c_str());
 
-        if (!*__presetList)
+        if (!*__Presets)
             return false;
 
-        BASS_MIDI_FONTEX * fontex = (*__presetList)->presets;
+        BASS_MIDI_FONTEX * fontex = (*__Presets)->Items;
 
-        for (unsigned int i = 0, j = (*__presetList)->count; i < j; ++i)
-            presetList.push_back(fontex[i]);
+        for (unsigned int i = 0, j = (*__Presets)->Count; i < j; ++i)
+            presets.push_back(fontex[i]);
 
         return true;
     }

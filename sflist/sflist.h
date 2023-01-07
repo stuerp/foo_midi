@@ -28,36 +28,20 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SFLIST_H
-#define _SFLIST_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#pragma once
 
 #include <bassmidi.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct sflist_presets
+struct PresetArray
 {
-   unsigned int count;
-   BASS_MIDI_FONTEX * presets;
-} sflist_presets;
+    unsigned int Count;
+    BASS_MIDI_FONTEX * Items;
+};
 
 #define sflist_max_error 1024
 
-sflist_presets * sflist_load(const char * sflist, size_t size, const char * base_path, char * error);
-void sflist_free(sflist_presets *);
+PresetArray * LoadPresetArray(const char * filePath, size_t size, const char * basePath, char * errorMessage);
+void DeletePresetArray(PresetArray *);
 
-const char * sflist_upgrade(const char * sflist, size_t size, char * error);
-void sflist_upgrade_free(const char *);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-
+const char * UpgradeSFList(const char * filePath, size_t size, char * error);
+void FreeUpgradedSFList(const char *);
