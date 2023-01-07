@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2023.01.06) **/
+/** $VER: Preferences.cpp (2023.01.07) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -97,7 +97,7 @@ t_uint32 Preferences::get_state()
 }
 
 /// <summary>
-/// Applies the changes made in the dialog.
+/// Applies the dialog state to the configuration variables.
 /// </summary>
 void Preferences::apply()
 {
@@ -178,10 +178,10 @@ void Preferences::apply()
 
     #pragma region("Miscellaneous")
     {
-        cfg_emidi_exclusion = (t_int32)SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK);
+        CfgEmuDeMIDIExclusion = (t_int32)SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK);
 
-        cfg_filter_instruments = (t_int32)SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
-        cfg_filter_banks = (t_int32)SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
+        CfgFilterInstruments = (t_int32)SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
+        CfgFilterBanks = (t_int32)SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
 
         cfg_thloopz = (t_int32)SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK);
         cfg_rpgmloopz = (t_int32)SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK);
@@ -267,7 +267,7 @@ void Preferences::apply()
 }
 
 /// <summary>
-/// Resets the configuration to a default state.
+/// Resets the dialog state to default.
 /// </summary>
 void Preferences::reset()
 {
@@ -339,7 +339,7 @@ void Preferences::reset()
     #pragma endregion
 
     #pragma region("Miscellaneous")
-    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, default_cfg_emidi_exclusion);
+    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, DefaultEmuDeMIDIExclusion);
     SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, default_cfg_filter_instruments);
     SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, default_cfg_filter_banks);
     SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, default_cfg_thloopz);
@@ -361,8 +361,8 @@ void Preferences::reset()
     #pragma endregion
 
     #pragma region("Nuke")
-    SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultMSSynth, DefaultMSBank));
-    SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultMSPanning);
+    SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultNukeSynth, DefaultNukeBank));
+    SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultNukePanning);
     #pragma endregion
 
     #pragma region("ADL")
@@ -645,10 +645,10 @@ BOOL Preferences::OnInitDialog(CWindow, LPARAM)
         }
     }
 
-    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, (WPARAM)cfg_emidi_exclusion);
+    SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, (WPARAM)CfgEmuDeMIDIExclusion);
 
-    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM)cfg_filter_instruments);
-    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, (WPARAM)cfg_filter_banks);
+    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM)CfgFilterInstruments);
+    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, (WPARAM)CfgFilterBanks);
 
     SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, (WPARAM)cfg_thloopz);
     SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, (WPARAM)cfg_rpgmloopz);
@@ -954,7 +954,7 @@ bool Preferences::HasChanged()
     if (SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL) != CfgLoopTypeOther)
         return true;
 
-    if (SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK) != cfg_emidi_exclusion)
+    if (SendDlgItemMessage(IDC_EMIDI_EX, BM_GETCHECK) != CfgEmuDeMIDIExclusion)
         return true;
 
     if (SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK) != cfg_thloopz)
@@ -969,10 +969,10 @@ bool Preferences::HasChanged()
     if (SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK) != cfg_ff7loopz)
         return true;
 
-    if (SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK) != cfg_filter_instruments)
+    if (SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK) != CfgFilterInstruments)
         return true;
 
-    if (SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK) != cfg_filter_banks)
+    if (SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK) != CfgFilterBanks)
         return true;
 
     if (SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK) != CfgNukePanning)
@@ -1094,7 +1094,7 @@ void Preferences::GetVSTiPlugins(const char * pathName, puFindFile findFile)
     {
         _VSTiPlugIns.set_size(0);
 
-        CfgVSTiPluginDirectoryPath.get(DirectoryPath);
+        AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
 
         if (DirectoryPath.is_empty())
             return;
@@ -1224,10 +1224,11 @@ static const SecretSauceInfo SecretSauceInfos[] =
     // 1.1.6 (S) - 64 bit - 27,347,456 - dbd9a30c168efef577d40a28d9adf37d
     { 27347456, { (char) 0xdb, (char) 0xd9, (char) 0xa3, 0x0c, 0x16, (char) 0x8e, (char) 0xfe, (char) 0xf5, 0x77, (char) 0xd4, 0x0a, 0x28, (char) 0xd9, (char) 0xad, (char) 0xf3, 0x7d } },
     #pragma warning(default: 4310)
-
-    { 0, { 0 } }
 };
 
+/// <summary>
+/// Is a compatible SecretSauce DLL available?
+/// </summary>
 bool Preferences::HasSecretSauce()
 {
     FILE * fp = nullptr;
@@ -1235,7 +1236,7 @@ bool Preferences::HasSecretSauce()
     {
         pfc::string8 PathName;
 
-        CfgSecretSaucePath.get(PathName);
+        AdvCfgSecretSaucePath.get(PathName);
 
         if (PathName.is_empty())
             return false;
@@ -1256,7 +1257,7 @@ bool Preferences::HasSecretSauce()
 
         size_t FileSize = (size_t)::ftell(fp);
 
-        for (int i = 0; SecretSauceInfos[i].FileSize; ++i)
+        for (size_t i = 0; i < _countof(SecretSauceInfos); ++i)
         {
             if (SecretSauceInfos[i].FileSize == FileSize)
             {
@@ -1287,7 +1288,7 @@ bool Preferences::HasSecretSauce()
                 {
                     hasher_md5_result Hash = Hasher->get_result(HasherState);
 
-                    if (Hash == SecretSauceInfos[i].Hash)
+                    if (SecretSauceInfos[i].Hash == Hash)
                     {
                         rc = true;
                         break;

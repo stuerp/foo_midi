@@ -361,8 +361,10 @@
     <ClInclude Include="OPNPlayer\OPNPlayer.h" />
     <ClInclude Include="OPNPlayer\Tomsoft.wopn.h" />
     <ClInclude Include="OPNPlayer\xg.wopn.h" />
+    <ClInclude Include="PreferencesPathsLayout.h" />
     <ClInclude Include="PreferencesRoot.h" />
     <ClInclude Include="PreferencesPaths.h" />
+    <ClInclude Include="PreferencesRootLayout.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="FileHasher.h" />
     <ClInclude Include="VSTiPlayer.h" />

@@ -178,8 +178,8 @@ void NukePlayer::GetPreset(pfc::string8 name, unsigned int & synth, unsigned int
         }
     }
 
-    synth = DefaultMSSynth;
-    bank = DefaultMSBank;
+    synth = DefaultNukeSynth;
+    bank = DefaultNukeBank;
 }
 
 /// <summary>

@@ -7,7 +7,7 @@
 
 #include "NukePlayer.h"
 
-#include <pfc/pathUtils.h>
+#include <pfc/string-conv-lite.h>
 
 //#define DEBUG_DIALOG
 
@@ -15,8 +15,6 @@
 
 extern char _DLLFileName[];
 extern volatile int _IsRunning;
-
-static const char * DefaultPathMessage = "Click to set.";
 
 #pragma region("preferences_page_instance")
 /// <summary>
@@ -32,24 +30,30 @@ t_uint32 PreferencesPaths::get_state()
     return State;
 }
 
+/// <summary>
+/// Applies the changes to the preferences.
+/// </summary>
 void PreferencesPaths::apply()
 {
-    CfgVSTiPluginDirectoryPath.set(_VSTiPluginDirectoryPath);
+    AdvCfgVSTiPluginDirectoryPath.set(_VSTiPluginDirectoryPath);
     CfgSoundFontFilePath = _SoundFontFilePath;
     CfgMuntDirectoryPath = _MT32ROMDirectoryPath;
+    AdvCfgSecretSaucePath.set(_SecretSauceDirectoryPath);
 
     OnChanged();
 }
 
+/// <summary>
+/// Resets this page's content to the default values. Does not apply any changes - lets user preview the changes before hitting "apply".
+/// </summary>
 void PreferencesPaths::reset()
 {
-    ::uSetDlgItemText(m_hWnd, IDC_VST_PATH_SELECT, DefaultPathMessage);
-    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH_SELECT, DefaultPathMessage);
-    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH_SELECT, DefaultPathMessage);
-
     _VSTiPluginDirectoryPath.reset();
     _SoundFontFilePath.reset();
     _MT32ROMDirectoryPath.reset();
+    _SecretSauceDirectoryPath.reset();
+
+    UpdateDialog();
 
     OnChanged();
 }
@@ -59,47 +63,58 @@ void PreferencesPaths::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL PreferencesPaths::OnInitDialog(CWindow, LPARAM)
+BOOL PreferencesPaths::OnInitDialog(CWindow, LPARAM) noexcept
 {
-#ifdef DEBUG_DIALOG
-    long BaseUnits = ::GetDialogBaseUnits();
-
-    int TemplateUnitX = ::MulDiv(498, 4, LOWORD(BaseUnits));
-    int TemplateUnitY = ::MulDiv(468, 8, HIWORD(BaseUnits));
-#endif
-
- #pragma region("VSTi")
-    {
-        CfgVSTiPluginDirectoryPath.get(_VSTiPluginDirectoryPath);
-
-        ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, !_VSTiPluginDirectoryPath.is_empty() ? _VSTiPluginDirectoryPath : DefaultPathMessage);
-    }
-#pragma endregion
-
-#pragma region("SoundFont")
-    {
-        _SoundFontFilePath = CfgSoundFontFilePath;
-
-        ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, !_SoundFontFilePath.is_empty() ? _SoundFontFilePath : DefaultPathMessage);
-    }
-#pragma endregion
-
-#pragma region("Munt")
-    {
-        _MT32ROMDirectoryPath = CfgMuntDirectoryPath;
-
-        ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, !_MT32ROMDirectoryPath.is_empty() ? _MT32ROMDirectoryPath : DefaultPathMessage);
-    }
-#pragma endregion
-
     _DarkModeHooks.AddDialogWithControls(*this);
+
+    UpdateDialog();
 
     return FALSE;
 }
 
-void PreferencesPaths::OnButtonClicked(UINT, int, CWindow w)
+/// <summary>
+/// Handles the notification when a control loses focus.
+/// </summary>
+void PreferencesPaths::OnLostFocus(UINT code, int id, CWindow) noexcept
 {
-    if (w == GetDlgItem(IDC_VST_PATH_SELECT))
+    if (code != EN_KILLFOCUS)
+        return;
+
+    WCHAR Text[MAX_PATH];
+
+    GetDlgItemText(id, Text, sizeof(Text));
+
+    switch (id)
+    {
+        case IDC_VST_PATH:
+            _VSTiPluginDirectoryPath = pfc::utf8FromWide(Text);
+            break;
+
+        case IDC_SOUNDFONT_FILE_PATH:
+            _SoundFontFilePath = pfc::utf8FromWide(Text);
+            break;
+
+        case IDC_MUNT_FILE_PATH:
+            _MT32ROMDirectoryPath = pfc::utf8FromWide(Text);
+            break;
+
+        case IDC_SECRET_SAUCE_PATH:
+            _SecretSauceDirectoryPath = pfc::utf8FromWide(Text);
+            break;
+
+        default:
+            return;
+    }
+
+    OnChanged();
+}
+
+/// <summary>
+/// Handles a click on a button.
+/// </summary>
+void PreferencesPaths::OnButtonClicked(UINT, int id, CWindow) noexcept
+{
+    if (id == IDC_VST_PATH_SELECT)
     {
         pfc::string8 DirectoryPath = _VSTiPluginDirectoryPath;
 
@@ -107,13 +122,13 @@ void PreferencesPaths::OnButtonClicked(UINT, int, CWindow w)
         {
             _VSTiPluginDirectoryPath = DirectoryPath;
 
-            ::uSetWindowText(w, !_VSTiPluginDirectoryPath.is_empty() ? _VSTiPluginDirectoryPath : DefaultPathMessage);
+            SetDlgItemText(IDC_VST_PATH, (LPCTSTR)(LPCSTR)_VSTiPluginDirectoryPath);
 
             OnChanged();
         }
     }
     else
-    if (w == GetDlgItem(IDC_SOUNDFONT_FILE_PATH_SELECT))
+    if (id == IDC_SOUNDFONT_FILE_PATH_SELECT)
     {
         pfc::string8 DirectoryPath = _SoundFontFilePath;
 
@@ -143,13 +158,13 @@ void PreferencesPaths::OnButtonClicked(UINT, int, CWindow w)
         {
             _SoundFontFilePath = FilePath;
 
-            ::uSetWindowText(w, !_SoundFontFilePath.isEmpty() ? _SoundFontFilePath : DefaultPathMessage);
+            SetDlgItemText(IDC_SOUNDFONT_FILE_PATH, (LPCTSTR)(LPCSTR)_SoundFontFilePath);
 
             OnChanged();
         }
     }
     else
-    if (w == GetDlgItem(IDC_MUNT_FILE_PATH_SELECT))
+    if (id == IDC_MUNT_FILE_PATH_SELECT)
     {
         pfc::string8 DirectoryPath = _MT32ROMDirectoryPath;
 
@@ -157,7 +172,21 @@ void PreferencesPaths::OnButtonClicked(UINT, int, CWindow w)
         {
             _MT32ROMDirectoryPath = DirectoryPath;
 
-            ::uSetWindowText(w, !_MT32ROMDirectoryPath.isEmpty() ? _MT32ROMDirectoryPath : DefaultPathMessage);
+            SetDlgItemText(IDC_MUNT_FILE_PATH, (LPCTSTR)(LPCSTR)_MT32ROMDirectoryPath);
+
+            OnChanged();
+        }
+    }
+    else
+    if (id == IDC_SECRET_SAUCE_PATH_SELECT)
+    {
+        pfc::string8 DirectoryPath = _SecretSauceDirectoryPath;
+
+        if (::uBrowseForFolder(m_hWnd, "Locate Secret Sauce...", DirectoryPath))
+        {
+            _SecretSauceDirectoryPath = DirectoryPath;
+
+            SetDlgItemText(IDC_SECRET_SAUCE_PATH, (LPCTSTR)(LPCSTR)_SecretSauceDirectoryPath);
 
             OnChanged();
         }
@@ -165,13 +194,13 @@ void PreferencesPaths::OnButtonClicked(UINT, int, CWindow w)
 }
 
 /// <summary>
-/// Returns true if the dialog state has changed.
+/// Returns whether our dialog content is different from the current configuration (whether the Apply button should be enabled or not)
 /// </summary>
-bool PreferencesPaths::HasChanged()
+bool PreferencesPaths::HasChanged() const noexcept
 {
     pfc::string8 DirectoryPath;
 
-    CfgVSTiPluginDirectoryPath.get(DirectoryPath);
+    AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
 
     if (_VSTiPluginDirectoryPath != DirectoryPath)
         return true;
@@ -186,11 +215,22 @@ bool PreferencesPaths::HasChanged()
 }
 
 /// <summary>
-/// Notifies the parent that the dialog state has changed.
+/// Tells the host that our state has changed to enable/disable the Apply button appropriately.
 /// </summary>
-void PreferencesPaths::OnChanged()
+void PreferencesPaths::OnChanged() const noexcept
 {
     _Callback->on_state_changed();
+}
+
+/// <summary>
+/// Updates the appearance of the dialog according to the values of the settings.
+/// </summary>
+void PreferencesPaths::UpdateDialog() const noexcept
+{
+    ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, _VSTiPluginDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, _SoundFontFilePath);
+    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, _MT32ROMDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_SECRET_SAUCE_PATH, _SecretSauceDirectoryPath);
 }
 #pragma endregion
 

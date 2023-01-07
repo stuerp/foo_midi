@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2023.01.05) **/
+/** $VER: Resource.h (2023.01.07) **/
 
 #pragma once
 
@@ -117,3 +117,6 @@
 
 #define IDC_MUNT_FILE_PATH              IDC_SOUNDFONT_FILE_PATH_SELECT + 1
 #define IDC_MUNT_FILE_PATH_SELECT       IDC_MUNT_FILE_PATH + 1
+
+#define IDC_SECRET_SAUCE_PATH           IDC_MUNT_FILE_PATH_SELECT + 1
+#define IDC_SECRET_SAUCE_PATH_SELECT    IDC_SECRET_SAUCE_PATH + 1

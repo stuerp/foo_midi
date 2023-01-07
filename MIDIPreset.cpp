@@ -43,8 +43,8 @@ MIDIPreset::MIDIPreset() noexcept
 
 #ifdef BASSMIDISUPPORT
     {
-        _BASSMIDIEffects = CfgBASSMIDIEffects;
-        _BASSMIDIVoices = (unsigned int)(int)CfgBASSMIDIVoices;
+        _BASSMIDIEffects = AdvCfgBASSMIDIEffectsEnabled;
+        _BASSMIDIVoices = (unsigned int)(int)AdvCfgBASSMIDIVoices;
     }
 #endif
 
@@ -63,36 +63,36 @@ MIDIPreset::MIDIPreset() noexcept
         _ADLChipCount = (unsigned int)CfgADLChipCount;
         _ADLUsePanning = !!CfgADLPanning;
 
-        if (CfgADLCoreDOSBox)
+        if (AdvCfgADLCoreDOSBox)
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
         else
-        if (cfg_adl_core_nuked_174)
+        if (AdvCfgADLCoreNuked074)
             _ADLEmulatorCore = ADLMIDI_EMU_NUKED_174;
         else
-        if (cfg_adl_core_nuked)
+        if (AdvCfgADLCoreNuked)
             _ADLEmulatorCore = ADLMIDI_EMU_NUKED;
         else
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
     }
 
     {
-        if (cfg_opn_core_mame)
+        if (AdvCfgOPNCoreMAME)
             _OPNEmulatorCore = OPNMIDI_EMU_MAME;
         else
-        if (cfg_opn_core_nuked)
+        if (AdvCfgOPNCoreNuked)
             _OPNEmulatorCore = OPNMIDI_EMU_NUKED;
         else
             _OPNEmulatorCore = OPNMIDI_EMU_GENS;
-        if (cfg_opn_bank_xg)
+        if (AdvCfgOPNBankXG)
             _OPNBankNumber = 0;
         else
-        if (cfg_opn_bank_gs)
+        if (AdvCfgOPNBankGS)
             _OPNBankNumber = 1;
         else
-        if (cfg_opn_bank_gems)
+        if (AdvCfgOPNBankGEMS)
             _OPNBankNumber = 2;
         else
-        if (cfg_opn_bank_tomsoft)
+        if (AdvCfgOPNBankTomSoft)
             _OPNBankNumber = 3;
         else
             _OPNBankNumber = 4;
@@ -413,7 +413,7 @@ void MIDIPreset::Deserialize(const char * text)
                     else
                     {
                     #ifdef BASSMIDISUPPORT
-                        BASSMIDIVoices = (unsigned int) (int) CfgBASSMIDIVoices;
+                        BASSMIDIVoices = (unsigned int) (int) AdvCfgBASSMIDIVoices;
                     #elif defined(FLUIDSYNTHSUPPORT)
                         in_voices = (unsigned int) (int) cfg_fluidsynth_voices;
                     #else
@@ -424,7 +424,7 @@ void MIDIPreset::Deserialize(const char * text)
                 else
                 {
                 #ifdef BASSMIDISUPPORT
-                    BASSMIDIVoices = (unsigned int) (int) CfgBASSMIDIVoices;
+                    BASSMIDIVoices = (unsigned int) (int) AdvCfgBASSMIDIVoices;
                 #elif defined(FLUIDSYNTHSUPPORT)
                     in_voices = (unsigned int) (int) cfg_fluidsynth_voices;
                 #else
@@ -435,8 +435,8 @@ void MIDIPreset::Deserialize(const char * text)
             else
             {
             #ifdef BASSMIDISUPPORT
-                BASSMIDIEffects = CfgBASSMIDIEffects;
-                BASSMIDIVoices = (unsigned int) (int) CfgBASSMIDIVoices;
+                BASSMIDIEffects = AdvCfgBASSMIDIEffectsEnabled;
+                BASSMIDIVoices = (unsigned int) (int) AdvCfgBASSMIDIVoices;
             #elif defined(FLUIDSYNTHSUPPORT)
                 in_effects = cfg_fluidsynth_effects;
                 in_voices = (unsigned int) (int) cfg_fluidsynth_voices;

@@ -147,6 +147,8 @@
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="PreferencesRoot.h" />
     <ClInclude Include="PreferencesPaths.h" />
+    <ClInclude Include="PreferencesPathsLayout.h" />
+    <ClInclude Include="PreferencesRootLayout.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

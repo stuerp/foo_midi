@@ -35,7 +35,13 @@
 class PreferencesPaths : public CDialogImpl<PreferencesPaths>, public preferences_page_instance
 {
 public:
-    PreferencesPaths(preferences_page_callback::ptr callback) noexcept : _Callback(callback) { }
+    PreferencesPaths(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
+    {
+        AdvCfgVSTiPluginDirectoryPath.get(_VSTiPluginDirectoryPath);
+        _SoundFontFilePath = CfgSoundFontFilePath;
+        _MT32ROMDirectoryPath = CfgMuntDirectoryPath;
+        AdvCfgSecretSaucePath.get(_SecretSauceDirectoryPath);
+    }
 
     PreferencesPaths(const PreferencesPaths&) = delete;
     PreferencesPaths(const PreferencesPaths&&) = delete;
@@ -54,9 +60,14 @@ public:
     BEGIN_MSG_MAP_EX(PreferencesPaths)
         MSG_WM_INITDIALOG(OnInitDialog)
 
+        COMMAND_HANDLER_EX(IDC_VST_PATH, EN_KILLFOCUS, OnLostFocus)
         COMMAND_HANDLER_EX(IDC_VST_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH, EN_KILLFOCUS, OnLostFocus)
         COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH, EN_KILLFOCUS, OnLostFocus)
         COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH, EN_KILLFOCUS, OnLostFocus)
+        COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
 
 #ifdef DEBUG_DIALOG
         MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
@@ -69,12 +80,15 @@ public:
     };
 
 private:
-    BOOL OnInitDialog(CWindow, LPARAM);
+    BOOL OnInitDialog(CWindow, LPARAM) noexcept;
 
-    void OnButtonClicked(UINT, int, CWindow);
+    void OnLostFocus(UINT, int, CWindow) noexcept;
+    void OnButtonClicked(UINT, int, CWindow) noexcept;
 
-    bool HasChanged();
-    void OnChanged();
+    void UpdateDialog() const noexcept;
+
+    bool HasChanged() const noexcept;
+    void OnChanged() const noexcept;
 
 #ifdef DEBUG_DIALOG
     /// <summary>
@@ -97,6 +111,10 @@ private:
 
 #pragma region("Munt")
     pfc::string8 _MT32ROMDirectoryPath;
+#pragma endregion
+
+#pragma region("Secret Sauce")
+    pfc::string8 _SecretSauceDirectoryPath;
 #pragma endregion
 
     const preferences_page_callback::ptr _Callback;

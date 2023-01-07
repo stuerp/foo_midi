@@ -100,7 +100,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         _FileHash = Hasher->get_result(HasherState);
     }
 
-    if (cfg_SkipToFirstNote)
+    if (AdvCfgSkipToFirstNote)
         _Container.trim_start();
 
     _LoopRange.Clear();
@@ -816,7 +816,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
             pfc::string8 PathName;
 
-            CfgSecretSaucePath.get(PathName);
+            AdvCfgSecretSaucePath.get(PathName);
 
             if (PathName.is_empty())
             {

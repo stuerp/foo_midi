@@ -115,12 +115,12 @@ public:
         _LengthInSamples = 0;
         _LengthInTicks = 0;
 
-        _CleanFlags = (unsigned int)(cfg_emidi_exclusion ? midi_container::clean_flag_emidi : 0) |
-                                    (cfg_filter_instruments ? midi_container::clean_flag_instruments : 0) |
-                                    (cfg_filter_banks ? midi_container::clean_flag_banks : 0);
+        _CleanFlags = (unsigned int)(CfgEmuDeMIDIExclusion ? midi_container::clean_flag_emidi : 0) |
+                                    (CfgFilterInstruments ? midi_container::clean_flag_instruments : 0) |
+                                    (CfgFilterBanks ? midi_container::clean_flag_banks : 0);
 
-        _LoopCount = (unsigned int)CfgLoopCount.get();
-        _FadeDuration = (unsigned int)CfgFadeTimeInMS.get();
+        _LoopCount    = (unsigned int)AdvCfgLoopCount.get();
+        _FadeDuration = (unsigned int)AdvCfgFadeTimeInMS.get();
 
     #ifdef FLUIDSYNTHSUPPORT
         _FluidSynthInterpolationMethod(Cfg_FluidSynthInterpolationMethod),

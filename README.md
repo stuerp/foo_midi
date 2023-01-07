@@ -37,6 +37,9 @@ To build the code you need:
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
 * [foobar2000 SDK](https://www.foobar2000.org/SDK) 2022-10-20
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
+
+The following libraries are included in the code:
+
 * [BASS](https://www.un4seen.com/) 2.4.17
   * [BASSFLAC](https://www.un4seen.com/) 2.4.5
   * [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
@@ -97,12 +100,13 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.8.0.0, 2023-xx-xx, *""*
+v2.8.0.0, 2023-xx-xx, *"A New Beginning...?"*
 
 * Major refactoring of the source code.
 * Tried to make the preferences page a bit more accessible to new users.
-  * Moved the configuration of the VTSi plugin path to the preferences page.
-  * Moved all the path controls to a separate page.
+  * Moved all the path controls to a separate preferences page.
+  * Added the configuration of the VTSi plugin path to the preferences page (in addition of the Advanced Preferences, for backwards compatibility).
+  * Added the configuration of the Secret Sauce path to the preferences page (in addition of the Advanced Preferences, for backwards compatibility).
 
 v2.7.4.4, 2022-11-21, *"I'm SoundFont of it"*
 

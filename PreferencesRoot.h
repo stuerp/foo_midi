@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2023.01.05) **/
+/** $VER: Preferences.h (2023.01.07) **/
 
 #pragma warning(disable: 5045)
 
@@ -109,10 +109,6 @@ public:
         COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_EDITCHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_ADL_PANNING, BN_CLICKED, OnButtonClick)
         #pragma endregion
-
-#ifdef DEBUG_DIALOG
-        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
-#endif
     END_MSG_MAP()
 
     enum
@@ -134,16 +130,6 @@ private:
 
     bool HasChanged();
     void OnChanged();
-
-#ifdef DEBUG_DIALOG
-    /// <summary>
-    /// Returns a brush that the system uses to draw the dialog background.
-    /// </summary>
-    HBRUSH OnCtlColorDlg(HDC, HWND)
-    {
-        return (HBRUSH)::GetStockObject(DKGRAY_BRUSH);
-    }
-#endif
 
 private:
     bool _IsBusy;

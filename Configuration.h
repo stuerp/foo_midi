@@ -43,7 +43,7 @@ enum
     default_cfg_xmiloopz = 1,
     default_cfg_ff7loopz = 1,
 
-    default_cfg_emidi_exclusion = 1,
+    DefaultEmuDeMIDIExclusion = 1,
 
     default_cfg_filter_instruments = 0,
     default_cfg_filter_banks = 0,
@@ -60,9 +60,9 @@ enum
 //  DefaultADL4Op = 14,
 
     // Munt
-    DefaultMSSynth = 0,
-    DefaultMSBank = 2,
-    DefaultMSPanning = 0,
+    DefaultNukeSynth = 0,
+    DefaultNukeBank = 2,
+    DefaultNukePanning = 0,
 
     DefaultMIDIFlavor = MIDIPlayer::FilterNone,
     DefaultMIDIEffects = 1,
@@ -83,10 +83,10 @@ extern cfg_int
     cfg_xmiloopz,
     cfg_ff7loopz,
 
-    cfg_emidi_exclusion,
+    CfgEmuDeMIDIExclusion,
 
-    cfg_filter_instruments,
-    cfg_filter_banks,
+    CfgFilterInstruments,
+    CfgFilterBanks,
 
     CfgResamplingMode,
 
@@ -116,40 +116,40 @@ extern cfg_string
 extern cfg_map
     CfgVSTiConfig;
 
-extern advconfig_string_factory CfgVSTiPluginDirectoryPath;
+extern advconfig_string_factory AdvCfgVSTiPluginDirectoryPath;
 
-extern advconfig_string_factory_MT CfgSecretSaucePath;
+extern advconfig_string_factory_MT AdvCfgSecretSaucePath;
 
-extern advconfig_branch_factory cfg_midi_timing_parent;
+extern advconfig_branch_factory CfgMIDITimingBranch;
 
-extern advconfig_integer_factory CfgLoopCount;
-extern advconfig_integer_factory CfgFadeTimeInMS;
+extern advconfig_integer_factory AdvCfgLoopCount;
+extern advconfig_integer_factory AdvCfgFadeTimeInMS;
 
-extern advconfig_branch_factory cfg_adl_core_parent;
+extern advconfig_branch_factory AdvCfgADLCoreBranch;
 
-extern advconfig_checkbox_factory_t<true> cfg_adl_core_nuked;
-extern advconfig_checkbox_factory_t<true> cfg_adl_core_nuked_174;
-extern advconfig_checkbox_factory_t<true> CfgADLCoreDOSBox;
+    extern advconfig_radio_factory AdvCfgADLCoreNuked;
+    extern advconfig_radio_factory AdvCfgADLCoreNuked074;
+    extern advconfig_radio_factory AdvCfgADLCoreDOSBox;
 
-extern advconfig_branch_factory cfg_opn_core_parent;
+extern advconfig_branch_factory AdvCfgOPNCoreBranch;
 
-extern advconfig_checkbox_factory_t<true> cfg_opn_core_mame;
-extern advconfig_checkbox_factory_t<true> cfg_opn_core_nuked;
-extern advconfig_checkbox_factory_t<true> cfg_opn_core_gens;
+    extern advconfig_radio_factory AdvCfgOPNCoreMAME;
+    extern advconfig_radio_factory AdvCfgOPNCoreNuked;
+    extern advconfig_radio_factory AdvCfgOPNCoreGens;
 
-extern advconfig_branch_factory cfg_opn_bank_parent;
+extern advconfig_branch_factory AdvCfgOPNBankBranch;
 
-extern advconfig_checkbox_factory_t<true> cfg_opn_bank_xg;
-extern advconfig_checkbox_factory_t<true> cfg_opn_bank_gs;
-extern advconfig_checkbox_factory_t<true> cfg_opn_bank_gems;
-extern advconfig_checkbox_factory_t<true> cfg_opn_bank_tomsoft;
-extern advconfig_checkbox_factory_t<true> cfg_opn_bank_fmmidi;
+    extern advconfig_radio_factory AdvCfgOPNBankXG;
+    extern advconfig_radio_factory AdvCfgOPNBankGS;
+    extern advconfig_radio_factory AdvCfgOPNBankGEMS;
+    extern advconfig_radio_factory AdvCfgOPNBankTomSoft;
+    extern advconfig_radio_factory AdvCfgOPNBankFMMIDI;
 
-extern advconfig_checkbox_factory cfg_SkipToFirstNote;
+extern advconfig_checkbox_factory AdvCfgSkipToFirstNote;
 
 #ifdef BASSMIDISUPPORT
-extern advconfig_checkbox_factory CfgBASSMIDIEffects;
-extern advconfig_integer_factory CfgBASSMIDIVoices;
+extern advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled;
+extern advconfig_integer_factory AdvCfgBASSMIDIVoices;
 #endif
 
 extern const char * _MuntGMSets[];
