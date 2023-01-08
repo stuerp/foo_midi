@@ -12,7 +12,7 @@
 
 extern bool GetSoundFontStatistics(uint64_t & total_sample_size, uint64_t & sample_loaded_size);
 
-typedef struct PresetArray PresetArray;
+typedef struct sflist_presets sflist_presets;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class BMPlayer : public MIDIPlayer
@@ -21,11 +21,11 @@ public:
     BMPlayer();
     virtual ~BMPlayer();
 
-    void SetSoundFontDirectory(const char * in);
-    void SetSoundFontFile(const char * in);
-    void SetInterpolation(int level);
-    void SetEffects(bool enable = true);
-    void SetVoices(int voices);
+    void setSoundFont(const char * in);
+    void setFileSoundFont(const char * in);
+    void setInterpolation(int level);
+    void setEffects(bool enable = true);
+    void setVoices(int voices);
 
     unsigned int getVoicesActive();
 
@@ -41,12 +41,12 @@ private:
 
     void compound_presets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels);
     void reset_parameters();
-    bool LoadSoundFont(std::vector<BASS_MIDI_FONTEX> & presetList, std::string path);
+    bool load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::string path);
 
     std::string sLastError;
 
-    std::vector<HSOUNDFONT> _SoundFonts;
-    PresetArray * _presetList[2];
+    std::vector<HSOUNDFONT> _soundFonts;
+    sflist_presets * _presetList[2];
 
     std::string _SoundFontDirectoryPath;
     std::string _SoundFontFilePath;

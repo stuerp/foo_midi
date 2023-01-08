@@ -289,7 +289,7 @@
     <ClCompile Include="PreferencesRoot.cpp" />
     <ClCompile Include="PreferencesPaths.cpp" />
     <ClCompile Include="SCPlayer.cpp" />
-    <ClCompile Include="sflist\SFList.cpp" />
+    <ClCompile Include="sflist\sflist.c" />
     <ClCompile Include="Experimental\SFPlayer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -387,7 +387,7 @@
     <ClInclude Include="3rdParty\Nuke\resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCPlayer.h" />
-    <ClInclude Include="sflist\SFList.h" />
+    <ClInclude Include="sflist\sflist.h" />
     <ClInclude Include="Experimental\SFPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

@@ -517,15 +517,15 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
         midiPlayer = sfPlayer;
 
-        sfPlayer->SetSoundFontDirectory(thePreset.soundfont_path);
+        sfPlayer->setSoundFont(thePreset.soundfont_path);
 
         if (file_soundfont.length())
-            sfPlayer->SetSoundFontFile(file_soundfont);
+            sfPlayer->setFileSoundFont(file_soundfont);
 
         sfPlayer->setSampleRate(srate);
         sfPlayer->setInterpolationMethod(_FluidSynthInterpolationMethod);
         sfPlayer->setDynamicLoading(cfg_soundfont_dynamic.get());
-        sfPlayer->SetEffects(thePreset.effects);
+        sfPlayer->setEffects(thePreset.effects);
         sfPlayer->setVoiceCount(thePreset.voices);
 
         sfPlayer->SetFilter((MIDIPlayer::filter_mode) thePreset.MIDIStandard, !thePreset._UseMIDIEffects);
@@ -563,21 +563,21 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
                 if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
                 {
-                    console::print("No SoundFonts configured and no file or directory SoundFont found.");
+                    console::print("No SoundFonts configured, and no file or directory SoundFont found");
                     throw exception_io_data();
                 }
             }
 
             auto Player = new BMPlayer;
 
-            Player->SetSoundFontDirectory(Preset._SoundFontFilePath);
+            Player->setSoundFont(Preset._SoundFontFilePath);
 
             if (SoundFontFilePath.length())
-                Player->SetSoundFontFile(SoundFontFilePath);
+                Player->setFileSoundFont(SoundFontFilePath);
 
-            Player->SetInterpolation((int)_BASSMIDIResamplingMode);
-            Player->SetEffects(Preset._BASSMIDIEffects);
-            Player->SetVoices((int)Preset._BASSMIDIVoices);
+            Player->setInterpolation((int)_BASSMIDIResamplingMode);
+            Player->setEffects(Preset._BASSMIDIEffects);
+            Player->setVoices((int)Preset._BASSMIDIVoices);
 
             _Player = Player;
         }

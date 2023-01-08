@@ -18,11 +18,11 @@ public:
     virtual ~SFPlayer();
 
     // configuration
-    void SetSoundFontDirectory(const char * in);
-    void SetSoundFontFile(const char * in);
+    void setSoundFont(const char * in);
+    void setFileSoundFont(const char * in);
     void setInterpolationMethod(unsigned method);
     void setDynamicLoading(bool enabled);
-    void SetEffects(bool enabled);
+    void setEffects(bool enabled);
     void setVoiceCount(unsigned int voices);
 
 private:

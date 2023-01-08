@@ -11,7 +11,7 @@
     <ClCompile Include="3rdParty\json\json-builder.c">
       <Filter>sflist</Filter>
     </ClCompile>
-    <ClCompile Include="sflist\SFList.cpp">
+    <ClCompile Include="sflist\sflist.c">
       <Filter>sflist</Filter>
     </ClCompile>
     <ClCompile Include="ADLPlayer.cpp" />
@@ -47,7 +47,7 @@
     <ClInclude Include="3rdParty\json\json-builder.h">
       <Filter>sflist</Filter>
     </ClInclude>
-    <ClInclude Include="sflist\SFList.h">
+    <ClInclude Include="sflist\sflist.h">
       <Filter>sflist</Filter>
     </ClInclude>
     <ClInclude Include="3rdParty\Nuke\interface.h" />
