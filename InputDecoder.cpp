@@ -29,12 +29,12 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     {
         _FileStats = file->get_stats(abortHandler);
 
-        if (!_FileStats.m_size || _FileStats.m_size > (t_size)(1 << 30))
+        if ((_FileStats.m_size == 0) || (_FileStats.m_size > (t_size)(1 << 30)))
             throw exception_io_unsupported_format();
 
         _FileStats2 = file->get_stats2_((uint32_t)stats2_all, abortHandler);
 
-        if (!_FileStats2.m_size || _FileStats2.m_size > (t_size)(1 << 30))
+        if ((_FileStats2.m_size == 0) || (_FileStats2.m_size > (t_size)(1 << 30)))
             throw exception_io_unsupported_format();
     }
 

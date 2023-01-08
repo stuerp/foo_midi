@@ -19,73 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Analog.cpp" />
-    <ClCompile Include="src\BReverbModel.cpp" />
-    <ClCompile Include="src\Display.cpp" />
-    <ClCompile Include="src\File.cpp" />
-    <ClCompile Include="src\FileStream.cpp" />
-    <ClCompile Include="src\LA32FloatWaveGenerator.cpp" />
-    <ClCompile Include="src\LA32Ramp.cpp" />
-    <ClCompile Include="src\LA32WaveGenerator.cpp" />
-    <ClCompile Include="src\MidiStreamParser.cpp" />
-    <ClCompile Include="src\Part.cpp" />
-    <ClCompile Include="src\Partial.cpp" />
-    <ClCompile Include="src\PartialManager.cpp" />
-    <ClCompile Include="src\Poly.cpp" />
-    <ClCompile Include="src\ROMInfo.cpp" />
-    <ClCompile Include="src\SampleRateConverter.cpp" />
-    <ClCompile Include="src\sha1\sha1.cpp" />
-    <ClCompile Include="src\Synth.cpp" />
-    <ClCompile Include="src\Tables.cpp" />
-    <ClCompile Include="src\TVA.cpp" />
-    <ClCompile Include="src\TVF.cpp" />
-    <ClCompile Include="src\TVP.cpp" />
-    <ClCompile Include="src\VersionTagging.cpp" />
+    <ClCompile Include="json-builder.c" />
+    <ClCompile Include="json.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Analog.h" />
-    <ClInclude Include="src\BReverbModel.h" />
-    <ClInclude Include="src\config.h" />
-    <ClInclude Include="src\Display.h" />
-    <ClInclude Include="src\Enumerations.h" />
-    <ClInclude Include="src\File.h" />
-    <ClInclude Include="src\FileStream.h" />
-    <ClInclude Include="src\globals.h" />
-    <ClInclude Include="src\internals.h" />
-    <ClInclude Include="src\LA32FloatWaveGenerator.h" />
-    <ClInclude Include="src\LA32Ramp.h" />
-    <ClInclude Include="src\LA32WaveGenerator.h" />
-    <ClInclude Include="src\MemoryRegion.h" />
-    <ClInclude Include="src\MidiEventQueue.h" />
-    <ClInclude Include="src\MidiStreamParser.h" />
-    <ClInclude Include="src\mmath.h" />
-    <ClInclude Include="src\mt32emu.h" />
-    <ClInclude Include="src\Part.h" />
-    <ClInclude Include="src\Partial.h" />
-    <ClInclude Include="src\PartialManager.h" />
-    <ClInclude Include="src\Poly.h" />
-    <ClInclude Include="src\ROMInfo.h" />
-    <ClInclude Include="src\SampleRateConverter.h" />
-    <ClInclude Include="src\sha1\sha1.h" />
-    <ClInclude Include="src\Structures.h" />
-    <ClInclude Include="src\Synth.h" />
-    <ClInclude Include="src\Tables.h" />
-    <ClInclude Include="src\TVA.h" />
-    <ClInclude Include="src\TVF.h" />
-    <ClInclude Include="src\TVP.h" />
-    <ClInclude Include="src\Types.h" />
-    <ClInclude Include="src\VersionTagging.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="src\config.h.in" />
-    <None Include="src\mt32emu.pc.in" />
+    <ClInclude Include="json-builder.h" />
+    <ClInclude Include="json.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{e1a15ce7-2670-4e0b-b4e9-e6e36bb4a579}</ProjectGuid>
-    <RootNamespace>mt32emu</RootNamespace>
-    <ProjectName>Munt (mt32emu)</ProjectName>
+    <ProjectGuid>{155cc5fc-96b6-4ffa-bfce-9db2fb987e47}</ProjectGuid>
+    <RootNamespace>libjson</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -133,12 +78,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
-      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
-      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
-      <AdditionalIncludeDirectories>src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -148,15 +90,18 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>./</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
-      <StringPooling>true</StringPooling>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -169,12 +114,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
-      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
-      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
-      <AdditionalIncludeDirectories>src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -184,15 +126,18 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>./</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
-      <StringPooling>true</StringPooling>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>

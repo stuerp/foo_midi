@@ -5,15 +5,6 @@
     <ClCompile Include="Experimental\SFPlayer.cpp" />
     <ClCompile Include="3rdParty\Twelve Tone Systems\SMF.cpp" />
     <ClCompile Include="Experimental\DXiProxy.cpp" />
-    <ClCompile Include="3rdParty\json\json.c">
-      <Filter>sflist</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdParty\json\json-builder.c">
-      <Filter>sflist</Filter>
-    </ClCompile>
-    <ClCompile Include="sflist\sflist.c">
-      <Filter>sflist</Filter>
-    </ClCompile>
     <ClCompile Include="ADLPlayer.cpp" />
     <ClCompile Include="BMPlayer.cpp" />
     <ClCompile Include="Configuration.cpp" />
@@ -41,15 +32,6 @@
     <ClInclude Include="Experimental\hypersonic2.h" />
     <ClInclude Include="Experimental\SFPlayer.h" />
     <ClInclude Include="Experimental\DXiProxy.h" />
-    <ClInclude Include="3rdParty\json\json.h">
-      <Filter>sflist</Filter>
-    </ClInclude>
-    <ClInclude Include="3rdParty\json\json-builder.h">
-      <Filter>sflist</Filter>
-    </ClInclude>
-    <ClInclude Include="sflist\sflist.h">
-      <Filter>sflist</Filter>
-    </ClInclude>
     <ClInclude Include="3rdParty\Nuke\interface.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_doom\i_oplmusic.h">
       <Filter>synthlib_doom</Filter>
