@@ -543,16 +543,13 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             return;
         }
     }
-#ifdef BASSMIDISUPPORT
     else
      if (_PlayerType == PlayerTypeBASSMIDI)
-    #endif
 #else
     else
     // BASS MIDI
     if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
 #endif
-#ifdef BASSMIDISUPPORT
     {
         {
             delete _Player;
@@ -607,7 +604,6 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             }
         }
     }
-#endif
     else
     // DirectX
 #ifdef DXISUPPORT
@@ -1116,12 +1112,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         Success = true;
     }
 
-#ifdef BASSMIDISUPPORT
-#ifdef FLUIDSYNTHSUPPORT
     if (_PlayerType == PlayerTypeBASSMIDI)
-#else
-    if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
-#endif
     {
         auto Player = (BMPlayer *)_Player;
 
@@ -1148,7 +1139,6 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         if (Success)
             timestampDelta = _AudioChunkDuration;
     }
-#endif
 
     return Success;
 }

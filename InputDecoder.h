@@ -324,12 +324,9 @@ private:
 
     double _AudioChunkDuration;
 
-#ifdef BASSMIDISUPPORT
     unsigned int _BASSMIDIResamplingMode;
-
     unsigned int _BASSMIDIVoiceCount;
     unsigned int _BASSMIDIVoiceMax;
-#endif
 
 #ifdef FLUIDSYNTHSUPPORT
     unsigned int _FluidSynthInterpolationMethod;

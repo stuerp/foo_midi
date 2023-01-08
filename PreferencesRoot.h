@@ -166,10 +166,8 @@ private:
 #pragma endregion
 
 #pragma region("BASS MIDI")
-#ifdef BASSMIDISUPPORT
     pfc::string8 _CacheStatusText;
     pfc::string8 _CacheStatusTextCurrent;
-#endif
 #pragma endregion
 
 #pragma region("ADL")

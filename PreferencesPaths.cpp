@@ -142,19 +142,14 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
         #ifdef SF2PACK
             "*.sf2pack;*.sfogg;"
         #endif
-        #ifdef BASSMIDISUPPORT
             ";*.json"
-        #endif
 
             "*.sflist|SoundFont files|*.sf2;*.sf3"
         #ifdef SF2PACK
             ";*.sf2pack;*.sfogg;"
         #endif
 
-            "|SoundFont list files|*.sflist"
-        #ifdef BASSMIDISUPPORT
-            ";*.json"
-        #endif
+            "|SoundFont list files|*.sflist;*.json"
             ,
             0, "sf2", "Choose a SoundFont bank or list...", DirectoryPath, FilePath, FALSE))
         {

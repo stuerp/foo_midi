@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.01.06) **/
+/** $VER: Configuration.h (2023.01.08) **/
 
 #pragma once
 
@@ -43,29 +43,27 @@ enum
     default_cfg_xmiloopz = 1,
     default_cfg_ff7loopz = 1,
 
+    DefaultMIDIFlavor = MIDIPlayer::FilterNone,
+    DefaultMIDIEffects = 1,
+
     DefaultEmuDeMIDIExclusion = 1,
-
-    default_cfg_filter_instruments = 0,
-    default_cfg_filter_banks = 0,
-
-//  default_cfg_recover_tracks = 0,
+    DefaultFilterInstruments = 0,
+    DefaultFilterBanks = 0,
 
     DefaultResamplingMode = 1,
 
     DefaultGMSet = 0,
-
-    DefaultADLBank = 72,
-    DefaultADLChipCount = 10,
-    DefaultADLPanning = 1,
-//  DefaultADL4Op = 14,
 
     // Munt
     DefaultNukeSynth = 0,
     DefaultNukeBank = 2,
     DefaultNukePanning = 0,
 
-    DefaultMIDIFlavor = MIDIPlayer::FilterNone,
-    DefaultMIDIEffects = 1,
+    DefaultADLBank = 72,
+    DefaultADLChipCount = 10,
+    DefaultADLPanning = 1,
+//  DefaultADL4Op = 14,
+
 #ifdef FLUIDSYNTHSUPPORT
     DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT
 #endif
@@ -120,35 +118,25 @@ extern advconfig_string_factory AdvCfgVSTiPluginDirectoryPath;
 extern advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath;
 extern advconfig_checkbox_factory AdvCfgSkipToFirstNote;
 
-extern advconfig_branch_factory CfgMIDITimingBranch;
-
 extern advconfig_integer_factory AdvCfgLoopCount;
 extern advconfig_integer_factory AdvCfgFadeTimeInMS;
 
-extern advconfig_branch_factory AdvCfgADLCoreBranch;
+extern advconfig_radio_factory AdvCfgADLCoreNuked;
+extern advconfig_radio_factory AdvCfgADLCoreNuked074;
+extern advconfig_radio_factory AdvCfgADLCoreDOSBox;
 
-    extern advconfig_radio_factory AdvCfgADLCoreNuked;
-    extern advconfig_radio_factory AdvCfgADLCoreNuked074;
-    extern advconfig_radio_factory AdvCfgADLCoreDOSBox;
+extern advconfig_radio_factory AdvCfgOPNCoreMAME;
+extern advconfig_radio_factory AdvCfgOPNCoreNuked;
+extern advconfig_radio_factory AdvCfgOPNCoreGens;
 
-extern advconfig_branch_factory AdvCfgOPNCoreBranch;
+extern advconfig_radio_factory AdvCfgOPNBankXG;
+extern advconfig_radio_factory AdvCfgOPNBankGS;
+extern advconfig_radio_factory AdvCfgOPNBankGEMS;
+extern advconfig_radio_factory AdvCfgOPNBankTomSoft;
+extern advconfig_radio_factory AdvCfgOPNBankFMMIDI;
 
-    extern advconfig_radio_factory AdvCfgOPNCoreMAME;
-    extern advconfig_radio_factory AdvCfgOPNCoreNuked;
-    extern advconfig_radio_factory AdvCfgOPNCoreGens;
-
-extern advconfig_branch_factory AdvCfgOPNBankBranch;
-
-    extern advconfig_radio_factory AdvCfgOPNBankXG;
-    extern advconfig_radio_factory AdvCfgOPNBankGS;
-    extern advconfig_radio_factory AdvCfgOPNBankGEMS;
-    extern advconfig_radio_factory AdvCfgOPNBankTomSoft;
-    extern advconfig_radio_factory AdvCfgOPNBankFMMIDI;
-
-#ifdef BASSMIDISUPPORT
 extern advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled;
 extern advconfig_integer_factory AdvCfgBASSMIDIVoices;
-#endif
 
 extern const char * _MuntGMSets[];
 extern const size_t _MuntGMSetCount;

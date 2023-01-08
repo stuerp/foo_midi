@@ -41,12 +41,10 @@ MIDIPreset::MIDIPreset() noexcept
     }
 #endif
 
-#ifdef BASSMIDISUPPORT
     {
         _BASSMIDIEffects = AdvCfgBASSMIDIEffectsEnabled;
         _BASSMIDIVoices = (unsigned int)(int)AdvCfgBASSMIDIVoices;
     }
-#endif
 
     {
         _MuntGMSet = (unsigned int)CfgMuntGMSet;
@@ -415,9 +413,9 @@ void MIDIPreset::Deserialize(const char * text)
                     #ifdef BASSMIDISUPPORT
                         BASSMIDIVoices = (unsigned int) (int) AdvCfgBASSMIDIVoices;
                     #elif defined(FLUIDSYNTHSUPPORT)
-                        in_voices = (unsigned int) (int) cfg_fluidsynth_voices;
+                        BASSMIDIVoices = (unsigned int) (int) cfg_fluidsynth_voices;
                     #else
-                        in_voices = 256;
+                        BASSMIDIVoices = 256;
                     #endif
                     }
                 }
@@ -426,9 +424,9 @@ void MIDIPreset::Deserialize(const char * text)
                 #ifdef BASSMIDISUPPORT
                     BASSMIDIVoices = (unsigned int) (int) AdvCfgBASSMIDIVoices;
                 #elif defined(FLUIDSYNTHSUPPORT)
-                    in_voices = (unsigned int) (int) cfg_fluidsynth_voices;
+                    BASSMIDIVoices = (unsigned int) (int) cfg_fluidsynth_voices;
                 #else
-                    in_voices = 256;
+                    BASSMIDIVoices = 256;
                 #endif
                 }
             }
@@ -438,11 +436,11 @@ void MIDIPreset::Deserialize(const char * text)
                 BASSMIDIEffects = AdvCfgBASSMIDIEffectsEnabled;
                 BASSMIDIVoices = (unsigned int) (int) AdvCfgBASSMIDIVoices;
             #elif defined(FLUIDSYNTHSUPPORT)
-                in_effects = cfg_fluidsynth_effects;
-                in_voices = (unsigned int) (int) cfg_fluidsynth_voices;
+                BASSMIDIEffects = cfg_fluidsynth_effects;
+                BASSMIDIVoices = (unsigned int) (int) cfg_fluidsynth_voices;
             #else
-                in_effects = 1;
-                in_voices = 256;
+                BASSMIDIEffects = 1;
+                BASSMIDIVoices = 256;
             #endif
             }
         }

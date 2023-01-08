@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.01.06) **/
+/** $VER: Configuration.cpp (2023.01.08) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -11,7 +11,7 @@
 const GUID PreferencesPageGUID = {0x08390b0c,0x5ba7,0x4abc,{0xb5,0x29,0x70,0x79,0x17,0x27,0x12,0xa4}};
 const GUID PreferencesPathsPageGUID = {0x9d601e5c,0xd542,0x435e,{0x8a,0x05,0x4e,0x88,0xd1,0x4d,0xa3,0xed}};
 
-static const GUID GUIDPlugInId = { 0x1253bac2, 0x9193, 0x420c, { 0xa9, 0x19, 0x9a, 0x1c, 0xf8, 0x70, 0x6e, 0x2c } };
+static const GUID GUIDPlayerType = { 0x1253bac2, 0x9193, 0x420c, { 0xa9, 0x19, 0x9a, 0x1c, 0xf8, 0x70, 0x6e, 0x2c } };
 static const GUID GUIDSampleRate = { 0xae5ba73b, 0xb0d4, 0x4261, { 0xbf, 0xf2, 0x11, 0xa1, 0xc4, 0x4e, 0x57, 0xea } };
 
 static const GUID guid_cfg_loop_type = { 0x460a84b6, 0x910a, 0x496c, { 0xbe, 0xb6, 0x86, 0xfd, 0xeb, 0x41, 0xab, 0xdc } };
@@ -37,7 +37,7 @@ static const GUID GUIDCfgMT32ROMDirectoryPath = { 0xd7e0ec5e, 0x872f, 0x41e3, { 
 static const GUID guid_cfg_fluid_interp_method = { 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } };
 #endif
 
-static const GUID guid_cfg_vst_config = { 0x44e7c715, 0xd256, 0x44c4, { 0x8f, 0xb6, 0xb7, 0x20, 0xfa, 0x9b, 0x31, 0xfc } };
+static const GUID GUIDCfgVSTConfig = { 0x44e7c715, 0xd256, 0x44c4, { 0x8f, 0xb6, 0xb7, 0x20, 0xfa, 0x9b, 0x31, 0xfc } };
 
 #ifdef DXISUPPORT
 static const GUID guid_cfg_dxi_plugin = { 0xd5c87282, 0xa9e6, 0x40f3, { 0x93, 0x82, 0x95, 0x68, 0xe6, 0x54, 0x1a, 0x46 } };
@@ -60,9 +60,8 @@ static const GUID guid_cfg_adl_panning = { 0xad6821b4, 0x493f, 0x4bb3, { 0xb7, 0
 
 static const GUID guid_cfg_munt_gm = { 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 0xc5, 0xb5, 0xf1, 0xb8, 0xcf, 0x5b } };
 
-#ifdef BASSMIDISUPPORT
-static const GUID guid_cfg_bassmidi_effects = { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };   // {62BF901B-9C51-45FE-BE8A-14FB56205E5E}
-#endif
+static const GUID guid_cfg_bassmidi_effects = { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };
+
 static const GUID guid_cfg_skip_to_first_note = { 0xf90c8abf, 0x68b5, 0x474a, { 0x8d, 0x9c, 0xff, 0xd9, 0xca, 0x80, 0x20, 0x2f } };
 
 static const GUID guid_cfg_ms_synth = { 0x7423a720, 0xeb39, 0x4d7d, { 0x9b, 0x85, 0x52, 0x4b, 0xc7, 0x79, 0xb5, 0x8b } };
@@ -74,10 +73,8 @@ static const GUID guid_cfg_adl_core_nuked = { 0x6b2c372, 0x2d86, 0x4368, { 0xb9,
 static const GUID guid_cfg_adl_core_nuked_174 = { 0x68252066, 0x2a7d, 0x4d74, { 0xb7, 0xc4, 0xd6, 0x9b, 0x1d, 0x67, 0x68, 0xd1 } };
 static const GUID guid_cfg_adl_core_dosbox = { 0x2a0290f8, 0x805b, 0x4109, { 0xaa, 0xd3, 0xd5, 0xae, 0x7f, 0x62, 0x35, 0xc7 } };
 
-#ifdef BASSMIDISUPPORT
 static const GUID GUIDAdvCfgBASSMIDIBranch = { 0xdd5adceb, 0x9b31, 0x47b6, { 0xaf, 0x57, 0x3b, 0x15, 0xd2, 0x2, 0x5d, 0x9f } };
 static const GUID guid_cfg_bassmidi_voices = { 0x9e0a5dab, 0x6786, 0x4120, { 0xb7, 0x37, 0x85, 0xbb, 0x2d, 0xfa, 0xf3, 0x7 } };
-#endif
 
 static const GUID GUIDAdvCfgOPNBranch = { 0x5223b5bc, 0x41e8, 0x4d5d, { 0x83, 0x1f, 0x47, 0x7d, 0x9f, 0x8f, 0x31, 0x89 } };
 static const GUID guid_cfg_opn_core_mame = { 0xc5617b26, 0xf011, 0x4674, { 0xb8, 0x5d, 0x12, 0xda, 0x2d, 0xa9, 0xd0, 0xdf } };
@@ -99,12 +96,12 @@ static const GUID guid_cfg_fluidsynth_effects = { 0x996e95ca, 0xce4d, 0x4bd5, { 
 static const GUID guid_cfg_fluidsynth_voices = { 0x9114d64d, 0x412c, 0x42d3, { 0xae, 0xd5, 0xa5, 0x52, 0x1e, 0x8f, 0xe2, 0xa6 } };
 #endif
 
-static const GUID guid_cfg_midi_flavor = { 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0x19, 0x32, 0x6a, 0x5a, 0x2d, 0x7e, 0x8e } };
-static const GUID guid_cfg_midi_reverb = { 0x91c12a1, 0xd42b, 0x4f4e, { 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
+static const GUID GUIDCfgMIDIFlavor = { 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0x19, 0x32, 0x6a, 0x5a, 0x2d, 0x7e, 0x8e } };
+static const GUID GUIDCfgMIDIReverb = { 0x91c12a1, 0xd42b, 0x4f4e, { 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
 #pragma endregion
 
 cfg_int
-    CfgPlayerType(GUIDPlugInId, DefaultPlayerType),
+    CfgPlayerType(GUIDPlayerType, DefaultPlayerType),
     CfgSampleRate(GUIDSampleRate, DefaultSampleRate),
 
     CfgLoopTypePlayback(guid_cfg_loop_type, DefaultPlaybackLoopType),
@@ -119,8 +116,8 @@ cfg_int
 
     CfgResamplingMode(GUIDResamplingMode, DefaultResamplingMode),
 
-    CfgFilterInstruments(guid_cfg_filter_instruments, default_cfg_filter_instruments),
-    CfgFilterBanks(guid_cfg_filter_banks, default_cfg_filter_banks),
+    CfgFilterInstruments(guid_cfg_filter_instruments, DefaultFilterInstruments),
+    CfgFilterBanks(guid_cfg_filter_banks, DefaultFilterBanks),
 
     CfgADLBank(guid_cfg_adl_bank, DefaultADLBank),
     CfgADLChipCount(guid_cfg_adl_chips, DefaultADLChipCount),
@@ -133,8 +130,8 @@ cfg_int
     CfgNukeBank(guid_cfg_ms_bank, DefaultNukeBank),
     CfgNukePanning(guid_cfg_ms_panning, DefaultNukePanning),
 
-    CfgMIDIFlavor(guid_cfg_midi_flavor, DefaultMIDIFlavor),
-    CfgAllowMIDIEffects(guid_cfg_midi_reverb, DefaultMIDIEffects)
+    CfgMIDIFlavor(GUIDCfgMIDIFlavor, DefaultMIDIFlavor),
+    CfgAllowMIDIEffects(GUIDCfgMIDIReverb, DefaultMIDIEffects)
 
 #ifdef FLUIDSYNTHSUPPORT
 ,
@@ -153,7 +150,7 @@ cfg_string
     CfgSoundFontFilePath(GUIDCfgSoundFontFilePath, ""),
     CfgMuntDirectoryPath(GUIDCfgMT32ROMDirectoryPath, "");
 
-cfg_map CfgVSTiConfig(guid_cfg_vst_config);
+cfg_map CfgVSTiConfig(GUIDCfgVSTConfig);
 
 /** Advanced Configuration **/
 
@@ -188,13 +185,10 @@ advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, GUIDMIDIPlay
         advconfig_radio_factory AdvCfgOPNBankTomSoft("TomSoft's SegaMusic",     guid_cfg_opn_bank_tomsoft, GUIDAdvCfgOPNBankBranch, 3.0, false);
         advconfig_radio_factory AdvCfgOPNBankFMMIDI ("FMMIDI original bank",    guid_cfg_opn_bank_fmmidi,  GUIDAdvCfgOPNBankBranch, 4.0, false);
 
-
-#ifdef BASSMIDISUPPORT
     advconfig_branch_factory AdvBASSMIDIBranch("BASSMIDI", GUIDAdvCfgBASSMIDIBranch, GUIDMIDIPlayerBranch, 3.0);
 
         advconfig_integer_factory AdvCfgBASSMIDIVoices("Maximum voice count", guid_cfg_bassmidi_voices, GUIDAdvCfgBASSMIDIBranch, 1, 256, 1, 100000);
         advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled("Enable reverb and chorus processing", guid_cfg_bassmidi_effects, GUIDAdvCfgBASSMIDIBranch, 0, true);
-#endif
 
 #ifdef FLUIDSYNTHSUPPORT
     advconfig_branch_factory cfg_fluidsynth_parent("FluidSynth", guid_cfg_fluidsynth_parent, GUIDMIDIPlayerBranch, 3.0);
