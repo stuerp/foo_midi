@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2023.01.07) **/
+/** $VER: PreferencesRoot.h (2023.01.08) **/
 
 #pragma warning(disable: 5045)
 
@@ -59,7 +59,7 @@ public:
         MSG_WM_TIMER(OnTimer)
 
         #pragma region("Output")
-        COMMAND_HANDLER_EX(IDC_PLAYER_TYPE, CBN_SELCHANGE, OnPlugInChange)
+        COMMAND_HANDLER_EX(IDC_PLAYER_TYPE, CBN_SELCHANGE, OnPlayerTypeChange)
 
         COMMAND_HANDLER_EX(IDC_CONFIGURE, BN_CLICKED, OnButtonConfig)
 
@@ -122,7 +122,7 @@ private:
     BOOL OnInitDialog(CWindow, LPARAM);
     void OnTimer(UINT_PTR);
 
-    void OnPlugInChange(UINT, int, CWindow);
+    void OnPlayerTypeChange(UINT, int, CWindow);
     void OnEditChange(UINT, int, CWindow);
     void OnSelectionChange(UINT, int, CWindow);
     void OnButtonClick(UINT, int, CWindow);

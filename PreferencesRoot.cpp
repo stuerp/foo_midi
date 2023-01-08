@@ -819,51 +819,51 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
     }
 }
 
-void PreferencesRootPage::OnPlugInChange(UINT, int, CWindow w)
+void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 {
-    int PlugInId = 0;
+    int PlayerType = 0;
 
     int SelectedIndex = (int)::SendMessage(w, CB_GETCURSEL, 0, 0);
 
     {
         if ((SelectedIndex >= _PlayerPresentCount) && (SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
-            PlugInId = PlayerTypeVSTi;
+            PlayerType = PlayerTypeVSTi;
     #ifdef DXISUPPORT
         else
-        if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
-            PlugInId = PlayerTypeDirectX;
+        if (SelectedIndex >= plugins_reported + _VSTiPlugins.get_count())
+            PlayerType = PlayerTypeDirectX;
     #endif
         else
-            PlugInId = _PlayerIndexToPlayerType[SelectedIndex];
+            PlayerType = _PlayerIndexToPlayerType[SelectedIndex];
     }
 
-    GetDlgItem(IDC_SAMPLERATE).EnableWindow(PlugInId || !_IsRunning);
+    GetDlgItem(IDC_SAMPLERATE).EnableWindow(PlayerType || !_IsRunning);
 
-    GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(PlugInId == 2 || PlugInId == 4);
-    GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(PlugInId == 2 || PlugInId == 4);
+    GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(PlayerType == 2 || PlayerType == 4);
+    GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(PlayerType == 2 || PlayerType == 4);
 
-    GetDlgItem(IDC_CACHED_TEXT).EnableWindow(PlugInId == 2 || PlugInId == 4);
-    GetDlgItem(IDC_CACHED).EnableWindow(PlugInId == 2 || PlugInId == 4);
+    GetDlgItem(IDC_CACHED_TEXT).EnableWindow(PlayerType == 2 || PlayerType == 4);
+    GetDlgItem(IDC_CACHED).EnableWindow(PlayerType == 2 || PlayerType == 4);
 
-    GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(PlugInId == 6);
-    GetDlgItem(IDC_ADL_BANK).EnableWindow(PlugInId == 6);
-    GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(PlugInId == 6 || PlugInId == 9);
-    GetDlgItem(IDC_ADL_CHIPS).EnableWindow(PlugInId == 6 || PlugInId == 9);
-    GetDlgItem(IDC_ADL_PANNING).EnableWindow(PlugInId == 6 || PlugInId == 9);
+    GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(PlayerType == 6);
+    GetDlgItem(IDC_ADL_BANK).EnableWindow(PlayerType == 6);
+    GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(PlayerType == 6 || PlayerType == 9);
+    GetDlgItem(IDC_ADL_CHIPS).EnableWindow(PlayerType == 6 || PlayerType == 9);
+    GetDlgItem(IDC_ADL_PANNING).EnableWindow(PlayerType == 6 || PlayerType == 9);
 
-    GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlugInId == 9);
-    GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlugInId == 9);
-    GetDlgItem(IDC_NUKE_PANNING).EnableWindow(PlugInId == 9);
+    GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlayerType == 9);
+    GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlayerType == 9);
+    GetDlgItem(IDC_NUKE_PANNING).EnableWindow(PlayerType == 9);
 
     {
-        bool enable = (PlugInId == 1) || (PlugInId == 2) || (PlugInId == 4) || (PlugInId == 10);
+        bool enable = (PlayerType == 1) || (PlayerType == 2) || (PlayerType == 4) || (PlayerType == 10);
 
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
     }
 
-    if (PlugInId == 3)
+    if (PlayerType == 3)
     {
         GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
@@ -881,7 +881,7 @@ void PreferencesRootPage::OnPlugInChange(UINT, int, CWindow w)
     }
 
     {
-        bool Enable = (SelectedIndex >= _PlayerPresentCount) && (PlugInId < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].HasEditor;
+        bool Enable = (SelectedIndex >= _PlayerPresentCount) && (PlayerType < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].HasEditor;
 
         GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
     }
@@ -905,7 +905,10 @@ void PreferencesRootPage::OnTimer(UINT_PTR eventId)
     uint64_t SamplesMax, SamplesLoaded;
 
     if (::GetSoundFontStatistics(SamplesMax, SamplesLoaded))
+    {
+        _CacheStatusText.reset();
         _CacheStatusText << pfc::format_file_size_short(SamplesLoaded) << " / " << pfc::format_file_size_short(SamplesMax);
+    }
     else
         _CacheStatusText = "BASS not loaded.";
 
