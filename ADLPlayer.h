@@ -35,8 +35,8 @@ protected:
     virtual void shutdown() override;
     virtual void render(audio_sample *, unsigned long) override;
 
-    virtual void send_event(uint32_t) override;
-    virtual void send_sysex(const uint8_t *, size_t, size_t) override;
+    virtual void SendEvent(uint32_t) override;
+    virtual void SendSysEx(const uint8_t *, size_t, size_t) override;
 
 private:
     struct ADL_MIDIPlayer * _Player[3];

@@ -127,8 +127,6 @@
     <ClInclude Include="MT32Player\MT32Player.h" />
     <ClInclude Include="MT32Player\mtgm.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
-    <ClInclude Include="PreferencesRoot.h" />
-    <ClInclude Include="PreferencesPaths.h" />
     <ClInclude Include="PreferencesPathsLayout.h" />
     <ClInclude Include="PreferencesRootLayout.h" />
   </ItemGroup>

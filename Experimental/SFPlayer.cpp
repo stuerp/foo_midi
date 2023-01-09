@@ -167,7 +167,7 @@ void SFPlayer::setVoiceCount(unsigned int voices)
     uVoices = voices;
 }
 
-void SFPlayer::send_event(uint32_t b)
+void SFPlayer::SendEvent(uint32_t b)
 {
     int param2 = (b >> 16) & 0xFF;
     int param1 = (b >> 8) & 0xFF;
@@ -204,7 +204,7 @@ void SFPlayer::send_event(uint32_t b)
     }
 }
 
-void SFPlayer::send_sysex(const uint8_t * event, uint32_t size, size_t port)
+void SFPlayer::SendSysEx(const uint8_t * event, uint32_t size, size_t port)
 {
     if (port >= 3)
         port = 0;
@@ -266,7 +266,9 @@ bool SFPlayer::reset()
         if (_synth[i])
         {
             fluid_synth_system_reset(_synth[i]);
-            sysex_reset(i, 0);
+
+            SendSysExReset(i, 0);
+
             ++synths_reset;
         }
     }
@@ -404,11 +406,11 @@ bool SFPlayer::startup()
     return true;
 }
 
-bool SFPlayer::get_last_error(std::string & p_out)
+bool SFPlayer::getErrorMessage(std::string & errorMessage)
 {
     if (_last_error.length())
     {
-        p_out = _last_error;
+        errorMessage = _last_error;
         return true;
     }
 

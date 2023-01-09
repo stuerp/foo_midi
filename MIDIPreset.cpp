@@ -696,10 +696,10 @@ void MIDIPreset::Deserialize(const char * text)
                     }
 
                     if (SCFlavor == 4)
-                        MIDIFlavor = MIDIPlayer::filter_xg;
+                        MIDIFlavor = MIDIPlayer::FilterXGSysEx;
                     else
                     if (SCFlavor == 3)
-                        MIDIFlavor = (GSFlavor == 0) ? MIDIPlayer::FilterNone : MIDIPlayer::filter_sc55 + (GSFlavor - 1);
+                        MIDIFlavor = (GSFlavor == 0) ? MIDIPlayer::FilterNone : MIDIPlayer::FilterSC55SysEx + (GSFlavor - 1);
                     else
                     if (SCFlavor <= 2)
                         MIDIFlavor = SCFlavor;
@@ -720,7 +720,7 @@ void MIDIPreset::Deserialize(const char * text)
                 AllowMIDIEffects = true;
             }
 
-            if (MIDIFlavor > MIDIPlayer::filter_xg)
+            if (MIDIFlavor > MIDIPlayer::FilterXGSysEx)
                 MIDIFlavor = MIDIPlayer::FilterNone;
         }
 

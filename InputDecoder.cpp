@@ -493,10 +493,10 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             }
             else
             {
-                std::string last_error;
+                std::string ErrorMessage;
 
-                if (_Player->GetLastError(last_error))
-                    throw exception_io_data(last_error.c_str());
+                if (_Player->GetErrorMessage(ErrorMessage))
+                    throw exception_io_data(ErrorMessage.c_str());
             }
         }
     }
@@ -597,10 +597,10 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
             }
             else
             {
-                std::string last_error;
+                std::string ErrorMessage;
 
-                if (_Player->GetLastError(last_error))
-                    throw exception_io_data(last_error.c_str());
+                if (_Player->GetErrorMessage(ErrorMessage))
+                    throw exception_io_data(ErrorMessage.c_str());
             }
         }
     }
@@ -1001,7 +1001,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         {
             std::string LastError;
 
-            if (_Player->GetLastError(LastError) != 0)
+            if (_Player->GetErrorMessage(LastError) != 0)
                 throw exception_io_data(LastError.c_str());
 
             return false;

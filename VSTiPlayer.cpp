@@ -590,7 +590,7 @@ bool VSTiPlayer::startup()
 
     _IsInitialized = true;
 
-    SetFilter(_FilterType, _UseMIDIEffects);
+    SetFilter(_FilterType, _FilterEffects);
 
     return true;
 }
@@ -600,7 +600,7 @@ unsigned VSTiPlayer::getChannelCount() noexcept
     return _ChannelCount;
 }
 
-void VSTiPlayer::send_event(uint32_t b)
+void VSTiPlayer::SendEvent(uint32_t b)
 {
     process_write_code(7);
     process_write_code(b);
@@ -611,7 +611,7 @@ void VSTiPlayer::send_event(uint32_t b)
         process_terminate();
 }
 
-void VSTiPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
+void VSTiPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
 {
     const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
 
@@ -625,7 +625,7 @@ void VSTiPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
         process_terminate();
 }
 
-void VSTiPlayer::send_event_time(uint32_t b, unsigned int time)
+void VSTiPlayer::SendEventWithTime(uint32_t b, unsigned int time)
 {
     process_write_code(10);
     process_write_code(b);
@@ -637,7 +637,7 @@ void VSTiPlayer::send_event_time(uint32_t b, unsigned int time)
         process_terminate();
 }
 
-void VSTiPlayer::send_sysex_time(const uint8_t * event, size_t size, size_t port, unsigned int time)
+void VSTiPlayer::SendSysExWithTime(const uint8_t * event, size_t size, size_t port, unsigned int time)
 {
     const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
 
@@ -688,7 +688,7 @@ void VSTiPlayer::render(audio_sample * out, unsigned long count)
     }
 }
 
-unsigned int VSTiPlayer::send_event_needs_time() noexcept
+unsigned int VSTiPlayer::GetSampleBlockSize() noexcept
 {
     return 4096;
 }

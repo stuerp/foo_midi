@@ -40,7 +40,7 @@ bool ADLPlayer::startup()
 
     _IsInitialized = true;
 
-    SetFilter(_FilterType, _UseMIDIEffects);
+    SetFilter(_FilterType, _FilterEffects);
 
     return true;
 }
@@ -107,7 +107,7 @@ void ADLPlayer::set4OpCount(unsigned count)
     _4OpCount = count;
 }
 
-void ADLPlayer::send_event(uint32_t message)
+void ADLPlayer::SendEvent(uint32_t message)
 {
     ADL_UInt8 Event[3]
     {
@@ -156,7 +156,7 @@ void ADLPlayer::send_event(uint32_t message)
     }
 }
 
-void ADLPlayer::send_sysex(const uint8_t * event, size_t size, size_t)
+void ADLPlayer::SendSysEx(const uint8_t * event, size_t size, size_t)
 {
     ::adl_rt_systemExclusive(_Player[0], event, size);
     ::adl_rt_systemExclusive(_Player[1], event, size);

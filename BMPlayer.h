@@ -32,21 +32,21 @@ public:
 private:
     virtual bool startup() override;
     virtual void shutdown() override;
-    virtual void render(audio_sample * out, unsigned long count) override;
+    virtual void render(audio_sample * samples, unsigned long samplesSize) override;
 
-    virtual void send_event(uint32_t b) override;
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port) override;
+    virtual void SendEvent(uint32_t b) override;
+    virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;
 
-    virtual bool get_last_error(std::string & p_out) override;
+    virtual bool getErrorMessage(std::string & errorMessage) override;
 
     void compound_presets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels);
     void reset_parameters();
     bool load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::string path);
 
-    std::string sLastError;
+    std::string _ErrorMessage;
 
-    std::vector<HSOUNDFONT> _soundFonts;
-    sflist_presets * _presetList[2];
+    std::vector<HSOUNDFONT> _SoundFonts;
+    sflist_presets * _Presets[2];
 
     std::string _SoundFontDirectoryPath;
     std::string _SoundFontFilePath;

@@ -14,7 +14,7 @@ IDD_PREFERENCES_ROOT dialogex 0, 0, 0, 0
 style DS_SETFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 0x0
 {
-    // Measuring stick
+//  Used to measure the dialog size.
 //  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
 
     groupbox "Output", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10

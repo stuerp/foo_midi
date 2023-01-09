@@ -78,7 +78,7 @@ bool OPNPlayer::startup()
 
     _IsInitialized = true;
 
-    SetFilter(_FilterType, _UseMIDIEffects);
+    SetFilter(_FilterType, _FilterEffects);
 
     return true;
 }
@@ -140,7 +140,7 @@ void OPNPlayer::setFullPanning(bool enabled)
     _FullPanning = enabled;
 }
 
-void OPNPlayer::send_event(uint32_t message)
+void OPNPlayer::SendEvent(uint32_t message)
 {
     OPN2_UInt8 Event[3]
     {
@@ -189,7 +189,7 @@ void OPNPlayer::send_event(uint32_t message)
     }
 }
 
-void OPNPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
+void OPNPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
 {
     if (port >= 3)
         port = 0;

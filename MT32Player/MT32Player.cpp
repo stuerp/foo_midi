@@ -118,12 +118,12 @@ void MT32Player::shutdown()
     _IsInitialized = false;
 }
 
-void MT32Player::send_event(uint32_t b)
+void MT32Player::SendEvent(uint32_t b)
 {
     _Synth->playMsg(b);
 }
 
-void MT32Player::send_sysex(const uint8_t * event, size_t size, size_t)
+void MT32Player::SendSysEx(const uint8_t * event, size_t size, size_t)
 {
     _Synth->playSysexNow(event, (MT32Emu::Bit32u)size);
 }

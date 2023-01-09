@@ -93,7 +93,7 @@ bool SCPlayer::startup()
 
     _IsInitialized = true;
 
-    SetFilter(_FilterType, _UseMIDIEffects);
+    SetFilter(_FilterType, _FilterEffects);
 
     return true;
 }
@@ -513,21 +513,41 @@ void SCPlayer::set_sccore_path(const char * path)
         ::memcpy(_SCCorePathName, path, len + 1);
 }
 
-void SCPlayer::send_event(uint32_t b)
+void SCPlayer::SendEvent(uint32_t event)
 {
-    uint32_t port = (b >> 24) & 0xFF;
+    uint32_t port = (event >> 24) & 0xFF;
 
     if (port > 2)
         port = 0;
 
     process_write_code(port, 2);
-    process_write_code(port, b & 0xFFFFFF);
+    process_write_code(port, event & 0xFFFFFF);
 
     if (process_read_code(port) != 0)
         process_terminate(port);
 }
 
-void SCPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
+void SCPlayer::SendEventWithTime(uint32_t event, unsigned int time)
+{
+    uint32_t port = (event >> 24) & 0xFF;
+
+    if (port > 2)
+        port = 0;
+
+    process_write_code(port, 6);
+    process_write_code(port, event & 0xFFFFFF);
+    process_write_code(port, time);
+
+    if (process_read_code(port) != 0)
+        process_terminate(port);
+}
+
+unsigned int SCPlayer::GetSampleBlockSize()
+{
+    return 0; // 4096; This doesn't work for some reason
+}
+
+void SCPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
 {
     process_write_code((uint32_t)port, 3);
     process_write_code((uint32_t)port, (uint32_t)size);
@@ -538,32 +558,12 @@ void SCPlayer::send_sysex(const uint8_t * event, size_t size, size_t port)
 
     if (port == 0)
     {
-        send_sysex(event, size, 1);
-        send_sysex(event, size, 2);
+        SendSysEx(event, size, 1);
+        SendSysEx(event, size, 2);
     }
 }
 
-void SCPlayer::send_event_time(uint32_t b, unsigned int time)
-{
-    uint32_t port = (b >> 24) & 0xFF;
-
-    if (port > 2)
-        port = 0;
-
-    process_write_code(port, 6);
-    process_write_code(port, b & 0xFFFFFF);
-    process_write_code(port, time);
-
-    if (process_read_code(port) != 0)
-        process_terminate(port);
-}
-
-unsigned int SCPlayer::send_event_needs_time()
-{
-    return 0; // 4096; This doesn't work for some reason
-}
-
-void SCPlayer::send_sysex_time(const uint8_t * event, size_t size, size_t port, unsigned int time)
+void SCPlayer::SendSysExWithTime(const uint8_t * event, size_t size, size_t port, unsigned int time)
 {
     process_write_code((uint32_t)port, 7);
     process_write_code((uint32_t)port, (uint32_t)size);
@@ -575,8 +575,8 @@ void SCPlayer::send_sysex_time(const uint8_t * event, size_t size, size_t port, 
 
     if (port == 0)
     {
-        send_sysex_time(event, size, 1, time);
-        send_sysex_time(event, size, 2, time);
+        SendSysExWithTime(event, size, 1, time);
+        SendSysExWithTime(event, size, 2, time);
     }
 }
 

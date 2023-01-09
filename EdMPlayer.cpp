@@ -106,7 +106,7 @@ void EdMPlayer::render(audio_sample * out, unsigned long count)
     }
 }
 
-void EdMPlayer::send_event(uint32_t message)
+void EdMPlayer::SendEvent(uint32_t message)
 {
     dsa::CMIDIMsgInterpreter mi;
 
@@ -165,7 +165,7 @@ void EdMPlayer::send_event(uint32_t message)
     }
 }
 
-void EdMPlayer::send_sysex(const uint8_t * event, size_t size, size_t)
+void EdMPlayer::SendSysEx(const uint8_t * event, size_t size, size_t)
 {
     dsa::CMIDIMsgInterpreter mi;
 

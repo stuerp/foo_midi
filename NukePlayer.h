@@ -38,8 +38,8 @@ protected:
     virtual bool startup() override;
     virtual void shutdown() override;
     virtual void render(audio_sample * out, unsigned long count) override;
-    virtual void send_event(uint32_t b) override;
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port) override;
+    virtual void SendEvent(uint32_t b) override;
+    virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;
 
 private:
     nomidisynth * _Synth;

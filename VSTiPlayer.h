@@ -37,12 +37,13 @@ protected:
     virtual void shutdown() override;
     virtual void render(audio_sample *, unsigned long) override;
 
-    virtual unsigned int send_event_needs_time() noexcept override;
-    virtual void send_event(uint32_t) override;
-    virtual void send_sysex(const uint8_t *, size_t, size_t) override;
+    virtual unsigned int GetSampleBlockSize() noexcept override;
 
-    virtual void send_event_time(uint32_t, unsigned int) override;
-    virtual void send_sysex_time(const uint8_t *, size_t, size_t, unsigned int) override;
+    virtual void SendEvent(uint32_t) override;
+    virtual void SendSysEx(const uint8_t *, size_t, size_t) override;
+
+    virtual void SendEventWithTime(uint32_t, unsigned int) override;
+    virtual void SendSysExWithTime(const uint8_t *, size_t, size_t, unsigned int) override;
 
 private:
     unsigned test_plugin_platform();

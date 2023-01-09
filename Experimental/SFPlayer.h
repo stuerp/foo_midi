@@ -31,10 +31,10 @@ private:
     virtual void render(audio_sample *, unsigned long) override;
     virtual bool reset() override;
 
-    virtual bool get_last_error(std::string & p_out) override;
+    virtual bool getErrorMessage(std::string & errorMessage) override;
 
-    virtual void send_event(uint32_t b) override;
-    virtual void send_sysex(const uint8_t * event, size_t size, size_t port) override;
+    virtual void SendEvent(uint32_t b) override;
+    virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;
 
     std::string _last_error;
 
