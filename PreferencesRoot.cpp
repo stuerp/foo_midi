@@ -237,7 +237,10 @@ private:
         bool operator<(const adl_bank & b) const
         {
             int c = ::stricmp_utf8(name, b.name);
-            if (c) return c < 0;
+
+            if (c)
+                return c < 0;
+
             return 0;
         }
 

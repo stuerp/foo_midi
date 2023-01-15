@@ -10,10 +10,10 @@ ADLPlayer::ADLPlayer() : MIDIPlayer()
 
 ADLPlayer::~ADLPlayer()
 {
-    shutdown();
+    Shutdown();
 }
 
-bool ADLPlayer::startup()
+bool ADLPlayer::Startup()
 {
     if (_Player[0] && _Player[1] && _Player[2])
         return true;
@@ -45,7 +45,7 @@ bool ADLPlayer::startup()
     return true;
 }
 
-void ADLPlayer::shutdown()
+void ADLPlayer::Shutdown()
 {
     for (size_t i = 0; i < 3; i++)
     {
@@ -56,7 +56,7 @@ void ADLPlayer::shutdown()
     _IsInitialized = false;
 }
 
-void ADLPlayer::render(audio_sample * samples, unsigned long samplesToDo)
+void ADLPlayer::Render(audio_sample * samples, unsigned long samplesToDo)
 {
     int16_t buffer[256 * sizeof(audio_sample)];
 

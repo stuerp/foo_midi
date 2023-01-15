@@ -17,10 +17,12 @@ class FileTypeRegistrar : public input_file_type
 {
 public:
     FileTypeRegistrar() noexcept { }
+
     FileTypeRegistrar(const FileTypeRegistrar&) = delete;
     FileTypeRegistrar(const FileTypeRegistrar&&) = delete;
     FileTypeRegistrar& operator=(const FileTypeRegistrar&) = delete;
     FileTypeRegistrar& operator=(FileTypeRegistrar&&) = delete;
+
     virtual ~FileTypeRegistrar() noexcept { }
 
 private:

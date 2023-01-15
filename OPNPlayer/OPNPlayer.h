@@ -30,9 +30,9 @@ public:
     void setFullPanning(bool);
 
 protected:
-    virtual bool startup() override;
-    virtual void shutdown() override;
-    virtual void render(audio_sample *, unsigned long);
+    virtual bool Startup() override;
+    virtual void Shutdown() override;
+    virtual void Render(audio_sample *, unsigned long);
 
     virtual void SendEvent(uint32_t) override;
     virtual void SendSysEx(const uint8_t *, size_t, size_t) override;

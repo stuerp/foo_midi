@@ -1,3 +1,6 @@
+
+/** $VER: MT32Player.h (2013.01.15) **/
+
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
@@ -27,12 +30,14 @@ public:
     static int GetSampleRate();
 
 protected:
-    virtual bool startup() override;
-    virtual void shutdown() override;
-    virtual void render(audio_sample * out, unsigned long count) override;
+    #pragma region("MIDIPlayer")
+    virtual bool Startup() override;
+    virtual void Shutdown() override;
+    virtual void Render(audio_sample * out, unsigned long count) override;
 
     virtual void SendEvent(uint32_t b) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;
+    #pragma endregion
 
 private:
     void _reset();
@@ -47,7 +52,7 @@ private:
     MT32Emu::File * controlRomFile, * pcmRomFile;
     const MT32Emu::ROMImage * controlRom, * pcmRom;
 
-    unsigned uGMSet;
-    bool bGM;
+    unsigned int _GMSet;
+    bool _IsGM;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

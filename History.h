@@ -119,7 +119,7 @@
 
 2021-04-27 02:35 UTC - kode54
 - Remove BASS_Free call, as it will most likely be happening during
-  application shutdown anyway
+  application Shutdown anyway
 - Update BASS and BASSMIDI versions, as well as decoder plugins
 - Version is now 2.4.12
 
@@ -423,7 +423,7 @@
 2017-02-24 02:34 UTC - kode54
 - Updated BASSMIDI and BASSFLAC libraries
 - Added Apogee MIDI driver to Nuclear Option set
-- Added dumb cleanup to Secret Sauce startup
+- Added dumb cleanup to Secret Sauce Startup
 - Version is now 2.0.9
 
 2017-02-04 19:28 UTC - kode54

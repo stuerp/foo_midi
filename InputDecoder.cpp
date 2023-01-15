@@ -476,7 +476,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
 
         {
-            _Player->setSampleRate(_SampleRate);
+            _Player->SetSampleRate(_SampleRate);
             _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
             unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
@@ -522,7 +522,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         if (file_soundfont.length())
             sfPlayer->setFileSoundFont(file_soundfont);
 
-        sfPlayer->setSampleRate(srate);
+        sfPlayer->SetSampleRate(srate);
         sfPlayer->setInterpolationMethod(_FluidSynthInterpolationMethod);
         sfPlayer->setDynamicLoading(cfg_soundfont_dynamic.get());
         sfPlayer->setEffects(thePreset.effects);
@@ -580,7 +580,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
 
         {
-            _Player->setSampleRate(_SampleRate);
+            _Player->SetSampleRate(_SampleRate);
             _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
             unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
@@ -618,7 +618,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         dxiProxy = new DXiProxy;
         if (SUCCEEDED(dxiProxy->initialize()))
         {
-            dxiProxy->setSampleRate(srate);
+            dxiProxy->SetSampleRate(srate);
             if (SUCCEEDED(dxiProxy->setSequence(serialized_midi_file.get_ptr(), serialized_midi_file.get_count())))
             {
                 if (SUCCEEDED(dxiProxy->setPlugin(thePreset.dxi_plugin)))
@@ -660,7 +660,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
 
         {
-            _Player->setSampleRate(_SampleRate);
+            _Player->SetSampleRate(_SampleRate);
 
             unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
@@ -694,7 +694,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
 
         {
-            _Player->setSampleRate(_SampleRate);
+            _Player->SetSampleRate(_SampleRate);
             _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
             unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
@@ -751,7 +751,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
 
         {
-            _Player->setSampleRate(_SampleRate);
+            _Player->SetSampleRate(_SampleRate);
 
             unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
@@ -784,7 +784,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         }
 
         {
-            _Player->setSampleRate(_SampleRate);
+            _Player->SetSampleRate(_SampleRate);
 
             unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
@@ -828,7 +828,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
         {
             _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
-            _Player->setSampleRate(_SampleRate);
+            _Player->SetSampleRate(_SampleRate);
 
             unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
 
@@ -876,7 +876,7 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
                     _IsEmuDeMIDI = true;
                 }
 
-                _Player->setSampleRate(_SampleRate);
+                _Player->SetSampleRate(_SampleRate);
 
                 _IsEndOfContainer = false;
                 _DontLoop = true;

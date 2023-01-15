@@ -18,9 +18,9 @@ public:
     void set_sccore_path(const char * path);
 
 protected:
-    virtual bool startup() override;
-    virtual void shutdown() override;
-    virtual void render(audio_sample *, unsigned long) override;
+    virtual bool Startup() override;
+    virtual void Shutdown() override;
+    virtual void Render(audio_sample *, unsigned long) override;
 
     virtual unsigned int GetSampleBlockSize() override;
 

@@ -35,9 +35,9 @@ public:
     static void EnumeratePresets(std::function<void (const pfc::string8 name, unsigned int synth, unsigned int bank)> functor) noexcept;
 
 protected:
-    virtual bool startup() override;
-    virtual void shutdown() override;
-    virtual void render(audio_sample * out, unsigned long count) override;
+    virtual bool Startup() override;
+    virtual void Shutdown() override;
+    virtual void Render(audio_sample * out, unsigned long count) override;
     virtual void SendEvent(uint32_t b) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;
 

@@ -1,5 +1,4 @@
-#ifndef __SFPlayer_h__
-#define __SFPlayer_h__
+#pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
@@ -26,12 +25,12 @@ public:
     void setVoiceCount(unsigned int voices);
 
 private:
-    virtual bool startup() override;
-    virtual void shutdown() override;
-    virtual void render(audio_sample *, unsigned long) override;
-    virtual bool reset() override;
+    virtual bool Startup() override;
+    virtual void Shutdown() override;
+    virtual void Render(audio_sample *, unsigned long) override;
+    virtual bool Reset() override;
 
-    virtual bool getErrorMessage(std::string & errorMessage) override;
+    virtual bool GetErrorMessage(std::string & errorMessage) override;
 
     virtual void SendEvent(uint32_t b) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;
@@ -48,5 +47,3 @@ private:
     bool bEffects;
     unsigned int uVoices;
 };
-
-#endif

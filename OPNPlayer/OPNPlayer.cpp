@@ -16,10 +16,10 @@ OPNPlayer::OPNPlayer() : MIDIPlayer()
 
 OPNPlayer::~OPNPlayer()
 {
-    shutdown();
+    Shutdown();
 }
 
-bool OPNPlayer::startup()
+bool OPNPlayer::Startup()
 {
     if (_Player[0] && _Player[1] && _Player[2])
         return true;
@@ -83,7 +83,7 @@ bool OPNPlayer::startup()
     return true;
 }
 
-void OPNPlayer::shutdown()
+void OPNPlayer::Shutdown()
 {
     for (size_t i = 0; i < 3; i++)
     {
@@ -94,7 +94,7 @@ void OPNPlayer::shutdown()
     _IsInitialized = false;
 }
 
-void OPNPlayer::render(audio_sample * out, unsigned long count)
+void OPNPlayer::Render(audio_sample * out, unsigned long count)
 {
     int16_t buffer[256 * sizeof(audio_sample)];
 

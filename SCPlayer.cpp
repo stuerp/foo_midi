@@ -51,7 +51,7 @@ SCPlayer::SCPlayer() noexcept : MIDIPlayer(), _SCCorePathName(0)
 
 SCPlayer::~SCPlayer()
 {
-    shutdown();
+    Shutdown();
 
     if (_Buffer)
     {
@@ -66,7 +66,7 @@ SCPlayer::~SCPlayer()
     }
 }
 
-bool SCPlayer::startup()
+bool SCPlayer::Startup()
 {
     pfc::string8 path;
 
@@ -98,7 +98,7 @@ bool SCPlayer::startup()
     return true;
 }
 
-void SCPlayer::shutdown()
+void SCPlayer::Shutdown()
 {
     for (uint32_t i = 0; i < 3; ++i)
         process_terminate(i);
@@ -596,7 +596,7 @@ void SCPlayer::render_port(uint32_t port, float * out, uint32_t count)
     process_read_bytes(port, out, count * sizeof(float) * 2);
 }
 
-void SCPlayer::render(audio_sample * out, unsigned long count)
+void SCPlayer::Render(audio_sample * out, unsigned long count)
 {
     ::memset(out, 0, count * sizeof(audio_sample) * 2);
 

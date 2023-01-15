@@ -19,28 +19,28 @@ NukePlayer::NukePlayer()
 
 NukePlayer::~NukePlayer()
 {
-    shutdown();
+    Shutdown();
 }
 
 void NukePlayer::SetSynth(unsigned int synthId)
 {
-    shutdown();
+    Shutdown();
     _SynthId = synthId;
 }
 
 void NukePlayer::SetBank(unsigned int bankId)
 {
-    shutdown();
+    Shutdown();
     _BankId = bankId;
 }
 
 void NukePlayer::SetExtp(unsigned int extp)
 {
-    shutdown();
+    Shutdown();
     _Extp = extp;
 }
 
-bool NukePlayer::startup()
+bool NukePlayer::Startup()
 {
     if (_Synth)
         return true;
@@ -70,13 +70,13 @@ bool NukePlayer::startup()
     return true;
 }
 
-void NukePlayer::shutdown()
+void NukePlayer::Shutdown()
 {
     delete _Synth;
     _Synth = nullptr;
 }
 
-void NukePlayer::render(audio_sample * samples, unsigned long count)
+void NukePlayer::Render(audio_sample * samples, unsigned long count)
 {
     audio_sample const ScaleFactor = 1.0f / 16384.0f;
 

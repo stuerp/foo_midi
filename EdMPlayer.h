@@ -21,9 +21,9 @@ public:
     virtual ~EdMPlayer();
 
 private:
-    virtual bool startup() override;
-    virtual void shutdown() override;
-    virtual void render(audio_sample *, unsigned long) override;
+    virtual bool Startup() override;
+    virtual void Shutdown() override;
+    virtual void Render(audio_sample *, unsigned long) override;
 
     virtual void SendEvent(uint32_t) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;

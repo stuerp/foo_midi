@@ -138,7 +138,7 @@ void SFPlayer::setInterpolationMethod(unsigned method)
 void SFPlayer::setDynamicLoading(bool enabled)
 {
     if (bDynamicLoading != enabled)
-        shutdown();
+        Shutdown();
     bDynamicLoading = enabled;
 }
 
@@ -221,71 +221,19 @@ void SFPlayer::SendSysEx(const uint8_t * event, uint32_t size, size_t port)
     }
 }
 
-void SFPlayer::render(audio_sample * out, unsigned long count)
-{
-    unsigned long done = 0;
-    memset(out, 0, sizeof(float) * 2 * count);
-    while (done < count)
-    {
-        float buffer[512 * 2];
-        unsigned long todo = count - done;
-        unsigned long i;
-        if (todo > 512) todo = 512;
-        for (unsigned long j = 0; j < 3; ++j)
-        {
-            memset(buffer, 0, sizeof(buffer));
-            fluid_synth_write_float(_synth[j], todo, buffer, 0, 2, buffer, 1, 2);
-            for (i = 0; i < todo; ++i)
-            {
-                out[i * 2 + 0] += buffer[i * 2 + 0];
-                out[i * 2 + 1] += buffer[i * 2 + 1];
-            }
-        }
-        out += todo * 2;
-        done += todo;
-    }
-}
-
 void SFPlayer::setSoundFont(const char * in)
 {
     sSoundFontName = in;
-    shutdown();
+    Shutdown();
 }
 
 void SFPlayer::setFileSoundFont(const char * in)
 {
     _SoundFontFilePath = in;
-    shutdown();
+    Shutdown();
 }
 
-bool SFPlayer::reset()
-{
-    unsigned int synths_reset = 0;
-    for (unsigned int i = 0; i < 3; ++i)
-    {
-        if (_synth[i])
-        {
-            fluid_synth_system_reset(_synth[i]);
-
-            SendSysExReset(i, 0);
-
-            ++synths_reset;
-        }
-    }
-    return synths_reset == 3;
-}
-
-void SFPlayer::shutdown()
-{
-    for (unsigned int i = 0; i < 3; ++i)
-    {
-        if (_synth[i]) delete_fluid_synth(_synth[i]);
-        _synth[i] = 0;
-    }
-    _IsInitialized = false;
-}
-
-bool SFPlayer::startup()
+bool SFPlayer::Startup()
 {
     if (_synth[0] && _synth[1] && _synth[2]) return true;
 
@@ -322,14 +270,15 @@ bool SFPlayer::startup()
             {
                 if (FLUID_FAILED == fluid_synth_sfload(_synth[i], sSoundFontName.c_str(), 1))
                 {
-                    shutdown();
+                    Shutdown();
                     _last_error = "Failed to load SoundFont bank: ";
                     _last_error += sSoundFontName;
                     return false;
                 }
             }
         }
-        else if (!stricmp_utf8(ext.c_str(), "sflist"))
+        else
+        if ((::stricmp_utf8(ext.c_str(), "sflist") == 0))
         {
             FILE * fl = _tfopen(pfc::stringcvt::string_os_from_utf8(sSoundFontName.c_str()), _T("r, ccs=UTF-8"));
             if (fl)
@@ -365,7 +314,7 @@ bool SFPlayer::startup()
                         if (FLUID_FAILED == fluid_synth_sfload(_synth[i], pfc::stringcvt::string_utf8_from_os(temp.c_str()), 1))
                         {
                             fclose(fl);
-                            shutdown();
+                            Shutdown();
                             _last_error = "Failed to load SoundFont bank: ";
                             _last_error += pfc::stringcvt::string_utf8_from_os(cr);
                             return false;
@@ -389,7 +338,7 @@ bool SFPlayer::startup()
         {
             if (FLUID_FAILED == fluid_synth_sfload(_synth[i], _SoundFontFilePath.c_str(), 1))
             {
-                shutdown();
+                Shutdown();
                 _last_error = "Failed to load SoundFont bank: ";
                 _last_error += _SoundFontFilePath;
                 return false;
@@ -406,7 +355,70 @@ bool SFPlayer::startup()
     return true;
 }
 
-bool SFPlayer::getErrorMessage(std::string & errorMessage)
+void SFPlayer::Shutdown()
+{
+    for (unsigned int i = 0; i < 3; ++i)
+    {
+        if (_synth[i]) delete_fluid_synth(_synth[i]);
+        _synth[i] = 0;
+    }
+    _IsInitialized = false;
+}
+
+void SFPlayer::Render(audio_sample * out, unsigned long count)
+{
+    ::memset(out, 0, sizeof(float) * 2 * count);
+
+    unsigned long done = 0;
+
+    while (done < count)
+    {
+        float buffer[512 * 2];
+
+        unsigned long todo = count - done;
+        unsigned long i;
+
+        if (todo > 512)
+            todo = 512;
+
+        for (unsigned long j = 0; j < 3; ++j)
+        {
+            ::memset(buffer, 0, sizeof(buffer));
+
+            fluid_synth_write_float(_synth[j], todo, buffer, 0, 2, buffer, 1, 2);
+
+            for (i = 0; i < todo; ++i)
+            {
+                out[i * 2 + 0] += buffer[i * 2 + 0];
+                out[i * 2 + 1] += buffer[i * 2 + 1];
+            }
+        }
+
+        out += todo * 2;
+        done += todo;
+    }
+}
+
+bool SFPlayer::Reset()
+{
+    unsigned int synths_reset = 0;
+
+    for (unsigned int i = 0; i < 3; ++i)
+    {
+        if (_synth[i])
+        {
+            fluid_synth_system_reset(_synth[i]);
+
+            SendSysExReset(i, 0);
+
+            ++synths_reset;
+        }
+    }
+
+    return synths_reset == 3;
+}
+
+bool SFPlayer::GetErrorMessage(std::string & errorMessage)
 {
     if (_last_error.length())
     {

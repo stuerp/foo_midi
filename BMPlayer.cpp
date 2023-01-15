@@ -456,7 +456,7 @@ bool GetSoundFontStatistics(uint64_t & sizeTotal, uint64_t & sizeLoaded)
 #pragma region("BASS Player")
 BMPlayer::BMPlayer() : MIDIPlayer()
 {
-    ::memset(_stream, 0, sizeof(_stream));
+    ::memset(_Stream, 0, sizeof(_Stream));
 
     _InterpolationLevel = 0;
     _AreEffectsEnabled = true;
@@ -470,33 +470,33 @@ BMPlayer::BMPlayer() : MIDIPlayer()
 
 BMPlayer::~BMPlayer()
 {
-    shutdown();
+    Shutdown();
 }
 
 void BMPlayer::setSoundFont(const char * directoryPath)
 {
     _SoundFontDirectoryPath = directoryPath;
-    shutdown();
+    Shutdown();
 }
 
 void BMPlayer::setFileSoundFont(const char * filePath)
 {
     _SoundFontFilePath = filePath;
-    shutdown();
+    Shutdown();
 }
 
 void BMPlayer::setInterpolation(int interpolationLevel)
 {
     _InterpolationLevel = interpolationLevel;
 
-    shutdown();
+    Shutdown();
 }
 
 void BMPlayer::setEffects(bool enabled)
 {
     _AreEffectsEnabled = enabled;
 
-    shutdown();
+    Shutdown();
 }
 
 void BMPlayer::setVoices(int voiceCount)
@@ -509,14 +509,14 @@ void BMPlayer::setVoices(int voiceCount)
 
     _VoiceCount = voiceCount;
 
-    if (_stream[0])
-        ::BASS_ChannelSetAttribute(_stream[0], BASS_ATTRIB_MIDI_VOICES, (float) voiceCount);
+    if (_Stream[0])
+        ::BASS_ChannelSetAttribute(_Stream[0], BASS_ATTRIB_MIDI_VOICES, (float) voiceCount);
 
-    if (_stream[1])
-        ::BASS_ChannelSetAttribute(_stream[1], BASS_ATTRIB_MIDI_VOICES, (float) voiceCount);
+    if (_Stream[1])
+        ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_MIDI_VOICES, (float) voiceCount);
 
-    if (_stream[2])
-        ::BASS_ChannelSetAttribute(_stream[2], BASS_ATTRIB_MIDI_VOICES, (float) voiceCount);
+    if (_Stream[2])
+        ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_MIDI_VOICES, (float) voiceCount);
 }
 
 unsigned int BMPlayer::getVoicesActive()
@@ -525,27 +525,27 @@ unsigned int BMPlayer::getVoicesActive()
 
     float Voices;
 
-    if (_stream[0])
+    if (_Stream[0])
     {
         Voices = 0.;
 
-        if (::BASS_ChannelGetAttribute(_stream[0], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &Voices))
+        if (::BASS_ChannelGetAttribute(_Stream[0], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &Voices))
             VoiceCount += (unsigned int) (int) (Voices);
     }
 
-    if (_stream[1])
+    if (_Stream[1])
     {
         Voices = 0.;
 
-        if (::BASS_ChannelGetAttribute(_stream[1], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &Voices))
+        if (::BASS_ChannelGetAttribute(_Stream[1], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &Voices))
             VoiceCount += (unsigned int) (int) (Voices);
     }
 
-    if (_stream[2])
+    if (_Stream[2])
     {
         Voices = 0.;
 
-        if (::BASS_ChannelGetAttribute(_stream[2], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &Voices))
+        if (::BASS_ChannelGetAttribute(_Stream[2], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &Voices))
             VoiceCount += (unsigned int) (int) (Voices);
     }
 
@@ -553,25 +553,25 @@ unsigned int BMPlayer::getVoicesActive()
 }
 
 #pragma region("Private")
-bool BMPlayer::startup()
+bool BMPlayer::Startup()
 {
-    if (_stream[0] && _stream[1] && _stream[2])
+    if (_Stream[0] && _Stream[1] && _Stream[2])
         return true;
 
-    _stream[0] = ::BASS_MIDI_StreamCreate(16, (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_AreEffectsEnabled ? 0 : BASS_MIDI_NOFX)), (unsigned int) _SampleRate);
-    _stream[1] = ::BASS_MIDI_StreamCreate(16, (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_AreEffectsEnabled ? 0 : BASS_MIDI_NOFX)), (unsigned int) _SampleRate);
-    _stream[2] = ::BASS_MIDI_StreamCreate(16, (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_AreEffectsEnabled ? 0 : BASS_MIDI_NOFX)), (unsigned int) _SampleRate);
+    _Stream[0] = ::BASS_MIDI_StreamCreate(16, (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_AreEffectsEnabled ? 0 : BASS_MIDI_NOFX)), (unsigned int) _SampleRate);
+    _Stream[1] = ::BASS_MIDI_StreamCreate(16, (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_AreEffectsEnabled ? 0 : BASS_MIDI_NOFX)), (unsigned int) _SampleRate);
+    _Stream[2] = ::BASS_MIDI_StreamCreate(16, (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_AreEffectsEnabled ? 0 : BASS_MIDI_NOFX)), (unsigned int) _SampleRate);
 
-    if (!_stream[0] || !_stream[1] || !_stream[2])
+    if (!_Stream[0] || !_Stream[1] || !_Stream[2])
         return false;
 
-    ::BASS_ChannelSetAttribute(_stream[0], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
-    ::BASS_ChannelSetAttribute(_stream[1], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
-    ::BASS_ChannelSetAttribute(_stream[2], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
+    ::BASS_ChannelSetAttribute(_Stream[0], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
+    ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
+    ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
 
     setVoices(_VoiceCount);
 
-    ::memset(bank_lsb_override, 0, sizeof(bank_lsb_override));
+    ::memset(_BankLSBOverride, 0, sizeof(_BankLSBOverride));
 
     std::vector<BASS_MIDI_FONTEX> presetList;
 
@@ -587,9 +587,9 @@ bool BMPlayer::startup()
             return false;
     }
 
-    ::BASS_MIDI_StreamSetFonts(_stream[0], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
-    ::BASS_MIDI_StreamSetFonts(_stream[1], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
-    ::BASS_MIDI_StreamSetFonts(_stream[2], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
+    ::BASS_MIDI_StreamSetFonts(_Stream[0], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
+    ::BASS_MIDI_StreamSetFonts(_Stream[1], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
+    ::BASS_MIDI_StreamSetFonts(_Stream[2], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
 
     reset_parameters();
 
@@ -600,24 +600,24 @@ bool BMPlayer::startup()
     return true;
 }
 
-void BMPlayer::shutdown()
+void BMPlayer::Shutdown()
 {
-    if (_stream[2])
+    if (_Stream[2])
     {
-        ::BASS_StreamFree(_stream[2]);
-        _stream[2] = 0;
+        ::BASS_StreamFree(_Stream[2]);
+        _Stream[2] = 0;
     }
 
-    if (_stream[1])
+    if (_Stream[1])
     {
-        ::BASS_StreamFree(_stream[1]);
-        _stream[1] = 0;
+        ::BASS_StreamFree(_Stream[1]);
+        _Stream[1] = 0;
     }
 
-    if (_stream[0])
+    if (_Stream[0])
     {
-        ::BASS_StreamFree(_stream[0]);
-        _stream[0] = 0;
+        ::BASS_StreamFree(_Stream[0]);
+        _Stream[0] = 0;
     }
 
     for (size_t i = 0; i < _SoundFonts.size(); ++i)
@@ -640,28 +640,28 @@ void BMPlayer::shutdown()
     _IsInitialized = false;
 }
 
-void BMPlayer::SendEvent(uint32_t b)
+void BMPlayer::SendEvent(uint32_t message)
 {
-    unsigned char event[3]
+    uint8_t Event[3]
     {
-        static_cast<uint8_t>(b),
-        static_cast<uint8_t>(b >> 8),
-        static_cast<uint8_t>(b >> 16)
+        static_cast<uint8_t>(message),
+        static_cast<uint8_t>(message >> 8),
+        static_cast<uint8_t>(message >> 16)
     };
 
-    size_t port = (b >> 24) & 0x7F;
+    const uint8_t Status = message & 0xF0;
 
-//  const unsigned channel = b & 0x0F;
-    const unsigned command = b & 0xF0;
-    const unsigned event_length = (unsigned int)((command >= 0xF8 && command <= 0xFF) ? 1 : ((command == 0xC0 || command == 0xD0) ? 2 : 3));
-
-    if (port > 2)
-        port = 0;
-
-    if (bank_lsb_overridden && command == 0xB0 && event[1] == 0x20)
+    if (_IsBankLSBOverridden && (Status == 0xB0) && (Event[1] == 0x20))
         return;
 
-    ::BASS_MIDI_StreamEvents(_stream[port], BASS_MIDI_EVENTS_RAW, event, event_length);
+    const DWORD EventSize = (DWORD)((Status >= 0xF8 && Status <= 0xFF) ? 1 : ((Status == 0xC0 || Status == 0xD0) ? 2 : 3));
+
+    uint8_t Port = (message >> 24) & 0x7F;
+
+    if (Port > 2)
+        Port = 0;
+
+    ::BASS_MIDI_StreamEvents(_Stream[Port], BASS_MIDI_EVENTS_RAW, Event, EventSize);
 }
 
 void BMPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
@@ -669,16 +669,16 @@ void BMPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
     if (port > 2)
         port = 0;
 
-    ::BASS_MIDI_StreamEvents(_stream[port], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
+    ::BASS_MIDI_StreamEvents(_Stream[port], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
 
     if (port == 0)
     {
-        ::BASS_MIDI_StreamEvents(_stream[1], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
-        ::BASS_MIDI_StreamEvents(_stream[2], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
+        ::BASS_MIDI_StreamEvents(_Stream[1], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
+        ::BASS_MIDI_StreamEvents(_Stream[2], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
     }
 }
 
-void BMPlayer::render(audio_sample * samples, unsigned long samplesSize)
+void BMPlayer::Render(audio_sample * samples, unsigned long samplesSize)
 {
     float Buffer[512 * 2];
 
@@ -693,7 +693,7 @@ void BMPlayer::render(audio_sample * samples, unsigned long samplesSize)
 
         for (size_t i = 0; i < 3; ++i)
         {
-            ::BASS_ChannelGetData(_stream[i], Buffer, BASS_DATA_FLOAT | static_cast<unsigned int>((ToDo * 2) * sizeof(float)));
+            ::BASS_ChannelGetData(_Stream[i], Buffer, BASS_DATA_FLOAT | static_cast<unsigned int>((ToDo * 2) * sizeof(float)));
 
             for (size_t j = 0; j < (ToDo * 2); ++j)
                 samples[j] += (audio_sample) Buffer[j];
@@ -718,7 +718,7 @@ void BMPlayer::compound_presets(std::vector<BASS_MIDI_FONTEX> & out, std::vector
         {
             for (auto it = channels.begin(); it != channels.end(); ++it)
             {
-                bank_lsb_override[*it - 1] = (uint8_t)*it;
+                _BankLSBOverride[*it - 1] = (uint8_t)*it;
 
                 int dbanklsb = (int) *it;
                 pit->dbanklsb = dbanklsb;
@@ -745,9 +745,9 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
     if (dot != std::string::npos)
         ext.assign(in_path.begin() + (const __int64)(dot + 1), in_path.end());
 
-    if (!stricmp_utf8(ext.c_str(), "sf2") || !stricmp_utf8(ext.c_str(), "sf3")
+    if ((::stricmp_utf8(ext.c_str(), "sf2") == 0) || (::stricmp_utf8(ext.c_str(), "sf3") == 0)
     #ifdef SF2PACK
-        || !stricmp_utf8(ext.c_str(), "sf2pack") || !stricmp_utf8(ext.c_str(), "sfogg")
+        || (::stricmp_utf8(ext.c_str(), "sf2pack") == 0) || (::stricmp_utf8(ext.c_str(), "sfogg") == 0)
     #endif
         )
     {
@@ -755,7 +755,7 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
 
         if (!font)
         {
-            shutdown();
+            Shutdown();
 
             _ErrorMessage = "Unable to load SoundFont: ";
             _ErrorMessage += in_path.c_str();
@@ -772,7 +772,7 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
         return true;
     }
     else
-    if (!stricmp_utf8(ext.c_str(), "sflist") || !stricmp_utf8(ext.c_str(), "json"))
+    if ((::stricmp_utf8(ext.c_str(), "sflist") == 0) || (::stricmp_utf8(ext.c_str(), "json") == 0))
     {
         sflist_presets ** __presetList = &_Presets[0];
 
@@ -797,18 +797,18 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
 
 void BMPlayer::reset_parameters()
 {
-    bank_lsb_overridden = false;
+    _IsBankLSBOverridden = false;
 
     for (size_t i = 0; i < 48; ++i)
     {
-        if (bank_lsb_override[i])
-            bank_lsb_overridden = true;
+        if (_BankLSBOverride[i] != 0)
+            _IsBankLSBOverridden = true;
 
-        ::BASS_MIDI_StreamEvent(_stream[i / 16], i % 16, MIDI_EVENT_BANK_LSB, bank_lsb_override[i]);
+        ::BASS_MIDI_StreamEvent(_Stream[i / 16], i % 16, MIDI_EVENT_BANK_LSB, _BankLSBOverride[i]);
     }
 }
 
-bool BMPlayer::getErrorMessage(std::string & errorMessage)
+bool BMPlayer::GetErrorMessage(std::string & errorMessage)
 {
     if (_ErrorMessage.length() == 0)
         return false;

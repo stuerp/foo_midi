@@ -39,10 +39,10 @@ EdMPlayer::EdMPlayer() : MIDIPlayer()
 
 EdMPlayer::~EdMPlayer()
 {
-    shutdown();
+    Shutdown();
 }
 
-bool EdMPlayer::startup()
+bool EdMPlayer::Startup()
 {
     if (_Initialized)
         return true;
@@ -64,7 +64,7 @@ bool EdMPlayer::startup()
     return true;
 }
 
-void EdMPlayer::shutdown()
+void EdMPlayer::Shutdown()
 {
     if (_Initialized)
         for (unsigned i = 0; i < 8; ++i)
@@ -73,7 +73,7 @@ void EdMPlayer::shutdown()
     _Initialized = false;
 }
 
-void EdMPlayer::render(audio_sample * out, unsigned long count)
+void EdMPlayer::Render(audio_sample * out, unsigned long count)
 {
     INT32 b[256 * sizeof(audio_sample)];
 

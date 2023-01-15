@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.h (2023.01.09) **/
+/** $VER: MIDIPlayer.h (2023.01.15) **/
 
 #pragma once
 
@@ -10,7 +10,9 @@
 
 #include <midi_processing/midi_container.h>
 
+#ifdef EXPERIMENT
 #include <API.h>
+#endif
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class MIDIPlayer
@@ -19,13 +21,11 @@ public:
     MIDIPlayer();
     virtual ~MIDIPlayer() { };
 
-    bool Load(const midi_container & container, unsigned int subsongIndex, unsigned int  loopMode, unsigned int cleanFlags);
+    bool Load(const midi_container & midiContainer, unsigned int subsongIndex, unsigned int loopMode, unsigned int cleanFlags);
     unsigned long Play(audio_sample * samples, unsigned long samplesSize);
-    void Seek(unsigned long sample);
+    void Seek(unsigned long seekTime);
 
-    bool GetErrorMessage(std::string &);
-
-    void setSampleRate(unsigned long rate);
+    void SetSampleRate(unsigned long sampleRate);
 
     enum LoopMode
     {
@@ -49,24 +49,20 @@ public:
 
     void SetFilter(FilterType filterType, bool filterEffects);
 
+    virtual bool GetErrorMessage(std::string &) { return false; }
+
 protected:
-    virtual bool startup() { return false; }
-    virtual void shutdown() { };
-
-    virtual void render(audio_sample *, unsigned long) { }
-    virtual bool reset() { return false; }
-
-    virtual bool getErrorMessage(std::string &) { return false; }
-
-    virtual void SendEvent(uint32_t) { }
-    virtual void SendSysEx(const uint8_t *, size_t, size_t) { };
+    virtual bool Startup() { return false; }
+    virtual void Shutdown() { };
+    virtual void Render(audio_sample *, unsigned long) { }
+    virtual bool Reset() { return false; }
 
     // Should return the block size that the player expects, otherwise 0.
     virtual unsigned int GetSampleBlockSize() { return 0; }
 
-    // Time should only be a block level offset
+    virtual void SendEvent(uint32_t) { }
+    virtual void SendSysEx(const uint8_t *, size_t, size_t) { };
     virtual void SendEventWithTime(uint32_t, unsigned int) { };
-
     virtual void SendSysExWithTime(const uint8_t *, size_t, size_t, unsigned int) { };
 
     void SendSysExReset(size_t port, unsigned int time);
@@ -91,9 +87,9 @@ private:
 
     std::vector<midi_stream_event> _Stream;
 
-    size_t _StreamCurrent;
-    size_t _TimeCurrent;
-    size_t _TimeEnd;
+    size_t _CurrentPosition; // Current position in the MIDI stream
+    size_t _CurrentTime;
+    size_t _EndTime;
     size_t _SamplesRemaining;
 
     unsigned int _LoopMode;
@@ -102,6 +98,8 @@ private:
     unsigned long _LoopEnd;
     unsigned long _LoopStartTime;
 
+    #ifdef EXPERIMENT
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;
+    #endif
 };
 #pragma warning(default: 4820)

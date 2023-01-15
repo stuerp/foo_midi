@@ -1,3 +1,6 @@
+
+/** MT32Player.cpp (2013.01.15) **/
+
 #include "MT32Player.h"
 
 #include "kq6mtgm.h"
@@ -7,7 +10,7 @@
 
 #include <pfc/pathUtils.h>
 
-MT32Player::MT32Player(bool gm, unsigned gm_set) : MIDIPlayer(), uGMSet(gm_set), bGM(gm)
+MT32Player::MT32Player(bool isGM, unsigned gmSet) : MIDIPlayer(), _GMSet(gmSet), _IsGM(isGM)
 {
     _Synth = nullptr;
 
@@ -19,7 +22,7 @@ MT32Player::MT32Player(bool gm, unsigned gm_set) : MIDIPlayer(), uGMSet(gm_set),
 
 MT32Player::~MT32Player()
 {
-    shutdown();
+    Shutdown();
 }
 
 static const MT32Emu::AnalogOutputMode useMode = MT32Emu::AnalogOutputMode::AnalogOutputMode_ACCURATE;
@@ -36,7 +39,8 @@ static const char * PCMROMNames[] =
     "MT32_PCM.ROM"
 };
 
-bool MT32Player::startup()
+#pragma region("MIDIPlayer")
+bool MT32Player::Startup()
 {
     if (_Synth)
         return true;
@@ -71,7 +75,7 @@ bool MT32Player::startup()
 
     _Synth = new MT32Emu::Synth;
 
-    MT32Emu::Bit32u UsePartialCount = bGM ? 256U : 32U;
+    MT32Emu::Bit32u UsePartialCount = _IsGM ? 256U : 32U;
 
     if (!_Synth->open(*controlRom, *pcmRom, UsePartialCount, useMode))
     {
@@ -87,7 +91,7 @@ bool MT32Player::startup()
     return true;
 }
 
-void MT32Player::shutdown()
+void MT32Player::Shutdown()
 {
     if (_Synth)
     {
@@ -118,6 +122,26 @@ void MT32Player::shutdown()
     _IsInitialized = false;
 }
 
+void MT32Player::Render(audio_sample * samples, unsigned long count)
+{
+    MT32Emu::Bit16s temp[256 * 2];
+
+    while (count > 0)
+    {
+        unsigned long ToDo = count;
+
+        if (ToDo > 256)
+            ToDo = 256;
+
+        _Synth->render(temp, (unsigned) ToDo);
+
+        audio_math::convert_from_int16(temp, (ToDo * 2), samples, 1.);
+
+        samples += (ToDo * 2);
+        count -= ToDo;
+    }
+}
+
 void MT32Player::SendEvent(uint32_t b)
 {
     _Synth->playMsg(b);
@@ -127,32 +151,13 @@ void MT32Player::SendSysEx(const uint8_t * event, size_t size, size_t)
 {
     _Synth->playSysexNow(event, (MT32Emu::Bit32u)size);
 }
-
-void MT32Player::render(audio_sample * out, unsigned long count)
-{
-    MT32Emu::Bit16s temp[256 * 2];
-
-    while (count > 0)
-    {
-        unsigned long todo = count;
-
-        if (todo > 256)
-            todo = 256;
-
-        _Synth->render(temp, (unsigned) todo);
-
-        audio_math::convert_from_int16(temp, (todo * 2), out, 1.);
-
-        out += (todo * 2);
-        count -= todo;
-    }
-}
+#pragma endregion
 
 void MT32Player::setBasePath(const char * in)
 {
     _BasePathName = in;
 
-    shutdown();
+    Shutdown();
 }
 
 void MT32Player::setAbortCallback(abort_callback * in)
@@ -167,7 +172,7 @@ int MT32Player::GetSampleRate()
 
 bool MT32Player::isConfigValid()
 {
-    return startup();
+    return Startup();
 }
 
 void MT32Player::_reset()
@@ -176,11 +181,11 @@ void MT32Player::_reset()
 
     _Synth->playSysexNow(mt32_reset, sizeof(mt32_reset));
 
-    if (bGM)
+    if (_IsGM)
     {
         const unsigned char * start, * end;
 
-        if (uGMSet == 0)
+        if (_GMSet == 0)
         {
             start = mt32_gm_sysex;
             end = start + _countof(mt32_gm_sysex);

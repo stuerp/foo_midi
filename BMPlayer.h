@@ -12,7 +12,7 @@
 
 extern bool GetSoundFontStatistics(uint64_t & total_sample_size, uint64_t & sample_loaded_size);
 
-typedef struct sflist_presets sflist_presets;
+struct sflist_presets;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class BMPlayer : public MIDIPlayer
@@ -30,14 +30,16 @@ public:
     unsigned int getVoicesActive();
 
 private:
-    virtual bool startup() override;
-    virtual void shutdown() override;
-    virtual void render(audio_sample * samples, unsigned long samplesSize) override;
+    #pragma region("MIDIPlayer")
+    virtual bool Startup() override;
+    virtual void Shutdown() override;
+    virtual void Render(audio_sample * samples, unsigned long samplesSize) override;
 
     virtual void SendEvent(uint32_t b) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;
 
-    virtual bool getErrorMessage(std::string & errorMessage) override;
+    virtual bool GetErrorMessage(std::string & errorMessage) override;
+    #pragma endregion
 
     void compound_presets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels);
     void reset_parameters();
@@ -51,14 +53,14 @@ private:
     std::string _SoundFontDirectoryPath;
     std::string _SoundFontFilePath;
 
-    HSTREAM _stream[3];
+    HSTREAM _Stream[3];
 
     int _InterpolationLevel;
     int _VoiceCount;
 
-    uint8_t bank_lsb_override[48];
+    uint8_t _BankLSBOverride[48];
 
     bool _AreEffectsEnabled;
-    bool bank_lsb_overridden;
+    bool _IsBankLSBOverridden;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

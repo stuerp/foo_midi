@@ -563,12 +563,12 @@ void VSTiPlayer::displayEditorModal()
         process_terminate();
 }
 
-void VSTiPlayer::shutdown()
+void VSTiPlayer::Shutdown()
 {
     process_terminate();
 }
 
-bool VSTiPlayer::startup()
+bool VSTiPlayer::Startup()
 {
     if (process_running())
         return true;
@@ -652,7 +652,7 @@ void VSTiPlayer::SendSysExWithTime(const uint8_t * event, size_t size, size_t po
         process_terminate();
 }
 
-void VSTiPlayer::render(audio_sample * out, unsigned long count)
+void VSTiPlayer::Render(audio_sample * out, unsigned long count)
 {
     process_write_code(9);
     process_write_code(count);
