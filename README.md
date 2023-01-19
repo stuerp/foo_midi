@@ -35,7 +35,7 @@ The code builds out-of-the box with Visual Studio.
 To build the code you need:
 
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2022-10-20
+* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2023-01-18
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
 The following libraries are included in the code:
@@ -103,6 +103,7 @@ branch. Pull requests are warmly welcome.
 v2.8.0.0, 2023-xx-xx, *"A New Beginning...?"*
 
 * Major refactoring of the source code.
+* Builds with foobar2000 SDK 2023-01-18.
 * Tried to make the preferences page a bit more accessible to new users.
   * Moved all the path controls to a separate preferences page.
   * Added the configuration of the VTSi plugin path to the preferences page (in addition of the Advanced Preferences, for backwards compatibility).
