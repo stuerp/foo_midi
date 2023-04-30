@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2023.01.07) **/
+/** $VER: Resource.h (2023.04.30) **/
 
 #pragma once
 
@@ -18,7 +18,7 @@
 #define STR_COMPANY_NAME        TEXT("LoSno.co")
 #define STR_INTERNAL_NAME       TEXT(STR_COMPONENT_NAME)
 #define STR_COMMENTS            TEXT("Written by Christopher Snowhill, P. Stuer")
-#define STR_COPYRIGHT           TEXT("Copyright (c) 2022 ") STR_COMPANY_NAME TEXT(". All rights reserved.")
+#define STR_COPYRIGHT           TEXT("Copyright (c) 2022-2023 ") STR_COMPANY_NAME TEXT(". All rights reserved.")
 
 #define NUM_FILE_MAJOR          2
 #define NUM_FILE_MINOR          8
