@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2023.01.07) **/
+/** $VER: foo_midi.rc (2023.05.01) **/
 
 #include "resource.h"
 
@@ -12,7 +12,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 IDD_PREFERENCES_ROOT dialogex 0, 0, 0, 0
 style DS_SETFONT | WS_CHILD
-font 8, "MS Shell Dlg", 400, 0, 0x0
+font 8, "Segoe UI", 400, 0, 1
 {
 //  Used to measure the dialog size.
 //  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
@@ -73,7 +73,7 @@ font 8, "MS Shell Dlg", 400, 0, 0x0
 
 IDD_PREFERENCES_PATHS dialogex 0, 0, 0, 0
 style DS_SETFONT | WS_CHILD
-font 8, "MS Shell Dlg", 400, 0, 0x0
+font 8, "Segoe UI", 400, 0, 1
 {
     rtext       "VSTi Plugins:",    IDC_STATIC,                         X_B11, Y_B11 + 2, W_B11, H_B11
     edittext                        IDC_VST_PATH,                       X_B12, Y_B12,     W_B12, H_B12, ES_AUTOHSCROLL

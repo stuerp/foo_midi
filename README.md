@@ -100,6 +100,10 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
+v2.8.1.0, 2023-05-01, *"A New Beginning...? Redux"*
+
+* Bug Fix: The dialog now properly resizes on systems with High DPI settings (> 100% scaling)
+
 v2.8.0.0, 2023-04-30, *"A New Beginning...?"*
 
 * Major refactoring of the source code.

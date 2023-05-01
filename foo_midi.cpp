@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.cpp (2022.12.31) **/
+/** $VER: foo_midi.cpp (2023.01.05) **/
 
 #pragma warning(disable: 5045)
 
@@ -20,7 +20,7 @@ namespace
         STR_COMPONENT_NAME,
         STR_COMPONENT_VERSION,
         STR_COMPONENT_BASENAME " " STR_COMPONENT_VERSION "\n"
-            "Copyright (c) 2022 LoSno.co. All rights reserved.\n"
+            "Copyright (c) 2022-2023 LoSno.co. All rights reserved.\n"
             "Written by kode54, P. Stuer\n"
             "\n"
             "Adds playback of MIDI files.\n"

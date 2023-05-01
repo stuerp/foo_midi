@@ -243,6 +243,7 @@
     <PostBuildEvent>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
+    <Manifest />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ADLPlayer.cpp" />
