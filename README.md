@@ -100,6 +100,11 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
+v2.8.2.0, 2023-xx-xx, *""*
+
+* Bug Fix: MIDI files with malformed tracks caused a crash.
+* Bug Fix: MIDI files with malformed SysEx events caused a crash.
+
 v2.8.1.0, 2023-05-01, *"A New Beginning...? Redux"*
 
 * Bug Fix: The dialog now properly resizes on systems with High DPI settings (> 100% scaling)
