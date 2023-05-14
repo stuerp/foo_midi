@@ -35,7 +35,7 @@ The code builds out-of-the box with Visual Studio.
 To build the code you need:
 
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2023-04-18
+* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2023-05-10
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
 The following libraries are included in the code:
