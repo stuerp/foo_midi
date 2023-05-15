@@ -82,6 +82,7 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <AdditionalIncludeDirectories>../libjson;../bass/c</AdditionalIncludeDirectories>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -103,6 +104,7 @@
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -121,6 +123,7 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <AdditionalIncludeDirectories>../libjson;../bass/c</AdditionalIncludeDirectories>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -142,6 +145,7 @@
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>

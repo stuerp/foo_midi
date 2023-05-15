@@ -106,7 +106,7 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <AdditionalOptions>/d2notypeopt %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
@@ -119,7 +119,7 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <AdditionalOptions>/d2notypeopt %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>

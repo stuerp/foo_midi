@@ -513,8 +513,9 @@ void PreferencesRootPage::reset()
     int PlayerIndex = _PlayerTypeToPlayerIndex[PlayerType];
     int SelectedItem = _PlayerPresentMap[PlayerIndex];
 
-    if ((PlayerType != PlayerTypeFluidSynth) && (PlayerType != PlayerTypeBASSMIDI))
     {
+        bool Enable = (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI);
+
         const int ControlId[] =
         {
             IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
@@ -522,7 +523,7 @@ void PreferencesRootPage::reset()
         };
 
         for (size_t i = 0; i < _countof(ControlId); ++i)
-            GetDlgItem(ControlId[i]).EnableWindow(FALSE);
+            GetDlgItem(ControlId[i]).EnableWindow(Enable);
     }
 
     if (PlayerType != PlayerTypeADL)
@@ -550,11 +551,11 @@ void PreferencesRootPage::reset()
     }
 
     {
-        bool enable = (PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce);
+        bool Enable = (PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce);
 
-        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
-        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
-        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enable);
+        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enable);
+        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(Enable);
     }
 
     if ((PlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
@@ -761,12 +762,17 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         PlayerIndex = _PlayerTypeToPlayerIndex[DefaultPlayerType];
     }
 
-    if ((PlayerType != PlayerTypeFluidSynth) && (PlayerType != PlayerTypeBASSMIDI))
     {
-        GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(FALSE);
-        GetDlgItem(IDC_CACHED_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_CACHED).EnableWindow(FALSE);
+        bool Enable = (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI);
+
+        const int ControlId[] =
+        {
+            IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
+            IDC_CACHED_TEXT, IDC_CACHED
+        };
+
+        for (size_t i = 0; i < _countof(ControlId); ++i)
+            GetDlgItem(ControlId[i]).EnableWindow(Enable);
     }
 
     GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
@@ -801,11 +807,12 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         GetDlgItem(IDC_NUKE_PANNING).EnableWindow(FALSE);
     }
 
-    if ((PlayerType != PlayerTypeVSTi) && (PlayerType != PlayerTypeFluidSynth) && (PlayerType != PlayerTypeBASSMIDI) && (PlayerType != PlayerTypeSecretSauce))
     {
-        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(FALSE);
-        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(FALSE);
+        bool Enabled = ((PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce));
+
+        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enabled);
+        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enabled);
+        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(Enabled);
     }
 
     // Set the selected player.
@@ -1074,7 +1081,7 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 
 void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 {
-    int PlayerType = 0;
+    int PlayerType = -1;
 
     int SelectedIndex = (int)::SendMessage(w, CB_GETCURSEL, 0, 0);
 
@@ -1092,28 +1099,36 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     GetDlgItem(IDC_SAMPLERATE).EnableWindow(PlayerType || !_IsRunning);
 
-    GetDlgItem(IDC_RESAMPLING_TEXT).EnableWindow(PlayerType == 2 || PlayerType == 4);
-    GetDlgItem(IDC_RESAMPLING_MODE).EnableWindow(PlayerType == 2 || PlayerType == 4);
+    {
+        bool Enable = (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI);
 
-    GetDlgItem(IDC_CACHED_TEXT).EnableWindow(PlayerType == 2 || PlayerType == 4);
-    GetDlgItem(IDC_CACHED).EnableWindow(PlayerType == 2 || PlayerType == 4);
+        const int ControlId[] =
+        {
+            IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
+            IDC_CACHED_TEXT, IDC_CACHED
+        };
 
-    GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(PlayerType == 6);
-    GetDlgItem(IDC_ADL_BANK).EnableWindow(PlayerType == 6);
-    GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(PlayerType == 6 || PlayerType == 9);
-    GetDlgItem(IDC_ADL_CHIPS).EnableWindow(PlayerType == 6 || PlayerType == 9);
-    GetDlgItem(IDC_ADL_PANNING).EnableWindow(PlayerType == 6 || PlayerType == 9);
+        for (size_t i = 0; i < _countof(ControlId); ++i)
+            GetDlgItem(ControlId[i]).EnableWindow(Enable);
+    }
 
-    GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlayerType == 9);
-    GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlayerType == 9);
-    GetDlgItem(IDC_NUKE_PANNING).EnableWindow(PlayerType == 9);
+    GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(PlayerType == PlayerTypeADL);
+    GetDlgItem(IDC_ADL_BANK).EnableWindow(PlayerType == PlayerTypeADL);
+
+    GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
+    GetDlgItem(IDC_ADL_CHIPS).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
+    GetDlgItem(IDC_ADL_PANNING).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
+
+    GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlayerType == PlayerTypeNuke);
+    GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlayerType == PlayerTypeNuke);
+    GetDlgItem(IDC_NUKE_PANNING).EnableWindow(PlayerType == PlayerTypeNuke);
 
     {
-        bool enable = (PlayerType == 1) || (PlayerType == 2) || (PlayerType == 4) || (PlayerType == 10);
+        bool Enable = (PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce);
 
-        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(enable);
-        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(enable);
-        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(enable);
+        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enable);
+        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enable);
+        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(Enable);
     }
 
     if (PlayerType == 3)
@@ -1167,9 +1182,18 @@ void PreferencesRootPage::OnTimer(UINT_PTR eventId)
 
     if (_CacheStatusText != _CacheStatusTextCurrent)
     {
+        // Weird code to work around foobar2000 rendering bug in dark mode: Get the state of the control, enable it, set the text and restore the state.
+        auto Control = GetDlgItem(IDC_CACHED);
+
+        BOOL State = Control.IsWindowEnabled();
+
+        Control.EnableWindow(TRUE);
+
         _CacheStatusTextCurrent = _CacheStatusText;
 
-        ::uSetWindowText(GetDlgItem(IDC_CACHED), _CacheStatusText);
+        ::uSetWindowText(Control, _CacheStatusText);
+
+        Control.EnableWindow(State);
     }
 }
 
@@ -1332,6 +1356,7 @@ void PreferencesRootPage::OnChanged()
 {
     _Callback->on_state_changed();
 }
+
 /// <summary>
 /// Updates the appearance of the dialog according to the values of the settings.
 /// </summary>

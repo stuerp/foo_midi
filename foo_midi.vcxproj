@@ -108,7 +108,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;EXPERIMENT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <AdditionalOptions>/d2notypeopt %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <ResourceCompile>

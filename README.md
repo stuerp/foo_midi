@@ -104,6 +104,8 @@ v2.8.2.0, 2023-xx-xx, *""*
 
 * Bug Fix: MIDI files with malformed tracks caused a crash.
 * Bug Fix: MIDI files with malformed SysEx events caused a crash.
+* Bug Fix: Work-around for weird rendering problem in Dark mode.
+* Improved: Tweaked the size of some of the labels of the Preferences dialog.
 
 v2.8.1.0, 2023-05-01, *"A New Beginning...? Redux"*
 

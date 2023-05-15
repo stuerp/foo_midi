@@ -50,7 +50,7 @@ font 8, "Segoe UI", 400, 0, 1
         rtext       "Resampling:",  IDC_RESAMPLING_TEXT,    X_A53, Y_A53 + 2, W_A53, H_A53
         combobox                    IDC_RESAMPLING_MODE,    X_A54, Y_A54,     W_A54, H_A54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext           "Cached:",  IDC_CACHED_TEXT,        X_A55, Y_A55 + 2, W_A55, H_A55
-        ltext                  "",  IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56
+        ltext                  "",  IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56, WS_VISIBLE
 
     groupbox "Munt", IDC_STATIC, X_A60, Y_A60, W_A60, H_A60
         rtext       "GM Set:",  IDC_MUNT_GM_TEXT,   X_A63, Y_A63 + 2, W_A63, H_A63

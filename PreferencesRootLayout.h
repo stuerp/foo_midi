@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRootLayout.h (2023.01.07) **/
+/** $VER: PreferencesRootLayout.h (2023.05.14) **/
 
 #pragma once
 
@@ -111,7 +111,7 @@
     // Label
     #define X_A81    X_A80 + 5
     #define Y_A81    Y_A80 + 11
-    #define W_A81    22
+    #define W_A81    24
     #define H_A81    8
 
     // Combobox
@@ -165,7 +165,7 @@
     // Label
     #define X_A53    X_A50 + 5
     #define Y_A53    Y_A50 + 11
-    #define W_A53    40
+    #define W_A53    42
     #define H_A53    8
 
     // Combobox
@@ -177,7 +177,7 @@
     // Label
     #define X_A55    X_A53
     #define Y_A55    Y_A54 + H_A54 + 4
-    #define W_A55    40
+    #define W_A55    W_A53
     #define H_A55    8
 
     // EditBox
@@ -219,7 +219,7 @@
     // Label
     #define X_A71    X_A70 + 5
     #define Y_A71    Y_A70 + 11
-    #define W_A71    22
+    #define W_A71    24
     #define H_A71    8
 
     // Combobox
@@ -245,7 +245,7 @@
 
     #define X_A91    X_A90 + 5
     #define Y_A91    Y_A90 + 11
-    #define W_A91    20
+    #define W_A91    22
     #define H_A91    8
 
     #define X_A92    X_A91 + W_A91 + 3
@@ -255,7 +255,7 @@
 
     #define X_A93    X_A91
     #define Y_A93    Y_A92 + H_A92 + 4
-    #define W_A93    20
+    #define W_A93    W_A91
     #define H_A93    8
 
     #define X_A94    X_A93 + W_A93 + 3

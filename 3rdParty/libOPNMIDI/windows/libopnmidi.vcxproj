@@ -188,6 +188,7 @@
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -206,6 +207,7 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -224,6 +226,7 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -242,6 +245,7 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>

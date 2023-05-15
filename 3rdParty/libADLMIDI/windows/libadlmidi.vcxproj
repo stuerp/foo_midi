@@ -88,6 +88,7 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -108,6 +109,7 @@
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -126,6 +128,7 @@
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -146,6 +149,7 @@
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
