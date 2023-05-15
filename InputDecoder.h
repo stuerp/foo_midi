@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.01.03) **/
+/** $VER: InputDecoder.h (2023.05.15) **/
 
 #pragma once
 
@@ -156,6 +156,25 @@ public:
     void open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler);
     #pragma endregion
 
+    #pragma region("input_decoder")
+    void decode_initialize(unsigned subsongIndex, unsigned flags, abort_callback & abortHandler);
+
+    bool decode_run(audio_chunk & audioChunk, abort_callback & abortHandler);
+
+    void decode_seek(double p_seconds, abort_callback &);
+
+    bool decode_can_seek()
+    {
+        return true;
+    }
+
+    bool decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta);
+
+    bool decode_get_dynamic_info_track(file_info &, double &) noexcept { return false; }
+
+    void decode_on_idle(abort_callback &) noexcept { }
+    #pragma endregion
+
     #pragma region("input_info_reader")
     unsigned get_subsong_count()
     {
@@ -180,25 +199,6 @@ public:
     {
         return _FileStats;
     }
-    #pragma endregion
-
-    #pragma region("input_decoder")
-    void decode_initialize(unsigned subsongIndex, unsigned flags, abort_callback & abortHandler);
-
-    bool decode_run(audio_chunk & audioChunk, abort_callback & abortHandler);
-
-    void decode_seek(double p_seconds, abort_callback &);
-
-    bool decode_can_seek()
-    {
-        return true;
-    }
-
-    bool decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta);
-
-    bool decode_get_dynamic_info_track(file_info &, double &) noexcept { return false; }
-
-    void decode_on_idle(abort_callback &) noexcept { }
     #pragma endregion
 
     #pragma region("input_info_writer")

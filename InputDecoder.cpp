@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.01.04) **/
+/** $VER: InputDecoder.cpp (2023.05.15) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -16,6 +16,7 @@ volatile unsigned int _CurrentSampleRate;
 
 const GUID GUIDTagMIDIHash = { 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0x61, 0xc3, 0x26, 0x87, 0xd0 } };
 
+#pragma region("input_impl")
 /// <summary>
 /// Opens the specified file and parses it.
 /// </summary>
@@ -106,150 +107,13 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     _LoopRange.Clear();
     _LoopInMs.Clear();
 }
+#pragma endregion
 
+#pragma region("input_decoder")
 /// <summary>
-/// Retrieves information about specified subsong.
-/// </summary>
-void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_callback & abortHandler)
-{
-    if (_IsSysExFile)
-        return;
-
-    // General tags
-    fileInfo.info_set_int(TagChannels, 2);
-    fileInfo.info_set(TagEncoding, "Synthesized");
-
-    // Specific tags
-    midi_meta_data MetaData;
-
-    _Container.get_meta_data(subsongIndex, MetaData);
-
-    midi_meta_data_item Item;
-
-    {
-        {
-            bool HasTitle = MetaData.get_item("title", Item);
-
-            for (t_size i = 0; i < MetaData.get_count(); ++i)
-            {
-                const midi_meta_data_item& mdi = MetaData[i];
-
-            #ifdef _DEBUG
-                pfc::string8 Text; Text << mdi.m_name.c_str() << ":" << mdi.m_value.c_str(); console::print(Text);
-            #endif
-
-                if (pfc::stricmp_ascii(mdi.m_name.c_str(), "type") == 0)
-                    continue;
-
-                std::string Name = mdi.m_name;
-
-                if (!HasTitle && (pfc::stricmp_ascii(Name.c_str(), "display_name") == 0))
-                    Name = "title";
-
-                AddTag(fileInfo, Name.c_str(), mdi.m_value.c_str(), 0);
-            }
-        }
-    }
-
-    fileInfo.info_set_int(TagMIDIFormat,       _Container.get_format());
-    fileInfo.info_set_int(TagMIDITrackCount,  (_Container.get_format() == 2) ? 1 : _Container.get_track_count());
-    fileInfo.info_set_int(TagMIDIChannelCount, _Container.get_channel_count(subsongIndex));
-    fileInfo.info_set_int(TagMIDITicks,        _Container.get_timestamp_end(subsongIndex));
-
-    if (MetaData.get_item("type", Item))
-        fileInfo.info_set(TagMIDIType, Item.m_value.c_str());
-
-    {
-        unsigned long LoopBegin = _Container.get_timestamp_loop_start(subsongIndex);
-        unsigned long LoopEnd = _Container.get_timestamp_loop_end(subsongIndex);
-        unsigned long LoopBeginInMS = _Container.get_timestamp_loop_start(subsongIndex, true);
-        unsigned long LoopEndInMS = _Container.get_timestamp_loop_end(subsongIndex, true);
-
-        if (LoopBegin != ~0) fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
-        if (LoopEnd != ~0) fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
-        if (LoopBeginInMS != ~0) fileInfo.info_set_int(TagMIDILoopStartInMs, LoopBeginInMS);
-        if (LoopEndInMS != ~0) fileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
-    }
-
-    {
-        unsigned long LengthInMs = _Container.get_timestamp_end(subsongIndex, true);
-
-        double LengthInSeconds = double(LengthInMs) * 0.001;
-
-        if (_LoopTypeOther == 1)
-            LengthInSeconds += 1.;
-
-        if ((_LoopTypeOther > 2) || !_LoopRange.IsEmpty())
-        {
-            if (!_LoopInMs.HasBegin())
-                _LoopInMs.SetBegin(0);
-
-            if (!_LoopInMs.HasEnd())
-                _LoopInMs.SetEnd(LengthInMs);
-
-            LengthInSeconds = (double) (_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * 0.001;
-        }
-
-        fileInfo.set_length(LengthInSeconds);
-    }
-
-    {
-        pfc::string8 FileHashString;
-
-        for (size_t i = 0; i < 16; ++i)
-            FileHashString += pfc::format_uint((t_uint8)_FileHash.m_data[i], 2, 16);
-
-        fileInfo.info_set(TagMIDIHash, FileHashString);
-    }
-
-    {
-        service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<FileHasher>;
-
-        _Hash = IndexClient->transform(fileInfo, playable_location_impl(_FilePath, subsongIndex));
-
-        pfc::array_t<t_uint8> Tags;
-
-        static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTagMIDIHash, _Hash, Tags);
-
-        if (Tags.get_count())
-        {
-            file::ptr File;
-
-            filesystem::g_open_tempmem(File, abortHandler);
-
-            File->write_object(Tags.get_ptr(), Tags.get_count(), abortHandler);
-
-            fileInfo.meta_remove_all();
-
-            tag_processor::read_trailing(File, fileInfo, abortHandler);
-
-            fileInfo.info_set("tagtype", "apev2 db");
-        }
-    }
-
-    {
-        const char * MIDIPreset = fileInfo.meta_get(TagMIDIPreset, 0);
-
-        if (MIDIPreset)
-        {
-            fileInfo.info_set(TagMIDIPreset, MIDIPreset);
-            fileInfo.meta_remove_field(TagMIDIPreset);
-        }
-    }
-
-    {
-        const char * MIDISysExDumps = fileInfo.meta_get(TagMIDISysExDumps, 0);
-
-        if (MIDISysExDumps)
-        {
-            fileInfo.info_set(TagMIDISysExDumps, MIDISysExDumps);
-            fileInfo.meta_remove_field(TagMIDISysExDumps);
-        }
-    }
-}
-
-/// <summary>
-/// Initializes the decoder before playing a song.
+/// Initializes the decoder before playing the specified subsong.
+/// Resets playback position to the beginning of specified subsong. This must be called first, before any other input_decoder methods (other than those inherited from input_info_reader).
+/// It is legal to set initialize() more than once, with same or different subsong, to play either the same subsong again or another subsong from same file without full reopen.
 /// </summary>
 void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abort_callback & abortHandler)
 {
@@ -263,22 +127,24 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 
     MIDIPreset Preset;
 
+    midi_meta_data MetaData;
+
+    _Container.get_meta_data(subsongIndex, MetaData);
+
+    midi_meta_data_item Item;
+
+    bool IsMT32 = (MetaData.get_item("type", Item) && (Item.m_value == "MT-32"));
+
     {
         file_info_impl FileInfo;
-
-        midi_meta_data MetaData;
-
-        _Container.get_meta_data(subsongIndex, MetaData);
-
-        midi_meta_data_item item;
 
         FileInfo.info_set_int(TagMIDIFormat,       _Container.get_format());
         FileInfo.info_set_int(TagMIDITrackCount,   _Container.get_format() == 2 ? 1 : _Container.get_track_count());
         FileInfo.info_set_int(TagMIDIChannelCount, _Container.get_channel_count(subsongIndex));
         FileInfo.info_set_int(TagMIDITicks,        _Container.get_timestamp_end(subsongIndex));
 
-        if (MetaData.get_item("type", item))
-            FileInfo.info_set(TagMIDIType, item.m_value.c_str());
+        if (MetaData.get_item("type", Item))
+            FileInfo.info_set(TagMIDIType, Item.m_value.c_str());
 
         {
             unsigned long LoopBegin = _Container.get_timestamp_loop_start(subsongIndex);
@@ -350,17 +216,9 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         _IsFirstChunk = true;
     }
 
-    midi_meta_data MetaData;
-
     {
-        _Container.get_meta_data(subsongIndex, MetaData);
-
-        {
-            midi_meta_data_item Item;
-
-            if (MetaData.get_item("type", Item) && (pfc::stricmp_ascii(Item.m_value.c_str(), "MT-32") == 0))
-                _PlayerType= PlayerTypeSuperMunt;
-        }
+        if (IsMT32)
+            _PlayerType= PlayerTypeSuperMunt;
     }
 
     pfc::string8 SoundFontFilePath;
@@ -718,14 +576,6 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
         {
             delete _Player;
 
-            bool IsMT32 = false;
-
-            {
-                midi_meta_data_item Item;
-
-                IsMT32 = (MetaData.get_item("type", Item) && (Item.m_value == "MT-32"));
-            }
-
             auto * Player = new MT32Player(!IsMT32, Preset._MuntGMSet);
 
             pfc::string8 BasePath = CfgMuntDirectoryPath;
@@ -890,7 +740,8 @@ void InputDecoder::decode_initialize(unsigned subsongIndex, unsigned flags, abor
 }
 
 /// <summary>
-/// 
+/// Reads/decodes one chunk of audio data.
+/// Use false return value to signal end of file (no more data to return). Before calling decode_run(), decoding must be initialized by a decode_initialize() call.
 /// </summary>
 bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHandler)
 {
@@ -1056,7 +907,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 }
 
 /// <summary>
-/// 
+/// Seeks to the specified time offset. Before seeking or other decoding calls, decoding must be initialized with decode_initialize() call.
 /// </summary>
 void InputDecoder::decode_seek(double timeInSeconds, abort_callback&)
 {
@@ -1096,7 +947,7 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback&)
 }
 
 /// <summary>
-/// 
+/// Signals dynamic VBR bitrate, etc. Called after each decode_run() (or not called at all if caller doesn't care about dynamic info).
 /// </summary>
 bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timestampDelta)
 {
@@ -1142,6 +993,150 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
     return Success;
 }
+#pragma endregion
+
+#pragma region("input_info_reader")
+/// <summary>
+/// Retrieves information about specified subsong.
+/// </summary>
+void InputDecoder::get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_callback & abortHandler)
+{
+    if (_IsSysExFile)
+        return;
+
+    // General tags
+    fileInfo.info_set_int(TagChannels, 2);
+    fileInfo.info_set(TagEncoding, "Synthesized");
+
+    // Specific tags
+    midi_meta_data MetaData;
+
+    _Container.get_meta_data(subsongIndex, MetaData);
+
+    midi_meta_data_item Item;
+
+    {
+        {
+            bool HasTitle = MetaData.get_item("title", Item);
+
+            for (t_size i = 0; i < MetaData.get_count(); ++i)
+            {
+                const midi_meta_data_item& mdi = MetaData[i];
+
+            #ifdef _DEBUG
+                pfc::string8 Text; Text << mdi.m_name.c_str() << ":" << mdi.m_value.c_str(); console::print(Text);
+            #endif
+
+                if (pfc::stricmp_ascii(mdi.m_name.c_str(), "type") == 0)
+                    continue;
+
+                std::string Name = mdi.m_name;
+
+                if (!HasTitle && (pfc::stricmp_ascii(Name.c_str(), "display_name") == 0))
+                    Name = "title";
+
+                AddTag(fileInfo, Name.c_str(), mdi.m_value.c_str(), 0);
+            }
+        }
+    }
+
+    fileInfo.info_set_int(TagMIDIFormat,       _Container.get_format());
+    fileInfo.info_set_int(TagMIDITrackCount,  (_Container.get_format() == 2) ? 1 : _Container.get_track_count());
+    fileInfo.info_set_int(TagMIDIChannelCount, _Container.get_channel_count(subsongIndex));
+    fileInfo.info_set_int(TagMIDITicks,        _Container.get_timestamp_end(subsongIndex));
+
+    if (MetaData.get_item("type", Item))
+        fileInfo.info_set(TagMIDIType, Item.m_value.c_str());
+
+    {
+        unsigned long LoopBegin = _Container.get_timestamp_loop_start(subsongIndex);
+        unsigned long LoopEnd = _Container.get_timestamp_loop_end(subsongIndex);
+        unsigned long LoopBeginInMS = _Container.get_timestamp_loop_start(subsongIndex, true);
+        unsigned long LoopEndInMS = _Container.get_timestamp_loop_end(subsongIndex, true);
+
+        if (LoopBegin != ~0) fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
+        if (LoopEnd != ~0) fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
+        if (LoopBeginInMS != ~0) fileInfo.info_set_int(TagMIDILoopStartInMs, LoopBeginInMS);
+        if (LoopEndInMS != ~0) fileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
+    }
+
+    {
+        unsigned long LengthInMs = _Container.get_timestamp_end(subsongIndex, true);
+
+        double LengthInSeconds = double(LengthInMs) * 0.001;
+
+        if (_LoopTypeOther == 1)
+            LengthInSeconds += 1.;
+
+        if ((_LoopTypeOther > 2) || !_LoopRange.IsEmpty())
+        {
+            if (!_LoopInMs.HasBegin())
+                _LoopInMs.SetBegin(0);
+
+            if (!_LoopInMs.HasEnd())
+                _LoopInMs.SetEnd(LengthInMs);
+
+            LengthInSeconds = (double) (_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * 0.001;
+        }
+
+        fileInfo.set_length(LengthInSeconds);
+    }
+
+    {
+        pfc::string8 FileHashString;
+
+        for (size_t i = 0; i < 16; ++i)
+            FileHashString += pfc::format_uint((t_uint8)_FileHash.m_data[i], 2, 16);
+
+        fileInfo.info_set(TagMIDIHash, FileHashString);
+    }
+
+    {
+        service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<FileHasher>;
+
+        _Hash = IndexClient->transform(fileInfo, playable_location_impl(_FilePath, subsongIndex));
+
+        pfc::array_t<t_uint8> Tags;
+
+        static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTagMIDIHash, _Hash, Tags);
+
+        if (Tags.get_count())
+        {
+            file::ptr File;
+
+            filesystem::g_open_tempmem(File, abortHandler);
+
+            File->write_object(Tags.get_ptr(), Tags.get_count(), abortHandler);
+
+            fileInfo.meta_remove_all();
+
+            tag_processor::read_trailing(File, fileInfo, abortHandler);
+
+            fileInfo.info_set("tagtype", "apev2 db");
+        }
+    }
+
+    {
+        const char * MIDIPreset = fileInfo.meta_get(TagMIDIPreset, 0);
+
+        if (MIDIPreset)
+        {
+            fileInfo.info_set(TagMIDIPreset, MIDIPreset);
+            fileInfo.meta_remove_field(TagMIDIPreset);
+        }
+    }
+
+    {
+        const char * MIDISysExDumps = fileInfo.meta_get(TagMIDISysExDumps, 0);
+
+        if (MIDISysExDumps)
+        {
+            fileInfo.info_set(TagMIDISysExDumps, MIDISysExDumps);
+            fileInfo.meta_remove_field(TagMIDISysExDumps);
+        }
+    }
+}
+#pragma endregion
 
 #pragma region("input_info_writer")
 /// <summary>
@@ -1195,7 +1190,19 @@ void InputDecoder::retag_set_info(t_uint32, const file_info& fileInfo, abort_cal
 #pragma endregion
 
 /// <summary>
-/// Initialize the time parameters.
+/// Initializes the Index Manager.
+/// </summary>
+void InputDecoder::InitializeIndexManager()
+{
+    try
+    {       
+        static_api_ptr_t<metadb_index_manager>()->add(new service_impl_t<FileHasher>, GUIDTagMIDIHash, system_time_periods::week * 4);
+    }
+    catch (...) { }
+}
+
+/// <summary>
+/// Initializes the time parameters.
 /// </summary>
 double InputDecoder::InitializeTime(unsigned subsongIndex)
 {
@@ -1343,15 +1350,6 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
         fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
     else
         fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));
-}
-
-void InputDecoder::InitializeIndexManager()
-{
-    try
-    {       
-        static_api_ptr_t<metadb_index_manager>()->add(new service_impl_t<FileHasher>, GUIDTagMIDIHash, system_time_periods::week * 4);
-    }
-    catch (...) { }
 }
 
 /*
