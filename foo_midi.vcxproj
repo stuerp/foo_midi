@@ -333,7 +333,7 @@
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="ADLPlayer.h" />
     <ClInclude Include="BMPlayer.h" />
-    <ClInclude Include="cfg_map.h" />
+    <ClInclude Include="ConfigurationMap.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="ContextMenu.h" />
     <ClInclude Include="EdMPlayer.h" />

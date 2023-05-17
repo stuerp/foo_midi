@@ -196,7 +196,7 @@ bool midi_processor::process_xmi( std::vector<uint8_t> const& p_file, midi_conta
 
     unsigned track_count = cat_chunk.get_chunk_count( "FORM" );
 
-    p_out.initialize( track_count > 1 ? 2 : 0, 60 );
+    p_out.Initialize( track_count > 1 ? 2 : 0, 60 );
 
     for ( unsigned i = 0; i < track_count; ++i )
     {
@@ -264,7 +264,7 @@ bool midi_processor::process_xmi( std::vector<uint8_t> const& p_file, midi_conta
                     buffer[ 4 ] = tempo;
                     if ( current_timestamp == 0 ) initial_tempo = true;
                 }
-                track.add_event( midi_event( current_timestamp, midi_event::extended, 0, &buffer[0], meta_count + 2 ) );
+                track.AddEvent( midi_event( current_timestamp, midi_event::extended, 0, &buffer[0], meta_count + 2 ) );
                 if ( buffer[ 1 ] == 0x2F ) break;
             }
             else if ( buffer[ 0 ] == 0xF0 )
@@ -275,7 +275,7 @@ bool midi_processor::process_xmi( std::vector<uint8_t> const& p_file, midi_conta
                 buffer.resize( system_exclusive_count + 1 );
                 std::copy( it, it + system_exclusive_count, buffer.begin() + 1 );
                 it += system_exclusive_count;
-                track.add_event( midi_event( current_timestamp, midi_event::extended, 0, &buffer[0], system_exclusive_count + 1 ) );
+                track.AddEvent( midi_event( current_timestamp, midi_event::extended, 0, &buffer[0], system_exclusive_count + 1 ) );
             }
             else if ( buffer[ 0 ] >= 0x80 && buffer[ 0 ] <= 0xEF )
             {
@@ -290,7 +290,7 @@ bool midi_processor::process_xmi( std::vector<uint8_t> const& p_file, midi_conta
                     buffer[ 2 ] = *it++;
                     bytes_read = 2;
                 }
-                track.add_event( midi_event( current_timestamp, type, channel, &buffer[1], bytes_read ) );
+                track.AddEvent( midi_event( current_timestamp, type, channel, &buffer[1], bytes_read ) );
                 if ( type == midi_event::note_on )
                 {
                     buffer[ 2 ] = 0x00;
@@ -298,14 +298,14 @@ bool midi_processor::process_xmi( std::vector<uint8_t> const& p_file, midi_conta
                     if ( note_length < 0 ) return false; /*throw exception_io_data( "Invalid XMI note message" );*/
                     unsigned note_end_timestamp = current_timestamp + note_length;
                     if ( note_end_timestamp > last_event_timestamp ) last_event_timestamp = note_end_timestamp;
-                    track.add_event( midi_event( note_end_timestamp, type, channel, &buffer[1], bytes_read ) );
+                    track.AddEvent( midi_event( note_end_timestamp, type, channel, &buffer[1], bytes_read ) );
                 }
             }
             else return false; /*throw exception_io_data( "Unexpected XMI status code" );*/
         }
 
         if ( !initial_tempo )
-            track.add_event( midi_event( 0, midi_event::extended, 0, xmi_default_tempo, _countof( xmi_default_tempo ) ) );
+            track.AddEvent( midi_event( 0, midi_event::extended, 0, xmi_default_tempo, _countof( xmi_default_tempo ) ) );
 
         p_out.add_track( track );
     }

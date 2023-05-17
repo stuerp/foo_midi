@@ -20,12 +20,12 @@ bool midi_processor::process_mus( std::vector<uint8_t> const& p_file, midi_conta
     uint16_t length = p_file[ 4 ] | ( p_file[ 5 ] << 8 );
     uint16_t offset = p_file[ 6 ] | ( p_file[ 7 ] << 8 );
 
-    p_out.initialize( 0, 0x59 );
+    p_out.Initialize( 0, 0x59 );
 
     {
         midi_track track;
-        track.add_event( midi_event( 0, midi_event::extended, 0, mus_default_tempo, _countof( mus_default_tempo ) ) );
-        track.add_event( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
+        track.AddEvent( midi_event( 0, midi_event::extended, 0, mus_default_tempo, _countof( mus_default_tempo ) ) );
+        track.AddEvent( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
         p_out.add_track( track );
     }
 
@@ -133,7 +133,7 @@ bool midi_processor::process_mus( std::vector<uint8_t> const& p_file, midi_conta
             return false; /*throw exception_io_data( "Invalid MUS status code" );*/
         }
 
-        track.add_event( midi_event( current_timestamp, type, channel, buffer + 1, bytes_to_write ) );
+        track.AddEvent( midi_event( current_timestamp, type, channel, buffer + 1, bytes_to_write ) );
 
         if ( buffer[ 0 ] & 0x80 )
         {
@@ -143,7 +143,7 @@ bool midi_processor::process_mus( std::vector<uint8_t> const& p_file, midi_conta
         }
     }
 
-    track.add_event( midi_event( current_timestamp, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
+    track.AddEvent( midi_event( current_timestamp, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
 
     p_out.add_track( track );
 

@@ -1,5 +1,5 @@
 
-/** $VER: cfg_map (2022.12.31) **/
+/** $VER: ConfigurationMap (2023.05.18) **/
 
 #pragma once
 

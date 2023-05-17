@@ -50,7 +50,7 @@ bool midi_processor::process_mids( std::vector<uint8_t> const& p_file, midi_cont
     if ( it == end ) return false;
     if ( fmt_size & 1 ) ++it;
 
-    p_out.initialize( 0, time_format );
+    p_out.Initialize( 0, time_format );
 
     if ( end - it < 4 ) return false;
     if ( it[ 0 ] != 'd' || it[ 1 ] != 'a' || it[ 2 ] != 't' || it[ 3 ] != 'a' ) return false; /*throw exception_io_data( "MIDS missing RIFF data chunk" );*/
@@ -59,7 +59,7 @@ bool midi_processor::process_mids( std::vector<uint8_t> const& p_file, midi_cont
 
     {
         midi_track track;
-        track.add_event( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
+        track.AddEvent( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
         p_out.add_track( track );
     }
 
@@ -122,13 +122,13 @@ bool midi_processor::process_mids( std::vector<uint8_t> const& p_file, midi_cont
                         buffer[ 1 ] = (uint8_t)( event >> 16 );
                         bytes_to_write = 2;
                     }
-                    track.add_event( midi_event( current_timestamp, (midi_event::event_type)( event_code - 8 ), event & 0x0F, buffer, bytes_to_write ) );
+                    track.AddEvent( midi_event( current_timestamp, (midi_event::event_type)( event_code - 8 ), event & 0x0F, buffer, bytes_to_write ) );
                 }
             }
         }
     }
 
-    track.add_event( midi_event( current_timestamp, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
+    track.AddEvent( midi_event( current_timestamp, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
 
     p_out.add_track( track );
 

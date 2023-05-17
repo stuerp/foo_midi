@@ -178,12 +178,12 @@ public:
     #pragma region("input_info_reader")
     unsigned get_subsong_count()
     {
-        return _IsSysExFile ? 1 : _Container.get_subsong_count();
+        return _IsSysExFile ? 1 : _Container.GetSubSongCount();
     }
 
     t_uint32 get_subsong(unsigned subSongIndex)
     {
-        return _IsSysExFile ? 0 : _Container.get_subsong(subSongIndex);
+        return _IsSysExFile ? 0 : _Container.GetSubSong(subSongIndex);
     }
 
     void get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_callback & abortHandler);
@@ -248,6 +248,7 @@ public:
 private:
     double InitializeTime(unsigned subsongIndex);
 
+    void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
 
     static bool GetSoundFontFilePath(const pfc::string8 filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept;
@@ -283,6 +284,8 @@ private:
 
     metadb_index_hash _Hash;
     hasher_md5_result _FileHash;
+
+    bool _IsMT32;
 
     bool _UseXMILoops;
     bool _UseFF7Loops;

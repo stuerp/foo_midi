@@ -35,12 +35,12 @@ bool midi_processor::process_standard_midi_count(std::vector<uint8_t> const & da
 
     std::vector<uint8_t>::const_iterator it = data.begin() + 8;
 
-    uint16_t Format = (it[0] << 8) | it[1];
+    uint16_t Format = (uint16_t)((it[0] << 8) | it[1]);
 
     if (Format > 2)
         return false;
 
-    trackCount = (it[2] << 8) | it[3];
+    trackCount = (size_t)((it[2] << 8) | it[3]);
 
     return true;
 }
@@ -79,7 +79,7 @@ bool midi_processor::process_standard_midi_track(std::vector<uint8_t>::const_ite
 
         unsigned BytesRead = 0;
 
-        unsigned char EventCode = *data++;
+        uint8_t EventCode = *data++;
 
         if (EventCode < 0x80)
         {
@@ -97,7 +97,7 @@ bool midi_processor::process_standard_midi_track(std::vector<uint8_t>::const_ite
         {
             if (LastSysExSize)
             {
-                Track.add_event(midi_event(LastSysExTimestamp, midi_event::extended, 0, &Buffer[0], LastSysExSize));
+                Track.AddEvent(midi_event(LastSysExTimestamp, midi_event::extended, 0, &Buffer[0], LastSysExSize));
                 LastSysExSize = 0;
             }
 
@@ -130,14 +130,14 @@ bool midi_processor::process_standard_midi_track(std::vector<uint8_t>::const_ite
                     Buffer[BytesRead++] = *data++;
             }
 
-            Track.add_event(midi_event(Timestamp, (midi_event::event_type) ((EventCode >> 4) - 8), EventCode & 0x0F, &Buffer[0], BytesRead));
+            Track.AddEvent(midi_event(Timestamp, (midi_event::event_type) ((EventCode >> 4) - 8), EventCode & 0x0F, &Buffer[0], BytesRead));
         }
         else
         if (EventCode == 0xF0)
         {
             if (LastSysExSize)
             {
-                Track.add_event(midi_event(LastSysExTimestamp, midi_event::extended, 0, &Buffer[0], LastSysExSize));
+                Track.AddEvent(midi_event(LastSysExTimestamp, midi_event::extended, 0, &Buffer[0], LastSysExSize));
                 LastSysExSize = 0;
             }
 
@@ -149,13 +149,13 @@ bool midi_processor::process_standard_midi_track(std::vector<uint8_t>::const_ite
             if (tail - data < data_count)
                 return false;
 
-            Buffer.resize(data_count + 1);
+            Buffer.resize((size_t)(data_count + 1));
             Buffer[0] = 0xF0;
 
             std::copy(data, data + data_count, Buffer.begin() + 1);
             data += data_count;
 
-            LastSysExSize = data_count + 1;
+            LastSysExSize = (unsigned int)(data_count + 1);
             LastSysExTimestamp = Timestamp;
         }
         else
@@ -184,7 +184,7 @@ bool midi_processor::process_standard_midi_track(std::vector<uint8_t>::const_ite
         {
             if (LastSysExSize)
             {
-                Track.add_event(midi_event(LastSysExTimestamp, midi_event::extended, 0, &Buffer[0], LastSysExSize));
+                Track.AddEvent(midi_event(LastSysExTimestamp, midi_event::extended, 0, &Buffer[0], LastSysExSize));
                 LastSysExSize = 0;
             }
 
@@ -201,7 +201,7 @@ bool midi_processor::process_standard_midi_track(std::vector<uint8_t>::const_ite
             if (tail - data < data_count)
                 return false;
 
-            Buffer.resize(data_count + 2);
+            Buffer.resize((size_t)(data_count + 2));
 
             Buffer[0] = 0xFF;
             Buffer[1] = meta_type;
@@ -209,7 +209,7 @@ bool midi_processor::process_standard_midi_track(std::vector<uint8_t>::const_ite
             std::copy(data, data + data_count, Buffer.begin() + 2);
             data += data_count;
 
-            Track.add_event(midi_event(Timestamp, midi_event::extended, 0, &Buffer[0], data_count + 2));
+            Track.AddEvent(midi_event(Timestamp, midi_event::extended, 0, &Buffer[0], (size_t)(data_count + 2)));
 
             if (meta_type == 0x2F)
             {
@@ -221,7 +221,7 @@ bool midi_processor::process_standard_midi_track(std::vector<uint8_t>::const_ite
         if (EventCode >= 0xF8 && EventCode <= 0xFE) //Sequencer specific events, single byte.
         {
             Buffer[0] = EventCode;
-            Track.add_event(midi_event(Timestamp, midi_event::extended, 0, &Buffer[0], 1));
+            Track.AddEvent(midi_event(Timestamp, midi_event::extended, 0, &Buffer[0], 1));
         }
         else
             return false; // Unhandled MIDI status code.
@@ -232,7 +232,7 @@ bool midi_processor::process_standard_midi_track(std::vector<uint8_t>::const_ite
         Buffer[0] = 0xFF;
         Buffer[1] = 0x2F;
 
-        Track.add_event(midi_event(Timestamp, midi_event::extended, 0, &Buffer[0], 2));
+        Track.AddEvent(midi_event(Timestamp, midi_event::extended, 0, &Buffer[0], 2));
     }
 
     container.add_track(Track);
@@ -254,18 +254,18 @@ bool midi_processor::process_standard_midi(std::vector<uint8_t> const & data, mi
     std::vector<uint8_t>::const_iterator Data = data.begin() + 8;
     std::vector<uint8_t>::const_iterator Tail = data.end();
 
-    uint16_t Format = (Data[0] << 8) | Data[1];
+    uint16_t Format = (uint16_t)((Data[0] << 8) | Data[1]);
 
     if (Format > 2)
         return false; // Bad MIDI format
 
-    std::size_t TrackCount = (Data[2] << 8) | Data[3];
-    uint16_t Division = (Data[4] << 8) | Data[5];
+    size_t TrackCount = (size_t)((Data[2] << 8) | Data[3]);
+    uint16_t Division = (uint16_t)((Data[4] << 8) | Data[5]);
 
     if ((TrackCount == 0) || (Division == 0))
         return false;
 
-    container.initialize(Format, Division);
+    container.Initialize(Format, Division);
 
     Data += 6;
 
@@ -277,11 +277,11 @@ bool midi_processor::process_standard_midi(std::vector<uint8_t> const & data, mi
         if (Data[0] != 'M' || Data[1] != 'T' || Data[2] != 'r' || Data[3] != 'k')
             return false;
 
-        uint32_t TrackSize = (Data[4] << 24) | (Data[5] << 16) | (Data[6] << 8) | Data[7];
+        uint32_t TrackSize = (uint32_t)((Data[4] << 24) | (Data[5] << 16) | (Data[6] << 8) | Data[7]);
 
         Data += 8;
 
-        if ((unsigned long) (Tail - Data) < TrackSize)
+        if ((unsigned long)(Tail - Data) < TrackSize)
             return false;
 
         intptr_t TrackData = Data - data.begin();

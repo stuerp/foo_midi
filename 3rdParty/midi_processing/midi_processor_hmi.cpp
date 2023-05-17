@@ -32,12 +32,12 @@ bool midi_processor::process_hmi( std::vector<uint8_t> const& p_file, midi_conta
         it += 4;
     }
 
-    p_out.initialize( 1, 0xC0 );
+    p_out.Initialize( 1, 0xC0 );
 
     {
         midi_track track;
-        track.add_event( midi_event( 0, midi_event::extended, 0, hmp_default_tempo, _countof( hmp_default_tempo ) ) );
-        track.add_event( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
+        track.AddEvent( midi_event( 0, midi_event::extended, 0, hmp_default_tempo, _countof( hmp_default_tempo ) ) );
+        track.AddEvent( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
         p_out.add_track( track );
     }
 
@@ -87,7 +87,7 @@ bool midi_processor::process_hmi( std::vector<uint8_t> const& p_file, midi_conta
             {
                 buffer[ 0 ] = 0xFF;
                 buffer[ 1 ] = 0x01;
-                track.add_event( midi_event( 0, midi_event::extended, 0, &buffer[0], meta_size + 2 ) );
+                track.AddEvent( midi_event( 0, midi_event::extended, 0, &buffer[0], meta_size + 2 ) );
             }
         }
 
@@ -133,7 +133,7 @@ bool midi_processor::process_hmi( std::vector<uint8_t> const& p_file, midi_conta
                 {
                     current_timestamp = last_event_timestamp;
                 }
-                track.add_event( midi_event( current_timestamp, midi_event::extended, 0, &buffer[0], meta_count + 2 ) );
+                track.AddEvent( midi_event( current_timestamp, midi_event::extended, 0, &buffer[0], meta_count + 2 ) );
                 if ( buffer[ 1 ] == 0x2F ) break;
             }
             else if ( buffer[ 0 ] == 0xF0 )
@@ -145,7 +145,7 @@ bool midi_processor::process_hmi( std::vector<uint8_t> const& p_file, midi_conta
                 buffer.resize( system_exclusive_count + 1 );
                 std::copy( it, it + system_exclusive_count, buffer.begin() + 1 );
                 it += system_exclusive_count;
-                track.add_event( midi_event( current_timestamp, midi_event::extended, 0, &buffer[0], system_exclusive_count + 1 ) );
+                track.AddEvent( midi_event( current_timestamp, midi_event::extended, 0, &buffer[0], system_exclusive_count + 1 ) );
             }
             else if ( buffer[ 0 ] == 0xFE )
             {
@@ -207,7 +207,7 @@ bool midi_processor::process_hmi( std::vector<uint8_t> const& p_file, midi_conta
                     buffer[ 2 ] = *it++;
                     bytes_read = 2;
                 }
-                track.add_event( midi_event( current_timestamp, type, channel, &buffer[ 1 ], bytes_read ) );
+                track.AddEvent( midi_event( current_timestamp, type, channel, &buffer[ 1 ], bytes_read ) );
                 if ( type == midi_event::note_on )
                 {
                     buffer[ 2 ] = 0x00;
@@ -215,7 +215,7 @@ bool midi_processor::process_hmi( std::vector<uint8_t> const& p_file, midi_conta
                     if ( note_length < 0 ) return false; /*throw exception_io_data( "Invalid HMI note message" );*/
                     unsigned note_end_timestamp = current_timestamp + note_length;
                     if ( note_end_timestamp > last_event_timestamp ) last_event_timestamp = note_end_timestamp;
-                    track.add_event( midi_event( note_end_timestamp, midi_event::note_on, channel, &buffer[1], bytes_read ) );
+                    track.AddEvent( midi_event( note_end_timestamp, midi_event::note_on, channel, &buffer[1], bytes_read ) );
                 }
             }
             else return false; /*throw exception_io_data( "Unexpected HMI status code" );*/

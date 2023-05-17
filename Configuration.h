@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.01.08) **/
+/** $VER: Configuration.h (2023.05.18) **/
 
 #pragma once
 
@@ -11,7 +11,7 @@
 
 #include "MIDIPlayer.h"
 
-#include "cfg_map.h"
+#include "ConfigurationMap.h"
 
 extern const GUID PreferencesPageGUID;
 extern const GUID PreferencesPathsPageGUID;

@@ -31,7 +31,7 @@ bool MIDIPlayer::Load(const midi_container & midiContainer, unsigned subsongInde
 
     _CurrentPosition = 0;
     _CurrentTime = 0;
-    _EndTime = (size_t)midiContainer.get_timestamp_end(subsongIndex, true) + 1000;
+    _EndTime = (size_t)midiContainer.GetDuration(subsongIndex, true) + 1000;
 
     _LoopMode = (LoopMode)loopMode;
 

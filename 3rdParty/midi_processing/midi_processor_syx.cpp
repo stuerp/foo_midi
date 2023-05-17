@@ -12,7 +12,7 @@ bool midi_processor::process_syx( std::vector<uint8_t> const& p_file, midi_conta
     const size_t size = p_file.size();
     size_t ptr = 0;
 
-    p_out.initialize( 0, 1 );
+    p_out.Initialize( 0, 1 );
 
     midi_track track;
 
@@ -24,7 +24,7 @@ bool midi_processor::process_syx( std::vector<uint8_t> const& p_file, midi_conta
 
         while ( p_file[ptr + msg_length++] != 0xF7 );
 
-        track.add_event( midi_event( 0, midi_event::extended, 0, &p_file[ptr], msg_length ) );
+        track.AddEvent( midi_event( 0, midi_event::extended, 0, &p_file[ptr], msg_length ) );
 
         ptr += msg_length;
     }

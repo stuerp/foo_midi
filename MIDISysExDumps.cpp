@@ -81,7 +81,7 @@ void MIDISysExDumps::Merge(midi_container & container, abort_callback & abortHan
                 if (!midi_processor::process_syx_file(Data, Container))
                     break;
 
-                container.merge_tracks(Container);
+                container.MergeTracks(Container);
             }
         }
         catch (const std::exception & e)

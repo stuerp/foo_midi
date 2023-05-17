@@ -53,12 +53,12 @@ bool midi_processor::process_hmp( std::vector<uint8_t> const& p_file, midi_conta
             return false;
     }
 
-    p_out.initialize( 1, dtx );
+    p_out.Initialize( 1, dtx );
 
     {
         midi_track track;
-        track.add_event( midi_event( 0, midi_event::extended, 0, hmp_default_tempo, _countof( hmp_default_tempo ) ) );
-        track.add_event( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
+        track.AddEvent( midi_event( 0, midi_event::extended, 0, hmp_default_tempo, _countof( hmp_default_tempo ) ) );
+        track.AddEvent( midi_event( 0, midi_event::extended, 0, end_of_track, _countof( end_of_track ) ) );
         p_out.add_track( track );
     }
 
@@ -139,7 +139,7 @@ bool midi_processor::process_hmp( std::vector<uint8_t> const& p_file, midi_conta
                 _buffer.resize( meta_count + 2 );
                 std::copy( it, it + meta_count, _buffer.begin() + 2 );
                 it += meta_count;
-                track.add_event( midi_event( current_timestamp, midi_event::extended, 0, &_buffer[0], meta_count + 2 ) );
+                track.AddEvent( midi_event( current_timestamp, midi_event::extended, 0, &_buffer[0], meta_count + 2 ) );
                 if ( _buffer[ 1 ] == 0x2F ) break;
             }
             else if ( _buffer[ 0 ] >= 0x80 && _buffer[ 0 ] <= 0xEF )
@@ -154,7 +154,7 @@ bool midi_processor::process_hmp( std::vector<uint8_t> const& p_file, midi_conta
                 if ( (unsigned long)(track_end - it) < bytes_read ) return false;
                 std::copy( it, it + bytes_read, _buffer.begin() + 1 );
                 it += bytes_read;
-                track.add_event( midi_event( current_timestamp, (midi_event::event_type)( ( _buffer[ 0 ] >> 4 ) - 8 ), _buffer[ 0 ] & 0x0F, &_buffer[1], bytes_read ) );
+                track.AddEvent( midi_event( current_timestamp, (midi_event::event_type)( ( _buffer[ 0 ] >> 4 ) - 8 ), _buffer[ 0 ] & 0x0F, &_buffer[1], bytes_read ) );
             }
             else return false; /*throw exception_io_data( "Unexpected status code in HMP track" );*/
         }
