@@ -117,10 +117,10 @@ public:
         COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_FILTER_BANKS, BN_CLICKED, OnButtonClick)
 
-        COMMAND_HANDLER_EX(IDC_RPGMLOOPZ, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_XMILOOPZ, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_THLOOPZ, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_FF7LOOPZ, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_RPGMAKERLOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_XMILOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_TOUHOULOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_FF7LOOPS, BN_CLICKED, OnButtonClick)
         #pragma endregion
 
         #pragma region("SoundFont")
@@ -422,10 +422,10 @@ void PreferencesRootPage::apply()
         CfgFilterInstruments = (t_int32)SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
         CfgFilterBanks = (t_int32)SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
 
-        cfg_thloopz = (t_int32)SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK);
-        cfg_rpgmloopz = (t_int32)SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK);
-        cfg_xmiloopz = (t_int32)SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK);
-        cfg_ff7loopz = (t_int32)SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK);
+        CfgDetectTouhouLoops = (t_int32)SendDlgItemMessage(IDC_TOUHOULOOPS, BM_GETCHECK);
+        CfgDetectRPGMakerLoops = (t_int32)SendDlgItemMessage(IDC_RPGMAKERLOOPS, BM_GETCHECK);
+        CfgDetectXMILoops = (t_int32)SendDlgItemMessage(IDC_XMILOOPS, BM_GETCHECK);
+        CfgDetectFF7Loops = (t_int32)SendDlgItemMessage(IDC_FF7LOOPS, BM_GETCHECK);
 
     }
     #pragma endregion
@@ -580,10 +580,10 @@ void PreferencesRootPage::reset()
     SendDlgItemMessage(IDC_EMIDI_EX, BM_SETCHECK, DefaultEmuDeMIDIExclusion);
     SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, DefaultFilterInstruments);
     SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, DefaultFilterBanks);
-    SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, default_cfg_thloopz);
-    SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, default_cfg_rpgmloopz);
-    SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, default_cfg_xmiloopz);
-    SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, default_cfg_ff7loopz);
+    SendDlgItemMessage(IDC_TOUHOULOOPS, BM_SETCHECK, default_cfg_thloopz);
+    SendDlgItemMessage(IDC_RPGMAKERLOOPS, BM_SETCHECK, default_cfg_rpgmloopz);
+    SendDlgItemMessage(IDC_XMILOOPS, BM_SETCHECK, default_cfg_xmiloopz);
+    SendDlgItemMessage(IDC_FF7LOOPS, BM_SETCHECK, default_cfg_ff7loopz);
     #pragma endregion
 
     #pragma region("SoundFont")
@@ -894,10 +894,10 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM)CfgFilterInstruments);
     SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, (WPARAM)CfgFilterBanks);
 
-    SendDlgItemMessage(IDC_THLOOPZ, BM_SETCHECK, (WPARAM)cfg_thloopz);
-    SendDlgItemMessage(IDC_RPGMLOOPZ, BM_SETCHECK, (WPARAM)cfg_rpgmloopz);
-    SendDlgItemMessage(IDC_XMILOOPZ, BM_SETCHECK, (WPARAM)cfg_xmiloopz);
-    SendDlgItemMessage(IDC_FF7LOOPZ, BM_SETCHECK, (WPARAM)cfg_ff7loopz);
+    SendDlgItemMessage(IDC_TOUHOULOOPS, BM_SETCHECK, (WPARAM)CfgDetectTouhouLoops);
+    SendDlgItemMessage(IDC_RPGMAKERLOOPS, BM_SETCHECK, (WPARAM)CfgDetectRPGMakerLoops);
+    SendDlgItemMessage(IDC_XMILOOPS, BM_SETCHECK, (WPARAM)CfgDetectXMILoops);
+    SendDlgItemMessage(IDC_FF7LOOPS, BM_SETCHECK, (WPARAM)CfgDetectFF7Loops);
 
     #pragma region("ADL")
     {
@@ -1214,16 +1214,16 @@ bool PreferencesRootPage::HasChanged()
     if (SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL) != CfgLoopTypeOther)
         return true;
 
-    if (SendDlgItemMessage(IDC_THLOOPZ, BM_GETCHECK) != cfg_thloopz)
+    if (SendDlgItemMessage(IDC_TOUHOULOOPS, BM_GETCHECK) != CfgDetectTouhouLoops)
         return true;
 
-    if (SendDlgItemMessage(IDC_RPGMLOOPZ, BM_GETCHECK) != cfg_rpgmloopz)
+    if (SendDlgItemMessage(IDC_RPGMAKERLOOPS, BM_GETCHECK) != CfgDetectRPGMakerLoops)
         return true;
 
-    if (SendDlgItemMessage(IDC_XMILOOPZ, BM_GETCHECK) != cfg_xmiloopz)
+    if (SendDlgItemMessage(IDC_XMILOOPS, BM_GETCHECK) != CfgDetectXMILoops)
         return true;
 
-    if (SendDlgItemMessage(IDC_FF7LOOPZ, BM_GETCHECK) != cfg_ff7loopz)
+    if (SendDlgItemMessage(IDC_FF7LOOPS, BM_GETCHECK) != CfgDetectFF7Loops)
         return true;
     #pragma endregion
 

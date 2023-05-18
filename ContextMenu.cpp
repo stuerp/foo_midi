@@ -110,7 +110,7 @@ void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const
 
             midi_container Container;
 
-            if (midi_processor::process_file(Data, pfc::string_extension(Location.get_path()), Container))
+            if (midi_processor::Process(Data, pfc::string_extension(Location.get_path()), Container))
             {
                 Data.resize(0);
 

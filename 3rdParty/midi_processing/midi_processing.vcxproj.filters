@@ -3,14 +3,14 @@
   <ItemGroup>
     <ClCompile Include="midi_container.cpp" />
     <ClCompile Include="midi_processor_gmf.cpp" />
-    <ClCompile Include="midi_processor_helpers.cpp" />
+    <ClCompile Include="midi_processor.cpp" />
     <ClCompile Include="midi_processor_hmi.cpp" />
     <ClCompile Include="midi_processor_hmp.cpp" />
     <ClCompile Include="midi_processor_lds.cpp" />
     <ClCompile Include="midi_processor_mids.cpp" />
     <ClCompile Include="midi_processor_mus.cpp" />
-    <ClCompile Include="midi_processor_riff_midi.cpp" />
-    <ClCompile Include="midi_processor_standard_midi.cpp" />
+    <ClCompile Include="midi_processor_RIFF.cpp" />
+    <ClCompile Include="midi_processor_SMF.cpp" />
     <ClCompile Include="midi_processor_syx.cpp" />
     <ClCompile Include="midi_processor_xmi.cpp" />
   </ItemGroup>

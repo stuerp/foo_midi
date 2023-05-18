@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.cpp (2023.01.15) **/
+/** $VER: MIDIPlayer.cpp (2023.05.18) **/
 
 #include "MIDIPlayer.h"
 
@@ -16,7 +16,7 @@ MIDIPlayer::MIDIPlayer()
     _SampleRate = 1000;
     _CurrentTime = 0;
     _EndTime = 0;
-    _LoopStartTime = 0;
+    _LoopBeginTime = 0;
     _IsInitialized = false;
 }
 
@@ -24,7 +24,7 @@ bool MIDIPlayer::Load(const midi_container & midiContainer, unsigned subsongInde
 {
     assert(_Stream.size() == 0);
 
-    midiContainer.serialize_as_stream(subsongIndex, _Stream, _SysExMap, _LoopStart, _LoopEnd, cleanFlags);
+    midiContainer.serialize_as_stream(subsongIndex, _Stream, _SysExMap, _LoopBegin, _LoopEnd, cleanFlags);
 
     if (_Stream.size() == 0)
         return false;
@@ -37,15 +37,15 @@ bool MIDIPlayer::Load(const midi_container & midiContainer, unsigned subsongInde
 
     if (_LoopMode & LoopModeEnabled)
     {
-        _LoopStartTime = midiContainer.get_timestamp_loop_start(subsongIndex, true);
+        _LoopBeginTime = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
 
-        size_t LoopEndTime = midiContainer.get_timestamp_loop_end(subsongIndex, true);
+        size_t LoopEndTime = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
 
-        if (_LoopStartTime != ~0UL || LoopEndTime != ~0UL)
+        if (_LoopBeginTime != ~0UL || LoopEndTime != ~0UL)
             _LoopMode |= LoopModeForced;
 
-        if (_LoopStartTime == ~0UL)
-            _LoopStartTime = 0;
+        if (_LoopBeginTime == ~0UL)
+            _LoopBeginTime = 0;
 
         if (LoopEndTime == ~0UL)
             LoopEndTime = _EndTime - 1000;
@@ -289,15 +289,15 @@ unsigned long MIDIPlayer::Play(audio_sample * samples, unsigned long samplesSize
 
             if ((_LoopMode & (LoopModeEnabled | LoopModeForced)) == (LoopModeEnabled | LoopModeForced))
             {
-                if (_LoopStart == ~0)
+                if (_LoopBegin == ~0)
                 {
                     _CurrentPosition = 0;
                     _CurrentTime = 0;
                 }
                 else
                 {
-                    _CurrentPosition = _LoopStart;
-                    _CurrentTime = _LoopStartTime;
+                    _CurrentPosition = _LoopBegin;
+                    _CurrentTime = _LoopBeginTime;
                 }
             }
             else
@@ -317,7 +317,7 @@ void MIDIPlayer::Seek(unsigned long seekTime)
         if ((_LoopMode & (LoopModeEnabled | LoopModeForced)) == (LoopModeEnabled | LoopModeForced))
         {
             while (seekTime >= _EndTime)
-                seekTime -= (unsigned long)(_EndTime - _LoopStartTime);
+                seekTime -= (unsigned long)(_EndTime - _LoopBeginTime);
         }
         else
         {
@@ -475,8 +475,8 @@ void MIDIPlayer::SetSampleRate(unsigned long sampleRate)
     if (_EndTime > 0)
         _EndTime = static_cast<uint64_t>(_EndTime) * sampleRate / _SampleRate;
 
-    if (_LoopStartTime > 0)
-        _LoopStartTime = static_cast<uint64_t>(_LoopStartTime) * sampleRate / _SampleRate;
+    if (_LoopBeginTime > 0)
+        _LoopBeginTime = static_cast<uint64_t>(_LoopBeginTime) * sampleRate / _SampleRate;
 
     _SampleRate = sampleRate;
 

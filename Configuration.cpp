@@ -107,10 +107,10 @@ cfg_int
     CfgLoopTypePlayback(guid_cfg_loop_type, DefaultPlaybackLoopType),
     CfgLoopTypeOther(guid_cfg_loop_type_other, DefaultOtherLoopType),
 
-    cfg_thloopz(guid_cfg_thloopz, default_cfg_thloopz),
-    cfg_rpgmloopz(guid_cfg_rpgmloopz, default_cfg_rpgmloopz),
-    cfg_xmiloopz(guid_cfg_xmiloopz, default_cfg_xmiloopz),
-    cfg_ff7loopz(guid_cfg_ff7loopz, default_cfg_ff7loopz),
+    CfgDetectXMILoops(guid_cfg_xmiloopz, default_cfg_xmiloopz),
+    CfgDetectFF7Loops(guid_cfg_ff7loopz, default_cfg_ff7loopz),
+    CfgDetectRPGMakerLoops(guid_cfg_rpgmloopz, default_cfg_rpgmloopz),
+    CfgDetectTouhouLoops(guid_cfg_thloopz, default_cfg_thloopz),
 
     CfgEmuDeMIDIExclusion(guid_cfg_emidi_exclusion, DefaultEmuDeMIDIExclusion),
 

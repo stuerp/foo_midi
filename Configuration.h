@@ -76,10 +76,10 @@ extern cfg_int
     CfgLoopTypePlayback,
     CfgLoopTypeOther,
 
-    cfg_thloopz,
-    cfg_rpgmloopz,
-    cfg_xmiloopz,
-    cfg_ff7loopz,
+    CfgDetectXMILoops,
+    CfgDetectFF7Loops,
+    CfgDetectRPGMakerLoops,
+    CfgDetectTouhouLoops,
 
     CfgEmuDeMIDIExclusion,
 

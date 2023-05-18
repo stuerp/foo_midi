@@ -1,36 +1,16 @@
 #include "midi_processor.h"
 
-const uint8_t midi_processor::end_of_track[2] = { 0xFF, 0x2F };
+const uint8_t midi_processor::end_of_track[2] = { StatusCodes::MetaData, MetaDataTypes::EndOfTrack };
 const uint8_t midi_processor::loop_start[11] = { 0xFF, 0x06, 'l', 'o', 'o', 'p', 'S', 't', 'a', 'r', 't' };
 const uint8_t midi_processor::loop_end[9] = { 0xFF, 0x06, 'l', 'o', 'o', 'p', 'E', 'n', 'd' };
 
-int midi_processor::decode_delta(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail)
+bool midi_processor::Process(std::vector<uint8_t> const & data, const char * fileExtension, midi_container & container)
 {
-    int delta = 0;
+    if (IsSMF(data))
+        return ProcessSMF(data, container);
 
-    unsigned char byte;
-
-    do
-    {
-        if (data == tail)
-            return 0;
-
-        byte = *data++;
-        delta = (delta << 7) + (byte & 0x7F);
-    }
-
-    while (byte & 0x80);
-
-    return delta;
-}
-
-bool midi_processor::process_file(std::vector<uint8_t> const & data, const char * fileExtension, midi_container & container)
-{
-    if (is_standard_midi(data))
-        return process_standard_midi(data, container);
-
-    if (is_riff_midi(data))
-        return process_riff_midi(data, container);
+    if (IsRIFF(data))
+        return ProcessRIFF(data, container);
 
     if (is_hmp(data))
         return process_hmp(data, container);
@@ -56,24 +36,24 @@ bool midi_processor::process_file(std::vector<uint8_t> const & data, const char 
     return false;
 }
 
-bool midi_processor::process_syx_file(std::vector<uint8_t> const & data, midi_container & container)
+bool midi_processor::ProcessSysEx(std::vector<uint8_t> const & data, midi_container & container)
 {
-    if (is_syx(data))
+    if (IsSysEx(data))
         return process_syx(data, container);
 
     return false;
 }
 
-bool midi_processor::process_track_count(std::vector<uint8_t> const & data, const char * fileExtension, size_t & trackCount)
+bool midi_processor::GetTrackCount(std::vector<uint8_t> const & data, const char * fileExtension, size_t & trackCount)
 {
     trackCount = 0;
 
-    if (is_standard_midi(data))
+    if (IsSMF(data))
 
-        return process_standard_midi_count(data, trackCount);
+        return GetTrackCount(data, trackCount);
 
-    if (is_riff_midi(data))
-        return process_riff_midi_count(data, trackCount);
+    if (IsRIFF(data))
+        return GetTrackCountFromRIFF(data, trackCount);
 
     if (is_hmp(data))
     {
@@ -88,7 +68,7 @@ bool midi_processor::process_track_count(std::vector<uint8_t> const & data, cons
     }
 
     if (is_xmi(data))
-        return process_xmi_count(data, trackCount);
+        return GetTrackCountFromXMI(data, trackCount);
 
     if (is_mus(data))
     {
@@ -115,4 +95,27 @@ bool midi_processor::process_track_count(std::vector<uint8_t> const & data, cons
     }
 
     return false;
+}
+
+/// <summary>
+/// Decode a variable-length quantity.
+/// </summary>
+int midi_processor::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail)
+{
+    int Quantity = 0;
+
+    uint8_t byte;
+
+    do
+    {
+        if (data == tail)
+            return 0;
+
+        byte = *data++;
+        Quantity = (Quantity << 7) + (byte & 0x7F);
+    }
+
+    while (byte & 0x80);
+
+    return Quantity;
 }

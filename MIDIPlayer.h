@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.h (2023.01.15) **/
+/** $VER: MIDIPlayer.h (2023.05.18) **/
 
 #pragma once
 
@@ -92,11 +92,11 @@ private:
     size_t _EndTime;
     size_t _SamplesRemaining;
 
-    unsigned int _LoopMode;
+    uint32_t _LoopMode;
 
-    unsigned long _LoopStart;
-    unsigned long _LoopEnd;
-    unsigned long _LoopStartTime;
+    uint32_t _LoopBegin;
+    uint32_t _LoopEnd;
+    uint32_t _LoopBeginTime;
 
     #ifdef EXPERIMENT
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;

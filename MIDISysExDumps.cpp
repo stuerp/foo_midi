@@ -78,7 +78,7 @@ void MIDISysExDumps::Merge(midi_container & container, abort_callback & abortHan
             {
                 midi_container Container;
 
-                if (!midi_processor::process_syx_file(Data, Container))
+                if (!midi_processor::ProcessSysEx(Data, Container))
                     break;
 
                 container.MergeTracks(Container);

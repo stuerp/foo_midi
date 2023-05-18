@@ -50,7 +50,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
         if (_IsSysExFile)
         {
-            if (!midi_processor::process_syx_file(Data, _Container))
+            if (!midi_processor::ProcessSysEx(Data, _Container))
                 throw exception_io_data("Invalid SysEx dump");
 
             return;
@@ -58,7 +58,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     }
 
     {
-        if (!midi_processor::process_file(Data, pfc::string_extension(filePath), _Container))
+        if (!midi_processor::Process(Data, pfc::string_extension(filePath), _Container))
             throw exception_io_data("Invalid MIDI file");
 
         _TrackCount = (size_t)_Container.GetTrackCount();
@@ -83,7 +83,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
                 throw exception_io_data("Invalid MIDI file");
         }
 
-        _Container.scan_for_loops(_UseXMILoops, _UseFF7Loops, _UseRPGMLoops, _UseThLoops);
+        _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops);
     }
 
     // Calculate the hash of the MIDI stream.
@@ -1058,23 +1058,18 @@ void InputDecoder::InitializeIndexManager()
 /// <summary>
 /// Initializes the time parameters.
 /// </summary>
-double InputDecoder::InitializeTime(unsigned subsongIndex)
+void InputDecoder::InitializeTime(size_t subSongIndex)
 {
-    _LengthInMS = _Container.GetDuration(subsongIndex, true);
+    _DurationInMS = _Container.GetDuration(subSongIndex, true);
 
-    double Length = _LengthInMS * .001;
-
-    if (_LoopType == 1)
-        Length += 1.;
-
-    _LengthInTicks = _Container.GetDuration(subsongIndex);
-    _LengthInSamples = (unsigned int) (((__int64) _LengthInMS * (__int64) _SampleRate) / 1000);
+    _LengthInTicks = _Container.GetDuration(subSongIndex);
+    _LengthInSamples = (uint32_t) (((__int64) _DurationInMS * (__int64) _SampleRate) / 1000);
 
     if (_LoopType == 1)
         _LengthInSamples += _SampleRate;
 
-    _LoopRange.Set(_Container.get_timestamp_loop_start(subsongIndex), _Container.get_timestamp_loop_end(subsongIndex));
-    _LoopInMs.Set(_Container.get_timestamp_loop_start(subsongIndex, true), _Container.get_timestamp_loop_end(subsongIndex, true));
+    _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex), _Container.GetLoopEndTimestamp(subSongIndex));
+    _LoopInMs.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
 
     if ((_LoopType > 2) || !_LoopRange.IsEmpty())
     {
@@ -1082,12 +1077,17 @@ double InputDecoder::InitializeTime(unsigned subsongIndex)
             _LoopInMs.SetBegin(0);
 
         if (!_LoopInMs.HasEnd())
-            _LoopInMs.SetEnd(_LengthInMS);
+            _LoopInMs.SetEnd(_DurationInMS);
+/*
+        {
+            double Length = _DurationInMS * .001;
 
-        Length = (double) (_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * 0.001;
+            if (_LoopType == 1)
+                Length += 1.;
+
+            Length = (double) (_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * 0.001;
+        }*/
     }
-
-    return Length;
 }
 
 /// <summary>
@@ -1173,10 +1173,10 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         _IsMT32 = false;
 
     {
-        unsigned long LoopBegin = _Container.get_timestamp_loop_start(subSongIndex);
-        unsigned long LoopEnd = _Container.get_timestamp_loop_end(subSongIndex);
-        unsigned long LoopBeginInMS = _Container.get_timestamp_loop_start(subSongIndex, true);
-        unsigned long LoopEndInMS = _Container.get_timestamp_loop_end(subSongIndex, true);
+        unsigned long LoopBegin = _Container.GetLoopBeginTimestamp(subSongIndex);
+        unsigned long LoopEnd = _Container.GetLoopEndTimestamp(subSongIndex);
+        unsigned long LoopBeginInMS = _Container.GetLoopBeginTimestamp(subSongIndex, true);
+        unsigned long LoopEndInMS = _Container.GetLoopEndTimestamp(subSongIndex, true);
 
         if (LoopBegin != ~0) fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
         if (LoopEnd != ~0) fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
@@ -1196,7 +1196,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     {
         service_ptr_t<metadb_index_client> IndexClient = new service_impl_t<FileHasher>;
 
-        _Hash = IndexClient->transform(fileInfo, playable_location_impl(_FilePath, subSongIndex));
+        _Hash = IndexClient->transform(fileInfo, playable_location_impl(_FilePath, (t_uint32) subSongIndex));
 
         pfc::array_t<t_uint8> Tags;
 

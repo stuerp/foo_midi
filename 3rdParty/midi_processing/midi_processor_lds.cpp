@@ -117,7 +117,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
 #ifdef ENABLE_WHEEL
     int16_t last_pitch_wheel[],
 #endif
-    channel_state * c, uint8_t allvolume, unsigned current_timestamp, unsigned sound, unsigned chan, unsigned high, midi_track & track)
+    channel_state * c, uint8_t allvolume, unsigned current_timestamp, unsigned sound, unsigned chan, unsigned high, MIDITrack & track)
 {
     uint8_t buffer[2];
     current_instrument[chan] = sound;
@@ -165,7 +165,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
         if (patch.midi_instrument != last_instrument[chan])
         {
             buffer[0] = patch.midi_instrument;
-            track.AddEvent(midi_event(current_timestamp, midi_event::program_change, channel, buffer, 1));
+            track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ProgramChange, channel, buffer, 1));
             last_instrument[chan] = patch.midi_instrument;
         }
     }
@@ -191,7 +191,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
     {
         buffer[0] = 7;
         buffer[1] = volume;
-        track.AddEvent(midi_event(current_timestamp, midi_event::control_change, last_channel[chan], buffer, 2));
+        track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ControlChange, last_channel[chan], buffer, 2));
         last_sent_volume[channel] = volume;
     }
 
@@ -199,7 +199,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
     {
         buffer[0] = saved_last_note;
         buffer[1] = 127;
-        track.AddEvent(midi_event(current_timestamp, midi_event::note_off, last_channel[chan], buffer, 2));
+        track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOff, last_channel[chan], buffer, 2));
         last_note[chan] = 0xFF;
     #ifdef ENABLE_WHEEL
         if (channel != 9)
@@ -210,7 +210,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
             {
                 buffer[0] = 0;
                 buffer[1] = 64;
-                track.AddEvent(midi_event(current_timestamp, midi_event::pitch_wheel, last_channel[chan], buffer, 2));
+                track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
                 last_pitch_wheel[channel] = 0;
             }
         }
@@ -221,7 +221,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
     {
         buffer[0] = WHEEL_SCALE_LOW(c->lasttune);
         buffer[1] = WHEEL_SCALE_HIGH(c->lasttune);
-        track.AddEvent(midi_event(current_timestamp, midi_event::pitch_wheel, channel, buffer, 2));
+        track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, channel, buffer, 2));
         last_pitch_wheel[channel] = c->lasttune;
     }
     if (!patch.glide || last_note[chan] == 0xFF)
@@ -233,7 +233,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
         {
             buffer[0] = note >> 4;
             buffer[1] = patch.midi_velocity;
-            track.AddEvent(midi_event(current_timestamp, midi_event::note_on, channel, buffer, 2));
+            track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOn, channel, buffer, 2));
             last_note[chan] = note >> 4;
             last_channel[chan] = channel;
         #ifdef ENABLE_WHEEL
@@ -247,7 +247,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
             c->portspeed = patch.portamento;
             buffer[0] = last_note[chan] = saved_last_note;
             buffer[1] = patch.midi_velocity;
-            track.AddEvent(midi_event(current_timestamp, midi_event::note_on, channel, buffer, 2));
+            track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOn, channel, buffer, 2));
         }
     #endif
     }
@@ -256,7 +256,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
     {
         buffer[0] = note >> 4;
         buffer[1] = patch.midi_velocity;
-        track.AddEvent(midi_event(current_timestamp, midi_event::note_on, channel, buffer, 2));
+        track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOn, channel, buffer, 2));
         last_note[chan] = note >> 4;
         last_channel[chan] = channel;
         c->gototune = patch.glide;
@@ -364,7 +364,7 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
         patch.keyoff = *it++;
     #ifdef ENABLE_WHEEL
         patch.portamento = *it++;
-        patch.glide = (int8_t)*it++;
+        patch.glide = (int8_t) *it++;
         it++;
     #else
         it += 3;
@@ -393,7 +393,7 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
         patch.midi_instrument = *it++;
         patch.midi_velocity = *it++;
         patch.midi_key = *it++;
-        patch.midi_transpose = (int8_t)*it++;
+        patch.midi_transpose = (int8_t) *it++;
         it += 2;
 
     #ifdef ENABLE_WHEEL
@@ -472,39 +472,39 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
     p_out.Initialize(1, 35);
 
     {
-        midi_track track;
-        track.AddEvent(midi_event(0, midi_event::extended, 0, lds_default_tempo, _countof(lds_default_tempo)));
+        MIDITrack track;
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, lds_default_tempo, _countof(lds_default_tempo)));
         for (unsigned i = 0; i < 11; ++i)
         {
             buffer[0] = 120;
             buffer[1] = 0;
-            track.AddEvent(midi_event(0, midi_event::control_change, i, buffer, 2));
+            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
             buffer[0] = 121;
-            track.AddEvent(midi_event(0, midi_event::control_change, i, buffer, 2));
+            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
         #ifdef ENABLE_WHEEL
             buffer[0] = 0x65;
-            track.AddEvent(midi_event(0, midi_event::control_change, i, buffer, 2));
+            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
             buffer[0] = 0x64;
-            track.AddEvent(midi_event(0, midi_event::control_change, i, buffer, 2));
+            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
             buffer[0] = 0x06;
             buffer[1] = WHEEL_RANGE_HIGH;
-            track.AddEvent(midi_event(0, midi_event::control_change, i, buffer, 2));
+            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
             buffer[0] = 0x26;
             buffer[1] = WHEEL_RANGE_LOW;
-            track.AddEvent(midi_event(0, midi_event::control_change, i, buffer, 2));
+            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
             buffer[0] = 0;
             buffer[1] = 64;
-            track.AddEvent(midi_event(0, midi_event::pitch_wheel, i, buffer, 2));
+            track.AddEvent(MIDIEvent(0, MIDIEvent::PitchWheel, i, buffer, 2));
         #endif
         }
-        track.AddEvent(midi_event(0, midi_event::extended, 0, end_of_track, _countof(end_of_track)));
-        p_out.add_track(track);
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, end_of_track, _countof(end_of_track)));
+        p_out.AddTrack(track);
     }
 
-    std::vector<midi_track> tracks;
+    std::vector<MIDITrack> tracks;
     {
-        midi_track track;
-        track.AddEvent(midi_event(0, midi_event::extended, 0, end_of_track, _countof(end_of_track)));
+        MIDITrack track;
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, end_of_track, _countof(end_of_track)));
         tracks.resize(10, track);
     }
 
@@ -632,7 +632,7 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
                                     {
                                         buffer[0] = 7;
                                         buffer[1] = volume;
-                                        tracks[_chan].AddEvent(midi_event(current_timestamp, midi_event::control_change, last_channel[_chan], buffer, 2));
+                                        tracks[_chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ControlChange, last_channel[_chan], buffer, 2));
                                         last_sent_volume[last_channel[_chan]] = volume;
                                     }
                                 }
@@ -660,8 +660,8 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
                                     /*jumping = 1;*/
                                     if (jumppos <= posplay)
                                     {
-                                        p_out.add_track_event(0, midi_event(position_timestamps[jumppos], midi_event::extended, 0, loop_start, _countof(loop_start)));
-                                        p_out.add_track_event(0, midi_event(current_timestamp + tempo - 1, midi_event::extended, 0, loop_end, _countof(loop_end)));
+                                        p_out.AddEventToTrack(0, MIDIEvent(position_timestamps[jumppos], MIDIEvent::Extended, 0, loop_start, _countof(loop_start)));
+                                        p_out.AddEventToTrack(0, MIDIEvent(current_timestamp + tempo - 1, MIDIEvent::Extended, 0, loop_end, _countof(loop_end)));
                                         playing = false;
                                     }
                                     break;
@@ -704,11 +704,11 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
                                 case 0xf1:
                                     buffer[0] = 10;
                                     buffer[1] = (comlo & 0x3F) * 127 / 63;
-                                    tracks[_chan].AddEvent(midi_event(current_timestamp, midi_event::control_change, last_channel[_chan], buffer, 2));
+                                    tracks[_chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ControlChange, last_channel[_chan], buffer, 2));
                                     break;
                                 case 0xf0:
                                     buffer[0] = comlo & 0x7F;
-                                    tracks[_chan].AddEvent(midi_event(current_timestamp, midi_event::program_change, last_channel[_chan], buffer, 1));
+                                    tracks[_chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ProgramChange, last_channel[_chan], buffer, 1));
                                     break;
                                 default:
                                 #ifdef ENABLE_WHEEL
@@ -811,14 +811,14 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
                 {
                     buffer[0] = last_note[chan];
                     buffer[1] = 127;
-                    tracks[chan].AddEvent(midi_event(current_timestamp, midi_event::note_off, last_channel[chan], buffer, 2));
+                    tracks[chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOff, last_channel[chan], buffer, 2));
                     last_note[chan] = 0xFF;
                 #ifdef ENABLE_WHEEL
                     if (0 != last_pitch_wheel[last_channel[chan]])
                     {
                         buffer[0] = 0;
                         buffer[1] = 64;
-                        tracks[chan].AddEvent(midi_event(current_timestamp, midi_event::pitch_wheel, last_channel[chan], buffer, 2));
+                        tracks[chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
                         last_pitch_wheel[last_channel[chan]] = 0;
                         c->lasttune = 0;
                         c->gototune = 0;
@@ -895,7 +895,7 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
                 {
                     buffer[0] = WHEEL_SCALE_LOW(arpreg);
                     buffer[1] = WHEEL_SCALE_HIGH(arpreg);
-                    tracks[chan].AddEvent(midi_event(current_timestamp, midi_event::pitch_wheel, last_channel[chan], buffer, 2));
+                    tracks[chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
                     last_pitch_wheel[last_channel[chan]] = arpreg;
                 }
             }
@@ -922,7 +922,7 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
                         {
                             buffer[0] = WHEEL_SCALE_LOW(tune);
                             buffer[1] = WHEEL_SCALE_HIGH(tune);
-                            tracks[chan].add_event(midi_event(current_timestamp, midi_event::pitch_wheel, last_channel[chan], buffer, 2));
+                            tracks[chan].add_event(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
                             last_pitch_wheel[last_channel[chan]] = tune;
                         }
 
@@ -937,7 +937,7 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
                         {
                             buffer[0] = WHEEL_SCALE_LOW(tune);
                             buffer[1] = WHEEL_SCALE_HIGH(tune);
-                            tracks[chan].add_event(midi_event(current_timestamp, midi_event::pitch_wheel, last_channel[chan], buffer, 2));
+                            tracks[chan].add_event(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
                             last_pitch_wheel[last_channel[chan]] = tune;
                         }
                     }
@@ -961,7 +961,7 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
                         {
                             buffer[0] = WHEEL_SCALE_LOW(tune);
                             buffer[1] = WHEEL_SCALE_HIGH(tune);
-                            tracks[chan].add_event(midi_event(current_timestamp, midi_event::pitch_wheel, last_channel[chan], buffer, 2));
+                            tracks[chan].add_event(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
                             last_pitch_wheel[last_channel[chan]] = tune;
                         }
                     }
@@ -1018,7 +1018,7 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
             {
                 buffer[0] = 7;
                 buffer[1] = volume;
-                tracks[chan].add_event(midi_event(current_timestamp, midi_event::control_change, last_channel[chan], buffer, 2));
+                tracks[chan].add_event(MIDIEvent(current_timestamp, MIDIEvent::ControlChange, last_channel[chan], buffer, 2));
                 last_sent_volume[last_channel[chan]] = volume;
             }
         #endif
@@ -1032,7 +1032,7 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
 
     for (unsigned i = 0; i < 9; ++i)
     {
-        midi_track & track = tracks[i];
+        MIDITrack & track = tracks[i];
         unsigned long count = track.GetLength();
         if (count > 1)
         {
@@ -1040,17 +1040,17 @@ bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_conta
             {
                 buffer[0] = last_note[i];
                 buffer[1] = 127;
-                track.AddEvent(midi_event(current_timestamp + channel[i].keycount, midi_event::note_off, last_channel[i], buffer, 2));
+                track.AddEvent(MIDIEvent(current_timestamp + channel[i].keycount, MIDIEvent::NoteOff, last_channel[i], buffer, 2));
             #ifdef ENABLE_WHEEL
                 if (last_pitch_wheel[last_channel[i]] != 0)
                 {
                     buffer[0] = 0;
                     buffer[1] = 0x40;
-                    track.AddEvent(midi_event(current_timestamp + channel[i].keycount, midi_event::pitch_wheel, last_channel[i], buffer, 2));
+                    track.AddEvent(MIDIEvent(current_timestamp + channel[i].keycount, MIDIEvent::PitchWheel, last_channel[i], buffer, 2));
                 }
             #endif
             }
-            p_out.add_track(track);
+            p_out.AddTrack(track);
         }
     }
 

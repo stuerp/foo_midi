@@ -1,35 +1,41 @@
 #include "midi_processor.h"
 
-bool midi_processor::is_syx( std::vector<uint8_t> const& p_file )
+bool midi_processor::IsSysEx(std::vector<uint8_t> const & data)
 {
-    if ( p_file.size() < 2 ) return false;
-    if ( p_file[ 0 ] != 0xF0 || p_file[ p_file.size() - 1 ] != 0xF7 ) return false;
+    if (data.size() < 2)
+        return false;
+
+    if (data[0] != StatusCodes::SysEx || data[data.size() - 1] != StatusCodes::SysExContinuation)
+        return false;
+
     return true;
 }
 
-bool midi_processor::process_syx( std::vector<uint8_t> const& p_file, midi_container & p_out )
+bool midi_processor::process_syx(std::vector<uint8_t> const & data, midi_container & container)
 {
-    const size_t size = p_file.size();
-    size_t ptr = 0;
+    const size_t Size = data.size();
 
-    p_out.Initialize( 0, 1 );
+    size_t Index = 0;
 
-    midi_track track;
+    container.Initialize(0, 1);
 
-    while ( ptr < size )
+    MIDITrack Track;
+
+    while (Index < Size)
     {
-        size_t msg_length = 1;
+        size_t MessageLength = 1;
 
-        if ( p_file[ptr] != 0xF0 ) return false;
+        if (data[Index] != StatusCodes::SysEx)
+            return false;
 
-        while ( p_file[ptr + msg_length++] != 0xF7 );
+        while (data[Index + MessageLength++] != StatusCodes::SysExContinuation);
 
-        track.AddEvent( midi_event( 0, midi_event::extended, 0, &p_file[ptr], msg_length ) );
+        Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, &data[Index], MessageLength));
 
-        ptr += msg_length;
+        Index += MessageLength;
     }
 
-    p_out.add_track( track );
+    container.AddTrack(Track);
 
     return true;
 }

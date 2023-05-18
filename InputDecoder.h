@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.05.15) **/
+/** $VER: InputDecoder.h (2023.05.18) **/
 
 #pragma once
 
@@ -90,10 +90,10 @@ public:
         _IsSysExFile(false),
         _TrackCount(0),
 
-        _UseXMILoops(!!cfg_xmiloopz),
-        _UseFF7Loops(!!cfg_ff7loopz),
-        _UseRPGMLoops(!!cfg_rpgmloopz),
-        _UseThLoops(!!cfg_thloopz),
+        _DetectXMILoops(!!CfgDetectXMILoops),
+        _DetectFF7Loops(!!CfgDetectFF7Loops),
+        _DetectRPGMakerLoops(!!CfgDetectRPGMakerLoops),
+        _DetectTouhouLoops(!!CfgDetectTouhouLoops),
 
         _LoopRange(),
         _LoopInMs(),
@@ -115,7 +115,7 @@ public:
         _LengthInSamples = 0;
         _LengthInTicks = 0;
 
-        _CleanFlags = (unsigned int)(CfgEmuDeMIDIExclusion ? midi_container::clean_flag_emidi : 0) |
+        _CleanFlags = (unsigned int)(CfgEmuDeMIDIExclusion ? midi_container::CleanFlagEMIDI : 0) |
                                     (CfgFilterInstruments ? midi_container::clean_flag_instruments : 0) |
                                     (CfgFilterBanks ? midi_container::clean_flag_banks : 0);
 
@@ -178,12 +178,12 @@ public:
     #pragma region("input_info_reader")
     unsigned get_subsong_count()
     {
-        return _IsSysExFile ? 1 : _Container.GetSubSongCount();
+        return _IsSysExFile ? 1 : (unsigned)_Container.GetSubSongCount();
     }
 
     t_uint32 get_subsong(unsigned subSongIndex)
     {
-        return _IsSysExFile ? 0 : _Container.GetSubSong(subSongIndex);
+        return _IsSysExFile ? 0 : (t_uint32)_Container.GetSubSong(subSongIndex);
     }
 
     void get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_callback & abortHandler);
@@ -246,7 +246,7 @@ public:
     static void InitializeIndexManager();
 
 private:
-    double InitializeTime(unsigned subsongIndex);
+    void InitializeTime(size_t subsongIndex);
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
@@ -287,10 +287,10 @@ private:
 
     bool _IsMT32;
 
-    bool _UseXMILoops;
-    bool _UseFF7Loops;
-    bool _UseRPGMLoops;
-    bool _UseThLoops;
+    bool _DetectXMILoops;
+    bool _DetectFF7Loops;
+    bool _DetectRPGMakerLoops;
+    bool _DetectTouhouLoops;
 
     Range _LoopRange;
     Range _LoopInMs;
@@ -298,25 +298,25 @@ private:
     // Player Properties
     MIDIPlayer * _Player;
 
-    unsigned _PlayerType;
-    unsigned _SampleRate;
+    uint32_t _PlayerType;
+    uint32_t _SampleRate;
 
-    unsigned _LoopType;
-    unsigned _LoopTypePlayback;
-    unsigned _LoopTypeOther;
+    uint32_t _LoopType;
+    uint32_t _LoopTypePlayback;
+    uint32_t _LoopTypeOther;
 
-    unsigned _CleanFlags;
+    uint32_t _CleanFlags;
 
-    unsigned _LengthInMS;
-    unsigned _LengthInTicks;
-    unsigned _LengthInSamples;
+    uint32_t _DurationInMS;
+    uint32_t _LengthInTicks;
+    uint32_t _LengthInSamples;
 
-    unsigned _LoopCount;
+    uint32_t _LoopCount;
 
-    unsigned _SamplesPlayed;
-    unsigned _SamplesDone;
+    uint32_t _SamplesPlayed;
+    uint32_t _SamplesDone;
 
-    unsigned _FadeDuration; // in ms
+    uint32_t _FadeDuration; // in ms
     Range _FadeRange;
 
     bool _IsEmuDeMIDI;
@@ -327,9 +327,9 @@ private:
 
     double _AudioChunkDuration;
 
-    unsigned int _BASSMIDIResamplingMode;
-    unsigned int _BASSMIDIVoiceCount;
-    unsigned int _BASSMIDIVoiceMax;
+    uint32_t _BASSMIDIResamplingMode;
+    uint32_t _BASSMIDIVoiceCount;
+    uint32_t _BASSMIDIVoiceMax;
 
 #ifdef FLUIDSYNTHSUPPORT
     unsigned int _FluidSynthInterpolationMethod;

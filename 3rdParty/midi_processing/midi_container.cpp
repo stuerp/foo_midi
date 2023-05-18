@@ -7,44 +7,39 @@
 #pragma warning(default: 4242)
 
 #pragma region("MIDI Event")
-midi_event::midi_event(const midi_event & p_in)
+MIDIEvent::MIDIEvent(const MIDIEvent & other)
 {
-    _Timestamp = p_in._Timestamp;
-    _ChannelNumber = p_in._ChannelNumber;
-    _Type = p_in._Type;
-    _DataSize = p_in._DataSize;
-    memcpy(_Data, p_in._Data, _DataSize);
-    _ExtendedData = p_in._ExtendedData;
+    Timestamp = other.Timestamp;
+    Type = other.Type;
+    ChannelNumber = other.ChannelNumber;
+    DataSize = other.DataSize;
+    ::memcpy(Data, other.Data, DataSize);
+    ExtendedData = other.ExtendedData;
 }
 
-midi_event::midi_event(unsigned long timestamp, event_type eventType, unsigned channelNumber, const uint8_t * data, size_t size)
+MIDIEvent::MIDIEvent(uint32_t timestamp, EventType eventType, uint32_t channelNumber, const uint8_t * data, size_t size)
 {
-    _Timestamp = timestamp;
-    _Type = eventType;
-    _ChannelNumber = channelNumber;
+    Timestamp = timestamp;
+    Type = eventType;
+    ChannelNumber = channelNumber;
 
     if (size <= MaxStaticData)
     {
-        _DataSize = size;
-        ::memcpy(_Data, data, size);
+        DataSize = size;
+        ::memcpy(Data, data, size);
     }
     else
     {
-        _DataSize = MaxStaticData;
-        ::memcpy(_Data, data, MaxStaticData);
+        DataSize = MaxStaticData;
+        ::memcpy(Data, data, MaxStaticData);
 
-        _ExtendedData.assign(data + MaxStaticData, data + size);
+        ExtendedData.assign(data + MaxStaticData, data + size);
     }
 }
 
-size_t midi_event::GetDataSize() const
+void MIDIEvent::GetData(uint8_t * data, size_t offset, size_t length) const
 {
-    return _DataSize + _ExtendedData.size();
-}
-
-void midi_event::GetData(uint8_t * data, size_t offset, size_t length) const
-{
-    size_t Size = _DataSize + _ExtendedData.size();
+    size_t Size = GetDataSize();
 
     size_t max_count = (offset <= Size) ? Size - offset : 0;
 
@@ -55,42 +50,42 @@ void midi_event::GetData(uint8_t * data, size_t offset, size_t length) const
         size_t _max_count = MaxStaticData - offset;
         size_t count = std::min(_max_count, length);
 
-        ::memcpy(data, _Data + offset, count);
+        ::memcpy(data, Data + offset, count);
 
         data += count;
         length -= count;
     }
 
     if (length > 0)
-        ::memcpy(data, &_ExtendedData[0], length);
+        ::memcpy(data, &ExtendedData[0], length);
 }
 #pragma endregion
 
 #pragma region("MIDI Track")
-midi_track::midi_track(const midi_track & track)
+MIDITrack::MIDITrack(const MIDITrack & track)
 {
     _Events = track._Events;
 }
 
-void midi_track::AddEvent(const midi_event & newEvent)
+void MIDITrack::AddEvent(const MIDIEvent & newEvent)
 {
     auto it = _Events.end();
 
     if (_Events.size() > 0)
     {
-        midi_event & Event = *(it - 1);
+        MIDIEvent & Event = *(it - 1);
 
-        if ((Event._Type == midi_event::extended) && (Event.GetDataSize() >= 2) && (Event._Data[0] == 0xFF) && (Event._Data[1] == 0x2F))
+        if ((Event.Type == MIDIEvent::Extended) && (Event.GetDataSize() >= 2) && (Event.Data[0] == StatusCodes::MetaData) && (Event.Data[1] == MetaDataTypes::EndOfTrack))
         {
             --it;
 
-            if (Event._Timestamp < newEvent._Timestamp)
-                Event._Timestamp = newEvent._Timestamp;
+            if (Event.Timestamp < newEvent.Timestamp)
+                Event.Timestamp = newEvent.Timestamp;
         }
 
         while (it > _Events.begin())
         {
-            if ((*(it - 1))._Timestamp <= newEvent._Timestamp)
+            if ((*(it - 1)).Timestamp <= newEvent.Timestamp)
                 break;
 
             --it;
@@ -100,78 +95,69 @@ void midi_track::AddEvent(const midi_event & newEvent)
     _Events.insert(it, newEvent);
 }
 
-void midi_track::RemoveEvent(size_t index)
+void MIDITrack::RemoveEvent(size_t index)
 {
-    _Events.erase(_Events.begin() + index);
+    _Events.erase(_Events.begin() + (int)index);
 }
 
 #pragma endregion
 
 #pragma region("Tempo Map")
-tempo_entry::tempo_entry(unsigned long p_timestamp, unsigned p_tempo)
+TempoEntry::TempoEntry(uint32_t timestamp, uint32_t tempo)
 {
-    m_timestamp = p_timestamp;
-    m_tempo = p_tempo;
+    Timestamp = timestamp;
+    Tempo = tempo;
 }
 
-void tempo_map::add_tempo(unsigned p_tempo, unsigned long p_timestamp)
+void TempoMap::Add(uint32_t tempo, uint32_t timestamp)
 {
-    auto it = m_entries.end();
+    auto it = _Entries.end();
 
-    while (it > m_entries.begin())
+    while (it > _Entries.begin())
     {
-        if ((*(it - 1)).m_timestamp <= p_timestamp) break;
+        if ((*(it - 1)).Timestamp <= timestamp)
+            break;
         --it;
     }
 
-    if (it > m_entries.begin() && (*(it - 1)).m_timestamp == p_timestamp)
+    if (it > _Entries.begin() && (*(it - 1)).Timestamp == timestamp)
     {
-        (*(it - 1)).m_tempo = p_tempo;
+        (*(it - 1)).Tempo = tempo;
     }
     else
     {
-        m_entries.insert(it, tempo_entry(p_timestamp, p_tempo));
+        _Entries.insert(it, TempoEntry(timestamp, tempo));
     }
 }
 
-unsigned long tempo_map::timestamp_to_ms(unsigned long p_timestamp, unsigned p_dtx) const
+uint32_t TempoMap::TimestampToMS(uint32_t p_timestamp, uint32_t p_dtx) const
 {
-    unsigned long timestamp_ms = 0;
-    unsigned long timestamp = 0;
-    auto tempo_it = m_entries.begin();
-    unsigned current_tempo = 500000;
+    uint32_t TimestampInMS = 0;
+    uint32_t Timestamp = 0;
 
-    unsigned half_dtx = p_dtx * 500;
+    auto Iterator = _Entries.begin();
+
+    uint32_t current_tempo = 500000;
+
+    uint32_t half_dtx = p_dtx * 500;
     p_dtx = half_dtx * 2;
 
-    while (tempo_it < m_entries.end() && timestamp + p_timestamp >= (*tempo_it).m_timestamp)
+    while ((Iterator < _Entries.end()) && (Timestamp + p_timestamp >= (*Iterator).Timestamp))
     {
-        unsigned long delta = (*tempo_it).m_timestamp - timestamp;
-        timestamp_ms += ((uint64_t) current_tempo * (uint64_t) delta + half_dtx) / p_dtx;
-        current_tempo = (*tempo_it).m_tempo;
-        ++tempo_it;
-        timestamp += delta;
+        uint32_t delta = (*Iterator).Timestamp - Timestamp;
+
+        TimestampInMS += ((uint64_t) current_tempo * (uint64_t) delta + half_dtx) / p_dtx;
+        current_tempo = (*Iterator).Tempo;
+
+        ++Iterator;
+
+        Timestamp += delta;
         p_timestamp -= delta;
     }
 
-    timestamp_ms += ((uint64_t) current_tempo * (uint64_t) p_timestamp + half_dtx) / p_dtx;
+    TimestampInMS += ((uint64_t) current_tempo * (uint64_t) p_timestamp + half_dtx) / p_dtx;
 
-    return timestamp_ms;
-}
-
-std::size_t tempo_map::get_count() const
-{
-    return m_entries.size();
-}
-
-const tempo_entry & tempo_map::operator [] (std::size_t p_index) const
-{
-    return m_entries[p_index];
-}
-
-tempo_entry & tempo_map::operator [] (std::size_t p_index)
-{
-    return m_entries[p_index];
+    return TimestampInMS;
 }
 #pragma endregion
 
@@ -190,14 +176,14 @@ system_exclusive_entry::system_exclusive_entry(std::size_t p_port, std::size_t p
     m_length = p_length;
 }
 
-unsigned system_exclusive_table::add_entry(const uint8_t * p_data, std::size_t p_size, std::size_t p_port)
+uint32_t system_exclusive_table::add_entry(const uint8_t * p_data, std::size_t p_size, std::size_t p_port)
 {
     for (auto it = m_entries.begin(); it < m_entries.end(); ++it)
     {
         const system_exclusive_entry & entry = *it;
 
         if (p_port == entry.m_port && p_size == entry.m_length && !memcmp(p_data, &m_data[entry.m_offset], p_size))
-            return ((unsigned) (it - m_entries.begin()));
+            return ((uint32_t) (it - m_entries.begin()));
     }
 
     system_exclusive_entry entry(p_port, m_data.size(), p_size);
@@ -205,10 +191,10 @@ unsigned system_exclusive_table::add_entry(const uint8_t * p_data, std::size_t p
     m_data.insert(m_data.end(), p_data, p_data + p_size);
     m_entries.push_back(entry);
 
-    return ((unsigned) (m_entries.size() - 1));
+    return ((uint32_t) (m_entries.size() - 1));
 }
 
-void system_exclusive_table::get_entry(unsigned p_index, const uint8_t *& p_data, std::size_t & p_size, std::size_t & p_port)
+void system_exclusive_table::get_entry(uint32_t p_index, const uint8_t *& p_data, std::size_t & p_size, std::size_t & p_port)
 {
     const system_exclusive_entry & entry = m_entries[p_index];
 
@@ -219,7 +205,7 @@ void system_exclusive_table::get_entry(unsigned p_index, const uint8_t *& p_data
 #pragma endregion
 
 #pragma region("MIDI Stream Event")
-midi_stream_event::midi_stream_event(unsigned long p_timestamp, unsigned p_event)
+midi_stream_event::midi_stream_event(uint32_t p_timestamp, uint32_t p_event)
 {
     m_timestamp = p_timestamp;
     m_event = p_event;
@@ -234,7 +220,7 @@ midi_meta_data_item::midi_meta_data_item(const midi_meta_data_item & item)
     Value = item.Value;
 }
 
-midi_meta_data_item::midi_meta_data_item(unsigned long timestamp, const char * name, const char * value)
+midi_meta_data_item::midi_meta_data_item(uint32_t timestamp, const char * name, const char * value)
 {
     Timestamp = timestamp;
     Name = name;
@@ -292,71 +278,71 @@ const midi_meta_data_item & midi_meta_data::operator [] (std::size_t p_index) co
 #pragma endregion
 
 #pragma region("MIDI Container")
-void midi_container::Initialize(unsigned format, unsigned division)
+void midi_container::Initialize(uint32_t format, uint32_t division)
 {
     _Format = format;
     _Division = division;
 
     if (format != 2)
     {
-        m_channel_mask.resize(1);
-        m_channel_mask[0] = 0;
-        m_tempo_map.resize(1);
-        m_timestamp_end.resize(1);
-        m_timestamp_end[0] = 0;
-        m_timestamp_loop_start.resize(1);
-        m_timestamp_loop_end.resize(1);
+        _ChannelMask.resize(1);
+        _ChannelMask[0] = 0;
+        _TempoMaps.resize(1);
+        _EndTimestamps.resize(1);
+        _EndTimestamps[0] = 0;
+        _LoopBeginTimestamps.resize(1);
+        _LoopEndTimestamps.resize(1);
     }
 }
 
-void midi_container::add_track(const midi_track & track)
+void midi_container::AddTrack(const MIDITrack & track)
 {
     _Tracks.push_back(track);
 
     std::string DeviceName;
     uint8_t PortNumber = 0;
 
-    size_t i;
+    size_t EventIndex;
 
-    for (i = 0; i < track.GetLength(); ++i)
+    for (EventIndex = 0; EventIndex < track.GetLength(); ++EventIndex)
     {
-        const midi_event & Event = track[i];
+        const MIDIEvent & Event = track[EventIndex];
 
-        if (Event._Type == midi_event::extended)
+        if (Event.Type == MIDIEvent::Extended)
         {
-            if ((Event.GetDataSize() >= 5) && (Event._Data[0] == 0xFF) && (Event._Data[1] == 0x51))
+            if ((Event.GetDataSize() >= 5) && (Event.Data[0] == StatusCodes::MetaData) && (Event.Data[1] == MetaDataTypes::SetTempo))
             {
-                unsigned tempo = (unsigned)((Event._Data[2] << 16) | (Event._Data[3] << 8) | Event._Data[4]);
+                uint32_t Tempo = (uint32_t)((Event.Data[2] << 16) | (Event.Data[3] << 8) | Event.Data[4]);
 
                 if (_Format != 2)
                 {
-                    m_tempo_map[0].add_tempo(tempo, Event._Timestamp);
+                    _TempoMaps[0].Add(Tempo, Event.Timestamp);
                 }
                 else
                 {
-                    m_tempo_map.resize(_Tracks.size());
-                    m_tempo_map[_Tracks.size() - 1].add_tempo(tempo, Event._Timestamp);
+                    _TempoMaps.resize(_Tracks.size());
+                    _TempoMaps[_Tracks.size() - 1].Add(Tempo, Event.Timestamp);
                 }
             }
             else
-            if ((Event.GetDataSize() >= 3) && (Event._Data[0] == 0xFF))
+            if ((Event.GetDataSize() >= 3) && (Event.Data[0] == StatusCodes::MetaData))
             {
-                if (Event._Data[1] == 0x04 || Event._Data[1] == 0x09)
+                if (Event.Data[1] == MetaDataTypes::InstrumentName || Event.Data[1] == MetaDataTypes::DeviceName)
                 {
-                    std::vector<uint8_t> data;
+                    std::vector<uint8_t> Data;
 
                     size_t Size = Event.GetDataSize() - 2;
 
-                    data.resize(Size);
-                    Event.GetData(&data[0], 2, Size);
+                    Data.resize(Size);
+                    Event.GetData(&Data[0], 2, Size);
 
-                    DeviceName.assign(data.begin(), data.begin() + Size);
+                    DeviceName.assign(Data.begin(), Data.begin() + (int)Size);
                     std::transform(DeviceName.begin(), DeviceName.end(), DeviceName.begin(), ::tolower);
                 }
                 else
-                if (Event._Data[1] == 0x21)
+                if (Event.Data[1] == MetaDataTypes::MIDIPort)
                 {
-                    PortNumber = Event._Data[2];
+                    PortNumber = Event.Data[2];
 
                     limit_port_number(PortNumber);
                     DeviceName.clear();
@@ -364,17 +350,17 @@ void midi_container::add_track(const midi_track & track)
             }
         }
         else
-        if (Event._Type == midi_event::note_on || Event._Type == midi_event::note_off)
+        if (Event.Type == MIDIEvent::NoteOn || Event.Type == MIDIEvent::NoteOff)
         {
-            unsigned ChannelNumber = Event._ChannelNumber;
+            uint32_t ChannelNumber = Event.ChannelNumber;
 
             if (DeviceName.length())
             {
                 size_t j, k;
 
-                for (j = 0, k = m_device_names[ChannelNumber].size(); j < k; ++j)
+                for (j = 0, k = _DeviceNames[ChannelNumber].size(); j < k; ++j)
                 {
-                    if (::strcmp(m_device_names[ChannelNumber][j].c_str(), DeviceName.c_str()) == 0)
+                    if (::strcmp(_DeviceNames[ChannelNumber][j].c_str(), DeviceName.c_str()) == 0)
                         break;
                 }
 
@@ -382,7 +368,7 @@ void midi_container::add_track(const midi_track & track)
                     PortNumber = (uint8_t)j;
                 else
                 {
-                    m_device_names[ChannelNumber].push_back(DeviceName);
+                    _DeviceNames[ChannelNumber].push_back(DeviceName);
                     PortNumber = (uint8_t)k;
                 }
 
@@ -394,102 +380,106 @@ void midi_container::add_track(const midi_track & track)
             ChannelNumber %= 48;
 
             if (_Format != 2)
-                m_channel_mask[0] |= 1ULL << ChannelNumber;
+                _ChannelMask[0] |= 1ULL << ChannelNumber;
             else
             {
-                m_channel_mask.resize(_Tracks.size(), 0);
-                m_channel_mask[_Tracks.size() - 1] |= 1ULL << ChannelNumber;
+                _ChannelMask.resize(_Tracks.size(), 0);
+                _ChannelMask[_Tracks.size() - 1] |= 1ULL << ChannelNumber;
             }
         }
     }
 
-    if ((_Format != 2) && (i > 0) && (track[i - 1]._Timestamp > m_timestamp_end[0]))
+    if ((_Format != 2) && (EventIndex > 0) && (track[EventIndex - 1].Timestamp > _EndTimestamps[0]))
     {
-        m_timestamp_end[0] = track[i - 1]._Timestamp;
+        _EndTimestamps[0] = track[EventIndex - 1].Timestamp;
     }
     else
     if (_Format == 2)
     {
-        if (i > 0)
-            m_timestamp_end.push_back(track[i - 1]._Timestamp);
+        if (EventIndex > 0)
+            _EndTimestamps.push_back(track[EventIndex - 1].Timestamp);
         else
-            m_timestamp_end.push_back((unsigned) 0);
+            _EndTimestamps.push_back((uint32_t) 0);
     }
 }
 
-void midi_container::add_track_event(std::size_t trackNumber, const midi_event & event)
+void midi_container::AddEventToTrack(size_t trackNumber, const MIDIEvent & event)
 {
-    midi_track & Track = _Tracks[trackNumber];
+    MIDITrack & Track = _Tracks[trackNumber];
 
     Track.AddEvent(event);
 
-    if ((event._Type == midi_event::extended) && (event.GetDataSize() >= 5) && (event._Data[0] == 0xFF) && (event._Data[1] == 0x51))
+    if ((event.Type == MIDIEvent::Extended) && (event.GetDataSize() >= 5) && (event.Data[0] == StatusCodes::MetaData) && (event.Data[1] == MetaDataTypes::SetTempo))
     {
-        unsigned tempo = (unsigned)((event._Data[2] << 16) | (event._Data[3] << 8) | event._Data[4]);
+        uint32_t Tempo = (uint32_t)((event.Data[2] << 16) | (event.Data[3] << 8) | event.Data[4]);
 
         if (_Format != 2)
         {
-            m_tempo_map[0].add_tempo(tempo, event._Timestamp);
+            _TempoMaps[0].Add(Tempo, event.Timestamp);
         }
         else
         {
-            m_tempo_map.resize(_Tracks.size());
-            m_tempo_map[trackNumber].add_tempo(tempo, event._Timestamp);
+            _TempoMaps.resize(_Tracks.size());
+            _TempoMaps[trackNumber].Add(Tempo, event.Timestamp);
         }
     }
     else
-    if (event._Type == midi_event::note_on || event._Type == midi_event::note_off)
+    if (event.Type == MIDIEvent::NoteOn || event.Type == MIDIEvent::NoteOff)
     {
         if (_Format != 2)
         {
-            m_channel_mask[0] |= 1ULL << event._ChannelNumber;
+            _ChannelMask[0] |= 1ULL << event.ChannelNumber;
         }
         else
         {
-            m_channel_mask.resize(_Tracks.size(), 0);
-            m_channel_mask[trackNumber] |= 1ULL << event._ChannelNumber;
+            _ChannelMask.resize(_Tracks.size(), 0);
+            _ChannelMask[trackNumber] |= 1ULL << event.ChannelNumber;
         }
     }
 
-    if ((_Format != 2) && (event._Timestamp > m_timestamp_end[0]))
+    if ((_Format != 2) && (event.Timestamp > _EndTimestamps[0]))
     {
-        m_timestamp_end[0] = event._Timestamp;
+        _EndTimestamps[0] = event.Timestamp;
     }
     else
-    if ((_Format == 2) && (event._Timestamp > m_timestamp_end[trackNumber]))
+    if ((_Format == 2) && (event.Timestamp > _EndTimestamps[trackNumber]))
     {
-        m_timestamp_end[trackNumber] = event._Timestamp;
+        _EndTimestamps[trackNumber] = event.Timestamp;
     }
 }
 
 void midi_container::MergeTracks(const midi_container & source)
 {
-    for (unsigned i = 0; i < source._Tracks.size(); i++)
-        add_track(source._Tracks[i]);
+    for (size_t i = 0; i < source._Tracks.size(); i++)
+        AddTrack(source._Tracks[i]);
 }
 
-void midi_container::SetTrackCount(unsigned count)
+void midi_container::SetTrackCount(uint32_t count)
 {
     _Tracks.resize(count);
 }
 
-void midi_container::set_extra_meta_data(const midi_meta_data & data)
+void midi_container::SetExtraMetaData(const midi_meta_data & data)
 {
-    m_extra_meta_data = data;
+    _ExtraMetaData = data;
 }
 
-void midi_container::apply_hackfix(unsigned hack)
+/*
+    Hack 0: Remove channel 16
+    Hack 1: Remove channels 11-16
+*/
+void midi_container::ApplyHack(uint32_t hack)
 {
     switch (hack)
     {
         case 0:
-            for (unsigned i = 0; i < _Tracks.size(); ++i)
+            for (size_t i = 0; i < _Tracks.size(); ++i)
             {
-                midi_track & t = _Tracks[i];
+                MIDITrack & t = _Tracks[i];
 
-                for (unsigned j = 0; j < t.GetLength(); )
+                for (size_t j = 0; j < t.GetLength(); )
                 {
-                    if (t[j]._Type != midi_event::extended && t[j]._ChannelNumber == 16)
+                    if ((t[j].Type != MIDIEvent::Extended) && (t[j].ChannelNumber == 16))
                     {
                         t.RemoveEvent(j);
                     }
@@ -502,13 +492,13 @@ void midi_container::apply_hackfix(unsigned hack)
             break;
 
         case 1:
-            for (unsigned i = 0; i < _Tracks.size(); ++i)
+            for (size_t i = 0; i < _Tracks.size(); ++i)
             {
-                midi_track & t = _Tracks[i];
+                MIDITrack & t = _Tracks[i];
 
-                for (unsigned j = 0; j < t.GetLength(); )
+                for (size_t j = 0; j < t.GetLength(); )
                 {
-                    if (t[j]._Type != midi_event::extended && (t[j]._ChannelNumber - 10 < 6))
+                    if (t[j].Type != MIDIEvent::Extended && (t[j].ChannelNumber - 10 < 6))
                     {
                         t.RemoveEvent(j);
                     }
@@ -522,7 +512,7 @@ void midi_container::apply_hackfix(unsigned hack)
     }
 }
 
-void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector<midi_stream_event> & midiStream, system_exclusive_table & p_system_exclusive, unsigned long & loop_start, unsigned long & loop_end, unsigned cleanFlags) const
+void midi_container::serialize_as_stream(size_t subSongIndex, std::vector<midi_stream_event> & midiStream, system_exclusive_table & p_system_exclusive, uint32_t & loop_start, uint32_t & loop_end, uint32_t cleanFlags) const
 {
     std::vector<uint8_t> data;
     std::vector<std::size_t> track_positions;
@@ -531,8 +521,8 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
 
     size_t TrackCount = _Tracks.size();
 
-    unsigned long tick_loop_start = get_timestamp_loop_start(subSongIndex);
-    unsigned long tick_loop_end = get_timestamp_loop_end(subSongIndex);
+    uint32_t tick_loop_start = GetLoopBeginTimestamp(subSongIndex);
+    uint32_t tick_loop_end = GetLoopEndTimestamp(subSongIndex);
 
     size_t local_loop_start = ~0UL;
     size_t local_loop_end = ~0UL;
@@ -541,25 +531,25 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
     port_numbers.resize(TrackCount, 0);
     device_names.resize(TrackCount);
 
-    bool clean_emidi = !!(cleanFlags & clean_flag_emidi);
+    bool CleanEMIDI = !!(cleanFlags & CleanFlagEMIDI);
     bool clean_instruments = !!(cleanFlags & clean_flag_instruments);
     bool clean_banks = !!(cleanFlags & clean_flag_banks);
 
-    if (clean_emidi)
+    if (CleanEMIDI) // Apogee Expanded MIDI (EMIDI) API v1.1
     {
         for (size_t i = 0; i < TrackCount; ++i)
         {
             bool SkipTrack = false;
 
-            const midi_track & Track = _Tracks[i];
+            const MIDITrack & Track = _Tracks[i];
 
             for (size_t j = 0; j < Track.GetLength(); ++j)
             {
-                const midi_event & Event = Track[j];
+                const MIDIEvent & Event = Track[j];
 
-                if ((Event._Type == midi_event::control_change) && Event._Data[0] == 110)
+                if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] == 110))
                 {
-                    if (Event._Data[1] != 0 && Event._Data[1] != 1 && Event._Data[1] != 127)
+                    if (Event.Data[1] != 0 && Event.Data[1] != 1 && Event.Data[1] != 127)
                     {
                         SkipTrack = true;
                         break;
@@ -581,7 +571,7 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
 
     for (;;)
     {
-        unsigned long NextTimestamp = ~0UL;
+        uint32_t NextTimestamp = ~0UL;
 
         size_t NextTrack = 0;
 
@@ -590,9 +580,9 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
             if (track_positions[i] >= _Tracks[i].GetLength())
                 continue;
 
-            if (_Tracks[i][track_positions[i]]._Timestamp < NextTimestamp)
+            if (_Tracks[i][track_positions[i]].Timestamp < NextTimestamp)
             {
-                NextTimestamp = _Tracks[i][track_positions[i]]._Timestamp;
+                NextTimestamp = _Tracks[i][track_positions[i]].Timestamp;
                 NextTrack = i;
             }
         }
@@ -604,41 +594,41 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
 
         if (clean_instruments || clean_banks)
         {
-            const midi_event & Event = _Tracks[NextTrack][track_positions[NextTrack]];
+            const MIDIEvent & Event = _Tracks[NextTrack][track_positions[NextTrack]];
 
-            if (clean_instruments && Event._Type == midi_event::program_change)
+            if (clean_instruments && (Event.Type == MIDIEvent::ProgramChange))
                 filtered = true;
             else
-            if (clean_banks && Event._Type == midi_event::control_change && (Event._Data[0] == 0x00 || Event._Data[0] == 0x20))
+            if (clean_banks && (Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] == 0x00 || Event.Data[0] == 0x20))
                 filtered = true;
         }
 
         if (!filtered)
         {
-            unsigned long TempoTrackIndex = 0;
+            uint32_t TempoTrackIndex = 0;
 
             if (_Format == 2 && subSongIndex)
-                TempoTrackIndex = subSongIndex;
+                TempoTrackIndex = (uint32_t)subSongIndex;
 
-            const midi_event & Event = _Tracks[NextTrack][track_positions[NextTrack]];
+            const MIDIEvent & Event = _Tracks[NextTrack][track_positions[NextTrack]];
 
-            if (local_loop_start == ~0UL && Event._Timestamp >= tick_loop_start)
+            if (local_loop_start == ~0UL && Event.Timestamp >= tick_loop_start)
                 local_loop_start = midiStream.size();
 
-            if (local_loop_end == ~0UL && Event._Timestamp > tick_loop_end)
+            if (local_loop_end == ~0UL && Event.Timestamp > tick_loop_end)
                 local_loop_end = midiStream.size();
 
-            unsigned long timestamp_ms = timestamp_to_ms(Event._Timestamp, TempoTrackIndex);
+            uint32_t timestamp_ms = timestamp_to_ms(Event.Timestamp, TempoTrackIndex);
 
-            if (Event._Type != midi_event::extended)
+            if (Event.Type != MIDIEvent::Extended)
             {
                 if (device_names[NextTrack].length())
                 {
                     size_t i, j;
 
-                    for (i = 0, j = m_device_names[Event._ChannelNumber].size(); i < j; ++i)
+                    for (i = 0, j = _DeviceNames[Event.ChannelNumber].size(); i < j; ++i)
                     {
-                        if (::strcmp(m_device_names[Event._ChannelNumber][i].c_str(), device_names[NextTrack].c_str()) == 0)
+                        if (::strcmp(_DeviceNames[Event.ChannelNumber][i].c_str(), device_names[NextTrack].c_str()) == 0)
                             break;
                     }
 
@@ -648,13 +638,13 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
                     limit_port_number(port_numbers[NextTrack]);
                 }
 
-                uint32_t event_code = ((Event._Type + 8) << 4) + Event._ChannelNumber;
+                uint32_t event_code = ((Event.Type + 8) << 4) + Event.ChannelNumber;
 
-                if (Event._DataSize >= 1)
-                    event_code += Event._Data[0] << 8;
+                if (Event.DataSize >= 1)
+                    event_code += Event.Data[0] << 8;
 
-                if (Event._DataSize >= 2)
-                    event_code += Event._Data[1] << 16;
+                if (Event.DataSize >= 2)
+                    event_code += Event.Data[1] << 16;
 
                 event_code += port_numbers[NextTrack] << 24;
 
@@ -664,15 +654,15 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
             {
                 size_t DataSize = Event.GetDataSize();
 
-                if (DataSize >= 3 && Event._Data[0] == 0xF0)
+                if ((DataSize >= 3) && (Event.Data[0] == StatusCodes::SysEx))
                 {
                     if (device_names[NextTrack].length())
                     {
                         size_t i, j;
 
-                        for (i = 0, j = m_device_names[Event._ChannelNumber].size(); i < j; ++i)
+                        for (i = 0, j = _DeviceNames[Event.ChannelNumber].size(); i < j; ++i)
                         {
-                            if (::strcmp(m_device_names[Event._ChannelNumber][i].c_str(), device_names[NextTrack].c_str()) == 0)
+                            if (::strcmp(_DeviceNames[Event.ChannelNumber][i].c_str(), device_names[NextTrack].c_str()) == 0)
                                 break;
                         }
 
@@ -692,9 +682,9 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
                     }
                 }
                 else
-                if (DataSize >= 3 && Event._Data[0] == 0xFF)
+                if ((DataSize >= 3) && (Event.Data[0] == StatusCodes::MetaData))
                 {
-                    if (Event._Data[1] == 4 || Event._Data[1] == 9)
+                    if (Event.Data[1] == MetaDataTypes::InstrumentName || Event.Data[1] == MetaDataTypes::DeviceName)
                     {
                         size_t _data_count = Event.GetDataSize() - 2;
 
@@ -702,27 +692,27 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
                         Event.GetData(&data[0], 2, _data_count);
 
                         device_names[NextTrack].clear();
-                        device_names[NextTrack].assign(data.begin(), data.begin() + _data_count);
+                        device_names[NextTrack].assign(data.begin(), data.begin() + (int)_data_count);
                         std::transform(device_names[NextTrack].begin(), device_names[NextTrack].end(), device_names[NextTrack].begin(), ::tolower);
                     }
                     else
-                    if (Event._Data[1] == 0x21)
+                    if (Event.Data[1] == MetaDataTypes::MIDIPort)
                     {
-                        port_numbers[NextTrack] = Event._Data[2];
+                        port_numbers[NextTrack] = Event.Data[2];
                         device_names[NextTrack].clear();
                         limit_port_number(port_numbers[NextTrack]);
                     }
                 }
                 else
-                if (DataSize == 1 && Event._Data[0] >= 0xF8)
+                if ((DataSize == 1) && (Event.Data[0] > StatusCodes::SysExContinuation))
                 {
                     if (device_names[NextTrack].length())
                     {
                         size_t i, j;
 
-                        for (i = 0, j = m_device_names[Event._ChannelNumber].size(); i < j; ++i)
+                        for (i = 0, j = _DeviceNames[Event.ChannelNumber].size(); i < j; ++i)
                         {
-                            if (::strcmp(m_device_names[Event._ChannelNumber][i].c_str(), device_names[NextTrack].c_str()) == 0)
+                            if (::strcmp(_DeviceNames[Event.ChannelNumber][i].c_str(), device_names[NextTrack].c_str()) == 0)
                                 break;
                         }
 
@@ -733,7 +723,7 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
 
                     uint32_t EventCode = (uint32_t)(port_numbers[NextTrack] << 24);
 
-                    EventCode += Event._Data[0];
+                    EventCode += Event.Data[0];
                     midiStream.push_back(midi_stream_event(timestamp_ms, EventCode));
                 }
             }
@@ -742,8 +732,8 @@ void midi_container::serialize_as_stream(unsigned long subSongIndex, std::vector
         track_positions[NextTrack]++;
     }
 
-    loop_start = (unsigned)local_loop_start;
-    loop_end = (unsigned)local_loop_end;
+    loop_start = (uint32_t)local_loop_start;
+    loop_end = (uint32_t)local_loop_end;
 }
 
 void midi_container::serialize_as_standard_midi_file(std::vector<uint8_t> & midiStream) const
@@ -771,9 +761,9 @@ void midi_container::serialize_as_standard_midi_file(std::vector<uint8_t> & midi
 
     for (size_t i = 0; i < _Tracks.size(); ++i)
     {
-        const char _signature[] = "MTrk";
+        const char ChunkType[] = "MTrk";
 
-        midiStream.insert(midiStream.end(), _signature, _signature + 4);
+        midiStream.insert(midiStream.end(), ChunkType, ChunkType + 4);
 
         size_t ChunkSizeOffset = midiStream.size();
 
@@ -782,22 +772,22 @@ void midi_container::serialize_as_standard_midi_file(std::vector<uint8_t> & midi
         midiStream.push_back(0);
         midiStream.push_back(0);
 
-        const midi_track & Track = _Tracks[i];
+        const MIDITrack & Track = _Tracks[i];
 
-        unsigned long LastTimestamp = 0;
-        uint8_t LastEventCode = 0xFF;
+        uint32_t LastTimestamp = 0;
+        uint8_t LastEventCode = StatusCodes::MetaData;
 
         for (size_t j = 0; j < Track.GetLength(); ++j)
         {
-            const midi_event & Event = Track[j];
+            const MIDIEvent & Event = Track[j];
 
-            encode_delta(midiStream, Event._Timestamp - LastTimestamp);
+            EncodeVariableLengthQuantity(midiStream, Event.Timestamp - LastTimestamp);
 
-            LastTimestamp = Event._Timestamp;
+            LastTimestamp = Event.Timestamp;
 
-            if (Event._Type != midi_event::extended)
+            if (Event.Type != MIDIEvent::Extended)
             {
-                const uint8_t EventCode = (uint8_t)(((Event._Type + 8) << 4) + Event._ChannelNumber);
+                const uint8_t EventCode = (uint8_t)(((Event.Type + 8) << 4) + Event.ChannelNumber);
 
                 if (EventCode != LastEventCode)
                 {
@@ -805,47 +795,47 @@ void midi_container::serialize_as_standard_midi_file(std::vector<uint8_t> & midi
                     LastEventCode = EventCode;
                 }
 
-                midiStream.insert(midiStream.end(), Event._Data, Event._Data + Event._DataSize);
+                midiStream.insert(midiStream.end(), Event.Data, Event.Data + Event.DataSize);
             }
             else
             {
-                std::size_t DataSize = Event.GetDataSize();
+                size_t DataSize = Event.GetDataSize();
 
                 if (DataSize >= 1)
                 {
-                    if (Event._Data[0] == 0xF0)
+                    if (Event.Data[0] == StatusCodes::SysEx)
                     {
                         --DataSize;
-                        midiStream.push_back(0xF0);
-                        encode_delta(midiStream, (unsigned)DataSize);
+                        midiStream.push_back(StatusCodes::SysEx);
+                        EncodeVariableLengthQuantity(midiStream, (uint32_t)DataSize);
 
                         if (DataSize)
                         {
                             Data.resize(DataSize);
                             Event.GetData(&Data[0], 1, DataSize);
-                            midiStream.insert(midiStream.end(), Data.begin(), Data.begin() + DataSize);
+                            midiStream.insert(midiStream.end(), Data.begin(), Data.begin() + (int)DataSize);
                         }
                     }
                     else
-                    if (Event._Data[0] == 0xFF && (DataSize >= 2))
+                    if (Event.Data[0] == StatusCodes::MetaData && (DataSize >= 2))
                     {
                         DataSize -= 2;
                         midiStream.push_back(0xFF);
-                        midiStream.push_back(Event._Data[1]);
-                        encode_delta(midiStream, (unsigned)DataSize);
+                        midiStream.push_back(Event.Data[1]);
+                        EncodeVariableLengthQuantity(midiStream, (uint32_t)DataSize);
 
                         if (DataSize)
                         {
                             Data.resize(DataSize);
                             Event.GetData(&Data[0], 2, DataSize);
-                            midiStream.insert(midiStream.end(), Data.begin(), Data.begin() + DataSize);
+                            midiStream.insert(midiStream.end(), Data.begin(), Data.begin() + (int)DataSize);
                         }
                     }
                     else
                     {
                         Data.resize(DataSize);
                         Event.GetData(&Data[0], 1, DataSize);
-                        midiStream.insert(midiStream.end(), Data.begin(), Data.begin() + DataSize);
+                        midiStream.insert(midiStream.end(), Data.begin(), Data.begin() + (int)DataSize);
                     }
                 }
             }
@@ -862,76 +852,77 @@ void midi_container::serialize_as_standard_midi_file(std::vector<uint8_t> & midi
 
 void midi_container::promote_to_type1()
 {
-    if (_Format == 0 && _Tracks.size() <= 2)
+    if (_Format != 0)
+        return;
+
+    if (_Tracks.size() > 2)
+        return;
+
+    bool meter_track_present = false;
+
+    MIDITrack new_tracks[17];
+    MIDITrack original_data_track = _Tracks[_Tracks.size() - 1];
+
+    if (_Tracks.size() > 1)
     {
-        bool meter_track_present = false;
-
-        midi_track new_tracks[17];
-        midi_track original_data_track = _Tracks[_Tracks.size() - 1];
-
-        if (_Tracks.size() > 1)
-        {
-            new_tracks[0] = _Tracks[0];
-            meter_track_present = true;
-        }
-
-        _Tracks.resize(0);
-
-        for (std::size_t i = 0; i < original_data_track.GetLength(); ++i)
-        {
-            const midi_event & event = original_data_track[i];
-
-            if (event._Type != midi_event::extended)
-            {
-                new_tracks[1 + event._ChannelNumber].AddEvent(event);
-            }
-            else
-            {
-                if (event._Data[0] != 0xFF || event.GetDataSize() < 2 || event._Data[1] != 0x2F)
-                {
-                    new_tracks[0].AddEvent(event);
-                }
-                else
-                {
-                    if (!meter_track_present)
-                        new_tracks[0].AddEvent(event);
-
-                    for (std::size_t j = 1; j < 17; ++j)
-                    {
-                        new_tracks[j].AddEvent(event);
-                    }
-                }
-            }
-        }
-
-        for (std::size_t i = 0; i < 17; ++i)
-        {
-            if (new_tracks[i].GetLength() > 1)
-                add_track(new_tracks[i]);
-        }
-
-        _Format = 1;
-    }
-}
-
-unsigned long midi_container::GetSubSongCount() const
-{
-    unsigned long subsong_count = 0;
-
-    for (unsigned i = 0; i < m_channel_mask.size(); ++i)
-    {
-        if (m_channel_mask[i])
-            ++subsong_count;
+        new_tracks[0] = _Tracks[0];
+        meter_track_present = true;
     }
 
-    return subsong_count;
+    _Tracks.resize(0);
+
+    for (std::size_t i = 0; i < original_data_track.GetLength(); ++i)
+    {
+        const MIDIEvent & event = original_data_track[i];
+
+        if (event.Type != MIDIEvent::Extended)
+        {
+            new_tracks[1 + event.ChannelNumber].AddEvent(event);
+        }
+        else
+        if (event.Data[0] != StatusCodes::MetaData || event.GetDataSize() < 2 || event.Data[1] != MetaDataTypes::EndOfTrack)
+        {
+            new_tracks[0].AddEvent(event);
+        }
+        else
+        {
+            if (!meter_track_present)
+                new_tracks[0].AddEvent(event);
+
+            for (std::size_t j = 1; j < 17; ++j)
+            {
+                new_tracks[j].AddEvent(event);
+            }
+        }
+    }
+
+    for (std::size_t i = 0; i < 17; ++i)
+    {
+        if (new_tracks[i].GetLength() > 1)
+            AddTrack(new_tracks[i]);
+    }
+
+    _Format = 1;
 }
 
-unsigned long midi_container::GetSubSong(size_t index) const
+size_t midi_container::GetSubSongCount() const
 {
-    for (size_t i = 0; i < m_channel_mask.size(); ++i)
+    size_t SubSongCount = 0;
+
+    for (size_t i = 0; i < _ChannelMask.size(); ++i)
     {
-        if (m_channel_mask[i])
+        if (_ChannelMask[i])
+            ++SubSongCount;
+    }
+
+    return SubSongCount;
+}
+
+size_t midi_container::GetSubSong(size_t index) const
+{
+    for (size_t i = 0; i < _ChannelMask.size(); ++i)
+    {
+        if (_ChannelMask[i])
         {
             if (index == 0)
                 return i;
@@ -943,97 +934,96 @@ unsigned long midi_container::GetSubSong(size_t index) const
     return 0;
 }
 
-unsigned long midi_container::GetDuration(size_t subSongIndex, bool ms /* = false */) const
+uint32_t midi_container::GetDuration(size_t subSongIndex, bool ms /* = false */) const
 {
     size_t SubSongIndex = 0;
 
-    unsigned long Timestamp = m_timestamp_end[0];
+    uint32_t Timestamp = _EndTimestamps[0];
 
     if ((_Format == 2) && (subSongIndex != 0))
     {
         SubSongIndex = subSongIndex;
 
-        Timestamp = m_timestamp_end[subSongIndex];
+        Timestamp = _EndTimestamps[subSongIndex];
     }
 
-    return ms ? Timestamp : timestamp_to_ms(Timestamp, SubSongIndex);
+    return ms ? timestamp_to_ms(Timestamp, SubSongIndex) : Timestamp;
 }
 
-unsigned long midi_container::GetFormat() const
+uint32_t midi_container::GetFormat() const
 {
     return _Format;
 }
 
-unsigned long midi_container::GetTrackCount() const
+uint32_t midi_container::GetTrackCount() const
 {
-    return (unsigned) _Tracks.size();
+    return (uint32_t) _Tracks.size();
 }
 
-unsigned long midi_container::GetChannelCount(size_t subSongIndex) const
+uint32_t midi_container::GetChannelCount(size_t subSongIndex) const
 {
-    unsigned long Count = 0;
+    uint32_t Count = 0;
     uint64_t j = 1;
 
     for (size_t i = 0; i < 48; ++i, j <<= 1)
     {
-        if (m_channel_mask[subSongIndex] & j)
+        if (_ChannelMask[subSongIndex] & j)
             ++Count;
     }
 
     return Count;
 }
 
-unsigned long midi_container::get_timestamp_loop_start(unsigned long subsong, bool ms /* = false */) const
+uint32_t midi_container::GetLoopBeginTimestamp(size_t subSongIndex, bool ms /* = false */) const
 {
-    unsigned long tempo_track = 0;
-    unsigned long timestamp = m_timestamp_loop_start[0];
+    size_t TrackIndex = 0;
 
-    if (_Format == 2 && subsong)
+    uint32_t Timestamp = _LoopBeginTimestamps[0];
+
+    if ((_Format == 2) && (subSongIndex > 0))
     {
-        tempo_track = subsong;
-        timestamp = m_timestamp_loop_start[subsong];
+        TrackIndex = subSongIndex;
+        Timestamp = _LoopBeginTimestamps[subSongIndex];
     }
 
     if (!ms)
-        return timestamp;
+        return Timestamp;
 
-    if (timestamp != ~0UL)
-        return timestamp_to_ms(timestamp, tempo_track);
+    if (Timestamp != ~0UL)
+        return timestamp_to_ms(Timestamp, TrackIndex);
 
     return ~0UL;
 }
 
-unsigned long midi_container::get_timestamp_loop_end(unsigned long subsong, bool ms /* = false */) const
+uint32_t midi_container::GetLoopEndTimestamp(size_t subSongIndex, bool ms /* = false */) const
 {
-    unsigned long tempo_track = 0;
-    unsigned long timestamp = m_timestamp_loop_end[0];
+    size_t TrackIndex = 0;
 
-    if (_Format == 2 && subsong)
+    uint32_t Timestamp = _LoopEndTimestamps[0];
+
+    if ((_Format == 2) && (subSongIndex > 0))
     {
-        tempo_track = subsong;
-        timestamp = m_timestamp_loop_end[subsong];
+        TrackIndex = subSongIndex;
+        Timestamp = _LoopEndTimestamps[subSongIndex];
     }
 
     if (!ms)
-        return timestamp;
+        return Timestamp;
 
-    if (timestamp != ~0UL)
-        return timestamp_to_ms(timestamp, tempo_track);
+    if (Timestamp != ~0UL)
+        return timestamp_to_ms(Timestamp, TrackIndex);
 
     return ~0UL;
 }
 
 /* TODO: Use iconv or libintl or something to probe for code pages and convert some mess to UTF-8 */
-static void convert_mess_to_utf8(const char * src, size_t srcLength, std::string & dst)
+static void ConvertTextToUTF8(const char * src, size_t srcLength, std::string & dst)
 {
     dst.assign(src, src + srcLength);
 }
 
 void midi_container::GetMetaData(size_t subSongIndex, midi_meta_data & metaData)
 {
-    std::vector<uint8_t> Data;
-    std::string Text;
-
     bool TypeFound = false;
     bool NonGMTypeFound = false;
 
@@ -1044,103 +1034,112 @@ void midi_container::GetMetaData(size_t subSongIndex, midi_meta_data & metaData)
 
         size_t TempoTrackIndex = (_Format == 2) ? i : 0;
 
-        const midi_track & Track = _Tracks[i];
+        const MIDITrack & Track = _Tracks[i];
 
         for (size_t j = 0; j < Track.GetLength(); ++j)
         {
-            const midi_event & Event = Track[j];
+            const MIDIEvent & Event = Track[j];
 
-            if (Event._Type == midi_event::extended)
+            if (Event.Type != MIDIEvent::Extended)
+                continue;
+
+            size_t DataSize = Event.GetDataSize();
+
+            if (!NonGMTypeFound && (DataSize >= 1) && (Event.Data[0] == StatusCodes::SysEx))
             {
-                std::size_t DataSize = Event.GetDataSize();
+                const char * TypeName = nullptr;
 
-                if (!NonGMTypeFound && (DataSize >= 1) && (Event._Data[0] == 0xF0))
+                switch (Event.Data[1])
                 {
-                    uint8_t test = 0, test2 = 0;
+                    case 0x7E:
+                        TypeFound = true; // "GM";
+                        break;
 
-                    if (DataSize > 1)
-                        test = Event._Data[1];
+                    case 0x43:
+                        TypeName = "XG";
+                        break;
 
-                    if (DataSize > 3)
-                        test2 = Event._Data[3];
+                    case 0x42:
+                        TypeName = "X5";
+                        break;
 
-                    const char * TypeName = nullptr;
-
-                    switch (test)
+                    case 0x41:
                     {
-                        case 0x7E:
-                            TypeFound = true;
-                            break;
+                        if (DataSize > 3)
+                        {
+                            switch (Event.Data[3])
+                            {
+                                case 0x42:
+                                    TypeName = "GS";
+                                    break;
 
-                        case 0x43:
-                            TypeName = "XG";
-                            break;
+                                case 0x16:
+                                    TypeName = "MT-32";
+                                    break;
 
-                        case 0x42:
-                            TypeName = "X5";
-                            break;
-
-                        case 0x41:
-                            if (test2 == 0x42)
-                                TypeName = "GS";
-                            else
-                            if (test2 == 0x16)
-                                TypeName = "MT-32";
-                            else
-                            if (test2 == 0x14)
-                                TypeName = "D-50";
-                    }
-
-                    if (TypeName)
-                    {
-                        TypeFound = true;
-                        NonGMTypeFound = true;
-
-                        metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event._Timestamp, TempoTrackIndex), "type", TypeName));
+                                case 0x14:
+                                    TypeName = "D-50";
+                                    break;
+                            }
+                        }
+                        break;
                     }
                 }
-                else
-                if ((DataSize > 2) && (Event._Data[0] == 0xFF))
+
+                if (TypeName)
                 {
-                    char Name[32];
+                    TypeFound = true;
+                    NonGMTypeFound = true;
 
-                    DataSize -= 2;
+                    metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "type", TypeName));
+                }
+            }
+            else
+            if ((DataSize > 2) && (Event.Data[0] == StatusCodes::MetaData))
+            {
+                char Name[32];
 
-                    switch (Event._Data[1])
-                    {
-                        case 6:
-                            Data.resize(DataSize);
-                            Event.GetData(&Data[0], 2, DataSize);
-                            convert_mess_to_utf8((const char *) &Data[0], DataSize, Text);
-                            metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event._Timestamp, TempoTrackIndex), "track_marker", Text.c_str()));
-                            break;
+                std::vector<uint8_t> Data;
+                std::string Text;
 
-                        case 2:
-                            Data.resize(DataSize);
-                            Event.GetData(&Data[0], 2, DataSize);
-                            convert_mess_to_utf8((const char *) &Data[0], DataSize, Text);
-                            metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event._Timestamp, TempoTrackIndex), "copyright", Text.c_str()));
-                            break;
+                DataSize -= 2;
 
-                        case 1:
-                            Data.resize(DataSize);
-                            Event.GetData(&Data[0], 2, DataSize);
-                            convert_mess_to_utf8((const char *) &Data[0], DataSize, Text);
+                switch (Event.Data[1])
+                {
+                    case MetaDataTypes::Text:
+                        Data.resize(DataSize);
+                        Event.GetData(&Data[0], 2, DataSize);
+                        ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
-                            ::snprintf(Name, _countof(Name) - 1, "track_text_%02lu", (unsigned long)i);
-                            metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event._Timestamp, TempoTrackIndex), Name, Text.c_str()));
-                            break;
+                        ::snprintf(Name, _countof(Name) - 1, "track_text_%02u", (unsigned int)i);
+                        metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
+                        break;
 
-                        case 3:
-                        case 4:
-                            Data.resize(DataSize);
-                            Event.GetData(&Data[0], 2, DataSize);
-                            convert_mess_to_utf8((const char *) &Data[0], DataSize, Text);
+                    case MetaDataTypes::Copyright:
+                        Data.resize(DataSize);
+                        Event.GetData(&Data[0], 2, DataSize);
+                        ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
-                            ::snprintf(Name, _countof(Name) - 1, "track_name_%02lu", (unsigned long)i);
-                            metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event._Timestamp, TempoTrackIndex), Name, Text.c_str()));
-                            break;
-                    }
+                        metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "copyright", Text.c_str()));
+                        break;
+
+                    case MetaDataTypes::TrackName:
+                    case MetaDataTypes::InstrumentName:
+                        Data.resize(DataSize);
+                        Event.GetData(&Data[0], 2, DataSize);
+                        ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
+
+                        ::snprintf(Name, _countof(Name) - 1, "track_name_%02u", (unsigned int)i);
+                        metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
+                        break;
+
+                    case MetaDataTypes::Marker:
+                        Data.resize(DataSize);
+                        Event.GetData(&Data[0], 2, DataSize);
+                        ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
+
+                        metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "track_marker", Text.c_str()));
+                        break;
                 }
             }
         }
@@ -1149,49 +1148,49 @@ void midi_container::GetMetaData(size_t subSongIndex, midi_meta_data & metaData)
     if (TypeFound && !NonGMTypeFound)
         metaData.AddItem(midi_meta_data_item(0, "type", "GM"));
 
-    metaData.Append(m_extra_meta_data);
+    metaData.Append(_ExtraMetaData);
 }
 
-void midi_container::trim_tempo_map(size_t index, unsigned long base_timestamp)
+void midi_container::trim_tempo_map(size_t index, uint32_t base_timestamp)
 {
-    if (index < m_tempo_map.size())
+    if (index >= _TempoMaps.size())
+        return;
+
+    TempoMap & Map = _TempoMaps[index];
+
+    for (size_t i = 0, j = Map.GetCount(); i < j; ++i)
     {
-        tempo_map & map = m_tempo_map[index];
+        TempoEntry & Entry = Map[i];
 
-        for (size_t i = 0, j = map.get_count(); i < j; ++i)
-        {
-            tempo_entry & entry = map[i];
-
-            if (entry.m_timestamp >= base_timestamp)
-                entry.m_timestamp -= base_timestamp;
-            else
-                entry.m_timestamp = 0;
-        }
+        if (Entry.Timestamp >= base_timestamp)
+            Entry.Timestamp -= base_timestamp;
+        else
+            Entry.Timestamp = 0;
     }
 }
 
 void midi_container::trim_range_of_tracks(size_t start, size_t end)
 {
-    unsigned long timestamp_first_note = ~0UL;
+    uint32_t timestamp_first_note = ~0UL;
 
     for (size_t i = start; i <= end; ++i)
     {
         size_t j, k;
 
-        const midi_track & track = _Tracks[i];
+        const MIDITrack & Track = _Tracks[i];
 
-        for (j = 0, k = track.GetLength(); j < k; ++j)
+        for (j = 0, k = Track.GetLength(); j < k; ++j)
         {
-            const midi_event & event = track[j];
+            const MIDIEvent & Event = Track[j];
 
-            if (event._Type == midi_event::note_on && event._Data[0])
+            if (Event.Type == MIDIEvent::NoteOn && Event.Data[0])
                 break;
         }
 
         if (j < k)
         {
-            if (track[j]._Timestamp < timestamp_first_note)
-                timestamp_first_note = track[j]._Timestamp;
+            if (Track[j].Timestamp < timestamp_first_note)
+                timestamp_first_note = Track[j].Timestamp;
         }
     }
 
@@ -1199,16 +1198,16 @@ void midi_container::trim_range_of_tracks(size_t start, size_t end)
     {
         for (size_t i = start; i <= end; ++i)
         {
-            midi_track & track = _Tracks[i];
+            MIDITrack & Track = _Tracks[i];
 
-            for (size_t j = 0, k = track.GetLength(); j < k; ++j)
+            for (size_t j = 0, k = Track.GetLength(); j < k; ++j)
             {
-                midi_event & event = track[j];
+                MIDIEvent & Event = Track[j];
 
-                if (event._Timestamp >= timestamp_first_note)
-                    event._Timestamp -= timestamp_first_note;
+                if (Event.Timestamp >= timestamp_first_note)
+                    Event.Timestamp -= timestamp_first_note;
                 else
-                    event._Timestamp = 0;
+                    Event.Timestamp = 0;
             }
         }
 
@@ -1216,34 +1215,34 @@ void midi_container::trim_range_of_tracks(size_t start, size_t end)
         {
             trim_tempo_map(start, timestamp_first_note);
 
-            m_timestamp_end[start] -= timestamp_first_note;
+            _EndTimestamps[start] -= timestamp_first_note;
 
-            if (m_timestamp_loop_end[start] != ~0UL)
-                m_timestamp_loop_end[start] -= timestamp_first_note;
+            if (_LoopEndTimestamps[start] != ~0UL)
+                _LoopEndTimestamps[start] -= timestamp_first_note;
 
-            if (m_timestamp_loop_start[start] != ~0UL)
+            if (_LoopBeginTimestamps[start] != ~0UL)
             {
-                if (m_timestamp_loop_start[start] > timestamp_first_note)
-                    m_timestamp_loop_start[start] -= timestamp_first_note;
+                if (_LoopBeginTimestamps[start] > timestamp_first_note)
+                    _LoopBeginTimestamps[start] -= timestamp_first_note;
                 else
-                    m_timestamp_loop_start[start] = 0;
+                    _LoopBeginTimestamps[start] = 0;
             }
         }
         else
         {
             trim_tempo_map(0, timestamp_first_note);
 
-            m_timestamp_end[0] -= timestamp_first_note;
+            _EndTimestamps[0] -= timestamp_first_note;
 
-            if (m_timestamp_loop_end[0] != ~0UL)
-                m_timestamp_loop_end[0] -= timestamp_first_note;
+            if (_LoopEndTimestamps[0] != ~0UL)
+                _LoopEndTimestamps[0] -= timestamp_first_note;
 
-            if (m_timestamp_loop_start[0] != ~0UL)
+            if (_LoopBeginTimestamps[0] != ~0UL)
             {
-                if (m_timestamp_loop_start[0] > timestamp_first_note)
-                    m_timestamp_loop_start[0] -= timestamp_first_note;
+                if (_LoopBeginTimestamps[0] > timestamp_first_note)
+                    _LoopBeginTimestamps[0] -= timestamp_first_note;
                 else
-                    m_timestamp_loop_start[0] = 0;
+                    _LoopBeginTimestamps[0] = 0;
             }
         }
     }
@@ -1260,74 +1259,76 @@ void midi_container::trim_start()
         trim_range_of_tracks(0, _Tracks.size() - 1);
 }
 
-void midi_container::split_by_instrument_changes(SplitCallback callback)
+void midi_container::SplitByInstrumentChanges(SplitCallback callback)
 {
-    if (_Format != 1) /* This would literally die on anything else */
+    if (_Format != 1)
         return;
 
     for (size_t i = 0; i < _Tracks.size(); ++i)
     {
-        midi_track SrcTrack = _Tracks[0];
+        MIDITrack SrcTrack = _Tracks[0];
 
         _Tracks.erase(_Tracks.begin());
 
-        midi_track DstTrack;
+        MIDITrack DstTrack;
 
-        midi_track program_change;
+        MIDITrack ProgramChangeTrack;
 
         for (size_t k = 0; k < SrcTrack.GetLength(); ++k)
         {
-            const midi_event & Event = SrcTrack[k];
+            const MIDIEvent & Event = SrcTrack[k];
 
-            if (Event._Type == midi_event::program_change || (Event._Type == midi_event::control_change && (Event._Data[0] == 0x00 || Event._Data[0] == 0x20)))
+            if (Event.Type == MIDIEvent::ProgramChange || (Event.Type == MIDIEvent::ControlChange && (Event.Data[0] == 0x00 || Event.Data[0] == 0x20)))
             {
-                program_change.AddEvent(Event);
+                ProgramChangeTrack.AddEvent(Event);
             }
             else
             {
-                if (program_change.GetLength() > 0)
+                if (ProgramChangeTrack.GetLength() > 0)
                 {
                     if (DstTrack.GetLength())
                         _Tracks.push_back(DstTrack);
 
-                    DstTrack = program_change;
+                    DstTrack = ProgramChangeTrack;
 
                     if (callback)
                     {
-                        unsigned long timestamp = 0;
+                        uint32_t timestamp = 0;
                         uint8_t bank_msb = 0, bank_lsb = 0, instrument = 0;
 
-                        for (size_t m = 0; m < program_change.GetLength(); ++m)
+                        for (size_t m = 0; m < ProgramChangeTrack.GetLength(); ++m)
                         {
-                            const midi_event & ev = program_change[m];
+                            const MIDIEvent & ev = ProgramChangeTrack[m];
 
-                            if (ev._Type == midi_event::program_change)
-                                instrument = ev._Data[0];
+                            if (ev.Type == MIDIEvent::ProgramChange)
+                                instrument = ev.Data[0];
                             else
-                                if (ev._Data[0] == 0)
-                                    bank_msb = ev._Data[1];
+                                if (ev.Data[0] == 0)
+                                    bank_msb = ev.Data[1];
                                 else
-                                    bank_lsb = ev._Data[1];
+                                    bank_lsb = ev.Data[1];
 
-                            if (ev._Timestamp > timestamp)
-                                timestamp = ev._Timestamp;
+                            if (ev.Timestamp > timestamp)
+                                timestamp = ev.Timestamp;
                         }
 
-                        std::string Name = callback(bank_msb, bank_lsb, instrument);
+                        {
+                            std::string Name = callback(bank_msb, bank_lsb, instrument);
 
-                        std::vector<uint8_t> Data;
+                            std::vector<uint8_t> Data;
 
-                        Data.resize(Name.length() + 2);
+                            Data.resize(Name.length() + 2);
 
-                        Data[0] = 0xFF;
-                        Data[1] = 0x03;
+                            Data[0] = 0xFF;
+                            Data[1] = 0x03;
 
-                        std::copy(Name.begin(), Name.end(), Data.begin() + 2);
+                            std::copy(Name.begin(), Name.end(), Data.begin() + 2);
 
-                        DstTrack.AddEvent(midi_event(timestamp, midi_event::extended, 0, &Data[0], Data.size()));
+                            DstTrack.AddEvent(MIDIEvent(timestamp, MIDIEvent::Extended, 0, &Data[0], Data.size()));
+                        }
                     }
 
-                    program_change = midi_track();
+                    ProgramChangeTrack = MIDITrack();
                 }
 
                 DstTrack.AddEvent(Event);
@@ -1339,143 +1340,50 @@ void midi_container::split_by_instrument_changes(SplitCallback callback)
     }
 }
 
-void midi_container::scan_for_loops(bool p_xmi_loops, bool p_marker_loops, bool p_rpgmaker_loops, bool p_touhou_loops)
+void midi_container::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops)
 {
     std::vector<uint8_t> data;
 
-    size_t subsong_count = (_Format == 2) ? _Tracks.size() : 1;
+    size_t SubSongCount = (_Format == 2) ? _Tracks.size() : 1;
 
-    m_timestamp_loop_start.resize(subsong_count);
-    m_timestamp_loop_end.resize(subsong_count);
+    _LoopBeginTimestamps.resize(SubSongCount);
+    _LoopEndTimestamps.resize(SubSongCount);
 
-    for (unsigned long i = 0; i < subsong_count; ++i)
+    for (size_t i = 0; i < SubSongCount; ++i)
     {
-        m_timestamp_loop_start[i] = ~0UL;
-        m_timestamp_loop_end[i] = ~0UL;
+        _LoopBeginTimestamps[i] = ~0UL;
+        _LoopEndTimestamps[i] = ~0UL;
     }
 
-    if (p_touhou_loops && _Format == 0)
+    if (detectXMILoops)
     {
-        bool loop_start_found = false;
-        bool loop_end_found = false;
-        bool errored = false;
-
-        for (unsigned long i = 0; !errored && i < _Tracks.size(); ++i)
+        for (size_t i = 0; i < _Tracks.size(); ++i)
         {
-            const midi_track & track = _Tracks[i];
-
-            for (unsigned long j = 0; !errored && j < track.GetLength(); ++j)
-            {
-                const midi_event & event = track[j];
-
-                if (event._Type == midi_event::control_change)
-                {
-                    if (event._Data[0] == 2)
-                    {
-                        if (event._Data[1] != 0)
-                        {
-                            errored = true;
-                            break;
-                        }
-
-                        m_timestamp_loop_start[0] = event._Timestamp;
-                        loop_start_found = true;
-                    }
-
-                    if (event._Data[0] == 4)
-                    {
-                        if (event._Data[1] != 0)
-                        {
-                            errored = true;
-                            break;
-                        }
-
-                        m_timestamp_loop_end[0] = event._Timestamp;
-                        loop_end_found = true;
-                    }
-                }
-            }
-        }
-
-        if (errored)
-        {
-            m_timestamp_loop_start[0] = ~0UL;
-            m_timestamp_loop_end[0] = ~0UL;
-        }
-    }
-
-    if (p_rpgmaker_loops)
-    {
-        bool emidi_commands_found = false;
-
-        for (unsigned long i = 0; i < _Tracks.size(); ++i)
-        {
-            unsigned long subsong = 0;
+            size_t SubSongIndex = 0;
 
             if (_Format == 2)
-                subsong = i;
+                SubSongIndex = i;
 
-            const midi_track & track = _Tracks[i];
+            const MIDITrack & Track = _Tracks[i];
 
-            for (unsigned long j = 0; j < track.GetLength(); ++j)
+            for (size_t j = 0; j < Track.GetLength(); ++j)
             {
-                const midi_event & event = track[j];
+                const MIDIEvent & event = Track[j];
 
-                if (event._Type == midi_event::control_change && (event._Data[0] == 110 || event._Data[0] == 111))
+                if (event.Type == MIDIEvent::ControlChange && (event.Data[0] >= 0x74 && event.Data[0] <= 0x77))
                 {
-                    if (event._Data[0] == 110)
+                    if (event.Data[0] == 0x74 || event.Data[0] == 0x76)
                     {
-                        emidi_commands_found = true;
-                        break;
-                    }
-
-                    {
-                        if (m_timestamp_loop_start[subsong] == ~0UL || m_timestamp_loop_start[subsong] > event._Timestamp)
+                        if (_LoopBeginTimestamps[SubSongIndex] == ~0UL || _LoopBeginTimestamps[SubSongIndex] > event.Timestamp)
                         {
-                            m_timestamp_loop_start[subsong] = event._Timestamp;
-                        }
-                    }
-                }
-            }
-
-            if (emidi_commands_found)
-            {
-                m_timestamp_loop_start[subsong] = ~0UL;
-                m_timestamp_loop_end[subsong] = ~0UL;
-                break;
-            }
-        }
-    }
-
-    if (p_xmi_loops)
-    {
-        for (unsigned long i = 0; i < _Tracks.size(); ++i)
-        {
-            unsigned long subsong = 0;
-
-            if (_Format == 2)
-                subsong = i;
-
-            const midi_track & track = _Tracks[i];
-
-            for (unsigned long j = 0; j < track.GetLength(); ++j)
-            {
-                const midi_event & event = track[j];
-
-                if (event._Type == midi_event::control_change && (event._Data[0] >= 0x74 && event._Data[0] <= 0x77))
-                {
-                    if (event._Data[0] == 0x74 || event._Data[0] == 0x76)
-                    {
-                        if (m_timestamp_loop_start[subsong] == ~0UL || m_timestamp_loop_start[subsong] > event._Timestamp)
-                        {
-                            m_timestamp_loop_start[subsong] = event._Timestamp;
+                            _LoopBeginTimestamps[SubSongIndex] = event.Timestamp;
                         }
                     }
                     else
                     {
-                        if (m_timestamp_loop_end[subsong] == ~0UL || m_timestamp_loop_end[subsong] < event._Timestamp)
+                        if (_LoopEndTimestamps[SubSongIndex] == ~0UL || _LoopEndTimestamps[SubSongIndex] < event.Timestamp)
                         {
-                            m_timestamp_loop_end[subsong] = event._Timestamp;
+                            _LoopEndTimestamps[SubSongIndex] = event.Timestamp;
                         }
                     }
                 }
@@ -1483,7 +1391,7 @@ void midi_container::scan_for_loops(bool p_xmi_loops, bool p_marker_loops, bool 
         }
     }
 
-    if (p_marker_loops)
+    if (detectMarkerLoops)
     {
         for (size_t i = 0; i < _Tracks.size(); ++i)
         {
@@ -1492,127 +1400,218 @@ void midi_container::scan_for_loops(bool p_xmi_loops, bool p_marker_loops, bool 
             if (_Format == 2)
                 SubsongIndex = i;
 
-            const midi_track & track = _Tracks[i];
+            const MIDITrack & Track = _Tracks[i];
 
-            for (size_t j = 0; j < track.GetLength(); ++j)
+            for (size_t j = 0; j < Track.GetLength(); ++j)
             {
-                const midi_event & event = track[j];
+                const MIDIEvent & Event = Track[j];
 
-                if (event._Type == midi_event::extended && event.GetDataSize() >= 9 && event._Data[0] == 0xFF && event._Data[1] == 0x06)
+                if ((Event.Type == MIDIEvent::Extended) && (Event.GetDataSize() >= 9) && Event.Data[0] == 0xFF && Event.Data[1] == 0x06)
                 {
-                    size_t data_count = event.GetDataSize() - 2;
+                    size_t Size = Event.GetDataSize() - 2;
 
-                    data.resize(data_count);
-                    event.GetData(&data[0], 2, data_count);
+                    data.resize(Size);
+                    Event.GetData(&data[0], 2, Size);
 
-                    if (data_count == 9 && !strncasecmp((const char *) &data[0], "loopStart", 9))
+                    if ((Size == 9) && (_strnicmp((const char *) &data[0], "loopStart", 9) == 0))
                     {
-                        if (m_timestamp_loop_start[SubsongIndex] == ~0UL || m_timestamp_loop_start[SubsongIndex] > event._Timestamp)
+                        if (_LoopBeginTimestamps[SubsongIndex] == ~0UL || _LoopBeginTimestamps[SubsongIndex] > Event.Timestamp)
                         {
-                            m_timestamp_loop_start[SubsongIndex] = event._Timestamp;
+                            _LoopBeginTimestamps[SubsongIndex] = Event.Timestamp;
                         }
                     }
                     else
-                        if (data_count == 7 && !strncasecmp((const char *) &data[0], "loopEnd", 7))
+                    if ((Size == 7) && (_strnicmp((const char *) &data[0], "loopEnd", 7) == 0))
+                    {
+                        if (_LoopEndTimestamps[SubsongIndex] == ~0UL || _LoopEndTimestamps[SubsongIndex] < Event.Timestamp)
                         {
-                            if (m_timestamp_loop_end[SubsongIndex] == ~0UL || m_timestamp_loop_end[SubsongIndex] < event._Timestamp)
-                            {
-                                m_timestamp_loop_end[SubsongIndex] = event._Timestamp;
-                            }
+                            _LoopEndTimestamps[SubsongIndex] = Event.Timestamp;
                         }
+                    }
                 }
             }
         }
     }
 
-    // Sanity
-    for (size_t i = 0; i < subsong_count; ++i)
+    if (detectRPGMakerLoops)
     {
-        unsigned long timestamp_song_end;
+        bool HasEMIDIControlChanges = false;
 
-        if (_Format == 2)
-            timestamp_song_end = _Tracks[i][_Tracks[i].GetLength() - 1]._Timestamp;
-        else
+        for (size_t i = 0; i < _Tracks.size(); ++i)
         {
-            timestamp_song_end = 0;
+            size_t SubSongIndex = 0;
 
-            for (size_t j = 0; j < _Tracks.size(); ++j)
+            if (_Format == 2)
+                SubSongIndex = i;
+
+            const MIDITrack & Track = _Tracks[i];
+
+            for (size_t j = 0; j < Track.GetLength(); ++j)
             {
-                const midi_track & track = _Tracks[j];
-                unsigned long timestamp = track[track.GetLength() - 1]._Timestamp;
+                const MIDIEvent & Event = Track[j];
 
-                if (timestamp > timestamp_song_end)
-                    timestamp_song_end = timestamp;
+                if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] == 110 || Event.Data[0] == 111))
+                {
+                    if (Event.Data[0] == 110)
+                    {
+                        HasEMIDIControlChanges = true;
+                        break;
+                    }
+
+                    {
+                        if (_LoopBeginTimestamps[SubSongIndex] == ~0UL || _LoopBeginTimestamps[SubSongIndex] > Event.Timestamp)
+                        {
+                            _LoopBeginTimestamps[SubSongIndex] = Event.Timestamp;
+                        }
+                    }
+                }
             }
-        }
 
-        if (m_timestamp_loop_start[i] != ~0UL && ((m_timestamp_loop_start[i] == m_timestamp_loop_end[i]) || (m_timestamp_loop_start[i] == timestamp_song_end)))
-        {
-            m_timestamp_loop_start[i] = ~0UL;
-            m_timestamp_loop_end[i] = ~0UL;
-        }
-    }
-}
-
-void midi_container::encode_delta(std::vector<uint8_t> & p_out, unsigned long delta)
-{
-    unsigned shift = 7 * 4;
-
-    while (shift && !(delta >> shift))
-    {
-        shift -= 7;
-    }
-
-    while (shift > 0)
-    {
-        p_out.push_back((unsigned char) (((delta >> shift) & 0x7F) | 0x80));
-        shift -= 7;
-    }
-
-    p_out.push_back((unsigned char) (delta & 0x7F));
-}
-
-unsigned long midi_container::timestamp_to_ms(unsigned long p_timestamp, size_t subsongIndex) const
-{
-    unsigned long timestamp_ms = 0;
-    unsigned long timestamp = 0;
-    std::size_t tempo_index = 0;
-    unsigned current_tempo = 500000;
-
-    unsigned half_dtx = _Division * 500;
-    unsigned p_dtx = half_dtx * 2;
-
-    size_t subsong_count = m_tempo_map.size();
-
-    if ((subsongIndex > 0) && (subsong_count > 0))
-    {
-        for (size_t i = std::min(subsongIndex, subsong_count); --i; )
-        {
-            size_t count = m_tempo_map[i].get_count();
-
-            if (count > 0)
+            if (HasEMIDIControlChanges)
             {
-                current_tempo = m_tempo_map[i][count - 1].m_tempo;
+                _LoopBeginTimestamps[SubSongIndex] = ~0UL;
+                _LoopEndTimestamps[SubSongIndex] = ~0UL;
                 break;
             }
         }
     }
 
-    if (subsongIndex < subsong_count)
+    if (detectTouhouLoops && (_Format == 0))
     {
-        const tempo_map & m_entries = m_tempo_map[subsongIndex];
+        bool HasLoopError = false;
 
-        std::size_t tempo_count = m_entries.get_count();
-
-        while (tempo_index < tempo_count && timestamp + p_timestamp >= m_entries[tempo_index].m_timestamp)
+        for (size_t i = 0; !HasLoopError && (i < _Tracks.size()); ++i)
         {
-            unsigned long delta = m_entries[tempo_index].m_timestamp - timestamp;
+            const MIDITrack & Track = _Tracks[i];
+
+            for (size_t j = 0; !HasLoopError && (j < Track.GetLength()); ++j)
+            {
+                const MIDIEvent & Event = Track[j];
+
+                if (Event.Type == MIDIEvent::ControlChange)
+                {
+                    if (Event.Data[0] == 2)
+                    {
+                        if (Event.Data[1] != 0)
+                        {
+                            HasLoopError = true;
+                            break;
+                        }
+
+                        _LoopBeginTimestamps[0] = Event.Timestamp;
+                    }
+
+                    if (Event.Data[0] == 4)
+                    {
+                        if (Event.Data[1] != 0)
+                        {
+                            HasLoopError = true;
+                            break;
+                        }
+
+                        _LoopEndTimestamps[0] = Event.Timestamp;
+                    }
+                }
+            }
+        }
+
+        if (HasLoopError)
+        {
+            _LoopBeginTimestamps[0] = ~0UL;
+            _LoopEndTimestamps[0] = ~0UL;
+        }
+    }
+
+    // Sanity
+    for (size_t i = 0; i < SubSongCount; ++i)
+    {
+        uint32_t EndOfSongTimestamp;
+
+        if (_Format == 2)
+            EndOfSongTimestamp = _Tracks[i][_Tracks[i].GetLength() - 1].Timestamp;
+        else
+        {
+            EndOfSongTimestamp = 0;
+
+            for (size_t j = 0; j < _Tracks.size(); ++j)
+            {
+                const MIDITrack & Track = _Tracks[j];
+
+                uint32_t Timestamp = Track[Track.GetLength() - 1].Timestamp;
+
+                if (Timestamp > EndOfSongTimestamp)
+                    EndOfSongTimestamp = Timestamp;
+            }
+        }
+
+        if ((_LoopBeginTimestamps[i] != ~0UL) && ((_LoopBeginTimestamps[i] == _LoopEndTimestamps[i]) || (_LoopBeginTimestamps[i] == EndOfSongTimestamp)))
+        {
+            _LoopBeginTimestamps[i] = ~0UL;
+            _LoopEndTimestamps[i] = ~0UL;
+        }
+    }
+}
+
+void midi_container::EncodeVariableLengthQuantity(std::vector<uint8_t> & data, uint32_t quantity)
+{
+    uint32_t Shift = 7 * 4;
+
+    while (Shift && !(quantity >> Shift))
+    {
+        Shift -= 7;
+    }
+
+    while (Shift > 0)
+    {
+        data.push_back((uint8_t) (((quantity >> Shift) & 0x7F) | 0x80));
+        Shift -= 7;
+    }
+
+    data.push_back((uint8_t) (quantity & 0x7F));
+}
+
+uint32_t midi_container::timestamp_to_ms(uint32_t p_timestamp, size_t subSongIndex) const
+{
+    uint32_t timestamp_ms = 0;
+    uint32_t Timestamp = 0;
+    std::size_t tempo_index = 0;
+    uint32_t current_tempo = 500000;
+
+    uint32_t half_dtx = _Division * 500;
+    uint32_t p_dtx = half_dtx * 2;
+
+    size_t TempoMapCount = _TempoMaps.size();
+
+    if ((subSongIndex > 0) && (TempoMapCount > 0))
+    {
+        for (size_t i = std::min(subSongIndex, TempoMapCount); --i; )
+        {
+            size_t Count = _TempoMaps[i].GetCount();
+
+            if (Count > 0)
+            {
+                current_tempo = _TempoMaps[i][Count - 1].Tempo;
+                break;
+            }
+        }
+    }
+
+    if (subSongIndex < TempoMapCount)
+    {
+        const TempoMap & m_entries = _TempoMaps[subSongIndex];
+
+        size_t TempoEntryCount = m_entries.GetCount();
+
+        while ((tempo_index < TempoEntryCount) && (Timestamp + p_timestamp >= m_entries[tempo_index].Timestamp))
+        {
+            uint32_t delta = m_entries[tempo_index].Timestamp - Timestamp;
 
             timestamp_ms += ((uint64_t) current_tempo * (uint64_t) delta + half_dtx) / p_dtx;
-            current_tempo = m_entries[tempo_index].m_tempo;
+            current_tempo = m_entries[tempo_index].Tempo;
+
             ++tempo_index;
 
-            timestamp += delta;
+            Timestamp += delta;
             p_timestamp -= delta;
         }
     }

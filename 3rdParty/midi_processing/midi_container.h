@@ -10,60 +10,98 @@
 
 #ifdef _MSC_VER
 #define strcasecmp _stricmp
-#define strncasecmp _strnicmp
 #define snprintf sprintf_s
 #endif
 
+enum StatusCodes
+{
+    SysEx = 0xF0,
+    SysExContinuation = 0xF7,
+    MetaData = 0xFF
+};
+
+enum MetaDataTypes
+{
+    SequenceNumber = 0x00,      // Sequence number in type 0 and 1 MIDI files; pattern number in type 2 MIDI files. (0..65535, default 0)
+    Text = 0x01,                // General "Text" Meta Message. Can be used for any text based data. (string)
+    Copyright = 0x02,           // Provides information about a MIDI file’s copyright. (string)
+    TrackName = 0x03,           // Track name (string)
+    InstrumentName = 0x04,      // Instrument name (string)
+    Lyrics = 0x05,              // Stores the lyrics of a song. Typically one syllable per Meta Message. (string)
+    Marker = 0x06,              // Marks a point of interest in a MIDI file. Can be used as the marker for the beginning of a verse, solo, etc. (string)
+    CueMarker = 0x07,           // Marks a cue. IE: ‘Cue performer 1’, etc (string)
+
+    DeviceName = 0x09,          // Gives the name of the device. (string)
+
+    ChannelPrefix = 0x20,       // Gives the prefix for the channel on which events are played. (0..255, default 0)
+    MIDIPort = 0x21,            // Gives the MIDI Port on which events are played. (0..255, default 0)
+
+    EndOfTrack = 0x2F,          // An empty Meta Message that marks the end of a track.
+
+    SetTempo = 0x51,            // Tempo is in microseconds per beat (quarter note). (0..16777215, default 500000)
+
+    SMPTEOffset = 0x54,         // 
+
+    TimeSignature = 0x58,       // 
+    KeySignature = 0x59,        // Valid values: A A#m Ab Abm Am B Bb Bbm Bm C C# C#m Cb Cm D D#m Db Dm E Eb Ebm Em F F# F#m Fm G G#m Gb Gm
+
+    SequencerSpecific = 0x7F    // An unprocessed sequencer specific message containing raw data.
+};
+
 #pragma warning(disable: 4820) // Padding added after data member
-struct midi_event
+struct MIDIEvent
 {
     enum
     {
         MaxStaticData = 16
     };
 
-    enum event_type
+    enum EventType
     {
-        note_off = 0,
-        note_on,
-        polyphonic_aftertouch,
-        control_change,
-        program_change,
-        channel_aftertouch,
-        pitch_wheel,
-        extended
+        NoteOff = 0,
+        NoteOn,
+        PolyphonicAftertouch,
+        ControlChange,
+        ProgramChange,
+        ChannelAftertouch,
+        PitchWheel,
+        Extended
     };
 
-    unsigned long _Timestamp;
-    event_type _Type;
-    unsigned _ChannelNumber;
+    uint32_t Timestamp;
+    EventType Type;
+    uint32_t ChannelNumber;
 
-    size_t _DataSize;
-    uint8_t _Data[MaxStaticData];
+    size_t DataSize;
+    uint8_t Data[MaxStaticData];
 
-    std::vector<uint8_t> _ExtendedData;
+    std::vector<uint8_t> ExtendedData;
 
-    midi_event() noexcept : _Timestamp(0), _Type(note_off), _ChannelNumber(0), _DataSize(0)
+    MIDIEvent() noexcept : Timestamp(0), Type(EventType::NoteOff), ChannelNumber(0), DataSize(0)
     {
-        _Data[0] = 0;
+        Data[0] = 0;
     }
 
-    midi_event(const midi_event & midiEvent);
-    midi_event(unsigned long timestamp, event_type eventType, unsigned channel, const uint8_t * data, size_t size);
+    MIDIEvent(const MIDIEvent & midiEvent);
+    MIDIEvent(uint32_t timestamp, EventType eventType, uint32_t channel, const uint8_t * data, size_t size);
 
-    size_t GetDataSize() const;
+    size_t GetDataSize() const
+    {
+        return DataSize + ExtendedData.size();
+    }
+
     void GetData(uint8_t * data, size_t offset, size_t length) const;
 };
 #pragma warning(default: 4820) // Padding added after data member
 
-class midi_track
+class MIDITrack
 {
 public:
-    midi_track() noexcept { }
+    MIDITrack() noexcept { }
 
-    midi_track(const midi_track & track);
+    MIDITrack(const MIDITrack & track);
 
-    void AddEvent(const midi_event & event);
+    void AddEvent(const MIDIEvent & event);
     void RemoveEvent(size_t index);
 
     size_t GetLength() const noexcept
@@ -71,50 +109,62 @@ public:
         return _Events.size();
     }
 
-    const midi_event & operator [] (size_t index) const noexcept
+    const MIDIEvent & operator [] (size_t index) const noexcept
     {
         return _Events[index];
     }
 
-    midi_event & operator [] (std::size_t index) noexcept
+    MIDIEvent & operator [] (std::size_t index) noexcept
     {
         return _Events[index];
     }
 
 private:
-    std::vector<midi_event> _Events;
+    std::vector<MIDIEvent> _Events;
 };
 
-struct tempo_entry
+struct TempoEntry
 {
-    unsigned long m_timestamp;
-    unsigned m_tempo;
+    uint32_t Timestamp;
+    uint32_t Tempo;
 
-    tempo_entry() noexcept : m_timestamp(0), m_tempo(0)
+    TempoEntry() noexcept : Timestamp(0), Tempo(0)
     {
     }
-    tempo_entry(unsigned long p_timestamp, unsigned p_tempo);
+    TempoEntry(uint32_t timestamp, uint32_t tempo);
 };
 
-class tempo_map
+class TempoMap
 {
 public:
-    void add_tempo(unsigned p_tempo, unsigned long p_timestamp);
-    unsigned long timestamp_to_ms(unsigned long p_timestamp, unsigned p_dtx) const;
+    void Add(uint32_t tempo, uint32_t timestamp);
+    uint32_t TimestampToMS(uint32_t timestamp, uint32_t division) const;
 
-    std::size_t get_count() const;
-    const tempo_entry & operator [] (std::size_t p_index) const;
-    tempo_entry & operator [] (std::size_t p_index);
+    size_t GetCount() const
+    {
+        return _Entries.size();
+    }
+
+    const TempoEntry & operator [] (std::size_t p_index) const
+    {
+        return _Entries[p_index];
+    }
+
+    TempoEntry & operator [] (size_t index)
+    {
+        return _Entries[index];
+    }
 
 private:
-    std::vector<tempo_entry> m_entries;
+    std::vector<TempoEntry> _Entries;
 };
 
 struct system_exclusive_entry
 {
-    std::size_t m_port;
-    std::size_t m_offset;
-    std::size_t m_length;
+    size_t m_port;
+    size_t m_offset;
+    size_t m_length;
+
     system_exclusive_entry() noexcept : m_port(0), m_offset(0), m_length(0)
     {
     }
@@ -125,8 +175,8 @@ struct system_exclusive_entry
 class system_exclusive_table
 {
 public:
-    unsigned add_entry(const uint8_t * p_data, std::size_t p_size, std::size_t p_port);
-    void get_entry(unsigned p_index, const uint8_t *& p_data, std::size_t & p_size, std::size_t & p_port);
+    uint32_t add_entry(const uint8_t * p_data, std::size_t p_size, std::size_t p_port);
+    void get_entry(uint32_t p_index, const uint8_t *& p_data, std::size_t & p_size, std::size_t & p_port);
 
 private:
     std::vector<uint8_t> m_data;
@@ -135,20 +185,20 @@ private:
 
 struct midi_stream_event
 {
-    unsigned long m_timestamp;
+    uint32_t m_timestamp;
     uint32_t m_event;
 
     midi_stream_event() noexcept : m_timestamp(0), m_event(0)
     {
     }
 
-    midi_stream_event(unsigned long p_timestamp, uint32_t p_event);
+    midi_stream_event(uint32_t timestamp, uint32_t event);
 };
 
 #pragma warning(disable: 4820) // Padding added after data member
 struct midi_meta_data_item
 {
-    unsigned long Timestamp;
+    uint32_t Timestamp;
     std::string Name;
     std::string Value;
 
@@ -156,7 +206,7 @@ struct midi_meta_data_item
     {
     }
     midi_meta_data_item(const midi_meta_data_item & item);
-    midi_meta_data_item(unsigned long timestamp, const char * name, const char * value);
+    midi_meta_data_item(uint32_t timestamp, const char * name, const char * value);
 };
 #pragma warning(default: 4820) // Padding added after data member
 
@@ -189,29 +239,24 @@ class midi_container
 public:
     midi_container() : _Format(0), _Division(0)
     {
-        m_device_names.resize(16);
+        _DeviceNames.resize(16);
     }
 
-    void Initialize(unsigned format, unsigned division);
+    void Initialize(uint32_t format, uint32_t division);
 
-    void add_track(const midi_track & track);
-    void add_track_event(size_t trackIndex, const midi_event & event);
+    void AddTrack(const MIDITrack & track);
+    void AddEventToTrack(size_t trackIndex, const MIDIEvent & event);
 
     // These functions are really only designed to merge and later remove System Exclusive message dumps.
-    void MergeTracks(const midi_container & p_source);
-    void SetTrackCount(unsigned count);
-    void set_extra_meta_data(const midi_meta_data & p_data);
+    void MergeTracks(const midi_container & source);
+    void SetTrackCount(uint32_t count);
+    void SetExtraMetaData(const midi_meta_data & data);
 
-    /*
-     * Blah.
-     * Hack 0: Remove channel 16
-     * Hack 1: Remove channels 11-16
-     */
-    void apply_hackfix(unsigned hack);
+    void ApplyHack(uint32_t hack);
 
-    void serialize_as_stream(unsigned long subsong, std::vector<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, unsigned long & loop_start, unsigned long & loop_end, unsigned clean_flags) const;
+    void serialize_as_stream(size_t subSongIndex, std::vector<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, uint32_t & loop_start, uint32_t & loop_end, uint32_t clean_flags) const;
 
-    void serialize_as_standard_midi_file(std::vector<uint8_t> & p_midi_file) const;
+    void serialize_as_standard_midi_file(std::vector<uint8_t> & data) const;
 
     void promote_to_type1();
 
@@ -219,64 +264,64 @@ public:
 
     typedef std::string(* SplitCallback)(uint8_t bank_msb, uint8_t bank_lsb, uint8_t instrument);
 
-    void split_by_instrument_changes(SplitCallback callback = nullptr);
+    void SplitByInstrumentChanges(SplitCallback callback = nullptr);
 
-    unsigned long GetSubSongCount() const;
-    unsigned long GetSubSong(size_t index) const;
+    size_t GetSubSongCount() const;
+    size_t GetSubSong(size_t index) const;
 
-    unsigned long GetDuration(size_t subsongIndex, bool ms = false) const;
+    uint32_t GetDuration(size_t subsongIndex, bool ms = false) const;
 
-    unsigned long GetFormat() const;
-    unsigned long GetTrackCount() const;
-    unsigned long GetChannelCount(size_t subSongIndex) const;
+    uint32_t GetFormat() const;
+    uint32_t GetTrackCount() const;
+    uint32_t GetChannelCount(size_t subSongIndex) const;
 
-    unsigned long get_timestamp_loop_start(unsigned long subsong, bool ms = false) const;
-    unsigned long get_timestamp_loop_end(unsigned long subsong, bool ms = false) const;
+    uint32_t GetLoopBeginTimestamp(size_t subSongIndex, bool ms = false) const;
+    uint32_t GetLoopEndTimestamp(size_t subSongIndex, bool ms = false) const;
 
     void GetMetaData(size_t subSongIndex, midi_meta_data & data);
 
-    void scan_for_loops(bool p_xmi_loops, bool p_marker_loops, bool p_rpgmaker_loops, bool p_touhou_loops);
+    void DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops);
 
-    static void encode_delta(std::vector<uint8_t> & p_out, unsigned long delta);
+    static void EncodeVariableLengthQuantity(std::vector<uint8_t> & p_out, uint32_t delta);
 
 public:
     enum
     {
-        clean_flag_emidi = 1 << 0,
+        CleanFlagEMIDI = 1 << 0,
         clean_flag_instruments = 1 << 1,
         clean_flag_banks = 1 << 2,
     };
 
 private:
     void trim_range_of_tracks(size_t start, size_t end);
-    void trim_tempo_map(size_t index, unsigned long base_timestamp);
+    void trim_tempo_map(size_t index, uint32_t base_timestamp);
 
-    unsigned long timestamp_to_ms(unsigned long timestamp, size_t subsongIndex) const;
+    uint32_t timestamp_to_ms(uint32_t timestamp, size_t subsongIndex) const;
 
     /*
      * Normalize port numbers properly
      */
     template <typename T> void limit_port_number(T & number)
     {
-        for (size_t i = 0; i < m_port_numbers.size(); ++i)
+        for (size_t i = 0; i < _PortNumbers.size(); ++i)
         {
-            if (m_port_numbers[i] == number)
+            if (_PortNumbers[i] == number)
             {
                 number = (T)i;
                 return;
             }
         }
 
-        m_port_numbers.push_back((uint8_t) number);
+        _PortNumbers.push_back((uint8_t) number);
 
-        number = m_port_numbers.size() - 1;
+        number = _PortNumbers.size() - 1;
     }
 
     template <typename T> void limit_port_number(T & number) const
     {
-        for (unsigned i = 0; i < m_port_numbers.size(); i++)
+        for (size_t i = 0; i < _PortNumbers.size(); i++)
         {
-            if (m_port_numbers[i] == number)
+            if (_PortNumbers[i] == number)
             {
                 number = (T)i;
                 return;
@@ -285,21 +330,21 @@ private:
     }
 
 private:
-    unsigned _Format;
-    unsigned _Division;
+    uint32_t _Format;
+    uint32_t _Division;
 
-    std::vector<uint64_t> m_channel_mask;
-    std::vector<tempo_map> m_tempo_map;
-    std::vector<midi_track> _Tracks;
+    std::vector<uint64_t> _ChannelMask;
+    std::vector<TempoMap> _TempoMaps;
+    std::vector<MIDITrack> _Tracks;
 
-    std::vector<uint8_t> m_port_numbers;
+    std::vector<uint8_t> _PortNumbers;
 
-    std::vector<std::vector<std::string>> m_device_names;
+    std::vector<std::vector<std::string>> _DeviceNames;
 
-    midi_meta_data m_extra_meta_data;
+    midi_meta_data _ExtraMetaData;
 
-    std::vector<unsigned long> m_timestamp_end;
+    std::vector<uint32_t> _EndTimestamps;
 
-    std::vector<unsigned long> m_timestamp_loop_start;
-    std::vector<unsigned long> m_timestamp_loop_end;
+    std::vector<uint32_t> _LoopBeginTimestamps;
+    std::vector<uint32_t> _LoopEndTimestamps;
 };
