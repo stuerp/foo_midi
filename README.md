@@ -100,13 +100,15 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.8.2.0, 2023-xx-xx, *""*
+v2.8.2.0, 2023-05-20, *"Spring Cleaning"*
 
 * Bug Fix: MIDI files with malformed tracks caused a crash.
 * Bug Fix: MIDI files with malformed SysEx events caused a crash.
 * Bug Fix: Work-around for weird rendering problem in Dark mode.
 * Bug Fix: Restored access to the Preferences page from the Decoding page in the Preferences dialog.
 * Improved: Tweaked the size of some of the labels of the Preferences dialog.
+* Improved: Added a message to re-open the Preferences dialog after any of the paths were changed.
+* Improved: Changed Shift-JIS detection in meta data. A copyright sign (©) was interpreted as Shift-JIS.
 
 v2.8.1.0, 2023-05-01, *"A New Beginning...? Redux"*
 

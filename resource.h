@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2023.05.14) **/
+/** $VER: Resource.h (2023.05.20) **/
 
 #pragma once
 
@@ -118,3 +118,5 @@
 
 #define IDC_SECRET_SAUCE_PATH           IDC_MUNT_FILE_PATH_SELECT + 1
 #define IDC_SECRET_SAUCE_PATH_SELECT    IDC_SECRET_SAUCE_PATH + 1
+
+#define IDC_PATHS_MESSAGE               IDC_SECRET_SAUCE_PATH_SELECT + 1

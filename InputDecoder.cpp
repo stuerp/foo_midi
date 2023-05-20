@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.05.17) **/
+/** $VER: InputDecoder.cpp (2023.05.20) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -148,7 +148,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
     }
 
-    _Container.SetTrackCount((unsigned int)_TrackCount);
+    _Container.SetTrackCount((uint32_t)_TrackCount);
 
     SysExDumps.Merge(_Container, abortHandler);
 
@@ -206,7 +206,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     }
 
     if (_PlayerType == PlayerTypeSuperMunt)
-        _SampleRate = (unsigned int)MT32Player::GetSampleRate();
+        _SampleRate = (uint32_t)MT32Player::GetSampleRate();
 
     // Initialize the fade-out range.
     if ((flags & input_flag_no_looping) || (_LoopType < 4))
@@ -274,7 +274,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             _Player->SetSampleRate(_SampleRate);
             _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
+            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
 
             if (_IsLooping)
                 LoopMode |= MIDIPlayer::LoopModeForced;
@@ -325,7 +325,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         sfPlayer->SetFilter((MIDIPlayer::filter_mode) thePreset.MIDIStandard, !thePreset._UseMIDIEffects);
 
-        unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
+        uint32 LoopMode = MIDIPlayer::LoopModeEnabled;
 
         if (_IsLooping)
             LoopMode |= MIDIPlayer::loop_mode_force;
@@ -378,7 +378,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             _Player->SetSampleRate(_SampleRate);
             _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
+            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
 
             if (_IsLooping)
                 LoopMode |= MIDIPlayer::LoopModeForced;
@@ -457,7 +457,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             _Player->SetSampleRate(_SampleRate);
 
-            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
+            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
 
             if (_IsLooping)
                 LoopMode |= MIDIPlayer::LoopModeForced;
@@ -492,7 +492,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             _Player->SetSampleRate(_SampleRate);
             _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
+            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
 
             if (_IsLooping)
                 LoopMode |= MIDIPlayer::LoopModeForced;
@@ -540,7 +540,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             _Player->SetSampleRate(_SampleRate);
 
-            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
+            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
 
             if (_IsLooping)
                 LoopMode |= MIDIPlayer::LoopModeForced;
@@ -573,7 +573,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             _Player->SetSampleRate(_SampleRate);
 
-            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
+            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
 
             if (_IsLooping)
                 LoopMode |= MIDIPlayer::LoopModeForced;
@@ -617,7 +617,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
             _Player->SetSampleRate(_SampleRate);
 
-            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
+            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
 
             if (_IsLooping)
                 LoopMode |= MIDIPlayer::LoopModeForced;
@@ -644,7 +644,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         {
-            unsigned LoopMode = MIDIPlayer::LoopModeEnabled;
+            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
 
             if (_IsLooping)
                 LoopMode |= MIDIPlayer::LoopModeForced;
@@ -812,7 +812,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
         if (EndOfChunk >= _FadeRange.Begin())
         {
-            for (unsigned int i = std::max(_FadeRange.Begin(), BeginOfChunk), j = std::min(EndOfChunk, _FadeRange.End()); i < j; ++i)
+            for (size_t i = std::max(_FadeRange.Begin(), BeginOfChunk), j = std::min(EndOfChunk, _FadeRange.End()); i < j; ++i)
             {
                 audio_sample * Sample = audioChunk.get_data() + (i - BeginOfChunk) * 2;
                 audio_sample Scale = (audio_sample) (_FadeRange.End() - i) / (audio_sample) _FadeRange.Size();
@@ -949,7 +949,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
     ConvertMetaDataToTags(subSongIndex, fileInfo, abortHandler);
 
     {
-        unsigned long LengthInMs = _Container.GetDuration(subSongIndex, true);
+        uint32_t LengthInMs = _Container.GetDuration(subSongIndex, true);
 
         double LengthInSeconds = double(LengthInMs) * 0.001;
 
@@ -1173,10 +1173,10 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         _IsMT32 = false;
 
     {
-        unsigned long LoopBegin = _Container.GetLoopBeginTimestamp(subSongIndex);
-        unsigned long LoopEnd = _Container.GetLoopEndTimestamp(subSongIndex);
-        unsigned long LoopBeginInMS = _Container.GetLoopBeginTimestamp(subSongIndex, true);
-        unsigned long LoopEndInMS = _Container.GetLoopEndTimestamp(subSongIndex, true);
+        uint32_t LoopBegin = _Container.GetLoopBeginTimestamp(subSongIndex);
+        uint32_t LoopEnd = _Container.GetLoopEndTimestamp(subSongIndex);
+        uint32_t LoopBeginInMS = _Container.GetLoopBeginTimestamp(subSongIndex, true);
+        uint32_t LoopEndInMS = _Container.GetLoopEndTimestamp(subSongIndex, true);
 
         if (LoopBegin != ~0) fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
         if (LoopEnd != ~0) fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
@@ -1251,9 +1251,9 @@ static size_t DecodeShiftJISChar(const uint8_t * data, size_t size)
 }
 
 /// <summary>
-/// Is the data Shift-JIS string?
+/// Is the data a Shift-JIS string?
 /// </summary>
-static bool IsValidShiftJIS(const char * data, size_t size)
+static bool IsValidShiftJISOld(const char * data, size_t size)
 {
     for (size_t i = 0; (i < size) && (data[i] != 0);)
     {
@@ -1269,6 +1269,70 @@ static bool IsValidShiftJIS(const char * data, size_t size)
     }
 
     return true;
+}
+
+/// <summary>
+/// Is the data a Shift-JIS string?
+/// char ShiftJIS[] = { 0x82, 0xA0, 0x82, 0xA2, 0x82, 0xA4 }; / char UTF8[] = { 0xE3, 0x81, 0x82, 0xE3, 0x81, 0x84, 0xE3, 0x81, 0x86 };
+/// </summary>
+static bool IsValidShiftJIS(const char * data, size_t size)
+{
+    bool Result = false;
+
+    unsigned char d1 = data[0];
+    unsigned char d2 = data[1];
+
+    int j1 = 0;
+    int j2 = 0;
+
+    // Check if the first byte is valid Shift-JIS.
+    if ((d1 >= 0x81 && d1 <= 0x84) || (d1 >= 0x87 && d1 <= 0x9F))
+    {
+        j1 = 2 * (d1 - 0x70) - 1;
+
+        if (d2 >= 0x40 && d2 <= 0x9E)
+        {
+            j2 = d2 - 31;
+
+            if (j2 > 95)
+                j2 -= 1;
+
+            Result = true;
+        }
+        else
+        if (d2 >= 0x9F && d2 <= 0xFC)
+        {
+            j2 = d2 - 126;
+            j1 += 1;
+
+            Result = true;
+        }
+    }
+    else
+    if (d1 >= 0xE0 && d1 <= 0xEF)
+    {
+        j1 = 2 * (d1 - 0xB0) - 1;
+
+        if (d2 >= 0x40 && d2 <= 0x9E)
+        {
+            j2 = d2 - 31;
+
+            if (j2 > 95)
+                j2 -= 1;
+
+            Result = true;
+        }
+        else
+        if (d2 >= 0x9F && d2 <= 0xFC)
+        {
+            j2 = d2 - 126;
+            j1 += 1;
+
+            Result = true;
+        }
+    }
+
+    return Result;
 }
 
 /// <summary>

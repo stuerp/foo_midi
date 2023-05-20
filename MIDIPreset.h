@@ -95,7 +95,7 @@ public:
 //  unsigned int gs_flavor;
 
     // v11 - most plugins
-    unsigned int _MIDIStandard;
+    uint32_t _MIDIStandard;
     bool _UseMIDIEffects;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

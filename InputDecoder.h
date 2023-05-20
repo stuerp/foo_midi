@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.05.18) **/
+/** $VER: InputDecoder.h (2023.05.20) **/
 
 #pragma once
 
@@ -100,12 +100,12 @@ public:
 
         _Player(nullptr),
 
-        _SampleRate((unsigned int)CfgSampleRate),
+        _SampleRate((uint32_t)CfgSampleRate),
 
-        _LoopTypePlayback((unsigned int)CfgLoopTypePlayback),
-        _LoopTypeOther((unsigned int)CfgLoopTypeOther),
+        _LoopTypePlayback((uint32_t)CfgLoopTypePlayback),
+        _LoopTypeOther((uint32_t)CfgLoopTypeOther),
 
-        _BASSMIDIResamplingMode((unsigned int)CfgResamplingMode)
+        _BASSMIDIResamplingMode((uint32_t)CfgResamplingMode)
     {
         _FileStats = { 0 };
         _FileStats2 = { 0 };
@@ -115,12 +115,12 @@ public:
         _LengthInSamples = 0;
         _LengthInTicks = 0;
 
-        _CleanFlags = (unsigned int)(CfgEmuDeMIDIExclusion ? midi_container::CleanFlagEMIDI : 0) |
-                                    (CfgFilterInstruments ? midi_container::clean_flag_instruments : 0) |
-                                    (CfgFilterBanks ? midi_container::clean_flag_banks : 0);
+        _CleanFlags = (uint32_t)(CfgEmuDeMIDIExclusion ? midi_container::CleanFlagEMIDI : 0) |
+                                (CfgFilterInstruments ? midi_container::clean_flag_instruments : 0) |
+                                (CfgFilterBanks ? midi_container::clean_flag_banks : 0);
 
-        _LoopCount    = (unsigned int)AdvCfgLoopCount.get();
-        _FadeDuration = (unsigned int)AdvCfgFadeTimeInMS.get();
+        _LoopCount    = (uint32_t)AdvCfgLoopCount.get();
+        _FadeDuration = (uint32_t)AdvCfgFadeTimeInMS.get();
 
     #ifdef FLUIDSYNTHSUPPORT
         _FluidSynthInterpolationMethod(Cfg_FluidSynthInterpolationMethod),
@@ -331,7 +331,7 @@ private:
     uint32_t _BASSMIDIVoiceMax;
 
 #ifdef FLUIDSYNTHSUPPORT
-    unsigned int _FluidSynthInterpolationMethod;
+    uint32_t _FluidSynthInterpolationMethod;
 #endif
 
 #ifdef DXISUPPORT

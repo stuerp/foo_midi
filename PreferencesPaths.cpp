@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2023.01.06) **/
+/** $VER: PreferencesPaths.cpp (2023.05.20) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -299,25 +299,29 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 /// </summary>
 bool PreferencesPathsPage::HasChanged() const noexcept
 {
+    bool HasChanged = false;
+
     pfc::string8 DirectoryPath;
 
     AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
 
     if (_VSTiPluginDirectoryPath != DirectoryPath)
-        return true;
+        HasChanged = true;
 
     if (_SoundFontFilePath != CfgSoundFontFilePath)
-        return true;
+        HasChanged = true;
 
     if (_MT32ROMDirectoryPath != CfgMuntDirectoryPath)
-        return true;
+        HasChanged = true;
 
     AdvCfgSecretSauceDirectoryPath.get(DirectoryPath);
 
     if (_SecretSauceDirectoryPath != DirectoryPath)
-        return true;
+        HasChanged = true;
 
-    return false;
+    GetDlgItem(IDC_PATHS_MESSAGE).ShowWindow(HasChanged ? SW_SHOW : SW_HIDE);
+
+    return HasChanged;
 }
 
 /// <summary>
