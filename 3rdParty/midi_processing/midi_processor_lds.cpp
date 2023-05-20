@@ -43,11 +43,17 @@ static const unsigned char tremtab[] = {
 };
 #endif
 
-bool midi_processor::is_lds(std::vector<uint8_t> const & p_file, const char * p_extension)
+bool midi_processor::is_lds(std::vector<uint8_t> const & data, const char * fileExtension)
 {
-    if (strcasecmp(p_extension, "LDS")) return false;
-    if (p_file.size() < 1) return false;
-    if (p_file[0] > 2) return false;
+    if (_stricmp(fileExtension, "LDS"))
+        return false;
+
+    if (data.size() < 1)
+        return false;
+
+    if (data[0] > 2)
+        return false;
+
     return true;
 }
 

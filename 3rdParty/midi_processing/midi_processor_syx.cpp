@@ -5,7 +5,7 @@ bool midi_processor::IsSysEx(std::vector<uint8_t> const & data)
     if (data.size() < 2)
         return false;
 
-    if (data[0] != StatusCodes::SysEx || data[data.size() - 1] != StatusCodes::SysExContinuation)
+    if (data[0] != StatusCodes::SysEx || data[data.size() - 1] != StatusCodes::SysExEnd)
         return false;
 
     return true;
@@ -28,7 +28,7 @@ bool midi_processor::process_syx(std::vector<uint8_t> const & data, midi_contain
         if (data[Index] != StatusCodes::SysEx)
             return false;
 
-        while (data[Index + MessageLength++] != StatusCodes::SysExContinuation);
+        while (data[Index + MessageLength++] != StatusCodes::SysExEnd);
 
         Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, &data[Index], MessageLength));
 

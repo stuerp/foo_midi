@@ -218,7 +218,7 @@ bool midi_processor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data
             SysExTimestamp = Timestamp;
         }
         else
-        if (StatusCode == StatusCodes::SysExContinuation)
+        if (StatusCode == StatusCodes::SysExEnd)
         {
             if (SysExSize == 0)
                 return false;
@@ -278,7 +278,7 @@ bool midi_processor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data
             }
         }
         else
-        if ((StatusCodes::SysExContinuation < StatusCode) && (StatusCode < StatusCodes::MetaData)) //Sequencer specific events, single byte.
+        if ((StatusCodes::SysExEnd < StatusCode) && (StatusCode < StatusCodes::MetaData)) //Sequencer specific events, single byte.
         {
             Buffer[0] = StatusCode;
             Track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::Extended, 0, &Buffer[0], 1));

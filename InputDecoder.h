@@ -209,14 +209,14 @@ public:
     void remove_tags(abort_callback &) { }
     #pragma endregion
 
-    static bool g_is_our_content_type(const char * p_content_type)
+    static bool g_is_our_content_type(const char * contentType)
     {
-        return ::strcmp(p_content_type, "audio/midi") == 0;
+        return (contentType != nullptr) && ::strcmp(contentType, "audio/midi") == 0;
     }
 
-    static bool g_is_our_path(const char *, const char * p_extension)
+    static bool g_is_our_path(const char *, const char * fileExtension)
     {
-        return IsMIDIFileExtension(p_extension) || IsSysExFileExtension(p_extension);
+        return (fileExtension != nullptr) && (IsMIDIFileExtension(fileExtension) || IsSysExFileExtension(fileExtension));
     }
 
     static GUID g_get_guid()
@@ -231,11 +231,10 @@ public:
         return STR_COMPONENT_NAME;
     }
 
+    // Returns the GUID of the Preferences page (if there is one.)
     static GUID g_get_preferences_guid()
     {
-        static const GUID guid = COMPONENT_GUID;
-
-        return guid;
+        return PreferencesPageGUID;
     }
 
     static bool g_is_low_merit()

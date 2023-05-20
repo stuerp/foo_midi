@@ -41,8 +41,6 @@
 #define STR_ABOUT_WEB           TEXT("https://github.com/stuerp/foo_midi")
 #define STR_ABOUT_EMAIL         TEXT("mailto:peter.stuer@outlook.com")
 
-#define COMPONENT_GUID { 0x1623aa03, 0xbadc, 0x4bab, { 0x8a, 0x17, 0xc7, 0x37, 0xcf, 0x78, 0x26, 0x61 } }
-
 /** Dialog Preferences Root **/
 
 #define IDD_PREFERENCES_ROOT 106

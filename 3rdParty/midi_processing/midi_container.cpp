@@ -244,7 +244,7 @@ bool midi_meta_data::GetItem(const char * name, midi_meta_data_item & item) cons
     {
         const midi_meta_data_item & Item = _Items[i];
 
-        if (strcasecmp(name, Item.Name.c_str()) == 0)
+        if (_stricmp(name, Item.Name.c_str()) == 0)
         {
             item = Item;
             return true;
@@ -704,7 +704,7 @@ void midi_container::serialize_as_stream(size_t subSongIndex, std::vector<midi_s
                     }
                 }
                 else
-                if ((DataSize == 1) && (Event.Data[0] > StatusCodes::SysExContinuation))
+                if ((DataSize == 1) && (Event.Data[0] > StatusCodes::SysExEnd))
                 {
                     if (device_names[NextTrack].length())
                     {
@@ -1111,7 +1111,7 @@ void midi_container::GetMetaData(size_t subSongIndex, midi_meta_data & metaData)
                         Event.GetData(&Data[0], 2, DataSize);
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
-                        ::snprintf(Name, _countof(Name) - 1, "track_text_%02u", (unsigned int)i);
+                        ::sprintf_s(Name, _countof(Name) - 1, "track_text_%02u", (unsigned int)i);
                         metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
                         break;
 
@@ -1129,7 +1129,7 @@ void midi_container::GetMetaData(size_t subSongIndex, midi_meta_data & metaData)
                         Event.GetData(&Data[0], 2, DataSize);
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
-                        ::snprintf(Name, _countof(Name) - 1, "track_name_%02u", (unsigned int)i);
+                        ::sprintf_s(Name, _countof(Name) - 1, "track_name_%02u", (unsigned int)i);
                         metaData.AddItem(midi_meta_data_item(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
                         break;
 

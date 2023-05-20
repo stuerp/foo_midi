@@ -8,15 +8,30 @@
 #include <string>
 #include <vector>
 
-#ifdef _MSC_VER
-#define strcasecmp _stricmp
-#define snprintf sprintf_s
-#endif
-
 enum StatusCodes
 {
+    NoteOff = 0x80,
+    NoteOn = 0x90,
+    PolyphonicAftertouch = 0xA0,
+    ControlChange = 0xB0,
+    ProgramChange = 0xC0,
+    ChannelAftertouch = 0xD0,
+    PitchBendChange = 0xE0,
+
     SysEx = 0xF0,
-    SysExContinuation = 0xF7,
+    MIDITimeCodeQtrFrame = 0xF1,
+    SongPositionPointer = 0xF2,
+    SongSelect = 0xF3,
+
+    TuneRequest = 0xF6,
+    SysExEnd = 0xF7,
+    TimingClock = 0xF8,
+
+    Start = 0xFA,
+    Continue = 0xFB,
+    Stop = 0xFC,
+
+    ActiveSensing = 0xFE,
     MetaData = 0xFF
 };
 
