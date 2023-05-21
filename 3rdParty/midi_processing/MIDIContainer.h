@@ -174,20 +174,20 @@ private:
     std::vector<TempoEntry> _Entries;
 };
 
-struct system_exclusive_entry
+struct SysExEntry
 {
     size_t m_port;
     size_t m_offset;
     size_t m_length;
 
-    system_exclusive_entry() noexcept : m_port(0), m_offset(0), m_length(0)
+    SysExEntry() noexcept : m_port(0), m_offset(0), m_length(0)
     {
     }
-    system_exclusive_entry(const system_exclusive_entry & p_in);
-    system_exclusive_entry(std::size_t p_port, std::size_t p_offset, std::size_t p_length);
+    SysExEntry(const SysExEntry & p_in);
+    SysExEntry(std::size_t p_port, std::size_t p_offset, std::size_t p_length);
 };
 
-class system_exclusive_table
+class SysExTable
 {
 public:
     uint32_t add_entry(const uint8_t * p_data, std::size_t p_size, std::size_t p_port);
@@ -195,33 +195,33 @@ public:
 
 private:
     std::vector<uint8_t> m_data;
-    std::vector<system_exclusive_entry> m_entries;
+    std::vector<SysExEntry> m_entries;
 };
 
-struct midi_stream_event
+struct MIDIStreamEvent
 {
     uint32_t m_timestamp;
     uint32_t m_event;
 
-    midi_stream_event() noexcept : m_timestamp(0), m_event(0)
+    MIDIStreamEvent() noexcept : m_timestamp(0), m_event(0)
     {
     }
 
-    midi_stream_event(uint32_t timestamp, uint32_t event);
+    MIDIStreamEvent(uint32_t timestamp, uint32_t event);
 };
 
 #pragma warning(disable: 4820) // Padding added after data member
-struct midi_meta_data_item
+struct MIDIMetaDataItem
 {
     uint32_t Timestamp;
     std::string Name;
     std::string Value;
 
-    midi_meta_data_item() noexcept : Timestamp(0)
+    MIDIMetaDataItem() noexcept : Timestamp(0)
     {
     }
-    midi_meta_data_item(const midi_meta_data_item & item);
-    midi_meta_data_item(uint32_t timestamp, const char * name, const char * value);
+    MIDIMetaDataItem(const MIDIMetaDataItem & item);
+    MIDIMetaDataItem(uint32_t timestamp, const char * name, const char * value);
 };
 #pragma warning(default: 4820) // Padding added after data member
 
@@ -230,11 +230,11 @@ class midi_meta_data
 public:
     midi_meta_data() noexcept { }
 
-    void AddItem(const midi_meta_data_item & item);
+    void AddItem(const MIDIMetaDataItem & item);
 
     void Append(const midi_meta_data & data);
 
-    bool GetItem(const char * name, midi_meta_data_item & item) const;
+    bool GetItem(const char * name, MIDIMetaDataItem & item) const;
 
     bool GetBitmap(std::vector<uint8_t> & bitmap);
 
@@ -242,17 +242,17 @@ public:
 
     std::size_t GetCount() const;
 
-    const midi_meta_data_item & operator [] (size_t index) const;
+    const MIDIMetaDataItem & operator [] (size_t index) const;
 
 private:
-    std::vector<midi_meta_data_item> _Items;
+    std::vector<MIDIMetaDataItem> _Items;
     std::vector<uint8_t> _Bitmap;
 };
 
-class midi_container
+class MIDIContainer
 {
 public:
-    midi_container() : _Format(0), _Division(0)
+    MIDIContainer() : _Format(0), _Division(0)
     {
         _DeviceNames.resize(16);
     }
@@ -263,13 +263,13 @@ public:
     void AddEventToTrack(size_t trackIndex, const MIDIEvent & event);
 
     // These functions are really only designed to merge and later remove System Exclusive message dumps.
-    void MergeTracks(const midi_container & source);
+    void MergeTracks(const MIDIContainer & source);
     void SetTrackCount(uint32_t count);
     void SetExtraMetaData(const midi_meta_data & data);
 
     void ApplyHack(uint32_t hack);
 
-    void serialize_as_stream(size_t subSongIndex, std::vector<midi_stream_event> & p_stream, system_exclusive_table & p_system_exclusive, uint32_t & loop_start, uint32_t & loop_end, uint32_t clean_flags) const;
+    void serialize_as_stream(size_t subSongIndex, std::vector<MIDIStreamEvent> & p_stream, SysExTable & p_system_exclusive, uint32_t & loop_start, uint32_t & loop_end, uint32_t clean_flags) const;
 
     void serialize_as_standard_midi_file(std::vector<uint8_t> & data) const;
 

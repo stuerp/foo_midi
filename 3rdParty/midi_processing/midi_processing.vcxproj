@@ -19,28 +19,29 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="midi_container.cpp" />
-    <ClCompile Include="midi_processor_gmf.cpp" />
-    <ClCompile Include="midi_processor.cpp" />
-    <ClCompile Include="midi_processor_hmi.cpp" />
-    <ClCompile Include="midi_processor_hmp.cpp" />
-    <ClCompile Include="midi_processor_lds.cpp" />
-    <ClCompile Include="midi_processor_mids.cpp" />
-    <ClCompile Include="midi_processor_mus.cpp" />
-    <ClCompile Include="midi_processor_RIFF.cpp" />
-    <ClCompile Include="midi_processor_SMF.cpp" />
-    <ClCompile Include="midi_processor_syx.cpp" />
-    <ClCompile Include="midi_processor_xmi.cpp" />
+    <ClCompile Include="MIDIContainer.cpp" />
+    <ClCompile Include="MIDIProcessorGMF.cpp" />
+    <ClCompile Include="MIDIProcessor.cpp" />
+    <ClCompile Include="MIDIProcessorHMI.cpp" />
+    <ClCompile Include="MIDIProcessorHMP.cpp" />
+    <ClCompile Include="MIDIProcessorLDS.cpp" />
+    <ClCompile Include="MIDIProcessorMIDS.cpp" />
+    <ClCompile Include="MIDIProcessorMUS.cpp" />
+    <ClCompile Include="MIDIProcessorRIFF.cpp" />
+    <ClCompile Include="MIDIProcessorSMF.cpp" />
+    <ClCompile Include="MIDIProcessorSyx.cpp" />
+    <ClCompile Include="MIDIProcessorXMI.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="midi_container.h" />
-    <ClInclude Include="midi_processor.h" />
+    <ClInclude Include="MIDIContainer.h" />
+    <ClInclude Include="MIDIProcessor.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4573E081-973B-47F0-A67D-551761BA1678}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>midi_processing</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>libmidi</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

@@ -1,13 +1,13 @@
-#include "midi_processor.h"
+#include "MIDIProcessor.h"
 
-bool midi_processor::is_gmf(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::is_gmf(std::vector<uint8_t> const & p_file)
 {
     if (p_file.size() < 32) return false;
     if (p_file[0] != 'G' || p_file[1] != 'M' || p_file[2] != 'F' || p_file[3] != 1) return false;
     return true;
 }
 
-bool midi_processor::process_gmf(std::vector<uint8_t> const & p_file, midi_container & p_out)
+bool MIDIProcessor::process_gmf(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
 {
     uint8_t buffer[10];
 

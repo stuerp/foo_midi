@@ -1,10 +1,10 @@
-#include "midi_processor.h"
+#include "MIDIProcessor.h"
 
-const uint8_t midi_processor::mus_default_tempo[5] = { 0xFF, 0x51, 0x09, 0xA3, 0x1A };
+const uint8_t MIDIProcessor::mus_default_tempo[5] = { 0xFF, 0x51, 0x09, 0xA3, 0x1A };
 
-const uint8_t midi_processor::mus_controllers[15] = { 0,0,1,7,10,11,91,93,64,67,120,123,126,127,121 };
+const uint8_t MIDIProcessor::mus_controllers[15] = { 0,0,1,7,10,11,91,93,64,67,120,123,126,127,121 };
 
-bool midi_processor::is_mus(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::is_mus(std::vector<uint8_t> const & p_file)
 {
     if (p_file.size() < 0x20) return false;
     if (p_file[0] != 'M' || p_file[1] != 'U' || p_file[2] != 'S' || p_file[3] != 0x1A) return false;
@@ -15,7 +15,7 @@ bool midi_processor::is_mus(std::vector<uint8_t> const & p_file)
     return false;
 }
 
-bool midi_processor::process_mus(std::vector<uint8_t> const & p_file, midi_container & p_out)
+bool MIDIProcessor::process_mus(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
 {
     uint16_t length = p_file[4] | (p_file[5] << 8);
     uint16_t offset = p_file[6] | (p_file[7] << 8);

@@ -16,7 +16,7 @@
 
 #include <pfc/synchro.h>
 
-#include <midi_processing/midi_processor.h>
+#include <midi_processing/MIDIProcessor.h>
 
 #include "Configuration.h"
 #include "FileHasher.h"
@@ -115,9 +115,9 @@ public:
         _LengthInSamples = 0;
         _LengthInTicks = 0;
 
-        _CleanFlags = (uint32_t)(CfgEmuDeMIDIExclusion ? midi_container::CleanFlagEMIDI : 0) |
-                                (CfgFilterInstruments ? midi_container::clean_flag_instruments : 0) |
-                                (CfgFilterBanks ? midi_container::clean_flag_banks : 0);
+        _CleanFlags = (uint32_t)(CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
+                                (CfgFilterInstruments ? MIDIContainer::clean_flag_instruments : 0) |
+                                (CfgFilterBanks ? MIDIContainer::clean_flag_banks : 0);
 
         _LoopCount    = (uint32_t)AdvCfgLoopCount.get();
         _FadeDuration = (uint32_t)AdvCfgFadeTimeInMS.get();
@@ -276,7 +276,7 @@ private:
     t_filestats _FileStats;
     t_filestats2 _FileStats2;
 
-    midi_container _Container;
+    MIDIContainer _Container;
 
     bool _IsSysExFile;
     size_t _TrackCount;

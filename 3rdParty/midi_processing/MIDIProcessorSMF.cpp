@@ -1,6 +1,6 @@
-#include "midi_processor.h"
+#include "MIDIProcessor.h"
 
-bool midi_processor::IsSMF(std::vector<uint8_t> const & data)
+bool MIDIProcessor::IsSMF(std::vector<uint8_t> const & data)
 {
     if (data.size() < 18)
         return false;
@@ -23,7 +23,7 @@ bool midi_processor::IsSMF(std::vector<uint8_t> const & data)
     return true;
 }
 
-bool midi_processor::GetTrackCount(std::vector<uint8_t> const & data, size_t & trackCount)
+bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, size_t & trackCount)
 {
     trackCount = 0;
 
@@ -45,7 +45,7 @@ bool midi_processor::GetTrackCount(std::vector<uint8_t> const & data, size_t & t
     return true;
 }
 
-bool midi_processor::ProcessSMF(std::vector<uint8_t> const & data, midi_container & container)
+bool MIDIProcessor::ProcessSMF(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
     if (data.size() < (4 + 4 + 6))
         return false;
@@ -103,7 +103,7 @@ bool midi_processor::ProcessSMF(std::vector<uint8_t> const & data, midi_containe
     return true;
 }
 
-bool midi_processor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail, midi_container & container, bool trackNeedsEndMarker)
+bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail, MIDIContainer & container, bool trackNeedsEndMarker)
 {
     MIDITrack Track;
 

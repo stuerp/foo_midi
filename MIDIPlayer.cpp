@@ -20,7 +20,7 @@ MIDIPlayer::MIDIPlayer()
     _IsInitialized = false;
 }
 
-bool MIDIPlayer::Load(const midi_container & midiContainer, unsigned subsongIndex, unsigned loopMode, unsigned cleanFlags)
+bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex, unsigned loopMode, unsigned cleanFlags)
 {
     assert(_Stream.size() == 0);
 
@@ -98,7 +98,7 @@ bool MIDIPlayer::Load(const midi_container & midiContainer, unsigned subsongInde
                     {
                         if (NoteOn.at(i) & (1 << j))
                         {
-                            _Stream.push_back(midi_stream_event((unsigned long)_EndTime, static_cast<uint32_t>((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                            _Stream.push_back(MIDIStreamEvent((unsigned long)_EndTime, static_cast<uint32_t>((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
                         }
                     }
                 }
@@ -182,7 +182,7 @@ unsigned long MIDIPlayer::Play(audio_sample * samples, unsigned long samplesSize
             {
                 for (; _CurrentPosition < TargetPosition; _CurrentPosition++)
                 {
-                    const midi_stream_event & me = _Stream.at(_CurrentPosition);
+                    const MIDIStreamEvent & me = _Stream.at(_CurrentPosition);
 
                 #ifdef EXPERIMENT
                     if (_MusicKeyboard.is_valid())
@@ -354,7 +354,7 @@ void MIDIPlayer::Seek(unsigned long seekTime)
     if (_CurrentPosition <= OldCurrentPosition)
         return;
 
-    std::vector<midi_stream_event> FillerEvents;
+    std::vector<MIDIStreamEvent> FillerEvents;
 
     FillerEvents.resize(_CurrentPosition - OldCurrentPosition);
     FillerEvents.assign(&_Stream.at(OldCurrentPosition), &_Stream.at(_CurrentPosition));
@@ -363,7 +363,7 @@ void MIDIPlayer::Seek(unsigned long seekTime)
 
     for (size_t i = 0; i < OldCurrentPosition; i++)
     {
-        midi_stream_event & e = FillerEvents.at(i);
+        MIDIStreamEvent & e = FillerEvents.at(i);
 
         if ((e.m_event & 0x800000F0) == 0x90 && (e.m_event & 0xFF0000)) // note on
         {
@@ -378,7 +378,7 @@ void MIDIPlayer::Seek(unsigned long seekTime)
 
             for (size_t j = i + 1; j < OldCurrentPosition; j++)
             {
-                midi_stream_event & e2 = FillerEvents.at(j);
+                MIDIStreamEvent & e2 = FillerEvents.at(j);
 
                 if ((e2.m_event & 0xFF00FFFF) == m || e2.m_event == m2)
                 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "midi_container.h"
+#include "MIDIContainer.h"
 
 #ifndef _countof
 template <typename T, size_t N>
@@ -8,11 +8,11 @@ char(&_ArraySizeHelper(T(&array)[N]))[N];
 #define _countof(array) (sizeof( _ArraySizeHelper(array)))
 #endif
 
-class midi_processor
+class MIDIProcessor
 {
 public:
-    static bool Process(std::vector<uint8_t> const & data, const char * fileExtension, midi_container & container);
-    static bool ProcessSysEx(std::vector<uint8_t> const & data, midi_container & container);
+    static bool Process(std::vector<uint8_t> const & data, const char * fileExtension, MIDIContainer & container);
+    static bool ProcessSysEx(std::vector<uint8_t> const & data, MIDIContainer & container);
 
     static bool GetTrackCount(std::vector<uint8_t> const & data, const char * fileExtension, size_t & trackCount);
 
@@ -45,20 +45,20 @@ private:
     static bool is_gmf(std::vector<uint8_t> const & data);
     static bool IsSysEx(std::vector<uint8_t> const & data);
 
-    static bool ProcessSMF(std::vector<uint8_t> const & data, midi_container & container);
-    static bool ProcessRIFF(std::vector<uint8_t> const & data, midi_container & container);
-    static bool process_hmp(std::vector<uint8_t> const & data, midi_container & container);
-    static bool process_hmi(std::vector<uint8_t> const & data, midi_container & container);
-    static bool process_xmi(std::vector<uint8_t> const & data, midi_container & container);
-    static bool process_mus(std::vector<uint8_t> const & data, midi_container & container);
-    static bool process_mids(std::vector<uint8_t> const & data, midi_container & container);
-    static bool process_lds(std::vector<uint8_t> const & data, midi_container & container);
-    static bool process_gmf(std::vector<uint8_t> const & data, midi_container & container);
-    static bool process_syx(std::vector<uint8_t> const & data, midi_container & container);
+    static bool ProcessSMF(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool ProcessRIFF(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool process_hmp(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool process_hmi(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool process_xmi(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool process_mus(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool process_mids(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool process_lds(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool process_gmf(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool process_syx(std::vector<uint8_t> const & data, MIDIContainer & container);
 
     static bool GetTrackCount(std::vector<uint8_t> const & data, size_t & trackCount);
     static bool GetTrackCountFromRIFF(std::vector<uint8_t> const & data, size_t & trackCount);
     static bool GetTrackCountFromXMI(std::vector<uint8_t> const & data, size_t & trackCount);
 
-    static bool ProcessSMFTrack(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end, midi_container & container, bool needs_end_marker);
+    static bool ProcessSMFTrack(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end, MIDIContainer & container, bool needs_end_marker);
 };

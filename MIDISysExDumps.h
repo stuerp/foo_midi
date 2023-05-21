@@ -7,7 +7,7 @@
 
 #include <sdk/foobar2000-lite.h>
 
-#include <midi_processing/midi_processor.h>
+#include <midi_processing/MIDIProcessor.h>
 
 class MIDISysExDumps
 {
@@ -22,7 +22,7 @@ public:
     void Serialize(const char * filePath, pfc::string8 & text);
     void Deserialize(const char * text, const char * filePath);
 
-    void Merge(midi_container & container, abort_callback & abortHandler);
+    void Merge(MIDIContainer & container, abort_callback & abortHandler);
 
 private:
     static void CreateRelativePath(const char * filePath, const char * directoryPath, pfc::string_base & p_out);

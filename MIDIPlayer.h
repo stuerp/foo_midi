@@ -8,7 +8,7 @@
 
 #include <sdk/foobar2000-lite.h>
 
-#include <midi_processing/midi_container.h>
+#include <midi_processing/MIDIContainer.h>
 
 #ifdef EXPERIMENT
 #include <API.h>
@@ -21,7 +21,7 @@ public:
     MIDIPlayer();
     virtual ~MIDIPlayer() { };
 
-    bool Load(const midi_container & midiContainer, unsigned int subsongIndex, unsigned int loopMode, unsigned int cleanFlags);
+    bool Load(const MIDIContainer & midiContainer, unsigned int subsongIndex, unsigned int loopMode, unsigned int cleanFlags);
     unsigned long Play(audio_sample * samples, unsigned long samplesSize);
     void Seek(unsigned long seekTime);
 
@@ -70,7 +70,7 @@ protected:
 protected:
     bool _IsInitialized;
     unsigned long _SampleRate;
-    system_exclusive_table _SysExMap;
+    SysExTable _SysExMap;
 
     FilterType _FilterType;
     bool _FilterEffects;
@@ -85,7 +85,7 @@ private:
     void SendSysExResetSC(size_t port, unsigned int time);
     void SendSysExGS(uint8_t * data, size_t size, size_t port, unsigned int time);
 
-    std::vector<midi_stream_event> _Stream;
+    std::vector<MIDIStreamEvent> _Stream;
 
     size_t _CurrentPosition; // Current position in the MIDI stream
     size_t _CurrentTime;

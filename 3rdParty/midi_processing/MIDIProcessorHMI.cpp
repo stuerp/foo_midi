@@ -1,6 +1,6 @@
-#include "midi_processor.h"
+#include "MIDIProcessor.h"
 
-bool midi_processor::is_hmi(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::is_hmi(std::vector<uint8_t> const & p_file)
 {
     if (p_file.size() < 12) return false;
     if (p_file[0] != 'H' || p_file[1] != 'M' || p_file[2] != 'I' || p_file[3] != '-' ||
@@ -9,7 +9,7 @@ bool midi_processor::is_hmi(std::vector<uint8_t> const & p_file)
     return true;
 }
 
-bool midi_processor::process_hmi(std::vector<uint8_t> const & p_file, midi_container & p_out)
+bool MIDIProcessor::process_hmi(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
 {
     std::vector<uint8_t> buffer;
 

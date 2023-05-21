@@ -1,8 +1,8 @@
-#include "midi_processor.h"
+#include "MIDIProcessor.h"
 
 #include <string.h>
 
-const uint8_t midi_processor::lds_default_tempo[5] = { 0xFF, 0x51, 0x07, 0xA1, 0x20 };
+const uint8_t MIDIProcessor::lds_default_tempo[5] = { 0xFF, 0x51, 0x07, 0xA1, 0x20 };
 
 #define ENABLE_WHEEL
 //#define ENABLE_VIB
@@ -43,7 +43,7 @@ static const unsigned char tremtab[] = {
 };
 #endif
 
-bool midi_processor::is_lds(std::vector<uint8_t> const & data, const char * fileExtension)
+bool MIDIProcessor::is_lds(std::vector<uint8_t> const & data, const char * fileExtension)
 {
     if (_stricmp(fileExtension, "LDS"))
         return false;
@@ -320,7 +320,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
     c->nextvol = c->finetune = 0;
 }
 
-bool midi_processor::process_lds(std::vector<uint8_t> const & p_file, midi_container & p_out)
+bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
 {
     struct position_data
     {

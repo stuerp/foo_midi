@@ -108,9 +108,9 @@ void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const
 
             File->read_object(&Data[0], FileSize, AbortHandler);
 
-            midi_container Container;
+            MIDIContainer Container;
 
-            if (midi_processor::Process(Data, pfc::string_extension(Location.get_path()), Container))
+            if (MIDIProcessor::Process(Data, pfc::string_extension(Location.get_path()), Container))
             {
                 Data.resize(0);
 

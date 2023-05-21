@@ -50,7 +50,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
         if (_IsSysExFile)
         {
-            if (!midi_processor::ProcessSysEx(Data, _Container))
+            if (!MIDIProcessor::ProcessSysEx(Data, _Container))
                 throw exception_io_data("Invalid SysEx dump");
 
             return;
@@ -58,7 +58,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     }
 
     {
-        if (!midi_processor::Process(Data, pfc::string_extension(filePath), _Container))
+        if (!MIDIProcessor::Process(Data, pfc::string_extension(filePath), _Container))
             throw exception_io_data("Invalid MIDI file");
 
         _TrackCount = (size_t)_Container.GetTrackCount();
@@ -1133,14 +1133,14 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
     _Container.GetMetaData(subSongIndex, MetaData);
 
-    midi_meta_data_item Item;
+    MIDIMetaDataItem Item;
 
     {
         bool HasTitle = MetaData.GetItem("title", Item);
 
         for (t_size i = 0; i < MetaData.GetCount(); ++i)
         {
-            const midi_meta_data_item& mdi = MetaData[i];
+            const MIDIMetaDataItem& mdi = MetaData[i];
 
         #ifdef _DEBUG
             pfc::string8 Text; Text << mdi.Name.c_str() << ":" << mdi.Value.c_str(); console::print(Text);

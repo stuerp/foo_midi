@@ -1,8 +1,8 @@
-#include "midi_processor.h"
+#include "MIDIProcessor.h"
 
 #include <string.h>
 
-bool midi_processor::is_xmi(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::is_xmi(std::vector<uint8_t> const & p_file)
 {
     if (p_file.size() < 0x22) return false;
     if (p_file[0] != 'F' || p_file[1] != 'O' || p_file[2] != 'R' || p_file[3] != 'M' ||
@@ -11,9 +11,9 @@ bool midi_processor::is_xmi(std::vector<uint8_t> const & p_file)
     return true;
 }
 
-const uint8_t midi_processor::xmi_default_tempo[5] = { 0xFF, 0x51, 0x07, 0xA1, 0x20 };
+const uint8_t MIDIProcessor::xmi_default_tempo[5] = { 0xFF, 0x51, 0x07, 0xA1, 0x20 };
 
-unsigned midi_processor::decode_xmi_delta(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
+unsigned MIDIProcessor::decode_xmi_delta(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
 {
     unsigned delta = 0;
     if (it == end) return 0;
@@ -168,7 +168,7 @@ static bool read_iff_stream(std::vector<uint8_t> const & p_file, iff_stream & p_
     return true;
 }
 
-bool midi_processor::GetTrackCountFromXMI(std::vector<uint8_t> const & data, size_t & trackCount)
+bool MIDIProcessor::GetTrackCountFromXMI(std::vector<uint8_t> const & data, size_t & trackCount)
 {
     trackCount = 0;
 
@@ -194,7 +194,7 @@ bool midi_processor::GetTrackCountFromXMI(std::vector<uint8_t> const & data, siz
     return true;
 }
 
-bool midi_processor::process_xmi(std::vector<uint8_t> const & p_file, midi_container & p_out)
+bool MIDIProcessor::process_xmi(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
 {
     iff_stream xmi_file;
     if (!read_iff_stream(p_file, xmi_file)) return false;

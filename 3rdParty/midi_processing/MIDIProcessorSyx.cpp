@@ -1,6 +1,6 @@
-#include "midi_processor.h"
+#include "MIDIProcessor.h"
 
-bool midi_processor::IsSysEx(std::vector<uint8_t> const & data)
+bool MIDIProcessor::IsSysEx(std::vector<uint8_t> const & data)
 {
     if (data.size() < 2)
         return false;
@@ -11,7 +11,7 @@ bool midi_processor::IsSysEx(std::vector<uint8_t> const & data)
     return true;
 }
 
-bool midi_processor::process_syx(std::vector<uint8_t> const & data, midi_container & container)
+bool MIDIProcessor::process_syx(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
     const size_t Size = data.size();
 

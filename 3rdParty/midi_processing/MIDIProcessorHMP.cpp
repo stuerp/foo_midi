@@ -1,8 +1,8 @@
-#include "midi_processor.h"
+#include "MIDIProcessor.h"
 
-const uint8_t midi_processor::hmp_default_tempo[5] = { 0xFF, 0x51, 0x18, 0x80, 0x00 };
+const uint8_t MIDIProcessor::hmp_default_tempo[5] = { 0xFF, 0x51, 0x18, 0x80, 0x00 };
 
-bool midi_processor::is_hmp(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::is_hmp(std::vector<uint8_t> const & p_file)
 {
     if (p_file.size() < 8) return false;
     if (p_file[0] != 'H' || p_file[1] != 'M' || p_file[2] != 'I' || p_file[3] != 'M' ||
@@ -11,7 +11,7 @@ bool midi_processor::is_hmp(std::vector<uint8_t> const & p_file)
     return true;
 }
 
-unsigned midi_processor::decode_hmp_delta(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
+unsigned MIDIProcessor::decode_hmp_delta(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
 {
     unsigned delta = 0;
     unsigned shift = 0;
@@ -27,7 +27,7 @@ unsigned midi_processor::decode_hmp_delta(std::vector<uint8_t>::const_iterator &
     return delta;
 }
 
-bool midi_processor::process_hmp(std::vector<uint8_t> const & p_file, midi_container & p_out)
+bool MIDIProcessor::process_hmp(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
 {
     bool is_funky = p_file[7] == 'R';
 
