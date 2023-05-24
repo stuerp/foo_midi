@@ -595,11 +595,6 @@ bool VSTiPlayer::Startup()
     return true;
 }
 
-unsigned VSTiPlayer::getChannelCount() noexcept
-{
-    return _ChannelCount;
-}
-
 void VSTiPlayer::SendEvent(uint32_t b)
 {
     process_write_code(7);

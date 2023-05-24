@@ -30,7 +30,7 @@ public:
     void displayEditorModal();
 
     // Setup
-    unsigned getChannelCount() noexcept;
+    virtual unsigned GetChannelCount() const noexcept override { return _ChannelCount; }
 
 protected:
     virtual bool Startup() override;

@@ -22,8 +22,12 @@ public:
     MT32Player(bool gm = false, unsigned gm_set = 0);
     virtual ~MT32Player();
 
+    virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept override
+    {
+        _AbortCallback = abortHandler;
+    }
+
     void setBasePath(const char * in);
-    void setAbortCallback(foobar2000_io::abort_callback * in);
 
     bool isConfigValid();
 

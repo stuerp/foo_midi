@@ -526,7 +526,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
 
             Player->setBasePath(BasePath);
-            Player->setAbortCallback(&abortHandler);
+            Player->SetAbortHandler(&abortHandler);
 
             if (!Player->isConfigValid())
             {
@@ -689,54 +689,6 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
     bool Success = false;
 
-    if (_PlayerType == PlayerTypeVSTi)
-    {
-        auto * Player = (VSTiPlayer *) _Player;
-
-        const size_t SamplesTodo = 4096;
-        const size_t ChannelCount = Player->getChannelCount();
-
-        audioChunk.set_data_size(SamplesTodo * ChannelCount);
-
-        audio_sample * Samples = audioChunk.get_data();
-
-        size_t SamplesDone = Player->Play(Samples, (unsigned long)SamplesTodo);
-
-        if (SamplesDone == 0)
-            return false;
-
-        audioChunk.set_srate(_SampleRate);
-        audioChunk.set_channels((unsigned int)ChannelCount);
-        audioChunk.set_sample_count(SamplesDone);
-
-        Success = true;
-    }
-    else
-    if (_PlayerType == PlayerTypeSuperMunt)
-    {
-        auto * mt32Player = (MT32Player *) _Player;
-
-        const size_t SamplesToDo = 4096;
-        const size_t ChannelCount = 2;
-
-        audioChunk.set_data_size(SamplesToDo * ChannelCount);
-
-        audio_sample * Samples = audioChunk.get_data();
-
-        mt32Player->setAbortCallback(&abortHandler);
-
-        size_t SamplesDone = mt32Player->Play(Samples, (unsigned long)SamplesToDo);
-
-        if (SamplesDone == 0)
-            return false;
-
-        audioChunk.set_srate(_SampleRate);
-        audioChunk.set_channels((unsigned int)ChannelCount);
-        audioChunk.set_sample_count(SamplesDone);
-
-        Success = true;
-    }
-    else
 #ifdef DXISUPPORT
     if (_PlayerType == PlayerTypeDirectX)
     {
@@ -774,14 +726,65 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     }
     else
 #endif
-    if (_Player)
+/*
+    if (_PlayerType == PlayerTypeVSTi)
     {
+        auto * Player = (VSTiPlayer *) _Player;
+
+        const size_t SamplesTodo = 4096;
+        const size_t ChannelCount = Player->GetChannelCount();
+
+        audioChunk.set_data_size(SamplesTodo * ChannelCount);
+
+        audio_sample * Samples = audioChunk.get_data();
+
+        size_t SamplesDone = Player->Play(Samples, (unsigned long)SamplesTodo);
+
+        if (SamplesDone == 0)
+            return false;
+
+        audioChunk.set_srate(_SampleRate);
+        audioChunk.set_channels((unsigned int)ChannelCount);
+        audioChunk.set_sample_count(SamplesDone);
+
+        Success = true;
+    }
+    else
+    if (_PlayerType == PlayerTypeSuperMunt)
+    {
+        auto * mt32Player = (MT32Player *) _Player;
+
         const size_t SamplesToDo = 4096;
         const size_t ChannelCount = 2;
 
         audioChunk.set_data_size(SamplesToDo * ChannelCount);
 
         audio_sample * Samples = audioChunk.get_data();
+
+        mt32Player->SetAbortCallback(&abortHandler);
+
+        size_t SamplesDone = mt32Player->Play(Samples, (unsigned long)SamplesToDo);
+
+        if (SamplesDone == 0)
+            return false;
+
+        audioChunk.set_srate(_SampleRate);
+        audioChunk.set_channels((unsigned int)ChannelCount);
+        audioChunk.set_sample_count(SamplesDone);
+
+        Success = true;
+    }
+    else*/
+    if (_Player)
+    {
+        const size_t SamplesToDo = 4096;
+        const size_t ChannelCount = _Player->GetChannelCount();
+
+        audioChunk.set_data_size(SamplesToDo * ChannelCount);
+
+        audio_sample * Samples = audioChunk.get_data();
+
+        _Player->SetAbortHandler(&abortHandler);
 
         size_t SamplesDone = _Player->Play(Samples, (unsigned long)SamplesToDo);
 

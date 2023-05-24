@@ -49,6 +49,8 @@ public:
 
     void SetFilter(FilterType filterType, bool filterEffects);
 
+    virtual unsigned GetChannelCount() const noexcept { return 2; }
+    virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept { UNREFERENCED_PARAMETER(abortHandler); }
     virtual bool GetErrorMessage(std::string &) { return false; }
 
 protected:
