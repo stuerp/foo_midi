@@ -8,7 +8,7 @@
 
 #include <sdk/foobar2000-lite.h>
 
-#include <midi_processing/MIDIContainer.h>
+#include <libmidi/MIDIContainer.h>
 
 #ifdef EXPERIMENT
 #include <API.h>

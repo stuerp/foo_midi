@@ -100,6 +100,10 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
+v2.8.3.0, 2023-xx-xx, *""*
+
+* Cue Marker, Lyrics, Time Signature and Key Signature meta events are now converted to tags.
+
 v2.8.2.0, 2023-05-20, *"Spring Cleaning"*
 
 * Bug Fix: MIDI files with malformed tracks caused a crash.

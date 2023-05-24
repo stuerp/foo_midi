@@ -2,34 +2,45 @@
 
 #include <string.h>
 
-bool MIDIProcessor::is_xmi(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::is_xmi(std::vector<uint8_t> const & data)
 {
-    if (p_file.size() < 0x22) return false;
-    if (p_file[0] != 'F' || p_file[1] != 'O' || p_file[2] != 'R' || p_file[3] != 'M' ||
-        p_file[8] != 'X' || p_file[9] != 'D' || p_file[10] != 'I' || p_file[11] != 'R' ||
-        p_file[0x1E] != 'X' || p_file[0x1F] != 'M' || p_file[0x20] != 'I' || p_file[0x21] != 'D') return false;
+    if (data.size() < 0x22)
+        return false;
+
+    if (data[0] != 'F' || data[1] != 'O' || data[2] != 'R' || data[3] != 'M' || data[8] != 'X' || data[9] != 'D' || data[10] != 'I' || data[11] != 'R' || data[0x1E] != 'X' || data[0x1F] != 'M' || data[0x20] != 'I' || data[0x21] != 'D')
+        return false;
+
     return true;
 }
 
 const uint8_t MIDIProcessor::xmi_default_tempo[5] = { 0xFF, 0x51, 0x07, 0xA1, 0x20 };
 
-unsigned MIDIProcessor::decode_xmi_delta(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
+uint32_t MIDIProcessor::DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
 {
-    unsigned delta = 0;
-    if (it == end) return 0;
-    uint8_t byte = *it++;
-    if (!(byte & 0x80))
+    uint32_t Quantity = 0;
+
+    if (it == end)
+        return 0;
+
+    uint8_t Byte = *it++;
+
+    if (!(Byte & 0x80))
     {
         do
         {
-            delta += byte;
-            if (it == end) break;
-            byte = *it++;
+            Quantity += Byte;
+
+            if (it == end)
+                break;
+
+            Byte = *it++;
         }
-        while (!(byte & 0x80) && it != end);
+        while (!(Byte & 0x80) && it != end);
     }
+
     --it;
-    return delta;
+
+    return Quantity;
 }
 
 struct iff_chunk
@@ -233,7 +244,7 @@ bool MIDIProcessor::process_xmi(std::vector<uint8_t> const & p_file, MIDIContain
 
         while (it != end)
         {
-            unsigned delta = decode_xmi_delta(it, end);
+            unsigned delta = DecodeVariableLengthQuantityXMI(it, end);
             current_timestamp += delta;
 
             if (current_timestamp > last_event_timestamp)

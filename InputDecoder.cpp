@@ -934,7 +934,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
 #pragma region("input_info_reader")
 /// <summary>
-/// Retrieves information about specified subsong.
+/// Retrieves information about the specified subsong.
 /// </summary>
 void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
 {
@@ -1129,48 +1129,59 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string
 /// </summary>
 void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
 {
-    midi_meta_data MetaData;
+    _IsMT32 = false;
 
-    _Container.GetMetaData(subSongIndex, MetaData);
-
-    MIDIMetaDataItem Item;
+    pfc::string8 Lyrics;
 
     {
-        bool HasTitle = MetaData.GetItem("title", Item);
+        MIDIMetaData MetaData;
 
-        for (t_size i = 0; i < MetaData.GetCount(); ++i)
+        _Container.GetMetaData(subSongIndex, MetaData);
+
+        MIDIMetaDataItem Item;
+
         {
-            const MIDIMetaDataItem& mdi = MetaData[i];
+            bool HasTitle = MetaData.GetItem("title", Item);
 
-        #ifdef _DEBUG
-            pfc::string8 Text; Text << mdi.Name.c_str() << ":" << mdi.Value.c_str(); console::print(Text);
-        #endif
+            for (t_size i = 0; i < MetaData.GetCount(); ++i)
+            {
+                const MIDIMetaDataItem& mdi = MetaData[i];
 
-            if (pfc::stricmp_ascii(mdi.Name.c_str(), "type") == 0)
-                continue;
+            #ifdef _DEBUG
+                pfc::string8 Text; Text << mdi.Name.c_str() << ":" << mdi.Value.c_str(); console::print(Text);
+            #endif
 
-            std::string Name = mdi.Name;
+                if (pfc::stricmp_ascii(mdi.Name.c_str(), "type") == 0)
+                {
+                    fileInfo.info_set(TagMIDIType, mdi.Value.c_str());
 
-            if (!HasTitle && (pfc::stricmp_ascii(Name.c_str(), "display_name") == 0))
-                Name = "title";
+                    _IsMT32 = (Item.Value == "MT-32");
+                }
+                else
+                if (pfc::stricmp_ascii(mdi.Name.c_str(), "lyrics") == 0)
+                {
+                    Lyrics += mdi.Value.c_str();
+                }
+                else
+                {
+                    std::string Name = mdi.Name;
 
-            AddTag(fileInfo, Name.c_str(), mdi.Value.c_str(), 0);
+                    if (!HasTitle && (pfc::stricmp_ascii(Name.c_str(), "display_name") == 0))
+                        Name = "title";
+
+                    AddTag(fileInfo, Name.c_str(), mdi.Value.c_str(), 0);
+                }
+            }
         }
     }
+
+    if (!Lyrics.is_empty())
+        fileInfo.meta_set("lyrics", Lyrics);
 
     fileInfo.info_set_int(TagMIDIFormat,       _Container.GetFormat());
     fileInfo.info_set_int(TagMIDITrackCount,   _Container.GetFormat() == 2 ? 1 : _Container.GetTrackCount());
     fileInfo.info_set_int(TagMIDIChannelCount, _Container.GetChannelCount(subSongIndex));
     fileInfo.info_set_int(TagMIDITicks,        _Container.GetDuration(subSongIndex));
-
-    if (MetaData.GetItem("type", Item))
-    {
-        fileInfo.info_set(TagMIDIType, Item.Value.c_str());
-
-        _IsMT32 = (Item.Value == "MT-32");
-    }
-    else
-        _IsMT32 = false;
 
     {
         uint32_t LoopBegin = _Container.GetLoopBeginTimestamp(subSongIndex);
@@ -1202,13 +1213,15 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
         static_api_ptr_t<metadb_index_manager>()->get_user_data_t(GUIDTagMIDIHash, _Hash, Tags);
 
-        if (Tags.get_count())
+        t_size TagCount = Tags.get_count();
+
+        if (TagCount > 0)
         {
             file::ptr File;
 
             filesystem::g_open_tempmem(File, abortHandler);
 
-            File->write_object(Tags.get_ptr(), Tags.get_count(), abortHandler);
+            File->write_object(Tags.get_ptr(), TagCount, abortHandler);
 
             fileInfo.meta_remove_all();
 
@@ -1218,7 +1231,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         }
     }
 }
-
+/*
 /// <summary>
 /// Returns the number of bytes required to represent a Shift-JIS character.
 /// </summary>
@@ -1270,17 +1283,17 @@ static bool IsValidShiftJISOld(const char * data, size_t size)
 
     return true;
 }
-
+*/
 /// <summary>
 /// Is the data a Shift-JIS string?
 /// char ShiftJIS[] = { 0x82, 0xA0, 0x82, 0xA2, 0x82, 0xA4 }; / char UTF8[] = { 0xE3, 0x81, 0x82, 0xE3, 0x81, 0x84, 0xE3, 0x81, 0x86 };
 /// </summary>
-static bool IsValidShiftJIS(const char * data, size_t size)
+static bool IsValidShiftJIS(const char * data)
 {
     bool Result = false;
 
-    unsigned char d1 = data[0];
-    unsigned char d2 = data[1];
+    unsigned char d1 = (unsigned char)data[0];
+    unsigned char d2 = (unsigned char)data[1];
 
     int j1 = 0;
     int j2 = 0;
@@ -1359,7 +1372,7 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
     if (pfc::is_lower_ascii(value) || pfc::is_valid_utf8(value, maxLength))
         fileInfo.meta_add(name, value);
     else
-    if (IsValidShiftJIS(value, maxLength))
+    if (IsValidShiftJIS(value))
         fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
     else
         fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));

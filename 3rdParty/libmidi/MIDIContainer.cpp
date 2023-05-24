@@ -205,10 +205,10 @@ void SysExTable::get_entry(uint32_t p_index, const uint8_t *& p_data, std::size_
 #pragma endregion
 
 #pragma region("MIDI Stream Event")
-MIDIStreamEvent::MIDIStreamEvent(uint32_t p_timestamp, uint32_t p_event)
+MIDIStreamEvent::MIDIStreamEvent(uint32_t timestamp, uint32_t data)
 {
-    m_timestamp = p_timestamp;
-    m_event = p_event;
+    Timestamp = timestamp;
+    Data = data;
 }
 #pragma endregion
 
@@ -227,18 +227,18 @@ MIDIMetaDataItem::MIDIMetaDataItem(uint32_t timestamp, const char * name, const 
     Value = value;
 }
 
-void midi_meta_data::AddItem(const MIDIMetaDataItem & item)
+void MIDIMetaData::AddItem(const MIDIMetaDataItem & item)
 {
     _Items.push_back(item);
 }
 
-void midi_meta_data::Append(const midi_meta_data & data)
+void MIDIMetaData::Append(const MIDIMetaData & data)
 {
     _Items.insert(_Items.end(), data._Items.begin(), data._Items.end());
     _Bitmap = data._Bitmap;
 }
 
-bool midi_meta_data::GetItem(const char * name, MIDIMetaDataItem & item) const
+bool MIDIMetaData::GetItem(const char * name, MIDIMetaDataItem & item) const
 {
     for (size_t i = 0; i < _Items.size(); ++i)
     {
@@ -254,24 +254,24 @@ bool midi_meta_data::GetItem(const char * name, MIDIMetaDataItem & item) const
     return false;
 }
 
-bool midi_meta_data::GetBitmap(std::vector<uint8_t> & bitmap)
+bool MIDIMetaData::GetBitmap(std::vector<uint8_t> & bitmap)
 {
     bitmap = _Bitmap;
 
     return bitmap.size() != 0;
 }
 
-void midi_meta_data::AssignBitmap(std::vector<uint8_t>::const_iterator const & begin, std::vector<uint8_t>::const_iterator const & end)
+void MIDIMetaData::AssignBitmap(std::vector<uint8_t>::const_iterator const & begin, std::vector<uint8_t>::const_iterator const & end)
 {
     _Bitmap.assign(begin, end);
 }
 
-std::size_t midi_meta_data::GetCount() const
+std::size_t MIDIMetaData::GetCount() const
 {
     return _Items.size();
 }
 
-const MIDIMetaDataItem & midi_meta_data::operator [] (std::size_t p_index) const
+const MIDIMetaDataItem & MIDIMetaData::operator [] (std::size_t p_index) const
 {
     return _Items[p_index];
 }
@@ -329,11 +329,9 @@ void MIDIContainer::AddTrack(const MIDITrack & track)
             {
                 if (Event.Data[1] == MetaDataTypes::InstrumentName || Event.Data[1] == MetaDataTypes::DeviceName)
                 {
-                    std::vector<uint8_t> Data;
-
                     size_t Size = Event.GetDataSize() - 2;
 
-                    Data.resize(Size);
+                    std::vector<uint8_t> Data(Size);
                     Event.GetData(&Data[0], 2, Size);
 
                     DeviceName.assign(Data.begin(), Data.begin() + (int)Size);
@@ -459,7 +457,7 @@ void MIDIContainer::SetTrackCount(uint32_t count)
     _Tracks.resize(count);
 }
 
-void MIDIContainer::SetExtraMetaData(const midi_meta_data & data)
+void MIDIContainer::SetExtraMetaData(const MIDIMetaData & data)
 {
     _ExtraMetaData = data;
 }
@@ -1021,7 +1019,7 @@ static void ConvertTextToUTF8(const char * src, size_t srcLength, std::string & 
     dst.assign(src, src + srcLength);
 }
 
-void MIDIContainer::GetMetaData(size_t subSongIndex, midi_meta_data & metaData)
+void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 {
     bool TypeFound = false;
     bool NonGMTypeFound = false;
@@ -1108,15 +1106,17 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, midi_meta_data & metaData)
                     case MetaDataTypes::Text:
                         Data.resize(DataSize);
                         Event.GetData(&Data[0], 2, DataSize);
+
+                        ::sprintf_s(Name, _countof(Name), "track_text_%02u", (unsigned int)i);
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
-                        ::sprintf_s(Name, _countof(Name) - 1, "track_text_%02u", (unsigned int)i);
                         metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
                         break;
 
                     case MetaDataTypes::Copyright:
                         Data.resize(DataSize);
                         Event.GetData(&Data[0], 2, DataSize);
+
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
                         metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "copyright", Text.c_str()));
@@ -1126,19 +1126,87 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, midi_meta_data & metaData)
                     case MetaDataTypes::InstrumentName:
                         Data.resize(DataSize);
                         Event.GetData(&Data[0], 2, DataSize);
+
+                        ::sprintf_s(Name, _countof(Name), "track_name_%02u", (unsigned int)i);
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
-                        ::sprintf_s(Name, _countof(Name) - 1, "track_name_%02u", (unsigned int)i);
                         metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
                         break;
 
-                    case MetaDataTypes::Marker:
+                    case MetaDataTypes::Lyrics:
+                    {
                         Data.resize(DataSize);
                         Event.GetData(&Data[0], 2, DataSize);
+
+                        ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
+
+                        metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "lyrics", Text.c_str()));
+                        break;
+                    }
+
+                    case MetaDataTypes::Marker:
+                    {
+                        Data.resize(DataSize);
+                        Event.GetData(&Data[0], 2, DataSize);
+
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
                         metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "track_marker", Text.c_str()));
                         break;
+                    }
+
+                    case MetaDataTypes::CueMarker:
+                    {
+                        Data.resize(DataSize);
+                        Event.GetData(&Data[0], 2, DataSize);
+
+                        ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
+
+                        metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "cue_marker", Text.c_str()));
+                        break;
+                    }
+
+                    case MetaDataTypes::TimeSignature:
+                    {
+                        Data.resize(DataSize);
+                        Event.GetData(&Data[0], 2, DataSize);
+
+                        if (DataSize == 4)
+                        {
+                            ::sprintf_s(Name, _countof(Name), "%d/%d", Data[0], (1 << Data[1]));
+                            metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "time_signature", Name));
+                        }
+                        break;
+                    }
+
+                    case MetaDataTypes::KeySignature:
+                    {
+                        Data.resize(DataSize);
+                        Event.GetData(&Data[0], 2, DataSize);
+
+                        if (DataSize == 2)
+                        {
+                            if (-7 <= (int8_t)Data[0] && (int8_t)Data[0] <= 7)
+                            {
+                                size_t Index = (size_t)((int8_t)Data[0] + 7);
+
+                                if (Data[1] == 0)
+                                {
+                                    const char * MajorScales[] = { "Cb", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#" };
+
+                                    metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "key_signature", MajorScales[Index]));
+                                }
+                                else
+                                if (Data[1] == 1)
+                                {
+                                    const char * MinorScales[] = { "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "D#", "A#" };
+
+                                    metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "key_signature", MinorScales[Index]));
+                                }
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         }

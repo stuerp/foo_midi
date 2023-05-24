@@ -1,8 +1,8 @@
 #include "MIDIProcessor.h"
 
-const uint8_t MIDIProcessor::end_of_track[2] = { StatusCodes::MetaData, MetaDataTypes::EndOfTrack };
-const uint8_t MIDIProcessor::loop_start[11] = { 0xFF, 0x06, 'l', 'o', 'o', 'p', 'S', 't', 'a', 'r', 't' };
-const uint8_t MIDIProcessor::loop_end[9] = { 0xFF, 0x06, 'l', 'o', 'o', 'p', 'E', 'n', 'd' };
+const uint8_t MIDIProcessor::EndOfTrack[2] = { StatusCodes::MetaData, MetaDataTypes::EndOfTrack };
+const uint8_t MIDIProcessor::LoopBeginMarker[11] = { StatusCodes::MetaData, MetaDataTypes::Marker, 'l', 'o', 'o', 'p', 'S', 't', 'a', 'r', 't' };
+const uint8_t MIDIProcessor::LoopEndMarker[9] = { StatusCodes::MetaData, MetaDataTypes::Marker, 'l', 'o', 'o', 'p', 'E', 'n', 'd' };
 
 bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * fileExtension, MIDIContainer & container)
 {
@@ -24,8 +24,8 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
     if (is_mus(data))
         return process_mus(data, container);
 
-    if (is_mids(data))
-        return process_mids(data, container);
+    if (IsMIDS(data))
+        return ProcessMIDS(data, container);
 
     if (is_lds(data, fileExtension))
         return process_lds(data, container);
@@ -39,7 +39,7 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
 bool MIDIProcessor::ProcessSysEx(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
     if (IsSysEx(data))
-        return process_syx(data, container);
+        return ProcessSysExInternal(data, container);
 
     return false;
 }
@@ -76,7 +76,7 @@ bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, const char 
         return true;
     }
 
-    if (is_mids(data))
+    if (IsMIDS(data))
     {
         trackCount = 1;
         return true;

@@ -293,7 +293,7 @@ void MIDIPreset::Deserialize(const char * text)
 
         unsigned SCFlavor = 0;
 
-        uint32_t MIDIFlavor = CfgMIDIFlavor;
+        uint32_t MIDIFlavor = (uint32_t)CfgMIDIFlavor;
         bool AllowMIDIEffects = (bool)CfgAllowMIDIEffects;
 
         {

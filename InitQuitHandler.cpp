@@ -1,5 +1,5 @@
 
-/** $VER: InitQuit.cpp (2023.01.04) **/
+/** $VER: InitQuit.cpp (2023.05.24) **/
 
 #pragma warning(disable: 5045)
 
@@ -34,4 +34,4 @@ public:
     }
 };
 
-static initquit_factory_t<InitQuitHandler> g_initquit_midi_factory;
+static initquit_factory_t<InitQuitHandler> _InitQuitHandlerFactory;

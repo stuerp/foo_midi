@@ -37,10 +37,10 @@ enum StatusCodes
 
 enum MetaDataTypes
 {
-    SequenceNumber = 0x00,      // Sequence number in type 0 and 1 MIDI files; pattern number in type 2 MIDI files. (0..65535, default 0)
+    SequenceNumber = 0x00,      // Sequence number in type 0 and 1 MIDI files; pattern number in type 2 MIDI files. (0..65535, default 0, occurs at delta time 0)
     Text = 0x01,                // General "Text" Meta Message. Can be used for any text based data. (string)
-    Copyright = 0x02,           // Provides information about a MIDI file’s copyright. (string)
-    TrackName = 0x03,           // Track name (string)
+    Copyright = 0x02,           // Provides information about a MIDI file’s copyright. (string, occurs at delta time 0 in the first track)
+    TrackName = 0x03,           // Track name (string, occurs at delta time 0)
     InstrumentName = 0x04,      // Instrument name (string)
     Lyrics = 0x05,              // Stores the lyrics of a song. Typically one syllable per Meta Message. (string)
     Marker = 0x06,              // Marks a point of interest in a MIDI file. Can be used as the marker for the beginning of a verse, solo, etc. (string)
@@ -51,11 +51,11 @@ enum MetaDataTypes
     ChannelPrefix = 0x20,       // Gives the prefix for the channel on which events are played. (0..255, default 0)
     MIDIPort = 0x21,            // Gives the MIDI Port on which events are played. (0..255, default 0)
 
-    EndOfTrack = 0x2F,          // An empty Meta Message that marks the end of a track.
+    EndOfTrack = 0x2F,          // An empty Meta Message that marks the end of a track. Occurs at the end of each track.
 
-    SetTempo = 0x51,            // Tempo is in microseconds per beat (quarter note). (0..16777215, default 500000)
+    SetTempo = 0x51,            // Tempo is in microseconds per beat (quarter note). (0..16777215, default 500000). Occurs anywhere but usually in the first track.
 
-    SMPTEOffset = 0x54,         // 
+    SMPTEOffset = 0x54,         // SMPTE time to denote playback offset from the beginning. Occurs at the beginning of a track and in the first track of files with MIDI format type 1.
 
     TimeSignature = 0x58,       // 
     KeySignature = 0x59,        // Valid values: A A#m Ab Abm Am B Bb Bbm Bm C C# C#m Cb Cm D D#m Db Dm E Eb Ebm Em F F# F#m Fm G G#m Gb Gm
@@ -200,14 +200,14 @@ private:
 
 struct MIDIStreamEvent
 {
-    uint32_t m_timestamp;
-    uint32_t m_event;
+    uint32_t Timestamp;
+    uint32_t Data;
 
-    MIDIStreamEvent() noexcept : m_timestamp(0), m_event(0)
+    MIDIStreamEvent() noexcept : Timestamp(0), Data(0)
     {
     }
 
-    MIDIStreamEvent(uint32_t timestamp, uint32_t event);
+    MIDIStreamEvent(uint32_t timestamp, uint32_t data);
 };
 
 #pragma warning(disable: 4820) // Padding added after data member
@@ -225,14 +225,14 @@ struct MIDIMetaDataItem
 };
 #pragma warning(default: 4820) // Padding added after data member
 
-class midi_meta_data
+class MIDIMetaData
 {
 public:
-    midi_meta_data() noexcept { }
+    MIDIMetaData() noexcept { }
 
     void AddItem(const MIDIMetaDataItem & item);
 
-    void Append(const midi_meta_data & data);
+    void Append(const MIDIMetaData & data);
 
     bool GetItem(const char * name, MIDIMetaDataItem & item) const;
 
@@ -265,11 +265,11 @@ public:
     // These functions are really only designed to merge and later remove System Exclusive message dumps.
     void MergeTracks(const MIDIContainer & source);
     void SetTrackCount(uint32_t count);
-    void SetExtraMetaData(const midi_meta_data & data);
+    void SetExtraMetaData(const MIDIMetaData & data);
 
     void ApplyHack(uint32_t hack);
 
-    void serialize_as_stream(size_t subSongIndex, std::vector<MIDIStreamEvent> & p_stream, SysExTable & p_system_exclusive, uint32_t & loop_start, uint32_t & loop_end, uint32_t clean_flags) const;
+    void serialize_as_stream(size_t subSongIndex, std::vector<MIDIStreamEvent> & stream, SysExTable & sysExTable, uint32_t & loopBegin, uint32_t & loopEnd, uint32_t cleanFlags) const;
 
     void serialize_as_standard_midi_file(std::vector<uint8_t> & data) const;
 
@@ -293,7 +293,7 @@ public:
     uint32_t GetLoopBeginTimestamp(size_t subSongIndex, bool ms = false) const;
     uint32_t GetLoopEndTimestamp(size_t subSongIndex, bool ms = false) const;
 
-    void GetMetaData(size_t subSongIndex, midi_meta_data & data);
+    void GetMetaData(size_t subSongIndex, MIDIMetaData & data);
 
     void DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops);
 
@@ -313,6 +313,7 @@ private:
 
     uint32_t timestamp_to_ms(uint32_t timestamp, size_t subsongIndex) const;
 
+    #pragma warning(disable: 4267)
     /*
      * Normalize port numbers properly
      */
@@ -343,6 +344,7 @@ private:
             }
         }
     }
+    #pragma warning(default: 4267)
 
 private:
     uint32_t _Format;
@@ -356,7 +358,7 @@ private:
 
     std::vector<std::vector<std::string>> _DeviceNames;
 
-    midi_meta_data _ExtraMetaData;
+    MIDIMetaData _ExtraMetaData;
 
     std::vector<uint32_t> _EndTimestamps;
 

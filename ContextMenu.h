@@ -8,7 +8,7 @@
 #include <sdk/foobar2000-lite.h>
 #include <sdk/contextmenu.h>
 
-#include <midi_processing/MIDIProcessor.h>
+#include <libmidi/MIDIProcessor.h>
 
 #include "Configuration.h"
 

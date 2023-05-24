@@ -11,7 +11,7 @@ bool MIDIProcessor::IsSysEx(std::vector<uint8_t> const & data)
     return true;
 }
 
-bool MIDIProcessor::process_syx(std::vector<uint8_t> const & data, MIDIContainer & container)
+bool MIDIProcessor::ProcessSysExInternal(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
     const size_t Size = data.size();
 

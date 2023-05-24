@@ -198,7 +198,7 @@ advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, GUIDMIDIPlay
         advconfig_integer_factory cfg_fluidsynth_voices("Maximum voice count", guid_cfg_fluidsynth_voices, guid_cfg_fluidsynth_parent, 2, 256, 1, 65535);
 #endif
 
-// Names of the meta data fields
+// Names of the info fields
 const char TagChannels[] = "channels";
 const char TagEncoding[] = "encoding";
 const char TagSampleRate[] = "samplerate";
@@ -213,11 +213,12 @@ const char TagMIDILoopStart[] = "midi_loop_start";
 const char TagMIDILoopEnd[] = "midi_loop_end";
 const char TagMIDILoopStartInMs[] = "midi_loop_start_ms";
 const char TagMIDILoopEndInMs[] = "midi_loop_end_ms";
-const char TagMIDIPreset[] = "midi_preset";
-const char TagMIDISysExDumps[] = "midi_sysex_dumps";
-
 const char TagBASSMIDIVoiceCount[] = "bassmidi_voices";
 const char TagBASSMIDIVoicesMax[] = "bassmidi_voices_max";
+
+// Names of the meta data fields
+const char TagMIDIPreset[] = "midi_preset";
+const char TagMIDISysExDumps[] = "midi_sysex_dumps";
 
 const char * _FileExtensions[] =
 {

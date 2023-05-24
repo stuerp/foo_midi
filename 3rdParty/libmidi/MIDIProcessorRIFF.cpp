@@ -128,7 +128,7 @@ bool MIDIProcessor::ProcessRIFF(std::vector<uint8_t> const & data, MIDIContainer
     bool found_data = false;
     bool found_info = false;
 
-    midi_meta_data MetaData;
+    MIDIMetaData MetaData;
 
     std::vector<uint8_t> extra_buffer;
 

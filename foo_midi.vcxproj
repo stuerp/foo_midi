@@ -437,14 +437,14 @@
     <ProjectReference Include="3rdParty\libjson\libjson.vcxproj">
       <Project>{155cc5fc-96b6-4ffa-bfce-9db2fb987e47}</Project>
     </ProjectReference>
+    <ProjectReference Include="3rdParty\libmidi\libmidi.vcxproj">
+      <Project>{4573e081-973b-47f0-a67d-551761ba1678}</Project>
+    </ProjectReference>
     <ProjectReference Include="3rdParty\libOPNMIDI\windows\libopnmidi.vcxproj">
       <Project>{7f212e63-0b40-4ffe-8cd5-19a1a397b5e5}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\libsflist\libsflist.vcxproj">
       <Project>{12bcec19-75dd-49cf-8822-2f290ce7eb36}</Project>
-    </ProjectReference>
-    <ProjectReference Include="3rdParty\midi_processing\midi_processing.vcxproj">
-      <Project>{4573e081-973b-47f0-a67d-551761ba1678}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\munt\mt32emu\mt32emu.vcxproj">
       <Project>{e1a15ce7-2670-4e0b-b4e9-e6e36bb4a579}</Project>

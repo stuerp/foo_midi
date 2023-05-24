@@ -16,7 +16,7 @@
 
 #include <pfc/synchro.h>
 
-#include <midi_processing/MIDIProcessor.h>
+#include <libmidi/MIDIProcessor.h>
 
 #include "Configuration.h"
 #include "FileHasher.h"

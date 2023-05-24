@@ -2,29 +2,36 @@
 
 const uint8_t MIDIProcessor::hmp_default_tempo[5] = { 0xFF, 0x51, 0x18, 0x80, 0x00 };
 
-bool MIDIProcessor::is_hmp(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::is_hmp(std::vector<uint8_t> const & data)
 {
-    if (p_file.size() < 8) return false;
-    if (p_file[0] != 'H' || p_file[1] != 'M' || p_file[2] != 'I' || p_file[3] != 'M' ||
-        p_file[4] != 'I' || p_file[5] != 'D' || p_file[6] != 'I' ||
-        (p_file[7] != 'P' && p_file[7] != 'R')) return false;
+    if (data.size() < 8)
+        return false;
+
+    if (data[0] != 'H' || data[1] != 'M' || data[2] != 'I' || data[3] != 'M' || data[4] != 'I' || data[5] != 'D' || data[6] != 'I' || (data[7] != 'P' && data[7] != 'R'))
+        return false;
+
     return true;
 }
 
-unsigned MIDIProcessor::decode_hmp_delta(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
+unsigned MIDIProcessor::DecodeVariableLengthQuantityHMP(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
 {
-    unsigned delta = 0;
-    unsigned shift = 0;
-    unsigned char byte;
+    uint32_t Quantity = 0;
+
+    uint32_t Shift = 0;
+    uint8_t Byte;
+
     do
     {
-        if (it == end) return 0;
-        byte = *it++;
-        delta = delta + ((byte & 0x7F) << shift);
-        shift += 7;
+        if (it == end)
+            return 0;
+
+        Byte = *it++;
+        Quantity = Quantity + ((Byte & 0x7F) << Shift);
+        Shift += 7;
     }
-    while (!(byte & 0x80));
-    return delta;
+    while (!(Byte & 0x80));
+
+    return Quantity;
 }
 
 bool MIDIProcessor::process_hmp(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
@@ -58,7 +65,7 @@ bool MIDIProcessor::process_hmp(std::vector<uint8_t> const & p_file, MIDIContain
     {
         MIDITrack track;
         track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, hmp_default_tempo, _countof(hmp_default_tempo)));
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, end_of_track, _countof(end_of_track)));
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
         p_out.AddTrack(track);
     }
 
@@ -125,7 +132,7 @@ bool MIDIProcessor::process_hmp(std::vector<uint8_t> const & p_file, MIDIContain
 
         while (it != track_end)
         {
-            unsigned delta = decode_hmp_delta(it, track_end);
+            unsigned delta = DecodeVariableLengthQuantityHMP(it, track_end);
             current_timestamp += delta;
             if (it == track_end) return false;
             _buffer[0] = *it++;

@@ -139,7 +139,7 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
 
         uint8_t StatusCode = *data++;
 
-        if (StatusCode < 0x80)
+        if (StatusCode < StatusCodes::NoteOff)
         {
             if (LastStatusCode == 0xFF)
                 return false; // "First MIDI track event is short encoded."
@@ -161,7 +161,7 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
 
             LastStatusCode = StatusCode;
 
-            if (!trackNeedsEndMarker && ((StatusCode & 0xF0) == 0xE0))
+            if (!trackNeedsEndMarker && ((StatusCode & 0xF0) == StatusCodes::PitchBendChange))
                 continue;
 
             if (BytesRead == 0)
@@ -177,8 +177,8 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
 
             switch (StatusCode & 0xF0)
             {
-                case 0xC0:
-                case 0xD0:
+                case StatusCodes::ProgramChange:
+                case StatusCodes::ChannelAftertouch:
                     break;
 
                 default:

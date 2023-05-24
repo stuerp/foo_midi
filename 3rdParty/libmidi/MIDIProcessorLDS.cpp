@@ -435,6 +435,7 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
 
     pattern_count = (end - it) / 2;
     patterns.resize(pattern_count);
+
     for (unsigned i = 0; i < pattern_count; ++i)
     {
         patterns[i] = it[0] | (it[1] << 8);
@@ -503,14 +504,14 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
             track.AddEvent(MIDIEvent(0, MIDIEvent::PitchWheel, i, buffer, 2));
         #endif
         }
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, end_of_track, _countof(end_of_track)));
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
         p_out.AddTrack(track);
     }
 
     std::vector<MIDITrack> tracks;
     {
         MIDITrack track;
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, end_of_track, _countof(end_of_track)));
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
         tracks.resize(10, track);
     }
 
@@ -571,7 +572,7 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
             }
             else if ((unsigned) ((allvolume + (0x100 - fadeonoff)) & 0xff) <= mainvolume)
             {
-                allvolume += (uint8_t) 0x100 - fadeonoff;
+                allvolume += (uint8_t)(0x100 - fadeonoff);
             }
             else
             {
@@ -666,8 +667,8 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
                                     /*jumping = 1;*/
                                     if (jumppos <= posplay)
                                     {
-                                        p_out.AddEventToTrack(0, MIDIEvent(position_timestamps[jumppos], MIDIEvent::Extended, 0, loop_start, _countof(loop_start)));
-                                        p_out.AddEventToTrack(0, MIDIEvent(current_timestamp + tempo - 1, MIDIEvent::Extended, 0, loop_end, _countof(loop_end)));
+                                        p_out.AddEventToTrack(0, MIDIEvent(position_timestamps[jumppos], MIDIEvent::Extended, 0, LoopBeginMarker, _countof(LoopBeginMarker)));
+                                        p_out.AddEventToTrack(0, MIDIEvent(current_timestamp + tempo - 1, MIDIEvent::Extended, 0, LoopEndMarker, _countof(LoopEndMarker)));
                                         playing = false;
                                     }
                                     break;

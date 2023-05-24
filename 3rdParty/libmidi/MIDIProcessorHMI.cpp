@@ -26,7 +26,7 @@ bool MIDIProcessor::process_hmi(std::vector<uint8_t> const & p_file, MIDIContain
     std::vector<uint32_t> track_offsets;
     track_offsets.resize(track_count);
 
-    for (unsigned i = 0; i < track_count; ++i)
+    for (size_t i = 0; i < track_count; ++i)
     {
         track_offsets[i] = it[0] | (it[1] << 8) | (it[2] << 16) | (it[3] << 24);
         it += 4;
@@ -37,7 +37,7 @@ bool MIDIProcessor::process_hmi(std::vector<uint8_t> const & p_file, MIDIContain
     {
         MIDITrack track;
         track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, hmp_default_tempo, _countof(hmp_default_tempo)));
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, end_of_track, _countof(end_of_track)));
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
         p_out.AddTrack(track);
     }
 
@@ -174,13 +174,13 @@ bool MIDIProcessor::process_hmi(std::vector<uint8_t> const & p_file, MIDIContain
                 {
                     if (track_end - it < 2) return false;
                     it += 2;
-                    p_out.AddEventToTrack(0, MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, loop_start, _countof(loop_start)));
+                    p_out.AddEventToTrack(0, MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, LoopBeginMarker, _countof(LoopBeginMarker)));
                 }
                 else if (buffer[1] == 0x15)
                 {
                     if (track_end - it < 6) return false;
                     it += 6;
-                    p_out.AddEventToTrack(0, MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, loop_end, _countof(loop_end)));
+                    p_out.AddEventToTrack(0, MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, LoopEndMarker, _countof(LoopEndMarker)));
                 }
                 else return false; /*throw exception_io_data( "Unexpected HMI meta event" );*/
             }
