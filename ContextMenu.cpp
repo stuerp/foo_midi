@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenu.cpp (2023.01.04) **/
+/** $VER: ContextMenu.cpp (2023.05.28) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -8,8 +8,10 @@
 static const char * ItemTexts[5] =
 {
     "Convert to General MIDI",
+
     "Save synthesizer preset",
     "Remove synthesizer preset",
+
     "Assign SysEx dumps",
     "Clear SysEx dumps"
 };
@@ -21,7 +23,7 @@ unsigned int ContextMenu::get_num_items() noexcept
 
 void ContextMenu::get_item_name(unsigned int itemIndex, pfc::string_base & itemName) noexcept
 {
-    if (itemIndex > 4)
+    if (itemIndex >= _countof(ItemTexts))
         ::uBugCheck();
 
     itemName = ItemTexts[itemIndex];
@@ -29,7 +31,7 @@ void ContextMenu::get_item_name(unsigned int itemIndex, pfc::string_base & itemN
 
 bool ContextMenu::context_get_display(unsigned itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out, unsigned &, const GUID &)
 {
-    if (itemIndex > 4)
+    if (itemIndex >= _countof(ItemTexts))
         uBugCheck();
 
     size_t j, matches, matches_syx;
@@ -80,87 +82,102 @@ bool ContextMenu::context_get_display(unsigned itemIndex, const pfc::list_base_c
     return false;
 }
 
-void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & data, const GUID &)
+void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & trackList, const GUID &)
 {
-    if (itemIndex > 4)
+    if (itemIndex >= _countof(ItemTexts))
         uBugCheck();
 
-    if (itemIndex == 0)
+    switch (itemIndex)
     {
-        std::vector<uint8_t> Data;
-        abort_callback_dummy AbortHandler;
-
-        for (size_t i = 0, TrackCount = data.get_count(); i < TrackCount; ++i)
+        case 0: 
         {
-            const playable_location & Location = data.get_item(i)->get_location();
+            std::vector<uint8_t> Data;
+            abort_callback_dummy AbortHandler;
 
-            pfc::string8 FilePath = Location.get_path();
-
-            FilePath += ".mid";
-
-            service_ptr_t<file> File;
-
-            filesystem::g_open(File, Location.get_path(), filesystem::open_mode_read, AbortHandler);
-
-            t_filesize FileSize = File->get_size_ex(AbortHandler);
-
-            Data.resize((size_t)FileSize);
-
-            File->read_object(&Data[0], (t_size)FileSize, AbortHandler);
-
-            MIDIContainer Container;
-
-            if (MIDIProcessor::Process(Data, pfc::string_extension(Location.get_path()), Container))
+            for (size_t i = 0, TrackCount = trackList.get_count(); i < TrackCount; ++i)
             {
-                Data.resize(0);
+                const playable_location & Location = trackList.get_item(i)->get_location();
 
-                Container.serialize_as_standard_midi_file(Data);
+                pfc::string8 FilePath = Location.get_path();
 
-                filesystem::g_open(File, FilePath, filesystem::open_mode_write_new, AbortHandler);
+                FilePath += ".mid";
 
-                File->write_object(&Data[0], Data.size(), AbortHandler);
+                service_ptr_t<file> File;
+
+                filesystem::g_open(File, Location.get_path(), filesystem::open_mode_read, AbortHandler);
+
+                t_filesize FileSize = File->get_size_ex(AbortHandler);
+
+                Data.resize((size_t)FileSize);
+
+                File->read_object(&Data[0], (t_size)FileSize, AbortHandler);
+
+                MIDIContainer Container;
+
+                if (MIDIProcessor::Process(Data, pfc::string_extension(Location.get_path()), Container))
+                {
+                    Data.resize(0);
+
+                    Container.serialize_as_standard_midi_file(Data);
+
+                    filesystem::g_open(File, FilePath, filesystem::open_mode_write_new, AbortHandler);
+
+                    File->write_object(&Data[0], Data.size(), AbortHandler);
+                }
             }
-        }
-    }
-    else
-    if (itemIndex < 3)
-    {
-        pfc::string8 Text;
-
-        if (itemIndex == 1)
-        {
-            MIDIPreset Preset;
-
-            Preset.Serialize(Text);
+            break;
         }
 
-        service_ptr_t<MIDIPresetFilter> Filter = new service_impl_t<MIDIPresetFilter>(data, Text);
-
-        static_api_ptr_t<metadb_io_v2> TagIO;
-
-        TagIO->update_info_async(data, Filter, core_api::get_main_window(), 0, 0);
-    }
-    else
-    {
-        MIDISysExDumps Dumps;
-
-        if (itemIndex == 3)
+        case 1:
+        case 2:
         {
-            for (size_t i = 0; i < data.get_count(); ++i)
+            pfc::string8 PresetText;
+
+            if (itemIndex == 1)
             {
-                const char * FilePath = data[i]->get_path();
+                MIDIPreset Preset;
 
-                if (IsSysExFileExtension(pfc::string_extension(FilePath)))
-                    Dumps.Items.append_single(FilePath);
+                Preset.Serialize(PresetText);
             }
+
+            // Update the tags of the specified tracks.
+            {
+                static_api_ptr_t<metadb_io_v2> TagIO;
+
+                service_ptr_t<MIDIPresetFilter> Filter = new service_impl_t<MIDIPresetFilter>(trackList, PresetText);
+
+                TagIO->update_info_async(trackList, Filter, core_api::get_main_window(), 0, 0);
+            }
+            break;
         }
 
-        service_ptr_t<MIDISysExFilter> Filter = new service_impl_t<MIDISysExFilter>(data, Dumps);
+        case 3:
+        case 4:
+        {
+            MIDISysExDumps Dumps;
 
-        static_api_ptr_t<metadb_io_v2> TagIO;
+            if (itemIndex == 3)
+            {
+                for (size_t i = 0; i < trackList.get_count(); ++i)
+                {
+                    const char * FilePath = trackList[i]->get_path();
 
-        TagIO->update_info_async(data, Filter, core_api::get_main_window(), 0, 0);
+                    if (IsSysExFileExtension(pfc::string_extension(FilePath)))
+                        Dumps.Items.append_single(FilePath);
+                }
+            }
+
+            // Update the tags of the specified tracks.
+            {
+                static_api_ptr_t<metadb_io_v2> TagIO;
+
+                service_ptr_t<MIDISysExFilter> Filter = new service_impl_t<MIDISysExFilter>(trackList, Dumps);
+
+                TagIO->update_info_async(trackList, Filter, core_api::get_main_window(), 0, 0);
+            }
+            break;
+        }
     }
 }
 
-static contextmenu_item_factory_t<ContextMenu> ContextMenuFactory;
+static contextmenu_item_factory_t<ContextMenu> _ContextMenuFactory;

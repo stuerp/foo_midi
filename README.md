@@ -103,6 +103,7 @@ branch. Pull requests are warmly welcome.
 v2.8.3.0, 2023-xx-xx, *""*
 
 * Cue Marker, Lyrics, Time Signature and Key Signature meta events are now converted to tags.
+* Bug Fix: vshost process was not stopped when checking for presets. (Regression)
 
 v2.8.2.0, 2023-05-20, *"Spring Cleaning"*
 
