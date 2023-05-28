@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.h (2023.05.18) **/
+/** $VER: MIDIPlayer.h (2023.05.24) **/
 
 #pragma once
 
@@ -22,7 +22,7 @@ public:
     virtual ~MIDIPlayer() { };
 
     bool Load(const MIDIContainer & midiContainer, unsigned int subsongIndex, unsigned int loopMode, unsigned int cleanFlags);
-    unsigned long Play(audio_sample * samples, unsigned long samplesSize);
+    size_t Play(audio_sample * samples, size_t samplesSize);
     void Seek(unsigned long seekTime);
 
     void SetSampleRate(unsigned long sampleRate);
@@ -60,7 +60,7 @@ protected:
     virtual bool Reset() { return false; }
 
     // Should return the block size that the player expects, otherwise 0.
-    virtual unsigned int GetSampleBlockSize() { return 0; }
+    virtual uint32_t GetSampleBlockSize() const noexcept { return 0; }
 
     virtual void SendEvent(uint32_t) { }
     virtual void SendSysEx(const uint8_t *, size_t, size_t) { };

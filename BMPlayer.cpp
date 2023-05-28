@@ -282,7 +282,7 @@ static sflist_presets * sflist_open_file(const char * filePath)
 
         filesystem::g_open_read(f, our_path, m_abort);
 
-        size_t length = f->get_size_ex(m_abort);
+        size_t length = (size_t)f->get_size_ex(m_abort);
 
         sflist_file = (char *) ::malloc(length + 1);
 

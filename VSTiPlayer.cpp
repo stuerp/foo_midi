@@ -1,3 +1,6 @@
+
+/** $VER: VSTiPlayer.cpp (2023.05.28) **/
+
 #include "VSTiPlayer.h"
 
 #define NOMINMAX
@@ -6,7 +9,7 @@
 
 // #define LOG_EXCHANGE
 
-template <class T> void SafeRelease(T& x) noexcept
+template <class T> void SafeDelete(T& x) noexcept
 {
     if (x)
     {
@@ -15,41 +18,267 @@ template <class T> void SafeRelease(T& x) noexcept
     }
 }
 
+#pragma region("Public")
 VSTiPlayer::VSTiPlayer() noexcept : MIDIPlayer()
 {
-    bInitialized = false;
-    bTerminating = false;
-    hProcess = NULL;
-    hThread = NULL;
-    hReadEvent = NULL;
-    hChildStd_IN_Rd = NULL;
-    hChildStd_IN_Wr = NULL;
-    hChildStd_OUT_Rd = NULL;
-    hChildStd_OUT_Wr = NULL;
+    _IsCOMInitialized = false;
+    _IsTerminating = false;
+
+    _hReadEvent = NULL;
+    _hPipeInRead = NULL;
+    _hPipeInWrite = NULL;
+    _hPipeOutRead = NULL;
+    _hPipeOutWrite = NULL;
+    _hProcess = NULL;
+    _hThread = NULL;
 
     _Name = nullptr;
-    _Vendor = nullptr;
-    _Product = nullptr;
+    _VendorName = nullptr;
+    _ProductName = nullptr;
 
     _ChannelCount = 0;
-    _VSTBuffer = nullptr;
+    _Samples = nullptr;
 
-    _PluginPlatform = 0;
+    _PluginArchitecture = 0;
     _UniqueId = 0;
     _VendorVersion = 0;
 }
 
 VSTiPlayer::~VSTiPlayer()
 {
-    process_terminate();
+    StopHost();
 
-    SafeRelease(_Name);
-    SafeRelease(_Vendor);
-    SafeRelease(_Product);
+    SafeDelete(_Name);
+    SafeDelete(_VendorName);
+    SafeDelete(_ProductName);
 
-    SafeRelease(_VSTBuffer);
+    SafeDelete(_Samples);
 }
 
+bool VSTiPlayer::LoadVST(const char * pathName)
+{
+    if (!pathName || !pathName[0])
+        return false;
+
+    if (pathName != _PluginFilePath)
+        _PluginFilePath = pathName;
+
+    _PluginArchitecture = GetPluginArchitecture();
+
+    if (!_PluginArchitecture)
+        return false;
+
+    return StartHost();
+}
+
+void VSTiPlayer::GetVendorName(pfc::string8 & vendorName) const
+{
+    vendorName = _VendorName;
+}
+
+void VSTiPlayer::GetProductName(pfc::string8 & productName) const 
+{
+    productName = _ProductName;
+}
+
+uint32_t VSTiPlayer::GetVendorVersion() const noexcept
+{
+    return _VendorVersion;
+}
+
+uint32_t VSTiPlayer::GetUniqueID() const noexcept
+{
+    return _UniqueId;
+}
+
+void VSTiPlayer::GetChunk(std::vector<uint8_t> & data)
+{
+    WriteBytes(1);
+
+    const uint32_t Code = ReadCode();
+
+    if (Code != 0)
+    {
+        StopHost();
+        return;
+    }
+
+    const uint32_t Size = ReadCode();
+
+    data.resize(Size);
+
+    if (Size != 0)
+        ReadBytes(&data[0], Size);
+}
+
+void VSTiPlayer::SetChunk(const void * data, size_t size)
+{
+    if ((_Chunk.size() == 0) || ((_Chunk.size() == size) && (size != 0) && (data != (const void *) &_Chunk[0])))
+    {
+        _Chunk.resize(size);
+
+        if (size != 0)
+            ::memcpy(&_Chunk[0], data, size);
+    }
+
+    WriteBytes(2);
+    WriteBytes((uint32_t)size);
+    WriteBytesOverlapped(data, (uint32_t)size);
+
+    const uint32_t Code = ReadCode();
+
+    if (Code != 0)
+        StopHost();
+}
+
+bool VSTiPlayer::HasEditor()
+{
+    WriteBytes(3);
+
+    uint32_t Code = ReadCode();
+
+    if (Code != 0)
+    {
+        StopHost();
+        return false;
+    }
+
+    Code = ReadCode();
+
+    return Code != 0;
+}
+
+void VSTiPlayer::DisplayEditorModal()
+{
+    WriteBytes(4);
+
+    const uint32_t Code = ReadCode();
+
+    if (Code != 0)
+        StopHost();
+}
+#pragma endregion
+
+#pragma region("Protected")
+bool VSTiPlayer::Startup()
+{
+    if (IsHostRunning())
+        return true;
+
+    if (!LoadVST(_PluginFilePath.c_str()))
+        return false;
+
+    if (_Chunk.size())
+        SetChunk(&_Chunk[0], _Chunk.size());
+
+    WriteBytes(5);
+    WriteBytes(sizeof(uint32_t));
+    WriteBytes(_SampleRate);
+
+    const uint32_t code = ReadCode();
+
+    if (code != 0)
+        StopHost();
+
+    _IsInitialized = true;
+
+    SetFilter(_FilterType, _FilterEffects);
+
+    return true;
+}
+
+void VSTiPlayer::Shutdown()
+{
+    StopHost();
+}
+
+void VSTiPlayer::Render(audio_sample * data, unsigned long size)
+{
+    WriteBytes(9);
+    WriteBytes(size);
+
+    const uint32_t Code = ReadCode();
+
+    if (Code != 0)
+    {
+        StopHost();
+
+        ::memset(data, 0, size * _ChannelCount * sizeof(audio_sample));
+
+        return;
+    }
+
+    if (_Samples == nullptr)
+        return;
+
+    while (size)
+    {
+        size_t ToDo = size > 4096 ? 4096 : size;
+
+        ReadBytes(_Samples, ToDo * _ChannelCount * sizeof(float));
+
+        for (size_t i = 0; i < ToDo * _ChannelCount; i++)
+            data[i] = (audio_sample) _Samples[i];
+
+        data += ToDo * _ChannelCount;
+        size -= ToDo;
+    }
+}
+
+void VSTiPlayer::SendEvent(uint32_t b)
+{
+    WriteBytes(7);
+    WriteBytes(b);
+
+    const uint32_t code = ReadCode();
+
+    if (code != 0)
+        StopHost();
+}
+
+void VSTiPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
+{
+    const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
+
+    WriteBytes(8);
+    WriteBytes(size_plus_port);
+    WriteBytesOverlapped(event, (uint32_t)size);
+
+    const uint32_t code = ReadCode();
+
+    if (code != 0)
+        StopHost();
+}
+
+void VSTiPlayer::SendEventWithTime(uint32_t b, unsigned int time)
+{
+    WriteBytes(10);
+    WriteBytes(b);
+    WriteBytes(time);
+
+    const uint32_t code = ReadCode();
+
+    if (code != 0)
+        StopHost();
+}
+
+void VSTiPlayer::SendSysExWithTime(const uint8_t * event, size_t size, size_t port, unsigned int time)
+{
+    const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
+
+    WriteBytes(11);
+    WriteBytes(size_plus_port);
+    WriteBytes(time);
+    WriteBytesOverlapped(event, (uint32_t)size);
+
+    const uint32_t code = ReadCode();
+
+    if (code != 0)
+        StopHost();
+}
+#pragma endregion
+
+#pragma region("Private")
 static uint16_t getwordle(const uint8_t * data) noexcept
 {
     return (uint16_t) (data[0] | (((uint16_t) data[1]) << 8));
@@ -60,38 +289,38 @@ static uint32_t getdwordle(const uint8_t * data) noexcept
     return data[0] | (((uint32_t) data[1]) << 8) | (((uint32_t) data[2]) << 16) | (((uint32_t) data[3]) << 24);
 }
 
-unsigned VSTiPlayer::test_plugin_platform()
+uint32_t VSTiPlayer::GetPluginArchitecture() const
 {
-    constexpr size_t iMZHeaderSize = 0x40;
-    constexpr size_t iPEHeaderSize = 4 + 20 + 224;
+    constexpr size_t MZHeaderSize = 0x40;
+    constexpr size_t PEHeaderSize = 4 + 20 + 224;
 
-    uint8_t peheader[iPEHeaderSize];
-    uint32_t dwOffsetPE;
+    uint8_t PEHeader[PEHeaderSize];
 
-    std::string plugin = "file://";
-    plugin += _PluginPathName;
+    std::string PluginURI = "file://";
 
-    file::ptr f;
-    abort_callback_dummy m_abort;
+    PluginURI += _PluginFilePath;
+
+    file::ptr File;
+    abort_callback_dummy AbortHandler;
 
     try
     {
-        filesystem::g_open(f, plugin.c_str(), filesystem::open_mode_read, m_abort);
+        filesystem::g_open(File, PluginURI.c_str(), filesystem::open_mode_read, AbortHandler);
 
-        f->read_object(peheader, iMZHeaderSize, m_abort);
+        File->read_object(PEHeader, MZHeaderSize, AbortHandler);
 
-        if (getwordle(peheader) != 0x5A4D)
+        if (getwordle(PEHeader) != 0x5A4D)
             return 0;
 
-        dwOffsetPE = getdwordle(peheader + 0x3c);
+        uint32_t OffsetPEHeader = getdwordle(PEHeader + 0x3c);
 
-        f->seek(dwOffsetPE, m_abort);
-        f->read_object(peheader, iPEHeaderSize, m_abort);
+        File->seek(OffsetPEHeader, AbortHandler);
+        File->read_object(PEHeader, PEHeaderSize, AbortHandler);
 
-        if (getdwordle(peheader) != 0x00004550)
+        if (getdwordle(PEHeader) != 0x00004550)
             return 0;
 
-        switch (getwordle(peheader + 4))
+        switch (getwordle(PEHeader + 4))
         {
             case 0x014C:
                 return 32;
@@ -110,250 +339,268 @@ unsigned VSTiPlayer::test_plugin_platform()
     return 0;
 }
 
-bool VSTiPlayer::LoadVST(const char * pathName)
-{
-    if (!pathName || !pathName[0])
-        return false;
-
-    if (pathName != _PluginPathName)
-        _PluginPathName = pathName;
-
-    _PluginPlatform = test_plugin_platform();
-
-    if (!_PluginPlatform)
-        return false;
-
-    return process_create();
-}
-
-static bool create_pipe_name(pfc::string_base & out)
+static bool CreatePipeName(pfc::string_base & pipeName)
 {
     GUID guid;
 
     if (FAILED(::CoCreateGuid(&guid)))
         return false;
 
-    out = "\\\\.\\pipe\\";
-    out += pfc::print_guid(guid);
+    pipeName = "\\\\.\\pipe\\";
+    pipeName += pfc::print_guid(guid);
 
     return true;
 }
 
-bool VSTiPlayer::process_create()
+bool VSTiPlayer::StartHost()
 {
-    SECURITY_ATTRIBUTES saAttr = { };
-
-    saAttr.nLength = sizeof(saAttr);
-    saAttr.bInheritHandle = TRUE;
-    saAttr.lpSecurityDescriptor = NULL;
-
-    if (!bInitialized)
+    if (!_IsCOMInitialized)
     {
         if (FAILED(::CoInitialize(NULL)))
             return false;
 
-        bInitialized = true;
+        _IsCOMInitialized = true;
     }
 
-    hReadEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
-
-    pfc::string8 pipe_name_in, pipe_name_out;
-
-    if (!create_pipe_name(pipe_name_in) || !create_pipe_name(pipe_name_out))
     {
-        process_terminate();
-
-        return false;
+        _hReadEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
     }
 
-    pfc::stringcvt::string_os_from_utf8 pipe_name_in_os(pipe_name_in), pipe_name_out_os(pipe_name_out);
-
-    HANDLE hPipe = ::CreateNamedPipe(pipe_name_in_os, PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &saAttr);
-
-    if (hPipe == INVALID_HANDLE_VALUE)
+    SECURITY_ATTRIBUTES sa =
     {
-        process_terminate();
+        sizeof(sa),
+        nullptr,
+        TRUE,
+    };
 
-        return false;
-    }
+    pfc::string8 InPipeName, OutPipeName;
 
-    hChildStd_IN_Rd = ::CreateFile(pipe_name_in_os, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL);
-
-    ::DuplicateHandle(::GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &hChildStd_IN_Wr, 0, FALSE, DUPLICATE_SAME_ACCESS);
-
-    ::CloseHandle(hPipe);
-
-    hPipe = CreateNamedPipe(pipe_name_out_os, PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &saAttr);
-
-    if (hPipe == INVALID_HANDLE_VALUE)
     {
-        process_terminate();
+        if (!CreatePipeName(InPipeName) || !CreatePipeName(OutPipeName))
+        {
+            StopHost();
 
-        return false;
+            return false;
+        }
     }
 
-    hChildStd_OUT_Wr = CreateFile(pipe_name_out_os, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL);
+    pfc::stringcvt::string_os_from_utf8 InPipeNameOS(InPipeName), OutPipeNameOS(OutPipeName);
 
-    ::DuplicateHandle(::GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &hChildStd_OUT_Rd, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    {
+        HANDLE hPipe = ::CreateNamedPipe(InPipeNameOS, PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &sa);
 
-    ::CloseHandle(hPipe);
+        if (hPipe == INVALID_HANDLE_VALUE)
+        {
+            StopHost();
+
+            return false;
+        }
+
+        _hPipeInRead = ::CreateFile(InPipeNameOS, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
+
+        ::DuplicateHandle(::GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &_hPipeInWrite, 0, FALSE, DUPLICATE_SAME_ACCESS);
+
+        ::CloseHandle(hPipe);
+    }
+
+    {
+        HANDLE hPipe = ::CreateNamedPipe(OutPipeNameOS, PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &sa);
+
+        if (hPipe == INVALID_HANDLE_VALUE)
+        {
+            StopHost();
+
+            return false;
+        }
+
+        _hPipeOutWrite = ::CreateFile(OutPipeNameOS, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
+
+        ::DuplicateHandle(::GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &_hPipeOutRead, 0, FALSE, DUPLICATE_SAME_ACCESS);
+
+        ::CloseHandle(hPipe);
+    }
 
     std::string CommandLine = "\"";
 
     {
         CommandLine += core_api::get_my_full_path();
 
-        const size_t slash = CommandLine.find_last_of('\\');
+        const size_t SlashPosition = CommandLine.find_last_of('\\');
 
-        if (slash != std::string::npos)
-            CommandLine.erase(CommandLine.begin() + (const __int64)(slash + 1), CommandLine.end());
+        if (SlashPosition != std::string::npos)
+            CommandLine.erase(CommandLine.begin() + (const __int64)(SlashPosition + 1), CommandLine.end());
 
-        CommandLine += (_PluginPlatform == 64) ? "vsthost64.exe" : "vsthost32.exe";
+        CommandLine += (_PluginArchitecture == 64) ? "vsthost64.exe" : "vsthost32.exe";
         CommandLine += "\" \"";
-        CommandLine += _PluginPathName;
+        CommandLine += _PluginFilePath;
         CommandLine += "\" ";
 
-        unsigned sum = 0;
+        uint32_t Sum = 0;
 
-        pfc::stringcvt::string_os_from_utf8 plugin_os(_PluginPathName.c_str());
-
-        const TCHAR * ch = plugin_os.get_ptr();
-
-        while (*ch)
         {
-            sum += (TCHAR) (*ch++ * 820109);
+            pfc::stringcvt::string_os_from_utf8 plugin_os(_PluginFilePath.c_str());
+
+            const TCHAR * ch = plugin_os.get_ptr();
+
+            while (*ch)
+            {
+                Sum += (TCHAR) (*ch++ * 820109);
+            }
         }
 
-        CommandLine += pfc::format_int(sum, 0, 16);
+        CommandLine += pfc::format_int(Sum, 0, 16);
     }
 
-    PROCESS_INFORMATION pi;
-
-    STARTUPINFO si = { sizeof(si) };
-
-    si.hStdInput = hChildStd_IN_Rd;
-    si.hStdOutput = hChildStd_OUT_Wr;
-    si.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
-//  si.wShowWindow = SW_HIDE;
-    si.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
-
-    if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
     {
-        process_terminate();
+        STARTUPINFO si = { sizeof(si) };
 
+        si.hStdInput = _hPipeInRead;
+        si.hStdOutput = _hPipeOutWrite;
+        si.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
+    //  si.wShowWindow = SW_HIDE;
+        si.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
+
+        PROCESS_INFORMATION pi;
+
+        if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+        {
+            StopHost();
+
+            return false;
+        }
+
+        // Close remote handles so the pipes will break when the process terminates.
+        ::CloseHandle(_hPipeOutWrite);
+        _hPipeOutWrite = 0;
+
+        ::CloseHandle(_hPipeInRead);
+        _hPipeInRead = 0;
+
+        _hProcess = pi.hProcess;
+        _hThread = pi.hThread;
+
+    #ifdef _DEBUG
+        FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hThread, 8), ")");
+    #endif
+
+    #ifdef NDEBUG
+        ::SetPriorityClass(hProcess, ::GetPriorityClass(::GetCurrentProcess()));
+        ::SetThreadPriority(hThread, ::GetThreadPriority(::GetCurrentThread()));
+    #endif
+    }
+
+    // Get the startup information.
+    const uint32_t Code = ReadCode();
+
+    if (Code != 0)
+    {
+        StopHost();
         return false;
     }
 
-    // Close remote handles so pipes will break when process terminates
-    ::CloseHandle(hChildStd_OUT_Wr);
-    hChildStd_OUT_Wr = NULL;
-
-    ::CloseHandle(hChildStd_IN_Rd);
-    hChildStd_IN_Rd = NULL;
-
-    hProcess = pi.hProcess;
-    hThread = pi.hThread;
-
-#ifdef NDEBUG
-    ::SetPriorityClass(hProcess, ::GetPriorityClass(::GetCurrentProcess()));
-    ::SetThreadPriority(hThread, ::GetThreadPriority(::GetCurrentThread()));
-#endif
-
-    const uint32_t code = process_read_code();
-
-    if (code != 0)
     {
-        process_terminate();
-        return false;
-    }
+        uint32_t NameLength = ReadCode();
+        uint32_t VendorNameLength = ReadCode();
+        uint32_t ProductNameLength = ReadCode();
 
-    {
-        uint32_t name_string_length = process_read_code();
-        uint32_t vendor_string_length = process_read_code();
-        uint32_t product_string_length = process_read_code();
+        _VendorVersion = ReadCode();
+        _UniqueId = ReadCode();
+        _ChannelCount = ReadCode();
 
-        _VendorVersion = process_read_code();
-        _UniqueId = process_read_code();
-        _ChannelCount = process_read_code();
+        {
+            // VST always uses float samples.
+            SafeDelete(_Samples);
+            _Samples = new float[4096 * _ChannelCount];
 
-        SafeRelease(_VSTBuffer);
+            SafeDelete(_Name);
+            _Name = new char[NameLength + 1];
+            ReadBytes(_Name, NameLength);
+            _Name[NameLength] = 0;
 
-        // VST always uses float samples.
-        _VSTBuffer = new float[4096 * _ChannelCount];
+            SafeDelete(_VendorName);
+            _VendorName = new char[VendorNameLength + 1];
+            ReadBytes(_VendorName, VendorNameLength);
+            _VendorName[VendorNameLength] = 0;
 
-        SafeRelease(_Name);
-        SafeRelease(_Vendor);
-        SafeRelease(_Product);
-
-        _Name = new char[name_string_length + 1];
-        _Vendor = new char[vendor_string_length + 1];
-        _Product = new char[product_string_length + 1];
-
-        process_read_bytes(_Name, name_string_length);
-        process_read_bytes(_Vendor, vendor_string_length);
-        process_read_bytes(_Product, product_string_length);
-
-        _Name[name_string_length] = 0;
-        _Vendor[vendor_string_length] = 0;
-        _Product[product_string_length] = 0;
+            SafeDelete(_ProductName);
+            _ProductName = new char[ProductNameLength + 1];
+            ReadBytes(_ProductName, ProductNameLength);
+            _ProductName[ProductNameLength] = 0;
+        }
     }
 
     return true;
 }
 
-void VSTiPlayer::process_terminate() noexcept
+void VSTiPlayer::StopHost() noexcept
 {
-    if (bTerminating)
+    if (_IsTerminating)
         return;
 
-    bTerminating = true;
+    _IsTerminating = true;
 
-    if (hProcess)
+    #ifdef _DEBUG
+        FB2K_console_print("Stopping host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hThread, 8), ")");
+    #endif
+
+    if (_hProcess)
     {
-        process_write_code(0);
+        WriteBytes(0);
 
-        ::WaitForSingleObject(hProcess, 5000);
-        ::TerminateProcess(hProcess, 0);
+        ::WaitForSingleObject(_hProcess, 5000);
+        ::TerminateProcess(_hProcess, 0);
 
-        ::CloseHandle(hThread);
-        ::CloseHandle(hProcess);
+        ::CloseHandle(_hThread);
+        _hThread = NULL;
+
+        ::CloseHandle(_hProcess);
+        _hProcess = NULL;
     }
 
-    if (hChildStd_IN_Rd)
-        ::CloseHandle(hChildStd_IN_Rd);
+    if (_hPipeInRead)
+    {
+        ::CloseHandle(_hPipeInRead);
+        _hPipeInRead = NULL;
+    }
 
-    if (hChildStd_IN_Wr)
-        ::CloseHandle(hChildStd_IN_Wr);
+    if (_hPipeInWrite)
+    {
+        ::CloseHandle(_hPipeInWrite);
+        _hPipeInWrite = NULL;
+    }
 
-    if (hChildStd_OUT_Rd)
-        ::CloseHandle(hChildStd_OUT_Rd);
+    if (_hPipeOutRead)
+    {
+        ::CloseHandle(_hPipeOutRead);
+        _hPipeOutRead = NULL;
+    }
 
-    if (hChildStd_OUT_Wr)
-        ::CloseHandle(hChildStd_OUT_Wr);
+    if (_hPipeOutWrite)
+    {
+        ::CloseHandle(_hPipeOutWrite);
+        _hPipeOutWrite = NULL;
+    }
 
-    if (hReadEvent)
-        ::CloseHandle(hReadEvent);
+    if (_hReadEvent)
+    {
+        ::CloseHandle(_hReadEvent);
+        _hReadEvent = 0;
+    }
 
-    if (bInitialized)
+    if (_IsCOMInitialized)
+    {
         ::CoUninitialize();
+        _IsCOMInitialized = false;
+    }
 
-    bInitialized = false;
-    bTerminating = false;
-
-    hProcess = NULL;
-    hThread = NULL;
-    hReadEvent = NULL;
-    hChildStd_IN_Rd = NULL;
-    hChildStd_IN_Wr = NULL;
-    hChildStd_OUT_Rd = NULL;
-    hChildStd_OUT_Wr = NULL;
+    _IsTerminating = false;
 
     _IsInitialized = false;
 }
 
-bool VSTiPlayer::process_running() noexcept
+bool VSTiPlayer::IsHostRunning() noexcept
 {
-    if (hProcess && ::WaitForSingleObject(hProcess, 0) == WAIT_TIMEOUT)
+    if (_hProcess && ::WaitForSingleObject(_hProcess, 0) == WAIT_TIMEOUT)
         return true;
 
     return false;
@@ -375,25 +622,60 @@ static void ProcessPendingMessages()
 }
 #endif
 
-uint32_t VSTiPlayer::process_read_bytes_pass(void * out, uint32_t size) noexcept
+uint32_t VSTiPlayer::ReadCode() noexcept
 {
-    OVERLAPPED ol = { 0 };
+    uint32_t Code;
 
-    ol.hEvent = hReadEvent;
+    ReadBytes(&Code, sizeof(Code));
 
-    ::ResetEvent(hReadEvent);
+    return Code;
+}
 
-    DWORD BytesRead;
+void VSTiPlayer::ReadBytes(void * data, uint32_t size) noexcept
+{
+    if (size == 0)
+        return;
+
+    if (IsHostRunning())
+    {
+        uint8_t * Data = (uint8_t *) data;
+        uint32_t BytesTotal = 0;
+
+        while (BytesTotal < size)
+        {
+            const uint32_t BytesRead = ReadBytesOverlapped(Data + BytesTotal, size - BytesTotal);
+
+            if (BytesRead == 0)
+            {
+                ::memset(data, 0xFF, size);
+                break;
+            }
+
+            BytesTotal += BytesRead;
+        }
+    }
+    else
+        ::memset(data, 0xFF, size);
+}
+
+uint32_t VSTiPlayer::ReadBytesOverlapped(void * data, uint32_t size) noexcept
+{
+    ::ResetEvent(_hReadEvent);
 
     ::SetLastError(NO_ERROR);
 
-    if (::ReadFile(hChildStd_OUT_Rd, out, size, &BytesRead, &ol))
+    DWORD BytesRead;
+    OVERLAPPED ol = { 0 };
+
+    ol.hEvent = _hReadEvent;
+
+    if (::ReadFile(_hPipeOutRead, data, size, &BytesRead, &ol))
         return BytesRead;
 
     if (::GetLastError() != ERROR_IO_PENDING)
         return 0;
 
-    const HANDLE handles[1] = { hReadEvent };
+    const HANDLE handles[1] = { _hReadEvent };
 
     ::SetLastError(NO_ERROR);
 
@@ -402,7 +684,7 @@ uint32_t VSTiPlayer::process_read_bytes_pass(void * out, uint32_t size) noexcept
 #ifdef MESSAGE_PUMP
     for (;;)
     {
-        state = MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
+        state = ::MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
 
         if (state == WAIT_OBJECT_0 + _countof(handles))
             ProcessPendingMessages();
@@ -413,277 +695,27 @@ uint32_t VSTiPlayer::process_read_bytes_pass(void * out, uint32_t size) noexcept
     state = ::WaitForMultipleObjects(_countof(handles), &handles[0], FALSE, INFINITE);
 #endif
 
-    if (state == WAIT_OBJECT_0 && ::GetOverlappedResult(hChildStd_OUT_Rd, &ol, &BytesRead, TRUE))
+    if (state == WAIT_OBJECT_0 && ::GetOverlappedResult(_hPipeOutRead, &ol, &BytesRead, TRUE))
         return BytesRead;
 
-    ::CancelIoEx(hChildStd_OUT_Rd, &ol);
+    ::CancelIoEx(_hPipeOutRead, &ol);
 
     return 0;
 }
 
-void VSTiPlayer::process_read_bytes(void * out, uint32_t size) noexcept
+void VSTiPlayer::WriteBytes(uint32_t code) noexcept
 {
-    if (size == 0)
-        return;
-
-    if (process_running())
-    {
-        uint8_t * ptr = (uint8_t *) out;
-        uint32_t done = 0;
-
-        while (done < size)
-        {
-            const uint32_t delta = process_read_bytes_pass(ptr + done, size - done);
-
-            if (delta == 0)
-            {
-                ::memset(out, 0xFF, size);
-                break;
-            }
-
-            done += delta;
-        }
-    }
-    else
-        ::memset(out, 0xFF, size);
+    WriteBytesOverlapped(&code, sizeof(code));
 }
 
-uint32_t VSTiPlayer::process_read_code() noexcept
+void VSTiPlayer::WriteBytesOverlapped(const void * data, uint32_t size) noexcept
 {
-    uint32_t code;
-
-    process_read_bytes(&code, sizeof(code));
-
-    return code;
-}
-
-void VSTiPlayer::process_write_bytes(const void * in, uint32_t size) noexcept
-{
-    if (size == 0)
-        return;
-
-    if (!process_running())
+    if ((size == 0) || !IsHostRunning())
         return;
 
     DWORD BytesWritten;
 
-    if (!::WriteFile(hChildStd_IN_Wr, in, size, &BytesWritten, nullptr) || (BytesWritten < size))
-        process_terminate();
+    if (!::WriteFile(_hPipeInWrite, data, size, &BytesWritten, nullptr) || (BytesWritten < size))
+        StopHost();
 }
-
-void VSTiPlayer::process_write_code(uint32_t code) noexcept
-{
-    process_write_bytes(&code, sizeof(code));
-}
-
-void VSTiPlayer::getVendorString(pfc::string8 & out) const
-{
-    out = _Vendor;
-}
-
-void VSTiPlayer::getProductString(pfc::string8 & out) const 
-{
-    out = _Product;
-}
-
-long VSTiPlayer::getVendorVersion() const noexcept
-{
-    return (long)_VendorVersion;
-}
-
-long VSTiPlayer::getUniqueID() const noexcept
-{
-    return (long)_UniqueId;
-}
-
-void VSTiPlayer::getChunk(std::vector<uint8_t> & out)
-{
-    process_write_code(1);
-
-    const uint32_t code = process_read_code();
-
-    if (code == 0)
-    {
-        const uint32_t size = process_read_code();
-
-        out.resize(size);
-
-        if (size)
-            process_read_bytes(&out[0], size);
-    }
-    else
-        process_terminate();
-}
-
-void VSTiPlayer::setChunk(const void * in, unsigned long size)
-{
-    if (_Chunk.size() == 0 || (_Chunk.size() == size && size != 0 && in != (const void *) &_Chunk[0]))
-    {
-        _Chunk.resize(size);
-
-        if (size)
-            ::memcpy(&_Chunk[0], in, size);
-    }
-
-    process_write_code(2);
-    process_write_code(size);
-    process_write_bytes(in, size);
-
-    const uint32_t code = process_read_code();
-
-    if (code != 0)
-        process_terminate();
-}
-
-bool VSTiPlayer::hasEditor()
-{
-    process_write_code(3);
-
-    uint32_t code = process_read_code();
-
-    if (code != 0)
-    {
-        process_terminate();
-
-        return false;
-    }
-
-    code = process_read_code();
-
-    return code != 0;
-}
-
-void VSTiPlayer::displayEditorModal()
-{
-    process_write_code(4);
-
-    const uint32_t code = process_read_code();
-
-    if (code != 0)
-        process_terminate();
-}
-
-void VSTiPlayer::Shutdown()
-{
-    process_terminate();
-}
-
-bool VSTiPlayer::Startup()
-{
-    if (process_running())
-        return true;
-
-    if (!LoadVST(_PluginPathName.c_str()))
-        return false;
-
-    if (_Chunk.size())
-        setChunk(&_Chunk[0], (unsigned long)_Chunk.size());
-
-    process_write_code(5);
-    process_write_code(sizeof(uint32_t));
-    process_write_code(_SampleRate);
-
-    const uint32_t code = process_read_code();
-
-    if (code != 0)
-        process_terminate();
-
-    _IsInitialized = true;
-
-    SetFilter(_FilterType, _FilterEffects);
-
-    return true;
-}
-
-void VSTiPlayer::SendEvent(uint32_t b)
-{
-    process_write_code(7);
-    process_write_code(b);
-
-    const uint32_t code = process_read_code();
-
-    if (code != 0)
-        process_terminate();
-}
-
-void VSTiPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
-{
-    const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
-
-    process_write_code(8);
-    process_write_code(size_plus_port);
-    process_write_bytes(event, (uint32_t)size);
-
-    const uint32_t code = process_read_code();
-
-    if (code != 0)
-        process_terminate();
-}
-
-void VSTiPlayer::SendEventWithTime(uint32_t b, unsigned int time)
-{
-    process_write_code(10);
-    process_write_code(b);
-    process_write_code(time);
-
-    const uint32_t code = process_read_code();
-
-    if (code != 0)
-        process_terminate();
-}
-
-void VSTiPlayer::SendSysExWithTime(const uint8_t * event, size_t size, size_t port, unsigned int time)
-{
-    const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
-
-    process_write_code(11);
-    process_write_code(size_plus_port);
-    process_write_code(time);
-    process_write_bytes(event, (uint32_t)size);
-
-    const uint32_t code = process_read_code();
-
-    if (code != 0)
-        process_terminate();
-}
-
-void VSTiPlayer::Render(audio_sample * out, unsigned long count)
-{
-    process_write_code(9);
-    process_write_code(count);
-
-    const uint32_t code = process_read_code();
-
-    if (code != 0)
-    {
-        process_terminate();
-
-        ::memset(out, 0, count * _ChannelCount * sizeof(audio_sample));
-
-        return;
-    }
-
-    while (count)
-    {
-        unsigned ToDo = 4096 * _ChannelCount;
-
-        if (ToDo > count)
-            ToDo = count;
-
-        if (_VSTBuffer != nullptr)
-        {
-            process_read_bytes(_VSTBuffer, ToDo * _ChannelCount * sizeof(float));
-
-            for (unsigned i = 0; i < ToDo * _ChannelCount; i++)
-                out[i] = (audio_sample) _VSTBuffer[i];
-        }
-
-        out += ToDo * _ChannelCount;
-        count -= ToDo;
-    }
-}
-
-unsigned int VSTiPlayer::GetSampleBlockSize() noexcept
-{
-    return 4096;
-}
+#pragma endregion

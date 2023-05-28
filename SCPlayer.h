@@ -1,5 +1,5 @@
 
-/** $VER: Secret Sauce (2023.01.04) **/
+/** $VER: SCPlayer.h (2023.05.28) Secret Sauce **/
 
 #pragma once
 
@@ -15,14 +15,14 @@ public:
     SCPlayer() noexcept;
     virtual ~SCPlayer();
 
-    void set_sccore_path(const char * path);
+    void SetRootPath(const char * path);
 
 protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, unsigned long) override;
 
-    virtual unsigned int GetSampleBlockSize() override;
+    virtual uint32_t GetSampleBlockSize() const noexcept override { return 0; } // 4096; This doesn't work for some reason.
 
     virtual void SendEvent(uint32_t) override;
     virtual void SendSysEx(const uint8_t *, size_t, size_t) override;
@@ -31,41 +31,39 @@ protected:
     virtual void SendSysExWithTime(const uint8_t *, size_t, size_t, unsigned int) override;
 
 private:
-    bool LoadCore(const char * path);
+    bool LoadCore(const char * filePath);
+    void RenderPort(uint32_t port, float * data, uint32_t size) noexcept;
 
-    void send_command(uint32_t port, uint32_t command);
+    uint32_t GetPluginArchitecture() const;
 
-    void render_port(uint32_t port, float * out, uint32_t count);
+    bool StartHost(uint32_t port);
+    void StopHost(uint32_t port) noexcept;
+    bool IsHostRunning(uint32_t port) noexcept;
 
-    void junk(uint32_t port, unsigned long count);
+    uint32_t ReadCode(uint32_t port) noexcept;
 
-    unsigned test_plugin_platform();
+    void ReadBytes(uint32_t port, void * data, uint32_t size) noexcept;
+    uint32_t ReadBytesOverlapped(uint32_t port, void * data, uint32_t size) noexcept;
 
-    bool process_create(uint32_t port);
-    void process_terminate(uint32_t port);
-    bool process_running(uint32_t port);
-    uint32_t process_read_code(uint32_t port);
-    void process_read_bytes(uint32_t port, void * buffer, uint32_t size);
-    uint32_t process_read_bytes_pass(uint32_t port, void * buffer, uint32_t size);
-    void process_write_code(uint32_t port, uint32_t code);
-    void process_write_bytes(uint32_t port, const void * buffer, uint32_t size);
+    void WriteBytes(uint32_t port, uint32_t code) noexcept;
+    void WriteBytesOverlapped(uint32_t port, const void * data, uint32_t size) noexcept;
 
 private:
-    unsigned _PluginArchitecture;
+    uint32_t _PluginArchitecture;
     int _COMInitialisationCount;
 
-    std::string PluginFilePath;
+    std::string _PluginFilePath;
 
-    HANDLE hProcess[3];
-    HANDLE hThread[3];
-    HANDLE hReadEvent[3];
-    HANDLE hChildStd_IN_Rd[3];
-    HANDLE hChildStd_IN_Wr[3];
-    HANDLE hChildStd_OUT_Rd[3];
-    HANDLE hChildStd_OUT_Wr[3];
+    HANDLE _hReadEvent[3];
+    HANDLE _hPipeInRead[3];
+    HANDLE _hPipeInWrite[3];
+    HANDLE _hPipeOutRead[3];
+    HANDLE _hPipeOutWrite[3];
+    HANDLE _hProcess[3];
+    HANDLE _hThread[3];
 
-    char * _SCCorePathName;
-    float * _Buffer;
+    char * _RootPathName;
+    float * _Samples;
 
     bool _IsPortTerminating[3];
 };

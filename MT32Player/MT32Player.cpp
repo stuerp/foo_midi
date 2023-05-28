@@ -238,11 +238,11 @@ MT32Emu::File * MT32Player::openFile(const char * fileName)
         if (FileSize > INT_MAX)
             FileSize = INT_MAX;
 
-        Data = new MT32Emu::Bit8u[FileSize];
+        Data = new MT32Emu::Bit8u[(size_t)FileSize];
 
-        File->read_object(Data, FileSize, *_AbortCallback);
+        File->read_object(Data, (t_size)FileSize, *_AbortCallback);
 
-        return new FBArrayFile(Data, FileSize);
+        return new FBArrayFile(Data, (size_t)FileSize);
     }
     catch (...)
     {

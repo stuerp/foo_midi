@@ -41,9 +41,9 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
     std::vector<uint8_t> Data;
 
-    Data.resize(_FileStats.m_size);
+    Data.resize((size_t)_FileStats.m_size);
 
-    file->read_object(&Data[0], _FileStats.m_size, abortHandler);
+    file->read_object(&Data[0], (t_size)_FileStats.m_size, abortHandler);
 
     {
         _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
@@ -239,6 +239,47 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
+    // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413))
+    if (_PlayerType == PlayerTypeEmuDeMIDI)
+    {
+        {
+            delete _Player;
+
+            auto * Player = new EdMPlayer;
+
+            _Player = Player;
+        }
+
+        {
+            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
+
+            if (_IsLooping)
+                LoopMode |= MIDIPlayer::LoopModeForced;
+
+            if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+            {
+                {
+                    insync(_Lock);
+
+                    if (++_IsRunning == 1)
+                        _CurrentSampleRate = _SampleRate;
+                    else
+                    if (_SampleRate != _CurrentSampleRate)
+                        _SampleRate = _CurrentSampleRate;
+
+                    _IsEmuDeMIDI = true;
+                }
+
+                _Player->SetSampleRate(_SampleRate);
+
+                _IsEndOfContainer = false;
+                _DontLoop = true;
+
+                return;
+            }
+        }
+    }
+    else
     // VSTi
     if (_PlayerType == PlayerTypeVSTi)
     {
@@ -247,7 +288,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (Preset._VSTiFilePath.is_empty())
             {
-                console::print("No VST instrument configured.");
+                console::error("No VST instrument configured.");
                 throw exception_io_data();
             }
 
@@ -255,17 +296,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (!Player->LoadVST(Preset._VSTiFilePath))
             {
-                pfc::string8 Text = "Unable to load VSTi plugin: ";
-
-                Text += Preset._VSTiFilePath;
-
-                console::print(Text);
+                console::print("Unable to load VSTi plugin: ", Preset._VSTiFilePath);
 
                 return;
             }
             
             if (Preset._VSTConfig.size())
-                Player->setChunk(&Preset._VSTConfig[0], (unsigned long)Preset._VSTConfig.size());
+                Player->SetChunk(&Preset._VSTConfig[0], Preset._VSTConfig.size());
 
             _Player = Player;
         }
@@ -355,7 +392,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
                 {
-                    console::print("No SoundFonts configured, and no file or directory SoundFont found");
+                    console::error("No SoundFonts configured, and no file or directory SoundFont found");
                     throw exception_io_data();
                 }
             }
@@ -519,7 +556,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (BasePath.is_empty())
             {
-                console::print("No Munt base path configured, attempting to load ROMs from plugin install path.");
+                console::warning("No Munt base path configured, attempting to load ROMs from plugin install path.");
 
                 BasePath = core_api::get_my_full_path();
                 BasePath.truncate(BasePath.scan_filename());
@@ -530,7 +567,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (!Player->isConfigValid())
             {
-                console::print("The Munt driver needs to be configured with a valid MT-32 or CM32L ROM set.");
+                console::error("The Munt driver needs to be configured with a valid MT-32 or CM32L ROM set.");
                 throw exception_io_data();
             }
 
@@ -602,13 +639,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (PathName.is_empty())
             {
-                console::print("Secret Sauce path not configured, yet somehow enabled, trying plugin directory...");
+                console::warning("Secret Sauce path not configured, yet somehow enabled, trying plugin directory...");
 
                 PathName = core_api::get_my_full_path();
                 PathName.truncate(PathName.scan_filename());
             }
 
-            Player->set_sccore_path(PathName);
+            Player->SetRootPath(PathName);
 
             _Player = Player;
         }
@@ -624,47 +661,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
             {
-                _IsEndOfContainer = false;
-                _DontLoop = true;
-
-                return;
-            }
-        }
-    }
-    else
-    // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413))
-    if (_PlayerType == PlayerTypeEmuDeMIDI)
-    {
-        {
-            delete _Player;
-
-            auto * Player = new EdMPlayer;
-
-            _Player = Player;
-        }
-
-        {
-            uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
-
-            if (_IsLooping)
-                LoopMode |= MIDIPlayer::LoopModeForced;
-
-            if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
-            {
-                {
-                    insync(_Lock);
-
-                    if (++_IsRunning == 1)
-                        _CurrentSampleRate = _SampleRate;
-                    else
-                    if (_SampleRate != _CurrentSampleRate)
-                        _SampleRate = _CurrentSampleRate;
-
-                    _IsEmuDeMIDI = true;
-                }
-
-                _Player->SetSampleRate(_SampleRate);
-
                 _IsEndOfContainer = false;
                 _DontLoop = true;
 
@@ -713,8 +709,11 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         audioChunk.set_data_32(ptr, todo, 2, srate);
     #else
         audioChunk.set_data_size(todo * 2);
+
         float * ptr = audioChunk.get_data();
+
         dxiProxy->fillBuffer(ptr, todo);
+
         audioChunk.set_srate(srate);
         audioChunk.set_channels(2);
         audioChunk.set_sample_count(todo);
@@ -726,55 +725,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     }
     else
 #endif
-/*
-    if (_PlayerType == PlayerTypeVSTi)
-    {
-        auto * Player = (VSTiPlayer *) _Player;
 
-        const size_t SamplesTodo = 4096;
-        const size_t ChannelCount = Player->GetChannelCount();
-
-        audioChunk.set_data_size(SamplesTodo * ChannelCount);
-
-        audio_sample * Samples = audioChunk.get_data();
-
-        size_t SamplesDone = Player->Play(Samples, (unsigned long)SamplesTodo);
-
-        if (SamplesDone == 0)
-            return false;
-
-        audioChunk.set_srate(_SampleRate);
-        audioChunk.set_channels((unsigned int)ChannelCount);
-        audioChunk.set_sample_count(SamplesDone);
-
-        Success = true;
-    }
-    else
-    if (_PlayerType == PlayerTypeSuperMunt)
-    {
-        auto * mt32Player = (MT32Player *) _Player;
-
-        const size_t SamplesToDo = 4096;
-        const size_t ChannelCount = 2;
-
-        audioChunk.set_data_size(SamplesToDo * ChannelCount);
-
-        audio_sample * Samples = audioChunk.get_data();
-
-        mt32Player->SetAbortCallback(&abortHandler);
-
-        size_t SamplesDone = mt32Player->Play(Samples, (unsigned long)SamplesToDo);
-
-        if (SamplesDone == 0)
-            return false;
-
-        audioChunk.set_srate(_SampleRate);
-        audioChunk.set_channels((unsigned int)ChannelCount);
-        audioChunk.set_sample_count(SamplesDone);
-
-        Success = true;
-    }
-    else*/
     if (_Player)
     {
         const size_t SamplesToDo = 4096;
@@ -786,7 +737,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
         _Player->SetAbortHandler(&abortHandler);
 
-        size_t SamplesDone = _Player->Play(Samples, (unsigned long)SamplesToDo);
+        size_t SamplesDone = _Player->Play(Samples, SamplesToDo);
 
         if (SamplesDone == 0)
         {
@@ -1036,7 +987,7 @@ void InputDecoder::retag_set_info(t_uint32, const file_info& fileInfo, abort_cal
 
             TagFile->seek(0, abortHandler);
 
-            Tag.set_count(TagFile->get_size_ex(abortHandler));
+            Tag.set_count((t_size)TagFile->get_size_ex(abortHandler));
 
             TagFile->read_object(Tag.get_ptr(), Tag.get_count(), abortHandler);
 
@@ -1151,7 +1102,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
                 const MIDIMetaDataItem& mdi = MetaData[i];
 
             #ifdef _DEBUG
-                pfc::string8 Text; Text << mdi.Name.c_str() << ":" << mdi.Value.c_str(); console::print(Text);
+//              console::print(mdi.Name.c_str(), ":", mdi.Value.c_str());
             #endif
 
                 if (pfc::stricmp_ascii(mdi.Name.c_str(), "type") == 0)

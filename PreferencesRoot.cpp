@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.05.20) **/
+/** $VER: PreferencesRoot.cpp (2023.05.27) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -703,7 +703,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         {
             CWindow w = GetDlgItem(IDC_PLAYER_TYPE);
 
-            pfc::string8 Text; Text << "Found " << pfc::format_int((t_int64)_VSTiPlugIns.get_size()).c_str() << " VSTi plug-ins."; console::print(Text);
+            console::print("Found ",pfc::format_int((t_int64)_VSTiPlugIns.get_size()), " VSTi plug-ins.");
 
             for (size_t i = 0, j = VSTiCount; i < j; ++i)
             {
@@ -1067,11 +1067,11 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 
         if (Player.LoadVST(_VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].PathName.c_str()))
         {
-            if (_VSTiConfig.size())
-                Player.setChunk(&_VSTiConfig[0], (unsigned long)_VSTiConfig.size());
+            if (_VSTiConfig.size() != 0)
+                Player.SetChunk(&_VSTiConfig[0], _VSTiConfig.size());
 
-            Player.displayEditorModal();
-            Player.getChunk(_VSTiConfig);
+            Player.DisplayEditorModal();
+            Player.GetChunk(_VSTiConfig);
         }
 
         _IsBusy = false;
@@ -1419,7 +1419,7 @@ void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findF
             // Examine all DLL files.
             if (findFile->GetFileSize() != 0)
             {
-                pfc::string8 Text; Text << "Examining \"" << PathName << "\"..."; console::print(Text);
+                console::print("Examining \"", PathName, "\"...");
 
                 VSTiPlayer Player;
 
@@ -1432,11 +1432,11 @@ void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findF
 
                     pfc::string8 VendorName;
 
-                    Player.getVendorString(VendorName);
+                    Player.GetVendorName(VendorName);
 
                     pfc::string8 ProductName;
 
-                    Player.getProductString(ProductName);
+                    Player.GetProductName(ProductName);
 
                     if (VendorName.length() || ProductName.length())
                     {
@@ -1455,8 +1455,8 @@ void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findF
                     else
                         Plugin.Name = findFile->GetFileName();
 
-                    Plugin.Id = (uint32_t)Player.getUniqueID();
-                    Plugin.HasEditor = Player.hasEditor();
+                    Plugin.Id = Player.GetUniqueID();
+                    Plugin.HasEditor = Player.HasEditor();
 
                     _VSTiPlugIns.append_single(Plugin);
                 }

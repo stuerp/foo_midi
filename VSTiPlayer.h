@@ -1,3 +1,6 @@
+
+/** $VER: VSTiPlayer.h (2023.05.28) **/
+
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
@@ -16,28 +19,28 @@ public:
 
     bool LoadVST(const char * path);
 
-    void getVendorString(pfc::string8 & out) const;
-    void getProductString(pfc::string8 & out) const;
-    long getVendorVersion() const noexcept;
-    long getUniqueID() const noexcept;
+    void GetVendorName(pfc::string8 & out) const;
+    void GetProductName(pfc::string8 & out) const;
+    uint32_t GetVendorVersion() const noexcept;
+    uint32_t GetUniqueID() const noexcept;
 
     // Configuration
-    void getChunk(std::vector<uint8_t> & out);
-    void setChunk(const void * in, unsigned long size);
+    void GetChunk(std::vector<uint8_t> & data);
+    void SetChunk(const void * data, size_t size);
 
     // Editor
-    bool hasEditor();
-    void displayEditorModal();
+    bool HasEditor();
+    void DisplayEditorModal();
 
     // Setup
-    virtual unsigned GetChannelCount() const noexcept override { return _ChannelCount; }
+    virtual uint32_t GetChannelCount() const noexcept override { return _ChannelCount; }
 
 protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, unsigned long) override;
 
-    virtual unsigned int GetSampleBlockSize() noexcept override;
+    virtual uint32_t GetSampleBlockSize() const noexcept override { return 4096; }
 
     virtual void SendEvent(uint32_t) override;
     virtual void SendSysEx(const uint8_t *, size_t, size_t) override;
@@ -46,44 +49,46 @@ protected:
     virtual void SendSysExWithTime(const uint8_t *, size_t, size_t, unsigned int) override;
 
 private:
-    unsigned test_plugin_platform();
+    uint32_t GetPluginArchitecture() const;
 
-    bool process_create();
-    void process_terminate() noexcept;
-    bool process_running() noexcept;
+    bool StartHost();
+    void StopHost() noexcept;
+    bool IsHostRunning() noexcept;
 
-    uint32_t process_read_code() noexcept;
-    void process_read_bytes(void * buffer, uint32_t size) noexcept;
-    uint32_t process_read_bytes_pass(void * buffer, uint32_t size) noexcept;
+    uint32_t ReadCode() noexcept;
 
-    void process_write_code(uint32_t code) noexcept;
-    void process_write_bytes(const void * buffer, uint32_t size) noexcept;
+    void ReadBytes(void * data, uint32_t size) noexcept;
+    uint32_t ReadBytesOverlapped(void * data, uint32_t size) noexcept;
 
-    std::string _PluginPathName;
+    void WriteBytes(uint32_t code) noexcept;
+    void WriteBytesOverlapped(const void * data, uint32_t size) noexcept;
 
-    HANDLE hProcess;
-    HANDLE hThread;
-    HANDLE hReadEvent;
-    HANDLE hChildStd_IN_Rd;
-    HANDLE hChildStd_IN_Wr;
-    HANDLE hChildStd_OUT_Rd;
-    HANDLE hChildStd_OUT_Wr;
+private:
+    uint32_t _PluginArchitecture;
+    bool _IsCOMInitialized;
+
+    std::string _PluginFilePath;
+
+    HANDLE _hReadEvent;
+    HANDLE _hPipeInRead;
+    HANDLE _hPipeInWrite;
+    HANDLE _hPipeOutRead;
+    HANDLE _hPipeOutWrite;
+    HANDLE _hProcess;
+    HANDLE _hThread;
 
     char * _Name;
-    char * _Vendor;
-    char * _Product;
+    char * _VendorName;
+    char * _ProductName;
 
     uint32_t _VendorVersion;
     uint32_t _UniqueId;
 
-    unsigned _PluginPlatform;
-    unsigned _ChannelCount;
+    uint32_t _ChannelCount;
 
     std::vector<uint8_t> _Chunk;
+    float * _Samples;
 
-    float * _VSTBuffer;
-
-    bool bInitialized;
-    bool bTerminating;
+    bool _IsTerminating;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

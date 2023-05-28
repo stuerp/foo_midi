@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.cpp (2023.01.04) **/
+/** $VER: MIDIPreset.cpp (2023.05.28) **/
 
 #pragma warning(disable: 5045)
 
@@ -21,7 +21,9 @@ MIDIPreset::MIDIPreset() noexcept
 
                 if (Player->LoadVST(_VSTiFilePath))
                 {
-                    _VSTConfig = CfgVSTiConfig[(unsigned int)(Player->getUniqueID())];
+                    _VSTConfig = CfgVSTiConfig[Player->GetUniqueID()];
+
+                    delete Player;
                 }
             }
             catch (...)
@@ -110,8 +112,6 @@ MIDIPreset::MIDIPreset() noexcept
 
 void MIDIPreset::Serialize(pfc::string8 & text)
     {
-        const char * const * banknames = adl_getBankNames();
-
         text.reset();
         text.prealloc(512);
 
@@ -120,7 +120,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
 
         text += pfc::format_int(_PlayerType);
 
-        if (_PlayerType == 1)
+        if (_PlayerType == PlayerTypeVSTi)
         {
             text += "|";
 
@@ -138,7 +138,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
             text += pfc::format_int(_UseMIDIEffects);
         }
         else
-        if (_PlayerType == 2 || _PlayerType == 4)
+        if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
         {
             text += "|";
 
@@ -160,9 +160,16 @@ void MIDIPreset::Serialize(pfc::string8 & text)
 
             text += pfc::format_int(_UseMIDIEffects);
         }
+        else
+        if (_PlayerType == PlayerTypeSuperMunt)
+        {
+            text += "|";
+
+            text += _MuntGMSets[_MuntGMSet];
+        }
     #ifdef DXISUPPORT
         else
-        if (plugin == 5)
+        if (plugin == PlayerTypeDirectX)
         {
             p_out += "|";
 
@@ -186,9 +193,11 @@ void MIDIPreset::Serialize(pfc::string8 & text)
         else
         if (_PlayerType == 6)
         {
+            const char * const * BankNames = adl_getBankNames();
+
             text += "|";
 
-            text += banknames[_ADLBankNumber];
+            text += BankNames[_ADLBankNumber];
             text += "|";
 
             text += pfc::format_int(_ADLChipCount);
@@ -203,30 +212,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
             text += pfc::format_int(_ADLEmulatorCore);
         }
         else
-        if (_PlayerType == 3)
-        {
-            text += "|";
-
-            text += _MuntGMSets[_MuntGMSet];
-        }
-        else
-        if (_PlayerType == 9)
-        {
-            text += "|";
-            text += NukePlayer::GetPresetName(_NukeSynth, _NukeBank);
-            text += "|";
-            text += pfc::format_int(_NukePanning);
-        }
-        else
-        if (_PlayerType == 10)
-        {
-            text += "|";
-            text += pfc::format_int(_MIDIStandard);
-            text += "|";
-            text += pfc::format_int(_UseMIDIEffects);
-        }
-        else
-        if (_PlayerType == 7)
+        if (_PlayerType == PlayerTypeOPN)
         {
             text += "|";
             text += pfc::format_int(_OPNBankNumber);
@@ -236,6 +222,22 @@ void MIDIPreset::Serialize(pfc::string8 & text)
             text += pfc::format_int(_ADLUsePanning);
             text += "|";
             text += pfc::format_int(_OPNEmulatorCore);
+        }
+        else
+        if (_PlayerType == PlayerTypeNuke)
+        {
+            text += "|";
+            text += NukePlayer::GetPresetName(_NukeSynth, _NukeBank);
+            text += "|";
+            text += pfc::format_int(_NukePanning);
+        }
+        else
+        if (_PlayerType == PlayerTypeSecretSauce)
+        {
+            text += "|";
+            text += pfc::format_int(_MIDIStandard);
+            text += "|";
+            text += pfc::format_int(_UseMIDIEffects);
         }
     }
 
