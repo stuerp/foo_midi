@@ -1,8 +1,11 @@
 
-/** $VER: MIDIPlayer.cpp (2023.05.24) **/
+/** $VER: MIDIPlayer.cpp (2023.05.28) **/
 
 #include "MIDIPlayer.h"
 
+/// <summary>
+/// Initializes a new instance.
+/// </summary>
 MIDIPlayer::MIDIPlayer()
 {
     #ifdef EXPERIMENT
@@ -20,6 +23,9 @@ MIDIPlayer::MIDIPlayer()
     _IsInitialized = false;
 }
 
+/// <summary>
+/// Loads the specified MIDI container.
+/// </summary>
 bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex, unsigned loopMode, unsigned cleanFlags)
 {
     assert(_Stream.size() == 0);
@@ -376,14 +382,14 @@ void MIDIPlayer::Seek(unsigned long seekTime)
                 continue;
             }
 
-            const uint32_t m  = (mse1.Data & 0x7F00FF0F) | 0x80; // note off
+            const uint32_t m1 = (mse1.Data & 0x7F00FF0F) | 0x80; // note off
             const uint32_t m2 = (mse1.Data & 0x7F00FFFF); // also note off
 
             for (size_t j = i + 1; j < OldCurrentPosition; j++)
             {
                 MIDIStreamEvent & mse2 = FillerEvents.at(j);
 
-                if ((mse2.Data & 0xFF00FFFF) == m || mse2.Data == m2)
+                if ((mse2.Data & 0xFF00FFFF) == m1 || mse2.Data == m2)
                 {
                     // kill 'em
                     mse1.Data = 0;

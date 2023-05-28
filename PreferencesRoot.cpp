@@ -541,13 +541,22 @@ void PreferencesRootPage::reset()
     }
 
     GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-    GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
 
-    if (PlayerType != PlayerTypeNuke)
     {
-        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
-        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
-        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(FALSE);
+        BOOL Enable = (PlayerType == PlayerTypeSuperMunt);
+
+        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
+        GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(Enable);
+
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
+    }
+
+    {
+        BOOL Enable = (PlayerType == PlayerTypeNuke);
+
+        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(Enable);
+        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(Enable);
+        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(Enable);
     }
 
     {
@@ -775,7 +784,14 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             GetDlgItem(ControlId[i]).EnableWindow(Enable);
     }
 
-    GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
+    {
+        BOOL Enable = (PlayerType == PlayerTypeSuperMunt);
+
+        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
+        GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(Enable);
+
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
+    }
 
     if (PlayerType != PlayerTypeADL)
     {
@@ -1079,15 +1095,22 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
     }
 }
 
+/// <summary>
+/// Updates the dialog controls when the player type changes.
+/// </summary>
 void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 {
     int PlayerType = -1;
 
+    // Player Type
     int SelectedIndex = (int)::SendMessage(w, CB_GETCURSEL, 0, 0);
 
     {
         if ((SelectedIndex >= _PlayerPresentCount) && (SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
+        {
             PlayerType = PlayerTypeVSTi;
+            _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].Id];
+        }
     #ifdef DXISUPPORT
         else
         if (SelectedIndex >= plugins_reported + _VSTiPlugins.get_count())
@@ -1097,10 +1120,33 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
             PlayerType = _PlayerIndexToPlayerType[SelectedIndex];
     }
 
-    GetDlgItem(IDC_SAMPLERATE).EnableWindow(PlayerType || !_IsRunning);
-
+    // Configure
     {
-        bool Enable = (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI);
+        bool Enable = (SelectedIndex >= _PlayerPresentCount) && (PlayerType < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].HasEditor;
+
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
+    }
+
+    // Sample Rate
+    {
+        GetDlgItem(IDC_SAMPLERATE).EnableWindow(PlayerType || !_IsRunning);
+    }
+
+    // Looping
+
+    // MIDI Flavor and Effects
+    {
+        BOOL Enable = (PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce);
+
+        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enable);
+        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enable);
+
+        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(Enable);
+    }
+
+    // SoundFont resampling mode and cache status
+    {
+        BOOL Enable = (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI);
 
         const int ControlId[] =
         {
@@ -1112,50 +1158,35 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
             GetDlgItem(ControlId[i]).EnableWindow(Enable);
     }
 
-    GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(PlayerType == PlayerTypeADL);
-    GetDlgItem(IDC_ADL_BANK).EnableWindow(PlayerType == PlayerTypeADL);
-
-    GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
-    GetDlgItem(IDC_ADL_CHIPS).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
-    GetDlgItem(IDC_ADL_PANNING).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
-
-    GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlayerType == PlayerTypeNuke);
-    GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlayerType == PlayerTypeNuke);
-    GetDlgItem(IDC_NUKE_PANNING).EnableWindow(PlayerType == PlayerTypeNuke);
-
+    // Munt
     {
-        bool Enable = (PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce);
+        BOOL Enable = (PlayerType == PlayerTypeSuperMunt);
 
-        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enable);
-        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(Enable);
+        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
+        GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(Enable);
+
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(Enable ? SW_SHOW : SW_HIDE);
     }
 
-    if (PlayerType == 3)
+    // Nuke
     {
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_SHOW);
-    }
-    else
-    if (_VSTiPlugIns.get_count() == 0)
-    {
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
-    }
-    else
-    {
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(SW_HIDE);
+        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlayerType == PlayerTypeNuke);
+        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlayerType == PlayerTypeNuke);
+        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(PlayerType == PlayerTypeNuke);
     }
 
+    // ADL
     {
-        bool Enable = (SelectedIndex >= _PlayerPresentCount) && (PlayerType < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].HasEditor;
-
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
+        GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(PlayerType == PlayerTypeADL);
+        GetDlgItem(IDC_ADL_BANK).EnableWindow(PlayerType == PlayerTypeADL);
     }
 
-    if ((SelectedIndex >= _PlayerPresentCount) && (SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
-        _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].Id];
+    // Nuke and ADL
+    {
+        GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
+        GetDlgItem(IDC_ADL_CHIPS).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
+        GetDlgItem(IDC_ADL_PANNING).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
+    }
 
     OnChanged();
 }

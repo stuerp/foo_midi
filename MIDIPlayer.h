@@ -87,6 +87,7 @@ private:
     void SendSysExResetSC(size_t port, unsigned int time);
     void SendSysExGS(uint8_t * data, size_t size, size_t port, unsigned int time);
 
+private:
     std::vector<MIDIStreamEvent> _Stream;
 
     size_t _CurrentPosition; // Current position in the MIDI stream
