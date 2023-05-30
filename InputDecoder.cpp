@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.05.20) **/
+/** $VER: InputDecoder.cpp (2023.05.30) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -8,6 +8,8 @@
 #include <sdk/hasher_md5.h>
 #include <sdk/metadb_index.h>
 #include <sdk/system_time_keeper.h>
+
+#include "KaraokeProcessor.h"
 
 volatile int _IsRunning = 0;
 
@@ -120,48 +122,48 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     if (_IsSysExFile)
         throw exception_io_data("You cannot play SysEx dumps");
 
+    _IsFirstChunk = true;
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _SamplesPlayed = 0;
 
     InitializeTime(subSongIndex);
 
-    MIDIPreset Preset;
-
-    // Specific tags
-    file_info_impl FileInfo;
-
-    ConvertMetaDataToTags(subSongIndex, FileInfo, abortHandler);
-
-    {
-        const char * MIDIPreset = FileInfo.meta_get(TagMIDIPreset, 0);
-
-        if (MIDIPreset)
-        {
-            console::print("Using preset ", MIDIPreset, " from file.");
-
-            Preset.Deserialize(MIDIPreset);
-        }
-    }
-
-    MIDISysExDumps SysExDumps;
-
-    {
-        const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
-
-        if (MIDISysExDumps)
-            SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
-    }
-
     _Container.SetTrackCount((uint32_t)_TrackCount);
 
-    SysExDumps.Merge(_Container, abortHandler);
+    MIDIPreset Preset;
 
-    _PlayerType = Preset._PlayerType;
-    _IsFirstChunk = true;
+    {
+        file_info_impl FileInfo;
+
+        {
+            const char * MIDIPreset = FileInfo.meta_get(TagMIDIPreset, 0);
+
+            if (MIDIPreset)
+            {
+                console::print("Using preset ", MIDIPreset, " from file.");
+
+                Preset.Deserialize(MIDIPreset);
+
+                // Override the player type with the one specified in the preset.
+                _PlayerType = Preset._PlayerType;
+            }
+        }
+
+        MIDISysExDumps SysExDumps;
+
+        {
+            const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
+
+            if (MIDISysExDumps)
+                SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
+        }
+
+        SysExDumps.Merge(_Container, abortHandler);
+    }
 
     if (_IsMT32)
     {
-        console::print("Overriding player with SuperMunt because MIDI is MT-32.");
+        console::print("Setting player type to SuperMunt because MIDI is MT-32.");
 
         _PlayerType= PlayerTypeSuperMunt;
     }
@@ -208,9 +210,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         if (FoundSoundFile)
         {
-            console::print("Overriding player with BASSMIDI and SoundFont ", TempSoundFontFilePath, ".");
+            console::print("Setting player type to BASSMIDI because matching SoundFont \"", TempSoundFontFilePath, "\".");
 
             SoundFontFilePath = TempSoundFontFilePath;
+
             _PlayerType = PlayerTypeBASSMIDI;
         }
     }
@@ -250,6 +253,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
+    // Create and initialize the MIDI player.
     delete _Player;
     _Player = nullptr;
 
@@ -907,11 +911,6 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
     if (_IsSysExFile)
         return;
 
-    // General tags
-    fileInfo.info_set_int(TagChannels, 2);
-    fileInfo.info_set(TagEncoding, "Synthesized");
-
-    // Specific tags
     ConvertMetaDataToTags(subSongIndex, fileInfo, abortHandler);
 
     {
@@ -1097,7 +1096,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 {
     _IsMT32 = false;
 
-    pfc::string8 Lyrics;
+    KaraokeProcessor kp;
 
     {
         MIDIMetaData MetaData;
@@ -1109,7 +1108,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         {
             bool HasTitle = MetaData.GetItem("title", Item);
 
-            for (t_size i = 0; i < MetaData.GetCount(); ++i)
+            for (size_t i = 0; i < MetaData.GetCount(); ++i)
             {
                 const MIDIMetaDataItem& mdi = MetaData[i];
 
@@ -1124,9 +1123,24 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
                     _IsMT32 = (Item.Value == "MT-32");
                 }
                 else
+                if (pfc::stricmp_ascii(mdi.Name.c_str(), "lyrics_type") == 0)
+                {
+                    fileInfo.info_set(TagMIDILyricsType, mdi.Value.c_str());
+                }
+                else
                 if (pfc::stricmp_ascii(mdi.Name.c_str(), "lyrics") == 0)
                 {
-                    Lyrics += mdi.Value.c_str();
+                    kp.AddUnsyncedLyrics(mdi.Timestamp, mdi.Value.c_str());
+                }
+                else
+                if (pfc::stricmp_ascii(mdi.Name.c_str(), "soft_karaoke_lyrics") == 0)
+                {
+                    kp.AddSyncedLyrics(mdi.Timestamp, mdi.Value.c_str());
+                }
+                else
+                if (pfc::stricmp_ascii(mdi.Name.c_str(), "soft_karaoke_text") == 0)
+                {
+                    kp.AddSyncedText(mdi.Value.c_str());
                 }
                 else
                 {
@@ -1141,9 +1155,31 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         }
     }
 
-    if (!Lyrics.is_empty())
-        fileInfo.meta_set("lyrics", Lyrics);
+    if (!kp.GetUnsyncedLyrics().is_empty())
+    {
+        auto Lyrics = kp.GetUnsyncedLyrics();
+        pfc::string8 UTF8;
 
+        KaraokeProcessor::UTF8Encode(Lyrics, UTF8);
+
+        fileInfo.meta_set("lyrics", UTF8);
+    }
+
+    if (!kp.GetSyncedLyrics().is_empty())
+    {
+        auto Lyrics = kp.GetSyncedLyrics();
+        pfc::string8 UTF8;
+
+        KaraokeProcessor::UTF8Encode(Lyrics, UTF8);
+
+        fileInfo.meta_set("syncedlyrics", UTF8);
+    }
+
+    // General info
+    fileInfo.info_set_int(TagChannels, 2);
+    fileInfo.info_set(TagEncoding, "Synthesized");
+
+    // Specific info
     fileInfo.info_set_int(TagMIDIFormat,       _Container.GetFormat());
     fileInfo.info_set_int(TagMIDITrackCount,   _Container.GetFormat() == 2 ? 1 : _Container.GetTrackCount());
     fileInfo.info_set_int(TagMIDIChannelCount, _Container.GetChannelCount(subSongIndex));

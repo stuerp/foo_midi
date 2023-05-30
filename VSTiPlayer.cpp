@@ -63,9 +63,9 @@ bool VSTiPlayer::LoadVST(const char * pathName)
     if (pathName != _PluginFilePath)
         _PluginFilePath = pathName;
 
-    _PluginArchitecture = GetPluginArchitecture();
+    _PluginArchitecture = GetProcessorArchitecture(_PluginFilePath);
 
-    if (!_PluginArchitecture)
+    if (_PluginArchitecture == 0)
         return false;
 
     return StartHost();
@@ -203,7 +203,7 @@ void VSTiPlayer::Render(audio_sample * data, unsigned long size)
     {
         StopHost();
 
-        ::memset(data, 0, size * _ChannelCount * sizeof(audio_sample));
+        ::memset(data, 0, (size_t)size * _ChannelCount * sizeof(audio_sample));
 
         return;
     }
@@ -215,13 +215,13 @@ void VSTiPlayer::Render(audio_sample * data, unsigned long size)
     {
         size_t ToDo = size > 4096 ? 4096 : size;
 
-        ReadBytes(_Samples, ToDo * _ChannelCount * sizeof(float));
+        ReadBytes(_Samples, (uint32_t)(ToDo * _ChannelCount * sizeof(float)));
 
         for (size_t i = 0; i < ToDo * _ChannelCount; i++)
             data[i] = (audio_sample) _Samples[i];
 
         data += ToDo * _ChannelCount;
-        size -= ToDo;
+        size -= (unsigned long) ToDo;
     }
 }
 
@@ -279,66 +279,6 @@ void VSTiPlayer::SendSysExWithTime(const uint8_t * event, size_t size, size_t po
 #pragma endregion
 
 #pragma region("Private")
-static uint16_t getwordle(const uint8_t * data) noexcept
-{
-    return (uint16_t) (data[0] | (((uint16_t) data[1]) << 8));
-}
-
-static uint32_t getdwordle(const uint8_t * data) noexcept
-{
-    return data[0] | (((uint32_t) data[1]) << 8) | (((uint32_t) data[2]) << 16) | (((uint32_t) data[3]) << 24);
-}
-
-uint32_t VSTiPlayer::GetPluginArchitecture() const
-{
-    constexpr size_t MZHeaderSize = 0x40;
-    constexpr size_t PEHeaderSize = 4 + 20 + 224;
-
-    uint8_t PEHeader[PEHeaderSize];
-
-    std::string PluginURI = "file://";
-
-    PluginURI += _PluginFilePath;
-
-    file::ptr File;
-    abort_callback_dummy AbortHandler;
-
-    try
-    {
-        filesystem::g_open(File, PluginURI.c_str(), filesystem::open_mode_read, AbortHandler);
-
-        File->read_object(PEHeader, MZHeaderSize, AbortHandler);
-
-        if (getwordle(PEHeader) != 0x5A4D)
-            return 0;
-
-        uint32_t OffsetPEHeader = getdwordle(PEHeader + 0x3c);
-
-        File->seek(OffsetPEHeader, AbortHandler);
-        File->read_object(PEHeader, PEHeaderSize, AbortHandler);
-
-        if (getdwordle(PEHeader) != 0x00004550)
-            return 0;
-
-        switch (getwordle(PEHeader + 4))
-        {
-            case 0x014C:
-                return 32;
-
-            case 0x8664:
-                return 64;
-
-            default:
-                return 0;
-        }
-    }
-    catch (...)
-    {
-    }
-
-    return 0;
-}
-
 static bool CreatePipeName(pfc::string_base & pipeName)
 {
     GUID guid;

@@ -1022,7 +1022,7 @@ static void ConvertTextToUTF8(const char * src, size_t srcLength, std::string & 
 void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 {
     bool TypeFound = false;
-    bool NonGMTypeFound = false;
+    bool IsSoftKaraoke = false;
 
     for (size_t i = 0; i < _Tracks.size(); ++i)
     {
@@ -1042,14 +1042,14 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 
             size_t DataSize = Event.GetDataSize();
 
-            if (!NonGMTypeFound && (DataSize >= 1) && (Event.Data[0] == StatusCodes::SysEx))
+            if ((DataSize >= 1) && (Event.Data[0] == StatusCodes::SysEx) && !TypeFound)
             {
                 const char * TypeName = nullptr;
 
                 switch (Event.Data[1])
                 {
                     case 0x7E:
-                        TypeFound = true; // "GM";
+                        TypeName = "GM";
                         break;
 
                     case 0x43:
@@ -1086,7 +1086,6 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
                 if (TypeName)
                 {
                     TypeFound = true;
-                    NonGMTypeFound = true;
 
                     metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "type", TypeName));
                 }
@@ -1101,43 +1100,105 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 
                 DataSize -= 2;
 
+                Data.resize(DataSize);
+                Event.GetData(&Data[0], 2, DataSize);
+
                 switch (Event.Data[1])
                 {
                     case MetaDataTypes::Text:
-                        Data.resize(DataSize);
-                        Event.GetData(&Data[0], 2, DataSize);
+                    {
+                        if (!IsSoftKaraoke)
+                        {
+                            IsSoftKaraoke = (DataSize >= 19) && (_strnicmp((const char *) &Data[0], "@KMIDI KARAOKE FILE", 19) == 0);
 
-                        ::sprintf_s(Name, _countof(Name), "track_text_%02u", (unsigned int)i);
-                        ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
+                            if (IsSoftKaraoke)
+                            {
+                                metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "lyrics_type", "Soft Karaoke"));
+                            }
+                            else
+                            {
+                                ::sprintf_s(Name, _countof(Name), "track_text_%02zd", i);
+                                ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
-                        metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
+                                metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
+                            }
+                        }
+                        else
+                        {
+                            if ((DataSize >= 2) && (_strnicmp((const char *) &Data[0], "@K", 2) == 0))
+                            {
+                                ConvertTextToUTF8((const char *) &Data[2], DataSize - 2, Text);
+
+                                metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "soft_karaoke_version", Text.c_str()));
+                            }
+                            else
+                            if ((DataSize >= 2) && (_strnicmp((const char *) &Data[0], "@L", 2) == 0))
+                            {
+                                ConvertTextToUTF8((const char *) &Data[2], DataSize - 2, Text);
+
+                                metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "soft_karaoke_language", Text.c_str()));
+                            }
+                            else
+                            if ((DataSize >= 2) && (_strnicmp((const char *) &Data[0], "@T", 2) == 0))
+                            {
+                                ConvertTextToUTF8((const char *) &Data[2], DataSize - 2, Text);
+
+                                metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "soft_karaoke_text", Text.c_str()));
+                            }
+                            else
+                            if ((DataSize >= 2) && (_strnicmp((const char *) &Data[0], "@I", 2) == 0))
+                            {
+                                ConvertTextToUTF8((const char *) &Data[2], DataSize - 2, Text);
+
+                                metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "soft_karaoke_info", Text.c_str()));
+                            }
+                            else
+                            if ((DataSize >= 2) && (_strnicmp((const char *) &Data[0], "@W", 2) == 0))
+                            {
+                                ConvertTextToUTF8((const char *) &Data[2], DataSize - 2, Text);
+
+                                metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "soft_karaoke_words", Text.c_str()));
+                            }
+                            else
+                            if ((DataSize >= 2) && (Data[0] == '@'))
+                            {
+                                // Unknown Soft Karaoke tag
+                                ::sprintf_s(Name, _countof(Name), "track_text_%02zd", i);
+                                ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
+
+                                metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
+                            }
+                            else
+                            {
+                                ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
+
+                                metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "soft_karaoke_lyrics", Text.c_str()));
+                            }
+                        }
                         break;
+                    }
 
                     case MetaDataTypes::Copyright:
-                        Data.resize(DataSize);
-                        Event.GetData(&Data[0], 2, DataSize);
-
+                    {
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
                         metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "copyright", Text.c_str()));
                         break;
+                    }
 
                     case MetaDataTypes::TrackName:
                     case MetaDataTypes::InstrumentName:
-                        Data.resize(DataSize);
-                        Event.GetData(&Data[0], 2, DataSize);
-
+                    {
                         ::sprintf_s(Name, _countof(Name), "track_name_%02u", (unsigned int)i);
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
                         metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), Name, Text.c_str()));
                         break;
+                    }
 
+                    // Tune 1000 Karaoke format (https://www.mixagesoftware.com/en/midikit/help/HTML/karaoke_formats.html)
                     case MetaDataTypes::Lyrics:
                     {
-                        Data.resize(DataSize);
-                        Event.GetData(&Data[0], 2, DataSize);
-
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
                         metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "lyrics", Text.c_str()));
@@ -1146,9 +1207,6 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 
                     case MetaDataTypes::Marker:
                     {
-                        Data.resize(DataSize);
-                        Event.GetData(&Data[0], 2, DataSize);
-
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
                         metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "track_marker", Text.c_str()));
@@ -1157,20 +1215,19 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 
                     case MetaDataTypes::CueMarker:
                     {
-                        Data.resize(DataSize);
-                        Event.GetData(&Data[0], 2, DataSize);
-
                         ConvertTextToUTF8((const char *) &Data[0], DataSize, Text);
 
                         metaData.AddItem(MIDIMetaDataItem(timestamp_to_ms(Event.Timestamp, TempoTrackIndex), "cue_marker", Text.c_str()));
                         break;
                     }
 
+                    case MetaDataTypes::SetTempo:
+                    {
+                        break;
+                    }
+
                     case MetaDataTypes::TimeSignature:
                     {
-                        Data.resize(DataSize);
-                        Event.GetData(&Data[0], 2, DataSize);
-
                         if (DataSize == 4)
                         {
                             ::sprintf_s(Name, _countof(Name), "%d/%d", Data[0], (1 << Data[1]));
@@ -1181,9 +1238,6 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 
                     case MetaDataTypes::KeySignature:
                     {
-                        Data.resize(DataSize);
-                        Event.GetData(&Data[0], 2, DataSize);
-
                         if (DataSize == 2)
                         {
                             if (-7 <= (int8_t)Data[0] && (int8_t)Data[0] <= 7)
@@ -1212,7 +1266,7 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
         }
     }
 
-    if (TypeFound && !NonGMTypeFound)
+    if (!TypeFound)
         metaData.AddItem(MIDIMetaDataItem(0, "type", "GM"));
 
     metaData.Append(_ExtraMetaData);

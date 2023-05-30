@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.01.08) **/
+/** $VER: Configuration.cpp (2023.05.29) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -201,9 +201,7 @@ advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, GUIDMIDIPlay
 // Names of the info fields
 const char TagChannels[] = "channels";
 const char TagEncoding[] = "encoding";
-const char TagSampleRate[] = "samplerate";
 
-const char TagMIDIHash[] = "midi_hash";
 const char TagMIDIFormat[] = "midi_format";
 const char TagMIDITrackCount[] = "midi_tracks";
 const char TagMIDIChannelCount[] = "midi_channels";
@@ -213,12 +211,17 @@ const char TagMIDILoopStart[] = "midi_loop_start";
 const char TagMIDILoopEnd[] = "midi_loop_end";
 const char TagMIDILoopStartInMs[] = "midi_loop_start_ms";
 const char TagMIDILoopEndInMs[] = "midi_loop_end_ms";
-const char TagBASSMIDIVoiceCount[] = "bassmidi_voices";
-const char TagBASSMIDIVoicesMax[] = "bassmidi_voices_max";
+const char TagMIDILyricsType[] = "midi_lyrics_type";
+const char TagMIDIHash[] = "midi_hash";
 
 // Names of the meta data fields
 const char TagMIDIPreset[] = "midi_preset";
 const char TagMIDISysExDumps[] = "midi_sysex_dumps";
+
+// Names of the dynamic info fields
+const char TagSampleRate[] = "samplerate";
+const char TagBASSMIDIVoiceCount[] = "bassmidi_voices";
+const char TagBASSMIDIVoicesMax[] = "bassmidi_voices_max";
 
 const char * _FileExtensions[] =
 {

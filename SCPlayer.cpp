@@ -124,7 +124,7 @@ void SCPlayer::Shutdown()
 
 void SCPlayer::Render(audio_sample * data, unsigned long size)
 {
-    ::memset(data, 0, size * 2 * sizeof(audio_sample));
+    ::memset(data, 0, (size_t)size * 2 * sizeof(audio_sample));
 
     while (size)
     {
@@ -132,7 +132,7 @@ void SCPlayer::Render(audio_sample * data, unsigned long size)
 
         for (size_t i = 0; i < 3; ++i)
         {
-            RenderPort(i, _Samples, ToDo);
+            RenderPort((uint32_t)i, _Samples, (uint32_t) ToDo);
 
             // Convert the format of the rendered output.
             for (size_t j = 0; j < ToDo; ++j)
@@ -143,7 +143,7 @@ void SCPlayer::Render(audio_sample * data, unsigned long size)
         }
 
         data += ToDo * 2;
-        size -= ToDo;
+        size -= (unsigned long) ToDo;
     }
 }
 
@@ -219,9 +219,9 @@ bool SCPlayer::LoadCore(const char * filePath)
     if (filePath != _PluginFilePath)
         _PluginFilePath = filePath;
 
-    _PluginArchitecture = GetPluginArchitecture();
+    _PluginArchitecture = GetProcessorArchitecture(_PluginFilePath);
 
-    if (!_PluginArchitecture)
+    if (_PluginArchitecture == 0)
         return false;
 
     bool Success = StartHost(0);
@@ -249,66 +249,6 @@ void SCPlayer::RenderPort(uint32_t port, float * data, uint32_t size) noexcept
     }
 
     ReadBytes(port, data, size * sizeof(float) * 2);
-}
-
-static uint16_t getwordle(uint8_t * data)
-{
-    return static_cast<uint16_t>(data[0] | (static_cast<uint16_t>(data[1]) << 8));
-}
-
-static uint32_t getdwordle(uint8_t * data)
-{
-    return data[0] | (static_cast<uint32_t>(data[1]) << 8) | (static_cast<uint32_t>(data[2]) << 16) | (static_cast<uint32_t>(data[3]) << 24);
-}
-
-uint32_t SCPlayer::GetPluginArchitecture() const
-{
-    constexpr size_t MZHeaderSize = 0x40;
-    constexpr size_t PEHeaderSize = 4 + 20 + 224;
-
-    uint8_t PEHeader[PEHeaderSize];
-
-    std::string PluginURI = "file://";
-
-    PluginURI += _PluginFilePath;
-
-    file::ptr File;
-    abort_callback_dummy AbortHandler;
-
-    try
-    {
-        filesystem::g_open(File, PluginURI.c_str(), filesystem::open_mode_read, AbortHandler);
-
-        File->read_object(PEHeader, MZHeaderSize, AbortHandler);
-
-        if (getwordle(PEHeader) != 0x5A4D)
-            return 0;
-
-        uint32_t OffsetPEHeader = getdwordle(PEHeader + 0x3c);
-
-        File->seek(OffsetPEHeader, AbortHandler);
-        File->read_object(PEHeader, PEHeaderSize, AbortHandler);
-
-        if (getdwordle(PEHeader) != 0x00004550)
-            return 0;
-
-        switch (getwordle(PEHeader + 4))
-        {
-            case 0x014C:
-                return 32;
-
-            case 0x8664:
-                return 64;
-
-            default:
-                return 0;
-        }
-    }
-    catch (...)
-    {
-    }
-
-    return 0;
 }
 
 static bool CreatePipeName(pfc::string_base & pipeName)
@@ -435,7 +375,7 @@ bool SCPlayer::StartHost(uint32_t port)
         _hThread[port] = pi.hThread;
 
     #ifdef _DEBUG
-        FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hProcess[port], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hThread[port], 8), ")");
+        FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess[port], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread[port], 8), ")");
     #endif
 
     #ifdef NDEBUG
@@ -464,7 +404,7 @@ void SCPlayer::StopHost(uint32_t port) noexcept
     _IsPortTerminating[port] = true;
 
     #ifdef _DEBUG
-        FB2K_console_print("Stopping host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hProcess[port], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hThread[port], 8), ")");
+        FB2K_console_print("Stopping host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess[port], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread[port], 8), ")");
     #endif
 
     if (_hProcess[port])

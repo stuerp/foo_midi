@@ -27,6 +27,7 @@
     <ClCompile Include="MT32Player\MT32Player.cpp" />
     <ClCompile Include="PreferencesRoot.cpp" />
     <ClCompile Include="PreferencesPaths.cpp" />
+    <ClCompile Include="KaraokeProcessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -129,6 +130,7 @@
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="PreferencesPathsLayout.h" />
     <ClInclude Include="PreferencesRootLayout.h" />
+    <ClInclude Include="KaraokeProcessor.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

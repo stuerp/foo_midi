@@ -808,3 +808,69 @@ static bool IsSysExEqual(const uint8_t * a, const uint8_t * b)
     return (*a == *b);
 }
 #pragma endregion
+
+#pragma region("Private")
+static uint16_t GetWord(const uint8_t * data) noexcept
+{
+    return (uint16_t) (data[0] | (((uint16_t) data[1]) << 8));
+}
+
+static uint32_t GetDWord(const uint8_t * data) noexcept
+{
+    return data[0] | (((uint32_t) data[1]) << 8) | (((uint32_t) data[2]) << 16) | (((uint32_t) data[3]) << 24);
+}
+
+/// <summary>
+/// Determines the processor architecture of a Windows binary file.
+/// </summary>
+uint32_t MIDIPlayer::GetProcessorArchitecture(const std::string & filePath) const
+{
+    constexpr size_t MZHeaderSize = 0x40;
+    constexpr size_t PEHeaderSize = (size_t)4 + 20 + 224;
+
+    uint8_t PEHeader[PEHeaderSize];
+
+    std::string URI = "file://";
+
+    URI += filePath;
+
+    try
+    {
+        file::ptr File;
+        abort_callback_dummy AbortHandler;
+
+        filesystem::g_open(File, URI.c_str(), filesystem::open_mode_read, AbortHandler);
+
+        File->read_object(PEHeader, MZHeaderSize, AbortHandler);
+
+        if (GetWord(PEHeader) != 0x5A4D)
+            return 0;
+
+        uint32_t OffsetPEHeader = GetDWord(PEHeader + 0x3C);
+
+        File->seek(OffsetPEHeader, AbortHandler);
+        File->read_object(PEHeader, PEHeaderSize, AbortHandler);
+
+        if (GetDWord(PEHeader) != 0x00004550)
+            return 0;
+
+        switch (GetWord(PEHeader + 4))
+        {
+            case 0x014C:
+                return 32;
+
+            case 0x8664:
+                return 64;
+
+            default:
+                return 0;
+        }
+    }
+    catch (...)
+    {
+    }
+
+    return 0;
+}
+
+#pragma endregion

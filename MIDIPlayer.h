@@ -69,6 +69,8 @@ protected:
 
     void SendSysExReset(size_t port, unsigned int time);
 
+    uint32_t GetProcessorArchitecture(const std::string & filePath) const;
+
 protected:
     bool _IsInitialized;
     unsigned long _SampleRate;

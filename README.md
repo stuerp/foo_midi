@@ -48,18 +48,18 @@ The following libraries are included in the code:
   * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 * [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
 * [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2)
-    * [Nuke.YKT](http://nukeykt.retrohost.net/)
-      * [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver)
-        * [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) Yamaha YMF262 and CT1747 (OPL3)
-        * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL) Yamaha YM2413 and VRC7 (OPLL)
-        * [Nuked-OPM](https://github.com/nukeykt/Nuked-OPM) Yamaha YM2151
-        * [Nuked-OPN2](https://github.com/nukeykt/Nuked-OPN2) Yamaha YM3438 (YM2612) 1.0.9
-        * [Nuked-OPNB](https://github.com/nukeykt/Nuked-OPNB) Yamaha YM2610
-        * [Nuked-PSG](https://github.com/nukeykt/Nuked-PSG) Yamaha YM7101
-    * [emu2149](https://github.com/digital-sound-antiques/emu2149) Yamaha YM2149 (PSG)
-    * [emu2212](https://github.com/digital-sound-antiques/emu2212) Konami SCC
-    * [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
-    * [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
+* [Nuke.YKT](http://nukeykt.retrohost.net/)
+    * [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver)
+    * [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) Yamaha YMF262 and CT1747 (OPL3)
+    * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL) Yamaha YM2413 and VRC7 (OPLL)
+    * [Nuked-OPM](https://github.com/nukeykt/Nuked-OPM) Yamaha YM2151
+    * [Nuked-OPN2](https://github.com/nukeykt/Nuked-OPN2) Yamaha YM3438 (YM2612) 1.0.9
+    * [Nuked-OPNB](https://github.com/nukeykt/Nuked-OPNB) Yamaha YM2610
+    * [Nuked-PSG](https://github.com/nukeykt/Nuked-PSG) Yamaha YM7101
+* [emu2149](https://github.com/digital-sound-antiques/emu2149) Yamaha YM2149 (PSG)
+* [emu2212](https://github.com/digital-sound-antiques/emu2212) Konami SCC
+* [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
+* [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 * [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
 
 To create the deployment package you need:
@@ -103,6 +103,7 @@ branch. Pull requests are warmly welcome.
 v2.8.3.0, 2023-xx-xx, *""*
 
 * Cue Marker, Lyrics, Time Signature and Key Signature meta events are now converted to tags.
+  * Soft Karaoke lyrics are stored in an SYNCEDLYRICS tag; other lyrics in a LYRICS tag.
 * Bug Fix: vshost process was not stopped when checking for presets. (Regression)
 
 v2.8.2.0, 2023-05-20, *"Spring Cleaning"*

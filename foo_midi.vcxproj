@@ -264,6 +264,7 @@
     <ClCompile Include="foo_midi.cpp" />
     <ClCompile Include="InitQuitHandler.cpp" />
     <ClCompile Include="InputDecoder.cpp" />
+    <ClCompile Include="KaraokeProcessor.cpp" />
     <ClCompile Include="MIDIPlayer.cpp" />
     <ClCompile Include="MIDIPreset.cpp" />
     <ClCompile Include="MIDIPresetFilter.cpp" />
@@ -351,6 +352,7 @@
     <ClInclude Include="FileTypeRegistrar.h" />
     <ClInclude Include="History.h" />
     <ClInclude Include="InputDecoder.h" />
+    <ClInclude Include="KaraokeProcessor.h" />
     <ClInclude Include="MIDIPlayer.h" />
     <ClInclude Include="MIDIPreset.h" />
     <ClInclude Include="MIDIPresetFilter.h" />

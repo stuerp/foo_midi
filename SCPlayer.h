@@ -34,8 +34,6 @@ private:
     bool LoadCore(const char * filePath);
     void RenderPort(uint32_t port, float * data, uint32_t size) noexcept;
 
-    uint32_t GetPluginArchitecture() const;
-
     bool StartHost(uint32_t port);
     void StopHost(uint32_t port) noexcept;
     bool IsHostRunning(uint32_t port) noexcept;

@@ -49,8 +49,6 @@ protected:
     virtual void SendSysExWithTime(const uint8_t *, size_t, size_t, unsigned int) override;
 
 private:
-    uint32_t GetPluginArchitecture() const;
-
     bool StartHost();
     void StopHost() noexcept;
     bool IsHostRunning() noexcept;
