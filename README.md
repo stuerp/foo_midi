@@ -100,7 +100,7 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.8.3.0, 2023-xx-xx, *""*
+v2.8.3.0, 2023-06-01, *"Do you want lyrics with that?"*
 
 * Cue Marker, Lyrics, Time Signature and Key Signature meta events are now converted to tags.
   * Soft Karaoke lyrics are stored in an SYNCEDLYRICS tag; other lyrics in a LYRICS tag. The tags can be edited but will not be written back to the MIDI file.
