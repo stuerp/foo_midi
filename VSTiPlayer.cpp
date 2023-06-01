@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.cpp (2023.05.28) **/
+/** $VER: VSTiPlayer.cpp (2023.06.01) **/
 
 #include "VSTiPlayer.h"
 
@@ -420,12 +420,12 @@ bool VSTiPlayer::StartHost()
         _hThread = pi.hThread;
 
     #ifdef _DEBUG
-        FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hThread, 8), ")");
+        FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ")");
     #endif
 
     #ifdef NDEBUG
-        ::SetPriorityClass(hProcess, ::GetPriorityClass(::GetCurrentProcess()));
-        ::SetThreadPriority(hThread, ::GetThreadPriority(::GetCurrentThread()));
+        ::SetPriorityClass(_hProcess, ::GetPriorityClass(::GetCurrentProcess()));
+        ::SetThreadPriority(_hThread, ::GetThreadPriority(::GetCurrentThread()));
     #endif
     }
 
@@ -480,7 +480,7 @@ void VSTiPlayer::StopHost() noexcept
     _IsTerminating = true;
 
     #ifdef _DEBUG
-        FB2K_console_print("Stopping host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(t_uint32)_hThread, 8), ")");
+        FB2K_console_print("Stopping host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ")");
     #endif
 
     if (_hProcess)

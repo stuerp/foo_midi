@@ -379,8 +379,8 @@ bool SCPlayer::StartHost(uint32_t port)
     #endif
 
     #ifdef NDEBUG
-        SetPriorityClass(hProcess[port], GetPriorityClass(GetCurrentProcess()));
-        SetThreadPriority(hThread[port], GetThreadPriority(GetCurrentThread()));
+        ::SetPriorityClass(_hProcess[port], ::GetPriorityClass(::GetCurrentProcess()));
+        ::SetThreadPriority(_hThread[port], ::GetThreadPriority(::GetCurrentThread()));
     #endif
     }
 

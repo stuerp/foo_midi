@@ -103,7 +103,8 @@ branch. Pull requests are warmly welcome.
 v2.8.3.0, 2023-xx-xx, *""*
 
 * Cue Marker, Lyrics, Time Signature and Key Signature meta events are now converted to tags.
-  * Soft Karaoke lyrics are stored in an SYNCEDLYRICS tag; other lyrics in a LYRICS tag.
+  * Soft Karaoke lyrics are stored in an SYNCEDLYRICS tag; other lyrics in a LYRICS tag. The tags can be edited but will not be written back to the MIDI file.
+  * Info tag MIDI_LYRICS_TYPE contains the name of the Karaoke standard. For now, only Soft Karaoke format is recognized.
 * Bug Fix: vshost process was not stopped when checking for presets. (Regression)
 
 v2.8.2.0, 2023-05-20, *"Spring Cleaning"*

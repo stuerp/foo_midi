@@ -346,6 +346,11 @@ private:
     }
     #pragma warning(default: 4267)
 
+    void AssignString(const char * src, size_t srcLength, std::string & dst) const
+    {
+        dst.assign(src, src + srcLength);
+    }
+
 private:
     uint32_t _Format;
     uint32_t _Division;
