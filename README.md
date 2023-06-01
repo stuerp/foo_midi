@@ -115,7 +115,7 @@ v2.8.2.0, 2023-05-20, *"Spring Cleaning"*
 * Bug Fix: Restored access to the Preferences page from the Decoding page in the Preferences dialog.
 * Improved: Tweaked the size of some of the labels of the Preferences dialog.
 * Improved: Added a message to re-open the Preferences dialog after any of the paths were changed.
-* Improved: Changed Shift-JIS detection in meta data. A copyright sign (©) was interpreted as Shift-JIS.
+* Improved: Changed Shift-JIS detection in meta data. A copyright sign (Â©) was interpreted as Shift-JIS.
 
 v2.8.1.0, 2023-05-01, *"A New Beginning...? Redux"*
 
