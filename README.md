@@ -100,7 +100,7 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.8.3.0, 2023-xx-xx, *""*
+v2.8.3.0, 2023-06-01, *"Do you want lyrics with that?"*
 
 * Cue Marker, Lyrics, Time Signature and Key Signature meta events are now converted to tags.
   * Soft Karaoke lyrics are stored in an SYNCEDLYRICS tag; other lyrics in a LYRICS tag. The tags can be edited but will not be written back to the MIDI file.
@@ -115,7 +115,7 @@ v2.8.2.0, 2023-05-20, *"Spring Cleaning"*
 * Bug Fix: Restored access to the Preferences page from the Decoding page in the Preferences dialog.
 * Improved: Tweaked the size of some of the labels of the Preferences dialog.
 * Improved: Added a message to re-open the Preferences dialog after any of the paths were changed.
-* Improved: Changed Shift-JIS detection in meta data. A copyright sign (©) was interpreted as Shift-JIS.
+* Improved: Changed Shift-JIS detection in meta data. A copyright sign (Â©) was interpreted as Shift-JIS.
 
 v2.8.1.0, 2023-05-01, *"A New Beginning...? Redux"*
 
