@@ -28,8 +28,8 @@ MIDIPreset::MIDIPreset() noexcept
             }
             catch (...)
             {
-                if (_PlayerType == 1)
-                    _PlayerType = 0;
+                if (_PlayerType == PlayerTypeVSTi)
+                    _PlayerType = PlayerTypeEmuDeMIDI;
             }
         }
 
@@ -191,7 +191,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
         }
     #endif
         else
-        if (_PlayerType == 6)
+        if (_PlayerType == PlayerTypeADL)
         {
             const char * const * BankNames = adl_getBankNames();
 

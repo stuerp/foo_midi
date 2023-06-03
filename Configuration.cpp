@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.05.29) **/
+/** $VER: Configuration.cpp (2023.06.03) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -222,6 +222,8 @@ const char TagMIDISysExDumps[] = "midi_sysex_dumps";
 const char TagSampleRate[] = "samplerate";
 const char TagBASSMIDIVoiceCount[] = "bassmidi_voices";
 const char TagBASSMIDIVoicesMax[] = "bassmidi_voices_max";
+
+const char TagMIDIPlayer[] = "midi_player";
 
 const char * _FileExtensions[] =
 {

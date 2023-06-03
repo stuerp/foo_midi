@@ -100,6 +100,10 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
+v2.8.3.1, 2023-06-01, *"Do you want lyrics with that? Redux"*
+
+* Bug Fix: The user selection of the MIDI player was no longer honored. (Regression) A SOLID bug...
+
 v2.8.3.0, 2023-06-01, *"Do you want lyrics with that?"*
 
 * Cue Marker, Lyrics, Time Signature and Key Signature meta events are now converted to tags.

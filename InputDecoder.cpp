@@ -122,6 +122,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     if (_IsSysExFile)
         throw exception_io_data("You cannot play SysEx dumps");
 
+    _PlayerType = (uint32_t)CfgPlayerType;
     _IsFirstChunk = true;
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _SamplesPlayed = 0;
@@ -864,6 +865,38 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
     {
         fileInfo.info_set_int(TagSampleRate, _SampleRate);
         timestampDelta = 0.;
+
+        const char * PlayerName = "";
+
+        switch (_PlayerType)
+        {
+            case PlayerTypeEmuDeMIDI:
+                PlayerName = "Emu de MIDI"; break;
+            case PlayerTypeVSTi:
+                PlayerName = "VSTi"; break;
+            case PlayerTypeFluidSynth:
+                PlayerName = "FluidSynth"; break;
+            case PlayerTypeSuperMunt:
+                PlayerName = "SuperMunt"; break;
+            case PlayerTypeBASSMIDI:
+                PlayerName = "BASS MIDI"; break;
+            case PlayerTypeDirectX:
+                PlayerName = "DirectX"; break;
+            case PlayerTypeADL:
+                PlayerName = "ADL"; break;
+            case PlayerTypeOPN:
+                PlayerName = "OPN"; break;
+            case PlayerTypeOPL:
+                PlayerName = "OPL"; break;
+            case PlayerTypeNuke:
+                PlayerName = "Nuke"; break;
+            case PlayerTypeSecretSauce:
+                PlayerName = "Secret Sauce"; break;
+            default:
+                PlayerName = "Unknown"; break;
+        }
+
+        fileInfo.info_set(TagMIDIPlayer, PlayerName);
 
         _IsFirstChunk = false;
 
