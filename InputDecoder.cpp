@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.05.30) **/
+/** $VER: InputDecoder.cpp (2023.06.03) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -10,6 +10,7 @@
 #include <sdk/system_time_keeper.h>
 
 #include "KaraokeProcessor.h"
+#include "Exceptions.h"
 
 volatile int _IsRunning = 0;
 
@@ -17,6 +18,21 @@ critical_section _Lock;
 volatile unsigned int _CurrentSampleRate;
 
 const GUID GUIDTagMIDIHash = { 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0x61, 0xc3, 0x26, 0x87, 0xd0 } };
+
+const char * PlayerTypeNames[] =
+{
+    "Emu de MIDI",
+    "VSTi",
+    "FluidSynth",
+    "SuperMunt",
+    "BASS MIDI",
+    "DirectX",
+    "LibADLMIDI",
+    "LibOPNMIDI",
+    "OPL",
+    "Nuke",
+    "Secret Sauce"
+};
 
 #pragma region("input_impl")
 /// <summary>
@@ -66,7 +82,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         _TrackCount = (size_t)_Container.GetTrackCount();
 
         if (_TrackCount == 0)
-            throw exception_io_data("Invalid MIDI file");
+            throw exception_io_data("Invalid MIDI file. No tracks found");
 
         // Check if we read a valid MIDI file.
         {
@@ -88,11 +104,11 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops);
     }
 
-    // Calculate the hash of the MIDI stream.
+    // Calculate the hash of the MIDI file.
     {
         Data.resize(0);
 
-        _Container.serialize_as_standard_midi_file(Data);
+        _Container.SerializeAsSMF(Data);
 
         hasher_md5_state HasherState;
         static_api_ptr_t<hasher_md5> Hasher;
@@ -104,7 +120,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     }
 
     if (AdvCfgSkipToFirstNote)
-        _Container.trim_start();
+        _Container.TrimStart();
 
     _LoopRange.Clear();
     _LoopInMs.Clear();
@@ -120,7 +136,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
     if (_IsSysExFile)
-        throw exception_io_data("You cannot play SysEx dumps");
+        throw exception_midi("You cannot play SysEx dumps");
 
     _PlayerType = (uint32_t)CfgPlayerType;
     _IsFirstChunk = true;
@@ -137,13 +153,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         file_info_impl FileInfo;
 
         {
-            const char * MIDIPreset = FileInfo.meta_get(TagMIDIPreset, 0);
+            const char * MIDIPresetText = FileInfo.meta_get(TagMIDIPreset, 0);
 
-            if (MIDIPreset)
+            if (MIDIPresetText)
             {
-                console::print("Using preset ", MIDIPreset, " from file.");
+                console::print("Using preset ", MIDIPresetText, " from file.");
 
-                Preset.Deserialize(MIDIPreset);
+                Preset.Deserialize(MIDIPresetText);
 
                 // Override the player type with the one specified in the preset.
                 _PlayerType = Preset._PlayerType;
@@ -164,9 +180,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     if (_IsMT32)
     {
-        console::print("Setting player type to SuperMunt because MIDI is MT-32.");
+        console::print("Setting player type to SuperMunt because MIDI file contains MT-32 messages.");
 
-        _PlayerType= PlayerTypeSuperMunt;
+        _PlayerType = PlayerTypeSuperMunt;
     }
 
     // Gets a SoundFont file that has been configured for the file, if any.
@@ -211,7 +227,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         if (FoundSoundFile)
         {
-            console::print("Setting player type to BASSMIDI because matching SoundFont \"", TempSoundFontFilePath, "\".");
+            console::print("Setting player type to BASS MIDI because matching SoundFont \"", TempSoundFontFilePath, "\".");
 
             SoundFontFilePath = TempSoundFontFilePath;
 
@@ -305,19 +321,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             {
                 if (Preset._VSTiFilePath.is_empty())
-                {
-                    console::error("No VST instrument configured.");
-                    throw exception_io_data();
-                }
+                    throw exception_midi("No VSTi specified in preset");
 
                 auto Player = new VSTiPlayer;
 
                 if (!Player->LoadVST(Preset._VSTiFilePath))
-                {
-                    console::print("Unable to load VSTi plugin: ", Preset._VSTiFilePath);
-
-                    return;
-                }
+                    throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\"");
             
                 if (Preset._VSTConfig.size())
                     Player->SetChunk(&Preset._VSTConfig[0], Preset._VSTConfig.size());
@@ -395,7 +404,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     #endif
         }
 
-        // Munt (MT32)
+        // Munt (MT-32)
         case PlayerTypeSuperMunt:
         {
             {
@@ -415,10 +424,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Player->SetAbortHandler(&abortHandler);
 
                 if (!Player->isConfigValid())
-                {
-                    console::error("The Munt driver needs to be configured with a valid MT-32 or CM32L ROM set.");
-                    throw exception_io_data();
-                }
+                    throw exception_midi("The Munt driver needs to be configured with a valid MT-32 or CM32L ROM set.");
 
                 _Player = Player;
             }
@@ -451,10 +457,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     _BASSMIDIVoiceMax = 0;
 
                     if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
-                    {
-                        console::error("No SoundFonts configured, and no file or directory SoundFont found");
-                        throw exception_io_data();
-                    }
+                        throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found");
                 }
 
                 auto Player = new BMPlayer;
@@ -503,7 +506,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
     #ifdef DXISUPPORT
             pfc::array_t<t_uint8> serialized_midi_file;
-            midi_file.serialize_as_standard_midi_file(serialized_midi_file);
+            midi_file.SerializeAsSMF(serialized_midi_file);
 
             delete dxiProxy;
             dxiProxy = nullptr;
@@ -654,7 +657,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 if (PathName.is_empty())
                 {
-                    console::warning("Secret Sauce path not configured, yet somehow enabled, trying plugin directory...");
+                    console::warning("Secret Sauce path not configured, yet somehow enabled; trying plugin directory...");
 
                     PathName = core_api::get_my_full_path();
                     PathName.truncate(PathName.scan_filename());
@@ -686,7 +689,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
-    throw exception_io_data();
+    throw exception_midi("No MIDI player specified");
 }
 
 /// <summary>
@@ -758,10 +761,10 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
         if (SamplesDone == 0)
         {
-            std::string LastError;
+            std::string ErrorMessage;
 
-            if (_Player->GetErrorMessage(LastError) != 0)
-                throw exception_io_data(LastError.c_str());
+            if (_Player->GetErrorMessage(ErrorMessage) != 0)
+                throw exception_io_data(ErrorMessage.c_str());
 
             return false;
         }
@@ -863,40 +866,22 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
     if (_IsFirstChunk)
     {
-        fileInfo.info_set_int(TagSampleRate, _SampleRate);
-        timestampDelta = 0.;
-
-        const char * PlayerName = "";
-
-        switch (_PlayerType)
         {
-            case PlayerTypeEmuDeMIDI:
-                PlayerName = "Emu de MIDI"; break;
-            case PlayerTypeVSTi:
-                PlayerName = "VSTi"; break;
-            case PlayerTypeFluidSynth:
-                PlayerName = "FluidSynth"; break;
-            case PlayerTypeSuperMunt:
-                PlayerName = "SuperMunt"; break;
-            case PlayerTypeBASSMIDI:
-                PlayerName = "BASS MIDI"; break;
-            case PlayerTypeDirectX:
-                PlayerName = "DirectX"; break;
-            case PlayerTypeADL:
-                PlayerName = "ADL"; break;
-            case PlayerTypeOPN:
-                PlayerName = "OPN"; break;
-            case PlayerTypeOPL:
-                PlayerName = "OPL"; break;
-            case PlayerTypeNuke:
-                PlayerName = "Nuke"; break;
-            case PlayerTypeSecretSauce:
-                PlayerName = "Secret Sauce"; break;
-            default:
-                PlayerName = "Unknown"; break;
+            fileInfo.info_set_int(TagSampleRate, _SampleRate);
+
+            timestampDelta = 0.;
         }
 
-        fileInfo.info_set(TagMIDIPlayer, PlayerName);
+        {
+            const char * PlayerName = "Unknown";
+
+            if (_PlayerType <= PlayerTypeMax)
+                PlayerName = PlayerTypeNames[_PlayerType];
+            else
+                PlayerName = "VSTi";
+
+            fileInfo.info_set(TagMIDIPlayer, PlayerName);
+        }
 
         _IsFirstChunk = false;
 

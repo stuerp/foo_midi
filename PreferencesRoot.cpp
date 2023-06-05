@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.05.27) **/
+/** $VER: PreferencesRoot.cpp (2023.06.03) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -712,7 +712,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         {
             CWindow w = GetDlgItem(IDC_PLAYER_TYPE);
 
-            console::print("Found ",pfc::format_int((t_int64)_VSTiPlugIns.get_size()), " VSTi plug-ins.");
+            console::print("Found ",pfc::format_int((t_int64)_VSTiPlugIns.get_size()), " VST instruments.");
 
             for (size_t i = 0, j = VSTiCount; i < j; ++i)
             {
@@ -1413,7 +1413,7 @@ void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findF
         if (DirectoryPath.is_empty())
             return;
 
-        console::print("Enumerating VSTi plug-ins...");
+        console::print("Enumerating VST instruments...");
 
         DirectoryPath = pfc::io::path::combine(DirectoryPath, "*.*");
 

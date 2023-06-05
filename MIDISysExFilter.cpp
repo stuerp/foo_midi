@@ -1,5 +1,5 @@
 
-/** $VER: MIDISysExFilter.cpp (2023.01.04) **/
+/** $VER: MIDISysExFilter.cpp (2023.06.04) **/
 
 #pragma warning(disable: 26446 26481 26493)
 
@@ -14,16 +14,20 @@ MIDISysExFilter::MIDISysExFilter(const pfc::list_base_const_t<metadb_handle_ptr>
 
     pfc::array_t<t_size> Order;
 
-    Order.set_size(list.get_count());
+    {
+        Order.set_size(list.get_count());
 
-    order_helper::g_fill(Order.get_ptr(), Order.get_size());
+        order_helper::g_fill(Order.get_ptr(), Order.get_size());
 
-    list.sort_get_permutation_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, Order.get_ptr());
+        list.sort_get_permutation_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, Order.get_ptr());
+    }
 
-    _Handles.set_count(Order.get_size());
+    {
+        _Handles.set_count(Order.get_size());
 
-    for (t_size n = 0; n < Order.get_size(); ++n)
-        _Handles[n] = list[Order[n]];
+        for (t_size n = 0; n < Order.get_size(); ++n)
+            _Handles[n] = list[Order[n]];
+    }
 }
 
 bool MIDISysExFilter::apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo)
@@ -38,20 +42,17 @@ bool MIDISysExFilter::apply_filter(metadb_handle_ptr location, t_filestats, file
 
     t_size Index;
 
-    if (_Handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, location, Index))
-    {
-        pfc::string8 Text;
+    if (!_Handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, location, Index))
+        return false;
 
-        _SysExDumps.Serialize(location->get_path(), Text);
+    pfc::string8 Text;
 
-        if (Text.get_length())
-            fileInfo.info_set(TagMIDISysExDumps, Text);
-        else
-            fileInfo.info_remove(TagMIDISysExDumps);
+    _SysExDumps.Serialize(location->get_path(), Text);
 
-        return true;
-    }
+    if (Text.get_length())
+        fileInfo.info_set(TagMIDISysExDumps, Text);
+    else
+        fileInfo.info_remove(TagMIDISysExDumps);
 
-    return false;
+    return true;
 }
-

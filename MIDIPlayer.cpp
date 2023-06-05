@@ -30,7 +30,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
 {
     assert(_Stream.size() == 0);
 
-    midiContainer.serialize_as_stream(subsongIndex, _Stream, _SysExMap, _LoopBegin, _LoopEnd, cleanFlags);
+    midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _LoopBegin, _LoopEnd, cleanFlags);
 
     if (_Stream.size() == 0)
         return false;
@@ -539,7 +539,7 @@ void MIDIPlayer::SendEventFiltered(uint32_t event)
         const uint8_t * Data;
         size_t Size, Port;
 
-        _SysExMap.get_entry(Index, Data, Size, Port);
+        _SysExMap.GetEntry(Index, Data, Size, Port);
 
         SendSysExFiltered(Data, Size, Port);
     }
@@ -566,7 +566,7 @@ void MIDIPlayer::SendEventWithTimeFiltered(uint32_t event, size_t time)
         const uint8_t * Data;
         size_t Size, Port;
 
-        _SysExMap.get_entry(Index, Data, Size, Port);
+        _SysExMap.GetEntry(Index, Data, Size, Port);
 
         SendSysExWithTimeFiltered(Data, Size, Port, time);
     }

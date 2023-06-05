@@ -1,5 +1,5 @@
 
-/** $VER: MIDISysExDumps.cpp (2022.12.31) **/
+/** $VER: MIDISysExDumps.cpp (2023.06.04) **/
 
 #pragma warning(disable: 26446 26481 26493)
 
@@ -16,9 +16,9 @@ void MIDISysExDumps::Serialize(const char * filePath, pfc::string8 & text)
 
     for (size_t i = 0; i < Items.get_count(); ++i)
     {
-        CreateRelativePath(Items[i], filePath, RelativePath);
+        CreateRelativeFromAbsolutePath(Items[i], filePath, RelativePath);
 
-        if (i)
+        if (i > 0)
             text += "\n";
 
         text += RelativePath;
@@ -43,7 +43,7 @@ void MIDISysExDumps::Deserialize(const char * text, const char * filePath)
 
         RelativePath.set_string(text, (t_size)(LineFeed - text));
 
-        relative_path_parse(RelativePath, filePath, AbsolutePath);
+        CreateAbsoluteFromRelativePath(RelativePath, filePath, AbsolutePath);
 
         Items.append_single(AbsolutePath);
 
@@ -101,54 +101,54 @@ void MIDISysExDumps::Merge(MIDIContainer & container, abort_callback & abortHand
     }
 }
 
-void MIDISysExDumps::CreateRelativePath(const char * filePath, const char * directoryPath, pfc::string_base & p_out)
+void MIDISysExDumps::CreateRelativeFromAbsolutePath(const char * filePath, const char * directoryPath, pfc::string_base & relativePath)
 {
     if ((filePath ==nullptr) || (directoryPath == nullptr))
         return;
 
-    const t_size p_file_fn = pfc::scan_filename(filePath);
-    const t_size p_base_path_fn = pfc::scan_filename(directoryPath);
+    const t_size FileNameIndex = pfc::scan_filename(filePath);
+    const t_size BasePathIndex = pfc::scan_filename(directoryPath);
 
-    if (p_file_fn == p_base_path_fn && !strncmp(filePath, directoryPath, p_file_fn))
+    if ((FileNameIndex == BasePathIndex) && (::strncmp(filePath, directoryPath, FileNameIndex) == 0))
     {
-        p_out = filePath + p_file_fn;
+        relativePath = filePath + FileNameIndex;
     }
     else
-    if ((p_file_fn > p_base_path_fn) && (::strncmp(filePath, directoryPath, p_base_path_fn) == 0) && pfc::is_path_separator((unsigned int)filePath[p_base_path_fn - 1]))
+    if ((FileNameIndex > BasePathIndex) && (::strncmp(filePath, directoryPath, BasePathIndex) == 0) && pfc::is_path_separator((unsigned int)filePath[BasePathIndex - 1]))
     {
-        p_out = filePath + p_base_path_fn;
+        relativePath = filePath + BasePathIndex;
     }
     else
-    if ((p_base_path_fn > p_file_fn) && (::strncmp(filePath, directoryPath, p_file_fn) == 0) && pfc::is_path_separator((unsigned int)directoryPath[p_file_fn - 1]))
+    if ((BasePathIndex > FileNameIndex) && (::strncmp(filePath, directoryPath, FileNameIndex) == 0) && pfc::is_path_separator((unsigned int)directoryPath[FileNameIndex - 1]))
     {
-        p_out.reset();
+        relativePath.reset();
 
-        t_size p_base_path_search = p_file_fn;
+        t_size p_base_path_search = FileNameIndex;
 
-        while (p_base_path_search < p_base_path_fn)
+        while (p_base_path_search < BasePathIndex)
         {
             if (pfc::is_path_separator((unsigned int)directoryPath[++p_base_path_search]))
             {
-                p_out += "..\\";
+                relativePath += "..\\";
             }
         }
 
-        p_out += filePath + p_file_fn;
+        relativePath += filePath + FileNameIndex;
     }
     else
     {
-        p_out = filePath;
+        relativePath = filePath;
     }
 }
 
-void MIDISysExDumps::relative_path_parse(const char * relativePath, const char * directoryPath, pfc::string_base & p_out)
+void MIDISysExDumps::CreateAbsoluteFromRelativePath(const char * relativePath, const char * directoryPath, pfc::string_base & absolutePath)
 {
     if ((relativePath == nullptr) || (directoryPath == nullptr))
         return;
 
     if (::strstr(relativePath, "://"))
     {
-        p_out = relativePath;
+        absolutePath = relativePath;
     }
     else
     {
@@ -157,7 +157,6 @@ void MIDISysExDumps::relative_path_parse(const char * relativePath, const char *
         t.truncate(t.scan_filename());
         t += relativePath;
 
-        filesystem::g_get_canonical_path(t, p_out);
+        filesystem::g_get_canonical_path(t, absolutePath);
     }
 }
-

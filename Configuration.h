@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.06.03) **/
+/** $VER: Configuration.h (2023.06.05) **/
 
 #pragma once
 
@@ -29,6 +29,8 @@ enum
     PlayerTypeOPL = 8,
     PlayerTypeNuke = 9,
     PlayerTypeSecretSauce = 10,
+
+    PlayerTypeMax = PlayerTypeSecretSauce
 };
 
 enum

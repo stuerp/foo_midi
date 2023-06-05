@@ -341,6 +341,7 @@
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="ContextMenu.h" />
     <ClInclude Include="EdMPlayer.h" />
+    <ClInclude Include="Exceptions.h" />
     <ClInclude Include="Experimental\DXiProxy.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

@@ -100,7 +100,12 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.8.3.1, 2023-06-01, *"Do you want lyrics with that? Redux"*
+v2.8.4.0, 2023-xx-xx, *""*
+
+* Info tag MIDI_PLAYER contains the name of the MIDI player playing the current track.
+* Improved: Error reporting in general and in case of parsing MIDI files with problems.
+
+v2.8.3.1, 2023-06-03, *"Do you want lyrics with that? Redux"*
 
 * Bug Fix: The user selection of the MIDI player was no longer honored. (Regression) A SOLID bug...
 

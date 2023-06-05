@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.05.20) **/
+/** $VER: InputDecoder.h (2023.06.04) **/
 
 #pragma once
 
@@ -154,6 +154,39 @@ public:
 public:
     #pragma region("input_impl")
     void open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler);
+
+    static bool g_is_our_content_type(const char * contentType)
+    {
+        return (contentType != nullptr) && ::strcmp(contentType, "audio/midi") == 0;
+    }
+
+    static bool g_is_our_path(const char *, const char * fileExtension)
+    {
+        return (fileExtension != nullptr) && (IsMIDIFileExtension(fileExtension) || IsSysExFileExtension(fileExtension));
+    }
+
+    static GUID g_get_guid()
+    {
+        static const GUID guid = { 0xae29c554, 0xee59, 0x4c1a, { 0x82, 0x11, 0x32, 0xf, 0x2a, 0x1a, 0x99, 0x2b } }; // {AE29C554-EE59-4C1A-8211-320F2A1A992B}
+
+        return guid;
+    }
+
+    static const char * g_get_name()
+    {
+        return STR_COMPONENT_NAME;
+    }
+
+    // Returns the GUID of the Preferences page (if there is one.)
+    static GUID g_get_preferences_guid()
+    {
+        return PreferencesPageGUID;
+    }
+
+    static bool g_is_low_merit()
+    {
+        return false;
+    }
     #pragma endregion
 
     #pragma region("input_decoder")
@@ -208,39 +241,6 @@ public:
 
     void remove_tags(abort_callback &) { }
     #pragma endregion
-
-    static bool g_is_our_content_type(const char * contentType)
-    {
-        return (contentType != nullptr) && ::strcmp(contentType, "audio/midi") == 0;
-    }
-
-    static bool g_is_our_path(const char *, const char * fileExtension)
-    {
-        return (fileExtension != nullptr) && (IsMIDIFileExtension(fileExtension) || IsSysExFileExtension(fileExtension));
-    }
-
-    static GUID g_get_guid()
-    {
-        static const GUID guid = { 0xae29c554, 0xee59, 0x4c1a, { 0x82, 0x11, 0x32, 0xf, 0x2a, 0x1a, 0x99, 0x2b } }; // {AE29C554-EE59-4C1A-8211-320F2A1A992B}
-
-        return guid;
-    }
-
-    static const char * g_get_name()
-    {
-        return STR_COMPONENT_NAME;
-    }
-
-    // Returns the GUID of the Preferences page (if there is one.)
-    static GUID g_get_preferences_guid()
-    {
-        return PreferencesPageGUID;
-    }
-
-    static bool g_is_low_merit()
-    {
-        return false;
-    }
 
     static void InitializeIndexManager();
 

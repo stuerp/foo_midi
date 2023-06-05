@@ -1,5 +1,5 @@
 
-/** $VER: FileHasher.cpp (2023.01.03) **/
+/** $VER: FileHasher.cpp (2023.04.06) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -7,28 +7,29 @@
 
 metadb_index_hash FileHasher::transform(const file_info & fileInfo, const playable_location & location)
 {
-    const metadb_index_hash hash_null = 0;
+    const metadb_index_hash NullHash = 0;
 
     if (!IsMIDIFileExtension(pfc::string_extension(location.get_path())))
-        return hash_null;
+        return NullHash;
 
-    hasher_md5_state HasherState;
     static_api_ptr_t<hasher_md5> Hasher;
 
-    t_uint32 SubsongIndex = location.get_subsong();
+    hasher_md5_state HasherState;
 
     Hasher->initialize(HasherState);
 
+    t_uint32 SubsongIndex = location.get_subsong();
+
     Hasher->process(HasherState, &SubsongIndex, sizeof(SubsongIndex));
 
-    const char * Info = fileInfo.info_get(TagMIDIHash);
+    const char * Value = fileInfo.info_get(TagMIDIHash);
 
-    if (Info)
-        Hasher->process_string(HasherState, Info);
+    if (Value)
+        Hasher->process_string(HasherState, Value);
     else
         Hasher->process_string(HasherState, location.get_path());
 
-#define HASH_STRING(s)  Info = fileInfo.info_get(s); if (Info) Hasher->process_string(HasherState, Info);
+#define HASH_STRING(s)  Value = fileInfo.info_get(s); if (Value) Hasher->process_string(HasherState, Value);
 
     HASH_STRING(TagMIDIFormat);
     HASH_STRING(TagMIDITrackCount);

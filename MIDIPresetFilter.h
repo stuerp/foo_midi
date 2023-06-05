@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPresetFilter.h (2023.01.04) **/
+/** $VER: MIDIPresetFilter.h (2023.06.04) **/
 
 #pragma once
 
@@ -10,6 +10,7 @@
 
 #include "Configuration.h"
 
+// Provides direct control over which part of file_info gets altered during a tag update uperation. To be used with metadb_io_v2::update_info_async().
 class MIDIPresetFilter : public file_info_filter
 {
 public:
@@ -28,6 +29,5 @@ public:
 
 private:
     pfc::string8 _MIDIPreset;
-
     metadb_handle_list _Handles;
 };

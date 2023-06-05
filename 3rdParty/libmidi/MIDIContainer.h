@@ -190,8 +190,8 @@ struct SysExEntry
 class SysExTable
 {
 public:
-    uint32_t add_entry(const uint8_t * p_data, std::size_t p_size, std::size_t p_port);
-    void get_entry(uint32_t p_index, const uint8_t *& p_data, std::size_t & p_size, std::size_t & p_port);
+    uint32_t AddEntry(const uint8_t * p_data, std::size_t p_size, std::size_t p_port);
+    void GetEntry(uint32_t p_index, const uint8_t *& p_data, std::size_t & p_size, std::size_t & p_port);
 
 private:
     std::vector<uint8_t> m_data;
@@ -269,13 +269,13 @@ public:
 
     void ApplyHack(uint32_t hack);
 
-    void serialize_as_stream(size_t subSongIndex, std::vector<MIDIStreamEvent> & stream, SysExTable & sysExTable, uint32_t & loopBegin, uint32_t & loopEnd, uint32_t cleanFlags) const;
+    void SerializeAsStream(size_t subSongIndex, std::vector<MIDIStreamEvent> & stream, SysExTable & sysExTable, uint32_t & loopBegin, uint32_t & loopEnd, uint32_t cleanFlags) const;
 
-    void serialize_as_standard_midi_file(std::vector<uint8_t> & data) const;
+    void SerializeAsSMF(std::vector<uint8_t> & data) const;
 
-    void promote_to_type1();
+    void PromoteToType1();
 
-    void trim_start();
+    void TrimStart();
 
     typedef std::string(* SplitCallback)(uint8_t bank_msb, uint8_t bank_lsb, uint8_t instrument);
 
@@ -308,10 +308,10 @@ public:
     };
 
 private:
-    void trim_range_of_tracks(size_t start, size_t end);
-    void trim_tempo_map(size_t index, uint32_t base_timestamp);
+    void TrimRange(size_t start, size_t end);
+    void TrimTempoMap(size_t index, uint32_t base_timestamp);
 
-    uint32_t timestamp_to_ms(uint32_t timestamp, size_t subsongIndex) const;
+    uint32_t TimestampToMS(uint32_t timestamp, size_t subsongIndex) const;
 
     #pragma warning(disable: 4267)
     /*

@@ -11,6 +11,7 @@
 #include "Configuration.h"
 #include "MIDISysExDumps.h"
 
+// Provides direct control over which part of file_info gets altered during a tag update uperation. To be used with metadb_io_v2::update_info_async().
 class MIDISysExFilter : public file_info_filter
 {
 public:
