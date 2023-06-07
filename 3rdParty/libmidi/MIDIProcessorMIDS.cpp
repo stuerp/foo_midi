@@ -82,7 +82,7 @@ bool MIDIProcessor::ProcessMIDS(std::vector<uint8_t> const & data, MIDIContainer
     {
         MIDITrack track;
 
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
         container.AddTrack(track);
     }
 
@@ -163,7 +163,7 @@ bool MIDIProcessor::ProcessMIDS(std::vector<uint8_t> const & data, MIDIContainer
         }
     }
 
-    track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
+    track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
 
     container.AddTrack(track);
 

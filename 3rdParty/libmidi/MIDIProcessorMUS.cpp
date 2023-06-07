@@ -25,7 +25,7 @@ bool MIDIProcessor::process_mus(std::vector<uint8_t> const & p_file, MIDIContain
     {
         MIDITrack track;
         track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, mus_default_tempo, _countof(mus_default_tempo)));
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
         p_out.AddTrack(track);
     }
 
@@ -143,7 +143,7 @@ bool MIDIProcessor::process_mus(std::vector<uint8_t> const & p_file, MIDIContain
         }
     }
 
-    track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
+    track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
 
     p_out.AddTrack(track);
 

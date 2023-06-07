@@ -65,7 +65,7 @@ bool MIDIProcessor::process_hmp(std::vector<uint8_t> const & p_file, MIDIContain
     {
         MIDITrack track;
         track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, hmp_default_tempo, _countof(hmp_default_tempo)));
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
         p_out.AddTrack(track);
     }
 

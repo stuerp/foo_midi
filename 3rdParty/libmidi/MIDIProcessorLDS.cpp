@@ -504,14 +504,14 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
             track.AddEvent(MIDIEvent(0, MIDIEvent::PitchWheel, i, buffer, 2));
         #endif
         }
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
         p_out.AddTrack(track);
     }
 
     std::vector<MIDITrack> tracks;
     {
         MIDITrack track;
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, EndOfTrack, _countof(EndOfTrack)));
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
         tracks.resize(10, track);
     }
 

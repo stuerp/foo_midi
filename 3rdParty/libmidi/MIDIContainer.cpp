@@ -278,10 +278,10 @@ const MIDIMetaDataItem & MIDIMetaData::operator [] (std::size_t p_index) const
 #pragma endregion
 
 #pragma region("MIDI Container")
-void MIDIContainer::Initialize(uint32_t format, uint32_t division)
+void MIDIContainer::Initialize(uint32_t format, uint32_t timeDivision)
 {
     _Format = format;
-    _Division = division;
+    _TimeDivision = timeDivision;
 
     if (format != 2)
     {
@@ -747,8 +747,8 @@ void MIDIContainer::SerializeAsSMF(std::vector<uint8_t> & midiStream) const
     midiStream.push_back((uint8_t) _Format);
     midiStream.push_back((uint8_t)(_Tracks.size() >> 8));
     midiStream.push_back((uint8_t) _Tracks.size());
-    midiStream.push_back((uint8_t)(_Division >> 8));
-    midiStream.push_back((uint8_t) _Division);
+    midiStream.push_back((uint8_t)(_TimeDivision >> 8));
+    midiStream.push_back((uint8_t) _TimeDivision);
 
     std::vector<uint8_t> Data;
 
@@ -1704,7 +1704,7 @@ uint32_t MIDIContainer::TimestampToMS(uint32_t p_timestamp, size_t subSongIndex)
     }
 
     uint32_t Timestamp = 0;
-    uint32_t HalfDivision = _Division * 500;
+    uint32_t HalfDivision = _TimeDivision * 500;
     uint32_t Division = HalfDivision * 2;
 
     if (subSongIndex < TempoMapCount)

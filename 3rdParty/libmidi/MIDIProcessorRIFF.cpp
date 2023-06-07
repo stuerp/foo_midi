@@ -50,7 +50,7 @@ bool MIDIProcessor::IsRIFF(std::vector<uint8_t> const & data)
 
     return IsSMF(Data);
 }
-
+/*
 bool MIDIProcessor::GetTrackCountFromRIFF(std::vector<uint8_t> const & data, size_t & trackCount)
 {
     trackCount = 0;
@@ -92,7 +92,7 @@ bool MIDIProcessor::GetTrackCountFromRIFF(std::vector<uint8_t> const & data, siz
 
     return false;
 }
-
+*/
 static const char * riff_tag_mappings[][2] =
 {
     { "IALB", "album" },

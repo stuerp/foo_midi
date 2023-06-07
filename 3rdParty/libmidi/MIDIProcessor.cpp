@@ -1,11 +1,18 @@
 #include "MIDIProcessor.h"
 
-const uint8_t MIDIProcessor::EndOfTrack[2] = { StatusCodes::MetaData, MetaDataTypes::EndOfTrack };
-const uint8_t MIDIProcessor::LoopBeginMarker[11] = { StatusCodes::MetaData, MetaDataTypes::Marker, 'l', 'o', 'o', 'p', 'S', 't', 'a', 'r', 't' };
-const uint8_t MIDIProcessor::LoopEndMarker[9] = { StatusCodes::MetaData, MetaDataTypes::Marker, 'l', 'o', 'o', 'p', 'E', 'n', 'd' };
+MIDIError MIDIProcessor::_ErrorCode;
 
+const uint8_t MIDIProcessor::MIDIEventEndOfTrack[2] = { StatusCodes::MetaData, MetaDataTypes::EndOfTrack };
+const uint8_t MIDIProcessor::LoopBeginMarker[11]    = { StatusCodes::MetaData, MetaDataTypes::Marker, 'l', 'o', 'o', 'p', 'S', 't', 'a', 'r', 't' };
+const uint8_t MIDIProcessor::LoopEndMarker[9]       = { StatusCodes::MetaData, MetaDataTypes::Marker, 'l', 'o', 'o', 'p', 'E', 'n', 'd' };
+
+/// <summary>
+/// Processes a stream of bytes.
+/// </summary>
 bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * fileExtension, MIDIContainer & container)
 {
+    _ErrorCode = MIDIError::None;
+
     if (IsSMF(data))
         return ProcessSMF(data, container);
 
@@ -36,20 +43,30 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
     return false;
 }
 
+/// <summary>
+/// Processes a stream of bytes.
+/// </summary>
 bool MIDIProcessor::ProcessSysEx(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
+    _ErrorCode = MIDIError::None;
+
     if (IsSysEx(data))
         return ProcessSysExInternal(data, container);
 
     return false;
 }
 
+/// <summary>
+/// Gets the number of tracks in the MIDI stream.
+/// </summary>
+/*
 bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, const char * fileExtension, size_t & trackCount)
 {
+    _ErrorCode = MIDIError::None;
+
     trackCount = 0;
 
     if (IsSMF(data))
-
         return GetTrackCount(data, trackCount);
 
     if (IsRIFF(data))
@@ -96,9 +113,9 @@ bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, const char 
 
     return false;
 }
-
+*/
 /// <summary>
-/// Decode a variable-length quantity.
+/// Decodes a variable-length quantity.
 /// </summary>
 int MIDIProcessor::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail)
 {

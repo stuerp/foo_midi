@@ -12,6 +12,7 @@ enum StatusCodes
 {
     NoteOff = 0x80,
     NoteOn = 0x90,
+
     PolyphonicAftertouch = 0xA0,
     ControlChange = 0xB0,
     ProgramChange = 0xC0,
@@ -252,7 +253,7 @@ private:
 class MIDIContainer
 {
 public:
-    MIDIContainer() : _Format(0), _Division(0)
+    MIDIContainer() : _Format(0), _TimeDivision(0)
     {
         _DeviceNames.resize(16);
     }
@@ -353,7 +354,7 @@ private:
 
 private:
     uint32_t _Format;
-    uint32_t _Division;
+    uint32_t _TimeDivision;
 
     std::vector<uint64_t> _ChannelMask;
     std::vector<TempoMap> _TempoMaps;

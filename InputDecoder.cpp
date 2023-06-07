@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.06.03) **/
+/** $VER: InputDecoder.cpp (2023.06.07) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -8,6 +8,8 @@
 #include <sdk/hasher_md5.h>
 #include <sdk/metadb_index.h>
 #include <sdk/system_time_keeper.h>
+
+#include <libmidi/MIDIProcessor.h>
 
 #include "KaraokeProcessor.h"
 #include "Exceptions.h"
@@ -77,7 +79,39 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
     {
         if (!MIDIProcessor::Process(Data, pfc::string_extension(filePath), _Container))
-            throw exception_io_data("Invalid MIDI file");
+        {
+            pfc::string8 Message = "Invalid MIDI file: ";
+
+            switch (MIDIProcessor::GetLastErrorCode())
+            {
+                case None: Message += "No error"; break;
+
+                case UnknownStatusCode: Message += "Unknown MIDI status code"; break;
+
+                case InsufficientData: Message += "Insufficient data in the stream"; break;
+
+                case InvalidSysExMessage: Message += "Invalid System Exclusive message"; break;
+                case InvalidSysExMessageContinuation: Message += "Invalid System Exclusive message"; break;
+                case InvalidSysExEndMessage: Message += "Invalid System Exclusive End message"; break;
+
+                case InvalidMetaDataMessage: Message += "Invalid Meta Datamessage"; break;
+
+                // SMF
+                case SMFBadHeaderChunkType: Message += "Bad SMF header chunk type"; break;
+                case SMFBadHeaderChunkSize: Message += "Bad SMF header chunk size"; break;
+                case SMFBadHeaderFormat: Message += "Bad SMF header format"; break;
+                case SMFBadHeaderTrackCount: Message += "Bad SMF header track count"; break;
+                case SMFBadHeaderTimeDivision: Message += "Bad SMF header time division"; break;
+
+                case SMFUnknownChunkType: Message += "Unknown type specified in SMF chunk"; break;
+
+                case SMFBadFirstMessage: Message += "Bad first message of a track"; break;
+
+                default: Message += "Unknown error code"; break;
+            }
+
+            throw exception_io_data(Message);
+        }
 
         _TrackCount = (size_t)_Container.GetTrackCount();
 
@@ -868,11 +902,11 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
     {
         {
             fileInfo.info_set_int(TagSampleRate, _SampleRate);
-
-            timestampDelta = 0.;
         }
 
         {
+            assert(_countof(PlayerTypeNames) == (PlayerTypeMax + 1));
+
             const char * PlayerName = "Unknown";
 
             if (_PlayerType <= PlayerTypeMax)
@@ -886,6 +920,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         _IsFirstChunk = false;
 
         Success = true;
+        timestampDelta = 0.;
     }
 
     if (_PlayerType == PlayerTypeBASSMIDI)
