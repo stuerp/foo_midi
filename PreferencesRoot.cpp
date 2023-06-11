@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.06.03) **/
+/** $VER: PreferencesRoot.cpp (2023.06.11) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -432,7 +432,7 @@ void PreferencesRootPage::apply()
 
     #pragma region("SoundFont")
     {
-        CfgResamplingMode = (t_int32)SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
+        CfgBASSMIDIInterpolationMode = (t_int32)SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
     }
     #pragma endregion
 
@@ -599,7 +599,7 @@ void PreferencesRootPage::reset()
 #ifdef FLUIDSYNTHSUPPORT
     SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, 2);
 #else
-    SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultResamplingMode);
+    SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIInterpolationMode);
 #endif
     #pragma endregion
 
@@ -966,7 +966,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         ::uSendMessageText(w, CB_ADDSTRING, 0, "8pt Sinc interpolation");
         ::uSendMessageText(w, CB_ADDSTRING, 0, "16pt Sinc interpolation");
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgResamplingMode, 0);
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgBASSMIDIInterpolationMode, 0);
     }
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -1201,12 +1201,12 @@ void PreferencesRootPage::OnTimer(UINT_PTR eventId)
  
     GetDlgItem(IDC_SAMPLERATE).EnableWindow(CfgPlayerType || !_IsRunning);
 
-    uint64_t SamplesMax, SamplesLoaded;
+    uint64_t SampleDataSize, SampleDataLoaded;
 
-    if (::GetSoundFontStatistics(SamplesMax, SamplesLoaded))
+    if (::GetSoundFontStatistics(SampleDataSize, SampleDataLoaded))
     {
         _CacheStatusText.reset();
-        _CacheStatusText << pfc::format_file_size_short(SamplesLoaded) << " / " << pfc::format_file_size_short(SamplesMax);
+        _CacheStatusText << pfc::format_file_size_short(SampleDataLoaded) << " / " << pfc::format_file_size_short(SampleDataSize);
     }
     else
         _CacheStatusText = "BASS not loaded.";
@@ -1278,7 +1278,7 @@ bool PreferencesRootPage::HasChanged()
     #pragma endregion
 
     #pragma region("SoundFont")
-    if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgResamplingMode)
+    if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgBASSMIDIInterpolationMode)
         return true;
 
 #ifdef FLUIDSYNTHSUPPORT

@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2023.01.04) **/
+/** $VER: BMPlayer.h (2023.06.11) **/
 
 #pragma once
 
@@ -10,7 +10,7 @@
 
 #include <bassmidi.h>
 
-extern bool GetSoundFontStatistics(uint64_t & total_sample_size, uint64_t & sample_loaded_size);
+extern bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoaded);
 
 struct sflist_presets;
 
@@ -21,13 +21,13 @@ public:
     BMPlayer();
     virtual ~BMPlayer();
 
-    void setSoundFont(const char * in);
-    void setFileSoundFont(const char * in);
-    void setInterpolation(int level);
-    void setEffects(bool enable = true);
-    void setVoices(int voices);
+    void SetSoundFontDirectory(const char * directoryPath);
+    void SetSoundFontFile(const char * filePath);
+    void SetInterpolationMode(int interpolationMode);
+    void EnableEffects(bool enable = true);
+    void SetVoiceCount(int voices);
 
-    unsigned int getVoicesActive();
+    size_t GetActiveVoiceCount() const;
 
 private:
     #pragma region("MIDIPlayer")
@@ -41,10 +41,12 @@ private:
     virtual bool GetErrorMessage(std::string & errorMessage) override;
     #pragma endregion
 
-    void compound_presets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels);
-    void reset_parameters();
-    bool load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::string path);
+    void ResetParameters();
+    bool LoadSoundFontConfiguration(std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations, std::string pathName);
 
+    void CompoundPresets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels);
+
+private:
     std::string _ErrorMessage;
 
     std::vector<HSOUNDFONT> _SoundFonts;
@@ -55,12 +57,12 @@ private:
 
     HSTREAM _Stream[3];
 
-    int _InterpolationLevel;
+    int _InterpolationMode;
     int _VoiceCount;
 
     uint8_t _BankLSBOverride[48];
 
-    bool _AreEffectsEnabled;
+    bool _DoReverbAndChorusProcessing;
     bool _IsBankLSBOverridden;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.06.03) **/
+/** $VER: Configuration.cpp (2023.06.11) **/
 
 #pragma warning(disable: 5045 26481 26485)
 
@@ -27,7 +27,7 @@ static const GUID guid_cfg_emidi_exclusion = { 0xc090f9c7, 0x47f9, 0x4f6f, { 0x8
 static const GUID guid_cfg_filter_instruments = { 0x6d30c919, 0xb053, 0x43aa, { 0x9f, 0x1b, 0x1d, 0x40, 0x18, 0x82, 0x80, 0x5e } };
 static const GUID guid_cfg_filter_banks = { 0x3145963c, 0x7322, 0x4b48, { 0x99, 0xff, 0x75, 0xea, 0xc5, 0xf4, 0xda, 0xcc } };
 
-static const GUID GUIDResamplingMode = { 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } };
+static const GUID GUIDBASSMIDIInterpolationMode = { 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } };
 
 static const GUID GUIDCfgVSTiFilePath = { 0x1a6ea7e5, 0x718a, 0x485a, { 0xb1, 0x67, 0xcf, 0xdf, 0x3b, 0x40, 0x61, 0x45 } };
 static const GUID GUIDCfgSoundFontFilePath = { 0x696d12dd, 0xaf32, 0x43d9, { 0x8d, 0xf6, 0xbd, 0xd1, 0x1e, 0x81, 0x83, 0x29 } };
@@ -114,7 +114,7 @@ cfg_int
 
     CfgEmuDeMIDIExclusion(guid_cfg_emidi_exclusion, DefaultEmuDeMIDIExclusion),
 
-    CfgResamplingMode(GUIDResamplingMode, DefaultResamplingMode),
+    CfgBASSMIDIInterpolationMode(GUIDBASSMIDIInterpolationMode, DefaultBASSMIDIInterpolationMode),
 
     CfgFilterInstruments(guid_cfg_filter_instruments, DefaultFilterInstruments),
     CfgFilterBanks(guid_cfg_filter_banks, DefaultFilterBanks),

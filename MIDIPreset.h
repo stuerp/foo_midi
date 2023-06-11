@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.h (2022.01.08) **/
+/** $VER: MIDIPreset.h (2023.06.11) **/
 
 #pragma once
 
@@ -72,7 +72,7 @@ public:
 
  #pragma region("BASS MIDI")
     // v2 - plug-in == 2/4 - SoundFont synthesizer
-    bool _BASSMIDIEffects;
+    bool _BASSMIDIEffectsEnabled;
     // v9 - plug-in == 2/4 - Maximum voices
     unsigned int _BASSMIDIVoices;
 #pragma endregion

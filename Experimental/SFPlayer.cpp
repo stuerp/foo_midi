@@ -142,7 +142,7 @@ void SFPlayer::setDynamicLoading(bool enabled)
     bDynamicLoading = enabled;
 }
 
-void SFPlayer::setEffects(bool enabled)
+void SFPlayer::EnableEffects(bool enabled)
 {
     if (bEffects != enabled)
     {
@@ -221,13 +221,13 @@ void SFPlayer::SendSysEx(const uint8_t * event, uint32_t size, size_t port)
     }
 }
 
-void SFPlayer::setSoundFont(const char * in)
+void SFPlayer::SetSoundFont(const char * directoryPath)
 {
-    sSoundFontName = in;
+    sSoundFontName = directoryPath;
     Shutdown();
 }
 
-void SFPlayer::setFileSoundFont(const char * in)
+void SFPlayer::SetSoundFontFile(const char * in)
 {
     _SoundFontFilePath = in;
     Shutdown();

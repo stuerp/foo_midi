@@ -1,5 +1,5 @@
 
-/** BASS Player **/
+/** $VER: BMPlayer.cpp (2023.06.11) **/
 
 #include "BMPlayer.h"
 
@@ -18,15 +18,14 @@
 #pragma region("Cache")
 
 #pragma warning(disable: 4820)
-struct Cached_SoundFont
+struct CacheItem
 {
-    HSOUNDFONT hSoundFont;
+    HSOUNDFONT _hSoundFont;
+    sflist_presets * _SoundFontList;
     size_t _ReferenceCount;
-
-    sflist_presets * _Presets;
     time_t _TimeReleased;
 
-    Cached_SoundFont() : hSoundFont(0), _Presets(nullptr)
+    CacheItem() : _hSoundFont(0), _SoundFontList(nullptr), _ReferenceCount(0), _TimeReleased(0)
     {
     }
 };
@@ -34,7 +33,7 @@ struct Cached_SoundFont
 
 static critical_section _CacheLock;
 
-static std::map<std::string, Cached_SoundFont> _CacheList;
+static std::map<std::string, CacheItem> _CacheItems;
 
 static bool _IsCacheRunning = false;
 
@@ -43,7 +42,7 @@ static void CacheRun();
 #ifdef USE_STD_THREAD
 static std::thread * Cache_Thread = NULL;
 #else
-class Cache_Thread : public pfc::thread
+class CacheThread : public pfc::thread
 {
 public:
     virtual void threadProc()
@@ -51,14 +50,14 @@ public:
         CacheRun();
     }
 
-    virtual ~Cache_Thread()
+    virtual ~CacheThread()
     {
         _IsCacheRunning = false;
         waitTillDone();
     }
 };
 
-static Cache_Thread * _CacheThread = nullptr;
+static CacheThread * _CacheThread = nullptr;
 #endif
 
 static void CacheInit()
@@ -66,7 +65,7 @@ static void CacheInit()
 #ifdef USE_STD_THREAD
     Cache_Thread = new std::thread(cache_run);
 #else
-    _CacheThread = new Cache_Thread;
+    _CacheThread = new CacheThread;
     _CacheThread->start();
 #endif
 }
@@ -83,13 +82,13 @@ static void CacheDispose()
     _CacheThread = NULL;
 #endif
 
-    for (auto it = _CacheList.begin(); it != _CacheList.end(); ++it)
+    for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
-        if (it->second.hSoundFont)
-            ::BASS_MIDI_FontFree(it->second.hSoundFont);
+        if (it->second._hSoundFont)
+            ::BASS_MIDI_FontFree(it->second._hSoundFont);
 
-        if (it->second._Presets)
-            sflist_free(it->second._Presets);
+        if (it->second._SoundFontList)
+            ::sflist_free(it->second._SoundFontList);
     }
 }
 
@@ -99,26 +98,26 @@ static void CacheRun()
 
     while (_IsCacheRunning)
     {
-        time_t now;
+        time_t Now;
 
-        time(&now);
+        ::time(&Now);
 
         {
             insync(_CacheLock);
 
-            for (auto it = _CacheList.begin(); it != _CacheList.end();)
+            for (auto it = _CacheItems.begin(); it != _CacheItems.end();)
             {
                 if (it->second._ReferenceCount == 0)
                 {
-                    if (::difftime(now, it->second._TimeReleased) >= 10.0)
+                    if (::difftime(Now, it->second._TimeReleased) >= 10.0)
                     {
-                        if (it->second.hSoundFont)
-                            ::BASS_MIDI_FontFree(it->second.hSoundFont);
+                        if (it->second._hSoundFont)
+                            ::BASS_MIDI_FontFree(it->second._hSoundFont);
 
-                        if (it->second._Presets)
-                            sflist_free(it->second._Presets);
+                        if (it->second._SoundFontList)
+                            ::sflist_free(it->second._SoundFontList);
 
-                        it = _CacheList.erase(it);
+                        it = _CacheItems.erase(it);
                         continue;
                     }
                 }
@@ -128,6 +127,240 @@ static void CacheRun()
         }
 
         ::Sleep(250);
+    }
+}
+
+/// <summary>
+/// Adds a SoundFont to the cache.
+/// </summary>
+static HSOUNDFONT CacheAddSoundFont(const char * filePath)
+{
+    HSOUNDFONT hSoundFont = 0;
+
+    insync(_CacheLock);
+
+    CacheItem & Item = _CacheItems[filePath];
+
+    if (Item._hSoundFont == 0)
+    {
+        const char * FilePath = (::stricmp_utf8_partial(filePath, "file://") == 0) ? filePath + 7 : filePath;
+
+        if (::strstr(FilePath, "://") != nullptr)
+            return 0;
+
+        hSoundFont = ::BASS_MIDI_FontInit(pfc::stringcvt::string_wide_from_utf8(FilePath), 0);
+
+        if (hSoundFont)
+        {
+            Item._hSoundFont = hSoundFont;
+            Item._ReferenceCount = 1;
+        }
+        else
+            _CacheItems.erase(filePath);
+    }
+    else
+    {
+        hSoundFont = Item._hSoundFont;
+        ++Item._ReferenceCount;
+    }
+
+    return hSoundFont;
+}
+
+/// <summary>
+/// Removes a SoundFont from the cache.
+/// </summary>
+static void CacheRemoveSoundFont(HSOUNDFONT hSoundFont)
+{
+    insync(_CacheLock);
+
+    for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
+    {
+        if (it->second._hSoundFont == hSoundFont)
+        {
+            if (--it->second._ReferenceCount == 0)
+                ::time(&it->second._TimeReleased);
+            break;
+        }
+    }
+}
+
+/// <summary>
+/// Loads a SoundFont List (*.sflist)
+/// </summary>
+static sflist_presets * LoadSoundFontList(const char * filePath)
+{
+    size_t Offset = (size_t)(::stricmp_utf8_partial(filePath, "file://") == 0 ? 7 : 0);
+
+    pfc::string8 DirectoryPath = filePath + Offset;
+
+    DirectoryPath.truncate(DirectoryPath.scan_filename());
+
+    pfc::string8 FilePath = "";
+
+    if (Offset == 0)
+        FilePath = "file://";
+
+    FilePath += filePath;
+
+    char * Data = nullptr;
+
+    try
+    {
+        abort_callback_dummy AbortHandler;
+
+        file::ptr f;
+
+        filesystem::g_open_read(f, FilePath, AbortHandler);
+
+        size_t Size = (size_t)f->get_size_ex(AbortHandler);
+
+        Data = (char *) ::malloc(Size + 1);
+
+        if (Data == nullptr)
+            return 0;
+
+        f->read_object(Data, Size, AbortHandler);
+
+        {
+            Data[Size] = '\0';
+
+            char ErrorMessage[sflist_max_error];
+
+            sflist_presets * SoundFontList = ::sflist_load(Data, ::strlen(Data), DirectoryPath, ErrorMessage);
+
+            ::free(Data);
+
+            return SoundFontList;
+        }
+    }
+    catch (...)
+    {
+        if (Data)
+            ::free(Data);
+
+        return nullptr;
+    }
+}
+
+/// <summary>
+/// Adds a SoundFont List to the cache.
+/// </summary>
+static sflist_presets * CacheAddSoundFontList(const char * filePath)
+{
+    sflist_presets * SoundFontList = nullptr;
+
+    insync(_CacheLock);
+
+    CacheItem & Item = _CacheItems[filePath];
+
+    if (Item._SoundFontList == nullptr)
+    {
+        SoundFontList = LoadSoundFontList(filePath);
+
+        if (SoundFontList)
+        {
+            Item._SoundFontList = SoundFontList;
+            Item._ReferenceCount = 1;
+        }
+        else
+        {
+            _CacheItems.erase(filePath);
+        }
+    }
+    else
+    {
+        SoundFontList = Item._SoundFontList;
+        ++Item._ReferenceCount;
+    }
+
+    return SoundFontList;
+}
+
+/// <summary>
+/// Removes a SoundFont List from the cache.
+/// </summary>
+static void CacheRemoveSoundFontList(sflist_presets * soundFontList)
+{
+    insync(_CacheLock);
+
+    for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
+    {
+        if (it->second._SoundFontList == soundFontList)
+        {
+            if (--it->second._ReferenceCount == 0)
+                ::time(&it->second._TimeReleased);
+            break;
+        }
+    }
+}
+
+struct SoundFontMarker
+{
+    bool IsUsed;
+
+    SoundFontMarker() : IsUsed(false)
+    {
+    }
+};
+
+/// <summary>
+/// Gets statistics about the cache.
+/// </summary>
+static void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesDataLoaded)
+{
+    std::map<HSOUNDFONT, SoundFontMarker> SoundFontMarkers;
+
+    insync(_CacheLock);
+
+    totalSampleDataSize = 0;
+    totalSamplesDataLoaded = 0;
+
+    for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
+    {
+        BASS_MIDI_FONTINFO FontInfo;
+
+        if (it->second._hSoundFont)
+        {
+            SoundFontMarker & sfm = SoundFontMarkers[it->second._hSoundFont];
+
+            if (!sfm.IsUsed)
+            {
+                sfm.IsUsed = true;
+
+                if (::BASS_MIDI_FontGetInfo(it->second._hSoundFont, &FontInfo))
+                {
+                    totalSampleDataSize += FontInfo.samsize;
+                    totalSamplesDataLoaded += FontInfo.samload;
+                }
+            }
+        }
+        else
+        if (it->second._SoundFontList)
+        {
+            sflist_presets * SoundFontList = it->second._SoundFontList;
+
+            for (unsigned int i = 0, j = SoundFontList->count; i < j; ++i)
+            {
+                HSOUNDFONT hSoundFont = SoundFontList->presets[i].font;
+
+                if (hSoundFont)
+                {
+                    SoundFontMarker & sfm = SoundFontMarkers[hSoundFont];
+
+                    if (!sfm.IsUsed)
+                    {
+                        sfm.IsUsed = true;
+
+                        if (::BASS_MIDI_FontGetInfo(hSoundFont, &FontInfo))
+                        {
+                            totalSampleDataSize += FontInfo.samsize;
+                            totalSamplesDataLoaded += FontInfo.samload;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -173,14 +406,14 @@ public:
             ::BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 0);
             ::BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, 0);
 
-            _IsInitialized = !!BASS_Init(0, 44100, 0, NULL, NULL);
+            _IsInitialized = !!BASS_Init(0, 44100, 0, 0, NULL);
 
             if (!_IsInitialized)
                 _IsInitialized = _IsAlreadyInitialized = (::BASS_ErrorGetCode() == BASS_ERROR_ALREADY);
 
             if (_IsInitialized)
             {
-                ::BASS_SetConfigPtr(BASS_CONFIG_MIDI_DEFFONT, (const void *) NULL);
+                ::BASS_SetConfigPtr(BASS_CONFIG_MIDI_DEFFONT, (const void *) 0);
                 ::BASS_SetConfig(BASS_CONFIG_MIDI_VOICES, 256);
 
                 CacheInit();
@@ -220,246 +453,13 @@ private:
 
 #pragma endregion
 
-#pragma region("SoundFont")
-
-static HSOUNDFONT cache_open_font(const char * filePath)
-{
-    HSOUNDFONT hSoundFont = 0;
-
-    insync(_CacheLock);
-
-    Cached_SoundFont & entry = _CacheList[filePath];
-
-    if (!entry.hSoundFont)
-    {
-        if ((!stricmp_utf8_partial(filePath, "file://") || !strstr(filePath, "://")))
-        {
-            size_t path_offset = (size_t)(!stricmp_utf8_partial(filePath, "file://") ? 7 : 0);
-
-            hSoundFont = ::BASS_MIDI_FontInit(pfc::stringcvt::string_wide_from_utf8(filePath + path_offset), 0);
-        }
-        else
-            return 0;
-
-        if (hSoundFont)
-        {
-            entry.hSoundFont = hSoundFont;
-            entry._ReferenceCount = 1;
-        }
-        else
-            _CacheList.erase(filePath);
-    }
-    else
-    {
-        hSoundFont = entry.hSoundFont;
-        ++entry._ReferenceCount;
-    }
-
-    return hSoundFont;
-}
-
-static sflist_presets * sflist_open_file(const char * filePath)
-{
-    size_t path_offset = (size_t)(!stricmp_utf8_partial(filePath, "file://") ? 7 : 0);
-
-    pfc::string8 base_path = filePath + path_offset;
-
-    base_path.truncate(base_path.scan_filename());
-
-    pfc::string8 our_path = "";
-
-    if (!path_offset)
-        our_path = "file://";
-
-    our_path += filePath;
-
-    char * sflist_file = nullptr;
-
-    try
-    {
-        abort_callback_dummy m_abort;
-        file::ptr f;
-
-        filesystem::g_open_read(f, our_path, m_abort);
-
-        size_t length = (size_t)f->get_size_ex(m_abort);
-
-        sflist_file = (char *) ::malloc(length + 1);
-
-        if (!sflist_file)
-            return 0;
-
-        f->read_object(sflist_file, length, m_abort);
-
-        sflist_file[length] = '\0';
-
-        char error[sflist_max_error];
-
-        sflist_presets * presetlist = sflist_load(sflist_file, strlen(sflist_file), base_path, error);
-
-        ::free(sflist_file);
-
-        return presetlist;
-    }
-    catch (...)
-    {
-        if (sflist_file)
-            ::free(sflist_file);
-
-        return 0;
-    }
-}
-
-static sflist_presets * cache_open_list(const char * path)
-{
-    sflist_presets * presetlist = nullptr;
-
-    insync(_CacheLock);
-
-    Cached_SoundFont & entry = _CacheList[path];
-
-    if (!entry._Presets)
-    {
-        if ((!stricmp_utf8_partial(path, "file://") || !strstr(path, "://")))
-        {
-            presetlist = sflist_open_file(path);
-        }
-        else
-        {
-            return 0;
-        }
-
-        if (presetlist)
-        {
-            entry._Presets = presetlist;
-            entry._ReferenceCount = 1;
-        }
-        else
-        {
-            _CacheList.erase(path);
-        }
-    }
-    else
-    {
-        presetlist = entry._Presets;
-        ++entry._ReferenceCount;
-    }
-
-    return presetlist;
-}
-
-static void cache_close_font(HSOUNDFONT hSoundFont)
-{
-    insync(_CacheLock);
-
-    for (auto it = _CacheList.begin(); it != _CacheList.end(); ++it)
-    {
-        if (it->second.hSoundFont == hSoundFont)
-        {
-            if (--it->second._ReferenceCount == 0)
-                time(&it->second._TimeReleased);
-            break;
-        }
-    }
-}
-
-static void cache_close_list(sflist_presets * presetlist)
-{
-    insync(_CacheLock);
-
-    for (auto it = _CacheList.begin(); it != _CacheList.end(); ++it)
-    {
-        if (it->second._Presets == presetlist)
-        {
-            if (--it->second._ReferenceCount == 0)
-                time(&it->second._TimeReleased);
-            break;
-        }
-    }
-}
-
-struct has_font
-{
-    int has;
-
-    has_font() : has(0)
-    {
-    }
-};
-
-static void cache_get_stats(uint64_t & total_sample_size, uint64_t & samples_loaded_size)
-{
-    std::map<HSOUNDFONT, has_font> uniqueList;
-
-    insync(_CacheLock);
-
-    total_sample_size = 0;
-    samples_loaded_size = 0;
-
-    for (auto it = _CacheList.begin(); it != _CacheList.end(); ++it)
-    {
-        BASS_MIDI_FONTINFO info;
-
-        if (it->second.hSoundFont)
-        {
-            has_font & h = uniqueList[it->second.hSoundFont];
-
-            if (!h.has)
-            {
-                h.has = 1;
-
-                if (::BASS_MIDI_FontGetInfo(it->second.hSoundFont, &info))
-                {
-                    total_sample_size += info.samsize;
-                    samples_loaded_size += info.samload;
-                }
-            }
-        }
-        else
-        if (it->second._Presets)
-        {
-            sflist_presets * presetlist = it->second._Presets;
-
-            for (unsigned int i = 0, j = presetlist->count; i < j; ++i)
-            {
-                HSOUNDFONT hfont = presetlist->presets[i].font;
-
-                has_font& h = uniqueList[hfont];
-
-                if (!h.has)
-                {
-                    h.has = 1;
-
-                    if (::BASS_MIDI_FontGetInfo(hfont, &info))
-                    {
-                        total_sample_size += info.samsize;
-                        samples_loaded_size += info.samload;
-                    }
-                }
-            }
-        }
-    }
-}
-
-bool GetSoundFontStatistics(uint64_t & sizeTotal, uint64_t & sizeLoaded)
-{
-    if (!_BASSInitializer.IsInitialized())
-        return false;
-
-    cache_get_stats(sizeTotal, sizeLoaded);
-
-    return true;
-}
-
-#pragma endregion
-
-#pragma region("BASS Player")
+#pragma region("BASS MIDI")
 BMPlayer::BMPlayer() : MIDIPlayer()
 {
     ::memset(_Stream, 0, sizeof(_Stream));
 
-    _InterpolationLevel = 0;
-    _AreEffectsEnabled = true;
+    _InterpolationMode = 0;
+    _DoReverbAndChorusProcessing = true;
     _VoiceCount = 256;
     _Presets[0] = 0;
     _Presets[1] = 0;
@@ -473,33 +473,33 @@ BMPlayer::~BMPlayer()
     Shutdown();
 }
 
-void BMPlayer::setSoundFont(const char * directoryPath)
+void BMPlayer::SetSoundFontDirectory(const char * directoryPath)
 {
     _SoundFontDirectoryPath = directoryPath;
     Shutdown();
 }
 
-void BMPlayer::setFileSoundFont(const char * filePath)
+void BMPlayer::SetSoundFontFile(const char * filePath)
 {
     _SoundFontFilePath = filePath;
     Shutdown();
 }
 
-void BMPlayer::setInterpolation(int interpolationLevel)
+void BMPlayer::SetInterpolationMode(int interpolationMode)
 {
-    _InterpolationLevel = interpolationLevel;
+    _InterpolationMode = interpolationMode;
 
     Shutdown();
 }
 
-void BMPlayer::setEffects(bool enabled)
+void BMPlayer::EnableEffects(bool enabled)
 {
-    _AreEffectsEnabled = enabled;
+    _DoReverbAndChorusProcessing = enabled;
 
     Shutdown();
 }
 
-void BMPlayer::setVoices(int voiceCount)
+void BMPlayer::SetVoiceCount(int voiceCount)
 {
     if (voiceCount < 1)
         voiceCount = 1;
@@ -519,9 +519,9 @@ void BMPlayer::setVoices(int voiceCount)
         ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_MIDI_VOICES, (float) voiceCount);
 }
 
-unsigned int BMPlayer::getVoicesActive()
+size_t BMPlayer::GetActiveVoiceCount() const
 {
-    unsigned int VoiceCount = 0;
+    size_t VoiceCount = 0;
 
     float Voices;
 
@@ -530,7 +530,7 @@ unsigned int BMPlayer::getVoicesActive()
         Voices = 0.;
 
         if (::BASS_ChannelGetAttribute(_Stream[0], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &Voices))
-            VoiceCount += (unsigned int) (int) (Voices);
+            VoiceCount += (size_t) (int) (Voices);
     }
 
     if (_Stream[1])
@@ -538,7 +538,7 @@ unsigned int BMPlayer::getVoicesActive()
         Voices = 0.;
 
         if (::BASS_ChannelGetAttribute(_Stream[1], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &Voices))
-            VoiceCount += (unsigned int) (int) (Voices);
+            VoiceCount += (size_t) (int) (Voices);
     }
 
     if (_Stream[2])
@@ -546,7 +546,7 @@ unsigned int BMPlayer::getVoicesActive()
         Voices = 0.;
 
         if (::BASS_ChannelGetAttribute(_Stream[2], BASS_ATTRIB_MIDI_VOICES_ACTIVE, &Voices))
-            VoiceCount += (unsigned int) (int) (Voices);
+            VoiceCount += (size_t) (int) (Voices);
     }
 
     return VoiceCount;
@@ -558,40 +558,42 @@ bool BMPlayer::Startup()
     if (_Stream[0] && _Stream[1] && _Stream[2])
         return true;
 
-    _Stream[0] = ::BASS_MIDI_StreamCreate(16, (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_AreEffectsEnabled ? 0 : BASS_MIDI_NOFX)), (unsigned int) _SampleRate);
-    _Stream[1] = ::BASS_MIDI_StreamCreate(16, (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_AreEffectsEnabled ? 0 : BASS_MIDI_NOFX)), (unsigned int) _SampleRate);
-    _Stream[2] = ::BASS_MIDI_StreamCreate(16, (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_AreEffectsEnabled ? 0 : BASS_MIDI_NOFX)), (unsigned int) _SampleRate);
+    const DWORD Flags = (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_DoReverbAndChorusProcessing ? 0 : BASS_MIDI_NOFX));
+
+    _Stream[0] = ::BASS_MIDI_StreamCreate(16, Flags, (DWORD) _SampleRate);
+    _Stream[1] = ::BASS_MIDI_StreamCreate(16, Flags, (DWORD) _SampleRate);
+    _Stream[2] = ::BASS_MIDI_StreamCreate(16, Flags, (DWORD) _SampleRate);
 
     if (!_Stream[0] || !_Stream[1] || !_Stream[2])
         return false;
 
-    ::BASS_ChannelSetAttribute(_Stream[0], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
-    ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
-    ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationLevel);
+    ::BASS_ChannelSetAttribute(_Stream[0], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
+    ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
+    ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
 
-    setVoices(_VoiceCount);
+    SetVoiceCount(_VoiceCount);
 
     ::memset(_BankLSBOverride, 0, sizeof(_BankLSBOverride));
 
-    std::vector<BASS_MIDI_FONTEX> presetList;
+    std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
 
     if (_SoundFontFilePath.length())
     {
-        if (!load_font_item(presetList, _SoundFontFilePath))
+        if (!LoadSoundFontConfiguration(SoundFontConfigurations, _SoundFontFilePath))
             return false;
     }
 
     if (_SoundFontDirectoryPath.length())
     {
-        if (!load_font_item(presetList, _SoundFontDirectoryPath))
+        if (!LoadSoundFontConfiguration(SoundFontConfigurations, _SoundFontDirectoryPath))
             return false;
     }
 
-    ::BASS_MIDI_StreamSetFonts(_Stream[0], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
-    ::BASS_MIDI_StreamSetFonts(_Stream[1], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
-    ::BASS_MIDI_StreamSetFonts(_Stream[2], &presetList[0], (unsigned int) presetList.size() | BASS_MIDI_FONT_EX);
+    ::BASS_MIDI_StreamSetFonts(_Stream[0], &SoundFontConfigurations[0], (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
+    ::BASS_MIDI_StreamSetFonts(_Stream[1], &SoundFontConfigurations[0], (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
+    ::BASS_MIDI_StreamSetFonts(_Stream[2], &SoundFontConfigurations[0], (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
 
-    reset_parameters();
+    ResetParameters();
 
     _IsInitialized = true;
 
@@ -621,19 +623,19 @@ void BMPlayer::Shutdown()
     }
 
     for (size_t i = 0; i < _SoundFonts.size(); ++i)
-        cache_close_font(_SoundFonts[i]);
+        CacheRemoveSoundFont(_SoundFonts[i]);
 
     _SoundFonts.resize(0);
 
     if (_Presets[0])
     {
-        cache_close_list(_Presets[0]);
+        CacheRemoveSoundFontList(_Presets[0]);
         _Presets[0] = 0;
     }
 
     if (_Presets[1])
     {
-        cache_close_list(_Presets[1]);
+        CacheRemoveSoundFontList(_Presets[1]);
         _Presets[1] = 0;
     }
 
@@ -704,24 +706,26 @@ void BMPlayer::Render(audio_sample * samples, unsigned long samplesSize)
     }
 }
 
-void BMPlayer::compound_presets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels)
+void BMPlayer::CompoundPresets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels)
 {
     if (in.size() == 0)
     {
         BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
+
         in.push_back(fex);
     }
 
-    if (channels.size())
+    if (channels.size() > 0)
     {
         for (auto pit = in.begin(); pit != in.end(); ++pit)
         {
-            for (auto it = channels.begin(); it != channels.end(); ++it)
+            for (auto cit = channels.begin(); cit != channels.end(); ++cit)
             {
-                _BankLSBOverride[*it - 1] = (uint8_t)*it;
+                _BankLSBOverride[*cit - 1] = (uint8_t)*cit;
 
-                int dbanklsb = (int) *it;
-                pit->dbanklsb = dbanklsb;
+                int DestinationBankLSB = (int) *cit;
+
+                pit->dbanklsb = DestinationBankLSB;
 
                 out.push_back(*pit);
             }
@@ -736,58 +740,58 @@ void BMPlayer::compound_presets(std::vector<BASS_MIDI_FONTEX> & out, std::vector
     }
 }
 
-bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::string in_path)
+bool BMPlayer::LoadSoundFontConfiguration(std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations, std::string pathName)
 {
-    std::string ext;
+    std::string FileExtension;
 
-    size_t dot = in_path.find_last_of('.');
+    size_t dot = pathName.find_last_of('.');
 
     if (dot != std::string::npos)
-        ext.assign(in_path.begin() + (const __int64)(dot + 1), in_path.end());
+        FileExtension.assign(pathName.begin() + (const __int64)(dot + 1), pathName.end());
 
-    if ((::stricmp_utf8(ext.c_str(), "sf2") == 0) || (::stricmp_utf8(ext.c_str(), "sf3") == 0)
+    if ((::stricmp_utf8(FileExtension.c_str(), "sf2") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf3") == 0)
     #ifdef SF2PACK
-        || (::stricmp_utf8(ext.c_str(), "sf2pack") == 0) || (::stricmp_utf8(ext.c_str(), "sfogg") == 0)
+        || (::stricmp_utf8(FileExtension.c_str(), "sf2pack") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sfogg") == 0)
     #endif
         )
     {
-        HSOUNDFONT font = cache_open_font(in_path.c_str());
+        HSOUNDFONT hSoundFont = CacheAddSoundFont(pathName.c_str());
 
-        if (!font)
+        if (hSoundFont == 0)
         {
             Shutdown();
 
             _ErrorMessage = "Unable to load SoundFont: ";
-            _ErrorMessage += in_path.c_str();
+            _ErrorMessage += pathName.c_str();
 
             return false;
         }
 
-        _SoundFonts.push_back(font);
+        _SoundFonts.push_back(hSoundFont);
 
-        BASS_MIDI_FONTEX fex = { font, -1, -1, -1, 0, 0 };
+        BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, 0, 0 };
 
-        presetList.push_back(fex);
+        soundFontConfigurations.push_back(fex);
 
         return true;
     }
-    else
-    if ((::stricmp_utf8(ext.c_str(), "sflist") == 0) || (::stricmp_utf8(ext.c_str(), "json") == 0))
+
+    if ((::stricmp_utf8(FileExtension.c_str(), "sflist") == 0) || (::stricmp_utf8(FileExtension.c_str(), "json") == 0))
     {
         sflist_presets ** __presetList = &_Presets[0];
 
         if (*__presetList)
             __presetList = &_Presets[1];
 
-        *__presetList = cache_open_list(in_path.c_str());
+        *__presetList = CacheAddSoundFontList(pathName.c_str());
 
         if (!*__presetList)
             return false;
 
-        BASS_MIDI_FONTEX * fontex = (*__presetList)->presets;
+        BASS_MIDI_FONTEX * fex = (*__presetList)->presets;
 
         for (size_t i = 0, j = (*__presetList)->count; i < j; ++i)
-            presetList.push_back(fontex[i]);
+            soundFontConfigurations.push_back(fex[i]);
 
         return true;
     }
@@ -795,7 +799,7 @@ bool BMPlayer::load_font_item(std::vector<BASS_MIDI_FONTEX> & presetList, std::s
     return false;
 }
 
-void BMPlayer::reset_parameters()
+void BMPlayer::ResetParameters()
 {
     _IsBankLSBOverridden = false;
 
@@ -818,6 +822,16 @@ bool BMPlayer::GetErrorMessage(std::string & errorMessage)
     return true;
 }
 #pragma endregion
+
+bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoaded)
+{
+    if (!_BASSInitializer.IsInitialized())
+        return false;
+
+    CacheGetStatistics(sampleDataSize, sampleDataLoaded);
+
+    return true;
+}
 
 #pragma endregion
 

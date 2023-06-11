@@ -103,7 +103,7 @@ public:
         _LoopTypePlayback((uint32_t)CfgLoopTypePlayback),
         _LoopTypeOther((uint32_t)CfgLoopTypeOther),
 
-        _BASSMIDIResamplingMode((uint32_t)CfgResamplingMode)
+        _BASSMIDIInterpolationMode((uint32_t)CfgBASSMIDIInterpolationMode)
     {
         _FileStats = { 0 };
         _FileStats2 = { 0 };
@@ -324,9 +324,9 @@ private:
 
     double _AudioChunkDuration;
 
-    uint32_t _BASSMIDIResamplingMode;
-    uint32_t _BASSMIDIVoiceCount;
-    uint32_t _BASSMIDIVoiceMax;
+    uint32_t _BASSMIDIInterpolationMode;
+    size_t _BASSMIDIVoiceCount;
+    size_t _BASSMIDIVoiceMax;
 
 #ifdef FLUIDSYNTHSUPPORT
     uint32_t _FluidSynthInterpolationMethod;

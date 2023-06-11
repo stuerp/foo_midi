@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.cpp (2023.05.28) **/
+/** $VER: MIDIPreset.cpp (2023.06.11) **/
 
 #pragma warning(disable: 5045)
 
@@ -44,7 +44,7 @@ MIDIPreset::MIDIPreset() noexcept
 #endif
 
     {
-        _BASSMIDIEffects = AdvCfgBASSMIDIEffectsEnabled;
+        _BASSMIDIEffectsEnabled = AdvCfgBASSMIDIEffectsEnabled;
         _BASSMIDIVoices = (unsigned int)(int)AdvCfgBASSMIDIVoices;
     }
 
@@ -146,7 +146,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
 
             text += "|";
 
-            text += pfc::format_int(_BASSMIDIEffects);
+            text += pfc::format_int(_BASSMIDIEffectsEnabled);
 
             text += "|";
 
@@ -733,7 +733,7 @@ void MIDIPreset::Deserialize(const char * text)
 
         _SoundFontFilePath = SoundFontPath;
 
-        _BASSMIDIEffects = BASSMIDIEffects;
+        _BASSMIDIEffectsEnabled = BASSMIDIEffects;
         _BASSMIDIVoices = BASSMIDIVoices;
 
     #ifdef DXISUPPORT

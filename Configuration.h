@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.06.05) **/
+/** $VER: Configuration.h (2023.06.11) **/
 
 #pragma once
 
@@ -52,7 +52,7 @@ enum
     DefaultFilterInstruments = 0,
     DefaultFilterBanks = 0,
 
-    DefaultResamplingMode = 1,
+    DefaultBASSMIDIInterpolationMode = 1,
 
     DefaultGMSet = 0,
 
@@ -88,7 +88,7 @@ extern cfg_int
     CfgFilterInstruments,
     CfgFilterBanks,
 
-    CfgResamplingMode,
+    CfgBASSMIDIInterpolationMode,
 
     CfgADLBank,
     CfgADLChipCount,

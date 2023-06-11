@@ -410,15 +410,15 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             midiPlayer = sfPlayer;
 
-            sfPlayer->setSoundFont(thePreset.soundfont_path);
+            sfPlayer->SetSoundFontDirectory(thePreset.soundfont_path);
 
             if (file_soundfont.length())
-                sfPlayer->setFileSoundFont(file_soundfont);
+                sfPlayer->SetSoundFontFile(file_soundfont);
 
             sfPlayer->SetSampleRate(srate);
             sfPlayer->setInterpolationMethod(_FluidSynthInterpolationMethod);
             sfPlayer->setDynamicLoading(cfg_soundfont_dynamic.get());
-            sfPlayer->setEffects(thePreset.effects);
+            sfPlayer->EnableEffects(thePreset.effects);
             sfPlayer->setVoiceCount(thePreset.voices);
 
             sfPlayer->SetFilter((MIDIPlayer::filter_mode) thePreset.MIDIStandard, !thePreset._UseMIDIEffects);
@@ -496,14 +496,14 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 auto Player = new BMPlayer;
 
-                Player->setSoundFont(Preset._SoundFontFilePath);
+                Player->SetSoundFontDirectory(Preset._SoundFontFilePath);
 
                 if (SoundFontFilePath.length())
-                    Player->setFileSoundFont(SoundFontFilePath);
+                    Player->SetSoundFontFile(SoundFontFilePath);
 
-                Player->setInterpolation((int)_BASSMIDIResamplingMode);
-                Player->setEffects(Preset._BASSMIDIEffects);
-                Player->setVoices((int)Preset._BASSMIDIVoices);
+                Player->SetInterpolationMode((int)_BASSMIDIInterpolationMode);
+                Player->EnableEffects(Preset._BASSMIDIEffectsEnabled);
+                Player->SetVoiceCount((int)Preset._BASSMIDIVoices);
 
                 _Player = Player;
             }
@@ -927,7 +927,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
     {
         auto Player = (BMPlayer *)_Player;
 
-        unsigned int VoiceCount = Player->getVoicesActive();
+        size_t VoiceCount = Player->GetActiveVoiceCount();
 
         if (VoiceCount != _BASSMIDIVoiceCount)
         {
