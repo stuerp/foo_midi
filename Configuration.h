@@ -1,9 +1,7 @@
 
-/** $VER: Configuration.h (2023.06.11) **/
+/** $VER: Configuration.h (2023.06.12) **/
 
 #pragma once
-
-#pragma warning(disable: 5045)
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/cfg_var.h>

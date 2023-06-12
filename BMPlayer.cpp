@@ -1,6 +1,10 @@
 
 /** $VER: BMPlayer.cpp (2023.06.11) **/
 
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
+
 #include "BMPlayer.h"
 
 #include <sflist.h>
@@ -691,13 +695,13 @@ void BMPlayer::Render(audio_sample * samples, unsigned long samplesSize)
         if (ToDo > 512)
             ToDo = 512;
 
-        ::memset(samples, 0, (ToDo * 2) * sizeof(audio_sample));
+        ::memset(samples, 0, (size_t) (((size_t) ToDo * 2) * sizeof(audio_sample)));
 
         for (size_t i = 0; i < 3; ++i)
         {
-            ::BASS_ChannelGetData(_Stream[i], Buffer, BASS_DATA_FLOAT | static_cast<unsigned int>((ToDo * 2) * sizeof(float)));
+            ::BASS_ChannelGetData(_Stream[i], Buffer, BASS_DATA_FLOAT | (DWORD) (((size_t) ToDo * 2) * sizeof(float)));
 
-            for (size_t j = 0; j < (ToDo * 2); ++j)
+            for (size_t j = 0; j < ((size_t) ToDo * 2); ++j)
                 samples[j] += (audio_sample) Buffer[j];
         }
 

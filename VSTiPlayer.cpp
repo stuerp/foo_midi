@@ -1,11 +1,13 @@
 
-/** $VER: VSTiPlayer.cpp (2023.06.01) **/
+/** $VER: VSTiPlayer.cpp (2023.06.12) **/
+
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "VSTiPlayer.h"
 
 #define NOMINMAX
-
-#pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 
 // #define LOG_EXCHANGE
 

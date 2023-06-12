@@ -1,7 +1,9 @@
  
-/** $VER: InputDecoder.cpp (2023.06.07) **/
+/** $VER: InputDecoder.cpp (2023.06.12) **/
 
-#pragma warning(disable: 5045 26481 26485)
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "InputDecoder.h"
 
@@ -50,12 +52,12 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     {
         _FileStats = file->get_stats(abortHandler);
 
-        if ((_FileStats.m_size == 0) || (_FileStats.m_size > (t_size)(1 << 30)))
+        if ((_FileStats.m_size == 0) || (_FileStats.m_size > (t_filesize)(1 << 30)))
             throw exception_io_unsupported_format();
 
         _FileStats2 = file->get_stats2_((uint32_t)stats2_all, abortHandler);
 
-        if ((_FileStats2.m_size == 0) || (_FileStats2.m_size > (t_size)(1 << 30)))
+        if ((_FileStats2.m_size == 0) || (_FileStats2.m_size > (t_filesize)(1 << 30)))
             throw exception_io_unsupported_format();
     }
 
@@ -931,7 +933,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
         if (VoiceCount != _BASSMIDIVoiceCount)
         {
-            fileInfo.info_set_int(TagBASSMIDIVoiceCount, VoiceCount);
+            fileInfo.info_set_int(TagBASSMIDIVoiceCount, (t_int64) VoiceCount);
 
             _BASSMIDIVoiceCount = VoiceCount;
 
@@ -940,7 +942,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
         if (VoiceCount > _BASSMIDIVoiceMax)
         {
-            fileInfo.info_set_int(TagBASSMIDIVoicesMax, VoiceCount);
+            fileInfo.info_set_int(TagBASSMIDIVoicesMax, (t_int64) VoiceCount);
 
             _BASSMIDIVoiceMax = VoiceCount;
 

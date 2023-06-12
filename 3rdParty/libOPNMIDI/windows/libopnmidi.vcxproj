@@ -189,6 +189,7 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -227,6 +228,7 @@
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>

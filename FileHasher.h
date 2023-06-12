@@ -3,8 +3,6 @@
 
 #pragma once
 
-#pragma warning(disable: 5045)
-
 #include <sdk/foobar2000-lite.h>
 
 #include <sdk/hasher_md5.h>

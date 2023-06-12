@@ -1,7 +1,9 @@
 
 /** $VER: MIDIPresetFilter.cpp (2023.06.04) **/
 
-#pragma warning(disable: 26446 26481 26493)
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPresetFilter.h"
 

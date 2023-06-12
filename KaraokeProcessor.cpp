@@ -1,6 +1,10 @@
 
 /** $VER: KaraokeProcessor.h (2023.05.30) **/
 
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
+
 #include "KaraokeProcessor.h"
 
 #include <string>

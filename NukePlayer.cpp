@@ -1,6 +1,10 @@
 
 /** $VER: NukePlayer.cpp (2023.01.04) **/
 
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
+
 #include "NukePlayer.h"
 
 #include <stdlib.h>

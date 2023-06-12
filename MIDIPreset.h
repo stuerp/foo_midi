@@ -3,8 +3,6 @@
 
 #pragma once
 
-#pragma warning(disable: 5045)
-
 #include <pfc/pfc-lite.h>
 
 #include "ADLPlayer.h"

@@ -1,9 +1,7 @@
 
-/** $VER: MIDISysExFilter.h (2023.04.01) **/
+/** $VER: MIDISysExFilter.h (2023.06.12) **/
 
 #pragma once
-
-#pragma warning(disable: 5045)
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/file_info_filter.h>
@@ -17,7 +15,7 @@ class MIDISysExFilter : public file_info_filter
 public:
     MIDISysExFilter() = delete;
 
-    MIDISysExFilter(const MIDISysExFilter & p_in) = delete;
+    MIDISysExFilter(const MIDISysExFilter &) = delete;
     MIDISysExFilter(const MIDISysExFilter &&) = delete;
     MIDISysExFilter & operator=(const MIDISysExFilter &) = delete;
     MIDISysExFilter & operator=(MIDISysExFilter &&) = delete;

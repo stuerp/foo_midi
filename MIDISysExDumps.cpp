@@ -1,7 +1,9 @@
 
-/** $VER: MIDISysExDumps.cpp (2023.06.04) **/
+/** $VER: MIDISysExDumps.cpp (2023.06.12) **/
 
-#pragma warning(disable: 26446 26481 26493)
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 26432 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDISysExDumps.h"
 
@@ -71,9 +73,9 @@ void MIDISysExDumps::Merge(MIDIContainer & container, abort_callback & abortHand
 
             const t_filesize FileSize = File->get_size_ex(abortHandler);
 
-            Data.resize(FileSize);
+            Data.resize((size_t) FileSize);
 
-            File->read_object(&Data[0], FileSize, abortHandler);
+            File->read_object(&Data[0], (t_size) FileSize, abortHandler);
 
             {
                 MIDIContainer Container;

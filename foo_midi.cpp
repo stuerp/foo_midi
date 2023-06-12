@@ -1,7 +1,9 @@
 
-/** $VER: foo_midi.cpp (2023.01.05) **/
+/** $VER: foo_midi.cpp (2023.06.12) **/
 
-#pragma warning(disable: 5045)
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/componentversion.h>

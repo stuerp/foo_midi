@@ -1,9 +1,7 @@
 
-/** $VER: MIDISysExDumps.h (2023.06.04) **/
+/** $VER: MIDISysExDumps.h (2023.06.12) **/
 
 #pragma once
-
-#pragma warning(disable: 5045)
 
 #include <sdk/foobar2000-lite.h>
 
@@ -13,7 +11,9 @@ class MIDISysExDumps
 {
 public:
     MIDISysExDumps() noexcept { }
-    MIDISysExDumps(const MIDISysExDumps & p_in) : Items(p_in.Items) { }
+
+    MIDISysExDumps(const MIDISysExDumps & in) : Items(in.Items) { }
+
     virtual ~MIDISysExDumps() { };
 
     void Serialize(const char * filePath, pfc::string8 & text);

@@ -1,7 +1,9 @@
 
 /** $VER: PreferencesPaths.cpp (2023.05.20) **/
 
-#pragma warning(disable: 5045 26481 26485)
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include <atlbase.h>
 #include <atlapp.h>

@@ -1,7 +1,10 @@
 
-/** $VER: Configuration.cpp (2023.06.11) **/
+/** $VER: Configuration.cpp (2023.06.12) **/
 
-#pragma warning(disable: 5045 26481 26485)
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
+
 
 #include "Configuration.h"
 

@@ -1,6 +1,10 @@
 
 /** $VER: SCPlayer.cpp (2023.05.28) Secret Sauce **/
 
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
+
 #include "SCPlayer.h"
 
 #include <sdk/foobar2000-lite.h>

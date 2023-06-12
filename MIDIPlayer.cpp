@@ -1,5 +1,9 @@
 
-/** $VER: MIDIPlayer.cpp (2023.05.28) **/
+/** $VER: MIDIPlayer.cpp (2023.06.12) **/
+
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
 

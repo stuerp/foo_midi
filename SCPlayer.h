@@ -1,10 +1,7 @@
 
-/** $VER: SCPlayer.h (2023.05.28) Secret Sauce **/
+/** $VER: SCPlayer.h (2023.06.12) Secret Sauce **/
 
 #pragma once
-
-#include <CppCoreCheck/Warnings.h>
-#pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
 

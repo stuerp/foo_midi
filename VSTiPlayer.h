@@ -1,10 +1,7 @@
 
-/** $VER: VSTiPlayer.h (2023.05.28) **/
+/** $VER: VSTiPlayer.h (2023.06.12) **/
 
 #pragma once
-
-#include <CppCoreCheck/Warnings.h>
-#pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
 

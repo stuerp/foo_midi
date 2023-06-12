@@ -3,9 +3,6 @@
 
 #pragma once
 
-#include <CppCoreCheck/Warnings.h>
-#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
-
 #include "MIDIPlayer.h"
 
 #include <bassmidi.h>

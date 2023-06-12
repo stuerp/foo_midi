@@ -28,6 +28,7 @@
     <ClCompile Include="PreferencesRoot.cpp" />
     <ClCompile Include="PreferencesPaths.cpp" />
     <ClCompile Include="KaraokeProcessor.cpp" />
+    <ClCompile Include="SoundFontCache.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -132,6 +133,7 @@
     <ClInclude Include="PreferencesRootLayout.h" />
     <ClInclude Include="KaraokeProcessor.h" />
     <ClInclude Include="Exceptions.h" />
+    <ClInclude Include="SoundFontCache.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

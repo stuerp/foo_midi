@@ -1,7 +1,9 @@
 
 /** $VER: EdMPlayer.cpp (2023.01.02) **/
 
-#pragma warning(disable: 26446 26481 26493)
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "EdMPlayer.h"
 
