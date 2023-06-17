@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.06.12) **/
+/** $VER: InputDecoder.cpp (2023.06.17) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -158,7 +158,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     if (AdvCfgSkipToFirstNote)
         _Container.TrimStart();
 
-    _LoopRange.Clear();
+    _LoopInTicks.Clear();
     _LoopInMs.Clear();
 }
 #pragma endregion
@@ -275,13 +275,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     if (_PlayerType == PlayerTypeSuperMunt)
         _SampleRate = (uint32_t)MT32Player::GetSampleRate();
 
-    // Initialize the fade-out range.
-    if ((flags & input_flag_no_looping) || (_LoopType < 4))
+    // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
+    if ((flags & input_flag_no_looping) || (_LoopType < PlayIndefinitelyWhenDetected))
     {
-        if ((_LoopType > 2) || !_LoopRange.IsEmpty())
+        if ((_LoopType > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
         {
-            unsigned int Begin = (unsigned int)::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int)_SampleRate, 1000);
-            unsigned int End = Begin + _SampleRate * _FadeDuration / 1000;
+            uint32_t Begin = (uint32_t)::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int)_SampleRate, 1000);
+            uint32_t End = Begin + _SampleRate * _FadeDuration / 1000;
 
             _FadeRange.Set(Begin, End);
             _IsLooping = true;
@@ -294,7 +294,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     }
     else
     {
-        if ((_LoopType > 4) || !_LoopRange.IsEmpty())
+        if ((_LoopType == PlayIndefinitely) || !_LoopInTicks.IsEmpty())
         {
             _FadeRange.Clear();
             _IsLooping = true;
@@ -310,6 +310,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     delete _Player;
     _Player = nullptr;
 
+    MIDIPlayer::LoopMode LoopModes = MIDIPlayer::LoopMode((int) MIDIPlayer::LoopModeEnabled | (_IsLooping ? (int) MIDIPlayer::LoopModeForced : 0));
+
     switch (_PlayerType)
     {
         // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413))
@@ -322,12 +324,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
 
             {
-                uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
-
-                if (_IsLooping)
-                    LoopMode |= MIDIPlayer::LoopModeForced;
-
-                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
                 {
                     {
                         insync(_Lock);
@@ -374,12 +371,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
-
-                if (_IsLooping)
-                    LoopMode |= MIDIPlayer::LoopModeForced;
-
-                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
                     _DontLoop = true;
@@ -430,7 +422,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (_IsLooping)
                 LoopMode |= MIDIPlayer::loop_mode_force;
 
-            if (sfPlayer->Load(midi_file, p_subsong, LoopMode, _CleanFlags))
+            if (sfPlayer->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
             {
                 _IsEndOfContainer = false;
                 _DontLoop = true;
@@ -468,12 +460,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _Player->SetSampleRate(_SampleRate);
 
-                uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
-
-                if (_IsLooping)
-                    LoopMode |= MIDIPlayer::LoopModeForced;
-
-                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
                     _DontLoop = true;
@@ -514,12 +501,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
-
-                if (_IsLooping)
-                    LoopMode |= MIDIPlayer::LoopModeForced;
-
-                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
                     _DontLoop = true;
@@ -593,12 +575,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _Player->SetSampleRate(_SampleRate);
 
-                uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
-
-                if (_IsLooping)
-                    LoopMode |= MIDIPlayer::LoopModeForced;
-
-                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
                     _DontLoop = true;
@@ -627,12 +604,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
-
-                if (_IsLooping)
-                    LoopMode |= MIDIPlayer::LoopModeForced;
-
-                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
                     _DontLoop = true;
@@ -665,12 +637,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _Player->SetSampleRate(_SampleRate);
 
-                uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
-
-                if (_IsLooping)
-                    LoopMode |= MIDIPlayer::LoopModeForced;
-
-                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
                     _DontLoop = true;
@@ -708,12 +675,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
                 _Player->SetSampleRate(_SampleRate);
 
-                uint32_t LoopMode = MIDIPlayer::LoopModeEnabled;
-
-                if (_IsLooping)
-                    LoopMode |= MIDIPlayer::LoopModeForced;
-
-                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
                     _DontLoop = true;
@@ -815,8 +777,8 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     // Scale the samples if fading was requaested.
     if (Success && _FadeRange.IsSet())
     {
-        unsigned int BeginOfChunk = _SamplesPlayed;
-        unsigned int EndOfChunk   = _SamplesPlayed + (unsigned int)audioChunk.get_sample_count();
+        uint32_t BeginOfChunk = _SamplesPlayed;
+        uint32_t EndOfChunk   = _SamplesPlayed + (uint32_t)audioChunk.get_sample_count();
 
         _SamplesPlayed = EndOfChunk;
 
@@ -833,7 +795,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
             if (EndOfChunk > _FadeRange.End())
             {
-                unsigned int SamplesRemaining = 0;
+                uint32_t SamplesRemaining = 0;
 
                 if (_FadeRange.End() > BeginOfChunk)
                     SamplesRemaining = _FadeRange.End() - BeginOfChunk;
@@ -867,9 +829,9 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback&)
     if (OffsetInSamples > _LoopInMs.End())
         OffsetInSamples = (OffsetInSamples - _LoopInMs.Begin()) % _LoopInMs.Size() + _LoopInMs.Begin();
 
-    unsigned int PositionInSamples = (unsigned int)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000);
+    uint32_t SeekTime = (uint32_t)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000);
 
-    if ((_LengthInSamples != 0) && (PositionInSamples >= (_LengthInSamples - _SampleRate)))
+    if ((_LengthInSamples != 0) && (SeekTime >= (_LengthInSamples - _SampleRate)))
     {
         _IsEndOfContainer = true;
         return;
@@ -888,7 +850,7 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback&)
 #endif
     if (_Player)
     {
-        _Player->Seek(PositionInSamples);
+        _Player->Seek(SeekTime);
         return;
     }
 }
@@ -973,10 +935,10 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 
         double LengthInSeconds = double(LengthInMs) * 0.001;
 
-        if (_LoopTypeOther == 1)
+        if (_LoopTypeOther == NeverLoopAdd1sDecay)
             LengthInSeconds += 1.;
-
-        if ((_LoopTypeOther > 2) || !_LoopRange.IsEmpty())
+        else
+        if ((_LoopTypeOther > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
         {
             if (!_LoopInMs.HasBegin())
                 _LoopInMs.SetBegin(0);
@@ -1085,28 +1047,19 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
     _LengthInTicks = _Container.GetDuration(subSongIndex);
     _LengthInSamples = (uint32_t) (((__int64) _DurationInMS * (__int64) _SampleRate) / 1000);
 
-    if (_LoopType == 1)
+    if (_LoopType == NeverLoopAdd1sDecay)
         _LengthInSamples += _SampleRate;
 
-    _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex), _Container.GetLoopEndTimestamp(subSongIndex));
+    _LoopInTicks.Set(_Container.GetLoopBeginTimestamp(subSongIndex), _Container.GetLoopEndTimestamp(subSongIndex));
     _LoopInMs.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
 
-    if ((_LoopType > 2) || !_LoopRange.IsEmpty())
+    if ((_LoopType > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
     {
         if (!_LoopInMs.HasBegin())
             _LoopInMs.SetBegin(0);
 
         if (!_LoopInMs.HasEnd())
             _LoopInMs.SetEnd(_DurationInMS);
-/*
-        {
-            double Length = _DurationInMS * .001;
-
-            if (_LoopType == 1)
-                Length += 1.;
-
-            Length = (double) (_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * 0.001;
-        }*/
     }
 }
 
