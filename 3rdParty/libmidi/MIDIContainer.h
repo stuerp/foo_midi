@@ -36,6 +36,13 @@ enum StatusCodes
     MetaData = 0xFF
 };
 
+enum ControlChangeNumbers
+{
+    BankSelect = 0x00,
+
+    LSB = 0x20,                 // LSB for Control Changes 0 to 31
+};
+
 enum MetaDataTypes
 {
     SequenceNumber = 0x00,      // Sequence number in type 0 and 1 MIDI files; pattern number in type 2 MIDI files. (0..65535, default 0, occurs at delta time 0)
@@ -139,15 +146,15 @@ private:
     std::vector<MIDIEvent> _Events;
 };
 
-struct TempoEntry
+struct TempoItem
 {
     uint32_t Timestamp;
     uint32_t Tempo;
 
-    TempoEntry() noexcept : Timestamp(0), Tempo(0)
+    TempoItem() noexcept : Timestamp(0), Tempo(0)
     {
     }
-    TempoEntry(uint32_t timestamp, uint32_t tempo);
+    TempoItem(uint32_t timestamp, uint32_t tempo);
 };
 
 class TempoMap
@@ -156,47 +163,52 @@ public:
     void Add(uint32_t tempo, uint32_t timestamp);
     uint32_t TimestampToMS(uint32_t timestamp, uint32_t division) const;
 
-    size_t GetCount() const
+    size_t Size() const
     {
-        return _Entries.size();
+        return _Items.size();
     }
 
-    const TempoEntry & operator [] (std::size_t p_index) const
+    const TempoItem & operator [] (std::size_t p_index) const
     {
-        return _Entries[p_index];
+        return _Items[p_index];
     }
 
-    TempoEntry & operator [] (size_t index)
+    TempoItem & operator [] (size_t index)
     {
-        return _Entries[index];
+        return _Items[index];
     }
 
 private:
-    std::vector<TempoEntry> _Entries;
+    std::vector<TempoItem> _Items;
 };
 
-struct SysExEntry
+#pragma warning(disable: 4820)
+struct SysExItem
 {
-    size_t m_port;
-    size_t m_offset;
-    size_t m_length;
+    size_t Offset;
+    size_t Size;
+    uint8_t PortNumber;
 
-    SysExEntry() noexcept : m_port(0), m_offset(0), m_length(0)
-    {
-    }
-    SysExEntry(const SysExEntry & p_in);
-    SysExEntry(std::size_t p_port, std::size_t p_offset, std::size_t p_length);
+    SysExItem() noexcept : Offset(0), Size(0), PortNumber(0) { }
+    SysExItem(const SysExItem & src);
+    SysExItem(uint8_t portNumber, std::size_t offset, std::size_t size);
 };
+#pragma warning(default: 4820)
 
 class SysExTable
 {
 public:
-    uint32_t AddEntry(const uint8_t * p_data, std::size_t p_size, std::size_t p_port);
-    void GetEntry(uint32_t p_index, const uint8_t *& p_data, std::size_t & p_size, std::size_t & p_port);
+    size_t AddItem(const uint8_t * data, std::size_t size, uint8_t portNumber);
+    void GetItem(size_t index, const uint8_t * & data, std::size_t & size, uint8_t & portNumber) const;
+
+    size_t Size() const
+    {
+        return _Items.size();
+    }
 
 private:
-    std::vector<uint8_t> m_data;
-    std::vector<SysExEntry> m_entries;
+    std::vector<SysExItem> _Items;
+    std::vector<uint8_t> _Data;
 };
 
 struct MIDIStreamEvent
@@ -298,7 +310,7 @@ public:
 
     void DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops);
 
-    static void EncodeVariableLengthQuantity(std::vector<uint8_t> & p_out, uint32_t delta);
+    static void EncodeVariableLengthQuantity(std::vector<uint8_t> & data, uint32_t delta);
 
 public:
     enum

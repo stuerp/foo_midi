@@ -18,17 +18,17 @@ public:
     MIDIPlayer();
     virtual ~MIDIPlayer() { };
 
-    bool Load(const MIDIContainer & midiContainer, unsigned int subsongIndex, unsigned int loopMode, unsigned int cleanFlags);
-    size_t Play(audio_sample * samples, size_t samplesSize);
-    void Seek(unsigned long seekTime);
-
-    void SetSampleRate(unsigned long sampleRate);
-
     enum LoopMode
     {
         LoopModeEnabled = 0x01,
         LoopModeForced = 0x02
     };
+
+    bool Load(const MIDIContainer & midiContainer, unsigned int subsongIndex, LoopMode loopMode, unsigned int cleanFlags);
+    size_t Play(audio_sample * samples, size_t samplesSize);
+    void Seek(unsigned long seekTime);
+
+    void SetSampleRate(unsigned long sampleRate);
 
     void SetLoopMode(LoopMode loopMode);
 
@@ -97,8 +97,8 @@ private:
     uint32_t _LoopMode;
 
     uint32_t _LoopBegin;
-    uint32_t _LoopEnd;
     uint32_t _LoopBeginTime;
+    uint32_t _LoopEnd;
 
     #ifdef EXPERIMENT
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;

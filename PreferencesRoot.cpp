@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.06.11) **/
+/** $VER: PreferencesRoot.cpp (2023.06.17) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -885,9 +885,9 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         static const char * LoopTypeDescription[] =
         {
             "Never loop",
-            "Never, add 1s decay time",
+            "Never loop, 1s decay time",
             "Loop and fade when detected",
-            "Always loop and fade",
+            "Loop and fade always",
             "Play indefinitely when detected",
             "Play indefinitely"
         };

@@ -28,10 +28,6 @@ or
 
 ## Developing
 
-The code builds out-of-the box with Visual Studio.
-
-### Requirements
-
 To build the code you need:
 
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
@@ -49,13 +45,13 @@ The following libraries are included in the code:
 * [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
 * [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2)
 * [Nuke.YKT](http://nukeykt.retrohost.net/)
-    * [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver)
-    * [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) Yamaha YMF262 and CT1747 (OPL3)
-    * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL) Yamaha YM2413 and VRC7 (OPLL)
-    * [Nuked-OPM](https://github.com/nukeykt/Nuked-OPM) Yamaha YM2151
-    * [Nuked-OPN2](https://github.com/nukeykt/Nuked-OPN2) Yamaha YM3438 (YM2612) 1.0.9
-    * [Nuked-OPNB](https://github.com/nukeykt/Nuked-OPNB) Yamaha YM2610
-    * [Nuked-PSG](https://github.com/nukeykt/Nuked-PSG) Yamaha YM7101
+  * [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver)
+  * [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) Yamaha YMF262 and CT1747 (OPL3)
+  * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL) Yamaha YM2413 and VRC7 (OPLL)
+  * [Nuked-OPM](https://github.com/nukeykt/Nuked-OPM) Yamaha YM2151
+  * [Nuked-OPN2](https://github.com/nukeykt/Nuked-OPN2) Yamaha YM3438 (YM2612) 1.0.9
+  * [Nuked-OPNB](https://github.com/nukeykt/Nuked-OPNB) Yamaha YM2610
+  * [Nuked-PSG](https://github.com/nukeykt/Nuked-PSG) Yamaha YM7101
 * [emu2149](https://github.com/digital-sound-antiques/emu2149) Yamaha YM2149 (PSG)
 * [emu2212](https://github.com/digital-sound-antiques/emu2212) Konami SCC
 * [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
@@ -102,8 +98,9 @@ branch. Pull requests are warmly welcome.
 
 v2.8.4.0, 2023-xx-xx, *""*
 
-* Info tag MIDI_PLAYER contains the name of the MIDI player playing the current track.
+* A new Info tag "MIDI_PLAYER" contains the name of the MIDI player playing the current track.
 * Improved: Error reporting in general and in case of parsing MIDI files with problems.
+* Bug Fix: Playing loops did not always work. (Regression)
 
 v2.8.3.1, 2023-06-03, *"Do you want lyrics with that? Redux"*
 
@@ -174,8 +171,8 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * Peter Pawlowski for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
 * [kode54](https://gitlab.com/kode54/) for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
 * [Munt](https://github.com/munt/munt/) for a multi-platform software synthesiser emulating pre-GM MIDI devices such as the Roland MT-32, CM-32L, CM-64 and LAPC-I.
-* [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) for Nuked OPL3 (https://github.com/nukeykt/Nuked-OPL3).
-* [Mitsutaka Okazaki]() for Emu de MIDI.
+* [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) for [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3).
+* [Mitsutaka Okazaki](https://github.com/Wohlstand/scc) for Emu de MIDI.
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
 
 ## Reference Material
@@ -190,12 +187,14 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
   * [Control Library](https://learn.microsoft.com/en-us/windows/win32/controls/individual-control-info)
   * [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
   * [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
+* SoundFonts
+  * [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
 
 ## Links
 
-* Home page: https://github.com/stuerp/foo_midi
-* Repository: https://github.com/stuerp/foo_midi.git
-* Issue tracker: https://github.com/stuerp/foo_midi/issues
+* Home page: [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)
+* Repository: [https://github.com/stuerp/foo_midi.git](https://github.com/stuerp/foo_midi.git)
+* Issue tracker: [https://github.com/stuerp/foo_midi/issues](https://github.com/stuerp/foo_midi/issues)
 
 ## License
 

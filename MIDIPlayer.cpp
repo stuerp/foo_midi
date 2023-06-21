@@ -30,7 +30,7 @@ MIDIPlayer::MIDIPlayer()
 /// <summary>
 /// Loads the specified MIDI container.
 /// </summary>
-bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex, unsigned loopMode, unsigned cleanFlags)
+bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex, LoopMode loopMode, unsigned cleanFlags)
 {
     assert(_Stream.size() == 0);
 
@@ -58,7 +58,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
             _LoopBeginTime = 0;
 
         if (LoopEndTime == ~0UL)
-            LoopEndTime = _EndTime - 1000;
+            LoopEndTime =  _EndTime - 1000; // Subtract 1000 ms that were added higher
 
         if ((_LoopMode & LoopModeForced))
         {
@@ -69,7 +69,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
             {
                 size_t i;
 
-                for (i = 0; (i < _Stream.size()) && (i < _LoopEnd); i++)
+                for (i = 0; (i < _Stream.size()) && (i < _LoopEnd); ++i)
                 {
                     uint32_t Message = _Stream.at(i).Data;
 
@@ -100,15 +100,15 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
                     _EndTime = (size_t)_Stream.at(i - 1).Timestamp;
             }
 
-            for (size_t i = 0; i < NoteOnSize; i++)
+            for (size_t i = 0; i < NoteOnSize; ++i)
             {
                 if (NoteOn.at(i))
                 {
-                    for (size_t j = 0; j < 8; j++)
+                    for (size_t j = 0; j < 8; ++j)
                     {
                         if (NoteOn.at(i) & (1 << j))
                         {
-                            _Stream.push_back(MIDIStreamEvent((unsigned long)_EndTime, static_cast<uint32_t>((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                            _Stream.push_back(MIDIStreamEvent((uint32_t)_EndTime, (uint32_t)((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
                         }
                     }
                 }
@@ -120,7 +120,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
 
     if (_SampleRate != 1000)
     {
-        unsigned long SampleRate = static_cast<unsigned long>(_SampleRate);
+        uint32_t SampleRate = _SampleRate;
 
         _SampleRate = 1000;
 
@@ -202,14 +202,14 @@ size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
                         _MusicKeyboard->ProcessMessage(me.Data, me.Timestamp);
                 #endif
 
-                    size_t SamplesToDo = me.Timestamp - _CurrentTime - BlockOffset;
+                    int64_t SamplesToDo = (int64_t) me.Timestamp - _CurrentTime - BlockOffset;
 
                     if (SamplesToDo > 0)
                     {
-                        if (SamplesToDo > samplesSize - SamplesDone)
+                        if (SamplesToDo > (int64_t)(samplesSize - SamplesDone))
                         {
-                            _SamplesRemaining = SamplesToDo - (samplesSize - SamplesDone);
-                            SamplesToDo = samplesSize - SamplesDone;
+                            _SamplesRemaining = SamplesToDo - (int64_t)(samplesSize - SamplesDone);
+                            SamplesToDo = (int64_t)(samplesSize - SamplesDone);
                         }
 
                         if ((SamplesToDo > 0) && (BlockSize == 0))
@@ -217,7 +217,7 @@ size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
                             Render(samples + SamplesDone * 2, (unsigned long)SamplesToDo);
 
                             SamplesDone += SamplesToDo;
-                            _CurrentTime += SamplesToDo;
+                            _CurrentTime += (uint32_t)SamplesToDo;
                         }
 
                         if (_SamplesRemaining > 0)
@@ -323,6 +323,9 @@ size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
     return SamplesDone;
 }
 
+/// <summary>
+/// Seeks to the specified time (in ms)
+/// </summary>
 void MIDIPlayer::Seek(unsigned long seekTime)
 {
     if (seekTime >= _EndTime)
@@ -359,9 +362,9 @@ void MIDIPlayer::Seek(unsigned long seekTime)
             ;
 
         if (_CurrentPosition == _Stream.size())
-            _SamplesRemaining = _EndTime - _CurrentTime;
+            _SamplesRemaining = (int64_t)_EndTime - _CurrentTime;
         else
-            _SamplesRemaining = _Stream.at(_CurrentPosition).Timestamp - _CurrentTime;
+            _SamplesRemaining = (int64_t)_Stream.at(_CurrentPosition).Timestamp - _CurrentTime;
     }
 
     if (_CurrentPosition <= OldCurrentPosition)
@@ -374,7 +377,7 @@ void MIDIPlayer::Seek(unsigned long seekTime)
 
     OldCurrentPosition = _CurrentPosition - OldCurrentPosition;
 
-    for (size_t i = 0; i < OldCurrentPosition; i++)
+    for (size_t i = 0; i < OldCurrentPosition; ++i)
     {
         MIDIStreamEvent & mse1 = FillerEvents.at(i);
 
@@ -389,7 +392,7 @@ void MIDIPlayer::Seek(unsigned long seekTime)
             const uint32_t m1 = (mse1.Data & 0x7F00FF0F) | 0x80; // note off
             const uint32_t m2 = (mse1.Data & 0x7F00FFFF); // also note off
 
-            for (size_t j = i + 1; j < OldCurrentPosition; j++)
+            for (size_t j = i + 1; j < OldCurrentPosition; ++j)
             {
                 MIDIStreamEvent & mse2 = FillerEvents.at(j);
 
@@ -408,18 +411,18 @@ void MIDIPlayer::Seek(unsigned long seekTime)
 
     if (BlockSize > 0)
     {
-        audio_sample * temp = new audio_sample[BlockSize * 2];
+        audio_sample * Temp = new audio_sample[BlockSize * 2];
 
-        if (temp)
+        if (Temp)
         {
-            Render(temp, BlockSize); // flush events
+            Render(Temp, BlockSize); // flush events
 
-            unsigned int JunkSize = 0;
+            uint32_t JunkSize = 0;
 
             unsigned long LastTimestamp = 0;
             bool IsTimestampSet = false;
 
-            for (size_t i = 0; i < OldCurrentPosition; i++)
+            for (size_t i = 0; i < OldCurrentPosition; ++i)
             {
                 if (FillerEvents[i].Data != 0)
                 {
@@ -433,34 +436,34 @@ void MIDIPlayer::Seek(unsigned long seekTime)
 
                     if (JunkSize >= BlockSize)
                     {
-                        Render(temp, BlockSize);
+                        Render(Temp, BlockSize);
                         JunkSize -= BlockSize;
                     }
                 }
             }
 
-            Render(temp, BlockSize);
+            Render(Temp, BlockSize);
 
-            delete[] temp;
+            delete[] Temp;
         }
     }
     else
     {
-        audio_sample * temp = new audio_sample[16 * 2];
+        audio_sample * Temp = new audio_sample[16 * 2];
 
-        if (temp)
+        if (Temp)
         {
-            Render(temp, 16);
+            Render(Temp, 16);
 
             unsigned long LastTimestamp = 0;
             bool IsTimestampSet = false;
 
-            for (size_t i = 0; i < OldCurrentPosition; i++)
+            for (size_t i = 0; i < OldCurrentPosition; ++i)
             {
                 if (FillerEvents[i].Data != 0)
                 {
                     if (IsTimestampSet && (FillerEvents[i].Timestamp != LastTimestamp))
-                        Render(temp, 16);
+                        Render(Temp, 16);
 
                     LastTimestamp = FillerEvents[i].Timestamp;
                     IsTimestampSet = true;
@@ -469,9 +472,9 @@ void MIDIPlayer::Seek(unsigned long seekTime)
                 }
             }
 
-            Render(temp, 16);
+            Render(Temp, 16);
 
-            delete[] temp;
+            delete[] Temp;
         }
     }
 }
@@ -479,17 +482,17 @@ void MIDIPlayer::Seek(unsigned long seekTime)
 void MIDIPlayer::SetSampleRate(unsigned long sampleRate)
 {
     if (_Stream.size() > 0)
-        for (size_t i = 0; i < _Stream.size(); i++)
+        for (size_t i = 0; i < _Stream.size(); ++i)
             _Stream.at(i).Timestamp = (unsigned long) ((uint64_t) _Stream.at(i).Timestamp * sampleRate / _SampleRate);
 
     if (_CurrentTime > 0)
-        _CurrentTime = static_cast<uint64_t>(_CurrentTime) * sampleRate / _SampleRate;
+        _CurrentTime = (uint64_t)(_CurrentTime) * sampleRate / _SampleRate;
 
     if (_EndTime > 0)
-        _EndTime = static_cast<uint64_t>(_EndTime) * sampleRate / _SampleRate;
+        _EndTime = (uint64_t)(_EndTime) * sampleRate / _SampleRate;
 
     if (_LoopBeginTime > 0)
-        _LoopBeginTime = static_cast<uint64_t>(_LoopBeginTime) * sampleRate / _SampleRate;
+        _LoopBeginTime = (uint64_t)(_LoopBeginTime) * sampleRate / _SampleRate;
 
     _SampleRate = sampleRate;
 
@@ -498,7 +501,7 @@ void MIDIPlayer::SetSampleRate(unsigned long sampleRate)
 
 void MIDIPlayer::SetLoopMode(LoopMode loopMode)
 {
-    if (_LoopMode == (unsigned int)loopMode)
+    if (_LoopMode == (uint32_t)loopMode)
         return;
 
     if (loopMode & LoopModeEnabled)
@@ -528,8 +531,9 @@ void MIDIPlayer::SendEventFiltered(uint32_t event)
     {
         if (_FilterEffects)
         {
-            const uint32_t _b = event & 0x7FF0;
+            const uint32_t _b = event & 0x7FF0u;
 
+            // Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
             if (_b == 0x5BB0 || _b == 0x5DB0)
                 return;
         }
@@ -538,12 +542,13 @@ void MIDIPlayer::SendEventFiltered(uint32_t event)
     }
     else
     {
-        const unsigned int Index = event & 0xffffff;
+        const uint32_t Index = event & 0xFFFFFFu;
 
         const uint8_t * Data;
-        size_t Size, Port;
+        size_t Size;
+        uint8_t Port;
 
-        _SysExMap.GetEntry(Index, Data, Size, Port);
+        _SysExMap.GetItem(Index, Data, Size, Port);
 
         SendSysExFiltered(Data, Size, Port);
     }
@@ -555,22 +560,24 @@ void MIDIPlayer::SendEventWithTimeFiltered(uint32_t event, size_t time)
     {
         if (_FilterEffects)
         {
-            const uint32_t _b = event & 0x7FF0;
+            const uint32_t _b = event & 0x7FF0u;
 
+            // Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
             if (_b == 0x5BB0 || _b == 0x5DB0)
                 return;
         }
 
-        SendEventWithTime(event, (unsigned int)time);
+        SendEventWithTime(event, (uint32_t)time);
     }
     else
     {
-        const unsigned int Index = event & 0xffffff;
+        const uint32_t Index = event & 0xFFFFFFu;
 
         const uint8_t * Data;
-        size_t Size, Port;
+        size_t Size;
+        uint8_t Port;
 
-        _SysExMap.GetEntry(Index, Data, Size, Port);
+        _SysExMap.GetItem(Index, Data, Size, Port);
 
         SendSysExWithTimeFiltered(Data, Size, Port, time);
     }
@@ -597,13 +604,13 @@ void MIDIPlayer::SendSysExFiltered(const uint8_t * data, size_t size, size_t por
 
 void MIDIPlayer::SendSysExWithTimeFiltered(const uint8_t * data, size_t size, size_t port, size_t time)
 {
-    SendSysExWithTime(data, size, port, (unsigned int)time);
+    SendSysExWithTime(data, size, port, (uint32_t)time);
 
     if (IsSysExReset(data) && (_FilterType != FilterNone))
-        SendSysExReset(port, (unsigned int)time);
+        SendSysExReset(port, (uint32_t)time);
 }
 
-void MIDIPlayer::SendSysExReset(size_t port, unsigned int time)
+void MIDIPlayer::SendSysExReset(size_t port, uint32_t time)
 {
     if (!_IsInitialized)
         return;
@@ -625,7 +632,7 @@ void MIDIPlayer::SendSysExReset(size_t port, unsigned int time)
     {
         case FilterGMSysEx:
         /*
-            if (time)
+            if (time > 0)
                 SendSysExWithTime(SysExResetGM, sizeof(SysExResetGM), port, time);
             else
                 SendSysEx(SysExResetGM, sizeof(SysExResetGM), port);
@@ -727,7 +734,7 @@ void MIDIPlayer::SendSysExReset(size_t port, unsigned int time)
     }
 }
 
-void MIDIPlayer::SendSysExResetSC(size_t port, unsigned int time)
+void MIDIPlayer::SendSysExResetSC(size_t port, uint32_t time)
 {
     uint8_t Message[11] = { 0 };
 
@@ -779,7 +786,7 @@ void MIDIPlayer::SendSysExResetSC(size_t port, unsigned int time)
     }
 }
 
-void MIDIPlayer::SendSysExGS(uint8_t * data, size_t size, size_t port, unsigned int time)
+void MIDIPlayer::SendSysExGS(uint8_t * data, size_t size, size_t port, uint32_t time)
 {
     size_t i;
 
