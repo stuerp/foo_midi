@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.06.17) **/
+/** $VER: InputDecoder.h (2023.06.04) **/
 
 #pragma once
 
@@ -55,15 +55,15 @@ public:
     Range() noexcept  { Clear(); }
     virtual ~Range() noexcept { }
 
-    uint32_t Begin() const noexcept { return _Begin; }
-    uint32_t End() const noexcept { return _End; }
+    unsigned int Begin() const noexcept { return _Begin; }
+    unsigned int End() const noexcept { return _End; }
 
-    void Set(uint32_t begin, uint32_t end) noexcept { _Begin = begin; _End = end; }
-    void SetBegin(uint32_t begin) noexcept { _Begin = begin; }
-    void SetEnd(uint32_t end) noexcept { _End = end; }
+    void Set(unsigned int begin, unsigned int end) noexcept { _Begin = begin; _End = end; }
+    void SetBegin(unsigned int begin) noexcept { _Begin = begin; }
+    void SetEnd(unsigned int end) noexcept { _End = end; }
     void Clear() { Set(pfc::infinite32, pfc::infinite32); }
 
-    uint32_t Size() const noexcept { return _End - _Begin; }
+    unsigned int Size() const noexcept { return _End - _Begin; }
 
     bool IsEmpty() const noexcept { return (_Begin == pfc::infinite32) && (_End == pfc::infinite32); }
     bool IsSet() const noexcept { return  (_Begin != pfc::infinite32) && (_End != pfc::infinite32); }
@@ -71,8 +71,8 @@ public:
     bool HasEnd() const noexcept { return _End != pfc::infinite32; }
 
 private:
-    uint32_t _Begin;
-    uint32_t _End;
+    unsigned int _Begin;
+    unsigned int _End;
 };
 
 /// <summary>
@@ -91,15 +91,15 @@ public:
         _DetectRPGMakerLoops(!!CfgDetectRPGMakerLoops),
         _DetectTouhouLoops(!!CfgDetectTouhouLoops),
 
+        _LoopRange(),
+        _LoopInMs(),
+
         _Player(nullptr),
 
         _SampleRate((uint32_t)CfgSampleRate),
 
         _LoopTypePlayback((uint32_t)CfgLoopTypePlayback),
         _LoopTypeOther((uint32_t)CfgLoopTypeOther),
-
-        _LoopInTicks(),
-        _LoopInMs(),
 
         _BASSMIDIInterpolationMode((uint32_t)CfgBASSMIDIInterpolationMode)
     {
@@ -287,6 +287,9 @@ private:
     bool _DetectRPGMakerLoops;
     bool _DetectTouhouLoops;
 
+    Range _LoopRange;
+    Range _LoopInMs;
+
     // Player Properties
     MIDIPlayer * _Player;
 
@@ -296,16 +299,14 @@ private:
     uint32_t _LoopType;
     uint32_t _LoopTypePlayback;
     uint32_t _LoopTypeOther;
-    uint32_t _LoopCount;
-
-    Range _LoopInTicks;
-    Range _LoopInMs;
 
     uint32_t _CleanFlags;
 
     uint32_t _DurationInMS;
     uint32_t _LengthInTicks;
     uint32_t _LengthInSamples;
+
+    uint32_t _LoopCount;
 
     uint32_t _SamplesPlayed;
     uint32_t _SamplesDone;

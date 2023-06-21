@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.h (2023.06.17) **/
+/** $VER: MIDIPlayer.h (2023.05.24) **/
 
 #pragma once
 
@@ -18,17 +18,17 @@ public:
     MIDIPlayer();
     virtual ~MIDIPlayer() { };
 
+    bool Load(const MIDIContainer & midiContainer, unsigned int subsongIndex, unsigned int loopMode, unsigned int cleanFlags);
+    size_t Play(audio_sample * samples, size_t samplesSize);
+    void Seek(unsigned long seekTime);
+
+    void SetSampleRate(unsigned long sampleRate);
+
     enum LoopMode
     {
         LoopModeEnabled = 0x01,
         LoopModeForced = 0x02
     };
-
-    bool Load(const MIDIContainer & midiContainer, unsigned int subsongIndex, LoopMode loopMode, unsigned int cleanFlags);
-    size_t Play(audio_sample * samples, size_t samplesSize);
-    void Seek(uint32_t seekTime);
-
-    void SetSampleRate(uint32_t sampleRate);
 
     void SetLoopMode(LoopMode loopMode);
 
@@ -70,7 +70,7 @@ protected:
 
 protected:
     bool _IsInitialized;
-    uint32_t _SampleRate;
+    unsigned long _SampleRate;
     SysExTable _SysExMap;
 
     FilterType _FilterType;
@@ -90,9 +90,9 @@ private:
     std::vector<MIDIStreamEvent> _Stream;
 
     size_t _CurrentPosition; // Current position in the MIDI stream
-    uint32_t _CurrentTime;
-    uint32_t _EndTime;
-    int64_t _SamplesRemaining;
+    size_t _CurrentTime;
+    size_t _EndTime;
+    size_t _SamplesRemaining;
 
     uint32_t _LoopMode;
 

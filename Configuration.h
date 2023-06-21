@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.06.17) **/
+/** $VER: Configuration.h (2023.06.12) **/
 
 #pragma once
 
@@ -67,18 +67,6 @@ enum
 #ifdef FLUIDSYNTHSUPPORT
     DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT
 #endif
-};
-
-enum LoopType
-{
-    NeverLoop = 0,                      // Never loop
-    NeverLoopAdd1sDecay = 1,            // Never loop, 1s decay time
-
-    LoopAndFadeWhenDetected = 2,        // Loop and fade when detected
-    LoopAndFadeAlways = 3,              // Loop and fade always
-
-    PlayIndefinitelyWhenDetected = 4,   // Play indefinitely when detected
-    PlayIndefinitely = 5,               // Play indefinitely
 };
 
 extern cfg_int
