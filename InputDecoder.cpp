@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.06.12) **/
+/** $VER: InputDecoder.cpp (2023.06.24) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -182,6 +182,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     InitializeTime(subSongIndex);
 
     _Container.SetTrackCount((uint32_t)_TrackCount);
+
+    _ExtraPercussionChannel = _Container.GetExtraPercussionChannel();
 
     MIDIPreset Preset;
 
@@ -879,6 +881,18 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
                 PlayerName = "VSTi";
 
             fileInfo.info_set(TagMIDIPlayer, PlayerName);
+        }
+
+        {
+            if (_ExtraPercussionChannel != 0)
+            {
+                char Text[4];
+
+                _itoa(_ExtraPercussionChannel + 1, Text, 10);
+                fileInfo.info_set(TagExtraPercusionChannel, Text);
+            }
+            else
+                fileInfo.info_remove(TagExtraPercusionChannel);
         }
 
         _IsFirstChunk = false;

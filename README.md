@@ -98,7 +98,9 @@ branch. Pull requests are warmly welcome.
 
 v2.8.4.0, 2023-xx-xx, *""*
 
-* A new Info tag "MIDI_PLAYER" contains the name of the MIDI player playing the current track.
+* New: A new Info tag "MIDI_PLAYER" contains the name of the MIDI player playing the current track.
+* New: Added detection of an extra percussion channel in Standard MIDI Files (*.MID). When meta data messages of type Text, TrackName of InstrumentName containing the word "drum" preceed the first message for channel 16 it will be assigned as an extra percussion channel in addition to channel 10.
+* New: A new Info tag "MIDI_EXTRA_PERCUSSION_CHANNEL" contains the (1-based) number of the channel that acts as an additional percussion channel.
 * Improved: Error reporting in general and in case of parsing MIDI files with problems.
 * Bug Fix: Playing loops did not always work. (Regression)
 

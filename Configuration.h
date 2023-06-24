@@ -181,6 +181,7 @@ extern const char TagBASSMIDIVoiceCount[];
 extern const char TagBASSMIDIVoicesMax[];
 
 extern const char TagMIDIPlayer[];
+extern const char TagExtraPercusionChannel[];
 
 extern bool IsMIDIFileExtension(const char * fileExtension);
 extern bool IsSysExFileExtension(const char * ext);

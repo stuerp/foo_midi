@@ -265,7 +265,7 @@ private:
 class MIDIContainer
 {
 public:
-    MIDIContainer() : _Format(0), _TimeDivision(0)
+    MIDIContainer() : _Format(0), _TimeDivision(0), _ExtraPercussionChannel(0)
     {
         _DeviceNames.resize(16);
     }
@@ -307,6 +307,9 @@ public:
     uint32_t GetLoopEndTimestamp(size_t subSongIndex, bool ms = false) const;
 
     void GetMetaData(size_t subSongIndex, MIDIMetaData & data);
+
+    void SetExtraPercussionChannel(uint32_t channelNumber) noexcept { _ExtraPercussionChannel = channelNumber; }
+    uint32_t GetExtraPercussionChannel() const noexcept { return _ExtraPercussionChannel; }
 
     void DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops);
 
@@ -367,6 +370,7 @@ private:
 private:
     uint32_t _Format;
     uint32_t _TimeDivision;
+    uint32_t _ExtraPercussionChannel;
 
     std::vector<uint64_t> _ChannelMask;
     std::vector<TempoMap> _TempoMaps;

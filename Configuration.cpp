@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.06.12) **/
+/** $VER: Configuration.cpp (2023.06.24) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -227,6 +227,7 @@ const char TagBASSMIDIVoiceCount[] = "bassmidi_voices";
 const char TagBASSMIDIVoicesMax[] = "bassmidi_voices_max";
 
 const char TagMIDIPlayer[] = "midi_player";
+const char TagExtraPercusionChannel[] = "midi_extra_percussion_channel";
 
 const char * _FileExtensions[] =
 {

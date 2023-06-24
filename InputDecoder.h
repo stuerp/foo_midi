@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.06.04) **/
+/** $VER: InputDecoder.h (2023.06.24) **/
 
 #pragma once
 
@@ -94,6 +94,7 @@ public:
         _Player(nullptr),
 
         _SampleRate((uint32_t)CfgSampleRate),
+        _ExtraPercussionChannel(0),
 
         _LoopTypePlayback((uint32_t)CfgLoopTypePlayback),
         _LoopTypeOther((uint32_t)CfgLoopTypeOther),
@@ -291,6 +292,7 @@ private:
 
     uint32_t _PlayerType;
     uint32_t _SampleRate;
+    uint32_t _ExtraPercussionChannel;
 
     uint32_t _LoopType;
     uint32_t _LoopTypePlayback;

@@ -1,5 +1,17 @@
 #include "MIDIProcessor.h"
 
+const uint8_t sx06[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x16, 0x15, 0x02, 0x13, 0xF7 }; // Set channel  6 to drums.
+const uint8_t sx07[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x17, 0x15, 0x02, 0x12, 0xF7 }; // Set channel  7 to drums.
+const uint8_t sx08[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x18, 0x15, 0x02, 0x11, 0xF7 }; // Set channel  8 to drums.
+const uint8_t sx09[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x19, 0x15, 0x02, 0x10, 0xF7 }; // Set channel  9 to drums.
+
+const uint8_t sx11[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x1A, 0x15, 0x02, 0x0E, 0xF7 }; // Set channel 11 to drums.
+const uint8_t sx12[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x1B, 0x15, 0x02, 0x0E, 0xF7 }; // Set channel 12 to drums.
+const uint8_t sx13[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x1C, 0x15, 0x02, 0x0D, 0xF7 }; // Set channel 13 to drums.
+const uint8_t sx14[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x1D, 0x15, 0x02, 0x0C, 0xF7 }; // Set channel 14 to drums.
+const uint8_t sx15[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x1E, 0x15, 0x02, 0x0B, 0xF7 }; // Set channel 14 to drums.
+const uint8_t sx16[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x1F, 0x15, 0x02, 0x0A, 0xF7 }; // Set channel 16 to drums.
+
 bool MIDIProcessor::IsSMF(std::vector<uint8_t> const & data)
 {
     if (data.size() < 18)
@@ -56,7 +68,7 @@ bool MIDIProcessor::ProcessSMF(std::vector<uint8_t> const & data, MIDIContainer 
     if ((TimeDivision == 0))
         return SetLastErrorCode(MIDIError::SMFBadHeaderTimeDivision);
 
-    container.Initialize(Format, TimeDivision);
+    container.Initialize((uint32_t) Format, (uint32_t) TimeDivision);
 
     std::vector<uint8_t>::const_iterator Data = data.begin() + 14;
     std::vector<uint8_t>::const_iterator Tail = data.end();
@@ -70,7 +82,7 @@ bool MIDIProcessor::ProcessSMF(std::vector<uint8_t> const & data, MIDIContainer 
 
         if (::memcmp(&Data[0], "MTrk", 4) == 0)
         {
-            if (Tail - Data < 8 + ChunkSize)
+            if (Tail - Data < (ptrdiff_t)8 + ChunkSize)
                 return SetLastErrorCode(MIDIError::InsufficientData);
 
             Data += 8;
@@ -85,10 +97,10 @@ bool MIDIProcessor::ProcessSMF(std::vector<uint8_t> const & data, MIDIContainer 
         // Skip unknown chunks in the stream.
         else
         {
-            if (Tail - Data < 8 + ChunkSize)
+            if (Tail - Data < (ptrdiff_t)(8) + ChunkSize)
                 return SetLastErrorCode(MIDIError::InsufficientData);
 
-            Data += 8 + ChunkSize;
+            Data += (int64_t)(8) + ChunkSize;
 
             continue;
         }
@@ -108,6 +120,8 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
     uint32_t SysExTimestamp = 0;
 
     std::vector<uint8_t> Buffer;
+
+    bool DetectedPercussionText = false;
 
     Buffer.resize(3);
 
@@ -179,7 +193,22 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
                     Buffer[BytesRead++] = *data++;
             }
 
-            Track.AddEvent(MIDIEvent(Timestamp, (MIDIEvent::EventType) ((StatusCode >> 4) - 8), (uint32_t)(StatusCode & 0x0F), &Buffer[0], BytesRead));
+            uint32_t ChannelNumber = (uint32_t)(StatusCode & 0x0F);
+
+            // Assign percussion to channel 16 if it's first message was preceded with meta data containing the word "drum".
+            {
+
+                if ((ChannelNumber == 0x0F) && DetectedPercussionText)
+                {
+                    Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, sx16, _countof(sx16)));
+
+                    container.SetExtraPercussionChannel(ChannelNumber);
+
+                    DetectedPercussionText = false;
+                }
+            }
+
+            Track.AddEvent(MIDIEvent(Timestamp, (MIDIEvent::EventType) ((StatusCode >> 4) - 8), ChannelNumber, &Buffer[0], BytesRead));
         }
         else
         if (StatusCode == StatusCodes::SysEx)
@@ -206,7 +235,7 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
                 std::copy(data, data + Size, Buffer.begin() + 1);
                 data += Size;
 
-                SysExSize = Size + 1;
+                SysExSize = (uint32_t)(Size + 1);
                 SysExTimestamp = Timestamp;
             }
         }
@@ -226,7 +255,7 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
                 return SetLastErrorCode(MIDIError::InsufficientData);
 
             {
-                Buffer.resize(SysExSize + Size);
+                Buffer.resize((size_t)SysExSize + Size);
 
                 std::copy(data, data + Size, Buffer.begin() + SysExSize);
                 data += Size;
@@ -255,6 +284,21 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
 
             if (data + Size > tail)
                 return SetLastErrorCode(MIDIError::InsufficientData);
+
+            // Remember when the track or instrument name contains the word "drum". We'll need it later.
+            if ((MetaDataType == MetaDataTypes::Text) || (MetaDataType == MetaDataTypes::TrackName) || (MetaDataType == MetaDataTypes::InstrumentName))
+            {
+                const char * p = (const char *) &data[0];
+
+                for (int n = Size; n > 3; --n, p++)
+                {
+                    if (::_strnicmp(p, "drum", 4) == 0)
+                    {
+                        DetectedPercussionText = true;
+                        break;
+                    }
+                }
+            }
 
             {
                 Buffer.resize((size_t)(Size + 2));
