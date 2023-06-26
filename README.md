@@ -96,7 +96,7 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.8.4.0, 2023-xx-xx, *""*
+v2.8.4.0, 2023-06-26, *"Beat the Drum"*
 
 * New: A new Info tag "MIDI_PLAYER" contains the name of the MIDI player playing the current track.
 * New: Added detection of an extra percussion channel in Standard MIDI Files (*.MID). When meta data messages of type Text, Track Name or Instrument Name containing the word "drum" preceed the first message for channel 16 it will be used as an extra percussion channel in addition to channel 10.

@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.06.24) **/
+/** $VER: InputDecoder.cpp (2023.06.26) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -1075,7 +1075,7 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
             if (!_LoopInMs.HasEnd())
                 _LoopInMs.SetEnd(LengthInMs);
 
-            _LengthInSamples = ((_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * _SampleRate) / 1000U;
+//          _LengthInSamples = ((_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * _SampleRate) / 1000U;
         }
     }
 }
