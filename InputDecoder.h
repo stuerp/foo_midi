@@ -102,14 +102,14 @@ public:
         _LoopInTicks(),
         _LoopInMs(),
 
+        _LengthInSamples(0),
+
+        _IsEmuDeMIDI(false),
+
         _BASSMIDIInterpolationMode((uint32_t)CfgBASSMIDIInterpolationMode)
     {
         _FileStats = { 0 };
         _FileStats2 = { 0 };
-
-        _IsEmuDeMIDI = false;
-
-        _LengthInSamples = 0;
 
         _CleanFlags = (uint32_t)(CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
                                 (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
@@ -190,14 +190,14 @@ public:
 
     bool decode_run(audio_chunk & audioChunk, abort_callback & abortHandler);
 
-    void decode_seek(double p_seconds, abort_callback &);
+    void decode_seek(double seconds, abort_callback &);
 
     bool decode_can_seek()
     {
         return true;
     }
 
-    bool decode_get_dynamic_info(file_info & p_out, double & p_timestamp_delta);
+    bool decode_get_dynamic_info(file_info & fi, double & timestampDelta);
 
     bool decode_get_dynamic_info_track(file_info &, double &) noexcept { return false; }
 
@@ -302,8 +302,6 @@ private:
     Range _LoopInTicks;
     Range _LoopInMs;
 
-    uint32_t _CleanFlags;
-
     uint32_t _LengthInSamples;
 
     uint32_t _SamplesPlayed;
@@ -311,6 +309,8 @@ private:
 
     uint32_t _FadeDuration; // in ms
     Range _FadeRange;
+
+    uint32_t _CleanFlags;
 
     bool _IsEmuDeMIDI;
     bool _IsLooping;

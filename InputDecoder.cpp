@@ -776,7 +776,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         Success = true;
     }
 
-    // Scale the samples if fading was requaested.
+    // Scale the samples if fading was requested.
     if (Success && _FadeRange.IsSet())
     {
         uint32_t BeginOfChunk = _SamplesPlayed;
@@ -822,18 +822,18 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 /// </summary>
 void InputDecoder::decode_seek(double timeInSeconds, abort_callback&)
 {
-    uint32_t OffsetInSamples = (uint32_t)audio_math::time_to_samples(timeInSeconds, 1000);
+    uint32_t OffsetInSamples = (uint32_t)audio_math::time_to_samples(timeInSeconds, 1000U);
 
-    _SamplesPlayed = (uint32_t)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000);
+    _SamplesPlayed = (uint32_t)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000U);
     _IsFirstChunk = true;
     _IsEndOfContainer = false;
 
     if (OffsetInSamples > _LoopInMs.End())
         OffsetInSamples = (OffsetInSamples - _LoopInMs.Begin()) % _LoopInMs.Size() + _LoopInMs.Begin();
 
-    uint32_t SeekTime = (uint32_t)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000);
+    uint32_t SeekTime = (uint32_t)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000U);
 
-    if ((_LengthInSamples != 0) && (SeekTime >= (_LengthInSamples - _SampleRate)))
+    if ((_LengthInSamples != 0U) && (SeekTime >= (_LengthInSamples - _SampleRate)))
     {
         _IsEndOfContainer = true;
         return;
@@ -942,10 +942,11 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 
     ConvertMetaDataToTags(subSongIndex, fileInfo, abortHandler);
 
+    // Calculate the total length of play back taking into account any looping and fading.
     {
         uint32_t LengthInMs = _Container.GetDuration(subSongIndex, true);
 
-        double LengthInSeconds = double(LengthInMs) * 0.001;
+        double LengthInSeconds = (double) LengthInMs * 0.001;
 
         if (_LoopTypeOther == NeverLoopAdd1sDecay)
             LengthInSeconds += 1.;
@@ -1054,18 +1055,17 @@ void InputDecoder::InitializeIndexManager()
 /// </summary>
 void InputDecoder::InitializeTime(size_t subSongIndex)
 {
-    uint32_t LengthInMs = _Container.GetDuration(subSongIndex, true);
+    _LoopInTicks.Set(_Container.GetLoopBeginTimestamp(subSongIndex), _Container.GetLoopEndTimestamp(subSongIndex));
+    _LoopInMs.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
 
+    // Calculate the total length of play back taking into account any looping and fading.
     {
-        _LengthInSamples = (uint32_t) (((__int64) LengthInMs * (__int64) _SampleRate) / 1000);
+        uint32_t LengthInMs = _Container.GetDuration(subSongIndex, true);
+
+        _LengthInSamples = (uint32_t) (((__int64) LengthInMs * (__int64) _SampleRate) / 1000U);
 
         if (_LoopType == NeverLoopAdd1sDecay)
             _LengthInSamples += _SampleRate;
-    }
-
-    {
-        _LoopInTicks.Set(_Container.GetLoopBeginTimestamp(subSongIndex), _Container.GetLoopEndTimestamp(subSongIndex));
-        _LoopInMs.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
 
         if ((_LoopType > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
         {
@@ -1074,6 +1074,8 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
 
             if (!_LoopInMs.HasEnd())
                 _LoopInMs.SetEnd(LengthInMs);
+
+            _LengthInSamples = ((_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * _SampleRate) / 1000U;
         }
     }
 }
@@ -1214,16 +1216,16 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         uint32_t LoopBeginInMS = _Container.GetLoopBeginTimestamp(subSongIndex, true);
         uint32_t LoopEndInMS = _Container.GetLoopEndTimestamp(subSongIndex, true);
 
-        if (LoopBegin != ~0) fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
-        if (LoopEnd != ~0) fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
-        if (LoopBeginInMS != ~0) fileInfo.info_set_int(TagMIDILoopStartInMs, LoopBeginInMS);
-        if (LoopEndInMS != ~0) fileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
+        if (LoopBegin != ~0U) fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
+        if (LoopEnd != ~0U) fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
+        if (LoopBeginInMS != ~0U) fileInfo.info_set_int(TagMIDILoopStartInMs, LoopBeginInMS);
+        if (LoopEndInMS != ~0U) fileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
     }
 
     {
         pfc::string8 FileHashString;
 
-        for (size_t i = 0; i < 16; ++i)
+        for (size_t i = 0U; i < 16; ++i)
             FileHashString += pfc::format_uint((t_uint8)_FileHash.m_data[i], 2, 16);
 
         fileInfo.info_set(TagMIDIHash, FileHashString);
