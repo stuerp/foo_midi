@@ -884,15 +884,13 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         }
 
         {
-            if (_ExtraPercussionChannel != 0)
+            if (_ExtraPercussionChannel != ~0L)
             {
                 char Text[4];
 
-                _itoa(_ExtraPercussionChannel + 1, Text, 10);
+                _itoa_s((int)(_ExtraPercussionChannel + 1), Text, 10);
                 fileInfo.info_set(TagExtraPercusionChannel, Text);
             }
-            else
-                fileInfo.info_remove(TagExtraPercusionChannel);
         }
 
         _IsFirstChunk = false;

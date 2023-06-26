@@ -94,7 +94,7 @@ public:
         _Player(nullptr),
 
         _SampleRate((uint32_t)CfgSampleRate),
-        _ExtraPercussionChannel(0),
+        _ExtraPercussionChannel(~0U),
 
         _LoopTypePlayback((uint32_t)CfgLoopTypePlayback),
         _LoopTypeOther((uint32_t)CfgLoopTypeOther),
@@ -112,8 +112,8 @@ public:
         _LengthInSamples = 0;
 
         _CleanFlags = (uint32_t)(CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
-                                (CfgFilterInstruments ? MIDIContainer::clean_flag_instruments : 0) |
-                                (CfgFilterBanks ? MIDIContainer::clean_flag_banks : 0);
+                                (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
+                                (CfgFilterBanks ? MIDIContainer::CleanFlagBanks : 0);
 
         _LoopCount    = (uint32_t)AdvCfgLoopCount.get();
         _FadeDuration = (uint32_t)AdvCfgFadeTimeInMS.get();

@@ -202,13 +202,13 @@ size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
                         _MusicKeyboard->ProcessMessage(me.Data, me.Timestamp);
                 #endif
 
-                    int64_t SamplesToDo = (int64_t) me.Timestamp - _CurrentTime - BlockOffset;
+                    int64_t SamplesToDo = (int64_t)me.Timestamp - (int64_t)_CurrentTime - (int64_t)BlockOffset;
 
                     if (SamplesToDo > 0)
                     {
                         if (SamplesToDo > (int64_t)(samplesSize - SamplesDone))
                         {
-                            _SamplesRemaining = SamplesToDo - (int64_t)(samplesSize - SamplesDone);
+                            _SamplesRemaining = (size_t)(SamplesToDo - (int64_t)(samplesSize - SamplesDone));
                             SamplesToDo = (int64_t)(samplesSize - SamplesDone);
                         }
 

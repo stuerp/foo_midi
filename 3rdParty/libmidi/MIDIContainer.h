@@ -265,7 +265,7 @@ private:
 class MIDIContainer
 {
 public:
-    MIDIContainer() : _Format(0), _TimeDivision(0), _ExtraPercussionChannel(0)
+    MIDIContainer() : _Format(0), _TimeDivision(0), _ExtraPercussionChannel(~0L)
     {
         _DeviceNames.resize(16);
     }
@@ -319,8 +319,8 @@ public:
     enum
     {
         CleanFlagEMIDI = 1 << 0,
-        clean_flag_instruments = 1 << 1,
-        clean_flag_banks = 1 << 2,
+        CleanFlagInstruments = 1 << 1,
+        CleanFlagBanks = 1 << 2,
     };
 
 private:

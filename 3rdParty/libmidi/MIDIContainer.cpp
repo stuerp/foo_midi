@@ -526,8 +526,8 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
     DeviceNames.resize(TrackCount);
 
     bool CleanEMIDI = !!(cleanFlags & CleanFlagEMIDI);
-    bool CleanInstruments = !!(cleanFlags & clean_flag_instruments);
-    bool CleanBanks = !!(cleanFlags & clean_flag_banks);
+    bool CleanInstruments = !!(cleanFlags & CleanFlagInstruments);
+    bool CleanBanks = !!(cleanFlags & CleanFlagBanks);
 
     if (CleanEMIDI) // Apogee Expanded MIDI (EMIDI) API v1.1
     {
