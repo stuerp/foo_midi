@@ -24,7 +24,7 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 or
 
-* Import `foo_midi.fbk2-component` into foobar2000 using "File / Preferences / Components / Install...".
+* Import `foo_midi.fbk2-component` into foobar2000 using the "*File / Preferences / Components / Install...*" menu item.
 
 ## Developing
 
@@ -95,6 +95,11 @@ If you'd like to contribute, please fork the repository and use a feature
 branch. Pull requests are warmly welcome.
 
 ## Change Log
+
+v2.8.5.0, 2023-07-22,  *""*
+
+* New: Added a configuration option to always use Secret Sauce when available and when playing an XG file.
+* Bug Fix: Saving MIDI presets was broken.
 
 v2.8.4.0, 2023-06-26, *"Beat the Drum"*
 
@@ -172,25 +177,31 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 * Peter Pawlowski for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
 * [kode54](https://gitlab.com/kode54/) for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
+* [Un4seen Developments](https://www.un4seen.com/) for the BASS audio library.
 * [Munt](https://github.com/munt/munt/) for a multi-platform software synthesiser emulating pre-GM MIDI devices such as the Roland MT-32, CM-32L, CM-64 and LAPC-I.
 * [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) for [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3).
+* [Vitaly Novichkov](https://github.com/Wohlstand) for [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) and [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI).
 * [Mitsutaka Okazaki](https://github.com/Wohlstand/scc) for Emu de MIDI.
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
 
 ## Reference Material
 
-* foobar2000
-  * [foobar2000 Development](https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Development:Overview)
+### foobar2000
 
-* Windows User Interface
-  * [Desktop App User Interface](https://learn.microsoft.com/en-us/windows/win32/windows-application-ui-development)
-  * [Windows User Experience Interaction Guidelines](https://learn.microsoft.com/en-us/windows/win32/uxguide/guidelines)
-  * [Windows Controls](https://learn.microsoft.com/en-us/windows/win32/controls/window-controls)
-  * [Control Library](https://learn.microsoft.com/en-us/windows/win32/controls/individual-control-info)
-  * [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
-  * [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
-* SoundFonts
-  * [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
+* [foobar2000 Development](https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Development:Overview)
+
+### Windows User Interface
+
+* [Desktop App User Interface](https://learn.microsoft.com/en-us/windows/win32/windows-application-ui-development)
+* [Windows User Experience Interaction Guidelines](https://learn.microsoft.com/en-us/windows/win32/uxguide/guidelines)
+* [Windows Controls](https://learn.microsoft.com/en-us/windows/win32/controls/window-controls)
+* [Control Library](https://learn.microsoft.com/en-us/windows/win32/controls/individual-control-info)
+* [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
+* [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
+
+### SoundFonts
+
+* [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
 
 ## Links
 

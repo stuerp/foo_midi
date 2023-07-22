@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.06.26) **/
+/** $VER: InputDecoder.cpp (2023.07.22) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -174,7 +174,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     if (_IsSysExFile)
         throw exception_midi("You cannot play SysEx dumps");
 
-    _PlayerType = (uint32_t)CfgPlayerType;
+    _PlayerType = (uint32_t) CfgPlayerType;
     _IsFirstChunk = true;
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _SamplesPlayed = 0;
@@ -190,12 +190,14 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     {
         file_info_impl FileInfo;
 
+        get_info(subSongIndex, FileInfo, abortHandler);
+
         {
             const char * MIDIPresetText = FileInfo.meta_get(TagMIDIPreset, 0);
 
             if (MIDIPresetText)
             {
-                console::print("Using preset ", MIDIPresetText, " from file.");
+                console::print("Using preset ", MIDIPresetText, " from track.");
 
                 Preset.Deserialize(MIDIPresetText);
 
@@ -210,7 +212,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
 
             if (MIDISysExDumps)
+            {
+                console::print("Using sysex ", MIDISysExDumps , " from track.");
+
                 SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
+            }
         }
 
         SysExDumps.Merge(_Container, abortHandler);
@@ -363,8 +369,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 if (!Player->LoadVST(Preset._VSTiFilePath))
                     throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\"");
             
-                if (Preset._VSTConfig.size())
-                    Player->SetChunk(&Preset._VSTConfig[0], Preset._VSTConfig.size());
+                if (Preset._VSTiConfig.size())
+                    Player->SetChunk(&Preset._VSTiConfig[0], Preset._VSTiConfig.size());
 
                 _Player = Player;
             }
@@ -631,7 +637,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 Player->SetSynth(Preset._NukeSynth);
                 Player->SetBank(Preset._NukeBank);
-                Player->SetExtp(Preset._NukePanning);
+                Player->SetExtp(Preset._NukeUsePanning);
 
                 _Player = Player;
             }
@@ -964,26 +970,6 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 
         fileInfo.set_length(LengthInSeconds);
     }
-
-    {
-        const char * MIDIPreset = fileInfo.meta_get(TagMIDIPreset, 0);
-
-        if (MIDIPreset)
-        {
-            fileInfo.info_set(TagMIDIPreset, MIDIPreset);
-            fileInfo.meta_remove_field(TagMIDIPreset);
-        }
-    }
-
-    {
-        const char * MIDISysExDumps = fileInfo.meta_get(TagMIDISysExDumps, 0);
-
-        if (MIDISysExDumps)
-        {
-            fileInfo.info_set(TagMIDISysExDumps, MIDISysExDumps);
-            fileInfo.meta_remove_field(TagMIDISysExDumps);
-        }
-    }
 }
 #pragma endregion
 
@@ -991,21 +977,12 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 /// <summary>
 /// Set the tags for the specified file.
 /// </summary>
-void InputDecoder::retag_set_info(t_uint32, const file_info& fileInfo, abort_callback & abortHandler)
+void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler)
 {
     if (_IsSysExFile)
         throw exception_io_data("You cannot tag SysEx dumps");
 
     file_info_impl fi(fileInfo);
-
-    {
-        fi.meta_remove_field(TagMIDIPreset);
-
-        const char * Preset = fi.info_get(TagMIDIPreset);
-
-        if (Preset)
-            fi.meta_set(TagMIDIPreset, Preset);
-    }
 
     {
         fi.meta_remove_field(TagMIDISysExDumps);
