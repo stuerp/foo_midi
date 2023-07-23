@@ -102,6 +102,7 @@ v2.8.5.0, 2023-07-23,  *""*
 * New: Added an configuration option to always use a VSTi to play an XG file. Default is off.
   * Don't forget to specify the path name of the VSTi in the Advanced preferences.
 * Bug Fix: Saving MIDI presets was broken.
+* Bug Fix: Loop detection was broken for some files.
 
 v2.8.4.0, 2023-06-26, *"Beat the Drum"*
 
