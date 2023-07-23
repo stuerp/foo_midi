@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.07.22) **/
+/** $VER: Configuration.h (2023.07.23) **/
 
 #pragma once
 
@@ -44,9 +44,9 @@ enum
     default_cfg_ff7loopz = 1,
 
     DefaultMIDIFlavor = MIDIPlayer::FilterNone,
-    DefaultCfgUseMIDIEffects = 1,
-    DefaultCfgUseSuperMuntWithMT32 = 1,
-    DefaultCfgUseSecretSauceWithXG = 0,
+    DefaultUseMIDIEffects = 1,
+    DefaultUseSuperMuntWithMT32 = 1,
+    DefaultUseSecretSauceWithXG = 0,
 
     DefaultEmuDeMIDIExclusion = 1,
     DefaultFilterInstruments = 0,
@@ -115,7 +115,7 @@ extern cfg_int
     CfgMIDIFlavor,
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
-    CfgUseSecretSauceWithXG
+    CfgUseVSTiWithXG
 
 #ifdef FLUIDSYNTHSUPPORT
 ,
@@ -132,6 +132,7 @@ extern cfg_map
     CfgVSTiConfig;
 
 extern advconfig_string_factory AdvCfgVSTiPluginDirectoryPath;
+extern advconfig_string_factory AdvCfgVSTiXGPlugin;
 extern advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath;
 extern advconfig_checkbox_factory AdvCfgSkipToFirstNote;
 

@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.07.22) **/
+/** $VER: PreferencesRoot.cpp (2023.07.23) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -112,7 +112,7 @@ public:
         COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_USE_SUPER_MUNT, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_USE_SECRET_SAUCE, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG, BN_CLICKED, OnButtonClick)
         #pragma endregion
 
         #pragma region("Miscellaneous")
@@ -418,7 +418,7 @@ void PreferencesRootPage::apply()
     CfgMIDIFlavor = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
     CfgUseMIDIEffects = (t_int32) !SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK);
     CfgUseSuperMuntWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK);
-    CfgUseSecretSauceWithXG = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_SECRET_SAUCE, BM_GETCHECK);
+    CfgUseVSTiWithXG = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
     #pragma endregion
 
     #pragma region("Miscellaneous")
@@ -588,7 +588,9 @@ void PreferencesRootPage::reset()
 
     #pragma region("MIDI")
     SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_SETCURSEL, DefaultMIDIFlavor);
-    SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !DefaultCfgUseMIDIEffects);
+    SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !DefaultUseMIDIEffects);
+    SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_SETCHECK, DefaultUseSuperMuntWithMT32);
+    SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK, DefaultUseSecretSauceWithXG);
     #pragma endregion
 
     #pragma region("Miscellaneous")
@@ -638,6 +640,8 @@ void PreferencesRootPage::reset()
     #pragma endregion
 
     _VSTiConfig.resize(0);
+
+    UpdateDialog();
 
     OnChanged();
 }
@@ -835,7 +839,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enabled);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enabled);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(Enabled);
-    }
+   }
 
     // Set the selected player.
     {
@@ -906,20 +910,20 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
                 ::uSendMessageText(w2, CB_ADDSTRING, 0, LoopTypeDescription[i]);
             }
  
-            ::SendMessage(w1, CB_SETCURSEL, (WPARAM)CfgLoopTypePlayback, 0);
-            ::SendMessage(w2, CB_SETCURSEL, (WPARAM)CfgLoopTypeOther, 0);
+            ::SendMessage(w1, CB_SETCURSEL, (WPARAM) CfgLoopTypePlayback, 0);
+            ::SendMessage(w2, CB_SETCURSEL, (WPARAM) CfgLoopTypeOther, 0);
         }
     }
 
-    SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_SETCHECK, (WPARAM)CfgEmuDeMIDIExclusion);
+    SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_SETCHECK, (WPARAM) CfgEmuDeMIDIExclusion);
 
-    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM)CfgFilterInstruments);
-    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, (WPARAM)CfgFilterBanks);
+    SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM) CfgFilterInstruments);
+    SendDlgItemMessage(IDC_FILTER_BANKS, BM_SETCHECK, (WPARAM) CfgFilterBanks);
 
-    SendDlgItemMessage(IDC_TOUHOU_LOOPS, BM_SETCHECK, (WPARAM)CfgDetectTouhouLoops);
-    SendDlgItemMessage(IDC_RPGMAKER_LOOPS, BM_SETCHECK, (WPARAM)CfgDetectRPGMakerLoops);
-    SendDlgItemMessage(IDC_XMI_LOOPS, BM_SETCHECK, (WPARAM)CfgDetectXMILoops);
-    SendDlgItemMessage(IDC_FF7_LOOPS, BM_SETCHECK, (WPARAM)CfgDetectFF7Loops);
+    SendDlgItemMessage(IDC_TOUHOU_LOOPS, BM_SETCHECK, (WPARAM) CfgDetectTouhouLoops);
+    SendDlgItemMessage(IDC_RPGMAKER_LOOPS, BM_SETCHECK, (WPARAM) CfgDetectRPGMakerLoops);
+    SendDlgItemMessage(IDC_XMI_LOOPS, BM_SETCHECK, (WPARAM) CfgDetectXMILoops);
+    SendDlgItemMessage(IDC_FF7_LOOPS, BM_SETCHECK, (WPARAM) CfgDetectFF7Loops);
 
     #pragma region("ADL")
     {
@@ -1048,7 +1052,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !CfgUseMIDIEffects);
         SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_SETCHECK, (WPARAM) CfgUseSuperMuntWithMT32);
-        SendDlgItemMessage(IDC_MIDI_USE_SECRET_SAUCE, BM_SETCHECK, (WPARAM) CfgUseSecretSauceWithXG);
+        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
     }
     #pragma endregion
 
@@ -1059,6 +1063,8 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     _IsBusy = false;
 
     _DarkModeHooks.AddDialogWithControls(*this);
+
+    UpdateDialog();
 
     return FALSE;
 }
@@ -1078,11 +1084,14 @@ void PreferencesRootPage::OnButtonClick(UINT, int, CWindow)
     OnChanged();
 }
 
+/// <summary>
+/// Handles a click on the Configure button.
+/// </summary>
 void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 {
-    int SelectedIndex = (int)GetDlgItem(IDC_PLAYER_TYPE).SendMessage(CB_GETCURSEL, 0, 0);
+    int SelectedIndex = (int) GetDlgItem(IDC_PLAYER_TYPE).SendMessage(CB_GETCURSEL, 0, 0);
 
-    if ((SelectedIndex >= _PlayerPresentCount) && SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count()))
+    if ((SelectedIndex >= _PlayerPresentCount) && SelectedIndex < (int) (_PlayerPresentCount + _VSTiPlugIns.get_count()))
     {
         _IsBusy = true;
         OnChanged();
@@ -1111,7 +1120,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
     int PlayerType = -1;
 
     // Player Type
-    int SelectedIndex = (int)::SendMessage(w, CB_GETCURSEL, 0, 0);
+    int SelectedIndex = (int) ::SendMessage(w, CB_GETCURSEL, 0, 0);
 
     {
         if ((SelectedIndex >= _PlayerPresentCount) && (SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
@@ -1276,7 +1285,7 @@ bool PreferencesRootPage::HasChanged()
     if (SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK) != CfgUseSuperMuntWithMT32)
         return true;
 
-    if (SendDlgItemMessage(IDC_MIDI_USE_SECRET_SAUCE, BM_GETCHECK) != CfgUseSecretSauceWithXG)
+    if (SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK) != CfgUseVSTiWithXG)
         return true;
     #pragma endregion
 
@@ -1407,6 +1416,11 @@ void PreferencesRootPage::OnChanged()
 /// </summary>
 void PreferencesRootPage::UpdateDialog() const noexcept
 {
+    #pragma region("MIDI")
+    pfc::string8 FilePath; AdvCfgVSTiXGPlugin.get(FilePath);
+
+    GetDlgItem(IDC_MIDI_USE_VSTI_WITH_XG).EnableWindow(!FilePath.isEmpty());
+    #pragma endregion
 }
 #pragma endregion
 
@@ -1483,22 +1497,25 @@ void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findF
 
                     Player.GetProductName(ProductName);
 
-                    if (VendorName.length() || ProductName.length())
+                    // Fix the plugin name if necessary.
                     {
-                        if ((VendorName.length() == 0) || ((ProductName.length() >= VendorName.length()) && (::strncmp(VendorName.c_str(), ProductName.c_str(), VendorName.length()) == 0)))
+                        if (VendorName.length() || ProductName.length())
                         {
-                            Plugin.Name.add_string(ProductName);
+                            if ((VendorName.length() == 0) || ((ProductName.length() >= VendorName.length()) && (::strncmp(VendorName.c_str(), ProductName.c_str(), VendorName.length()) == 0)))
+                            {
+                                Plugin.Name.add_string(ProductName);
+                            }
+                            else
+                            {
+                                Plugin.Name += VendorName;
+
+                                if (ProductName.length())
+                                    Plugin.Name.add_string(' ' + ProductName);
+                            }
                         }
                         else
-                        {
-                            Plugin.Name += VendorName;
-
-                            if (ProductName.length())
-                                Plugin.Name.add_string(' ' + ProductName);
-                        }
+                            Plugin.Name = findFile->GetFileName();
                     }
-                    else
-                        Plugin.Name = findFile->GetFileName();
 
                     Plugin.Id = Player.GetUniqueID();
                     Plugin.HasEditor = Player.HasEditor();

@@ -121,7 +121,7 @@ MIDIPreset::MIDIPreset() noexcept
         _MIDIStandard = (uint32_t) CfgMIDIFlavor;
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
         _UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
-        _UseSecretSauceWithXG = (bool) CfgUseSecretSauceWithXG;
+        _UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
     }
 }
 
@@ -297,7 +297,7 @@ void MIDIPreset::Deserialize(const char * text)
     uint32_t MIDIStandard = (uint32_t) CfgMIDIFlavor;
     bool UseMIDIEffects = (bool) CfgUseMIDIEffects;
     bool UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
-    bool UseSecretSauceWithXG = (bool) CfgUseSecretSauceWithXG;
+    bool UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
 
     GetValue(Separator, text);
 

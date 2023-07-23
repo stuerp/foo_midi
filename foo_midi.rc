@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2023.05.20) **/
+/** $VER: foo_midi.rc (2023.07.23) **/
 
 #include "resource.h"
 
@@ -39,7 +39,7 @@ font 8, "Segoe UI", 400, 0, 1
         combobox                                            IDC_MIDI_FLAVOR,      X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         control     "Filter effects (Reverb and Chorus)",   IDC_MIDI_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
         control     "Use Super Munt with MT-32",            IDC_MIDI_USE_SUPER_MUNT, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
-        control     "Use Secret Sauce with XG",             IDC_MIDI_USE_SECRET_SAUCE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
+        control     "Use VSTi with XG",                     IDC_MIDI_USE_VSTI_WITH_XG, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
 
     groupbox "Miscellaneous", IDC_STATIC, X_A30, Y_A30, W_A30, H_A30
         control "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EXCLUSION, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31

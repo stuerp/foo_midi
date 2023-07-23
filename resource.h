@@ -88,7 +88,7 @@
 #define IDC_MIDI_FLAVOR                 1028
 #define IDC_MIDI_EFFECTS                1029
 #define IDC_MIDI_USE_SUPER_MUNT         1030
-#define IDC_MIDI_USE_SECRET_SAUCE       1031
+#define IDC_MIDI_USE_VSTI_WITH_XG       1031
 
 /** Dialog: Preferences Paths **/
 

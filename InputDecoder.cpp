@@ -188,14 +188,20 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     _ExtraPercussionChannel = _Container.GetExtraPercussionChannel();
 
+    MIDIPreset Preset;
+
     // Set the player type based on the content of the container.
-    if (_IsXG && CfgUseSecretSauceWithXG)
-        _PlayerType = PlayerTypeSecretSauce;
+    if (_IsXG && CfgUseVSTiWithXG)
+    {
+        _PlayerType = PlayerTypeVSTi;
+
+        pfc::string8 FilePath;
+
+        AdvCfgVSTiXGPlugin.get(FilePath), Preset._VSTiFilePath = FilePath;
+    }
     else
     if (_IsMT32 && CfgUseSuperMuntWithMT32)
         _PlayerType = PlayerTypeSuperMunt;
-
-    MIDIPreset Preset;
 
     {
         file_info_impl FileInfo;
@@ -885,7 +891,10 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             if (_PlayerType <= PlayerTypeMax)
                 PlayerName = PlayerTypeNames[_PlayerType];
             else
+            {
+                
                 PlayerName = "VSTi";
+            }
 
             fileInfo.info_set(TagMIDIPlayer, PlayerName);
         }

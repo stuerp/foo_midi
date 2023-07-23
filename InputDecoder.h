@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.07.22) **/
+/** $VER: InputDecoder.h (2023.07.23) **/
 
 #pragma once
 
