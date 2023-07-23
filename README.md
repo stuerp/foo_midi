@@ -204,6 +204,12 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 * [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
 
+### MIDI
+
+#### XMI
+
+* [XMI Format](https://moddingwiki.shikadi.net/wiki/XMI_Format)
+
 ## Links
 
 * Home page: [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)

@@ -1466,6 +1466,7 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
         }
     }
 
+    // Project Touhou
     if (detectTouhouLoops && (_Format == 0))
     {
         bool HasLoopError = false;
@@ -1512,6 +1513,7 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
         }
     }
 
+    // RPG Maker
     if (detectRPGMakerLoops)
     {
         bool HasEMIDIControlChanges = false;
@@ -1534,6 +1536,7 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
                         break;
                     }
 
+                    // Control Change 111 (The end of the loop is always the end of the song.
                     if ((_LoopBeginTimestamp[SubSongIndex] == ~0UL) || (Event.Timestamp < _LoopBeginTimestamp[SubSongIndex]))
                         _LoopBeginTimestamp[SubSongIndex] = Event.Timestamp;
                 }
@@ -1548,6 +1551,7 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
         }
     }
 
+    // EMIDI/XMI
     if (detectXMILoops)
     {
         for (size_t i = 0; i < _Tracks.size(); ++i)
@@ -1560,23 +1564,30 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
             {
                 const MIDIEvent & Event = Track[j];
 
-                if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] >= 0x74 && Event.Data[0] <= 0x77))
+                if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] >= 116 /* 0x74 */ && Event.Data[0] <= 119 /* 0x77 */))
                 {
-                    if (Event.Data[0] == 0x74 || Event.Data[0] == 0x76)
+                    if (Event.Data[0] == 116 /* 0x74, AIL loop: FOR loop = 1 to n */ || Event.Data[0] == 118 /* 0x76, AIL clear beat/measure count */)
                     {
-                        if (_LoopBeginTimestamp[SubSongIndex] == ~0UL || _LoopBeginTimestamp[SubSongIndex] > Event.Timestamp)
+                        if ((_LoopBeginTimestamp[SubSongIndex] == ~0UL) || (Event.Timestamp < _LoopBeginTimestamp[SubSongIndex]))
+                        {
                             _LoopBeginTimestamp[SubSongIndex] = Event.Timestamp;
+                        //  LoopCount = Event.Data[1]; // 0 = forever, 1 - 127 = finite
+                        }
                     }
-                    else
+                    else // 117 /* 0x75, AIL loop: NEXT/BREAK *//* 0x77, AIL callback trigger */
                     {
-                        if (_LoopEndTimestamp[SubSongIndex] == ~0UL || _LoopEndTimestamp[SubSongIndex] < Event.Timestamp)
+                        if ((_LoopEndTimestamp[SubSongIndex] == ~0UL) || (Event.Timestamp < _LoopEndTimestamp[SubSongIndex]))
+                        {
                             _LoopEndTimestamp[SubSongIndex] = Event.Timestamp;
+                        //  Event.Data[1] should be 127.
+                        }
                     }
                 }
             }
         }
     }
 
+    // Introduced in MIDI files from Final Fantasy VII.
     if (detectMarkerLoops)
     {
         for (size_t i = 0; i < _Tracks.size(); ++i)
