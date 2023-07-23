@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.06.26) **/
+/** $VER: InputDecoder.h (2023.07.23) **/
 
 #pragma once
 
@@ -47,35 +47,6 @@ extern critical_section _Lock;
 extern volatile uint32_t _CurrentSampleRate;
 
 /// <summary>
-/// Represents a range.
-/// </summary>
-class Range
-{
-public:
-    Range() noexcept  { Clear(); }
-    virtual ~Range() noexcept { }
-
-    uint32_t Begin() const noexcept { return _Begin; }
-    uint32_t End() const noexcept { return _End; }
-
-    void Set(uint32_t begin, uint32_t end) noexcept { _Begin = begin; _End = end; }
-    void SetBegin(uint32_t begin) noexcept { _Begin = begin; }
-    void SetEnd(uint32_t end) noexcept { _End = end; }
-    void Clear() { Set(pfc::infinite32, pfc::infinite32); }
-
-    uint32_t Size() const noexcept { return _End - _Begin; }
-
-    bool IsEmpty() const noexcept { return (_Begin == pfc::infinite32) && (_End == pfc::infinite32); }
-    bool IsSet() const noexcept { return  (_Begin != pfc::infinite32) && (_End != pfc::infinite32); }
-    bool HasBegin() const noexcept { return _Begin != pfc::infinite32; }
-    bool HasEnd() const noexcept { return _End != pfc::infinite32; }
-
-private:
-    uint32_t _Begin;
-    uint32_t _End;
-};
-
-/// <summary>
 /// Implements an input decoder.
 /// </summary>
 #pragma warning(disable: 4820) // x bytes padding added after data member
@@ -83,40 +54,43 @@ class InputDecoder : public input_stubs
 {
 public:
     InputDecoder() :
+        _FileStats{},
+        _FileStats2{},
+
         _IsSysExFile(false),
         _TrackCount(0),
 
-        _DetectXMILoops(!!CfgDetectXMILoops),
-        _DetectFF7Loops(!!CfgDetectFF7Loops),
-        _DetectRPGMakerLoops(!!CfgDetectRPGMakerLoops),
-        _DetectTouhouLoops(!!CfgDetectTouhouLoops),
+        _IsMT32(),
+        _IsXG(),
+
+        _DetectRPGMakerLoops((bool) CfgDetectRPGMakerLoops),
+        _DetectXMILoops((bool) CfgDetectXMILoops),
+        _DetectTouhouLoops((bool) CfgDetectTouhouLoops),
+        _DetectFF7Loops((bool) CfgDetectFF7Loops),
 
         _Player(nullptr),
 
-        _SampleRate((uint32_t)CfgSampleRate),
+        _PlayerType(),
+        _SampleRate((uint32_t) CfgSampleRate),
         _ExtraPercussionChannel(~0U),
 
-        _LoopTypePlayback((uint32_t)CfgLoopTypePlayback),
-        _LoopTypeOther((uint32_t)CfgLoopTypeOther),
+        _LoopType(),
+        _LoopTypePlayback((uint32_t) CfgLoopTypePlayback),
+        _LoopTypeOther((uint32_t) CfgLoopTypeOther),
 
         _LoopInTicks(),
         _LoopInMs(),
 
         _LengthInSamples(0),
 
-        _IsEmuDeMIDI(false),
-
-        _BASSMIDIInterpolationMode((uint32_t)CfgBASSMIDIInterpolationMode)
+        _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIInterpolationMode)
     {
-        _FileStats = { 0 };
-        _FileStats2 = { 0 };
+        _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
+                                 (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
+                                 (CfgFilterBanks ? MIDIContainer::CleanFlagBanks : 0);
 
-        _CleanFlags = (uint32_t)(CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
-                                (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
-                                (CfgFilterBanks ? MIDIContainer::CleanFlagBanks : 0);
-
-        _LoopCount    = (uint32_t)AdvCfgLoopCount.get();
-        _FadeDuration = (uint32_t)AdvCfgFadeTimeInMS.get();
+        _LoopCount    = (uint32_t) AdvCfgLoopCount.get();
+        _FadeDuration = (uint32_t) AdvCfgFadeTimeInMS.get();
 
     #ifdef FLUIDSYNTHSUPPORT
         _FluidSynthInterpolationMethod(Cfg_FluidSynthInterpolationMethod),
@@ -136,7 +110,7 @@ public:
     {
         delete _Player;
 
-        if (_IsEmuDeMIDI)
+        if (_PlayerType == PlayerTypeEmuDeMIDI)
         {
             insync(_Lock);
             _IsRunning--;
@@ -281,11 +255,12 @@ private:
     hasher_md5_result _FileHash;
 
     bool _IsMT32;
+    bool _IsXG;
 
-    bool _DetectXMILoops;
-    bool _DetectFF7Loops;
     bool _DetectRPGMakerLoops;
+    bool _DetectXMILoops;
     bool _DetectTouhouLoops;
+    bool _DetectFF7Loops;
 
     // Player Properties
     MIDIPlayer * _Player;
@@ -312,7 +287,6 @@ private:
 
     uint32_t _CleanFlags;
 
-    bool _IsEmuDeMIDI;
     bool _IsLooping;
     bool _IsEndOfContainer;
     bool _DontLoop;

@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.06.24) **/
+/** $VER: Configuration.cpp (2023.07.23) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -50,11 +50,12 @@ static const GUID guid_cfg_dxi_plugin = { 0xd5c87282, 0xa9e6, 0x40f3, { 0x93, 0x
 static const GUID GUIDMIDIPlayerBranch = { 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0xfd, 0xc0, 0xfb, 0xae, 0x74, 0xe5, 0xfc } };
 
 static const GUID GUIDVSTiPluginDirectoryPath = { 0xbb4c61a1, 0x3c4, 0x4b62, { 0xb0, 0x4d, 0x2c, 0x86, 0xce, 0xde, 0x0, 0x5d } };
-static const GUID GUIDSCCorePath = { 0x1bf1799d, 0x7691, 0x4075, { 0x98, 0xae, 0x43, 0xae, 0x82, 0xd8, 0xc9, 0xcf } };
+static const GUID GUIDVSTiXGPlugin = { 0xbeccac58, 0x1710, 0x459e, { 0xa0, 0xb1, 0x01, 0xf8, 0x76, 0xe9, 0xf2, 0xdf } };
+static const GUID GUIDSecretSauceDirectoryPath = { 0x1bf1799d, 0x7691, 0x4075, { 0x98, 0xae, 0x43, 0xae, 0x82, 0xd8, 0xc9, 0xcf } };
 
 static const GUID GUIDAdvCfgMIDITimingBranch = { 0x851583f7, 0x98b4, 0x44c7, { 0x9d, 0xf4, 0x4c, 0x7f, 0x85, 0x9d, 0x13, 0xba } };
-static const GUID guid_cfg_midi_loop_count = { 0xd8492ad0, 0x3b70, 0x4768, { 0x8d, 0x7, 0x97, 0xf5, 0x50, 0x8c, 0x8, 0xe8 } };
-static const GUID guid_cfg_midi_fade_time = { 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
+static const GUID GUIDLoopCount = { 0xd8492ad0, 0x3b70, 0x4768, { 0x8d, 0x7, 0x97, 0xf5, 0x50, 0x8c, 0x8, 0xe8 } };
+static const GUID GUIDFadeTimeInMS = { 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
 
 static const GUID guid_cfg_adl_bank = { 0xa62a00a7, 0xdbf, 0x4475, { 0xbe, 0xca, 0xed, 0xbf, 0x5d, 0x6, 0x4a, 0x80 } };
 static const GUID guid_cfg_adl_chips = { 0x974365ed, 0xd4f9, 0x4daa, { 0xb4, 0x89, 0xad, 0x7a, 0xd2, 0x91, 0xfa, 0x94 } };
@@ -65,7 +66,7 @@ static const GUID guid_cfg_munt_gm = { 0x7257ac7, 0x9901, 0x4a5f, { 0x9d, 0x8b, 
 
 static const GUID guid_cfg_bassmidi_effects = { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };
 
-static const GUID guid_cfg_skip_to_first_note = { 0xf90c8abf, 0x68b5, 0x474a, { 0x8d, 0x9c, 0xff, 0xd9, 0xca, 0x80, 0x20, 0x2f } };
+static const GUID GUIDAdvCfgSkipToFirstNote = { 0xf90c8abf, 0x68b5, 0x474a, { 0x8d, 0x9c, 0xff, 0xd9, 0xca, 0x80, 0x20, 0x2f } };
 
 static const GUID guid_cfg_ms_synth = { 0x7423a720, 0xeb39, 0x4d7d, { 0x9b, 0x85, 0x52, 0x4b, 0xc7, 0x79, 0xb5, 0x8b } };
 static const GUID guid_cfg_ms_bank = { 0xa91d31f4, 0x22ae, 0x4c5c, { 0xa6, 0x21, 0xf6, 0xb6, 0x1, 0x1f, 0x5d, 0xdc } };
@@ -100,7 +101,9 @@ static const GUID guid_cfg_fluidsynth_voices = { 0x9114d64d, 0x412c, 0x42d3, { 0
 #endif
 
 static const GUID GUIDCfgMIDIFlavor = { 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0x19, 0x32, 0x6a, 0x5a, 0x2d, 0x7e, 0x8e } };
-static const GUID GUIDCfgMIDIReverb = { 0x91c12a1, 0xd42b, 0x4f4e, { 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
+static const GUID GUIDCfgUseMIDIEffects = { 0x91c12a1, 0xd42b, 0x4f4e, { 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
+static const GUID GUIDCfgUseSuperMuntWithMT32 = { 0xb91b9d1c, 0x17ea, 0x4e72, { 0xbb, 0x4c, 0x74, 0xdf, 0xae, 0x31, 0x2e, 0x92 } };
+static const GUID GUIDCfgUseSecretSauceWithXG = { 0xea9f43b2, 0xbe58, 0x4494, { 0x8f, 0xa0, 0x29, 0x50, 0x4b, 0x30, 0x6b, 0xaa } };
 #pragma endregion
 
 cfg_int
@@ -134,7 +137,9 @@ cfg_int
     CfgNukePanning(guid_cfg_ms_panning, DefaultNukePanning),
 
     CfgMIDIFlavor(GUIDCfgMIDIFlavor, DefaultMIDIFlavor),
-    CfgAllowMIDIEffects(GUIDCfgMIDIReverb, DefaultMIDIEffects)
+    CfgUseMIDIEffects(GUIDCfgUseMIDIEffects, DefaultUseMIDIEffects),
+    CfgUseSuperMuntWithMT32(GUIDCfgUseSuperMuntWithMT32, DefaultUseSuperMuntWithMT32),
+    CfgUseVSTiWithXG(GUIDCfgUseSecretSauceWithXG, DefaultUseSecretSauceWithXG)
 
 #ifdef FLUIDSYNTHSUPPORT
 ,
@@ -160,13 +165,14 @@ cfg_map CfgVSTiConfig(GUIDCfgVSTConfig);
 advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, GUIDMIDIPlayerBranch, advconfig_branch::guid_branch_playback, 0);
 
     advconfig_string_factory AdvCfgVSTiPluginDirectoryPath      ("VSTi search path", GUIDVSTiPluginDirectoryPath, GUIDMIDIPlayerBranch, 0.1, "");
-    advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath  ("Secret Sauce path", GUIDSCCorePath, GUIDMIDIPlayerBranch, 0.2, "");
-    advconfig_checkbox_factory AdvCfgSkipToFirstNote            ("Skip to first note", guid_cfg_skip_to_first_note, GUIDMIDIPlayerBranch, 0.3, false);
+    advconfig_string_factory AdvCfgVSTiXGPlugin                 ("VSTi XG plugin", GUIDVSTiXGPlugin, GUIDMIDIPlayerBranch, 0.2, "");
+    advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath  ("Secret Sauce path", GUIDSecretSauceDirectoryPath, GUIDMIDIPlayerBranch, 0.3, "");
+    advconfig_checkbox_factory AdvCfgSkipToFirstNote            ("Skip to first note", GUIDAdvCfgSkipToFirstNote, GUIDMIDIPlayerBranch, 0.4, false);
 
     advconfig_branch_factory AdvCfgMIDITimingBranch("Playback timing when loops present", GUIDAdvCfgMIDITimingBranch, GUIDMIDIPlayerBranch, 1.0);
 
-    advconfig_integer_factory AdvCfgLoopCount   ("Loop count", guid_cfg_midi_loop_count, GUIDAdvCfgMIDITimingBranch, 0, 2, 1, 10);
-    advconfig_integer_factory AdvCfgFadeTimeInMS("Fade time (ms)", guid_cfg_midi_fade_time, GUIDAdvCfgMIDITimingBranch, 1, 5000, 0, 30000);
+        advconfig_integer_factory AdvCfgLoopCount   ("Loop count", GUIDLoopCount, GUIDAdvCfgMIDITimingBranch, 0.0, 2, 1, 10);
+        advconfig_integer_factory AdvCfgFadeTimeInMS("Fade time (ms)", GUIDFadeTimeInMS, GUIDAdvCfgMIDITimingBranch, 1.0, 5000, 0, 30000);
 
     advconfig_branch_factory AdvCfgADLCoreBranch("libADLMIDI emulator core", GUIDAdvCfgADLBranch, GUIDMIDIPlayerBranch, 2.0);
 

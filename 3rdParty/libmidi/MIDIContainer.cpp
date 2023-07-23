@@ -288,10 +288,11 @@ void MIDIContainer::Initialize(uint32_t format, uint32_t timeDivision)
         _ChannelMask.resize(1);
         _ChannelMask[0] = 0;
         _TempoMaps.resize(1);
+
         _EndTimestamps.resize(1);
         _EndTimestamps[0] = 0;
-        _LoopBeginTimestamps.resize(1);
-        _LoopEndTimestamps.resize(1);
+
+        _Loop.resize(1);
     }
 }
 
@@ -971,12 +972,12 @@ uint32_t MIDIContainer::GetLoopBeginTimestamp(size_t subSongIndex, bool ms /* = 
 {
     size_t TrackIndex = 0;
 
-    uint32_t Timestamp = _LoopBeginTimestamps[0];
+    uint32_t Timestamp = _Loop[0].Begin();
 
     if ((_Format == 2) && (subSongIndex > 0))
     {
         TrackIndex = subSongIndex;
-        Timestamp = _LoopBeginTimestamps[subSongIndex];
+        Timestamp = _Loop[subSongIndex].Begin();
     }
 
     if (!ms)
@@ -992,12 +993,12 @@ uint32_t MIDIContainer::GetLoopEndTimestamp(size_t subSongIndex, bool ms /* = fa
 {
     size_t TrackIndex = 0;
 
-    uint32_t Timestamp = _LoopEndTimestamps[0];
+    uint32_t Timestamp = _Loop[0].End();
 
     if ((_Format == 2) && (subSongIndex > 0))
     {
         TrackIndex = subSongIndex;
-        Timestamp = _LoopEndTimestamps[subSongIndex];
+        Timestamp = _Loop[subSongIndex].End();
     }
 
     if (!ms)
@@ -1321,15 +1322,15 @@ void MIDIContainer::TrimRange(size_t start, size_t end)
 
             _EndTimestamps[start] -= timestamp_first_note;
 
-            if (_LoopEndTimestamps[start] != ~0UL)
-                _LoopEndTimestamps[start] -= timestamp_first_note;
+            if (_Loop[start].HasEnd())
+                _Loop[start].SetEnd(_Loop[start].End() - timestamp_first_note);
 
-            if (_LoopBeginTimestamps[start] != ~0UL)
+            if (_Loop[start].HasBegin())
             {
-                if (_LoopBeginTimestamps[start] > timestamp_first_note)
-                    _LoopBeginTimestamps[start] -= timestamp_first_note;
+                if (_Loop[start].Begin() > timestamp_first_note)
+                    _Loop[start].SetBegin(_Loop[start].Begin() - timestamp_first_note);
                 else
-                    _LoopBeginTimestamps[start] = 0;
+                    _Loop[start].SetBegin(0);
             }
         }
         else
@@ -1338,15 +1339,15 @@ void MIDIContainer::TrimRange(size_t start, size_t end)
 
             _EndTimestamps[0] -= timestamp_first_note;
 
-            if (_LoopEndTimestamps[0] != ~0UL)
-                _LoopEndTimestamps[0] -= timestamp_first_note;
+            if (_Loop[0].HasEnd())
+                _Loop[0].SetEnd(_Loop[0].End() - timestamp_first_note);
 
-            if (_LoopBeginTimestamps[0] != ~0UL)
+            if (_Loop[0].HasBegin())
             {
-                if (_LoopBeginTimestamps[0] > timestamp_first_note)
-                    _LoopBeginTimestamps[0] -= timestamp_first_note;
+                if (_Loop[0].Begin() > timestamp_first_note)
+                    _Loop[0].SetBegin(_Loop[0].Begin() - timestamp_first_note);
                 else
-                    _LoopBeginTimestamps[0] = 0;
+                    _Loop[0].SetBegin(0);
             }
         }
     }
@@ -1456,130 +1457,13 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
     size_t SubSongCount = (_Format == 2) ? _Tracks.size() : 1;
 
     {
-        _LoopBeginTimestamps.resize(SubSongCount);
-        _LoopEndTimestamps.resize(SubSongCount);
+        _Loop.resize(SubSongCount);
 
         for (size_t i = 0; i < SubSongCount; ++i)
-        {
-            _LoopBeginTimestamps[i] = ~0UL;
-            _LoopEndTimestamps[i] = ~0UL;
-        }
+            _Loop[i].Clear();
     }
 
-    std::vector<uint8_t> data;
-
-    if (detectXMILoops)
-    {
-        for (size_t i = 0; i < _Tracks.size(); ++i)
-        {
-            size_t SubSongIndex = (_Format != 2) ? 0 : i;
-
-            const MIDITrack & Track = _Tracks[i];
-
-            for (size_t j = 0; j < Track.GetLength(); ++j)
-            {
-                const MIDIEvent & event = Track[j];
-
-                if (event.Type == MIDIEvent::ControlChange && (event.Data[0] >= 0x74 && event.Data[0] <= 0x77))
-                {
-                    if (event.Data[0] == 0x74 || event.Data[0] == 0x76)
-                    {
-                        if (_LoopBeginTimestamps[SubSongIndex] == ~0UL || _LoopBeginTimestamps[SubSongIndex] > event.Timestamp)
-                        {
-                            _LoopBeginTimestamps[SubSongIndex] = event.Timestamp;
-                        }
-                    }
-                    else
-                    {
-                        if (_LoopEndTimestamps[SubSongIndex] == ~0UL || _LoopEndTimestamps[SubSongIndex] < event.Timestamp)
-                        {
-                            _LoopEndTimestamps[SubSongIndex] = event.Timestamp;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (detectMarkerLoops)
-    {
-        for (size_t i = 0; i < _Tracks.size(); ++i)
-        {
-            size_t SubSongIndex = (_Format != 2) ? 0 : i;
-
-            const MIDITrack & Track = _Tracks[i];
-
-            for (size_t j = 0; j < Track.GetLength(); ++j)
-            {
-                const MIDIEvent & Event = Track[j];
-
-                if ((Event.Type == MIDIEvent::Extended) && (Event.GetDataSize() >= 9) && Event.Data[0] == 0xFF && Event.Data[1] == 0x06)
-                {
-                    size_t Size = Event.GetDataSize() - 2;
-
-                    data.resize(Size);
-                    Event.GetData(&data[0], 2, Size);
-
-                    if ((Size == 9) && (::_strnicmp((const char *) &data[0], "loopStart", 9) == 0))
-                    {
-                        if (_LoopBeginTimestamps[SubSongIndex] == ~0UL || _LoopBeginTimestamps[SubSongIndex] > Event.Timestamp)
-                        {
-                            _LoopBeginTimestamps[SubSongIndex] = Event.Timestamp;
-                        }
-                    }
-                    else
-                    if ((Size == 7) && (::_strnicmp((const char *) &data[0], "loopEnd", 7) == 0))
-                    {
-                        if (_LoopEndTimestamps[SubSongIndex] == ~0UL || _LoopEndTimestamps[SubSongIndex] < Event.Timestamp)
-                        {
-                            _LoopEndTimestamps[SubSongIndex] = Event.Timestamp;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (detectRPGMakerLoops)
-    {
-        bool HasEMIDIControlChanges = false;
-
-        for (size_t i = 0; i < _Tracks.size(); ++i)
-        {
-            size_t SubSongIndex = (_Format != 2) ? 0 : i;
-
-            const MIDITrack & Track = _Tracks[i];
-
-            for (size_t j = 0; j < Track.GetLength(); ++j)
-            {
-                const MIDIEvent & Event = Track[j];
-
-                if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] == 110 || Event.Data[0] == 111))
-                {
-                    if (Event.Data[0] == 110)
-                    {
-                        HasEMIDIControlChanges = true;
-                        break;
-                    }
-
-                    {
-                        if (_LoopBeginTimestamps[SubSongIndex] == ~0UL || _LoopBeginTimestamps[SubSongIndex] > Event.Timestamp)
-                        {
-                            _LoopBeginTimestamps[SubSongIndex] = Event.Timestamp;
-                        }
-                    }
-                }
-            }
-
-            if (HasEMIDIControlChanges)
-            {
-                _LoopBeginTimestamps[SubSongIndex] = ~0UL;
-                _LoopEndTimestamps[SubSongIndex] = ~0UL;
-                break;
-            }
-        }
-    }
-
+    // Project Touhou
     if (detectTouhouLoops && (_Format == 0))
     {
         bool HasLoopError = false;
@@ -1602,7 +1486,7 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
                             break;
                         }
 
-                        _LoopBeginTimestamps[0] = Event.Timestamp;
+                        _Loop[0].SetBegin(Event.Timestamp);
                     }
 
                     if (Event.Data[0] == 4)
@@ -1613,16 +1497,119 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
                             break;
                         }
 
-                        _LoopEndTimestamps[0] = Event.Timestamp;
+                        _Loop[0].SetEnd(Event.Timestamp);
                     }
                 }
             }
         }
 
         if (HasLoopError)
+            _Loop[0].Clear();
+    }
+
+    // RPG Maker
+    if (detectRPGMakerLoops)
+    {
+        bool HasEMIDIControlChanges = false;
+
+        for (size_t i = 0; i < _Tracks.size(); ++i)
         {
-            _LoopBeginTimestamps[0] = ~0UL;
-            _LoopEndTimestamps[0] = ~0UL;
+            size_t SubSongIndex = (_Format != 2) ? 0 : i;
+
+            const MIDITrack & Track = _Tracks[i];
+
+            for (size_t j = 0; j < Track.GetLength(); ++j)
+            {
+                const MIDIEvent & Event = Track[j];
+
+                if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] == 110 /* 0x6E */ || Event.Data[0] == 111 /* 0x6F */))
+                {
+                    if (Event.Data[0] == 110 /* 0x6E */)
+                    {
+                        HasEMIDIControlChanges = true;
+                        break;
+                    }
+
+                    // Control Change 111 (The end of the loop is always the end of the song.
+                    if (!_Loop[SubSongIndex].HasBegin() || (Event.Timestamp < _Loop[SubSongIndex].Begin()))
+                        _Loop[SubSongIndex].SetBegin(Event.Timestamp);
+                }
+            }
+
+            if (HasEMIDIControlChanges)
+            {
+                _Loop[SubSongIndex].Clear();
+                break;
+            }
+        }
+    }
+
+    // EMIDI/XMI
+    if (detectXMILoops)
+    {
+        for (size_t i = 0; i < _Tracks.size(); ++i)
+        {
+            size_t SubSongIndex = (_Format != 2) ? 0 : i;
+
+            const MIDITrack & Track = _Tracks[i];
+
+            for (size_t j = 0; j < Track.GetLength(); ++j)
+            {
+                const MIDIEvent & Event = Track[j];
+
+                if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] >= 116 /* 0x74 */ && Event.Data[0] <= 119 /* 0x77 */))
+                {
+                    if (Event.Data[0] == 116 /* 0x74, AIL loop: FOR loop = 1 to n */ || Event.Data[0] == 118 /* 0x76, AIL clear beat/measure count */)
+                    {
+                        if (!_Loop[SubSongIndex].HasBegin() || (Event.Timestamp < _Loop[SubSongIndex].Begin()))
+                            _Loop[SubSongIndex].SetBegin(Event.Timestamp); //  LoopCount = Event.Data[1]; // 0 = forever, 1 - 127 = finite
+                    }
+                    else // 117 /* 0x75, AIL loop: NEXT/BREAK *//* 0x77, AIL callback trigger */
+                    {
+                        if (!_Loop[SubSongIndex].HasEnd() || (Event.Timestamp < _Loop[SubSongIndex].End()))
+                            _Loop[SubSongIndex].SetEnd(Event.Timestamp); //  Event.Data[1] should be 127.
+                    }
+                }
+            }
+        }
+    }
+
+    // Introduced in MIDI files from Final Fantasy VII.
+    if (detectMarkerLoops)
+    {
+        for (size_t i = 0; i < _Tracks.size(); ++i)
+        {
+            size_t SubSongIndex = (_Format != 2) ? 0 : i;
+
+            const MIDITrack & Track = _Tracks[i];
+
+            for (size_t j = 0; j < Track.GetLength(); ++j)
+            {
+                const MIDIEvent & Event = Track[j];
+
+                if ((Event.Type == MIDIEvent::Extended) && (Event.GetDataSize() >= 9) && (Event.Data[0] == 0xFF) && (Event.Data[1] == 0x06))
+                {
+                    size_t Size = Event.GetDataSize() - 2;
+
+                    std::vector<uint8_t> Data;
+
+                    Data.resize(Size);
+
+                    Event.GetData(&Data[0], 2, Size);
+
+                    if ((Size == 9) && (::_strnicmp((const char *) &Data[0], "loopStart", 9) == 0))
+                    {
+                        if (!_Loop[SubSongIndex].HasBegin() || (Event.Timestamp < _Loop[SubSongIndex].Begin()))
+                            _Loop[SubSongIndex].SetBegin(Event.Timestamp);
+                    }
+                    else
+                    if ((Size == 7) && (::_strnicmp((const char *) &Data[0], "loopEnd", 7) == 0))
+                    {
+                        if (!_Loop[SubSongIndex].HasEnd() || (Event.Timestamp > _Loop[SubSongIndex].End()))
+                            _Loop[SubSongIndex].SetEnd(Event.Timestamp);
+                    }
+                }
+            }
         }
     }
 
@@ -1648,11 +1635,8 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
             }
         }
 
-        if ((_LoopBeginTimestamps[i] != ~0UL) && ((_LoopBeginTimestamps[i] == _LoopEndTimestamps[i]) || (_LoopBeginTimestamps[i] == EndOfSongTimestamp)))
-        {
-            _LoopBeginTimestamps[i] = ~0UL;
-            _LoopEndTimestamps[i] = ~0UL;
-        }
+        if (_Loop[i].HasBegin() && (_Loop[i].IsEmpty() || (_Loop[i].Begin() == EndOfSongTimestamp)))
+            _Loop[i].Clear();
     }
 }
 

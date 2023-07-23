@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.cpp (2023.06.11) **/
+/** $VER: MIDIPreset.cpp (2023.07.22) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -10,10 +10,21 @@
 #include "Configuration.h"
 #include "NukePlayer.h"
 
+static void GetValue(const char * & separator, const char * & text);
+
 MIDIPreset::MIDIPreset() noexcept
 {
+/* Test Code
+    for (_PlayerType = 0; _PlayerType < PlayerTypeMax; _PlayerType++)
     {
-        _PlayerType = (unsigned int)CfgPlayerType;
+        pfc::string8 Preset;
+
+        Serialize(Preset);
+        Deserialize(Preset);
+    }
+*/
+    {
+        _PlayerType = (uint32_t) CfgPlayerType;
         _VSTiFilePath = CfgVSTiFilePath;
 
         {
@@ -23,7 +34,7 @@ MIDIPreset::MIDIPreset() noexcept
 
                 if (Player->LoadVST(_VSTiFilePath))
                 {
-                    _VSTConfig = CfgVSTiConfig[Player->GetUniqueID()];
+                    _VSTiConfig = CfgVSTiConfig[Player->GetUniqueID()];
 
                     delete Player;
                 }
@@ -41,17 +52,17 @@ MIDIPreset::MIDIPreset() noexcept
 #ifdef FLUIDSYNTHSUPPORT
     {
         effects = cfg_fluidsynth_effects;
-        voices = (unsigned int)(int)cfg_fluidsynth_voices;
+        voices = (uint32_t)(int)cfg_fluidsynth_voices;
     }
 #endif
 
     {
-        _BASSMIDIEffectsEnabled = AdvCfgBASSMIDIEffectsEnabled;
-        _BASSMIDIVoices = (unsigned int)(int)AdvCfgBASSMIDIVoices;
+        _BASSMIDIEffectsEnabled = (bool) AdvCfgBASSMIDIEffectsEnabled;
+        _BASSMIDIVoices = (uint32_t) AdvCfgBASSMIDIVoices;
     }
 
     {
-        _MuntGMSet = (unsigned int)CfgMuntGMSet;
+        _MuntGMSet = (uint32_t) CfgMuntGMSet;
     }
 
 #ifdef DXISUPPORT
@@ -61,9 +72,9 @@ MIDIPreset::MIDIPreset() noexcept
 #endif
 
     {
-        _ADLBankNumber = (unsigned int)CfgADLBank;
-        _ADLChipCount = (unsigned int)CfgADLChipCount;
-        _ADLUsePanning = !!CfgADLPanning;
+        _ADLBankNumber = (uint32_t) CfgADLBank;
+        _ADLChipCount = (uint32_t) CfgADLChipCount;
+        _ADLUsePanning = (bool) CfgADLPanning;
 
         if (AdvCfgADLCoreDOSBox)
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
@@ -101,334 +112,251 @@ MIDIPreset::MIDIPreset() noexcept
     }
 
     {
-        _NukeSynth = (unsigned int)CfgNukeSynthesizer;
-        _NukeBank = (unsigned int)CfgNukeBank;
-        _NukePanning = (bool)CfgNukePanning;
+        _NukeSynth = (uint32_t) CfgNukeSynthesizer;
+        _NukeBank = (uint32_t) CfgNukeBank;
+        _NukeUsePanning = (bool) CfgNukePanning;
     }
 
     {
-        _MIDIStandard = (unsigned int)CfgMIDIFlavor;
-        _UseMIDIEffects = (bool)CfgAllowMIDIEffects;
+        _MIDIStandard = (uint32_t) CfgMIDIFlavor;
+        _UseMIDIEffects = (bool) CfgUseMIDIEffects;
+        _UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
+        _UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
     }
 }
 
 void MIDIPreset::Serialize(pfc::string8 & text)
-    {
-        text.reset();
-        text.prealloc(512);
+{
+    text.reset();
+    text.prealloc(512);
 
-        text += pfc::format_int(CurrentSchemaVersion);
+    text += pfc::format_int(CurrentSchemaVersion);
+
+    text += "|";
+    text += pfc::format_int(_PlayerType);
+
+    if (_PlayerType == PlayerTypeVSTi)
+    {
+        text += "|";
+        text += _VSTiFilePath;
+
         text += "|";
 
-        text += pfc::format_int(_PlayerType);
+        for (size_t i = 0; i < _VSTiConfig.size(); ++i)
+            text += pfc::format_hex(_VSTiConfig[i], 2);
+    }
+    else
+    if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
+    {
+        text += "|";
+        text += _SoundFontFilePath;
 
-        if (_PlayerType == PlayerTypeVSTi)
-        {
-            text += "|";
+        text += "|";
+        text += pfc::format_int(_BASSMIDIEffectsEnabled);
 
-            text += _VSTiFilePath;
-            text += "|";
+        text += "|";
+        text += pfc::format_int(_BASSMIDIVoices);
+    }
+    else
+    if (_PlayerType == PlayerTypeSuperMunt)
+    {
+        text += "|";
+        text += _MuntGMSets[_MuntGMSet];
+    }
+#ifdef DXISUPPORT
+    else
+    if (plugin == PlayerTypeDirectX)
+    {
+        p_out += "|";
+        p_out += pfc::format_hex(dxi_plugin.Data1, 8);
+        p_out += "-";
+        p_out += pfc::format_hex(dxi_plugin.Data2, 4);
+        p_out += "-";
+        p_out += pfc::format_hex(dxi_plugin.Data3, 4);
+        p_out += "-";
+        p_out += pfc::format_hex(dxi_plugin.Data4[0], 2);
+        p_out += pfc::format_hex(dxi_plugin.Data4[1], 2);
+        p_out += "-";
+        p_out += pfc::format_hex(dxi_plugin.Data4[2], 2);
+        p_out += pfc::format_hex(dxi_plugin.Data4[3], 2);
+        p_out += pfc::format_hex(dxi_plugin.Data4[4], 2);
+        p_out += pfc::format_hex(dxi_plugin.Data4[5], 2);
+        p_out += pfc::format_hex(dxi_plugin.Data4[6], 2);
+        p_out += pfc::format_hex(dxi_plugin.Data4[7], 2);
+    }
+#endif
+    else
+    if (_PlayerType == PlayerTypeADL)
+    {
+        const char * const * BankNames = adl_getBankNames();
 
-            for (unsigned i = 0; i < _VSTConfig.size(); ++i)
-            {
-                text += pfc::format_hex(_VSTConfig[i], 2);
-            }
+        text += "|";
+        text += BankNames[_ADLBankNumber];
 
-            text += "|";
-            text += pfc::format_int(_MIDIStandard);
-            text += "|";
-            text += pfc::format_int(_UseMIDIEffects);
-        }
-        else
-        if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
-        {
-            text += "|";
+        text += "|";
+        text += pfc::format_int(_ADLChipCount);
 
-            text += _SoundFontFilePath;
+        text += "|";
+        text += pfc::format_int(_ADLUsePanning);
 
-            text += "|";
+        text += "|";
+        text += pfc::format_int(_ADLUseChorus);
 
-            text += pfc::format_int(_BASSMIDIEffectsEnabled);
+        text += "|";
+        text += pfc::format_int(_ADLEmulatorCore);
+    }
+    else
+    if (_PlayerType == PlayerTypeOPN)
+    {
+        text += "|";
+        text += pfc::format_int(_OPNBankNumber);
 
-            text += "|";
+        text += "|";
+        text += pfc::format_int(_ADLChipCount);
 
-            text += pfc::format_int(_BASSMIDIVoices);
+        text += "|";
+        text += pfc::format_int(_ADLUsePanning);
 
-            text += "|";
+        text += "|";
+        text += pfc::format_int(_OPNEmulatorCore);
+    }
+    else
+    if (_PlayerType == PlayerTypeNuke)
+    {
+        text += "|";
+        text += NukePlayer::GetPresetName(_NukeSynth, _NukeBank);
 
-            text += pfc::format_int(_MIDIStandard);
-
-            text += "|";
-
-            text += pfc::format_int(_UseMIDIEffects);
-        }
-        else
-        if (_PlayerType == PlayerTypeSuperMunt)
-        {
-            text += "|";
-
-            text += _MuntGMSets[_MuntGMSet];
-        }
-    #ifdef DXISUPPORT
-        else
-        if (plugin == PlayerTypeDirectX)
-        {
-            p_out += "|";
-
-            p_out += pfc::format_hex(dxi_plugin.Data1, 8);
-            p_out += "-";
-            p_out += pfc::format_hex(dxi_plugin.Data2, 4);
-            p_out += "-";
-            p_out += pfc::format_hex(dxi_plugin.Data3, 4);
-            p_out += "-";
-            p_out += pfc::format_hex(dxi_plugin.Data4[0], 2);
-            p_out += pfc::format_hex(dxi_plugin.Data4[1], 2);
-            p_out += "-";
-            p_out += pfc::format_hex(dxi_plugin.Data4[2], 2);
-            p_out += pfc::format_hex(dxi_plugin.Data4[3], 2);
-            p_out += pfc::format_hex(dxi_plugin.Data4[4], 2);
-            p_out += pfc::format_hex(dxi_plugin.Data4[5], 2);
-            p_out += pfc::format_hex(dxi_plugin.Data4[6], 2);
-            p_out += pfc::format_hex(dxi_plugin.Data4[7], 2);
-        }
-    #endif
-        else
-        if (_PlayerType == PlayerTypeADL)
-        {
-            const char * const * BankNames = adl_getBankNames();
-
-            text += "|";
-
-            text += BankNames[_ADLBankNumber];
-            text += "|";
-
-            text += pfc::format_int(_ADLChipCount);
-            text += "|";
-
-            text += pfc::format_int(_ADLUsePanning);
-            text += "|";
-
-            text += pfc::format_int(_ADLChorus);
-            text += "|";
-
-            text += pfc::format_int(_ADLEmulatorCore);
-        }
-        else
-        if (_PlayerType == PlayerTypeOPN)
-        {
-            text += "|";
-            text += pfc::format_int(_OPNBankNumber);
-            text += "|";
-            text += pfc::format_int(_ADLChipCount);
-            text += "|";
-            text += pfc::format_int(_ADLUsePanning);
-            text += "|";
-            text += pfc::format_int(_OPNEmulatorCore);
-        }
-        else
-        if (_PlayerType == PlayerTypeNuke)
-        {
-            text += "|";
-            text += NukePlayer::GetPresetName(_NukeSynth, _NukeBank);
-            text += "|";
-            text += pfc::format_int(_NukePanning);
-        }
-        else
-        if (_PlayerType == PlayerTypeSecretSauce)
-        {
-            text += "|";
-            text += pfc::format_int(_MIDIStandard);
-            text += "|";
-            text += pfc::format_int(_UseMIDIEffects);
-        }
+        text += "|";
+        text += pfc::format_int(_NukeUsePanning);
+    }
+    else
+    if (_PlayerType == PlayerTypeSecretSauce)
+    {
+        // No player specific settings
     }
 
+    text += "|";
+    text += pfc::format_int(_MIDIStandard);
+
+    text += "|";
+    text += pfc::format_int(_UseMIDIEffects);
+
+    text += "|";
+    text += pfc::format_int(_UseSuperMuntWithMT32);
+
+    text += "|";
+    text += pfc::format_int(_UseSecretSauceWithXG);
+}
+
 void MIDIPreset::Deserialize(const char * text)
+{
+    if (text == nullptr)
+        return;
+
+    // Get the schema version.
+    const char * Separator = text;
+
+    GetValue(Separator, text);
+
+    uint32_t SchemaVersion = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+
+    if (SchemaVersion > CurrentSchemaVersion)
+        return;
+
+    // Get the player type.
+    GetValue(Separator, text);
+
+    uint32_t PlayerType = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+
+    pfc::string8 VSTiPath;
+    std::vector<uint8_t> VSTiConfig;
+    pfc::string8 SoundFontPath;
+
+    bool BASSMIDIEffectsEnabled = false;
+    uint32_t BASSMIDIVoices = 0;
+
+#ifdef DXISUPPORT
+    GUID DirectXGUID = { 0 };
+#endif
+
+    uint32_t ADLBankNumber = 0;
+    uint32_t ADLChipCount = 0;
+    bool ADLUsePanning = false;
+    bool ADLUseChorus = false;
+    uint32_t ADLEmulatorCore = 0;
+
+    uint32_t OPNBankNumber = 0;
+    uint32_t OPNEmulatorCore = 0;
+
+    uint32_t MuntGMSet = 0;
+
+    uint32_t NukeSynth = 0;
+    uint32_t NukeBank = 0;
+    bool NukeUsePanning = false;
+
+    uint32_t MIDIStandard = (uint32_t) CfgMIDIFlavor;
+    bool UseMIDIEffects = (bool) CfgUseMIDIEffects;
+    bool UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
+    bool UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
+
+    GetValue(Separator, text);
+
+    if (PlayerType == PlayerTypeVSTi)
     {
-        if (text == nullptr)
-            return;
+        VSTiPath.set_string(text, (t_size)(Separator - text));
 
-        const char * Separator = ::strchr(text, '|');
+        GetValue(Separator, text);
 
-        if (Separator == nullptr)
-            return;
-
-        unsigned int SchemaVersion = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-        if (SchemaVersion > CurrentSchemaVersion)
-            return;
-
+        while (*text && (text < Separator))
         {
-            text = Separator + 1;
+            VSTiConfig.push_back(pfc::atohex<unsigned char>(text, 2));
 
-            Separator = ::strchr(text, '|');
-
-            if (Separator == nullptr)
-                Separator = text += ::strlen(text);
+            text += 2;
         }
 
-        unsigned PlugInId = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-        if (*Separator == '\0')
-            return;
-
-        pfc::string8 VSTPath;
-        std::vector<uint8_t> VSTConfig;
-        pfc::string8 SoundFontPath;
-
-        bool BASSMIDIEffects = false;
-        unsigned int BASSMIDIVoices = 0;
-        GUID in_dxi_plugin = { 0 };
-
-        unsigned ADLBankNumber = 0;
-        unsigned ADLChipCount = 0;
-        bool ADLUsePanning = false;
-        bool ADLChorus = false;
-        unsigned ADLEmulatorCore = 0;
-
-        unsigned OPNBankNumber = 0;
-        unsigned OPNEmulatorCore = 0;
-
-        unsigned MuntGMSet = 0;
-
-        unsigned NukeSynth = 0;
-        unsigned NukeBank = 0;
-        bool NukePanning = false;
-
-        unsigned SCFlavor = 0;
-
-        uint32_t MIDIFlavor = (uint32_t)CfgMIDIFlavor;
-        bool AllowMIDIEffects = (bool)CfgAllowMIDIEffects;
-
+        if (CurrentSchemaVersion >= 11)
         {
-            text = Separator + 1;
+            GetValue(Separator, text);
+            MIDIStandard = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
 
-            Separator = ::strchr(text, '|');
-
-            if (Separator == nullptr)
-                Separator = text + ::strlen(text);
+            GetValue(Separator, text);
+            UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
         }
+    }
+    else
+    if (PlayerType == PlayerTypeFluidSynth || PlayerType == PlayerTypeBASSMIDI)
+    {
+        SoundFontPath.set_string(text, (t_size)(Separator - text));
 
-        if (PlugInId == PlayerTypeVSTi)
+        GetValue(Separator, text);
+
+        if (Separator > text)
         {
-            VSTPath.set_string(text, (t_size)(Separator - text));
+            BASSMIDIEffectsEnabled = pfc::atodec<bool>(text, 1);
 
+            if (SchemaVersion >= 9)
             {
-                text = Separator + (*Separator == '|');
+                GetValue(Separator, text);
 
-                Separator = ::strchr(text, '|');
-
-                if (Separator == nullptr)
-                    Separator = text + ::strlen(text);
-            }
-
-            while (*text && text < Separator)
-            {
-                VSTConfig.push_back(pfc::atohex<unsigned char>(text, 2));
-
-                text += 2;
-            }
-
-            if (CurrentSchemaVersion >= 11 && *text == '|')
-            {
+                if (Separator > text)
                 {
-                    text = Separator + (*Separator == '|');
+                    BASSMIDIVoices = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
 
-                    Separator = ::strchr(text, '|');
-
-                    if (Separator == nullptr)
-                        Separator = text + ::strlen(text);
-                }
-
-                MIDIFlavor = pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
-
-                {
-                    text = Separator + (*Separator == '|');
-
-                    Separator = ::strchr(text, '|');
-
-                    if (Separator == nullptr)
-                        Separator = text + ::strlen(text);
-                }
-
-                AllowMIDIEffects = !!pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
-            }
-        }
-        else
-        if (PlugInId == PlayerTypeFluidSynth || PlugInId == PlayerTypeBASSMIDI)
-        {
-            SoundFontPath.set_string(text, (t_size)(Separator - text));
-
-            {
-                text = Separator + (*Separator == '|');
-
-                Separator = ::strchr(text, '|');
-
-                if (Separator == nullptr)
-                    Separator = text + ::strlen(text);
-            }
-
-            if (Separator > text)
-            {
-                BASSMIDIEffects = pfc::atodec<bool>(text, 1);
-
-                if (SchemaVersion >= 9)
-                {
+                    if (CurrentSchemaVersion >= 11)
                     {
-                        text = Separator + (*Separator == '|');
+                        GetValue(Separator, text);
+                        MIDIStandard = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
 
-                        Separator = ::strchr(text, '|');
-
-                        if (Separator == nullptr)
-                            Separator = text + ::strlen(text);
-                    }
-
-                    if (Separator > text)
-                    {
-                        BASSMIDIVoices = pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
-
-                        if (CurrentSchemaVersion >= 11)
-                        {
-                            {
-                                text = Separator + (*Separator == '|');
-
-                                Separator = ::strchr(text, '|');
-
-                                if (Separator == nullptr)
-                                    Separator = text + ::strlen(text);
-                            }
-
-                            MIDIFlavor = pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
-
-                            {
-                                text = Separator + (*Separator == '|');
-
-                                Separator = ::strchr(text, '|');
-
-                                if (Separator == nullptr)
-                                    Separator = text + ::strlen(text);
-                            }
-
-                            AllowMIDIEffects = !!pfc::atodec<unsigned int>(text, (t_size)(Separator - text));
-                        }
-                    }
-                    else
-                    {
-                    #ifdef BASSMIDISUPPORT
-                        BASSMIDIVoices = (unsigned int) (int) AdvCfgBASSMIDIVoices;
-                    #elif defined(FLUIDSYNTHSUPPORT)
-                        BASSMIDIVoices = (unsigned int) (int) cfg_fluidsynth_voices;
-                    #else
-                        BASSMIDIVoices = 256;
-                    #endif
+                        GetValue(Separator, text);
+                        UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
                     }
                 }
                 else
                 {
                 #ifdef BASSMIDISUPPORT
-                    BASSMIDIVoices = (unsigned int) (int) AdvCfgBASSMIDIVoices;
+                    BASSMIDIVoices = (uint32_t) (int) AdvCfgBASSMIDIVoices;
                 #elif defined(FLUIDSYNTHSUPPORT)
-                    BASSMIDIVoices = (unsigned int) (int) cfg_fluidsynth_voices;
+                    BASSMIDIVoices = (uint32_t) (int) cfg_fluidsynth_voices;
                 #else
                     BASSMIDIVoices = 256;
                 #endif
@@ -437,326 +365,215 @@ void MIDIPreset::Deserialize(const char * text)
             else
             {
             #ifdef BASSMIDISUPPORT
-                BASSMIDIEffects = AdvCfgBASSMIDIEffectsEnabled;
-                BASSMIDIVoices = (unsigned int) (int) AdvCfgBASSMIDIVoices;
+                BASSMIDIVoices = (uint32_t) (int) AdvCfgBASSMIDIVoices;
             #elif defined(FLUIDSYNTHSUPPORT)
-                BASSMIDIEffects = cfg_fluidsynth_effects;
-                BASSMIDIVoices = (unsigned int) (int) cfg_fluidsynth_voices;
+                BASSMIDIVoices = (uint32_t) (int) cfg_fluidsynth_voices;
             #else
-                BASSMIDIEffects = 1;
                 BASSMIDIVoices = 256;
             #endif
             }
         }
         else
-        if (PlugInId == PlayerTypeSuperMunt)
         {
-            size_t i;
+        #ifdef BASSMIDISUPPORT
+            BASSMIDIEffectsEnabled = AdvCfgBASSMIDIEffectsEnabled;
+            BASSMIDIVoices = (uint32_t) (int) AdvCfgBASSMIDIVoices;
+        #elif defined(FLUIDSYNTHSUPPORT)
+            BASSMIDIEffects = cfg_fluidsynth_effects;
+            BASSMIDIVoices = (uint32_t) (int) cfg_fluidsynth_voices;
+        #else
+            BASSMIDIEffects = 1;
+            BASSMIDIVoices = 256;
+        #endif
+        }
+    }
+    else
+    if (PlayerType == PlayerTypeSuperMunt)
+    {
+        size_t i;
 
-            for (i = 0; i < _MuntGMSetCount; ++i)
+        for (i = 0; i < _MuntGMSetCount; ++i)
+        {
+            size_t len = ::strlen(_MuntGMSets[i]);
+
+            if (len == (size_t)(Separator - text) && (::strncmp(text, _MuntGMSets[i], len) == 0))
             {
-                size_t len = ::strlen(_MuntGMSets[i]);
-
-                if (len == (size_t)(Separator - text) && (::strncmp(text, _MuntGMSets[i], len) == 0))
-                {
-                    MuntGMSet = (unsigned int)i;
-                    break;
-                }
+                MuntGMSet = (uint32_t) i;
+                break;
             }
-
-            if (i == _MuntGMSetCount)
-                return;
         }
-        else
-    #ifdef DXISUPPORT
-        else
-        if (in_plugin == PlayerTypeDirectX)
-        {
-            if (bar_pos - p_in < 8 + 1 + 4 + 1 + 4 + 1 + 4 + 1 + 12) return;
-            in_dxi_plugin.Data1 = pfc::atohex<t_uint32>(p_in, 8);
-            in_dxi_plugin.Data2 = pfc::atohex<t_uint16>(p_in + 8 + 1, 4);
-            in_dxi_plugin.Data3 = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1, 4);
-            in_dxi_plugin.Data4[0] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1, 2);
-            in_dxi_plugin.Data4[1] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2, 2);
-            in_dxi_plugin.Data4[2] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1, 2);
-            in_dxi_plugin.Data4[3] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2, 2);
-            in_dxi_plugin.Data4[4] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2, 2);
-            in_dxi_plugin.Data4[5] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2, 2);
-            in_dxi_plugin.Data4[6] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2, 2);
-            in_dxi_plugin.Data4[7] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2 + 2, 2);
-        }
-    #endif
-        if (PlugInId == PlayerTypeADL)
-        {
-            const char * const * banknames = adl_getBankNames();
-            unsigned j = (unsigned int)adl_getBanksCount();
-            unsigned i;
 
-            for (i = 0; i < j; ++i)
+        if (i == _MuntGMSetCount)
+            return;
+    }
+    else
+#ifdef DXISUPPORT
+    else
+    if (in_plugin == PlayerTypeDirectX)
+    {
+        if (bar_pos - p_in < 8 + 1 + 4 + 1 + 4 + 1 + 4 + 1 + 12)
+            return;
+
+        DirectXGUID.Data1 = pfc::atohex<t_uint32>(p_in, 8);
+        DirectXGUID.Data2 = pfc::atohex<t_uint16>(p_in + 8 + 1, 4);
+        DirectXGUID.Data3 = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1, 4);
+        DirectXGUID.Data4[0] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1, 2);
+        DirectXGUID.Data4[1] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2, 2);
+        DirectXGUID.Data4[2] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1, 2);
+        DirectXGUID.Data4[3] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2, 2);
+        DirectXGUID.Data4[4] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2, 2);
+        DirectXGUID.Data4[5] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2, 2);
+        DirectXGUID.Data4[6] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2, 2);
+        DirectXGUID.Data4[7] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2 + 2, 2);
+    }
+#endif
+    if (PlayerType == PlayerTypeADL)
+    {
+        {
+            const char * const * BankNames = adl_getBankNames();
+            uint32_t BankCount = (uint32_t) adl_getBanksCount();
+
+            uint32_t i;
+
+            for (i = 0; i < BankCount; ++i)
             {
-                size_t len = ::strlen(banknames[i]);
+                size_t len = ::strlen(BankNames[i]);
 
-                if (len == (size_t)(Separator - text) && !strncmp(text, banknames[i], len))
+                if (len == (size_t)(Separator - text) && (::strncmp(text, BankNames[i], len) == 0))
                 {
                     ADLBankNumber = i;
                     break;
                 }
             }
 
-            if (i == j)
+            if (i == BankCount)
                 return;
-
-            {
-                text = Separator + (*Separator == '|');
-
-                Separator = ::strchr(text, '|');
-
-                if (Separator == nullptr)
-                    Separator = text + ::strlen(text);
-
-                if (!*text) return;
-            }
-
-            ADLChipCount = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-            {
-                text = Separator + (*Separator == '|');
-
-                Separator = ::strchr(text, '|');
-
-                if (Separator == nullptr)
-                    Separator = text + ::strlen(text);
-
-                if (!*text) return;
-            }
-
-            ADLUsePanning = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-            if (CurrentSchemaVersion >= 3)
-            {
-                {
-                    text = Separator + (*Separator == '|');
-
-                    Separator = ::strchr(text, '|');
-
-                    if (Separator == nullptr)
-                        Separator = text + ::strlen(text);
-
-                    if (!*text)
-                        return;
-                }
-
-                ADLChorus = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-                if (CurrentSchemaVersion >= 7)
-                {
-                    {
-                        text = Separator + (*Separator == '|');
-
-                        Separator = ::strchr(text, '|');
-
-                        if (Separator == nullptr)
-                            Separator = text + ::strlen(text);
-
-                        if (!*text)
-                            return;
-                    }
-
-                    ADLEmulatorCore = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-                }
-                else
-                    ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
-            }
-            else
-                ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
         }
-        else
-        if (PlugInId == PlayerTypeOPN)
+
+        GetValue(Separator, text);
+        ADLChipCount = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+
+        GetValue(Separator, text);
+        ADLUsePanning = pfc::atodec<bool>(text, (t_size)(Separator - text));
+
+        ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
+
+        if (CurrentSchemaVersion >= 3)
         {
-            if (CurrentSchemaVersion >= 10)
+            GetValue(Separator, text);
+            ADLUseChorus = pfc::atodec<bool>(text, (t_size)(Separator - text));
+
+            if (CurrentSchemaVersion >= 7)
             {
-                OPNBankNumber = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-                {
-                    text = Separator + (*Separator == '|');
-
-                    Separator = ::strchr(text, '|');
-
-                    if (Separator == nullptr)
-                        Separator = text + ::strlen(text);
-
-                    if (!*text)
-                        return;
-                }
-
-                ADLChipCount = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-                {
-                    text = Separator + (*Separator == '|');
-                    Separator = ::strchr(text, '|');
-                    if (!Separator) Separator = text + ::strlen(text);
-                    if (!*text) return;
-                }
-
-                ADLUsePanning = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-                {
-                    text = Separator + (*Separator == '|');
-                    Separator = ::strchr(text, '|');
-                    if (!Separator) Separator = text + ::strlen(text);
-                    if (!*text) return;
-                }
-
-                OPNEmulatorCore = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-            }
-            else
-            {
-                OPNBankNumber = 4;
-                ADLChipCount = 10;
-                ADLUsePanning = true;
-                OPNEmulatorCore = 0;
+                GetValue(Separator, text);
+                ADLEmulatorCore = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
             }
         }
-        else
-        if (PlugInId == PlayerTypeNuke)
-        {
-            pfc::string8 temp;
-
-            temp.set_string(text, (t_size)(Separator - text));
-
-            NukePlayer::GetPreset(temp, NukeSynth, NukeBank);
-
-            if (CurrentSchemaVersion >= 6)
-            {
-                {
-                    text = Separator + (*Separator == '|');
-
-                    Separator = ::strchr(text, '|');
-
-                    if (Separator == nullptr)
-                        Separator = text + ::strlen(text);
-
-                    if (!*text)
-                        return;
-                }
-
-                NukePanning = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-            }
-            else
-            {
-                NukePanning = true;
-            }
-        }
-        else
-        if (PlugInId == PlayerTypeSecretSauce)
-        {
-            SCFlavor = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-            if (CurrentSchemaVersion >= 6)
-            {
-                {
-                    text = Separator + (*Separator == '|');
-
-                    Separator = ::strchr(text, '|');
-
-                    if (Separator == nullptr)
-                        Separator = text + ::strlen(text);
-
-                    if (!*text)
-                        return;
-                }
-
-                if (CurrentSchemaVersion >= 11)
-                {
-                    MIDIFlavor = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-                    {
-                        text = Separator + (*Separator == '|');
-
-                        Separator = ::strchr(text, '|');
-
-                        if (Separator == nullptr)
-                            Separator = text + ::strlen(text);
-
-                        if (!*text)
-                            return;
-                    }
-                }
-                else
-                if (CurrentSchemaVersion >= 8)
-                {
-                    unsigned GSFlavor = pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-
-                    {
-                        text = Separator + (*Separator == '|');
-
-                        Separator = ::strchr(text, '|');
-
-                        if (Separator == nullptr)
-                            Separator = text + ::strlen(text);
-
-                        if (*text == '\0')
-                            return;
-                    }
-
-                    if (SCFlavor == 4)
-                        MIDIFlavor = MIDIPlayer::FilterXGSysEx;
-                    else
-                    if (SCFlavor == 3)
-                        MIDIFlavor = (GSFlavor == 0) ? MIDIPlayer::FilterNone : MIDIPlayer::FilterSC55SysEx + (GSFlavor - 1);
-                    else
-                    if (SCFlavor <= 2)
-                        MIDIFlavor = SCFlavor;
-                }
-                else
-                    MIDIFlavor = SCFlavor;
-
-                AllowMIDIEffects = !!pfc::atodec<unsigned>(text, (t_size)(Separator - text));
-            }
-            else
-            {
-                if (SCFlavor >= 3 && SCFlavor <= 6)
-                    MIDIFlavor = SCFlavor;
-                else
-                if (SCFlavor == 7)
-                    MIDIFlavor = SCFlavor;
-
-                AllowMIDIEffects = true;
-            }
-
-            if (MIDIFlavor > MIDIPlayer::FilterXGSysEx)
-                MIDIFlavor = MIDIPlayer::FilterNone;
-        }
-
-        _PlayerType = PlugInId;
-
-        _VSTiFilePath = VSTPath;
-        _VSTConfig = VSTConfig;
-
-        _SoundFontFilePath = SoundFontPath;
-
-        _BASSMIDIEffectsEnabled = BASSMIDIEffects;
-        _BASSMIDIVoices = BASSMIDIVoices;
-
-    #ifdef DXISUPPORT
-        dxi_plugin = in_dxi_plugin;
-    #endif
-
-        _ADLBankNumber = ADLBankNumber;
-        _ADLChipCount = ADLChipCount;
-        _ADLUsePanning = ADLUsePanning;
-        _ADLChorus = ADLChorus;
-        _ADLEmulatorCore = ADLEmulatorCore;
-
-        _OPNBankNumber = OPNBankNumber;
-        _OPNEmulatorCore = OPNEmulatorCore;
-
-        _MuntGMSet = MuntGMSet;
-
-        _NukeSynth = NukeSynth;
-        _NukeBank = NukeBank;
-        _NukePanning = NukePanning;
-
-        _MIDIStandard = MIDIFlavor;
-        _UseMIDIEffects = AllowMIDIEffects;
     }
+    else
+    if (PlayerType == PlayerTypeOPN)
+    {
+        if (CurrentSchemaVersion >= 10)
+        {
+            OPNBankNumber = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+
+            GetValue(Separator, text);
+            ADLChipCount = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+
+            GetValue(Separator, text);
+            ADLUsePanning = pfc::atodec<bool>(text, (t_size)(Separator - text));
+
+            GetValue(Separator, text);
+            OPNEmulatorCore = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+        }
+        else
+        {
+            OPNBankNumber = 4;
+            ADLChipCount = 10;
+            ADLUsePanning = true;
+            OPNEmulatorCore = 0;
+        }
+    }
+    else
+    if (PlayerType == PlayerTypeNuke)
+    {
+        pfc::string8 Text;
+
+        Text.set_string(text, (t_size)(Separator - text));
+
+        NukePlayer::GetPreset(Text, NukeSynth, NukeBank);
+
+        if (CurrentSchemaVersion >= 6)
+        {
+            GetValue(Separator, text);
+            NukeUsePanning = pfc::atodec<bool>(text, (t_size)(Separator - text));
+        }
+        else
+            NukeUsePanning = true;
+    }
+    else
+    if (PlayerType == PlayerTypeSecretSauce)
+    {
+        if (CurrentSchemaVersion >= 11)
+        {
+            MIDIStandard = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+
+            if (MIDIStandard > MIDIPlayer::FilterXGSysEx)
+                MIDIStandard = MIDIPlayer::FilterNone;
+
+            GetValue(Separator, text);
+            UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
+        }
+    }
+
+    if (CurrentSchemaVersion >= 12)
+    {
+        GetValue(Separator, text);
+        UseSuperMuntWithMT32 = pfc::atodec<bool>(text, (t_size)(Separator - text));
+
+        GetValue(Separator, text);
+        UseSecretSauceWithXG = pfc::atodec<bool>(text, (t_size)(Separator - text));
+    }
+
+    _PlayerType = PlayerType;
+
+    _VSTiFilePath = VSTiPath;
+    _VSTiConfig = VSTiConfig;
+
+    _SoundFontFilePath = SoundFontPath;
+
+    _BASSMIDIEffectsEnabled = BASSMIDIEffectsEnabled;
+    _BASSMIDIVoices = BASSMIDIVoices;
+
+#ifdef DXISUPPORT
+    dxi_plugin = DirectXGUID;
+#endif
+
+    _ADLBankNumber = ADLBankNumber;
+    _ADLChipCount = ADLChipCount;
+    _ADLUsePanning = ADLUsePanning;
+    _ADLUseChorus = ADLUseChorus;
+    _ADLEmulatorCore = ADLEmulatorCore;
+
+    _OPNBankNumber = OPNBankNumber;
+    _OPNEmulatorCore = OPNEmulatorCore;
+
+    _MuntGMSet = MuntGMSet;
+
+    _NukeSynth = NukeSynth;
+    _NukeBank = NukeBank;
+    _NukeUsePanning = NukeUsePanning;
+
+    _MIDIStandard = MIDIStandard;
+    _UseMIDIEffects = UseMIDIEffects;
+}
+
+static void GetValue(const char * & separator, const char * & text)
+{
+    text = separator + (*separator == '|');
+
+    separator = ::strchr(text, '|');
+
+    if (separator == nullptr)
+        separator = text + ::strlen(text);
+}

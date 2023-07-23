@@ -51,8 +51,15 @@ const
 {$IFDEF LINUX}
   bassflacdll = 'libbassflac.so';
 {$ENDIF}
+{$IFDEF ANDROID}
+  bassflacdll = 'libbassflac.so';
+{$ENDIF}
 {$IFDEF MACOS}
-  bassflacdll = 'libbassflac.dylib';
+  {$IFDEF IOS}
+    bassflacdll = 'bassflac.framework/bassflac';
+  {$ELSE}
+    bassflacdll = 'libbassflac.dylib';
+  {$ENDIF}
 {$ENDIF}
 
 function BASS_FLAC_StreamCreateFile(mem:BOOL; f:Pointer; offset,length:QWORD; flags:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassflacdll;

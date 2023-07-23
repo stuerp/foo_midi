@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.06.26) **/
+/** $VER: InputDecoder.cpp (2023.07.23) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -15,6 +15,8 @@
 
 #include "KaraokeProcessor.h"
 #include "Exceptions.h"
+
+#include <math.h>
 
 volatile int _IsRunning = 0;
 
@@ -174,28 +176,44 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     if (_IsSysExFile)
         throw exception_midi("You cannot play SysEx dumps");
 
-    _PlayerType = (uint32_t)CfgPlayerType;
     _IsFirstChunk = true;
+
+    _PlayerType = (uint32_t) CfgPlayerType;
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _SamplesPlayed = 0;
 
     InitializeTime(subSongIndex);
 
-    _Container.SetTrackCount((uint32_t)_TrackCount);
+    _Container.SetTrackCount((uint32_t) _TrackCount);
 
     _ExtraPercussionChannel = _Container.GetExtraPercussionChannel();
 
     MIDIPreset Preset;
 
+    // Set the player type based on the content of the container.
+    if (_IsXG && CfgUseVSTiWithXG)
+    {
+        _PlayerType = PlayerTypeVSTi;
+
+        pfc::string8 FilePath;
+
+        AdvCfgVSTiXGPlugin.get(FilePath), Preset._VSTiFilePath = FilePath;
+    }
+    else
+    if (_IsMT32 && CfgUseSuperMuntWithMT32)
+        _PlayerType = PlayerTypeSuperMunt;
+
     {
         file_info_impl FileInfo;
+
+        get_info(subSongIndex, FileInfo, abortHandler);
 
         {
             const char * MIDIPresetText = FileInfo.meta_get(TagMIDIPreset, 0);
 
             if (MIDIPresetText)
             {
-                console::print("Using preset ", MIDIPresetText, " from file.");
+                console::print("Using preset \"", MIDIPresetText, "\" from file.");
 
                 Preset.Deserialize(MIDIPresetText);
 
@@ -210,17 +228,14 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
 
             if (MIDISysExDumps)
+            {
+                console::print("Using sysex \"", MIDISysExDumps , "\" from file.");
+
                 SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
+            }
         }
 
         SysExDumps.Merge(_Container, abortHandler);
-    }
-
-    if (_IsMT32)
-    {
-        console::print("Setting player type to SuperMunt because MIDI file contains MT-32 messages.");
-
-        _PlayerType = PlayerTypeSuperMunt;
     }
 
     // Gets a SoundFont file that has been configured for the file, if any.
@@ -275,14 +290,14 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     // Update sample rate before initializing the fade-out range.
     if (_PlayerType == PlayerTypeSuperMunt)
-        _SampleRate = (uint32_t)MT32Player::GetSampleRate();
+        _SampleRate = (uint32_t) MT32Player::GetSampleRate();
 
     // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
     if ((flags & input_flag_no_looping) || (_LoopType < PlayIndefinitelyWhenDetected))
     {
-        if ((_LoopType > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
+        if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
-            uint32_t Begin = (uint32_t)::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int)_SampleRate, 1000);
+            uint32_t Begin = (uint32_t) ::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int) _SampleRate, 1000);
             uint32_t End = Begin + _SampleRate * _FadeDuration / 1000;
 
             _FadeRange.Set(Begin, End);
@@ -296,7 +311,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     }
     else
     {
-        if ((_LoopType == PlayIndefinitely) || !_LoopInTicks.IsEmpty())
+        if ((_LoopType == PlayIndefinitely) || _LoopInTicks.IsSet())
         {
             _FadeRange.Clear();
             _IsLooping = true;
@@ -336,8 +351,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                         else
                         if (_SampleRate != _CurrentSampleRate)
                             _SampleRate = _CurrentSampleRate;
-
-                        _IsEmuDeMIDI = true;
                     }
 
                     _Player->SetSampleRate(_SampleRate);
@@ -363,8 +376,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 if (!Player->LoadVST(Preset._VSTiFilePath))
                     throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\"");
             
-                if (Preset._VSTConfig.size())
-                    Player->SetChunk(&Preset._VSTConfig[0], Preset._VSTConfig.size());
+                if (Preset._VSTiConfig.size())
+                    Player->SetChunk(&Preset._VSTiConfig[0], Preset._VSTiConfig.size());
 
                 _Player = Player;
             }
@@ -631,7 +644,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 Player->SetSynth(Preset._NukeSynth);
                 Player->SetBank(Preset._NukeBank);
-                Player->SetExtp(Preset._NukePanning);
+                Player->SetExtp(Preset._NukeUsePanning);
 
                 _Player = Player;
             }
@@ -878,7 +891,10 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             if (_PlayerType <= PlayerTypeMax)
                 PlayerName = PlayerTypeNames[_PlayerType];
             else
+            {
+                
                 PlayerName = "VSTi";
+            }
 
             fileInfo.info_set(TagMIDIPlayer, PlayerName);
         }
@@ -951,7 +967,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
         if (_LoopTypeOther == NeverLoopAdd1sDecay)
             LengthInSeconds += 1.;
 
-        if ((_LoopTypeOther > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
+        if ((_LoopTypeOther > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
             if (!_LoopInMs.HasBegin())
                 _LoopInMs.SetBegin(0);
@@ -964,26 +980,6 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 
         fileInfo.set_length(LengthInSeconds);
     }
-
-    {
-        const char * MIDIPreset = fileInfo.meta_get(TagMIDIPreset, 0);
-
-        if (MIDIPreset)
-        {
-            fileInfo.info_set(TagMIDIPreset, MIDIPreset);
-            fileInfo.meta_remove_field(TagMIDIPreset);
-        }
-    }
-
-    {
-        const char * MIDISysExDumps = fileInfo.meta_get(TagMIDISysExDumps, 0);
-
-        if (MIDISysExDumps)
-        {
-            fileInfo.info_set(TagMIDISysExDumps, MIDISysExDumps);
-            fileInfo.meta_remove_field(TagMIDISysExDumps);
-        }
-    }
 }
 #pragma endregion
 
@@ -991,21 +987,12 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 /// <summary>
 /// Set the tags for the specified file.
 /// </summary>
-void InputDecoder::retag_set_info(t_uint32, const file_info& fileInfo, abort_callback & abortHandler)
+void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler)
 {
     if (_IsSysExFile)
         throw exception_io_data("You cannot tag SysEx dumps");
 
     file_info_impl fi(fileInfo);
-
-    {
-        fi.meta_remove_field(TagMIDIPreset);
-
-        const char * Preset = fi.info_get(TagMIDIPreset);
-
-        if (Preset)
-            fi.meta_set(TagMIDIPreset, Preset);
-    }
 
     {
         fi.meta_remove_field(TagMIDISysExDumps);
@@ -1067,7 +1054,7 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
         if (_LoopType == NeverLoopAdd1sDecay)
             _LengthInSamples += _SampleRate;
 
-        if ((_LoopType > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
+        if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
             if (!_LoopInMs.HasBegin())
                 _LoopInMs.SetBegin(0);
@@ -1120,6 +1107,7 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string
 void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
 {
     _IsMT32 = false;
+    _IsXG = false;
 
     KaraokeProcessor kp;
 
@@ -1135,7 +1123,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
             for (size_t i = 0; i < MetaData.GetCount(); ++i)
             {
-                const MIDIMetaDataItem& mdi = MetaData[i];
+                const MIDIMetaDataItem & mdi = MetaData[i];
 
             #ifdef _DEBUG
 //              console::print(mdi.Name.c_str(), ":", mdi.Value.c_str());
@@ -1145,7 +1133,8 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
                 {
                     fileInfo.info_set(TagMIDIType, mdi.Value.c_str());
 
-                    _IsMT32 = (Item.Value == "MT-32");
+                    _IsMT32 = (mdi.Value == "MT-32");
+                    _IsXG = (mdi.Value == "XG");
                 }
                 else
                 if (pfc::stricmp_ascii(mdi.Name.c_str(), "lyrics_type") == 0)

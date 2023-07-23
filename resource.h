@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2023.06.22) **/
+/** $VER: Resource.h (2023.07.22) **/
 
 #pragma once
 
@@ -22,7 +22,7 @@
 
 #define NUM_FILE_MAJOR          2
 #define NUM_FILE_MINOR          8
-#define NUM_FILE_PATCH          4
+#define NUM_FILE_PATCH          5
 #define NUM_FILE_PRERELEASE     0
 
 #define STR_FILE_NAME           TEXT(STR_COMPONENT_FILENAME)
@@ -31,7 +31,7 @@
 
 #define NUM_PRODUCT_MAJOR       2
 #define NUM_PRODUCT_MINOR       8
-#define NUM_PRODUCT_PATCH       4
+#define NUM_PRODUCT_PATCH       5
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRODUCT_NAME        STR_COMPANY_NAME TEXT(" ") STR_INTERNAL_NAME
@@ -46,61 +46,49 @@
 #define IDD_PREFERENCES_ROOT 106
 #define IDD_PREFERENCES_ROOT_NAME STR_COMPONENT_NAME
 
-#define IDC_PLAYER_TYPE 1000
-#define IDC_SAMPLERATE 1001
+#define IDC_PLAYER_TYPE                 1000
+#define IDC_SAMPLERATE                  1001
 
-#define IDC_CONFIGURE 1013
+#define IDC_CONFIGURE                   1002
 
-#define IDC_LOOP_PLAYBACK 1002
-#define IDC_RPGMAKERLOOPS 1003
-#define IDC_XMILOOPS 1004
-#define IDC_FF7LOOPS 1005
-#define IDC_EMIDI_EX 1006
-#define IDC_RECOVER 1007
-#define IDC_LOOP2 1007
-#define IDC_LOOP_OTHER 1007
-#define IDC_NOSYSEX 1008
+#define IDC_LOOP_PLAYBACK               1003
+#define IDC_LOOP_OTHER                  1004
 
-#define IDC_MUNT_WARNING 1014
+#define IDC_RPGMAKER_LOOPS              1005
+#define IDC_XMI_LOOPS                   1006
+#define IDC_TOUHOU_LOOPS                1007
+#define IDC_FF7_LOOPS                   1008
 
-#define IDC_FILTER_INSTRUMENTS 1015
-#define IDC_FILTER_BANKS 1016
+#define IDC_MUNT_WARNING                1009
 
-#define IDC_RESAMPLING_MODE 1017
-#define IDC_RESAMPLING_TEXT 1018
+#define IDC_EMIDI_EXCLUSION             1010
+#define IDC_FILTER_INSTRUMENTS          1011
+#define IDC_FILTER_BANKS                1012
 
-#define IDC_CACHED 1019
-#define IDC_CACHED_TEXT 1020
+#define IDC_RESAMPLING_MODE             1013
+#define IDC_RESAMPLING_TEXT             1014
 
-#define IDC_ADL_BANK 1021
-#define IDC_ADL_BANK_TEXT 1022
-#define IDC_ADL_CHIPS 1023
-#define IDC_ADL_CHIPS_TEXT 1024
-#define IDC_ADL_PANNING 1025
+#define IDC_CACHED                      1015
+#define IDC_CACHED_TEXT                 1016
 
-#define IDC_MUNT_GM_TEXT 1026
+#define IDC_ADL_BANK                    1017
+#define IDC_ADL_BANK_TEXT               1018
+#define IDC_ADL_CHIPS                   1019
+#define IDC_ADL_CHIPS_TEXT              1020
+#define IDC_ADL_PANNING                 1021
 
-#define IDC_RESAMPLING2 1027
+#define IDC_MUNT_GM_TEXT                1022
+#define IDC_MUNT_GM_SET                 1023
 
-#define IDC_NUKE_PRESET_TEXT 1027
-#define IDC_MUNT_GM_SET 1028
-#define IDC_NUKE_PRESET 1029
+#define IDC_NUKE_PRESET_TEXT            1024
+#define IDC_NUKE_PRESET                 1025
+#define IDC_NUKE_PANNING                1026
 
-#define IDC_SC_FLAVOR_TEXT 1030
-#define IDC_MIDI_FLAVOR_TEXT 1030
-#define IDC_SC_FLAVOR 1031
-
-#define IDC_MIDI_FLAVOR 1031
-#define IDC_MIDI_FLAVOR 1031
-
-#define IDC_NUKE_PANNING 1033
-#define IDC_MS_PANNING2 1034
-#define IDC_SC_EFFECTS 1034
-#define IDC_MIDI_EFFECTS 1034
-#define IDC_SC_FLAVOR2 1035
-#define IDC_GS_FLAVOR 1035
-#define IDC_CHECK1 1036
-#define IDC_TOUHOULOOPS 1036
+#define IDC_MIDI_FLAVOR_TEXT            1027
+#define IDC_MIDI_FLAVOR                 1028
+#define IDC_MIDI_EFFECTS                1029
+#define IDC_MIDI_USE_SUPER_MUNT         1030
+#define IDC_MIDI_USE_VSTI_WITH_XG       1031
 
 /** Dialog: Preferences Paths **/
 

@@ -17,5 +17,6 @@
   <ItemGroup>
     <ClInclude Include="MIDIContainer.h" />
     <ClInclude Include="MIDIProcessor.h" />
+    <ClInclude Include="Range.h" />
   </ItemGroup>
 </Project>

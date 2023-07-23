@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPresetFilter.cpp (2023.06.04) **/
+/** $VER: MIDIPresetFilter.cpp (2023.07.2) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -37,16 +37,16 @@ MIDIPresetFilter::MIDIPresetFilter(const pfc::list_base_const_t<metadb_handle_pt
 /// </summary>
 bool MIDIPresetFilter::apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo)
 {
+    // Find the database entry.
     t_size index;
 
-    // Find the database entry.
     if (!_Handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, location, index))
         return false;
 
     if (_MIDIPreset.get_length())
-        fileInfo.info_set(TagMIDIPreset, _MIDIPreset);
+        fileInfo.meta_set(TagMIDIPreset, _MIDIPreset);
     else
-        fileInfo.info_remove(TagMIDIPreset);
+        fileInfo.meta_remove_field(TagMIDIPreset);
 
     return true;
 }
