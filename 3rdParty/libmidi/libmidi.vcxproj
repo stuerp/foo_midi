@@ -34,6 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MIDIContainer.h" />
+    <ClInclude Include="Range.h" />
     <ClInclude Include="MIDIProcessor.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

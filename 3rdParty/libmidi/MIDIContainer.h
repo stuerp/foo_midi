@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "Range.h"
+
 enum StatusCodes
 {
     NoteOff = 0x80,
@@ -108,7 +110,7 @@ struct MIDIEvent
     MIDIEvent(const MIDIEvent & midiEvent);
     MIDIEvent(uint32_t timestamp, EventType eventType, uint32_t channel, const uint8_t * data, size_t size);
 
-    size_t GetDataSize() const
+    size_t GetDataSize() const noexcept
     {
         return DataSize + ExtendedData.size();
     }
@@ -387,5 +389,7 @@ private:
 
     std::vector<uint32_t> _LoopBeginTimestamp;
     std::vector<uint32_t> _LoopEndTimestamp;
+
+    std::vector<Range> _Loop;
 };
 #pragma warning(default: 4820)

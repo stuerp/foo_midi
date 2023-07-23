@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.07.22) **/
+/** $VER: InputDecoder.cpp (2023.07.23) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -15,6 +15,8 @@
 
 #include "KaraokeProcessor.h"
 #include "Exceptions.h"
+
+#include <math.h>
 
 volatile int _IsRunning = 0;
 
@@ -287,9 +289,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
     if ((flags & input_flag_no_looping) || (_LoopType < PlayIndefinitelyWhenDetected))
     {
-        if ((_LoopType > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
+        if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
-            uint32_t Begin = (uint32_t) ::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int)_SampleRate, 1000);
+            uint32_t Begin = (uint32_t) ::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int) _SampleRate, 1000);
             uint32_t End = Begin + _SampleRate * _FadeDuration / 1000;
 
             _FadeRange.Set(Begin, End);
@@ -303,7 +305,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     }
     else
     {
-        if ((_LoopType == PlayIndefinitely) || !_LoopInTicks.IsEmpty())
+        if ((_LoopType == PlayIndefinitely) || _LoopInTicks.IsSet())
         {
             _FadeRange.Clear();
             _IsLooping = true;
@@ -956,7 +958,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
         if (_LoopTypeOther == NeverLoopAdd1sDecay)
             LengthInSeconds += 1.;
 
-        if ((_LoopTypeOther > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
+        if ((_LoopTypeOther > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
             if (!_LoopInMs.HasBegin())
                 _LoopInMs.SetBegin(0);
@@ -1043,7 +1045,7 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
         if (_LoopType == NeverLoopAdd1sDecay)
             _LengthInSamples += _SampleRate;
 
-        if ((_LoopType > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
+        if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
             if (!_LoopInMs.HasBegin())
                 _LoopInMs.SetBegin(0);

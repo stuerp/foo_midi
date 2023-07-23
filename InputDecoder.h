@@ -47,35 +47,6 @@ extern critical_section _Lock;
 extern volatile uint32_t _CurrentSampleRate;
 
 /// <summary>
-/// Represents a range.
-/// </summary>
-class Range
-{
-public:
-    Range() noexcept  { Clear(); }
-    virtual ~Range() noexcept { }
-
-    uint32_t Begin() const noexcept { return _Begin; }
-    uint32_t End() const noexcept { return _End; }
-
-    void Set(uint32_t begin, uint32_t end) noexcept { _Begin = begin; _End = end; }
-    void SetBegin(uint32_t begin) noexcept { _Begin = begin; }
-    void SetEnd(uint32_t end) noexcept { _End = end; }
-    void Clear() { Set(pfc::infinite32, pfc::infinite32); }
-
-    uint32_t Size() const noexcept { return _End - _Begin; }
-
-    bool IsEmpty() const noexcept { return (_Begin == pfc::infinite32) && (_End == pfc::infinite32); }
-    bool IsSet() const noexcept { return  (_Begin != pfc::infinite32) && (_End != pfc::infinite32); }
-    bool HasBegin() const noexcept { return _Begin != pfc::infinite32; }
-    bool HasEnd() const noexcept { return _End != pfc::infinite32; }
-
-private:
-    uint32_t _Begin;
-    uint32_t _End;
-};
-
-/// <summary>
 /// Implements an input decoder.
 /// </summary>
 #pragma warning(disable: 4820) // x bytes padding added after data member
