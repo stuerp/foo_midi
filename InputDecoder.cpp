@@ -174,16 +174,24 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     if (_IsSysExFile)
         throw exception_midi("You cannot play SysEx dumps");
 
-    _PlayerType = (uint32_t) CfgPlayerType;
     _IsFirstChunk = true;
+
+    _PlayerType = (uint32_t) CfgPlayerType;
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _SamplesPlayed = 0;
 
     InitializeTime(subSongIndex);
 
-    _Container.SetTrackCount((uint32_t)_TrackCount);
+    _Container.SetTrackCount((uint32_t) _TrackCount);
 
     _ExtraPercussionChannel = _Container.GetExtraPercussionChannel();
+
+    // Set the player type based on the content of the container.
+    if (_IsXG && CfgUseSecretSauceWithXG)
+        _PlayerType = PlayerTypeSecretSauce;
+    else
+    if (_IsMT32 && CfgUseSuperMuntWithMT32)
+        _PlayerType = PlayerTypeSuperMunt;
 
     MIDIPreset Preset;
 
@@ -197,7 +205,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (MIDIPresetText)
             {
-                console::print("Using preset ", MIDIPresetText, " from track.");
+                console::print("Using preset \"", MIDIPresetText, "\" from file.");
 
                 Preset.Deserialize(MIDIPresetText);
 
@@ -213,20 +221,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (MIDISysExDumps)
             {
-                console::print("Using sysex ", MIDISysExDumps , " from track.");
+                console::print("Using sysex \"", MIDISysExDumps , "\" from file.");
 
                 SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
             }
         }
 
         SysExDumps.Merge(_Container, abortHandler);
-    }
-
-    if (_IsMT32)
-    {
-        console::print("Setting player type to SuperMunt because MIDI file contains MT-32 messages.");
-
-        _PlayerType = PlayerTypeSuperMunt;
     }
 
     // Gets a SoundFont file that has been configured for the file, if any.
@@ -281,14 +282,14 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     // Update sample rate before initializing the fade-out range.
     if (_PlayerType == PlayerTypeSuperMunt)
-        _SampleRate = (uint32_t)MT32Player::GetSampleRate();
+        _SampleRate = (uint32_t) MT32Player::GetSampleRate();
 
     // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
     if ((flags & input_flag_no_looping) || (_LoopType < PlayIndefinitelyWhenDetected))
     {
         if ((_LoopType > LoopAndFadeWhenDetected) || !_LoopInTicks.IsEmpty())
         {
-            uint32_t Begin = (uint32_t)::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int)_SampleRate, 1000);
+            uint32_t Begin = (uint32_t) ::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int)_SampleRate, 1000);
             uint32_t End = Begin + _SampleRate * _FadeDuration / 1000;
 
             _FadeRange.Set(Begin, End);
@@ -342,8 +343,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                         else
                         if (_SampleRate != _CurrentSampleRate)
                             _SampleRate = _CurrentSampleRate;
-
-                        _IsEmuDeMIDI = true;
                     }
 
                     _Player->SetSampleRate(_SampleRate);
@@ -1097,6 +1096,7 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string
 void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
 {
     _IsMT32 = false;
+    _IsXG = false;
 
     KaraokeProcessor kp;
 
@@ -1112,7 +1112,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
             for (size_t i = 0; i < MetaData.GetCount(); ++i)
             {
-                const MIDIMetaDataItem& mdi = MetaData[i];
+                const MIDIMetaDataItem & mdi = MetaData[i];
 
             #ifdef _DEBUG
 //              console::print(mdi.Name.c_str(), ":", mdi.Value.c_str());
@@ -1122,7 +1122,8 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
                 {
                     fileInfo.info_set(TagMIDIType, mdi.Value.c_str());
 
-                    _IsMT32 = (Item.Value == "MT-32");
+                    _IsMT32 = (mdi.Value == "MT-32");
+                    _IsXG = (mdi.Value == "XG");
                 }
                 else
                 if (pfc::stricmp_ascii(mdi.Name.c_str(), "lyrics_type") == 0)

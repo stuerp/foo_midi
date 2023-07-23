@@ -98,7 +98,8 @@ branch. Pull requests are warmly welcome.
 
 v2.8.5.0, 2023-07-22,  *""*
 
-* New: Added a configuration option to always use Secret Sauce when available and when playing an XG file.
+* New: Added a configuration option to always use Super Munt when playing an MT-32 file. Default is on.
+* New: Added a configuration option to always use Secret Sauce when available and when playing an XG file. Default is off.
 * Bug Fix: Saving MIDI presets was broken.
 
 v2.8.4.0, 2023-06-26, *"Beat the Drum"*

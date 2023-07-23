@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRootLayout.h (2023.05.14) **/
+/** $VER: PreferencesRootLayout.h (2023.07.22) **/
 
 #pragma once
 
@@ -126,7 +126,19 @@
     #define W_A83    W_A80 - 5 - 6
     #define H_A83    8
 
-#define H_A80    11 + H_A82 + 4 + H_A83 + 4
+    // Checkbox: Use Super Munt with MT-32
+    #define X_A84    X_A81
+    #define Y_A84    Y_A83 + H_A83 + 4
+    #define W_A84    W_A80 - 5 - 6
+    #define H_A84    8
+
+    // Checkbox: Use Secret Sauce with XG
+    #define X_A85    X_A81
+    #define Y_A85    Y_A84 + H_A84 + 4
+    #define W_A85    W_A80 - 5 - 6
+    #define H_A85    8
+
+#define H_A80    11 + H_A82 + 4 + H_A83 + 4 + H_A84 + 4 + H_A85 + 4
 #pragma endregion
 
 #pragma region("Miscellaneous")

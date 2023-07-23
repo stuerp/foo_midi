@@ -262,10 +262,11 @@ private:
     std::vector<uint8_t> _Bitmap;
 };
 
+#pragma warning(disable: 4820)
 class MIDIContainer
 {
 public:
-    MIDIContainer() : _Format(0), _TimeDivision(0), _ExtraPercussionChannel(~0L)
+    MIDIContainer() : _Format(0), _TimeDivision(0), _ExtraPercussionChannel(~0u)
     {
         _DeviceNames.resize(16);
     }
@@ -384,6 +385,7 @@ private:
 
     std::vector<uint32_t> _EndTimestamps;
 
-    std::vector<uint32_t> _LoopBeginTimestamps;
-    std::vector<uint32_t> _LoopEndTimestamps;
+    std::vector<uint32_t> _LoopBeginTimestamp;
+    std::vector<uint32_t> _LoopEndTimestamp;
 };
+#pragma warning(default: 4820)

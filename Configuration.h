@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.06.17) **/
+/** $VER: Configuration.h (2023.07.22) **/
 
 #pragma once
 
@@ -44,7 +44,9 @@ enum
     default_cfg_ff7loopz = 1,
 
     DefaultMIDIFlavor = MIDIPlayer::FilterNone,
-    DefaultMIDIEffects = 1,
+    DefaultCfgUseMIDIEffects = 1,
+    DefaultCfgUseSuperMuntWithMT32 = 1,
+    DefaultCfgUseSecretSauceWithXG = 0,
 
     DefaultEmuDeMIDIExclusion = 1,
     DefaultFilterInstruments = 0,
@@ -111,7 +113,10 @@ extern cfg_int
     CfgNukePanning,
 
     CfgMIDIFlavor,
-    CfgAllowMIDIEffects
+    CfgUseMIDIEffects,
+    CfgUseSuperMuntWithMT32,
+    CfgUseSecretSauceWithXG
+
 #ifdef FLUIDSYNTHSUPPORT
 ,
     Cfg_FluidSynthInterpolationMethod

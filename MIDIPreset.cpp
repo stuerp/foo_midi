@@ -119,7 +119,9 @@ MIDIPreset::MIDIPreset() noexcept
 
     {
         _MIDIStandard = (uint32_t) CfgMIDIFlavor;
-        _UseMIDIEffects = (bool) CfgAllowMIDIEffects;
+        _UseMIDIEffects = (bool) CfgUseMIDIEffects;
+        _UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
+        _UseSecretSauceWithXG = (bool) CfgUseSecretSauceWithXG;
     }
 }
 
@@ -142,12 +144,6 @@ void MIDIPreset::Serialize(pfc::string8 & text)
 
         for (size_t i = 0; i < _VSTiConfig.size(); ++i)
             text += pfc::format_hex(_VSTiConfig[i], 2);
-
-        text += "|";
-        text += pfc::format_int(_MIDIStandard);
-
-        text += "|";
-        text += pfc::format_int(_UseMIDIEffects);
     }
     else
     if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
@@ -160,12 +156,6 @@ void MIDIPreset::Serialize(pfc::string8 & text)
 
         text += "|";
         text += pfc::format_int(_BASSMIDIVoices);
-
-        text += "|";
-        text += pfc::format_int(_MIDIStandard);
-
-        text += "|";
-        text += pfc::format_int(_UseMIDIEffects);
     }
     else
     if (_PlayerType == PlayerTypeSuperMunt)
@@ -242,12 +232,20 @@ void MIDIPreset::Serialize(pfc::string8 & text)
     else
     if (_PlayerType == PlayerTypeSecretSauce)
     {
-        text += "|";
-        text += pfc::format_int(_MIDIStandard);
-
-        text += "|";
-        text += pfc::format_int(_UseMIDIEffects);
+        // No player specific settings
     }
+
+    text += "|";
+    text += pfc::format_int(_MIDIStandard);
+
+    text += "|";
+    text += pfc::format_int(_UseMIDIEffects);
+
+    text += "|";
+    text += pfc::format_int(_UseSuperMuntWithMT32);
+
+    text += "|";
+    text += pfc::format_int(_UseSecretSauceWithXG);
 }
 
 void MIDIPreset::Deserialize(const char * text)
@@ -297,7 +295,9 @@ void MIDIPreset::Deserialize(const char * text)
     bool NukeUsePanning = false;
 
     uint32_t MIDIStandard = (uint32_t) CfgMIDIFlavor;
-    bool UseMIDIEffects = (bool) CfgAllowMIDIEffects;
+    bool UseMIDIEffects = (bool) CfgUseMIDIEffects;
+    bool UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
+    bool UseSecretSauceWithXG = (bool) CfgUseSecretSauceWithXG;
 
     GetValue(Separator, text);
 
@@ -524,6 +524,15 @@ void MIDIPreset::Deserialize(const char * text)
             GetValue(Separator, text);
             UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
         }
+    }
+
+    if (CurrentSchemaVersion >= 12)
+    {
+        GetValue(Separator, text);
+        UseSuperMuntWithMT32 = pfc::atodec<bool>(text, (t_size)(Separator - text));
+
+        GetValue(Separator, text);
+        UseSecretSauceWithXG = pfc::atodec<bool>(text, (t_size)(Separator - text));
     }
 
     _PlayerType = PlayerType;

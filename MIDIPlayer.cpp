@@ -43,7 +43,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
     _CurrentTime = 0;
     _EndTime = (size_t)midiContainer.GetDuration(subsongIndex, true) + 1000;
 
-    _LoopMode = (LoopMode)loopMode;
+    _LoopMode = (LoopMode) loopMode;
 
     if (_LoopMode & LoopModeEnabled)
     {

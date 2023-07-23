@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.h (2023.07.2) **/
+/** $VER: MIDIPreset.h (2023.07.22) **/
 
 #pragma once
 
@@ -26,7 +26,7 @@ public:
     void Deserialize(const char * text);
 
 public:
-    const uint32_t CurrentSchemaVersion = 11;
+    const uint32_t CurrentSchemaVersion = 12;
 
     // version 0
     uint32_t _PlayerType;
@@ -93,8 +93,12 @@ public:
     // v8 - GS flavor, also sc_flavor has new values
 //  uint32_t gs_flavor;
 
-    // v11 - most plugins
+    // v11: Most players
     uint32_t _MIDIStandard;
     bool _UseMIDIEffects;
+
+    // v11: Most players
+    bool _UseSuperMuntWithMT32;
+    bool _UseSecretSauceWithXG;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

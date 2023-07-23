@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.06.24) **/
+/** $VER: Configuration.cpp (2023.07.22) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -100,7 +100,9 @@ static const GUID guid_cfg_fluidsynth_voices = { 0x9114d64d, 0x412c, 0x42d3, { 0
 #endif
 
 static const GUID GUIDCfgMIDIFlavor = { 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0x19, 0x32, 0x6a, 0x5a, 0x2d, 0x7e, 0x8e } };
-static const GUID GUIDCfgMIDIReverb = { 0x91c12a1, 0xd42b, 0x4f4e, { 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
+static const GUID GUIDCfgUseMIDIEffects = { 0x91c12a1, 0xd42b, 0x4f4e, { 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } };
+static const GUID GUIDCfgUseSuperMuntWithMT32 = { 0xb91b9d1c, 0x17ea, 0x4e72, { 0xbb, 0x4c, 0x74, 0xdf, 0xae, 0x31, 0x2e, 0x92 } };
+static const GUID GUIDCfgUseSecretSauceWithXG = { 0xea9f43b2, 0xbe58, 0x4494, { 0x8f, 0xa0, 0x29, 0x50, 0x4b, 0x30, 0x6b, 0xaa } };
 #pragma endregion
 
 cfg_int
@@ -134,7 +136,9 @@ cfg_int
     CfgNukePanning(guid_cfg_ms_panning, DefaultNukePanning),
 
     CfgMIDIFlavor(GUIDCfgMIDIFlavor, DefaultMIDIFlavor),
-    CfgAllowMIDIEffects(GUIDCfgMIDIReverb, DefaultMIDIEffects)
+    CfgUseMIDIEffects(GUIDCfgUseMIDIEffects, DefaultCfgUseMIDIEffects),
+    CfgUseSuperMuntWithMT32(GUIDCfgUseSuperMuntWithMT32, DefaultCfgUseSuperMuntWithMT32),
+    CfgUseSecretSauceWithXG(GUIDCfgUseSecretSauceWithXG, DefaultCfgUseSecretSauceWithXG)
 
 #ifdef FLUIDSYNTHSUPPORT
 ,

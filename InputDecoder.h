@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.06.26) **/
+/** $VER: InputDecoder.h (2023.07.22) **/
 
 #pragma once
 
@@ -83,40 +83,43 @@ class InputDecoder : public input_stubs
 {
 public:
     InputDecoder() :
+        _FileStats{},
+        _FileStats2{},
+
         _IsSysExFile(false),
         _TrackCount(0),
 
-        _DetectXMILoops(!!CfgDetectXMILoops),
-        _DetectFF7Loops(!!CfgDetectFF7Loops),
-        _DetectRPGMakerLoops(!!CfgDetectRPGMakerLoops),
-        _DetectTouhouLoops(!!CfgDetectTouhouLoops),
+        _IsMT32(),
+        _IsXG(),
+
+        _DetectRPGMakerLoops((bool) CfgDetectRPGMakerLoops),
+        _DetectXMILoops((bool) CfgDetectXMILoops),
+        _DetectTouhouLoops((bool) CfgDetectTouhouLoops),
+        _DetectFF7Loops((bool) CfgDetectFF7Loops),
 
         _Player(nullptr),
 
-        _SampleRate((uint32_t)CfgSampleRate),
+        _PlayerType(),
+        _SampleRate((uint32_t) CfgSampleRate),
         _ExtraPercussionChannel(~0U),
 
-        _LoopTypePlayback((uint32_t)CfgLoopTypePlayback),
-        _LoopTypeOther((uint32_t)CfgLoopTypeOther),
+        _LoopType(),
+        _LoopTypePlayback((uint32_t) CfgLoopTypePlayback),
+        _LoopTypeOther((uint32_t) CfgLoopTypeOther),
 
         _LoopInTicks(),
         _LoopInMs(),
 
         _LengthInSamples(0),
 
-        _IsEmuDeMIDI(false),
-
-        _BASSMIDIInterpolationMode((uint32_t)CfgBASSMIDIInterpolationMode)
+        _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIInterpolationMode)
     {
-        _FileStats = { 0 };
-        _FileStats2 = { 0 };
+        _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
+                                 (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
+                                 (CfgFilterBanks ? MIDIContainer::CleanFlagBanks : 0);
 
-        _CleanFlags = (uint32_t)(CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
-                                (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
-                                (CfgFilterBanks ? MIDIContainer::CleanFlagBanks : 0);
-
-        _LoopCount    = (uint32_t)AdvCfgLoopCount.get();
-        _FadeDuration = (uint32_t)AdvCfgFadeTimeInMS.get();
+        _LoopCount    = (uint32_t) AdvCfgLoopCount.get();
+        _FadeDuration = (uint32_t) AdvCfgFadeTimeInMS.get();
 
     #ifdef FLUIDSYNTHSUPPORT
         _FluidSynthInterpolationMethod(Cfg_FluidSynthInterpolationMethod),
@@ -136,7 +139,7 @@ public:
     {
         delete _Player;
 
-        if (_IsEmuDeMIDI)
+        if (_PlayerType == PlayerTypeEmuDeMIDI)
         {
             insync(_Lock);
             _IsRunning--;
@@ -281,11 +284,12 @@ private:
     hasher_md5_result _FileHash;
 
     bool _IsMT32;
+    bool _IsXG;
 
-    bool _DetectXMILoops;
-    bool _DetectFF7Loops;
     bool _DetectRPGMakerLoops;
+    bool _DetectXMILoops;
     bool _DetectTouhouLoops;
+    bool _DetectFF7Loops;
 
     // Player Properties
     MIDIPlayer * _Player;
@@ -312,7 +316,6 @@ private:
 
     uint32_t _CleanFlags;
 
-    bool _IsEmuDeMIDI;
     bool _IsLooping;
     bool _IsEndOfContainer;
     bool _DontLoop;
