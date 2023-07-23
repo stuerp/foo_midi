@@ -37,10 +37,10 @@ To build the code you need:
 The following libraries are included in the code:
 
 * [BASS](https://www.un4seen.com/) 2.4.17
-  * [BASSFLAC](https://www.un4seen.com/) 2.4.5
+  * [BASSFLAC](https://www.un4seen.com/) 2.4.5.3
   * [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
   * [BASSWV](https://www.un4seen.com/) 2.4.7.3
-  * [BASSOPUS](https://www.un4seen.com/) 2.4.2.1
+  * [BASSOPUS](https://www.un4seen.com/) 2.4.2.3
   * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 * [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
 * [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2)

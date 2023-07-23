@@ -1,5 +1,5 @@
 BASSOPUS 2.4
-Copyright (c) 2012-2021 Un4seen Developments Ltd. All rights reserved.
+Copyright (c) 2012-2023 Un4seen Developments Ltd. All rights reserved.
 
 Files that you should have found in the BASSOPUS package
 ========================================================
@@ -115,6 +115,11 @@ History
 These are the major (and not so major) changes in each release, along with the
 functions/options that are introduced/affected by them. There are other little
 tweaks and fixes made along the way too.
+
+2.4.2.3 - 4/5/2023
+------------------
+* Updated to libOpus 1.4
+* SSE is required on x86 platforms
 
 2.4.2.1 - 9/9/2021
 ------------------

@@ -30,8 +30,15 @@ const
 {$IFDEF LINUX}
   bassopusdll = 'libbassopus.so';
 {$ENDIF}
+{$IFDEF ANDROID}
+  bassopusdll = 'libbassopus.so';
+{$ENDIF}
 {$IFDEF MACOS}
-  bassopusdll = 'libbassopus.dylib';
+  {$IFDEF IOS}
+    bassopusdll = 'bassopus.framework/bassopus';
+  {$ELSE}
+    bassopusdll = 'libbassopus.dylib';
+  {$ENDIF}
 {$ENDIF}
 
 function BASS_OPUS_StreamCreateFile(mem:BOOL; fl:pointer; offset,length:QWORD; flags:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassopusdll;
