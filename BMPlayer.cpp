@@ -538,7 +538,7 @@ void BMPlayer::SetVoiceCount(uint32_t voiceCount)
 
 uint32_t BMPlayer::GetActiveVoiceCount() const noexcept
 {
-    size_t VoiceCount = 0;
+    uint32_t VoiceCount = 0;
 
     float Voices;
 

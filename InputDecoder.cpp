@@ -180,7 +180,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     _IsFirstChunk = true;
 
-    _PlayerType = (uint32_t) CfgPlayerType;
+    _PlayerType = (PlayerType) (uint32_t) CfgPlayerType;
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _SamplesPlayed = 0;
 
@@ -195,7 +195,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // Set the player type based on the content of the container.
     if (_IsXG && CfgUseVSTiWithXG)
     {
-        _PlayerType = PlayerTypeVSTi;
+        _PlayerType = PlayerType::VSTi;
 
         pfc::string8 FilePath;
 
@@ -203,7 +203,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     }
     else
     if (_IsMT32 && CfgUseSuperMuntWithMT32)
-        _PlayerType = PlayerTypeSuperMunt;
+        _PlayerType = PlayerType::SuperMunt;
 
     {
         file_info_impl FileInfo;
@@ -286,12 +286,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             SoundFontFilePath = TempSoundFontFilePath;
 
-            _PlayerType = PlayerTypeBASSMIDI;
+            _PlayerType = PlayerType::BASSMIDI;
         }
     }
 
     // Update sample rate before initializing the fade-out range.
-    if (_PlayerType == PlayerTypeSuperMunt)
+    if (_PlayerType == PlayerType::SuperMunt)
         _SampleRate = (uint32_t) MT32Player::GetSampleRate();
 
     // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
@@ -333,8 +333,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     switch (_PlayerType)
     {
+        case PlayerType::Unknown:
+            break;
+
         // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413))
-        case PlayerTypeEmuDeMIDI:
+        case PlayerType::EmuDeMIDI:
         {
             {
                 auto Player = new EdMPlayer;
@@ -366,7 +369,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // VSTi
-        case PlayerTypeVSTi:
+        case PlayerType::VSTi:
         {
             {
                 if (Preset._VSTiFilePath.is_empty())
@@ -405,7 +408,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // FluidSynth
-        case PlayerTypeFluidSynth:
+        case PlayerType::FluidSynth:
         {
             {
 //              _FluidSynthVoiceCount = 0;
@@ -468,7 +471,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // Munt (MT-32)
-        case PlayerTypeSuperMunt:
+        case PlayerType::SuperMunt:
         {
             {
                 auto Player = new MT32Player(!_IsMT32, Preset._MuntGMSet);
@@ -506,7 +509,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // BASS MIDI
-        case PlayerTypeBASSMIDI:
+        case PlayerType::BASSMIDI:
         {
             {
                 {
@@ -553,7 +556,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // DirectX
-        case PlayerTypeDirectX:
+        case PlayerType::DirectX:
         {
     #ifdef DXISUPPORT
             pfc::array_t<t_uint8> serialized_midi_file;
@@ -590,7 +593,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // ADL
-        case PlayerTypeADL:
+        case PlayerType::ADL:
         {
             {
                 auto Player = new ADLPlayer;
@@ -619,7 +622,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // OPN
-        case PlayerTypeOPN:
+        case PlayerType::OPN:
         {
             {
                 auto Player = new OPNPlayer;
@@ -647,13 +650,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // OPL
-        case PlayerTypeOPL:
+        case PlayerType::OPL:
         {
             break;
         }
 
         // Nuke
-        case PlayerTypeNuke:
+        case PlayerType::Nuke:
         {
             {
                 auto Player = new NukePlayer();
@@ -679,7 +682,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // Secret Sauce
-        case PlayerTypeSecretSauce:
+        case PlayerType::SecretSauce:
         {
             {
                 auto Player = new SCPlayer();
@@ -733,7 +736,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     bool Success = false;
 
 #ifdef DXISUPPORT
-    if (_PlayerType == PlayerTypeDirectX)
+    if (_PlayerType == PlayerType::DirectX)
     {
         unsigned todo = 4096;
 
@@ -867,7 +870,7 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback&)
     }
 
 #ifdef DXISUPPORT
-    if (_PlayerType == PlayerTypeDirectX)
+    if (_PlayerType == PlayerType::DirectX)
     {
         dxiProxy->setPosition(seek_msec);
 
@@ -898,12 +901,12 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         }
 
         {
-            assert(_countof(PlayerTypeNames) == (PlayerTypeMax + 1));
+            assert(_countof(PlayerTypeNames) == ((size_t) PlayerType::Max + 1));
 
             const char * PlayerName = "Unknown";
 
-            if (_PlayerType <= PlayerTypeMax)
-                PlayerName = PlayerTypeNames[_PlayerType];
+            if (_PlayerType <= PlayerType::Max)
+                PlayerName = PlayerTypeNames[(size_t) _PlayerType];
             else
                 PlayerName = "VSTi";
 
@@ -926,7 +929,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         timestampDelta = 0.;
     }
 
-    if (_PlayerType == PlayerTypeFluidSynth)
+    if (_PlayerType == PlayerType::FluidSynth)
     {
         auto Player = (FSPlayer *) _Player;
 
@@ -954,7 +957,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             timestampDelta = _AudioChunkDuration;
     }
     else
-    if (_PlayerType == PlayerTypeBASSMIDI)
+    if (_PlayerType == PlayerType::BASSMIDI)
     {
         auto Player = (BMPlayer *) _Player;
 

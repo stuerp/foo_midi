@@ -177,14 +177,14 @@ private:
     struct InstalledPlayer
     {
         pfc::string8 Name;
-        int Type;
+        PlayerType Type;
     };
 
     struct BuiltInPlayer
     {
         const char * Name;
-        int Type;
-        int Fallback;
+        PlayerType Type;
+        PlayerType Fallback;
         bool (*IsPresent)(PreferencesRootPage *);
     };
 
@@ -307,7 +307,7 @@ private:
 
     std::map<int, int> _PlayerTypeToPlayerIndex;
     std::map<int, int> _PlayerPresentMap;
-    std::map<int, int> _PlayerIndexToPlayerType;
+    std::map<int, PlayerType> _PlayerIndexToPlayerType;
 
     const preferences_page_callback::ptr _Callback;
 
@@ -319,15 +319,15 @@ private:
 /// </summary>
 const PreferencesRootPage::BuiltInPlayer PreferencesRootPage::BuiltInPlayers[] =
 {
-    { "Emu de MIDI",    PlayerTypeEmuDeMIDI,    -1,                   IsPluginAlwaysPresent },
-    { "FluidSynth",     PlayerTypeFluidSynth,   PlayerTypeBASSMIDI,   IsFluidSynthPresent },
-    { "BASSMIDI",       PlayerTypeBASSMIDI,     PlayerTypeFluidSynth, IsPluginAlwaysPresent },
-    { "Super Munt GM",  PlayerTypeSuperMunt,    -1,                   IsPluginAlwaysPresent },
-    { "LibADLMIDI",     PlayerTypeADL,          -1,                   IsPluginAlwaysPresent },
-    { "LibOPNMIDI",     PlayerTypeOPN,          -1,                   IsPluginAlwaysPresent },
-    { "OPL MIDI",       PlayerTypeOPL,          -1,                   IsPluginNeverPresent },
-    { "Nuke",           PlayerTypeNuke,         -1,                   IsPluginAlwaysPresent },
-    { "Secret Sauce",   PlayerTypeSecretSauce,  -1,                   IsSecretSaucePresent }
+    { "Emu de MIDI",    PlayerType::EmuDeMIDI,    PlayerType::Unknown,    IsPluginAlwaysPresent },
+    { "FluidSynth",     PlayerType::FluidSynth,   PlayerType::BASSMIDI,   IsFluidSynthPresent },
+    { "BASSMIDI",       PlayerType::BASSMIDI,     PlayerType::FluidSynth, IsPluginAlwaysPresent },
+    { "Super Munt GM",  PlayerType::SuperMunt,    PlayerType::Unknown,    IsPluginAlwaysPresent },
+    { "LibADLMIDI",     PlayerType::ADL,          PlayerType::Unknown,    IsPluginAlwaysPresent },
+    { "LibOPNMIDI",     PlayerType::OPN,          PlayerType::Unknown,    IsPluginAlwaysPresent },
+    { "OPL MIDI",       PlayerType::OPL,          PlayerType::Unknown,    IsPluginNeverPresent },
+    { "Nuke",           PlayerType::Nuke,         PlayerType::Unknown,    IsPluginAlwaysPresent },
+    { "Secret Sauce",   PlayerType::SecretSauce,  PlayerType::Unknown,    IsSecretSaucePresent }
 };
 
 #pragma region("preferences_page_instance")
@@ -354,26 +354,26 @@ void PreferencesRootPage::apply()
 {
     #pragma region("Output")
     {
-        int PlayerType = -1;
+        PlayerType PlayerType = PlayerType::Unknown;
 
         int SelectedItem = (int) SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
 
         {
             if ((SelectedItem >= _PlayerPresentCount) && (SelectedItem < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
-                PlayerType = PlayerTypeVSTi;
+                PlayerType = PlayerType::VSTi;
         #ifdef DXISUPPORT
             else
             if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
-                PlayerType = PlayerTypeDirectX;
+                PlayerType = PlayerType::DirectX;
         #endif
             else
-                PlayerType = _PlayerIndexToPlayerType[SelectedItem];
+                PlayerType = (enum PlayerType) _PlayerIndexToPlayerType[SelectedItem];
 
-            CfgPlayerType = PlayerType;
+            CfgPlayerType = (int) PlayerType;
         }
 
         {
-            if (PlayerType == PlayerTypeVSTi)
+            if (PlayerType == PlayerType::VSTi)
             {
                 CfgVSTiFilePath = _VSTiPlugIns[(size_t)(SelectedItem - _PlayerPresentCount)].PathName.c_str();
 
@@ -385,7 +385,7 @@ void PreferencesRootPage::apply()
 
         #ifdef DXISUPPORT
         {
-            if (PlayerType == PlayerTypeDirectX)
+            if (PlayerType == PlayerType::DirectX)
             {
                 cfg_dxi_plugin = dxi_plugins[plugin_selected - _VSTiPlugins.get_count() - plugins_reported];
             }
@@ -524,13 +524,13 @@ void PreferencesRootPage::apply()
 /// </summary>
 void PreferencesRootPage::reset()
 {
-    int PlayerType = DefaultPlayerType;
+    PlayerType PlayerType = (enum PlayerType) DefaultPlayerType;
 
-    int PlayerIndex = _PlayerTypeToPlayerIndex[PlayerType];
+    int PlayerIndex = _PlayerTypeToPlayerIndex[(int) PlayerType];
     int SelectedItem = _PlayerPresentMap[PlayerIndex];
 
     {
-        bool Enable = (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI);
+        bool Enable = (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI);
 
         const int ControlId[] =
         {
@@ -542,7 +542,7 @@ void PreferencesRootPage::reset()
             GetDlgItem(ControlId[i]).EnableWindow(Enable);
     }
 
-    if (PlayerType != PlayerTypeADL)
+    if (PlayerType != PlayerType::ADL)
     {
         const int ControlId[] =
         {
@@ -559,16 +559,16 @@ void PreferencesRootPage::reset()
     GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
 
     {
-        BOOL Enable = (PlayerType == PlayerTypeSuperMunt);
+        BOOL Enable = (PlayerType == PlayerType::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(Enable);
 
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerType::SuperMunt) ? SW_SHOW : SW_HIDE);
     }
 
     {
-        BOOL Enable = (PlayerType == PlayerTypeNuke);
+        BOOL Enable = (PlayerType == PlayerType::Nuke);
 
         GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_NUKE_PRESET).EnableWindow(Enable);
@@ -576,14 +576,14 @@ void PreferencesRootPage::reset()
     }
 
     {
-        bool Enable = (PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce);
+        bool Enable = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
 
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enable);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(Enable);
     }
 
-    if ((PlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
+    if ((PlayerType == PlayerType::EmuDeMIDI) && _IsRunning)
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
     #pragma region("Output")
@@ -662,10 +662,10 @@ void PreferencesRootPage::reset()
 /// </summary>
 BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 {
-    int PlayerType = CfgPlayerType;
+    PlayerType PlayerType = (enum PlayerType) (uint8_t) CfgPlayerType;
 
-    _PlayerTypeToPlayerIndex[PlayerType] = -1;
-    _PlayerIndexToPlayerType[-1] = -1;
+    _PlayerTypeToPlayerIndex[(int) PlayerType] = -1;
+    _PlayerIndexToPlayerType[-1] = PlayerType::Unknown;
 
     for (size_t i = 0; i < _countof(BuiltInPlayers); ++i)
     {
@@ -679,7 +679,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             _InstalledPlayers.push_back(ip);
         }
 
-        _PlayerTypeToPlayerIndex[BuiltInPlayers[i].Type] = (int) i;
+        _PlayerTypeToPlayerIndex[(int) BuiltInPlayers[i].Type] = (int) i;
 
 //      if (BuiltInPlayers[i].Fallback >= 0)
 //          _PlayerTypeToPlayerIndex[BuiltInPlayers[i].Fallback] = (int)i;
@@ -687,7 +687,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 /*
     int PlayerIndex = -1;
 
-    if ((PlayerType != PlayerTypeVSTi) && (PlayerType != PlayerTypeDirectX))
+    if ((PlayerType != PlayerType::VSTi) && (PlayerType != PlayerType::DirectX))
     {
         PlayerIndex = _PlayerTypeToPlayerIndex[PlayerType];
 
@@ -709,7 +709,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         {
             _PlayerPresentCount = 0;
 
-            _PlayerPresentMap[PlayerType] = -1;
+            _PlayerPresentMap[(int) PlayerType] = -1;
 
             for (size_t i = 0; i < _countof(BuiltInPlayers); ++i)
             {
@@ -717,7 +717,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
                 if (bip.IsPresent(this))
                 {
-                    _PlayerPresentMap[bip.Type] = _PlayerPresentCount;
+                    _PlayerPresentMap[(int) bip.Type] = _PlayerPresentCount;
 
 //                    if (bip.Fallback >= 0)
 //                        _PlayerPresentMap[bip.Fallback] = _PlayerPresentCount;
@@ -745,11 +745,11 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
             for (size_t i = 0, j = VSTiCount; i < j; ++i)
             {
-                _PlayerIndexToPlayerType[_PlayerPresentCount + (int)i] = 1;
+                _PlayerIndexToPlayerType[_PlayerPresentCount + (int) i] = PlayerType::VSTi;
 
                 ::uSendMessageText(w, CB_ADDSTRING, 0, _VSTiPlugIns[i].Name.c_str());
 
-                if ((PlayerType == PlayerTypeVSTi) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiFilePath) == 0))
+                if ((PlayerType == PlayerType::VSTi) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiFilePath) == 0))
                     VSTiPluginIndex = i;
             }
         }
@@ -791,14 +791,14 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 #endif
     }
 
-    if ((PlayerType == PlayerTypeEmuDeMIDI) && _IsRunning)
+    if ((PlayerType == PlayerType::EmuDeMIDI) && _IsRunning)
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
-    if ((PlayerType == PlayerTypeVSTi) && (VSTiPluginIndex == ~0))
-        PlayerType = DefaultPlayerType;
+    if ((PlayerType == PlayerType::VSTi) && (VSTiPluginIndex == ~0))
+        PlayerType = (enum PlayerType) DefaultPlayerType;
 
     {
-        bool Enable = (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI);
+        bool Enable = (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI);
 
         const int ControlId[] =
         {
@@ -811,28 +811,28 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     }
 
     {
-        BOOL Enable = (PlayerType == PlayerTypeSuperMunt);
+        BOOL Enable = (PlayerType == PlayerType::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(Enable);
 
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerTypeSuperMunt) ? SW_SHOW : SW_HIDE);
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerType::SuperMunt) ? SW_SHOW : SW_HIDE);
     }
 
-    if (PlayerType != PlayerTypeADL)
+    if (PlayerType != PlayerType::ADL)
     {
         GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_BANK).EnableWindow(FALSE);
     }
 
-    if (PlayerType != PlayerTypeADL && PlayerType != PlayerTypeOPN)
+    if (PlayerType != PlayerType::ADL && PlayerType != PlayerType::OPN)
     {
         GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_CHIPS).EnableWindow(FALSE);
         GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
     }
 
-    if (PlayerType != PlayerTypeVSTi)
+    if (PlayerType != PlayerType::VSTi)
     {
         GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
     }
@@ -842,7 +842,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[VSTiPluginIndex].Id];
     }
 
-    if (PlayerType != PlayerTypeNuke)
+    if (PlayerType != PlayerType::Nuke)
     {
         GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
         GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
@@ -850,7 +850,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     }
 
     {
-        bool Enabled = ((PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce));
+        bool Enabled = ((PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce));
 
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enabled);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enabled);
@@ -863,11 +863,11 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         int SelectedIndex = -1;
 
-        if (PlayerType == PlayerTypeVSTi)
+        if (PlayerType == PlayerType::VSTi)
             SelectedIndex = _PlayerPresentCount + (int) VSTiPluginIndex;
     #ifdef DXISUPPORT
         else
-        if (PlayerType == PlayerTypeDirectX)
+        if (PlayerType == PlayerType::DirectX)
         {
             if (dxi_selected != ~0)
                 SelectedIndex = _PlayerPresentCount + vsti_count + dxi_selected;
@@ -876,7 +876,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         }
     #endif
         else
-            SelectedIndex = _PlayerPresentMap[PlayerType];
+            SelectedIndex = _PlayerPresentMap[(int) PlayerType];
 
         ::SendMessage(w, CB_SETCURSEL, (WPARAM)SelectedIndex, (LPARAM)0);
     }
@@ -1133,7 +1133,7 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 /// </summary>
 void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 {
-    int PlayerType = -1;
+    PlayerType PlayerType = PlayerType::Unknown;
 
     // Player Type
     int SelectedIndex = (int) ::SendMessage(w, CB_GETCURSEL, 0, 0);
@@ -1141,13 +1141,13 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
     {
         if ((SelectedIndex >= _PlayerPresentCount) && (SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
         {
-            PlayerType = PlayerTypeVSTi;
+            PlayerType = PlayerType::VSTi;
             _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].Id];
         }
     #ifdef DXISUPPORT
         else
         if (SelectedIndex >= plugins_reported + _VSTiPlugins.get_count())
-            PlayerType = PlayerTypeDirectX;
+            PlayerType = PlayerType::DirectX;
     #endif
         else
             PlayerType = _PlayerIndexToPlayerType[SelectedIndex];
@@ -1155,21 +1155,21 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Configure
     {
-        bool Enable = (SelectedIndex >= _PlayerPresentCount) && (PlayerType < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].HasEditor;
+        bool Enable = (SelectedIndex >= _PlayerPresentCount) && ((int) PlayerType < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].HasEditor;
 
         GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
     }
 
     // Sample Rate
     {
-        GetDlgItem(IDC_SAMPLERATE).EnableWindow(PlayerType || !_IsRunning);
+        GetDlgItem(IDC_SAMPLERATE).EnableWindow((PlayerType != PlayerType::EmuDeMIDI) || !_IsRunning);
     }
 
     // Looping
 
     // MIDI Flavor and Effects
     {
-        BOOL Enable = (PlayerType == PlayerTypeVSTi) || (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI) || (PlayerType == PlayerTypeSecretSauce);
+        BOOL Enable = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
 
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enable);
@@ -1179,7 +1179,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // SoundFont resampling mode and cache status
     {
-        BOOL Enable = (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI);
+        BOOL Enable = (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI);
 
         const int ControlId[] =
         {
@@ -1193,7 +1193,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Munt
     {
-        BOOL Enable = (PlayerType == PlayerTypeSuperMunt);
+        BOOL Enable = (PlayerType == PlayerType::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(Enable);
@@ -1203,22 +1203,22 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Nuke
     {
-        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlayerType == PlayerTypeNuke);
-        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlayerType == PlayerTypeNuke);
-        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(PlayerType == PlayerTypeNuke);
+        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlayerType == PlayerType::Nuke);
+        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(PlayerType == PlayerType::Nuke);
+        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(PlayerType == PlayerType::Nuke);
     }
 
     // ADL
     {
-        GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(PlayerType == PlayerTypeADL);
-        GetDlgItem(IDC_ADL_BANK).EnableWindow(PlayerType == PlayerTypeADL);
+        GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(PlayerType == PlayerType::ADL);
+        GetDlgItem(IDC_ADL_BANK).EnableWindow(PlayerType == PlayerType::ADL);
     }
 
     // Nuke and ADL
     {
-        GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
-        GetDlgItem(IDC_ADL_CHIPS).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
-        GetDlgItem(IDC_ADL_PANNING).EnableWindow(PlayerType == PlayerTypeADL || PlayerType == PlayerTypeNuke);
+        GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(PlayerType == PlayerType::ADL || PlayerType == PlayerType::Nuke);
+        GetDlgItem(IDC_ADL_CHIPS).EnableWindow(PlayerType == PlayerType::ADL || PlayerType == PlayerType::Nuke);
+        GetDlgItem(IDC_ADL_PANNING).EnableWindow(PlayerType == PlayerType::ADL || PlayerType == PlayerType::Nuke);
     }
 
     OnChanged();
@@ -1378,22 +1378,22 @@ bool PreferencesRootPage::HasChanged()
 
     {
         int PlayerIndex = (int)SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
-        int PlayerType = -1;
+        PlayerType PlayerType = PlayerType::Unknown;
 
         if ((PlayerIndex >= _PlayerPresentCount) && (PlayerIndex < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()))
-            PlayerType = PlayerTypeVSTi;
+            PlayerType = PlayerType::VSTi;
     #ifdef DXISUPPORT
         else
         if (PlayerIndex >= plugins_reported + _VSTiPlugins.get_count())
-            PlayerType = PlayerTypeDirectX;
+            PlayerType = PlayerType::DirectX;
     #endif
         else
             PlayerType = _PlayerIndexToPlayerType[PlayerIndex];
 
-        if (PlayerType != CfgPlayerType)
+        if (PlayerType != (enum PlayerType) (int) CfgPlayerType)
             return true;
 
-        if (PlayerType == PlayerTypeVSTi)
+        if (PlayerType == PlayerType::VSTi)
         {
             if (CfgVSTiFilePath != _VSTiPlugIns[(size_t)(PlayerIndex - _PlayerPresentCount)].PathName)
                 return true;
@@ -1408,7 +1408,7 @@ bool PreferencesRootPage::HasChanged()
         }
     #ifdef DXISUPPORT
         else
-        if (PlayerType == PlayerTypeDirectX)
+        if (PlayerType == PlayerType::DirectX)
         {
             if (dxi_plugins[PlayerIndex - _VSTiPlugins.get_count() - plugins_reported] != cfg_dxi_plugin.get_value())
                 return true;

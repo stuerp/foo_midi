@@ -105,7 +105,7 @@ public:
     {
         delete _Player;
 
-        if (_PlayerType == PlayerTypeEmuDeMIDI)
+        if (_PlayerType == PlayerType::EmuDeMIDI)
         {
             insync(_Lock);
             _IsRunning--;
@@ -260,7 +260,7 @@ private:
     // Player Properties
     MIDIPlayer * _Player;
 
-    uint32_t _PlayerType;
+    PlayerType _PlayerType;
     uint32_t _SampleRate;
     uint32_t _ExtraPercussionChannel;
 

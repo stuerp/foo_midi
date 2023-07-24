@@ -102,6 +102,9 @@ v2.9.0.0, 2023-08-xx, *""*
 * New: Added FluidSynth player again. It can be selected after setting the path to the directory that contains the FluidSynth libraries.
 * Changed: Renamed dynamic info tags *bassmidi_voices* and *bassmidi_voices_max* to *midi_active_voices* and *midi_peak_voices*. The FluidSynth player also sets those tags while playing.
 
+TODO: Does FluidSynth use all CC's?
+TODO: Does FluidSynth switch between GM, GS and XG?
+
 v2.8.5.0, 2023-07-23, *""*
 
 * New: Added a configuration option to always use Super Munt when playing an MT-32 file. Default is on.

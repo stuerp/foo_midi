@@ -16,26 +16,28 @@
 extern const GUID PreferencesPageGUID;
 extern const GUID PreferencesPathsPageGUID;
 
-enum
+enum class PlayerType : int8_t
 {
-    PlayerTypeEmuDeMIDI = 0,
-    PlayerTypeVSTi = 1,
-    PlayerTypeFluidSynth = 2,
-    PlayerTypeSuperMunt = 3,
-    PlayerTypeBASSMIDI = 4,
-    PlayerTypeDirectX = 5,
-    PlayerTypeADL = 6,
-    PlayerTypeOPN = 7,
-    PlayerTypeOPL = 8,
-    PlayerTypeNuke = 9,
-    PlayerTypeSecretSauce = 10,
+    Unknown = -1,
 
-    PlayerTypeMax = PlayerTypeSecretSauce
+    EmuDeMIDI = 0,
+    VSTi = 1,
+    FluidSynth = 2,
+    SuperMunt = 3,
+    BASSMIDI = 4,
+    DirectX = 5,
+    ADL = 6,
+    OPN = 7,
+    OPL = 8,
+    Nuke = 9,
+    SecretSauce = 10,
+
+    Max = SecretSauce,
 };
 
 enum
 {
-    DefaultPlayerType = PlayerTypeADL,
+    DefaultPlayerType = PlayerType::ADL,
     DefaultSampleRate = 44100,
     DefaultPlaybackLoopType = 0,
     DefaultOtherLoopType = 0,
@@ -54,6 +56,8 @@ enum
     DefaultFilterInstruments = 0,
     DefaultFilterBanks = 0,
 
+    DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT,
+
     DefaultBASSMIDIInterpolationMode = 1,
 
     DefaultGMSet = 0,
@@ -67,8 +71,6 @@ enum
     DefaultADLChipCount = 10,
     DefaultADLPanning = 1,
 //  DefaultADL4Op = 14,
-
-    DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT
 };
 
 enum LoopType

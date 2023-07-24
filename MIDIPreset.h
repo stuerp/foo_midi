@@ -6,6 +6,7 @@
 #include <pfc/pfc-lite.h>
 
 #include "ADLPlayer.h"
+#include "Configuration.h"
 #include "OPNPlayer/OPNPlayer.h"
 #include "VSTiPlayer.h"
 
@@ -29,7 +30,7 @@ public:
     const uint32_t CurrentSchemaVersion = 12;
 
     // version 0
-    uint32_t _PlayerType;
+    PlayerType _PlayerType;
 
     // v0 - plug-in == 1 - VSTi
     pfc::string8 _VSTiFilePath;

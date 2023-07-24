@@ -366,7 +366,7 @@ void FSPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
 
 void FSPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
-    ::memset(sampleData, 0, (sampleCount * 2) * sizeof(audio_sample));
+    ::memset(sampleData, 0, ((size_t) sampleCount * 2) * sizeof(audio_sample));
 
     unsigned long Done = 0;
 
