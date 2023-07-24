@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2023.07.22) **/
+/** $VER: Resource.h (2023.07.24) **/
 
 #pragma once
 
@@ -22,7 +22,7 @@
 
 #define NUM_FILE_MAJOR          2
 #define NUM_FILE_MINOR          8
-#define NUM_FILE_PATCH          5
+#define NUM_FILE_PATCH          6
 #define NUM_FILE_PRERELEASE     0
 
 #define STR_FILE_NAME           TEXT(STR_COMPONENT_FILENAME)
@@ -31,7 +31,7 @@
 
 #define NUM_PRODUCT_MAJOR       2
 #define NUM_PRODUCT_MINOR       8
-#define NUM_PRODUCT_PATCH       5
+#define NUM_PRODUCT_PATCH       6
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRODUCT_NAME        STR_COMPANY_NAME TEXT(" ") STR_INTERNAL_NAME
@@ -107,4 +107,7 @@
 #define IDC_SECRET_SAUCE_PATH           IDC_MUNT_FILE_PATH_SELECT + 1
 #define IDC_SECRET_SAUCE_PATH_SELECT    IDC_SECRET_SAUCE_PATH + 1
 
-#define IDC_PATHS_MESSAGE               IDC_SECRET_SAUCE_PATH_SELECT + 1
+#define IDC_FLUIDSYNTH_PATH             IDC_SECRET_SAUCE_PATH_SELECT + 1
+#define IDC_FLUIDSYNTH_PATH_SELECT      IDC_FLUIDSYNTH_PATH + 1
+
+#define IDC_PATHS_MESSAGE               IDC_FLUIDSYNTH_PATH_SELECT + 1

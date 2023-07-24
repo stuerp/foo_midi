@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2023.06.11) **/
+/** $VER: BMPlayer.h (2023.07.24) **/
 
 #pragma once
 
@@ -12,6 +12,9 @@ extern bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleD
 struct sflist_presets;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
+/// <summary>
+/// Implements a MIDI player using BASS MIDI.
+/// </summary>
 class BMPlayer : public MIDIPlayer
 {
 public:
@@ -20,11 +23,12 @@ public:
 
     void SetSoundFontDirectory(const char * directoryPath);
     void SetSoundFontFile(const char * filePath);
-    void SetInterpolationMode(int interpolationMode);
-    void EnableEffects(bool enable = true);
-    void SetVoiceCount(int voices);
 
-    size_t GetActiveVoiceCount() const;
+    void SetInterpolationMode(uint32_t interpolationMode);
+    void EnableEffects(bool enable = true);
+    void SetVoiceCount(uint32_t voices);
+
+    uint32_t GetActiveVoiceCount() const noexcept;
 
 private:
     #pragma region("MIDIPlayer")
@@ -49,13 +53,13 @@ private:
     std::vector<HSOUNDFONT> _SoundFonts;
     sflist_presets * _Presets[2];
 
+    HSTREAM _Stream[3];
+
     std::string _SoundFontDirectoryPath;
     std::string _SoundFontFilePath;
 
-    HSTREAM _Stream[3];
-
-    int _InterpolationMode;
-    int _VoiceCount;
+    uint32_t _InterpolationMode;
+    uint32_t _VoiceCount;
 
     uint8_t _BankLSBOverride[48];
 

@@ -49,12 +49,10 @@ MIDIPreset::MIDIPreset() noexcept
         _SoundFontFilePath = CfgSoundFontFilePath;
     }
 
-#ifdef FLUIDSYNTHSUPPORT
     {
-        effects = cfg_fluidsynth_effects;
-        voices = (uint32_t)(int)cfg_fluidsynth_voices;
+        _FluidSynthEffectsEnabled = (bool) AdvCfgFluidSynthEffectsEnabled;
+        _FluidSynthVoices = (uint32_t) AdvCfgFluidSynthVoices;
     }
-#endif
 
     {
         _BASSMIDIEffectsEnabled = (bool) AdvCfgBASSMIDIEffectsEnabled;

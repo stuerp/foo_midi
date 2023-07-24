@@ -57,6 +57,7 @@ The following libraries are included in the code:
 * [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
 * [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 * [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
+* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.2
 
 To create the deployment package you need:
 
@@ -96,7 +97,12 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.8.5.0, 2023-07-23,  *""*
+v2.9.0.0, 2023-08-xx, *""*
+
+* New: Added FluidSynth player again. It can be selected after setting the path to the directory that contains the FluidSynth libraries.
+* Changed: Renamed dynamic info tags *bassmidi_voices* and *bassmidi_voices_max* to *midi_active_voices* and *midi_peak_voices*. The FluidSynth player also sets those tags while playing.
+
+v2.8.5.0, 2023-07-23, *""*
 
 * New: Added a configuration option to always use Super Munt when playing an MT-32 file. Default is on.
 * New: Added an configuration option to always use a VSTi to play an XG file. Default is off.
@@ -186,6 +192,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Vitaly Novichkov](https://github.com/Wohlstand) for [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) and [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI).
 * [Mitsutaka Okazaki](https://github.com/Wohlstand/scc) for Emu de MIDI.
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
+* Tom Moebert for [FluidSynth](https://www.fluidsynth.org/)
 
 ## Reference Material
 
@@ -205,6 +212,10 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 ### SoundFonts
 
 * [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
+
+### FluidSynth
+
+* [FluidSynth Documentation](https://github.com/FluidSynth/fluidsynth/wiki/Documentation)
 
 ### MIDI
 

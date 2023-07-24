@@ -68,6 +68,11 @@ public:
     uint32_t _MuntGMSet;
 #pragma endregion
 
+ #pragma region("FluidSynth")
+    bool _FluidSynthEffectsEnabled;
+    uint32_t _FluidSynthVoices;
+#pragma endregion
+
  #pragma region("BASS MIDI")
     // v2 - plug-in == 2/4 - SoundFont synthesizer
     bool _BASSMIDIEffectsEnabled;

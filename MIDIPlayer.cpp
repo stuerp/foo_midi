@@ -133,55 +133,54 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
 /// <summary>
 /// Renders the specified number of samples to an audio sample buffer.
 /// </summary>
-size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
+size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
 {
     assert(_Stream.size());
 
     if (!Startup())
         return 0;
 
-    size_t SamplesDone = 0;
-
     const uint32_t BlockSize = GetSampleBlockSize();
 
     size_t BlockOffset = 0;
 
-    // This should be a multiple of block size, and have leftover
-    while ((_SamplesRemaining > 0) && (SamplesDone < samplesSize))
+    size_t Done = 0;
+
+    while ((_SamplesRemaining > 0) && (Done < sampleCount))
     {
-        size_t SamplesRemaining = _SamplesRemaining;
+        size_t ToDo = _SamplesRemaining;
 
         {
-            if (SamplesRemaining > samplesSize - SamplesDone)
-                SamplesRemaining = samplesSize - SamplesDone;
+            if (ToDo > sampleCount - Done)
+                ToDo = sampleCount - Done;
 
-            if (BlockSize && SamplesRemaining > BlockSize)
-                SamplesRemaining = BlockSize;
+            if (BlockSize && ToDo > BlockSize)
+                ToDo = BlockSize;
         }
 
-        if (SamplesRemaining < BlockSize)
+        if (ToDo < BlockSize)
         {
             _SamplesRemaining = 0;
-            BlockOffset = SamplesRemaining;
+            BlockOffset = ToDo;
             break;
         }
 
         {
-            Render(samples + SamplesDone * 2, (unsigned long)SamplesRemaining);
+            Render(sampleData + Done * 2, (unsigned long) ToDo);
 
-            SamplesDone += SamplesRemaining;
-            _CurrentTime += SamplesRemaining;
+            Done += ToDo;
+            _CurrentTime += ToDo;
         }
 
-        _SamplesRemaining -= SamplesRemaining;
+        _SamplesRemaining -= ToDo;
     }
 
-    while (SamplesDone < samplesSize)
+    while (Done < sampleCount)
     {
         size_t TimeToDo = _EndTime - _CurrentTime;
 
-        if (TimeToDo > samplesSize - SamplesDone)
-            TimeToDo = samplesSize - SamplesDone;
+        if (TimeToDo > sampleCount - Done)
+            TimeToDo = sampleCount - Done;
 
         const size_t TargetTime = _CurrentTime + TimeToDo;
 
@@ -202,40 +201,40 @@ size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
                         _MusicKeyboard->ProcessMessage(me.Data, me.Timestamp);
                 #endif
 
-                    int64_t SamplesToDo = (int64_t)me.Timestamp - (int64_t)_CurrentTime - (int64_t)BlockOffset;
+                    int64_t ToDo = (int64_t) me.Timestamp - (int64_t) _CurrentTime - (int64_t) BlockOffset;
 
-                    if (SamplesToDo > 0)
+                    if (ToDo > 0)
                     {
-                        if (SamplesToDo > (int64_t)(samplesSize - SamplesDone))
+                        if (ToDo > (int64_t)(sampleCount - Done))
                         {
-                            _SamplesRemaining = (size_t)(SamplesToDo - (int64_t)(samplesSize - SamplesDone));
-                            SamplesToDo = (int64_t)(samplesSize - SamplesDone);
+                            _SamplesRemaining = (size_t) (ToDo - (int64_t) (sampleCount - Done));
+                            ToDo = (int64_t) (sampleCount - Done);
                         }
 
-                        if ((SamplesToDo > 0) && (BlockSize == 0))
+                        if ((ToDo > 0) && (BlockSize == 0))
                         {
-                            Render(samples + SamplesDone * 2, (unsigned long)SamplesToDo);
+                            Render(sampleData + Done * 2, (unsigned long)ToDo);
 
-                            SamplesDone += SamplesToDo;
-                            _CurrentTime += (uint32_t)SamplesToDo;
+                            Done += ToDo;
+                            _CurrentTime += (uint32_t)ToDo;
                         }
 
                         if (_SamplesRemaining > 0)
                         {
                             _SamplesRemaining += BlockOffset;
-                            return (unsigned long)SamplesDone;
+                            return (unsigned long) Done;
                         }
                     }
 
                     if (BlockSize > 0)
                     {
-                        BlockOffset += SamplesToDo;
+                        BlockOffset += ToDo;
 
                         while (BlockOffset >= BlockSize)
                         {
-                            Render(samples + SamplesDone * 2, BlockSize);
+                            Render(sampleData + (Done * 2), BlockSize);
 
-                            SamplesDone += BlockSize;
+                            Done += BlockSize;
                             BlockOffset -= BlockSize;
                             _CurrentTime += BlockSize;
                         }
@@ -248,7 +247,7 @@ size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
             }
         }
 
-        if (SamplesDone < samplesSize)
+        if (Done < sampleCount)
         {
             size_t SamplesToDo;
 
@@ -263,8 +262,8 @@ size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
                 BlockOffset = SamplesToDo;
 
             {
-                if (SamplesToDo > samplesSize - SamplesDone)
-                    SamplesToDo = samplesSize - SamplesDone;
+                if (SamplesToDo > sampleCount - Done)
+                    SamplesToDo = sampleCount - Done;
 
                 if ((BlockSize > 0) && (SamplesToDo > BlockSize))
                     SamplesToDo = BlockSize;
@@ -273,9 +272,9 @@ size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
             if (SamplesToDo >= BlockSize)
             {
                 {
-                    Render(samples + SamplesDone * 2, (unsigned long)SamplesToDo);
+                    Render(sampleData + Done * 2, (unsigned long)SamplesToDo);
 
-                    SamplesDone += SamplesToDo;
+                    Done += SamplesToDo;
                     _CurrentTime += SamplesToDo;
                 }
 
@@ -320,7 +319,7 @@ size_t MIDIPlayer::Play(audio_sample * samples, size_t samplesSize)
 
     _SamplesRemaining = BlockOffset;
 
-    return SamplesDone;
+    return Done;
 }
 
 /// <summary>

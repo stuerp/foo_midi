@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.07.23) **/
+/** $VER: PreferencesRoot.cpp (2023.07.24) P. Stuer **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -22,6 +22,7 @@
 #include <helpers/atl-misc.h>
 #include <helpers/dropdown_helper.h>
 
+#include <pfc/string-conv-lite.h>
 #include <pfc/pathUtils.h>
 
 #include "resource.h"
@@ -33,6 +34,8 @@
 #include "BMPlayer.h"
 #include "NukePlayer.h"
 #include "VSTiPlayer.h"
+
+#include "FluidSynth.h"
 
 #pragma hdrstop
 
@@ -46,14 +49,12 @@ static const int SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 4410
 static cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
 
 #pragma region("FluidSynth")
-#ifdef FLUIDSYNTHSUPPORT
 static const char * interp_txt[] = { "None", "Linear", "Cubic", "7th Order Sinc" };
 static int interp_method[] = { FLUID_INTERP_NONE, FLUID_INTERP_LINEAR, FLUID_INTERP_4THORDER, FLUID_INTERP_7THORDER };
 enum
 {
     interp_method_default = 2
 };
-#endif
 #pragma endregion
 
 #pragma region("Munt")
@@ -173,11 +174,17 @@ private:
 private:
     bool _IsBusy;
 
+    struct InstalledPlayer
+    {
+        pfc::string8 Name;
+        int Type;
+    };
+
     struct BuiltInPlayer
     {
         const char * Name;
         int Type;
-        int PlayerTypeAlternate;
+        int Fallback;
         bool (*IsPresent)(PreferencesRootPage *);
     };
 
@@ -287,9 +294,16 @@ private:
         return p->_HasSecretSauce;
     }
 
+    static bool IsFluidSynthPresent(PreferencesRootPage *)
+    {
+        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath));
+    }
+
     int _PlayerPresentCount;
 
     static const BuiltInPlayer BuiltInPlayers[];
+
+    std::vector<InstalledPlayer> _InstalledPlayers;
 
     std::map<int, int> _PlayerTypeToPlayerIndex;
     std::map<int, int> _PlayerPresentMap;
@@ -305,21 +319,15 @@ private:
 /// </summary>
 const PreferencesRootPage::BuiltInPlayer PreferencesRootPage::BuiltInPlayers[] =
 {
-    { "Emu de MIDI",    PlayerTypeEmuDeMIDI,      -1, IsPluginAlwaysPresent },
-
-#ifdef FLUIDSYNTHSUPPORT
-    { "FluidSynth",     FluidSynthPluginId,       -1, IsPluginAlwaysPresent },
-#endif
-
-    { "BASSMIDI",       PlayerTypeBASSMIDI, PlayerTypeFluidSynth, IsPluginAlwaysPresent },
-
-    { "Super Munt GM",  PlayerTypeSuperMunt,      -1, IsPluginAlwaysPresent },
-
-    { "LibADLMIDI",     PlayerTypeADL,            -1, IsPluginAlwaysPresent },
-    { "LibOPNMIDI",     PlayerTypeOPN,            -1, IsPluginAlwaysPresent },
-    { "OPL MIDI",       PlayerTypeOPL,            -1, IsPluginNeverPresent },
-    { "Nuke",           PlayerTypeNuke,           -1, IsPluginAlwaysPresent },
-    { "Secret Sauce",   PlayerTypeSecretSauce,    -1, IsSecretSaucePresent }
+    { "Emu de MIDI",    PlayerTypeEmuDeMIDI,    -1,                   IsPluginAlwaysPresent },
+    { "FluidSynth",     PlayerTypeFluidSynth,   PlayerTypeBASSMIDI,   IsFluidSynthPresent },
+    { "BASSMIDI",       PlayerTypeBASSMIDI,     PlayerTypeFluidSynth, IsPluginAlwaysPresent },
+    { "Super Munt GM",  PlayerTypeSuperMunt,    -1,                   IsPluginAlwaysPresent },
+    { "LibADLMIDI",     PlayerTypeADL,          -1,                   IsPluginAlwaysPresent },
+    { "LibOPNMIDI",     PlayerTypeOPN,          -1,                   IsPluginAlwaysPresent },
+    { "OPL MIDI",       PlayerTypeOPL,          -1,                   IsPluginNeverPresent },
+    { "Nuke",           PlayerTypeNuke,         -1,                   IsPluginAlwaysPresent },
+    { "Secret Sauce",   PlayerTypeSecretSauce,  -1,                   IsSecretSaucePresent }
 };
 
 #pragma region("preferences_page_instance")
@@ -386,7 +394,7 @@ void PreferencesRootPage::apply()
     }
 
     {
-        int t = (int) GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE);
+        UINT t = GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE);
 
         if (t < 6000)
             t = 6000;
@@ -394,15 +402,15 @@ void PreferencesRootPage::apply()
         if (t > 192000)
             t = 192000;
 
-        SetDlgItemInt(IDC_SAMPLERATE, (UINT)t, FALSE);
+        SetDlgItemInt(IDC_SAMPLERATE, t, FALSE);
 
         {
             char Text[16];
 
-            _itoa_s(t, Text, _countof(Text), 10);
+            _itoa_s((int) t, Text, _countof(Text), 10);
 
             CfgSampleRateHistory.add_item(Text);
-            CfgSampleRate = t;
+            CfgSampleRate = (t_int) t;
         }
     }
     #pragma endregion
@@ -492,8 +500,9 @@ void PreferencesRootPage::apply()
     }
     #pragma endregion
 
-#ifdef FLUIDSYNTHSUPPORT
+    #pragma region("FluidSynth")
     {
+/*
         int interp_method = SendDlgItemMessage(IDC_RESAMPLING, CB_GETCURSEL);
 
         if (interp_method == 2)
@@ -502,9 +511,10 @@ void PreferencesRootPage::apply()
         if (interp_method == 3)
             interp_method = 7;
         
-        Cfg_FluidSynthInterpolationMethod = interp_method;
+        CfgFluidSynthInterpolationMode = interp_method;
+*/
     }
-#endif
+    #pragma endregion
 
     OnChanged();
 }
@@ -606,9 +616,8 @@ void PreferencesRootPage::reset()
     #pragma region("SoundFont")
 #ifdef FLUIDSYNTHSUPPORT
     SendDlgItemMessage(IDC_RESAMPLING, CB_SETCURSEL, 2);
-#else
-    SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIInterpolationMode);
 #endif
+    SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIInterpolationMode);
     #pragma endregion
 
     #pragma region("Munt")
@@ -660,12 +669,22 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     for (size_t i = 0; i < _countof(BuiltInPlayers); ++i)
     {
-        _PlayerTypeToPlayerIndex[BuiltInPlayers[i].Type] = (int)i;
+        if (BuiltInPlayers[i].IsPresent(this))
+        {
+            struct InstalledPlayer ip;
 
-        if (BuiltInPlayers[i].PlayerTypeAlternate >= 0)
-            _PlayerTypeToPlayerIndex[BuiltInPlayers[i].PlayerTypeAlternate] = (int)i;
+            ip.Name = BuiltInPlayers[i].Name;
+            ip.Type = BuiltInPlayers[i].Type;
+
+            _InstalledPlayers.push_back(ip);
+        }
+
+        _PlayerTypeToPlayerIndex[BuiltInPlayers[i].Type] = (int) i;
+
+//      if (BuiltInPlayers[i].Fallback >= 0)
+//          _PlayerTypeToPlayerIndex[BuiltInPlayers[i].Fallback] = (int)i;
     }
-
+/*
     int PlayerIndex = -1;
 
     if ((PlayerType != PlayerTypeVSTi) && (PlayerType != PlayerTypeDirectX))
@@ -678,11 +697,11 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             PlayerIndex = _PlayerTypeToPlayerIndex[DefaultPlayerType];
         }
         else
-        if (BuiltInPlayers[PlayerIndex].PlayerTypeAlternate == PlayerType)
+        if (BuiltInPlayers[PlayerIndex].Fallback == PlayerType)
             PlayerType = BuiltInPlayers[PlayerIndex].Type;
     }
-
-    size_t VSTiPluginIndex = (size_t)~0;
+*/
+    size_t VSTiPluginIndex = (size_t) ~0;
 
     {
         CWindow w = GetDlgItem(IDC_PLAYER_TYPE);
@@ -700,8 +719,8 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
                 {
                     _PlayerPresentMap[bip.Type] = _PlayerPresentCount;
 
-                    if (bip.PlayerTypeAlternate >= 0)
-                        _PlayerPresentMap[bip.PlayerTypeAlternate] = _PlayerPresentCount;
+//                    if (bip.Fallback >= 0)
+//                        _PlayerPresentMap[bip.Fallback] = _PlayerPresentCount;
 
                     _PlayerIndexToPlayerType[_PlayerPresentCount] = bip.Type;
                     _PlayerPresentCount++;
@@ -776,10 +795,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
     if ((PlayerType == PlayerTypeVSTi) && (VSTiPluginIndex == ~0))
-    {
         PlayerType = DefaultPlayerType;
-        PlayerIndex = _PlayerTypeToPlayerIndex[DefaultPlayerType];
-    }
 
     {
         bool Enable = (PlayerType == PlayerTypeFluidSynth) || (PlayerType == PlayerTypeBASSMIDI);
@@ -848,7 +864,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         int SelectedIndex = -1;
 
         if (PlayerType == PlayerTypeVSTi)
-            SelectedIndex = _PlayerPresentCount + (int)VSTiPluginIndex;
+            SelectedIndex = _PlayerPresentCount + (int) VSTiPluginIndex;
     #ifdef DXISUPPORT
         else
         if (PlayerType == PlayerTypeDirectX)
@@ -988,16 +1004,16 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         ::uSendMessageText(w, CB_ADDSTRING, 0, "Cubic interpolation");
         ::uSendMessageText(w, CB_ADDSTRING, 0, "7pt Sinc interpolation");
 
-        if (Cfg_FluidSynthInterpolationMethod == 0)
+        if (CfgFluidSynthInterpolationMode == 0)
             ::SendMessage(w, CB_SETCURSEL, 0, 0);
         else
-        if (Cfg_FluidSynthInterpolationMethod == 1)
+        if (CfgFluidSynthInterpolationMode == 1)
             ::SendMessage(w, CB_SETCURSEL, 1, 0);
         else
-        if (Cfg_FluidSynthInterpolationMethod == 4)
+        if (CfgFluidSynthInterpolationMode == 4)
             ::SendMessage(w, CB_SETCURSEL, 2, 0);
         else
-        if (Cfg_FluidSynthInterpolationMethod == 7)
+        if (CfgFluidSynthInterpolationMode == 7)
             ::SendMessage(w, CB_SETCURSEL, 3, 0);
         else
             ::SendMessage(w, CB_SETCURSEL, 3, 0);
@@ -1314,7 +1330,7 @@ bool PreferencesRootPage::HasChanged()
         if (interp_method == 3)
             interp_method = 7;
 
-        if (interp_method != Cfg_FluidSynthInterpolationMethod)
+        if (interp_method != CfgFluidSynthInterpolationMode)
             return true;
     }
 #endif

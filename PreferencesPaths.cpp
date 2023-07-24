@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2023.05.20) **/
+/** $VER: PreferencesPaths.cpp (2023.07.24) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -47,8 +47,9 @@ public:
     {
         AdvCfgVSTiPluginDirectoryPath.get(_VSTiPluginDirectoryPath);
         _SoundFontFilePath = CfgSoundFontFilePath;
-        _MT32ROMDirectoryPath = CfgMuntDirectoryPath;
+        _MT32ROMDirectoryPath = CfgMT32ROMDirectoryPath;
         AdvCfgSecretSauceDirectoryPath.get(_SecretSauceDirectoryPath);
+        _FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
     }
 
     PreferencesPathsPage(const PreferencesPathsPage&) = delete;
@@ -76,6 +77,8 @@ public:
         COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH, EN_KILLFOCUS, OnLostFocus)
         COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH, EN_KILLFOCUS, OnLostFocus)
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH_SELECT, BN_CLICKED, OnButtonClicked)
     END_MSG_MAP()
 
     enum
@@ -111,6 +114,10 @@ private:
     pfc::string8 _SecretSauceDirectoryPath;
 #pragma endregion
 
+#pragma region("FluidSynth")
+    pfc::string8 _FluidSynthDirectoryPath;
+#pragma endregion
+
     const preferences_page_callback::ptr _Callback;
 
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
@@ -137,8 +144,9 @@ void PreferencesPathsPage::apply()
 {
     AdvCfgVSTiPluginDirectoryPath.set(_VSTiPluginDirectoryPath);
     CfgSoundFontFilePath = _SoundFontFilePath;
-    CfgMuntDirectoryPath = _MT32ROMDirectoryPath;
+    CfgMT32ROMDirectoryPath = _MT32ROMDirectoryPath;
     AdvCfgSecretSauceDirectoryPath.set(_SecretSauceDirectoryPath);
+    CfgFluidSynthDirectoryPath = _FluidSynthDirectoryPath;
 
     OnChanged();
 }
@@ -152,6 +160,7 @@ void PreferencesPathsPage::reset()
     _SoundFontFilePath.reset();
     _MT32ROMDirectoryPath.reset();
     _SecretSauceDirectoryPath.reset();
+    _FluidSynthDirectoryPath.reset();
 
     UpdateDialog();
 
@@ -200,6 +209,10 @@ void PreferencesPathsPage::OnLostFocus(UINT code, int id, CWindow) noexcept
 
         case IDC_SECRET_SAUCE_PATH:
             _SecretSauceDirectoryPath = pfc::utf8FromWide(Text);
+            break;
+
+        case IDC_FLUIDSYNTH_PATH:
+            _FluidSynthDirectoryPath = pfc::utf8FromWide(Text);
             break;
 
         default:
@@ -294,6 +307,22 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
             OnChanged();
         }
     }
+    else
+    if (id == IDC_FLUIDSYNTH_PATH_SELECT)
+    {
+        pfc::string8 DirectoryPath = _FluidSynthDirectoryPath;
+
+        if (::uBrowseForFolder(m_hWnd, "Locate FluidSynth...", DirectoryPath))
+        {
+            _FluidSynthDirectoryPath = DirectoryPath;
+
+            pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
+
+            SetDlgItemText(IDC_FLUIDSYNTH_PATH, w);
+
+            OnChanged();
+        }
+    }
 }
 
 /// <summary>
@@ -313,12 +342,15 @@ bool PreferencesPathsPage::HasChanged() const noexcept
     if (_SoundFontFilePath != CfgSoundFontFilePath)
         HasChanged = true;
 
-    if (_MT32ROMDirectoryPath != CfgMuntDirectoryPath)
+    if (_MT32ROMDirectoryPath != CfgMT32ROMDirectoryPath)
         HasChanged = true;
 
     AdvCfgSecretSauceDirectoryPath.get(DirectoryPath);
 
     if (_SecretSauceDirectoryPath != DirectoryPath)
+        HasChanged = true;
+
+    if (_FluidSynthDirectoryPath != CfgFluidSynthDirectoryPath)
         HasChanged = true;
 
     GetDlgItem(IDC_PATHS_MESSAGE).ShowWindow(HasChanged ? SW_SHOW : SW_HIDE);
@@ -343,6 +375,7 @@ void PreferencesPathsPage::UpdateDialog() const noexcept
     ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, _SoundFontFilePath);
     ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, _MT32ROMDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_SECRET_SAUCE_PATH, _SecretSauceDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_PATH, _FluidSynthDirectoryPath);
 }
 #pragma endregion
 

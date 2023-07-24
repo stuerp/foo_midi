@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.07.23) **/
+/** $VER: Configuration.h (2023.07.24) **/
 
 #pragma once
 
@@ -10,6 +10,8 @@
 #include "MIDIPlayer.h"
 
 #include "ConfigurationMap.h"
+
+#include <fluidsynth.h>
 
 extern const GUID PreferencesPageGUID;
 extern const GUID PreferencesPathsPageGUID;
@@ -66,9 +68,7 @@ enum
     DefaultADLPanning = 1,
 //  DefaultADL4Op = 14,
 
-#ifdef FLUIDSYNTHSUPPORT
     DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT
-#endif
 };
 
 enum LoopType
@@ -101,6 +101,7 @@ extern cfg_int
     CfgFilterBanks,
 
     CfgBASSMIDIInterpolationMode,
+    CfgFluidSynthInterpolationMode,
 
     CfgADLBank,
     CfgADLChipCount,
@@ -115,18 +116,13 @@ extern cfg_int
     CfgMIDIFlavor,
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
-    CfgUseVSTiWithXG
-
-#ifdef FLUIDSYNTHSUPPORT
-,
-    Cfg_FluidSynthInterpolationMethod
-#endif
-;
+    CfgUseVSTiWithXG;
 
 extern cfg_string
     CfgVSTiFilePath,
     CfgSoundFontFilePath,
-    CfgMuntDirectoryPath;
+    CfgMT32ROMDirectoryPath,
+    CfgFluidSynthDirectoryPath;
 
 extern cfg_map
     CfgVSTiConfig;
@@ -152,6 +148,10 @@ extern advconfig_radio_factory AdvCfgOPNBankGS;
 extern advconfig_radio_factory AdvCfgOPNBankGEMS;
 extern advconfig_radio_factory AdvCfgOPNBankTomSoft;
 extern advconfig_radio_factory AdvCfgOPNBankFMMIDI;
+
+extern advconfig_integer_factory AdvCfgFluidSynthVoices;
+extern advconfig_checkbox_factory AdvCfgFluidSynthEffectsEnabled;
+extern advconfig_checkbox_factory AdvCfgLoadSoundFontDynamically;
 
 extern advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled;
 extern advconfig_integer_factory AdvCfgBASSMIDIVoices;
@@ -183,8 +183,8 @@ extern const char TagMIDILyricsType[];
 extern const char TagMIDIHash[];
 
 extern const char TagSampleRate[];
-extern const char TagBASSMIDIVoiceCount[];
-extern const char TagBASSMIDIVoicesMax[];
+extern const char TagMIDIActiveVoices[];
+extern const char TagMIDIPeakVoices[];
 
 extern const char TagMIDIPlayer[];
 extern const char TagExtraPercusionChannel[];

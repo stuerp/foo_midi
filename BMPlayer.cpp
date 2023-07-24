@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2023.06.11) **/
+/** $VER: BMPlayer.cpp (2023.07.24) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -388,14 +388,14 @@ public:
 
     bool IsInitialized()
     {
-        insync(_InitializerLock);
+        insync(_Lock);
 
         return _IsInitialized;
     }
 
-    bool initialize()
+    bool Initialize()
     {
-        insync(_InitializerLock);
+        insync(_Lock);
 
         if (!_IsInitialized)
         {
@@ -413,7 +413,7 @@ public:
             _IsInitialized = !!BASS_Init(0, 44100, 0, 0, NULL);
 
             if (!_IsInitialized)
-                _IsInitialized = _IsAlreadyInitialized = (::BASS_ErrorGetCode() == BASS_ERROR_ALREADY);
+                _IsInitialized = (::BASS_ErrorGetCode() == BASS_ERROR_ALREADY);
 
             if (_IsInitialized)
             {
@@ -446,12 +446,11 @@ public:
     }
 
 private:
-    critical_section _InitializerLock;
+    critical_section _Lock;
 
     std::string _BasePath;
 
     bool _IsInitialized;
-    bool _IsAlreadyInitialized;
 } _BASSInitializer;
 #pragma warning(default: 4820) // x bytes padding added after data member
 
@@ -468,8 +467,8 @@ BMPlayer::BMPlayer() : MIDIPlayer()
     _Presets[0] = 0;
     _Presets[1] = 0;
 
-    if (!_BASSInitializer.initialize())
-        throw std::runtime_error("Unable to initialize BASS");
+    if (!_BASSInitializer.Initialize())
+        throw std::runtime_error("Unable to initialize BASS MIDI");
 }
 
 BMPlayer::~BMPlayer()
@@ -479,18 +478,29 @@ BMPlayer::~BMPlayer()
 
 void BMPlayer::SetSoundFontDirectory(const char * directoryPath)
 {
+    if (_SoundFontDirectoryPath == directoryPath)
+        return;
+
     _SoundFontDirectoryPath = directoryPath;
+
     Shutdown();
 }
 
 void BMPlayer::SetSoundFontFile(const char * filePath)
 {
+    if (_SoundFontFilePath == filePath)
+        return;
+
     _SoundFontFilePath = filePath;
+
     Shutdown();
 }
 
-void BMPlayer::SetInterpolationMode(int interpolationMode)
+void BMPlayer::SetInterpolationMode(uint32_t interpolationMode)
 {
+    if (_InterpolationMode == interpolationMode)
+        return;
+
     _InterpolationMode = interpolationMode;
 
     Shutdown();
@@ -498,12 +508,15 @@ void BMPlayer::SetInterpolationMode(int interpolationMode)
 
 void BMPlayer::EnableEffects(bool enabled)
 {
+    if (_DoReverbAndChorusProcessing == enabled)
+        return;
+
     _DoReverbAndChorusProcessing = enabled;
 
     Shutdown();
 }
 
-void BMPlayer::SetVoiceCount(int voiceCount)
+void BMPlayer::SetVoiceCount(uint32_t voiceCount)
 {
     if (voiceCount < 1)
         voiceCount = 1;
@@ -523,7 +536,7 @@ void BMPlayer::SetVoiceCount(int voiceCount)
         ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_MIDI_VOICES, (float) voiceCount);
 }
 
-size_t BMPlayer::GetActiveVoiceCount() const
+uint32_t BMPlayer::GetActiveVoiceCount() const noexcept
 {
     size_t VoiceCount = 0;
 
@@ -651,7 +664,7 @@ void BMPlayer::SendEvent(uint32_t message)
     uint8_t Event[3]
     {
         static_cast<uint8_t>(message),
-        static_cast<uint8_t>(message >> 8),
+        static_cast<uint8_t>(message >>  8),
         static_cast<uint8_t>(message >> 16)
     };
 
@@ -675,38 +688,39 @@ void BMPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
     if (port > 2)
         port = 0;
 
-    ::BASS_MIDI_StreamEvents(_Stream[port], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
+    ::BASS_MIDI_StreamEvents(_Stream[port], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
 
     if (port == 0)
     {
-        ::BASS_MIDI_StreamEvents(_Stream[1], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
-        ::BASS_MIDI_StreamEvents(_Stream[2], BASS_MIDI_EVENTS_RAW, event, static_cast<unsigned int>(size));
+        ::BASS_MIDI_StreamEvents(_Stream[1], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
+        ::BASS_MIDI_StreamEvents(_Stream[2], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
     }
 }
 
-void BMPlayer::Render(audio_sample * samples, unsigned long samplesSize)
+void BMPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
     float Buffer[512 * 2];
 
-    while (samplesSize > 0)
+    while (sampleCount != 0)
     {
-        unsigned long ToDo = samplesSize;
+        unsigned long ToDo = sampleCount;
 
         if (ToDo > 512)
             ToDo = 512;
 
-        ::memset(samples, 0, (size_t) (((size_t) ToDo * 2) * sizeof(audio_sample)));
+        ::memset(sampleData, 0, (size_t) (ToDo * 2) * sizeof(audio_sample));
 
-        for (size_t i = 0; i < 3; ++i)
+        for (size_t i = 0; i < _countof(_Stream); ++i)
         {
-            ::BASS_ChannelGetData(_Stream[i], Buffer, BASS_DATA_FLOAT | (DWORD) (((size_t) ToDo * 2) * sizeof(float)));
+            ::BASS_ChannelGetData(_Stream[i], Buffer, BASS_DATA_FLOAT | (DWORD) ((size_t) (ToDo * 2) * sizeof(float)));
 
-            for (size_t j = 0; j < ((size_t) ToDo * 2); ++j)
-                samples[j] += (audio_sample) Buffer[j];
+            // Convert the format of the rendered output.
+            for (unsigned long j = 0; j < (ToDo * 2); ++j)
+                sampleData[j] += Buffer[j];
         }
 
-        samples     += (ToDo * 2);
-        samplesSize -= ToDo;
+        sampleData += (ToDo * 2);
+        sampleCount -= ToDo;
     }
 }
 

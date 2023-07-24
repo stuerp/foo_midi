@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPathsLayout.h (2023.01.07) **/
+/** $VER: PreferencesPathsLayout.h (2023.07.24) **/
 
 #pragma once
 
@@ -84,4 +84,24 @@
 #define Y_B42    Y_B41
 #define W_B42    W_B00 - 7 - W_B41 - 3 - W_B43 - 3 - 7
 #define H_B42    14
+#pragma endregion
+
+#pragma region("FluidSynth path")
+// Label
+#define X_B51    X_B41
+#define Y_B51    Y_B42 + H_B42 + 4
+#define W_B51    W_B41
+#define H_B51    8
+
+// Button
+#define W_B53    16
+#define H_B53    14
+#define X_B53    W_B00 - 7 - W_B53
+#define Y_B53    Y_B52
+
+// EditBox
+#define X_B52    X_B51 + W_B51 + 3
+#define Y_B52    Y_B51
+#define W_B52    W_B00 - 7 - W_B51 - 3 - W_B53 - 3 - 7
+#define H_B52    14
 #pragma endregion

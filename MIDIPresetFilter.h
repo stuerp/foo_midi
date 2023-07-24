@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPresetFilter.h (2023.06.04) **/
+/** $VER: MIDIPresetFilter.h (2023.07.23) **/
 
 #pragma once
 
@@ -8,7 +8,9 @@
 
 #include "Configuration.h"
 
-// Provides direct control over which part of file_info gets altered during a tag update uperation. To be used with metadb_io_v2::update_info_async().
+/// <summary>
+/// Provides direct control over which part of file_info gets altered during a tag update uperation. To be used with metadb_io_v2::update_info_async().
+/// </summary>
 class MIDIPresetFilter : public file_info_filter
 {
 public:

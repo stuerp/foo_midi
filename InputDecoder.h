@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.07.23) **/
+/** $VER: InputDecoder.h (2023.07.24) **/
 
 #pragma once
 
@@ -24,15 +24,12 @@
 #include "ADLPlayer.h"
 #include "BMPlayer.h"
 #include "EdMPlayer.h"
+#include "FSPlayer.h"
 #include "NukePlayer.h"
 #include <MT32Player/MT32Player.h>
 #include <OPNPlayer/OPNPlayer.h>
 #include "SCPlayer.h"
 #include "VSTiPlayer.h"
-
-#ifdef FLUIDSYNTHSUPPORT
-#include "SFPlayer.h"
-#endif
 
 #ifdef DXISUPPORT
 #include "DXiProxy.h"
@@ -58,7 +55,7 @@ public:
         _FileStats2{},
 
         _IsSysExFile(false),
-        _TrackCount(0),
+        _TrackCount(),
 
         _IsMT32(),
         _IsXG(),
@@ -83,6 +80,8 @@ public:
 
         _LengthInSamples(0),
 
+        _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode),
+
         _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIInterpolationMode)
     {
         _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
@@ -91,10 +90,6 @@ public:
 
         _LoopCount    = (uint32_t) AdvCfgLoopCount.get();
         _FadeDuration = (uint32_t) AdvCfgFadeTimeInMS.get();
-
-    #ifdef FLUIDSYNTHSUPPORT
-        _FluidSynthInterpolationMethod(Cfg_FluidSynthInterpolationMethod),
-    #endif
 
     #ifdef DXISUPPORT
         dxiProxy = nullptr;
@@ -249,7 +244,7 @@ private:
     MIDIContainer _Container;
 
     bool _IsSysExFile;
-    size_t _TrackCount;
+    uint32_t _TrackCount;
 
     metadb_index_hash _Hash;
     hasher_md5_result _FileHash;
@@ -287,20 +282,18 @@ private:
 
     uint32_t _CleanFlags;
 
+    uint32_t _FluidSynthInterpolationMethod;
+
+    uint32_t _BASSMIDIInterpolationMode;
+
     bool _IsLooping;
     bool _IsEndOfContainer;
-    bool _DontLoop;
     bool _IsFirstChunk;
 
     double _AudioChunkDuration;
 
-    uint32_t _BASSMIDIInterpolationMode;
-    size_t _BASSMIDIVoiceCount;
-    size_t _BASSMIDIVoiceMax;
-
-#ifdef FLUIDSYNTHSUPPORT
-    uint32_t _FluidSynthInterpolationMethod;
-#endif
+    uint32_t _ActiveVoiceCount;
+    uint32_t _PeakVoiceCount;
 
 #ifdef DXISUPPORT
     DXiProxy * dxiProxy;

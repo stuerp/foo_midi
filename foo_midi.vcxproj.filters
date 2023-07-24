@@ -29,6 +29,7 @@
     <ClCompile Include="PreferencesPaths.cpp" />
     <ClCompile Include="KaraokeProcessor.cpp" />
     <ClCompile Include="SoundFontCache.cpp" />
+    <ClCompile Include="FSPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -134,6 +135,44 @@
     <ClInclude Include="KaraokeProcessor.h" />
     <ClInclude Include="Exceptions.h" />
     <ClInclude Include="SoundFontCache.h" />
+    <ClInclude Include="FSPlayer.h" />
+    <ClInclude Include="FluidSynth.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\audio.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\event.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\gen.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\ladspa.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\log.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\midi.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\misc.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\mod.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\seq.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\seqbind.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\settings.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\sfont.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\shell.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\synth.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\types.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\version.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\voice.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\audio.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\event.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\gen.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\ladspa.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\log.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\midi.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\misc.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\mod.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\seq.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\seqbind.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\settings.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\sfont.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\shell.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\synth.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\types.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\version.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
+    <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
