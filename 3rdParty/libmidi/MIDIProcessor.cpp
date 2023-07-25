@@ -16,8 +16,16 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
     if (IsSMF(data))
         return ProcessSMF(data, container);
 
+    // .RMI
     if (IsRIFF(data))
         return ProcessRIFF(data, container);
+
+    // .XMI, .XFM
+    if (IsXMI(data))
+        return ProcessXMI(data, container);
+
+    if (IsMIDS(data))
+        return ProcessMIDS(data, container);
 
     if (is_hmp(data))
         return process_hmp(data, container);
@@ -25,14 +33,8 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
     if (is_hmi(data))
         return process_hmi(data, container);
 
-    if (is_xmi(data))
-        return process_xmi(data, container);
-
     if (is_mus(data))
         return process_mus(data, container);
-
-    if (IsMIDS(data))
-        return ProcessMIDS(data, container);
 
     if (is_lds(data, fileExtension))
         return process_lds(data, container);
@@ -84,7 +86,7 @@ bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, const char 
         return true;
     }
 
-    if (is_xmi(data))
+    if (IsXMI(data))
         return GetTrackCountFromXMI(data, trackCount);
 
     if (is_mus(data))

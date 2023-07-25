@@ -99,8 +99,11 @@ branch. Pull requests are warmly welcome.
 
 v2.9.0.0, 2023-08-xx, *""*
 
-* New: Added FluidSynth player again. It can be selected after setting the path to the directory that contains the FluidSynth libraries.
+* New: Added FluidSynth player again.
+  * It can be selected after setting the path to the directory that contains the FluidSynth libraries. You can download FluidSynth [here](https://github.com/FluidSynth/fluidsynth/releases). Make sure you download the version that has the same CPU architecture as foobar2000 (x64 or x86).
+* New: Added .XFM as an alternative file extension for XMI files.
 * Changed: Renamed dynamic info tags *bassmidi_voices* and *bassmidi_voices_max* to *midi_active_voices* and *midi_peak_voices*. The FluidSynth player also sets those tags while playing.
+* Bug Fix: Some XMI files could not be read.
 
 TODO: Does FluidSynth use all CC's?
 TODO: Does FluidSynth switch between GM, GS and XG?

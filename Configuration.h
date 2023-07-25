@@ -20,7 +20,9 @@ enum class PlayerType : int8_t
 {
     Unknown = -1,
 
-    EmuDeMIDI = 0,
+    Min = 0,
+
+    EmuDeMIDI = Min,
     VSTi = 1,
     FluidSynth = 2,
     SuperMunt = 3,

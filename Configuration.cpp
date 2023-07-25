@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.07.24) **/
+/** $VER: Configuration.cpp (2023.07.25) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -240,7 +240,7 @@ const char * _FileExtensions[] =
     "HMP",
     "HMQ",
     "MUS",
-    "XMI",
+    "XMI", "XFM",
     "LDS",
 };
 

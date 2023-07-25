@@ -113,6 +113,14 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
                 case SMFBadFirstMessage: Message += "Bad first message of a track"; break;
 
+                // XMI
+                case XMIFORMXDIRNotFound: Message += "FORM XDIR chunk not found"; break;
+                case XMICATXMIDNotFound: Message += "CAT XMID chunk not found"; break;
+                case XMIFORMXMIDNotFound: Message += "FORM XMID chunk not found"; break;
+                case XMIEVNTChunkNotFound: Message += "EVNT chunk not found"; break;
+
+                case XMIInvalidNoteMessage: Message += "Invalid note message"; break;
+
                 default: Message += "Unknown error code"; break;
             }
 
@@ -193,19 +201,22 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     MIDIPreset Preset;
 
     // Set the player type based on the content of the container.
-    if (_IsXG && CfgUseVSTiWithXG)
     {
-        _PlayerType = PlayerType::VSTi;
+        if (_IsXG && CfgUseVSTiWithXG)
+        {
+            _PlayerType = PlayerType::VSTi;
 
-        pfc::string8 FilePath;
+            pfc::string8 FilePath;
 
-        AdvCfgVSTiXGPlugin.get(FilePath), Preset._VSTiFilePath = FilePath;
+            AdvCfgVSTiXGPlugin.get(FilePath), Preset._VSTiFilePath = FilePath;
+        }
+        else
+        if (_IsMT32 && CfgUseSuperMuntWithMT32)
+            _PlayerType = PlayerType::SuperMunt;
     }
-    else
-    if (_IsMT32 && CfgUseSuperMuntWithMT32)
-        _PlayerType = PlayerType::SuperMunt;
 
     {
+        // Load the preset from the song if it has one.
         file_info_impl FileInfo;
 
         get_info(subSongIndex, FileInfo, abortHandler);
@@ -226,6 +237,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         MIDISysExDumps SysExDumps;
 
+        // Load the sysex from the song if it has one.
         {
             const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
 
@@ -411,8 +423,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         case PlayerType::FluidSynth:
         {
             {
-//              _FluidSynthVoiceCount = 0;
-//              _FluidSynthVoiceMax = 0;
+                _ActiveVoiceCount = 0;
+                _PeakVoiceCount = 0;
 
                 if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
                     throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found");
@@ -905,7 +917,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
             const char * PlayerName = "Unknown";
 
-            if (_PlayerType <= PlayerType::Max)
+            if ((_PlayerType >= PlayerType::Min) && (_PlayerType <= PlayerType::Max))
                 PlayerName = PlayerTypeNames[(size_t) _PlayerType];
             else
                 PlayerName = "VSTi";
@@ -918,7 +930,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             {
                 char Text[4];
 
-                _itoa_s((int)(_ExtraPercussionChannel + 1), Text, 10);
+                ::_itoa_s((int)(_ExtraPercussionChannel + 1), Text, 10);
                 fileInfo.info_set(TagExtraPercusionChannel, Text);
             }
         }
@@ -929,40 +941,24 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         timestampDelta = 0.;
     }
 
+    uint32_t VoiceCount = 0;
+
     if (_PlayerType == PlayerType::FluidSynth)
     {
         auto Player = (FSPlayer *) _Player;
 
-        uint32_t VoiceCount = Player->GetActiveVoiceCount();
-
-        if (VoiceCount != _ActiveVoiceCount)
-        {
-            fileInfo.info_set_int(TagMIDIActiveVoices, (t_int64) VoiceCount);
-
-            _ActiveVoiceCount = VoiceCount;
-
-            Success = true;
-        }
-
-        if (VoiceCount > _PeakVoiceCount)
-        {
-            fileInfo.info_set_int(TagMIDIPeakVoices, (t_int64) VoiceCount);
-
-            _PeakVoiceCount = VoiceCount;
-
-            Success = true;
-        }
-
-        if (Success)
-            timestampDelta = _AudioChunkDuration;
+        VoiceCount = Player->GetActiveVoiceCount();
     }
     else
     if (_PlayerType == PlayerType::BASSMIDI)
     {
         auto Player = (BMPlayer *) _Player;
 
-        uint32_t VoiceCount = Player->GetActiveVoiceCount();
+        VoiceCount = Player->GetActiveVoiceCount();
+    }
 
+    if ((_PlayerType == PlayerType::FluidSynth) || (_PlayerType == PlayerType::BASSMIDI))
+    {
         if (VoiceCount != _ActiveVoiceCount)
         {
             fileInfo.info_set_int(TagMIDIActiveVoices, (t_int64) VoiceCount);
