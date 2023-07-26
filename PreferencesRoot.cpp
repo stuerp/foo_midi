@@ -22,6 +22,7 @@
 #include <helpers/atl-misc.h>
 #include <helpers/dropdown_helper.h>
 
+#include <pfc/string_base.h>
 #include <pfc/string-conv-lite.h>
 #include <pfc/pathUtils.h>
 
@@ -43,10 +44,9 @@ extern char _DLLFileName[];
 extern volatile int _IsRunning;
 
 static const GUID GUIDCfgSampleRateHistory = { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
+static cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
 
 static const int SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
-
-static cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
 
 #pragma region("FluidSynth")
 static const char * interp_txt[] = { "None", "Linear", "Cubic", "7th Order Sinc" };
@@ -192,7 +192,7 @@ private:
     pfc::array_t<CLSID> dxi_plugins;
 #endif
 
-#pragma region("VSTi")
+    #pragma region("VSTi")
     pfc::string8 _VSTiPath;
 
     void GetVSTiPlugins(const char * pathName = nullptr, puFindFile findFile = nullptr);
@@ -207,77 +207,44 @@ private:
 
     pfc::array_t<VSTiPlugin> _VSTiPlugIns;
     std::vector<uint8_t> _VSTiConfig;
-#pragma endregion
+    #pragma endregion
 
-#pragma region("BASS MIDI")
+    #pragma region("BASS MIDI")
     pfc::string8 _CacheStatusText;
     pfc::string8 _CacheStatusTextCurrent;
-#pragma endregion
+    #pragma endregion
 
-#pragma region("ADL")
-    struct adl_bank
+    #pragma region("ADL")
+    struct ADLBank
     {
-        int number;
-        const char * name;
+        int Number;
+        pfc::string8 Name;
 
-        adl_bank() : number(-1), name("")
-        {
-        }
+        ADLBank() : Number(-1), Name() { }
+        ADLBank(const ADLBank & b) : Number(b.Number), Name(b.Name) { }
+        ADLBank(int number, const char * name) : Number(number), Name(name) { }
 
-        adl_bank(const adl_bank & b) : number(b.number), name(b.name)
+        ADLBank & operator =(const ADLBank & b)
         {
-        }
-
-        adl_bank(int _number, const char * _name) : number(_number), name(_name)
-        {
-        }
-
-        adl_bank & operator=(const adl_bank & b)
-        {
-            number = b.number;
-            name = b.name;
+            Number = b.Number;
+            Name = b.Name;
 
             return *this;
         }
 
-        bool operator==(const adl_bank & b) const
-        {
-            return number == b.number;
-        }
-
-        bool operator<(const adl_bank & b) const
-        {
-            int c = ::stricmp_utf8(name, b.name);
-
-            if (c)
-                return c < 0;
-
-            return 0;
-        }
-
-        bool operator>(const adl_bank & b) const
-        {
-            int c = ::stricmp_utf8(name, b.name);
-
-            if (c == 0)
-                return 0;
-
-            return c > 0;
-        }
-
-        bool operator!=(const adl_bank & b) const
-        {
-            return !operator==(b);
-        }
+        bool operator ==(const ADLBank & b) const { return Number == b.Number; }
+        bool operator !=(const ADLBank & b) const { return !operator ==(b); }
+        bool operator < (const ADLBank & b) const { return Name < b.Name; }
+        bool operator > (const ADLBank & b) const { return Name > b.Name; }
     };
 
-    pfc::list_t<adl_bank> _ADLBanks;
-#pragma endregion
+    pfc::list_t<ADLBank> _ADLBanks;
+    #pragma endregion
 
-#pragma region("Secret Sauce")
+    #pragma region("Secret Sauce")
     bool _HasSecretSauce;
     static bool HasSecretSauce();
-#pragma endregion
+    #pragma endregion
 
     static bool IsPluginAlwaysPresent(PreferencesRootPage *)
     {
@@ -404,14 +371,8 @@ void PreferencesRootPage::apply()
 
         SetDlgItemInt(IDC_SAMPLERATE, t, FALSE);
 
-        {
-            char Text[16];
-
-            _itoa_s((int) t, Text, _countof(Text), 10);
-
-            CfgSampleRateHistory.add_item(Text);
-            CfgSampleRate = (t_int) t;
-        }
+        CfgSampleRateHistory.add_item(pfc::format_int(t));
+        CfgSampleRate = (t_int) t;
     }
     #pragma endregion
 
@@ -479,7 +440,7 @@ void PreferencesRootPage::apply()
             if (t < 0 || t >= (int)_ADLBanks.get_count())
                 t = 0;
 
-            CfgADLBank = _ADLBanks[(size_t)t].number;
+            CfgADLBank = _ADLBanks[(size_t) t].Number;
         }
 
         {
@@ -635,7 +596,7 @@ void PreferencesRootPage::reset()
 
         for (size_t i = 0; i < _ADLBanks.get_count(); ++i)
         {
-            if (_ADLBanks[i].number == DefaultADLBank)
+            if (_ADLBanks[i].Number == DefaultADLBank)
             {
                 BankIndex = i;
                 break;
@@ -859,7 +820,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     // Set the selected player.
     {
-        CWindow w = GetDlgItem(IDC_PLAYER_TYPE);
+        auto w = (CComboBox) GetDlgItem(IDC_PLAYER_TYPE);
 
         int SelectedIndex = -1;
 
@@ -878,56 +839,50 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         else
             SelectedIndex = _PlayerPresentMap[(int) PlayerType];
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)SelectedIndex, (LPARAM)0);
+         w.SetCurSel(SelectedIndex);
     }
 
     // Set the selected sample rate.
     {
-        char Text[16];
-
         for (size_t i = _countof(SampleRates); i--;)
         {
             if (SampleRates[i] != CfgSampleRate)
-            {
-                _itoa_s(SampleRates[i], Text, _countof(Text), 10);
-                CfgSampleRateHistory.add_item(Text);
-            }
+                CfgSampleRateHistory.add_item(pfc::format_int(SampleRates[i]));
         }
 
-        _itoa_s(CfgSampleRate, Text, _countof(Text), 10);
-        CfgSampleRateHistory.add_item(Text);
+        CfgSampleRateHistory.add_item(pfc::format_int(CfgSampleRate));
 
-        auto w = GetDlgItem(IDC_SAMPLERATE);
+        auto w = (CComboBox) GetDlgItem(IDC_SAMPLERATE);
 
         CfgSampleRateHistory.setup_dropdown(w);
 
-        ::SendMessage(w, CB_SETCURSEL, 0, 0);
+         w.SetCurSel(0);
     }
 
     // Set the selected loop types.
     {
-        static const char * LoopTypeDescription[] =
+        static const WCHAR * LoopTypeDescription[] =
         {
-            "Never loop",
-            "Never loop, 1s decay time",
-            "Loop and fade when detected",
-            "Loop and fade always",
-            "Play indefinitely when detected",
-            "Play indefinitely"
+            L"Never loop",
+            L"Never loop, 1s decay time",
+            L"Loop and fade when detected",
+            L"Loop and fade always",
+            L"Play indefinitely when detected",
+            L"Play indefinitely"
         };
 
         {
-            auto w1 = GetDlgItem(IDC_LOOP_PLAYBACK);
-            auto w2 = GetDlgItem(IDC_LOOP_OTHER);
+            auto w1 = (CComboBox) GetDlgItem(IDC_LOOP_PLAYBACK);
+            auto w2 = (CComboBox) GetDlgItem(IDC_LOOP_OTHER);
 
             for (size_t i = 0; i < _countof(LoopTypeDescription); ++i)
             {
-                ::uSendMessageText(w1, CB_ADDSTRING, 0, LoopTypeDescription[i]);
-                ::uSendMessageText(w2, CB_ADDSTRING, 0, LoopTypeDescription[i]);
+                w1.AddString(LoopTypeDescription[i]);
+                w2.AddString(LoopTypeDescription[i]);
             }
  
-            ::SendMessage(w1, CB_SETCURSEL, (WPARAM) CfgLoopTypePlayback, 0);
-            ::SendMessage(w2, CB_SETCURSEL, (WPARAM) CfgLoopTypeOther, 0);
+             w1.SetCurSel(CfgLoopTypePlayback);
+             w2.SetCurSel(CfgLoopTypeOther);
         }
     }
 
@@ -943,56 +898,56 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     #pragma region("ADL")
     {
-        const char * const * BankNames = adl_getBankNames();
-        const size_t BankCount = (size_t)adl_getBanksCount();
+        const char * const * BankNames = ::adl_getBankNames();
+        const size_t BankCount = (size_t) ::adl_getBanksCount();
 
         if (BankNames && (BankCount > 0))
         {
             for (size_t i = 0; i < BankCount; ++i)
-                _ADLBanks += adl_bank((int)i, BankNames[i]);
+                _ADLBanks += ADLBank((int) i, BankNames[i]);
 
             _ADLBanks.sort();
         }
 
         {
-            size_t SelectedBank = 0;
+            auto w = (CComboBox) GetDlgItem(IDC_ADL_BANK);
 
-            auto w = GetDlgItem(IDC_ADL_BANK);
+            int SelectedBank = 0;
 
             for (size_t i = 0; i < _ADLBanks.get_count(); ++i)
             {
-                ::uSendMessageText(w, CB_ADDSTRING, 0, _ADLBanks[i].name);
+                w.AddString(pfc::wideFromUTF8(_ADLBanks[i].Name));
 
-                if (_ADLBanks[i].number == CfgADLBank)
-                    SelectedBank = i;
+                if (_ADLBanks[i].Number == CfgADLBank)
+                    SelectedBank = (int) i;
             }
 
-            w.SendMessage(CB_SETCURSEL, SelectedBank);
+            w.SetCurSel(SelectedBank);
         }
 
         {
-            static const char * ChipCounts[] = { "1", "2", "5", "10", "25", "50", "100" };
+            static const WCHAR * ChipCounts[] = { L"1", L"2", L"5", L"10", L"25", L"50", L"100" };
 
-            auto w = GetDlgItem(IDC_ADL_CHIPS);
+            auto w = (CComboBox) GetDlgItem(IDC_ADL_CHIPS);
 
             for (size_t i = 0; i < _countof(ChipCounts); ++i)
-                ::uSendMessageText(w, CB_ADDSTRING, 0, ChipCounts[i]);
+                w.AddString(ChipCounts[i]);
 
-            SetDlgItemInt(IDC_ADL_CHIPS, (UINT)CfgADLChipCount, 0);
+            SetDlgItemInt(IDC_ADL_CHIPS, (UINT) CfgADLChipCount, 0);
         }
 
-        SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, (WPARAM)CfgADLPanning);
+        SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, (WPARAM) CfgADLPanning);
     }
     #pragma endregion
 
     {
-        auto w = GetDlgItem(IDC_RESAMPLING_MODE);
+        auto w = (CComboBox) GetDlgItem(IDC_RESAMPLING_MODE);
 
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "Linear interpolation");
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "8pt Sinc interpolation");
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "16pt Sinc interpolation");
+        w.AddString(L"Linear interpolation");
+        w.AddString(L"8pt Sinc interpolation");
+        w.AddString(L"16pt Sinc interpolation");
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgBASSMIDIInterpolationMode, 0);
+        w.SetCurSel(CfgBASSMIDIInterpolationMode);
     }
 
 #ifdef FLUIDSYNTHSUPPORT
@@ -1022,12 +977,12 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     #pragma region("Munt")
     {
-        auto w = GetDlgItem(IDC_MUNT_GM_SET);
+        auto w = (CComboBox) GetDlgItem(IDC_MUNT_GM_SET);
 
         for (size_t i = 0; i < _countof(_MuntGMSets); ++i)
             ::uSendMessageText(w, CB_ADDSTRING, 0, _MuntGMSets[i]);
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMuntGMSet, 0);
+        w.SetCurSel(CfgMuntGMSet);
     }
     #pragma endregion
 
@@ -1360,12 +1315,12 @@ bool PreferencesRootPage::HasChanged()
 
     #pragma region("ADL")
     {
-        int SelectedIndex = (int)SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
+        int SelectedIndex = (int) SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
 
-        if ((SelectedIndex < 0) || (SelectedIndex >= (int)_ADLBanks.get_count()))
+        if ((SelectedIndex < 0) || (SelectedIndex >= (int) _ADLBanks.get_count()))
             SelectedIndex = 0;
 
-        if (_ADLBanks[(t_size)SelectedIndex].number != (int)CfgADLBank)
+        if (_ADLBanks[(t_size) SelectedIndex].Number != CfgADLBank)
             return true;
     }
 
