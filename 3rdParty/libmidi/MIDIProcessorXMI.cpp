@@ -1,73 +1,82 @@
 #include "MIDIProcessor.h"
 
+#include <Windows.h>
+
 #include <string.h>
 
 struct IFFChunk
 {
-    uint8_t m_id[4];
-    uint8_t m_type[4];
-    std::vector<uint8_t> m_data;
-    std::vector<IFFChunk> m_sub_chunks;
+    uint8_t Id[4];
+    uint8_t Type[4];
+    std::vector<uint8_t> _Data;
+    std::vector<IFFChunk> _SubChunks;
 
     IFFChunk()
     {
-        memset(m_id, 0, sizeof(m_id));
-        memset(m_type, 0, sizeof(m_type));
+        memset(Id, 0, sizeof(Id));
+        memset(Type, 0, sizeof(Type));
     }
 
-    IFFChunk(const IFFChunk & p_in)
+    IFFChunk(const IFFChunk & in)
     {
-        memcpy(m_id, p_in.m_id, sizeof(m_id));
-        memcpy(m_type, p_in.m_type, sizeof(m_type));
-        m_data = p_in.m_data;
-        m_sub_chunks = p_in.m_sub_chunks;
+        memcpy(Id, in.Id, sizeof(Id));
+        memcpy(Type, in.Type, sizeof(Type));
+        _Data = in._Data;
+        _SubChunks = in._SubChunks;
     }
 
-    const IFFChunk & find_sub_chunk(const char * p_id, uint32_t index = 0) const
+    const IFFChunk & FindSubChunk(const char * id, uint32_t index = 0) const
     {
-        for (std::size_t i = 0; i < m_sub_chunks.size(); ++i)
+        for (std::size_t i = 0; i < _SubChunks.size(); ++i)
         {
-            if (!memcmp(p_id, m_sub_chunks[i].m_id, 4))
+            if (!memcmp(id, _SubChunks[i].Id, 4))
             {
-                if (index) --index;
-                if (!index) return m_sub_chunks[i];
+                if (index)
+                    --index;
+
+                if (!index)
+                    return _SubChunks[i];
             }
         }
-        /*throw exception_io_data( pfc::string_formatter() << "Missing IFF chunk: " << p_id );*/
-        return *this;
+
+        return *this; // throw exception_io_data( pfc::string_formatter() << "Missing IFF chunk: " << p_id );
     }
 
-    uint32_t get_chunk_count(const char * p_id) const
+    /// <summary>
+    /// Gets the number of chunks with the specified id.
+    /// </summary>
+    uint32_t GetChunkCount(const char * id) const
     {
-        uint32_t chunk_count = 0;
-        for (std::size_t i = 0; i < m_sub_chunks.size(); ++i)
+        uint32_t ChunkCount = 0;
+
+        for (std::size_t i = 0; i < _SubChunks.size(); ++i)
         {
-            if (!memcmp(p_id, m_sub_chunks[i].m_id, 4))
-            {
-                ++chunk_count;
-            }
+            if (!memcmp(id, _SubChunks[i].Id, 4))
+                ++ChunkCount;
         }
-        return chunk_count;
+
+        return ChunkCount;
     }
 };
 
 struct IFFStream
 {
-    std::vector<IFFChunk> m_chunks;
+    std::vector<IFFChunk> _Chunks;
 
     IFFChunk fail;
 
-    const IFFChunk & find_chunk(const char * p_id) const
+    /// <summary>
+    /// Finds the first chunk with the specified id.
+    /// </summary>
+    const IFFChunk & FindChunk(const char * id) const
     {
-        for (std::size_t i = 0; i < m_chunks.size(); ++i)
+        for (std::size_t i = 0; i < _Chunks.size(); ++i)
         {
-            if (!memcmp(p_id, m_chunks[i].m_id, 4))
-            {
-                return m_chunks[i];
-            }
+            if (!memcmp(id, _Chunks[i].Id, 4))
+                return _Chunks[i];
         }
-        /*throw exception_io_data( pfc::string_formatter() << "Missing IFF chunk: " << p_id );*/
-        return fail;
+
+        return fail; // throw exception_io_data( pfc::string_formatter() << "Missing IFF chunk: " << p_id );
     }
 };
 
@@ -112,48 +121,63 @@ uint32_t MIDIProcessor::DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::co
     return Quantity;
 }
 
-static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end, IFFChunk & p_out, bool first_chunk)
+static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end, IFFChunk & chunk, bool isFirstChunk)
 {
     if (end - it < 8)
         return false;
 
-    std::copy(it, it + 4, p_out.m_id);
+    std::copy(it, it + 4, chunk.Id);
     it += 4;
 
-    uint32_t chunk_size = (uint32_t) (it[0] << 24) | (it[1] << 16) | (it[2] << 8) | it[3];
+    uint32_t ChunkSize = (uint32_t) (it[0] << 24) | (it[1] << 16) | (it[2] << 8) | it[3];
 
-    if ((size_t) (end - it) < chunk_size)
+    if ((size_t) (end - it) < ChunkSize)
         return false;
 
     it += 4;
-    bool is_cat_chunk = !memcmp(p_out.m_id, "CAT ", 4);
-    bool is_form_chunk = !memcmp(p_out.m_id, "FORM", 4);
 
-    std::size_t chunk_size_limit = (size_t) (end - it);
+    bool IsCATChunk = !memcmp(chunk.Id, "CAT ", 4);
+    bool IsFORMChunk = !memcmp(chunk.Id, "FORM", 4);
 
-    if (chunk_size > chunk_size_limit) chunk_size = (uint32_t)
-        chunk_size_limit;
+    std::size_t ChunkSizeLimit = (size_t) (end - it);
 
-    if ((first_chunk && is_form_chunk) || (!first_chunk && is_cat_chunk))
+    if (ChunkSize > ChunkSizeLimit) ChunkSize = (uint32_t)
+        ChunkSizeLimit;
+
+    if ((isFirstChunk && IsFORMChunk) || (!isFirstChunk && IsCATChunk))
     {
-        if (end - it < 4) return false;
-        std::vector<uint8_t>::const_iterator chunk_end = it + chunk_size;
-        std::copy(it, it + 4, p_out.m_type);
+        if (end - it < 4)
+            return false;
+
+        // Read the sub-chunks of a FORM or CAT chunk.
+        auto ChunkEnd = it + ChunkSize;
+
+        std::copy(it, it + 4, chunk.Type);
         it += 4;
-        while (it < chunk_end)
+
+        while (it < ChunkEnd)
         {
-            IFFChunk chunk;
-            if (!ReadChunk(it, chunk_end, chunk, is_cat_chunk)) return false;
-            p_out.m_sub_chunks.push_back(chunk);
+            IFFChunk SubChunk;
+
+            if (!ReadChunk(it, ChunkEnd, SubChunk, IsCATChunk))
+                return false;
+
+            chunk._SubChunks.push_back(SubChunk);
         }
-        it = chunk_end;
-        if (chunk_size & 1 && it != end) ++it;
+
+        it = ChunkEnd;
+
+        if (ChunkSize & 1 && it != end)
+            ++it;
     }
-    else if (!is_form_chunk && !is_cat_chunk)
+    else
+    if (!IsFORMChunk && !IsCATChunk)
     {
-        p_out.m_data.assign(it, it + chunk_size);
-        it += chunk_size;
-        if (chunk_size & 1 && it != end) ++it;
+        chunk._Data.assign(it, it + ChunkSize);
+        it += ChunkSize;
+
+        if (ChunkSize & 1 && it != end)
+            ++it;
     }
     else
     {
@@ -161,29 +185,30 @@ static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uin
         else throw exception_io_data( "Found multiple FORM chunks" );*/
         return false;
     }
+
     return true;
 }
 
 static bool ReadStream(std::vector<uint8_t> const & data, IFFStream & stream)
 {
-    std::vector<uint8_t>::const_iterator it = data.begin(), end = data.end();
+    auto it = data.begin(), end = data.end();
 
-    bool first_chunk = true;
+    bool IsFirstChunk = true;
 
     while (it != end)
     {
-        IFFChunk chunk;
+        IFFChunk Chunk;
 
-        if (ReadChunk(it, end, chunk, first_chunk))
+        if (ReadChunk(it, end, Chunk, IsFirstChunk))
         {
-            stream.m_chunks.push_back(chunk);
-            first_chunk = false;
+            stream._Chunks.push_back(Chunk);
+            IsFirstChunk = false;
         }
         else
-            if (first_chunk)
-                return false;
-            else
-                break;
+        if (IsFirstChunk)
+            return false;
+        else
+            break;
     }
 
     return true;
@@ -198,17 +223,17 @@ bool MIDIProcessor::GetTrackCountFromXMI(std::vector<uint8_t> const & data, size
     if (!ReadStream(data, Stream))
         return false;
 
-    const IFFChunk & form_chunk = Stream.find_chunk("FORM");
+    const IFFChunk & form_chunk = Stream.FindChunk("FORM");
 
-    if (::memcmp(form_chunk.m_type, "XDIR", 4))
+    if (::memcmp(form_chunk.Type, "XDIR", 4))
         return SetLastErrorCode(MIDIError::XMIFORMXDIRNotFound);
 
-    const IFFChunk & cat_chunk = Stream.find_chunk("CAT ");
+    const IFFChunk & cat_chunk = Stream.FindChunk("CAT ");
 
-    if (::memcmp(cat_chunk.m_type, "XMID", 4))
+    if (::memcmp(cat_chunk.Type, "XMID", 4))
         return SetLastErrorCode(MIDIError::XMICATXMIDNotFound);
 
-    trackCount = cat_chunk.get_chunk_count("FORM");
+    trackCount = cat_chunk.GetChunkCount("FORM");
 
     return true;
 }
@@ -222,33 +247,35 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
     if (!ReadStream(data, Stream))
         return false;
 
-    const IFFChunk & FORMChunk = Stream.find_chunk("FORM");
+    const FOURCC FOURCC_FORM = mmioFOURCC('F', 'O', 'R', 'M');
 
-    if (memcmp(FORMChunk.m_type, "XDIR", 4))
+    const IFFChunk & FORMChunk = Stream.FindChunk("FORM");
+
+    if (memcmp(FORMChunk.Type, "XDIR", 4))
         return SetLastErrorCode(MIDIError::XMIFORMXDIRNotFound);
 
-    const IFFChunk & CATChunk = Stream.find_chunk("CAT ");
+    const IFFChunk & CATChunk = Stream.FindChunk("CAT ");
 
-    if (memcmp(CATChunk.m_type, "XMID", 4))
+    if (memcmp(CATChunk.Type, "XMID", 4))
         return SetLastErrorCode(MIDIError::XMICATXMIDNotFound);
 
-    uint32_t TrackCount = CATChunk.get_chunk_count("FORM");
+    uint32_t TrackCount = CATChunk.GetChunkCount("FORM");
 
     container.Initialize(TrackCount > 1 ? 2u : 0u, 60);
 
     for (uint32_t i = 0; i < TrackCount; ++i)
     {
-        const IFFChunk & FORMChunk = CATChunk.find_sub_chunk("FORM", i);
+        const IFFChunk & SubFORMChunk = CATChunk.FindSubChunk("FORM", i);
 
-        if (memcmp(FORMChunk.m_type, "XMID", 4))
+        if (memcmp(SubFORMChunk.Type, "XMID", 4))
             return SetLastErrorCode(MIDIError::XMIFORMXMIDNotFound);
 
-        const IFFChunk & EVNTChunk = FORMChunk.find_sub_chunk("EVNT");
+        const IFFChunk & EVNTChunk = SubFORMChunk.FindSubChunk("EVNT");
 
-        if (memcmp(EVNTChunk.m_id, "EVNT", 4))
+        if (memcmp(EVNTChunk.Id, "EVNT", 4))
             return SetLastErrorCode(MIDIError::XMIEVNTChunkNotFound);
 
-        std::vector<uint8_t> const & Data = EVNTChunk.m_data;
+        std::vector<uint8_t> const & Data = EVNTChunk._Data;
 
         MIDITrack Track;
 
