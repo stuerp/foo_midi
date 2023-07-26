@@ -240,6 +240,7 @@ static bool ReadStream(std::vector<uint8_t> const & data, IFFStream & stream)
 /// <summary>
 /// Gets the number of tracks from an byte vector with XMI data.
 /// </summary>
+/*
 bool MIDIProcessor::GetTrackCountFromXMI(std::vector<uint8_t> const & data, size_t & trackCount)
 {
     trackCount = 0;
@@ -263,7 +264,7 @@ bool MIDIProcessor::GetTrackCountFromXMI(std::vector<uint8_t> const & data, size
 
     return true;
 }
-
+*/
 /// <summary>
 /// Processes a byte vector with XMI data.
 /// </summary>

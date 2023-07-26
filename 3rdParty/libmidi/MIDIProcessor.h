@@ -72,7 +72,7 @@ private:
 
 //  static bool GetTrackCount(std::vector<uint8_t> const & data, const char * fileExtension, size_t & trackCount);
 //  static bool GetTrackCountFromRIFF(std::vector<uint8_t> const & data, size_t & trackCount);
-    static bool GetTrackCountFromXMI(std::vector<uint8_t> const & data, size_t & trackCount);
+//  static bool GetTrackCountFromXMI(std::vector<uint8_t> const & data, size_t & trackCount);
 
     static bool ProcessSMFTrack(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end, MIDIContainer & container, bool needs_end_marker);
 
