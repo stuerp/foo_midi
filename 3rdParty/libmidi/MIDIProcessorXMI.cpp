@@ -5,7 +5,7 @@
 #include <string.h>
 
 const FOURCC FOURCC_FORM = mmioFOURCC('F', 'O', 'R', 'M');
-const FOURCC FOURCC_CAT = mmioFOURCC('C', 'A', 'T', ' ');
+const FOURCC FOURCC_CAT  = mmioFOURCC('C', 'A', 'T', ' ');
 const FOURCC FOURCC_EVNT = mmioFOURCC('E', 'V', 'N', 'T');
 
 const FOURCC FOURCC_XDIR = mmioFOURCC('X', 'D', 'I', 'R');
@@ -16,7 +16,7 @@ struct IFFChunk
     FOURCC Id;
     FOURCC Type;
     std::vector<uint8_t> _Data;
-    std::vector<IFFChunk> _SubChunks;
+    std::vector<IFFChunk> _Chunks;
 
     IFFChunk() : Id(), Type()
     {
@@ -27,20 +27,23 @@ struct IFFChunk
         Id = in.Id;
         Type = in.Type;
         _Data = in._Data;
-        _SubChunks = in._SubChunks;
+        _Chunks = in._Chunks;
     }
 
-    const IFFChunk & FindSubChunk(FOURCC id, uint32_t index = 0) const
+    /// <summary>
+    /// Gets the n-th chunk with the specified id.
+    /// </summary>
+    const IFFChunk & FindChunk(FOURCC id, uint32_t n = 0) const
     {
-        for (std::size_t i = 0; i < _SubChunks.size(); ++i)
+        for (size_t i = 0; i < _Chunks.size(); ++i)
         {
-            if (_SubChunks[i].Id == id)
+            if (_Chunks[i].Id == id)
             {
-                if (index)
-                    --index;
+                if (n != 0)
+                    --n;
 
-                if (!index)
-                    return _SubChunks[i];
+                if (n == 0)
+                    return _Chunks[i];
             }
         }
 
@@ -54,9 +57,9 @@ struct IFFChunk
     {
         uint32_t ChunkCount = 0;
 
-        for (std::size_t i = 0; i < _SubChunks.size(); ++i)
+        for (size_t i = 0; i < _Chunks.size(); ++i)
         {
-            if (_SubChunks[i].Id == id)
+            if (_Chunks[i].Id == id)
                 ++ChunkCount;
         }
 
@@ -75,7 +78,7 @@ struct IFFStream
     /// </summary>
     const IFFChunk & FindChunk(FOURCC id) const
     {
-        for (std::size_t i = 0; i < _Chunks.size(); ++i)
+        for (size_t i = 0; i < _Chunks.size(); ++i)
         {
             if (_Chunks[i].Id == id)
                 return _Chunks[i];
@@ -85,6 +88,9 @@ struct IFFStream
     }
 };
 
+/// <summary>
+/// Returns true if the byte vector contains XMI data.
+/// </summary>
 bool MIDIProcessor::IsXMI(std::vector<uint8_t> const & data)
 {
     if (data.size() < 0x22)
@@ -98,6 +104,9 @@ bool MIDIProcessor::IsXMI(std::vector<uint8_t> const & data)
     return true;
 }
 
+/// <summary>
+/// Decodes a variable length quantity.
+/// </summary>
 uint32_t MIDIProcessor::DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
 {
     uint32_t Quantity = 0;
@@ -126,6 +135,9 @@ uint32_t MIDIProcessor::DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::co
     return Quantity;
 }
 
+/// <summary>
+/// Reads a chunk from a byte vector.
+/// </summary>
 static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end, IFFChunk & chunk, bool isFirstChunk)
 {
     if (end - it < 8)
@@ -144,10 +156,10 @@ static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uin
     bool IsCATChunk = (chunk.Id == FOURCC_CAT);
     bool IsFORMChunk = (chunk.Id == FOURCC_FORM);
 
-    std::size_t ChunkSizeLimit = (size_t) (end - it);
+    const size_t ChunkSizeLimit = (size_t) (end - it);
 
-    if (ChunkSize > ChunkSizeLimit) ChunkSize = (uint32_t)
-        ChunkSizeLimit;
+    if (ChunkSize > ChunkSizeLimit)
+        ChunkSize = (uint32_t) ChunkSizeLimit;
 
     if ((isFirstChunk && IsFORMChunk) || (!isFirstChunk && IsCATChunk))
     {
@@ -167,12 +179,12 @@ static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uin
             if (!ReadChunk(it, ChunkEnd, SubChunk, IsCATChunk))
                 return false;
 
-            chunk._SubChunks.push_back(SubChunk);
+            chunk._Chunks.push_back(SubChunk);
         }
 
         it = ChunkEnd;
 
-        if (ChunkSize & 1 && it != end)
+        if ((ChunkSize & 1) && (it != end))
             ++it;
     }
     else
@@ -181,7 +193,7 @@ static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uin
         chunk._Data.assign(it, it + ChunkSize);
         it += ChunkSize;
 
-        if (ChunkSize & 1 && it != end)
+        if ((ChunkSize & 1) && (it != end))
             ++it;
     }
     else
@@ -197,6 +209,9 @@ static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uin
     return true;
 }
 
+/// <summary>
+/// Reads a byte vector and converts it to a stream of chunks.
+/// </summary>
 static bool ReadStream(std::vector<uint8_t> const & data, IFFStream & stream)
 {
     auto it = data.begin(), end = data.end();
@@ -222,6 +237,9 @@ static bool ReadStream(std::vector<uint8_t> const & data, IFFStream & stream)
     return true;
 }
 
+/// <summary>
+/// Gets the number of tracks from an byte vector with XMI data.
+/// </summary>
 bool MIDIProcessor::GetTrackCountFromXMI(std::vector<uint8_t> const & data, size_t & trackCount)
 {
     trackCount = 0;
@@ -231,21 +249,24 @@ bool MIDIProcessor::GetTrackCountFromXMI(std::vector<uint8_t> const & data, size
     if (!ReadStream(data, Stream))
         return false;
 
-    const IFFChunk & form_chunk = Stream.FindChunk(FOURCC_FORM);
+    const IFFChunk & FORMChunk = Stream.FindChunk(FOURCC_FORM);
 
-    if (form_chunk.Type != FOURCC_XDIR)
+    if (FORMChunk.Type != FOURCC_XDIR)
         return SetLastErrorCode(MIDIError::XMIFORMXDIRNotFound);
 
-    const IFFChunk & cat_chunk = Stream.FindChunk(FOURCC_CAT);
+    const IFFChunk & CATChunk = Stream.FindChunk(FOURCC_CAT);
 
-    if (cat_chunk.Type != FOURCC_XMID)
+    if (CATChunk.Type != FOURCC_XMID)
         return SetLastErrorCode(MIDIError::XMICATXMIDNotFound);
 
-    trackCount = cat_chunk.GetChunkCount(FOURCC_FORM);
+    trackCount = CATChunk.GetChunkCount(FOURCC_FORM);
 
     return true;
 }
 
+/// <summary>
+/// Processes a byte vector with XMI data.
+/// </summary>
 bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
     SetLastErrorCode(MIDIError::None);
@@ -271,161 +292,163 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
 
     for (uint32_t i = 0; i < TrackCount; ++i)
     {
-        const IFFChunk & SubFORMChunk = CATChunk.FindSubChunk(FOURCC_FORM, i);
+        const IFFChunk & SubFORMChunk = CATChunk.FindChunk(FOURCC_FORM, i);
 
         if (SubFORMChunk.Type != FOURCC_XMID)
             return SetLastErrorCode(MIDIError::XMIFORMXMIDNotFound);
 
-        const IFFChunk & EVNTChunk = SubFORMChunk.FindSubChunk(FOURCC_EVNT);
+        const IFFChunk & EVNTChunk = SubFORMChunk.FindChunk(FOURCC_EVNT);
 
         if (EVNTChunk.Id != FOURCC_EVNT)
             return SetLastErrorCode(MIDIError::XMIEVNTChunkNotFound);
 
         std::vector<uint8_t> const & Data = EVNTChunk._Data;
 
-        MIDITrack Track;
-
-        bool IsTempoSet = false;
-
-        uint32_t CurrentTimestamp = 0;
-        uint32_t LastEventTimestamp = 0;
-
-        std::vector<uint8_t> Buffer;
-
-        Buffer.resize(3);
-
-        auto it = Data.begin(), end = Data.end();
-
-        while (it != end)
         {
-            uint32_t Delta = DecodeVariableLengthQuantityXMI(it, end);
+            MIDITrack Track;
 
-            CurrentTimestamp += Delta;
+            bool IsTempoSet = false;
 
-            if (CurrentTimestamp > LastEventTimestamp)
-                LastEventTimestamp = CurrentTimestamp;
+            uint32_t CurrentTimestamp = 0;
+            uint32_t LastEventTimestamp = 0;
 
-            if (it == end)
-                return SetLastErrorCode(MIDIError::InsufficientData);
+            std::vector<uint8_t> Buffer;
 
-            Buffer[0] = *it++;
+            Buffer.resize(3);
 
-            if (Buffer[0] == StatusCodes::MetaData)
+            auto it = Data.begin(), end = Data.end();
+
+            while (it != end)
             {
+                uint32_t Delta = DecodeVariableLengthQuantityXMI(it, end);
+
+                CurrentTimestamp += Delta;
+
+                if (CurrentTimestamp > LastEventTimestamp)
+                    LastEventTimestamp = CurrentTimestamp;
+
                 if (it == end)
                     return SetLastErrorCode(MIDIError::InsufficientData);
 
-                Buffer[1] = *it++;
+                Buffer[0] = *it++;
 
-                long Size = 0;
-
-                if (Buffer[1] == MetaDataTypes::EndOfTrack)
-                {
-                    if (LastEventTimestamp > CurrentTimestamp)
-                        CurrentTimestamp = LastEventTimestamp;
-                }
-                else
-                {
-                    Size = DecodeVariableLengthQuantity(it, end);
-
-                    if (Size < 0)
-                        return SetLastErrorCode(MIDIError::InvalidMetaDataMessage);
-
-                    if (end - it < Size)
-                        return SetLastErrorCode(MIDIError::InsufficientData);
-
-                    Buffer.resize((size_t) (Size + 2));
-                    std::copy(it, it + Size, Buffer.begin() + 2);
-                    it += Size;
-
-                    if ((Buffer[1] == MetaDataTypes::SetTempo) && (Size == 3))
-                    {
-                        uint32_t Tempo = (uint32_t) (Buffer[2] * 0x10000 + Buffer[3] * 0x100 + Buffer[4]);
-                        uint32_t PpQN = (Tempo * 3) / 25000;
-
-                        Tempo = Tempo * 60 / PpQN;
-
-                        Buffer[2] = (uint8_t) (Tempo / 0x10000);
-                        Buffer[3] = (uint8_t) (Tempo /   0x100);
-                        Buffer[4] = (uint8_t) (Tempo);
-
-                        if (CurrentTimestamp == 0)
-                            IsTempoSet = true;
-                    }
-                }
-
-                Track.AddEvent(MIDIEvent(CurrentTimestamp, MIDIEvent::Extended, 0, &Buffer[0], (size_t) (Size + 2)));
-
-                if (Buffer[1] == MetaDataTypes::EndOfTrack)
-                    break;
-            }
-            else
-            if (Buffer[0] == StatusCodes::SysEx)
-            {
-                long Size = DecodeVariableLengthQuantity(it, end);
-
-                if (Size < 0)
-                    return SetLastErrorCode(MIDIError::InvalidSysExMessage);
-
-                if (end - it < Size)
-                    return SetLastErrorCode(MIDIError::InsufficientData);
-
-                Buffer.resize((size_t) (Size + 1));
-                std::copy(it, it + Size, Buffer.begin() + 1);
-                it += Size;
-
-                Track.AddEvent(MIDIEvent(CurrentTimestamp, MIDIEvent::Extended, 0, &Buffer[0], (size_t) (Size + 1)));
-            }
-            else
-            if (Buffer[0] >= StatusCodes::NoteOff && Buffer[0] <= StatusCodes::ActiveSensing)
-            {
-                if (it == end)
-                    return SetLastErrorCode(MIDIError::InsufficientData);
-
-                Buffer.resize(3);
-
-                Buffer[1] = *it++;
-                uint32_t BytesRead = 1;
-
-                MIDIEvent::EventType Type = (MIDIEvent::EventType) ((Buffer[0] >> 4) - 8);
-                uint32_t Channel = (uint32_t) (Buffer[0] & 0x0F);
-
-                if ((Type != MIDIEvent::ProgramChange) && (Type != MIDIEvent::ChannelAftertouch))
+                if (Buffer[0] == StatusCodes::MetaData)
                 {
                     if (it == end)
                         return SetLastErrorCode(MIDIError::InsufficientData);
 
-                    Buffer[2] = *it++;
-                    BytesRead = 2;
+                    Buffer[1] = *it++;
+
+                    long Size = 0;
+
+                    if (Buffer[1] == MetaDataTypes::EndOfTrack)
+                    {
+                        if (LastEventTimestamp > CurrentTimestamp)
+                            CurrentTimestamp = LastEventTimestamp;
+                    }
+                    else
+                    {
+                        Size = DecodeVariableLengthQuantity(it, end);
+
+                        if (Size < 0)
+                            return SetLastErrorCode(MIDIError::InvalidMetaDataMessage);
+
+                        if (end - it < Size)
+                            return SetLastErrorCode(MIDIError::InsufficientData);
+
+                        Buffer.resize((size_t) (Size + 2));
+                        std::copy(it, it + Size, Buffer.begin() + 2);
+                        it += Size;
+
+                        if ((Buffer[1] == MetaDataTypes::SetTempo) && (Size == 3))
+                        {
+                            uint32_t Tempo = (uint32_t) (Buffer[2] * 0x10000 + Buffer[3] * 0x100 + Buffer[4]);
+                            uint32_t PpQN = (Tempo * 3) / 25000;
+
+                            Tempo = Tempo * 60 / PpQN;
+
+                            Buffer[2] = (uint8_t) (Tempo / 0x10000);
+                            Buffer[3] = (uint8_t) (Tempo /   0x100);
+                            Buffer[4] = (uint8_t) (Tempo);
+
+                            if (CurrentTimestamp == 0)
+                                IsTempoSet = true;
+                        }
+                    }
+
+                    Track.AddEvent(MIDIEvent(CurrentTimestamp, MIDIEvent::Extended, 0, &Buffer[0], (size_t) (Size + 2)));
+
+                    if (Buffer[1] == MetaDataTypes::EndOfTrack)
+                        break;
                 }
-
-                Track.AddEvent(MIDIEvent(CurrentTimestamp, Type, Channel, &Buffer[1], BytesRead));
-
-                if (Type == MIDIEvent::NoteOn)
+                else
+                if (Buffer[0] == StatusCodes::SysEx)
                 {
-                    Buffer[2] = 0x00;
+                    long Size = DecodeVariableLengthQuantity(it, end);
 
-                    int Length = DecodeVariableLengthQuantity(it, end);
+                    if (Size < 0)
+                        return SetLastErrorCode(MIDIError::InvalidSysExMessage);
 
-                    if (Length < 0)
-                        return SetLastErrorCode(MIDIError::XMIInvalidNoteMessage);
+                    if (end - it < Size)
+                        return SetLastErrorCode(MIDIError::InsufficientData);
 
-                    uint32_t Timestamp = CurrentTimestamp + Length;
+                    Buffer.resize((size_t) (Size + 1));
+                    std::copy(it, it + Size, Buffer.begin() + 1);
+                    it += Size;
 
-                    if (Timestamp > LastEventTimestamp)
-                        LastEventTimestamp = Timestamp;
-
-                    Track.AddEvent(MIDIEvent(Timestamp, Type, Channel, &Buffer[1], BytesRead));
+                    Track.AddEvent(MIDIEvent(CurrentTimestamp, MIDIEvent::Extended, 0, &Buffer[0], (size_t) (Size + 1)));
                 }
+                else
+                if (Buffer[0] >= StatusCodes::NoteOff && Buffer[0] <= StatusCodes::ActiveSensing)
+                {
+                    if (it == end)
+                        return SetLastErrorCode(MIDIError::InsufficientData);
+
+                    Buffer.resize(3);
+
+                    Buffer[1] = *it++;
+                    uint32_t BytesRead = 1;
+
+                    MIDIEvent::EventType Type = (MIDIEvent::EventType) ((Buffer[0] >> 4) - 8);
+                    uint32_t Channel = (uint32_t) (Buffer[0] & 0x0F);
+
+                    if ((Type != MIDIEvent::ProgramChange) && (Type != MIDIEvent::ChannelAftertouch))
+                    {
+                        if (it == end)
+                            return SetLastErrorCode(MIDIError::InsufficientData);
+
+                        Buffer[2] = *it++;
+                        BytesRead = 2;
+                    }
+
+                    Track.AddEvent(MIDIEvent(CurrentTimestamp, Type, Channel, &Buffer[1], BytesRead));
+
+                    if (Type == MIDIEvent::NoteOn)
+                    {
+                        Buffer[2] = 0x00;
+
+                        int Length = DecodeVariableLengthQuantity(it, end);
+
+                        if (Length < 0)
+                            return SetLastErrorCode(MIDIError::XMIInvalidNoteMessage);
+
+                        uint32_t Timestamp = CurrentTimestamp + Length;
+
+                        if (Timestamp > LastEventTimestamp)
+                            LastEventTimestamp = Timestamp;
+
+                        Track.AddEvent(MIDIEvent(Timestamp, Type, Channel, &Buffer[1], BytesRead));
+                    }
+                }
+                else
+                    return SetLastErrorCode(MIDIError::UnknownStatusCode);
             }
-            else
-                return SetLastErrorCode(MIDIError::UnknownStatusCode);
+
+            if (!IsTempoSet)
+                Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, XMIDefaultTempo, _countof(XMIDefaultTempo)));
+
+            container.AddTrack(Track);
         }
-
-        if (!IsTempoSet)
-            Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, XMIDefaultTempo, _countof(XMIDefaultTempo)));
-
-        container.AddTrack(Track);
     }
 
     return true;
