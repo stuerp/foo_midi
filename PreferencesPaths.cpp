@@ -69,15 +69,15 @@ public:
     BEGIN_MSG_MAP_EX(PreferencesPathsPage)
         MSG_WM_INITDIALOG(OnInitDialog)
 
-        COMMAND_HANDLER_EX(IDC_VST_PATH, EN_KILLFOCUS, OnLostFocus)
+        COMMAND_HANDLER_EX(IDC_VST_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_VST_PATH_SELECT, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH, EN_KILLFOCUS, OnLostFocus)
+        COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH, EN_KILLFOCUS, OnLostFocus)
+        COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH, EN_KILLFOCUS, OnLostFocus)
+        COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH, EN_KILLFOCUS, OnLostFocus)
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH_SELECT, BN_CLICKED, OnButtonClicked)
     END_MSG_MAP()
 
@@ -89,7 +89,7 @@ public:
 private:
     BOOL OnInitDialog(CWindow, LPARAM) noexcept;
 
-    void OnLostFocus(UINT, int, CWindow) noexcept;
+    void OnEditChange(UINT, int, CWindow) noexcept;
     void OnButtonClicked(UINT, int, CWindow) noexcept;
 
     void UpdateDialog() const noexcept;
@@ -184,9 +184,9 @@ BOOL PreferencesPathsPage::OnInitDialog(CWindow, LPARAM) noexcept
 /// <summary>
 /// Handles the notification when a control loses focus.
 /// </summary>
-void PreferencesPathsPage::OnLostFocus(UINT code, int id, CWindow) noexcept
+void PreferencesPathsPage::OnEditChange(UINT code, int id, CWindow) noexcept
 {
-    if (code != EN_KILLFOCUS)
+    if (code != EN_CHANGE)
         return;
 
     WCHAR Text[MAX_PATH];

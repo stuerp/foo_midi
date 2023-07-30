@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2023.07.26) **/
+/** $VER: foo_midi.rc (2023.07.30) **/
 
 #include "resource.h"
 
@@ -29,10 +29,10 @@ font 8, "Segoe UI", 400, 0, 1
         combobox                    IDC_LOOP_PLAYBACK,  X_A22, Y_A22, W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext       "Other:",       IDC_STATIC,         X_A23, Y_A23, W_A23, H_A23
         combobox                    IDC_LOOP_OTHER,     X_A24, Y_A24, W_A24, H_A24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button",        BS_AUTOCHECKBOX | WS_TABSTOP, X_A41, Y_A41, W_A41, H_A41
-        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A42, Y_A42, W_A42, H_A42
-        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS, "Button",          BS_AUTOCHECKBOX | WS_TABSTOP, X_A43, Y_A43, W_A43, H_A43
-        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A44, Y_A44, W_A44, H_A44
+        control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button",        BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
+        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS, "Button",          BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
+        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
 
     groupbox "MIDI", IDC_STATIC, X_A80, Y_A80, W_A80, H_A80
         rtext       "Flavor:",                              IDC_MIDI_FLAVOR_TEXT, X_A81, Y_A81 + 2, W_A81, H_A81
@@ -48,11 +48,15 @@ font 8, "Segoe UI", 400, 0, 1
 
     ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, 7, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 
-    groupbox "SoundFont", IDC_STATIC, X_A50, Y_A50, W_A50, H_A50
+    groupbox "BASS MIDI", IDC_STATIC, X_A50, Y_A50, W_A50, H_A50
         rtext       "Resampling:",  IDC_RESAMPLING_TEXT,    X_A53, Y_A53 + 2, W_A53, H_A53
         combobox                    IDC_RESAMPLING_MODE,    X_A54, Y_A54,     W_A54, H_A54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext           "Cached:",  IDC_CACHED_TEXT,        X_A55, Y_A55 + 2, W_A55, H_A55
         ltext                  "",  IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56, WS_VISIBLE
+
+    groupbox "FluidSynth", IDC_STATIC, X_A40, Y_A40, W_A40, H_A40
+        rtext       "Interpolation:",  IDC_FLUIDSYNTH_INTERPOLATION_TEXT, X_A41, Y_A41 + 2, W_A41, H_A41
+        combobox                       IDC_FLUIDSYNTH_INTERPOLATION,      X_A42, Y_A42,     W_A42, H_A42, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     groupbox "Munt", IDC_STATIC, X_A60, Y_A60, W_A60, H_A60
         rtext       "GM Set:",  IDC_MUNT_GM_TEXT,   X_A63, Y_A63 + 2, W_A63, H_A63

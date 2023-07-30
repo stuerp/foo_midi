@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2023.07.24) P. Stuer **/
+/** $VER: FSPlayer.cpp (2023.07.30) P. Stuer **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -266,11 +266,15 @@ bool FSPlayer::Startup()
         }
     }
 */
-    if (_SoundFontFilePath.length())
+    if (_SoundFontFilePath.length() != 0)
     {
+        char FilePath[MAX_PATH];
+
+        pfc::stringcvt::convert_utf8_to_ascii(FilePath, _countof(FilePath), _SoundFontFilePath.c_str(), _SoundFontFilePath.size());
+
         for (size_t i = 0; i < _countof(_Synth); ++i)
         {
-            if (_FluidSynth.LoadSoundFont(_Synth[i], _SoundFontFilePath.c_str(), 1) == FLUID_FAILED)
+            if (_FluidSynth.LoadSoundFont(_Synth[i], FilePath, 1) == FLUID_FAILED)
             {
                 Shutdown();
 

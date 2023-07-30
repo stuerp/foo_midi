@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.07.25) **/
+/** $VER: Configuration.cpp (2023.07.30) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -30,14 +30,14 @@ static const GUID guid_cfg_emidi_exclusion = { 0xc090f9c7, 0x47f9, 0x4f6f, { 0x8
 static const GUID guid_cfg_filter_instruments = { 0x6d30c919, 0xb053, 0x43aa, { 0x9f, 0x1b, 0x1d, 0x40, 0x18, 0x82, 0x80, 0x5e } };
 static const GUID guid_cfg_filter_banks = { 0x3145963c, 0x7322, 0x4b48, { 0x99, 0xff, 0x75, 0xea, 0xc5, 0xf4, 0xda, 0xcc } };
 
+static const GUID GUIDCfgFluidSynthInterpolationMethod = { 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } };
+
 static const GUID GUIDBASSMIDIInterpolationMode = { 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } };
 
 static const GUID GUIDCfgVSTiFilePath = { 0x1a6ea7e5, 0x718a, 0x485a, { 0xb1, 0x67, 0xcf, 0xdf, 0x3b, 0x40, 0x61, 0x45 } };
 static const GUID GUIDCfgSoundFontFilePath = { 0x696d12dd, 0xaf32, 0x43d9, { 0x8d, 0xf6, 0xbd, 0xd1, 0x1e, 0x81, 0x83, 0x29 } };
 static const GUID GUIDCfgMT32ROMDirectoryPath = { 0xd7e0ec5e, 0x872f, 0x41e3, { 0x9b, 0x5b, 0xd2, 0x2, 0xd8, 0xb9, 0x42, 0xa7 } };
 static const GUID GUIDCfgFluidSynthDirectoryPath = { 0x0774129c, 0x3baf, 0x471e, { 0xa3, 0xdd, 0x83, 0x78, 0xc4, 0x2c, 0x1a, 0x4e } };
-
-static const GUID guid_cfg_fluid_interp_method = { 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } };
 
 static const GUID GUIDCfgVSTConfig = { 0x44e7c715, 0xd256, 0x44c4, { 0x8f, 0xb6, 0xb7, 0x20, 0xfa, 0x9b, 0x31, 0xfc } };
 
@@ -109,6 +109,11 @@ cfg_int
     CfgLoopTypePlayback(guid_cfg_loop_type, DefaultPlaybackLoopType),
     CfgLoopTypeOther(guid_cfg_loop_type_other, DefaultOtherLoopType),
 
+    CfgMIDIFlavor(GUIDCfgMIDIFlavor, DefaultMIDIFlavor),
+    CfgUseMIDIEffects(GUIDCfgUseMIDIEffects, DefaultUseMIDIEffects),
+    CfgUseSuperMuntWithMT32(GUIDCfgUseSuperMuntWithMT32, DefaultUseSuperMuntWithMT32),
+    CfgUseVSTiWithXG(GUIDCfgUseSecretSauceWithXG, DefaultUseSecretSauceWithXG),
+
     CfgDetectXMILoops(guid_cfg_xmiloopz, default_cfg_xmiloopz),
     CfgDetectFF7Loops(guid_cfg_ff7loopz, default_cfg_ff7loopz),
     CfgDetectRPGMakerLoops(guid_cfg_rpgmloopz, default_cfg_rpgmloopz),
@@ -116,28 +121,23 @@ cfg_int
 
     CfgEmuDeMIDIExclusion(guid_cfg_emidi_exclusion, DefaultEmuDeMIDIExclusion),
 
+    CfgFluidSynthInterpolationMode(GUIDCfgFluidSynthInterpolationMethod, DefaultFluidSynthInterpolationMethod),
+
     CfgBASSMIDIInterpolationMode(GUIDBASSMIDIInterpolationMode, DefaultBASSMIDIInterpolationMode),
 
     CfgFilterInstruments(guid_cfg_filter_instruments, DefaultFilterInstruments),
     CfgFilterBanks(guid_cfg_filter_banks, DefaultFilterBanks),
+
+    CfgMuntGMSet(guid_cfg_munt_gm, DefaultGMSet),
 
     CfgADLBank(guid_cfg_adl_bank, DefaultADLBank),
     CfgADLChipCount(guid_cfg_adl_chips, DefaultADLChipCount),
     CfgADLPanning(guid_cfg_adl_panning, DefaultADLPanning),
 //  CfgADL4Op(guid_cfg_adl_4op, DefaultADL4Op),
 
-    CfgMuntGMSet(guid_cfg_munt_gm, DefaultGMSet),
-
     CfgNukeSynthesizer(guid_cfg_ms_synth, DefaultNukeSynth),
     CfgNukeBank(guid_cfg_ms_bank, DefaultNukeBank),
-    CfgNukePanning(guid_cfg_ms_panning, DefaultNukePanning),
-
-    CfgMIDIFlavor(GUIDCfgMIDIFlavor, DefaultMIDIFlavor),
-    CfgUseMIDIEffects(GUIDCfgUseMIDIEffects, DefaultUseMIDIEffects),
-    CfgUseSuperMuntWithMT32(GUIDCfgUseSuperMuntWithMT32, DefaultUseSuperMuntWithMT32),
-    CfgUseVSTiWithXG(GUIDCfgUseSecretSauceWithXG, DefaultUseSecretSauceWithXG),
-
-    CfgFluidSynthInterpolationMode(guid_cfg_fluid_interp_method, DefaultFluidSynthInterpolationMethod);
+    CfgNukePanning(guid_cfg_ms_panning, DefaultNukePanning);
 
 #ifdef DXISUPPORT
 static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };

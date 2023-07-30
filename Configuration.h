@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.07.24) **/
+/** $VER: Configuration.h (2023.07.30) **/
 
 #pragma once
 
@@ -105,8 +105,8 @@ extern cfg_int
     CfgFilterInstruments,
     CfgFilterBanks,
 
-    CfgBASSMIDIInterpolationMode,
     CfgFluidSynthInterpolationMode,
+    CfgBASSMIDIInterpolationMode,
 
     CfgADLBank,
     CfgADLChipCount,
