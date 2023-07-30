@@ -35,11 +35,12 @@ enum class PlayerType : int8_t
     SecretSauce = 10,
 
     Max = SecretSauce,
+
+    Default = ADL,
 };
 
 enum
 {
-    DefaultPlayerType = PlayerType::ADL,
     DefaultSampleRate = 44100,
     DefaultPlaybackLoopType = 0,
     DefaultOtherLoopType = 0,

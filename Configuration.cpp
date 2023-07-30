@@ -103,7 +103,7 @@ static const GUID GUIDMIDIPlayerBranch = { 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0
 #pragma endregion
 
 cfg_int
-    CfgPlayerType(GUIDPlayerType, DefaultPlayerType),
+    CfgPlayerType(GUIDPlayerType, (t_int32) PlayerType::Default),
     CfgSampleRate(GUIDSampleRate, DefaultSampleRate),
 
     CfgLoopTypePlayback(guid_cfg_loop_type, DefaultPlaybackLoopType),

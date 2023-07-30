@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.07.24) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2023.07.30) P. Stuer **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -46,18 +46,27 @@ extern volatile int _IsRunning;
 static const GUID GUIDCfgSampleRateHistory = { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
 static cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
 
-static const int SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
+static const int _SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
 
-#pragma region("FluidSynth")
-static const char * interp_txt[] = { "None", "Linear", "Cubic", "7th Order Sinc" };
-static int interp_method[] = { FLUID_INTERP_NONE, FLUID_INTERP_LINEAR, FLUID_INTERP_4THORDER, FLUID_INTERP_7THORDER };
-enum
+#pragma region(FluidSynth)
+#pragma warning(disable: 4820)
+struct InterpolationMethod
 {
-    interp_method_default = 2
+    const WCHAR * Name;
+    int Id;
+};
+#pragma warning(default: 4820)
+
+static const InterpolationMethod _InterpolationMethods[] =
+{
+    { L"None", FLUID_INTERP_NONE },
+    { L"Linear", FLUID_INTERP_LINEAR },
+    { L"Cubic", FLUID_INTERP_4THORDER },
+    { L"7th Order Sinc", FLUID_INTERP_7THORDER }
 };
 #pragma endregion
 
-#pragma region("Munt")
+#pragma region(Munt)
 const char * _MuntGMSets[] =
 {
     "Roland",
@@ -68,13 +77,13 @@ const size_t _MuntGMSetCount = _countof(_MuntGMSets);
 #pragma endregion
 
 /// <summary>
-/// Implements a preferences page.
+/// Implements the main preferences page.
 /// </summary>
 #pragma warning(disable: 4820)
 class PreferencesRootPage : public CDialogImpl<PreferencesRootPage>, public preferences_page_instance
 {
 public:
-    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _Callback(callback) { }
+    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _InstalledKnownPlayerCount(), _Callback(callback) { }
 
     PreferencesRootPage(const PreferencesRootPage&) = delete;
     PreferencesRootPage(const PreferencesRootPage&&) = delete;
@@ -174,13 +183,27 @@ private:
 private:
     bool _IsBusy;
 
-    struct InstalledPlayer
+    static bool IsPluginAlwaysPresent(PreferencesRootPage *)
     {
-        pfc::string8 Name;
-        PlayerType Type;
-    };
+        return true;
+    }
 
-    struct BuiltInPlayer
+    static bool IsPluginNeverPresent(PreferencesRootPage *)
+    {
+        return false;
+    }
+
+    static bool IsSecretSaucePresent(PreferencesRootPage * p)
+    {
+        return p->_HasSecretSauce;
+    }
+
+    static bool IsFluidSynthPresent(PreferencesRootPage *)
+    {
+        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath));
+    }
+
+    struct KnownPlayer
     {
         const char * Name;
         PlayerType Type;
@@ -188,11 +211,23 @@ private:
         bool (*IsPresent)(PreferencesRootPage *);
     };
 
+    static const KnownPlayer _KnownPlayers[];
+
+    struct InstalledPlayer
+    {
+        pfc::string8 Name;
+        PlayerType Type;
+    };
+
+    std::vector<InstalledPlayer> _InstalledPlayers;
+
+    size_t _InstalledKnownPlayerCount; // Number of installed known players.
+
 #ifdef DXISUPPORT
     pfc::array_t<CLSID> dxi_plugins;
 #endif
 
-    #pragma region("VSTi")
+    #pragma region(VSTi)
     pfc::string8 _VSTiPath;
 
     void GetVSTiPlugins(const char * pathName = nullptr, puFindFile findFile = nullptr);
@@ -209,7 +244,7 @@ private:
     std::vector<uint8_t> _VSTiConfig;
     #pragma endregion
 
-    #pragma region("BASS MIDI")
+    #pragma region(BASS MIDI)
     pfc::string8 _CacheStatusText;
     pfc::string8 _CacheStatusTextCurrent;
     #pragma endregion
@@ -246,36 +281,6 @@ private:
     static bool HasSecretSauce();
     #pragma endregion
 
-    static bool IsPluginAlwaysPresent(PreferencesRootPage *)
-    {
-        return true;
-    }
-
-    static bool IsPluginNeverPresent(PreferencesRootPage *)
-    {
-        return false;
-    }
-
-    static bool IsSecretSaucePresent(PreferencesRootPage * p)
-    {
-        return p->_HasSecretSauce;
-    }
-
-    static bool IsFluidSynthPresent(PreferencesRootPage *)
-    {
-        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath));
-    }
-
-    int _PlayerPresentCount;
-
-    static const BuiltInPlayer BuiltInPlayers[];
-
-    std::vector<InstalledPlayer> _InstalledPlayers;
-
-    std::map<int, int> _PlayerTypeToPlayerIndex;
-    std::map<int, int> _PlayerPresentMap;
-    std::map<int, PlayerType> _PlayerIndexToPlayerType;
-
     const preferences_page_callback::ptr _Callback;
 
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
@@ -284,7 +289,7 @@ private:
 /// <summary>
 /// Contains all the plugins that are build into the component.
 /// </summary>
-const PreferencesRootPage::BuiltInPlayer PreferencesRootPage::BuiltInPlayers[] =
+const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
 {
     { "Emu de MIDI",    PlayerType::EmuDeMIDI,    PlayerType::Unknown,    IsPluginAlwaysPresent },
     { "FluidSynth",     PlayerType::FluidSynth,   PlayerType::BASSMIDI,   IsFluidSynthPresent },
@@ -297,7 +302,7 @@ const PreferencesRootPage::BuiltInPlayer PreferencesRootPage::BuiltInPlayers[] =
     { "Secret Sauce",   PlayerType::SecretSauce,  PlayerType::Unknown,    IsSecretSaucePresent }
 };
 
-#pragma region("preferences_page_instance")
+#pragma region(preferences_page_instance)
 /// <summary>
 /// Gets the state of the Preference dialog.
 /// </summary>
@@ -319,47 +324,33 @@ t_uint32 PreferencesRootPage::get_state()
 /// </summary>
 void PreferencesRootPage::apply()
 {
-    #pragma region("Output")
+    #pragma region(PlayerType)
     {
-        PlayerType PlayerType = PlayerType::Unknown;
+        int SelectedIndex = (int) SendDlgItemMessageW(IDC_PLAYER_TYPE, CB_GETCURSEL);
 
-        int SelectedItem = (int) SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
-
+        if (SelectedIndex != -1)
         {
-            if ((SelectedItem >= _PlayerPresentCount) && (SelectedItem < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
-                PlayerType = PlayerType::VSTi;
-        #ifdef DXISUPPORT
-            else
-            if (plugin_selected >= plugins_reported + _VSTiPlugins.get_count())
-                PlayerType = PlayerType::DirectX;
-        #endif
-            else
-                PlayerType = (enum PlayerType) _PlayerIndexToPlayerType[SelectedItem];
-
-            CfgPlayerType = (int) PlayerType;
-        }
-
-        {
-            if (PlayerType == PlayerType::VSTi)
+            if ((size_t) SelectedIndex < _InstalledKnownPlayerCount)
             {
-                CfgVSTiFilePath = _VSTiPlugIns[(size_t)(SelectedItem - _PlayerPresentCount)].PathName.c_str();
-
-                CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedItem - _PlayerPresentCount)].Id] = _VSTiConfig;
-            }
-            else
+                CfgPlayerType = (int) _InstalledPlayers[(size_t) SelectedIndex].Type;
                 CfgVSTiFilePath = "";
-        }
-
-        #ifdef DXISUPPORT
-        {
-            if (PlayerType == PlayerType::DirectX)
+            }
+            else
             {
-                cfg_dxi_plugin = dxi_plugins[plugin_selected - _VSTiPlugins.get_count() - plugins_reported];
+                CfgPlayerType = (int) PlayerType::VSTi;
+
+                size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
+
+                VSTiPlugin & Plugin = _VSTiPlugIns[VSTiIndex];
+
+                CfgVSTiFilePath = Plugin.PathName.c_str();
+                CfgVSTiConfig[Plugin.Id] = _VSTiConfig;
             }
         }
-        #endif
     }
+    #pragma endregion
 
+    #pragma region(Sample Rate)
     {
         UINT t = GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE);
 
@@ -485,10 +476,22 @@ void PreferencesRootPage::apply()
 /// </summary>
 void PreferencesRootPage::reset()
 {
-    PlayerType PlayerType = (enum PlayerType) DefaultPlayerType;
+    PlayerType PlayerType = PlayerType::Default;
 
-    int PlayerIndex = _PlayerTypeToPlayerIndex[(int) PlayerType];
-    int SelectedItem = _PlayerPresentMap[PlayerIndex];
+    int SelectedItem = -1;
+
+    {
+        int i = 0;
+
+        for (auto Iter = _InstalledPlayers.begin(); Iter != _InstalledPlayers.end(); ++Iter, ++i)
+        {
+            if (Iter->Type == PlayerType)
+            {
+                SelectedItem = i;
+                break;
+            }
+        }
+    }
 
     {
         bool Enable = (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI);
@@ -623,140 +626,79 @@ void PreferencesRootPage::reset()
 /// </summary>
 BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 {
-    PlayerType PlayerType = (enum PlayerType) (uint8_t) CfgPlayerType;
-
-    _PlayerTypeToPlayerIndex[(int) PlayerType] = -1;
-    _PlayerIndexToPlayerType[-1] = PlayerType::Unknown;
-
-    for (size_t i = 0; i < _countof(BuiltInPlayers); ++i)
+    // Gets the installed players. FluidSynth and Secret Sauce are optional.
+    for (size_t i = 0; i < _countof(_KnownPlayers); ++i)
     {
-        if (BuiltInPlayers[i].IsPresent(this))
+        if (_KnownPlayers[i].IsPresent(this))
         {
             struct InstalledPlayer ip;
 
-            ip.Name = BuiltInPlayers[i].Name;
-            ip.Type = BuiltInPlayers[i].Type;
+            ip.Name = _KnownPlayers[i].Name;
+            ip.Type = _KnownPlayers[i].Type;
 
             _InstalledPlayers.push_back(ip);
         }
-
-        _PlayerTypeToPlayerIndex[(int) BuiltInPlayers[i].Type] = (int) i;
-
-//      if (BuiltInPlayers[i].Fallback >= 0)
-//          _PlayerTypeToPlayerIndex[BuiltInPlayers[i].Fallback] = (int)i;
     }
-/*
-    int PlayerIndex = -1;
 
-    if ((PlayerType != PlayerType::VSTi) && (PlayerType != PlayerType::DirectX))
+    _InstalledKnownPlayerCount = _InstalledPlayers.size();
+
+    #pragma region("VSTi")
+    size_t VSTiIndex = ~0u;
+
+    // Add the VSTi to the installed player list.
     {
-        PlayerIndex = _PlayerTypeToPlayerIndex[PlayerType];
-
-        if ((PlayerIndex < 0) || !BuiltInPlayers[PlayerIndex].IsPresent(this))
         {
-            PlayerType  = DefaultPlayerType;
-            PlayerIndex = _PlayerTypeToPlayerIndex[DefaultPlayerType];
+            GetVSTiPlugins();
+
+            size_t VSTiCount = _VSTiPlugIns.get_size();
+
+            if (VSTiCount > 0)
+            {
+                console::print("Found ",pfc::format_int((t_int64) VSTiCount), " VST instruments.");
+
+                for (size_t i = 0; i < VSTiCount; ++i)
+                {
+                    struct InstalledPlayer ip;
+
+                    ip.Name = _VSTiPlugIns[i].Name.c_str();
+                    ip.Type = PlayerType::VSTi;
+
+                    _InstalledPlayers.push_back(ip);
+
+                    if (CfgVSTiFilePath == _VSTiPlugIns[i].PathName)
+                        VSTiIndex = i;
+                }
+            }
+        }
+    }
+    #pragma endregion
+
+    #pragma region(Player Type)
+    // Determine the selected player.
+    PlayerType PlayerType = (enum PlayerType) (uint8_t) CfgPlayerType;
+
+    if ((PlayerType == PlayerType::VSTi) && (VSTiIndex == ~0u))
+        PlayerType = PlayerType::Default; // In case the VSTi is no longer available.
+    #pragma endregion
+
+    #pragma region(Configure)
+    {
+        auto w = (CComboBox) GetDlgItem(IDC_CONFIGURE);
+
+        if (PlayerType != PlayerType::VSTi)
+        {
+            w.EnableWindow(FALSE);
         }
         else
-        if (BuiltInPlayers[PlayerIndex].Fallback == PlayerType)
-            PlayerType = BuiltInPlayers[PlayerIndex].Type;
-    }
-*/
-    size_t VSTiPluginIndex = (size_t) ~0;
-
-    {
-        CWindow w = GetDlgItem(IDC_PLAYER_TYPE);
-
+        if (VSTiIndex != ~0u)
         {
-            _PlayerPresentCount = 0;
+            const VSTiPlugin & Plugin = _VSTiPlugIns[VSTiIndex];
 
-            _PlayerPresentMap[(int) PlayerType] = -1;
-
-            for (size_t i = 0; i < _countof(BuiltInPlayers); ++i)
-            {
-                const BuiltInPlayer& bip = BuiltInPlayers[i];
-
-                if (bip.IsPresent(this))
-                {
-                    _PlayerPresentMap[(int) bip.Type] = _PlayerPresentCount;
-
-//                    if (bip.Fallback >= 0)
-//                        _PlayerPresentMap[bip.Fallback] = _PlayerPresentCount;
-
-                    _PlayerIndexToPlayerType[_PlayerPresentCount] = bip.Type;
-                    _PlayerPresentCount++;
-
-                    ::uSendMessageText(w, CB_ADDSTRING, 0, bip.Name);
-                }
-            }
+            w.EnableWindow(Plugin.HasEditor);
+            _VSTiConfig = CfgVSTiConfig[Plugin.Id];
         }
     }
-
- #pragma region("VSTi")
-    {
-        GetVSTiPlugins();
-
-        size_t VSTiCount = _VSTiPlugIns.get_size();
-
-        if (VSTiCount > 0)
-        {
-            CWindow w = GetDlgItem(IDC_PLAYER_TYPE);
-
-            console::print("Found ",pfc::format_int((t_int64)_VSTiPlugIns.get_size()), " VST instruments.");
-
-            for (size_t i = 0, j = VSTiCount; i < j; ++i)
-            {
-                _PlayerIndexToPlayerType[_PlayerPresentCount + (int) i] = PlayerType::VSTi;
-
-                ::uSendMessageText(w, CB_ADDSTRING, 0, _VSTiPlugIns[i].Name.c_str());
-
-                if ((PlayerType == PlayerType::VSTi) && (::stricmp_utf8(_VSTiPlugIns[i].PathName.c_str(), CfgVSTiFilePath) == 0))
-                    VSTiPluginIndex = i;
-            }
-        }
-#pragma endregion
-
-#ifdef DXISUPPORT
-        unsigned dxi_selected = ~0;
-
-        dxi_plugins.set_count(0);
-
-        ::CoInitialize(NULL);
-
-        {
-            CPlugInInventory theInventory;
-
-            if (SUCCEEDED(theInventory.EnumPlugIns()))
-            {
-                unsigned count = theInventory.GetCount();
-                pfc::string8_fastalloc name;
-                CLSID theClsid;
-
-                for (unsigned i = 0; i < count; ++i)
-                {
-                    if (SUCCEEDED(theInventory.GetInfo(i, &theClsid, name)))
-                    {
-                        dxi_plugins.append_single(theClsid);
-                        uSendMessageText(w, CB_ADDSTRING, 0, name);
-
-                        if (theClsid == cfg_dxi_plugin.get_value())
-                            dxi_selected = i;
-
-                        plugins_present_reverse_map[plugins_reported + vsti_count + i] = 5;
-                    }
-                }
-            }
-        }
-
-        ::CoUninitialize();
-#endif
-    }
-
-    if ((PlayerType == PlayerType::EmuDeMIDI) && _IsRunning)
-        GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
-
-    if ((PlayerType == PlayerType::VSTi) && (VSTiPluginIndex == ~0))
-        PlayerType = (enum PlayerType) DefaultPlayerType;
+    #pragma endregion
 
     {
         bool Enable = (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI);
@@ -793,16 +735,6 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
     }
 
-    if (PlayerType != PlayerType::VSTi)
-    {
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-    }
-    else
-    {
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(_VSTiPlugIns[VSTiPluginIndex].HasEditor);
-        _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[VSTiPluginIndex].Id];
-    }
-
     if (PlayerType != PlayerType::Nuke)
     {
         GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
@@ -824,39 +756,40 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         int SelectedIndex = -1;
 
-        if (PlayerType == PlayerType::VSTi)
-            SelectedIndex = _PlayerPresentCount + (int) VSTiPluginIndex;
-    #ifdef DXISUPPORT
-        else
-        if (PlayerType == PlayerType::DirectX)
+        for (size_t i = 0; i < _InstalledPlayers.size(); ++i)
         {
-            if (dxi_selected != ~0)
-                SelectedIndex = _PlayerPresentCount + vsti_count + dxi_selected;
-            else
-                SelectedIndex = 0;
+            w.AddString(pfc::wideFromUTF8(_InstalledPlayers[i].Name));
+
+            if (_InstalledPlayers[i].Type == PlayerType)
+                SelectedIndex = (int) i;
         }
-    #endif
-        else
-            SelectedIndex = _PlayerPresentMap[(int) PlayerType];
+
+        if ((PlayerType == PlayerType::VSTi) && (VSTiIndex != ~0))
+            SelectedIndex = (int) (_InstalledKnownPlayerCount + VSTiIndex);
 
          w.SetCurSel(SelectedIndex);
     }
 
     // Set the selected sample rate.
     {
-        for (size_t i = _countof(SampleRates); i--;)
+        for (size_t i = _countof(_SampleRates); i--;)
         {
-            if (SampleRates[i] != CfgSampleRate)
-                CfgSampleRateHistory.add_item(pfc::format_int(SampleRates[i]));
+            if (_SampleRates[i] != CfgSampleRate)
+                CfgSampleRateHistory.add_item(pfc::format_int(_SampleRates[i]));
         }
 
         CfgSampleRateHistory.add_item(pfc::format_int(CfgSampleRate));
 
-        auto w = (CComboBox) GetDlgItem(IDC_SAMPLERATE);
+        {
+            auto w = (CComboBox) GetDlgItem(IDC_SAMPLERATE);
 
-        CfgSampleRateHistory.setup_dropdown(w);
+            CfgSampleRateHistory.setup_dropdown(w);
 
-         w.SetCurSel(0);
+             w.SetCurSel(0);
+
+            if ((PlayerType == PlayerType::EmuDeMIDI) && _IsRunning)
+                w.EnableWindow(FALSE);
+        }
     }
 
     // Set the selected loop types.
@@ -1040,16 +973,25 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     return FALSE;
 }
 
+/// <summary>
+/// Handles a change in an edit box.
+/// </summary>
 void PreferencesRootPage::OnEditChange(UINT, int, CWindow)
 {
     OnChanged();
 }
 
+/// <summary>
+/// Handles a selection change in a combo box.
+/// </summary>
 void PreferencesRootPage::OnSelectionChange(UINT, int, CWindow)
 {
     OnChanged();
 }
 
+/// <summary>
+/// Handles a click on a button
+/// </summary>
 void PreferencesRootPage::OnButtonClick(UINT, int, CWindow)
 {
     OnChanged();
@@ -1062,25 +1004,28 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 {
     int SelectedIndex = (int) GetDlgItem(IDC_PLAYER_TYPE).SendMessage(CB_GETCURSEL, 0, 0);
 
-    if ((SelectedIndex >= _PlayerPresentCount) && SelectedIndex < (int) (_PlayerPresentCount + _VSTiPlugIns.get_count()))
+    if ((SelectedIndex != -1) && ((size_t) SelectedIndex < _InstalledKnownPlayerCount))
+        return;
+
+    _IsBusy = true;
+    OnChanged();
+
+    VSTiPlayer Player;
+
+    size_t VSTiIndex = SelectedIndex - _InstalledKnownPlayerCount;
+
+    if (Player.LoadVST(_VSTiPlugIns[VSTiIndex].PathName.c_str()))
     {
-        _IsBusy = true;
-        OnChanged();
+        if (_VSTiConfig.size() != 0)
+            Player.SetChunk(&_VSTiConfig[0], _VSTiConfig.size());
 
-        VSTiPlayer Player;
+        Player.DisplayEditorModal();
 
-        if (Player.LoadVST(_VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].PathName.c_str()))
-        {
-            if (_VSTiConfig.size() != 0)
-                Player.SetChunk(&_VSTiConfig[0], _VSTiConfig.size());
-
-            Player.DisplayEditorModal();
-            Player.GetChunk(_VSTiConfig);
-        }
-
-        _IsBusy = false;
-        OnChanged();
+        Player.GetChunk(_VSTiConfig);
     }
+
+    _IsBusy = false;
+    OnChanged();
 }
 
 /// <summary>
@@ -1090,29 +1035,27 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 {
     PlayerType PlayerType = PlayerType::Unknown;
 
-    // Player Type
     int SelectedIndex = (int) ::SendMessage(w, CB_GETCURSEL, 0, 0);
+    size_t VSTiIndex = ~0u;
 
+    // Player Type
+    if (SelectedIndex != -1)
     {
-        if ((SelectedIndex >= _PlayerPresentCount) && (SelectedIndex < (int)(_PlayerPresentCount + _VSTiPlugIns.get_count())))
+        PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
+
+        if ((size_t) SelectedIndex >= _InstalledKnownPlayerCount)
         {
-            PlayerType = PlayerType::VSTi;
-            _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].Id];
+            VSTiIndex = SelectedIndex - _InstalledKnownPlayerCount;
+            _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[VSTiIndex].Id];
         }
-    #ifdef DXISUPPORT
-        else
-        if (SelectedIndex >= plugins_reported + _VSTiPlugins.get_count())
-            PlayerType = PlayerType::DirectX;
-    #endif
-        else
-            PlayerType = _PlayerIndexToPlayerType[SelectedIndex];
     }
 
     // Configure
     {
-        bool Enable = (SelectedIndex >= _PlayerPresentCount) && ((int) PlayerType < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()) && _VSTiPlugIns[(size_t)(SelectedIndex - _PlayerPresentCount)].HasEditor;
-
-        GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
+        if (PlayerType != PlayerType::VSTi)
+            GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
+        else
+            GetDlgItem(IDC_CONFIGURE).EnableWindow(_VSTiPlugIns[VSTiIndex].HasEditor);
     }
 
     // Sample Rate
@@ -1221,8 +1164,41 @@ void PreferencesRootPage::OnTimer(UINT_PTR eventId)
 /// </summary>
 bool PreferencesRootPage::HasChanged()
 {
+    {
+        PlayerType PlayerType = PlayerType::Unknown;
+
+        int SelectedIndex = (int) SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
+
+        if (SelectedIndex != -1)
+        {
+            if ((size_t) SelectedIndex < _InstalledKnownPlayerCount)
+                PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
+            else
+                PlayerType = PlayerType::VSTi;
+
+            if (PlayerType != (enum PlayerType) (int) CfgPlayerType)
+                return true;
+
+            if (PlayerType == PlayerType::VSTi)
+            {
+                size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
+
+                if (CfgVSTiFilePath != _VSTiPlugIns[VSTiIndex].PathName)
+                    return true;
+
+                t_uint32 Id = _VSTiPlugIns[VSTiIndex].Id;
+
+                if (_VSTiConfig.size() != CfgVSTiConfig[Id].size())
+                    return true;
+
+                if ((_VSTiConfig.size() != 0) && (::memcmp(&_VSTiConfig[0], &CfgVSTiConfig[Id][0], _VSTiConfig.size()) != 0))
+                    return true;
+            }
+        }
+    }
+
     #pragma region("Output")
-    if (GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT)CfgSampleRate)
+    if (GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT) CfgSampleRate)
         return true;
     #pragma endregion
 
@@ -1301,14 +1277,14 @@ bool PreferencesRootPage::HasChanged()
         return true;
 
     {
-        size_t PresetNumber = (size_t)SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
+        size_t PresetNumber = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
 
-        unsigned int Synth;
-        unsigned int Bank;
+        uint32_t Synth;
+        uint32_t Bank;
 
         NukePlayer::GetPreset(PresetNumber, Synth, Bank);
 
-        if (!(Synth == (unsigned int)CfgNukeSynthesizer && Bank == (unsigned int)CfgNukeBank))
+        if (!(Synth == (uint32_t) CfgNukeSynthesizer && Bank == (uint32_t) CfgNukeBank))
             return true;
     }
     #pragma endregion
@@ -1324,52 +1300,12 @@ bool PreferencesRootPage::HasChanged()
             return true;
     }
 
-    if (GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE) != (UINT)CfgADLChipCount)
+    if (GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE) != (UINT) CfgADLChipCount)
         return true;
 
     if (SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != CfgADLPanning)
         return true;
     #pragma endregion
-
-    {
-        int PlayerIndex = (int)SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
-        PlayerType PlayerType = PlayerType::Unknown;
-
-        if ((PlayerIndex >= _PlayerPresentCount) && (PlayerIndex < _PlayerPresentCount + (int)_VSTiPlugIns.get_count()))
-            PlayerType = PlayerType::VSTi;
-    #ifdef DXISUPPORT
-        else
-        if (PlayerIndex >= plugins_reported + _VSTiPlugins.get_count())
-            PlayerType = PlayerType::DirectX;
-    #endif
-        else
-            PlayerType = _PlayerIndexToPlayerType[PlayerIndex];
-
-        if (PlayerType != (enum PlayerType) (int) CfgPlayerType)
-            return true;
-
-        if (PlayerType == PlayerType::VSTi)
-        {
-            if (CfgVSTiFilePath != _VSTiPlugIns[(size_t)(PlayerIndex - _PlayerPresentCount)].PathName)
-                return true;
-
-            t_uint32 Id = _VSTiPlugIns[(size_t)(PlayerIndex - _PlayerPresentCount)].Id;
-
-            if (_VSTiConfig.size() != CfgVSTiConfig[Id].size())
-                return true;
-
-            if ((_VSTiConfig.size() != 0) && (::memcmp(&_VSTiConfig[0], &CfgVSTiConfig[Id][0], _VSTiConfig.size()) != 0))
-                return true;
-        }
-    #ifdef DXISUPPORT
-        else
-        if (PlayerType == PlayerType::DirectX)
-        {
-            if (dxi_plugins[PlayerIndex - _VSTiPlugins.get_count() - plugins_reported] != cfg_dxi_plugin.get_value())
-                return true;
-        }
-    #endif
-    }
 
     return false;
 }
@@ -1457,7 +1393,6 @@ void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findF
                 {
                     VSTiPlugin Plugin;
 
-                    Plugin.Name = "VST ";
                     Plugin.PathName = PathName;
 
                     pfc::string8 VendorName;
@@ -1468,8 +1403,10 @@ void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findF
 
                     Player.GetProductName(ProductName);
 
-                    // Fix the plugin name if necessary.
+                    // Get the plugin name.
                     {
+                        Plugin.Name = "VSTi ";
+
                         if (VendorName.length() || ProductName.length())
                         {
                             if ((VendorName.length() == 0) || ((ProductName.length() >= VendorName.length()) && (::strncmp(VendorName.c_str(), ProductName.c_str(), VendorName.length()) == 0)))
@@ -1478,7 +1415,7 @@ void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findF
                             }
                             else
                             {
-                                Plugin.Name += VendorName;
+                                Plugin.Name.add_string(VendorName);
 
                                 if (ProductName.length())
                                     Plugin.Name.add_string(' ' + ProductName);
