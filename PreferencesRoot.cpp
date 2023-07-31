@@ -43,12 +43,14 @@
 extern char _DLLFileName[];
 extern volatile int _IsRunning;
 
+#pragma region("Sample Rate")
 static const GUID GUIDCfgSampleRateHistory = { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
 static cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
 
 static const int _SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
+#pragma endregion
 
-#pragma region(FluidSynth)
+#pragma region("FluidSynth")
 #pragma warning(disable: 4820)
 struct InterpolationMethod
 {
@@ -66,7 +68,7 @@ static const InterpolationMethod _InterpolationMethods[] =
 };
 #pragma endregion
 
-#pragma region(Munt)
+#pragma region("Munt")
 const char * _MuntGMSets[] =
 {
     "Roland",
@@ -714,6 +716,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     else
     if ((PlayerType == PlayerType::SecretSauce) && !_HasSecretSauce)
         PlayerType = PlayerType::BASSMIDI; // In case Secret Sauce is no longer available.
+
     #pragma endregion
 
     #pragma region("Configure")

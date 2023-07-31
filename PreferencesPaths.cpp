@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2023.07.24) **/
+/** $VER: PreferencesPaths.cpp (2023.07.30) **/
 
 #include <CppCoreCheck/Warnings.h>
 
