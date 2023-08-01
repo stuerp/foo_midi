@@ -183,6 +183,8 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 /// </summary>
 void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
+    console::print("decode_initialize");
+
     if (_IsSysExFile)
         throw exception_midi("You cannot play SysEx dumps");
 
@@ -198,6 +200,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     _ExtraPercussionChannel = _Container.GetExtraPercussionChannel();
 
+    // The preset collects a number of settings that will configure the player.
     MIDIPreset Preset;
 
     // Set the player type based on the content of the container.
@@ -208,15 +211,17 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             pfc::string8 FilePath;
 
-            AdvCfgVSTiXGPlugin.get(FilePath), Preset._VSTiFilePath = FilePath;
+            AdvCfgVSTiXGPlugin.get(FilePath);
+
+            Preset._VSTiFilePath = FilePath;
         }
         else
         if (_IsMT32 && CfgUseSuperMuntWithMT32)
             _PlayerType = PlayerType::SuperMunt;
     }
 
+    // Load the preset from the song if it has one.
     {
-        // Load the preset from the song if it has one.
         file_info_impl FileInfo;
 
         get_info(subSongIndex, FileInfo, abortHandler);
@@ -235,26 +240,28 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
         }
 
-        MIDISysExDumps SysExDumps;
-
-        // Load the sysex from the song if it has one.
         {
-            const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
+            MIDISysExDumps SysExDumps;
 
-            if (MIDISysExDumps)
+            // Load the sysex from the song if it has one.
             {
-                console::print("Using sysex \"", MIDISysExDumps , "\" from file.");
+                const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
 
-                SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
+                if (MIDISysExDumps)
+                {
+                    console::print("Using sysex \"", MIDISysExDumps , "\" from file.");
+
+                    SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
+                }
             }
-        }
 
-        SysExDumps.Merge(_Container, abortHandler);
+            SysExDumps.Merge(_Container, abortHandler);
+        }
     }
 
-    // Gets a SoundFont file that has been configured for the file, if any.
     pfc::string8 SoundFontFilePath;
 
+    // Gets a SoundFont file that has been configured for the file, if any.
     {
         pfc::string8 FilePath = _FilePath;
         pfc::string8 TempSoundFontFilePath;
@@ -341,7 +348,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     delete _Player;
     _Player = nullptr;
 
-    MIDIPlayer::LoopMode LoopModes = MIDIPlayer::LoopMode((int) MIDIPlayer::LoopModeEnabled | (_IsLooping ? (int) MIDIPlayer::LoopModeForced : 0));
+    MIDIPlayer::LoopMode LoopMode = (MIDIPlayer::LoopMode) ((int) MIDIPlayer::LoopModeEnabled | (_IsLooping ? (int) MIDIPlayer::LoopModeForced : 0));
 
     switch (_PlayerType)
     {
@@ -358,7 +365,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
 
             {
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     {
                         insync(_Lock);
@@ -402,7 +409,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
 
@@ -465,7 +472,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
 
@@ -510,7 +517,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _Player->SetSampleRate(_SampleRate);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
 
@@ -550,7 +557,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
 
@@ -623,7 +630,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _Player->SetSampleRate(_SampleRate);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
 
@@ -651,7 +658,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
 
@@ -683,7 +690,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _Player->SetSampleRate(_SampleRate);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
 
@@ -720,7 +727,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
                 _Player->SetSampleRate(_SampleRate);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
 
@@ -991,6 +998,8 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 /// </summary>
 void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
 {
+    console::print("get_info");
+
     if (_IsSysExFile)
         return;
 
@@ -1080,6 +1089,8 @@ void InputDecoder::InitializeIndexManager()
 /// </summary>
 void InputDecoder::InitializeTime(size_t subSongIndex)
 {
+    console::print("InitializeTime");
+
     _LoopInTicks.Set(_Container.GetLoopBeginTimestamp(subSongIndex), _Container.GetLoopEndTimestamp(subSongIndex));
     _LoopInMs.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
 
