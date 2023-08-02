@@ -104,10 +104,10 @@ v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
 * New: Added .XFM as an alternative file extension for XMI files.
 * Improved: Added FluidSynth settings to preferences page.
 * Improved: MIDI standard detection
-  * Some XG files where not recognized as such if the file contained anyy GS messages first.
+  * Some XG files were not recognized as such if the file contained anyy GS messages first.
   * GM 2 detection.
 * Changed: Renamed dynamic info tags *bassmidi_voices* and *bassmidi_voices_max* to *midi_active_voices* and *midi_peak_voices*. The FluidSynth player also sets those tags while playing.
-* Bug Fix: An old bug in the XMI parser prevent some XMI files from loading.
+* Bug Fix: An old bug in the XMI parser prevented some XMI files from loading.
 
 v2.8.5.0, 2023-07-23, *""*
 
