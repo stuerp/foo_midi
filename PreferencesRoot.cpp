@@ -1541,7 +1541,7 @@ bool PreferencesRootPage::HasSecretSauce() noexcept
     {
         ::fseek(fp, 0, SEEK_END);
 
-        size_t FileSize = ::ftell(fp);
+        size_t FileSize = (size_t) ::ftell(fp);
 
         for (size_t i = 0; i < _countof(SecretSauceInfos); ++i)
         {
