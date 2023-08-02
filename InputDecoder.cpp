@@ -76,7 +76,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
         if (_IsSysExFile)
         {
-            if (!MIDIProcessor::ProcessSysEx(Data, _Container))
+            if (!MIDIProcessor::Process(Data, nullptr, _Container))
                 throw exception_io_data("Invalid SysEx dump");
 
             return;
@@ -183,8 +183,6 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 /// </summary>
 void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
-    console::print("decode_initialize");
-
     if (_IsSysExFile)
         throw exception_midi("You cannot play SysEx dumps");
 
@@ -998,8 +996,6 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 /// </summary>
 void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
 {
-    console::print("get_info");
-
     if (_IsSysExFile)
         return;
 
@@ -1089,8 +1085,6 @@ void InputDecoder::InitializeIndexManager()
 /// </summary>
 void InputDecoder::InitializeTime(size_t subSongIndex)
 {
-    console::print("InitializeTime");
-
     _LoopInTicks.Set(_Container.GetLoopBeginTimestamp(subSongIndex), _Container.GetLoopEndTimestamp(subSongIndex));
     _LoopInMs.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
 

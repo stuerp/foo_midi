@@ -1012,7 +1012,6 @@ uint32_t MIDIContainer::GetLoopEndTimestamp(size_t subSongIndex, bool ms /* = fa
 
 void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 {
-    bool TypeFound = false;
     const char * TypeName = nullptr;
     uint32_t TypeTimestamp = 0;
 
@@ -1043,15 +1042,20 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
                 switch (Event.Data[1])
                 {
                     case 0x7Eu:
-                        TempTypeName = "GM";
+                    {
+                        TempTypeName = "GM"; // 1991
+
+                        if ((DataSize >= 5) && (((Event.Data[3] == 0x04) && (Event.Data[4] >= 0x05)) || (Event.Data[3] > 0x04)))
+                            TempTypeName = "GM2"; // 1999, 2003 v1.1, 2007 v1.2
                         break;
+                    }
 
                     case 0x43u:
-                        TempTypeName = "XG";
+                        TempTypeName = "XG"; // 1994 Level 1, 1997 Level 2, 1998, Level 3
                         break;
 
                     case 0x42u:
-                        TempTypeName = "X5";
+                        TempTypeName = "X5"; // 1994 Korg X5
                         break;
 
                     case 0x41u:
@@ -1061,15 +1065,15 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
                             switch (Event.Data[3])
                             {
                                 case 0x42u:
-                                    TempTypeName = "GS";
+                                    TempTypeName = "GS"; // 1991
                                     break;
 
                                 case 0x16u:
-                                    TempTypeName = "MT-32";
+                                    TempTypeName = "MT-32"; // 1987 Roland MT-32
                                     break;
 
                                 case 0x14u:
-                                    TempTypeName = "D-50";
+                                    TempTypeName = "D-50"; // 1987 Roland D-50
                                     break;
                             }
                         }
@@ -1251,15 +1255,22 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
                 }
             }
 
-            if (TempTypeName && ((TypeName == nullptr) || (::_stricmp(TypeName, TempTypeName) != 0)))
+            // Remember the container type name: MT-32 or GM < GM2 < GS < XG
+            if (TempTypeName)
             {
-                uint32_t TempTimestamp = TimestampToMS(Event.Timestamp, TempoTrackIndex);
-
-                if (TempTimestamp >= TypeTimestamp)
+                if ((TypeName != nullptr) && (::_stricmp(TypeName, "MT-32") != 0))
                 {
-                    TypeName = TempTypeName;
-                    TypeTimestamp = TempTimestamp;
+                    if ((::_stricmp(TypeName, "GM") == 0) && (::_stricmp(TempTypeName, "GM2") == 0))
+                        TypeName = TempTypeName;
+                    else
+                    if (((::_stricmp(TypeName, "GM") == 0) || (::_stricmp(TypeName, "GM2") == 0)) && (::_stricmp(TempTypeName, "GS") == 0))
+                        TypeName = TempTypeName;
+                    else
+                    if (::_stricmp(TempTypeName, "XG") == 0)
+                        TypeName = TempTypeName;
                 }
+                else
+                    TypeName = TempTypeName;
             }
         }
     }

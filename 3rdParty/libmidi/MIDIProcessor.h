@@ -39,7 +39,6 @@ class MIDIProcessor
 {
 public:
     static bool Process(std::vector<uint8_t> const & data, const char * fileExtension, MIDIContainer & container);
-    static bool ProcessSysEx(std::vector<uint8_t> const & data, MIDIContainer & container);
 
     static MIDIError GetLastErrorCode() noexcept { return _ErrorCode; }
 
@@ -68,7 +67,7 @@ private:
     static bool ProcessMIDS(std::vector<uint8_t> const & data, MIDIContainer & container);
     static bool process_lds(std::vector<uint8_t> const & data, MIDIContainer & container);
     static bool process_gmf(std::vector<uint8_t> const & data, MIDIContainer & container);
-    static bool ProcessSysExInternal(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool ProcessSysEx(std::vector<uint8_t> const & data, MIDIContainer & container);
 
 //  static bool GetTrackCount(std::vector<uint8_t> const & data, const char * fileExtension, size_t & trackCount);
 //  static bool GetTrackCountFromRIFF(std::vector<uint8_t> const & data, size_t & trackCount);

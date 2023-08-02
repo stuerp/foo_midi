@@ -29,7 +29,6 @@
     <ClCompile Include="MIDIProcessorMUS.cpp" />
     <ClCompile Include="MIDIProcessorRIFF.cpp" />
     <ClCompile Include="MIDIProcessorSMF.cpp" />
-    <ClCompile Include="MIDIProcessorSyx.cpp" />
     <ClCompile Include="MIDIProcessorXMI.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -97,13 +97,15 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.9.0.0, 2023-08-xx, *"A very fluid player..."*
+v2.9.0.0, 2023-08-xx, *"Revenge of the FluidSynth"*
 
 * New: Added FluidSynth player again.
   * It can be selected after setting the path to the directory that contains the FluidSynth libraries. You can download FluidSynth [here](https://github.com/FluidSynth/fluidsynth/releases). Make sure you download the version that has the same CPU architecture as foobar2000 (x64 or x86).
 * New: Added .XFM as an alternative file extension for XMI files.
 * Improved: Added FluidSynth settings to preferences page.
-* Improved: MIDI standard detection. Some XG files where not recognized as such if any GS events preceded the XG events.
+* Improved: MIDI standard detection
+  * Some XG files where not recognized as such if the file contained anyy GS messages first.
+  * GM 2 detection.
 * Changed: Renamed dynamic info tags *bassmidi_voices* and *bassmidi_voices_max* to *midi_active_voices* and *midi_peak_voices*. The FluidSynth player also sets those tags while playing.
 * Bug Fix: An old bug in the XMI parser prevent some XMI files from loading.
 
@@ -214,15 +216,25 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
 * [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
 
+### Electronic Music
+
+* [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
+
 ### SoundFonts
 
-* [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
+* [SoundFont](https://musical-artifacts.com/artifacts?tags=soundfont), Musical Artifacts
 
 ### FluidSynth
 
 * [FluidSynth Documentation](https://github.com/FluidSynth/fluidsynth/wiki/Documentation)
 
 ### MIDI
+
+* [Introduction to Computer Music: MIDI](https://cmtext.indiana.edu/MIDI/chapter3_MIDI.php), Jeffrey Hass
+* [MIDI is the language of the gods](http://midi.teragonaudio.com/), Teragon Audio
+* [Standards in Music](https://www.recordingblogs.com/wiki/standards-in-music-index), Recording Blogs
+* [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
+* [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
 
 #### XMI
 
