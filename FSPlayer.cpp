@@ -147,7 +147,7 @@ bool FSPlayer::Startup()
         _FluidSynth.SetIntegerSetting(_Settings[i], "synth.polyphony", (int ) _VoiceCount);
     }
 
-    // Create the synthesizer.
+    // Create the synthesizers.
     for (size_t i = 0; i < _countof(_Synth); ++i)
     {
         fluid_sfloader_t * Loader = GetSoundFontLoader(_Settings[i]);
@@ -171,101 +171,7 @@ bool FSPlayer::Startup()
         _FluidSynth.AddSoundFontLoader(_Synth[i], Loader);
         _FluidSynth.SetInterpolationMethod(_Synth[i], -1, (int) _InterpolationMode);
     }
-/*
-    if (_SoundFontFilePath.length())
-    {
-        std::string ext;
 
-        size_t dot = _SoundFontFilePath.find_last_of('.');
-
-        if (dot != std::string::npos)
-            ext.assign(_SoundFontFilePath.begin() + dot + 1, _SoundFontFilePath.end());
-
-        if (!::_stricmp(ext.c_str(), "sf2") || !::_stricmp(ext.c_str(), "sf3"))
-        {
-            for (size_t i = 0; i < _countof(_Synth); ++i)
-            {
-                if (_FluidSynth.LoadSoundFont(_Synth[i], _SoundFontFilePath.c_str(), 1) == FLUID_FAILED)
-                {
-                    Shutdown();
-
-                    _ErrorMessage = "Failed to load SoundFont bank: ";
-                    _ErrorMessage += _SoundFontFilePath;
-
-                    return false;
-                }
-            }
-        }
-        else
-        if ((::stricmp_utf8(ext.c_str(), "sflist") == 0))
-        {
-            FILE * fl;
-
-            if (::_wfopen_s(&fl, pfc::stringcvt::string_os_from_utf8(_SoundFontFilePath.c_str()), L"r, ccs=UTF-8") == 0)
-            {
-                std::wstring path, temp;
-
-                WCHAR name[32768];
-
-                size_t slash = _SoundFontFilePath.find_last_of('\\');
-
-                if (slash != std::string::npos)
-                    path.assign(_SoundFontFilePath.begin(), _SoundFontFilePath.begin() + slash + 1);
-
-                while (!feof(fl))
-                {
-                    if (!::fgetws(name, 32767, fl))
-                        break;
-
-                    name[32767] = 0;
-
-                    TCHAR * cr = ::wcschr(name, '\n');
-
-                    if (cr)
-                        *cr = 0;
-
-                    cr = ::wcschr(name, '\r');
-
-                    if (cr)
-                        *cr = 0;
-
-                    if ((isalpha(name[0]) && name[1] == ':') || name[0] == '\\')
-                    {
-                        temp = name;
-                    }
-                    else
-                    {
-                        temp = path;
-                        temp += name;
-                    }
-
-                    for (size_t i = 0; i < _countof(_Synth); ++i)
-                    {
-                        if (_FluidSynth.LoadSoundFont(_Synth[i], pfc::stringcvt::string_utf8_from_os(temp.c_str()), 1) == FLUID_FAILED)
-                        {
-                            ::fclose(fl);
-                            Shutdown();
-
-                            _ErrorMessage = "Failed to load SoundFont bank: ";
-                            _ErrorMessage += pfc::stringcvt::string_utf8_from_os(cr);
-
-                            return false;
-                        }
-                    }
-                }
-
-                ::fclose(fl);
-            }
-            else
-            {
-                _ErrorMessage = "Failed to open SoundFont list: ";
-                _ErrorMessage += _SoundFontFilePath;
-
-                return false;
-            }
-        }
-    }
-*/
     if (_SoundFontFilePath.length() != 0)
     {
         char FilePath[MAX_PATH];

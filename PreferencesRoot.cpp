@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.07.30) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2023.08.02) P. Stuer **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -656,6 +656,9 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 {
     #pragma region("Player Type")
 
+    _HasFluidSynth = HasFluidSynth();
+    _HasSecretSauce = HasSecretSauce();
+
     #pragma region("Known Players")
     // Gets the installed players. FluidSynth and Secret Sauce are optional.
     for (size_t i = 0; i < _countof(_KnownPlayers); ++i)
@@ -851,8 +854,6 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     #pragma region("FluidSynth")
     {
-        _HasFluidSynth = HasFluidSynth();
-
         int SelectedIndex = -1;
 
         auto w = (CComboBox) GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION);
@@ -997,10 +998,6 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
         GetDlgItem(IDC_NUKE_PANNING).EnableWindow(FALSE);
     }
-    #pragma endregion
-
-    #pragma region("Secret Sauce")
-    _HasSecretSauce = HasSecretSauce();
     #pragma endregion
 
     SetTimer(ID_REFRESH, 20);
@@ -1533,9 +1530,9 @@ bool PreferencesRootPage::HasSecretSauce() noexcept
 
         pfc::string8 FilePath = pfc::io::path::combine(PathName, _DLLFileName);
 
-        pfc::stringcvt::string_os_from_utf8 FilePathW(PathName);
+        pfc::stringcvt::string_os_from_utf8 FilePathW(FilePath);
 
-        _tfopen_s(&fp, FilePathW, _T("rb"));
+        ::_wfopen_s(&fp, FilePathW, L"rb");
     }
 
     bool rc = false;
@@ -1544,7 +1541,7 @@ bool PreferencesRootPage::HasSecretSauce() noexcept
     {
         ::fseek(fp, 0, SEEK_END);
 
-        size_t FileSize = (size_t)::ftell(fp);
+        size_t FileSize = ::ftell(fp);
 
         for (size_t i = 0; i < _countof(SecretSauceInfos); ++i)
         {

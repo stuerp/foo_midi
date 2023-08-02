@@ -259,7 +259,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     pfc::string8 SoundFontFilePath;
 
-    // Gets a SoundFont file that has been configured for the file, if any.
+    // Set the player type to BASS MIDI if a SoundFont has been configured for the file.
     {
         pfc::string8 FilePath = _FilePath;
         pfc::string8 TempSoundFontFilePath;
