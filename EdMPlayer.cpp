@@ -75,36 +75,37 @@ void EdMPlayer::Shutdown()
     _Initialized = false;
 }
 
-void EdMPlayer::Render(audio_sample * out, unsigned long count)
+void EdMPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
-    INT32 b[256 * sizeof(audio_sample)];
+    int32_t Buffer[256 * sizeof(audio_sample)];
 
-    while (count)
+    while (sampleCount != 0)
     {
         unsigned long ToDo = 256;
 
-        if (ToDo > count)
-            ToDo = count;
+        if (ToDo > sampleCount)
+            ToDo = sampleCount;
 
-        ::memset(b, 0, (ToDo * 2) * sizeof(audio_sample));
+        ::memset(Buffer, 0, (ToDo * 2) * sizeof(audio_sample));
 
         for (size_t i = 0; i < 8; ++i)
         {
             for (size_t j = 0; j < ToDo; ++j)
             {
-                INT32 c[2];
+                int32_t c[2];
 
                 _Module[i].Render(c);
 
-                b[j * 2]     += c[0];
-                b[j * 2 + 1] += c[1];
+                Buffer[j * 2] += c[0];
+                Buffer[j * 2 + 1] += c[1];
             }
         }
 
-        audio_math::convert_from_int32((const t_int32 *) b, (ToDo * 2), out, 1 << 16);
+        // Convert the format of the rendered output.
+        audio_math::convert_from_int32((const t_int32 *) Buffer, (ToDo * 2), sampleData, 1 << 16);
 
-        out   += (ToDo * 2);
-        count -= ToDo;
+        sampleData += (ToDo * 2);
+        sampleCount -= ToDo;
     }
 }
 

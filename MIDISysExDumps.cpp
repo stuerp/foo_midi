@@ -80,7 +80,7 @@ void MIDISysExDumps::Merge(MIDIContainer & container, abort_callback & abortHand
             {
                 MIDIContainer Container;
 
-                if (!MIDIProcessor::ProcessSysEx(Data, Container))
+                if (!MIDIProcessor::Process(Data, nullptr, Container))
                     break;
 
                 container.MergeTracks(Container);

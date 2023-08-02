@@ -76,30 +76,30 @@
     #define H_A24    14
 
     // Checkbox
-    #define X_A41    X_A23
-    #define Y_A41    Y_A24 + H_A24 + 4
-    #define W_A41    W_A20 - 5 - 6
-    #define H_A41    10
+    #define X_A25    X_A23
+    #define Y_A25    Y_A24 + H_A24 + 4
+    #define W_A25    W_A20 - 5 - 6
+    #define H_A25    10
 
     // Checkbox
-    #define X_A42    X_A41
-    #define Y_A42    Y_A41 + H_A41 + 4
-    #define W_A42    W_A41
-    #define H_A42    H_A41
+    #define X_A26    X_A25
+    #define Y_A26    Y_A25 + H_A25 + 4
+    #define W_A26    W_A25
+    #define H_A26    H_A25
 
     // Checkbox
-    #define X_A43    X_A42
-    #define Y_A43    Y_A42 + H_A42 + 4
-    #define W_A43    W_A42
-    #define H_A43    H_A42
+    #define X_A27    X_A26
+    #define Y_A27    Y_A26 + H_A26 + 4
+    #define W_A27    W_A26
+    #define H_A27    H_A26
 
     // Checkbox
-    #define X_A44    X_A43
-    #define Y_A44    Y_A43 + H_A43 + 4
-    #define W_A44    W_A43
-    #define H_A44    H_A43
+    #define X_A28    X_A27
+    #define Y_A28    Y_A27 + H_A27 + 4
+    #define W_A28    W_A27
+    #define H_A28    H_A27
 
-#define H_A20    11 + H_A22 + 4 + H_A24 + 4 + H_A41 + 4 + H_A42 + 4 + H_A43 + 4 + H_A44 + 4
+#define H_A20    11 + H_A22 + 4 + H_A24 + 4 + H_A25 + 4 + H_A26 + 4 + H_A27 + 4 + H_A28 + 4
 #pragma endregion
 
 #pragma region("MIDI")
@@ -168,11 +168,32 @@
 #define H_A30    11 + H_A31 + 4 + H_A32 + 4 + H_A33 + 4
 #pragma endregion
 
-#pragma region("SoundFont")
+#pragma region("FluidSynth")
 // Groupbox
-#define X_A50    X_A20 + W_A20 + 4
-#define Y_A50    Y_A20
-#define W_A50    W_A20
+#define X_A40    X_A20 + W_A20 + 4
+#define Y_A40    Y_A20
+#define W_A40    W_A20
+
+    // Label
+    #define X_A41    X_A40 + 5
+    #define Y_A41    Y_A40 + 11
+    #define W_A41    48
+    #define H_A41    8
+
+    // Combobox
+    #define X_A42    X_A41 + W_A41 + 3
+    #define Y_A42    Y_A41
+    #define W_A42    W_A40 - 5 - W_A41 - 3 - 5
+    #define H_A42    14
+
+#define H_A40    11 + H_A42 + 4
+#pragma endregion
+
+#pragma region("BASS MIDI")
+// Groupbox
+#define X_A50    X_A40
+#define Y_A50    Y_A40 + H_A40 + 4
+#define W_A50    W_A40
 
     // Label
     #define X_A53    X_A50 + 5
@@ -217,43 +238,16 @@
     #define X_A64    X_A63 + W_A63 + 3
     #define Y_A64    Y_A63
     #define W_A64    W_A60 - 5 - W_A63 - 3 - 5
-#define H_A64    14
+    #define H_A64    14
 
 #define H_A60    11 + H_A64 + 4
 #pragma endregion
 
-#pragma region("Nuke")
-// Groupbox
-#define X_A70    X_A60
-#define Y_A70    Y_A60 + H_A60 + 4
-#define W_A70    W_A60
-
-    // Label
-    #define X_A71    X_A70 + 5
-    #define Y_A71    Y_A70 + 11
-    #define W_A71    24
-    #define H_A71    8
-
-    // Combobox
-    #define X_A72    X_A71 + W_A71 + 3
-    #define Y_A72    Y_A71
-    #define W_A72    W_A70 - 5 - W_A71 - 3 - 6
-    #define H_A72    14
-
-    // Checkbox
-    #define X_A73    X_A71
-    #define Y_A73    Y_A72 + H_A72 + 4
-    #define W_A73    W_A70 - 5 - 6
-    #define H_A73    8
-
-#define H_A70    11 + H_A72 + 4 + H_A73 + 4
-#pragma endregion
-
 #pragma region("ADL")
 // ADL
-#define X_A90    X_A70
-#define Y_A90    Y_A70 + H_A70 + 4
-#define W_A90    W_A70
+#define X_A90    X_A60
+#define Y_A90    Y_A60 + H_A60 + 4
+#define W_A90    W_A60
 
     #define X_A91    X_A90 + 5
     #define Y_A91    Y_A90 + 11
@@ -281,4 +275,31 @@
     #define H_A95    10
 
 #define H_A90    11 + H_A92 + 4 + H_A94 + 4 + H_A95 + 4
+#pragma endregion
+
+#pragma region("Nuke")
+// Groupbox
+#define X_A70    X_A90
+#define Y_A70    Y_A90 + H_A90 + 4
+#define W_A70    W_A90
+
+    // Label
+    #define X_A71    X_A70 + 5
+    #define Y_A71    Y_A70 + 11
+    #define W_A71    24
+    #define H_A71    8
+
+    // Combobox
+    #define X_A72    X_A71 + W_A71 + 3
+    #define Y_A72    Y_A71
+    #define W_A72    W_A70 - 5 - W_A71 - 3 - 6
+    #define H_A72    14
+
+    // Checkbox
+    #define X_A73    X_A71
+    #define Y_A73    Y_A72 + H_A72 + 4
+    #define W_A73    W_A70 - 5 - 6
+    #define H_A73    8
+
+#define H_A70    11 + H_A72 + 4 + H_A73 + 4
 #pragma endregion

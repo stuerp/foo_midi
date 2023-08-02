@@ -7,7 +7,7 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Features
 
-* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .LDS).
+* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS).
 * Supports several synthesizers, several of which do not require any additional files to play back music. The bundled synthesizers which do not require additional files may sound rather basic, though.
 * Supports FluidSynth SoundFont (.sf2) based synthesizer, including support for the newer compressed format. (.sf3). SoundFonts may be loaded in a simple, or even complex setup, using either basic .sflist text files encoded in UTF-8 format, but for now, it only supports a bare list of files.
 * Supports 32 and 64-bit VST instruments.
@@ -57,6 +57,7 @@ The following libraries are included in the code:
 * [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
 * [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 * [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
+* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.2
 
 To create the deployment package you need:
 
@@ -96,12 +97,25 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.8.5.0, 2023-07-23,  *""*
+v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
+
+* New: Added FluidSynth player again.
+  * It can be selected after setting the path to the directory that contains the FluidSynth libraries. You can download FluidSynth [here](https://github.com/FluidSynth/fluidsynth/releases). Make sure you download the version that has the same CPU architecture as foobar2000 (x64 or x86).
+* New: Added .XFM as an alternative file extension for XMI files.
+* Improved: Added FluidSynth settings to preferences page.
+* Improved: MIDI standard detection
+  * Some XG files where not recognized as such if the file contained anyy GS messages first.
+  * GM 2 detection.
+* Changed: Renamed dynamic info tags *bassmidi_voices* and *bassmidi_voices_max* to *midi_active_voices* and *midi_peak_voices*. The FluidSynth player also sets those tags while playing.
+* Bug Fix: An old bug in the XMI parser prevent some XMI files from loading.
+
+v2.8.5.0, 2023-07-23, *""*
 
 * New: Added a configuration option to always use Super Munt when playing an MT-32 file. Default is on.
 * New: Added an configuration option to always use a VSTi to play an XG file. Default is off.
   * Don't forget to specify the path name of the VSTi in the Advanced preferences.
 * Bug Fix: Saving MIDI presets was broken.
+* Bug Fix: Loop detection was broken for some files.
 
 v2.8.4.0, 2023-06-26, *"Beat the Drum"*
 
@@ -185,6 +199,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Vitaly Novichkov](https://github.com/Wohlstand) for [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) and [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI).
 * [Mitsutaka Okazaki](https://github.com/Wohlstand/scc) for Emu de MIDI.
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
+* Tom Moebert for [FluidSynth](https://www.fluidsynth.org/)
 
 ## Reference Material
 
@@ -201,11 +216,25 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
 * [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
 
+### Electronic Music
+
+* [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
+
 ### SoundFonts
 
-* [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
+* [SoundFont](https://musical-artifacts.com/artifacts?tags=soundfont), Musical Artifacts
+
+### FluidSynth
+
+* [FluidSynth Documentation](https://github.com/FluidSynth/fluidsynth/wiki/Documentation)
 
 ### MIDI
+
+* [Introduction to Computer Music: MIDI](https://cmtext.indiana.edu/MIDI/chapter3_MIDI.php), Jeffrey Hass
+* [MIDI is the language of the gods](http://midi.teragonaudio.com/), Teragon Audio
+* [Standards in Music](https://www.recordingblogs.com/wiki/standards-in-music-index), Recording Blogs
+* [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
+* [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
 
 #### XMI
 

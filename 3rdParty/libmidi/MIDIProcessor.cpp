@@ -16,8 +16,16 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
     if (IsSMF(data))
         return ProcessSMF(data, container);
 
+    // .RMI
     if (IsRIFF(data))
         return ProcessRIFF(data, container);
+
+    // .XMI, .XFM
+    if (IsXMI(data))
+        return ProcessXMI(data, container);
+
+    if (IsMIDS(data))
+        return ProcessMIDS(data, container);
 
     if (is_hmp(data))
         return process_hmp(data, container);
@@ -25,14 +33,8 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
     if (is_hmi(data))
         return process_hmi(data, container);
 
-    if (is_xmi(data))
-        return process_xmi(data, container);
-
     if (is_mus(data))
         return process_mus(data, container);
-
-    if (IsMIDS(data))
-        return ProcessMIDS(data, container);
 
     if (is_lds(data, fileExtension))
         return process_lds(data, container);
@@ -40,20 +42,56 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
     if (is_gmf(data))
         return process_gmf(data, container);
 
+    if (IsSysEx(data))
+        return ProcessSysEx(data, container);
+
     return false;
 }
 
 /// <summary>
-/// Processes a stream of bytes.
+/// Returns true if the data represents a SysEx message.
+/// </summary>
+bool MIDIProcessor::IsSysEx(std::vector<uint8_t> const & data)
+{
+    if (data.size() < 2)
+        return false;
+
+    if (data[0] != StatusCodes::SysEx || data[data.size() - 1] != StatusCodes::SysExEnd)
+        return false;
+
+    return true;
+}
+
+/// <summary>
+/// Processes a byte stream containing 1 or more SysEx messages.
 /// </summary>
 bool MIDIProcessor::ProcessSysEx(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
-    _ErrorCode = MIDIError::None;
+    const size_t Size = data.size();
 
-    if (IsSysEx(data))
-        return ProcessSysExInternal(data, container);
+    size_t Index = 0;
 
-    return false;
+    container.Initialize(0, 1);
+
+    MIDITrack Track;
+
+    while (Index < Size)
+    {
+        size_t MessageLength = 1;
+
+        if (data[Index] != StatusCodes::SysEx)
+            return false;
+
+        while (data[Index + MessageLength++] != StatusCodes::SysExEnd);
+
+        Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, &data[Index], MessageLength));
+
+        Index += MessageLength;
+    }
+
+    container.AddTrack(Track);
+
+    return true;
 }
 
 /// <summary>
@@ -84,7 +122,7 @@ bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, const char 
         return true;
     }
 
-    if (is_xmi(data))
+    if (IsXMI(data))
         return GetTrackCountFromXMI(data, trackCount);
 
     if (is_mus(data))
@@ -117,6 +155,7 @@ bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, const char 
 /// <summary>
 /// Decodes a variable-length quantity.
 /// </summary>
+
 int MIDIProcessor::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail)
 {
     int Quantity = 0;
@@ -131,7 +170,6 @@ int MIDIProcessor::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iter
         byte = *data++;
         Quantity = (Quantity << 7) + (byte & 0x7F);
     }
-
     while (byte & 0x80);
 
     return Quantity;

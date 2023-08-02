@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.07.23) **/
+/** $VER: InputDecoder.cpp (2023.07.24) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -10,6 +10,8 @@
 #include <sdk/hasher_md5.h>
 #include <sdk/metadb_index.h>
 #include <sdk/system_time_keeper.h>
+
+#include <pfc/string-conv-lite.h>
 
 #include <libmidi/MIDIProcessor.h>
 
@@ -74,7 +76,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
         if (_IsSysExFile)
         {
-            if (!MIDIProcessor::ProcessSysEx(Data, _Container))
+            if (!MIDIProcessor::Process(Data, nullptr, _Container))
                 throw exception_io_data("Invalid SysEx dump");
 
             return;
@@ -111,13 +113,21 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
                 case SMFBadFirstMessage: Message += "Bad first message of a track"; break;
 
+                // XMI
+                case XMIFORMXDIRNotFound: Message += "FORM XDIR chunk not found"; break;
+                case XMICATXMIDNotFound: Message += "CAT XMID chunk not found"; break;
+                case XMIFORMXMIDNotFound: Message += "FORM XMID chunk not found"; break;
+                case XMIEVNTChunkNotFound: Message += "EVNT chunk not found"; break;
+
+                case XMIInvalidNoteMessage: Message += "Invalid note message"; break;
+
                 default: Message += "Unknown error code"; break;
             }
 
             throw exception_io_data(Message);
         }
 
-        _TrackCount = (size_t)_Container.GetTrackCount();
+        _TrackCount = _Container.GetTrackCount();
 
         if (_TrackCount == 0)
             throw exception_io_data("Invalid MIDI file. No tracks found");
@@ -178,31 +188,37 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     _IsFirstChunk = true;
 
-    _PlayerType = (uint32_t) CfgPlayerType;
+    _PlayerType = (PlayerType) (uint32_t) CfgPlayerType;
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _SamplesPlayed = 0;
 
     InitializeTime(subSongIndex);
 
-    _Container.SetTrackCount((uint32_t) _TrackCount);
+    _Container.SetTrackCount(_TrackCount);
 
     _ExtraPercussionChannel = _Container.GetExtraPercussionChannel();
 
+    // The preset collects a number of settings that will configure the player.
     MIDIPreset Preset;
 
     // Set the player type based on the content of the container.
-    if (_IsXG && CfgUseVSTiWithXG)
     {
-        _PlayerType = PlayerTypeVSTi;
+        if (_IsXG && CfgUseVSTiWithXG)
+        {
+            _PlayerType = PlayerType::VSTi;
 
-        pfc::string8 FilePath;
+            pfc::string8 FilePath;
 
-        AdvCfgVSTiXGPlugin.get(FilePath), Preset._VSTiFilePath = FilePath;
+            AdvCfgVSTiXGPlugin.get(FilePath);
+
+            Preset._VSTiFilePath = FilePath;
+        }
+        else
+        if (_IsMT32 && CfgUseSuperMuntWithMT32)
+            _PlayerType = PlayerType::SuperMunt;
     }
-    else
-    if (_IsMT32 && CfgUseSuperMuntWithMT32)
-        _PlayerType = PlayerTypeSuperMunt;
 
+    // Load the preset from the song if it has one.
     {
         file_info_impl FileInfo;
 
@@ -222,25 +238,28 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
         }
 
-        MIDISysExDumps SysExDumps;
-
         {
-            const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
+            MIDISysExDumps SysExDumps;
 
-            if (MIDISysExDumps)
+            // Load the sysex from the song if it has one.
             {
-                console::print("Using sysex \"", MIDISysExDumps , "\" from file.");
+                const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
 
-                SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
+                if (MIDISysExDumps)
+                {
+                    console::print("Using sysex \"", MIDISysExDumps , "\" from file.");
+
+                    SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
+                }
             }
-        }
 
-        SysExDumps.Merge(_Container, abortHandler);
+            SysExDumps.Merge(_Container, abortHandler);
+        }
     }
 
-    // Gets a SoundFont file that has been configured for the file, if any.
     pfc::string8 SoundFontFilePath;
 
+    // Set the player type to BASS MIDI if a SoundFont has been configured for the file.
     {
         pfc::string8 FilePath = _FilePath;
         pfc::string8 TempSoundFontFilePath;
@@ -284,12 +303,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             SoundFontFilePath = TempSoundFontFilePath;
 
-            _PlayerType = PlayerTypeBASSMIDI;
+            _PlayerType = PlayerType::BASSMIDI;
         }
     }
 
     // Update sample rate before initializing the fade-out range.
-    if (_PlayerType == PlayerTypeSuperMunt)
+    if (_PlayerType == PlayerType::SuperMunt)
         _SampleRate = (uint32_t) MT32Player::GetSampleRate();
 
     // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
@@ -327,12 +346,15 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     delete _Player;
     _Player = nullptr;
 
-    MIDIPlayer::LoopMode LoopModes = MIDIPlayer::LoopMode((int) MIDIPlayer::LoopModeEnabled | (_IsLooping ? (int) MIDIPlayer::LoopModeForced : 0));
+    MIDIPlayer::LoopMode LoopMode = (MIDIPlayer::LoopMode) ((int) MIDIPlayer::LoopModeEnabled | (_IsLooping ? (int) MIDIPlayer::LoopModeForced : 0));
 
     switch (_PlayerType)
     {
+        case PlayerType::Unknown:
+            break;
+
         // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413))
-        case PlayerTypeEmuDeMIDI:
+        case PlayerType::EmuDeMIDI:
         {
             {
                 auto Player = new EdMPlayer;
@@ -341,7 +363,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
 
             {
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     {
                         insync(_Lock);
@@ -356,7 +378,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     _Player->SetSampleRate(_SampleRate);
 
                     _IsEndOfContainer = false;
-                    _DontLoop = true;
 
                     return;
                 }
@@ -365,7 +386,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // VSTi
-        case PlayerTypeVSTi:
+        case PlayerType::VSTi:
         {
             {
                 if (Preset._VSTiFilePath.is_empty())
@@ -386,10 +407,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
-                    _DontLoop = true;
 
                     return;
                 }
@@ -405,55 +425,75 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // FluidSynth
-        case PlayerTypeFluidSynth:
+        case PlayerType::FluidSynth:
         {
-    #ifdef FLUIDSYNTHSUPPORT
-            /*HMODULE fsmod = LoadLibraryEx( FLUIDSYNTH_DLL, nullptr, LOAD_LIBRARY_AS_DATAFILE );
-                if ( !fsmod )
-                {
-                    throw exception_io_data("Failed to load FluidSynth.dll");
-                }
-                FreeLibrary( fsmod );*/
-
-            auto sfPlayer = new SFPlayer;
-
-            midiPlayer = sfPlayer;
-
-            sfPlayer->SetSoundFontDirectory(thePreset.soundfont_path);
-
-            if (file_soundfont.length())
-                sfPlayer->SetSoundFontFile(file_soundfont);
-
-            sfPlayer->SetSampleRate(srate);
-            sfPlayer->setInterpolationMethod(_FluidSynthInterpolationMethod);
-            sfPlayer->setDynamicLoading(cfg_soundfont_dynamic.get());
-            sfPlayer->EnableEffects(thePreset.effects);
-            sfPlayer->setVoiceCount(thePreset.voices);
-
-            sfPlayer->SetFilter((MIDIPlayer::filter_mode) thePreset.MIDIStandard, !thePreset._UseMIDIEffects);
-
-            uint32 LoopMode = MIDIPlayer::LoopModeEnabled;
-
-            if (_IsLooping)
-                LoopMode |= MIDIPlayer::loop_mode_force;
-
-            if (sfPlayer->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
             {
-                _IsEndOfContainer = false;
-                _DontLoop = true;
+                _ActiveVoiceCount = 0;
+                _PeakVoiceCount = 0;
 
-                return;
+                if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
+                    throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found");
             }
-    #endif
+
+            pfc::string8 FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
+
+            if (FluidSynthDirectoryPath.is_empty())
+            {
+                console::warning("FluidSynth path configured. Attempting to load libraries from plugin install path");
+
+                FluidSynthDirectoryPath = core_api::get_my_full_path();
+                FluidSynthDirectoryPath.truncate(FluidSynthDirectoryPath.scan_filename());
+            }
+
+            {
+                auto Player = new FSPlayer;
+
+                Player->SetAbortHandler(&abortHandler);
+
+                if (!Player->Initialize(pfc::wideFromUTF8(FluidSynthDirectoryPath)))
+                    throw exception_midi("FluidSynth path not configured");
+
+                Player->SetSoundFontFile(Preset._SoundFontFilePath);
+
+                if (SoundFontFilePath.length())
+                    Player->SetSoundFontFile(SoundFontFilePath);
+
+                Player->SetInterpolationMode(_FluidSynthInterpolationMethod);
+                Player->EnableEffects(Preset._BASSMIDIEffectsEnabled);
+                Player->SetVoiceCount(Preset._BASSMIDIVoices);
+                Player->EnableDynamicLoading(AdvCfgLoadSoundFontDynamically.get());
+
+                _Player = Player;
+            }
+
+            {
+                _Player->SetSampleRate(_SampleRate);
+                _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
+                {
+                    _IsEndOfContainer = false;
+
+                    return;
+                }
+                else
+                {
+                    std::string ErrorMessage;
+
+                    if (_Player->GetErrorMessage(ErrorMessage))
+                        throw exception_io_data(ErrorMessage.c_str());
+                }
+            }
+            break;
         }
 
         // Munt (MT-32)
-        case PlayerTypeSuperMunt:
+        case PlayerType::SuperMunt:
         {
             {
                 auto Player = new MT32Player(!_IsMT32, Preset._MuntGMSet);
 
-                pfc::string8 BasePath = CfgMuntDirectoryPath;
+                pfc::string8 BasePath = CfgMT32ROMDirectoryPath;
 
                 if (BasePath.is_empty())
                 {
@@ -475,10 +515,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _Player->SetSampleRate(_SampleRate);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
-                    _DontLoop = true;
 
                     return;
                 }
@@ -487,12 +526,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // BASS MIDI
-        case PlayerTypeBASSMIDI:
+        case PlayerType::BASSMIDI:
         {
             {
                 {
-                    _BASSMIDIVoiceCount = 0;
-                    _BASSMIDIVoiceMax = 0;
+                    _ActiveVoiceCount = 0;
+                    _PeakVoiceCount = 0;
 
                     if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
                         throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found");
@@ -505,9 +544,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 if (SoundFontFilePath.length())
                     Player->SetSoundFontFile(SoundFontFilePath);
 
-                Player->SetInterpolationMode((int)_BASSMIDIInterpolationMode);
+                Player->SetInterpolationMode(_BASSMIDIInterpolationMode);
                 Player->EnableEffects(Preset._BASSMIDIEffectsEnabled);
-                Player->SetVoiceCount((int)Preset._BASSMIDIVoices);
+                Player->SetVoiceCount(Preset._BASSMIDIVoices);
 
                 _Player = Player;
             }
@@ -516,10 +555,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
-                    _DontLoop = true;
 
                     return;
                 }
@@ -535,7 +573,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // DirectX
-        case PlayerTypeDirectX:
+        case PlayerType::DirectX:
         {
     #ifdef DXISUPPORT
             pfc::array_t<t_uint8> serialized_midi_file;
@@ -572,7 +610,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // ADL
-        case PlayerTypeADL:
+        case PlayerType::ADL:
         {
             {
                 auto Player = new ADLPlayer;
@@ -590,10 +628,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _Player->SetSampleRate(_SampleRate);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
-                    _DontLoop = true;
 
                     return;
                 }
@@ -602,7 +639,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // OPN
-        case PlayerTypeOPN:
+        case PlayerType::OPN:
         {
             {
                 auto Player = new OPNPlayer;
@@ -619,10 +656,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
-                    _DontLoop = true;
 
                     return;
                 }
@@ -631,13 +667,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // OPL
-        case PlayerTypeOPL:
+        case PlayerType::OPL:
         {
             break;
         }
 
         // Nuke
-        case PlayerTypeNuke:
+        case PlayerType::Nuke:
         {
             {
                 auto Player = new NukePlayer();
@@ -652,10 +688,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _Player->SetSampleRate(_SampleRate);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
-                    _DontLoop = true;
 
                     return;
                 }
@@ -664,7 +699,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // Secret Sauce
-        case PlayerTypeSecretSauce:
+        case PlayerType::SecretSauce:
         {
             {
                 auto Player = new SCPlayer();
@@ -690,10 +725,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
                 _Player->SetSampleRate(_SampleRate);
 
-                if (_Player->Load(_Container, subSongIndex, LoopModes, _CleanFlags))
+                if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
                     _IsEndOfContainer = false;
-                    _DontLoop = true;
 
                     return;
                 }
@@ -719,7 +753,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     bool Success = false;
 
 #ifdef DXISUPPORT
-    if (_PlayerType == PlayerTypeDirectX)
+    if (_PlayerType == PlayerType::DirectX)
     {
         unsigned todo = 4096;
 
@@ -762,7 +796,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     if (_Player)
     {
         const size_t SamplesToDo = 4096;
-        const size_t ChannelCount = _Player->GetChannelCount();
+        const uint32_t ChannelCount = _Player->GetChannelCount();
 
         audioChunk.set_data_size(SamplesToDo * ChannelCount);
 
@@ -783,7 +817,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         }
 
         audioChunk.set_srate(_SampleRate);
-        audioChunk.set_channels((uint32_t)ChannelCount);
+        audioChunk.set_channels(ChannelCount);
         audioChunk.set_sample_count(SamplesDone);
 
         Success = true;
@@ -853,7 +887,7 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback&)
     }
 
 #ifdef DXISUPPORT
-    if (_PlayerType == PlayerTypeDirectX)
+    if (_PlayerType == PlayerType::DirectX)
     {
         dxiProxy->setPosition(seek_msec);
 
@@ -884,17 +918,14 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         }
 
         {
-            assert(_countof(PlayerTypeNames) == (PlayerTypeMax + 1));
+            assert(_countof(PlayerTypeNames) == ((size_t) PlayerType::Max + 1));
 
             const char * PlayerName = "Unknown";
 
-            if (_PlayerType <= PlayerTypeMax)
-                PlayerName = PlayerTypeNames[_PlayerType];
+            if ((_PlayerType >= PlayerType::Min) && (_PlayerType <= PlayerType::Max))
+                PlayerName = PlayerTypeNames[(size_t) _PlayerType];
             else
-            {
-                
                 PlayerName = "VSTi";
-            }
 
             fileInfo.info_set(TagMIDIPlayer, PlayerName);
         }
@@ -904,7 +935,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             {
                 char Text[4];
 
-                _itoa_s((int)(_ExtraPercussionChannel + 1), Text, 10);
+                ::_itoa_s((int)(_ExtraPercussionChannel + 1), Text, 10);
                 fileInfo.info_set(TagExtraPercusionChannel, Text);
             }
         }
@@ -915,26 +946,38 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         timestampDelta = 0.;
     }
 
-    if (_PlayerType == PlayerTypeBASSMIDI)
+    uint32_t VoiceCount = 0;
+
+    if (_PlayerType == PlayerType::FluidSynth)
     {
-        auto Player = (BMPlayer *)_Player;
+        auto Player = (FSPlayer *) _Player;
 
-        size_t VoiceCount = Player->GetActiveVoiceCount();
+        VoiceCount = Player->GetActiveVoiceCount();
+    }
+    else
+    if (_PlayerType == PlayerType::BASSMIDI)
+    {
+        auto Player = (BMPlayer *) _Player;
 
-        if (VoiceCount != _BASSMIDIVoiceCount)
+        VoiceCount = Player->GetActiveVoiceCount();
+    }
+
+    if ((_PlayerType == PlayerType::FluidSynth) || (_PlayerType == PlayerType::BASSMIDI))
+    {
+        if (VoiceCount != _ActiveVoiceCount)
         {
-            fileInfo.info_set_int(TagBASSMIDIVoiceCount, (t_int64) VoiceCount);
+            fileInfo.info_set_int(TagMIDIActiveVoices, (t_int64) VoiceCount);
 
-            _BASSMIDIVoiceCount = VoiceCount;
+            _ActiveVoiceCount = VoiceCount;
 
             Success = true;
         }
 
-        if (VoiceCount > _BASSMIDIVoiceMax)
+        if (VoiceCount > _PeakVoiceCount)
         {
-            fileInfo.info_set_int(TagBASSMIDIVoicesMax, (t_int64) VoiceCount);
+            fileInfo.info_set_int(TagMIDIPeakVoices, (t_int64) VoiceCount);
 
-            _BASSMIDIVoiceMax = VoiceCount;
+            _PeakVoiceCount = VoiceCount;
 
             Success = true;
         }

@@ -1012,7 +1012,9 @@ uint32_t MIDIContainer::GetLoopEndTimestamp(size_t subSongIndex, bool ms /* = fa
 
 void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 {
-    bool TypeFound = false;
+    const char * TypeName = nullptr;
+    uint32_t TypeTimestamp = 0;
+
     bool IsSoftKaraoke = false;
 
     for (size_t i = 0; i < _Tracks.size(); ++i)
@@ -1033,22 +1035,27 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
 
             size_t DataSize = Event.GetDataSize();
 
-            if ((DataSize >= 1) && (Event.Data[0] == StatusCodes::SysEx) && !TypeFound)
-            {
-                const char * TypeName = nullptr;
+            const char * TempTypeName = nullptr;
 
+            if ((DataSize >= 1) && (Event.Data[0] == StatusCodes::SysEx))
+            {
                 switch (Event.Data[1])
                 {
                     case 0x7Eu:
-                        TypeName = "GM";
+                    {
+                        TempTypeName = "GM"; // 1991
+
+                        if ((DataSize >= 5) && (((Event.Data[3] == 0x04) && (Event.Data[4] >= 0x05)) || (Event.Data[3] > 0x04)))
+                            TempTypeName = "GM2"; // 1999, 2003 v1.1, 2007 v1.2
                         break;
+                    }
 
                     case 0x43u:
-                        TypeName = "XG";
+                        TempTypeName = "XG"; // 1994 Level 1, 1997 Level 2, 1998, Level 3
                         break;
 
                     case 0x42u:
-                        TypeName = "X5";
+                        TempTypeName = "X5"; // 1994 Korg X5
                         break;
 
                     case 0x41u:
@@ -1058,27 +1065,20 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
                             switch (Event.Data[3])
                             {
                                 case 0x42u:
-                                    TypeName = "GS";
+                                    TempTypeName = "GS"; // 1991
                                     break;
 
                                 case 0x16u:
-                                    TypeName = "MT-32";
+                                    TempTypeName = "MT-32"; // 1987 Roland MT-32
                                     break;
 
                                 case 0x14u:
-                                    TypeName = "D-50";
+                                    TempTypeName = "D-50"; // 1987 Roland D-50
                                     break;
                             }
                         }
                         break;
                     }
-                }
-
-                if (TypeName && ::_strnicmp(TypeName, "GM", 2) != 0)
-                {
-                    TypeFound = true;
-
-                    metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "type", TypeName));
                 }
             }
             else
@@ -1254,10 +1254,30 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
                     }
                 }
             }
+
+            // Remember the container type name: MT-32 or GM < GM2 < GS < XG
+            if (TempTypeName)
+            {
+                if ((TypeName != nullptr) && (::_stricmp(TypeName, "MT-32") != 0))
+                {
+                    if ((::_stricmp(TypeName, "GM") == 0) && (::_stricmp(TempTypeName, "GM2") == 0))
+                        TypeName = TempTypeName;
+                    else
+                    if (((::_stricmp(TypeName, "GM") == 0) || (::_stricmp(TypeName, "GM2") == 0)) && (::_stricmp(TempTypeName, "GS") == 0))
+                        TypeName = TempTypeName;
+                    else
+                    if (::_stricmp(TempTypeName, "XG") == 0)
+                        TypeName = TempTypeName;
+                }
+                else
+                    TypeName = TempTypeName;
+            }
         }
     }
 
-    if (!TypeFound)
+    if (TypeName && (::_stricmp(TypeName, "GM") != 0))
+        metaData.AddItem(MIDIMetaDataItem(TypeTimestamp, "type", TypeName));
+    else
         metaData.AddItem(MIDIMetaDataItem(0, "type", "GM"));
 
     metaData.Append(_ExtraMetaData);

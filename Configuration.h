@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.07.23) **/
+/** $VER: Configuration.h (2023.07.30) **/
 
 #pragma once
 
@@ -11,29 +11,36 @@
 
 #include "ConfigurationMap.h"
 
+#include <fluidsynth.h>
+
 extern const GUID PreferencesPageGUID;
 extern const GUID PreferencesPathsPageGUID;
 
-enum
+enum class PlayerType : int8_t
 {
-    PlayerTypeEmuDeMIDI = 0,
-    PlayerTypeVSTi = 1,
-    PlayerTypeFluidSynth = 2,
-    PlayerTypeSuperMunt = 3,
-    PlayerTypeBASSMIDI = 4,
-    PlayerTypeDirectX = 5,
-    PlayerTypeADL = 6,
-    PlayerTypeOPN = 7,
-    PlayerTypeOPL = 8,
-    PlayerTypeNuke = 9,
-    PlayerTypeSecretSauce = 10,
+    Unknown = -1,
 
-    PlayerTypeMax = PlayerTypeSecretSauce
+    Min = 0,
+
+    EmuDeMIDI = Min,
+    VSTi = 1,
+    FluidSynth = 2,
+    SuperMunt = 3,
+    BASSMIDI = 4,
+    DirectX = 5,
+    ADL = 6,
+    OPN = 7,
+    OPL = 8,
+    Nuke = 9,
+    SecretSauce = 10,
+
+    Max = SecretSauce,
+
+    Default = ADL,
 };
 
 enum
 {
-    DefaultPlayerType = PlayerTypeADL,
     DefaultSampleRate = 44100,
     DefaultPlaybackLoopType = 0,
     DefaultOtherLoopType = 0,
@@ -52,6 +59,8 @@ enum
     DefaultFilterInstruments = 0,
     DefaultFilterBanks = 0,
 
+    DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT,
+
     DefaultBASSMIDIInterpolationMode = 1,
 
     DefaultGMSet = 0,
@@ -65,10 +74,6 @@ enum
     DefaultADLChipCount = 10,
     DefaultADLPanning = 1,
 //  DefaultADL4Op = 14,
-
-#ifdef FLUIDSYNTHSUPPORT
-    DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT
-#endif
 };
 
 enum LoopType
@@ -100,6 +105,7 @@ extern cfg_int
     CfgFilterInstruments,
     CfgFilterBanks,
 
+    CfgFluidSynthInterpolationMode,
     CfgBASSMIDIInterpolationMode,
 
     CfgADLBank,
@@ -115,18 +121,13 @@ extern cfg_int
     CfgMIDIFlavor,
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
-    CfgUseVSTiWithXG
-
-#ifdef FLUIDSYNTHSUPPORT
-,
-    Cfg_FluidSynthInterpolationMethod
-#endif
-;
+    CfgUseVSTiWithXG;
 
 extern cfg_string
     CfgVSTiFilePath,
     CfgSoundFontFilePath,
-    CfgMuntDirectoryPath;
+    CfgMT32ROMDirectoryPath,
+    CfgFluidSynthDirectoryPath;
 
 extern cfg_map
     CfgVSTiConfig;
@@ -152,6 +153,10 @@ extern advconfig_radio_factory AdvCfgOPNBankGS;
 extern advconfig_radio_factory AdvCfgOPNBankGEMS;
 extern advconfig_radio_factory AdvCfgOPNBankTomSoft;
 extern advconfig_radio_factory AdvCfgOPNBankFMMIDI;
+
+extern advconfig_integer_factory AdvCfgFluidSynthVoices;
+extern advconfig_checkbox_factory AdvCfgFluidSynthEffectsEnabled;
+extern advconfig_checkbox_factory AdvCfgLoadSoundFontDynamically;
 
 extern advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled;
 extern advconfig_integer_factory AdvCfgBASSMIDIVoices;
@@ -183,8 +188,8 @@ extern const char TagMIDILyricsType[];
 extern const char TagMIDIHash[];
 
 extern const char TagSampleRate[];
-extern const char TagBASSMIDIVoiceCount[];
-extern const char TagBASSMIDIVoicesMax[];
+extern const char TagMIDIActiveVoices[];
+extern const char TagMIDIPeakVoices[];
 
 extern const char TagMIDIPlayer[];
 extern const char TagExtraPercusionChannel[];

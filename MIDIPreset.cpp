@@ -15,7 +15,7 @@ static void GetValue(const char * & separator, const char * & text);
 MIDIPreset::MIDIPreset() noexcept
 {
 /* Test Code
-    for (_PlayerType = 0; _PlayerType < PlayerTypeMax; _PlayerType++)
+    for (_PlayerType = 0; _PlayerType < PlayerType::Max; _PlayerType++)
     {
         pfc::string8 Preset;
 
@@ -24,7 +24,7 @@ MIDIPreset::MIDIPreset() noexcept
     }
 */
     {
-        _PlayerType = (uint32_t) CfgPlayerType;
+        _PlayerType = (PlayerType) (uint32_t) CfgPlayerType;
         _VSTiFilePath = CfgVSTiFilePath;
 
         {
@@ -41,20 +41,18 @@ MIDIPreset::MIDIPreset() noexcept
             }
             catch (...)
             {
-                if (_PlayerType == PlayerTypeVSTi)
-                    _PlayerType = PlayerTypeEmuDeMIDI;
+                if (_PlayerType == PlayerType::VSTi)
+                    _PlayerType = PlayerType::EmuDeMIDI;
             }
         }
 
         _SoundFontFilePath = CfgSoundFontFilePath;
     }
 
-#ifdef FLUIDSYNTHSUPPORT
     {
-        effects = cfg_fluidsynth_effects;
-        voices = (uint32_t)(int)cfg_fluidsynth_voices;
+        _FluidSynthEffectsEnabled = (bool) AdvCfgFluidSynthEffectsEnabled;
+        _FluidSynthVoices = (uint32_t) AdvCfgFluidSynthVoices;
     }
-#endif
 
     {
         _BASSMIDIEffectsEnabled = (bool) AdvCfgBASSMIDIEffectsEnabled;
@@ -133,9 +131,9 @@ void MIDIPreset::Serialize(pfc::string8 & text)
     text += pfc::format_int(CurrentSchemaVersion);
 
     text += "|";
-    text += pfc::format_int(_PlayerType);
+    text += pfc::format_int((t_int64) _PlayerType);
 
-    if (_PlayerType == PlayerTypeVSTi)
+    if (_PlayerType == PlayerType::VSTi)
     {
         text += "|";
         text += _VSTiFilePath;
@@ -146,7 +144,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
             text += pfc::format_hex(_VSTiConfig[i], 2);
     }
     else
-    if (_PlayerType == PlayerTypeFluidSynth || _PlayerType == PlayerTypeBASSMIDI)
+    if (_PlayerType == PlayerType::FluidSynth || _PlayerType == PlayerType::BASSMIDI)
     {
         text += "|";
         text += _SoundFontFilePath;
@@ -158,14 +156,14 @@ void MIDIPreset::Serialize(pfc::string8 & text)
         text += pfc::format_int(_BASSMIDIVoices);
     }
     else
-    if (_PlayerType == PlayerTypeSuperMunt)
+    if (_PlayerType == PlayerType::SuperMunt)
     {
         text += "|";
         text += _MuntGMSets[_MuntGMSet];
     }
 #ifdef DXISUPPORT
     else
-    if (plugin == PlayerTypeDirectX)
+    if (plugin == PlayerType::DirectX)
     {
         p_out += "|";
         p_out += pfc::format_hex(dxi_plugin.Data1, 8);
@@ -186,7 +184,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
     }
 #endif
     else
-    if (_PlayerType == PlayerTypeADL)
+    if (_PlayerType == PlayerType::ADL)
     {
         const char * const * BankNames = adl_getBankNames();
 
@@ -206,7 +204,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
         text += pfc::format_int(_ADLEmulatorCore);
     }
     else
-    if (_PlayerType == PlayerTypeOPN)
+    if (_PlayerType == PlayerType::OPN)
     {
         text += "|";
         text += pfc::format_int(_OPNBankNumber);
@@ -221,7 +219,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
         text += pfc::format_int(_OPNEmulatorCore);
     }
     else
-    if (_PlayerType == PlayerTypeNuke)
+    if (_PlayerType == PlayerType::Nuke)
     {
         text += "|";
         text += NukePlayer::GetPresetName(_NukeSynth, _NukeBank);
@@ -230,7 +228,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
         text += pfc::format_int(_NukeUsePanning);
     }
     else
-    if (_PlayerType == PlayerTypeSecretSauce)
+    if (_PlayerType == PlayerType::SecretSauce)
     {
         // No player specific settings
     }
@@ -266,7 +264,7 @@ void MIDIPreset::Deserialize(const char * text)
     // Get the player type.
     GetValue(Separator, text);
 
-    uint32_t PlayerType = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+    PlayerType PlayerType = (enum PlayerType) (uint8_t) pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
 
     pfc::string8 VSTiPath;
     std::vector<uint8_t> VSTiConfig;
@@ -301,7 +299,7 @@ void MIDIPreset::Deserialize(const char * text)
 
     GetValue(Separator, text);
 
-    if (PlayerType == PlayerTypeVSTi)
+    if (PlayerType == PlayerType::VSTi)
     {
         VSTiPath.set_string(text, (t_size)(Separator - text));
 
@@ -324,7 +322,7 @@ void MIDIPreset::Deserialize(const char * text)
         }
     }
     else
-    if (PlayerType == PlayerTypeFluidSynth || PlayerType == PlayerTypeBASSMIDI)
+    if (PlayerType == PlayerType::FluidSynth || PlayerType == PlayerType::BASSMIDI)
     {
         SoundFontPath.set_string(text, (t_size)(Separator - text));
 
@@ -388,7 +386,7 @@ void MIDIPreset::Deserialize(const char * text)
         }
     }
     else
-    if (PlayerType == PlayerTypeSuperMunt)
+    if (PlayerType == PlayerType::SuperMunt)
     {
         size_t i;
 
@@ -409,7 +407,7 @@ void MIDIPreset::Deserialize(const char * text)
     else
 #ifdef DXISUPPORT
     else
-    if (in_plugin == PlayerTypeDirectX)
+    if (in_plugin == PlayerType::DirectX)
     {
         if (bar_pos - p_in < 8 + 1 + 4 + 1 + 4 + 1 + 4 + 1 + 12)
             return;
@@ -427,7 +425,7 @@ void MIDIPreset::Deserialize(const char * text)
         DirectXGUID.Data4[7] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2 + 2, 2);
     }
 #endif
-    if (PlayerType == PlayerTypeADL)
+    if (PlayerType == PlayerType::ADL)
     {
         {
             const char * const * BankNames = adl_getBankNames();
@@ -471,7 +469,7 @@ void MIDIPreset::Deserialize(const char * text)
         }
     }
     else
-    if (PlayerType == PlayerTypeOPN)
+    if (PlayerType == PlayerType::OPN)
     {
         if (CurrentSchemaVersion >= 10)
         {
@@ -495,7 +493,7 @@ void MIDIPreset::Deserialize(const char * text)
         }
     }
     else
-    if (PlayerType == PlayerTypeNuke)
+    if (PlayerType == PlayerType::Nuke)
     {
         pfc::string8 Text;
 
@@ -512,7 +510,7 @@ void MIDIPreset::Deserialize(const char * text)
             NukeUsePanning = true;
     }
     else
-    if (PlayerType == PlayerTypeSecretSauce)
+    if (PlayerType == PlayerType::SecretSauce)
     {
         if (CurrentSchemaVersion >= 11)
         {

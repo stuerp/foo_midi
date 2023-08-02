@@ -80,25 +80,26 @@ void NukePlayer::Shutdown()
     _Synth = nullptr;
 }
 
-void NukePlayer::Render(audio_sample * samples, unsigned long count)
+void NukePlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
-    audio_sample const ScaleFactor = 1.0f / 16384.0f;
+    const audio_sample ScaleFactor = 1.0f / 16384.0f;
 
-    signed short Data[512];
+    int16_t Data[512];
 
-    while (count)
+    while (sampleCount != 0)
     {
-        unsigned int Todo = (count > 256) ? 256 : (unsigned int)count;
+        unsigned long Todo = (sampleCount > 256) ? 256 : sampleCount;
 
         _Synth->midi_generate(Data, Todo);
 
-        for (unsigned int i = 0; i < Todo; ++i)
+        // Convert the format of the rendered output.
+        for (size_t i = 0; i < Todo; ++i)
         {
-            *samples++ = Data[i * 2 + 0] * ScaleFactor;
-            *samples++ = Data[i * 2 + 1] * ScaleFactor;
+            *sampleData++ = Data[i * 2 + 0] * ScaleFactor;
+            *sampleData++ = Data[i * 2 + 1] * ScaleFactor;
         }
 
-        count -= Todo;
+        sampleCount -= Todo;
     }
 }
 

@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2023.07.23) **/
+/** $VER: foo_midi.rc (2023.07.30) **/
 
 #include "resource.h"
 
@@ -29,30 +29,34 @@ font 8, "Segoe UI", 400, 0, 1
         combobox                    IDC_LOOP_PLAYBACK,  X_A22, Y_A22, W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext       "Other:",       IDC_STATIC,         X_A23, Y_A23, W_A23, H_A23
         combobox                    IDC_LOOP_OTHER,     X_A24, Y_A24, W_A24, H_A24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button",        BS_AUTOCHECKBOX | WS_TABSTOP, X_A41, Y_A41, W_A41, H_A41
-        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A42, Y_A42, W_A42, H_A42
-        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS, "Button",          BS_AUTOCHECKBOX | WS_TABSTOP, X_A43, Y_A43, W_A43, H_A43
-        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A44, Y_A44, W_A44, H_A44
+        control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button",        BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
+        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS, "Button",          BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
+        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
 
     groupbox "MIDI", IDC_STATIC, X_A80, Y_A80, W_A80, H_A80
         rtext       "Flavor:",                              IDC_MIDI_FLAVOR_TEXT, X_A81, Y_A81 + 2, W_A81, H_A81
         combobox                                            IDC_MIDI_FLAVOR,      X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        control     "Filter effects (Reverb and Chorus)",   IDC_MIDI_EFFECTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
-        control     "Use Super Munt with MT-32",            IDC_MIDI_USE_SUPER_MUNT, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
+        control     "Filter effects (Reverb and Chorus)",   IDC_MIDI_EFFECTS,          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
+        control     "Use Super Munt with MT-32",            IDC_MIDI_USE_SUPER_MUNT,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
         control     "Use VSTi with XG",                     IDC_MIDI_USE_VSTI_WITH_XG, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
 
     groupbox "Miscellaneous", IDC_STATIC, X_A30, Y_A30, W_A30, H_A30
-        control "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EXCLUSION, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
+        control "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EXCLUSION, "Button",      BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
         control "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS, "Button",   BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
         control "Disable bank changes",                             IDC_FILTER_BANKS, "Button",         BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
 
     ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, 7, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 
-    groupbox "SoundFont", IDC_STATIC, X_A50, Y_A50, W_A50, H_A50
+    groupbox "BASS MIDI", IDC_STATIC, X_A50, Y_A50, W_A50, H_A50
         rtext       "Resampling:",  IDC_RESAMPLING_TEXT,    X_A53, Y_A53 + 2, W_A53, H_A53
         combobox                    IDC_RESAMPLING_MODE,    X_A54, Y_A54,     W_A54, H_A54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext           "Cached:",  IDC_CACHED_TEXT,        X_A55, Y_A55 + 2, W_A55, H_A55
         ltext                  "",  IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56, WS_VISIBLE
+
+    groupbox "FluidSynth", IDC_STATIC, X_A40, Y_A40, W_A40, H_A40
+        rtext       "Interpolation:",  IDC_FLUIDSYNTH_INTERPOLATION_TEXT, X_A41, Y_A41 + 2, W_A41, H_A41
+        combobox                       IDC_FLUIDSYNTH_INTERPOLATION,      X_A42, Y_A42,     W_A42, H_A42, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     groupbox "Munt", IDC_STATIC, X_A60, Y_A60, W_A60, H_A60
         rtext       "GM Set:",  IDC_MUNT_GM_TEXT,   X_A63, Y_A63 + 2, W_A63, H_A63
@@ -92,6 +96,10 @@ font 8, "Segoe UI", 400, 0, 1
     rtext       "Secret Sauce:",    IDC_STATIC,                         X_B41, Y_B41 + 2, W_B41, H_B41
     edittext                        IDC_SECRET_SAUCE_PATH,              X_B42, Y_B42,     W_B42, H_B42, ES_AUTOHSCROLL
     pushbutton  "...",              IDC_SECRET_SAUCE_PATH_SELECT,       X_B43, Y_B43,     W_B43, H_B43
+
+    rtext       "FluidSynth:",      IDC_STATIC,                         X_B51, Y_B51 + 2, W_B51, H_B51
+    edittext                        IDC_FLUIDSYNTH_PATH, ,              X_B52, Y_B52,     W_B52, H_B52, ES_AUTOHSCROLL
+    pushbutton  "...",              IDC_FLUIDSYNTH_PATH_SELECT,         X_B53, Y_B53,     W_B53, H_B53
 
     ltext "Please close and re-open Preferences to activate the changes.", IDC_PATHS_MESSAGE, 7, H_B00 - 4 - 8, W_B00, 8, NOT WS_VISIBLE
 }

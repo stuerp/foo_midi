@@ -194,10 +194,10 @@ void VSTiPlayer::Shutdown()
     StopHost();
 }
 
-void VSTiPlayer::Render(audio_sample * data, unsigned long size)
+void VSTiPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
     WriteBytes(9);
-    WriteBytes(size);
+    WriteBytes(sampleCount);
 
     const uint32_t Code = ReadCode();
 
@@ -205,7 +205,7 @@ void VSTiPlayer::Render(audio_sample * data, unsigned long size)
     {
         StopHost();
 
-        ::memset(data, 0, (size_t)size * _ChannelCount * sizeof(audio_sample));
+        ::memset(sampleData, 0, (size_t) sampleCount * _ChannelCount * sizeof(audio_sample));
 
         return;
     }
@@ -213,17 +213,18 @@ void VSTiPlayer::Render(audio_sample * data, unsigned long size)
     if (_Samples == nullptr)
         return;
 
-    while (size)
+    while (sampleCount != 0)
     {
-        size_t ToDo = size > 4096 ? 4096 : size;
+        unsigned long ToDo = (sampleCount > 4096) ? 4096 : sampleCount;
 
-        ReadBytes(_Samples, (uint32_t)(ToDo * _ChannelCount * sizeof(float)));
+        ReadBytes(_Samples, (uint32_t) (ToDo * _ChannelCount * sizeof(float)));
 
-        for (size_t i = 0; i < ToDo * _ChannelCount; i++)
-            data[i] = (audio_sample) _Samples[i];
+        // Convert the format of the rendered output.
+        for (size_t i = 0; i < ToDo * _ChannelCount; ++i)
+            sampleData[i] = (audio_sample) _Samples[i];
 
-        data += ToDo * _ChannelCount;
-        size -= (unsigned long) ToDo;
+        sampleData += ToDo * _ChannelCount;
+        sampleCount -= ToDo;
     }
 }
 

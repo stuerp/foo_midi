@@ -126,28 +126,28 @@ void SCPlayer::Shutdown()
     _IsInitialized = false;
 }
 
-void SCPlayer::Render(audio_sample * data, unsigned long size)
+void SCPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
-    ::memset(data, 0, (size_t)size * 2 * sizeof(audio_sample));
+    ::memset(sampleData, 0, sampleCount * 2 * sizeof(audio_sample));
 
-    while (size)
+    while (sampleCount != 0)
     {
-        size_t ToDo = size > 4096 ? 4096 : size;
+        unsigned long ToDo = (sampleCount > 4096) ? 4096 : sampleCount;
 
         for (size_t i = 0; i < 3; ++i)
         {
-            RenderPort((uint32_t)i, _Samples, (uint32_t) ToDo);
+            RenderPort((uint32_t) i, _Samples, (uint32_t) ToDo);
 
             // Convert the format of the rendered output.
             for (size_t j = 0; j < ToDo; ++j)
             {
-                data[j * 2 + 0] += _Samples[j * 2 + 0];
-                data[j * 2 + 1] += _Samples[j * 2 + 1];
+                sampleData[j * 2 + 0] += _Samples[j * 2 + 0];
+                sampleData[j * 2 + 1] += _Samples[j * 2 + 1];
             }
         }
 
-        data += ToDo * 2;
-        size -= (unsigned long) ToDo;
+        sampleData += ToDo * 2;
+        sampleCount -= ToDo;
     }
 }
 

@@ -60,29 +60,30 @@ void ADLPlayer::Shutdown()
     _IsInitialized = false;
 }
 
-void ADLPlayer::Render(audio_sample * samples, unsigned long samplesToDo)
+void ADLPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
-    int16_t buffer[256 * sizeof(audio_sample)];
+    int16_t Buffer[256 * sizeof(audio_sample)];
 
-    while (samplesToDo)
+    while (sampleCount != 0)
     {
-        size_t ToDo = samplesToDo;
+        unsigned long ToDo = sampleCount;
 
         if (ToDo > 256)
             ToDo = 256;
 
-        ::memset(samples, 0, (ToDo * 2) * sizeof(audio_sample));
+        ::memset(sampleData, 0, (ToDo * 2) * sizeof(audio_sample));
 
-        for (size_t i = 0; i < 3; i++)
+        for (size_t i = 0; i < 3; ++i)
         {
-            ::adl_generate(_Player[i], (int)(ToDo * 2), buffer);
+            ::adl_generate(_Player[i], (int) (ToDo * 2), Buffer);
 
-            for (size_t j = 0, k = (ToDo * 2); j < k; j++)
-                samples[j] += (audio_sample) buffer[j] * (1.0f / 32768.0f);
+            // Convert the format of the rendered output.
+            for (size_t j = 0; j < (ToDo * 2); ++j)
+                sampleData[j] += (audio_sample) Buffer[j] * (1.0f / 32768.0f);
         }
 
-        samples     += (ToDo * 2);
-        samplesToDo -= (unsigned long)ToDo;
+        sampleData += (ToDo * 2);
+        sampleCount -= ToDo;
     }
 }
 
