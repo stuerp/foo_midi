@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2023.07.24) **/
+/** $VER: FluidSynth.h (2023.08.02) **/
 
 #pragma once
 
@@ -8,44 +8,44 @@
 #include <fluidsynth.h>
 
 #pragma region("FluidSynth API")
-typedef char * (WINAPI * _fluid_version_str)();
+typedef char * (WINAPIV * _fluid_version_str)();
 
-typedef fluid_settings_t * (WINAPI * _new_fluid_settings)();
-typedef int (WINAPI * _fluid_settings_setnum)(fluid_settings_t * settings, const char * name, double val);
-typedef int (WINAPI * _fluid_settings_setint)(fluid_settings_t * settings, const char * name, int val);
-typedef void (WINAPI * _delete_fluid_settings)(fluid_settings_t * settings);
+typedef fluid_settings_t * (WINAPIV * _new_fluid_settings)();
+typedef int (WINAPIV * _fluid_settings_setnum)(fluid_settings_t * settings, const char * name, double val);
+typedef int (WINAPIV * _fluid_settings_setint)(fluid_settings_t * settings, const char * name, int val);
+typedef void (WINAPIV * _delete_fluid_settings)(fluid_settings_t * settings);
 
-typedef fluid_synth_t * (WINAPI * _new_fluid_synth)(fluid_settings_t * settings);
-typedef void (WINAPI * _fluid_synth_add_sfloader)(fluid_synth_t * synth, fluid_sfloader_t * loader);
-typedef int (WINAPI * _fluid_synth_system_reset)(fluid_synth_t *synth);
-typedef void (WINAPI * _delete_fluid_synth)(fluid_synth_t * synth);
+typedef fluid_synth_t * (WINAPIV * _new_fluid_synth)(fluid_settings_t * settings);
+typedef void (WINAPIV * _fluid_synth_add_sfloader)(fluid_synth_t * synth, fluid_sfloader_t * loader);
+typedef int (WINAPIV * _fluid_synth_system_reset)(fluid_synth_t *synth);
+typedef void (WINAPIV * _delete_fluid_synth)(fluid_synth_t * synth);
 
-typedef fluid_sfloader_t * (WINAPI * _new_fluid_defsfloader)(fluid_settings_t * settings);
-typedef int (WINAPI * _fluid_sfloader_set_callbacks)(fluid_sfloader_t * loader, fluid_sfloader_callback_open_t open, fluid_sfloader_callback_read_t read, fluid_sfloader_callback_seek_t seek, fluid_sfloader_callback_tell_t tell, fluid_sfloader_callback_close_t close);
+typedef fluid_sfloader_t * (WINAPIV * _new_fluid_defsfloader)(fluid_settings_t * settings);
+typedef int (WINAPIV * _fluid_sfloader_set_callbacks)(fluid_sfloader_t * loader, fluid_sfloader_callback_open_t open, fluid_sfloader_callback_read_t read, fluid_sfloader_callback_seek_t seek, fluid_sfloader_callback_tell_t tell, fluid_sfloader_callback_close_t close);
 
-typedef int (WINAPI * _fluid_synth_set_interp_method)(fluid_synth_t * synth, int chan, int interp_method);
+typedef int (WINAPIV * _fluid_synth_set_interp_method)(fluid_synth_t * synth, int chan, int interp_method);
 
-typedef void (WINAPI * _fluid_synth_add_sfloader)(fluid_synth_t * synth, fluid_sfloader_t * loader);
-typedef int (WINAPI * _fluid_synth_sfload)(fluid_synth_t * synth, const char *filename, int reset_presets);
+typedef void (WINAPIV * _fluid_synth_add_sfloader)(fluid_synth_t * synth, fluid_sfloader_t * loader);
+typedef int (WINAPIV * _fluid_synth_sfload)(fluid_synth_t * synth, const char *filename, int reset_presets);
 
-typedef int (WINAPI * _fluid_synth_noteon)(fluid_synth_t * synth, int chan, int key, int vel);
-typedef int (WINAPI * _fluid_synth_noteoff)(fluid_synth_t * synth, int chan, int key);
-typedef int (WINAPI * _fluid_synth_cc)(fluid_synth_t * synth, int chan, int ctrl, int val);
-typedef int (WINAPI * _fluid_synth_get_cc)(fluid_synth_t * synth, int chan, int ctrl, int *pval);
-typedef int (WINAPI * _fluid_synth_sysex)(fluid_synth_t * synth, const char * data, int len, char * response, int * response_len, int * handled, int dryrun);
+typedef int (WINAPIV * _fluid_synth_noteon)(fluid_synth_t * synth, int chan, int key, int vel);
+typedef int (WINAPIV * _fluid_synth_noteoff)(fluid_synth_t * synth, int chan, int key);
+typedef int (WINAPIV * _fluid_synth_cc)(fluid_synth_t * synth, int chan, int ctrl, int val);
+typedef int (WINAPIV * _fluid_synth_get_cc)(fluid_synth_t * synth, int chan, int ctrl, int *pval);
+typedef int (WINAPIV * _fluid_synth_sysex)(fluid_synth_t * synth, const char * data, int len, char * response, int * response_len, int * handled, int dryrun);
 
-typedef int (WINAPI * _fluid_synth_pitch_bend)(fluid_synth_t * synth, int chan, int val);
-typedef int (WINAPI * _fluid_synth_get_pitch_bend)(fluid_synth_t * synth, int chan, int *ppitch_bend);
-typedef int (WINAPI * _fluid_synth_pitch_wheel_sens)(fluid_synth_t * synth, int chan, int val);
-typedef int (WINAPI * _fluid_synth_get_pitch_wheel_sens)(fluid_synth_t * synth, int chan, int *pval);
-typedef int (WINAPI * _fluid_synth_program_change)(fluid_synth_t * synth, int chan, int program);
-typedef int (WINAPI * _fluid_synth_channel_pressure)(fluid_synth_t * synth, int chan, int val);
-typedef int (WINAPI * _fluid_synth_key_pressure)(fluid_synth_t * synth, int chan, int key, int val);
-typedef int (WINAPI * _fluid_synth_bank_select)(fluid_synth_t * synth, int chan, int bank);
+typedef int (WINAPIV * _fluid_synth_pitch_bend)(fluid_synth_t * synth, int chan, int val);
+typedef int (WINAPIV * _fluid_synth_get_pitch_bend)(fluid_synth_t * synth, int chan, int *ppitch_bend);
+typedef int (WINAPIV * _fluid_synth_pitch_wheel_sens)(fluid_synth_t * synth, int chan, int val);
+typedef int (WINAPIV * _fluid_synth_get_pitch_wheel_sens)(fluid_synth_t * synth, int chan, int *pval);
+typedef int (WINAPIV * _fluid_synth_program_change)(fluid_synth_t * synth, int chan, int program);
+typedef int (WINAPIV * _fluid_synth_channel_pressure)(fluid_synth_t * synth, int chan, int val);
+typedef int (WINAPIV * _fluid_synth_key_pressure)(fluid_synth_t * synth, int chan, int key, int val);
+typedef int (WINAPIV * _fluid_synth_bank_select)(fluid_synth_t * synth, int chan, int bank);
 
-typedef int (WINAPI * _fluid_synth_write_float)(fluid_synth_t * synth, int len, void * lout, int loff, int lincr, void * rout, int roff, int rincr);
+typedef int (WINAPIV * _fluid_synth_write_float)(fluid_synth_t * synth, int len, void * lout, int loff, int lincr, void * rout, int roff, int rincr);
 
-typedef int (WINAPI * _fluid_synth_get_active_voice_count)(fluid_synth_t * synth);
+typedef int (WINAPIV * _fluid_synth_get_active_voice_count)(fluid_synth_t * synth);
 
 #define InitializeFunction(type, address) { address = (##_##type) ::GetProcAddress(_hModule, #type); if (*address == nullptr) return false; }
 #pragma endregion
