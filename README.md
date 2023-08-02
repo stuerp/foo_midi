@@ -97,7 +97,7 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.9.0.0, 2023-08-xx, *"Revenge of the FluidSynth"*
+v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
 
 * New: Added FluidSynth player again.
   * It can be selected after setting the path to the directory that contains the FluidSynth libraries. You can download FluidSynth [here](https://github.com/FluidSynth/fluidsynth/releases). Make sure you download the version that has the same CPU architecture as foobar2000 (x64 or x86).
