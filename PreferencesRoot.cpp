@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.08.02) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2023.08.04) P. Stuer **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -137,6 +137,10 @@ public:
         COMMAND_HANDLER_EX(IDC_XMI_LOOPS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_FF7_LOOPS, BN_CLICKED, OnButtonClick)
+        #pragma endregion
+
+        #pragma region("FluidSynth")
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
         #pragma endregion
 
         #pragma region("BASS MIDI")
@@ -1296,8 +1300,12 @@ bool PreferencesRootPage::HasChanged()
     #pragma endregion
 
     #pragma region("FluidSynth")
-    if (SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_GETCURSEL) != CfgFluidSynthInterpolationMode)
-        return true;
+    {
+        int SelectedIndex = (int) SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_GETCURSEL);
+
+        if ((SelectedIndex != -1) && (_InterpolationMethods[SelectedIndex ].Id != CfgFluidSynthInterpolationMode))
+            return true;
+    }
     #pragma endregion
 
     #pragma region("BASS MIDI")
