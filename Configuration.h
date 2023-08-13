@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.07.30) **/
+/** $VER: Configuration.h (2023.08.13) **/
 
 #pragma once
 
@@ -44,6 +44,7 @@ enum
     DefaultSampleRate = 44100,
     DefaultPlaybackLoopType = 0,
     DefaultOtherLoopType = 0,
+    DefaultDecayTime = 1000,
 
     default_cfg_thloopz = 1,
     default_cfg_rpgmloopz = 1,
@@ -94,6 +95,7 @@ extern cfg_int
 
     CfgLoopTypePlayback,
     CfgLoopTypeOther,
+    CfgDecayTime,
 
     CfgDetectXMILoops,
     CfgDetectFF7Loops,
