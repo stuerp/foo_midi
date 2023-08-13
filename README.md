@@ -97,6 +97,10 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
+v2.9.1.0, 2023-xx-xx, *""*
+
+*
+
 v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
 
 * New: Added FluidSynth player again.
