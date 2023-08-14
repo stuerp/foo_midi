@@ -1,3 +1,6 @@
+
+/** $VER: MIDIProcessorXMI.cpp (2023.08.14) Extended Multiple Instrument Digital Interface (http://www.vgmpf.com/Wiki/index.php?title=XMI) **/
+
 #include "MIDIProcessor.h"
 
 #include <Windows.h>
@@ -107,7 +110,7 @@ bool MIDIProcessor::IsXMI(std::vector<uint8_t> const & data)
 /// <summary>
 /// Decodes a variable length quantity.
 /// </summary>
-uint32_t MIDIProcessor::DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end)
+uint32_t MIDIProcessor::DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end) noexcept
 {
     uint32_t Quantity = 0;
 
@@ -446,7 +449,7 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
             }
 
             if (!IsTempoSet)
-                Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, XMIDefaultTempo, _countof(XMIDefaultTempo)));
+                Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, DefaultTempoXMI, _countof(DefaultTempoXMI)));
 
             container.AddTrack(Track);
         }
@@ -455,4 +458,4 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
     return true;
 }
 
-const uint8_t MIDIProcessor::XMIDefaultTempo[5] = { StatusCodes::MetaData, MetaDataTypes::SetTempo, 0x07, 0xA1, 0x20 };
+const uint8_t MIDIProcessor::DefaultTempoXMI[5] = { StatusCodes::MetaData, MetaDataTypes::SetTempo, 0x07, 0xA1, 0x20 };

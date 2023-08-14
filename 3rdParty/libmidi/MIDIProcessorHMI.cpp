@@ -1,227 +1,315 @@
+
+/** $VER: MIDIProcessorHMI.cpp (2023.08.14) Human Machine Interface (http://www.vgmpf.com/Wiki/index.php?title=HMI) **/
+
 #include "MIDIProcessor.h"
 
-bool MIDIProcessor::is_hmi(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::IsHMI(std::vector<uint8_t> const & p_file)
 {
-    if (p_file.size() < 12) return false;
-    if (p_file[0] != 'H' || p_file[1] != 'M' || p_file[2] != 'I' || p_file[3] != '-' ||
-        p_file[4] != 'M' || p_file[5] != 'I' || p_file[6] != 'D' || p_file[7] != 'I' ||
+    if (p_file.size() < 12)
+        return false;
+
+    if (p_file[0] != 'H' || p_file[1] != 'M' || p_file[ 2] != 'I' || p_file[ 3] != '-' ||
+        p_file[4] != 'M' || p_file[5] != 'I' || p_file[ 6] != 'D' || p_file[ 7] != 'I' ||
         p_file[8] != 'S' || p_file[9] != 'O' || p_file[10] != 'N' || p_file[11] != 'G') return false;
+
     return true;
 }
 
-bool MIDIProcessor::process_hmi(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
+bool MIDIProcessor::ProcessHMI(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
-    std::vector<uint8_t> buffer;
+    std::vector<uint8_t> Data;
 
-    std::vector<uint8_t>::const_iterator it = p_file.begin() + 0xE4;
+    auto it = data.begin() + 0xE4;
 
-    uint32_t track_count = it[0] | (it[1] << 8) | (it[2] << 16) | (it[3] << 24);
-    uint32_t track_table_offset = it[4] | (it[5] << 8) | (it[6] << 16) | (it[7] << 24);
+    uint32_t TrackCount       = (uint32_t) (it[0] | (it[1] << 8) | (it[2] << 16) | (it[3] << 24));
+    uint32_t TrackTableOffset = (uint32_t) (it[4] | (it[5] << 8) | (it[6] << 16) | (it[7] << 24));
 
-    if (track_table_offset >= p_file.size() || track_table_offset + track_count * 4 > p_file.size())
+    if (TrackTableOffset >= data.size() || TrackTableOffset + (size_t) (TrackCount * 4) > data.size())
         return false;
 
-    it = p_file.begin() + track_table_offset;
+    it = data.begin() + TrackTableOffset;
 
-    std::vector<uint32_t> track_offsets;
-    track_offsets.resize(track_count);
+    std::vector<uint32_t> TrackOffsets;
 
-    for (size_t i = 0; i < track_count; ++i)
+    TrackOffsets.resize(TrackCount);
+
+    for (size_t i = 0; i < TrackCount; ++i)
     {
-        track_offsets[i] = it[0] | (it[1] << 8) | (it[2] << 16) | (it[3] << 24);
+        TrackOffsets[i] = (uint32_t) (it[0] | (it[1] << 8) | (it[2] << 16) | (it[3] << 24));
         it += 4;
     }
 
-    p_out.Initialize(1, 0xC0);
+    container.Initialize(1, 0xC0);
 
     {
         MIDITrack track;
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, hmp_default_tempo, _countof(hmp_default_tempo)));
+
+        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, DefaultTempoHMP, _countof(DefaultTempoHMP)));
         track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
-        p_out.AddTrack(track);
+
+        container.AddTrack(track);
     }
 
-    for (unsigned i = 0; i < track_count; ++i)
+    for (uint32_t i = 0; i < TrackCount; ++i)
     {
-        unsigned track_offset = track_offsets[i];
-        unsigned long track_length;
-        if (i + 1 < track_count)
-        {
-            track_length = track_offsets[i + 1] - track_offset;
-        }
+        uint32_t TrackOffset = TrackOffsets[i];
+
+        uint32_t TrackLength;
+
+        if (i + 1 < TrackCount)
+            TrackLength = TrackOffsets[(size_t) (i + 1)] - TrackOffset;
         else
-        {
-            track_length = p_file.size() - track_offset;
-        }
-        if (track_offset >= p_file.size() || track_offset + track_length > p_file.size())
+            TrackLength = (uint32_t) data.size() - TrackOffset;
+
+        if (TrackOffset >= data.size() || (size_t) (TrackOffset + TrackLength) > data.size())
             return false;
 
-        std::vector<uint8_t>::const_iterator track_body = p_file.begin() + track_offset;
-        std::vector<uint8_t>::const_iterator track_end = track_body + track_length;
+        auto TrackData    = data.begin() + TrackOffset;
+        auto TrackDataEnd = TrackData + TrackLength;
 
-        if (track_length < 13) return false;
-        if (track_body[0] != 'H' || track_body[1] != 'M' || track_body[2] != 'I' || track_body[3] != '-' ||
-            track_body[4] != 'M' || track_body[5] != 'I' || track_body[6] != 'D' || track_body[7] != 'I' ||
-            track_body[8] != 'T' || track_body[9] != 'R' || track_body[10] != 'A' || track_body[11] != 'C' ||
-            track_body[12] != 'K') return false;
+        if (TrackLength < 13)
+            return false;
 
-        MIDITrack track;
-        unsigned current_timestamp = 0;
-        unsigned char last_event_code = 0xFF;
+        if (TrackData[0] != 'H' || TrackData[1] != 'M' || TrackData[ 2] != 'I' || TrackData[ 3] != '-' ||
+            TrackData[4] != 'M' || TrackData[5] != 'I' || TrackData[ 6] != 'D' || TrackData[ 7] != 'I' ||
+            TrackData[8] != 'T' || TrackData[9] != 'R' || TrackData[10] != 'A' || TrackData[11] != 'C' || TrackData[12] != 'K')
+            return false;
 
-        unsigned last_event_timestamp = 0;
+        MIDITrack Track;
 
-        if (track_length < 0x4B + 4) return false;
+        uint32_t Timestamp = 0;
 
-        uint32_t meta_offset = track_body[0x4B] | (track_body[0x4C] << 8) | (track_body[0x4D] << 16) | (track_body[0x4E] << 24);
-        if (meta_offset && meta_offset + 1 < track_length)
+        uint8_t LastStatusCode = 0xFF;
+        uint32_t LastStatusTimestamp = 0;
+
+        if (TrackLength < 0x4B + 4)
+            return false;
+
+        uint32_t MetaOffset = (uint32_t) (TrackData[0x4B] | (TrackData[0x4C] << 8) | (TrackData[0x4D] << 16) | (TrackData[0x4E] << 24));
+
+        if (MetaOffset && MetaOffset + 1 < TrackLength)
         {
-            buffer.resize(2);
-            std::copy(track_body + meta_offset, track_body + meta_offset + 2, buffer.begin());
-            unsigned meta_size = buffer[1];
-            if (meta_offset + 2 + meta_size > track_length) return false;
-            buffer.resize(meta_size + 2);
-            std::copy(track_body + meta_offset + 2, track_body + meta_offset + 2 + meta_size, buffer.begin() + 2);
-            while (meta_size > 0 && buffer[meta_size + 1] == ' ') --meta_size;
-            if (meta_size > 0)
+            Data.resize(2);
+            std::copy(TrackData + MetaOffset, TrackData + MetaOffset + 2, Data.begin());
+
+            uint32_t MetadataSize = Data[1];
+
+            if (MetaOffset + 2 + MetadataSize > TrackLength)
+                return false;
+
+            Data.resize((size_t) (MetadataSize + 2));
+            std::copy(TrackData + MetaOffset + 2, TrackData + MetaOffset + 2 + MetadataSize, Data.begin() + 2);
+
+            while (MetadataSize > 0 && Data[(size_t) (MetadataSize + 1)] == ' ')
+                --MetadataSize;
+
+            if (MetadataSize > 0)
             {
-                buffer[0] = 0xFF;
-                buffer[1] = 0x01;
-                track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, &buffer[0], meta_size + 2));
+                Data[0] = StatusCodes::MetaData;
+                Data[1] = MetaDataTypes::Text;
+
+                Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, &Data[0], MetadataSize + 2));
             }
         }
 
-        if (track_length < 0x57 + 4) return false;
+        if (TrackLength < 0x57 + 4)
+            return false;
 
-        uint32_t track_data_offset = track_body[0x57] | (track_body[0x58] << 8) | (track_body[0x59] << 16) | (track_body[0x5A] << 24);
+        uint32_t TrackDataOffset = (uint32_t) (TrackData[0x57] | (TrackData[0x58] << 8) | (TrackData[0x59] << 16) | (TrackData[0x5A] << 24));
 
-        it = track_body + track_data_offset;
+        it = TrackData + TrackDataOffset;
 
-        buffer.resize(3);
+        Data.resize(3);
 
-        while (it != track_end)
+        while (it != TrackDataEnd)
         {
-            int delta = DecodeVariableLengthQuantity(it, track_end);
+            int delta = DecodeVariableLengthQuantity(it, TrackDataEnd);
+
             if (delta > 0xFFFF || delta < 0)
             {
-                current_timestamp = last_event_timestamp;
-                /*console::formatter() << "[foo_midi] Large HMI delta detected, shunting.";*/
+                Timestamp = LastStatusTimestamp; /*console::formatter() << "[foo_midi] Large HMI delta detected, shunting.";*/
             }
             else
             {
-                current_timestamp += delta;
-                if (current_timestamp > last_event_timestamp)
-                {
-                    last_event_timestamp = current_timestamp;
-                }
+                Timestamp += delta;
+
+                if (Timestamp > LastStatusTimestamp)
+                    LastStatusTimestamp = Timestamp;
             }
 
-            if (it == track_end) return false;
-            buffer[0] = *it++;
-            if (buffer[0] == 0xFF)
+            if (it == TrackDataEnd)
+                return false;
+
+            Data[0] = *it++;
+
+            if (Data[0] == StatusCodes::MetaData)
             {
-                last_event_code = 0xFF;
-                if (it == track_end) return false;
-                buffer[1] = *it++;
-                int meta_count = DecodeVariableLengthQuantity(it, track_end);
-                if (meta_count < 0) return false; /*throw exception_io_data( "Invalid HMI meta message" );*/
-                if (track_end - it < meta_count) return false;
-                buffer.resize(meta_count + 2);
-                std::copy(it, it + meta_count, buffer.begin() + 2);
-                it += meta_count;
-                if (buffer[1] == 0x2F && last_event_timestamp > current_timestamp)
-                {
-                    current_timestamp = last_event_timestamp;
-                }
-                track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, &buffer[0], meta_count + 2));
-                if (buffer[1] == 0x2F) break;
+                LastStatusCode = 0xFF;
+
+                if (it == TrackDataEnd)
+                    return false;
+
+                Data[1] = *it++;
+
+                int MetadataSize = DecodeVariableLengthQuantity(it, TrackDataEnd);
+
+                if (MetadataSize < 0)
+                    return false; /*throw exception_io_data( "Invalid HMI meta message" );*/
+
+                if (TrackDataEnd - it < MetadataSize)
+                    return false;
+
+                Data.resize((size_t) (MetadataSize + 2));
+                std::copy(it, it + MetadataSize, Data.begin() + 2);
+
+                it += MetadataSize;
+
+                if ((Data[1] == MetaDataTypes::EndOfTrack) && (LastStatusTimestamp > Timestamp))
+                    Timestamp = LastStatusTimestamp;
+
+                Track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::Extended, 0, &Data[0], (size_t) (MetadataSize + 2)));
+
+                if (Data[1] == MetaDataTypes::EndOfTrack)
+                    break;
             }
-            else if (buffer[0] == 0xF0)
+            else
+            if (Data[0] == StatusCodes::SysEx)
             {
-                last_event_code = 0xFF;
-                int system_exclusive_count = DecodeVariableLengthQuantity(it, track_end);
-                if (system_exclusive_count < 0) return false; /*throw exception_io_data( "Invalid HMI System Exclusive message" );*/
-                if (track_end - it < system_exclusive_count) return false;
-                buffer.resize(system_exclusive_count + 1);
-                std::copy(it, it + system_exclusive_count, buffer.begin() + 1);
-                it += system_exclusive_count;
-                track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, &buffer[0], system_exclusive_count + 1));
+                LastStatusCode = 0xFF;
+
+                int SysExSize = DecodeVariableLengthQuantity(it, TrackDataEnd);
+
+                if (SysExSize < 0)
+                    return false; /*throw exception_io_data( "Invalid HMI System Exclusive message" );*/
+
+                if (TrackDataEnd - it < SysExSize)
+                    return false;
+
+                Data.resize((size_t) (SysExSize + 1));
+                std::copy(it, it + SysExSize, Data.begin() + 1);
+
+                it += SysExSize;
+                Track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::Extended, 0, &Data[0], (size_t) (SysExSize + 1)));
             }
-            else if (buffer[0] == 0xFE)
+            else
+            if (Data[0] == StatusCodes::ActiveSensing)
             {
-                last_event_code = 0xFF;
-                if (it == track_end) return false;
-                buffer[1] = *it++;
-                if (buffer[1] == 0x10)
+                LastStatusCode = 0xFF;
+
+                if (it == TrackDataEnd)
+                    return false;
+
+                Data[1] = *it++;
+
+                if (Data[1] == 0x10)
                 {
-                    if (track_end - it < 3) return false;
+                    if (TrackDataEnd - it < 3)
+                        return false;
+
                     it += 2;
-                    buffer[2] = *it++;
-                    if (track_end - it < buffer[2] + 4) return false;
-                    it += buffer[2] + 4;
+                    Data[2] = *it++;
+
+                    if (TrackDataEnd - it < Data[2] + 4)
+                        return false;
+
+                    it += Data[2] + 4;
                 }
-                else if (buffer[1] == 0x12)
+                else
+                if (Data[1] == 0x12)
                 {
-                    if (track_end - it < 2) return false;
+                    if (TrackDataEnd - it < 2)
+                        return false;
+
                     it += 2;
                 }
-                else if (buffer[1] == 0x13)
+                else
+                if (Data[1] == 0x13)
                 {
-                    if (track_end - it < 10) return false;
+                    if (TrackDataEnd - it < 10)
+                        return false;
+
                     it += 10;
                 }
-                else if (buffer[1] == 0x14)
+                else
+                if (Data[1] == 0x14)
                 {
-                    if (track_end - it < 2) return false;
+                    if (TrackDataEnd - it < 2)
+                        return false;
+
                     it += 2;
-                    p_out.AddEventToTrack(0, MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, LoopBeginMarker, _countof(LoopBeginMarker)));
+                    container.AddEventToTrack(0, MIDIEvent(Timestamp, MIDIEvent::Extended, 0, LoopBeginMarker, _countof(LoopBeginMarker)));
                 }
-                else if (buffer[1] == 0x15)
+                else
+                if (Data[1] == 0x15)
                 {
-                    if (track_end - it < 6) return false;
+                    if (TrackDataEnd - it < 6)
+                        return false;
+
                     it += 6;
-                    p_out.AddEventToTrack(0, MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, LoopEndMarker, _countof(LoopEndMarker)));
+                    container.AddEventToTrack(0, MIDIEvent(Timestamp, MIDIEvent::Extended, 0, LoopEndMarker, _countof(LoopEndMarker)));
                 }
-                else return false; /*throw exception_io_data( "Unexpected HMI meta event" );*/
+                else
+                    return false; /*throw exception_io_data( "Unexpected HMI meta event" );*/
             }
-            else if (buffer[0] <= 0xEF)
+            else
+            if (Data[0] < StatusCodes::SysEx)
             {
-                unsigned bytes_read = 1;
-                if (buffer[0] >= 0x80)
+                uint32_t BytesRead = 1;
+
+                if (Data[0] >= 0x80)
                 {
-                    if (it == track_end) return false;
-                    buffer[1] = *it++;
-                    last_event_code = buffer[0];
+                    if (it == TrackDataEnd)
+                        return false;
+
+                    Data[1] = *it++;
+                    LastStatusCode = Data[0];
                 }
                 else
                 {
-                    if (last_event_code == 0xFF) return false; /*throw exception_io_data( "HMI used shortened event after Meta or SysEx message" );*/
-                    buffer[1] = buffer[0];
-                    buffer[0] = last_event_code;
+                    if (LastStatusCode == 0xFF)
+                        return false; /*throw exception_io_data( "HMI used shortened event after Meta or SysEx message" );*/
+
+                    Data[1] = Data[0];
+                    Data[0] = LastStatusCode;
                 }
-                MIDIEvent::EventType type = (MIDIEvent::EventType) ((buffer[0] >> 4) - 8);
-                unsigned channel = buffer[0] & 0x0F;
-                if (type != MIDIEvent::ProgramChange && type != MIDIEvent::ChannelAftertouch)
+
+                MIDIEvent::EventType Type = (MIDIEvent::EventType) ((Data[0] >> 4) - 8);
+
+                uint32_t Channel = (uint32_t) (Data[0] & 0x0F);
+
+                if ((Type != MIDIEvent::ProgramChange) && (Type != MIDIEvent::ChannelAftertouch))
                 {
-                    if (it == track_end) return false;
-                    buffer[2] = *it++;
-                    bytes_read = 2;
+                    if (it == TrackDataEnd)
+                        return false;
+
+                    Data[2] = *it++;
+                    BytesRead = 2;
                 }
-                track.AddEvent(MIDIEvent(current_timestamp, type, channel, &buffer[1], bytes_read));
-                if (type == MIDIEvent::NoteOn)
+
+                Track.AddEvent(MIDIEvent(Timestamp, Type, Channel, &Data[1], BytesRead));
+
+                if (Type == MIDIEvent::NoteOn)
                 {
-                    buffer[2] = 0x00;
-                    int note_length = DecodeVariableLengthQuantity(it, track_end);
-                    if (note_length < 0) return false; /*throw exception_io_data( "Invalid HMI note message" );*/
-                    unsigned note_end_timestamp = current_timestamp + note_length;
-                    if (note_end_timestamp > last_event_timestamp) last_event_timestamp = note_end_timestamp;
-                    track.AddEvent(MIDIEvent(note_end_timestamp, MIDIEvent::NoteOn, channel, &buffer[1], bytes_read));
+                    Data[2] = 0x00;
+
+                    int note_length = DecodeVariableLengthQuantity(it, TrackDataEnd);
+
+                    if (note_length < 0)
+                        return false; /*throw exception_io_data( "Invalid HMI note message" );*/
+
+                    uint32_t note_end_timestamp = Timestamp + note_length;
+
+                    if (note_end_timestamp > LastStatusTimestamp)
+                        LastStatusTimestamp = note_end_timestamp;
+
+                    Track.AddEvent(MIDIEvent(note_end_timestamp, MIDIEvent::NoteOn, Channel, &Data[1], BytesRead));
                 }
             }
-            else return false; /*throw exception_io_data( "Unexpected HMI status code" );*/
+            else
+                return false; /*throw exception_io_data( "Unexpected HMI status code" );*/
         }
 
-        p_out.AddTrack(track);
+        container.AddTrack(Track);
     }
 
     return true;

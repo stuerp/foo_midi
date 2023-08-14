@@ -1,52 +1,59 @@
+
+/** $VER: MIDIProcessorGMF.cpp (2023.08.14) Game Music Format (http://www.vgmpf.com/Wiki/index.php?title=GMF) **/
+
 #include "MIDIProcessor.h"
 
-bool MIDIProcessor::is_gmf(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::IsGMF(std::vector<uint8_t> const & data)
 {
-    if (p_file.size() < 32) return false;
-    if (p_file[0] != 'G' || p_file[1] != 'M' || p_file[2] != 'F' || p_file[3] != 1) return false;
+    if (data.size() < 32)
+        return false;
+
+    if (data[0] != 'G' || data[1] != 'M' || data[2] != 'F' || data[3] != 1)
+        return false;
+
     return true;
 }
 
-bool MIDIProcessor::process_gmf(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
+bool MIDIProcessor::ProcessGMF(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
-    uint8_t buffer[10];
+    uint8_t Data[10];
 
-    p_out.Initialize(0, 0xC0);
+    container.Initialize(0, 0xC0);
 
-    uint16_t tempo = (p_file[4] << 8) | p_file[5];
-    uint32_t tempo_scaled = tempo * 100000;
+    uint16_t Tempo = (uint16_t) (((uint16_t) data[4] << 8) | data[5]);
+    uint32_t ScaledTempo = (uint32_t) Tempo * 100000;
 
-    MIDITrack track;
+    MIDITrack Track;
 
-    buffer[0] = 0xFF;
-    buffer[1] = 0x51;
-    buffer[2] = tempo_scaled >> 16;
-    buffer[3] = tempo_scaled >> 8;
-    buffer[4] = tempo_scaled;
+    Data[0] = StatusCodes::MetaData;
+    Data[1] = MetaDataTypes::SetTempo;
+    Data[2] = (uint8_t) (ScaledTempo >> 16);
+    Data[3] = (uint8_t) (ScaledTempo >>  8);
+    Data[4] = (uint8_t)  ScaledTempo;
 
-    track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, buffer, 5));
+    Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, Data, 5));
 
-    buffer[0] = 0xF0;
-    buffer[1] = 0x41;
-    buffer[2] = 0x10;
-    buffer[3] = 0x16;
-    buffer[4] = 0x12;
-    buffer[5] = 0x7F;
-    buffer[6] = 0x00;
-    buffer[7] = 0x00;
-    buffer[8] = 0x01;
-    buffer[9] = 0xF7;
+    Data[0] = StatusCodes::SysEx;
+    Data[1] = 0x41;
+    Data[2] = 0x10;
+    Data[3] = 0x16;
+    Data[4] = 0x12;
+    Data[5] = 0x7F;
+    Data[6] = 0x00;
+    Data[7] = 0x00;
+    Data[8] = 0x01;
+    Data[9] = StatusCodes::SysExEnd;
 
-    track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, buffer, 10));
+    Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, Data, 10));
 
-    buffer[0] = 0xFF;
-    buffer[1] = 0x2F;
+    Data[0] = StatusCodes::MetaData;
+    Data[1] = MetaDataTypes::EndOfTrack;
 
-    track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, buffer, 2));
+    Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, Data, 2));
 
-    p_out.AddTrack(track);
+    container.AddTrack(Track);
 
-    std::vector<uint8_t>::const_iterator it = p_file.begin() + 7;
+    auto it = data.begin() + 7;
 
-    return ProcessSMFTrack(it, p_file.end(), p_out, false);
+    return ProcessSMFTrack(it, data.end(), container, false);
 }

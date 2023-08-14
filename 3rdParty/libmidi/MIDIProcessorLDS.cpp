@@ -1,8 +1,9 @@
+
+/** $VER: MIDIProcessorLDS.cpp (2023.08.14) Loudness Sound System (http://www.vgmpf.com/Wiki/index.php?title=LDS) **/
+
 #include "MIDIProcessor.h"
 
 #include <string.h>
-
-const uint8_t MIDIProcessor::lds_default_tempo[5] = { 0xFF, 0x51, 0x07, 0xA1, 0x20 };
 
 #define ENABLE_WHEEL
 //#define ENABLE_VIB
@@ -43,9 +44,9 @@ static const unsigned char tremtab[] = {
 };
 #endif
 
-bool MIDIProcessor::is_lds(std::vector<uint8_t> const & data, const char * fileExtension)
+bool MIDIProcessor::IsLDS(std::vector<uint8_t> const & data, const char * fileExtension)
 {
-    if (_stricmp(fileExtension, "LDS"))
+    if (::_stricmp(fileExtension, "LDS"))
         return false;
 
     if (data.size() < 1)
@@ -57,7 +58,7 @@ bool MIDIProcessor::is_lds(std::vector<uint8_t> const & data, const char * fileE
     return true;
 }
 
-struct sound_patch
+struct SoundPatch
 {
     // skip 11 bytes worth of Adlib crap
     uint8_t keyoff;
@@ -119,16 +120,21 @@ struct channel_state
     } chancheat;
 };
 
-void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & patches, uint8_t last_note[], uint8_t last_channel[], uint8_t last_instrument[], uint8_t last_volume[], uint8_t last_sent_volume[],
+static void PlaySound(uint8_t currentInstrument[], std::vector<SoundPatch> const & patches, uint8_t last_note[], uint8_t last_channel[], uint8_t last_instrument[], uint8_t last_volume[], uint8_t last_sent_volume[],
 #ifdef ENABLE_WHEEL
     int16_t last_pitch_wheel[],
 #endif
-    channel_state * c, uint8_t allvolume, unsigned current_timestamp, unsigned sound, unsigned chan, unsigned high, MIDITrack & track)
+    channel_state * c, uint8_t allvolume, unsigned Timestamp, unsigned sound, unsigned chan, unsigned high, MIDITrack & track)
 {
-    uint8_t buffer[2];
-    current_instrument[chan] = sound;
-    if (sound >= patches.size()) return;
-    const sound_patch & patch = patches[current_instrument[chan]];
+    uint8_t buffer[2] = { };
+
+    currentInstrument[chan] = (uint8_t) sound;
+
+    if (sound >= patches.size())
+        return;
+
+    const SoundPatch & patch = patches[currentInstrument[chan]];
+
     unsigned channel = (patch.midi_instrument >= 0x80) ? 9 : (chan == 9) ? 10 : chan;
     unsigned saved_last_note = last_note[chan];
     unsigned note;
@@ -149,7 +155,7 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
     #endif
 
         // and MIDI transpose
-        high = (int) high + (patch.midi_transpose << 4);
+        high = (unsigned int) ((int) high + (patch.midi_transpose << 4));
 
         note = high
         #ifdef ENABLE_WHEEL
@@ -161,9 +167,10 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
     #ifdef ENABLE_WHEEL
         if (c->glideto != 0)
         {
-            c->gototune = note - (last_note[chan] << 4) + c->lasttune;
+            c->gototune  = (int16_t) (note - (last_note[chan] << 4) + c->lasttune);
             c->portspeed = c->glideto;
-            c->glideto = c->finetune = 0;
+            c->glideto   = 0;
+            c->finetune  = 0;
             return;
         }
     #endif
@@ -171,52 +178,56 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
         if (patch.midi_instrument != last_instrument[chan])
         {
             buffer[0] = patch.midi_instrument;
-            track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ProgramChange, channel, buffer, 1));
+            track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::ProgramChange, channel, buffer, 1));
             last_instrument[chan] = patch.midi_instrument;
         }
     }
     else
     {
-        note = (patch.midi_instrument & 0x7F) << 4;
+        note = (unsigned int) ((patch.midi_instrument & 0x7F) << 4);
     }
 
-    unsigned volume = 127;
+    uint32_t volume = 127;
 
     if (c->nextvol)
     {
-        volume = (c->nextvol & 0x3F) * 127 / 63;
-        last_volume[chan] = volume;
+        volume = (uint32_t) ((c->nextvol & 0x3F) * 127 / 63);
+        last_volume[chan] = (uint8_t) volume;
     }
 
     if (allvolume)
-    {
         volume = volume * allvolume / 255;
-    }
 
     if (volume != last_sent_volume[channel])
     {
         buffer[0] = 7;
-        buffer[1] = volume;
-        track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ControlChange, last_channel[chan], buffer, 2));
-        last_sent_volume[channel] = volume;
+        buffer[1] = (uint8_t) volume;
+        track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::ControlChange, last_channel[chan], buffer, 2));
+        last_sent_volume[channel] = (uint8_t) volume;
     }
 
     if (saved_last_note != 0xFF)
     {
-        buffer[0] = saved_last_note;
+        buffer[0] = (uint8_t) saved_last_note;
         buffer[1] = 127;
-        track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOff, last_channel[chan], buffer, 2));
+
+        track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::NoteOff, last_channel[chan], buffer, 2));
+
         last_note[chan] = 0xFF;
+
     #ifdef ENABLE_WHEEL
         if (channel != 9)
         {
             note += c->lasttune;
             c->lasttune = 0;
+
             if (last_pitch_wheel[channel] != 0)
             {
                 buffer[0] = 0;
                 buffer[1] = 64;
-                track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
+                track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
                 last_pitch_wheel[channel] = 0;
             }
         }
@@ -225,9 +236,11 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
 #ifdef ENABLE_WHEEL
     if (c->lasttune != last_pitch_wheel[channel])
     {
-        buffer[0] = WHEEL_SCALE_LOW(c->lasttune);
-        buffer[1] = WHEEL_SCALE_HIGH(c->lasttune);
-        track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, channel, buffer, 2));
+        buffer[0] = (uint8_t) WHEEL_SCALE_LOW(c->lasttune);
+        buffer[1] = (uint8_t) WHEEL_SCALE_HIGH(c->lasttune);
+
+        track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::PitchWheel, channel, buffer, 2));
+
         last_pitch_wheel[channel] = c->lasttune;
     }
     if (!patch.glide || last_note[chan] == 0xFF)
@@ -237,11 +250,13 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
         if (!patch.portamento || last_note[chan] == 0xFF)
         #endif
         {
-            buffer[0] = note >> 4;
+            buffer[0] = (uint8_t) (note >> 4);
             buffer[1] = patch.midi_velocity;
-            track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOn, channel, buffer, 2));
-            last_note[chan] = note >> 4;
-            last_channel[chan] = channel;
+
+            track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::NoteOn, channel, buffer, 2));
+
+            last_note[chan] = (uint8_t) (note >> 4);
+            last_channel[chan] = (uint8_t) channel;
         #ifdef ENABLE_WHEEL
             c->gototune = c->lasttune;
         #endif
@@ -249,22 +264,27 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
     #ifdef ENABLE_WHEEL
         else
         {
-            c->gototune = note - (last_note[chan] << 4) + c->lasttune;
+            c->gototune = (int16_t) (note - (last_note[chan] << 4) + c->lasttune);
             c->portspeed = patch.portamento;
-            buffer[0] = last_note[chan] = saved_last_note;
+
+            buffer[0] = last_note[chan] = (uint8_t) saved_last_note;
             buffer[1] = patch.midi_velocity;
-            track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOn, channel, buffer, 2));
+
+            track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::NoteOn, channel, buffer, 2));
         }
     #endif
     }
 #ifdef ENABLE_WHEEL
     else
     {
-        buffer[0] = note >> 4;
+        buffer[0] = (uint8_t) (note >> 4);
         buffer[1] = patch.midi_velocity;
-        track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOn, channel, buffer, 2));
-        last_note[chan] = note >> 4;
-        last_channel[chan] = channel;
+
+        track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::NoteOn, channel, buffer, 2));
+
+        last_note[chan] = (uint8_t) (note >> 4);
+        last_channel[chan] = (uint8_t) channel;
+
         c->gototune = patch.glide;
         c->portspeed = patch.portamento;
     }
@@ -314,58 +334,78 @@ void playsound(uint8_t current_instrument[], std::vector<sound_patch> const & pa
     c->vibcount = 0;
 #endif
 #ifdef ENABLE_WHEEL
-    c->glideto = 0;
+    c->glideto  = 0;
 #endif
     c->keycount = patch.keyoff;
-    c->nextvol = c->finetune = 0;
+    c->nextvol  = 0;
+    c->finetune = 0;
 }
 
-bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
+bool MIDIProcessor::ProcessLDS(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
+    #pragma warning(disable: 4820)
     struct position_data
     {
         uint16_t pattern_number;
         uint8_t transpose;
     };
+    #pragma warning(default: 4820)
 
-    uint8_t mode;
-    /*uint16_t speed;*/
-    uint8_t tempo;
-    uint8_t pattern_length;
-    uint8_t channel_delay[9];
-    /*uint8_t register_bd;*/
-    uint16_t patch_count;
-    std::vector<sound_patch> patches;
-    uint16_t position_count;
-    std::vector<position_data> positions;
-    std::size_t pattern_count;
-    std::vector<uint16_t> patterns;
+//  uint16_t speed;
+//  uint8_t register_bd;
 
-    std::vector<uint8_t>::const_iterator it = p_file.begin();
-    std::vector<uint8_t>::const_iterator end = p_file.end();
+    uint16_t PatchCount;
+    std::vector<SoundPatch> Patches;
 
-    if (end == it) return false;
-    mode = *it++;
-    if (mode > 2) return false; /*throw exception_io_data( "Invalid LDS mode" );*/
-    /*speed = it[ 0 ] | ( it[ 1 ] << 8 );*/
-    if (end - it < 4) return false;
-    tempo = it[2];
-    pattern_length = it[3];
+    auto it  = data.begin();
+    auto end = data.end();
+
+    if (end == it)
+        return false;
+
+    uint8_t mode = *it++;
+
+    if (mode > 2)
+        return false; /*throw exception_io_data( "Invalid LDS mode" );*/
+
+//  speed = it[ 0 ] | ( it[ 1 ] << 8 );
+
+    if (end - it < 4)
+        return false;
+
+    uint8_t Tempo = it[2];
+    uint8_t pattern_length = it[3];
     it += 4;
-    if (end - it < 9) return false;
-    for (unsigned i = 0; i < 9; ++i)
-        channel_delay[i] = *it++;
-    /*register_bd = *it++;*/ it++;
 
-    if (end - it < 2) return false;
-    patch_count = it[0] | (it[1] << 8);
-    if (!patch_count) return false;
+    if (end - it < 9)
+        return false;
+
+    uint8_t ChannelDelay[9] = { };
+
+    for (size_t i = 0; i < 9; ++i)
+        ChannelDelay[i] = *it++;
+
+//  register_bd = *it++;
+    it++;
+
+    if (end - it < 2)
+        return false;
+
+    PatchCount = (uint16_t) (it[0] | (it[1] << 8));
+
+    if (!PatchCount)
+        return false;
+
     it += 2;
-    patches.resize(patch_count);
-    if (end - it < 46 * patch_count) return false;
-    for (unsigned i = 0; i < patch_count; ++i)
+    Patches.resize(PatchCount);
+
+    if (end - it < 46 * PatchCount)
+        return false;
+
+    for (uint16_t i = 0; i < PatchCount; ++i)
     {
-        sound_patch & patch = patches[i];
+        SoundPatch & patch = Patches[i];
+
         it += 11;
         patch.keyoff = *it++;
     #ifdef ENABLE_WHEEL
@@ -405,50 +445,71 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
     #ifdef ENABLE_WHEEL
         // hax
         if (patch.midi_instrument >= 0x80)
-        {
             patch.glide = 0;
-        }
     #endif
     }
 
-    if (end - it < 2) return false;
-    position_count = it[0] | (it[1] << 8);
-    if (!position_count) return false;
+    if (end - it < 2)
+        return false;
+
+    std::vector<position_data> Positions;
+
+    uint16_t PositionCount = (uint16_t) (it[0] | (it[1] << 8));
+
+    if (PositionCount == 0)
+        return false;
+
     it += 2;
-    positions.resize(9 * position_count);
-    if (end - it < 3 * position_count) return false;
-    for (unsigned i = 0; i < position_count; ++i)
+    Positions.resize((size_t) (9 * PositionCount));
+
+    if (end - it < 3 * PositionCount)
+        return false;
+
+    for (uint16_t  i = 0; i < PositionCount; ++i)
     {
         for (unsigned j = 0; j < 9; ++j)
         {
-            position_data & position = positions[i * 9 + j];
-            position.pattern_number = it[0] | (it[1] << 8);
-            if (position.pattern_number & 1) return false; /*throw exception_io_data( "Odd LDS pattern number" );*/
+            position_data & position = Positions[i * 9 + j];
+
+            position.pattern_number = (uint16_t) (it[0] | (it[1] << 8));
+
+            if (position.pattern_number & 1)
+                return false; /*throw exception_io_data( "Odd LDS pattern number" );*/
+
             position.pattern_number >>= 1;
             position.transpose = it[2];
             it += 3;
         }
     }
 
-    if (end - it < 2) return false;
+    if (end - it < 2)
+        return false;
+
     it += 2;
 
-    pattern_count = (end - it) / 2;
-    patterns.resize(pattern_count);
+    std::vector<uint16_t> Patterns;
 
-    for (unsigned i = 0; i < pattern_count; ++i)
+    size_t PatternCount = (size_t) ((end - it) / 2);
+
+    Patterns.resize(PatternCount);
+
+    for (size_t i = 0; i < PatternCount; ++i)
     {
-        patterns[i] = it[0] | (it[1] << 8);
+        Patterns[i] = (uint16_t) (it[0] | ((uint16_t) it[1] << 8));
         it += 2;
     }
 
     uint8_t /*jumping,*/ fadeonoff, allvolume, hardfade, tempo_now, pattplay;
     uint16_t posplay, jumppos;
     uint32_t mainvolume;
-    std::vector<channel_state> channel;
-    channel.resize(9);
-    std::vector<unsigned> position_timestamps;
-    position_timestamps.resize(position_count, ~0u);
+
+    std::vector<channel_state> Channel;
+
+    Channel.resize(9);
+
+    std::vector<unsigned> PositionTimestamps;
+
+    PositionTimestamps.resize(PositionCount, ~0u);
 
     uint8_t current_instrument[9] = { 0 };
 
@@ -462,57 +523,77 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
 #endif
     uint8_t ticks_without_notes[11];
 
-    memset(last_channel, 0, sizeof(last_channel));
-    memset(last_instrument, 0xFF, sizeof(last_instrument));
-    memset(last_note, 0xFF, sizeof(last_note));
-    memset(last_volume, 127, sizeof(last_volume));
-    memset(last_sent_volume, 127, sizeof(last_sent_volume));
+    ::memset(last_channel, 0, sizeof(last_channel));
+    ::memset(last_instrument, 0xFF, sizeof(last_instrument));
+    ::memset(last_note, 0xFF, sizeof(last_note));
+    ::memset(last_volume, 127, sizeof(last_volume));
+    ::memset(last_sent_volume, 127, sizeof(last_sent_volume));
 #ifdef ENABLE_WHEEL
-    memset(last_pitch_wheel, 0, sizeof(last_pitch_wheel));
+    ::memset(last_pitch_wheel, 0, sizeof(last_pitch_wheel));
 #endif
-    memset(ticks_without_notes, 0, sizeof(ticks_without_notes));
+    ::memset(ticks_without_notes, 0, sizeof(ticks_without_notes));
 
-    unsigned current_timestamp = 0;
+    uint32_t Timestamp = 0;
 
-    uint8_t buffer[2];
+    uint8_t buffer[2] = { };
 
-    p_out.Initialize(1, 35);
+    container.Initialize(1, 35);
 
     {
-        MIDITrack track;
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, lds_default_tempo, _countof(lds_default_tempo)));
-        for (unsigned i = 0; i < 11; ++i)
+        MIDITrack Track;
+
+        Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, DefaultTempoLDS, _countof(DefaultTempoLDS)));
+
+        for (size_t i = 0; i < 11; ++i)
         {
             buffer[0] = 120;
             buffer[1] = 0;
-            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
+
+            Track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, (uint32_t) i, buffer, 2));
+
             buffer[0] = 121;
-            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
+
+            Track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, (uint32_t) i, buffer, 2));
+
         #ifdef ENABLE_WHEEL
             buffer[0] = 0x65;
-            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
+
+            Track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, (uint32_t) i, buffer, 2));
+
             buffer[0] = 0x64;
-            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
+
+            Track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, (uint32_t) i, buffer, 2));
+
             buffer[0] = 0x06;
             buffer[1] = WHEEL_RANGE_HIGH;
-            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
+
+            Track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, (uint32_t) i, buffer, 2));
+
             buffer[0] = 0x26;
             buffer[1] = WHEEL_RANGE_LOW;
-            track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, i, buffer, 2));
+
+            Track.AddEvent(MIDIEvent(0, MIDIEvent::ControlChange, (uint32_t) i, buffer, 2));
+
             buffer[0] = 0;
             buffer[1] = 64;
-            track.AddEvent(MIDIEvent(0, MIDIEvent::PitchWheel, i, buffer, 2));
+
+            Track.AddEvent(MIDIEvent(0, MIDIEvent::PitchWheel, (uint32_t) i, buffer, 2));
         #endif
         }
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
-        p_out.AddTrack(track);
+
+        Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
+
+        container.AddTrack(Track);
     }
 
-    std::vector<MIDITrack> tracks;
+    std::vector<MIDITrack> Tracks;
+
     {
-        MIDITrack track;
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
-        tracks.resize(10, track);
+        MIDITrack Track;
+
+        Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
+
+        Tracks.resize(10, Track);
     }
 
     tempo_now = 3;
@@ -524,12 +605,13 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
     posplay = 0;
     jumppos = 0;
     mainvolume = 0;
-    memset(&channel[0], 0, sizeof(channel_state) * 9);
+    memset(&Channel[0], 0, sizeof(channel_state) * 9);
 
     const uint16_t maxsound = 0x3F;
     const uint16_t maxpos = 0xFF;
 
     bool playing = true;
+
     while (playing)
     {
         uint16_t        chan;
@@ -561,22 +643,25 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
                 {
                     allvolume = 1;
                     fadeonoff = 0;
+
                     if (hardfade != 0)
                     {
                         playing = false;
                         hardfade = 0;
+
                         for (i = 0; i < 9; i++)
-                            channel[i].keycount = 1;
+                            Channel[i].keycount = 1;
                     }
                 }
             }
-            else if ((unsigned) ((allvolume + (0x100 - fadeonoff)) & 0xff) <= mainvolume)
+            else
+            if ((unsigned) ((allvolume + (0x100 - fadeonoff)) & 0xff) <= mainvolume)
             {
                 allvolume += (uint8_t)(0x100 - fadeonoff);
             }
             else
             {
-                allvolume = mainvolume;
+                allvolume = (uint8_t) mainvolume;
                 fadeonoff = 0;
             }
         }
@@ -584,99 +669,115 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
         // handle channel delay
         for (chan = 0; chan < 9; ++chan)
         {
-            channel_state * _c = &channel[chan];
+            channel_state * _c = &Channel[chan];
+
             if (_c->chancheat.chandelay)
             {
                 if (!(--_c->chancheat.chandelay))
                 {
-                    playsound(current_instrument, patches, last_note, last_channel, last_instrument, last_volume, last_sent_volume,
+                    PlaySound(current_instrument, Patches, last_note, last_channel, last_instrument, last_volume, last_sent_volume,
                     #ifdef ENABLE_WHEEL
                         last_pitch_wheel,
                     #endif
-                        _c, allvolume, current_timestamp, _c->chancheat.sound, chan, _c->chancheat.high, tracks[chan]);
+                        _c, allvolume, Timestamp, _c->chancheat.sound, chan, _c->chancheat.high, Tracks[chan]);
                     ticks_without_notes[last_channel[chan]] = 0;
                 }
             }
         }
 
         // handle notes
-        if (!tempo_now)
+        if (tempo_now == 0)
         {
-            if (pattplay == 0 && position_timestamps[posplay] == ~0u)
-            {
-                position_timestamps[posplay] = current_timestamp;
-            }
+            if (pattplay == 0 && PositionTimestamps[posplay] == ~0u)
+                PositionTimestamps[posplay] = Timestamp;
 
             vbreak = false;
-            for (unsigned _chan = 0; _chan < 9; _chan++)
+
+            for (unsigned int _chan = 0; _chan < 9; _chan++)
             {
-                channel_state * _c = &channel[_chan];
+                channel_state * _c = &Channel[_chan];
+
                 if (!_c->packwait)
                 {
-                    unsigned short	patnum = positions[posplay * 9 + _chan].pattern_number;
-                    unsigned char	transpose = positions[posplay * 9 + _chan].transpose;
+                    unsigned short	patnum = Positions[posplay * 9 + _chan].pattern_number;
+                    unsigned char	transpose = Positions[posplay * 9 + _chan].transpose;
 
-                    if ((unsigned long) (patnum + _c->packpos) >= patterns.size()) return false; /*throw exception_io_data( "Invalid LDS pattern number" );*/
+                    if ((unsigned long) (patnum + _c->packpos) >= Patterns.size())
+                        return false; /*throw exception_io_data( "Invalid LDS pattern number" );*/
 
-                    unsigned comword = patterns[patnum + _c->packpos];
+                    unsigned comword = Patterns[(size_t) (patnum + _c->packpos)];
                     unsigned comhi = comword >> 8;
                     unsigned comlo = comword & 0xff;
+
                     if (comword)
                     {
                         if (comhi == 0x80)
                         {
-                            _c->packwait = comlo;
+                            _c->packwait = (uint8_t) comlo;
                         }
-                        else if (comhi >= 0x80)
+                        else
+                        if (comhi >= 0x80)
                         {
                             switch (comhi)
                             {
                                 case 0xff:
                                 {
                                     unsigned volume = (comlo & 0x3F) * 127 / 63;
-                                    last_volume[_chan] = volume;
+
+                                    last_volume[_chan] = (uint8_t) volume;
+
                                     if (volume != last_sent_volume[last_channel[_chan]])
                                     {
                                         buffer[0] = 7;
-                                        buffer[1] = volume;
-                                        tracks[_chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ControlChange, last_channel[_chan], buffer, 2));
-                                        last_sent_volume[last_channel[_chan]] = volume;
+                                        buffer[1] = (uint8_t) volume;
+
+                                        Tracks[_chan].AddEvent(MIDIEvent(Timestamp, MIDIEvent::ControlChange, last_channel[_chan], buffer, 2));
+
+                                        last_sent_volume[last_channel[_chan]] = (uint8_t) volume;
                                     }
+                                    break;
                                 }
-                                break;
+
                                 case 0xfe:
-                                    tempo = comword & 0x3f;
+                                    Tempo = comword & 0x3f;
                                     break;
+
                                 case 0xfd:
-                                    _c->nextvol = comlo;
+                                    _c->nextvol = (uint8_t) comlo;
                                     break;
+
                                 case 0xfc:
                                     playing = false;
                                     // in real player there's also full keyoff here, but we don't need it
                                     break;
+
                                 case 0xfb:
                                     _c->keycount = 1;
                                     break;
+
                                 case 0xfa:
                                     vbreak = true;
-                                    jumppos = (posplay + 1) & maxpos;
+                                    jumppos = (uint16_t) ((posplay + 1) & maxpos);
                                     break;
+
                                 case 0xf9:
                                     vbreak = true;
                                     jumppos = comlo & maxpos;
                                     /*jumping = 1;*/
                                     if (jumppos <= posplay)
                                     {
-                                        p_out.AddEventToTrack(0, MIDIEvent(position_timestamps[jumppos], MIDIEvent::Extended, 0, LoopBeginMarker, _countof(LoopBeginMarker)));
-                                        p_out.AddEventToTrack(0, MIDIEvent(current_timestamp + tempo - 1, MIDIEvent::Extended, 0, LoopEndMarker, _countof(LoopEndMarker)));
+                                        container.AddEventToTrack(0, MIDIEvent(PositionTimestamps[jumppos], MIDIEvent::Extended, 0, LoopBeginMarker, _countof(LoopBeginMarker)));
+                                        container.AddEventToTrack(0, MIDIEvent(Timestamp + Tempo - 1, MIDIEvent::Extended, 0, LoopEndMarker, _countof(LoopEndMarker)));
                                         playing = false;
                                     }
                                     break;
+
                                 case 0xf8:
                                 #ifdef ENABLE_WHEEL
                                     _c->lasttune = 0;
                                 #endif
                                     break;
+
                                 case 0xf7:
                                 #ifdef ENABLE_VIB
                                     _c->vibwait = 0;
@@ -685,38 +786,50 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
                                     _c->vibrate = (comlo & 15) + 1;
                                 #endif
                                     break;
+
                                 case 0xf6:
                                 #ifdef ENABLE_WHEEL
-                                    _c->glideto = comlo;
+                                    _c->glideto = (uint8_t) comlo;
                                 #endif
                                     break;
+
                                 case 0xf5:
-                                    _c->finetune = comlo;
+                                    _c->finetune = (int8_t) comlo;
                                     break;
+
                                 case 0xf4:
                                     if (!hardfade)
                                     {
-                                        allvolume = mainvolume = comlo;
+                                        allvolume = (uint8_t) comlo;
+                                        mainvolume = comlo;
                                         fadeonoff = 0;
                                     }
                                     break;
+
                                 case 0xf3:
-                                    if (!hardfade) fadeonoff = comlo;
+                                    if (!hardfade)
+                                        fadeonoff = (uint8_t) comlo;
                                     break;
+
                                 case 0xf2:
                                 #ifdef ENABLE_TREM
                                     _c->trmstay = comlo;
                                 #endif
                                     break;
+
                                 case 0xf1:
                                     buffer[0] = 10;
                                     buffer[1] = (comlo & 0x3F) * 127 / 63;
-                                    tracks[_chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ControlChange, last_channel[_chan], buffer, 2));
+
+                                    Tracks[_chan].AddEvent(MIDIEvent(Timestamp, MIDIEvent::ControlChange, last_channel[_chan], buffer, 2));
                                     break;
+
                                 case 0xf0:
                                     buffer[0] = comlo & 0x7F;
-                                    tracks[_chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::ProgramChange, last_channel[_chan], buffer, 1));
+
+                                    Tracks[_chan].AddEvent(MIDIEvent(Timestamp, MIDIEvent::ProgramChange, last_channel[_chan], buffer, 1));
                                     break;
+
                                 default:
                                 #ifdef ENABLE_WHEEL
                                     if (comhi < 0xa0)
@@ -727,20 +840,22 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
                         }
                         else
                         {
-                            unsigned char	sound;
-                            unsigned short	high;
+                            unsigned char sound;
+                            unsigned short high;
+
                             signed char	transp = transpose << 1;
+
                             transp >>= 1;
 
                             if (transpose & 128)
                             {
-                                sound = (comlo + transp) & maxsound;
-                                high = comhi << 4;
+                                sound = (uint8_t) ((comlo + transp) & maxsound);
+                                high  = (uint16_t) (comhi << 4);
                             }
                             else
                             {
                                 sound = comlo & maxsound;
-                                high = (comhi + transp) << 4;
+                                high = (uint16_t) ((comhi + transp) << 4);
                             }
 
                             /*
@@ -749,23 +864,25 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
                             high = (comhi + (((transpose + 0x24) & 0xff) - 0x24)) << 4;
                             */
 
-                            if (!channel_delay[_chan])
+                            if (!ChannelDelay[_chan])
                             {
-                                playsound(current_instrument, patches, last_note, last_channel, last_instrument, last_volume, last_sent_volume,
+                                PlaySound(current_instrument, Patches, last_note, last_channel, last_instrument, last_volume, last_sent_volume,
                                 #ifdef ENABLE_WHEEL
                                     last_pitch_wheel,
                                 #endif
-                                    _c, allvolume, current_timestamp, sound, _chan, high, tracks[_chan]);
+                                    _c, allvolume, Timestamp, sound, _chan, high, Tracks[_chan]);
+
                                 ticks_without_notes[last_channel[_chan]] = 0;
                             }
                             else
                             {
-                                _c->chancheat.chandelay = channel_delay[_chan];
+                                _c->chancheat.chandelay = ChannelDelay[_chan];
                                 _c->chancheat.sound = sound;
                                 _c->chancheat.high = high;
                             }
                         }
                     }
+
                     _c->packpos++;
                 }
                 else
@@ -774,7 +891,7 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
                 }
             }
 
-            tempo_now = tempo;
+            tempo_now = Tempo;
             /*
             The continue table is updated here, but this is only used in the
             original player, which can be paused in the middle of a song and then
@@ -788,19 +905,31 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
             }
             */
             pattplay++;
+
             if (vbreak)
             {
                 pattplay = 0;
-                for (i = 0; i < 9; i++) channel[i].packpos = channel[i].packwait = 0;
+
+                for (i = 0; i < 9; i++)
+                    Channel[i].packpos = Channel[i].packwait = 0;
+
                 posplay = jumppos;
-                if (posplay >= position_count) return false; /*throw exception_io_data( "Invalid LDS position jump" );*/
+
+                if (posplay >= PositionCount)
+                    return false; /*throw exception_io_data( "Invalid LDS position jump" );*/
             }
-            else if (pattplay >= pattern_length)
+            else
+            if (pattplay >= pattern_length)
             {
                 pattplay = 0;
-                for (i = 0; i < 9; i++) channel[i].packpos = channel[i].packwait = 0;
-                posplay = (posplay + 1) & maxpos;
-                if (posplay >= position_count) playing = false; //throw exception_io_data( "LDS reached the end without a loop or end command" );
+
+                for (i = 0; i < 9; i++)
+                    Channel[i].packpos = Channel[i].packwait = 0;
+
+                posplay = (uint16_t) ((posplay + 1) & maxpos);
+
+                if (posplay >= PositionCount)
+                    playing = false; //throw exception_io_data( "LDS reached the end without a loop or end command" );
             }
         }
         else
@@ -811,27 +940,35 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
         // make effects
         for (chan = 0; chan < 9; ++chan)
         {
-            c = &channel[chan];
+            c = &Channel[chan];
+
             if (c->keycount > 0)
             {
                 if (c->keycount == 1 && last_note[chan] != 0xFF)
                 {
                     buffer[0] = last_note[chan];
                     buffer[1] = 127;
-                    tracks[chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::NoteOff, last_channel[chan], buffer, 2));
+
+                    Tracks[chan].AddEvent(MIDIEvent(Timestamp, MIDIEvent::NoteOff, last_channel[chan], buffer, 2));
+
                     last_note[chan] = 0xFF;
+
                 #ifdef ENABLE_WHEEL
                     if (0 != last_pitch_wheel[last_channel[chan]])
                     {
                         buffer[0] = 0;
                         buffer[1] = 64;
-                        tracks[chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
+                        Tracks[chan].AddEvent(MIDIEvent(Timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
                         last_pitch_wheel[last_channel[chan]] = 0;
+
                         c->lasttune = 0;
                         c->gototune = 0;
                     }
                 #endif
                 }
+
                 c->keycount--;
             }
 
@@ -844,6 +981,7 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
             else
             {
                 arpreg = c->arp_tab[c->arp_pos] << 4;
+
                 if (arpreg == -0x800)
                 {
                     if (c->arp_pos > 0) c->arp_tab[0] = c->arp_tab[c->arp_pos - 1];
@@ -900,9 +1038,11 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
 
                 if (arpreg != last_pitch_wheel[last_channel[chan]])
                 {
-                    buffer[0] = WHEEL_SCALE_LOW(arpreg);
-                    buffer[1] = WHEEL_SCALE_HIGH(arpreg);
-                    tracks[chan].AddEvent(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+                    buffer[0] = (uint8_t) WHEEL_SCALE_LOW(arpreg);
+                    buffer[1] = (uint8_t) WHEEL_SCALE_HIGH(arpreg);
+
+                    Tracks[chan].AddEvent(MIDIEvent(Timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
                     last_pitch_wheel[last_channel[chan]] = arpreg;
                 }
             }
@@ -929,7 +1069,9 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
                         {
                             buffer[0] = WHEEL_SCALE_LOW(tune);
                             buffer[1] = WHEEL_SCALE_HIGH(tune);
-                            tracks[chan].add_event(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
+                            Tracks[chan].add_event(MIDIEvent(Timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
                             last_pitch_wheel[last_channel[chan]] = tune;
                         }
 
@@ -944,7 +1086,9 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
                         {
                             buffer[0] = WHEEL_SCALE_LOW(tune);
                             buffer[1] = WHEEL_SCALE_HIGH(tune);
-                            tracks[chan].add_event(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
+                            Tracks[chan].add_event(MIDIEvent(Timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
                             last_pitch_wheel[last_channel[chan]] = tune;
                         }
                     }
@@ -968,7 +1112,9 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
                         {
                             buffer[0] = WHEEL_SCALE_LOW(tune);
                             buffer[1] = WHEEL_SCALE_HIGH(tune);
-                            tracks[chan].add_event(MIDIEvent(current_timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
+                            Tracks[chan].add_event(MIDIEvent(Timestamp, MIDIEvent::PitchWheel, last_channel[chan], buffer, 2));
+
                             last_pitch_wheel[last_channel[chan]] = tune;
                         }
                     }
@@ -1025,41 +1171,51 @@ bool MIDIProcessor::process_lds(std::vector<uint8_t> const & p_file, MIDIContain
             {
                 buffer[0] = 7;
                 buffer[1] = volume;
-                tracks[chan].add_event(MIDIEvent(current_timestamp, MIDIEvent::ControlChange, last_channel[chan], buffer, 2));
+
+                Tracks[chan].add_event(MIDIEvent(Timestamp, MIDIEvent::ControlChange, last_channel[chan], buffer, 2));
+
                 last_sent_volume[last_channel[chan]] = volume;
             }
         #endif
 
         }
 
-        ++current_timestamp;
+        ++Timestamp;
     }
 
-    --current_timestamp;
+    --Timestamp;
 
-    for (unsigned i = 0; i < 9; ++i)
+    for (size_t i = 0; i < 9; ++i)
     {
-        MIDITrack & track = tracks[i];
-        unsigned long count = track.GetLength();
-        if (count > 1)
+        MIDITrack & Track = Tracks[i];
+
+        size_t Count = Track.GetLength();
+
+        if (Count > 1)
         {
             if (last_note[i] != 0xFF)
             {
                 buffer[0] = last_note[i];
                 buffer[1] = 127;
-                track.AddEvent(MIDIEvent(current_timestamp + channel[i].keycount, MIDIEvent::NoteOff, last_channel[i], buffer, 2));
+
+                Track.AddEvent(MIDIEvent(Timestamp + Channel[i].keycount, MIDIEvent::NoteOff, last_channel[i], buffer, 2));
+
             #ifdef ENABLE_WHEEL
                 if (last_pitch_wheel[last_channel[i]] != 0)
                 {
                     buffer[0] = 0;
                     buffer[1] = 0x40;
-                    track.AddEvent(MIDIEvent(current_timestamp + channel[i].keycount, MIDIEvent::PitchWheel, last_channel[i], buffer, 2));
+
+                    Track.AddEvent(MIDIEvent(Timestamp + Channel[i].keycount, MIDIEvent::PitchWheel, last_channel[i], buffer, 2));
                 }
             #endif
             }
-            p_out.AddTrack(track);
+
+            container.AddTrack(Track);
         }
     }
 
     return true;
 }
+
+const uint8_t MIDIProcessor::DefaultTempoLDS[5] = { StatusCodes::MetaData, MetaDataTypes::SetTempo, 0x07, 0xA1, 0x20 };

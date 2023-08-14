@@ -223,6 +223,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 ### Electronic Music
 
 * [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
+* [File format samples](https://telparia.com/fileFormatSamples/)
 
 ### SoundFonts
 
@@ -240,8 +241,34 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
 * [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
 
-#### XMI
+#### GMF (Game Music Format)
 
+* [GMF](http://www.vgmpf.com/Wiki/index.php?title=GMF)
+
+#### HMI (Human Machine Interface)
+
+* [HMI](http://www.vgmpf.com/Wiki/index.php?title=HMI)
+
+#### HMP (Human Machine Interface P)
+
+* [HMP](http://www.vgmpf.com/Wiki/index.php?title=HMP)
+
+#### LDS (Loudness Sound System)
+
+* [LDS](http://www.vgmpf.com/Wiki/index.php?title=LDS)
+
+#### MDS (MIDI Stream)
+
+* [MDS](http://www.vgmpf.com/Wiki/index.php?title=MDS)
+
+#### MUS (DMX)
+
+* [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX))
+* [MUS Format](https://moddingwiki.shikadi.net/wiki/MUS_Format)
+
+#### XMI (Extended Multiple Instrument Digital Interface)
+
+* [XMI](http://www.vgmpf.com/Wiki/index.php?title=XMI)
 * [XMI Format](https://moddingwiki.shikadi.net/wiki/XMI_Format)
 
 ## Links

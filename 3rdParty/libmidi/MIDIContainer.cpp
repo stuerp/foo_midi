@@ -1,3 +1,6 @@
+
+/** $VER: MIDIContainer.cpp (2023.08.14) **/
+
 #include "MIDIContainer.h"
 
 #include <string.h>

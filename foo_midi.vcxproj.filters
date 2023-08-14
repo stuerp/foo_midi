@@ -117,7 +117,6 @@
     <ClInclude Include="3rdParty\Nuke\resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCPlayer.h" />
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="FileHasher.h" />
     <ClInclude Include="VSTiPlayer.h" />
     <ClInclude Include="OPNPlayer\fmmidi.wopn.h" />

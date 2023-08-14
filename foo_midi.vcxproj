@@ -414,7 +414,6 @@
     <ClInclude Include="PreferencesPathsLayout.h" />
     <ClInclude Include="PreferencesRootLayout.h" />
     <ClInclude Include="SoundFontCache.h" />
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="FileHasher.h" />
     <ClInclude Include="VSTiPlayer.h" />
     <CustomBuild Include="Experimental\DXiPlayer.h">

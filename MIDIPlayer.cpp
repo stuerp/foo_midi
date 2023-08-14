@@ -1,11 +1,12 @@
 
-/** $VER: MIDIPlayer.cpp (2023.06.12) **/
+/** $VER: MIDIPlayer.cpp (2023.08.13) **/
 
 #include <CppCoreCheck/Warnings.h>
 
 #pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
+#include "Configuration.h"
 
 /// <summary>
 /// Initializes a new instance.
@@ -41,7 +42,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
 
     _CurrentPosition = 0;
     _CurrentTime = 0;
-    _EndTime = (size_t)midiContainer.GetDuration(subsongIndex, true) + 1000;
+    _EndTime = (size_t) midiContainer.GetDuration(subsongIndex, true) + CfgDecayTime;
 
     _LoopMode = (LoopMode) loopMode;
 
@@ -58,7 +59,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
             _LoopBeginTime = 0;
 
         if (LoopEndTime == ~0UL)
-            LoopEndTime =  _EndTime - 1000; // Subtract 1000 ms that were added higher
+            LoopEndTime =  _EndTime - CfgDecayTime;
 
         if ((_LoopMode & LoopModeForced))
         {

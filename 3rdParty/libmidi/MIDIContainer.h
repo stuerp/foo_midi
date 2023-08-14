@@ -1,3 +1,6 @@
+
+/** $VER: MIDIContainer.h (2023.08.14) **/
+
 #pragma once
 
 #pragma warning(disable: 4514) // Unreferenced inline function has been removed
