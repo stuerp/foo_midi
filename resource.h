@@ -53,45 +53,46 @@
 
 #define IDC_LOOP_PLAYBACK                   1003
 #define IDC_LOOP_OTHER                      1004
+#define IDC_DECAY_TIME                      1005
 
-#define IDC_RPGMAKER_LOOPS                  1005
-#define IDC_XMI_LOOPS                       1006
-#define IDC_TOUHOU_LOOPS                    1007
-#define IDC_FF7_LOOPS                       1008
+#define IDC_RPGMAKER_LOOPS                  1006
+#define IDC_XMI_LOOPS                       1007
+#define IDC_TOUHOU_LOOPS                    1008
+#define IDC_FF7_LOOPS                       1009
 
-#define IDC_MUNT_WARNING                    1009
+#define IDC_MUNT_WARNING                    1010
 
-#define IDC_EMIDI_EXCLUSION                 1010
-#define IDC_FILTER_INSTRUMENTS              1011
-#define IDC_FILTER_BANKS                    1012
+#define IDC_EMIDI_EXCLUSION                 1011
+#define IDC_FILTER_INSTRUMENTS              1012
+#define IDC_FILTER_BANKS                    1013
 
-#define IDC_RESAMPLING_MODE                 1013
-#define IDC_RESAMPLING_TEXT                 1014
+#define IDC_RESAMPLING_MODE                 1014
+#define IDC_RESAMPLING_TEXT                 1015
 
-#define IDC_CACHED                          1015
-#define IDC_CACHED_TEXT                     1016
+#define IDC_CACHED                          1016
+#define IDC_CACHED_TEXT                     1017
 
-#define IDC_ADL_BANK                        1017
-#define IDC_ADL_BANK_TEXT                   1018
-#define IDC_ADL_CHIPS                       1019
-#define IDC_ADL_CHIPS_TEXT                  1020
-#define IDC_ADL_PANNING                     1021
+#define IDC_ADL_BANK                        1018
+#define IDC_ADL_BANK_TEXT                   1019
+#define IDC_ADL_CHIPS                       1020
+#define IDC_ADL_CHIPS_TEXT                  1021
+#define IDC_ADL_PANNING                     1022
 
-#define IDC_MUNT_GM_TEXT                    1022
-#define IDC_MUNT_GM_SET                     1023
+#define IDC_MUNT_GM_TEXT                    1023
+#define IDC_MUNT_GM_SET                     1024
 
-#define IDC_NUKE_PRESET_TEXT                1024
-#define IDC_NUKE_PRESET                     1025
-#define IDC_NUKE_PANNING                    1026
+#define IDC_NUKE_PRESET_TEXT                1025
+#define IDC_NUKE_PRESET                     1026
+#define IDC_NUKE_PANNING                    1027
 
-#define IDC_MIDI_FLAVOR_TEXT                1027
-#define IDC_MIDI_FLAVOR                     1028
-#define IDC_MIDI_EFFECTS                    1029
-#define IDC_MIDI_USE_SUPER_MUNT             1030
-#define IDC_MIDI_USE_VSTI_WITH_XG           1031
+#define IDC_MIDI_FLAVOR_TEXT                1028
+#define IDC_MIDI_FLAVOR                     1029
+#define IDC_MIDI_EFFECTS                    1030
+#define IDC_MIDI_USE_SUPER_MUNT             1031
+#define IDC_MIDI_USE_VSTI_WITH_XG           1032
 
-#define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   1032
-#define IDC_FLUIDSYNTH_INTERPOLATION        1033
+#define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   1033
+#define IDC_FLUIDSYNTH_INTERPOLATION        1034
 
 /** Dialog: Preferences Paths **/
 

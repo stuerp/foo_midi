@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.08.04) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2023.08.14) P. Stuer **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -118,6 +118,7 @@ public:
         #pragma region("Looping")
         COMMAND_HANDLER_EX(IDC_LOOP_PLAYBACK, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_LOOP_OTHER, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_DECAY_TIME, EN_CHANGE, OnEditChange)
         #pragma endregion
 
         #pragma region("MIDI")
@@ -387,6 +388,8 @@ void PreferencesRootPage::apply()
     {
         CfgLoopTypePlayback = (t_int32) SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
         CfgLoopTypeOther = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
+
+        CfgDecayTime = GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
     }
     #pragma endregion
 
@@ -813,6 +816,8 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
  
              w1.SetCurSel(CfgLoopTypePlayback);
              w2.SetCurSel(CfgLoopTypeOther);
+
+            ::uSetDlgItemText(m_hWnd, IDC_DECAY_TIME, pfc::format_int(CfgDecayTime));
         }
     }
     #pragma endregion
@@ -1259,6 +1264,9 @@ bool PreferencesRootPage::HasChanged()
         return true;
 
     if (SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL) != CfgLoopTypeOther)
+        return true;
+
+    if (GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE) != (UINT) CfgDecayTime)
         return true;
 
     if (SendDlgItemMessage(IDC_TOUHOU_LOOPS, BM_GETCHECK) != CfgDetectTouhouLoops)
