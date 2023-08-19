@@ -592,7 +592,7 @@ static const uint8_t SysExResetGM2[]        = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0x
 static const uint8_t SysExResetGS[]         = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
 static const uint8_t SysExResetXG[]         = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
 
-static const uint8_t SysExGSBankSelectLSB[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x41, 0x00, 0x03, 0x00, 0xF7 };
+static const uint8_t SysExGSToneMapNumber[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x41, 0x00, 0x03, 0x00, 0xF7 };
 
 static bool IsSysExReset(const uint8_t * data);
 static bool IsSysExEqual(const uint8_t * a, const uint8_t * b);
@@ -666,8 +666,7 @@ void MIDIPlayer::SendSysExReset(uint8_t portNumber, uint32_t time)
             else
                 SendSysEx(SysExResetGS, sizeof(SysExResetGS), portNumber);
 
-            SendSysExResetSC(portNumber, time);
-            SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber, time);
+            SendSysExSetToneMapNumber(portNumber, time);
             break;
 
         case ConfigurationType::XG:
@@ -683,44 +682,45 @@ void MIDIPlayer::SendSysExReset(uint8_t portNumber, uint32_t time)
         {
             if (time != 0)
             {
-                SendEvent((uint32_t) (0x78B0 + i + (portNumber << 24)), time);
-                SendEvent((uint32_t) (0x79B0 + i + (portNumber << 24)), time);
+                SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24)), time); // CC 120 Channel Mute / Sound Off
+                SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24)), time); // CC 121 Reset All Controllers
 
                 if (_ConfigurationType != ConfigurationType::XG || i != 9)
                 {
-                    SendEvent((uint32_t) (0x20B0 + i + (portNumber << 24)), time);
-                    SendEvent((uint32_t) (0x00B0 + i + (portNumber << 24)), time);
-                    SendEvent((uint32_t) (0x00C0 + i + (portNumber << 24)), time);
+                    SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24)), time); // CC 32 Bank select LSB
+                    SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24)), time); // CC  0 Bank select MSB
+                    SendEvent((uint32_t) ((0x00C0 + i) + (portNumber << 24)), time); // Program Change 0
                 }
             }
             else
             {
-                SendEvent((uint32_t) (0x78B0 + i + (portNumber << 24)));
-                SendEvent((uint32_t) (0x79B0 + i + (portNumber << 24)));
+                SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24))); // CC 120 Channel Mute / Sound Off
+                SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24))); // CC 121 Reset All Controllers
 
                 if (_ConfigurationType != ConfigurationType::XG || i != 9)
                 {
-                    SendEvent((uint32_t) (0x20B0 + i + (portNumber << 24)));
-                    SendEvent((uint32_t) (0x00B0 + i + (portNumber << 24)));
-                    SendEvent((uint32_t) (0x00C0 + i + (portNumber << 24)));
+                    SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24))); // CC 32 Bank select LSB
+                    SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24))); // CC  0 Bank select MSB
+                    SendEvent((uint32_t) ((0x00C0 + i) + (portNumber << 24))); // Program Change 0
                 }
             }
         }
     }
 
+    // Configure channel 10 as drum kit in XG mode.
     if (_ConfigurationType == ConfigurationType::XG)
     {
         if (time != 0)
         {
-            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24)), time);
-            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24)), time);
-            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24)), time);
+            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24)), time); // CC 32 Bank select LSB
+            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24)), time); // CC  0 Bank select MSB. Selects Drum Kit in XG mode.
+            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24)), time); // Program Change 0
         }
         else
         {
-            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24)));
-            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24)));
-            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24)));
+            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24))); // CC 32 Bank select LSB
+            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24))); // CC  0 Bank select MSB. Selects Drum Kit in XG mode.
+            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24))); // Program Change 0
         }
     }
 
@@ -730,31 +730,31 @@ void MIDIPlayer::SendSysExReset(uint8_t portNumber, uint32_t time)
         {
             for (uint8_t  i = 0; i < 16; ++i)
             {
-                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24)), time);
-                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24)), time);
+                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24)), time); // CC 91 Effect 1 (Reverb) Set Level to 0
+                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24)), time); // CC 93 Effect 3 (Chorus) Set Level to 0
             }
         }
         else
         {
             for (uint8_t i = 0; i < 16; ++i)
             {
-                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24)));
-                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24)));
+                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24))); // CC 91 Effect 1 (Reverb) Set Level to 0
+                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24))); // CC 93 Effect 3 (Chorus) Set Level to 0
             }
         }
     }
 }
 
 /// <summary>
-/// Sends a reset message specific to a partular Roland Sound Canvas model.
+/// Sends a GS SET TONE MAP-0 NUMBER message.
 /// </summary>
-void MIDIPlayer::SendSysExResetSC(uint32_t port, uint32_t time)
+void MIDIPlayer::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
 {
     uint8_t Data[11] = { 0 };
 
-    ::memcpy(Data, SysExGSBankSelectLSB, sizeof(Data));
+    ::memcpy(Data, SysExGSToneMapNumber, sizeof(Data));
 
-    Data[7] = 1;
+    Data[7] = 1; // Tone Map-0 Number
 
     switch (_ConfigurationType)
     {
@@ -779,31 +779,31 @@ void MIDIPlayer::SendSysExResetSC(uint32_t port, uint32_t time)
         case ConfigurationType::GM2:
         case ConfigurationType::XG:
         default:
-            break;
+            break; // Use SC88Pro Map (3)
     }
 
     for (uint8_t i = 0x41; i <= 0x49; ++i)
     {
         Data[6] = i;
-        SendSysExGS(Data, sizeof(Data), port, time);
+        SendSysExGS(Data, sizeof(Data), portNumber, time);
     }
 
     {
         Data[6] = 0x40;
-        SendSysExGS(Data, sizeof(Data), port, time);
+        SendSysExGS(Data, sizeof(Data), portNumber, time);
     }
 
     for (uint8_t i = 0x4A; i <= 0x4F; ++i)
     {
         Data[6] = i;
-        SendSysExGS(Data, sizeof(Data), port, time);
+        SendSysExGS(Data, sizeof(Data), portNumber, time);
     }
 }
 
 /// <summary>
 /// Sends a Roland GS message after re-calculating the checksum.
 /// </summary>
-void MIDIPlayer::SendSysExGS(uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
+void MIDIPlayer::SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time)
 {
     uint8_t Checksum = 0;
     size_t i;

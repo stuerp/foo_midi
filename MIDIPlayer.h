@@ -85,8 +85,8 @@ private:
     void SendSysExFiltered(const uint8_t * event, size_t size, uint8_t portNumber);
     void SendSysExFiltered(const uint8_t * event, size_t size, uint8_t portNumber, uint32_t time);
 
-    void SendSysExResetSC(uint32_t portNumber, uint32_t time);
-    void SendSysExGS(uint8_t * data, size_t size, uint32_t portNumber, uint32_t time);
+    void SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time);
+    void SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time);
 
 private:
     std::vector<MIDIStreamEvent> _Stream;
