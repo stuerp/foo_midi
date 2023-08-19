@@ -405,7 +405,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             {
                 _Player->SetSampleRate(_SampleRate);
-                _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+                _Player->Configure((MIDIPlayer::ConfigurationType) Preset._ConfigurationType, !Preset._UseMIDIEffects);
 
                 if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
@@ -468,7 +468,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             {
                 _Player->SetSampleRate(_SampleRate);
-                _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+                _Player->Configure((MIDIPlayer::ConfigurationType) Preset._ConfigurationType, !Preset._UseMIDIEffects);
 
                 if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
@@ -553,7 +553,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             {
                 _Player->SetSampleRate(_SampleRate);
-                _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+                _Player->Configure((MIDIPlayer::ConfigurationType) Preset._ConfigurationType, !Preset._UseMIDIEffects);
 
                 if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
@@ -620,7 +620,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Player->setFullPanning(Preset._ADLUsePanning);
                 Player->set4OpCount(Preset._ADLChipCount * 4 /*cfg_adl_4op*/);
                 Player->setCore(Preset._ADLEmulatorCore);
-                Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+                Player->Configure((MIDIPlayer::ConfigurationType) Preset._ConfigurationType, !Preset._UseMIDIEffects);
 
                 _Player = Player;
             }
@@ -654,7 +654,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             {
                 _Player->SetSampleRate(_SampleRate);
-                _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+                _Player->Configure((MIDIPlayer::ConfigurationType) Preset._ConfigurationType, !Preset._UseMIDIEffects);
 
                 if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))
                 {
@@ -722,7 +722,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
 
             {
-                _Player->SetFilter((MIDIPlayer::FilterType) Preset._MIDIStandard, !Preset._UseMIDIEffects);
+                _Player->Configure((MIDIPlayer::ConfigurationType) Preset._ConfigurationType, !Preset._UseMIDIEffects);
                 _Player->SetSampleRate(_SampleRate);
 
                 if (_Player->Load(_Container, subSongIndex, LoopMode, _CleanFlags))

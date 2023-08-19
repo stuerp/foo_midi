@@ -103,13 +103,9 @@ void NukePlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
     }
 }
 
-void NukePlayer::SendEvent(uint32_t message)
+void NukePlayer::SendEvent(uint32_t data)
 {
-    _Synth->midi_write(message);
-}
-
-void NukePlayer::SendSysEx(const uint8_t *, size_t, size_t)
-{
+    _Synth->midi_write(data);
 }
 
 /// <summary>

@@ -32,19 +32,19 @@ public:
 
     void SetLoopMode(LoopMode loopMode);
 
-    enum FilterType
+    enum class ConfigurationType
     {
-        FilterNone = 0,
-        FilterGMSysEx,
-        FilterGM2SysEx,
-        FilterSC55SysEx,
-        FilterSC88SysEx,
-        FilterSC88ProSysEx,
-        FilterSC8850SysEx,
-        FilterXGSysEx
+        None = 0,
+        GM,
+        GM2,
+        SC55,
+        SC88,
+        SC88Pro,
+        SC8850,
+        XG
     };
 
-    void SetFilter(FilterType filterType, bool filterEffects);
+    void Configure(ConfigurationType filterType, bool filterEffects);
 
     virtual unsigned GetChannelCount() const noexcept { return 2; }
     virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept { UNREFERENCED_PARAMETER(abortHandler); }
@@ -60,11 +60,13 @@ protected:
     virtual uint32_t GetSampleBlockSize() const noexcept { return 0; }
 
     virtual void SendEvent(uint32_t) { }
-    virtual void SendSysEx(const uint8_t *, size_t, size_t) { };
-    virtual void SendEventWithTime(uint32_t, unsigned int) { };
-    virtual void SendSysExWithTime(const uint8_t *, size_t, size_t, unsigned int) { };
+    virtual void SendSysEx(const uint8_t *, size_t, uint32_t) { };
 
-    void SendSysExReset(size_t port, unsigned int time);
+    // Only implemented by Secret Sauce and VSTi-specific
+    virtual void SendEvent(uint32_t, uint32_t) { };
+    virtual void SendSysEx(const uint8_t *, size_t, uint32_t, uint32_t) { };
+
+    void SendSysExReset(uint8_t portNumber, uint32_t time);
 
     uint32_t GetProcessorArchitecture(const std::string & filePath) const;
 
@@ -73,18 +75,18 @@ protected:
     unsigned long _SampleRate;
     SysExTable _SysExMap;
 
-    FilterType _FilterType;
+    ConfigurationType _ConfigurationType;
     bool _FilterEffects;
 
 private:
-    void SendEventFiltered(uint32_t event);
-    void SendSysExFiltered(const uint8_t * event, size_t size, size_t port);
+    void SendEventFiltered(uint32_t data);
+    void SendEventFiltered(uint32_t data, uint32_t time);
 
-    void SendEventWithTimeFiltered(uint32_t b, size_t time);
-    void SendSysExWithTimeFiltered(const uint8_t * event, size_t size, size_t port, size_t time);
+    void SendSysExFiltered(const uint8_t * event, size_t size, uint8_t portNumber);
+    void SendSysExFiltered(const uint8_t * event, size_t size, uint8_t portNumber, uint32_t time);
 
-    void SendSysExResetSC(size_t port, unsigned int time);
-    void SendSysExGS(uint8_t * data, size_t size, size_t port, unsigned int time);
+    void SendSysExResetSC(uint32_t portNumber, uint32_t time);
+    void SendSysExGS(uint8_t * data, size_t size, uint32_t portNumber, uint32_t time);
 
 private:
     std::vector<MIDIStreamEvent> _Stream;

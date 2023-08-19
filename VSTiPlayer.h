@@ -39,11 +39,11 @@ protected:
 
     virtual uint32_t GetSampleBlockSize() const noexcept override { return 4096; }
 
-    virtual void SendEvent(uint32_t) override;
-    virtual void SendSysEx(const uint8_t *, size_t, size_t) override;
+    virtual void SendEvent(uint32_t data) override;
+    virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
 
-    virtual void SendEventWithTime(uint32_t, unsigned int) override;
-    virtual void SendSysExWithTime(const uint8_t *, size_t, size_t, unsigned int) override;
+    virtual void SendEvent(uint32_t data, uint32_t time) override;
+    virtual void SendSysEx(const uint8_t *, size_t, uint32_t portNumber, uint32_t time) override;
 
 private:
     bool StartHost();

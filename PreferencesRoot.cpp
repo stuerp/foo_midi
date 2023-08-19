@@ -380,7 +380,7 @@ void PreferencesRootPage::apply()
         SetDlgItemInt(IDC_SAMPLERATE, t, FALSE);
 
         CfgSampleRateHistory.add_item(pfc::format_int(t));
-        CfgSampleRate = (t_int) t;
+        CfgSampleRate = (t_int32) t;
     }
     #pragma endregion
 
@@ -389,12 +389,12 @@ void PreferencesRootPage::apply()
         CfgLoopTypePlayback = (t_int32) SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
         CfgLoopTypeOther = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
 
-        CfgDecayTime = GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
+        CfgDecayTime = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
     }
     #pragma endregion
 
     #pragma region("MIDI Flavor")
-    CfgMIDIFlavor = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
+    CfgMIDIStandard = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
     CfgUseMIDIEffects = (t_int32) !SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK);
     CfgUseSuperMuntWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK);
     CfgUseVSTiWithXG = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
@@ -797,7 +797,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         static const WCHAR * LoopTypeDescription[] =
         {
             L"Never loop",
-            L"Never loop, 1s decay time",
+            L"Never loop. Use decay time",
             L"Loop and fade when detected",
             L"Loop and fade always",
             L"Play indefinitely when detected",
@@ -835,7 +835,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-8820");
         ::uSendMessageText(w, CB_ADDSTRING, 0, "XG");
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMIDIFlavor, 0);
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMIDIStandard, 0);
 
         SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !CfgUseMIDIEffects);
         SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_SETCHECK, (WPARAM) CfgUseSuperMuntWithMT32);
@@ -1283,7 +1283,7 @@ bool PreferencesRootPage::HasChanged()
     #pragma endregion
 
     #pragma region("MIDI")
-    if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIFlavor)
+    if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIStandard)
         return true;
 
     if (SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != !CfgUseMIDIEffects)

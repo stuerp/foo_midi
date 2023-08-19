@@ -111,7 +111,7 @@ cfg_int
     CfgLoopTypeOther(GUIDCfgOtherLoopType, DefaultOtherLoopType),
     CfgDecayTime(GUIDCfgDecayTime, DefaultDecayTime),
 
-    CfgMIDIFlavor(GUIDCfgMIDIFlavor, DefaultMIDIFlavor),
+    CfgMIDIStandard(GUIDCfgMIDIFlavor, DefaultMIDIFlavor),
     CfgUseMIDIEffects(GUIDCfgUseMIDIEffects, DefaultUseMIDIEffects),
     CfgUseSuperMuntWithMT32(GUIDCfgUseSuperMuntWithMT32, DefaultUseSuperMuntWithMT32),
     CfgUseVSTiWithXG(GUIDCfgUseSecretSauceWithXG, DefaultUseSecretSauceWithXG),

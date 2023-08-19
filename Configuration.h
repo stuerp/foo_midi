@@ -51,7 +51,7 @@ enum
     default_cfg_xmiloopz = 1,
     default_cfg_ff7loopz = 1,
 
-    DefaultMIDIFlavor = MIDIPlayer::FilterNone,
+    DefaultMIDIFlavor = MIDIPlayer::ConfigurationType::None,
     DefaultUseMIDIEffects = 1,
     DefaultUseSuperMuntWithMT32 = 1,
     DefaultUseSecretSauceWithXG = 0,
@@ -120,7 +120,7 @@ extern cfg_int
     CfgNukeBank,
     CfgNukePanning,
 
-    CfgMIDIFlavor,
+    CfgMIDIStandard,
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
     CfgUseVSTiWithXG;

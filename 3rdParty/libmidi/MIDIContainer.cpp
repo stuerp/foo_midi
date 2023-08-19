@@ -65,11 +65,6 @@ void MIDIEvent::GetData(uint8_t * data, size_t offset, size_t length) const
 #pragma endregion
 
 #pragma region("MIDI Track")
-MIDITrack::MIDITrack(const MIDITrack & track)
-{
-    _Events = track._Events;
-}
-
 void MIDITrack::AddEvent(const MIDIEvent & newEvent)
 {
     auto it = _Events.end();
@@ -216,20 +211,6 @@ MIDIStreamEvent::MIDIStreamEvent(uint32_t timestamp, uint32_t data)
 #pragma endregion
 
 #pragma region("MIDI Meta Data")
-MIDIMetaDataItem::MIDIMetaDataItem(const MIDIMetaDataItem & item)
-{
-    Timestamp = item.Timestamp;
-    Name = item.Name;
-    Value = item.Value;
-}
-
-MIDIMetaDataItem::MIDIMetaDataItem(uint32_t timestamp, const char * name, const char * value)
-{
-    Timestamp = timestamp;
-    Name = name;
-    Value = value;
-}
-
 void MIDIMetaData::AddItem(const MIDIMetaDataItem & item)
 {
     _Items.push_back(item);
@@ -247,7 +228,7 @@ bool MIDIMetaData::GetItem(const char * name, MIDIMetaDataItem & item) const
     {
         const MIDIMetaDataItem & Item = _Items[i];
 
-        if (_stricmp(name, Item.Name.c_str()) == 0)
+        if (::_stricmp(name, Item.Name.c_str()) == 0)
         {
             item = Item;
             return true;

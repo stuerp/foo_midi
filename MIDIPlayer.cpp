@@ -63,7 +63,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
 
         if ((_LoopMode & LoopModeForced))
         {
-            constexpr size_t NoteOnSize = (size_t)128 * 16;
+            constexpr size_t NoteOnSize = (size_t) 128 * 16;
 
             std::vector<uint8_t> NoteOn(NoteOnSize, 0);
 
@@ -76,20 +76,20 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
 
                     uint32_t Event = Message & 0x800000F0;
 
-                    if (Event == 0x90 || Event == 0x80)
+                    if (Event == StatusCodes::NoteOn || Event == StatusCodes::NoteOff)
                     {
                         const unsigned long Port     = (Message >> 24) & 0x7F;
                         const unsigned long Velocity = (Message >> 16) & 0xFF;
                         const unsigned long Note     = (Message >>  8) & 0x7F;
                         const unsigned long Channel  =  Message        & 0x0F;
 
-                        const bool IsNoteOn = (Event == 0x90) && (Velocity > 0);
+                        const bool IsNoteOn = (Event == StatusCodes::NoteOn) && (Velocity > 0);
 
-                        const unsigned long bit = (unsigned long)(1 << Port);
+                        const unsigned long bit = (unsigned long) (1 << Port);
 
-                        size_t Index = (size_t)Channel * 128 + Note;
+                        size_t Index = (size_t) Channel * 128 + Note;
 
-                        NoteOn.at(Index) = (uint8_t)((NoteOn.at(Index) & ~bit) | (bit * IsNoteOn));
+                        NoteOn.at(Index) = (uint8_t) ((NoteOn.at(Index) & ~bit) | (bit * IsNoteOn));
                     }
                 }
 
@@ -97,8 +97,8 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
 
                 _EndTime = LoopEndTime - 1;
 
-                if (_EndTime < (size_t)_Stream.at(i - 1).Timestamp)
-                    _EndTime = (size_t)_Stream.at(i - 1).Timestamp;
+                if (_EndTime < (size_t) _Stream.at(i - 1).Timestamp)
+                    _EndTime = (size_t) _Stream.at(i - 1).Timestamp;
             }
 
             for (size_t i = 0; i < NoteOnSize; ++i)
@@ -109,7 +109,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, unsigned subsongIndex
                     {
                         if (NoteOn.at(i) & (1 << j))
                         {
-                            _Stream.push_back(MIDIStreamEvent((uint32_t)_EndTime, (uint32_t)((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                            _Stream.push_back(MIDIStreamEvent((uint32_t) _EndTime, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
                         }
                     }
                 }
@@ -214,7 +214,7 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
 
                         if ((ToDo > 0) && (BlockSize == 0))
                         {
-                            Render(sampleData + Done * 2, (unsigned long)ToDo);
+                            Render(sampleData + Done * 2, (unsigned long) ToDo);
 
                             Done += ToDo;
                             _CurrentTime += (uint32_t)ToDo;
@@ -240,7 +240,7 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
                             _CurrentTime += BlockSize;
                         }
 
-                        SendEventWithTimeFiltered(me.Data, BlockOffset);
+                        SendEventFiltered(me.Data, (uint32_t) BlockOffset);
                     }
                     else
                         SendEventFiltered(me.Data);
@@ -273,7 +273,7 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
             if (SamplesToDo >= BlockSize)
             {
                 {
-                    Render(sampleData + Done * 2, (unsigned long)SamplesToDo);
+                    Render(sampleData + Done * 2, (unsigned long) SamplesToDo);
 
                     Done += SamplesToDo;
                     _CurrentTime += SamplesToDo;
@@ -294,7 +294,7 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
                 for (; _CurrentPosition < _Stream.size(); _CurrentPosition++)
                 {
                     if (BlockSize > 0)
-                        SendEventWithTimeFiltered(_Stream.at(_CurrentPosition).Data, BlockOffset);
+                        SendEventFiltered(_Stream.at(_CurrentPosition).Data, (uint32_t) BlockOffset);
                     else
                         SendEventFiltered(_Stream.at(_CurrentPosition).Data);
                 }
@@ -409,7 +409,7 @@ void MIDIPlayer::Seek(unsigned long seekTime)
 
     const uint32_t BlockSize = GetSampleBlockSize();
 
-    if (BlockSize > 0)
+    if (BlockSize != 0)
     {
         audio_sample * Temp = new audio_sample[BlockSize * 2];
 
@@ -426,7 +426,7 @@ void MIDIPlayer::Seek(unsigned long seekTime)
             {
                 if (FillerEvents[i].Data != 0)
                 {
-                    SendEventWithTimeFiltered(FillerEvents[i].Data, JunkSize);
+                    SendEventFiltered(FillerEvents[i].Data, JunkSize);
 
                     if (IsTimestampSet && (FillerEvents[i].Timestamp != LastTimestamp))
                         JunkSize += 16;
@@ -512,9 +512,12 @@ void MIDIPlayer::SetLoopMode(LoopMode loopMode)
     _LoopMode = loopMode;
 }
 
-void MIDIPlayer::SetFilter(FilterType filterType, bool filterEffects)
+/// <summary>
+/// Configures the MIDI player.
+/// </summary>
+void MIDIPlayer::Configure(ConfigurationType configurationType, bool filterEffects)
 {
-    _FilterType = filterType;
+    _ConfigurationType = configurationType;
     _FilterEffects = filterEffects;
 
     if (_IsInitialized)
@@ -525,24 +528,24 @@ void MIDIPlayer::SetFilter(FilterType filterType, bool filterEffects)
     }
 }
 
-void MIDIPlayer::SendEventFiltered(uint32_t event)
+void MIDIPlayer::SendEventFiltered(uint32_t data)
 {
-    if (!(event & 0x80000000u))
+    if (!(data & 0x80000000u))
     {
         if (_FilterEffects)
         {
-            const uint32_t _b = event & 0x7FF0u;
+            const uint32_t Data = data & 0x00007FF0u;
 
             // Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
-            if (_b == 0x5BB0 || _b == 0x5DB0)
+            if (Data == 0x5BB0 || Data == 0x5DB0)
                 return;
         }
 
-        SendEvent(event);
+        SendEvent(data);
     }
     else
     {
-        const uint32_t Index = event & 0xFFFFFFu;
+        const uint32_t Index = data & 0x00FFFFFFu;
 
         const uint8_t * Data;
         size_t Size;
@@ -554,24 +557,24 @@ void MIDIPlayer::SendEventFiltered(uint32_t event)
     }
 }
 
-void MIDIPlayer::SendEventWithTimeFiltered(uint32_t event, size_t time)
+void MIDIPlayer::SendEventFiltered(uint32_t data, uint32_t time)
 {
-    if (!(event & 0x80000000u))
+    if (!(data & 0x80000000u))
     {
         if (_FilterEffects)
         {
-            const uint32_t _b = event & 0x7FF0u;
+            const uint32_t Data = data & 0x00007FF0u;
 
             // Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
-            if (_b == 0x5BB0 || _b == 0x5DB0)
+            if (Data == 0x5BB0 || Data == 0x5DB0)
                 return;
         }
 
-        SendEventWithTime(event, (uint32_t)time);
+        SendEvent(data, time);
     }
     else
     {
-        const uint32_t Index = event & 0xFFFFFFu;
+        const uint32_t Index = data & 0x00FFFFFFu;
 
         const uint8_t * Data;
         size_t Size;
@@ -579,238 +582,251 @@ void MIDIPlayer::SendEventWithTimeFiltered(uint32_t event, size_t time)
 
         _SysExMap.GetItem(Index, Data, Size, Port);
 
-        SendSysExWithTimeFiltered(Data, Size, Port, time);
+        SendSysExFiltered(Data, Size, Port, time);
     }
 }
 
 #pragma region("SysEx")
-static const uint8_t SysExResetGM[]  = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-static const uint8_t SysExResetGM2[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-static const uint8_t SysExResetGS[]  = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const uint8_t SysExResetXG[]  = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
+static const uint8_t SysExResetGM[]         = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
+static const uint8_t SysExResetGM2[]        = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
+static const uint8_t SysExResetGS[]         = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
+static const uint8_t SysExResetXG[]         = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
 
-static const uint8_t syx_gs_limit_bank_lsb[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x41, 0x00, 0x03, 0x00, 0xF7 };
+static const uint8_t SysExGSBankSelectLSB[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x41, 0x00, 0x03, 0x00, 0xF7 };
 
 static bool IsSysExReset(const uint8_t * data);
 static bool IsSysExEqual(const uint8_t * a, const uint8_t * b);
 
-void MIDIPlayer::SendSysExFiltered(const uint8_t * data, size_t size, size_t port)
+/// <summary>
+/// Sends a SysEx.
+/// </summary>
+void MIDIPlayer::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t portNumber)
 {
-    SendSysEx(data, size, port);
+    SendSysEx(data, size, portNumber);
 
-    if (IsSysExReset(data) && (_FilterType != FilterNone))
-        SendSysExReset(port, 0);
+    if (IsSysExReset(data) && (_ConfigurationType != ConfigurationType::None))
+        SendSysExReset(portNumber, 0);
 }
 
-void MIDIPlayer::SendSysExWithTimeFiltered(const uint8_t * data, size_t size, size_t port, size_t time)
+/// <summary>
+/// Sends a SysEx with a timestamp.
+/// </summary>
+void MIDIPlayer::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t portNumber, uint32_t time)
 {
-    SendSysExWithTime(data, size, port, (uint32_t)time);
+    SendSysEx(data, size, portNumber, time);
 
-    if (IsSysExReset(data) && (_FilterType != FilterNone))
-        SendSysExReset(port, (uint32_t)time);
+    if (IsSysExReset(data) && (_ConfigurationType != ConfigurationType::None))
+        SendSysExReset(portNumber, time);
 }
 
-void MIDIPlayer::SendSysExReset(size_t port, uint32_t time)
+/// <summary>
+/// Sends a SysEx reset message.
+/// </summary>
+void MIDIPlayer::SendSysExReset(uint8_t portNumber, uint32_t time)
 {
     if (!_IsInitialized)
         return;
 
-    if (time > 0)
+    if (time != 0)
     {
-        SendSysExWithTime(&SysExResetXG[0], sizeof(SysExResetXG), port, time);
-        SendSysExWithTime(&SysExResetGM2[0], sizeof(SysExResetGM2), port, time);
-        SendSysExWithTime(&SysExResetGM[0], sizeof(SysExResetGM), port, time);
+        SendSysEx(SysExResetXG, sizeof(SysExResetXG), portNumber, time);
+        SendSysEx(SysExResetGM2, sizeof(SysExResetGM2), portNumber, time);
+        SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber, time);
     }
     else
     {
-        SendSysEx(&SysExResetXG[0], sizeof(SysExResetXG), port);
-        SendSysEx(&SysExResetGM2[0], sizeof(SysExResetGM2), port);
-        SendSysEx(&SysExResetGM[0], sizeof(SysExResetGM), port);
+        SendSysEx(SysExResetXG, sizeof(SysExResetXG), portNumber);
+        SendSysEx(SysExResetGM2, sizeof(SysExResetGM2), portNumber);
+        SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber);
     }
 
-    switch (_FilterType)
+    switch (_ConfigurationType)
     {
-        case FilterGMSysEx:
-        /*
-            if (time > 0)
-                SendSysExWithTime(SysExResetGM, sizeof(SysExResetGM), port, time);
+        case ConfigurationType::GM:
+            if (time != 0)
+                SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber, time);
             else
-                SendSysEx(SysExResetGM, sizeof(SysExResetGM), port);
-        */
+                SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber);
             break;
 
-        case FilterGM2SysEx:
-            if (time > 0)
-                SendSysExWithTime(&SysExResetGM2[0], sizeof(SysExResetGM2), port, time);
+        case ConfigurationType::GM2:
+            if (time != 0)
+                SendSysEx(SysExResetGM2, sizeof(SysExResetGM2), portNumber, time);
             else
-                SendSysEx(&SysExResetGM2[0], sizeof(SysExResetGM2), port);
+                SendSysEx(SysExResetGM2, sizeof(SysExResetGM2), portNumber);
             break;
 
-        case FilterSC55SysEx:
-        case FilterSC88SysEx:
-        case FilterSC88ProSysEx:
-        case FilterSC8850SysEx:
-        case FilterNone:
-            if (time > 0)
-                SendSysExWithTime(&SysExResetGS[0], sizeof(SysExResetGS), port, time);
+        case ConfigurationType::SC55:
+        case ConfigurationType::SC88:
+        case ConfigurationType::SC88Pro:
+        case ConfigurationType::SC8850:
+        case ConfigurationType::None:
+            if (time != 0)
+                SendSysEx(SysExResetGS, sizeof(SysExResetGS), portNumber, time);
             else
-                SendSysEx(&SysExResetGS[0], sizeof(SysExResetGS), port);
+                SendSysEx(SysExResetGS, sizeof(SysExResetGS), portNumber);
 
-            SendSysExResetSC(port, time);
+            SendSysExResetSC(portNumber, time);
+            SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber, time);
             break;
 
-        case FilterXGSysEx:
-            if (time > 0)
-                SendSysExWithTime(&SysExResetXG[0], sizeof(SysExResetXG), port, time);
+        case ConfigurationType::XG:
+            if (time != 0)
+                SendSysEx(SysExResetXG, sizeof(SysExResetXG), portNumber, time);
             else
-                SendSysEx(&SysExResetXG[0], sizeof(SysExResetXG), port);
+                SendSysEx(SysExResetXG, sizeof(SysExResetXG), portNumber);
             break;
     }
 
     {
-        for (size_t i = 0; i < 16; ++i)
+        for (uint8_t i = 0; i < 16; ++i)
         {
-            if (time)
+            if (time != 0)
             {
-                SendEventWithTime((uint32_t)(0x78B0 + i + (port << 24)), time);
-                SendEventWithTime((uint32_t)(0x79B0 + i + (port << 24)), time);
+                SendEvent((uint32_t) (0x78B0 + i + (portNumber << 24)), time);
+                SendEvent((uint32_t) (0x79B0 + i + (portNumber << 24)), time);
 
-                if (_FilterType != FilterXGSysEx || i != 9)
+                if (_ConfigurationType != ConfigurationType::XG || i != 9)
                 {
-                    SendEventWithTime((uint32_t)(0x20B0 + i + (port << 24)), time);
-                    SendEventWithTime((uint32_t)(0x00B0 + i + (port << 24)), time);
-                    SendEventWithTime((uint32_t)(0x00C0 + i + (port << 24)), time);
+                    SendEvent((uint32_t) (0x20B0 + i + (portNumber << 24)), time);
+                    SendEvent((uint32_t) (0x00B0 + i + (portNumber << 24)), time);
+                    SendEvent((uint32_t) (0x00C0 + i + (portNumber << 24)), time);
                 }
             }
             else
             {
-                SendEvent((uint32_t)(0x78B0 + i + (port << 24)));
-                SendEvent((uint32_t)(0x79B0 + i + (port << 24)));
+                SendEvent((uint32_t) (0x78B0 + i + (portNumber << 24)));
+                SendEvent((uint32_t) (0x79B0 + i + (portNumber << 24)));
 
-                if (_FilterType != FilterXGSysEx || i != 9)
+                if (_ConfigurationType != ConfigurationType::XG || i != 9)
                 {
-                    SendEvent((uint32_t)(0x20B0 + i + (port << 24)));
-                    SendEvent((uint32_t)(0x00B0 + i + (port << 24)));
-                    SendEvent((uint32_t)(0x00C0 + i + (port << 24)));
+                    SendEvent((uint32_t) (0x20B0 + i + (portNumber << 24)));
+                    SendEvent((uint32_t) (0x00B0 + i + (portNumber << 24)));
+                    SendEvent((uint32_t) (0x00C0 + i + (portNumber << 24)));
                 }
             }
         }
     }
 
-    if (_FilterType == FilterXGSysEx)
+    if (_ConfigurationType == ConfigurationType::XG)
     {
-        if (time > 0)
+        if (time != 0)
         {
-            SendEventWithTime((uint32_t)(0x0020B9 + (port << 24)), time);
-            SendEventWithTime((uint32_t)(0x7F00B9 + (port << 24)), time);
-            SendEventWithTime((uint32_t)(0x0000C9 + (port << 24)), time);
+            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24)), time);
+            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24)), time);
+            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24)), time);
         }
         else
         {
-            SendEvent((uint32_t)(0x0020B9 + (port << 24)));
-            SendEvent((uint32_t)(0x7F00B9 + (port << 24)));
-            SendEvent((uint32_t)(0x0000C9 + (port << 24)));
+            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24)));
+            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24)));
+            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24)));
         }
     }
 
     if (_FilterEffects)
     {
-        if (time > 0)
+        if (time != 0)
         {
-            for (size_t i = 0; i < 16; ++i)
+            for (uint8_t  i = 0; i < 16; ++i)
             {
-                SendEventWithTime((uint32_t)(0x5BB0 + i + (port << 24)), time);
-                SendEventWithTime((uint32_t)(0x5DB0 + i + (port << 24)), time);
+                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24)), time);
+                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24)), time);
             }
         }
         else
         {
-            for (size_t i = 0; i < 16; ++i)
+            for (uint8_t i = 0; i < 16; ++i)
             {
-                SendEvent((uint32_t)(0x5BB0 + i + (port << 24)));
-                SendEvent((uint32_t)(0x5DB0 + i + (port << 24)));
+                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24)));
+                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24)));
             }
         }
     }
 }
 
-void MIDIPlayer::SendSysExResetSC(size_t port, uint32_t time)
+/// <summary>
+/// Sends a reset message specific to a partular Roland Sound Canvas model.
+/// </summary>
+void MIDIPlayer::SendSysExResetSC(uint32_t port, uint32_t time)
 {
-    uint8_t Message[11] = { 0 };
+    uint8_t Data[11] = { 0 };
 
-    ::memcpy(&Message[0], &syx_gs_limit_bank_lsb[0], sizeof(Message));
+    ::memcpy(Data, SysExGSBankSelectLSB, sizeof(Data));
 
-    Message[7] = 1;
+    Data[7] = 1;
 
-    switch (_FilterType)
+    switch (_ConfigurationType)
     {
-        case FilterSC55SysEx:
-            Message[8] = 1;
+        case ConfigurationType::SC55:
+            Data[8] = 1;
             break;
 
-        case FilterSC88SysEx:
-            Message[8] = 2;
+        case ConfigurationType::SC88:
+            Data[8] = 2;
             break;
 
-        case FilterSC88ProSysEx:
-            Message[8] = 3;
+        case ConfigurationType::SC88Pro:
+            Data[8] = 3;
             break;
 
-        case FilterSC8850SysEx:
-        case FilterNone:
-            Message[8] = 4;
+        case ConfigurationType::SC8850:
+        case ConfigurationType::None:
+            Data[8] = 4;
             break;
 
-        case FilterGMSysEx:
-        case FilterGM2SysEx:
-        case FilterXGSysEx:
+        case ConfigurationType::GM:
+        case ConfigurationType::GM2:
+        case ConfigurationType::XG:
         default:
             break;
     }
 
     for (uint8_t i = 0x41; i <= 0x49; ++i)
     {
-        Message[6] = i;
-        SendSysExGS(&Message[0], sizeof(Message), port, time);
+        Data[6] = i;
+        SendSysExGS(Data, sizeof(Data), port, time);
     }
 
     {
-        Message[6] = 0x40;
-        SendSysExGS(&Message[0], sizeof(Message), port, time);
+        Data[6] = 0x40;
+        SendSysExGS(Data, sizeof(Data), port, time);
     }
 
     for (uint8_t i = 0x4A; i <= 0x4F; ++i)
     {
-        Message[6] = i;
-        SendSysExGS(&Message[0], sizeof(Message), port, time);
+        Data[6] = i;
+        SendSysExGS(Data, sizeof(Data), port, time);
     }
 }
 
-void MIDIPlayer::SendSysExGS(uint8_t * data, size_t size, size_t port, uint32_t time)
+/// <summary>
+/// Sends a Roland GS message after re-calculating the checksum.
+/// </summary>
+void MIDIPlayer::SendSysExGS(uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
 {
+    uint8_t Checksum = 0;
     size_t i;
 
-    unsigned char Checksum = 0;
-
-    for (i = 5; i + 1 < size && data[i + 1] != 0xF7; ++i)
+    for (i = 5; (i + 1 < size) && (data[i + 1] != StatusCodes::SysExEnd); ++i)
         Checksum += data[i];
 
-    data[i] = (unsigned char)((128 - Checksum) & 127);
+    data[i] = (uint8_t) ((128 - Checksum) & 127);
 
     if (time > 0)
-        SendSysExWithTime(data, size, port, time);
+        SendSysEx(data, size, portNumber, time);
     else
-        SendSysEx(data, size, port);
+        SendSysEx(data, size, portNumber);
 }
 
 static bool IsSysExReset(const uint8_t * data)
 {
-    return IsSysExEqual(data, &SysExResetGM[0]) || IsSysExEqual(data, &SysExResetGM2[0]) || IsSysExEqual(data, &SysExResetGS[0]) || IsSysExEqual(data, &SysExResetXG[0]);
+    return IsSysExEqual(data, SysExResetGM) || IsSysExEqual(data, SysExResetGM2) || IsSysExEqual(data, SysExResetGS) || IsSysExEqual(data, SysExResetXG);
 }
 
 static bool IsSysExEqual(const uint8_t * a, const uint8_t * b)
 {
-    while ((*a != 0xF7) && (*b != 0xF7) && (*a == *b))
+    while ((*a != StatusCodes::SysExEnd) && (*b != StatusCodes::SysExEnd) && (*a == *b))
     {
         a++;
         b++;

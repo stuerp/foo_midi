@@ -1,10 +1,10 @@
 
-/** $VER: MT32Player.h (2013.01.15) **/
+/** $VER: MT32Player.h (2013.08.19) **/
 
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
-#pragma warning(disable: ALL_CPPCORECHECK_WARNINGS)
+#pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include <MIDIPlayer.h>
 
@@ -15,6 +15,7 @@ namespace foobar2000_io
     class abort_callback;
 };
 
+#pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class MT32Player : public MIDIPlayer
 {
@@ -37,10 +38,10 @@ protected:
     #pragma region("MIDIPlayer")
     virtual bool Startup() override;
     virtual void Shutdown() override;
-    virtual void Render(audio_sample * out, unsigned long count) override;
+    virtual void Render(audio_sample *, unsigned long) override;
 
-    virtual void SendEvent(uint32_t b) override;
-    virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;
+    virtual void SendEvent(uint32_t data) override;
+    virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
     #pragma endregion
 
 private:

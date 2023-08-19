@@ -254,19 +254,19 @@ void FSPlayer::SendEvent(uint32_t message)
     }
 }
 
-void FSPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
+void FSPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber)
 {
     if (event && (size > 2) && (event[0] == 0xF0) && (event[size - 1] == 0xF7))
     {
         ++event;
         size -= 2;
 
-        if (port >= _countof(_Synth))
-            port = 0;
+        if (portNumber >= _countof(_Synth))
+            portNumber = 0;
 
-        _FluidSynth.SysEx(_Synth[port], (const char *) event, (int) size, NULL, NULL, NULL, 0);
+        _FluidSynth.SysEx(_Synth[portNumber], (const char *) event, (int) size, NULL, NULL, NULL, 0);
 
-        if (port == 0)
+        if (portNumber == 0)
         {
             _FluidSynth.SysEx(_Synth[1], (const char *) event, (int) size, NULL, NULL, NULL, 0);
             _FluidSynth.SysEx(_Synth[2], (const char *) event, (int) size, NULL, NULL, NULL, 0);
@@ -282,7 +282,7 @@ void FSPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 
     while (Done < sampleCount)
     {
-        float Buffer[512 * 2];
+        float Data[512 * 2];
 
         unsigned long ToDo = sampleCount - Done;
 
@@ -291,15 +291,15 @@ void FSPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 
         for (size_t i = 0; i < _countof(_Synth); ++i)
         {
-            ::memset(Buffer, 0, sizeof(Buffer));
+            ::memset(Data, 0, sizeof(Data));
 
-            _FluidSynth.WriteFloat(_Synth[i], (int) ToDo, Buffer, 0, 2, Buffer, 1, 2);
+            _FluidSynth.WriteFloat(_Synth[i], (int) ToDo, Data, 0, 2, Data, 1, 2);
 
             // Convert the format of the rendered output.
             for (unsigned long j = 0; j < ToDo; ++j)
             {
-                sampleData[j * 2 + 0] += Buffer[j * 2 + 0];
-                sampleData[j * 2 + 1] += Buffer[j * 2 + 1];
+                sampleData[j * 2 + 0] += Data[j * 2 + 0];
+                sampleData[j * 2 + 1] += Data[j * 2 + 1];
             }
         }
 
@@ -318,7 +318,7 @@ bool FSPlayer::Reset()
         {
             _FluidSynth.ResetSynthesizer(_Synth[i]);
 
-            SendSysExReset(i, 0);
+            SendSysExReset((uint8_t) i, 0);
 
             ++ResetCount;
         }

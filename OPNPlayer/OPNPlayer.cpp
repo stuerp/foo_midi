@@ -78,7 +78,7 @@ bool OPNPlayer::Startup()
 
     _IsInitialized = true;
 
-    SetFilter(_FilterType, _FilterEffects);
+    Configure(_ConfigurationType, _FilterEffects);
 
     return true;
 }
@@ -94,29 +94,29 @@ void OPNPlayer::Shutdown()
     _IsInitialized = false;
 }
 
-void OPNPlayer::Render(audio_sample * out, unsigned long count)
+void OPNPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
-    int16_t buffer[256 * sizeof(audio_sample)];
+    int16_t Data[256 * sizeof(audio_sample)];
 
-    while (count)
+    while (sampleCount)
     {
-        size_t todo = count;
+        size_t ToDo = sampleCount;
 
-        if (todo > 256)
-            todo = 256;
+        if (ToDo > 256)
+            ToDo = 256;
 
-        ::memset(out, 0, (todo * 2) * sizeof(audio_sample));
+        ::memset(sampleData, 0, (ToDo * 2) * sizeof(audio_sample));
 
         for (size_t i = 0; i < 3; i++)
         {
-            ::opn2_generate(_Player[i], (int)(todo * 2), buffer);
+            ::opn2_generate(_Player[i], (int) (ToDo * 2), Data);
 
-            for (size_t j = 0, k = (todo * 2); j < k; j++)
-                out[j] += (audio_sample) buffer[j] * (1.0f / 32768.0f);
+            for (size_t j = 0, k = (ToDo * 2); j < k; j++)
+                sampleData[j] += (audio_sample) Data[j] * (1.0f / 32768.0f);
         }
 
-        out += (todo * 2);
-        count -= (unsigned long)todo;
+        sampleData += (ToDo * 2);
+        sampleCount -= (unsigned long) ToDo;
     }
 }
 
@@ -189,16 +189,16 @@ void OPNPlayer::SendEvent(uint32_t message)
     }
 }
 
-void OPNPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
+void OPNPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
-    if (port >= 3)
-        port = 0;
+    if (portNumber >= 3)
+        portNumber = 0;
 
-    ::opn2_rt_systemExclusive(_Player[port], event, size);
+    ::opn2_rt_systemExclusive(_Player[portNumber], data, size);
 
-    if (port == 0)
+    if (portNumber == 0)
     {
-        ::opn2_rt_systemExclusive(_Player[1], event, size);
-        ::opn2_rt_systemExclusive(_Player[2], event, size);
+        ::opn2_rt_systemExclusive(_Player[1], data, size);
+        ::opn2_rt_systemExclusive(_Player[2], data, size);
     }
 }

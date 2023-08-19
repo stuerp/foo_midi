@@ -44,7 +44,7 @@ bool ADLPlayer::Startup()
 
     _IsInitialized = true;
 
-    SetFilter(_FilterType, _FilterEffects);
+    Configure(_ConfigurationType, _FilterEffects);
 
     return true;
 }
@@ -62,7 +62,7 @@ void ADLPlayer::Shutdown()
 
 void ADLPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
-    int16_t Buffer[256 * sizeof(audio_sample)];
+    int16_t Data[256 * sizeof(audio_sample)];
 
     while (sampleCount != 0)
     {
@@ -71,15 +71,15 @@ void ADLPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
         if (ToDo > 256)
             ToDo = 256;
 
-        ::memset(sampleData, 0, (ToDo * 2) * sizeof(audio_sample));
+        ::memset(sampleData, 0, ((size_t) ToDo * 2) * sizeof(audio_sample));
 
         for (size_t i = 0; i < 3; ++i)
         {
-            ::adl_generate(_Player[i], (int) (ToDo * 2), Buffer);
+            ::adl_generate(_Player[i], (int) (ToDo * 2), Data);
 
             // Convert the format of the rendered output.
-            for (size_t j = 0; j < (ToDo * 2); ++j)
-                sampleData[j] += (audio_sample) Buffer[j] * (1.0f / 32768.0f);
+            for (size_t j = 0; j < ((size_t) ToDo * 2); ++j)
+                sampleData[j] += (audio_sample) Data[j] * (1.0f / 32768.0f);
         }
 
         sampleData += (ToDo * 2);
@@ -161,7 +161,7 @@ void ADLPlayer::SendEvent(uint32_t message)
     }
 }
 
-void ADLPlayer::SendSysEx(const uint8_t * event, size_t size, size_t)
+void ADLPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t)
 {
     ::adl_rt_systemExclusive(_Player[0], event, size);
     ::adl_rt_systemExclusive(_Player[1], event, size);

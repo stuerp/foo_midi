@@ -93,13 +93,13 @@ To create the component first build the x86 configuration and next the x64 confi
 ## Contributing
 
 If you'd like to contribute, please fork the repository and use a feature
-branch. Pull requests are warmly welcome.
+branch. Pull requests are warmly welcomed.
 
 ## Change Log
 
 v2.9.1.0, 2023-xx-xx, *""*
 
-*
+* Improved: The decay time is now configurable. The default is still 1s (1000ms).
 
 v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
 

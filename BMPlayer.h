@@ -1,7 +1,10 @@
 
-/** $VER: BMPlayer.h (2023.07.24) **/
+/** $VER: BMPlayer.h (2023.08.19) **/
 
 #pragma once
+
+#include <CppCoreCheck/Warnings.h>
+#pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
 
@@ -11,6 +14,7 @@ extern bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleD
 
 struct sflist_presets;
 
+#pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
 /// <summary>
 /// Implements a MIDI player using BASS MIDI.
@@ -34,10 +38,10 @@ private:
     #pragma region("MIDIPlayer")
     virtual bool Startup() override;
     virtual void Shutdown() override;
-    virtual void Render(audio_sample * samples, unsigned long samplesSize) override;
+    virtual void Render(audio_sample * sampleData, unsigned long samplesCount) override;
 
     virtual void SendEvent(uint32_t b) override;
-    virtual void SendSysEx(const uint8_t * event, size_t size, size_t port) override;
+    virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
 
     virtual bool GetErrorMessage(std::string & errorMessage) override;
     #pragma endregion

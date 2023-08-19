@@ -122,23 +122,23 @@ void MT32Player::Shutdown()
     _IsInitialized = false;
 }
 
-void MT32Player::Render(audio_sample * samples, unsigned long count)
+void MT32Player::Render(audio_sample * sampleData, unsigned long sampleCount)
 {
-    MT32Emu::Bit16s temp[256 * 2];
+    MT32Emu::Bit16s Data[256 * 2];
 
-    while (count > 0)
+    while (sampleCount > 0)
     {
-        unsigned long ToDo = count;
+        unsigned long ToDo = sampleCount;
 
         if (ToDo > 256)
             ToDo = 256;
 
-        _Synth->render(temp, (unsigned) ToDo);
+        _Synth->render(Data, (MT32Emu::Bit32u) ToDo);
 
-        audio_math::convert_from_int16(temp, (ToDo * 2), samples, 1.);
+        audio_math::convert_from_int16(Data, ((size_t) ToDo * 2), sampleData, 1.);
 
-        samples += (ToDo * 2);
-        count -= ToDo;
+        sampleData += (ToDo * 2);
+        sampleCount -= ToDo;
     }
 }
 
@@ -147,9 +147,9 @@ void MT32Player::SendEvent(uint32_t b)
     _Synth->playMsg(b);
 }
 
-void MT32Player::SendSysEx(const uint8_t * event, size_t size, size_t)
+void MT32Player::SendSysEx(const uint8_t * event, size_t size, uint32_t)
 {
-    _Synth->playSysexNow(event, (MT32Emu::Bit32u)size);
+    _Synth->playSysexNow(event, (MT32Emu::Bit32u) size);
 }
 #pragma endregion
 

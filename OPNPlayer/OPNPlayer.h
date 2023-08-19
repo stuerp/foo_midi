@@ -1,5 +1,5 @@
 
-/** $VER: OPN Player (2023.01.04) **/
+/** $VER: OPN Player (2023.08.19) **/
 
 #pragma once
 
@@ -10,6 +10,7 @@
 
 #include <libOPNMIDI/include/opnmidi.h>
 
+#pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class OPNPlayer : public MIDIPlayer
 {
@@ -34,8 +35,8 @@ protected:
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, unsigned long);
 
-    virtual void SendEvent(uint32_t) override;
-    virtual void SendSysEx(const uint8_t *, size_t, size_t) override;
+    virtual void SendEvent(uint32_t data) override;
+    virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
 
 private:
     struct OPN2_MIDIPlayer * _Player[3];

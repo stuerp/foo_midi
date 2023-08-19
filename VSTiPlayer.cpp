@@ -184,7 +184,7 @@ bool VSTiPlayer::Startup()
 
     _IsInitialized = true;
 
-    SetFilter(_FilterType, _FilterEffects);
+    Configure(_ConfigurationType, _FilterEffects);
 
     return true;
 }
@@ -239,13 +239,13 @@ void VSTiPlayer::SendEvent(uint32_t b)
         StopHost();
 }
 
-void VSTiPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
+void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
-    const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
+    const uint32_t SizeAndPort = ((uint32_t) size & 0xFFFFFF) | (portNumber << 24);
 
     WriteBytes(8);
-    WriteBytes(size_plus_port);
-    WriteBytesOverlapped(event, (uint32_t)size);
+    WriteBytes(SizeAndPort);
+    WriteBytesOverlapped(data, (uint32_t) size);
 
     const uint32_t code = ReadCode();
 
@@ -253,10 +253,10 @@ void VSTiPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
         StopHost();
 }
 
-void VSTiPlayer::SendEventWithTime(uint32_t b, unsigned int time)
+void VSTiPlayer::SendEvent(uint32_t data, uint32_t time)
 {
     WriteBytes(10);
-    WriteBytes(b);
+    WriteBytes(data);
     WriteBytes(time);
 
     const uint32_t code = ReadCode();
@@ -265,14 +265,14 @@ void VSTiPlayer::SendEventWithTime(uint32_t b, unsigned int time)
         StopHost();
 }
 
-void VSTiPlayer::SendSysExWithTime(const uint8_t * event, size_t size, size_t port, unsigned int time)
+void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
 {
-    const uint32_t size_plus_port = ((uint32_t)size & 0xFFFFFF) | ((uint32_t)port << 24);
+    const uint32_t SizeAndPort = ((uint32_t) size & 0xFFFFFF) | (portNumber << 24);
 
     WriteBytes(11);
-    WriteBytes(size_plus_port);
+    WriteBytes(SizeAndPort);
     WriteBytes(time);
-    WriteBytesOverlapped(event, (uint32_t)size);
+    WriteBytesOverlapped(data, (uint32_t) size);
 
     const uint32_t code = ReadCode();
 

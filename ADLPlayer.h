@@ -1,12 +1,16 @@
 
-/** $VER: ADLPlayer.h (2022.01.02) **/
+/** $VER: ADLPlayer.h (2023.08.19) **/
 
 #pragma once
+
+#include <CppCoreCheck/Warnings.h>
+#pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "MIDIPlayer.h"
 
 #include <libADLMIDI/include/adlmidi.h>
 
+#pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class ADLPlayer : public MIDIPlayer
 {
@@ -33,7 +37,7 @@ protected:
     virtual void Render(audio_sample *, unsigned long) override;
 
     virtual void SendEvent(uint32_t) override;
-    virtual void SendSysEx(const uint8_t *, size_t, size_t) override;
+    virtual void SendSysEx(const uint8_t *, size_t, uint32_t) override;
 
 private:
     struct ADL_MIDIPlayer * _Player[3];

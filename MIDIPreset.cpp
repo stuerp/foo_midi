@@ -116,7 +116,7 @@ MIDIPreset::MIDIPreset() noexcept
     }
 
     {
-        _MIDIStandard = (uint32_t) CfgMIDIFlavor;
+        _ConfigurationType = (MIDIPlayer::ConfigurationType) (uint32_t) CfgMIDIStandard;
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
         _UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
         _UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
@@ -234,7 +234,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
     }
 
     text += "|";
-    text += pfc::format_int(_MIDIStandard);
+    text += pfc::format_int((uint32_t) _ConfigurationType);
 
     text += "|";
     text += pfc::format_int(_UseMIDIEffects);
@@ -292,7 +292,7 @@ void MIDIPreset::Deserialize(const char * text)
     uint32_t NukeBank = 0;
     bool NukeUsePanning = false;
 
-    uint32_t MIDIStandard = (uint32_t) CfgMIDIFlavor;
+    MIDIPlayer::ConfigurationType ConfigurationType = (MIDIPlayer::ConfigurationType) (uint32_t) CfgMIDIStandard;
     bool UseMIDIEffects = (bool) CfgUseMIDIEffects;
     bool UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
     bool UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
@@ -315,7 +315,7 @@ void MIDIPreset::Deserialize(const char * text)
         if (CurrentSchemaVersion >= 11)
         {
             GetValue(Separator, text);
-            MIDIStandard = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+            ConfigurationType = (MIDIPlayer::ConfigurationType) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
             GetValue(Separator, text);
             UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
@@ -343,7 +343,7 @@ void MIDIPreset::Deserialize(const char * text)
                     if (CurrentSchemaVersion >= 11)
                     {
                         GetValue(Separator, text);
-                        MIDIStandard = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+                        ConfigurationType = (MIDIPlayer::ConfigurationType) pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
 
                         GetValue(Separator, text);
                         UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
@@ -504,7 +504,7 @@ void MIDIPreset::Deserialize(const char * text)
         if (CurrentSchemaVersion >= 6)
         {
             GetValue(Separator, text);
-            NukeUsePanning = pfc::atodec<bool>(text, (t_size)(Separator - text));
+            NukeUsePanning = pfc::atodec<bool>(text, (t_size) (Separator - text));
         }
         else
             NukeUsePanning = true;
@@ -514,23 +514,23 @@ void MIDIPreset::Deserialize(const char * text)
     {
         if (CurrentSchemaVersion >= 11)
         {
-            MIDIStandard = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+            ConfigurationType = (MIDIPlayer::ConfigurationType) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
-            if (MIDIStandard > MIDIPlayer::FilterXGSysEx)
-                MIDIStandard = MIDIPlayer::FilterNone;
+            if (ConfigurationType > MIDIPlayer::ConfigurationType::XG)
+                ConfigurationType = MIDIPlayer::ConfigurationType::None;
 
             GetValue(Separator, text);
-            UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
+            UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
         }
     }
 
     if (CurrentSchemaVersion >= 12)
     {
         GetValue(Separator, text);
-        UseSuperMuntWithMT32 = pfc::atodec<bool>(text, (t_size)(Separator - text));
+        UseSuperMuntWithMT32 = pfc::atodec<bool>(text, (t_size) (Separator - text));
 
         GetValue(Separator, text);
-        UseSecretSauceWithXG = pfc::atodec<bool>(text, (t_size)(Separator - text));
+        UseSecretSauceWithXG = pfc::atodec<bool>(text, (t_size) (Separator - text));
     }
 
     _PlayerType = PlayerType;
@@ -562,7 +562,7 @@ void MIDIPreset::Deserialize(const char * text)
     _NukeBank = NukeBank;
     _NukeUsePanning = NukeUsePanning;
 
-    _MIDIStandard = MIDIStandard;
+    _ConfigurationType = ConfigurationType;
     _UseMIDIEffects = UseMIDIEffects;
 }
 

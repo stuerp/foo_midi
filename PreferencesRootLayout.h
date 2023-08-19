@@ -12,35 +12,35 @@
 #define Y_A10    7
 #define W_A10    W_A00 - 7 - 7
 
-// Label
-#define X_A11    X_A10 + 5
-#define Y_A11    Y_A10 + 11
-#define W_A11    26
-#define H_A11    8
+    // Label
+    #define X_A11    X_A10 + 5
+    #define Y_A11    Y_A10 + 11
+    #define W_A11    26
+    #define H_A11    8
 
-// Combobox
-#define W_A15    40
-#define H_A15    14
-#define X_A15    X_A10 + W_A10 - 7 - W_A15
-#define Y_A15    Y_A11
+    // Combobox
+    #define W_A15    40
+    #define H_A15    14
+    #define X_A15    X_A10 + W_A10 - 7 - W_A15
+    #define Y_A15    Y_A11
 
-// Label
-#define W_A14    40
-#define H_A14    8
-#define X_A14    X_A15 - W_A14 - 3
-#define Y_A14    Y_A13
+    // Label
+    #define W_A14    42
+    #define H_A14    8
+    #define X_A14    X_A15 - W_A14 - 3
+    #define Y_A14    Y_A13
 
-// Button
-#define W_A13    50
-#define H_A13    14
-#define X_A13    X_A14 - W_A13 - 4
-#define Y_A13    Y_A12
+    // Button
+    #define W_A13    50
+    #define H_A13    14
+    #define X_A13    X_A14 - W_A13 - 4
+    #define Y_A13    Y_A12
 
-// Combobox
-#define X_A12    X_A11 + W_A11 + 3
-#define Y_A12    Y_A11
-#define W_A12    W_A10 - 5 - W_A11 - 3 - W_A13 - 4 - W_A14 - 3 - W_A15 - 7
-#define H_A12    14
+    // Combobox
+    #define X_A12    X_A11 + W_A11 + 3
+    #define Y_A12    Y_A11
+    #define W_A12    W_A10 - 5 - W_A11 - 3 - W_A13 - 4 - W_A14 - 3 - W_A15 - 7
+    #define H_A12    14
 
 #define H_A10    11 + H_A12 + 4
 #pragma endregion
