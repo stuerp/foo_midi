@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.cpp (2023.06.12) **/
+/** $VER: ADLPlayer.cpp (2023.08.19) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -28,7 +28,7 @@ bool ADLPlayer::Startup()
 
     for (size_t i = 0; i < 3; i++)
     {
-        ADL_MIDIPlayer * Player = this->_Player[i] = adl_init((long)_SampleRate);
+        ADL_MIDIPlayer * Player = this->_Player[i] = ::adl_init((long) _SampleRate);
 
         if (Player == nullptr)
             return false;
@@ -60,13 +60,13 @@ void ADLPlayer::Shutdown()
     _IsInitialized = false;
 }
 
-void ADLPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void ADLPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     int16_t Data[256 * sizeof(audio_sample)];
 
     while (sampleCount != 0)
     {
-        unsigned long ToDo = sampleCount;
+        uint32_t ToDo = sampleCount;
 
         if (ToDo > 256)
             ToDo = 256;

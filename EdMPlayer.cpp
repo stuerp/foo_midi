@@ -1,5 +1,5 @@
 
-/** $VER: EdMPlayer.cpp (2023.01.02) **/
+/** $VER: EdMPlayer.cpp (2023.08.19) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -69,24 +69,24 @@ bool EdMPlayer::Startup()
 void EdMPlayer::Shutdown()
 {
     if (_Initialized)
-        for (unsigned i = 0; i < 8; ++i)
+        for (size_t i = 0; i < 8; ++i)
             delete _Module[i].DetachDevice();
 
     _Initialized = false;
 }
 
-void EdMPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void EdMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     int32_t Data[256 * sizeof(audio_sample)];
 
     while (sampleCount != 0)
     {
-        size_t ToDo = 256;
+        uint32_t ToDo = 256;
 
         if (ToDo > sampleCount)
             ToDo = sampleCount;
 
-        ::memset(Data, 0, (ToDo * 2) * sizeof(audio_sample));
+        ::memset(Data, 0, ((size_t) ToDo * 2) * sizeof(audio_sample));
 
         for (size_t i = 0; i < 8; ++i)
         {
@@ -102,10 +102,10 @@ void EdMPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
         }
 
         // Convert the format of the rendered output.
-        audio_math::convert_from_int32((const t_int32 *) Data, (ToDo * 2), sampleData, 1 << 16);
+        audio_math::convert_from_int32((const t_int32 *) Data, ((t_size) ToDo * 2), sampleData, 1 << 16);
 
         sampleData += (ToDo * 2);
-        sampleCount -= (unsigned long) ToDo;
+        sampleCount -= ToDo;
     }
 }
 
@@ -173,10 +173,10 @@ void EdMPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
     for (size_t n = 0; n < size; ++n)
         mi.Interpret(data[n]);
 
-    if ((size == _countof(SysExGMReset) && !::memcmp(data, &SysExGMReset[0], _countof(SysExGMReset))) ||
-        (size == _countof(SysExGM2Reset) && !::memcmp(data, &SysExGM2Reset[0], _countof(SysExGM2Reset))) ||
+    if ((size == _countof(SysExGMReset) && ::memcmp(data, SysExGMReset, _countof(SysExGMReset) == 0)) ||
+        (size == _countof(SysExGM2Reset) && ::memcmp(data, SysExGM2Reset, _countof(SysExGM2Reset) == 0)) ||
         IsGSReset(data, size) ||
-        (size == _countof(SysExXGReset) && !::memcmp(data, &SysExXGReset[0], _countof(SysExXGReset))))
+        (size == _countof(SysExXGReset) && ::memcmp(data, SysExXGReset, _countof(SysExXGReset) == 0)))
     {
         ResetDrumChannels();
 
@@ -210,7 +210,7 @@ void EdMPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
 
         _Module[(msg.m_ch * 2) & 7].SendMIDIMsg(msg);
 
-        if (!_DrumChannels[msg.m_ch])
+        if (_DrumChannels[msg.m_ch] == 0)
             _Module[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
 
         mi.PopMsg();

@@ -115,7 +115,7 @@ bool MIDIProcessor::ProcessRIFF(std::vector<uint8_t> const & data, MIDIContainer
 
     auto it = data.begin() + 12;
 
-    auto body_end = data.begin() + 8 + Size;
+    auto body_end = data.begin() + 8 + (int) Size;
 
     bool found_data = false;
     bool found_info = false;
@@ -141,14 +141,14 @@ bool MIDIProcessor::ProcessRIFF(std::vector<uint8_t> const & data, MIDIContainer
 
             std::vector<uint8_t> Data;
 
-            Data.assign(it + 8, it + 8 + chunk_size);
+            Data.assign(it + 8, it + 8 + (int) chunk_size);
 
             if (!ProcessSMF(Data, container))
                 return false;
 
             found_data = true;
 
-            it += 8 + chunk_size; if (chunk_size & 1 && it != body_end) ++it;
+            it += 8 + (int) chunk_size; if (chunk_size & 1 && it != body_end) ++it;
         }
         else
         if (::memcmp(&it[0], "DISP", 4) == 0)
@@ -158,17 +158,17 @@ bool MIDIProcessor::ProcessRIFF(std::vector<uint8_t> const & data, MIDIContainer
             if (type == 1)
             {
                 extra_buffer.resize(chunk_size - 4 + 1);
-                std::copy(it + 12, it + 8 + chunk_size, extra_buffer.begin());
+                std::copy(it + 12, it + 8 + (int) chunk_size, extra_buffer.begin());
                 extra_buffer[chunk_size - 4] = '\0';
                 MetaData.AddItem(MIDIMetaDataItem(0, "display_name", (const char *) &extra_buffer[0]));
             }
 
-            it += 8 + chunk_size; if (chunk_size & 1 && it != body_end) ++it;
+            it += 8 + (int) chunk_size; if (chunk_size & 1 && it != body_end) ++it;
         }
         else
         if (::memcmp(&it[0], "LIST", 4) == 0)
         {
-            auto chunk_end = it + 8 + chunk_size;
+            auto chunk_end = it + 8 + (int) chunk_size;
 
             if (::memcmp(&it[8], "INFO", 4) == 0)
             {
@@ -204,10 +204,10 @@ bool MIDIProcessor::ProcessRIFF(std::vector<uint8_t> const & data, MIDIContainer
                     }
 
                     extra_buffer.resize(field_size + 1);
-                    std::copy(it + 8, it + 8 + field_size, extra_buffer.begin());
+                    std::copy(it + 8, it + 8 + (int) field_size, extra_buffer.begin());
                     extra_buffer[field_size] = '\0';
 
-                    it += 8 + field_size;
+                    it += 8 + (int) field_size;
                     MetaData.AddItem(MIDIMetaDataItem(0, field.c_str(), (const char *) &extra_buffer[0]));
 
                     if (field_size & 1 && it != chunk_end) ++it;
@@ -223,7 +223,7 @@ bool MIDIProcessor::ProcessRIFF(std::vector<uint8_t> const & data, MIDIContainer
         }
         else
         {
-            it += chunk_size;
+            it += (int) chunk_size;
             if (chunk_size & 1 && it != body_end) ++it;
         }
 

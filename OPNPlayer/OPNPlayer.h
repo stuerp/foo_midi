@@ -25,15 +25,15 @@ public:
         OPNMIDI_EMU_GENS,       // GENS
     };
 
-    void setCore(unsigned);
-    void setBank(unsigned);
-    void setChipCount(unsigned);
+    void setCore(uint32_t);
+    void setBank(uint32_t);
+    void setChipCount(uint32_t);
     void setFullPanning(bool);
 
 protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
-    virtual void Render(audio_sample *, unsigned long);
+    virtual void Render(audio_sample *, uint32_t);
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;

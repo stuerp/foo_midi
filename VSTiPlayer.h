@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2023.06.12) **/
+/** $VER: VSTiPlayer.h (2023.08.19) **/
 
 #pragma once
 
@@ -35,7 +35,7 @@ public:
 protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
-    virtual void Render(audio_sample *, unsigned long) override;
+    virtual void Render(audio_sample *, uint32_t) override;
 
     virtual uint32_t GetSampleBlockSize() const noexcept override { return 4096; }
 

@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.cpp (2023.06.12) **/
+/** $VER: VSTiPlayer.cpp (2023.08.19) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -194,7 +194,7 @@ void VSTiPlayer::Shutdown()
     StopHost();
 }
 
-void VSTiPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void VSTiPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     WriteBytes(9);
     WriteBytes(sampleCount);

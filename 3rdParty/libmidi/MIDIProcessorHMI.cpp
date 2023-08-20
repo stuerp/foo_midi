@@ -27,7 +27,7 @@ bool MIDIProcessor::ProcessHMI(std::vector<uint8_t> const & data, MIDIContainer 
     if (TrackTableOffset >= data.size() || TrackTableOffset + (size_t) (TrackCount * 4) > data.size())
         return false;
 
-    it = data.begin() + TrackTableOffset;
+    it = data.begin() + (int) TrackTableOffset;
 
     std::vector<uint32_t> TrackOffsets;
 
@@ -64,8 +64,8 @@ bool MIDIProcessor::ProcessHMI(std::vector<uint8_t> const & data, MIDIContainer 
         if (TrackOffset >= data.size() || (size_t) (TrackOffset + TrackLength) > data.size())
             return false;
 
-        auto TrackData    = data.begin() + TrackOffset;
-        auto TrackDataEnd = TrackData + TrackLength;
+        auto TrackData    = data.begin() + (int) TrackOffset;
+        auto TrackDataEnd = TrackData + (int) TrackLength;
 
         if (TrackLength < 13)
             return false;
@@ -90,7 +90,7 @@ bool MIDIProcessor::ProcessHMI(std::vector<uint8_t> const & data, MIDIContainer 
         if (MetaOffset && MetaOffset + 1 < TrackLength)
         {
             Data.resize(2);
-            std::copy(TrackData + MetaOffset, TrackData + MetaOffset + 2, Data.begin());
+            std::copy(TrackData + (int) MetaOffset, TrackData + (int) MetaOffset + 2, Data.begin());
 
             uint32_t MetadataSize = Data[1];
 
@@ -98,7 +98,7 @@ bool MIDIProcessor::ProcessHMI(std::vector<uint8_t> const & data, MIDIContainer 
                 return false;
 
             Data.resize((size_t) (MetadataSize + 2));
-            std::copy(TrackData + MetaOffset + 2, TrackData + MetaOffset + 2 + MetadataSize, Data.begin() + 2);
+            std::copy(TrackData + (int) MetaOffset + 2, TrackData + (int) MetaOffset + 2 + MetadataSize, Data.begin() + 2);
 
             while (MetadataSize > 0 && Data[(size_t) (MetadataSize + 1)] == ' ')
                 --MetadataSize;
@@ -117,7 +117,7 @@ bool MIDIProcessor::ProcessHMI(std::vector<uint8_t> const & data, MIDIContainer 
 
         uint32_t TrackDataOffset = (uint32_t) (TrackData[0x57] | (TrackData[0x58] << 8) | (TrackData[0x59] << 16) | (TrackData[0x5A] << 24));
 
-        it = TrackData + TrackDataOffset;
+        it = TrackData + (int) TrackDataOffset;
 
         Data.resize(3);
 

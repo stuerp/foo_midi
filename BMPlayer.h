@@ -38,7 +38,7 @@ private:
     #pragma region("MIDIPlayer")
     virtual bool Startup() override;
     virtual void Shutdown() override;
-    virtual void Render(audio_sample * sampleData, unsigned long samplesCount) override;
+    virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
 
     virtual void SendEvent(uint32_t b) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;

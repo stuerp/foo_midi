@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.cpp (2023.05.28) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2023.08.19) Secret Sauce **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -126,7 +126,7 @@ void SCPlayer::Shutdown()
     _IsInitialized = false;
 }
 
-void SCPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void SCPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     ::memset(sampleData, 0, sampleCount * 2 * sizeof(audio_sample));
 

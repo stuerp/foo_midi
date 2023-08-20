@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2023.07.24) **/
+/** $VER: BMPlayer.cpp (2023.08.19) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -697,13 +697,13 @@ void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
     }
 }
 
-void BMPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     float Data[512 * 2];
 
     while (sampleCount != 0)
     {
-        unsigned long ToDo = sampleCount;
+        uint32_t ToDo = sampleCount;
 
         if (ToDo > 512)
             ToDo = 512;

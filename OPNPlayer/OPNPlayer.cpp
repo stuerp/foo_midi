@@ -1,5 +1,5 @@
 
-/** OPN Player **/
+/** $VER: OPNPlayer.cpp (2023.08.19) **/
 
 #include "OPNPlayer.h"
 
@@ -94,11 +94,11 @@ void OPNPlayer::Shutdown()
     _IsInitialized = false;
 }
 
-void OPNPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void OPNPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     int16_t Data[256 * sizeof(audio_sample)];
 
-    while (sampleCount)
+    while (sampleCount != 0)
     {
         size_t ToDo = sampleCount;
 

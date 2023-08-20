@@ -170,7 +170,7 @@ static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uin
             return false;
 
         // Read the sub-chunks of a FORM or CAT chunk.
-        auto ChunkEnd = it + ChunkSize;
+        auto ChunkEnd = it + (int) ChunkSize;
 
         std::copy(it, it + 4, (uint8_t *) &chunk.Type);
         it += 4;
@@ -193,8 +193,8 @@ static bool ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uin
     else
     if (!IsFORMChunk && !IsCATChunk)
     {
-        chunk._Data.assign(it, it + ChunkSize);
-        it += ChunkSize;
+        chunk._Data.assign(it, it + (int) ChunkSize);
+        it += (int) ChunkSize;
 
         if ((ChunkSize & 1) && (it != end))
             ++it;

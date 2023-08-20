@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2023.07.30) P. Stuer **/
+/** $VER: FSPlayer.cpp (2023.08.20) P. Stuer **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -121,11 +121,11 @@ bool FSPlayer::Startup()
         _Settings[i] = _FluidSynth.CreateSettings();
 
         // https://www.fluidsynth.org/api/fluidsettings.xml#synth.audio-channels
-        _FluidSynth.SetNumericSetting(_Settings[i], "synth.sample-rate", 44100);
+        _FluidSynth.SetNumericSetting(_Settings[i], "synth.sample-rate", (double) _SampleRate);
         _FluidSynth.SetIntegerSetting(_Settings[i], "synth.midi-channels", 16);
 
         // Gain applied to the final output of the synthesizer.
-        _FluidSynth.SetNumericSetting(_Settings[i], "synth.gain", 0.2);
+        _FluidSynth.SetNumericSetting(_Settings[i], "synth.gain", 0.2f);
 
         // Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands.
         // Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID).
@@ -139,8 +139,8 @@ bool FSPlayer::Startup()
 
         // Chorus effects module
         _FluidSynth.SetIntegerSetting(_Settings[i], "synth.chorus.active", _DoReverbAndChorusProcessing ? 1 : 0);
-//      _FluidSynth.SetNumericSetting(_Settings[i], "synth.chorus.depth", 8.0); // 0.0 - 256.0
-//      _FluidSynth.SetNumericSetting(_Settings[i], "synth.chorus.level", 2.0); // 0.0 - 10.0
+//      _FluidSynth.SetNumericSetting(_Settings[i], "synth.chorus.depth", 8.0f); // 0.0 - 256.0
+//      _FluidSynth.SetNumericSetting(_Settings[i], "synth.chorus.level", 2.0f); // 0.0 - 10.0
 //      _FluidSynth.SetIntegerSetting(_Settings[i], "synth.chorus.nr", 3); // 0 - 99
 
         // Defines how many voices can be played in parallel.
@@ -254,37 +254,37 @@ void FSPlayer::SendEvent(uint32_t message)
     }
 }
 
-void FSPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber)
+void FSPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
-    if (event && (size > 2) && (event[0] == 0xF0) && (event[size - 1] == 0xF7))
+    if (data && (size > 2) && (data[0] == StatusCodes::SysEx) && (data[size - 1] == StatusCodes::SysExEnd))
     {
-        ++event;
+        ++data;
         size -= 2;
 
         if (portNumber >= _countof(_Synth))
             portNumber = 0;
 
-        _FluidSynth.SysEx(_Synth[portNumber], (const char *) event, (int) size, NULL, NULL, NULL, 0);
+        _FluidSynth.SysEx(_Synth[portNumber], (const char *) data, (int) size, NULL, NULL, NULL, 0);
 
         if (portNumber == 0)
         {
-            _FluidSynth.SysEx(_Synth[1], (const char *) event, (int) size, NULL, NULL, NULL, 0);
-            _FluidSynth.SysEx(_Synth[2], (const char *) event, (int) size, NULL, NULL, NULL, 0);
+            _FluidSynth.SysEx(_Synth[1], (const char *) data, (int) size, NULL, NULL, NULL, 0);
+            _FluidSynth.SysEx(_Synth[2], (const char *) data, (int) size, NULL, NULL, NULL, 0);
         }
     }
 }
 
-void FSPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void FSPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     ::memset(sampleData, 0, ((size_t) sampleCount * 2) * sizeof(audio_sample));
 
-    unsigned long Done = 0;
+    uint32_t Done = 0;
 
     while (Done < sampleCount)
     {
         float Data[512 * 2];
 
-        unsigned long ToDo = sampleCount - Done;
+        uint32_t ToDo = sampleCount - Done;
 
         if (ToDo > 512)
             ToDo = 512;
@@ -296,7 +296,7 @@ void FSPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
             _FluidSynth.WriteFloat(_Synth[i], (int) ToDo, Data, 0, 2, Data, 1, 2);
 
             // Convert the format of the rendered output.
-            for (unsigned long j = 0; j < ToDo; ++j)
+            for (uint32_t j = 0; j < ToDo; ++j)
             {
                 sampleData[j * 2 + 0] += Data[j * 2 + 0];
                 sampleData[j * 2 + 1] += Data[j * 2 + 1];

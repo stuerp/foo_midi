@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.07.24) **/
+/** $VER: InputDecoder.cpp (2023.08.19) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -67,9 +67,9 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
     std::vector<uint8_t> Data;
 
-    Data.resize((size_t)_FileStats.m_size);
+    Data.resize((size_t) _FileStats.m_size);
 
-    file->read_object(&Data[0], (t_size)_FileStats.m_size, abortHandler);
+    file->read_object(&Data[0], (t_size) _FileStats.m_size, abortHandler);
 
     {
         _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
@@ -459,8 +459,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     Player->SetSoundFontFile(SoundFontFilePath);
 
                 Player->SetInterpolationMode(_FluidSynthInterpolationMethod);
-                Player->EnableEffects(Preset._BASSMIDIEffectsEnabled);
-                Player->SetVoiceCount(Preset._BASSMIDIVoices);
+                Player->EnableEffects(Preset._EffectsEnabled);
+                Player->SetVoiceCount(Preset._VoiceCount);
                 Player->EnableDynamicLoading(AdvCfgLoadSoundFontDynamically.get());
 
                 _Player = Player;
@@ -545,8 +545,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     Player->SetSoundFontFile(SoundFontFilePath);
 
                 Player->SetInterpolationMode(_BASSMIDIInterpolationMode);
-                Player->EnableEffects(Preset._BASSMIDIEffectsEnabled);
-                Player->SetVoiceCount(Preset._BASSMIDIVoices);
+                Player->EnableEffects(Preset._EffectsEnabled);
+                Player->SetVoiceCount(Preset._VoiceCount);
 
                 _Player = Player;
             }
@@ -867,7 +867,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 /// <summary>
 /// Seeks to the specified time offset. Before seeking or other decoding calls, decoding must be initialized with decode_initialize() call.
 /// </summary>
-void InputDecoder::decode_seek(double timeInSeconds, abort_callback&)
+void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
 {
     uint32_t OffsetInSamples = (uint32_t)audio_math::time_to_samples(timeInSeconds, 1000U);
 
@@ -1351,8 +1351,8 @@ static bool IsValidShiftJIS(const char * data)
 {
     bool Result = false;
 
-    unsigned char d1 = (unsigned char)data[0];
-    unsigned char d2 = (unsigned char)data[1];
+    uint8_t d1 = (uint8_t) data[0];
+    uint8_t d2 = (uint8_t) data[1];
 
     int j1 = 0;
     int j2 = 0;

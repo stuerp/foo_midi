@@ -38,13 +38,13 @@ private:
     #pragma region("MIDIPlayer")
     virtual bool Startup() override;
     virtual void Shutdown() override;
-    virtual void Render(audio_sample *, unsigned long) override;
+    virtual void Render(audio_sample *, uint32_t) override;
     virtual bool Reset() override;
 
     virtual bool GetErrorMessage(std::string & errorMessage) override;
 
-    virtual void SendEvent(uint32_t b) override;
-    virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
+    virtual void SendEvent(uint32_t data) override;
+    virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
     #pragma endregion
 
     fluid_sfloader_t * GetSoundFontLoader(fluid_settings_t * settings);

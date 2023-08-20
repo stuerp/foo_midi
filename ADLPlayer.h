@@ -34,7 +34,7 @@ public:
 protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
-    virtual void Render(audio_sample *, unsigned long) override;
+    virtual void Render(audio_sample *, uint32_t) override;
 
     virtual void SendEvent(uint32_t) override;
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) override;

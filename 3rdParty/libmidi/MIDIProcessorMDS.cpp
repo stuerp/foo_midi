@@ -64,7 +64,7 @@ bool MIDIProcessor::ProcessMDS(std::vector<uint8_t> const & data, MIDIContainer 
             FormatSize -= 4;
         }
 
-        it += FormatSize;
+        it += (int) FormatSize;
 
         if (it == end)
             return false;
@@ -96,7 +96,7 @@ bool MIDIProcessor::ProcessMDS(std::vector<uint8_t> const & data, MIDIContainer 
 
     uint32_t DataSize = (uint32_t) (it[0] | (it[1] << 8) | (it[2] << 16) | (it[3] << 24)); it += 4;
 
-    auto BodyEnd = it + DataSize;
+    auto BodyEnd = it + (int) DataSize;
 
     if (BodyEnd - it < 4)
         return false;
@@ -118,7 +118,7 @@ bool MIDIProcessor::ProcessMDS(std::vector<uint8_t> const & data, MIDIContainer 
 
         uint32_t SegmentSize = (uint32_t) (it[0] | (it[1] << 8) | (it[2] << 16) | (it[3] << 24)); it += 4;
 
-        auto SegmentEnd = it + SegmentSize;
+        auto SegmentEnd = it + (int) SegmentSize;
 
         while ((it != SegmentEnd) && (it != BodyEnd))
         {

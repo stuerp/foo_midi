@@ -26,7 +26,7 @@ bool MIDIProcessor::ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer 
     if (Offset >= data.size())
         return false;
 
-    auto it = data.begin() + Offset;
+    auto it = data.begin() + (int) Offset;
     auto end = data.end();
 
     track_count_8 = *it;
@@ -86,7 +86,7 @@ bool MIDIProcessor::ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer 
     if ((unsigned long) (end - it) < Offset)
         return false;
 
-    it += Offset;
+    it += (int) Offset;
 
     uint32_t TrackCount = track_count_8;
 
@@ -133,7 +133,7 @@ bool MIDIProcessor::ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer 
         std::vector<uint8_t> _buffer;
         _buffer.resize(3);
 
-        auto TrackDataEnd = it + track_size_32;
+        auto TrackDataEnd = it + (int) track_size_32;
 
         while (it != TrackDataEnd)
         {
@@ -185,7 +185,7 @@ bool MIDIProcessor::ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer 
                 if ((unsigned long) (TrackDataEnd - it) < bytes_read)
                     return false;
 
-                std::copy(it, it + bytes_read, _buffer.begin() + 1);
+                std::copy(it, it + (int) bytes_read, _buffer.begin() + 1);
                 it += bytes_read;
 
                 track.AddEvent(MIDIEvent(Timestamp, (MIDIEvent::EventType) ((_buffer[0] >> 4) - 8), (uint32_t) (_buffer[0] & 0x0F), &_buffer[1], bytes_read));
@@ -195,10 +195,10 @@ bool MIDIProcessor::ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer 
 
         Offset = (uint32_t) (IsFunky ? 0 : 4);
 
-        if (end - it < (signed long) Offset)
+        if (end - it < (int) Offset)
             return false;
 
-        it = TrackDataEnd + Offset;
+        it = TrackDataEnd + (int) Offset;
 
         container.AddTrack(track);
     }

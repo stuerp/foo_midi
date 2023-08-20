@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.h (2023.05.24) **/
+/** $VER: MIDIPlayer.h (2023.08.19) **/
 
 #pragma once
 
@@ -24,11 +24,11 @@ public:
         LoopModeForced = 0x02
     };
 
-    bool Load(const MIDIContainer & midiContainer, unsigned int subsongIndex, LoopMode loopMode, unsigned int cleanFlags);
+    bool Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, LoopMode loopMode, uint32_t cleanFlags);
     size_t Play(audio_sample * samples, size_t samplesSize);
-    void Seek(unsigned long seekTime);
+    void Seek(uint32_t seekTime);
 
-    void SetSampleRate(unsigned long sampleRate);
+    void SetSampleRate(uint32_t sampleRate);
 
     void SetLoopMode(LoopMode loopMode);
 
@@ -46,14 +46,14 @@ public:
 
     void Configure(ConfigurationType filterType, bool filterEffects);
 
-    virtual unsigned GetChannelCount() const noexcept { return 2; }
+    virtual uint32_t GetChannelCount() const noexcept { return 2; }
     virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept { UNREFERENCED_PARAMETER(abortHandler); }
     virtual bool GetErrorMessage(std::string &) { return false; }
 
 protected:
     virtual bool Startup() { return false; }
     virtual void Shutdown() { };
-    virtual void Render(audio_sample *, unsigned long) { }
+    virtual void Render(audio_sample *, uint32_t) { }
     virtual bool Reset() { return false; }
 
     // Should return the block size that the player expects, otherwise 0.
@@ -72,7 +72,7 @@ protected:
 
 protected:
     bool _IsInitialized;
-    unsigned long _SampleRate;
+    uint32_t _SampleRate;
     SysExTable _SysExMap;
 
     ConfigurationType _ConfigurationType;

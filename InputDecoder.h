@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.07.24) **/
+/** $VER: InputDecoder.h (2023.08.19) **/
 
 #pragma once
 
@@ -96,10 +96,10 @@ public:
     #endif
     }
 
-    InputDecoder(const InputDecoder&) = delete;
-    InputDecoder(const InputDecoder&&) = delete;
-    InputDecoder& operator=(const InputDecoder&) = delete;
-    InputDecoder& operator=(InputDecoder&&) = delete;
+    InputDecoder(const InputDecoder &) = delete;
+    InputDecoder(InputDecoder &&) = delete;
+    InputDecoder & operator=(const InputDecoder &) = delete;
+    InputDecoder & operator=(InputDecoder &&) = delete;
 
     ~InputDecoder()
     {
@@ -176,31 +176,31 @@ public:
     #pragma region("input_info_reader")
     unsigned get_subsong_count()
     {
-        return _IsSysExFile ? 1 : (unsigned)_Container.GetSubSongCount();
+        return _IsSysExFile ? 1 : (unsigned) _Container.GetSubSongCount();
     }
 
     t_uint32 get_subsong(unsigned subSongIndex)
     {
-        return _IsSysExFile ? 0 : (t_uint32)_Container.GetSubSong(subSongIndex);
+        return _IsSysExFile ? 0 : (unsigned) _Container.GetSubSong(subSongIndex);
     }
 
     void get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_callback & abortHandler);
     #pragma endregion
 
     #pragma region("input_info_reader_v2")
-    t_filestats2 get_stats2(uint32_t, abort_callback&)
+    t_filestats2 get_stats2(uint32_t, abort_callback &)
     {
         return _FileStats2;
     }
 
-    t_filestats get_file_stats(abort_callback&)
+    t_filestats get_file_stats(abort_callback &)
     {
         return _FileStats;
     }
     #pragma endregion
 
     #pragma region("input_info_writer")
-    void retag_set_info(t_uint32, const file_info& fileInfo, abort_callback & abortHandler);
+    void retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler);
 
     void retag_commit(abort_callback &) { }
 

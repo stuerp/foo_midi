@@ -1,5 +1,5 @@
 
-/** MT32Player.cpp (2013.01.15) **/
+/** $VER: MT32Player.cpp (2013.08.19) **/
 
 #include "MT32Player.h"
 
@@ -122,13 +122,13 @@ void MT32Player::Shutdown()
     _IsInitialized = false;
 }
 
-void MT32Player::Render(audio_sample * sampleData, unsigned long sampleCount)
+void MT32Player::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     MT32Emu::Bit16s Data[256 * 2];
 
-    while (sampleCount > 0)
+    while (sampleCount != 0)
     {
-        unsigned long ToDo = sampleCount;
+        uint32_t ToDo = sampleCount;
 
         if (ToDo > 256)
             ToDo = 256;
