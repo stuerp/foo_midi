@@ -317,7 +317,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
             uint32_t Begin = (uint32_t) ::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int) _SampleRate, 1000);
-            uint32_t End = Begin + _SampleRate * _FadeDuration / 1000;
+            uint32_t End = Begin + (uint32_t) ::MulDiv((int) _FadeDuration, (int) _SampleRate, 1000);
 
             _FadeRange.Set(Begin, End);
             _IsLooping = true;
@@ -1092,10 +1092,10 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
     {
         uint32_t LengthInMs = _Container.GetDuration(subSongIndex, true);
 
-        _LengthInSamples = (uint32_t) (((__int64) LengthInMs * (__int64) _SampleRate) / 1000U);
+        _LengthInSamples = (uint32_t) ::MulDiv((int) LengthInMs, (int) _SampleRate, 1000);
 
         if (_LoopType == NeverLoopAddDecayTime)
-            _LengthInSamples += _SampleRate;
+            _LengthInSamples += _SampleRate * CfgDecayTime * 0.001;
 
         if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
@@ -1105,7 +1105,7 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
             if (!_LoopInMs.HasEnd())
                 _LoopInMs.SetEnd(LengthInMs);
 
-//          _LengthInSamples = ((_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration) * _SampleRate) / 1000U;
+            _LengthInSamples = (uint32_t) ::MulDiv((int) (_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount) + _FadeDuration), (int) _SampleRate, 1000);
         }
     }
 }
