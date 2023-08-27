@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.h (2023.08.19) **/
+/** $VER: MIDIPlayer.h (2023.08.27) **/
 
 #pragma once
 
@@ -25,7 +25,7 @@ public:
     };
 
     bool Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, LoopMode loopMode, uint32_t cleanFlags);
-    size_t Play(audio_sample * samples, size_t samplesSize);
+    uint32_t Play(audio_sample * samples, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
     void SetSampleRate(uint32_t sampleRate);
@@ -90,11 +90,11 @@ private:
 
 private:
     std::vector<MIDIStreamEvent> _Stream;
-
     size_t _CurrentPosition; // Current position in the MIDI stream
-    size_t _CurrentTime;
-    size_t _EndTime;
-    size_t _SamplesRemaining;
+
+    uint32_t _TimeInSamples;
+    uint32_t _TimeInSamplesRemaining;
+    uint32_t _LengthInSamples;
 
     uint32_t _LoopMode;
 

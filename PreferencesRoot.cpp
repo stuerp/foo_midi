@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.08.14) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2023.08.27) P. Stuer **/
 
 #include <CppCoreCheck/Warnings.h>
 

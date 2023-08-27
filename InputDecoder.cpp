@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.08.19) **/
+/** $VER: InputDecoder.cpp (2023.08.27) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -190,7 +190,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     _PlayerType = (PlayerType) (uint32_t) CfgPlayerType;
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
-    _SamplesPlayed = 0;
+    _TimeInSamples = 0;
 
     InitializeTime(subSongIndex);
 
@@ -795,16 +795,16 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
     if (_Player)
     {
-        const size_t SamplesToDo = 4096;
+        const uint32_t SamplesToDo = 4096;
         const uint32_t ChannelCount = _Player->GetChannelCount();
 
-        audioChunk.set_data_size(SamplesToDo * ChannelCount);
+        audioChunk.set_data_size((t_size) SamplesToDo * ChannelCount);
 
         audio_sample * Samples = audioChunk.get_data();
 
         _Player->SetAbortHandler(&abortHandler);
 
-        size_t SamplesDone = _Player->Play(Samples, SamplesToDo);
+        uint32_t SamplesDone = _Player->Play(Samples, SamplesToDo);
 
         if (SamplesDone == 0)
         {
@@ -826,10 +826,10 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     // Scale the samples if fading was requested.
     if (Success && _FadeRange.IsSet())
     {
-        uint32_t BeginOfChunk = _SamplesPlayed;
-        uint32_t EndOfChunk   = _SamplesPlayed + (uint32_t)audioChunk.get_sample_count();
+        uint32_t BeginOfChunk = _TimeInSamples;
+        uint32_t EndOfChunk   = _TimeInSamples + (uint32_t) audioChunk.get_sample_count();
 
-        _SamplesPlayed = EndOfChunk;
+        _TimeInSamples = EndOfChunk;
 
         if (EndOfChunk >= _FadeRange.Begin())
         {
@@ -869,18 +869,18 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 /// </summary>
 void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
 {
-    uint32_t OffsetInSamples = (uint32_t)audio_math::time_to_samples(timeInSeconds, 1000U);
-
-    _SamplesPlayed = (uint32_t)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000U);
+    _TimeInSamples = (uint32_t) (timeInSeconds * _SampleRate);
     _IsFirstChunk = true;
     _IsEndOfContainer = false;
 
-    if (OffsetInSamples > _LoopInMs.End())
-        OffsetInSamples = (OffsetInSamples - _LoopInMs.Begin()) % _LoopInMs.Size() + _LoopInMs.Begin();
+    uint32_t OffsetInMs = (uint32_t) (timeInSeconds * 1000.);
 
-    uint32_t SeekTime = (uint32_t)((t_int64(OffsetInSamples) * t_int64(_SampleRate)) / 1000U);
+    if (OffsetInMs > _LoopInMs.End())
+        OffsetInMs = _LoopInMs.Begin() + (OffsetInMs - _LoopInMs.Begin()) % _LoopInMs.Size();
 
-    if ((_LengthInSamples != 0U) && (SeekTime >= (_LengthInSamples - _SampleRate)))
+    uint32_t TimeInSamples = (uint32_t) ::MulDiv((int) OffsetInMs, (int) _SampleRate, 1000);
+
+    if ((_LengthInSamples != 0U) && (TimeInSamples >= (_LengthInSamples - _SampleRate)))
     {
         _IsEndOfContainer = true;
         return;
@@ -899,7 +899,7 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
 #endif
     if (_Player)
     {
-        _Player->Seek(SeekTime);
+        _Player->Seek(TimeInSamples);
         return;
     }
 }
@@ -946,24 +946,24 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         timestampDelta = 0.;
     }
 
-    uint32_t VoiceCount = 0;
-
-    if (_PlayerType == PlayerType::FluidSynth)
-    {
-        auto Player = (FSPlayer *) _Player;
-
-        VoiceCount = Player->GetActiveVoiceCount();
-    }
-    else
-    if (_PlayerType == PlayerType::BASSMIDI)
-    {
-        auto Player = (BMPlayer *) _Player;
-
-        VoiceCount = Player->GetActiveVoiceCount();
-    }
-
     if ((_PlayerType == PlayerType::FluidSynth) || (_PlayerType == PlayerType::BASSMIDI))
     {
+        uint32_t VoiceCount = 0;
+
+        if (_PlayerType == PlayerType::FluidSynth)
+        {
+            auto Player = (FSPlayer *) _Player;
+
+            VoiceCount = Player->GetActiveVoiceCount();
+        }
+        else
+        if (_PlayerType == PlayerType::BASSMIDI)
+        {
+            auto Player = (BMPlayer *) _Player;
+
+            VoiceCount = Player->GetActiveVoiceCount();
+        }
+
         if (VoiceCount != _ActiveVoiceCount)
         {
             fileInfo.info_set_int(TagMIDIActiveVoices, (t_int64) VoiceCount);
@@ -1007,10 +1007,10 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 
         double LengthInSeconds = (double) LengthInMs * 0.001;
 
-        if (_LoopTypeOther == NeverLoopAdd1sDecay)
-            LengthInSeconds += 1.;
+        if (_LoopTypePlayback == NeverLoopAddDecayTime)
+            LengthInSeconds += CfgDecayTime * 0.001;
 
-        if ((_LoopTypeOther > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
+        if ((_LoopTypePlayback > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
             if (!_LoopInMs.HasBegin())
                 _LoopInMs.SetBegin(0);
@@ -1094,7 +1094,7 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
 
         _LengthInSamples = (uint32_t) (((__int64) LengthInMs * (__int64) _SampleRate) / 1000U);
 
-        if (_LoopType == NeverLoopAdd1sDecay)
+        if (_LoopType == NeverLoopAddDecayTime)
             _LengthInSamples += _SampleRate;
 
         if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())

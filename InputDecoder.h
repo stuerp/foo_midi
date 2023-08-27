@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.08.19) **/
+/** $VER: InputDecoder.h (2023.08.27) **/
 
 #pragma once
 
@@ -74,6 +74,8 @@ public:
         _LoopType(),
         _LoopTypePlayback((uint32_t) CfgLoopTypePlayback),
         _LoopTypeOther((uint32_t) CfgLoopTypeOther),
+        _LoopCount((uint32_t) AdvCfgLoopCount.get()),
+        _FadeDuration((uint32_t) AdvCfgFadeTimeInMS.get()),
 
         _LoopInTicks(),
         _LoopInMs(),
@@ -87,10 +89,6 @@ public:
         _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
                                  (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
                                  (CfgFilterBanks ? MIDIContainer::CleanFlagBanks : 0);
-
-        _LoopCount    = (uint32_t) AdvCfgLoopCount.get();
-        _FadeDuration = (uint32_t) AdvCfgFadeTimeInMS.get();
-
     #ifdef DXISUPPORT
         dxiProxy = nullptr;
     #endif
@@ -268,17 +266,16 @@ private:
     uint32_t _LoopTypePlayback;
     uint32_t _LoopTypeOther;
     uint32_t _LoopCount;
+    uint32_t _FadeDuration; // in ms
 
     Range _LoopInTicks;
     Range _LoopInMs;
+    Range _FadeRange;
 
     uint32_t _LengthInSamples;
 
-    uint32_t _SamplesPlayed;
+    uint32_t _TimeInSamples;
     uint32_t _SamplesDone;
-
-    uint32_t _FadeDuration; // in ms
-    Range _FadeRange;
 
     uint32_t _CleanFlags;
 

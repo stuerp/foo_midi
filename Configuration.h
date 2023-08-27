@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.08.13) **/
+/** $VER: Configuration.h (2023.08.27) **/
 
 #pragma once
 
@@ -80,7 +80,7 @@ enum
 enum LoopType
 {
     NeverLoop = 0,                      // Never loop
-    NeverLoopAdd1sDecay = 1,            // Never loop, 1s decay time
+    NeverLoopAddDecayTime = 1,          // Never loop, add configured decay time at the end
 
     LoopAndFadeWhenDetected = 2,        // Loop and fade when detected
     LoopAndFadeAlways = 3,              // Loop and fade always
