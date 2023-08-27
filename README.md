@@ -57,7 +57,7 @@ The following libraries are included in the code:
 * [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
 * [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 * [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
-* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.2
+* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.3
 
 To create the deployment package you need:
 
@@ -100,6 +100,8 @@ branch. Pull requests are warmly welcomed.
 v2.9.1.0, 2023-xx-xx, *""*
 
 * Improved: The decay time is now configurable. The default is still 1s (1000ms).
+* Bug Fix: FluidSynth did not respect the preferred sample rate.
+* Bug Fix: FluidSynth did not save two settings in a preset.
 
 v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
 
