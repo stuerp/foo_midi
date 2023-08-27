@@ -424,9 +424,7 @@ bool VSTiPlayer::StartHost()
 
     #ifdef _DEBUG
         FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ")");
-    #endif
-
-    #ifdef NDEBUG
+    #else
         ::SetPriorityClass(_hProcess, ::GetPriorityClass(::GetCurrentProcess()));
         ::SetThreadPriority(_hThread, ::GetThreadPriority(::GetCurrentThread()));
     #endif

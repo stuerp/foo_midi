@@ -43,18 +43,18 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
 
     _CurrentPosition = 0;
     _TimeInSamples = 0;
-    _LengthInSamples = (size_t) midiContainer.GetDuration(subsongIndex, true) + CfgDecayTime;
+    _LengthInSamples = midiContainer.GetDuration(subsongIndex, true) + CfgDecayTime;
 
-    _LoopMode = (LoopMode) loopMode;
+    _LoopMode = (uint32_t) loopMode;
 
-    if (_LoopMode & LoopModeEnabled)
+    if (_LoopMode & LoopMode::Enabled)
     {
         _LoopBeginTime = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
 
         uint32_t LoopEndTime = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
 
         if (_LoopBeginTime != ~0UL || LoopEndTime != ~0UL)
-            _LoopMode |= LoopModeForced;
+            _LoopMode |= LoopMode::Forced;
 
         if (_LoopBeginTime == ~0UL)
             _LoopBeginTime = 0;
@@ -62,7 +62,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
         if (LoopEndTime == ~0UL)
             LoopEndTime =  _LengthInSamples - CfgDecayTime;
 
-        if ((_LoopMode & LoopModeForced))
+        if ((_LoopMode & LoopMode::Forced))
         {
             constexpr size_t NoteOnSize = (size_t) 128 * 16;
 
@@ -98,8 +98,8 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
 
                 _LengthInSamples = LoopEndTime - 1;
 
-                if (_LengthInSamples < (size_t) _Stream.at(i - 1).Timestamp)
-                    _LengthInSamples = (size_t) _Stream.at(i - 1).Timestamp;
+                if (_LengthInSamples < _Stream.at(i - 1).Timestamp)
+                    _LengthInSamples = _Stream.at(i - 1).Timestamp;
             }
 
             for (size_t i = 0; i < NoteOnSize; ++i)
@@ -142,7 +142,7 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
     if (!Startup())
         return 0;
 
-console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _TimeInSamples, _LengthInSamples, _TimeInSamplesRemaining, sampleCount);
+//  console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _TimeInSamples, _LengthInSamples, _TimeInSamplesRemaining, sampleCount);
 
     const uint32_t BlockSize = GetSampleBlockSize();
 
@@ -208,7 +208,7 @@ console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _TimeInSamples, _Lengt
 
                     if (ToDo > 0)
                     {
-                        if (ToDo > (int64_t)(sampleCount - SamplesDone))
+                        if (ToDo > (int64_t) (sampleCount - SamplesDone))
                         {
                             _TimeInSamplesRemaining = (ToDo - (int64_t) (sampleCount - SamplesDone));
                             ToDo = (int64_t) (sampleCount - SamplesDone);
@@ -229,7 +229,7 @@ console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _TimeInSamples, _Lengt
                         }
                     }
 
-                    if (BlockSize > 0)
+                    if (BlockSize != 0)
                     {
                         BlockOffset += ToDo;
 
@@ -261,14 +261,14 @@ console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _TimeInSamples, _Lengt
 
             SamplesToDo -= _TimeInSamples;
 
-            if (BlockSize > 0)
+            if (BlockSize != 0)
                 BlockOffset = SamplesToDo;
 
             {
                 if (SamplesToDo > sampleCount - SamplesDone)
                     SamplesToDo = sampleCount - SamplesDone;
 
-                if ((BlockSize > 0) && (SamplesToDo > BlockSize))
+                if ((BlockSize != 0) && (SamplesToDo > BlockSize))
                     SamplesToDo = BlockSize;
             }
 
@@ -281,7 +281,7 @@ console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _TimeInSamples, _Lengt
                     _TimeInSamples += SamplesToDo;
                 }
 
-                if (BlockSize > 0)
+                if (BlockSize != 0)
                     BlockOffset -= SamplesToDo;
             }
         }
@@ -295,14 +295,14 @@ console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _TimeInSamples, _Lengt
             {
                 for (; _CurrentPosition < _Stream.size(); _CurrentPosition++)
                 {
-                    if (BlockSize > 0)
+                    if (BlockSize != 0)
                         SendEventFiltered(_Stream.at(_CurrentPosition).Data, BlockOffset);
                     else
                         SendEventFiltered(_Stream.at(_CurrentPosition).Data);
                 }
             }
 
-            if ((_LoopMode & (LoopModeEnabled | LoopModeForced)) == (LoopModeEnabled | LoopModeForced))
+            if (_LoopMode == (LoopMode::Enabled | LoopMode::Forced))
             {
                 if (_LoopBegin == ~0)
                 {
@@ -332,7 +332,7 @@ void MIDIPlayer::Seek(uint32_t timeInSamples)
 {
     if (timeInSamples >= _LengthInSamples)
     {
-        if ((_LoopMode & (LoopModeEnabled | LoopModeForced)) == (LoopModeEnabled | LoopModeForced))
+        if (_LoopMode == (LoopMode::Enabled | LoopMode::Forced))
         {
             while (timeInSamples >= _LengthInSamples)
                 timeInSamples -= (uint32_t) (_LengthInSamples - _LoopBeginTime);
@@ -507,19 +507,6 @@ void MIDIPlayer::SetSampleRate(uint32_t sampleRate)
     Shutdown();
 }
 
-void MIDIPlayer::SetLoopMode(LoopMode loopMode)
-{
-    if (_LoopMode == (uint32_t) loopMode)
-        return;
-
-    if (loopMode & LoopModeEnabled)
-        _LengthInSamples -= _SampleRate;
-    else
-        _LengthInSamples += _SampleRate;
-
-    _LoopMode = loopMode;
-}
-
 /// <summary>
 /// Configures the MIDI player.
 /// </summary>
@@ -573,7 +560,7 @@ void MIDIPlayer::SendEventFiltered(uint32_t data, uint32_t time)
         {
             const uint32_t Data = data & 0x00007FF0u;
 
-            // Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
+            // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
             if (Data == 0x5BB0 || Data == 0x5DB0)
                 return;
         }

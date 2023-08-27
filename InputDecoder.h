@@ -283,7 +283,6 @@ private:
 
     uint32_t _BASSMIDIInterpolationMode;
 
-    bool _IsLooping;
     bool _IsEndOfContainer;
     bool _IsFirstChunk;
 

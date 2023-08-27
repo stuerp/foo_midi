@@ -312,41 +312,40 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         _SampleRate = (uint32_t) MT32Player::GetSampleRate();
 
     // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
-    if ((flags & input_flag_no_looping) || (_LoopType < PlayIndefinitelyWhenDetected))
-    {
-        if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
-        {
-            uint32_t Begin = (uint32_t) ::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int) _SampleRate, 1000);
-            uint32_t End = Begin + (uint32_t) ::MulDiv((int) _FadeDuration, (int) _SampleRate, 1000);
+    MIDIPlayer::LoopMode LoopMode = MIDIPlayer::LoopMode::None;
 
-            _FadeRange.Set(Begin, End);
-            _IsLooping = true;
+    if (!(flags & input_flag_no_looping))
+    {
+        if (_LoopType < PlayIndefinitelyWhenDetected)
+        {
+            if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
+            {
+                uint32_t Begin =       (uint32_t) ::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int) _SampleRate, 1000);
+                uint32_t End = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                        (int) _SampleRate, 1000);
+
+                _FadeRange.Set(Begin, End);
+                LoopMode = (MIDIPlayer::LoopMode) (MIDIPlayer::LoopMode::Enabled | MIDIPlayer::LoopMode::Forced);
+            }
+            else
+                _FadeRange.Set(_LengthInSamples, _LengthInSamples);
         }
         else
         {
-            _FadeRange.Set(_LengthInSamples, _LengthInSamples);
-            _IsLooping = false;
+            if ((_LoopType == PlayIndefinitely) || _LoopInTicks.IsSet())
+            {
+                _FadeRange.Clear();
+                LoopMode = (MIDIPlayer::LoopMode) (MIDIPlayer::LoopMode::Enabled | MIDIPlayer::LoopMode::Forced);
+            }
+            else
+                _FadeRange.Set(_LengthInSamples, _LengthInSamples);
         }
     }
     else
-    {
-        if ((_LoopType == PlayIndefinitely) || _LoopInTicks.IsSet())
-        {
-            _FadeRange.Clear();
-            _IsLooping = true;
-        }
-        else
-        {
-            _FadeRange.Set(_LengthInSamples, _LengthInSamples);
-            _IsLooping = false;
-        }
-    }
+        _FadeRange.Clear();
 
     // Create and initialize the MIDI player.
     delete _Player;
     _Player = nullptr;
-
-    MIDIPlayer::LoopMode LoopMode = (MIDIPlayer::LoopMode) ((int) MIDIPlayer::LoopModeEnabled | (_IsLooping ? (int) MIDIPlayer::LoopModeForced : 0));
 
     switch (_PlayerType)
     {
@@ -1095,7 +1094,7 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
         _LengthInSamples = (uint32_t) ::MulDiv((int) LengthInMs, (int) _SampleRate, 1000);
 
         if (_LoopType == NeverLoopAddDecayTime)
-            _LengthInSamples += _SampleRate * CfgDecayTime * 0.001;
+            _LengthInSamples += (uint32_t) ((double) _SampleRate * CfgDecayTime * 0.001);
 
         if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
@@ -1119,10 +1118,8 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string
     {
         "json",
         "sflist",
-#ifdef SF2PACK
         "sf2pack",
         "sfogg",
-#endif
         "sf2",
         "sf3"
     };

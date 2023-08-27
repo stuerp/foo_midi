@@ -1,5 +1,5 @@
 
-/** $VER: Range.h (2023.07.23) P. Stuer **/
+/** $VER: Range.h (2023.08.27) P. Stuer **/
 
 #pragma once
 
@@ -12,15 +12,21 @@ class Range
 {
 public:
     Range() noexcept  { Clear(); }
+
+    Range(const Range &) = delete;
+    Range(Range && other) { _Begin = other._Begin; _End = other._End; }
+    Range & operator=(const Range &) = delete;
+    Range & operator=(Range && other) { _Begin = other._Begin; _End = other._End; return *this; }
+
     virtual ~Range() noexcept { }
 
     uint32_t Begin() const noexcept { return _Begin; }
     uint32_t End() const noexcept { return _End; }
 
-    void Set(uint32_t begin, uint32_t end) noexcept { _Begin = begin; _End = end; }
     void SetBegin(uint32_t begin) noexcept { _Begin = begin; }
     void SetEnd(uint32_t end) noexcept { _End = end; }
-    void Clear() { Set(~0u, ~0u); }
+    void Clear() noexcept { Set(~0u, ~0u); }
+    void Set(uint32_t begin, uint32_t end) noexcept { _Begin = begin; _End = end; }
 
     uint32_t Size() const noexcept { return _End - _Begin; }
 

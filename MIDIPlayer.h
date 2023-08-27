@@ -20,8 +20,9 @@ public:
 
     enum LoopMode
     {
-        LoopModeEnabled = 0x01,
-        LoopModeForced = 0x02
+        None = 0x00,
+        Enabled = 0x01,
+        Forced = 0x02
     };
 
     bool Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, LoopMode loopMode, uint32_t cleanFlags);
@@ -29,8 +30,6 @@ public:
     void Seek(uint32_t seekTime);
 
     void SetSampleRate(uint32_t sampleRate);
-
-    void SetLoopMode(LoopMode loopMode);
 
     enum class ConfigurationType
     {

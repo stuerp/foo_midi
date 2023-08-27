@@ -380,9 +380,7 @@ bool SCPlayer::StartHost(uint32_t port)
 
     #ifdef _DEBUG
         FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess[port], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread[port], 8), ")");
-    #endif
-
-    #ifdef NDEBUG
+    #else
         ::SetPriorityClass(_hProcess[port], ::GetPriorityClass(::GetCurrentProcess()));
         ::SetThreadPriority(_hThread[port], ::GetThreadPriority(::GetCurrentThread()));
     #endif
