@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.cpp (2023.08.19) **/
+/** $VER: MIDIPlayer.cpp (2023.08.27) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -20,18 +20,17 @@ MIDIPlayer::MIDIPlayer()
         _MusicKeyboard = api->GetMusicKeyboard();
     #endif
 
-    _SamplesRemaining = 0;
     _SampleRate = 1000;
-    _CurrentTime = 0;
-    _EndTime = 0;
-    _LoopBeginTime = 0;
+    _LengthInSamples = 0;
+    _TimeInSamples = 0;
+    _TimeInSamplesRemaining = 0;
     _IsInitialized = false;
 }
 
 /// <summary>
 /// Loads the specified MIDI container.
 /// </summary>
-bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, LoopMode loopMode, uint32_t cleanFlags)
+bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, uint32_t cleanFlags)
 {
     assert(_Stream.size() == 0);
 
@@ -41,83 +40,8 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
         return false;
 
     _CurrentPosition = 0;
-    _CurrentTime = 0;
-    _EndTime = (size_t) midiContainer.GetDuration(subsongIndex, true) + CfgDecayTime;
-
-    _LoopMode = (LoopMode) loopMode;
-
-    if (_LoopMode & LoopModeEnabled)
-    {
-        _LoopBeginTime = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
-
-        size_t LoopEndTime = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
-
-        if (_LoopBeginTime != ~0UL || LoopEndTime != ~0UL)
-            _LoopMode |= LoopModeForced;
-
-        if (_LoopBeginTime == ~0UL)
-            _LoopBeginTime = 0;
-
-        if (LoopEndTime == ~0UL)
-            LoopEndTime =  _EndTime - CfgDecayTime;
-
-        if ((_LoopMode & LoopModeForced))
-        {
-            constexpr size_t NoteOnSize = (size_t) 128 * 16;
-
-            std::vector<uint8_t> NoteOn(NoteOnSize, 0);
-
-            {
-                size_t i;
-
-                for (i = 0; (i < _Stream.size()) && (i < _LoopEnd); ++i)
-                {
-                    uint32_t Message = _Stream.at(i).Data;
-
-                    uint32_t Event = Message & 0x800000F0;
-
-                    if (Event == StatusCodes::NoteOn || Event == StatusCodes::NoteOff)
-                    {
-                        const unsigned long Port     = (Message >> 24) & 0x7F;
-                        const unsigned long Velocity = (Message >> 16) & 0xFF;
-                        const unsigned long Note     = (Message >>  8) & 0x7F;
-                        const unsigned long Channel  =  Message        & 0x0F;
-
-                        const bool IsNoteOn = (Event == StatusCodes::NoteOn) && (Velocity > 0);
-
-                        const unsigned long bit = (unsigned long) (1 << Port);
-
-                        size_t Index = (size_t) Channel * 128 + Note;
-
-                        NoteOn.at(Index) = (uint8_t) ((NoteOn.at(Index) & ~bit) | (bit * IsNoteOn));
-                    }
-                }
-
-                _Stream.resize(i);
-
-                _EndTime = LoopEndTime - 1;
-
-                if (_EndTime < (size_t) _Stream.at(i - 1).Timestamp)
-                    _EndTime = (size_t) _Stream.at(i - 1).Timestamp;
-            }
-
-            for (size_t i = 0; i < NoteOnSize; ++i)
-            {
-                if (NoteOn.at(i))
-                {
-                    for (size_t j = 0; j < 8; ++j)
-                    {
-                        if (NoteOn.at(i) & (1 << j))
-                        {
-                            _Stream.push_back(MIDIStreamEvent((uint32_t) _EndTime, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
-                        }
-                    }
-                }
-            }
-
-            _EndTime = LoopEndTime;
-        }
-    }
+    _TimeInSamples = 0;
+    _LengthInSamples = midiContainer.GetDuration(subsongIndex, true);
 
     if (_SampleRate != 1000)
     {
@@ -134,22 +58,23 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
 /// <summary>
 /// Renders the specified number of samples to an audio sample buffer.
 /// </summary>
-size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
+uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexcept
 {
     assert(_Stream.size());
 
     if (!Startup())
         return 0;
 
+console::printf("Cur: %08d, End: %08d, Rem: %08d, Cnt: %08d", _TimeInSamples, _LengthInSamples, _TimeInSamplesRemaining, sampleCount);
+
     const uint32_t BlockSize = GetSampleBlockSize();
 
-    size_t BlockOffset = 0;
+    uint32_t BlockOffset = 0;
+    uint32_t SamplesDone = 0;
 
-    size_t SamplesDone = 0;
-
-    while ((SamplesDone < sampleCount) && (_SamplesRemaining > 0))
+    while ((SamplesDone < sampleCount) && (_TimeInSamplesRemaining > 0))
     {
-        size_t SamplesToDo = _SamplesRemaining;
+        uint32_t SamplesToDo = _TimeInSamplesRemaining;
 
         {
             if (SamplesToDo > sampleCount - SamplesDone)
@@ -161,29 +86,29 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
 
         if (SamplesToDo < BlockSize)
         {
-            _SamplesRemaining = 0;
+            _TimeInSamplesRemaining = 0;
             BlockOffset = SamplesToDo;
             break;
         }
 
         {
-            Render(sampleData + (SamplesDone * 2), (uint32_t) SamplesToDo);
+            Render(sampleData + (SamplesDone * 2), SamplesToDo);
 
             SamplesDone += SamplesToDo;
-            _CurrentTime += SamplesToDo;
+            _TimeInSamples += SamplesToDo;
         }
 
-        _SamplesRemaining -= SamplesToDo;
+        _TimeInSamplesRemaining -= SamplesToDo;
     }
 
     while (SamplesDone < sampleCount)
     {
-        size_t TimeToDo = _EndTime - _CurrentTime;
+        uint32_t TimeToDo = _LengthInSamples - _TimeInSamples;
 
         if (TimeToDo > sampleCount - SamplesDone)
             TimeToDo = sampleCount - SamplesDone;
 
-        const size_t TargetTime = _CurrentTime + TimeToDo;
+        const uint32_t TargetTime = _TimeInSamples + TimeToDo;
 
         {
             size_t TargetPosition = _CurrentPosition;
@@ -202,34 +127,34 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
                         _MusicKeyboard->ProcessMessage(me.Data, me.Timestamp);
                 #endif
 
-                    int64_t ToDo = (int64_t) me.Timestamp - (int64_t) _CurrentTime - (int64_t) BlockOffset;
+                    uint32_t ToDo = me.Timestamp - _TimeInSamples - BlockOffset;
 
                     if (ToDo > 0)
                     {
-                        if (ToDo > (int64_t)(sampleCount - SamplesDone))
+                        if (ToDo > (sampleCount - SamplesDone))
                         {
-                            _SamplesRemaining = (size_t) (ToDo - (int64_t) (sampleCount - SamplesDone));
-                            ToDo = (int64_t) (sampleCount - SamplesDone);
+                            _TimeInSamplesRemaining = (ToDo - (sampleCount - SamplesDone));
+                            ToDo = sampleCount - SamplesDone;
                         }
 
                         if ((ToDo > 0) && (BlockSize == 0))
                         {
-                            Render(sampleData + SamplesDone * 2, (uint32_t) ToDo);
+                            Render(sampleData + SamplesDone * 2, ToDo);
 
-                            SamplesDone += (size_t) ToDo;
-                            _CurrentTime += (size_t) ToDo;
+                            SamplesDone += ToDo;
+                            _TimeInSamples += ToDo;
                         }
 
-                        if (_SamplesRemaining > 0)
+                        if (_TimeInSamplesRemaining > 0)
                         {
-                            _SamplesRemaining += BlockOffset;
+                            _TimeInSamplesRemaining += BlockOffset;
                             return SamplesDone;
                         }
                     }
 
                     if (BlockSize > 0)
                     {
-                        BlockOffset += (size_t) ToDo;
+                        BlockOffset += ToDo;
 
                         while (BlockOffset >= BlockSize)
                         {
@@ -237,10 +162,10 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
 
                             SamplesDone += BlockSize;
                             BlockOffset -= BlockSize;
-                            _CurrentTime += BlockSize;
+                            _TimeInSamples += BlockSize;
                         }
 
-                        SendEventFiltered(me.Data, (uint32_t) BlockOffset);
+                        SendEventFiltered(me.Data, BlockOffset);
                     }
                     else
                         SendEventFiltered(me.Data);
@@ -250,14 +175,14 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
 
         if (SamplesDone < sampleCount)
         {
-            size_t SamplesToDo;
+            uint32_t SamplesToDo;
 
             if (_CurrentPosition < _Stream.size())
                 SamplesToDo = _Stream.at(_CurrentPosition).Timestamp;
             else
-                SamplesToDo = _EndTime;
+                SamplesToDo = _LengthInSamples;
 
-            SamplesToDo -= _CurrentTime;
+            SamplesToDo -= _TimeInSamples;
 
             if (BlockSize > 0)
                 BlockOffset = SamplesToDo;
@@ -273,10 +198,10 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
             if (SamplesToDo >= BlockSize)
             {
                 {
-                    Render(sampleData + (SamplesDone * 2), (uint32_t) SamplesToDo);
+                    Render(sampleData + (SamplesDone * 2), SamplesToDo);
 
                     SamplesDone += SamplesToDo;
-                    _CurrentTime += SamplesToDo;
+                    _TimeInSamples += SamplesToDo;
                 }
 
                 if (BlockSize > 0)
@@ -285,63 +210,38 @@ size_t MIDIPlayer::Play(audio_sample * sampleData, size_t sampleCount)
         }
 
         if (BlockSize == 0)
-            _CurrentTime = TargetTime;
+            _TimeInSamples = TargetTime;
 
-        if (TargetTime >= _EndTime)
+        if (TargetTime >= _LengthInSamples)
         {
             if (_CurrentPosition < _Stream.size())
             {
                 for (; _CurrentPosition < _Stream.size(); _CurrentPosition++)
                 {
                     if (BlockSize > 0)
-                        SendEventFiltered(_Stream.at(_CurrentPosition).Data, (uint32_t) BlockOffset);
+                        SendEventFiltered(_Stream.at(_CurrentPosition).Data, BlockOffset);
                     else
                         SendEventFiltered(_Stream.at(_CurrentPosition).Data);
                 }
             }
-
-            if ((_LoopMode & (LoopModeEnabled | LoopModeForced)) == (LoopModeEnabled | LoopModeForced))
-            {
-                if (_LoopBegin == ~0)
-                {
-                    _CurrentPosition = 0;
-                    _CurrentTime = 0;
-                }
-                else
-                {
-                    _CurrentPosition = _LoopBegin;
-                    _CurrentTime = _LoopBeginTime;
-                }
-            }
-            else
-                break;
+            break;
         }
     }
 
-    _SamplesRemaining = BlockOffset;
+    _TimeInSamplesRemaining = BlockOffset;
 
     return SamplesDone;
 }
 
 /// <summary>
-/// Seeks to the specified time (in ms)
+/// Seeks to the specified time (in samples)
 /// </summary>
-void MIDIPlayer::Seek(uint32_t seekTime)
+void MIDIPlayer::Seek(uint32_t timeInSamples)
 {
-    if (seekTime >= _EndTime)
-    {
-        if ((_LoopMode & (LoopModeEnabled | LoopModeForced)) == (LoopModeEnabled | LoopModeForced))
-        {
-            while (seekTime >= _EndTime)
-                seekTime -= (uint32_t) (_EndTime - _LoopBeginTime);
-        }
-        else
-        {
-            seekTime = (uint32_t) _EndTime;
-        }
-    }
+    if (timeInSamples >= _LengthInSamples)
+        timeInSamples = _LengthInSamples;
 
-    if (_CurrentTime > seekTime)
+    if (_TimeInSamples > timeInSamples)
     {
         _CurrentPosition = 0;
 
@@ -352,19 +252,19 @@ void MIDIPlayer::Seek(uint32_t seekTime)
     if (!Startup())
         return;
 
-    _CurrentTime = seekTime;
+    _TimeInSamples = timeInSamples;
 
+    // Find the position in the MIDI stream that corresponds with the seek time.
     size_t OldCurrentPosition = _CurrentPosition;
 
     {
-        // Find the position in the MIDI stream that corresponds with the seek time.
-        for (; (_CurrentPosition < _Stream.size()) && (_Stream.at(_CurrentPosition).Timestamp < _CurrentTime); _CurrentPosition++)
+        for (; (_CurrentPosition < _Stream.size()) && (_Stream.at(_CurrentPosition).Timestamp < _TimeInSamples); _CurrentPosition++)
             ;
 
         if (_CurrentPosition == _Stream.size())
-            _SamplesRemaining = (size_t) _EndTime - _CurrentTime;
+            _TimeInSamplesRemaining = _LengthInSamples - _TimeInSamples;
         else
-            _SamplesRemaining = (size_t) _Stream.at(_CurrentPosition).Timestamp - _CurrentTime;
+            _TimeInSamplesRemaining = _Stream.at(_CurrentPosition).Timestamp - _TimeInSamples;
     }
 
     if (_CurrentPosition <= OldCurrentPosition)
@@ -409,7 +309,37 @@ void MIDIPlayer::Seek(uint32_t seekTime)
 
     const uint32_t BlockSize = GetSampleBlockSize();
 
-    if (BlockSize != 0)
+    if (BlockSize == 0) // Most of the players
+    {
+        audio_sample * Temp = new audio_sample[16 * 2];
+
+        if (Temp)
+        {
+            Render(Temp, 16);
+
+            uint32_t LastTimestamp = 0;
+            bool IsTimestampSet = false;
+
+            for (size_t i = 0; i < OldCurrentPosition; ++i)
+            {
+                if (FillerEvents[i].Data != 0)
+                {
+                    if (IsTimestampSet && (FillerEvents[i].Timestamp != LastTimestamp))
+                        Render(Temp, 16);
+
+                    LastTimestamp = FillerEvents[i].Timestamp;
+                    IsTimestampSet = true;
+
+                    SendEventFiltered(FillerEvents[i].Data);
+                }
+            }
+
+            Render(Temp, 16);
+
+            delete[] Temp;
+        }
+    }
+    else // Secret Sauce and VSTi
     {
         audio_sample * Temp = new audio_sample[BlockSize * 2];
 
@@ -447,40 +377,10 @@ void MIDIPlayer::Seek(uint32_t seekTime)
             delete[] Temp;
         }
     }
-    else
-    {
-        audio_sample * Temp = new audio_sample[16 * 2];
-
-        if (Temp)
-        {
-            Render(Temp, 16);
-
-            uint32_t LastTimestamp = 0;
-            bool IsTimestampSet = false;
-
-            for (size_t i = 0; i < OldCurrentPosition; ++i)
-            {
-                if (FillerEvents[i].Data != 0)
-                {
-                    if (IsTimestampSet && (FillerEvents[i].Timestamp != LastTimestamp))
-                        Render(Temp, 16);
-
-                    LastTimestamp = FillerEvents[i].Timestamp;
-                    IsTimestampSet = true;
-
-                    SendEventFiltered(FillerEvents[i].Data);
-                }
-            }
-
-            Render(Temp, 16);
-
-            delete[] Temp;
-        }
-    }
 }
 
 /// <summary>
-/// Adjusts the timestamps to the new sample rate.
+/// Converts the timestamps of the MIDI stream (in ms) to timestamps in samples. Note: that's why the default sample rate is 1000: to force a recalculation before starting to play.
 /// </summary>
 void MIDIPlayer::SetSampleRate(uint32_t sampleRate)
 {
@@ -489,33 +389,17 @@ void MIDIPlayer::SetSampleRate(uint32_t sampleRate)
 
     if (_Stream.size() > 0)
         for (size_t i = 0; i < _Stream.size(); ++i)
-            _Stream.at(i).Timestamp = (uint32_t) ((uint64_t) _Stream.at(i).Timestamp * sampleRate / _SampleRate);
+            _Stream.at(i).Timestamp = (uint32_t) ::MulDiv((int) _Stream.at(i).Timestamp, (int) sampleRate, (int) _SampleRate);
 
-    if (_CurrentTime != 0)
-        _CurrentTime = ((uint64_t) _CurrentTime) * sampleRate / _SampleRate;
+    if (_LengthInSamples != 0)
+        _LengthInSamples = (uint32_t) ::MulDiv((int) _LengthInSamples, (int) sampleRate, (int) _SampleRate);
 
-    if (_EndTime != 0)
-        _EndTime = ((uint64_t) _EndTime) * sampleRate / _SampleRate;
-
-    if (_LoopBeginTime != 0)
-        _LoopBeginTime = ((uint64_t) _LoopBeginTime) * sampleRate / _SampleRate;
+    if (_TimeInSamples != 0)
+        _TimeInSamples = (uint32_t) ::MulDiv((int) _TimeInSamples, (int) sampleRate, (int) _SampleRate);
 
     _SampleRate = sampleRate;
 
     Shutdown();
-}
-
-void MIDIPlayer::SetLoopMode(LoopMode loopMode)
-{
-    if (_LoopMode == (uint32_t) loopMode)
-        return;
-
-    if (loopMode & LoopModeEnabled)
-        _EndTime -= _SampleRate;
-    else
-        _EndTime += _SampleRate;
-
-    _LoopMode = loopMode;
 }
 
 /// <summary>
@@ -859,7 +743,7 @@ static uint32_t GetDWord(const uint8_t * data) noexcept
 uint32_t MIDIPlayer::GetProcessorArchitecture(const std::string & filePath) const
 {
     constexpr size_t MZHeaderSize = 0x40;
-    constexpr size_t PEHeaderSize = (size_t)4 + 20 + 224;
+    constexpr size_t PEHeaderSize = (size_t) 4 + 20 + 224;
 
     uint8_t PEHeader[PEHeaderSize];
 

@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.08.19) **/
+/** $VER: InputDecoder.h (2023.08.27) **/
 
 #pragma once
 
@@ -74,6 +74,7 @@ public:
         _LoopType(),
         _LoopTypePlayback((uint32_t) CfgLoopTypePlayback),
         _LoopTypeOther((uint32_t) CfgLoopTypeOther),
+        _LoopCount((uint32_t) AdvCfgLoopCount.get()),
 
         _LoopInTicks(),
         _LoopInMs(),
@@ -88,7 +89,6 @@ public:
                                  (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
                                  (CfgFilterBanks ? MIDIContainer::CleanFlagBanks : 0);
 
-        _LoopCount    = (uint32_t) AdvCfgLoopCount.get();
         _FadeDuration = (uint32_t) AdvCfgFadeTimeInMS.get();
 
     #ifdef DXISUPPORT
@@ -212,7 +212,6 @@ public:
 private:
     void InitializeTime(size_t subsongIndex);
 
-    void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
 
     static bool GetSoundFontFilePath(const pfc::string8 filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept;
@@ -274,8 +273,7 @@ private:
 
     uint32_t _LengthInSamples;
 
-    uint32_t _SamplesPlayed;
-    uint32_t _SamplesDone;
+    uint32_t _TimeInSamples;
 
     uint32_t _FadeDuration; // in ms
     Range _FadeRange;
@@ -286,7 +284,6 @@ private:
 
     uint32_t _BASSMIDIInterpolationMode;
 
-    bool _IsLooping;
     bool _IsEndOfContainer;
     bool _IsFirstChunk;
 

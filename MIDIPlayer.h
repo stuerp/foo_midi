@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.h (2023.08.19) **/
+/** $VER: MIDIPlayer.h (2023.08.27) **/
 
 #pragma once
 
@@ -18,19 +18,11 @@ public:
     MIDIPlayer();
     virtual ~MIDIPlayer() { };
 
-    enum LoopMode
-    {
-        LoopModeEnabled = 0x01,
-        LoopModeForced = 0x02
-    };
-
-    bool Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, LoopMode loopMode, uint32_t cleanFlags);
-    size_t Play(audio_sample * samples, size_t samplesSize);
+    bool Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, uint32_t cleanFlags);
+    uint32_t Play(audio_sample * samples, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
     void SetSampleRate(uint32_t sampleRate);
-
-    void SetLoopMode(LoopMode loopMode);
 
     enum class ConfigurationType
     {
@@ -90,17 +82,14 @@ private:
 
 private:
     std::vector<MIDIStreamEvent> _Stream;
-
     size_t _CurrentPosition; // Current position in the MIDI stream
-    size_t _CurrentTime;
-    size_t _EndTime;
-    size_t _SamplesRemaining;
 
-    uint32_t _LoopMode;
+    uint32_t _TimeInSamples;
+    uint32_t _TimeInSamplesRemaining;
+    uint32_t _LengthInSamples;
 
-    uint32_t _LoopBegin;
-    uint32_t _LoopBeginTime;
-    uint32_t _LoopEnd;
+    uint32_t _LoopBegin; // in ticks
+    uint32_t _LoopEnd; // in ticks
 
     #ifdef EXPERIMENT
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;
