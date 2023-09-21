@@ -20,6 +20,8 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Getting started
 
+### Installation
+
 * Double-click `foo_midi.fbk2-component`.
 
 or
@@ -93,13 +95,14 @@ To create the component first build the x86 configuration and next the x64 confi
 ## Contributing
 
 If you'd like to contribute, please fork the repository and use a feature
-branch. Pull requests are warmly welcomed.
+branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.9.1.0, 2023-xx-xx, *""*
+v2.9.1.0, 2023-xx-xx, *"Loop de loop"*
 
 * Improved: The decay time is now configurable. The default is still 1s (1000ms).
+* Improved: Looping, fading and decay has been tweaked.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
 * Bug Fix: FluidSynth did not save two settings in a preset.
 

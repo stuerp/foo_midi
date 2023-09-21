@@ -202,10 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="3rdParty\BASS\bassflac.dll" />
-    <None Include=".gitattributes" />
-    <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
-    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

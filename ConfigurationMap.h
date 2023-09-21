@@ -1,5 +1,5 @@
 
-/** $VER: ConfigurationMap (2023.05.18) **/
+/** $VER: ConfigurationMap (2023.09.21) **/
 
 #pragma once
 
@@ -11,10 +11,10 @@
 /// <summary>
 /// Implements a configuration variable for maps.
 /// </summary>
-class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>>
+class cfg_map : public cfg_var_common, public std::map<uint32_t, std::vector<uint8_t>>
 {
 public:
-    cfg_map(const GUID& guid) : cfg_var(guid), std::map<t_uint32, std::vector<uint8_t>>() { }
+    cfg_map(const GUID& guid) : cfg_var_common(guid), std::map<t_uint32, std::vector<uint8_t>>() { }
     cfg_map(const cfg_map&) = delete;
     cfg_map(const cfg_map&&) = delete;
     cfg_map& operator=(const cfg_map&) = delete;
