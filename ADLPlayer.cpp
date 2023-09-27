@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.cpp (2023.08.19) **/
+/** $VER: ADLPlayer.cpp (2023.09.27) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -33,7 +33,9 @@ bool ADLPlayer::Startup()
         if (Player == nullptr)
             return false;
 
-        ::adl_setBank(Player, (int)_BankNumber);
+        if ((_BankFilePath.length() == 0) || (::adl_openBankFile(Player, _BankFilePath.c_str()) == -1))
+            ::adl_setBank(Player, (int)_BankNumber);
+
         ::adl_setNumChips(Player, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
         ::adl_setNumFourOpsChn(Player, (int)_4OpCount);
         ::adl_setSoftPanEnabled(Player, _FullPanning);
@@ -110,6 +112,11 @@ void ADLPlayer::setFullPanning(bool enabled)
 void ADLPlayer::set4OpCount(unsigned count)
 {
     _4OpCount = count;
+}
+
+void ADLPlayer::SetBankFilePath(pfc::string8 filePath)
+{
+    _BankFilePath = filePath;
 }
 
 void ADLPlayer::SendEvent(uint32_t message)

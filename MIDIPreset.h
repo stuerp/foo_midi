@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.h (2023.08.20) **/
+/** $VER: MIDIPreset.h (2023.09.27) **/
 
 #pragma once
 
@@ -46,6 +46,7 @@ public:
     bool _ADLUsePanning;
     bool _ADLUseChorus;
     uint32_t _ADLEmulatorCore;
+    pfc::string8 _ADLBankFilePath;
 
     // OPN
     uint32_t _OPNBankNumber;

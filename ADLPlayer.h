@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.h (2023.08.19) **/
+/** $VER: ADLPlayer.h (2023.09.27) **/
 
 #pragma once
 
@@ -30,6 +30,7 @@ public:
     void setChipCount(unsigned);
     void setFullPanning(bool);
     void set4OpCount(unsigned);
+    void SetBankFilePath(pfc::string8 filePath);
 
 protected:
     virtual bool Startup() override;
@@ -47,5 +48,6 @@ private:
     unsigned _ChipCount;
     unsigned _4OpCount;
     bool _FullPanning;
+    pfc::string8 _BankFilePath;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

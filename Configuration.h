@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.08.27) **/
+/** $VER: Configuration.h (2023.09.27) **/
 
 #pragma once
 
@@ -145,6 +145,8 @@ extern advconfig_integer_factory AdvCfgFadeTimeInMS;
 extern advconfig_radio_factory AdvCfgADLCoreNuked;
 extern advconfig_radio_factory AdvCfgADLCoreNuked074;
 extern advconfig_radio_factory AdvCfgADLCoreDOSBox;
+
+extern advconfig_string_factory AdvCfgADLBankFilePath;
 
 extern advconfig_radio_factory AdvCfgOPNCoreMAME;
 extern advconfig_radio_factory AdvCfgOPNCoreNuked;

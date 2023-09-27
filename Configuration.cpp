@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.08.13) **/
+/** $VER: Configuration.cpp (2023.09.27) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -77,30 +77,34 @@ static const GUID GUIDMIDIPlayerBranch = { 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0
     static const GUID GUIDCfgNukeBank = { 0xa91d31f4, 0x22ae, 0x4c5c, { 0xa6, 0x21, 0xf6, 0xb6, 0x1, 0x1f, 0x5d, 0xdc } };
     static const GUID GUIDCfgNukePanning = { 0x849c5c09, 0x520a, 0x4d62, { 0xa6, 0xd1, 0xe8, 0xb4, 0x32, 0x66, 0x49, 0x48 } };
 
-    static const GUID GUIDAdvCfgADLBranch = { 0x715c6e5d, 0x60bf, 0x43aa, { 0x8d, 0xa3, 0xf4, 0xf3, 0xb, 0x6, 0xff, 0x48 } };
-        static const GUID guid_cfg_adl_core_nuked = { 0x6b2c372, 0x2d86, 0x4368, { 0xb9, 0xd1, 0xfc, 0xb, 0xc8, 0x99, 0x38, 0xb1 } };
-        static const GUID guid_cfg_adl_core_nuked_174 = { 0x68252066, 0x2a7d, 0x4d74, { 0xb7, 0xc4, 0xd6, 0x9b, 0x1d, 0x67, 0x68, 0xd1 } };
-        static const GUID guid_cfg_adl_core_dosbox = { 0x2a0290f8, 0x805b, 0x4109, { 0xaa, 0xd3, 0xd5, 0xae, 0x7f, 0x62, 0x35, 0xc7 } };
+    static const GUID AdvCfgADLCoreBranchGUID = { 0x715c6e5d, 0x60bf, 0x43aa, { 0x8d, 0xa3, 0xf4, 0xf3, 0xb, 0x6, 0xff, 0x48 } };
+        static const GUID AdvCfgADLCoreBranchNukedGUID = { 0x6b2c372, 0x2d86, 0x4368, { 0xb9, 0xd1, 0xfc, 0xb, 0xc8, 0x99, 0x38, 0xb1 } };
+        static const GUID AdvCfgADLCoreBranchNuked074GUID = { 0x68252066, 0x2a7d, 0x4d74, { 0xb7, 0xc4, 0xd6, 0x9b, 0x1d, 0x67, 0x68, 0xd1 } };
+        static const GUID AdvCfgADLCoreBranchDOSBoxGUID = { 0x2a0290f8, 0x805b, 0x4109, { 0xaa, 0xd3, 0xd5, 0xae, 0x7f, 0x62, 0x35, 0xc7 } };
 
-    static const GUID GUIDAdvCfgFluidSynthBranch = { 0xf1ad51c5, 0x4b04, 0x4c8b, { 0x84, 0x65, 0x6c, 0x86, 0x1e, 0x81, 0xc6, 0x69 } };
-        static const GUID guid_cfg_fluidsynth_effects = { 0x996e95ca, 0xce4d, 0x4bd5, { 0xb7, 0xe6, 0x40, 0x61, 0x32, 0x83, 0xc3, 0x27 } };
-        static const GUID guid_cfg_fluidsynth_voices = { 0x9114d64d, 0x412c, 0x42d3, { 0xae, 0xd5, 0xa5, 0x52, 0x1e, 0x8f, 0xe2, 0xa6 } };
-        static const GUID guid_cfg_soundfont_dynamic = { 0x4c455226, 0xb107, 0x4e04, { 0xa9, 0xec, 0xf8, 0x9, 0x8f, 0x81, 0xe2, 0x96 } };
+    static const GUID AdvCfgADLBankBranchGUID = {0x2fdc9597,0x9be2,0x4634,{0xa3,0x97,0x66,0xb6,0xa7,0x16,0x50,0x34}};
+
+        static const GUID AdvCfgADLBankFilePathGUID = {0x412bf229,0x4408,0x4fe1,{0x84,0x8d,0xac,0xe0,0xfc,0xec,0x36,0x94}};
+
+    static const GUID AdvCfgOPNCoreBranchGUID = { 0x5223b5bc, 0x41e8, 0x4d5d, { 0x83, 0x1f, 0x47, 0x7d, 0x9f, 0x8f, 0x31, 0x89 } };
+        static const GUID AdvCfgOPNCoreMAMEGUID = { 0xc5617b26, 0xf011, 0x4674, { 0xb8, 0x5d, 0x12, 0xda, 0x2d, 0xa9, 0xd0, 0xdf } };
+        static const GUID AdvCfgOPNCoreNukedGUID = { 0x8abbad90, 0x4e76, 0x4dd7, { 0x87, 0x77, 0x2b, 0x7e, 0xe7, 0xe9, 0x69, 0x53 } };
+        static const GUID AdvCfgOPNCoreGensGUID = { 0xa74c885, 0xe917, 0x40cd, { 0x9a, 0x49, 0x52, 0xa7, 0x1b, 0x93, 0x7b, 0x8a } };
+
+    static const GUID AdvCfgOPNBankBranchGUID = { 0x7f53d374, 0x9731, 0x4321, { 0x92, 0x2b, 0x1, 0x46, 0x3f, 0x19, 0x72, 0x96 } };
+        static const GUID AdvCfgOPNBankXGGUID = { 0x6a6f56a9, 0x513b, 0x4aad, { 0x90, 0x29, 0x32, 0x46, 0xec, 0xf0, 0x2d, 0x93 } };
+        static const GUID AdvCfgOPNBankGSGUID = { 0xed7876ab, 0xfca3, 0x4dfd, { 0xaf, 0x56, 0x2, 0x8d, 0xd9, 0xbf, 0x54, 0x80 } };
+        static const GUID AdvCfgOPNBankGEMSGUID = { 0x792b2366, 0x1768, 0x4f30, { 0x87, 0xc0, 0xc2, 0xea, 0xb5, 0xe8, 0x22, 0xd2 } };
+        static const GUID AdvCfgOPNBankTomSoftGUID = { 0xad75fc74, 0xc8d6, 0x4399, { 0x89, 0xf2, 0xeb, 0x7f, 0xf0, 0x62, 0x33, 0xfe } };
+        static const GUID AdvCfgOPNBankFMMIDIGUID = { 0x47e69508, 0x2cb7, 0x4e32, { 0x83, 0x13, 0x15, 0x1a, 0x5f, 0x5a, 0xc7, 0x79 } };
+
+    static const GUID AdvCfgFluidSynthBranchGUID = { 0xf1ad51c5, 0x4b04, 0x4c8b, { 0x84, 0x65, 0x6c, 0x86, 0x1e, 0x81, 0xc6, 0x69 } };
+        static const GUID AdvCfgFluidSynthEnableEffectsEnabledGUID = { 0x996e95ca, 0xce4d, 0x4bd5, { 0xb7, 0xe6, 0x40, 0x61, 0x32, 0x83, 0xc3, 0x27 } };
+        static const GUID AdvCfgFluidSynthVoiceCountGUID = { 0x9114d64d, 0x412c, 0x42d3, { 0xae, 0xd5, 0xa5, 0x52, 0x1e, 0x8f, 0xe2, 0xa6 } };
+        static const GUID AdvCfgFluidSynthLoadSoundFontDynamicallyGUID = { 0x4c455226, 0xb107, 0x4e04, { 0xa9, 0xec, 0xf8, 0x9, 0x8f, 0x81, 0xe2, 0x96 } };
 
     static const GUID GUIDAdvCfgBASSMIDIBranch = { 0xdd5adceb, 0x9b31, 0x47b6, { 0xaf, 0x57, 0x3b, 0x15, 0xd2, 0x2, 0x5d, 0x9f } };
         static const GUID GUIDAdvCfgBASSMIDIVoices = { 0x9e0a5dab, 0x6786, 0x4120, { 0xb7, 0x37, 0x85, 0xbb, 0x2d, 0xfa, 0xf3, 0x7 } };
-
-    static const GUID GUIDAdvCfgOPNBranch = { 0x5223b5bc, 0x41e8, 0x4d5d, { 0x83, 0x1f, 0x47, 0x7d, 0x9f, 0x8f, 0x31, 0x89 } };
-        static const GUID guid_cfg_opn_core_mame = { 0xc5617b26, 0xf011, 0x4674, { 0xb8, 0x5d, 0x12, 0xda, 0x2d, 0xa9, 0xd0, 0xdf } };
-        static const GUID guid_cfg_opn_core_nuked = { 0x8abbad90, 0x4e76, 0x4dd7, { 0x87, 0x77, 0x2b, 0x7e, 0xe7, 0xe9, 0x69, 0x53 } };
-        static const GUID guid_cfg_opn_core_gens = { 0xa74c885, 0xe917, 0x40cd, { 0x9a, 0x49, 0x52, 0xa7, 0x1b, 0x93, 0x7b, 0x8a } };
-
-    static const GUID GUIDAdvCfgOPNBankBranch = { 0x7f53d374, 0x9731, 0x4321, { 0x92, 0x2b, 0x1, 0x46, 0x3f, 0x19, 0x72, 0x96 } };
-        static const GUID guid_cfg_opn_bank_xg = { 0x6a6f56a9, 0x513b, 0x4aad, { 0x90, 0x29, 0x32, 0x46, 0xec, 0xf0, 0x2d, 0x93 } };
-        static const GUID guid_cfg_opn_bank_gs = { 0xed7876ab, 0xfca3, 0x4dfd, { 0xaf, 0x56, 0x2, 0x8d, 0xd9, 0xbf, 0x54, 0x80 } };
-        static const GUID guid_cfg_opn_bank_gems = { 0x792b2366, 0x1768, 0x4f30, { 0x87, 0xc0, 0xc2, 0xea, 0xb5, 0xe8, 0x22, 0xd2 } };
-        static const GUID guid_cfg_opn_bank_tomsoft = { 0xad75fc74, 0xc8d6, 0x4399, { 0x89, 0xf2, 0xeb, 0x7f, 0xf0, 0x62, 0x33, 0xfe } };
-        static const GUID guid_cfg_opn_bank_fmmidi = { 0x47e69508, 0x2cb7, 0x4e32, { 0x83, 0x13, 0x15, 0x1a, 0x5f, 0x5a, 0xc7, 0x79 } };
 #pragma endregion
 
 cfg_int
@@ -169,31 +173,35 @@ advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, GUIDMIDIPlay
         advconfig_integer_factory AdvCfgLoopCount   ("Loop count",     GUIDLoopCount,    GUIDAdvCfgMIDITimingBranch, 0.0, 2, 1, 10);
         advconfig_integer_factory AdvCfgFadeTimeInMS("Fade time (ms)", GUIDFadeTimeInMS, GUIDAdvCfgMIDITimingBranch, 1.0, 5000, 0, 30000);
 
-    advconfig_branch_factory AdvCfgADLCoreBranch("libADLMIDI emulator core", GUIDAdvCfgADLBranch, GUIDMIDIPlayerBranch, 2.0);
+    advconfig_branch_factory AdvCfgADLCoreBranch("libADLMIDI emulator core", AdvCfgADLCoreBranchGUID, GUIDMIDIPlayerBranch, 2.0);
 
-        advconfig_radio_factory AdvCfgADLCoreNuked      ("Nuked OPL3 (slowest, most accurate)",             guid_cfg_adl_core_nuked, GUIDAdvCfgADLBranch,     0.0, false, 0);
-        advconfig_radio_factory AdvCfgADLCoreNuked074   ("Nuked OPL3 v0.74 (slow, slightly less accurate)", guid_cfg_adl_core_nuked_174, GUIDAdvCfgADLBranch, 1.0, false, 0);
-        advconfig_radio_factory AdvCfgADLCoreDOSBox     ("Dosbox OPL3 (really fast, mostly accurate)",      guid_cfg_adl_core_dosbox, GUIDAdvCfgADLBranch,    2.0, true, 0);
+        advconfig_radio_factory AdvCfgADLCoreNuked      ("Nuked OPL3 (slowest, most accurate)",             AdvCfgADLCoreBranchNukedGUID, AdvCfgADLCoreBranchGUID,     0.0, false, 0);
+        advconfig_radio_factory AdvCfgADLCoreNuked074   ("Nuked OPL3 v0.74 (slow, slightly less accurate)", AdvCfgADLCoreBranchNuked074GUID, AdvCfgADLCoreBranchGUID, 1.0, false, 0);
+        advconfig_radio_factory AdvCfgADLCoreDOSBox     ("DOSBox OPL3 (really fast, mostly accurate)",      AdvCfgADLCoreBranchDOSBoxGUID, AdvCfgADLCoreBranchGUID,    2.0, true, 0);
 
-    advconfig_branch_factory AdvCfgOPNCoreBranch("libOPNMIDI emulator core", GUIDAdvCfgOPNBranch, GUIDMIDIPlayerBranch, 3.0);
+    advconfig_branch_factory AdvCfgADLBankBranch("libADLMIDI bank", AdvCfgADLBankBranchGUID, GUIDMIDIPlayerBranch, 2.5);
 
-        advconfig_radio_factory AdvCfgOPNCoreMAME       ("MAME OPN",    guid_cfg_opn_core_mame,  GUIDAdvCfgOPNBranch, 0.0, true, 0);
-        advconfig_radio_factory AdvCfgOPNCoreNuked      ("Nuked OPN",   guid_cfg_opn_core_nuked, GUIDAdvCfgOPNBranch, 1.0, false, 0);
-        advconfig_radio_factory AdvCfgOPNCoreGens       ("Gens OPN",    guid_cfg_opn_core_gens,  GUIDAdvCfgOPNBranch, 2.0, false, 0);
+        advconfig_string_factory AdvCfgADLBankFilePath("File path", AdvCfgADLBankFilePathGUID, AdvCfgADLBankBranchGUID, 0.0, "");
 
-    advconfig_branch_factory AdvCfgOPNBankBranch("libOPNMIDI bank", GUIDAdvCfgOPNBankBranch, GUIDMIDIPlayerBranch, 4.0);
+    advconfig_branch_factory AdvCfgOPNCoreBranch("libOPNMIDI emulator core", AdvCfgOPNCoreBranchGUID, GUIDMIDIPlayerBranch, 3.0);
 
-        advconfig_radio_factory AdvCfgOPNBankXG     ("XG",                      guid_cfg_opn_bank_xg,      GUIDAdvCfgOPNBankBranch, 0.0, true);
-        advconfig_radio_factory AdvCfgOPNBankGS     ("GS (DMXOPN2)",            guid_cfg_opn_bank_gs,      GUIDAdvCfgOPNBankBranch, 1.0, false);
-        advconfig_radio_factory AdvCfgOPNBankGEMS   ("GEMS fmlib GM",           guid_cfg_opn_bank_gems,    GUIDAdvCfgOPNBankBranch, 2.0, false);
-        advconfig_radio_factory AdvCfgOPNBankTomSoft("TomSoft's SegaMusic",     guid_cfg_opn_bank_tomsoft, GUIDAdvCfgOPNBankBranch, 3.0, false);
-        advconfig_radio_factory AdvCfgOPNBankFMMIDI ("FMMIDI original bank",    guid_cfg_opn_bank_fmmidi,  GUIDAdvCfgOPNBankBranch, 4.0, false);
+        advconfig_radio_factory AdvCfgOPNCoreMAME       ("MAME OPN",    AdvCfgOPNCoreMAMEGUID,  AdvCfgOPNCoreBranchGUID, 0.0, true, 0);
+        advconfig_radio_factory AdvCfgOPNCoreNuked      ("Nuked OPN",   AdvCfgOPNCoreNukedGUID, AdvCfgOPNCoreBranchGUID, 1.0, false, 0);
+        advconfig_radio_factory AdvCfgOPNCoreGens       ("GEMS OPN",    AdvCfgOPNCoreGensGUID,  AdvCfgOPNCoreBranchGUID, 2.0, false, 0);
 
-    advconfig_branch_factory cfg_fluidsynth_parent("FluidSynth", GUIDAdvCfgFluidSynthBranch, GUIDMIDIPlayerBranch, 5.0);
+    advconfig_branch_factory AdvCfgOPNBankBranch("libOPNMIDI bank", AdvCfgOPNBankBranchGUID, GUIDMIDIPlayerBranch, 4.0);
 
-        advconfig_integer_factory AdvCfgFluidSynthVoices         ("Maximum voice count",                 guid_cfg_fluidsynth_voices,  GUIDAdvCfgFluidSynthBranch, 1.0, 256, 1, 65535);
-        advconfig_checkbox_factory AdvCfgFluidSynthEffectsEnabled("Enable reverb and chorus processing", guid_cfg_fluidsynth_effects, GUIDAdvCfgFluidSynthBranch, 2.0, true);
-        advconfig_checkbox_factory AdvCfgLoadSoundFontDynamically("Load SoundFont samples dynamically",  guid_cfg_soundfont_dynamic,  GUIDAdvCfgFluidSynthBranch, 3.0, true);
+        advconfig_radio_factory AdvCfgOPNBankXG     ("XG",                      AdvCfgOPNBankXGGUID,      AdvCfgOPNBankBranchGUID, 0.0, true);
+        advconfig_radio_factory AdvCfgOPNBankGS     ("GS (DMXOPN2)",            AdvCfgOPNBankGSGUID,      AdvCfgOPNBankBranchGUID, 1.0, false);
+        advconfig_radio_factory AdvCfgOPNBankGEMS   ("GEMS FMLib GM",           AdvCfgOPNBankGEMSGUID,    AdvCfgOPNBankBranchGUID, 2.0, false);
+        advconfig_radio_factory AdvCfgOPNBankTomSoft("TomSoft's SegaMusic",     AdvCfgOPNBankTomSoftGUID, AdvCfgOPNBankBranchGUID, 3.0, false);
+        advconfig_radio_factory AdvCfgOPNBankFMMIDI ("FMMIDI original bank",    AdvCfgOPNBankFMMIDIGUID,  AdvCfgOPNBankBranchGUID, 4.0, false);
+
+    advconfig_branch_factory cfg_fluidsynth_parent("FluidSynth", AdvCfgFluidSynthBranchGUID, GUIDMIDIPlayerBranch, 5.0);
+
+        advconfig_integer_factory AdvCfgFluidSynthVoices         ("Maximum voice count",                 AdvCfgFluidSynthVoiceCountGUID,  AdvCfgFluidSynthBranchGUID, 1.0, 256, 1, 65535);
+        advconfig_checkbox_factory AdvCfgFluidSynthEffectsEnabled("Enable reverb and chorus processing", AdvCfgFluidSynthEnableEffectsEnabledGUID, AdvCfgFluidSynthBranchGUID, 2.0, true);
+        advconfig_checkbox_factory AdvCfgLoadSoundFontDynamically("Load SoundFont samples dynamically",  AdvCfgFluidSynthLoadSoundFontDynamicallyGUID, AdvCfgFluidSynthBranchGUID, 3.0, true);
 
     advconfig_branch_factory AdvBASSMIDIBranch("BASSMIDI", GUIDAdvCfgBASSMIDIBranch, GUIDMIDIPlayerBranch, 6.0);
 

@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.08.27) **/
+/** $VER: InputDecoder.cpp (2023.09.27) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -615,6 +615,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 auto Player = new ADLPlayer;
 
                 Player->setBank(Preset._ADLBankNumber);
+                Player->SetBankFilePath(Preset._ADLBankFilePath);
                 Player->setChipCount(Preset._ADLChipCount);
                 Player->setFullPanning(Preset._ADLUsePanning);
                 Player->set4OpCount(Preset._ADLChipCount * 4 /*cfg_adl_4op*/);
@@ -1007,7 +1008,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
         double LengthInSeconds = (double) LengthInMs * 0.001;
 
         if (_LoopTypePlayback == NeverLoopAddDecayTime)
-            LengthInSeconds += CfgDecayTime * 0.001;
+            LengthInSeconds += (double) CfgDecayTime * 0.001;
 
         if ((_LoopTypePlayback > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {
@@ -1094,7 +1095,7 @@ void InputDecoder::InitializeTime(size_t subSongIndex)
         _LengthInSamples = (uint32_t) ::MulDiv((int) LengthInMs, (int) _SampleRate, 1000);
 
         if (_LoopType == NeverLoopAddDecayTime)
-            _LengthInSamples += (uint32_t) ((double) _SampleRate * CfgDecayTime * 0.001);
+            _LengthInSamples += (uint32_t) ((double) _SampleRate * (double) CfgDecayTime * 0.001);
 
         if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
         {

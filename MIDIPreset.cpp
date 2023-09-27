@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.cpp (2023.08.20) **/
+/** $VER: MIDIPreset.cpp (2023.09.27) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -86,6 +86,8 @@ MIDIPreset::MIDIPreset() noexcept
             _ADLEmulatorCore = ADLMIDI_EMU_NUKED;
         else
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
+
+        _ADLBankFilePath = AdvCfgADLBankFilePath.get();
     }
 
     {
@@ -96,6 +98,7 @@ MIDIPreset::MIDIPreset() noexcept
             _OPNEmulatorCore = OPNMIDI_EMU_NUKED;
         else
             _OPNEmulatorCore = OPNMIDI_EMU_GENS;
+
         if (AdvCfgOPNBankXG)
             _OPNBankNumber = 0;
         else

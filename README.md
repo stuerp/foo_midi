@@ -99,8 +99,12 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.9.1.0, 2023-xx-xx, *"Loop de loop"*
+v2.9.1.0-alpha, 2023-xx-xx, *"Loop de loop"*
 
+* New: You can specify the path of an ADLMIDI bank (*.wopl or any of the other supported formats) in the Advanced branch of the Preferences dialog.
+  * The bank in the file overrides any selection in the bank drop down list in Preferences.
+  * The file path is not yet saved as part of a preset.
+  * Only file paths with Latin-1 characters are supported (limitation of the library).
 * Improved: The decay time is now configurable. The default is still 1s (1000ms).
 * Improved: Looping, fading and decay has been tweaked.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
