@@ -105,6 +105,7 @@ v2.9.1.0, 2023-xx-xx, *"Loop de loop"*
 * Improved: Looping, fading and decay has been tweaked.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
 * Bug Fix: FluidSynth did not save two settings in a preset.
+* Builds with foobar2000 SDK 2023-09-06.
 
 v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
 

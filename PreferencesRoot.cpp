@@ -252,7 +252,7 @@ private:
     bool _HasFluidSynth;
     static bool HasFluidSynth() noexcept
     {
-        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath));
+        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
     }
     #pragma endregion
 
@@ -707,7 +707,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
                     _InstalledPlayers.push_back(ip);
 
-                    if (CfgVSTiFilePath == _VSTiPlugIns[i].PathName)
+                    if (CfgVSTiFilePath.get() == _VSTiPlugIns[i].PathName)
                         VSTiIndex = i;
                 }
             }
@@ -814,8 +814,8 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
                 w2.AddString(LoopTypeDescription[i]);
             }
  
-             w1.SetCurSel(CfgLoopTypePlayback);
-             w2.SetCurSel(CfgLoopTypeOther);
+             w1.SetCurSel((int) CfgLoopTypePlayback);
+             w2.SetCurSel((int) CfgLoopTypeOther);
 
             ::uSetDlgItemText(m_hWnd, IDC_DECAY_TIME, pfc::format_int(CfgDecayTime));
         }
@@ -892,7 +892,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         w.AddString(L"8pt Sinc interpolation");
         w.AddString(L"16pt Sinc interpolation");
 
-        w.SetCurSel(CfgBASSMIDIInterpolationMode);
+        w.SetCurSel((int) CfgBASSMIDIInterpolationMode);
 
         bool Enable = (PlayerType == PlayerType::BASSMIDI);
 
@@ -914,7 +914,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         for (size_t i = 0; i < _countof(_MuntGMSets); ++i)
             ::uSendMessageText(w, CB_ADDSTRING, 0, _MuntGMSets[i]);
 
-        w.SetCurSel(CfgMuntGMSet);
+        w.SetCurSel((int) CfgMuntGMSet);
 
         BOOL Enable = (PlayerType == PlayerType::SuperMunt);
 
@@ -1239,7 +1239,7 @@ bool PreferencesRootPage::HasChanged()
             {
                 size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
 
-                if (CfgVSTiFilePath != _VSTiPlugIns[VSTiIndex].PathName)
+                if (CfgVSTiFilePath.get() != _VSTiPlugIns[VSTiIndex].PathName)
                     return true;
 
                 t_uint32 Id = _VSTiPlugIns[VSTiIndex].Id;
@@ -1286,7 +1286,7 @@ bool PreferencesRootPage::HasChanged()
     if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIStandard)
         return true;
 
-    if (SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != !CfgUseMIDIEffects)
+    if (SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != ~CfgUseMIDIEffects)
         return true;
 
     if (SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK) != CfgUseSuperMuntWithMT32)
