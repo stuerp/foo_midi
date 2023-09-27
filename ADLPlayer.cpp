@@ -17,6 +17,36 @@ ADLPlayer::~ADLPlayer()
     Shutdown();
 }
 
+void ADLPlayer::SetCore(uint32_t emuCore)
+{
+    _EmuCore = emuCore;
+}
+
+void ADLPlayer::SetBank(uint32_t bankNumber)
+{
+    _BankNumber = bankNumber;
+}
+
+void ADLPlayer::SetChipCount(uint32_t chipCount)
+{
+    _ChipCount = chipCount;
+}
+
+void ADLPlayer::Set4OpCount(uint32_t count)
+{
+    _4OpCount = count;
+}
+
+void ADLPlayer::SetFullPanning(bool enabled)
+{
+    _FullPanning = enabled;
+}
+
+void ADLPlayer::SetBankFilePath(pfc::string8 filePath)
+{
+    _BankFilePath = filePath;
+}
+
 bool ADLPlayer::Startup()
 {
     if (_Player[0] && _Player[1] && _Player[2])
@@ -37,10 +67,10 @@ bool ADLPlayer::Startup()
             ::adl_setBank(Player, (int)_BankNumber);
 
         ::adl_setNumChips(Player, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
-        ::adl_setNumFourOpsChn(Player, (int)_4OpCount);
+        ::adl_setNumFourOpsChn(Player, (int) _4OpCount);
         ::adl_setSoftPanEnabled(Player, _FullPanning);
-        ::adl_setDeviceIdentifier(Player, (unsigned int)i);
-        ::adl_switchEmulator(Player, (int)_EmuCore);
+        ::adl_setDeviceIdentifier(Player, (unsigned int) i);
+        ::adl_switchEmulator(Player, (int) _EmuCore);
         ::adl_reset(Player);
     }
 
@@ -87,36 +117,6 @@ void ADLPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         sampleData += (ToDo * 2);
         sampleCount -= ToDo;
     }
-}
-
-void ADLPlayer::setCore(unsigned emuCore)
-{
-    _EmuCore = emuCore;
-}
-
-void ADLPlayer::setBank(unsigned bankNumber)
-{
-    _BankNumber = bankNumber;
-}
-
-void ADLPlayer::setChipCount(unsigned chipCount)
-{
-    _ChipCount = chipCount;
-}
-
-void ADLPlayer::setFullPanning(bool enabled)
-{
-    _FullPanning = enabled;
-}
-
-void ADLPlayer::set4OpCount(unsigned count)
-{
-    _4OpCount = count;
-}
-
-void ADLPlayer::SetBankFilePath(pfc::string8 filePath)
-{
-    _BankFilePath = filePath;
 }
 
 void ADLPlayer::SendEvent(uint32_t message)

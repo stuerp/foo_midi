@@ -25,11 +25,11 @@ public:
         ADLMIDI_EMU_DOSBOX
     };
 
-    void setCore(unsigned);
-    void setBank(unsigned);
-    void setChipCount(unsigned);
-    void setFullPanning(bool);
-    void set4OpCount(unsigned);
+    void SetCore(uint32_t);
+    void SetBank(uint32_t);
+    void SetChipCount(uint32_t);
+    void Set4OpCount(uint32_t);
+    void SetFullPanning(bool);
     void SetBankFilePath(pfc::string8 filePath);
 
 protected:
@@ -43,10 +43,10 @@ protected:
 private:
     struct ADL_MIDIPlayer * _Player[3];
 
-    unsigned _EmuCore;
-    unsigned _BankNumber;
-    unsigned _ChipCount;
-    unsigned _4OpCount;
+    uint32_t _EmuCore;
+    uint32_t _BankNumber;
+    uint32_t _ChipCount;
+    uint32_t _4OpCount;
     bool _FullPanning;
     pfc::string8 _BankFilePath;
 };
