@@ -143,8 +143,10 @@ extern advconfig_integer_factory AdvCfgLoopCount;
 extern advconfig_integer_factory AdvCfgFadeTimeInMS;
 
 extern advconfig_radio_factory AdvCfgADLCoreNuked;
-extern advconfig_radio_factory AdvCfgADLCoreNuked074;
+extern advconfig_radio_factory AdvCfgADLCoreNuked174;
 extern advconfig_radio_factory AdvCfgADLCoreDOSBox;
+extern advconfig_radio_factory AdvCfgADLCoreOpal;
+extern advconfig_radio_factory AdvCfgADLCoreJava;
 
 extern advconfig_string_factory AdvCfgADLBankFilePath;
 

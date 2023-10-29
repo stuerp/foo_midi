@@ -76,10 +76,16 @@ MIDIPreset::MIDIPreset() noexcept
         _ADLChipCount = (uint32_t) CfgADLChipCount;
         _ADLUsePanning = (bool) CfgADLPanning;
 
+        if (AdvCfgADLCoreJava)
+            _ADLEmulatorCore = ADLMIDI_EMU_JAVA;
+        else
+        if (AdvCfgADLCoreOpal)
+            _ADLEmulatorCore = ADLMIDI_EMU_OPAL;
+        else
         if (AdvCfgADLCoreDOSBox)
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
         else
-        if (AdvCfgADLCoreNuked074)
+        if (AdvCfgADLCoreNuked174)
             _ADLEmulatorCore = ADLMIDI_EMU_NUKED_174;
         else
         if (AdvCfgADLCoreNuked)

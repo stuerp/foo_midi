@@ -79,8 +79,10 @@ static const GUID GUIDMIDIPlayerBranch = { 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0
 
     static const GUID AdvCfgADLCoreBranchGUID = { 0x715c6e5d, 0x60bf, 0x43aa, { 0x8d, 0xa3, 0xf4, 0xf3, 0xb, 0x6, 0xff, 0x48 } };
         static const GUID AdvCfgADLCoreBranchNukedGUID = { 0x6b2c372, 0x2d86, 0x4368, { 0xb9, 0xd1, 0xfc, 0xb, 0xc8, 0x99, 0x38, 0xb1 } };
-        static const GUID AdvCfgADLCoreBranchNuked074GUID = { 0x68252066, 0x2a7d, 0x4d74, { 0xb7, 0xc4, 0xd6, 0x9b, 0x1d, 0x67, 0x68, 0xd1 } };
+        static const GUID AdvCfgADLCoreBranchNuked174GUID = { 0x68252066, 0x2a7d, 0x4d74, { 0xb7, 0xc4, 0xd6, 0x9b, 0x1d, 0x67, 0x68, 0xd1 } };
         static const GUID AdvCfgADLCoreBranchDOSBoxGUID = { 0x2a0290f8, 0x805b, 0x4109, { 0xaa, 0xd3, 0xd5, 0xae, 0x7f, 0x62, 0x35, 0xc7 } };
+        static const GUID AdvCfgADLCoreBranchOpalGUID = {0xcdad1b28,0x5f39,0x4e3e,{0x8b,0x2c,0xef,0xc6,0xb9,0x4a,0x48,0x3e}};
+        static const GUID AdvCfgADLCoreBranchJavaGUID = {0xe18e404c,0x82a0,0x481c,{0xb9,0x5d,0xd7,0x70,0xcf,0x7d,0x35,0x9c}};
 
     static const GUID AdvCfgADLBankBranchGUID = {0x2fdc9597,0x9be2,0x4634,{0xa3,0x97,0x66,0xb6,0xa7,0x16,0x50,0x34}};
 
@@ -175,9 +177,11 @@ advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, GUIDMIDIPlay
 
     advconfig_branch_factory AdvCfgADLCoreBranch("libADLMIDI emulator core", AdvCfgADLCoreBranchGUID, GUIDMIDIPlayerBranch, 2.0);
 
-        advconfig_radio_factory AdvCfgADLCoreNuked      ("Nuked OPL3 (slowest, most accurate)",             AdvCfgADLCoreBranchNukedGUID, AdvCfgADLCoreBranchGUID,     0.0, false, 0);
-        advconfig_radio_factory AdvCfgADLCoreNuked074   ("Nuked OPL3 v0.74 (slow, slightly less accurate)", AdvCfgADLCoreBranchNuked074GUID, AdvCfgADLCoreBranchGUID, 1.0, false, 0);
-        advconfig_radio_factory AdvCfgADLCoreDOSBox     ("DOSBox OPL3 (really fast, mostly accurate)",      AdvCfgADLCoreBranchDOSBoxGUID, AdvCfgADLCoreBranchGUID,    2.0, true, 0);
+        advconfig_radio_factory AdvCfgADLCoreNuked      ("Nuked OPL3 (slowest, most accurate)",             AdvCfgADLCoreBranchNukedGUID, AdvCfgADLCoreBranchGUID,    0.0, false, 0);
+        advconfig_radio_factory AdvCfgADLCoreNuked174   ("Nuked OPL3 v1.74 (slow, slightly less accurate)", AdvCfgADLCoreBranchNuked174GUID, AdvCfgADLCoreBranchGUID, 1.0, false, 0);
+        advconfig_radio_factory AdvCfgADLCoreDOSBox     ("DOSBox OPL3 (really fast, mostly accurate)",      AdvCfgADLCoreBranchDOSBoxGUID, AdvCfgADLCoreBranchGUID,   2.0, true, 0);
+        advconfig_radio_factory AdvCfgADLCoreOpal       ("OPAL OPL3 (Reality AdLib Tracker)",               AdvCfgADLCoreBranchOpalGUID, AdvCfgADLCoreBranchGUID,     3.0, false, 0);
+        advconfig_radio_factory AdvCfgADLCoreJava       ("Java OPL3",                                       AdvCfgADLCoreBranchJavaGUID, AdvCfgADLCoreBranchGUID,     4.0, false, 0);
 
     advconfig_branch_factory AdvCfgADLBankBranch("libADLMIDI bank", AdvCfgADLBankBranchGUID, GUIDMIDIPlayerBranch, 2.5);
 

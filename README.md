@@ -105,6 +105,7 @@ v2.9.1.0-alpha, 2023-xx-xx, *"Loop de loop"*
   * The bank in the file overrides any selection in the bank drop down list in Preferences.
   * The file path is not yet saved as part of a preset.
   * Only file paths with Latin-1 characters are supported (limitation of the library).
+* New: Made Opal and Java OPL3 emulator core from LibADLMIDI selectable in the Advanced Preferences.
 * Improved: The decay time is now configurable. The default is still 1s (1000ms).
 * Improved: Looping, fading and decay has been tweaked.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
