@@ -89,17 +89,18 @@ private:
 
 private:
     std::vector<MIDIStreamEvent> _Stream;
-    size_t _CurrentPosition; // Current position in the MIDI stream
+    size_t _StreamPosition; // Current position in the MIDI stream
 
-    uint32_t _TimeInSamples;
-    uint32_t _TimeInSamplesRemaining;
-    uint32_t _LengthInSamples;
+    uint32_t _Position;     // In samples
+    uint32_t _Length;       // In samples
+    uint32_t _Remainder;    // In samples
 
     uint32_t _LoopMode;
 
-    uint32_t _LoopBegin;
-    uint32_t _LoopBeginTime;
-    uint32_t _LoopEnd;
+    uint32_t _StreamLoopBegin;
+    uint32_t _StreamLoopEnd;
+
+    uint32_t _LoopBegin;    // In samples
 
     #ifdef EXPERIMENT
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;

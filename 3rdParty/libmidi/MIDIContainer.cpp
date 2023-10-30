@@ -1456,6 +1456,8 @@ void MIDIContainer::SplitByInstrumentChanges(SplitCallback callback)
     }
 }
 
+#include <windows.h>
+
 void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops)
 {
     size_t SubSongCount = (_Format == 2) ? _Tracks.size() : 1;
@@ -1563,15 +1565,19 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
 
                 if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] >= 116 /* 0x74 */ && Event.Data[0] <= 119 /* 0x77 */))
                 {
-                    if (Event.Data[0] == 116 /* 0x74, AIL loop: FOR loop = 1 to n */ || Event.Data[0] == 118 /* 0x76, AIL clear beat/measure count */)
+                    wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"EMIDI: %08X %3d %3d\n", Event.Timestamp, Event.Data[0], Event.Data[1]); OutputDebugStringW(Line);
+
+                    // 116 / 0x74, AIL loop: FOR loop = 1 to n, 118 / 0x76, AIL clear beat / measure count (AIL = Audio Interface Library)
+                    if (Event.Data[0] == 116 || Event.Data[0] == 118)
                     {
                         if (!_Loop[SubSongIndex].HasBegin() || (Event.Timestamp < _Loop[SubSongIndex].Begin()))
-                            _Loop[SubSongIndex].SetBegin(Event.Timestamp); //  LoopCount = Event.Data[1]; // 0 = forever, 1 - 127 = finite
+                            _Loop[SubSongIndex].SetBegin(Event.Timestamp); // LoopCount = Event.Data[1]; // 0 = Forever, 1 - 127 = Finite
                     }
-                    else // 117 /* 0x75, AIL loop: NEXT/BREAK *//* 0x77, AIL callback trigger */
+                    // 117 / 0x75, AIL loop: NEXT/BREAK, 119 / 0x77, AIL callback trigger
+                    else
                     {
                         if (!_Loop[SubSongIndex].HasEnd() || (Event.Timestamp < _Loop[SubSongIndex].End()))
-                            _Loop[SubSongIndex].SetEnd(Event.Timestamp); //  Event.Data[1] should be 127.
+                            _Loop[SubSongIndex].SetEnd(Event.Timestamp); // Event.Data[1] should be 127.
                     }
                 }
             }
@@ -1672,7 +1678,7 @@ uint32_t MIDIContainer::TimestampToMS(uint32_t p_timestamp, size_t subSongIndex)
 
     if ((subSongIndex > 0) && (TempoMapCount > 0))
     {
-        for (size_t i = std::min(subSongIndex, TempoMapCount); --i; )
+        for (size_t i = (std::min)(subSongIndex, TempoMapCount); --i; )
         {
             size_t Count = _TempoMaps[i].Size();
 

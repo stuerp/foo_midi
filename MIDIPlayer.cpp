@@ -21,10 +21,10 @@ MIDIPlayer::MIDIPlayer()
     #endif
 
     _SampleRate = 1000;
-    _LengthInSamples = 0;
-    _TimeInSamples = 0;
-    _TimeInSamplesRemaining = 0;
-    _LoopBeginTime = 0;
+    _Length = 0;
+    _Position = 0;
+    _Remainder = 0;
+    _LoopBegin = 0;
 
     _IsInitialized = false;
 }
@@ -36,31 +36,31 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
 {
     assert(_Stream.size() == 0);
 
-    midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _LoopBegin, _LoopEnd, cleanFlags);
+    midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
 
     if (_Stream.size() == 0)
         return false;
 
-    _CurrentPosition = 0;
-    _TimeInSamples = 0;
-    _LengthInSamples = midiContainer.GetDuration(subsongIndex, true) + CfgDecayTime;
+    _StreamPosition = 0;
+    _Position = 0;
+    _Length = midiContainer.GetDuration(subsongIndex, true) + CfgDecayTime;
 
     _LoopMode = (uint32_t) loopMode;
 
     if (_LoopMode & LoopMode::Enabled)
     {
-        _LoopBeginTime = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
+        _LoopBegin = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
 
         uint32_t LoopEndTime = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
 
-        if (_LoopBeginTime != ~0UL || LoopEndTime != ~0UL)
+        if (_LoopBegin != ~0UL || LoopEndTime != ~0UL)
             _LoopMode |= LoopMode::Forced;
 
-        if (_LoopBeginTime == ~0UL)
-            _LoopBeginTime = 0;
+        if (_LoopBegin == ~0UL)
+            _LoopBegin = 0;
 
         if (LoopEndTime == ~0UL)
-            LoopEndTime =  _LengthInSamples - CfgDecayTime;
+            LoopEndTime =  _Length - CfgDecayTime;
 
         if ((_LoopMode & LoopMode::Forced))
         {
@@ -71,7 +71,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
             {
                 size_t i;
 
-                for (i = 0; (i < _Stream.size()) && (i < _LoopEnd); ++i)
+                for (i = 0; (i < _Stream.size()) && (i < _StreamLoopEnd); ++i)
                 {
                     uint32_t Message = _Stream.at(i).Data;
 
@@ -96,10 +96,10 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
 
                 _Stream.resize(i);
 
-                _LengthInSamples = LoopEndTime - 1;
+                _Length = LoopEndTime - 1;
 
-                if (_LengthInSamples < _Stream.at(i - 1).Timestamp)
-                    _LengthInSamples = _Stream.at(i - 1).Timestamp;
+                if (_Length < _Stream.at(i - 1).Timestamp)
+                    _Length = _Stream.at(i - 1).Timestamp;
             }
 
             for (size_t i = 0; i < NoteOnSize; ++i)
@@ -110,13 +110,13 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
                     {
                         if (NoteOn.at(i) & (1 << j))
                         {
-                            _Stream.push_back(MIDIStreamEvent(_LengthInSamples, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                            _Stream.push_back(MIDIStreamEvent(_Length, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
                         }
                     }
                 }
             }
 
-            _LengthInSamples = LoopEndTime;
+            _Length = LoopEndTime;
         }
     }
 
@@ -142,90 +142,91 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
     if (!Startup())
         return 0;
 
-//  console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _TimeInSamples, _LengthInSamples, _TimeInSamplesRemaining, sampleCount);
+    console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _Position, _Length, _Remainder, sampleCount);
 
     const uint32_t BlockSize = GetSampleBlockSize();
 
+    uint32_t SampleIndex = 0;
     uint32_t BlockOffset = 0;
-    uint32_t SamplesDone = 0;
 
-    while ((SamplesDone < sampleCount) && (_TimeInSamplesRemaining > 0))
+    while ((SampleIndex < sampleCount) && (_Remainder > 0))
     {
-        uint32_t SamplesToDo = _TimeInSamplesRemaining;
+        uint32_t Remainder = _Remainder;
 
         {
-            if (SamplesToDo > sampleCount - SamplesDone)
-                SamplesToDo = sampleCount - SamplesDone;
+            if (Remainder > sampleCount - SampleIndex)
+                Remainder = sampleCount - SampleIndex;
 
-            if ((BlockSize != 0) && (SamplesToDo > BlockSize))
-                SamplesToDo = BlockSize;
+            if ((BlockSize != 0) && (Remainder > BlockSize))
+                Remainder = BlockSize;
         }
 
-        if (SamplesToDo < BlockSize)
+        if (Remainder < BlockSize)
         {
-            _TimeInSamplesRemaining = 0;
-            BlockOffset = SamplesToDo;
+            _Remainder = 0;
+            BlockOffset = Remainder;
             break;
         }
 
         {
-            Render(sampleData + (SamplesDone * 2), SamplesToDo);
+            Render(sampleData + (SampleIndex * 2), Remainder);
 
-            SamplesDone += SamplesToDo;
-            _TimeInSamples += SamplesToDo;
+            SampleIndex += Remainder;
+            _Position += Remainder;
         }
 
-        _TimeInSamplesRemaining -= SamplesToDo;
+        _Remainder -= Remainder;
     }
 
-    while (SamplesDone < sampleCount)
+    while (SampleIndex < sampleCount)
     {
-        uint32_t TimeToDo = _LengthInSamples - _TimeInSamples;
+        uint32_t Remainder = _Length - _Position;
 
-        if (TimeToDo > sampleCount - SamplesDone)
-            TimeToDo = sampleCount - SamplesDone;
+        if (Remainder > sampleCount - SampleIndex)
+            Remainder = sampleCount - SampleIndex;
 
-        const uint32_t TargetTime = _TimeInSamples + TimeToDo;
+        const uint32_t NewPosition = _Position + Remainder;
 
         {
-            size_t TargetPosition = _CurrentPosition;
+            size_t NewStreamPosition = _StreamPosition;
 
-            while ((TargetPosition < _Stream.size()) && (_Stream.at(TargetPosition).Timestamp < TargetTime))
-                TargetPosition++;
+            while ((NewStreamPosition < _Stream.size()) && (_Stream.at(NewStreamPosition).Timestamp < NewPosition))
+                NewStreamPosition++;
 
-            if (TargetPosition > _CurrentPosition)
+            if (NewStreamPosition > _StreamPosition)
             {
-                for (; _CurrentPosition < TargetPosition; ++_CurrentPosition)
+                for (; _StreamPosition < NewStreamPosition; ++_StreamPosition)
                 {
-                    const MIDIStreamEvent & me = _Stream.at(_CurrentPosition);
+                    const MIDIStreamEvent & me = _Stream.at(_StreamPosition);
 
                 #ifdef EXPERIMENT
                     if (_MusicKeyboard.is_valid())
                         _MusicKeyboard->ProcessMessage(me.Data, me.Timestamp);
                 #endif
 
-                    int64_t ToDo = (int64_t) me.Timestamp - (int64_t) _TimeInSamples - (int64_t) BlockOffset;
+                    int64_t ToDo = (int64_t) me.Timestamp - (int64_t) _Position - (int64_t) BlockOffset;
 
                     if (ToDo > 0)
                     {
-                        if (ToDo > (int64_t) (sampleCount - SamplesDone))
+                        if (ToDo > (int64_t) (sampleCount - SampleIndex))
                         {
-                            _TimeInSamplesRemaining = (ToDo - (int64_t) (sampleCount - SamplesDone));
-                            ToDo = (int64_t) (sampleCount - SamplesDone);
+                            _Remainder = (ToDo - (int64_t) (sampleCount - SampleIndex));
+                            ToDo = (int64_t) (sampleCount - SampleIndex);
                         }
 
                         if ((ToDo > 0) && (BlockSize == 0))
                         {
-                            Render(sampleData + SamplesDone * 2, ToDo);
+                            Render(sampleData + SampleIndex * 2, ToDo);
 
-                            SamplesDone += ToDo;
-                            _TimeInSamples += ToDo;
+                            SampleIndex += ToDo;
+                            _Position += ToDo;
                         }
 
-                        if (_TimeInSamplesRemaining > 0)
+                        if (_Remainder > 0)
                         {
-                            _TimeInSamplesRemaining += BlockOffset;
-                            return SamplesDone;
+                            _Remainder += BlockOffset;
+
+                            return SampleIndex;
                         }
                     }
 
@@ -235,11 +236,11 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
 
                         while (BlockOffset >= BlockSize)
                         {
-                            Render(sampleData + (SamplesDone * 2), BlockSize);
+                            Render(sampleData + (SampleIndex * 2), BlockSize);
 
-                            SamplesDone += BlockSize;
+                            SampleIndex += BlockSize;
                             BlockOffset -= BlockSize;
-                            _TimeInSamples += BlockSize;
+                            _Position += BlockSize;
                         }
 
                         SendEventFiltered(me.Data, BlockOffset);
@@ -250,69 +251,62 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
             }
         }
 
-        if (SamplesDone < sampleCount)
+        if (SampleIndex < sampleCount)
         {
-            uint32_t SamplesToDo;
-
-            if (_CurrentPosition < _Stream.size())
-                SamplesToDo = _Stream.at(_CurrentPosition).Timestamp;
-            else
-                SamplesToDo = _LengthInSamples;
-
-            SamplesToDo -= _TimeInSamples;
+            uint32_t Remainder = ((_StreamPosition < _Stream.size()) ? _Stream.at(_StreamPosition).Timestamp : _Length) - _Position;
 
             if (BlockSize != 0)
-                BlockOffset = SamplesToDo;
+                BlockOffset = Remainder;
 
             {
-                if (SamplesToDo > sampleCount - SamplesDone)
-                    SamplesToDo = sampleCount - SamplesDone;
+                if (Remainder > sampleCount - SampleIndex)
+                    Remainder = sampleCount - SampleIndex;
 
-                if ((BlockSize != 0) && (SamplesToDo > BlockSize))
-                    SamplesToDo = BlockSize;
+                if ((BlockSize != 0) && (Remainder > BlockSize))
+                    Remainder = BlockSize;
             }
 
-            if (SamplesToDo >= BlockSize)
+            if (Remainder >= BlockSize)
             {
                 {
-                    Render(sampleData + (SamplesDone * 2), SamplesToDo);
+                    Render(sampleData + (SampleIndex * 2), Remainder);
 
-                    SamplesDone += SamplesToDo;
-                    _TimeInSamples += SamplesToDo;
+                    SampleIndex += Remainder;
+                    _Position += Remainder;
                 }
 
                 if (BlockSize != 0)
-                    BlockOffset -= SamplesToDo;
+                    BlockOffset -= Remainder;
             }
         }
 
         if (BlockSize == 0)
-            _TimeInSamples = TargetTime;
+            _Position = NewPosition;
 
-        if (TargetTime >= _LengthInSamples)
+        if (NewPosition >= _Length)
         {
-            if (_CurrentPosition < _Stream.size())
+            if (_StreamPosition < _Stream.size())
             {
-                for (; _CurrentPosition < _Stream.size(); _CurrentPosition++)
+                for (; _StreamPosition < _Stream.size(); _StreamPosition++)
                 {
                     if (BlockSize != 0)
-                        SendEventFiltered(_Stream.at(_CurrentPosition).Data, BlockOffset);
+                        SendEventFiltered(_Stream.at(_StreamPosition).Data, BlockOffset);
                     else
-                        SendEventFiltered(_Stream.at(_CurrentPosition).Data);
+                        SendEventFiltered(_Stream.at(_StreamPosition).Data);
                 }
             }
 
             if (_LoopMode == (LoopMode::Enabled | LoopMode::Forced))
             {
-                if (_LoopBegin == ~0)
+                if (_StreamLoopBegin == ~0)
                 {
-                    _CurrentPosition = 0;
-                    _TimeInSamples = 0;
+                    _StreamPosition = 0;
+                    _Position = 0;
                 }
                 else
                 {
-                    _CurrentPosition = _LoopBegin;
-                    _TimeInSamples = _LoopBeginTime;
+                    _StreamPosition = _StreamLoopBegin;
+                    _Position = _LoopBegin;
                 }
             }
             else
@@ -320,9 +314,9 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
         }
     }
 
-    _TimeInSamplesRemaining = BlockOffset;
+    _Remainder = BlockOffset;
 
-    return SamplesDone;
+    return SampleIndex;
 }
 
 /// <summary>
@@ -330,22 +324,22 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
 /// </summary>
 void MIDIPlayer::Seek(uint32_t timeInSamples)
 {
-    if (timeInSamples >= _LengthInSamples)
+    if (timeInSamples >= _Length)
     {
         if (_LoopMode == (LoopMode::Enabled | LoopMode::Forced))
         {
-            while (timeInSamples >= _LengthInSamples)
-                timeInSamples -= (uint32_t) (_LengthInSamples - _LoopBeginTime);
+            while (timeInSamples >= _Length)
+                timeInSamples -= (uint32_t) (_Length - _LoopBegin);
         }
         else
         {
-            timeInSamples = (uint32_t) _LengthInSamples;
+            timeInSamples = (uint32_t) _Length;
         }
     }
 
-    if (_TimeInSamples > timeInSamples)
+    if (_Position > timeInSamples)
     {
-        _CurrentPosition = 0;
+        _StreamPosition = 0;
 
         if (!Reset())
             Shutdown();
@@ -354,30 +348,30 @@ void MIDIPlayer::Seek(uint32_t timeInSamples)
     if (!Startup())
         return;
 
-    _TimeInSamples = timeInSamples;
+    _Position = timeInSamples;
 
-    size_t OldCurrentPosition = _CurrentPosition;
+    size_t OldCurrentPosition = _StreamPosition;
 
     {
         // Find the position in the MIDI stream that corresponds with the seek time.
-        for (; (_CurrentPosition < _Stream.size()) && (_Stream.at(_CurrentPosition).Timestamp < _TimeInSamples); _CurrentPosition++)
+        for (; (_StreamPosition < _Stream.size()) && (_Stream.at(_StreamPosition).Timestamp < _Position); _StreamPosition++)
             ;
 
-        if (_CurrentPosition == _Stream.size())
-            _TimeInSamplesRemaining = _LengthInSamples - _TimeInSamples;
+        if (_StreamPosition == _Stream.size())
+            _Remainder = _Length - _Position;
         else
-            _TimeInSamplesRemaining = _Stream.at(_CurrentPosition).Timestamp - _TimeInSamples;
+            _Remainder = _Stream.at(_StreamPosition).Timestamp - _Position;
     }
 
-    if (_CurrentPosition <= OldCurrentPosition)
+    if (_StreamPosition <= OldCurrentPosition)
         return;
 
     std::vector<MIDIStreamEvent> FillerEvents;
 
-    FillerEvents.resize(_CurrentPosition - OldCurrentPosition);
-    FillerEvents.assign(&_Stream.at(OldCurrentPosition), &_Stream.at(_CurrentPosition));
+    FillerEvents.resize(_StreamPosition - OldCurrentPosition);
+    FillerEvents.assign(&_Stream.at(OldCurrentPosition), &_Stream.at(_StreamPosition));
 
-    OldCurrentPosition = _CurrentPosition - OldCurrentPosition;
+    OldCurrentPosition = _StreamPosition - OldCurrentPosition;
 
     for (size_t i = 0; i < OldCurrentPosition; ++i)
     {
@@ -493,14 +487,14 @@ void MIDIPlayer::SetSampleRate(uint32_t sampleRate)
         for (size_t i = 0; i < _Stream.size(); ++i)
             _Stream.at(i).Timestamp = (uint32_t) ::MulDiv((int) _Stream.at(i).Timestamp, (int) sampleRate, (int) _SampleRate);
 
-    if (_LengthInSamples != 0)
-        _LengthInSamples = (uint32_t) ::MulDiv((int) _LengthInSamples, (int) sampleRate, (int) _SampleRate);
+    if (_Length != 0)
+        _Length = (uint32_t) ::MulDiv((int) _Length, (int) sampleRate, (int) _SampleRate);
 
-    if (_LoopBeginTime != 0)
-        _LoopBeginTime = (uint32_t) ::MulDiv((int) _LoopBeginTime, (int) sampleRate, (int) _SampleRate);
+    if (_LoopBegin != 0)
+        _LoopBegin = (uint32_t) ::MulDiv((int) _LoopBegin, (int) sampleRate, (int) _SampleRate);
 
-    if (_TimeInSamples != 0)
-        _TimeInSamples = (uint32_t) ::MulDiv((int) _TimeInSamples, (int) sampleRate, (int) _SampleRate);
+    if (_Position != 0)
+        _Position = (uint32_t) ::MulDiv((int) _Position, (int) sampleRate, (int) _SampleRate);
 
     _SampleRate = sampleRate;
 
