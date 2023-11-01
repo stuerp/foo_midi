@@ -1,5 +1,5 @@
 
-/** $VER: MIDIProcessorSMF.cpp (2023.08.14) Standard MIDI File **/
+/** $VER: MIDIProcessorSMF.cpp (2023.11.01) Standard MIDI File **/
 
 #include "MIDIProcessor.h"
 
@@ -272,12 +272,16 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
 
             uint8_t MetaDataType = *data++;
 
+            if (MetaDataType > MetaDataTypes::SequencerSpecific)
+                return SetLastErrorCode(MIDIError::InvalidMetaDataMessage);
+                
+
             int Size = DecodeVariableLengthQuantity(data, tail);
 
             if (Size < 0)
                 return SetLastErrorCode(MIDIError::InvalidMetaDataMessage);
 
-            if (data + Size > tail)
+            if (data > tail - Size)
                 return SetLastErrorCode(MIDIError::InsufficientData);
 
             // Remember when the track or instrument name contains the word "drum". We'll need it later.

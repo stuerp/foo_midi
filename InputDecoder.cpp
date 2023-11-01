@@ -100,7 +100,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
                 case InvalidSysExMessageContinuation: Message += "Invalid System Exclusive message"; break;
                 case InvalidSysExEndMessage: Message += "Invalid System Exclusive End message"; break;
 
-                case InvalidMetaDataMessage: Message += "Invalid Meta Datamessage"; break;
+                case InvalidMetaDataMessage: Message += "Invalid meta data message"; break;
 
                 // SMF
                 case SMFBadHeaderChunkType: Message += "Bad SMF header chunk type"; break;

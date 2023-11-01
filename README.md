@@ -128,8 +128,10 @@ v2.9.1.0, 2023-xx-xx, *"Loop de loop"*
 * Improved: The decay time is now configurable. The default is still 1s (1000ms).
 * Improved: Looping, fading and decay has been tweaked.
 * Improved: The song duration is now always calculated without taking into account the selected loop mode. So it's the absolute length of the song without any looping or decay time.
+* Improved: Scanning for metadata in SMF is more robust.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
 * Bug Fix: FluidSynth did not save two settings in a preset.
+* Bug Fix: Invalid embedded karaoke lyrics were not handled correctly.
 * Builds with foobar2000 SDK 2023-09-06.
 
 v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*

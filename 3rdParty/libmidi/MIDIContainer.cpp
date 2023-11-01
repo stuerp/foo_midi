@@ -1100,42 +1100,42 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
                         }
                         else
                         {
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@K", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@K", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_version", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@L", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@L", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_language", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@T", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@T", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_text", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@I", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@I", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_info", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@W", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@W", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_words", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (Data[0] == '@'))
+                            if ((DataSize > 2) && (Data[0] == '@'))
                             {
                                 // Unknown Soft Karaoke tag
                                 ::sprintf_s(Name, _countof(Name), "track_text_%02zd", i);
