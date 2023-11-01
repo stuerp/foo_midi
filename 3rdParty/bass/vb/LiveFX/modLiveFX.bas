@@ -12,81 +12,73 @@ Attribute VB_Name = "modLiveFX"
 
 Option Explicit
 
-Declare Sub FillMemory Lib "kernel32.dll" Alias "RtlFillMemory" (Destination As Any, ByVal length As Long, ByVal Fill As Byte)
-Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
-
+Public fxtype(3) As Long ' { BASS_FX_DX8_REVERB, BASS_FX_DX8_GARGLE, BASS_FX_DX8_FLANGER, BASS_FX_DX8_CHORUS }
+Public info As BASS_INFO
 Public rchan As Long    ' recording channel
 Public chan As Long     ' playback stream
-Public fx(4) As Long    ' FX handles
-Public chunk As Long    ' recording chunk size
+Public fx(3) As Long    ' FX handles
 Public input_ As Long   ' current input source
-Public latency As Long  ' current latency
+Public volume As Single ' volume level
+
+Public Const DEFAULTRATE = 44100
+Public Const TARGETBUFS = 2 ' managed buffer level target (higher = more safety margin + higher latency)
+
+Public prebuf As Boolean   ' prebuffering
+Public initrate As Long    ' initial output rate
+Public rate As Long        ' current output rate
+Public ratedelay As Long   ' rate change delay
+Public buftarget As Long   ' target buffer amount
+Public buflevel As Single  ' current/average buffer amount
 
 ' Display error message
 Public Sub Error_(ByVal es As String)
     Call MsgBox(es & vbCrLf & vbCrLf & "error code: " & BASS_ErrorGetCode, vbExclamation, "Error")
 End Sub
 
-Public Function RecordingCallback(ByVal handle As Long, ByVal buffer As Long, ByVal length As Long, ByVal user As Long) As Long
-    Call BASS_StreamPutData(chan, ByVal buffer, length) ' feed recorded data to output stream
-    RecordingCallback = BASSTRUE ' continue recording
-End Function
-
-Static Function Initialize() As Boolean
-    Dim bi As BASS_INFO
-
-    ' initialize output, get latency
-    If (BASS_Init(-1, 44100, BASS_DEVICE_LATENCY, frmLiveFX.hWnd, 0) = 0) Then
-        Call Error_("Can't initialize output")
-        Initialize = False
-        Exit Function
-    End If
-
-    Call BASS_GetInfo(bi)
-    If (bi.dsver < 8) Then ' no DX8, so disable effect buttons
-        With frmLiveFX
-            .chkChorus.Enabled = False
-            .chkFlanger.Enabled = False
-            .chkGargle.Enabled = False
-            .chkReverb.Enabled = False
-        End With
-    End If
-
-    ' create a stream to play the recording
-    chan = BASS_StreamCreate(44100, 2, 0, STREAMPROC_PUSH, 0)
-
-    ' start recording with 10ms period
-    Dim rinit As Long
-    rinit = BASS_RecordInit(-1)
-    rchan = BASS_RecordStart(44100, 2, MakeLong(0, 10), AddressOf RecordingCallback, 0)
-    If (rinit = 0 Or rchan = 0) Then
-        Call BASS_RecordFree
-        Call BASS_Free
-        Call Error_("Can't initialize recording")
-        Initialize = False
-        Exit Function
+' STREAMPROC that pulls data from the recording
+Public Function MyStreamProc(ByVal handle As Long, ByVal buffer As Long, ByVal length As Long, ByVal user As Long) As Long
+    Dim got As Long
+    got = BASS_ChannelGetData(rchan, 0, BASS_DATA_AVAILABLE) ' get recording buffer level
+    buflevel = (buflevel * 49 + got) / 50#
+    If got = 0 Then prebuf = True ' prebuffer again if buffer is empty
+    If prebuf Then ' prebuffering
+        buflevel = got
+        If got < IIf(buftarget, buftarget, length) Then Exit Function ' haven't got enough yet
+        prebuf = False
+        ratedelay = 10
     End If
     
-    ' get list of inputs
-    Dim c As Integer
-    Dim level As Single
-    While BASS_RecordGetInputName(c) <> 0
-        frmLiveFX.cmbSelChange.AddItem VBStrFromAnsiPtr(BASS_RecordGetInputName(c))
-        If (BASS_RecordGetInput(c, level) And BASS_INPUT_OFF) = 0 Then
-            frmLiveFX.cmbSelChange.ListIndex = c  ' this 1 is currently "on"
-            input_ = c
-            frmLiveFX.sLevel.SelStart = level * 100 ' set level slider
+    Dim r As Long
+    r = rate
+    If buftarget Then
+#If 1 Then ' target buffer amount = minimum
+        If got < buftarget Then ' buffer level is low
+            r = initrate * 0.999 ' slow down slightly
+            ratedelay = 10 + (buftarget - got) / 16 ' prevent speeding-up again too soon
+        ElseIf ratedelay = 0 Then
+            If buflevel >= buftarget * 1.1 Then ' buffer level is high
+                r = initrate * 1.001 ' speed up slightly
+            Else ' buffer level is in range
+                r = initrate ' normal speed
+            End If
+        Else
+            ratedelay = ratedelay - 1
+#Else ' target buffer amount = average
+        If buflevel < buftarget Then ' buffer level is low
+            r = initrate * 0.999 ' slow down slightly
+        ElseIf buflevel >= buftarget * 1.1 Then ' buffer level is high
+            r = initrate * 1.001 ' speed up slightly
+        Else ' buffer level is in range
+            r = initrate ' normal speed
+#End If
         End If
-        c = c + 1
-    Wend
-
-    ' prebuffer at least "minbuf" amount of data before starting playback
-    Dim prebuf As Long
-    prebuf = BASS_ChannelSeconds2Bytes(chan, CSng(bi.minbuf) / 1000)
-    While BASS_ChannelGetData(chan, 0, BASS_DATA_AVAILABLE) < prebuf
-        Call Sleep(1)
-    Wend
-    Call BASS_ChannelPlay(chan, BASSFALSE)
-
-    Initialize = True
+    Else
+        r = initrate ' normal speed
+        If r <> rate Then
+            rate = r
+            Call BASS_ChannelSetAttribute(chan, BASS_ATTRIB_FREQ, rate)
+        End If
+    End If
+    MyStreamProc = BASS_ChannelGetData(rchan, ByVal buffer, length) ' get the data
 End Function
+ 

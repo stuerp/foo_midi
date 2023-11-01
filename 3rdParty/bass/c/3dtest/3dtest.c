@@ -23,7 +23,6 @@ int chan = -1;		// selected channel
 
 #define TIMERPERIOD	50		// timer period (ms)
 #define MAXDIST		50		// maximum distance of the channels (m)
-#define SPEED		12		// speed of the channels' movement (m/s)
 
 // Display error dialogs
 void Error(const char *es)

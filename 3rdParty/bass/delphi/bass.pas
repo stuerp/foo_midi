@@ -39,6 +39,7 @@ const
   BASS_ERROR_POSITION     = 7;    // invalid position
   BASS_ERROR_INIT         = 8;    // BASS_Init has not been successfully called
   BASS_ERROR_START        = 9;    // BASS_Start has not been successfully called
+  BASS_ERROR_SSL          = 10;   // SSL/HTTPS support isn't available
   BASS_ERROR_REINIT       = 11;   // device needs to be reinitialized
   BASS_ERROR_ALREADY      = 14;   // already initialized/paused/whatever
   BASS_ERROR_NOTAUDIO     = 17;   // file does not contain audio
@@ -131,6 +132,7 @@ const
   // BASS_SetConfigPtr options
   BASS_CONFIG_NET_AGENT     = 16;
   BASS_CONFIG_NET_PROXY     = 17;
+  BASS_CONFIG_ANDROID_JAVAVM = 63;
   BASS_CONFIG_LIBSSL        = 64;
   BASS_CONFIG_FILENAME      = 75;
 
@@ -847,7 +849,7 @@ const
 {$ENDIF}
 {$IFDEF MACOS}
   {$IFDEF IOS}
-    bassdll = 'libbass.a';
+    bassdll = 'bass.framework/bass';
   {$ELSE}
     bassdll = 'libbass.dylib';
   {$ENDIF}

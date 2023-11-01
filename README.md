@@ -28,6 +28,25 @@ or
 
 * Import `foo_midi.fbk2-component` into foobar2000 using the "*File / Preferences / Components / Install...*" menu item.
 
+## Usage
+
+### Loops
+
+The component supports 6 loop modes:
+
+* Never loop
+  * The song will be played once ignoring any loop information.
+* Never loop. Use decay time
+  * The song will be played once ignoring any loop information with a customizable decay period at end for the sound to die down.
+* Loop and fade when detected
+  * The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences.
+* Loop and fade always
+  * The song will be played and looped a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences.
+* Play indefinitely when detected
+  * The song will be played and the loop will play until stopped.
+* Play indefinitely
+  * The song will be played and loop until stopped.
+
 ## Developing
 
 To build the code you need:
@@ -39,10 +58,10 @@ To build the code you need:
 The following libraries are included in the code:
 
 * [BASS](https://www.un4seen.com/) 2.4.17
-  * [BASSFLAC](https://www.un4seen.com/) 2.4.5.3
+  * [BASSFLAC](https://www.un4seen.com/) 2.4.5.4
   * [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
   * [BASSWV](https://www.un4seen.com/) 2.4.7.3
-  * [BASSOPUS](https://www.un4seen.com/) 2.4.2.3
+  * [BASSOPUS](https://www.un4seen.com/) 2.4.2.4
   * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 * [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
 * [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2)
@@ -59,7 +78,7 @@ The following libraries are included in the code:
 * [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
 * [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 * [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
-* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.3
+* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.4
 
 To create the deployment package you need:
 
@@ -99,7 +118,7 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.9.1.0-alpha, 2023-xx-xx, *"Loop de loop"*
+v2.9.1.0, 2023-xx-xx, *"Loop de loop"*
 
 * New: You can specify the path of an ADLMIDI bank (*.wopl or any of the other supported formats) in the Advanced branch of the Preferences dialog.
   * The bank in the file overrides any selection in the bank drop down list in Preferences.

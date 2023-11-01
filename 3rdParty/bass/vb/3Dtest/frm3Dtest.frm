@@ -1,29 +1,29 @@
 VERSION 5.00
-Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
+Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "ComDlg32.OCX"
 Begin VB.Form frm3Dtest 
    BorderStyle     =   1  'Fixed Single
-   Caption         =   "BASS - 3D Test"
-   ClientHeight    =   4005
+   Caption         =   "BASS 3D test"
+   ClientHeight    =   3750
    ClientLeft      =   45
    ClientTop       =   330
    ClientWidth     =   5415
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
-   ScaleHeight     =   4005
+   ScaleHeight     =   3750
    ScaleWidth      =   5415
    StartUpPosition =   2  'CenterScreen
    Begin VB.Frame Frame6 
       Caption         =   "Doppler factor"
       Height          =   495
       Left            =   2640
-      TabIndex        =   12
-      Top             =   3360
+      TabIndex        =   10
+      Top             =   3120
       Width           =   2655
       Begin VB.HScrollBar ID_Doppler 
          Height          =   135
          Left            =   120
          Max             =   20
-         TabIndex        =   14
+         TabIndex        =   12
          Top             =   240
          Value           =   10
          Width           =   2415
@@ -32,34 +32,35 @@ Begin VB.Form frm3Dtest
    Begin VB.Frame Frame5 
       Caption         =   "Rolloff factor"
       Height          =   495
-      Left            =   2640
-      TabIndex        =   11
-      Top             =   2760
-      Width           =   2655
+      Left            =   0
+      TabIndex        =   9
+      Top             =   3120
+      Width           =   2535
       Begin VB.HScrollBar ID_Rolloff 
          Height          =   135
          Left            =   120
          Max             =   20
-         TabIndex        =   13
+         TabIndex        =   11
          Top             =   240
          Value           =   10
-         Width           =   2415
+         Width           =   2175
       End
    End
    Begin VB.Frame Frame4 
-      Height          =   2655
+      Caption         =   "Position"
+      Height          =   3065
       Left            =   2640
-      TabIndex        =   3
+      TabIndex        =   2
       Top             =   0
       Width           =   2655
       Begin VB.PictureBox picDisplay 
          FillStyle       =   0  'Solid
-         Height          =   2295
+         Height          =   2655
          Left            =   120
-         ScaleHeight     =   149
+         ScaleHeight     =   173
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   157
-         TabIndex        =   4
+         TabIndex        =   3
          Top             =   240
          Width           =   2415
       End
@@ -68,7 +69,7 @@ Begin VB.Form frm3Dtest
       Caption         =   "Channels (sample/music)"
       Height          =   2295
       Left            =   120
-      TabIndex        =   2
+      TabIndex        =   1
       Top             =   0
       Width           =   2415
       Begin VB.Timer tmr3D 
@@ -89,7 +90,7 @@ Begin VB.Form frm3Dtest
          Enabled         =   0   'False
          Height          =   300
          Left            =   1320
-         TabIndex        =   9
+         TabIndex        =   8
          Top             =   1920
          Width           =   975
       End
@@ -98,7 +99,7 @@ Begin VB.Form frm3Dtest
          Enabled         =   0   'False
          Height          =   300
          Left            =   120
-         TabIndex        =   8
+         TabIndex        =   7
          Top             =   1920
          Width           =   975
       End
@@ -107,7 +108,7 @@ Begin VB.Form frm3Dtest
          Enabled         =   0   'False
          Height          =   300
          Left            =   1320
-         TabIndex        =   7
+         TabIndex        =   6
          Top             =   1560
          Width           =   975
       End
@@ -115,14 +116,14 @@ Begin VB.Form frm3Dtest
          Caption         =   "Add ..."
          Height          =   300
          Left            =   120
-         TabIndex        =   6
+         TabIndex        =   5
          Top             =   1560
          Width           =   975
       End
       Begin VB.ListBox lstChannels 
          Height          =   1230
          Left            =   120
-         TabIndex        =   5
+         TabIndex        =   4
          Top             =   240
          Width           =   2175
       End
@@ -130,9 +131,9 @@ Begin VB.Form frm3Dtest
    Begin VB.Frame Frame2 
       Caption         =   "Movement"
       ClipControls    =   0   'False
-      Height          =   765
+      Height          =   795
       Left            =   120
-      TabIndex        =   1
+      TabIndex        =   0
       Top             =   2280
       Width           =   2415
       Begin VB.CommandButton btnReset 
@@ -140,7 +141,7 @@ Begin VB.Form frm3Dtest
          Enabled         =   0   'False
          Height          =   255
          Left            =   1680
-         TabIndex        =   19
+         TabIndex        =   17
          Top             =   310
          Width           =   615
       End
@@ -149,7 +150,7 @@ Begin VB.Form frm3Dtest
          Height          =   285
          Left            =   360
          MaxLength       =   2
-         TabIndex        =   16
+         TabIndex        =   14
          Top             =   300
          Width           =   375
       End
@@ -158,7 +159,7 @@ Begin VB.Form frm3Dtest
          Height          =   285
          Left            =   1080
          MaxLength       =   2
-         TabIndex        =   15
+         TabIndex        =   13
          Top             =   300
          Width           =   375
       End
@@ -167,7 +168,7 @@ Begin VB.Form frm3Dtest
          Caption         =   "z:"
          Height          =   195
          Left            =   840
-         TabIndex        =   18
+         TabIndex        =   16
          Top             =   310
          Width           =   120
       End
@@ -176,28 +177,9 @@ Begin VB.Form frm3Dtest
          Caption         =   "x:"
          Height          =   195
          Left            =   120
-         TabIndex        =   17
+         TabIndex        =   15
          Top             =   310
          Width           =   120
-      End
-   End
-   Begin VB.Frame Frame3 
-      Caption         =   "EAX Environment"
-      ClipControls    =   0   'False
-      Height          =   735
-      Left            =   120
-      TabIndex        =   0
-      Top             =   3120
-      Width           =   2415
-      Begin VB.ComboBox cmbEAX 
-         BackColor       =   &H00FFFFFF&
-         Enabled         =   0   'False
-         Height          =   315
-         Left            =   120
-         Style           =   2  'Dropdown List
-         TabIndex        =   10
-         Top             =   240
-         Width           =   2175
       End
    End
 End
@@ -233,7 +215,6 @@ Dim chan As Long            ' current Channel
 
 Const TIMERPERIOD = 50      ' timer period (ms)
 Const MAXDIST = 50          ' maximum distance of the channels (m)
-Const SPEED = 12            ' speed of the channels' movement (m/s)
 
 ' display error messages
 Sub Error_(ByVal es As String)
@@ -251,37 +232,6 @@ Private Sub Form_Load()
         End
     End If
     
-    With cmbEAX
-        .AddItem "Off"
-        .AddItem "Generic"
-        .AddItem "Padded Cell"
-        .AddItem "Room"
-        .AddItem "Bathroom"
-        .AddItem "Living Room"
-        .AddItem "Stone Room"
-        .AddItem "Auditorium"
-        .AddItem "Concert Hall"
-        .AddItem "Cave"
-        .AddItem "Arena"
-        .AddItem "Hangar"
-        .AddItem "Carpeted Hallway"
-        .AddItem "Hallway"
-        .AddItem "Stone Corridor"
-        .AddItem "Alley"
-        .AddItem "Forest"
-        .AddItem "City"
-        .AddItem "Mountains"
-        .AddItem "Quarry"
-        .AddItem "Plain"
-        .AddItem "Parking Lot"
-        .AddItem "Sewer Pipe"
-        .AddItem "Under Water"
-        .AddItem "Drugged"
-        .AddItem "Dizzy"
-        .AddItem "Psychotic"
-        .ListIndex = 0
-    End With
-    
     chanc = 0
     chan = -1
 
@@ -289,16 +239,22 @@ Private Sub Form_Load()
     Me.Show
 
     ' Initialize the default output device with 3D support
-    If (BASS_Init(-1, 44100, BASS_DEVICE_3D, Me.hWnd, 0) = 0) Then
+    If (BASS_Init(-1, 44100, 0, Me.hWnd, 0) = 0) Then
         Call Error_("Can't initialize output device")
         End
+    End If
+    
+    ' check if multiple speakers are available
+    Dim i As BASS_INFO
+    Call BASS_GetInfo(i)
+    If (i.speakers > 2) Then
+        If MsgBox("Multiple speakers were detected. Would you like to use them?", vbYesNo, "Speakers") = vbNo Then
+            Call BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_OFF) ' use stereo 3D output
+        End If
     End If
 
     ' Use meters as distance unit, real world rolloff, real doppler effect
     Call BASS_Set3DFactors(1, 1, 1)
-
-    ' Turn EAX off (volume=0), if error then EAX is not supported
-    If BASS_SetEAXParameters(-1, 0, -1, -1) Then cmbEAX.Enabled = True
 
     Call UpdateButtons
     tmr3D.Enabled = True
@@ -341,7 +297,8 @@ Sub Update()
         If chan = c Then
             picDisplay.FillColor = RGB(255, 0, 0)
         Else
-            picDisplay.FillColor = RGB(150, 0, 0)
+'            picDisplay.FillColor = RGB(150, 0, 0)
+            picDisplay.FillColor = RGB(255, 255, 255)
         End If
         picDisplay.Circle (X - 4, Y - 4), 4, RGB(0, 0, 0)
     Next c
@@ -364,39 +321,6 @@ Sub UpdateButtons()
         txtX.Text = Abs(Int(chans(chan).vel.X))
         txtZ.Text = Abs(Int(chans(chan).vel.z))
     End If
-End Sub
-
-Private Sub cmbEAX_Click()
-    ' Change the EAX Environment depending on which is selected
-    Select Case cmbEAX.ListIndex
-        Case 0: BASS_SetEAXParameters -1, 0, -1, -1
-        Case 1: BASS_SetEAXPreset EAX_ENVIRONMENT_GENERIC
-        Case 2: BASS_SetEAXPreset EAX_ENVIRONMENT_PADDEDCELL
-        Case 3: BASS_SetEAXPreset EAX_ENVIRONMENT_ROOM
-        Case 4: BASS_SetEAXPreset EAX_ENVIRONMENT_BATHROOM
-        Case 5: BASS_SetEAXPreset EAX_ENVIRONMENT_LIVINGROOM
-        Case 6: BASS_SetEAXPreset EAX_ENVIRONMENT_STONEROOM
-        Case 7: BASS_SetEAXPreset EAX_ENVIRONMENT_AUDITORIUM
-        Case 8: BASS_SetEAXPreset EAX_ENVIRONMENT_CONCERTHALL
-        Case 9: BASS_SetEAXPreset EAX_ENVIRONMENT_CAVE
-        Case 10: BASS_SetEAXPreset EAX_ENVIRONMENT_ARENA
-        Case 11: BASS_SetEAXPreset EAX_ENVIRONMENT_HANGAR
-        Case 12: BASS_SetEAXPreset EAX_ENVIRONMENT_CARPETEDHALLWAY
-        Case 13: BASS_SetEAXPreset EAX_ENVIRONMENT_HALLWAY
-        Case 14: BASS_SetEAXPreset EAX_ENVIRONMENT_STONECORRIDOR
-        Case 15: BASS_SetEAXPreset EAX_ENVIRONMENT_ALLEY
-        Case 16: BASS_SetEAXPreset EAX_ENVIRONMENT_FOREST
-        Case 17: BASS_SetEAXPreset EAX_ENVIRONMENT_CITY
-        Case 18: BASS_SetEAXPreset EAX_ENVIRONMENT_MOUNTAINS
-        Case 19: BASS_SetEAXPreset EAX_ENVIRONMENT_QUARRY
-        Case 20: BASS_SetEAXPreset EAX_ENVIRONMENT_PLAIN
-        Case 21: BASS_SetEAXPreset EAX_ENVIRONMENT_PARKINGLOT
-        Case 22: BASS_SetEAXPreset EAX_ENVIRONMENT_SEWERPIPE
-        Case 23: BASS_SetEAXPreset EAX_ENVIRONMENT_UNDERWATER
-        Case 24: BASS_SetEAXPreset EAX_ENVIRONMENT_DRUGGED
-        Case 25: BASS_SetEAXPreset EAX_ENVIRONMENT_DIZZY
-        Case 26: BASS_SetEAXPreset EAX_ENVIRONMENT_PSYCHOTIC
-    End Select
 End Sub
 
 Private Sub cmdAdd_Click()

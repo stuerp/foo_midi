@@ -155,7 +155,7 @@ Private Sub Form_Load()
         End
     End If
     
-    ' initialize BASS - default device
+    ' initialize default device
     If (BASS_Init(-1, 44100, 0, Me.hWnd, 0) = 0) Then
         Call Error_("Can't initialize device")
         End
@@ -169,17 +169,6 @@ Private Sub Form_Load()
     ' check how many speakers the device supports
     Dim i As BASS_INFO
     Call BASS_GetInfo(i)
-    If (i.speakers < 4) Then ' no extra speakers detected, enable them anyway?
-        If (MsgBox("Do you wish to enable ""speaker assignment"" anyway?", vbYesNo + vbQuestion, "No extra speakers detected") = vbYes) Then
-            ' reinitialize BASS - forcing speaker assignment
-            Call BASS_Free
-            If (BASS_Init(-1, 44100, BASS_DEVICE_SPEAKERS, Me.hWnd, 0) = 0) Then
-                Call Error_("Can't initialize device")
-                End
-            End If
-            Call BASS_GetInfo(i) ' get info again
-        End If
-    End If
     If (i.speakers < 8) Then
         btnOpen(3).Enabled = False
         btnSwap(2).Enabled = False
