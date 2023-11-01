@@ -1,11 +1,12 @@
 
-/** $VER: MIDIPlayer.h (2023.08.27) **/
+/** $VER: MIDIPlayer.h (2023.11.01) **/
 
 #pragma once
 
 #include <sdk/foobar2000-lite.h>
 
 #include <libmidi/MIDIContainer.h>
+#include "Configuration.h"
 
 #ifdef EXPERIMENT
 #include <API.h>
@@ -25,25 +26,13 @@ public:
         Forced = 0x02
     };
 
-    bool Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, LoopMode loopMode, uint32_t cleanFlags);
+    bool Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t cleanFlags);
     uint32_t Play(audio_sample * samples, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
     void SetSampleRate(uint32_t sampleRate);
 
-    enum class ConfigurationType
-    {
-        None = 0,
-        GM,
-        GM2,
-        SC55,
-        SC88,
-        SC88Pro,
-        SC8850,
-        XG
-    };
-
-    void Configure(ConfigurationType filterType, bool filterEffects);
+    void Configure(MIDIFlavor midiFlavor, bool filterEffects);
 
     virtual uint32_t GetChannelCount() const noexcept { return 2; }
     virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept { UNREFERENCED_PARAMETER(abortHandler); }
@@ -74,7 +63,7 @@ protected:
     uint32_t _SampleRate;
     SysExTable _SysExMap;
 
-    ConfigurationType _ConfigurationType;
+    MIDIFlavor _MIDIFlavor;
     bool _FilterEffects;
 
 private:
@@ -89,18 +78,18 @@ private:
 
 private:
     std::vector<MIDIStreamEvent> _Stream;
-    size_t _StreamPosition; // Current position in the MIDI stream
+    size_t _StreamPosition; // Current position in the event stream
 
-    uint32_t _Position;     // In samples
-    uint32_t _Length;       // In samples
+    uint32_t _Position;     // Current position in the sample stream
+    uint32_t _Length;       // Total length of the sample stream
     uint32_t _Remainder;    // In samples
 
-    uint32_t _LoopMode;
+    LoopType _LoopType;
 
     uint32_t _StreamLoopBegin;
     uint32_t _StreamLoopEnd;
 
-    uint32_t _LoopBegin;    // In samples
+    uint32_t _LoopBegin;    // Position of the start of a loop in the sample stream
 
     #ifdef EXPERIMENT
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;

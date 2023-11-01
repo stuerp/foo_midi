@@ -127,7 +127,7 @@ MIDIPreset::MIDIPreset() noexcept
     }
 
     {
-        _ConfigurationType = (MIDIPlayer::ConfigurationType) (uint32_t) CfgMIDIStandard;
+        _MIDIFlavor = (MIDIFlavor) (uint32_t) CfgMIDIStandard;
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
         _UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
         _UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
@@ -245,7 +245,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
     }
 
     text += "|";
-    text += pfc::format_int((uint32_t) _ConfigurationType);
+    text += pfc::format_int((uint32_t) _MIDIFlavor);
 
     text += "|";
     text += pfc::format_int(_UseMIDIEffects);
@@ -303,7 +303,8 @@ void MIDIPreset::Deserialize(const char * text)
     uint32_t NukeBank = 0;
     bool NukeUsePanning = false;
 
-    MIDIPlayer::ConfigurationType ConfigurationType = MIDIPlayer::ConfigurationType::None;
+    MIDIFlavor Flavor = MIDIFlavor::None;
+
     bool UseMIDIEffects = false;
     bool UseSuperMuntWithMT32 = false;
     bool UseSecretSauceWithXG = false;
@@ -326,7 +327,7 @@ void MIDIPreset::Deserialize(const char * text)
         if (CurrentSchemaVersion >= 11)
         {
             GetValue(Separator, text);
-            ConfigurationType = (MIDIPlayer::ConfigurationType) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
+            Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
             GetValue(Separator, text);
             UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
@@ -368,7 +369,7 @@ void MIDIPreset::Deserialize(const char * text)
                     if (CurrentSchemaVersion >= 11)
                     {
                         GetValue(Separator, text);
-                        ConfigurationType = (MIDIPlayer::ConfigurationType) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
+                        Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
                         GetValue(Separator, text);
                         UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
@@ -506,10 +507,10 @@ void MIDIPreset::Deserialize(const char * text)
     {
         if (CurrentSchemaVersion >= 11)
         {
-            ConfigurationType = (MIDIPlayer::ConfigurationType) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
+            Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
-            if (ConfigurationType > MIDIPlayer::ConfigurationType::XG)
-                ConfigurationType = MIDIPlayer::ConfigurationType::None;
+            if (Flavor > MIDIFlavor::XG)
+                Flavor = MIDIFlavor::None;
 
             GetValue(Separator, text);
             UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
@@ -554,7 +555,7 @@ void MIDIPreset::Deserialize(const char * text)
     _NukeBank = NukeBank;
     _NukeUsePanning = NukeUsePanning;
 
-    _ConfigurationType = ConfigurationType;
+    _MIDIFlavor = Flavor;
     _UseMIDIEffects = UseMIDIEffects;
 }
 

@@ -113,7 +113,7 @@ bool SCPlayer::Startup()
 
     _IsInitialized = true;
 
-    Configure(_ConfigurationType, _FilterEffects);
+    Configure(_MIDIFlavor, _FilterEffects);
 
     return true;
 }

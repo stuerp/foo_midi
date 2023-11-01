@@ -64,7 +64,7 @@ public:
     uint32_t _NukeBank;
     bool _NukeUsePanning;
 
-    MIDIPlayer::ConfigurationType _ConfigurationType;
+    MIDIFlavor _MIDIFlavor;
     bool _UseMIDIEffects;
     bool _UseSuperMuntWithMT32;
     bool _UseSecretSauceWithXG;

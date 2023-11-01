@@ -108,6 +108,7 @@ v2.9.1.0-alpha, 2023-xx-xx, *"Loop de loop"*
 * New: Made Opal and Java OPL3 emulator core from LibADLMIDI selectable in the Advanced Preferences.
 * Improved: The decay time is now configurable. The default is still 1s (1000ms).
 * Improved: Looping, fading and decay has been tweaked.
+* Improved: The song duration is now always calculated without taking into account the selected loop mode. So it's the absolute length of the song without any looping or decay time.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
 * Bug Fix: FluidSynth did not save two settings in a preset.
 * Builds with foobar2000 SDK 2023-09-06.

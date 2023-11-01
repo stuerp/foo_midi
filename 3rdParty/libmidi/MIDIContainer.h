@@ -1,5 +1,5 @@
 
-/** $VER: MIDIContainer.h (2023.08.14) **/
+/** $VER: MIDIContainer.h (2023.10.31) **/
 
 #pragma once
 
@@ -227,7 +227,7 @@ private:
 
 struct MIDIStreamEvent
 {
-    uint32_t Timestamp;
+    uint32_t Timestamp; // in ms
     uint32_t Data;
 
     MIDIStreamEvent() noexcept : Timestamp(0), Data(0)
@@ -423,9 +423,6 @@ private:
     MIDIMetaData _ExtraMetaData;
 
     std::vector<uint32_t> _EndTimestamps;
-
-    std::vector<uint32_t> _LoopBeginTimestamp;
-    std::vector<uint32_t> _LoopEndTimestamp;
 
     std::vector<Range> _Loop;
 };

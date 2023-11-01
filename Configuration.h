@@ -1,13 +1,11 @@
 
-/** $VER: Configuration.h (2023.09.27) **/
+/** $VER: Configuration.h (2023.11.01) **/
 
 #pragma once
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/cfg_var.h>
 #include <sdk/advconfig_impl.h>
-
-#include "MIDIPlayer.h"
 
 #include "ConfigurationMap.h"
 
@@ -39,6 +37,30 @@ enum class PlayerType : int8_t
     Default = ADL,
 };
 
+enum class LoopType
+{
+    NeverLoop = 0,                      // Never loop
+    NeverLoopAddDecayTime = 1,          // Never loop, add configured decay time at the end
+
+    LoopAndFadeWhenDetected = 2,        // Loop and fade when detected
+    LoopAndFadeAlways = 3,              // Loop and fade always
+
+    PlayIndefinitelyWhenDetected = 4,   // Play indefinitely when detected
+    PlayIndefinitely = 5,               // Play indefinitely
+};
+
+enum class MIDIFlavor
+{
+    None = 0,
+    GM,
+    GM2,
+    SC55,
+    SC88,
+    SC88Pro,
+    SC8850,
+    XG
+};
+
 enum
 {
     DefaultSampleRate = 44100,
@@ -51,7 +73,7 @@ enum
     default_cfg_xmiloopz = 1,
     default_cfg_ff7loopz = 1,
 
-    DefaultMIDIFlavor = MIDIPlayer::ConfigurationType::None,
+    DefaultMIDIFlavor = MIDIFlavor::None,
     DefaultUseMIDIEffects = 1,
     DefaultUseSuperMuntWithMT32 = 1,
     DefaultUseSecretSauceWithXG = 0,
@@ -75,18 +97,6 @@ enum
     DefaultADLChipCount = 10,
     DefaultADLPanning = 1,
 //  DefaultADL4Op = 14,
-};
-
-enum LoopType
-{
-    NeverLoop = 0,                      // Never loop
-    NeverLoopAddDecayTime = 1,          // Never loop, add configured decay time at the end
-
-    LoopAndFadeWhenDetected = 2,        // Loop and fade when detected
-    LoopAndFadeAlways = 3,              // Loop and fade always
-
-    PlayIndefinitelyWhenDetected = 4,   // Play indefinitely when detected
-    PlayIndefinitely = 5,               // Play indefinitely
 };
 
 extern cfg_int
