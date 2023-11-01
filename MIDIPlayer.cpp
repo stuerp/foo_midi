@@ -143,9 +143,9 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
 
     if (!Startup())
         return 0;
-
+#ifdef _DEBUG
     console::printf("Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _Position, _Length, _Remainder, sampleCount);
-
+#endif
     const uint32_t BlockSize = GetSampleBlockSize();
 
     uint32_t SampleIndex = 0;

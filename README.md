@@ -129,6 +129,7 @@ v2.9.1.0, 2023-xx-xx, *"Loop de loop"*
 * Improved: Looping, fading and decay has been tweaked.
 * Improved: The song duration is now always calculated without taking into account the selected loop mode. So it's the absolute length of the song without any looping or decay time.
 * Improved: Scanning for metadata in SMF is more robust.
+* Improved: LDS file detection is more robust.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
 * Bug Fix: FluidSynth did not save two settings in a preset.
 * Bug Fix: Invalid embedded karaoke lyrics were not handled correctly.

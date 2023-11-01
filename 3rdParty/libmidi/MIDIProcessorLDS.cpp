@@ -46,6 +46,9 @@ static const unsigned char tremtab[] = {
 
 bool MIDIProcessor::IsLDS(std::vector<uint8_t> const & data, const char * fileExtension)
 {
+    if (fileExtension == nullptr)
+        return false;
+
     if (::_stricmp(fileExtension, "LDS"))
         return false;
 
