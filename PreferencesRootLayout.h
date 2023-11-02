@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRootLayout.h (2023.07.22) **/
+/** $VER: PreferencesRootLayout.h (2023.08.14) **/
 
 #pragma once
 
@@ -12,35 +12,35 @@
 #define Y_A10    7
 #define W_A10    W_A00 - 7 - 7
 
-// Label
-#define X_A11    X_A10 + 5
-#define Y_A11    Y_A10 + 11
-#define W_A11    26
-#define H_A11    8
+    // Label
+    #define X_A11    X_A10 + 5
+    #define Y_A11    Y_A10 + 11
+    #define W_A11    26
+    #define H_A11    8
 
-// Combobox
-#define W_A15    40
-#define H_A15    14
-#define X_A15    X_A10 + W_A10 - 7 - W_A15
-#define Y_A15    Y_A11
+    // Combobox
+    #define W_A15    40
+    #define H_A15    14
+    #define X_A15    X_A10 + W_A10 - 7 - W_A15
+    #define Y_A15    Y_A11
 
-// Label
-#define W_A14    40
-#define H_A14    8
-#define X_A14    X_A15 - W_A14 - 3
-#define Y_A14    Y_A13
+    // Label
+    #define W_A14    42
+    #define H_A14    8
+    #define X_A14    X_A15 - W_A14 - 3
+    #define Y_A14    Y_A13
 
-// Button
-#define W_A13    50
-#define H_A13    14
-#define X_A13    X_A14 - W_A13 - 4
-#define Y_A13    Y_A12
+    // Button
+    #define W_A13    50
+    #define H_A13    14
+    #define X_A13    X_A14 - W_A13 - 4
+    #define Y_A13    Y_A12
 
-// Combobox
-#define X_A12    X_A11 + W_A11 + 3
-#define Y_A12    Y_A11
-#define W_A12    W_A10 - 5 - W_A11 - 3 - W_A13 - 4 - W_A14 - 3 - W_A15 - 7
-#define H_A12    14
+    // Combobox
+    #define X_A12    X_A11 + W_A11 + 3
+    #define Y_A12    Y_A11
+    #define W_A12    W_A10 - 5 - W_A11 - 3 - W_A13 - 4 - W_A14 - 3 - W_A15 - 7
+    #define H_A12    14
 
 #define H_A10    11 + H_A12 + 4
 #pragma endregion
@@ -54,7 +54,7 @@
     // Label
     #define X_A21    X_A20 + 5
     #define Y_A21    Y_A20 + 11 + 2
-    #define W_A21    32
+    #define W_A21    40
     #define H_A21    8
 
     // Combobox
@@ -70,14 +70,32 @@
     #define H_A23    8
 
     // Combobox
-    #define X_A24    X_A23 + W_A23 + 3
+    #define X_A24    X_A22
     #define Y_A24    Y_A23 - 2
     #define W_A24    W_A22
     #define H_A24    14
 
+    // Label (Decay)
+    #define X_A29    X_A21
+    #define Y_A29    Y_A24 + H_A24 + 4 + 2
+    #define W_A29    W_A21
+    #define H_A29    8
+
+    // Textbox (Decay)
+    #define X_A2A    X_A22
+    #define Y_A2A    Y_A24 + H_A24 + 4
+    #define W_A2A    32
+    #define H_A2A    12
+
+    // Label (ms)
+    #define X_A2B    X_A2A + W_A2A + 3
+    #define Y_A2B    Y_A24 + H_A24 + 4 + 2
+    #define W_A2B    10
+    #define H_A2B    8
+
     // Checkbox
     #define X_A25    X_A23
-    #define Y_A25    Y_A24 + H_A24 + 4
+    #define Y_A25    Y_A29 + H_A29 + 4
     #define W_A25    W_A20 - 5 - 6
     #define H_A25    10
 
@@ -99,7 +117,7 @@
     #define W_A28    W_A27
     #define H_A28    H_A27
 
-#define H_A20    11 + H_A22 + 4 + H_A24 + 4 + H_A25 + 4 + H_A26 + 4 + H_A27 + 4 + H_A28 + 4
+#define H_A20    11 + H_A22 + 4 + H_A2A + 4 + H_A24 + 4 + H_A25 + 4 + H_A26 + 4 + H_A27 + 4 + H_A28 + 4
 #pragma endregion
 
 #pragma region("MIDI")

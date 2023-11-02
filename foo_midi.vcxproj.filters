@@ -117,7 +117,6 @@
     <ClInclude Include="3rdParty\Nuke\resampler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SCPlayer.h" />
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="FileHasher.h" />
     <ClInclude Include="VSTiPlayer.h" />
     <ClInclude Include="OPNPlayer\fmmidi.wopn.h" />
@@ -203,10 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="3rdParty\BASS\bassflac.dll" />
-    <None Include=".gitattributes" />
-    <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
-    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

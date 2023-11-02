@@ -1,3 +1,6 @@
+
+/** $VER: MIDIProcessorSMF.cpp (2023.11.01) Standard MIDI File **/
+
 #include "MIDIProcessor.h"
 
   const uint8_t SysExUseForRhythmPartCh16[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x1F, 0x15, 0x02, 0x0A, 0xF7 }; // Use channel 16 for rhythm.
@@ -74,12 +77,12 @@ bool MIDIProcessor::ProcessSMF(std::vector<uint8_t> const & data, MIDIContainer 
 
         if (::memcmp(&Data[0], "MTrk", 4) == 0)
         {
-            if (Tail - Data < (ptrdiff_t)8 + ChunkSize)
+            if (Tail - Data < (ptrdiff_t) (8 + ChunkSize))
                 return SetLastErrorCode(MIDIError::InsufficientData);
 
             Data += 8;
 
-            std::vector<uint8_t>::const_iterator ChunkTail = Data + ChunkSize;
+            std::vector<uint8_t>::const_iterator ChunkTail = Data + (int) ChunkSize;
 
             if (!ProcessSMFTrack(Data, ChunkTail, container, true))
                 return false;
@@ -89,7 +92,7 @@ bool MIDIProcessor::ProcessSMF(std::vector<uint8_t> const & data, MIDIContainer 
         // Skip unknown chunks in the stream.
         else
         {
-            if (Tail - Data < (ptrdiff_t)(8) + ChunkSize)
+            if (Tail - Data < (ptrdiff_t) (8 + ChunkSize))
                 return SetLastErrorCode(MIDIError::InsufficientData);
 
             Data += (int64_t)(8) + ChunkSize;
@@ -216,8 +219,8 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
             if (Size < 0)
                 return SetLastErrorCode(MIDIError::InvalidSysExMessage);
 
-            if (data + Size > tail)
-                return SetLastErrorCode(MIDIError::InsufficientData);
+            if (Size > tail - data)
+                return SetLastErrorCode(MIDIError::InvalidSysExMessage);
 
             {
                 Buffer.resize((size_t)(Size + 1));
@@ -243,13 +246,13 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
             if (Size < 0)
                 return SetLastErrorCode(MIDIError::InvalidSysExMessageContinuation);
 
-            if (data + Size > tail)
-                return SetLastErrorCode(MIDIError::InsufficientData);
+            if (Size > tail - data)
+                return SetLastErrorCode(MIDIError::InvalidSysExMessageContinuation);
 
             {
                 Buffer.resize((size_t)SysExSize + Size);
 
-                std::copy(data, data + Size, Buffer.begin() + SysExSize);
+                std::copy(data, data + Size, Buffer.begin() + (int) SysExSize);
                 data += Size;
 
                 SysExSize += Size;
@@ -269,12 +272,15 @@ bool MIDIProcessor::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data,
 
             uint8_t MetaDataType = *data++;
 
+            if (MetaDataType > MetaDataTypes::SequencerSpecific)
+                return SetLastErrorCode(MIDIError::InvalidMetaDataMessage);
+
             int Size = DecodeVariableLengthQuantity(data, tail);
 
             if (Size < 0)
                 return SetLastErrorCode(MIDIError::InvalidMetaDataMessage);
 
-            if (data + Size > tail)
+            if (Size > tail - data)
                 return SetLastErrorCode(MIDIError::InsufficientData);
 
             // Remember when the track or instrument name contains the word "drum". We'll need it later.

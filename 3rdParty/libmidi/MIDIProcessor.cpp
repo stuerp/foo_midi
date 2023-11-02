@@ -1,3 +1,6 @@
+
+/** $VER: MIDIProcessor.cpp (2023.08.14) **/
+
 #include "MIDIProcessor.h"
 
 MIDIError MIDIProcessor::_ErrorCode;
@@ -24,23 +27,23 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
     if (IsXMI(data))
         return ProcessXMI(data, container);
 
-    if (IsMIDS(data))
-        return ProcessMIDS(data, container);
+    if (IsMDS(data))
+        return ProcessMDS(data, container);
 
-    if (is_hmp(data))
-        return process_hmp(data, container);
+    if (IsHMP(data))
+        return ProcessHMP(data, container);
 
-    if (is_hmi(data))
-        return process_hmi(data, container);
+    if (IsHMI(data))
+        return ProcessHMI(data, container);
 
-    if (is_mus(data))
-        return process_mus(data, container);
+    if (IsMUS(data))
+        return ProcessMUS(data, container);
 
-    if (is_lds(data, fileExtension))
-        return process_lds(data, container);
+    if (IsLDS(data, fileExtension))
+        return ProcessLDS(data, container);
 
-    if (is_gmf(data))
-        return process_gmf(data, container);
+    if (IsGMF(data))
+        return ProcessGMF(data, container);
 
     if (IsSysEx(data))
         return ProcessSysEx(data, container);
@@ -125,7 +128,7 @@ bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, const char 
     if (IsXMI(data))
         return GetTrackCountFromXMI(data, trackCount);
 
-    if (is_mus(data))
+    if (IsMUS(data))
     {
         trackCount = 1;
         return true;
@@ -143,7 +146,7 @@ bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, const char 
         return true;
     }
 
-    if (is_gmf(data))
+    if (IsGMF(data))
     {
         trackCount = 1;
         return true;
@@ -152,25 +155,25 @@ bool MIDIProcessor::GetTrackCount(std::vector<uint8_t> const & data, const char 
     return false;
 }
 */
+
 /// <summary>
 /// Decodes a variable-length quantity.
 /// </summary>
-
-int MIDIProcessor::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail)
+int MIDIProcessor::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail) noexcept
 {
     int Quantity = 0;
 
-    uint8_t byte;
+    uint8_t Byte;
 
     do
     {
         if (data == tail)
             return 0;
 
-        byte = *data++;
-        Quantity = (Quantity << 7) + (byte & 0x7F);
+        Byte = *data++;
+        Quantity = (Quantity << 7) + (Byte & 0x7F);
     }
-    while (byte & 0x80);
+    while (Byte & 0x80);
 
     return Quantity;
 }

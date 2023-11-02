@@ -1,3 +1,6 @@
+
+/** $VER: MIDIContainer.h (2023.10.31) **/
+
 #pragma once
 
 #pragma warning(disable: 4514) // Unreferenced inline function has been removed
@@ -124,7 +127,16 @@ class MIDITrack
 public:
     MIDITrack() noexcept { }
 
-    MIDITrack(const MIDITrack & track);
+    MIDITrack(const MIDITrack & track) noexcept
+    {
+        _Events = track._Events;
+    }
+    MIDITrack & operator=(const MIDITrack & track)
+    {
+        _Events = track._Events;
+
+        return *this;
+    }
 
     void AddEvent(const MIDIEvent & event);
     void RemoveEvent(size_t index);
@@ -215,7 +227,7 @@ private:
 
 struct MIDIStreamEvent
 {
-    uint32_t Timestamp;
+    uint32_t Timestamp; // in ms
     uint32_t Data;
 
     MIDIStreamEvent() noexcept : Timestamp(0), Data(0)
@@ -232,11 +244,36 @@ struct MIDIMetaDataItem
     std::string Name;
     std::string Value;
 
-    MIDIMetaDataItem() noexcept : Timestamp(0)
+    MIDIMetaDataItem() noexcept : Timestamp(0) { }
+
+    MIDIMetaDataItem(const MIDIMetaDataItem & item) noexcept { operator=(item); };
+    MIDIMetaDataItem & operator=(const MIDIMetaDataItem & other) noexcept
     {
+        Timestamp = other.Timestamp;
+        Name = other.Name;
+        Value = other.Value;
+
+        return *this;
     }
-    MIDIMetaDataItem(const MIDIMetaDataItem & item);
-    MIDIMetaDataItem(uint32_t timestamp, const char * name, const char * value);
+
+    MIDIMetaDataItem(MIDIMetaDataItem && item) { operator=(item); }
+    MIDIMetaDataItem & operator=(MIDIMetaDataItem && other)
+    {
+        Timestamp = other.Timestamp;
+        Name = std::move(Name);
+        Value = std::move(Value);
+
+        return *this;
+    }
+
+    virtual ~MIDIMetaDataItem() { }
+
+    MIDIMetaDataItem(uint32_t timestamp, const char * name, const char * value) noexcept
+    {
+        Timestamp = timestamp;
+        Name = name;
+        Value = value;
+    }
 };
 #pragma warning(default: 4820) // Padding added after data member
 
@@ -386,9 +423,6 @@ private:
     MIDIMetaData _ExtraMetaData;
 
     std::vector<uint32_t> _EndTimestamps;
-
-    std::vector<uint32_t> _LoopBeginTimestamp;
-    std::vector<uint32_t> _LoopEndTimestamp;
 
     std::vector<Range> _Loop;
 };

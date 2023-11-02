@@ -1,3 +1,6 @@
+
+/** $VER: MIDIProcessor.h (2023.08.14) **/
+
 #pragma once
 
 #include "MIDIContainer.h"
@@ -43,30 +46,30 @@ public:
     static MIDIError GetLastErrorCode() noexcept { return _ErrorCode; }
 
 private:
-    static int DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end);
-    static uint32_t DecodeVariableLengthQuantityHMP(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end);
-    static uint32_t DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end);
+    static int      DecodeVariableLengthQuantity   (std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end) noexcept;
+    static uint32_t DecodeVariableLengthQuantityHMP(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end) noexcept;
+    static uint32_t DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end) noexcept;
 
     static bool IsSMF(std::vector<uint8_t> const & data);
     static bool IsRIFF(std::vector<uint8_t> const & data);
-    static bool is_hmp(std::vector<uint8_t> const & data);
-    static bool is_hmi(std::vector<uint8_t> const & data);
+    static bool IsHMP(std::vector<uint8_t> const & data);
+    static bool IsHMI(std::vector<uint8_t> const & data);
     static bool IsXMI(std::vector<uint8_t> const & data);
-    static bool is_mus(std::vector<uint8_t> const & data);
-    static bool IsMIDS(std::vector<uint8_t> const & data);
-    static bool is_lds(std::vector<uint8_t> const & data, const char * fileExtension);
-    static bool is_gmf(std::vector<uint8_t> const & data);
+    static bool IsMUS(std::vector<uint8_t> const & data);
+    static bool IsMDS(std::vector<uint8_t> const & data);
+    static bool IsLDS(std::vector<uint8_t> const & data, const char * fileExtension);
+    static bool IsGMF(std::vector<uint8_t> const & data);
     static bool IsSysEx(std::vector<uint8_t> const & data);
 
     static bool ProcessSMF(std::vector<uint8_t> const & data, MIDIContainer & container);
     static bool ProcessRIFF(std::vector<uint8_t> const & data, MIDIContainer & container);
-    static bool process_hmp(std::vector<uint8_t> const & data, MIDIContainer & container);
-    static bool process_hmi(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool ProcessHMI(std::vector<uint8_t> const & data, MIDIContainer & container);
     static bool ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer & container);
-    static bool process_mus(std::vector<uint8_t> const & data, MIDIContainer & container);
-    static bool ProcessMIDS(std::vector<uint8_t> const & data, MIDIContainer & container);
-    static bool process_lds(std::vector<uint8_t> const & data, MIDIContainer & container);
-    static bool process_gmf(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool ProcessMUS(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool ProcessMDS(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool ProcessLDS(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool ProcessGMF(std::vector<uint8_t> const & data, MIDIContainer & container);
     static bool ProcessSysEx(std::vector<uint8_t> const & data, MIDIContainer & container);
 
 //  static bool GetTrackCount(std::vector<uint8_t> const & data, const char * fileExtension, size_t & trackCount);
@@ -89,12 +92,12 @@ private:
     static const uint8_t LoopBeginMarker[11];
     static const uint8_t LoopEndMarker[9];
 
-    static const uint8_t XMIDefaultTempo[5];
+    static const uint8_t DefaultTempoXMI[5];
 
-    static const uint8_t hmp_default_tempo[5];
+    static const uint8_t DefaultTempoHMP[5];
 
-    static const uint8_t mus_default_tempo[5];
-    static const uint8_t mus_controllers[15];
+    static const uint8_t DefaultTempoMUS[5];
+    static const uint8_t MusControllers[15];
 
-    static const uint8_t lds_default_tempo[5];
+    static const uint8_t DefaultTempoLDS[5];
 };

@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2023.07.30) **/
+/** $VER: foo_midi.rc (2023.08.14) **/
 
 #include "resource.h"
 
@@ -29,6 +29,10 @@ font 8, "Segoe UI", 400, 0, 1
         combobox                    IDC_LOOP_PLAYBACK,  X_A22, Y_A22, W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext       "Other:",       IDC_STATIC,         X_A23, Y_A23, W_A23, H_A23
         combobox                    IDC_LOOP_OTHER,     X_A24, Y_A24, W_A24, H_A24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Decay time:",  IDC_STATIC,         X_A29, Y_A29, W_A29, H_A29
+        edittext                    IDC_DECAY_TIME,     X_A2A, Y_A2A, W_A2A, H_A2A, WS_TABSTOP
+        ltext       "ms",           IDC_STATIC,         X_A2B, Y_A2B, W_A2B, H_A2B
+
         control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button",        BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
         control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
         control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS, "Button",          BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27

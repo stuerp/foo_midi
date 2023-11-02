@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2023.07.24) **/
+/** $VER: BMPlayer.cpp (2023.08.19) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -614,7 +614,7 @@ bool BMPlayer::Startup()
 
     _IsInitialized = true;
 
-    SetFilter(_FilterType, _FilterEffects);
+    Configure(_MIDIFlavor, _FilterEffects);
 
     return true;
 }
@@ -683,27 +683,27 @@ void BMPlayer::SendEvent(uint32_t message)
     ::BASS_MIDI_StreamEvents(_Stream[Port], BASS_MIDI_EVENTS_RAW, Event, EventSize);
 }
 
-void BMPlayer::SendSysEx(const uint8_t * event, size_t size, size_t port)
+void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber)
 {
-    if (port > 2)
-        port = 0;
+    if (portNumber > 2)
+        portNumber = 0;
 
-    ::BASS_MIDI_StreamEvents(_Stream[port], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
+    ::BASS_MIDI_StreamEvents(_Stream[portNumber], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
 
-    if (port == 0)
+    if (portNumber == 0)
     {
         ::BASS_MIDI_StreamEvents(_Stream[1], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
         ::BASS_MIDI_StreamEvents(_Stream[2], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
     }
 }
 
-void BMPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
-    float Buffer[512 * 2];
+    float Data[512 * 2];
 
     while (sampleCount != 0)
     {
-        unsigned long ToDo = sampleCount;
+        uint32_t ToDo = sampleCount;
 
         if (ToDo > 512)
             ToDo = 512;
@@ -712,11 +712,11 @@ void BMPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
 
         for (size_t i = 0; i < _countof(_Stream); ++i)
         {
-            ::BASS_ChannelGetData(_Stream[i], Buffer, BASS_DATA_FLOAT | (DWORD) ((size_t) (ToDo * 2) * sizeof(float)));
+            ::BASS_ChannelGetData(_Stream[i], Data, BASS_DATA_FLOAT | (DWORD) ((size_t) (ToDo * 2) * sizeof(float)));
 
             // Convert the format of the rendered output.
             for (unsigned long j = 0; j < (ToDo * 2); ++j)
-                sampleData[j] += Buffer[j];
+                sampleData[j] += Data[j];
         }
 
         sampleData += (ToDo * 2);

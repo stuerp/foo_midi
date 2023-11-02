@@ -1,3 +1,6 @@
+
+/** $VER: MIDIContainer.cpp (2023.08.14) **/
+
 #include "MIDIContainer.h"
 
 #include <string.h>
@@ -62,11 +65,6 @@ void MIDIEvent::GetData(uint8_t * data, size_t offset, size_t length) const
 #pragma endregion
 
 #pragma region("MIDI Track")
-MIDITrack::MIDITrack(const MIDITrack & track)
-{
-    _Events = track._Events;
-}
-
 void MIDITrack::AddEvent(const MIDIEvent & newEvent)
 {
     auto it = _Events.end();
@@ -213,20 +211,6 @@ MIDIStreamEvent::MIDIStreamEvent(uint32_t timestamp, uint32_t data)
 #pragma endregion
 
 #pragma region("MIDI Meta Data")
-MIDIMetaDataItem::MIDIMetaDataItem(const MIDIMetaDataItem & item)
-{
-    Timestamp = item.Timestamp;
-    Name = item.Name;
-    Value = item.Value;
-}
-
-MIDIMetaDataItem::MIDIMetaDataItem(uint32_t timestamp, const char * name, const char * value)
-{
-    Timestamp = timestamp;
-    Name = name;
-    Value = value;
-}
-
 void MIDIMetaData::AddItem(const MIDIMetaDataItem & item)
 {
     _Items.push_back(item);
@@ -244,7 +228,7 @@ bool MIDIMetaData::GetItem(const char * name, MIDIMetaDataItem & item) const
     {
         const MIDIMetaDataItem & Item = _Items[i];
 
-        if (_stricmp(name, Item.Name.c_str()) == 0)
+        if (::_stricmp(name, Item.Name.c_str()) == 0)
         {
             item = Item;
             return true;
@@ -1116,42 +1100,42 @@ void MIDIContainer::GetMetaData(size_t subSongIndex, MIDIMetaData & metaData)
                         }
                         else
                         {
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@K", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@K", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_version", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@L", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@L", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_language", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@T", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@T", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_text", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@I", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@I", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_info", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (::_strnicmp((const char *) &Data[0], "@W", 2) == 0))
+                            if ((DataSize > 2) && (::_strnicmp((const char *) &Data[0], "@W", 2) == 0))
                             {
                                 AssignString((const char *) &Data[2], DataSize - 2, Text);
 
                                 metaData.AddItem(MIDIMetaDataItem(TimestampToMS(Event.Timestamp, TempoTrackIndex), "soft_karaoke_words", Text.c_str()));
                             }
                             else
-                            if ((DataSize >= 2) && (Data[0] == '@'))
+                            if ((DataSize > 2) && (Data[0] == '@'))
                             {
                                 // Unknown Soft Karaoke tag
                                 ::sprintf_s(Name, _countof(Name), "track_text_%02zd", i);
@@ -1472,6 +1456,8 @@ void MIDIContainer::SplitByInstrumentChanges(SplitCallback callback)
     }
 }
 
+#include <windows.h>
+
 void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops)
 {
     size_t SubSongCount = (_Format == 2) ? _Tracks.size() : 1;
@@ -1579,15 +1565,20 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
 
                 if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] >= 116 /* 0x74 */ && Event.Data[0] <= 119 /* 0x77 */))
                 {
-                    if (Event.Data[0] == 116 /* 0x74, AIL loop: FOR loop = 1 to n */ || Event.Data[0] == 118 /* 0x76, AIL clear beat/measure count */)
+                #ifdef _DEBUG
+                    wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"EMIDI: %08X %3d %3d\n", Event.Timestamp, Event.Data[0], Event.Data[1]); ::OutputDebugStringW(Line);
+                #endif
+                    // 116 / 0x74, AIL loop: FOR loop = 1 to n, 118 / 0x76, AIL clear beat / measure count (AIL = Audio Interface Library)
+                    if (Event.Data[0] == 116 || Event.Data[0] == 118)
                     {
                         if (!_Loop[SubSongIndex].HasBegin() || (Event.Timestamp < _Loop[SubSongIndex].Begin()))
-                            _Loop[SubSongIndex].SetBegin(Event.Timestamp); //  LoopCount = Event.Data[1]; // 0 = forever, 1 - 127 = finite
+                            _Loop[SubSongIndex].SetBegin(Event.Timestamp); // LoopCount = Event.Data[1]; // 0 = Forever, 1 - 127 = Finite
                     }
-                    else // 117 /* 0x75, AIL loop: NEXT/BREAK *//* 0x77, AIL callback trigger */
+                    // 117 / 0x75, AIL loop: NEXT/BREAK, 119 / 0x77, AIL callback trigger
+                    else
                     {
                         if (!_Loop[SubSongIndex].HasEnd() || (Event.Timestamp < _Loop[SubSongIndex].End()))
-                            _Loop[SubSongIndex].SetEnd(Event.Timestamp); //  Event.Data[1] should be 127.
+                            _Loop[SubSongIndex].SetEnd(Event.Timestamp); // Event.Data[1] should be 127.
                     }
                 }
             }
@@ -1688,7 +1679,7 @@ uint32_t MIDIContainer::TimestampToMS(uint32_t p_timestamp, size_t subSongIndex)
 
     if ((subSongIndex > 0) && (TempoMapCount > 0))
     {
-        for (size_t i = std::min(subSongIndex, TempoMapCount); --i; )
+        for (size_t i = (std::min)(subSongIndex, TempoMapCount); --i; )
         {
             size_t Count = _TempoMaps[i].Size();
 

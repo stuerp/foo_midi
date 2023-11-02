@@ -116,6 +116,8 @@ VB\             Visual Basic API and examples...
     ...
   CUSTLOOP\       Custom looping example
     ...
+  DEVLIST\        Device list example
+    ...
   DSPTEST\        DSP example
     ...
   FXTEST\         Effects example
@@ -123,6 +125,8 @@ VB\             Visual Basic API and examples...
   LIVEFX\         Full-duplex example
     ...
   LIVESPEC\       Live version of spectrum analyser example
+    ...
+  MODTEST\        MOD music example
     ...
   MULTI\          Multiple device example
     ...
@@ -453,6 +457,9 @@ can be used to extract the x86_64 and arm64 architectures (exclude i386), and
 "make intel" to extract the x86_64 and i386 architectures (exclude arm64). Any
 BASS add-ons placed in the same directory will also be processed.
 
+NOTE: You will need to exclude the i386 architecture (run "make 64bit") for
+      submitting an app to Apple's App Store.
+
 Since BASS 2.4.17, the BASS/add-on libraries use the "@rpath" install path,
 while "@loader_path was used by older versions. If upgrading from an old
 version, you may need to change your copy/embed destination to "Frameworks"
@@ -580,7 +587,7 @@ API/Sample contributors
 Delphi: Titus Miloi, Rogier Timmermans, Alessandro Cappellozza,
         Jesse Naranjo, Chris Troesken, Evgeny Melnikov
 Visual Basic: Adam Hoult, Hendrik Knaepen, Arthur Aminov,
-              Peter Hebels
+              Peter Hebels, Juan Pablo Franchi
 
 
 History
@@ -599,8 +606,8 @@ tweaks and fixes made along the way too.
 	BASS_RecordStart
 	BASS_SYNC_DEV_FORMAT (BASS_ChannelSetSync type)
 * DSP volume control
-	BASS_ATTRIB_VOLDSP
-	BASS_ATTRIB_VOLDSP_PRIORITY
+	BASS_ATTRIB_VOLDSP (BASS_ChannelSetAttribute option)
+	BASS_ATTRIB_VOLDSP_PRIORITY (BASS_ChannelSetAttribute option)
 	RECTEST example updated
 * Auto-reconnecting when a download stops before the end
 	BASS_StreamCreateURL
@@ -963,7 +970,7 @@ tweaks and fixes made along the way too.
 * DSP/FX chain order modification
 	BASS_FXSetPriority
 * Average bitrate retrieval
-	BASS_ATTRIB_BITRATE
+	BASS_ATTRIB_BITRATE (BASS_ChannelGetAttribute option)
 * Ramping-out when stopping/pausing playback
 	BASS_ChannelStop
 	BASS_ChannelPause

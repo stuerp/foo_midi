@@ -60,21 +60,6 @@ begin
 
   // check how many speakers the device supports
   BASS_GetInfo(i);
-  if (i.speakers < 4) then // no extra speakers detected, enable them anyway?
-  begin
-    if (MessageBox(0, 'Do you wish to enable "speaker assignment" anyway?', 'No extra speakers detected', MB_ICONQUESTION or MB_YESNO) = IDYES) then
-    begin
-      // reinitialize BASS - forcing speaker assignment
-      BASS_Free;
-      if (not BASS_Init(-1, 44100, BASS_DEVICE_SPEAKERS, Handle, nil)) then
-      begin
-        MessageBox(0, 'Can''t initialize device', 0, 0);
-        Halt;
-      end;
-      BASS_GetInfo(i); // get info again
-    end;
-  end;
-
   if (i.speakers < 8) then
   begin
     Button4.Enabled := False;

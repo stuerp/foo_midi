@@ -1,151 +1,211 @@
+
+/** $VER: MIDIProcessorMUS.cpp (2023.08.14) Created by Paul Radek for his DMX audio library. Used by id Software for Doom and several other games. (https://moddingwiki.shikadi.net/wiki/MUS_Format) **/
+
 #include "MIDIProcessor.h"
 
-const uint8_t MIDIProcessor::mus_default_tempo[5] = { 0xFF, 0x51, 0x09, 0xA3, 0x1A };
-
-const uint8_t MIDIProcessor::mus_controllers[15] = { 0,0,1,7,10,11,91,93,64,67,120,123,126,127,121 };
-
-bool MIDIProcessor::is_mus(std::vector<uint8_t> const & p_file)
+bool MIDIProcessor::IsMUS(std::vector<uint8_t> const & data)
 {
-    if (p_file.size() < 0x20) return false;
-    if (p_file[0] != 'M' || p_file[1] != 'U' || p_file[2] != 'S' || p_file[3] != 0x1A) return false;
-    uint16_t length = p_file[4] | (p_file[5] << 8);
-    uint16_t offset = p_file[6] | (p_file[7] << 8);
-    uint16_t instrument_count = p_file[12] | (p_file[13] << 8);
-    if (offset >= 16 + instrument_count * 2 && offset < 16 + instrument_count * 4 && (size_t) (offset + length) <= p_file.size()) return true;
+    if (data.size() < 0x20)
+        return false;
+
+    if (data[0] != 'M' || data[1] != 'U' || data[2] != 'S' || data[3] != 0x1A)
+        return false;
+
+    uint16_t Length          = (uint16_t) (data[ 4] | (data[ 5] << 8)); // Song length in bytes
+    uint16_t Offset          = (uint16_t) (data[ 6] | (data[ 7] << 8)); // Offset to song data
+    uint16_t InstrumentCount = (uint16_t) (data[12] | (data[13] << 8)); // No. of primary channels used
+
+    if (Offset >= (16 + (InstrumentCount * 2)) && Offset < (16 + (InstrumentCount * 4)) && (size_t) (Offset + Length) <= data.size())
+        return true;
+
     return false;
 }
 
-bool MIDIProcessor::process_mus(std::vector<uint8_t> const & p_file, MIDIContainer & p_out)
+bool MIDIProcessor::ProcessMUS(std::vector<uint8_t> const & data, MIDIContainer & container)
 {
-    uint16_t length = p_file[4] | (p_file[5] << 8);
-    uint16_t offset = p_file[6] | (p_file[7] << 8);
+    uint16_t Length = (uint16_t) (data[ 4] | (data[ 5] << 8)); // Song length in bytes
+    uint16_t Offset = (uint16_t) (data[ 6] | (data[ 7] << 8)); // Offset to song data
 
-    p_out.Initialize(0, 0x59);
+    container.Initialize(0, 0x59);
 
     {
-        MIDITrack track;
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, mus_default_tempo, _countof(mus_default_tempo)));
-        track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
-        p_out.AddTrack(track);
+        MIDITrack Track;
+
+        Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, DefaultTempoMUS, _countof(DefaultTempoMUS)));
+        Track.AddEvent(MIDIEvent(0, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
+
+        container.AddTrack(Track);
     }
 
-    MIDITrack track;
-
-    unsigned current_timestamp = 0;
-
-    uint8_t velocity_levels[16] = { 0 };
-
-    if ((size_t) offset >= p_file.size() || (size_t) (offset + length) > p_file.size())
+    if ((size_t) Offset >= data.size() || (size_t) (Offset + Length) > data.size())
         return false;
 
-    std::vector<uint8_t>::const_iterator it = p_file.begin() + offset, end = p_file.begin() + offset + length;
+    MIDITrack Track;
 
-    uint8_t buffer[4];
+    uint32_t Timestamp = 0;
+
+    uint8_t VelocityLevels[16] = { 0 };
+
+    auto it = data.begin() + Offset, end = data.begin() + Offset + Length;
+
+    uint8_t Data[4];
 
     while (it != end)
     {
-        buffer[0] = *it++;
-        if (buffer[0] == 0x60) break;
+        Data[0] = *it++;
 
-        MIDIEvent::EventType type;
+        if (Data[0] == 0x60)
+            break;
 
-        unsigned bytes_to_write;
+        MIDIEvent::EventType EventType;
+        uint32_t EventSize;
 
-        unsigned channel = buffer[0] & 0x0F;
-        if (channel == 0x0F) channel = 9;
-        else if (channel >= 9) ++channel;
+        uint32_t Channel = (uint32_t) (Data[0] & 0x0F);
 
-        switch (buffer[0] & 0x70)
+        if (Channel == 0x0F)
+            Channel = 9;
+        else
+        if (Channel >= 9)
+            ++Channel;
+
+        switch (Data[0] & 0x70)
         {
+            // Release Note
             case 0x00:
-                type = MIDIEvent::NoteOn;
-                if (it == end) return false;
-                buffer[1] = *it++;
-                buffer[2] = 0;
-                bytes_to_write = 2;
+                EventType = MIDIEvent::NoteOff;
+
+                if (it == end)
+                    return false;
+
+                Data[1] = *it++;
+                Data[2] = 0;
+                EventSize = 2;
                 break;
 
+            // PLay Note
             case 0x10:
-                type = MIDIEvent::NoteOn;
-                if (it == end) return false;
-                buffer[1] = *it++;
-                if (buffer[1] & 0x80)
+                EventType = MIDIEvent::NoteOn;
+
+                if (it == end)
+                    return false;
+
+                Data[1] = *it++;
+
+                if (Data[1] & 0x80)
                 {
-                    if (it == end) return false;
-                    buffer[2] = *it++;
-                    velocity_levels[channel] = buffer[2];
-                    buffer[1] &= 0x7F;
+                    if (it == end)
+                        return false;
+
+                    Data[2] = *it++;
+                    VelocityLevels[Channel] = Data[2];
+                    Data[1] &= 0x7F;
                 }
                 else
-                {
-                    buffer[2] = velocity_levels[channel];
-                }
-                bytes_to_write = 2;
+                    Data[2] = VelocityLevels[Channel];
+
+                EventSize = 2;
                 break;
 
+            // Pitch Bend
             case 0x20:
-                type = MIDIEvent::PitchWheel;
-                if (it == end) return false;
-                buffer[1] = *it++;
-                buffer[2] = buffer[1] >> 1;
-                buffer[1] <<= 7;
-                bytes_to_write = 2;
+                EventType = MIDIEvent::PitchWheel;
+
+                if (it == end)
+                    return false;
+
+                Data[1] = *it++;
+                Data[2] = (uint8_t) (Data[1] >> 1);
+                Data[1] <<= 7;
+                EventSize = 2;
                 break;
 
+            // System Event
             case 0x30:
-                type = MIDIEvent::ControlChange;
-                if (it == end) return false;
-                buffer[1] = *it++;
-                if (buffer[1] >= 10 && buffer[1] <= 14)
+                EventType = MIDIEvent::ControlChange;
+
+                if (it == end)
+                    return false;
+
+                Data[1] = *it++;
+
+                if (Data[1] >= 10 && Data[1] <= 14)
                 {
-                    buffer[1] = mus_controllers[buffer[1]];
-                    buffer[2] = 1;
-                    bytes_to_write = 2;
+                    Data[1] = MusControllers[Data[1]];
+                    Data[2] = 1;
+                    EventSize = 2;
                 }
-                else return false; /*throw exception_io_data( "Unhandled MUS system event" );*/
+                else
+                    return false; /*throw exception_io_data( "Unhandled MUS system event" );*/
                 break;
 
+            // Controller
             case 0x40:
-                if (it == end) return false;
-                buffer[1] = *it++;
-                if (buffer[1])
+                if (it == end)
+                    return false;
+
+                Data[1] = *it++;
+
+                if (Data[1])
                 {
-                    if (buffer[1] < 10)
+                    if (Data[1] < 10)
                     {
-                        type = MIDIEvent::ControlChange;
-                        buffer[1] = mus_controllers[buffer[1]];
-                        if (it == end) return false;
-                        buffer[2] = *it++;
-                        bytes_to_write = 2;
+                        EventType = MIDIEvent::ControlChange;
+
+                        Data[1] = MusControllers[Data[1]];
+
+                        if (it == end)
+                            return false;
+
+                        Data[2] = *it++;
+                        EventSize = 2;
                     }
-                    else return false; /*throw exception_io_data( "Invalid MUS controller change event" );*/
+                    else
+                        return false; /*throw exception_io_data( "Invalid MUS controller change event" );*/
                 }
                 else
                 {
-                    type = MIDIEvent::ProgramChange;
-                    if (it == end) return false;
-                    buffer[1] = *it++;
-                    bytes_to_write = 1;
+                    EventType = MIDIEvent::ProgramChange;
+
+                    if (it == end)
+                        return false;
+
+                    Data[1] = *it++;
+                    EventSize = 1;
                 }
                 break;
+
+            // End of Measure
+            case 0x50:
+
+            // Finish
+            case 0x60:
+
+            // Unused
+            case 0x70:
 
             default:
                 return false; /*throw exception_io_data( "Invalid MUS status code" );*/
         }
 
-        track.AddEvent(MIDIEvent(current_timestamp, type, channel, buffer + 1, bytes_to_write));
+        Track.AddEvent(MIDIEvent(Timestamp, EventType, Channel, Data + 1, EventSize));
 
-        if (buffer[0] & 0x80)
+        if (Data[0] & 0x80)
         {
-            int delta = DecodeVariableLengthQuantity(it, end);
-            if (delta < 0) return false; /*throw exception_io_data( "Invalid MUS delta" );*/
-            current_timestamp += delta;
+            int Delta = DecodeVariableLengthQuantity(it, end);
+
+            if (Delta < 0)
+                return false; /*throw exception_io_data( "Invalid MUS delta" );*/
+
+            Timestamp += Delta;
         }
     }
 
-    track.AddEvent(MIDIEvent(current_timestamp, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
+    Track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));
 
-    p_out.AddTrack(track);
+    container.AddTrack(Track);
 
     return true;
 }
+
+const uint8_t MIDIProcessor::DefaultTempoMUS[5] = { StatusCodes::MetaData, MetaDataTypes::SetTempo, 0x09, 0xA3, 0x1A };
+const uint8_t MIDIProcessor::MusControllers[15] = { 0, 0, 1, 7, 10, 11, 91, 93, 64, 67, 120, 123, 126, 127, 121 };

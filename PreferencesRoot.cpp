@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.08.04) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2023.08.27) P. Stuer **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -118,6 +118,7 @@ public:
         #pragma region("Looping")
         COMMAND_HANDLER_EX(IDC_LOOP_PLAYBACK, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_LOOP_OTHER, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_DECAY_TIME, EN_CHANGE, OnEditChange)
         #pragma endregion
 
         #pragma region("MIDI")
@@ -251,7 +252,7 @@ private:
     bool _HasFluidSynth;
     static bool HasFluidSynth() noexcept
     {
-        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath));
+        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
     }
     #pragma endregion
 
@@ -379,7 +380,7 @@ void PreferencesRootPage::apply()
         SetDlgItemInt(IDC_SAMPLERATE, t, FALSE);
 
         CfgSampleRateHistory.add_item(pfc::format_int(t));
-        CfgSampleRate = (t_int) t;
+        CfgSampleRate = (t_int32) t;
     }
     #pragma endregion
 
@@ -387,11 +388,13 @@ void PreferencesRootPage::apply()
     {
         CfgLoopTypePlayback = (t_int32) SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
         CfgLoopTypeOther = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
+
+        CfgDecayTime = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
     }
     #pragma endregion
 
     #pragma region("MIDI Flavor")
-    CfgMIDIFlavor = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
+    CfgMIDIStandard = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
     CfgUseMIDIEffects = (t_int32) !SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK);
     CfgUseSuperMuntWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK);
     CfgUseVSTiWithXG = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
@@ -704,7 +707,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
                     _InstalledPlayers.push_back(ip);
 
-                    if (CfgVSTiFilePath == _VSTiPlugIns[i].PathName)
+                    if (CfgVSTiFilePath.get() == _VSTiPlugIns[i].PathName)
                         VSTiIndex = i;
                 }
             }
@@ -794,7 +797,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         static const WCHAR * LoopTypeDescription[] =
         {
             L"Never loop",
-            L"Never loop, 1s decay time",
+            L"Never loop. Use decay time",
             L"Loop and fade when detected",
             L"Loop and fade always",
             L"Play indefinitely when detected",
@@ -811,8 +814,10 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
                 w2.AddString(LoopTypeDescription[i]);
             }
  
-             w1.SetCurSel(CfgLoopTypePlayback);
-             w2.SetCurSel(CfgLoopTypeOther);
+             w1.SetCurSel((int) CfgLoopTypePlayback);
+             w2.SetCurSel((int) CfgLoopTypeOther);
+
+            ::uSetDlgItemText(m_hWnd, IDC_DECAY_TIME, pfc::format_int(CfgDecayTime));
         }
     }
     #pragma endregion
@@ -830,7 +835,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-8820");
         ::uSendMessageText(w, CB_ADDSTRING, 0, "XG");
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMIDIFlavor, 0);
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM)CfgMIDIStandard, 0);
 
         SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_SETCHECK, !CfgUseMIDIEffects);
         SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_SETCHECK, (WPARAM) CfgUseSuperMuntWithMT32);
@@ -887,7 +892,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         w.AddString(L"8pt Sinc interpolation");
         w.AddString(L"16pt Sinc interpolation");
 
-        w.SetCurSel(CfgBASSMIDIInterpolationMode);
+        w.SetCurSel((int) CfgBASSMIDIInterpolationMode);
 
         bool Enable = (PlayerType == PlayerType::BASSMIDI);
 
@@ -909,7 +914,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         for (size_t i = 0; i < _countof(_MuntGMSets); ++i)
             ::uSendMessageText(w, CB_ADDSTRING, 0, _MuntGMSets[i]);
 
-        w.SetCurSel(CfgMuntGMSet);
+        w.SetCurSel((int) CfgMuntGMSet);
 
         BOOL Enable = (PlayerType == PlayerType::SuperMunt);
 
@@ -1234,7 +1239,7 @@ bool PreferencesRootPage::HasChanged()
             {
                 size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
 
-                if (CfgVSTiFilePath != _VSTiPlugIns[VSTiIndex].PathName)
+                if (CfgVSTiFilePath.get() != _VSTiPlugIns[VSTiIndex].PathName)
                     return true;
 
                 t_uint32 Id = _VSTiPlugIns[VSTiIndex].Id;
@@ -1261,6 +1266,9 @@ bool PreferencesRootPage::HasChanged()
     if (SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL) != CfgLoopTypeOther)
         return true;
 
+    if (GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE) != (UINT) CfgDecayTime)
+        return true;
+
     if (SendDlgItemMessage(IDC_TOUHOU_LOOPS, BM_GETCHECK) != CfgDetectTouhouLoops)
         return true;
 
@@ -1275,10 +1283,10 @@ bool PreferencesRootPage::HasChanged()
     #pragma endregion
 
     #pragma region("MIDI")
-    if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIFlavor)
+    if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIStandard)
         return true;
 
-    if (SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != !CfgUseMIDIEffects)
+    if (SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != ~CfgUseMIDIEffects)
         return true;
 
     if (SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK) != CfgUseSuperMuntWithMT32)

@@ -189,7 +189,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 					if ((LOWORD(w) >= 10 && LOWORD(w) < 20) || LOWORD(w) == 21) {
 						char *url;
 						if (LOWORD(w) == 21) { // custom stream URL
-							char temp[200];
+							char temp[500];
 							MESS(20, WM_GETTEXT, sizeof(temp), temp);
 							url = strdup(temp);
 						} else // preset

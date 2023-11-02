@@ -113,7 +113,6 @@
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -148,7 +147,6 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -414,7 +412,6 @@
     <ClInclude Include="PreferencesPathsLayout.h" />
     <ClInclude Include="PreferencesRootLayout.h" />
     <ClInclude Include="SoundFontCache.h" />
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="FileHasher.h" />
     <ClInclude Include="VSTiPlayer.h" />
     <CustomBuild Include="Experimental\DXiPlayer.h">
@@ -459,9 +456,6 @@
     <ClInclude Include="3rdParty\Nuke\synthlib_opl3w\opl3type.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\foo_vis_midi\foo_vis_midi.vcxproj">
-      <Project>{64c481bc-066d-4049-9dfb-b503a7b6983f}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
       <Project>{71ad2674-065b-48f5-b8b0-e1f9d3892081}</Project>
     </ProjectReference>
@@ -515,11 +509,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include=".gitattributes" />
-    <None Include=".gitignore" />
     <None Include="3rdParty\BASS\bassflac.dll" />
     <None Include="Build-FB2KComponent.ps1" />
-    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

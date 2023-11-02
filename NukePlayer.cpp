@@ -1,5 +1,5 @@
 
-/** $VER: NukePlayer.cpp (2023.01.04) **/
+/** $VER: NukePlayer.cpp (2023.08.19) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -80,7 +80,7 @@ void NukePlayer::Shutdown()
     _Synth = nullptr;
 }
 
-void NukePlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void NukePlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     const audio_sample ScaleFactor = 1.0f / 16384.0f;
 
@@ -103,13 +103,9 @@ void NukePlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
     }
 }
 
-void NukePlayer::SendEvent(uint32_t message)
+void NukePlayer::SendEvent(uint32_t data)
 {
-    _Synth->midi_write(message);
-}
-
-void NukePlayer::SendSysEx(const uint8_t *, size_t, size_t)
-{
+    _Synth->midi_write(data);
 }
 
 /// <summary>

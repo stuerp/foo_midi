@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.cpp (2023.07.22) **/
+/** $VER: MIDIPreset.cpp (2023.09.27) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -49,14 +49,16 @@ MIDIPreset::MIDIPreset() noexcept
         _SoundFontFilePath = CfgSoundFontFilePath;
     }
 
+    if (_PlayerType == PlayerType::FluidSynth)
     {
-        _FluidSynthEffectsEnabled = (bool) AdvCfgFluidSynthEffectsEnabled;
-        _FluidSynthVoices = (uint32_t) AdvCfgFluidSynthVoices;
+        _EffectsEnabled = (bool) AdvCfgFluidSynthEffectsEnabled;
+        _VoiceCount = (uint32_t) AdvCfgFluidSynthVoices;
     }
-
+    else
+    if (_PlayerType == PlayerType::BASSMIDI)
     {
-        _BASSMIDIEffectsEnabled = (bool) AdvCfgBASSMIDIEffectsEnabled;
-        _BASSMIDIVoices = (uint32_t) AdvCfgBASSMIDIVoices;
+        _EffectsEnabled = (bool) AdvCfgBASSMIDIEffectsEnabled;
+        _VoiceCount = (uint32_t) AdvCfgBASSMIDIVoices;
     }
 
     {
@@ -74,16 +76,24 @@ MIDIPreset::MIDIPreset() noexcept
         _ADLChipCount = (uint32_t) CfgADLChipCount;
         _ADLUsePanning = (bool) CfgADLPanning;
 
+        if (AdvCfgADLCoreJava)
+            _ADLEmulatorCore = ADLMIDI_EMU_JAVA;
+        else
+        if (AdvCfgADLCoreOpal)
+            _ADLEmulatorCore = ADLMIDI_EMU_OPAL;
+        else
         if (AdvCfgADLCoreDOSBox)
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
         else
-        if (AdvCfgADLCoreNuked074)
+        if (AdvCfgADLCoreNuked174)
             _ADLEmulatorCore = ADLMIDI_EMU_NUKED_174;
         else
         if (AdvCfgADLCoreNuked)
             _ADLEmulatorCore = ADLMIDI_EMU_NUKED;
         else
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
+
+        _ADLBankFilePath = AdvCfgADLBankFilePath.get();
     }
 
     {
@@ -94,6 +104,7 @@ MIDIPreset::MIDIPreset() noexcept
             _OPNEmulatorCore = OPNMIDI_EMU_NUKED;
         else
             _OPNEmulatorCore = OPNMIDI_EMU_GENS;
+
         if (AdvCfgOPNBankXG)
             _OPNBankNumber = 0;
         else
@@ -116,7 +127,7 @@ MIDIPreset::MIDIPreset() noexcept
     }
 
     {
-        _MIDIStandard = (uint32_t) CfgMIDIFlavor;
+        _MIDIFlavor = (MIDIFlavor) (uint32_t) CfgMIDIStandard;
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
         _UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
         _UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
@@ -150,10 +161,10 @@ void MIDIPreset::Serialize(pfc::string8 & text)
         text += _SoundFontFilePath;
 
         text += "|";
-        text += pfc::format_int(_BASSMIDIEffectsEnabled);
+        text += pfc::format_int(_EffectsEnabled);
 
         text += "|";
-        text += pfc::format_int(_BASSMIDIVoices);
+        text += pfc::format_int(_VoiceCount);
     }
     else
     if (_PlayerType == PlayerType::SuperMunt)
@@ -234,7 +245,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
     }
 
     text += "|";
-    text += pfc::format_int(_MIDIStandard);
+    text += pfc::format_int((uint32_t) _MIDIFlavor);
 
     text += "|";
     text += pfc::format_int(_UseMIDIEffects);
@@ -264,14 +275,14 @@ void MIDIPreset::Deserialize(const char * text)
     // Get the player type.
     GetValue(Separator, text);
 
-    PlayerType PlayerType = (enum PlayerType) (uint8_t) pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+    PlayerType PlayerType = (enum PlayerType) (uint8_t) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
     pfc::string8 VSTiPath;
     std::vector<uint8_t> VSTiConfig;
     pfc::string8 SoundFontPath;
 
-    bool BASSMIDIEffectsEnabled = false;
-    uint32_t BASSMIDIVoices = 0;
+    bool EffectsEnabled = false;
+    uint32_t VoiceCount = 256;
 
 #ifdef DXISUPPORT
     GUID DirectXGUID = { 0 };
@@ -292,16 +303,17 @@ void MIDIPreset::Deserialize(const char * text)
     uint32_t NukeBank = 0;
     bool NukeUsePanning = false;
 
-    uint32_t MIDIStandard = (uint32_t) CfgMIDIFlavor;
-    bool UseMIDIEffects = (bool) CfgUseMIDIEffects;
-    bool UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
-    bool UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
+    MIDIFlavor Flavor = MIDIFlavor::None;
+
+    bool UseMIDIEffects = false;
+    bool UseSuperMuntWithMT32 = false;
+    bool UseSecretSauceWithXG = false;
 
     GetValue(Separator, text);
 
     if (PlayerType == PlayerType::VSTi)
     {
-        VSTiPath.set_string(text, (t_size)(Separator - text));
+        VSTiPath.set_string(text, (t_size) (Separator - text));
 
         GetValue(Separator, text);
 
@@ -315,10 +327,10 @@ void MIDIPreset::Deserialize(const char * text)
         if (CurrentSchemaVersion >= 11)
         {
             GetValue(Separator, text);
-            MIDIStandard = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+            Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
             GetValue(Separator, text);
-            UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
+            UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
         }
     }
     else
@@ -326,11 +338,25 @@ void MIDIPreset::Deserialize(const char * text)
     {
         SoundFontPath.set_string(text, (t_size)(Separator - text));
 
+        {
+            if (PlayerType == PlayerType::FluidSynth)
+            {
+                EffectsEnabled = (bool) AdvCfgFluidSynthEffectsEnabled;
+                VoiceCount = (uint32_t) (int) AdvCfgFluidSynthVoices;
+            }
+            else
+            if (PlayerType == PlayerType::BASSMIDI)
+            {
+                EffectsEnabled = (bool) AdvCfgBASSMIDIEffectsEnabled;
+                VoiceCount = (uint32_t) (int) AdvCfgBASSMIDIVoices;
+            }
+        }
+
         GetValue(Separator, text);
 
         if (Separator > text)
         {
-            BASSMIDIEffectsEnabled = pfc::atodec<bool>(text, 1);
+            EffectsEnabled = pfc::atodec<bool>(text, 1);
 
             if (SchemaVersion >= 9)
             {
@@ -338,51 +364,18 @@ void MIDIPreset::Deserialize(const char * text)
 
                 if (Separator > text)
                 {
-                    BASSMIDIVoices = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+                    VoiceCount = pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
                     if (CurrentSchemaVersion >= 11)
                     {
                         GetValue(Separator, text);
-                        MIDIStandard = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+                        Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
                         GetValue(Separator, text);
-                        UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
+                        UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
                     }
                 }
-                else
-                {
-                #ifdef BASSMIDISUPPORT
-                    BASSMIDIVoices = (uint32_t) (int) AdvCfgBASSMIDIVoices;
-                #elif defined(FLUIDSYNTHSUPPORT)
-                    BASSMIDIVoices = (uint32_t) (int) cfg_fluidsynth_voices;
-                #else
-                    BASSMIDIVoices = 256;
-                #endif
-                }
             }
-            else
-            {
-            #ifdef BASSMIDISUPPORT
-                BASSMIDIVoices = (uint32_t) (int) AdvCfgBASSMIDIVoices;
-            #elif defined(FLUIDSYNTHSUPPORT)
-                BASSMIDIVoices = (uint32_t) (int) cfg_fluidsynth_voices;
-            #else
-                BASSMIDIVoices = 256;
-            #endif
-            }
-        }
-        else
-        {
-        #ifdef BASSMIDISUPPORT
-            BASSMIDIEffectsEnabled = AdvCfgBASSMIDIEffectsEnabled;
-            BASSMIDIVoices = (uint32_t) (int) AdvCfgBASSMIDIVoices;
-        #elif defined(FLUIDSYNTHSUPPORT)
-            BASSMIDIEffects = cfg_fluidsynth_effects;
-            BASSMIDIVoices = (uint32_t) (int) cfg_fluidsynth_voices;
-        #else
-            BASSMIDIEffects = 1;
-            BASSMIDIVoices = 256;
-        #endif
         }
     }
     else
@@ -394,7 +387,7 @@ void MIDIPreset::Deserialize(const char * text)
         {
             size_t len = ::strlen(_MuntGMSets[i]);
 
-            if (len == (size_t)(Separator - text) && (::strncmp(text, _MuntGMSets[i], len) == 0))
+            if (len == (size_t) (Separator - text) && (::strncmp(text, _MuntGMSets[i], len) == 0))
             {
                 MuntGMSet = (uint32_t) i;
                 break;
@@ -449,22 +442,22 @@ void MIDIPreset::Deserialize(const char * text)
         }
 
         GetValue(Separator, text);
-        ADLChipCount = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+        ADLChipCount = pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
         GetValue(Separator, text);
-        ADLUsePanning = pfc::atodec<bool>(text, (t_size)(Separator - text));
+        ADLUsePanning = pfc::atodec<bool>(text, (t_size) (Separator - text));
 
         ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
 
         if (CurrentSchemaVersion >= 3)
         {
             GetValue(Separator, text);
-            ADLUseChorus = pfc::atodec<bool>(text, (t_size)(Separator - text));
+            ADLUseChorus = pfc::atodec<bool>(text, (t_size) (Separator - text));
 
             if (CurrentSchemaVersion >= 7)
             {
                 GetValue(Separator, text);
-                ADLEmulatorCore = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+                ADLEmulatorCore = pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
             }
         }
     }
@@ -473,16 +466,16 @@ void MIDIPreset::Deserialize(const char * text)
     {
         if (CurrentSchemaVersion >= 10)
         {
-            OPNBankNumber = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+            OPNBankNumber = pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
             GetValue(Separator, text);
-            ADLChipCount = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+            ADLChipCount = pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
             GetValue(Separator, text);
-            ADLUsePanning = pfc::atodec<bool>(text, (t_size)(Separator - text));
+            ADLUsePanning = pfc::atodec<bool>(text, (t_size) (Separator - text));
 
             GetValue(Separator, text);
-            OPNEmulatorCore = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+            OPNEmulatorCore = pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
         }
         else
         {
@@ -497,14 +490,14 @@ void MIDIPreset::Deserialize(const char * text)
     {
         pfc::string8 Text;
 
-        Text.set_string(text, (t_size)(Separator - text));
+        Text.set_string(text, (t_size) (Separator - text));
 
         NukePlayer::GetPreset(Text, NukeSynth, NukeBank);
 
         if (CurrentSchemaVersion >= 6)
         {
             GetValue(Separator, text);
-            NukeUsePanning = pfc::atodec<bool>(text, (t_size)(Separator - text));
+            NukeUsePanning = pfc::atodec<bool>(text, (t_size) (Separator - text));
         }
         else
             NukeUsePanning = true;
@@ -514,23 +507,23 @@ void MIDIPreset::Deserialize(const char * text)
     {
         if (CurrentSchemaVersion >= 11)
         {
-            MIDIStandard = pfc::atodec<uint32_t>(text, (t_size)(Separator - text));
+            Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
-            if (MIDIStandard > MIDIPlayer::FilterXGSysEx)
-                MIDIStandard = MIDIPlayer::FilterNone;
+            if (Flavor > MIDIFlavor::XG)
+                Flavor = MIDIFlavor::None;
 
             GetValue(Separator, text);
-            UseMIDIEffects = pfc::atodec<bool>(text, (t_size)(Separator - text));
+            UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
         }
     }
 
     if (CurrentSchemaVersion >= 12)
     {
         GetValue(Separator, text);
-        UseSuperMuntWithMT32 = pfc::atodec<bool>(text, (t_size)(Separator - text));
+        UseSuperMuntWithMT32 = pfc::atodec<bool>(text, (t_size) (Separator - text));
 
         GetValue(Separator, text);
-        UseSecretSauceWithXG = pfc::atodec<bool>(text, (t_size)(Separator - text));
+        UseSecretSauceWithXG = pfc::atodec<bool>(text, (t_size) (Separator - text));
     }
 
     _PlayerType = PlayerType;
@@ -540,8 +533,8 @@ void MIDIPreset::Deserialize(const char * text)
 
     _SoundFontFilePath = SoundFontPath;
 
-    _BASSMIDIEffectsEnabled = BASSMIDIEffectsEnabled;
-    _BASSMIDIVoices = BASSMIDIVoices;
+    _EffectsEnabled = EffectsEnabled;
+    _VoiceCount = VoiceCount;
 
 #ifdef DXISUPPORT
     dxi_plugin = DirectXGUID;
@@ -562,7 +555,7 @@ void MIDIPreset::Deserialize(const char * text)
     _NukeBank = NukeBank;
     _NukeUsePanning = NukeUsePanning;
 
-    _MIDIStandard = MIDIStandard;
+    _MIDIFlavor = Flavor;
     _UseMIDIEffects = UseMIDIEffects;
 }
 

@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.cpp (2023.05.28) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2023.08.19) Secret Sauce **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -113,7 +113,7 @@ bool SCPlayer::Startup()
 
     _IsInitialized = true;
 
-    SetFilter(_FilterType, _FilterEffects);
+    Configure(_MIDIFlavor, _FilterEffects);
 
     return true;
 }
@@ -126,7 +126,7 @@ void SCPlayer::Shutdown()
     _IsInitialized = false;
 }
 
-void SCPlayer::Render(audio_sample * sampleData, unsigned long sampleCount)
+void SCPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     ::memset(sampleData, 0, sampleCount * 2 * sizeof(audio_sample));
 
@@ -165,51 +165,51 @@ void SCPlayer::SendEvent(uint32_t event)
         StopHost(PorNumber);
 }
 
-void SCPlayer::SendEventWithTime(uint32_t event, unsigned int time)
+void SCPlayer::SendEvent(uint32_t data, uint32_t time)
 {
-    uint32_t PortNumber = (event >> 24) & 0xFF;
+    uint32_t PortNumber = (data >> 24) & 0xFF;
 
     if (PortNumber > 2)
         PortNumber = 0;
 
     WriteBytes(PortNumber, 6);
-    WriteBytes(PortNumber, event & 0xFFFFFF);
+    WriteBytes(PortNumber, data & 0xFFFFFF);
     WriteBytes(PortNumber, time);
 
     if (ReadCode(PortNumber) != 0)
         StopHost(PortNumber);
 }
 
-void SCPlayer::SendSysEx(const uint8_t * event, size_t size, size_t portNumber)
+void SCPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
-    WriteBytes((uint32_t)portNumber, 3);
-    WriteBytes((uint32_t)portNumber, (uint32_t)size);
-    WriteBytesOverlapped((uint32_t)portNumber, event, (uint32_t)size);
+    WriteBytes(portNumber, 3);
+    WriteBytes(portNumber, (uint32_t) size);
+    WriteBytesOverlapped(portNumber, data, (uint32_t) size);
 
-    if (ReadCode((uint32_t)portNumber) != 0)
-        StopHost((uint32_t)portNumber);
+    if (ReadCode(portNumber) != 0)
+        StopHost(portNumber);
 
     if (portNumber == 0)
     {
-        SendSysEx(event, size, 1);
-        SendSysEx(event, size, 2);
+        SendSysEx(data, size, 1);
+        SendSysEx(data, size, 2);
     }
 }
 
-void SCPlayer::SendSysExWithTime(const uint8_t * event, size_t size, size_t portNumber, unsigned int time)
+void SCPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber, uint32_t time)
 {
-    WriteBytes((uint32_t)portNumber, 7);
-    WriteBytes((uint32_t)portNumber, (uint32_t)size);
-    WriteBytes((uint32_t)portNumber, (uint32_t)time);
-    WriteBytesOverlapped((uint32_t)portNumber, event, (uint32_t)size);
+    WriteBytes(portNumber, 7);
+    WriteBytes(portNumber, (uint32_t) size);
+    WriteBytes(portNumber, (uint32_t) time);
+    WriteBytesOverlapped(portNumber, event, (uint32_t) size);
 
-    if (ReadCode((uint32_t)portNumber) != 0)
-        StopHost((uint32_t)portNumber);
+    if (ReadCode(portNumber) != 0)
+        StopHost(portNumber);
 
     if (portNumber == 0)
     {
-        SendSysExWithTime(event, size, 1, time);
-        SendSysExWithTime(event, size, 2, time);
+        SendSysEx(event, size, 1, time);
+        SendSysEx(event, size, 2, time);
     }
 }
 #pragma endregion
@@ -380,9 +380,7 @@ bool SCPlayer::StartHost(uint32_t port)
 
     #ifdef _DEBUG
         FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess[port], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread[port], 8), ")");
-    #endif
-
-    #ifdef NDEBUG
+    #else
         ::SetPriorityClass(_hProcess[port], ::GetPriorityClass(::GetCurrentProcess()));
         ::SetThreadPriority(_hThread[port], ::GetThreadPriority(::GetCurrentThread()));
     #endif

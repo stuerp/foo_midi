@@ -25,7 +25,7 @@
     <ClCompile Include="MIDIProcessorHMI.cpp" />
     <ClCompile Include="MIDIProcessorHMP.cpp" />
     <ClCompile Include="MIDIProcessorLDS.cpp" />
-    <ClCompile Include="MIDIProcessorMIDS.cpp" />
+    <ClCompile Include="MIDIProcessorMDS.cpp" />
     <ClCompile Include="MIDIProcessorMUS.cpp" />
     <ClCompile Include="MIDIProcessorRIFF.cpp" />
     <ClCompile Include="MIDIProcessorSMF.cpp" />

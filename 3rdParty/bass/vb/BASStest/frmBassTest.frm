@@ -1,6 +1,5 @@
 VERSION 5.00
-Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "mscomctl.ocx"
+Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "ComDlg32.OCX"
 Begin VB.Form frmBassTest 
    BorderStyle     =   1  'Fixed Single
    Caption         =   "BASS - simple playback test"
@@ -12,42 +11,42 @@ Begin VB.Form frmBassTest
    MaxButton       =   0   'False
    ScaleHeight     =   3135
    ScaleWidth      =   7830
-   Begin MSComctlLib.Slider sldVol 
-      Height          =   195
-      Left            =   4560
-      TabIndex        =   23
+   Begin VB.HScrollBar sldVol 
+      Height          =   135
+      Left            =   3480
+      TabIndex        =   31
       Top             =   2760
-      Width           =   1995
-      _ExtentX        =   3519
-      _ExtentY        =   344
-      _Version        =   393216
-      LargeChange     =   10
-      Max             =   100
-      SelStart        =   100
-      TickFrequency   =   10
-      Value           =   100
+      Width           =   2295
+   End
+   Begin VB.CheckBox chk2UpdateThreads 
+      Caption         =   "2 update threads"
+      Height          =   255
+      Left            =   6120
+      TabIndex        =   27
+      Top             =   2520
+      Width           =   1575
    End
    Begin VB.CommandButton cmdResumeAll 
       Caption         =   "Resume"
       Height          =   375
-      Left            =   3120
+      Left            =   1920
       TabIndex        =   14
-      Top             =   2580
-      Width           =   1215
+      Top             =   2640
+      Width           =   1335
    End
    Begin VB.CommandButton cmdStopAll 
       Caption         =   "Stop Output"
       Height          =   375
-      Left            =   1320
+      Left            =   480
       TabIndex        =   13
-      Top             =   2580
-      Width           =   1695
+      Top             =   2640
+      Width           =   1335
    End
    Begin VB.Timer tmrBass 
       Enabled         =   0   'False
       Interval        =   250
-      Left            =   600
-      Top             =   2550
+      Left            =   0
+      Top             =   2760
    End
    Begin VB.Frame frameStream 
       Caption         =   "Stream"
@@ -56,21 +55,12 @@ Begin VB.Form frmBassTest
       TabIndex        =   12
       Top             =   0
       Width           =   2415
-      Begin MSComctlLib.Slider sldVolGlStr 
-         Height          =   195
-         Left            =   150
-         TabIndex        =   25
+      Begin VB.HScrollBar sldVolGlStr 
+         Height          =   135
+         Left            =   120
+         TabIndex        =   28
          Top             =   2160
-         Width           =   2115
-         _ExtentX        =   3731
-         _ExtentY        =   344
-         _Version        =   393216
-         LargeChange     =   1000
-         SmallChange     =   100
-         Max             =   10000
-         SelStart        =   10000
-         TickFrequency   =   1000
-         Value           =   10000
+         Width           =   2175
       End
       Begin VB.CommandButton cmdStreamRemove 
          Caption         =   "Remove"
@@ -119,11 +109,11 @@ Begin VB.Form frmBassTest
          Top             =   1200
          Width           =   735
       End
-      Begin VB.Label Label2 
+      Begin VB.Label lblVolGlStr 
          Caption         =   "global volume"
          Height          =   195
          Left            =   180
-         TabIndex        =   26
+         TabIndex        =   24
          Top             =   1965
          Width           =   1455
       End
@@ -135,6 +125,13 @@ Begin VB.Form frmBassTest
       TabIndex        =   7
       Top             =   0
       Width           =   2415
+      Begin VB.HScrollBar sldVolglSam 
+         Height          =   135
+         Left            =   120
+         TabIndex        =   30
+         Top             =   2160
+         Width           =   2175
+      End
       Begin VB.CommandButton cmdSampleRemove 
          Caption         =   "Remove"
          Height          =   375
@@ -166,34 +163,18 @@ Begin VB.Form frmBassTest
          Top             =   1200
          Width           =   2175
       End
-      Begin MSComctlLib.Slider sldVolglSam 
-         Height          =   195
-         Left            =   180
-         TabIndex        =   29
-         Top             =   2160
-         Width           =   2115
-         _ExtentX        =   3731
-         _ExtentY        =   344
-         _Version        =   393216
-         LargeChange     =   1000
-         SmallChange     =   100
-         Max             =   10000
-         SelStart        =   10000
-         TickFrequency   =   1000
-         Value           =   10000
-      End
-      Begin VB.Label Label4 
+      Begin VB.Label lblVolglSam 
          Caption         =   "global volume"
          Height          =   195
          Left            =   240
-         TabIndex        =   30
+         TabIndex        =   26
          Top             =   1965
          Width           =   1455
       End
    End
    Begin MSComDlg.CommonDialog DLG 
-      Left            =   120
-      Top             =   2520
+      Left            =   0
+      Top             =   2280
       _ExtentX        =   847
       _ExtentY        =   847
       _Version        =   393216
@@ -205,6 +186,13 @@ Begin VB.Form frmBassTest
       TabIndex        =   0
       Top             =   0
       Width           =   2415
+      Begin VB.HScrollBar sldVolGlMus 
+         Height          =   135
+         Left            =   120
+         TabIndex        =   29
+         Top             =   2160
+         Width           =   2175
+      End
       Begin VB.CommandButton cmdMusicRemove 
          Caption         =   "Remove"
          Height          =   375
@@ -252,38 +240,22 @@ Begin VB.Form frmBassTest
          Top             =   240
          Width           =   2175
       End
-      Begin MSComctlLib.Slider sldVolGlMus 
-         Height          =   195
-         Left            =   150
-         TabIndex        =   27
-         Top             =   2160
-         Width           =   2115
-         _ExtentX        =   3731
-         _ExtentY        =   344
-         _Version        =   393216
-         LargeChange     =   1000
-         SmallChange     =   100
-         Max             =   10000
-         SelStart        =   10000
-         TickFrequency   =   1000
-         Value           =   10000
-      End
-      Begin VB.Label Label3 
+      Begin VB.Label lblVolGlMus 
          Caption         =   "global volume"
          Height          =   195
          Left            =   210
-         TabIndex        =   28
+         TabIndex        =   25
          Top             =   1965
          Width           =   1455
       End
    End
-   Begin VB.Label Label1 
+   Begin VB.Label lblVol 
       AutoSize        =   -1  'True
       Caption         =   "Volume"
       Height          =   195
-      Left            =   5280
-      TabIndex        =   24
-      Top             =   2580
+      Left            =   4440
+      TabIndex        =   23
+      Top             =   2520
       Width           =   525
    End
    Begin VB.Label lblCPUP 
@@ -291,9 +263,9 @@ Begin VB.Form frmBassTest
       BackStyle       =   0  'Transparent
       Caption         =   "CPU%"
       Height          =   195
-      Left            =   6780
+      Left            =   6360
       TabIndex        =   16
-      Top             =   2700
+      Top             =   2880
       Width           =   450
    End
    Begin VB.Label lblCPU 
@@ -301,10 +273,10 @@ Begin VB.Form frmBassTest
       AutoSize        =   -1  'True
       Caption         =   "0.0"
       Height          =   195
-      Left            =   7320
+      Left            =   6960
       TabIndex        =   15
-      Top             =   2700
-      Width           =   240
+      Top             =   2880
+      Width           =   480
    End
 End
 Attribute VB_Name = "frmBassTest"
@@ -312,6 +284,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+
 '*****************************************************************
 '* BASS Simple test (rev .1), copyright (c) 1999 Adam Hoult.     *
 '*                                                               *
@@ -329,17 +302,27 @@ Public Sub Error_(ByVal es As String)
     Call MsgBox(es & vbCrLf & "(error code: " & BASS_ErrorGetCode() & ")", vbExclamation, "Error")
 End Sub
 
+Private Sub chk2UpdateThreads_Click()
+    Call BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, IIf(chk2UpdateThreads.value = vbChecked, 2, 1)) ' set 1 or 2 update threads
+End Sub
+
 Private Sub Form_Load()
     ' change and set the current path, to prevent from VB not finding BASS.DLL
     ChDrive App.Path
     ChDir App.Path
 
     ' check the correct BASS was loaded
+    On Error Resume Next
     If (HiWord(BASS_GetVersion) <> BASSVERSION) Then
-        Call MsgBox("An incorrect version of BASS.DLL was loaded", vbCritical)
+        If Err Then
+            Call MsgBox("Error " & Err.Number & ": " & Err.Description)
+        Else
+            Call MsgBox("An incorrect version of BASS.DLL was loaded", vbCritical)
+        End If
         End
     End If
-
+    On Error Resume Next
+    
     ' Initialize output - default device, 44100hz, stereo, 16 bits
     If BASS_Init(-1, 44100, 0, Me.hWnd, 0) = BASSFALSE Then
         Call Error_("Can't initialize digital sound system")
@@ -515,19 +498,19 @@ Private Sub cmdSampleRemove_Click()
 End Sub
 
 Private Sub sldVol_Scroll()
-    Call BASS_SetVolume(sldVol.value / 100)
+    Call BASS_SetVolume(sldVol.value / CSng(sldVol.max)) '0...1
 End Sub
 
 Private Sub sldVolGlMus_Scroll()
-    Call BASS_SetConfig(BASS_CONFIG_GVOL_MUSIC, sldVolGlMus.value)
+    Call BASS_SetConfig(BASS_CONFIG_GVOL_MUSIC, sldVolGlMus.value / sldVolGlMus * 10000) '0...10000
 End Sub
 
 Private Sub sldVolglSam_Scroll()
-    Call BASS_SetConfig(BASS_CONFIG_GVOL_SAMPLE, sldVolglSam.value)
+    Call BASS_SetConfig(BASS_CONFIG_GVOL_SAMPLE, sldVolglSam.value / sldVolglSam.max * 10000)
 End Sub
 
 Private Sub sldVolGlStr_Scroll()
-    Call BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, sldVolGlStr.value)
+    Call BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, sldVolGlStr.value / sldVolGlStr.max * 10000)
 End Sub
 
 ' Main timer, to update all info needed.

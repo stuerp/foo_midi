@@ -20,11 +20,32 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Getting started
 
+### Installation
+
 * Double-click `foo_midi.fbk2-component`.
 
 or
 
 * Import `foo_midi.fbk2-component` into foobar2000 using the "*File / Preferences / Components / Install...*" menu item.
+
+## Usage
+
+### Loops
+
+The component supports 6 loop modes:
+
+* Never loop
+  * The song will be played once ignoring any loop information.
+* Never loop. Use decay time
+  * The song will be played once ignoring any loop information with a customizable decay period at end for the sound to die down.
+* Loop and fade when detected
+  * The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences.
+* Loop and fade always
+  * The song will be played and looped a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences.
+* Play indefinitely when detected
+  * The song will be played and the loop will play until stopped.
+* Play indefinitely
+  * The song will be played and loop until stopped.
 
 ## Developing
 
@@ -37,10 +58,10 @@ To build the code you need:
 The following libraries are included in the code:
 
 * [BASS](https://www.un4seen.com/) 2.4.17
-  * [BASSFLAC](https://www.un4seen.com/) 2.4.5.3
+  * [BASSFLAC](https://www.un4seen.com/) 2.4.5.4
   * [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
   * [BASSWV](https://www.un4seen.com/) 2.4.7.3
-  * [BASSOPUS](https://www.un4seen.com/) 2.4.2.3
+  * [BASSOPUS](https://www.un4seen.com/) 2.4.2.4
   * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 * [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
 * [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2)
@@ -57,7 +78,7 @@ The following libraries are included in the code:
 * [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
 * [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 * [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
-* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.2
+* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.4
 
 To create the deployment package you need:
 
@@ -96,6 +117,23 @@ If you'd like to contribute, please fork the repository and use a feature
 branch. Pull requests are warmly welcome.
 
 ## Change Log
+
+v2.9.1.3, 2023-11-02, *"Loop de loop"*
+
+* New: You can specify the path of an ADLMIDI bank (*.wopl or any of the other supported formats) in the Advanced branch of the Preferences dialog.
+  * The bank in the file overrides any selection in the bank drop down list in Preferences.
+  * The file path is not yet saved as part of a preset.
+  * Only file paths with Latin-1 characters are supported (limitation of the library).
+* New: Made Opal and Java OPL3 emulator core from LibADLMIDI selectable in the Advanced Preferences.
+* Improved: The decay time is now configurable. The default is still 1s (1000ms).
+* Improved: Looping, fading and decay has been tweaked.
+* Improved: The song duration is now always calculated without taking into account the selected loop mode. So it's the absolute length of the song without any looping or decay time.
+* Improved: Made the parsing the MIDI data more robust.
+* Improved: LDS file detection is more robust.
+* Bug Fix: FluidSynth did not respect the preferred sample rate.
+* Bug Fix: FluidSynth did not save two settings in a preset.
+* Bug Fix: Invalid embedded karaoke lyrics were not handled correctly.
+* Builds with foobar2000 SDK 2023-09-06.
 
 v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
 
@@ -219,6 +257,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 ### Electronic Music
 
 * [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
+* [File format samples](https://telparia.com/fileFormatSamples/)
 
 ### SoundFonts
 
@@ -236,8 +275,34 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
 * [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
 
-#### XMI
+#### GMF (Game Music Format)
 
+* [GMF](http://www.vgmpf.com/Wiki/index.php?title=GMF)
+
+#### HMI (Human Machine Interface)
+
+* [HMI](http://www.vgmpf.com/Wiki/index.php?title=HMI)
+
+#### HMP (Human Machine Interface P)
+
+* [HMP](http://www.vgmpf.com/Wiki/index.php?title=HMP)
+
+#### LDS (Loudness Sound System)
+
+* [LDS](http://www.vgmpf.com/Wiki/index.php?title=LDS)
+
+#### MDS (MIDI Stream)
+
+* [MDS](http://www.vgmpf.com/Wiki/index.php?title=MDS)
+
+#### MUS (DMX)
+
+* [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX))
+* [MUS Format](https://moddingwiki.shikadi.net/wiki/MUS_Format)
+
+#### XMI (Extended Multiple Instrument Digital Interface)
+
+* [XMI](http://www.vgmpf.com/Wiki/index.php?title=XMI)
 * [XMI Format](https://moddingwiki.shikadi.net/wiki/XMI_Format)
 
 ## Links

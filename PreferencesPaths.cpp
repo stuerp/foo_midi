@@ -252,15 +252,11 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
         pfc::string8 FilePath = _SoundFontFilePath;
 
         if (::uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;*.sf3;*.sflist"
-        #ifdef SF2PACK
             "*.sf2pack;*.sfogg;"
-        #endif
             ";*.json"
 
             "*.sflist|SoundFont files|*.sf2;*.sf3"
-        #ifdef SF2PACK
             ";*.sf2pack;*.sfogg;"
-        #endif
 
             "|SoundFont list files|*.sflist;*.json"
             ,

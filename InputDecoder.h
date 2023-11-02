@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.07.24) **/
+/** $VER: InputDecoder.h (2023.11.01) **/
 
 #pragma once
 
@@ -71,12 +71,14 @@ public:
         _SampleRate((uint32_t) CfgSampleRate),
         _ExtraPercussionChannel(~0U),
 
-        _LoopType(),
-        _LoopTypePlayback((uint32_t) CfgLoopTypePlayback),
-        _LoopTypeOther((uint32_t) CfgLoopTypeOther),
+        _LoopType(LoopType::NeverLoop),
+        _LoopTypePlayback((LoopType) (int) CfgLoopTypePlayback),
+        _LoopTypeOther((LoopType) (int) CfgLoopTypeOther),
+        _LoopCount((uint32_t) AdvCfgLoopCount.get()),
+        _FadeDuration((uint32_t) AdvCfgFadeTimeInMS.get()),
 
-        _LoopInTicks(),
-        _LoopInMs(),
+//      _LoopInTicks(),
+        _LoopRange(),
 
         _LengthInSamples(0),
 
@@ -87,19 +89,15 @@ public:
         _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
                                  (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
                                  (CfgFilterBanks ? MIDIContainer::CleanFlagBanks : 0);
-
-        _LoopCount    = (uint32_t) AdvCfgLoopCount.get();
-        _FadeDuration = (uint32_t) AdvCfgFadeTimeInMS.get();
-
     #ifdef DXISUPPORT
         dxiProxy = nullptr;
     #endif
     }
 
-    InputDecoder(const InputDecoder&) = delete;
-    InputDecoder(const InputDecoder&&) = delete;
-    InputDecoder& operator=(const InputDecoder&) = delete;
-    InputDecoder& operator=(InputDecoder&&) = delete;
+    InputDecoder(const InputDecoder &) = delete;
+    InputDecoder(InputDecoder &&) = delete;
+    InputDecoder & operator=(const InputDecoder &) = delete;
+    InputDecoder & operator=(InputDecoder &&) = delete;
 
     ~InputDecoder()
     {
@@ -176,31 +174,31 @@ public:
     #pragma region("input_info_reader")
     unsigned get_subsong_count()
     {
-        return _IsSysExFile ? 1 : (unsigned)_Container.GetSubSongCount();
+        return _IsSysExFile ? 1 : (unsigned) _Container.GetSubSongCount();
     }
 
     t_uint32 get_subsong(unsigned subSongIndex)
     {
-        return _IsSysExFile ? 0 : (t_uint32)_Container.GetSubSong(subSongIndex);
+        return _IsSysExFile ? 0 : (unsigned) _Container.GetSubSong(subSongIndex);
     }
 
     void get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_callback & abortHandler);
     #pragma endregion
 
     #pragma region("input_info_reader_v2")
-    t_filestats2 get_stats2(uint32_t, abort_callback&)
+    t_filestats2 get_stats2(uint32_t, abort_callback &)
     {
         return _FileStats2;
     }
 
-    t_filestats get_file_stats(abort_callback&)
+    t_filestats get_file_stats(abort_callback &)
     {
         return _FileStats;
     }
     #pragma endregion
 
     #pragma region("input_info_writer")
-    void retag_set_info(t_uint32, const file_info& fileInfo, abort_callback & abortHandler);
+    void retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler);
 
     void retag_commit(abort_callback &) { }
 
@@ -211,6 +209,7 @@ public:
 
 private:
     void InitializeTime(size_t subsongIndex);
+    uint32_t GetPlaybackTime(size_t subSongIndex);
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
@@ -264,21 +263,20 @@ private:
     uint32_t _SampleRate;
     uint32_t _ExtraPercussionChannel;
 
-    uint32_t _LoopType;
-    uint32_t _LoopTypePlayback;
-    uint32_t _LoopTypeOther;
+    LoopType _LoopType;
+    LoopType _LoopTypePlayback;
+    LoopType _LoopTypeOther;
     uint32_t _LoopCount;
 
-    Range _LoopInTicks;
-    Range _LoopInMs;
+    uint32_t _FadeDuration; // in ms
+
+    Range _LoopRange;
+    Range _FadeRange;
 
     uint32_t _LengthInSamples;
 
-    uint32_t _SamplesPlayed;
+    uint32_t _TimeInSamples;
     uint32_t _SamplesDone;
-
-    uint32_t _FadeDuration; // in ms
-    Range _FadeRange;
 
     uint32_t _CleanFlags;
 
@@ -286,7 +284,6 @@ private:
 
     uint32_t _BASSMIDIInterpolationMode;
 
-    bool _IsLooping;
     bool _IsEndOfContainer;
     bool _IsFirstChunk;
 

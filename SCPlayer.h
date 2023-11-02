@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.h (2023.06.12) Secret Sauce **/
+/** $VER: SCPlayer.h (2023.08.19) Secret Sauce **/
 
 #pragma once
 
@@ -17,15 +17,15 @@ public:
 protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
-    virtual void Render(audio_sample *, unsigned long) override;
+    virtual void Render(audio_sample *, uint32_t) override;
 
     virtual uint32_t GetSampleBlockSize() const noexcept override { return 0; } // 4096; This doesn't work for some reason.
 
-    virtual void SendEvent(uint32_t) override;
-    virtual void SendSysEx(const uint8_t *, size_t, size_t) override;
+    virtual void SendEvent(uint32_t data) override;
+    virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
 
-    virtual void SendEventWithTime(uint32_t, unsigned int) override;
-    virtual void SendSysExWithTime(const uint8_t *, size_t, size_t, unsigned int) override;
+    virtual void SendEvent(uint32_t data, uint32_t time) override;
+    virtual void SendSysEx(const uint8_t * data, size_t size , uint32_t portNumber, uint32_t time) override;
 
 private:
     bool LoadCore(const char * filePath);
