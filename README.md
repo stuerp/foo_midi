@@ -118,7 +118,7 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v2.9.1.0, 2023-xx-xx, *"Loop de loop"*
+v2.9.1.3, 2023-11-02, *"Loop de loop"*
 
 * New: You can specify the path of an ADLMIDI bank (*.wopl or any of the other supported formats) in the Advanced branch of the Preferences dialog.
   * The bank in the file overrides any selection in the bank drop down list in Preferences.
