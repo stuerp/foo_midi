@@ -1565,8 +1565,9 @@ void MIDIContainer::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, boo
 
                 if ((Event.Type == MIDIEvent::ControlChange) && (Event.Data[0] >= 116 /* 0x74 */ && Event.Data[0] <= 119 /* 0x77 */))
                 {
-                    wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"EMIDI: %08X %3d %3d\n", Event.Timestamp, Event.Data[0], Event.Data[1]); OutputDebugStringW(Line);
-
+                #ifdef _DEBUG
+                    wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"EMIDI: %08X %3d %3d\n", Event.Timestamp, Event.Data[0], Event.Data[1]); ::OutputDebugStringW(Line);
+                #endif
                     // 116 / 0x74, AIL loop: FOR loop = 1 to n, 118 / 0x76, AIL clear beat / measure count (AIL = Audio Interface Library)
                     if (Event.Data[0] == 116 || Event.Data[0] == 118)
                     {
