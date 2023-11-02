@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.cpp (2023.11.01) **/
+/** $VER: MIDIPlayer.cpp (2023.11.02) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -34,6 +34,8 @@ MIDIPlayer::MIDIPlayer()
 /// </summary>
 bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, LoopType loopType, uint32_t cleanFlags)
 {
+    _LoopType = loopType;
+
     assert(_Stream.size() == 0);
 
     midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
@@ -43,8 +45,6 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
 
     _StreamPosition = 0;
     _Position = 0;
-
-    _LoopType = loopType;
 
     _Length = midiContainer.GetDuration(subsongIndex, true);
 
@@ -116,9 +116,9 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
                     }
                 }
             }
-        }
 
-        _Length = LoopEnd;
+            _Length = LoopEnd;
+        }
     }
 
     if (_SampleRate != 1000)
@@ -145,7 +145,7 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
         return 0;
 
 #ifdef _DEBUG
-    wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d", _Position, _Length, _Remainder, sampleCount); ::OutputDebugStringW(Line);
+    wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d\n", (int) _Position, (int) _Length, (int) _Remainder, (int) sampleCount); ::OutputDebugStringW(Line);
 #endif
 
     const uint32_t BlockSize = GetSampleBlockSize();
@@ -287,31 +287,33 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
         if (BlockSize == 0)
             _Position = NewPosition;
 
+        // Have we reached the end of the song?
         if (NewPosition >= _Length)
         {
-            if (_StreamPosition < _Stream.size())
+            // Process any remaing events.
+            for (; _StreamPosition < _Stream.size(); _StreamPosition++)
             {
-                for (; _StreamPosition < _Stream.size(); _StreamPosition++)
-                {
-                    if (BlockSize != 0)
-                        SendEventFiltered(_Stream.at(_StreamPosition).Data, BlockOffset);
-                    else
-                        SendEventFiltered(_Stream.at(_StreamPosition).Data);
-                }
+                if (BlockSize != 0)
+                    SendEventFiltered(_Stream.at(_StreamPosition).Data, BlockOffset);
+                else
+                    SendEventFiltered(_Stream.at(_StreamPosition).Data);
             }
 
-            if (_LoopType >= LoopType::LoopAndFadeWhenDetected)
+            if ((_LoopType == LoopType::LoopAndFadeWhenDetected) || (_LoopType == LoopType::PlayIndefinitelyWhenDetected))
             {
-                if (_StreamLoopBegin == ~0)
-                {
-                    _StreamPosition = 0;
-                    _Position = 0;
-                }
-                else
+                if (_StreamLoopBegin != ~0)
                 {
                     _StreamPosition = _StreamLoopBegin;
                     _Position = _LoopBegin;
                 }
+                else
+                    break;
+            }
+            else
+            if ((_LoopType == LoopType::LoopAndFadeAlways) || (_LoopType == LoopType::PlayIndefinitely))
+            {
+                _StreamPosition = 0;
+                _Position = 0;
             }
             else
                 break;
@@ -521,6 +523,9 @@ void MIDIPlayer::Configure(MIDIFlavor midiFlavor, bool filterEffects)
     }
 }
 
+/// <summary>
+/// 
+/// </summary>
 void MIDIPlayer::SendEventFiltered(uint32_t data)
 {
     if (!(data & 0x80000000u))
@@ -550,6 +555,9 @@ void MIDIPlayer::SendEventFiltered(uint32_t data)
     }
 }
 
+/// <summary>
+/// 
+/// </summary>
 void MIDIPlayer::SendEventFiltered(uint32_t data, uint32_t time)
 {
     if (!(data & 0x80000000u))

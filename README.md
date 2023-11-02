@@ -128,7 +128,7 @@ v2.9.1.0, 2023-xx-xx, *"Loop de loop"*
 * Improved: The decay time is now configurable. The default is still 1s (1000ms).
 * Improved: Looping, fading and decay has been tweaked.
 * Improved: The song duration is now always calculated without taking into account the selected loop mode. So it's the absolute length of the song without any looping or decay time.
-* Improved: Detetection of errors in MIDI data.
+* Improved: Made the parsing the MIDI data more robust.
 * Improved: LDS file detection is more robust.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
 * Bug Fix: FluidSynth did not save two settings in a preset.

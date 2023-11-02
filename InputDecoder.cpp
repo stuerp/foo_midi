@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.11.01) **/
+/** $VER: InputDecoder.cpp (2023.11.02) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -312,8 +312,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         _SampleRate = (uint32_t) MT32Player::GetSampleRate();
 
     // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
-    MIDIPlayer::LoopMode LoopMode = MIDIPlayer::LoopMode::None;
-
     _FadeRange.Clear();
 
     if (!(flags & input_flag_no_looping))
@@ -346,37 +344,27 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         switch (_LoopType)
         {
             case LoopType::NeverLoop:
-                LoopMode = MIDIPlayer::LoopMode::None;
                 break;
 
             case LoopType::NeverLoopAddDecayTime:
-                LoopMode = MIDIPlayer::LoopMode::None;
                 break;
 
             case LoopType::LoopAndFadeWhenDetected:
             {
                 if (_LoopRange.IsSet())
                 {
-                    LoopMode = MIDIPlayer::LoopMode::Enabled;
-
                     uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1000);
                     uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1000);
 
                     _FadeRange.Set(Begin, End);
                 }
                 else
-                {
-                    LoopMode = MIDIPlayer::LoopMode::None;
-
                     _FadeRange.Set(_LengthInSamples, _LengthInSamples);
-                }
                 break;
             }
 
             case LoopType::LoopAndFadeAlways:
             {
-                LoopMode = (MIDIPlayer::LoopMode) (MIDIPlayer::LoopMode::Enabled | MIDIPlayer::LoopMode::Forced);
-
                 uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1000);
                 uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1000);
 
@@ -385,10 +373,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
 
             case LoopType::PlayIndefinitelyWhenDetected:
-                _FadeRange.Set(_LengthInSamples, _LengthInSamples);
                 break;
 
             case LoopType::PlayIndefinitely:
+//              _FadeRange.Set(_LengthInSamples, _LengthInSamples);
                 break;
         }
     }

@@ -267,9 +267,9 @@ private:
     LoopType _LoopTypePlayback;
     LoopType _LoopTypeOther;
     uint32_t _LoopCount;
+
     uint32_t _FadeDuration; // in ms
 
-//  Range _LoopInTicks;
     Range _LoopRange;
     Range _FadeRange;
 
