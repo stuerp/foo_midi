@@ -34,8 +34,9 @@ enum class PlayerType : int8_t
     OPL = 8,
     Nuke = 9,
     SecretSauce = 10,
+    MCI = 11,
 
-    Max = SecretSauce,
+    Max = MCI,
 
     Default = ADL,
 };

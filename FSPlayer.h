@@ -47,7 +47,7 @@ private:
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
     #pragma endregion
 
-    fluid_sfloader_t * GetSoundFontLoader(fluid_settings_t * settings);
+    fluid_sfloader_t * GetSoundFontLoader(fluid_settings_t * settings) const;
 
 private:
     std::string _ErrorMessage;

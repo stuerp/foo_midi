@@ -39,7 +39,8 @@ const char * PlayerTypeNames[] =
     "LibOPNMIDI",
     "OPL",
     "Nuke",
-    "Secret Sauce"
+    "Secret Sauce",
+    "MCI",
 };
 
 #pragma region("input_impl")
@@ -746,6 +747,30 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
             break;
         }
+
+        // MCI
+        case PlayerType::MCI:
+        {
+            {
+                auto Player = new MCIPlayer;
+
+                _Player = Player;
+            }
+
+            {
+                _Player->SetSampleRate(_SampleRate);
+                _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
+
+                if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
+                {
+                    _IsEndOfContainer = false;
+
+                    return;
+                }
+            }
+            break;
+        }
+
     }
 
     throw exception_midi("No MIDI player specified");

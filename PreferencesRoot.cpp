@@ -316,7 +316,8 @@ const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
     { "LibOPNMIDI",     PlayerType::OPN,          IsPluginAlwaysPresent },
     { "OPL MIDI",       PlayerType::OPL,          IsPluginNeverPresent },
     { "Nuke",           PlayerType::Nuke,         IsPluginAlwaysPresent },
-    { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent }
+    { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent },
+    { "MCI",            PlayerType::MCI,          IsPluginAlwaysPresent }
 };
 
 #pragma region(preferences_page_instance)

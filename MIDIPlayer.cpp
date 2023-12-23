@@ -234,7 +234,9 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
                         }
                     }
 
-                    if (BlockSize != 0)
+                    if (BlockSize == 0)
+                        SendEventFiltered(mse.Data);
+                    else
                     {
                         BlockOffset += (uint32_t) ToDo;
 
@@ -249,8 +251,6 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
 
                         SendEventFiltered(mse.Data, BlockOffset);
                     }
-                    else
-                        SendEventFiltered(mse.Data);
                 }
             }
         }
@@ -290,13 +290,13 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
         // Have we reached the end of the song?
         if (NewPosition >= _Length)
         {
-            // Process any remaing events.
+            // Process any remaining events.
             for (; _StreamPosition < _Stream.size(); _StreamPosition++)
             {
-                if (BlockSize != 0)
-                    SendEventFiltered(_Stream.at(_StreamPosition).Data, BlockOffset);
-                else
+                if (BlockSize == 0)
                     SendEventFiltered(_Stream.at(_StreamPosition).Data);
+                else
+                    SendEventFiltered(_Stream.at(_StreamPosition).Data, BlockOffset);
             }
 
             if ((_LoopType == LoopType::LoopAndFadeWhenDetected) || (_LoopType == LoopType::PlayIndefinitelyWhenDetected))
@@ -534,7 +534,7 @@ void MIDIPlayer::SendEventFiltered(uint32_t data)
         {
             const uint32_t Data = data & 0x00007FF0u;
 
-            // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
+            // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D).
             if (Data == 0x5BB0 || Data == 0x5DB0)
                 return;
         }

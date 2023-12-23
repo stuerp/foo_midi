@@ -25,6 +25,7 @@
 #include "BMPlayer.h"
 #include "EdMPlayer.h"
 #include "FSPlayer.h"
+#include "MCIPlayer.h"
 #include "NukePlayer.h"
 #include <MT32Player/MT32Player.h>
 #include <OPNPlayer/OPNPlayer.h>
