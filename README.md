@@ -121,6 +121,7 @@ branch. Pull requests are warmly welcome.
 v2.9.2.0, 2023-12-xx, *""*
 
 * Bug Fix: Crash in Emu de MIDI because dynamic synthesis rate was not initialized in time.
+* Bug Fix: Loop type was not respected when converting to other audio formats.
 * Builds with foobar2000 SDK 2023-09-23.
 
 v2.9.1.3, 2023-11-02, *"Loop de loop"*
