@@ -118,6 +118,11 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
+v2.9.2.0, 2023-12-xx, *""*
+
+* Bug Fix: Crash in Emu de MIDI because dynamic synthesis rate was not initialized in time.
+* Builds with foobar2000 SDK 2023-09-23.
+
 v2.9.1.3, 2023-11-02, *"Loop de loop"*
 
 * New: You can specify the path of an ADLMIDI bank (*.wopl or any of the other supported formats) in the Advanced branch of the Preferences dialog.
@@ -128,7 +133,7 @@ v2.9.1.3, 2023-11-02, *"Loop de loop"*
 * Improved: The decay time is now configurable. The default is still 1s (1000ms).
 * Improved: Looping, fading and decay has been tweaked.
 * Improved: The song duration is now always calculated without taking into account the selected loop mode. So it's the absolute length of the song without any looping or decay time.
-* Improved: Made the parsing the MIDI data more robust.
+* Improved: Made the parsing of the MIDI data more robust.
 * Improved: LDS file detection is more robust.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
 * Bug Fix: FluidSynth did not save two settings in a preset.

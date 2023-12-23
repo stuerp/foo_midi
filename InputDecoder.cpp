@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.11.02) **/
+/** $VER: InputDecoder.cpp (2023.12.23) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -1048,7 +1048,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 /// <summary>
 /// Set the tags for the specified file.
 /// </summary>
-void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler)
+void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const
 {
     if (_IsSysExFile)
         throw exception_io_data("You cannot tag SysEx dumps");

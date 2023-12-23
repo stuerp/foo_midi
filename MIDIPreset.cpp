@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.cpp (2023.09.27) **/
+/** $VER: MIDIPreset.cpp (2023.12.23) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -93,7 +93,7 @@ MIDIPreset::MIDIPreset() noexcept
         else
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
 
-        _ADLBankFilePath = AdvCfgADLBankFilePath.get();
+        AdvCfgADLBankFilePath.get(_ADLBankFilePath);
     }
 
     {

@@ -1,5 +1,5 @@
 
-/** $VER: ConfigurationMap (2023.09.21) **/
+/** $VER: ConfigurationMap (2023.12.23) **/
 
 #pragma once
 
@@ -7,6 +7,8 @@
 #include <sdk/cfg_var.h>
 
 #include <map>
+
+using namespace cfg_var_modern;
 
 /// <summary>
 /// Implements a configuration variable for maps.
@@ -24,6 +26,9 @@ public:
     #pragma region("cfg_var_writer")
     virtual void get_data_raw(stream_writer * streamWriter, abort_callback & handleAbort)
     {
+        if (streamWriter == nullptr)
+            return;
+
         stream_writer_formatter<> out(*streamWriter, handleAbort);
 
         out.write_int(size());
@@ -45,6 +50,9 @@ public:
     #pragma region("cfg_var_reader")
     virtual void set_data_raw(stream_reader * streamReader, t_size, abort_callback & handleAbort)
     {
+        if (streamReader == nullptr)
+            return;
+
         stream_reader_formatter<> in(*streamReader, handleAbort);
 
         clear();

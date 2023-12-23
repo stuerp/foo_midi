@@ -1,15 +1,18 @@
 
-/** $VER: Configuration.h (2023.11.01) **/
+/** $VER: Configuration.h (2023.12.23) **/
 
 #pragma once
 
 #include <sdk/foobar2000-lite.h>
+
 #include <sdk/cfg_var.h>
 #include <sdk/advconfig_impl.h>
 
 #include "ConfigurationMap.h"
 
 #include <fluidsynth.h>
+
+using namespace cfg_var_modern;
 
 extern const GUID PreferencesPageGUID;
 extern const GUID PreferencesPathsPageGUID;
@@ -99,7 +102,7 @@ enum
 //  DefaultADL4Op = 14,
 };
 
-extern cfg_int
+extern cfg_var_modern::cfg_int
     CfgPlayerType,
     CfgSampleRate,
 
@@ -135,7 +138,7 @@ extern cfg_int
     CfgUseSuperMuntWithMT32,
     CfgUseVSTiWithXG;
 
-extern cfg_string
+extern cfg_var_modern::cfg_string
     CfgVSTiFilePath,
     CfgSoundFontFilePath,
     CfgMT32ROMDirectoryPath,

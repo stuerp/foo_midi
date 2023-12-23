@@ -1,10 +1,9 @@
 
-/** $VER: Configuration.cpp (2023.09.27) **/
+/** $VER: Configuration.cpp (2023.12.23) **/
 
 #include <CppCoreCheck/Warnings.h>
 
 #pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
-
 
 #include "Configuration.h"
 
@@ -109,7 +108,7 @@ static const GUID GUIDMIDIPlayerBranch = { 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0
         static const GUID GUIDAdvCfgBASSMIDIVoices = { 0x9e0a5dab, 0x6786, 0x4120, { 0xb7, 0x37, 0x85, 0xbb, 0x2d, 0xfa, 0xf3, 0x7 } };
 #pragma endregion
 
-cfg_int
+cfg_var_modern::cfg_int
     CfgPlayerType(GUIDCfgPlayerType, (t_int32) PlayerType::Default),
     CfgSampleRate(GUIDCfgSampleRate, DefaultSampleRate),
 
@@ -153,7 +152,7 @@ static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 }
 cfg_guid cfg_dxi_plugin(guid_cfg_dxi_plugin, default_cfg_dxi_plugin);
 #endif
 
-cfg_string
+cfg_var_modern::cfg_string
     CfgVSTiFilePath(GUIDCfgVSTiFilePath, ""),
     CfgSoundFontFilePath(GUIDCfgSoundFontFilePath, ""),
     CfgMT32ROMDirectoryPath(GUIDCfgMT32ROMDirectoryPath, ""),
