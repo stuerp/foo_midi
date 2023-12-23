@@ -1,5 +1,5 @@
 
-/** $VER: MIDIContainer.cpp (2023.08.14) **/
+/** $VER: MIDIContainer.cpp (2023.12.23) **/
 
 #include "MIDIContainer.h"
 
@@ -192,13 +192,18 @@ size_t SysExTable::AddItem(const uint8_t * data, std::size_t size, uint8_t portN
     return (_Items.size() - 1);
 }
 
-void SysExTable::GetItem(size_t index, const uint8_t * & data, std::size_t & size, uint8_t & portNumber) const
+bool SysExTable::GetItem(size_t index, const uint8_t * & data, std::size_t & size, uint8_t & portNumber) const
 {
+    if (index >= _Items.size())
+        return false;
+
     const SysExItem & Item = _Items[index];
 
     data = &_Data[Item.Offset];
     size = Item.Size;
     portNumber = Item.PortNumber;
+
+    return true;
 }
 #pragma endregion
 

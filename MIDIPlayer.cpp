@@ -549,9 +549,8 @@ void MIDIPlayer::SendEventFiltered(uint32_t data)
         size_t Size;
         uint8_t Port;
 
-        _SysExMap.GetItem(Index, Data, Size, Port);
-
-        SendSysExFiltered(Data, Size, Port);
+        if (_SysExMap.GetItem(Index, Data, Size, Port))
+            SendSysExFiltered(Data, Size, Port);
     }
 }
 
@@ -581,9 +580,8 @@ void MIDIPlayer::SendEventFiltered(uint32_t data, uint32_t time)
         size_t Size;
         uint8_t Port;
 
-        _SysExMap.GetItem(Index, Data, Size, Port);
-
-        SendSysExFiltered(Data, Size, Port, time);
+        if (_SysExMap.GetItem(Index, Data, Size, Port))
+            SendSysExFiltered(Data, Size, Port, time);
     }
 }
 

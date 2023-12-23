@@ -213,7 +213,7 @@ class SysExTable
 {
 public:
     size_t AddItem(const uint8_t * data, std::size_t size, uint8_t portNumber);
-    void GetItem(size_t index, const uint8_t * & data, std::size_t & size, uint8_t & portNumber) const;
+    bool GetItem(size_t index, const uint8_t * & data, std::size_t & size, uint8_t & portNumber) const;
 
     size_t Size() const
     {
