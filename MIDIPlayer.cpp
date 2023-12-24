@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPlayer.cpp (2023.11.02) **/
+/** $VER: MIDIPlayer.cpp (2023.12.24) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -13,13 +13,6 @@
 /// </summary>
 MIDIPlayer::MIDIPlayer()
 {
-    #ifdef EXPERIMENT
-    foo_vis_midi::IAPI::ptr api;
-
-    if (fb2k::std_api_try_get(api))
-        _MusicKeyboard = api->GetMusicKeyboard();
-    #endif
-
     _SampleRate = 1000;
     _Length = 0;
     _Position = 0;
@@ -27,6 +20,16 @@ MIDIPlayer::MIDIPlayer()
     _LoopBegin = 0;
 
     _IsInitialized = false;
+
+    {
+        foo_vis_midi::IAPI::ptr api;
+
+        if (fb2k::std_api_try_get(api))
+            _MusicKeyboard = api->GetMusicKeyboard();
+
+        if (_MusicKeyboard.is_valid())
+            _MusicKeyboard->Initialize(foo_vis_midi::InterfaceVersion);
+    }
 }
 
 /// <summary>
@@ -144,6 +147,8 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
     if (!Startup())
         return 0;
 
+    uint32_t OldPosition = _Position;
+
 #ifdef _DEBUG
     wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d, Evt: %6d/%6d\n", (int) _Position, (int) _Length, (int) _Remainder, (int) sampleCount, (int) _StreamPosition, (int) _Stream.size()); ::OutputDebugStringW(Line);
 #endif
@@ -203,10 +208,8 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
                 {
                     const MIDIStreamEvent& mse = _Stream[_StreamPosition];
 
-                #ifdef EXPERIMENT
                     if (_MusicKeyboard.is_valid())
                         _MusicKeyboard->ProcessMessage(mse.Data, mse.Timestamp);
-                #endif
 
                     int64_t ToDo = (int64_t) mse.Timestamp - (int64_t) _Position - (int64_t) BlockOffset;
 
@@ -322,6 +325,9 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
 
     _Remainder = BlockOffset;
 
+    if (_MusicKeyboard.is_valid())
+        _MusicKeyboard->SetPosition(OldPosition);
+
     return SampleIndex;
 }
 
@@ -421,7 +427,7 @@ void MIDIPlayer::Seek(uint32_t timeInSamples)
             uint32_t LastTimestamp = 0;
             bool IsTimestampSet = false;
 
-            for (auto Event : FillerEvents)
+            for (const MIDIStreamEvent & Event : FillerEvents)
             {
                 if (Event.Data != 0)
                 {
@@ -457,7 +463,7 @@ void MIDIPlayer::Seek(uint32_t timeInSamples)
             uint32_t LastTimestamp = 0;
             bool IsTimestampSet = false;
 
-            for (auto Event : FillerEvents)
+            for (const MIDIStreamEvent & Event : FillerEvents)
             {
                 if (Event.Data != 0)
                 {
