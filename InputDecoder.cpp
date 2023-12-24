@@ -66,9 +66,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             throw exception_io_unsupported_format();
     }
 
-    std::vector<uint8_t> Data;
-
-    Data.resize((size_t) _FileStats.m_size);
+    std::vector<uint8_t> Data((size_t) _FileStats.m_size);
 
     file->read_object(&Data[0], (t_size) _FileStats.m_size, abortHandler);
 

@@ -61,30 +61,26 @@ public:
 
         clear();
 
-        t_size count;
+        t_size Count;
 
-        in.read_int(count);
+        in.read_int(Count);
 
-        for (t_size i = 0; i < count; ++i)
+        for (t_size i = 0; i < Count; ++i)
         {
-            t_uint32 p_key;
+            t_uint32 Key;
 
-            std::vector<uint8_t> p_value;
+            in.read_int(Key);
 
-            in.read_int(p_key);
+            t_uint32 Size;
 
-            {
-                t_uint32 size;
+            in >> Size;
 
-                in >> size;
+            std::vector<uint8_t> Value(Size);
 
-                p_value.resize(size);
+            for (size_t j = 0; j < (size_t) Size; ++j)
+                in >> Value[j];
 
-                for (t_uint32 walk = 0; walk < size; ++walk)
-                    in >> p_value[walk];
-            }
-
-            operator[](p_key) = p_value;
+            operator[](Key) = Value;
         }
     }
     #pragma endregion

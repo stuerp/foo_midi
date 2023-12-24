@@ -309,7 +309,7 @@ void MIDIContainer::AddTrack(const MIDITrack & track)
 
                 for (j = 0, k = _DeviceNames[ChannelNumber].size(); j < k; ++j)
                 {
-                    if (::strcmp(_DeviceNames[ChannelNumber][j].c_str(), DeviceName.c_str()) == 0)
+                    if (_DeviceNames[ChannelNumber][j] == DeviceName)
                         break;
                 }
 
@@ -568,7 +568,7 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
 
                     for (i = 0, j = _DeviceNames[Event.ChannelNumber].size(); i < j; ++i)
                     {
-                        if (::strcmp(_DeviceNames[Event.ChannelNumber][i].c_str(), DeviceNames[SelectedTrack].c_str()) == 0)
+                        if (_DeviceNames[Event.ChannelNumber][i] == DeviceNames[SelectedTrack])
                             break;
                     }
 
@@ -602,7 +602,7 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
 
                         for (i = 0, j = _DeviceNames[Event.ChannelNumber].size(); i < j; ++i)
                         {
-                            if (::strcmp(_DeviceNames[Event.ChannelNumber][i].c_str(), DeviceNames[SelectedTrack].c_str()) == 0)
+                            if (_DeviceNames[Event.ChannelNumber][i] == DeviceNames[SelectedTrack])
                                 break;
                         }
 
@@ -645,7 +645,7 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
 
                         for (i = 0, j = _DeviceNames[Event.ChannelNumber].size(); i < j; ++i)
                         {
-                            if (::strcmp(_DeviceNames[Event.ChannelNumber][i].c_str(), DeviceNames[SelectedTrack].c_str()) == 0)
+                            if (_DeviceNames[Event.ChannelNumber][i] == DeviceNames[SelectedTrack])
                                 break;
                         }
 

@@ -74,7 +74,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
 
                 for (i = 0; (i < _Stream.size()) && (i < _StreamLoopEnd); ++i)
                 {
-                    uint32_t Message = _Stream.at(i).Data;
+                    uint32_t Message = _Stream[i].Data;
 
                     uint32_t Event = Message & 0x800000F0;
 
@@ -91,7 +91,7 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
 
                         size_t Index = (size_t) Channel * 128 + Note;
 
-                        NoteOn.at(Index) = (uint8_t) ((NoteOn.at(Index) & ~bit) | (bit * IsNoteOn));
+                        NoteOn[Index] = (uint8_t) ((NoteOn[Index] & ~bit) | (bit * IsNoteOn));
                     }
                 }
 
@@ -99,17 +99,17 @@ bool MIDIPlayer::Load(const MIDIContainer & midiContainer, uint32_t subsongIndex
 
                 _Length = LoopEnd - 1;
 
-                if (_Length < _Stream.at(i - 1).Timestamp)
-                    _Length = _Stream.at(i - 1).Timestamp;
+                if (_Length < _Stream[i - 1].Timestamp)
+                    _Length = _Stream[i - 1].Timestamp;
             }
 
             for (size_t i = 0; i < NoteOnSize; ++i)
             {
-                if (NoteOn.at(i))
+                if (NoteOn[i] != 0x00)
                 {
                     for (size_t j = 0; j < 8; ++j)
                     {
-                        if (NoteOn.at(i) & (1 << j))
+                        if (NoteOn[i] & (1 << j))
                         {
                             _Stream.push_back(MIDIStreamEvent(_Length, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
                         }
@@ -194,14 +194,14 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
         {
             size_t NewStreamPosition = _StreamPosition;
 
-            while ((NewStreamPosition < _Stream.size()) && (_Stream.at(NewStreamPosition).Timestamp < NewPosition))
+            while ((NewStreamPosition < _Stream.size()) && (_Stream[NewStreamPosition].Timestamp < NewPosition))
                 NewStreamPosition++;
 
             if (NewStreamPosition > _StreamPosition)
             {
                 for (; _StreamPosition < NewStreamPosition; ++_StreamPosition)
                 {
-                    const MIDIStreamEvent& mse = _Stream.at(_StreamPosition);
+                    const MIDIStreamEvent& mse = _Stream[_StreamPosition];
 
                 #ifdef EXPERIMENT
                     if (_MusicKeyboard.is_valid())
@@ -257,7 +257,7 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
 
         if (SampleIndex < sampleCount)
         {
-            Remainder = ((_StreamPosition < _Stream.size()) ? _Stream.at(_StreamPosition).Timestamp : _Length) - _Position;
+            Remainder = ((_StreamPosition < _Stream.size()) ? _Stream[_StreamPosition].Timestamp : _Length) - _Position;
 
             if (BlockSize != 0)
                 BlockOffset = Remainder;
@@ -294,9 +294,9 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
             for (; _StreamPosition < _Stream.size(); _StreamPosition++)
             {
                 if (BlockSize == 0)
-                    SendEventFiltered(_Stream.at(_StreamPosition).Data);
+                    SendEventFiltered(_Stream[_StreamPosition].Data);
                 else
-                    SendEventFiltered(_Stream.at(_StreamPosition).Data, BlockOffset);
+                    SendEventFiltered(_Stream[_StreamPosition].Data, BlockOffset);
             }
 
             if ((_LoopType == LoopType::LoopAndFadeWhenDetected) || (_LoopType == LoopType::PlayIndefinitelyWhenDetected))
@@ -360,28 +360,27 @@ void MIDIPlayer::Seek(uint32_t timeInSamples)
 
     {
         // Find the position in the MIDI stream that corresponds with the seek time.
-        for (; (_StreamPosition < _Stream.size()) && (_Stream.at(_StreamPosition).Timestamp < _Position); _StreamPosition++)
+        for (; (_StreamPosition < _Stream.size()) && (_Stream[_StreamPosition].Timestamp < _Position); _StreamPosition++)
             ;
 
         if (_StreamPosition == _Stream.size())
             _Remainder = _Length - _Position;
         else
-            _Remainder = _Stream.at(_StreamPosition).Timestamp - _Position;
+            _Remainder = _Stream[_StreamPosition].Timestamp - _Position;
     }
 
     if (_StreamPosition <= OldCurrentPosition)
         return;
 
-    std::vector<MIDIStreamEvent> FillerEvents;
+    std::vector<MIDIStreamEvent> FillerEvents(_StreamPosition - OldCurrentPosition);
 
-    FillerEvents.resize(_StreamPosition - OldCurrentPosition);
-    FillerEvents.assign(&_Stream.at(OldCurrentPosition), &_Stream.at(_StreamPosition));
+    FillerEvents.assign(&_Stream[OldCurrentPosition], &_Stream[_StreamPosition]);
 
     OldCurrentPosition = _StreamPosition - OldCurrentPosition;
 
     for (size_t i = 0; i < OldCurrentPosition; ++i)
     {
-        MIDIStreamEvent & mse1 = FillerEvents.at(i);
+        MIDIStreamEvent & mse1 = FillerEvents[i];
 
         if ((mse1.Data & 0x800000F0) == 0x90 && (mse1.Data & 0xFF0000)) // note on
         {
@@ -396,7 +395,7 @@ void MIDIPlayer::Seek(uint32_t timeInSamples)
 
             for (size_t j = i + 1; j < OldCurrentPosition; ++j)
             {
-                MIDIStreamEvent & mse2 = FillerEvents.at(j);
+                MIDIStreamEvent & mse2 = FillerEvents[j];
 
                 if ((mse2.Data & 0xFF00FFFF) == m1 || mse2.Data == m2)
                 {
@@ -489,9 +488,8 @@ void MIDIPlayer::SetSampleRate(uint32_t sampleRate)
     if (sampleRate == _SampleRate)
         return;
 
-    if (_Stream.size() > 0)
-        for (size_t i = 0; i < _Stream.size(); ++i)
-            _Stream.at(i).Timestamp = (uint32_t) ::MulDiv((int) _Stream.at(i).Timestamp, (int) sampleRate, (int) _SampleRate);
+    for (MIDIStreamEvent & it : _Stream)
+        it.Timestamp = (uint32_t) ::MulDiv((int) it.Timestamp, (int) sampleRate, (int) _SampleRate);
 
     if (_Length != 0)
         _Length = (uint32_t) ::MulDiv((int) _Length, (int) sampleRate, (int) _SampleRate);

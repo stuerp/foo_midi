@@ -109,7 +109,7 @@ void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const
 
                     t_filesize FileSize = File->get_size_ex(AbortHandler);
 
-                    Data.resize((size_t)FileSize);
+                    Data.resize((size_t) FileSize);
 
                     File->read_object(&Data[0], (t_size)FileSize, AbortHandler);
 
