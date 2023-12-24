@@ -59,7 +59,7 @@ VSTiPlayer::~VSTiPlayer()
 
 bool VSTiPlayer::LoadVST(const char * pathName)
 {
-    if (!pathName || !pathName[0])
+    if ((pathName == nullptr) || (pathName[0] == '\0'))
         return false;
 
     if (pathName != _PluginFilePath)
@@ -93,7 +93,7 @@ uint32_t VSTiPlayer::GetUniqueID() const noexcept
     return _UniqueId;
 }
 
-void VSTiPlayer::GetChunk(std::vector<uint8_t> & data)
+void VSTiPlayer::GetChunk(std::vector<uint8_t> & chunk)
 {
     WriteBytes(1);
 
@@ -107,20 +107,20 @@ void VSTiPlayer::GetChunk(std::vector<uint8_t> & data)
 
     const uint32_t Size = ReadCode();
 
-    data.resize(Size);
+    chunk.resize(Size);
 
     if (Size != 0)
-        ReadBytes(&data[0], Size);
+        ReadBytes(chunk.data(), Size);
 }
 
 void VSTiPlayer::SetChunk(const void * data, size_t size)
 {
-    if ((_Chunk.size() == 0) || ((_Chunk.size() == size) && (size != 0) && (data != (const void *) &_Chunk[0])))
+    if ((_Chunk.size() == 0) || ((_Chunk.size() == size) && (size != 0) && (data != (const void *) _Chunk.data())))
     {
         _Chunk.resize(size);
 
         if (size != 0)
-            ::memcpy(&_Chunk[0], data, size);
+            ::memcpy(_Chunk.data(), data, size);
     }
 
     WriteBytes(2);
@@ -170,8 +170,8 @@ bool VSTiPlayer::Startup()
     if (!LoadVST(_PluginFilePath.c_str()))
         return false;
 
-    if (_Chunk.size())
-        SetChunk(&_Chunk[0], _Chunk.size());
+    if (_Chunk.size() != 0)
+        SetChunk(_Chunk.data(), _Chunk.size());
 
     WriteBytes(5);
     WriteBytes(sizeof(uint32_t));

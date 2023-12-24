@@ -130,8 +130,7 @@ bool MIDIProcessor::ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer 
 
         uint32_t Timestamp = 0;
 
-        std::vector<uint8_t> _buffer;
-        _buffer.resize(3);
+        std::vector<uint8_t> Temp(3);
 
         auto TrackDataEnd = it + (int) track_size_32;
 
@@ -144,14 +143,14 @@ bool MIDIProcessor::ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer 
             if (it == TrackDataEnd)
                 return false;
 
-            _buffer[0] = *it++;
+            Temp[0] = *it++;
 
-            if (_buffer[0] == 0xFF)
+            if (Temp[0] == 0xFF)
             {
                 if (it == TrackDataEnd)
                     return false;
 
-                _buffer[1] = *it++;
+                Temp[1] = *it++;
 
                 int MetadataSize = DecodeVariableLengthQuantity(it, TrackDataEnd);
 
@@ -161,21 +160,21 @@ bool MIDIProcessor::ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer 
                 if (TrackDataEnd - it < MetadataSize)
                     return false;
 
-                _buffer.resize((size_t) (MetadataSize + 2));
-                std::copy(it, it + MetadataSize, _buffer.begin() + 2);
+                Temp.resize((size_t) (MetadataSize + 2));
+                std::copy(it, it + MetadataSize, Temp.begin() + 2);
                 it += MetadataSize;
 
-                track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::Extended, 0, &_buffer[0], (size_t) (MetadataSize + 2)));
+                track.AddEvent(MIDIEvent(Timestamp, MIDIEvent::Extended, 0, &Temp[0], (size_t) (MetadataSize + 2)));
 
-                if (_buffer[1] == 0x2F)
+                if (Temp[1] == 0x2F)
                     break;
             }
             else
-            if (_buffer[0] >= 0x80 && _buffer[0] <= 0xEF)
+            if (Temp[0] >= 0x80 && Temp[0] <= 0xEF)
             {
                 unsigned bytes_read = 2;
 
-                switch (_buffer[0] & 0xF0)
+                switch (Temp[0] & 0xF0)
                 {
                     case 0xC0:
                     case 0xD0:
@@ -185,10 +184,10 @@ bool MIDIProcessor::ProcessHMP(std::vector<uint8_t> const & data, MIDIContainer 
                 if ((unsigned long) (TrackDataEnd - it) < bytes_read)
                     return false;
 
-                std::copy(it, it + (int) bytes_read, _buffer.begin() + 1);
+                std::copy(it, it + (int) bytes_read, Temp.begin() + 1);
                 it += bytes_read;
 
-                track.AddEvent(MIDIEvent(Timestamp, (MIDIEvent::EventType) ((_buffer[0] >> 4) - 8), (uint32_t) (_buffer[0] & 0x0F), &_buffer[1], bytes_read));
+                track.AddEvent(MIDIEvent(Timestamp, (MIDIEvent::EventType) ((Temp[0] >> 4) - 8), (uint32_t) (Temp[0] & 0x0F), &Temp[1], bytes_read));
             }
             else return false; /*throw exception_io_data( "Unexpected status code in HMP track" );*/
         }

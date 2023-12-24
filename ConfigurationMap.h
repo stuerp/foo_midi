@@ -1,12 +1,18 @@
 
-/** $VER: ConfigurationMap (2023.09.21) **/
+/** $VER: ConfigurationMap (2023.12.23) **/
 
 #pragma once
+
+#include <CppCoreCheck/Warnings.h>
+
+#pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/cfg_var.h>
 
 #include <map>
+
+using namespace cfg_var_modern;
 
 /// <summary>
 /// Implements a configuration variable for maps.
@@ -24,6 +30,9 @@ public:
     #pragma region("cfg_var_writer")
     virtual void get_data_raw(stream_writer * streamWriter, abort_callback & handleAbort)
     {
+        if (streamWriter == nullptr)
+            return;
+
         stream_writer_formatter<> out(*streamWriter, handleAbort);
 
         out.write_int(size());
@@ -45,34 +54,33 @@ public:
     #pragma region("cfg_var_reader")
     virtual void set_data_raw(stream_reader * streamReader, t_size, abort_callback & handleAbort)
     {
+        if (streamReader == nullptr)
+            return;
+
         stream_reader_formatter<> in(*streamReader, handleAbort);
 
         clear();
 
-        t_size count;
+        t_size Count;
 
-        in.read_int(count);
+        in.read_int(Count);
 
-        for (t_size i = 0; i < count; ++i)
+        for (t_size i = 0; i < Count; ++i)
         {
-            t_uint32 p_key;
+            t_uint32 Key;
 
-            std::vector<uint8_t> p_value;
+            in.read_int(Key);
 
-            in.read_int(p_key);
+            t_uint32 Size;
 
-            {
-                t_uint32 size;
+            in >> Size;
 
-                in >> size;
+            std::vector<uint8_t> Value(Size);
 
-                p_value.resize(size);
+            for (size_t j = 0; j < (size_t) Size; ++j)
+                in >> Value[j];
 
-                for (t_uint32 walk = 0; walk < size; ++walk)
-                    in >> p_value[walk];
-            }
-
-            operator[](p_key) = p_value;
+            operator[](Key) = Value;
         }
     }
     #pragma endregion

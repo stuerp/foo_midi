@@ -432,7 +432,7 @@ static int HandleClose(void * handle) noexcept
     }
 }
 
-fluid_sfloader_t * FSPlayer::GetSoundFontLoader(fluid_settings_t * settings)
+fluid_sfloader_t * FSPlayer::GetSoundFontLoader(fluid_settings_t * settings) const
 {
     fluid_sfloader_t * Loader = _FluidSynth.CreateSoundFontLoader(settings);
 

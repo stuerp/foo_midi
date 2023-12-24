@@ -316,7 +316,8 @@ const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
     { "LibOPNMIDI",     PlayerType::OPN,          IsPluginAlwaysPresent },
     { "OPL MIDI",       PlayerType::OPL,          IsPluginNeverPresent },
     { "Nuke",           PlayerType::Nuke,         IsPluginAlwaysPresent },
-    { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent }
+    { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent },
+    { "MCI",            PlayerType::MCI,          IsPluginNeverPresent }
 };
 
 #pragma region(preferences_page_instance)
@@ -753,13 +754,16 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         auto w = (CComboBox) GetDlgItem(IDC_PLAYER_TYPE);
 
         int SelectedIndex = -1;
+        int i = 0;
 
-        for (size_t i = 0; i < _InstalledPlayers.size(); ++i)
+        for (auto Player : _InstalledPlayers)
         {
-            w.AddString(pfc::wideFromUTF8(_InstalledPlayers[i].Name));
+            w.AddString(pfc::wideFromUTF8(Player.Name));
 
-            if (_InstalledPlayers[i].Type == PlayerType)
-                SelectedIndex = (int) i;
+            if (Player.Type == PlayerType)
+                SelectedIndex = i;
+
+            i++;
         }
 
         if ((PlayerType == PlayerType::VSTi) && (VSTiIndex != ~0))
@@ -1064,7 +1068,7 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
     if (Player.LoadVST(_VSTiPlugIns[VSTiIndex].PathName.c_str()))
     {
         if (_VSTiConfig.size() != 0)
-            Player.SetChunk(&_VSTiConfig[0], _VSTiConfig.size());
+            Player.SetChunk(_VSTiConfig.data(), _VSTiConfig.size());
 
         Player.DisplayEditorModal();
 
@@ -1247,7 +1251,7 @@ bool PreferencesRootPage::HasChanged()
                 if (_VSTiConfig.size() != CfgVSTiConfig[Id].size())
                     return true;
 
-                if ((_VSTiConfig.size() != 0) && (::memcmp(&_VSTiConfig[0], &CfgVSTiConfig[Id][0], _VSTiConfig.size()) != 0))
+                if ((_VSTiConfig.size() != 0) && (::memcmp(_VSTiConfig.data(), &CfgVSTiConfig[Id][0], _VSTiConfig.size()) != 0))
                     return true;
             }
         }

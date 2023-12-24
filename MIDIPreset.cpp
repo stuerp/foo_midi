@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.cpp (2023.09.27) **/
+/** $VER: MIDIPreset.cpp (2023.12.23) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -93,7 +93,7 @@ MIDIPreset::MIDIPreset() noexcept
         else
             _ADLEmulatorCore = ADLMIDI_EMU_DOSBOX;
 
-        _ADLBankFilePath = AdvCfgADLBankFilePath.get();
+        AdvCfgADLBankFilePath.get(_ADLBankFilePath);
     }
 
     {
@@ -151,8 +151,8 @@ void MIDIPreset::Serialize(pfc::string8 & text)
 
         text += "|";
 
-        for (size_t i = 0; i < _VSTiConfig.size(); ++i)
-            text += pfc::format_hex(_VSTiConfig[i], 2);
+        for (auto Byte : _VSTiConfig)
+            text += pfc::format_hex(Byte, 2);
     }
     else
     if (_PlayerType == PlayerType::FluidSynth || _PlayerType == PlayerType::BASSMIDI)

@@ -217,7 +217,7 @@ void SCPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
 #pragma region("Private")
 bool SCPlayer::LoadCore(const char * filePath)
 {
-    if (!filePath || !filePath[0])
+    if ((filePath == nullptr) || (filePath[0] == '\0'))
         return false;
 
     if (filePath != _PluginFilePath)

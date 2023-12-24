@@ -606,9 +606,9 @@ bool BMPlayer::Startup()
             return false;
     }
 
-    ::BASS_MIDI_StreamSetFonts(_Stream[0], &SoundFontConfigurations[0], (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
-    ::BASS_MIDI_StreamSetFonts(_Stream[1], &SoundFontConfigurations[0], (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
-    ::BASS_MIDI_StreamSetFonts(_Stream[2], &SoundFontConfigurations[0], (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
+    ::BASS_MIDI_StreamSetFonts(_Stream[0], SoundFontConfigurations.data(), (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
+    ::BASS_MIDI_StreamSetFonts(_Stream[1], SoundFontConfigurations.data(), (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
+    ::BASS_MIDI_StreamSetFonts(_Stream[2], SoundFontConfigurations.data(), (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
 
     ResetParameters();
 
@@ -639,8 +639,8 @@ void BMPlayer::Shutdown()
         _Stream[0] = 0;
     }
 
-    for (size_t i = 0; i < _SoundFonts.size(); ++i)
-        CacheRemoveSoundFont(_SoundFonts[i]);
+    for (auto SoundFont : _SoundFonts)
+        CacheRemoveSoundFont(SoundFont);
 
     _SoundFonts.resize(0);
 

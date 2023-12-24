@@ -52,7 +52,7 @@ The component supports 6 loop modes:
 To build the code you need:
 
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2023-05-10
+* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2023-09-23
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
 The following libraries are included in the code:
@@ -111,12 +111,14 @@ Open `foo_midi.sln` with Visual Studio and build the solution.
 
 To create the component first build the x86 configuration and next the x64 configuration.
 
-## Contributing
-
-If you'd like to contribute, please fork the repository and use a feature
-branch. Pull requests are warmly welcome.
-
 ## Change Log
+
+v2.9.2.0, 2023-12-24, *"Merry Christmas"*
+
+* New: Compatible with foo_vis_midi v0.1.0.
+* Bug Fix: Crash in Emu de MIDI because dynamic synthesis rate was not initialized in time.
+* Bug Fix: Loop type was not respected when converting to other audio formats.
+* Builds with foobar2000 SDK 2023-09-23.
 
 v2.9.1.3, 2023-11-02, *"Loop de loop"*
 
@@ -128,7 +130,7 @@ v2.9.1.3, 2023-11-02, *"Loop de loop"*
 * Improved: The decay time is now configurable. The default is still 1s (1000ms).
 * Improved: Looping, fading and decay has been tweaked.
 * Improved: The song duration is now always calculated without taking into account the selected loop mode. So it's the absolute length of the song without any looping or decay time.
-* Improved: Made the parsing the MIDI data more robust.
+* Improved: Made the parsing of the MIDI data more robust.
 * Improved: LDS file detection is more robust.
 * Bug Fix: FluidSynth did not respect the preferred sample rate.
 * Bug Fix: FluidSynth did not save two settings in a preset.

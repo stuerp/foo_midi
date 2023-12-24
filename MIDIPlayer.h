@@ -8,9 +8,7 @@
 #include <libmidi/MIDIContainer.h>
 #include "Configuration.h"
 
-#ifdef EXPERIMENT
 #include <API.h>
-#endif
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class MIDIPlayer
@@ -91,8 +89,6 @@ private:
 
     uint32_t _LoopBegin;    // Position of the start of a loop in the sample stream
 
-    #ifdef EXPERIMENT
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;
-    #endif
 };
 #pragma warning(default: 4820)

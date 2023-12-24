@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.11.02) **/
+/** $VER: InputDecoder.cpp (2023.12.23) **/
 
 #include <CppCoreCheck/Warnings.h>
 
@@ -39,7 +39,8 @@ const char * PlayerTypeNames[] =
     "LibOPNMIDI",
     "OPL",
     "Nuke",
-    "Secret Sauce"
+    "Secret Sauce",
+    "MCI",
 };
 
 #pragma region("input_impl")
@@ -65,18 +66,16 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             throw exception_io_unsupported_format();
     }
 
-    std::vector<uint8_t> Data;
+    std::vector<uint8_t> Object((size_t) _FileStats.m_size);
 
-    Data.resize((size_t) _FileStats.m_size);
-
-    file->read_object(&Data[0], (t_size) _FileStats.m_size, abortHandler);
+    file->read_object(Object.data(), (t_size) _FileStats.m_size, abortHandler);
 
     {
         _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
 
         if (_IsSysExFile)
         {
-            if (!MIDIProcessor::Process(Data, nullptr, _Container))
+            if (!MIDIProcessor::Process(Object, nullptr, _Container))
                 throw exception_io_data("Invalid SysEx dump");
 
             return;
@@ -84,7 +83,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     }
 
     {
-        if (!MIDIProcessor::Process(Data, pfc::string_extension(filePath), _Container))
+        if (!MIDIProcessor::Process(Object, pfc::string_extension(filePath), _Container))
         {
             pfc::string8 Message = "Invalid MIDI file: ";
 
@@ -154,15 +153,15 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
     // Calculate the hash of the MIDI file.
     {
-        Data.resize(0);
+        Object.resize(0);
 
-        _Container.SerializeAsSMF(Data);
+        _Container.SerializeAsSMF(Object);
 
         hasher_md5_state HasherState;
         static_api_ptr_t<hasher_md5> Hasher;
 
         Hasher->initialize(HasherState);
-        Hasher->process(HasherState, &Data[0], Data.size());
+        Hasher->process(HasherState, Object.data(), Object.size());
 
         _FileHash = Hasher->get_result(HasherState);
     }
@@ -314,33 +313,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
     _FadeRange.Clear();
 
-    if (!(flags & input_flag_no_looping))
+//  if (!(flags & input_flag_no_looping))
     {
-/*
-        if (_LoopType < PlayIndefinitelyWhenDetected)
-        {
-            if ((_LoopType > LoopAndFadeWhenDetected) || _LoopInTicks.IsSet())
-            {
-                uint32_t Begin =       (uint32_t) ::MulDiv((int)(_LoopInMs.Begin() + (_LoopInMs.Size() * _LoopCount)), (int) _SampleRate, 1000);
-                uint32_t End = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                        (int) _SampleRate, 1000);
-
-                _FadeRange.Set(Begin, End);
-                LoopMode = (MIDIPlayer::LoopMode) (MIDIPlayer::LoopMode::Enabled | MIDIPlayer::LoopMode::Forced);
-            }
-            else
-                _FadeRange.Set(_LengthInSamples, _LengthInSamples);
-        }
-        else
-        {
-            if ((_LoopType == PlayIndefinitely) || _LoopInTicks.IsSet())
-            {
-                _FadeRange.Clear();
-                LoopMode = (MIDIPlayer::LoopMode) (MIDIPlayer::LoopMode::Enabled | MIDIPlayer::LoopMode::Forced);
-            }
-            else
-                _FadeRange.Set(_LengthInSamples, _LengthInSamples);
-        }
-*/
         switch (_LoopType)
         {
             case LoopType::NeverLoop:
@@ -376,7 +350,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 break;
 
             case LoopType::PlayIndefinitely:
-//              _FadeRange.Set(_LengthInSamples, _LengthInSamples);
                 break;
         }
     }
@@ -434,8 +407,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 if (!Player->LoadVST(Preset._VSTiFilePath))
                     throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\"");
             
-                if (Preset._VSTiConfig.size())
-                    Player->SetChunk(&Preset._VSTiConfig[0], Preset._VSTiConfig.size());
+                if (Preset._VSTiConfig.size() != 0)
+                    Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
 
                 _Player = Player;
             }
@@ -772,6 +745,30 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
             break;
         }
+
+        // MCI
+        case PlayerType::MCI:
+        {
+            {
+                auto Player = new MCIPlayer;
+
+                _Player = Player;
+            }
+
+            {
+                _Player->SetSampleRate(_SampleRate);
+                _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
+
+                if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
+                {
+                    _IsEndOfContainer = false;
+
+                    return;
+                }
+            }
+            break;
+        }
+
     }
 
     throw exception_midi("No MIDI player specified");
@@ -1048,7 +1045,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 /// <summary>
 /// Set the tags for the specified file.
 /// </summary>
-void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler)
+void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const
 {
     if (_IsSysExFile)
         throw exception_io_data("You cannot tag SysEx dumps");

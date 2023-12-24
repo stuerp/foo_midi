@@ -30,6 +30,7 @@
     <ClCompile Include="KaraokeProcessor.cpp" />
     <ClCompile Include="SoundFontCache.cpp" />
     <ClCompile Include="FSPlayer.cpp" />
+    <ClCompile Include="MCIPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -172,6 +173,7 @@
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\version.h" />
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth.h" />
+    <ClInclude Include="MCIPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

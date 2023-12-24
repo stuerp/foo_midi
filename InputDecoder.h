@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.11.01) **/
+/** $VER: InputDecoder.h (2023.12.23) **/
 
 #pragma once
 
@@ -25,6 +25,7 @@
 #include "BMPlayer.h"
 #include "EdMPlayer.h"
 #include "FSPlayer.h"
+#include "MCIPlayer.h"
 #include "NukePlayer.h"
 #include <MT32Player/MT32Player.h>
 #include <OPNPlayer/OPNPlayer.h>
@@ -92,6 +93,7 @@ public:
     #ifdef DXISUPPORT
         dxiProxy = nullptr;
     #endif
+        _CurrentSampleRate = _SampleRate;
     }
 
     InputDecoder(const InputDecoder &) = delete;
@@ -186,19 +188,19 @@ public:
     #pragma endregion
 
     #pragma region("input_info_reader_v2")
-    t_filestats2 get_stats2(uint32_t, abort_callback &)
+    t_filestats2 get_stats2(uint32_t, abort_callback &) const
     {
         return _FileStats2;
     }
 
-    t_filestats get_file_stats(abort_callback &)
+    t_filestats get_file_stats(abort_callback &) const
     {
         return _FileStats;
     }
     #pragma endregion
 
     #pragma region("input_info_writer")
-    void retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler);
+    void retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const;
 
     void retag_commit(abort_callback &) { }
 

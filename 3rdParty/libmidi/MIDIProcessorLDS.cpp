@@ -358,7 +358,6 @@ bool MIDIProcessor::ProcessLDS(std::vector<uint8_t> const & data, MIDIContainer 
 //  uint8_t register_bd;
 
     uint16_t PatchCount;
-    std::vector<SoundPatch> Patches;
 
     auto it  = data.begin();
     auto end = data.end();
@@ -396,14 +395,15 @@ bool MIDIProcessor::ProcessLDS(std::vector<uint8_t> const & data, MIDIContainer 
 
     PatchCount = (uint16_t) (it[0] | (it[1] << 8));
 
-    if (!PatchCount)
+    if (PatchCount == 0)
         return false;
 
     it += 2;
-    Patches.resize(PatchCount);
 
     if (end - it < 46 * PatchCount)
         return false;
+
+    std::vector<SoundPatch> Patches(PatchCount);
 
     for (uint16_t i = 0; i < PatchCount; ++i)
     {
@@ -455,15 +455,14 @@ bool MIDIProcessor::ProcessLDS(std::vector<uint8_t> const & data, MIDIContainer 
     if (end - it < 2)
         return false;
 
-    std::vector<position_data> Positions;
-
     uint16_t PositionCount = (uint16_t) (it[0] | (it[1] << 8));
 
     if (PositionCount == 0)
         return false;
 
     it += 2;
-    Positions.resize((size_t) (9 * PositionCount));
+
+    std::vector<position_data> Positions((size_t) (9 * PositionCount));
 
     if (end - it < 3 * PositionCount)
         return false;
@@ -490,11 +489,9 @@ bool MIDIProcessor::ProcessLDS(std::vector<uint8_t> const & data, MIDIContainer 
 
     it += 2;
 
-    std::vector<uint16_t> Patterns;
-
     size_t PatternCount = (size_t) ((end - it) / 2);
 
-    Patterns.resize(PatternCount);
+    std::vector<uint16_t> Patterns(PatternCount);
 
     for (size_t i = 0; i < PatternCount; ++i)
     {
@@ -506,13 +503,8 @@ bool MIDIProcessor::ProcessLDS(std::vector<uint8_t> const & data, MIDIContainer 
     uint16_t posplay, jumppos;
     uint32_t mainvolume;
 
-    std::vector<channel_state> Channel;
-
-    Channel.resize(9);
-
-    std::vector<unsigned> PositionTimestamps;
-
-    PositionTimestamps.resize(PositionCount, ~0u);
+    std::vector<channel_state> Channel(9);
+    std::vector<unsigned> PositionTimestamps(PositionCount, ~0u);
 
     uint8_t current_instrument[9] = { 0 };
 
