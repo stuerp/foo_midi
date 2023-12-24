@@ -151,8 +151,8 @@ void MIDIPreset::Serialize(pfc::string8 & text)
 
         text += "|";
 
-        for (size_t i = 0; i < _VSTiConfig.size(); ++i)
-            text += pfc::format_hex(_VSTiConfig[i], 2);
+        for (auto Byte : _VSTiConfig)
+            text += pfc::format_hex(Byte, 2);
     }
     else
     if (_PlayerType == PlayerType::FluidSynth || _PlayerType == PlayerType::BASSMIDI)

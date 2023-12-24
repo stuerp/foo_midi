@@ -61,7 +61,7 @@ void MIDISysExDumps::Deserialize(const char * text, const char * filePath) noexc
 /// </summary>
 void MIDISysExDumps::Merge(MIDIContainer & container, abort_callback & abortHandler)
 {
-    std::vector<uint8_t> Data;
+    std::vector<uint8_t> Object;
 
     for (size_t i = 0; i < Items.get_count(); ++i)
     {
@@ -73,14 +73,14 @@ void MIDISysExDumps::Merge(MIDIContainer & container, abort_callback & abortHand
 
             const t_filesize FileSize = File->get_size_ex(abortHandler);
 
-            Data.resize((size_t) FileSize);
+            Object.resize((size_t) FileSize);
 
-            File->read_object(&Data[0], (t_size) FileSize, abortHandler);
+            File->read_object(Object.data(), (t_size) FileSize, abortHandler);
 
             {
                 MIDIContainer Container;
 
-                if (!MIDIProcessor::Process(Data, nullptr, Container))
+                if (!MIDIProcessor::Process(Object, nullptr, Container))
                     break;
 
                 container.MergeTracks(Container);

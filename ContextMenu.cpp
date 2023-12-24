@@ -91,7 +91,7 @@ void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const
     {
         case 0: 
         {
-            std::vector<uint8_t> Data;
+            std::vector<uint8_t> Object;
             abort_callback_dummy AbortHandler;
 
             for (size_t i = 0, ItemCount = itemList.get_count(); i < ItemCount; ++i)
@@ -109,22 +109,22 @@ void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const
 
                     t_filesize FileSize = File->get_size_ex(AbortHandler);
 
-                    Data.resize((size_t) FileSize);
+                    Object.resize((size_t) FileSize);
 
-                    File->read_object(&Data[0], (t_size)FileSize, AbortHandler);
+                    File->read_object(Object.data(), (t_size) FileSize, AbortHandler);
 
                     {
                         MIDIContainer Container;
 
-                        if (MIDIProcessor::Process(Data, pfc::string_extension(Location.get_path()), Container))
+                        if (MIDIProcessor::Process(Object, pfc::string_extension(Location.get_path()), Container))
                         {
-                            Data.resize(0);
+                            Object.resize(0);
 
-                            Container.SerializeAsSMF(Data);
+                            Container.SerializeAsSMF(Object);
 
                             filesystem::g_open(File, FilePath, filesystem::open_mode_write_new, AbortHandler);
 
-                            File->write_object(&Data[0], Data.size(), AbortHandler);
+                            File->write_object(Object.data(), Object.size(), AbortHandler);
                         }
                     }
                 }

@@ -66,16 +66,16 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             throw exception_io_unsupported_format();
     }
 
-    std::vector<uint8_t> Data((size_t) _FileStats.m_size);
+    std::vector<uint8_t> Object((size_t) _FileStats.m_size);
 
-    file->read_object(&Data[0], (t_size) _FileStats.m_size, abortHandler);
+    file->read_object(Object.data(), (t_size) _FileStats.m_size, abortHandler);
 
     {
         _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
 
         if (_IsSysExFile)
         {
-            if (!MIDIProcessor::Process(Data, nullptr, _Container))
+            if (!MIDIProcessor::Process(Object, nullptr, _Container))
                 throw exception_io_data("Invalid SysEx dump");
 
             return;
@@ -83,7 +83,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     }
 
     {
-        if (!MIDIProcessor::Process(Data, pfc::string_extension(filePath), _Container))
+        if (!MIDIProcessor::Process(Object, pfc::string_extension(filePath), _Container))
         {
             pfc::string8 Message = "Invalid MIDI file: ";
 
@@ -153,15 +153,15 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
     // Calculate the hash of the MIDI file.
     {
-        Data.resize(0);
+        Object.resize(0);
 
-        _Container.SerializeAsSMF(Data);
+        _Container.SerializeAsSMF(Object);
 
         hasher_md5_state HasherState;
         static_api_ptr_t<hasher_md5> Hasher;
 
         Hasher->initialize(HasherState);
-        Hasher->process(HasherState, &Data[0], Data.size());
+        Hasher->process(HasherState, Object.data(), Object.size());
 
         _FileHash = Hasher->get_result(HasherState);
     }
@@ -407,8 +407,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 if (!Player->LoadVST(Preset._VSTiFilePath))
                     throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\"");
             
-                if (Preset._VSTiConfig.size())
-                    Player->SetChunk(&Preset._VSTiConfig[0], Preset._VSTiConfig.size());
+                if (Preset._VSTiConfig.size() != 0)
+                    Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
 
                 _Player = Player;
             }
