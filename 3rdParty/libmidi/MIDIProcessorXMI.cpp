@@ -316,9 +316,7 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
             uint32_t CurrentTimestamp = 0;
             uint32_t LastEventTimestamp = 0;
 
-            std::vector<uint8_t> Buffer;
-
-            Buffer.resize(3);
+            std::vector<uint8_t> Temp(3);
 
             auto it = Data.begin(), end = Data.end();
 
@@ -334,18 +332,18 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
                 if (it == end)
                     return SetLastErrorCode(MIDIError::InsufficientData);
 
-                Buffer[0] = *it++;
+                Temp[0] = *it++;
 
-                if (Buffer[0] == StatusCodes::MetaData)
+                if (Temp[0] == StatusCodes::MetaData)
                 {
                     if (it == end)
                         return SetLastErrorCode(MIDIError::InsufficientData);
 
-                    Buffer[1] = *it++;
+                    Temp[1] = *it++;
 
                     long Size = 0;
 
-                    if (Buffer[1] == MetaDataTypes::EndOfTrack)
+                    if (Temp[1] == MetaDataTypes::EndOfTrack)
                     {
                         if (LastEventTimestamp > CurrentTimestamp)
                             CurrentTimestamp = LastEventTimestamp;
@@ -360,33 +358,33 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
                         if (end - it < Size)
                             return SetLastErrorCode(MIDIError::InsufficientData);
 
-                        Buffer.resize((size_t) (Size + 2));
-                        std::copy(it, it + Size, Buffer.begin() + 2);
+                        Temp.resize((size_t) (Size + 2));
+                        std::copy(it, it + Size, Temp.begin() + 2);
                         it += Size;
 
-                        if ((Buffer[1] == MetaDataTypes::SetTempo) && (Size == 3))
+                        if ((Temp[1] == MetaDataTypes::SetTempo) && (Size == 3))
                         {
-                            uint32_t Tempo = (uint32_t) (Buffer[2] * 0x10000 + Buffer[3] * 0x100 + Buffer[4]);
+                            uint32_t Tempo = (uint32_t) (Temp[2] * 0x10000 + Temp[3] * 0x100 + Temp[4]);
                             uint32_t PpQN = (Tempo * 3) / 25000;
 
                             Tempo = Tempo * 60 / PpQN;
 
-                            Buffer[2] = (uint8_t) (Tempo / 0x10000);
-                            Buffer[3] = (uint8_t) (Tempo /   0x100);
-                            Buffer[4] = (uint8_t) (Tempo);
+                            Temp[2] = (uint8_t) (Tempo / 0x10000);
+                            Temp[3] = (uint8_t) (Tempo /   0x100);
+                            Temp[4] = (uint8_t) (Tempo);
 
                             if (CurrentTimestamp == 0)
                                 IsTempoSet = true;
                         }
                     }
 
-                    Track.AddEvent(MIDIEvent(CurrentTimestamp, MIDIEvent::Extended, 0, &Buffer[0], (size_t) (Size + 2)));
+                    Track.AddEvent(MIDIEvent(CurrentTimestamp, MIDIEvent::Extended, 0, &Temp[0], (size_t) (Size + 2)));
 
-                    if (Buffer[1] == MetaDataTypes::EndOfTrack)
+                    if (Temp[1] == MetaDataTypes::EndOfTrack)
                         break;
                 }
                 else
-                if (Buffer[0] == StatusCodes::SysEx)
+                if (Temp[0] == StatusCodes::SysEx)
                 {
                     long Size = DecodeVariableLengthQuantity(it, end);
 
@@ -396,40 +394,40 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
                     if (end - it < Size)
                         return SetLastErrorCode(MIDIError::InsufficientData);
 
-                    Buffer.resize((size_t) (Size + 1));
-                    std::copy(it, it + Size, Buffer.begin() + 1);
+                    Temp.resize((size_t) (Size + 1));
+                    std::copy(it, it + Size, Temp.begin() + 1);
                     it += Size;
 
-                    Track.AddEvent(MIDIEvent(CurrentTimestamp, MIDIEvent::Extended, 0, &Buffer[0], (size_t) (Size + 1)));
+                    Track.AddEvent(MIDIEvent(CurrentTimestamp, MIDIEvent::Extended, 0, &Temp[0], (size_t) (Size + 1)));
                 }
                 else
-                if (Buffer[0] >= StatusCodes::NoteOff && Buffer[0] <= StatusCodes::ActiveSensing)
+                if (Temp[0] >= StatusCodes::NoteOff && Temp[0] <= StatusCodes::ActiveSensing)
                 {
                     if (it == end)
                         return SetLastErrorCode(MIDIError::InsufficientData);
 
-                    Buffer.resize(3);
+                    Temp.resize(3);
 
-                    Buffer[1] = *it++;
+                    Temp[1] = *it++;
                     uint32_t BytesRead = 1;
 
-                    MIDIEvent::EventType Type = (MIDIEvent::EventType) ((Buffer[0] >> 4) - 8);
-                    uint32_t Channel = (uint32_t) (Buffer[0] & 0x0F);
+                    MIDIEvent::EventType Type = (MIDIEvent::EventType) ((Temp[0] >> 4) - 8);
+                    uint32_t Channel = (uint32_t) (Temp[0] & 0x0F);
 
                     if ((Type != MIDIEvent::ProgramChange) && (Type != MIDIEvent::ChannelAftertouch))
                     {
                         if (it == end)
                             return SetLastErrorCode(MIDIError::InsufficientData);
 
-                        Buffer[2] = *it++;
+                        Temp[2] = *it++;
                         BytesRead = 2;
                     }
 
-                    Track.AddEvent(MIDIEvent(CurrentTimestamp, Type, Channel, &Buffer[1], BytesRead));
+                    Track.AddEvent(MIDIEvent(CurrentTimestamp, Type, Channel, &Temp[1], BytesRead));
 
                     if (Type == MIDIEvent::NoteOn)
                     {
-                        Buffer[2] = 0x00;
+                        Temp[2] = 0x00;
 
                         int Length = DecodeVariableLengthQuantity(it, end);
 
@@ -441,7 +439,7 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
                         if (Timestamp > LastEventTimestamp)
                             LastEventTimestamp = Timestamp;
 
-                        Track.AddEvent(MIDIEvent(Timestamp, Type, Channel, &Buffer[1], BytesRead));
+                        Track.AddEvent(MIDIEvent(Timestamp, Type, Channel, &Temp[1], BytesRead));
                     }
                 }
                 else

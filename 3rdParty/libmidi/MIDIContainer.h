@@ -1,9 +1,10 @@
 
-/** $VER: MIDIContainer.h (2023.10.31) **/
+/** $VER: MIDIContainer.h (2023.12.24) **/
 
 #pragma once
 
 #pragma warning(disable: 4514) // Unreferenced inline function has been removed
+#pragma warning(disable: 4820) // Padding added after data member
 #pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 
 #include <stdint.h>
@@ -76,14 +77,8 @@ enum MetaDataTypes
     SequencerSpecific = 0x7F    // An unprocessed sequencer specific message containing raw data.
 };
 
-#pragma warning(disable: 4820) // Padding added after data member
 struct MIDIEvent
 {
-    enum
-    {
-        MaxStaticData = 16
-    };
-
     enum EventType
     {
         NoteOff = 0,
@@ -99,28 +94,12 @@ struct MIDIEvent
     uint32_t Timestamp;
     EventType Type;
     uint32_t ChannelNumber;
+    std::vector<uint8_t> Data;
 
-    size_t DataSize;
-    uint8_t Data[MaxStaticData];
-
-    std::vector<uint8_t> ExtendedData;
-
-    MIDIEvent() noexcept : Timestamp(0), Type(EventType::NoteOff), ChannelNumber(0), DataSize(0)
-    {
-        Data[0] = 0;
-    }
-
+    MIDIEvent() noexcept : Timestamp(0), Type(EventType::NoteOff), ChannelNumber(0) { }
     MIDIEvent(const MIDIEvent & midiEvent);
     MIDIEvent(uint32_t timestamp, EventType eventType, uint32_t channel, const uint8_t * data, size_t size);
-
-    size_t GetDataSize() const noexcept
-    {
-        return DataSize + ExtendedData.size();
-    }
-
-    void GetData(uint8_t * data, size_t offset, size_t length) const;
 };
-#pragma warning(default: 4820) // Padding added after data member
 
 class MIDITrack
 {
@@ -131,6 +110,7 @@ public:
     {
         _Events = track._Events;
     }
+
     MIDITrack & operator=(const MIDITrack & track)
     {
         _Events = track._Events;
@@ -146,12 +126,12 @@ public:
         return _Events.size();
     }
 
-    const MIDIEvent & operator [] (size_t index) const noexcept
+    const MIDIEvent & operator[](size_t index) const noexcept
     {
         return _Events[index];
     }
 
-    MIDIEvent & operator [] (std::size_t index) noexcept
+    MIDIEvent & operator[](std::size_t index) noexcept
     {
         return _Events[index];
     }
@@ -182,12 +162,12 @@ public:
         return _Items.size();
     }
 
-    const TempoItem & operator [] (std::size_t p_index) const
+    const TempoItem & operator[](std::size_t p_index) const
     {
         return _Items[p_index];
     }
 
-    TempoItem & operator [] (size_t index)
+    TempoItem & operator[](size_t index)
     {
         return _Items[index];
     }
@@ -196,7 +176,6 @@ private:
     std::vector<TempoItem> _Items;
 };
 
-#pragma warning(disable: 4820)
 struct SysExItem
 {
     size_t Offset;
@@ -207,7 +186,6 @@ struct SysExItem
     SysExItem(const SysExItem & src);
     SysExItem(uint8_t portNumber, std::size_t offset, std::size_t size);
 };
-#pragma warning(default: 4820)
 
 class SysExTable
 {
@@ -237,7 +215,6 @@ struct MIDIStreamEvent
     MIDIStreamEvent(uint32_t timestamp, uint32_t data);
 };
 
-#pragma warning(disable: 4820) // Padding added after data member
 struct MIDIMetaDataItem
 {
     uint32_t Timestamp;
@@ -275,7 +252,6 @@ struct MIDIMetaDataItem
         Value = value;
     }
 };
-#pragma warning(default: 4820) // Padding added after data member
 
 class MIDIMetaData
 {
@@ -283,25 +259,19 @@ public:
     MIDIMetaData() noexcept { }
 
     void AddItem(const MIDIMetaDataItem & item);
-
     void Append(const MIDIMetaData & data);
-
     bool GetItem(const char * name, MIDIMetaDataItem & item) const;
-
-    bool GetBitmap(std::vector<uint8_t> & bitmap);
-
+    bool GetBitmap(std::vector<uint8_t> & bitmap) const;
     void AssignBitmap(std::vector<uint8_t>::const_iterator const & begin, std::vector<uint8_t>::const_iterator const & end);
-
     std::size_t GetCount() const;
 
-    const MIDIMetaDataItem & operator [] (size_t index) const;
+    const MIDIMetaDataItem & operator[](size_t index) const;
 
 private:
     std::vector<MIDIMetaDataItem> _Items;
     std::vector<uint8_t> _Bitmap;
 };
 
-#pragma warning(disable: 4820)
 class MIDIContainer
 {
 public:
@@ -426,4 +396,3 @@ private:
 
     std::vector<Range> _Loop;
 };
-#pragma warning(default: 4820)
