@@ -58,9 +58,9 @@ To build the code you need:
 The following libraries are included in the code:
 
 * [BASS](https://www.un4seen.com/) 2.4.17
-  * [BASSFLAC](https://www.un4seen.com/) 2.4.5.4
+  * [BASSFLAC](https://www.un4seen.com/) 2.4.5.5
   * [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
-  * [BASSWV](https://www.un4seen.com/) 2.4.7.3
+  * [BASSWV](https://www.un4seen.com/) 2.4.7.4
   * [BASSOPUS](https://www.un4seen.com/) 2.4.2.4
   * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 * [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
@@ -115,8 +115,10 @@ To create the component first build the x86 configuration and next the x64 confi
 
 v2.10.0.0, 2024-05-xx,
 
-* New: The volume of BASS MIDI can be tweaked independantly of the overall volume. Defaults to 0.15, determined experimentally to align with the other players.
+* New: The volume of BASS MIDI can be tweaked independently of the overall volume. Defaults to 0.15, determined experimentally to align with the other players.
 * Improved: Added detection of EUC-JP encoded meta data.
+* Improved: Added Shift-JIS and EUC-JP detection and conversion for lyrics.
+* Fixed: Mixed ANSI and Shift-JIS wasn't detected (anymore?).
 * Fixed: The BASS MIDI voice count was not initialized correctly when using a preset.
 * Fixed: Emu de MIDI sysex recognition.
 * Fixed: Emu de MIDI potential buffer overflow during rendering.

@@ -1390,7 +1390,7 @@ static bool IsValidEUCJP(const char * data, size_t size)
 {
     while (size != 0)
     {
-        uint8_t d1 = *data++;
+        uint8_t d1 = (uint8_t) *data++;
         size--;
 
         if (d1 > 0x80)
@@ -1398,7 +1398,7 @@ static bool IsValidEUCJP(const char * data, size_t size)
             if (size == 0)
                 return true;
 
-            uint8_t d2 = *data++;
+            uint8_t d2 = (uint8_t) *data++;
             size--;
 
             if (!((d1 >= 0xA1 && d1 <= 0xAD) || (d1 >= 0xB0 && d1 <= 0xFE)))
@@ -1421,7 +1421,7 @@ static bool IsValidShiftJIS(const char * data, size_t size)
 {
     while (size != 0)
     {
-        uint8_t d1 = *data++;
+        uint8_t d1 = (uint8_t) *data++;
         size--;
 
         if (d1 > 0x80)
@@ -1429,7 +1429,7 @@ static bool IsValidShiftJIS(const char * data, size_t size)
             if (size == 0)
                 return false;
 
-            uint8_t d2 = *data++;
+            uint8_t d2 = (uint8_t) *data++;
             size--;
 
             if (!((d1 >= 0x81 && d1 <= 0x84) || (d1 >= 0x87 && d1 <= 0x9F) || (d1 >= 0xE0 && d1 <= 0xEF)))

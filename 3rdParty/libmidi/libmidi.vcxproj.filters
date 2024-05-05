@@ -12,6 +12,7 @@
     <ClCompile Include="MIDIProcessorRIFF.cpp" />
     <ClCompile Include="MIDIProcessorSMF.cpp" />
     <ClCompile Include="MIDIProcessorXMI.cpp" />
+    <ClCompile Include="MIDIProcessorRCP.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MIDIContainer.h" />

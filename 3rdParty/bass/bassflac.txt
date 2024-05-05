@@ -1,5 +1,5 @@
 BASSFLAC 2.4
-Copyright (c) 2004-2023 Un4seen Developments Ltd. All rights reserved.
+Copyright (c) 2004-2024 Un4seen Developments Ltd. All rights reserved.
 
 Files that you should have found in the BASSFLAC package
 ========================================================
@@ -114,6 +114,11 @@ History
 These are the major (and not so major) changes in each release, along with the
 functions/options that are introduced/affected by them. There are other little
 tweaks and fixes made along the way too.
+
+2.4.5.5 - 3/5/2024
+------------------
+* Fix for possible stalling with asynchronous file reading
+	BASS_ASYNCFILE (BASS_FLAC_StreamCreateFile/User flag)
 
 2.4.5.4 - 12/10/2023
 --------------------
