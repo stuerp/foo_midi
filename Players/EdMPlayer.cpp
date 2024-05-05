@@ -21,7 +21,7 @@ EdMPlayer::EdMPlayer() : MIDIPlayer()
 
     _SynthMode = ModeGM;
 
-    _Buffer = new int32_t[_BufferSize * sizeof(audio_sample) * _ChannelCount];
+    _Buffer = new int32_t[MaxSamples * ChannelCount];
 }
 
 EdMPlayer::~EdMPlayer()
@@ -66,28 +66,31 @@ void EdMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     while (sampleCount != 0)
     {
-        uint32_t ToDo = std::max(sampleCount, _BufferSize);
+        const size_t ToDo = std::min(sampleCount, MaxSamples);
+        const size_t SampleCount = ToDo * ChannelCount;
 
-        ::memset(_Buffer, 0, (size_t) ToDo * sizeof(audio_sample) * _ChannelCount);
+        ::memset(_Buffer, 0, SampleCount * sizeof(_Buffer[0]));
 
-        for (size_t i = 0; i < 8; ++i)
+        for (auto & m : _Module)
         {
-            for (size_t j = 0; j < ToDo; j += _ChannelCount)
+            int32_t * Src = _Buffer;
+
+            for (size_t i = 0; i < ToDo; ++i)
             {
-                int32_t Channel[2];
+                int32_t Channel[ChannelCount];
 
-                _Module[i].Render(Channel);
+                m.Render(Channel);
 
-                _Buffer[j]     += Channel[0];
-                _Buffer[j + 1] += Channel[1];
+                *Src++ += Channel[0];
+                *Src++ += Channel[1];
             }
         }
 
         // Convert the format of the rendered output.
-        audio_math::convert_from_int32((const t_int32 *) _Buffer, ((t_size) ToDo * _ChannelCount), sampleData, 1 << 16);
+        audio_math::convert_from_int32(_Buffer, SampleCount, sampleData, 1 << 16);
 
-        sampleData  += (ToDo * _ChannelCount);
-        sampleCount -= ToDo;
+        sampleData  += SampleCount;
+        sampleCount -= (uint32_t) ToDo;
     }
 }
 

@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2023.08.19) **/
+/** $VER: BMPlayer.cpp (2024.05.05) **/
 
 #include "framework.h"
 
@@ -586,6 +586,10 @@ bool BMPlayer::Startup()
     ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
     ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
 
+    ::BASS_ChannelSetAttribute(_Stream[0], BASS_ATTRIB_VOLDSP, (float) .5f);
+    ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_VOLDSP, (float) .5f);
+    ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_VOLDSP, (float) .5f);
+
     SetVoiceCount(_VoiceCount);
 
     ::memset(_BankLSBOverride, 0, sizeof(_BankLSBOverride));
@@ -697,28 +701,23 @@ void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
 
 void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
-    float Data[512 * 2];
-
     while (sampleCount != 0)
     {
-        uint32_t ToDo = sampleCount;
+        size_t ToDo = std::min(sampleCount, MaxSamples);
 
-        if (ToDo > 512)
-            ToDo = 512;
-
-        ::memset(sampleData, 0, (size_t) (ToDo * 2) * sizeof(audio_sample));
+        ::memset(sampleData, 0, (size_t) ToDo * ChannelCount * sizeof(audio_sample));
 
         for (size_t i = 0; i < _countof(_Stream); ++i)
         {
-            ::BASS_ChannelGetData(_Stream[i], Data, BASS_DATA_FLOAT | (DWORD) ((size_t) (ToDo * 2) * sizeof(float)));
+            ::BASS_ChannelGetData(_Stream[i], _Buffer, BASS_DATA_FLOAT | (DWORD) (ToDo * ChannelCount * sizeof(float)));
 
             // Convert the format of the rendered output.
-            for (unsigned long j = 0; j < (ToDo * 2); ++j)
-                sampleData[j] += Data[j];
+            for (size_t j = 0; j < ToDo * ChannelCount; ++j)
+                sampleData[j] += _Buffer[j];
         }
 
-        sampleData += (ToDo * 2);
-        sampleCount -= ToDo;
+        sampleData  += (ToDo * ChannelCount);
+        sampleCount -= (uint32_t) ToDo;
     }
 }
 
@@ -819,7 +818,7 @@ void BMPlayer::ResetParameters()
 {
     _IsBankLSBOverridden = false;
 
-    for (size_t i = 0; i < 48; ++i)
+    for (size_t i = 0; i < _countof(_BankLSBOverride); ++i)
     {
         if (_BankLSBOverride[i] != 0)
             _IsBankLSBOverridden = true;

@@ -33,8 +33,8 @@ private:
     void SetDrumChannel(int channel, int enable);
 
 private:
-    const uint32_t _BufferSize = 256;
-    const uint32_t _ChannelCount = 2;
+    static const uint32_t MaxSamples = 256;
+    static const uint32_t ChannelCount = 2;
 
     int32_t * _Buffer;
 

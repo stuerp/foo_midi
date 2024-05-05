@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2023.08.19) **/
+/** $VER: BMPlayer.h (2024.05.05) **/
 
 #pragma once
 
@@ -52,6 +52,11 @@ private:
     void CompoundPresets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels);
 
 private:
+    static const uint32_t MaxSamples = 512;
+    static const uint32_t ChannelCount = 2;
+
+    float _Buffer[MaxSamples * ChannelCount];
+
     std::string _ErrorMessage;
 
     std::vector<HSOUNDFONT> _SoundFonts;
