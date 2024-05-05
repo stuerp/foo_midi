@@ -113,6 +113,12 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
+v2.9.3.0, 2024-05-xx,
+
+* Bug Fix: The BASS MIDI voice count was not initialized correctly when using a preset.
+* Bug Fix: Emu de MIDI sysex recognition.
+* Bug Fix: Emu de MIDI potential buffer overflow during rendering.
+
 v2.9.2.0, 2023-12-24, *"Merry Christmas"*
 
 * New: Compatible with foo_vis_midi v0.1.0.

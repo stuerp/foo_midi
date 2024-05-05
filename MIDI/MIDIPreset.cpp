@@ -58,6 +58,8 @@ MIDIPreset::MIDIPreset() noexcept
         _EffectsEnabled = (bool) AdvCfgBASSMIDIEffectsEnabled;
         _VoiceCount = (uint32_t) AdvCfgBASSMIDIVoices;
     }
+    else
+        _VoiceCount = 256;
 
     {
         _MuntGMSet = (uint32_t) CfgMuntGMSet;

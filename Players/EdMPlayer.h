@@ -1,5 +1,5 @@
 
-/** $VER: EdMPlayer.h (2023.08.19) **/
+/** $VER: EdMPlayer.h (2024.05.05) **/
 
 #pragma once
 
@@ -33,6 +33,11 @@ private:
     void SetDrumChannel(int channel, int enable);
 
 private:
+    const uint32_t _BufferSize = 256;
+    const uint32_t _ChannelCount = 2;
+
+    int32_t * _Buffer;
+
     dsa::CMIDIModule _Module[8];
 
     enum
