@@ -15,12 +15,10 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Requirements
 
-* Tested on Microsoft Windows 10 and later.
 * [foobar2000](https://www.foobar2000.org/download) v1.6.16 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)
+* Tested on Microsoft Windows 10 and later.
 
 ## Getting started
-
-### Installation
 
 * Double-click `foo_midi.fbk2-component`.
 
@@ -48,6 +46,8 @@ The component supports 6 loop modes:
   * The song will be played and loop until stopped.
 
 ## Developing
+
+### Requirements
 
 To build the code you need:
 

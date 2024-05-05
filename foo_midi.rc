@@ -8,7 +8,7 @@
 language LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
-#include "PreferencesRootLayout.h"
+#include "Infrastructure\PreferencesRootLayout.h"
 
 IDD_PREFERENCES_ROOT dialogex 0, 0, 0, 0
 style DS_SETFONT | WS_CHILD
@@ -79,7 +79,7 @@ font 8, "Segoe UI", 400, 0, 1
         control     "Enable soft panning",  IDC_ADL_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A95, Y_A95, W_A95, H_A95
 }
 
-#include "PreferencesPathsLayout.h"
+#include "Infrastructure\PreferencesPathsLayout.h"
 
 IDD_PREFERENCES_PATHS dialogex 0, 0, 0, 0
 style DS_SETFONT | WS_CHILD
