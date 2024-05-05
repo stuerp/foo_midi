@@ -1,4 +1,4 @@
- 
+﻿ 
 /** $VER: InputDecoder.cpp (2024.05.05) **/
 
 #include "framework.h"
@@ -1360,68 +1360,87 @@ static bool IsValidShiftJISOld(const char * data, size_t size)
     return true;
 }
 */
+
+#ifdef _DEBUG
+// Test cases
+const uint8_t Data1[] =
+{
+    0x46, 0x69, 0x6e, 0x61, 0x6c, 0x20, 0x46, 0x61, 0x6e, 0x74, 0x61, 0x73, 0x79, 0x20, 0x35, 0x20, 0x5b, 0x20, 0x83, 0x72, 0x83, 0x62, 0x83, 0x4f,
+    0x83, 0x75, 0x83, 0x8a, 0x83, 0x62, 0x83, 0x61, 0x82, 0xcc, 0x8e, 0x80, 0x93, 0xac, 0x20, 0x81, 0x66, 0x82, 0x58, 0x82, 0x58, 0x20, 0x2d, 0x73,
+    0x69, 0x6e, 0x67, 0x6c, 0x65, 0x20, 0x65, 0x64, 0x69, 0x74, 0x2d, 0x20, 0x5d, 0x20, 0x66, 0x6f, 0x72, 0x20, 0x53, 0x43, 0x2d, 0x38, 0x38, 0x50,
+    0x72, 0x6f, 0x20, 0x32, 0x50, 0x6f, 0x72, 0x74, 0x20, 0x76, 0x65, 0x72, 0x37, 0x2e, 0x30, 0x20, 0x62, 0x79, 0x20, 0x4c, 0x69, 0x78, 0x00
+};
+const WCHAR * Text1 = L"Final Fantasy 5 [ ビッグブリッヂの死闘 ’９９ -single edit- ] for SC-88Pro 2Port ver7.0 by Lix";
+
+struct Test
+{
+    const uint8_t * Data;
+    const WCHAR * Text;
+} Tests[] =
+{
+    { Data1, Text1 },   // Mixed ASCII and Shift-JIS
+};
+#endif
+
+/// <summary>
+/// Is the data a EUC-JP string?
+/// http://www.rikai.com/library/kanjitables/kanji_codes.euc.shtml
+/// </summary>
+static bool IsValidEUCJP(const char * data, size_t size)
+{
+    while (size != 0)
+    {
+        uint8_t d1 = *data++;
+        size--;
+
+        if (d1 > 0x80)
+        {
+            if (size == 0)
+                return true;
+
+            uint8_t d2 = *data++;
+            size--;
+
+            if (!((d1 >= 0xA1 && d1 <= 0xAD) || (d1 >= 0xB0 && d1 <= 0xFE)))
+                return false;
+
+            if (!(d2 >= 0xA0 && d1 <= 0xFF))
+                return false;
+        }
+    }
+
+    return true;
+}
+
 /// <summary>
 /// Is the data a Shift-JIS string?
 /// char ShiftJIS[] = { 0x82, 0xA0, 0x82, 0xA2, 0x82, 0xA4 }; / char UTF8[] = { 0xE3, 0x81, 0x82, 0xE3, 0x81, 0x84, 0xE3, 0x81, 0x86 };
+/// http://www.rikai.com/library/kanjitables/kanji_codes.sjis.shtml
 /// </summary>
-static bool IsValidShiftJIS(const char * data)
+static bool IsValidShiftJIS(const char * data, size_t size)
 {
-    bool Result = false;
-
-    uint8_t d1 = (uint8_t) data[0];
-    uint8_t d2 = (uint8_t) data[1];
-
-    int j1 = 0;
-    int j2 = 0;
-
-    // Check if the first byte is valid Shift-JIS.
-    if ((d1 >= 0x81 && d1 <= 0x84) || (d1 >= 0x87 && d1 <= 0x9F))
+    while (size != 0)
     {
-        j1 = 2 * (d1 - 0x70) - 1;
+        uint8_t d1 = *data++;
+        size--;
 
-        if (d2 >= 0x40 && d2 <= 0x9E)
+        if (d1 > 0x80)
         {
-            j2 = d2 - 31;
+            if (size == 0)
+                return false;
 
-            if (j2 > 95)
-                j2 -= 1;
+            uint8_t d2 = *data++;
+            size--;
 
-            Result = true;
-        }
-        else
-        if (d2 >= 0x9F && d2 <= 0xFC)
-        {
-            j2 = d2 - 126;
-            j1 += 1;
+            if (!((d1 >= 0x81 && d1 <= 0x84) || (d1 >= 0x87 && d1 <= 0x9F) || (d1 >= 0xE0 && d1 <= 0xEF)))
+                return false;
 
-            Result = true;
-        }
-    }
-    else
-    if (d1 >= 0xE0 && d1 <= 0xEF)
-    {
-        j1 = 2 * (d1 - 0xB0) - 1;
-
-        if (d2 >= 0x40 && d2 <= 0x9E)
-        {
-            j2 = d2 - 31;
-
-            if (j2 > 95)
-                j2 -= 1;
-
-            Result = true;
-        }
-        else
-        if (d2 >= 0x9F && d2 <= 0xFC)
-        {
-            j2 = d2 - 126;
-            j1 += 1;
-
-            Result = true;
+            if (!((d2 >= 0x40 && d2 <= 0x9E) || (d2 >= 0x9F && d2 <= 0xFC)))
+                return false;
         }
     }
 
-    return Result;
+    return true;
 }
 
 /// <summary>
@@ -1435,23 +1454,41 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
     if (value[0] == '\0')
         return;
 
-    pfc::string8 NewValue;
+    pfc::string8 Value;
 
     if ((maxLength != 0) && value[maxLength - 1])
     {
-        NewValue.set_string(value, maxLength);
-        value = NewValue;
+        Value.set_string(value, maxLength);
+        value = Value;
     }
     else
         maxLength = ::strlen(value);
 
-    if (pfc::is_lower_ascii(value) || pfc::is_valid_utf8(value, maxLength))
-        fileInfo.meta_add(name, value);
-    else
-    if (IsValidShiftJIS(value))
-        fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_codepage(932, value)); // Shift-JIS
-    else
-        fileInfo.meta_add(name, pfc::stringcvt::string_utf8_from_ansi(value));
+    if (!pfc::is_lower_ascii(value) && !pfc::is_valid_utf8(value, maxLength))
+    {
+        if (IsValidShiftJIS(value, ::strlen(value)))
+        {
+            // Shift-JIS
+            Value = pfc::stringcvt::string_utf8_from_codepage(932, value);
+        }
+        else
+        if (IsValidEUCJP(value, ::strlen(value)))
+        {
+            // EUC-JP, http://www.rikai.com/library/kanjitables/kanji_codes.euc.shtml
+            Value = pfc::stringcvt::string_utf8_from_codepage(20932, value);
+
+            // Try other code pages.
+            if (Value.is_empty())
+                Value = pfc::stringcvt::string_utf8_from_codepage(51932, value);
+        }
+        else
+            Value = pfc::stringcvt::string_utf8_from_ansi(value);
+
+        if (!Value.is_empty())
+            value = Value;
+    }
+
+    fileInfo.meta_add(name, value);
 }
 
 /*
