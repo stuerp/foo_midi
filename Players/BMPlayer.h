@@ -28,6 +28,7 @@ public:
     void SetSoundFontDirectory(const char * directoryPath);
     void SetSoundFontFile(const char * filePath);
 
+    void SetVolume(float volume);
     void SetInterpolationMode(uint32_t interpolationMode);
     void EnableEffects(bool enable = true);
     void SetVoiceCount(uint32_t voices);
@@ -67,6 +68,7 @@ private:
     std::string _SoundFontDirectoryPath;
     std::string _SoundFontFilePath;
 
+    float _Volume;
     uint32_t _InterpolationMode;
     uint32_t _VoiceCount;
 

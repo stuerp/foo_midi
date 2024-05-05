@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2023.12.23) **/
+/** $VER: Configuration.cpp (2024.05.05) **/
 
 #include "framework.h"
 
@@ -30,6 +30,7 @@ static const GUID GUIDCfgFilterBanks = { 0x3145963c, 0x7322, 0x4b48, { 0x99, 0xf
 
 static const GUID GUIDCfgFluidSynthInterpolationMethod = { 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } };
 
+static const GUID GUIDBASSMIDIVolume = { 0x143e8051, 0xa42b, 0x4225, {0xb9, 0xd2, 0x79, 0xf1, 0x43, 0x1e, 0x70, 0x16 } };
 static const GUID GUIDBASSMIDIInterpolationMode = { 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } };
 
 static const GUID GUIDCfgVSTiFilePath = { 0x1a6ea7e5, 0x718a, 0x485a, { 0xb1, 0x67, 0xcf, 0xdf, 0x3b, 0x40, 0x61, 0x45 } };
@@ -143,6 +144,9 @@ cfg_var_modern::cfg_int
     CfgNukeSynthesizer(GUIDCfgNukeSynth, DefaultNukeSynth),
     CfgNukeBank(GUIDCfgNukeBank, DefaultNukeBank),
     CfgNukePanning(GUIDCfgNukePanning, DefaultNukePanning);
+
+cfg_var_modern::cfg_float
+    CfgBASSMIDIVolume(GUIDBASSMIDIVolume, DefaultBASSMIDIVolume);
 
 #ifdef DXISUPPORT
 static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };

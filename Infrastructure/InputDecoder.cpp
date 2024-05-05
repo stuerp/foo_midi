@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2023.12.23) **/
+/** $VER: InputDecoder.cpp (2024.05.05) **/
 
 #include "framework.h"
 
@@ -552,6 +552,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 if (SoundFontFilePath.length())
                     Player->SetSoundFontFile(SoundFontFilePath);
 
+                Player->SetVolume(_BASSMIDIVolume);
                 Player->SetInterpolationMode(_BASSMIDIInterpolationMode);
                 Player->EnableEffects(Preset._EffectsEnabled);
                 Player->SetVoiceCount(Preset._VoiceCount);

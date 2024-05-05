@@ -113,17 +113,18 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v2.9.3.0, 2024-05-xx,
+v2.10.0.0, 2024-05-xx,
 
-* Bug Fix: The BASS MIDI voice count was not initialized correctly when using a preset.
-* Bug Fix: Emu de MIDI sysex recognition.
-* Bug Fix: Emu de MIDI potential buffer overflow during rendering.
+* Improved: The volume of BASS MIDI can be tweaked independantly of the overall volume. Defaults to 0.15, determined experimentally to align with the other players.
+* Fixed: The BASS MIDI voice count was not initialized correctly when using a preset.
+* Fixed: Emu de MIDI sysex recognition.
+* Fixed: Emu de MIDI potential buffer overflow during rendering.
 
 v2.9.2.0, 2023-12-24, *"Merry Christmas"*
 
 * New: Compatible with foo_vis_midi v0.1.0.
-* Bug Fix: Crash in Emu de MIDI because dynamic synthesis rate was not initialized in time.
-* Bug Fix: Loop type was not respected when converting to other audio formats.
+* Fixed: Crash in Emu de MIDI because dynamic synthesis rate was not initialized in time.
+* Fixed: Loop type was not respected when converting to other audio formats.
 * Builds with foobar2000 SDK 2023-09-23.
 
 v2.9.1.3, 2023-11-02, *"Loop de loop"*
@@ -138,9 +139,9 @@ v2.9.1.3, 2023-11-02, *"Loop de loop"*
 * Improved: The song duration is now always calculated without taking into account the selected loop mode. So it's the absolute length of the song without any looping or decay time.
 * Improved: Made the parsing of the MIDI data more robust.
 * Improved: LDS file detection is more robust.
-* Bug Fix: FluidSynth did not respect the preferred sample rate.
-* Bug Fix: FluidSynth did not save two settings in a preset.
-* Bug Fix: Invalid embedded karaoke lyrics were not handled correctly.
+* Fixed: FluidSynth did not respect the preferred sample rate.
+* Fixed: FluidSynth did not save two settings in a preset.
+* Fixed: Invalid embedded karaoke lyrics were not handled correctly.
 * Builds with foobar2000 SDK 2023-09-06.
 
 v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
@@ -153,15 +154,15 @@ v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
   * Some XG files were not recognized as such if the file contained any GS messages first.
   * GM 2 detection.
 * Changed: Renamed dynamic info tags *bassmidi_voices* and *bassmidi_voices_max* to *midi_active_voices* and *midi_peak_voices*. The FluidSynth player also sets those tags while playing.
-* Bug Fix: An old bug in the XMI parser prevented some XMI files from loading.
+* Fixed: An old bug in the XMI parser prevented some XMI files from loading.
 
 v2.8.5.0, 2023-07-23, *""*
 
 * New: Added a configuration option to always use Super Munt when playing an MT-32 file. Default is on.
 * New: Added an configuration option to always use a VSTi to play an XG file. Default is off.
   * Don't forget to specify the path name of the VSTi in the Advanced preferences.
-* Bug Fix: Saving MIDI presets was broken.
-* Bug Fix: Loop detection was broken for some files.
+* Fixed: Saving MIDI presets was broken.
+* Fixed: Loop detection was broken for some files.
 
 v2.8.4.0, 2023-06-26, *"Beat the Drum"*
 
@@ -169,32 +170,32 @@ v2.8.4.0, 2023-06-26, *"Beat the Drum"*
 * New: Added detection of an extra percussion channel in Standard MIDI Files (*.MID). When meta data messages of type Text, Track Name or Instrument Name containing the word "drum" preceed the first message for channel 16 it will be used as an extra percussion channel in addition to channel 10.
 * New: A new Info tag "MIDI_EXTRA_PERCUSSION_CHANNEL" contains the (1-based) number of the channel that acts as an additional percussion channel (only channel 16 for now).
 * Improved: Error reporting in general and in case of parsing MIDI files with problems.
-* Bug Fix: Playing loops did not always work. (Regression)
+* Fixed: Playing loops did not always work. (Regression)
 
 v2.8.3.1, 2023-06-03, *"Do you want lyrics with that? Redux"*
 
-* Bug Fix: The user selection of the MIDI player was no longer honored. (Regression) A SOLID bug...
+* Fixed: The user selection of the MIDI player was no longer honored. (Regression) A SOLID bug...
 
 v2.8.3.0, 2023-06-01, *"Do you want lyrics with that?"*
 
 * Cue Marker, Lyrics, Time Signature and Key Signature meta events are now converted to tags.
   * Soft Karaoke lyrics are stored in an SYNCEDLYRICS tag; other lyrics in a LYRICS tag. The tags can be edited but will not be written back to the MIDI file.
   * Info tag MIDI_LYRICS_TYPE contains the name of the Karaoke standard. For now, only Soft Karaoke format is recognized.
-* Bug Fix: vshost process was not stopped when checking for presets. (Regression)
+* Fixed: vshost process was not stopped when checking for presets. (Regression)
 
 v2.8.2.0, 2023-05-20, *"Spring Cleaning"*
 
-* Bug Fix: MIDI files with malformed tracks caused a crash.
-* Bug Fix: MIDI files with malformed SysEx events caused a crash.
-* Bug Fix: Work-around for weird rendering problem in Dark mode.
-* Bug Fix: Restored access to the Preferences page from the Decoding page in the Preferences dialog.
+* Fixed: MIDI files with malformed tracks caused a crash.
+* Fixed: MIDI files with malformed SysEx events caused a crash.
+* Fixed: Work-around for weird rendering problem in Dark mode.
+* Fixed: Restored access to the Preferences page from the Decoding page in the Preferences dialog.
 * Improved: Tweaked the size of some of the labels of the Preferences dialog.
 * Improved: Added a message to re-open the Preferences dialog after any of the paths were changed.
 * Improved: Changed Shift-JIS detection in meta data. A copyright sign (©) was interpreted as Shift-JIS.
 
 v2.8.1.0, 2023-05-01, *"A New Beginning...? Redux"*
 
-* Bug Fix: The dialog now properly resizes on systems with High DPI settings (> 100% scaling)
+* Fixed: The dialog now properly resizes on systems with High DPI settings (> 100% scaling)
 
 v2.8.0.0, 2023-04-30, *"A New Beginning...?"*
 
@@ -207,7 +208,7 @@ v2.8.0.0, 2023-04-30, *"A New Beginning...?"*
 
 v2.7.4.4, 2022-11-21, *"I'm SoundFont of it"*
 
-* Bug Fix: The new scpipe32 and scpipe64 in the previous version had issues. Secret Sauce is back.
+* Fixed: The new scpipe32 and scpipe64 in the previous version had issues. Secret Sauce is back.
 * Added support for compressed SoundFonts (.sf3) to BASS MIDI player.
 * Updated Munt (MT32 emulator) to v2.7.0.
 * Reduced the component package size a bit. Only one copy of each vsthost and scpipe executable is included.

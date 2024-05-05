@@ -459,6 +459,7 @@ BMPlayer::BMPlayer() : MIDIPlayer()
 {
     ::memset(_Stream, 0, sizeof(_Stream));
 
+    _Volume = 1.f;
     _InterpolationMode = 0;
     _DoReverbAndChorusProcessing = true;
     _VoiceCount = 256;
@@ -490,6 +491,16 @@ void BMPlayer::SetSoundFontFile(const char * filePath)
         return;
 
     _SoundFontFilePath = filePath;
+
+    Shutdown();
+}
+
+void BMPlayer::SetVolume(float volume)
+{
+    if (_Volume == volume)
+        return;
+
+    _Volume = volume;
 
     Shutdown();
 }
@@ -582,13 +593,13 @@ bool BMPlayer::Startup()
     if (!_Stream[0] || !_Stream[1] || !_Stream[2])
         return false;
 
+    ::BASS_ChannelSetAttribute(_Stream[0], BASS_ATTRIB_VOLDSP, (float) _Volume);
+    ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_VOLDSP, (float) _Volume);
+    ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_VOLDSP, (float) _Volume);
+
     ::BASS_ChannelSetAttribute(_Stream[0], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
     ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
     ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
-
-    ::BASS_ChannelSetAttribute(_Stream[0], BASS_ATTRIB_VOLDSP, (float) .5f);
-    ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_VOLDSP, (float) .5f);
-    ::BASS_ChannelSetAttribute(_Stream[2], BASS_ATTRIB_VOLDSP, (float) .5f);
 
     SetVoiceCount(_VoiceCount);
 
@@ -703,20 +714,21 @@ void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     while (sampleCount != 0)
     {
-        size_t ToDo = std::min(sampleCount, MaxSamples);
+        const size_t ToDo = std::min(sampleCount, MaxSamples);
+        const size_t SampleCount = ToDo * ChannelCount;
 
-        ::memset(sampleData, 0, (size_t) ToDo * ChannelCount * sizeof(audio_sample));
+        ::memset(sampleData, 0, SampleCount * sizeof(*sampleData));
 
         for (size_t i = 0; i < _countof(_Stream); ++i)
         {
-            ::BASS_ChannelGetData(_Stream[i], _Buffer, BASS_DATA_FLOAT | (DWORD) (ToDo * ChannelCount * sizeof(float)));
+            ::BASS_ChannelGetData(_Stream[i], _Buffer, BASS_DATA_FLOAT | (DWORD) (SampleCount * sizeof(*_Buffer)));
 
             // Convert the format of the rendered output.
-            for (size_t j = 0; j < ToDo * ChannelCount; ++j)
+            for (size_t j = 0; j < SampleCount; ++j)
                 sampleData[j] += _Buffer[j];
         }
 
-        sampleData  += (ToDo * ChannelCount);
+        sampleData  += SampleCount;
         sampleCount -= (uint32_t) ToDo;
     }
 }

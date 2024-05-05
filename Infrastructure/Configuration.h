@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2023.12.23) **/
+/** $VER: Configuration.h (2024.05.05) **/
 
 #pragma once
 
@@ -103,6 +103,8 @@ enum
 //  DefaultADL4Op = 14,
 };
 
+const float DefaultBASSMIDIVolume = 0.15f;
+
 extern cfg_var_modern::cfg_int
     CfgPlayerType,
     CfgSampleRate,
@@ -122,6 +124,7 @@ extern cfg_var_modern::cfg_int
     CfgFilterBanks,
 
     CfgFluidSynthInterpolationMode,
+
     CfgBASSMIDIInterpolationMode,
 
     CfgADLBank,
@@ -138,6 +141,9 @@ extern cfg_var_modern::cfg_int
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
     CfgUseVSTiWithXG;
+
+extern cfg_var_modern::cfg_float
+    CfgBASSMIDIVolume;
 
 extern cfg_var_modern::cfg_string
     CfgVSTiFilePath,

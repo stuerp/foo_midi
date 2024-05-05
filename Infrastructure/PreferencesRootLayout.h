@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRootLayout.h (2023.08.14) **/
+/** $VER: PreferencesRootLayout.h (2024.05.05) **/
 
 #pragma once
 
@@ -214,12 +214,24 @@
 #define W_A50    W_A40
 
     // Label
-    #define X_A53    X_A50 + 5
-    #define Y_A53    Y_A50 + 11
+    #define X_A57    X_A50 + 5
+    #define Y_A57    Y_A50 + 11
+    #define W_A57    42
+    #define H_A57    8
+
+    // EditBox: Volume
+    #define X_A58    X_A57 + W_A57 + 3
+    #define Y_A58    Y_A57
+    #define W_A58    20
+    #define H_A58    12
+
+    // Label
+    #define X_A53    X_A57
+    #define Y_A53    Y_A58 + H_A58 + 4
     #define W_A53    42
     #define H_A53    8
 
-    // Combobox
+    // Combobox: Resampling
     #define X_A54    X_A53 + W_A53 + 3
     #define Y_A54    Y_A53
     #define W_A54    W_A50 - 5 - W_A53 - 3 - 5
@@ -231,13 +243,13 @@
     #define W_A55    W_A53
     #define H_A55    8
 
-    // EditBox
+    // Label: Cached
     #define X_A56    X_A55 + W_A55 + 3
     #define Y_A56    Y_A55
     #define W_A56    W_A50 - 5 - W_A55 - 3 - 5
     #define H_A56    8
 
-#define H_A50    11 + H_A54 + 4 + 14 + 4
+#define H_A50    11 + H_A58 + 4 + H_A54 + 4 + H_A56 + 7
 #pragma endregion
 
 #pragma region("Munt")

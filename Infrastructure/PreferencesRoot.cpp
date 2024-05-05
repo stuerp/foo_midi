@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2023.08.27) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2024.05.05) P. Stuer **/
 
 #include "framework.h"
 
@@ -424,6 +424,13 @@ void PreferencesRootPage::apply()
 
     #pragma region("BASS MIDI")
     {
+        WCHAR Text[32];
+
+        GetDlgItemTextW(IDC_BASSMIDI_VOLUME, Text, _countof(Text));
+
+        CfgBASSMIDIVolume = std::clamp((float) ::_wtof(Text), 0.f, 2.f);
+    }
+    {
         CfgBASSMIDIInterpolationMode = (t_int32) SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
     }
     #pragma endregion
@@ -577,8 +584,9 @@ void PreferencesRootPage::reset()
 
         const int ControlId[] =
         {
-            IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
-            IDC_CACHED_TEXT, IDC_CACHED
+            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_VOLUME,
+            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
+            IDC_CACHED_LBL, IDC_CACHED
         };
 
         for (size_t i = 0; i < _countof(ControlId); ++i)
@@ -622,7 +630,7 @@ void PreferencesRootPage::reset()
             {
                 IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
                 IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
-                IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
+                IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
                 IDC_ADL_PANNING
             };
 
@@ -887,6 +895,9 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     #pragma region("BASS MIDI")
     {
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
+    }
+    {
         auto w = (CComboBox) GetDlgItem(IDC_RESAMPLING_MODE);
 
         w.AddString(L"Linear interpolation");
@@ -899,8 +910,9 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         const int ControlId[] =
         {
-            IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
-            IDC_CACHED_TEXT, IDC_CACHED
+            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_VOLUME,
+            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
+            IDC_CACHED_LBL, IDC_CACHED
         };
 
         for (size_t i = 0; i < _countof(ControlId); ++i)
@@ -1137,8 +1149,9 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
         const int ControlId[] =
         {
-            IDC_RESAMPLING_TEXT, IDC_RESAMPLING_MODE,
-            IDC_CACHED_TEXT, IDC_CACHED
+            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_VOLUME,
+            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
+            IDC_CACHED_LBL, IDC_CACHED
         };
 
         for (size_t i = 0; i < _countof(ControlId); ++i)

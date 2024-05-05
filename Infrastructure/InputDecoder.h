@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2023.12.23) **/
+/** $VER: InputDecoder.h (2024.05.05) **/
 
 #pragma once
 
@@ -85,6 +85,7 @@ public:
 
         _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode),
 
+        _BASSMIDIVolume(CfgBASSMIDIVolume),
         _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIInterpolationMode)
     {
         _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
@@ -284,6 +285,7 @@ private:
 
     uint32_t _FluidSynthInterpolationMethod;
 
+    float _BASSMIDIVolume;
     uint32_t _BASSMIDIInterpolationMode;
 
     bool _IsEndOfContainer;
