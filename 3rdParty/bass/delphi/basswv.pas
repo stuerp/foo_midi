@@ -31,7 +31,7 @@ const
 {$ENDIF}
 {$IFDEF MACOS}
   {$IFDEF IOS}
-    basswvdll = 'libbasswv.a';
+    basswvdll = 'basswv.framework/basswv';
   {$ELSE}
     basswvdll = 'libbasswv.dylib';
   {$ENDIF}

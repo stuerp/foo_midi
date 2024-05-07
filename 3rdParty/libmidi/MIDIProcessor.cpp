@@ -1,5 +1,5 @@
 
-/** $VER: MIDIProcessor.cpp (2023.08.14) **/
+/** $VER: MIDIProcessor.cpp (2024.05.06) **/
 
 #include "MIDIProcessor.h"
 
@@ -44,6 +44,9 @@ bool MIDIProcessor::Process(std::vector<uint8_t> const & data, const char * file
 
     if (IsGMF(data))
         return ProcessGMF(data, container);
+
+    if (IsRCP(data, fileExtension))
+        return ProcessRCP(data, container);
 
     if (IsSysEx(data))
         return ProcessSysEx(data, container);

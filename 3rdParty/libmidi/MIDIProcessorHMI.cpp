@@ -275,7 +275,7 @@ bool MIDIProcessor::ProcessHMI(std::vector<uint8_t> const & data, MIDIContainer 
 
                 uint32_t Channel = (uint32_t) (Temp[0] & 0x0F);
 
-                if ((Type != MIDIEvent::ProgramChange) && (Type != MIDIEvent::ChannelAftertouch))
+                if ((Type != MIDIEvent::ProgramChange) && (Type != MIDIEvent::ChannelPressureAftertouch))
                 {
                     if (it == TrackDataEnd)
                         return false;

@@ -1,5 +1,5 @@
 
-/** $VER: MIDIProcessor.h (2023.08.14) **/
+/** $VER: MIDIProcessor.h (2024.05.05) **/
 
 #pragma once
 
@@ -59,6 +59,7 @@ private:
     static bool IsMDS(std::vector<uint8_t> const & data);
     static bool IsLDS(std::vector<uint8_t> const & data, const char * fileExtension);
     static bool IsGMF(std::vector<uint8_t> const & data);
+    static bool IsRCP(std::vector<uint8_t> const & data, const char * fileExtension);
     static bool IsSysEx(std::vector<uint8_t> const & data);
 
     static bool ProcessSMF(std::vector<uint8_t> const & data, MIDIContainer & container);
@@ -70,6 +71,7 @@ private:
     static bool ProcessMDS(std::vector<uint8_t> const & data, MIDIContainer & container);
     static bool ProcessLDS(std::vector<uint8_t> const & data, MIDIContainer & container);
     static bool ProcessGMF(std::vector<uint8_t> const & data, MIDIContainer & container);
+    static bool ProcessRCP(std::vector<uint8_t> const & data, MIDIContainer & container);
     static bool ProcessSysEx(std::vector<uint8_t> const & data, MIDIContainer & container);
 
 //  static bool GetTrackCount(std::vector<uint8_t> const & data, const char * fileExtension, size_t & trackCount);

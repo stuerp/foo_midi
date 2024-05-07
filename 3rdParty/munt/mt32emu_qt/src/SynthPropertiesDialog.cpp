@@ -28,6 +28,9 @@ SynthPropertiesDialog::SynthPropertiesDialog(QWidget *parent, SynthRoute *useSyn
 	rsd(synthProfile, this)
 {
 	ui->setupUi(this);
+	if (ui->formLayout->fieldGrowthPolicy() == QFormLayout::FieldsStayAtSizeHint) {
+		ui->formLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
+	}
 	refreshProfileCombo("");
 	loadSynthProfile();
 
@@ -143,11 +146,27 @@ void SynthPropertiesDialog::on_reverbCheckBox_stateChanged(int state) {
 }
 
 void SynthPropertiesDialog::on_outputGainSlider_valueChanged(int value) {
-	synthRoute->setOutputGain((float)value / 100.0f);
+	double gain = value / 100.0;
+	ui->outputGainSpinBox->setValue(gain);
+	synthRoute->setOutputGain(float(gain));
+}
+
+void SynthPropertiesDialog::on_outputGainSpinBox_editingFinished() {
+	double value = ui->outputGainSpinBox->value();
+	ui->outputGainSlider->setValue(int(value * 100 + 0.5));
+	synthRoute->setOutputGain(float(value));
 }
 
 void SynthPropertiesDialog::on_reverbOutputGainSlider_valueChanged(int value) {
-	synthRoute->setReverbOutputGain((float)value / 100.0f);
+	double gain = value / 100.0;
+	ui->reverbOutputGainSpinBox->setValue(gain);
+	synthRoute->setReverbOutputGain(float(gain));
+}
+
+void SynthPropertiesDialog::on_reverbOutputGainSpinBox_editingFinished() {
+	double value = ui->reverbOutputGainSpinBox->value();
+	ui->reverbOutputGainSlider->setValue(int(value * 100 + 0.5));
+	synthRoute->setReverbOutputGain(float(value));
 }
 void SynthPropertiesDialog::on_reverseStereoCheckBox_stateChanged(int state) {
 	synthRoute->setReversedStereoEnabled(state == Qt::Checked);

@@ -108,7 +108,7 @@ bool MIDIProcessor::ProcessMUS(std::vector<uint8_t> const & data, MIDIContainer 
 
             // Pitch Bend
             case 0x20:
-                EventType = MIDIEvent::PitchWheel;
+                EventType = MIDIEvent::PitchBendChange;
 
                 if (it == end)
                     return false;

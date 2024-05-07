@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2023.12.24) P. Stuer **/
+/** $VER: Resource.h (2024.05.05) P. Stuer **/
 
 #pragma once
 
@@ -13,7 +13,7 @@
 #define STR_COMPONENT_BASENAME      "foo_midi"
 #define STR_COMPONENT_FILENAME      STR_COMPONENT_BASENAME ".dll"
 #define STR_COMPONENT_COMPANY_NAME  "LoSno.co"
-#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2022-2023 " STR_COMPANY_NAME ". All rights reserved."
+#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2022-2024 " STR_COMPANY_NAME ". All rights reserved."
 #define STR_COMPONENT_COMMENTS      "Written by Christopher Snowhill, P. Stuer"
 #define STR_COMPONENT_DESCRIPTION   "Adds playback of MIDI files to foobar2000"
 
@@ -25,8 +25,8 @@
 #define STR_COPYRIGHT           TEXT(STR_COMPONENT_COPYRIGHT)
 
 #define NUM_FILE_MAJOR          2
-#define NUM_FILE_MINOR          9
-#define NUM_FILE_PATCH          2
+#define NUM_FILE_MINOR          10
+#define NUM_FILE_PATCH          0
 #define NUM_FILE_PRERELEASE     0
 
 #define STR_FILE_NAME           TEXT(STR_COMPONENT_FILENAME)
@@ -34,8 +34,8 @@
 #define STR_FILE_DESCRIPTION    TEXT(STR_COMPONENT_DESCRIPTION)
 
 #define NUM_PRODUCT_MAJOR       2
-#define NUM_PRODUCT_MINOR       9
-#define NUM_PRODUCT_PATCH       2
+#define NUM_PRODUCT_MINOR       10
+#define NUM_PRODUCT_PATCH       0
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRODUCT_NAME        STR_COMPANY_NAME TEXT(" ") STR_INTERNAL_NAME
@@ -70,11 +70,14 @@
 #define IDC_FILTER_INSTRUMENTS              1012
 #define IDC_FILTER_BANKS                    1013
 
-#define IDC_RESAMPLING_MODE                 1014
-#define IDC_RESAMPLING_TEXT                 1015
+#define IDC_BASSMIDI_VOLUME_LBL             1035
+#define IDC_BASSMIDI_VOLUME                 1036
 
-#define IDC_CACHED                          1016
-#define IDC_CACHED_TEXT                     1017
+#define IDC_RESAMPLING_LBL                  1014
+#define IDC_RESAMPLING_MODE                 1015
+
+#define IDC_CACHED_LBL                      1016
+#define IDC_CACHED                          1017
 
 #define IDC_ADL_BANK                        1018
 #define IDC_ADL_BANK_TEXT                   1019

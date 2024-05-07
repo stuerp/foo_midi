@@ -1,5 +1,5 @@
 BASSWV 2.4
-Copyright (c) 2007-2022 Un4seen Developments Ltd. All rights reserved.
+Copyright (c) 2007-2024 Un4seen Developments Ltd. All rights reserved.
 
 Files that you should have found in the BASSWV package
 ======================================================
@@ -107,7 +107,7 @@ package are the property of their respective owners.
 Credits
 =======
 WavPack decoding is based on the WavPack library,
-Copyright (c) 1998-2022 David Bryant
+Copyright (c) 1998-2024 David Bryant
 
 
 History
@@ -115,6 +115,10 @@ History
 These are the major (and not so major) changes in each release, along with the
 functions/options that are introduced/affected by them. There are other little
 tweaks and fixes made along the way too.
+
+2.4.7.4 - 5/3/2024
+------------------
+* Updated for WavPack 5.7.0
 
 2.4.7.3 - 22/12/2022
 --------------------

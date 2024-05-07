@@ -414,7 +414,7 @@ bool MIDIProcessor::ProcessXMI(std::vector<uint8_t> const & data, MIDIContainer 
                     MIDIEvent::EventType Type = (MIDIEvent::EventType) ((Temp[0] >> 4) - 8);
                     uint32_t Channel = (uint32_t) (Temp[0] & 0x0F);
 
-                    if ((Type != MIDIEvent::ProgramChange) && (Type != MIDIEvent::ChannelAftertouch))
+                    if ((Type != MIDIEvent::ProgramChange) && (Type != MIDIEvent::ChannelPressureAftertouch))
                     {
                         if (it == end)
                             return SetLastErrorCode(MIDIError::InsufficientData);
