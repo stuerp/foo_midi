@@ -173,14 +173,6 @@ bool SysExTable::GetItem(size_t index, const uint8_t * & data, std::size_t & siz
 }
 #pragma endregion
 
-#pragma region("MIDI Stream Event")
-MIDIStreamEvent::MIDIStreamEvent(uint32_t timestamp, uint32_t data)
-{
-    Timestamp = timestamp;
-    Data = data;
-}
-#pragma endregion
-
 #pragma region("MIDI Meta Data")
 void MIDIMetaData::AddItem(const MIDIMetaDataItem & item)
 {
@@ -293,7 +285,7 @@ void MIDIContainer::AddTrack(const MIDITrack & track)
                 {
                     PortNumber = Event.Data[2];
 
-                    limit_port_number(PortNumber);
+                    LimitPortNumber(PortNumber);
                     DeviceName.clear();
                 }
             }
@@ -321,7 +313,7 @@ void MIDIContainer::AddTrack(const MIDITrack & track)
                     PortNumber = (uint8_t)k;
                 }
 
-                limit_port_number(PortNumber);
+                LimitPortNumber(PortNumber);
                 DeviceName.clear();
             }
 
@@ -575,7 +567,7 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
                     PortNumbers[SelectedTrack] = (uint8_t) i;
                     DeviceNames[SelectedTrack].clear();
 
-                    limit_port_number(PortNumbers[SelectedTrack]);
+                    LimitPortNumber(PortNumbers[SelectedTrack]);
                 }
 
                 uint32_t Message = ((Event.Type + 8) << 4) + Event.ChannelNumber;
@@ -608,7 +600,8 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
 
                         PortNumbers[SelectedTrack] = (uint8_t) i;
                         DeviceNames[SelectedTrack].clear();
-                        limit_port_number(PortNumbers[SelectedTrack]);
+
+                        LimitPortNumber(PortNumbers[SelectedTrack]);
                     }
 
                     Data = Event.Data;
@@ -626,6 +619,7 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
                     if (Event.Data[1] == MetaDataTypes::InstrumentName || Event.Data[1] == MetaDataTypes::DeviceName)
                     {
                         DeviceNames[SelectedTrack].assign(Event.Data.begin() + 2, Event.Data.end());
+
                         std::transform(DeviceNames[SelectedTrack].begin(), DeviceNames[SelectedTrack].end(), DeviceNames[SelectedTrack].begin(), ::tolower);
                     }
                     else
@@ -633,7 +627,8 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
                     {
                         PortNumbers[SelectedTrack] = Event.Data[2];
                         DeviceNames[SelectedTrack].clear();
-                        limit_port_number(PortNumbers[SelectedTrack]);
+
+                        LimitPortNumber(PortNumbers[SelectedTrack]);
                     }
                 }
                 else
@@ -651,7 +646,7 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
 
                         PortNumbers[SelectedTrack] = (uint8_t) i;
                         DeviceNames[SelectedTrack].clear();
-                        limit_port_number(PortNumbers[SelectedTrack]);
+                        LimitPortNumber(PortNumbers[SelectedTrack]);
                     }
 
                     uint32_t Message = (uint32_t)(PortNumbers[SelectedTrack] << 24);
@@ -665,8 +660,8 @@ void MIDIContainer::SerializeAsStream(size_t subSongIndex, std::vector<MIDIStrea
         TrackPositions[SelectedTrack]++;
     }
 
-    loopBegin = (uint32_t)LoopBegin;
-    loopEnd = (uint32_t)LoopEnd;
+    loopBegin = (uint32_t) LoopBegin;
+    loopEnd   = (uint32_t) LoopEnd;
 }
 
 void MIDIContainer::SerializeAsSMF(std::vector<uint8_t> & midiStream) const
@@ -692,7 +687,7 @@ void MIDIContainer::SerializeAsSMF(std::vector<uint8_t> & midiStream) const
 
     std::vector<uint8_t> Data;
 
-    for (size_t i = 0; i < _Tracks.size(); ++i)
+    for (const MIDITrack & Track : _Tracks)
     {
         const char ChunkType[] = "MTrk";
 
@@ -705,22 +700,18 @@ void MIDIContainer::SerializeAsSMF(std::vector<uint8_t> & midiStream) const
         midiStream.push_back(0);
         midiStream.push_back(0);
 
-        const MIDITrack & Track = _Tracks[i];
-
         uint32_t LastTimestamp = 0;
         uint8_t LastStatus = StatusCodes::MetaData;
 
-        for (size_t j = 0; j < Track.GetLength(); ++j)
+        for (const MIDIEvent & Event : Track)
         {
-            const MIDIEvent & Event = Track[j];
-
             EncodeVariableLengthQuantity(midiStream, Event.Timestamp - LastTimestamp);
 
             LastTimestamp = Event.Timestamp;
 
             if (Event.Type != MIDIEvent::Extended)
             {
-                const uint8_t Status = (uint8_t)(((Event.Type + 8) << 4) + Event.ChannelNumber);
+                const uint8_t Status = (uint8_t) (((Event.Type + 8) << 4) + Event.ChannelNumber);
 
                 if (Status != LastStatus)
                 {
@@ -753,6 +744,7 @@ void MIDIContainer::SerializeAsSMF(std::vector<uint8_t> & midiStream) const
 
                         midiStream.push_back(0xFFu);
                         midiStream.push_back(Event.Data[1]);
+
                         EncodeVariableLengthQuantity(midiStream, DataSize);
 
                         if (DataSize != 0)

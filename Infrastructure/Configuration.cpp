@@ -257,12 +257,13 @@ const char * _FileExtensions[] =
     "MUS",
     "XMI", "XFM",
     "LDS",
-
+/*
     // Recomposer
     "RCP",
     "R36",
     "G18",
     "G36",
+*/
 };
 
 const size_t _FileExtensionCount = _countof(_FileExtensions);

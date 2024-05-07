@@ -113,7 +113,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v2.10.0.0, 2024-05-xx,
+v2.10.0.0, 2024-05-07, *"It's been a while"*
 
 * New: The volume of BASS MIDI can be tweaked independently of the overall volume. Defaults to 0.15, determined experimentally to align with the other players.
 * Improved: Added detection of EUC-JP encoded meta data.

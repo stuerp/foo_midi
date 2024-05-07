@@ -1,5 +1,5 @@
 
-/** $VER: MIDIContainer.h (2023.12.24) **/
+/** $VER: MIDIContainer.h (2024.05.07) **/
 
 #pragma once
 
@@ -22,7 +22,7 @@ enum StatusCodes
     PolyphonicAftertouch = 0xA0,
     ControlChange = 0xB0,
     ProgramChange = 0xC0,
-    ChannelAftertouch = 0xD0,
+    ChannelPressureAftertouch = 0xD0,
     PitchBendChange = 0xE0,
 
     SysEx = 0xF0,
@@ -81,14 +81,14 @@ struct MIDIEvent
 {
     enum EventType
     {
-        NoteOff = 0,
-        NoteOn,
-        PolyphonicAftertouch,
-        ControlChange,
-        ProgramChange,
-        ChannelAftertouch,
-        PitchWheel,
-        Extended
+        NoteOff = 0,                // x080
+        NoteOn,                     // x090
+        PolyphonicAftertouch,       // x0A0
+        ControlChange,              // x0B0
+        ProgramChange,              // x0C0
+        ChannelPressureAftertouch,  // x0D0
+        PitchBendChange,            // x0E0
+        Extended                    // x0F0
     };
 
     uint32_t Timestamp;
@@ -136,6 +136,19 @@ public:
         return _Events[index];
     }
 
+public:
+    using midievents_t = std::vector<MIDIEvent>;
+    using iterator = midievents_t::iterator;
+    using const_iterator = midievents_t::const_iterator;
+
+    iterator begin() { return _Events.begin(); }
+    iterator end() { return _Events.end(); }
+
+    const_iterator begin() const { return _Events.begin(); }
+    const_iterator end() const { return _Events.end(); }
+    const_iterator cbegin() const { return _Events.cbegin(); }
+    const_iterator cend() const { return _Events.cend(); }
+
 private:
     std::vector<MIDIEvent> _Events;
 };
@@ -148,6 +161,7 @@ struct TempoItem
     TempoItem() noexcept : Timestamp(0), Tempo(0)
     {
     }
+
     TempoItem(uint32_t timestamp, uint32_t tempo);
 };
 
@@ -212,7 +226,11 @@ struct MIDIStreamEvent
     {
     }
 
-    MIDIStreamEvent(uint32_t timestamp, uint32_t data);
+    MIDIStreamEvent(uint32_t timestamp, uint32_t data)
+    {
+        Timestamp = timestamp;
+        Data = data;
+    }
 };
 
 struct MIDIMetaDataItem
@@ -293,7 +311,6 @@ public:
     void ApplyHack(uint32_t hack);
 
     void SerializeAsStream(size_t subSongIndex, std::vector<MIDIStreamEvent> & stream, SysExTable & sysExTable, uint32_t & loopBegin, uint32_t & loopEnd, uint32_t cleanFlags) const;
-
     void SerializeAsSMF(std::vector<uint8_t> & data) const;
 
     void PromoteToType1();
@@ -316,6 +333,8 @@ public:
     uint32_t GetLoopBeginTimestamp(size_t subSongIndex, bool ms = false) const;
     uint32_t GetLoopEndTimestamp(size_t subSongIndex, bool ms = false) const;
 
+    std::vector<MIDITrack> & GetTracks() { return _Tracks; }
+
     void GetMetaData(size_t subSongIndex, MIDIMetaData & data);
 
     void SetExtraPercussionChannel(uint32_t channelNumber) noexcept { _ExtraPercussionChannel = channelNumber; }
@@ -324,6 +343,19 @@ public:
     void DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops);
 
     static void EncodeVariableLengthQuantity(std::vector<uint8_t> & data, uint32_t delta);
+
+public:
+    using miditracks_t = std::vector<MIDITrack>;
+    using iterator = miditracks_t::iterator;
+    using const_iterator = miditracks_t::const_iterator;
+
+    iterator begin() { return _Tracks.begin(); }
+    iterator end() { return _Tracks.end(); }
+
+    const_iterator begin() const { return _Tracks.begin(); }
+    const_iterator end() const { return _Tracks.end(); }
+    const_iterator cbegin() const { return _Tracks.cbegin(); }
+    const_iterator cend() const { return _Tracks.cend(); }
 
 public:
     enum
@@ -340,16 +372,15 @@ private:
     uint32_t TimestampToMS(uint32_t timestamp, size_t subsongIndex) const;
 
     #pragma warning(disable: 4267)
-    /*
-     * Normalize port numbers properly
-     */
-    template <typename T> void limit_port_number(T & number)
+    // Normalize port numbers properly
+    template <typename T> void LimitPortNumber(T & number)
     {
         for (size_t i = 0; i < _PortNumbers.size(); ++i)
         {
             if (_PortNumbers[i] == number)
             {
-                number = (T)i;
+                number = (T) i;
+
                 return;
             }
         }
@@ -359,13 +390,14 @@ private:
         number = _PortNumbers.size() - 1;
     }
 
-    template <typename T> void limit_port_number(T & number) const
+    template <typename T> void LimitPortNumber(T & number) const
     {
         for (size_t i = 0; i < _PortNumbers.size(); i++)
         {
             if (_PortNumbers[i] == number)
             {
-                number = (T)i;
+                number = (T) i;
+
                 return;
             }
         }
