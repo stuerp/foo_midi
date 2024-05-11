@@ -1,11 +1,11 @@
 
-/** $VER: MIDIPlayer.h (2023.11.01) **/
+/** $VER: MIDIPlayer.h (2024.05.11) **/
 
 #pragma once
 
 #include <sdk/foobar2000-lite.h>
 
-#include <libmidi/MIDIContainer.h>
+#include <MIDIContainer.h>
 #include "Configuration.h"
 
 #include <API.h>

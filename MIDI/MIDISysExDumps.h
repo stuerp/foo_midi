@@ -1,11 +1,11 @@
 
-/** $VER: MIDISysExDumps.h (2023.08.14) **/
+/** $VER: MIDISysExDumps.h (2024.05.11) **/
 
 #pragma once
 
 #include <sdk/foobar2000-lite.h>
 
-#include <libmidi/MIDIProcessor.h>
+#include <MIDIProcessor.h>
 
 class MIDISysExDumps
 {
@@ -13,6 +13,7 @@ public:
     MIDISysExDumps() noexcept { }
 
     MIDISysExDumps(const MIDISysExDumps & other) { operator=(other); }
+
     MIDISysExDumps & operator=(const MIDISysExDumps & other)
     {
         Items = other.Items;

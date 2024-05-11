@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenu.cpp (2023.06.04) **/
+/** $VER: ContextMenu.cpp (2024.05.11) **/
 
 #include "framework.h"
 
@@ -29,7 +29,7 @@ void ContextMenu::get_item_name(unsigned int itemIndex, pfc::string_base & itemN
     itemName = ItemTexts[itemIndex];
 }
 
-bool ContextMenu::context_get_display(unsigned itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, pfc::string_base & out, unsigned &, const GUID &)
+bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, pfc::string_base & out, unsigned &, const GUID &)
 {
     if (itemIndex >= _countof(ItemTexts))
         uBugCheck();
@@ -80,7 +80,7 @@ bool ContextMenu::context_get_display(unsigned itemIndex, const pfc::list_base_c
     return false;
 }
 
-void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, const GUID &)
+void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, const GUID &)
 {
     if (itemIndex >= _countof(ItemTexts))
         uBugCheck();

@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.05.05) **/
+/** $VER: InputDecoder.cpp (2024.05.11) **/
 
 #include "framework.h"
 
@@ -10,8 +10,6 @@
 #include <sdk/system_time_keeper.h>
 
 #include <pfc/string-conv-lite.h>
-
-#include <libmidi/MIDIProcessor.h>
 
 #include "KaraokeProcessor.h"
 #include "Exceptions.h"
@@ -74,7 +72,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         if (_IsSysExFile)
         {
             if (!MIDIProcessor::Process(Object, nullptr, _Container))
-                throw exception_io_data("Invalid SysEx dump");
+                throw exception_io_data("Invalid SysEx file.");
 
             return;
         }
@@ -89,36 +87,36 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             {
                 case None: Message += "No error"; break;
 
-                case UnknownStatusCode: Message += "Unknown MIDI status code"; break;
+                case UnknownStatusCode: Message += "Unknown MIDI status code."; break;
 
-                case InsufficientData: Message += "Insufficient data in the stream"; break;
+                case InsufficientData: Message += "Insufficient data in the stream."; break;
 
-                case InvalidSysExMessage: Message += "Invalid System Exclusive message"; break;
-                case InvalidSysExMessageContinuation: Message += "Invalid System Exclusive message"; break;
-                case InvalidSysExEndMessage: Message += "Invalid System Exclusive End message"; break;
+                case InvalidSysExMessage: Message += "Invalid System Exclusive message."; break;
+                case InvalidSysExMessageContinuation: Message += "Invalid System Exclusive message."; break;
+                case InvalidSysExEndMessage: Message += "Invalid System Exclusive End message."; break;
 
-                case InvalidMetaDataMessage: Message += "Invalid meta data message"; break;
+                case InvalidMetaDataMessage: Message += "Invalid meta data message."; break;
 
                 // SMF
-                case SMFBadHeaderChunkType: Message += "Bad SMF header chunk type"; break;
-                case SMFBadHeaderChunkSize: Message += "Bad SMF header chunk size"; break;
-                case SMFBadHeaderFormat: Message += "Bad SMF header format"; break;
-                case SMFBadHeaderTrackCount: Message += "Bad SMF header track count"; break;
-                case SMFBadHeaderTimeDivision: Message += "Bad SMF header time division"; break;
+                case SMFBadHeaderChunkType: Message += "Bad SMF header chunk type."; break;
+                case SMFBadHeaderChunkSize: Message += "Bad SMF header chunk size."; break;
+                case SMFBadHeaderFormat: Message += "Bad SMF header format."; break;
+                case SMFBadHeaderTrackCount: Message += "Bad SMF header track count."; break;
+                case SMFBadHeaderTimeDivision: Message += "Bad SMF header time division."; break;
 
-                case SMFUnknownChunkType: Message += "Unknown type specified in SMF chunk"; break;
+                case SMFUnknownChunkType: Message += "Unknown type specified in SMF chunk."; break;
 
-                case SMFBadFirstMessage: Message += "Bad first message of a track"; break;
+                case SMFBadFirstMessage: Message += "Bad first message of a track."; break;
 
                 // XMI
-                case XMIFORMXDIRNotFound: Message += "FORM XDIR chunk not found"; break;
-                case XMICATXMIDNotFound: Message += "CAT XMID chunk not found"; break;
-                case XMIFORMXMIDNotFound: Message += "FORM XMID chunk not found"; break;
-                case XMIEVNTChunkNotFound: Message += "EVNT chunk not found"; break;
+                case XMIFORMXDIRNotFound: Message += "FORM XDIR chunk not found."; break;
+                case XMICATXMIDNotFound: Message += "CAT XMID chunk not found."; break;
+                case XMIFORMXMIDNotFound: Message += "FORM XMID chunk not found."; break;
+                case XMIEVNTChunkNotFound: Message += "EVNT chunk not found."; break;
 
-                case XMIInvalidNoteMessage: Message += "Invalid note message"; break;
+                case XMIInvalidNoteMessage: Message += "Invalid note message."; break;
 
-                default: Message += "Unknown error code"; break;
+                default: Message += "Unknown error code."; break;
             }
 
             throw exception_io_data(Message);
@@ -127,7 +125,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         _TrackCount = _Container.GetTrackCount();
 
         if (_TrackCount == 0)
-            throw exception_io_data("Invalid MIDI file. No tracks found");
+            throw exception_io_data("Invalid MIDI file. No tracks found.");
 
         // Check if we read a valid MIDI file.
         {
@@ -143,7 +141,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             }
 
             if (!HasDuration)
-                throw exception_io_data("Invalid MIDI file");
+                throw exception_io_data("Invalid MIDI file. No tracks have events with timestamps.");
         }
 
         _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops);
@@ -181,7 +179,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
     if (_IsSysExFile)
-        throw exception_midi("You cannot play SysEx dumps");
+        throw exception_midi("You cannot play SysEx files.");
 
     _IsFirstChunk = true;
 
@@ -398,12 +396,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             {
                 if (Preset._VSTiFilePath.is_empty())
-                    throw exception_midi("No VSTi specified in preset");
+                    throw exception_midi("No VSTi specified in preset.");
 
                 auto Player = new VSTiPlayer;
 
                 if (!Player->LoadVST(Preset._VSTiFilePath))
-                    throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\"");
+                    throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\".");
             
                 if (Preset._VSTiConfig.size() != 0)
                     Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
@@ -440,7 +438,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _PeakVoiceCount = 0;
 
                 if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
-                    throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found");
+                    throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found.");
             }
 
             pfc::string8 FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
@@ -459,7 +457,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Player->SetAbortHandler(&abortHandler);
 
                 if (!Player->Initialize(pfc::wideFromUTF8(FluidSynthDirectoryPath)))
-                    throw exception_midi("FluidSynth path not configured");
+                    throw exception_midi("FluidSynth path not configured.");
 
                 Player->SetSoundFontFile(Preset._SoundFontFilePath);
 
@@ -542,7 +540,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     _PeakVoiceCount = 0;
 
                     if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
-                        throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found");
+                        throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found.");
                 }
 
                 auto Player = new BMPlayer;
@@ -770,7 +768,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     }
 
-    throw exception_midi("No MIDI player specified");
+    throw exception_midi("No MIDI player specified.");
 }
 
 /// <summary>
@@ -1047,7 +1045,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const
 {
     if (_IsSysExFile)
-        throw exception_io_data("You cannot tag SysEx dumps");
+        throw exception_io_data("You cannot tag SysEx files.");
 
     file_info_impl fi(fileInfo);
 

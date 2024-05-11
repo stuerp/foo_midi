@@ -273,8 +273,8 @@ private:
 
     uint32_t _FadeDuration; // in ms
 
-    Range _LoopRange;
-    Range _FadeRange;
+    range_t _LoopRange;
+    range_t _FadeRange;
 
     uint32_t _LengthInSamples;
 
