@@ -144,7 +144,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             }
 
             if (!HasDuration)
-                throw exception_io_data("Invalid MIDI file. No tracks have events with timestamps.");
+                throw exception_io_data("Invalid MIDI file. No timestamps found in any of the tracks.");
         }
 
         _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops);
