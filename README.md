@@ -115,7 +115,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 v2.11.0.0, 2024-xx-xx
 
-* New: Recomposer support (.RCP)
+* New: Recomposer support (.RCP, .R36, .G18, .G36)
 * Fixed: RPG Maker loops should work again.
 
 v2.10.0.0, 2024-05-07, *"It's been a while"*
@@ -254,7 +254,8 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Vitaly Novichkov](https://github.com/Wohlstand) for [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) and [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI).
 * [Mitsutaka Okazaki](https://github.com/Wohlstand/scc) for Emu de MIDI.
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
-* Tom Moebert for [FluidSynth](https://www.fluidsynth.org/)
+* Tom Moebert for [FluidSynth](https://www.fluidsynth.org/).
+* [Valley Bell](https://github.com/ValleyBell) for [MidiConverters](https://github.com/ValleyBell/MidiConverters).
 
 ## Reference Material
 
@@ -316,6 +317,10 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 * [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX))
 * [MUS Format](https://moddingwiki.shikadi.net/wiki/MUS_Format)
+
+#### RPC (Recomposer)
+
+* [Recomposer Format](http://www.vgmpf.com/Wiki/index.php?title=GMF)
 
 #### XMI (Extended Multiple Instrument Digital Interface)
 

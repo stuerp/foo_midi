@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2024.05.05) **/
+/** $VER: foo_midi.rc (2024.05.11) **/
 
 #include "resource.h"
 
@@ -86,8 +86,6 @@ font 8, "Segoe UI", 400, 0, 1
         control "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS, "Button",   BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
         control "Disable bank changes",                             IDC_FILTER_BANKS, "Button",         BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
 
-    ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, 7, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
-
     groupbox "BASS MIDI", IDC_STATIC, X_A50, Y_A50, W_A50, H_A50
         rtext           "Volume:",          IDC_BASSMIDI_VOLUME_LBL,X_A57, Y_A57 + 2, W_A57, H_A57
         edittext                            IDC_BASSMIDI_VOLUME,    X_A58, Y_A58, W_A58, H_A58, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
@@ -115,6 +113,8 @@ font 8, "Segoe UI", 400, 0, 1
         rtext       "Chips:",               IDC_ADL_CHIPS_TEXT, X_A93, Y_A93 + 2, W_A93, H_A93
         combobox                            IDC_ADL_CHIPS,      X_A94, Y_A94,     W_A94, H_A94, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
         control     "Enable soft panning",  IDC_ADL_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A95, Y_A95, W_A95, H_A95
+
+    ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, X_A50, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 }
 
 #include "Infrastructure\PreferencesPathsLayout.h"

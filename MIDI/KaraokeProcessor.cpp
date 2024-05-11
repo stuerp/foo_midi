@@ -138,16 +138,77 @@ static bool IsValidShiftJIS(const char * data, size_t size)
 }
 
 /// <summary>
+/// Returns true if the specified text is UTF-8 encoded.
+/// </summary>
+bool IsUTF8(const char * text, size_t size)
+{
+    size_t n;
+
+    for (size_t i = 0; i < size; ++i)
+    {
+        uint8_t c = (uint8_t ) text[i];
+
+        //if (c==0x09 || c==0x0a || c==0x0d || (0x20 <= c && c <= 0x7e) ) n = 0; // is_printable_ascii
+        if ((0x00 <= c) && (c <= 0x7F))
+            n = 0; // 0bbbbbbb
+        else
+        if ((c & 0xE0) == 0xC0)
+            n = 1; // 110bbbbb
+        else
+        if ((c == 0xED) && (i < (size - 1)) && (((uint8_t) text[i + 1] & 0xA0) == 0xA0))
+            return false; //U+d800 to U+dfff
+        else
+        if ((c & 0xF0) == 0xE0)
+            n = 2; // 1110bbbb
+        else
+        if ((c & 0xF8) == 0xF0)
+            n = 3; // 11110bbb
+//      else
+//      if ((c & 0xFC) == 0xF8)
+//          n = 4; // 111110bb //byte 5, unnecessary in 4 byte UTF-8
+//      if ((c & 0xFE) == 0xFC)
+//          n = 5; // 1111110b //byte 6, unnecessary in 4 byte UTF-8
+        else
+            return false;
+
+        // n bytes matching 10bbbbbb follow?
+        for (size_t j = 0; (j < n) && (i < size); ++j)
+        { 
+            if ((++i == size) || (((uint8_t) text[i] & 0xC0) != 0x80))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+/// <summary>
+/// Returns true if the specified text is ASCII encoded.
+/// </summary>
+bool IsASCII(const char * text)
+{
+    while (*text)
+    {
+        if (*text < 0)
+            return false;
+
+        text++;
+    }
+
+    return true;
+}
+
+/// <summary>
 /// Convert an ANSI string to UTF-8.
 /// </summary>
 void KaraokeProcessor::UTF8Encode(pfc::string8 text, pfc::string8 & utf8)
 {
-    if (pfc::is_valid_utf8(text))
+    if (IsUTF8(text, ::strlen(text)))
         return;
 
     UINT CodePage = CP_ACP; // ANSI
 
-    if (!pfc::is_lower_ascii(text))
+    if (IsASCII(text))
     {
         if (IsValidShiftJIS(text, ::strlen(text)))
             CodePage = 932; // Shift-JIS

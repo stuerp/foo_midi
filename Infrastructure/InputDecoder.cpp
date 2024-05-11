@@ -66,12 +66,15 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
     file->read_object(Object.data(), (t_size) _FileStats.m_size, abortHandler);
 
+    if (_strnicmp(filePath, "file://", 7) == 0)
+        filePath += 7;
+
     {
         _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
 
         if (_IsSysExFile)
         {
-            if (!MIDIProcessor::Process(Object, nullptr, _Container))
+            if (!MIDIProcessor::Process(Object, filePath, _Container))
                 throw exception_io_data("Invalid SysEx file.");
 
             return;
@@ -79,7 +82,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     }
 
     {
-        if (!MIDIProcessor::Process(Object, pfc::string_extension(filePath), _Container))
+        if (!MIDIProcessor::Process(Object, filePath, _Container))
         {
             pfc::string8 Message = "Invalid MIDI file: ";
 
