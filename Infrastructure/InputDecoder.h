@@ -109,7 +109,7 @@ public:
         if (_PlayerType == PlayerType::EmuDeMIDI)
         {
             insync(_Lock);
-            _IsRunning--;
+            _IsRunning -= 1;
         }
     #ifdef DXISUPPORT
         if (dxiProxy)

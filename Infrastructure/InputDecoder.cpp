@@ -377,7 +377,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     {
                         insync(_Lock);
 
-                        if (++_IsRunning == 1)
+                        _IsRunning += 1;
+
+                        if (_IsRunning == 1)
                             _CurrentSampleRate = _SampleRate;
                         else
                         if (_SampleRate != _CurrentSampleRate)
