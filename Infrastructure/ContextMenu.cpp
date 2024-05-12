@@ -112,14 +112,14 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
                     File->read_object(Object.data(), (t_size) FileSize, AbortHandler);
 
                     {
-                        const char * FilePath = Location.get_path();
+                        const char * TmpFilePath = Location.get_path();
 
-                        if (_strnicmp(FilePath, "file://", 7) == 0)
-                            FilePath += 7;
+                        if (_strnicmp(TmpFilePath, "file://", 7) == 0)
+                            TmpFilePath += 7;
 
                         MIDIContainer Container;
 
-                        if (MIDIProcessor::Process(Object, FilePath, Container))
+                        if (MIDIProcessor::Process(Object, TmpFilePath, Container))
                         {
                             Object.resize(0);
 
