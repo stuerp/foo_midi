@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.05.11) **/
+/** $VER: InputDecoder.cpp (2024.05.12) **/
 
 #include "framework.h"
 
@@ -74,7 +74,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
         if (_IsSysExFile)
         {
-            if (!MIDIProcessor::Process(Object, filePath, _Container))
+            if (!MIDIProcessor::Process(Object, pfc::wideFromUTF8(filePath), _Container))
                 throw exception_io_data("Invalid SysEx file.");
 
             return;
@@ -82,7 +82,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     }
 
     {
-        if (!MIDIProcessor::Process(Object, filePath, _Container))
+        if (!MIDIProcessor::Process(Object, pfc::wideFromUTF8(filePath), _Container))
         {
             pfc::string8 Message = "Invalid MIDI file: ";
 

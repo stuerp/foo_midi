@@ -1,9 +1,11 @@
 
-/** $VER: ContextMenu.cpp (2024.05.11) **/
+/** $VER: ContextMenu.cpp (2024.05.12) **/
 
 #include "framework.h"
 
 #include "ContextMenu.h"
+
+#include <pfc/string-conv-lite.h>
 
 static const char * ItemTexts[5] =
 {
@@ -119,7 +121,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
 
                         MIDIContainer Container;
 
-                        if (MIDIProcessor::Process(Object, TmpFilePath, Container))
+                        if (MIDIProcessor::Process(Object, pfc::wideFromUTF8(TmpFilePath), Container))
                         {
                             Object.resize(0);
 
