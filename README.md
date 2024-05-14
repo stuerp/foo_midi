@@ -118,6 +118,7 @@ v2.11.0.0-alpha3, 2024-xx-xx
 * New: Recomposer support (.RCP, .R36, .G18, .G36)
 * Improved: Added support for Unicode paths to RCP converter (alpha3)
 * Fixed: RPG Maker loops should work again.
+* Fixed: Recomposer files with strange tempo changes crashed the component.
 
 v2.10.0.0, 2024-05-07, *"It's been a while"*
 
