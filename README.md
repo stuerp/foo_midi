@@ -113,13 +113,13 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v2.11.0.0-alpha4, 2024-xx-xx
+v2.11.0.0-alpha5, 2024-xx-xx
 
 * New: Recomposer support (.RCP, .R36, .G18, .G36)
 * Improved: Added support for Unicode paths to RCP converter (alpha3)
-* Improved: Detection of mixed-encoding text in metadata (alpha4)
+* Improved: Detection of mixed-encoding text in metadata (alpha5)
 * Fixed: RPG Maker loops should work again.
-* Fixed: Recomposer files with strange tempo changes crashed the component.
+* Fixed: Recomposer files with strange tempo changes crashed the component. (alpha4)
 
 v2.10.0.0, 2024-05-07, *"It's been a while"*
 
