@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.05.12) **/
+/** $VER: InputDecoder.cpp (2024.05.15) **/
 
 #include "framework.h"
 
@@ -15,6 +15,8 @@
 #include "Exceptions.h"
 
 #include <math.h>
+
+#include <Encoding.h>
 
 volatile int _IsRunning = 0;
 
@@ -74,15 +76,34 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
         if (_IsSysExFile)
         {
-            if (!MIDIProcessor::Process(Object, pfc::wideFromUTF8(filePath), _Container))
-                throw exception_io_data("Invalid SysEx file.");
+            try
+            {
+                MIDIProcessor::Process(Object, pfc::wideFromUTF8(filePath), _Container);
+            }
+            catch (std::exception &)
+            {
+                throw exception_io_data("Invalid SysEx file");
+            }
 
             return;
         }
     }
 
     {
-        if (!MIDIProcessor::Process(Object, pfc::wideFromUTF8(filePath), _Container))
+        bool Success = false;
+
+        try
+        {
+            Success = MIDIProcessor::Process(Object, pfc::wideFromUTF8(filePath), _Container);
+        }
+        catch (std::exception & e)
+        {
+            pfc::string8 Message = "Invalid MIDI file: ";
+
+            throw exception_io_data(Message + e.what());
+        }
+
+        if (!Success)
         {
             pfc::string8 Message = "Invalid MIDI file: ";
 
@@ -174,6 +195,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 #pragma endregion
 
 #pragma region("input_decoder")
+
 /// <summary>
 /// Initializes the decoder before playing the specified subsong.
 /// Resets playback position to the beginning of specified subsong. This must be called first, before any other input_decoder methods (other than those inherited from input_info_reader).
@@ -1083,6 +1105,7 @@ void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_ca
         }
     }
 }
+
 #pragma endregion
 
 /// <summary>
@@ -1310,141 +1333,6 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         }
     }
 }
-/*
-/// <summary>
-/// Returns the number of bytes required to represent a Shift-JIS character.
-/// </summary>
-static size_t DecodeShiftJISChar(const uint8_t * data, size_t size)
-{
-    if (size == 0)
-        return 0;
-
-    if (size > 2)
-        size = 2;
-
-    if (data[0] < 0x80)
-        return (size_t)((data[0] > 0) ? 1 : 0);
-
-    if (size >= 1)
-    {
-        // TODO: definitely weak
-        if (unsigned(data[0] - 0xA1) < 0x3F)
-            return 1;
-    }
-
-    if (size >= 2)
-    {
-        // TODO: probably very weak
-        if ((unsigned(data[0] - 0x81) < 0x1F || unsigned(data[0] - 0xE0) < 0x10) && unsigned(data[1] - 0x40) < 0xBD)
-            return 2;
-    }
-
-    return 0;
-}
-
-/// <summary>
-/// Is the data a Shift-JIS string?
-/// </summary>
-static bool IsValidShiftJISOld(const char * data, size_t size)
-{
-    for (size_t i = 0; (i < size) && (data[i] != 0);)
-    {
-        size_t n = ::DecodeShiftJISChar((const uint8_t *)data + i, size - i);
-
-        if (n == 0)
-            return false;
-
-        i += n;
-
-        if (i > size)
-            return false;
-    }
-
-    return true;
-}
-*/
-
-#ifdef _DEBUG
-// Test cases
-const uint8_t Data1[] =
-{
-    0x46, 0x69, 0x6e, 0x61, 0x6c, 0x20, 0x46, 0x61, 0x6e, 0x74, 0x61, 0x73, 0x79, 0x20, 0x35, 0x20, 0x5b, 0x20, 0x83, 0x72, 0x83, 0x62, 0x83, 0x4f,
-    0x83, 0x75, 0x83, 0x8a, 0x83, 0x62, 0x83, 0x61, 0x82, 0xcc, 0x8e, 0x80, 0x93, 0xac, 0x20, 0x81, 0x66, 0x82, 0x58, 0x82, 0x58, 0x20, 0x2d, 0x73,
-    0x69, 0x6e, 0x67, 0x6c, 0x65, 0x20, 0x65, 0x64, 0x69, 0x74, 0x2d, 0x20, 0x5d, 0x20, 0x66, 0x6f, 0x72, 0x20, 0x53, 0x43, 0x2d, 0x38, 0x38, 0x50,
-    0x72, 0x6f, 0x20, 0x32, 0x50, 0x6f, 0x72, 0x74, 0x20, 0x76, 0x65, 0x72, 0x37, 0x2e, 0x30, 0x20, 0x62, 0x79, 0x20, 0x4c, 0x69, 0x78, 0x00
-};
-const WCHAR * Text1 = L"Final Fantasy 5 [ ビッグブリッヂの死闘 ’９９ -single edit- ] for SC-88Pro 2Port ver7.0 by Lix";
-
-struct Test
-{
-    const uint8_t * Data;
-    const WCHAR * Text;
-} Tests[] =
-{
-    { Data1, Text1 },   // Mixed ASCII and Shift-JIS
-};
-#endif
-
-/// <summary>
-/// Is the data a EUC-JP string?
-/// http://www.rikai.com/library/kanjitables/kanji_codes.euc.shtml
-/// </summary>
-static bool IsValidEUCJP(const char * data, size_t size)
-{
-    while (size != 0)
-    {
-        uint8_t d1 = (uint8_t) *data++;
-        size--;
-
-        if (d1 > 0x80)
-        {
-            if (size == 0)
-                return true;
-
-            uint8_t d2 = (uint8_t) *data++;
-            size--;
-
-            if (!((d1 >= 0xA1 && d1 <= 0xAD) || (d1 >= 0xB0 && d1 <= 0xFE)))
-                return false;
-
-            if (!(d2 >= 0xA0 && d1 <= 0xFF))
-                return false;
-        }
-    }
-
-    return true;
-}
-
-/// <summary>
-/// Is the data a Shift-JIS string?
-/// char ShiftJIS[] = { 0x82, 0xA0, 0x82, 0xA2, 0x82, 0xA4 }; / char UTF8[] = { 0xE3, 0x81, 0x82, 0xE3, 0x81, 0x84, 0xE3, 0x81, 0x86 };
-/// http://www.rikai.com/library/kanjitables/kanji_codes.sjis.shtml
-/// </summary>
-static bool IsValidShiftJIS(const char * data, size_t size)
-{
-    while (size != 0)
-    {
-        uint8_t d1 = (uint8_t) *data++;
-        size--;
-
-        if (d1 > 0x80)
-        {
-            if (size == 0)
-                return false;
-
-            uint8_t d2 = (uint8_t) *data++;
-            size--;
-
-            if (!((d1 >= 0x81 && d1 <= 0x84) || (d1 >= 0x87 && d1 <= 0x9F) || (d1 >= 0xE0 && d1 <= 0xEF)))
-                return false;
-
-            if (!((d2 >= 0x40 && d2 <= 0x9E) || (d2 >= 0x9F && d2 <= 0xFC)))
-                return false;
-        }
-    }
-
-    return true;
-}
 
 /// <summary>
 /// Adds the specified tag.
@@ -1469,20 +1357,18 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
 
     if (!pfc::is_lower_ascii(value) && !pfc::is_valid_utf8(value, maxLength))
     {
-        if (IsValidShiftJIS(value, ::strlen(value)))
+        if (IsShiftJIS(value, maxLength))
         {
-            // Shift-JIS
             Value = pfc::stringcvt::string_utf8_from_codepage(932, value);
         }
         else
-        if (IsValidEUCJP(value, ::strlen(value)))
+        if (IsEUCJP(value, maxLength))
         {
-            // EUC-JP, http://www.rikai.com/library/kanjitables/kanji_codes.euc.shtml
             Value = pfc::stringcvt::string_utf8_from_codepage(20932, value);
 
             // Try other code pages.
             if (Value.is_empty())
-                Value = pfc::stringcvt::string_utf8_from_codepage(51932, value);
+                Value = pfc::stringcvt::string_utf8_from_codepage(51932, value); // EUC Japanese
         }
         else
             Value = pfc::stringcvt::string_utf8_from_ansi(value);

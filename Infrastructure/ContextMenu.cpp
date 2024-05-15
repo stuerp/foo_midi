@@ -120,8 +120,17 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
                             TmpFilePath += 7;
 
                         MIDIContainer Container;
+                        bool Success = false;
 
-                        if (MIDIProcessor::Process(Object, pfc::wideFromUTF8(TmpFilePath), Container))
+                        try
+                        {
+                            Success = MIDIProcessor::Process(Object, pfc::wideFromUTF8(TmpFilePath), Container);
+                        }
+                        catch (std::exception &)
+                        {
+                        }
+
+                        if (Success)
                         {
                             Object.resize(0);
 
