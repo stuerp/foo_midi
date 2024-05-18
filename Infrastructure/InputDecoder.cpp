@@ -15,6 +15,7 @@
 #include "Exceptions.h"
 
 #include <math.h>
+#include <string.h>
 
 #include <Encoding.h>
 
@@ -51,6 +52,9 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     if (file.is_empty())
         filesystem::g_open(file, filePath, filesystem::open_mode_read, abortHandler);
 
+    if (_strnicmp(filePath, "file://", 7) == 0)
+        filePath += 7;
+
     _FilePath = filePath;
 
     {
@@ -69,17 +73,14 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
     file->read_object(Object.data(), (t_size) _FileStats.m_size, abortHandler);
 
-    if (_strnicmp(filePath, "file://", 7) == 0)
-        filePath += 7;
-
     {
-        _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
+        _IsSysExFile = IsSysExFileExtension(pfc::string_extension(_FilePath));
 
         if (_IsSysExFile)
         {
             try
             {
-                midi_processor_t::Process(Object, pfc::wideFromUTF8(filePath), _Container);
+                midi_processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container);
             }
             catch (std::exception & e)
             {
@@ -95,7 +96,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     {
         try
         {
-            midi_processor_t::Process(Object, pfc::wideFromUTF8(filePath), _Container);
+            midi_processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container);
         }
         catch (std::exception & e)
         {
@@ -135,13 +136,16 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
         _Container.SerializeAsSMF(Object);
 
-        hasher_md5_state HasherState;
-        static_api_ptr_t<hasher_md5> Hasher;
+        {
+            static_api_ptr_t<hasher_md5> Hasher;
 
-        Hasher->initialize(HasherState);
-        Hasher->process(HasherState, Object.data(), Object.size());
+            hasher_md5_state HasherState;
 
-        _FileHash = Hasher->get_result(HasherState);
+            Hasher->initialize(HasherState);
+            Hasher->process(HasherState, Object.data(), Object.size());
+
+            _FileHash = Hasher->get_result(HasherState);
+        }
     }
 
     if (AdvCfgSkipToFirstNote)
@@ -1144,6 +1148,23 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 & filePath, pfc::stri
 #pragma region Tags
 
 /// <summary>
+/// Changes the extension of the file name in the specified file path.
+/// </summary>
+pfc::string8 ChangeExtension(const pfc::string8 & filePath, const pfc::string8 & fileExtension)
+{
+    char FilePath[MAX_PATH];
+
+    ::strcpy_s(FilePath, _countof(FilePath), filePath);
+
+    char * FileExtension = ::strrchr(FilePath, '.');
+
+    if (FileExtension != nullptr)
+        ::strcpy_s(FileExtension + 1, _countof(FilePath) - (FileExtension - FilePath) - 1, fileExtension.c_str());
+
+    return pfc::string8(FilePath);
+}
+
+/// <summary>
 /// Converts the MIDI metadata to tags.
 /// </summary>
 void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
@@ -1211,24 +1232,44 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         }
     }
 
+    // Read a WRD file in the same path and convert it to lyrics.
+    {
+        pfc::string8 FilePath = ChangeExtension(_FilePath, "wrd");
+
+        FILE * fp = nullptr;
+
+        ::fopen_s(&fp, FilePath.c_str(), "r");
+
+        if (fp != nullptr)
+        {
+            char Line[256];
+
+            while (!::feof(fp) && (::fgets(Line, _countof(Line), fp) != NULL))
+            {
+                if (Line[0] != '@')
+                    kp.AddUnsyncedLyrics(0, Line);
+            }
+
+            ::fclose(fp);
+        }
+    }
+
     if (!kp.GetUnsyncedLyrics().is_empty())
     {
         auto Lyrics = kp.GetUnsyncedLyrics();
-        pfc::string8 UTF8;
 
-        KaraokeProcessor::UTF8Encode(Lyrics, UTF8);
+        std::string UTF8 = TextToUTF8(Lyrics.c_str());
 
-        fileInfo.meta_set("lyrics", UTF8);
+        fileInfo.meta_set("lyrics", UTF8.c_str());
     }
 
     if (!kp.GetSyncedLyrics().is_empty())
     {
         auto Lyrics = kp.GetSyncedLyrics();
-        pfc::string8 UTF8;
 
-        KaraokeProcessor::UTF8Encode(Lyrics, UTF8);
+        std::string UTF8 = TextToUTF8(Lyrics.c_str());
 
-        fileInfo.meta_set("syncedlyrics", UTF8);
+        fileInfo.meta_set("syncedlyrics", UTF8.c_str());
     }
 
     // General info
