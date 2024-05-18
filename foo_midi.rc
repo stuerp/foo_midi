@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2024.05.11) **/
+/** $VER: foo_midi.rc (2024.05.16) **/
 
 #include "resource.h"
 
@@ -144,4 +144,21 @@ font 8, "Segoe UI", 400, 0, 1
     pushbutton  "...",              IDC_FLUIDSYNTH_PATH_SELECT,         X_B53, Y_B53,     W_B53, H_B53
 
     ltext "Please close and re-open Preferences to activate the changes.", IDC_PATHS_MESSAGE, 7, H_B00 - 4 - 8, W_B00, 8, NOT WS_VISIBLE
+}
+
+#include "Infrastructure\PreferencesRecomposer.h"
+
+IDD_PREFERENCES_RECOMPOSER dialogex 0, 0, 0, 0
+style DS_SETFONT | WS_CHILD
+font 8, "Segoe UI", 400, 0, 1
+{
+    rtext       "Loop expansion:",          IDC_STATIC,                 X_C11, Y_C11 + 2, W_C11, H_C11
+    edittext                                IDC_LOOP_EXPANSION,         X_C12, Y_C12,     W_C12, H_C12, ES_AUTOHSCROLL | ES_RIGHT
+
+    control     "Write bar markers",        IDC_WRITE_BAR_MARKERS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C20, Y_C20, W_C20, H_C20
+    control     "Write SysEx names",        IDC_WRITE_SYSEX_NAMES,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C21, Y_C21, W_C21, H_C21
+    control     "Extend loops ",            IDC_EXTEND_LOOPS,           "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C22, Y_C22, W_C22, H_C22
+    control     "Wolfteam loops ",          IDC_WOLFTEAM_LOOPS,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C23, Y_C23, W_C23, H_C23
+    control     "Keep dummy channels",      IDC_KEEP_DUMMY_CHANNELS,    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C24, Y_C24, W_C24, H_C24
+    control     "Include control data",     IDC_INCLUDE_CONTROL_DATA,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C25, Y_C25, W_C25, H_C25
 }

@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2024.05.05) **/
+/** $VER: Configuration.h (2024.05.16) **/
 
 #pragma once
 
@@ -16,6 +16,7 @@ using namespace cfg_var_modern;
 
 extern const GUID PreferencesPageGUID;
 extern const GUID PreferencesPathsPageGUID;
+extern const GUID PreferencesRecomposerPageGUID;
 
 enum class PlayerType : int8_t
 {

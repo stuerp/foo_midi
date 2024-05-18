@@ -257,6 +257,7 @@
     <Manifest />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Infrastructure\PreferencesRecomposer.cpp" />
     <ClCompile Include="Players\ADLPlayer.cpp" />
     <ClCompile Include="Players\BMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Configuration.cpp" />
@@ -388,6 +389,7 @@
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\version.h" />
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
+    <ClInclude Include="Infrastructure\PreferencesRecomposer.h" />
     <ClInclude Include="Players\ADLPlayer.h" />
     <ClInclude Include="Players\BMPlayer.h" />
     <ClInclude Include="Infrastructure\ConfigurationMap.h" />

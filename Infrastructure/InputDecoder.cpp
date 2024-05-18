@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.05.15) **/
+/** $VER: InputDecoder.cpp (2024.05.16) **/
 
 #include "framework.h"
 
@@ -42,6 +42,7 @@ const char * PlayerTypeNames[] =
 };
 
 #pragma region("input_impl")
+
 /// <summary>
 /// Opens the specified file and parses it.
 /// </summary>
@@ -78,11 +79,13 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         {
             try
             {
-                MIDIProcessor::Process(Object, pfc::wideFromUTF8(filePath), _Container);
+                midi_processor_t::Process(Object, pfc::wideFromUTF8(filePath), _Container);
             }
-            catch (std::exception &)
+            catch (std::exception & e)
             {
-                throw exception_io_data("Invalid SysEx file");
+                pfc::string8 Message = "Failed to read SysEx file: ";
+
+                throw exception_io_data(Message + e.what());
             }
 
             return;
@@ -90,66 +93,21 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     }
 
     {
-        bool Success = false;
-
         try
         {
-            Success = MIDIProcessor::Process(Object, pfc::wideFromUTF8(filePath), _Container);
+            midi_processor_t::Process(Object, pfc::wideFromUTF8(filePath), _Container);
         }
         catch (std::exception & e)
         {
-            pfc::string8 Message = "Invalid MIDI file: ";
+            pfc::string8 Message = "Failed to read MIDI file: ";
 
             throw exception_io_data(Message + e.what());
-        }
-
-        if (!Success)
-        {
-            pfc::string8 Message = "Invalid MIDI file: ";
-
-            switch (MIDIProcessor::GetLastErrorCode())
-            {
-                case None: Message += "No error"; break;
-
-                case UnknownStatusCode: Message += "Unknown MIDI status code."; break;
-
-                case InsufficientData: Message += "Insufficient data in the stream."; break;
-
-                case InvalidSysExMessage: Message += "Invalid System Exclusive message."; break;
-                case InvalidSysExMessageContinuation: Message += "Invalid System Exclusive message."; break;
-                case InvalidSysExEndMessage: Message += "Invalid System Exclusive End message."; break;
-
-                case InvalidMetaDataMessage: Message += "Invalid meta data message."; break;
-
-                // SMF
-                case SMFBadHeaderChunkType: Message += "Bad SMF header chunk type."; break;
-                case SMFBadHeaderChunkSize: Message += "Bad SMF header chunk size."; break;
-                case SMFBadHeaderFormat: Message += "Bad SMF header format."; break;
-                case SMFBadHeaderTrackCount: Message += "Bad SMF header track count."; break;
-                case SMFBadHeaderTimeDivision: Message += "Bad SMF header time division."; break;
-
-                case SMFUnknownChunkType: Message += "Unknown type specified in SMF chunk."; break;
-
-                case SMFBadFirstMessage: Message += "Bad first message of a track."; break;
-
-                // XMI
-                case XMIFORMXDIRNotFound: Message += "FORM XDIR chunk not found."; break;
-                case XMICATXMIDNotFound: Message += "CAT XMID chunk not found."; break;
-                case XMIFORMXMIDNotFound: Message += "FORM XMID chunk not found."; break;
-                case XMIEVNTChunkNotFound: Message += "EVNT chunk not found."; break;
-
-                case XMIInvalidNoteMessage: Message += "Invalid note message."; break;
-
-                default: Message += "Unknown error code."; break;
-            }
-
-            throw exception_io_data(Message);
         }
 
         _TrackCount = _Container.GetTrackCount();
 
         if (_TrackCount == 0)
-            throw exception_io_data("Invalid MIDI file. No tracks found.");
+            throw exception_io_data("Invalid MIDI file: No tracks found");
 
         // Check if we read a valid MIDI file.
         {
@@ -165,7 +123,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             }
 
             if (!HasDuration)
-                throw exception_io_data("Invalid MIDI file. No timestamps found in any of the tracks.");
+                throw exception_io_data("Invalid MIDI file: No timestamps found in any of the tracks");
         }
 
         _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops);
@@ -189,9 +147,9 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     if (AdvCfgSkipToFirstNote)
         _Container.TrimStart();
 
-//  _LoopInTicks.Clear();
     _LoopRange.Clear();
 }
+
 #pragma endregion
 
 #pragma region("input_decoder")
@@ -212,7 +170,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _TimeInSamples = 0;
 
-    InitializeTime(subSongIndex);
+    // Initialize time.
+    _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
+
+    _LengthInSamples = (uint32_t) ::MulDiv((int) GetDuration(subSongIndex), (int) _SampleRate, 1000);
 
     _Container.SetTrackCount(_TrackCount);
 
@@ -1048,9 +1009,11 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
     return Success;
 }
+
 #pragma endregion
 
 #pragma region("input_info_reader")
+
 /// <summary>
 /// Retrieves information about the specified subsong.
 /// </summary>
@@ -1063,9 +1026,11 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 
     fileInfo.set_length(_Container.GetDuration(subSongIndex, true) * 0.001);
 }
+
 #pragma endregion
 
 #pragma region("input_info_writer")
+
 /// <summary>
 /// Set the tags for the specified file.
 /// </summary>
@@ -1121,20 +1086,9 @@ void InputDecoder::InitializeIndexManager()
 }
 
 /// <summary>
-/// Initializes the time parameters.
+/// Gets the total duration of the specified sub-song taking into account any looping and decay time, in ms.
 /// </summary>
-void InputDecoder::InitializeTime(size_t subSongIndex)
-{
-//  _LoopInTicks.Set(_Container.GetLoopBeginTimestamp(subSongIndex), _Container.GetLoopEndTimestamp(subSongIndex));
-    _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
-
-    _LengthInSamples = (uint32_t) ::MulDiv((int) GetPlaybackTime(subSongIndex), (int) _SampleRate, 1000);
-}
-
-/// <summary>
-/// Gets the total play back time taking into account any looping and decay time, in ms.
-/// </summary>
-uint32_t InputDecoder::GetPlaybackTime(size_t subSongIndex)
+uint32_t InputDecoder::GetDuration(size_t subSongIndex)
 {
     uint32_t LengthInMs = _Container.GetDuration(subSongIndex, true);
 
@@ -1158,9 +1112,9 @@ uint32_t InputDecoder::GetPlaybackTime(size_t subSongIndex)
 /// <summary>
 /// Gets the path name of the matching SoundFont file for the specified file, if any.
 /// </summary>
-bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept
+bool InputDecoder::GetSoundFontFilePath(const pfc::string8 & filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept
 {
-    static const char * Extensions[] =
+    static const char * FileExtensions[] =
     {
         "json",
         "sflist",
@@ -1172,13 +1126,13 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string
 
     soundFontPath = filePath;
 
-    size_t length = soundFontPath.length();
+    size_t Length = soundFontPath.length();
 
-    for (size_t i = 0; i < _countof(Extensions); ++i)
+    for (const char * & FileExtension : FileExtensions)
     {
-        soundFontPath.truncate(length);
+        soundFontPath.truncate(Length);
         soundFontPath += ".";
-        soundFontPath += Extensions[i];
+        soundFontPath += FileExtension;
 
         if (filesystem::g_exists(soundFontPath, abortHandler))
             return true;
@@ -1186,6 +1140,8 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string
 
     return false;
 }
+
+#pragma region Tags
 
 /// <summary>
 /// Converts the MIDI metadata to tags.
@@ -1198,18 +1154,18 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     KaraokeProcessor kp;
 
     {
-        MIDIMetaData MetaData;
+        midi_metadata_t MetaData;
 
         _Container.GetMetaData(subSongIndex, MetaData);
 
-        MIDIMetaDataItem Item;
+        midi_metadata_item_t Item;
 
         {
             bool HasTitle = MetaData.GetItem("title", Item);
 
             for (size_t i = 0; i < MetaData.GetCount(); ++i)
             {
-                const MIDIMetaDataItem & mdi = MetaData[i];
+                const midi_metadata_item_t & mdi = MetaData[i];
 
             #ifdef _DEBUG
 //              console::print(mdi.Name.c_str(), ":", mdi.Value.c_str());
@@ -1380,14 +1336,6 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
     fileInfo.meta_add(name, value);
 }
 
-/*
-#define XMIDI_CONTROLLER_FOR_LOOP 0x74 // For Loop
-#define XMIDI_CONTROLLER_NEXT_BREAK 0x75 // Next/Break
-
-#define EMIDI_CONTROLLER_TRACK_DESIGNATION 110 // Track Designation
-#define EMIDI_CONTROLLER_TRACK_EXCLUSION 111 // Track Exclusion
-#define EMIDI_CONTROLLER_LOOP_BEGIN XMIDI_CONTROLLER_FOR_LOOP
-#define EMIDI_CONTROLLER_LOOP_END XMIDI_CONTROLLER_NEXT_BREAK
-*/
+#pragma endregion
 
 static input_factory_t<InputDecoder> InputDecoderFactory;
