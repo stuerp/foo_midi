@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRecomposer.cpp (2024.05.16) P. Stuer **/
+/** $VER: PreferencesHMI.cpp (2024.05.19) P. Stuer **/
 
 #include "framework.h"
 
@@ -33,19 +33,19 @@
 /// <summary>
 /// Implements a preferences page.
 /// </summary>
-class PreferencesRecomposerPage : public CDialogImpl<PreferencesRecomposerPage>, public preferences_page_instance
+class DialogPage : public CDialogImpl<DialogPage>, public preferences_page_instance
 {
 public:
-    PreferencesRecomposerPage(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
+    DialogPage(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
     {
     }
 
-    PreferencesRecomposerPage(const PreferencesRecomposerPage &) = delete;
-    PreferencesRecomposerPage(const PreferencesRecomposerPage &&) = delete;
-    PreferencesRecomposerPage & operator=(const PreferencesRecomposerPage &) = delete;
-    PreferencesRecomposerPage & operator=(PreferencesRecomposerPage &&) = delete;
+    DialogPage(const DialogPage &) = delete;
+    DialogPage(const DialogPage &&) = delete;
+    DialogPage & operator=(const DialogPage &) = delete;
+    DialogPage & operator=(DialogPage &&) = delete;
 
-    virtual ~PreferencesRecomposerPage() { };
+    virtual ~DialogPage() { };
 
     #pragma region("preferences_page_instance")
 
@@ -56,17 +56,18 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(PreferencesRecomposerPage)
+    BEGIN_MSG_MAP_EX(DialogPage)
         MSG_WM_INITDIALOG(OnInitDialog)
 /*
         COMMAND_HANDLER_EX(IDC_VST_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_VST_PATH_SELECT, BN_CLICKED, OnButtonClicked)
 */
+        REFLECT_NOTIFICATIONS()
     END_MSG_MAP()
 
     enum
     {
-        IDD = IDD_PREFERENCES_RECOMPOSER
+        IDD = IDD_PREFERENCES_HMI
     };
 
 private:
@@ -91,7 +92,7 @@ private:
 /// <summary>
 /// Gets the state of the Preference dialog.
 /// </summary>
-t_uint32 PreferencesRecomposerPage::get_state()
+t_uint32 DialogPage::get_state()
 {
     t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
 
@@ -104,7 +105,7 @@ t_uint32 PreferencesRecomposerPage::get_state()
 /// <summary>
 /// Applies the changes to the preferences.
 /// </summary>
-void PreferencesRecomposerPage::apply()
+void DialogPage::apply()
 {
 //  AdvCfgVSTiPluginDirectoryPath.set(_VSTiPluginDirectoryPath);
 
@@ -114,7 +115,7 @@ void PreferencesRecomposerPage::apply()
 /// <summary>
 /// Resets this page's content to the default values. Does not apply any changes - lets user preview the changes before hitting "apply".
 /// </summary>
-void PreferencesRecomposerPage::reset()
+void DialogPage::reset()
 {
 //  _VSTiPluginDirectoryPath.reset();
 
@@ -130,7 +131,7 @@ void PreferencesRecomposerPage::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL PreferencesRecomposerPage::OnInitDialog(CWindow, LPARAM) noexcept
+BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
 {
     _DarkModeHooks.AddDialogWithControls(*this);
 
@@ -142,7 +143,7 @@ BOOL PreferencesRecomposerPage::OnInitDialog(CWindow, LPARAM) noexcept
 /// <summary>
 /// Handles the notification when a control loses focus.
 /// </summary>
-void PreferencesRecomposerPage::OnEditChange(UINT code, int id, CWindow) noexcept
+void DialogPage::OnEditChange(UINT code, int id, CWindow) noexcept
 {
     if (code != EN_CHANGE)
         return;
@@ -167,7 +168,7 @@ void PreferencesRecomposerPage::OnEditChange(UINT code, int id, CWindow) noexcep
 /// <summary>
 /// Handles a click on a button.
 /// </summary>
-void PreferencesRecomposerPage::OnButtonClicked(UINT, int id, CWindow) noexcept
+void DialogPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 {
 /*
     if (id == IDC_VST_PATH_SELECT)
@@ -191,7 +192,7 @@ void PreferencesRecomposerPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 /// <summary>
 /// Returns whether our dialog content is different from the current configuration (whether the Apply button should be enabled or not)
 /// </summary>
-bool PreferencesRecomposerPage::HasChanged() const noexcept
+bool DialogPage::HasChanged() const noexcept
 {
     bool HasChanged = false;
 /*
@@ -206,7 +207,7 @@ bool PreferencesRecomposerPage::HasChanged() const noexcept
 /// <summary>
 /// Tells the host that our state has changed to enable/disable the Apply button appropriately.
 /// </summary>
-void PreferencesRecomposerPage::OnChanged() const noexcept
+void DialogPage::OnChanged() const noexcept
 {
     _Callback->on_state_changed();
 }
@@ -214,33 +215,33 @@ void PreferencesRecomposerPage::OnChanged() const noexcept
 /// <summary>
 /// Updates the appearance of the dialog according to the values of the settings.
 /// </summary>
-void PreferencesRecomposerPage::UpdateDialog() const noexcept
+void DialogPage::UpdateDialog() const noexcept
 {
 //  ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, _VSTiPluginDirectoryPath);
 }
 
 #pragma endregion
 
-class PreferencesRecomposerPageImpl : public preferences_page_impl<PreferencesRecomposerPage>
+class Page : public preferences_page_impl<DialogPage>
 {
 public:
-    PreferencesRecomposerPageImpl() noexcept { };
+    Page() noexcept { };
 
-    PreferencesRecomposerPageImpl(const PreferencesRecomposerPageImpl &) = delete;
-    PreferencesRecomposerPageImpl(const PreferencesRecomposerPageImpl &&) = delete;
-    PreferencesRecomposerPageImpl & operator=(const PreferencesRecomposerPageImpl &) = delete;
-    PreferencesRecomposerPageImpl & operator=(PreferencesRecomposerPageImpl &&) = delete;
+    Page(const Page &) = delete;
+    Page(const Page &&) = delete;
+    Page & operator=(const Page &) = delete;
+    Page & operator=(Page &&) = delete;
 
-    virtual ~PreferencesRecomposerPageImpl() noexcept { };
+    virtual ~Page() noexcept { };
 
     const char * get_name() noexcept
     {
-        return IDD_PREFERENCES_RECOMPOSER_NAME;
+        return IDD_PREFERENCES_HMI_NAME;
     }
 
     GUID get_guid() noexcept
     {
-        return PreferencesRecomposerPageGUID;
+        return PreferencesHMIPageGUID;
     }
 
     GUID get_parent_guid() noexcept
@@ -249,4 +250,4 @@ public:
     }
 };
 
-static preferences_page_factory_t<PreferencesRecomposerPageImpl> PreferencesPageFactory;
+//static preferences_page_factory_t<Page> PreferencesPageFactory;

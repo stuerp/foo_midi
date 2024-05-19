@@ -121,6 +121,7 @@ v2.11.0.0-alpha6, 2024-xx-xx
 * Improved: Reduced the default tempo of HMI/HMP files to half the old tempo.
 * Fixed: RPG Maker loops should work again.
 * Fixed: Recomposer files with strange tempo changes crashed the component. (alpha4)
+* Fixed: HMI conversion added a second Note On event after every note instead of a Note Off event. (alpha7)
 
 v2.10.0.0, 2024-05-07, *"It's been a while"*
 

@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2024.05.16) **/
+/** $VER: Configuration.h (2024.05.19) **/
 
 #pragma once
 
@@ -16,7 +16,8 @@ using namespace cfg_var_modern;
 
 extern const GUID PreferencesPageGUID;
 extern const GUID PreferencesPathsPageGUID;
-extern const GUID PreferencesRecomposerPageGUID;
+extern const GUID PreferencesProcessingPageGUID;
+extern const GUID PreferencesHMIPageGUID;
 
 enum class PlayerType : int8_t
 {
@@ -141,7 +142,19 @@ extern cfg_var_modern::cfg_int
     CfgMIDIStandard,
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
-    CfgUseVSTiWithXG;
+    CfgUseVSTiWithXG,
+
+    CfgLoopExpansion,
+
+    CfgDefaultTempo;
+
+extern cfg_var_modern::cfg_bool
+    CfgWriteBarMarkers,
+    CfgWriteSysExNames,
+    CfgExtendLoops,
+    CfgWolfteamLoopMode,
+    CfgKeepDummyChannels,
+    CfgIncludeControlData;
 
 extern cfg_var_modern::cfg_float
     CfgBASSMIDIVolume;

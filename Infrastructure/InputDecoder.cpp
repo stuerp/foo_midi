@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.05.16) **/
+/** $VER: InputDecoder.cpp (2024.05.19) **/
 
 #include "framework.h"
 
@@ -96,7 +96,20 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     {
         try
         {
-            midi_processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container);
+            midi_processor_options_t Options
+            (
+                (uint16_t) CfgLoopExpansion,
+                CfgWriteBarMarkers,
+                CfgWriteSysExNames,
+                CfgExtendLoops,
+                CfgWolfteamLoopMode,
+                CfgKeepDummyChannels,
+                CfgIncludeControlData,
+
+                (uint16_t) CfgDefaultTempo
+            );
+
+            midi_processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, Options);
         }
         catch (std::exception & e)
         {
@@ -1175,7 +1188,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     KaraokeProcessor kp;
 
     {
-        midi_metadata_t MetaData;
+        midi_metadata_table_t MetaData;
 
         _Container.GetMetaData(subSongIndex, MetaData);
 

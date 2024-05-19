@@ -75,7 +75,7 @@ private:
     void SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time);
 
 private:
-    std::vector<midi_stream_event_t> _Stream;
+    std::vector<midi_item_t> _Stream;
     size_t _StreamPosition; // Current position in the event stream
 
     uint32_t _Position;     // Current position in the sample stream

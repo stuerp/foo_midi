@@ -32,7 +32,7 @@
     <ClCompile Include="Players\FSPlayer.cpp" />
     <ClCompile Include="Players\MCIPlayer.cpp" />
     <ClCompile Include="framework.cpp" />
-    <ClCompile Include="Infrastructure\PreferencesRecomposer.cpp" />
+    <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -177,7 +177,7 @@
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth.h" />
     <ClInclude Include="Players\MCIPlayer.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Infrastructure\PreferencesRecomposer.h" />
+    <ClInclude Include="Infrastructure\PreferencesProcessingLayout.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
