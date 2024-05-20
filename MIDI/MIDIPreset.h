@@ -67,6 +67,6 @@ public:
     MIDIFlavor _MIDIFlavor;
     bool _UseMIDIEffects;
     bool _UseSuperMuntWithMT32;
-    bool _UseSecretSauceWithXG;
+    bool _UseVSTiWithXG;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

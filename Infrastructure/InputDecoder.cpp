@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.05.19) **/
+/** $VER: InputDecoder.cpp (2024.05.20) **/
 
 #include "framework.h"
 
@@ -42,7 +42,7 @@ const char * PlayerTypeNames[] =
     "MCI",
 };
 
-#pragma region("input_impl")
+#pragma region input_impl
 
 /// <summary>
 /// Opens the specified file and parses it.
@@ -169,7 +169,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
 #pragma endregion
 
-#pragma region("input_decoder")
+#pragma region input_decoder
 
 /// <summary>
 /// Initializes the decoder before playing the specified subsong.
@@ -201,6 +201,22 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     // Set the player type based on the content of the container.
     {
+        midi_metadata_table_t MetaData;
+
+        _Container.GetMetaData(subSongIndex, MetaData);
+
+        for (const midi_metadata_item_t & Item : MetaData)
+        {
+            if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
+            {
+                _IsMT32 = (Item.Value == "MT-32");
+                _IsXG = (Item.Value == "XG");
+            }
+        }
+
+        if (_IsMT32 && CfgUseSuperMuntWithMT32)
+            _PlayerType = PlayerType::SuperMunt;
+        else
         if (_IsXG && CfgUseVSTiWithXG)
         {
             _PlayerType = PlayerType::VSTi;
@@ -211,9 +227,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             Preset._VSTiFilePath = FilePath;
         }
-        else
-        if (_IsMT32 && CfgUseSuperMuntWithMT32)
-            _PlayerType = PlayerType::SuperMunt;
     }
 
     // Load the preset from the song if it has one.
@@ -970,12 +983,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
         {
             if (_ExtraPercussionChannel != ~0L)
-            {
-                char Text[4];
-
-                ::_itoa_s((int)(_ExtraPercussionChannel + 1), Text, 10);
-                fileInfo.info_set(TagExtraPercusionChannel, Text);
-            }
+                fileInfo.info_set(TagMIDIExtraPercusionChannel, pfc::format_int(_ExtraPercussionChannel + 1));
         }
 
         _IsFirstChunk = false;
@@ -1029,7 +1037,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
 #pragma endregion
 
-#pragma region("input_info_reader")
+#pragma region input_info_reader
 
 /// <summary>
 /// Retrieves information about the specified subsong.
@@ -1046,7 +1054,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 
 #pragma endregion
 
-#pragma region("input_info_writer")
+#pragma region input_info_writer
 
 /// <summary>
 /// Set the tags for the specified file.
@@ -1089,6 +1097,8 @@ void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_ca
 }
 
 #pragma endregion
+
+#pragma region Private
 
 /// <summary>
 /// Initializes the Index Manager.
@@ -1158,6 +1168,8 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 & filePath, pfc::stri
     return false;
 }
 
+#pragma endregion
+
 #pragma region Tags
 
 /// <summary>
@@ -1192,54 +1204,48 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
         _Container.GetMetaData(subSongIndex, MetaData);
 
-        midi_metadata_item_t Item;
+        midi_metadata_item_t TrackItem;
+
+        bool HasTitle = MetaData.GetItem("title", TrackItem);
 
         {
-            bool HasTitle = MetaData.GetItem("title", Item);
-
-            for (size_t i = 0; i < MetaData.GetCount(); ++i)
+            for (const auto & Item : MetaData)
             {
-                const midi_metadata_item_t & mdi = MetaData[i];
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
+                {
+                    fileInfo.info_set(TagMIDIType, Item.Value.c_str());
 
-            #ifdef _DEBUG
-//              console::print(mdi.Name.c_str(), ":", mdi.Value.c_str());
-            #endif
-
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "type") == 0)
-                {
-                    fileInfo.info_set(TagMIDIType, mdi.Value.c_str());
-
-                    _IsMT32 = (mdi.Value == "MT-32");
-                    _IsXG = (mdi.Value == "XG");
+                    _IsMT32 = (Item.Value == "MT-32");
+                    _IsXG = (Item.Value == "XG");
                 }
                 else
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "lyrics_type") == 0)
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "lyrics_type") == 0)
                 {
-                    fileInfo.info_set(TagMIDILyricsType, mdi.Value.c_str());
+                    fileInfo.info_set(TagMIDILyricsType, Item.Value.c_str());
                 }
                 else
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "lyrics") == 0)
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "lyrics") == 0)
                 {
-                    kp.AddUnsyncedLyrics(mdi.Timestamp, mdi.Value.c_str());
+                    kp.AddUnsyncedLyrics(Item.Timestamp, Item.Value.c_str());
                 }
                 else
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "soft_karaoke_lyrics") == 0)
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "soft_karaoke_lyrics") == 0)
                 {
-                    kp.AddSyncedLyrics(mdi.Timestamp, mdi.Value.c_str());
+                    kp.AddSyncedLyrics(Item.Timestamp, Item.Value.c_str());
                 }
                 else
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "soft_karaoke_text") == 0)
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "soft_karaoke_text") == 0)
                 {
-                    kp.AddSyncedText(mdi.Value.c_str());
+                    kp.AddSyncedText(Item.Value.c_str());
                 }
                 else
                 {
-                    std::string Name = mdi.Name;
+                    std::string Name = Item.Name;
 
                     if (!HasTitle && (pfc::stricmp_ascii(Name.c_str(), "display_name") == 0))
                         Name = "title";
 
-                    AddTag(fileInfo, Name.c_str(), mdi.Value.c_str(), 0);
+                    AddTag(fileInfo, Name.c_str(), Item.Value.c_str(), 0);
                 }
             }
         }
@@ -1286,14 +1292,14 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     }
 
     // General info
-    fileInfo.info_set_int(TagChannels, 2);
-    fileInfo.info_set(TagEncoding, "Synthesized");
+    fileInfo.info_set_int("channels", 2);
+    fileInfo.info_set("encoding", "Synthesized");
 
     // Specific info
-    fileInfo.info_set_int(TagMIDIFormat,       _Container.GetFormat());
-    fileInfo.info_set_int(TagMIDITrackCount,   _Container.GetFormat() == 2 ? 1 : _Container.GetTrackCount());
-    fileInfo.info_set_int(TagMIDIChannelCount, _Container.GetChannelCount(subSongIndex));
-    fileInfo.info_set_int(TagMIDITicks,        _Container.GetDuration(subSongIndex));
+    fileInfo.info_set_int   (TagMIDIFormat,       _Container.GetFormat());
+    fileInfo.info_set_int   (TagMIDITrackCount,   _Container.GetFormat() == 2 ? 1 : _Container.GetTrackCount());
+    fileInfo.info_set_int   (TagMIDIChannelCount, _Container.GetChannelCount(subSongIndex));
+    fileInfo.info_set_int   (TagMIDITicks,        _Container.GetDuration(subSongIndex));
 
     {
         uint32_t LoopBegin = _Container.GetLoopBeginTimestamp(subSongIndex);

@@ -130,7 +130,7 @@ MIDIPreset::MIDIPreset() noexcept
         _MIDIFlavor = (MIDIFlavor) (uint32_t) CfgMIDIStandard;
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
         _UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
-        _UseSecretSauceWithXG = (bool) CfgUseVSTiWithXG;
+        _UseVSTiWithXG = (bool) CfgUseVSTiWithXG;
     }
 }
 
@@ -254,7 +254,7 @@ void MIDIPreset::Serialize(pfc::string8 & text)
     text += pfc::format_int(_UseSuperMuntWithMT32);
 
     text += "|";
-    text += pfc::format_int(_UseSecretSauceWithXG);
+    text += pfc::format_int(_UseVSTiWithXG);
 }
 
 void MIDIPreset::Deserialize(const char * text)

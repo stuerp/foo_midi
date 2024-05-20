@@ -163,6 +163,7 @@ public:
 
         #pragma region BASS MIDI
 
+        COMMAND_HANDLER_EX(IDC_BASSMIDI_VOLUME, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_RESAMPLING_MODE, CBN_SELCHANGE, OnSelectionChange)
 
         #pragma endregion
@@ -405,6 +406,7 @@ void PreferencesRootPage::apply()
     #pragma region MIDI Flavor
     {
         CfgMIDIStandard         = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
+
         CfgUseMIDIEffects       = (t_int32) SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) ? 0 : 1;
         CfgUseSuperMuntWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK);
         CfgUseVSTiWithXG        = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
@@ -435,13 +437,15 @@ void PreferencesRootPage::apply()
     }
     #pragma endregion
 
-    #pragma region("BASS MIDI")
+    #pragma region BASS MIDI
     {
         wchar_t Text[32];
 
         GetDlgItemTextW(IDC_BASSMIDI_VOLUME, Text, _countof(Text));
 
-        CfgBASSMIDIVolume = std::clamp((float) ::_wtof(Text), 0.f, 2.f);
+        CfgBASSMIDIVolume = std::clamp(::_wtof(Text), 0., 2.);
+
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
     }
     {
         CfgBASSMIDIInterpolationMode = (t_int32) SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
@@ -551,7 +555,7 @@ void PreferencesRootPage::reset()
         SendDlgItemMessage(IDC_MIDI_FLAVOR,           CB_SETCURSEL, DefaultMIDIFlavor);
         SendDlgItemMessage(IDC_MIDI_EFFECTS,          BM_SETCHECK,  DefaultUseMIDIEffects ? 0 : 1);
         SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT,   BM_SETCHECK, DefaultUseSuperMuntWithMT32);
-        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK, DefaultUseSecretSauceWithXG);
+        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK, DefaultUseVSTiWithXG);
     }
     #pragma endregion
 
@@ -716,23 +720,27 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     {
         VSTi::Enumerate();
 
-        size_t VSTiCount = VSTi::PlugIns.get_size();
+        size_t VSTiCount = VSTi::PlugIns.size();
 
         if (VSTiCount > 0)
         {
             console::print("Found ", pfc::format_int((t_int64) VSTiCount), " VST instruments.");
 
-            for (size_t i = 0; i < VSTiCount; ++i)
+            size_t i = 0;
+
+            for (const auto & it : VSTi::PlugIns)
             {
                 struct InstalledPlayer ip;
 
-                ip.Name = VSTi::PlugIns[i].Name.c_str();
+                ip.Name = it.Name.c_str();
                 ip.Type = PlayerType::VSTi;
 
                 _InstalledPlayers.push_back(ip);
 
-                if (CfgVSTiFilePath.get() == VSTi::PlugIns[i].PathName.c_str())
+                if (CfgVSTiFilePath.get() == it.PathName.c_str())
                     VSTiIndex = i;
+
+                ++i;
             }
         }
         else
@@ -1387,6 +1395,13 @@ bool PreferencesRootPage::HasChanged()
 
     #pragma region BASS MIDI
     {
+        wchar_t Text[32];
+
+        GetDlgItemTextW(IDC_BASSMIDI_VOLUME, Text, _countof(Text));
+
+        if (std::abs(::_wtof(Text) - CfgBASSMIDIVolume) > 0.001)
+            return true;
+
         if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgBASSMIDIInterpolationMode)
             return true;
     }

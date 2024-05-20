@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2024.05.19) **/
+/** $VER: Configuration.h (2024.05.20) **/
 
 #pragma once
 
@@ -82,7 +82,7 @@ enum
     DefaultMIDIFlavor = MIDIFlavor::None,
     DefaultUseMIDIEffects = 1,
     DefaultUseSuperMuntWithMT32 = 1,
-    DefaultUseSecretSauceWithXG = 0,
+    DefaultUseVSTiWithXG = 0,
 
     DefaultEmuDeMIDIExclusion = 1,
     DefaultFilterInstruments = 0,
@@ -210,9 +210,6 @@ extern const size_t _FileExtensionCount;
 extern const char * _SysExFileExtensions[];
 extern const size_t _SysExFileExtensionCount;
 
-extern const char TagChannels[];
-extern const char TagEncoding[];
-
 extern const char TagMIDIFormat[];
 extern const char TagMIDITrackCount[];
 extern const char TagMIDIChannelCount[];
@@ -232,7 +229,7 @@ extern const char TagMIDIActiveVoices[];
 extern const char TagMIDIPeakVoices[];
 
 extern const char TagMIDIPlayer[];
-extern const char TagExtraPercusionChannel[];
+extern const char TagMIDIExtraPercusionChannel[];
 
 extern bool IsMIDIFileExtension(const char * fileExtension);
 extern bool IsSysExFileExtension(const char * ext);

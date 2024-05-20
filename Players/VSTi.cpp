@@ -10,7 +10,7 @@
 
 #include "VSTiPlayer.h"
 
-pfc::array_t<VSTi::plugin_t> VSTi::PlugIns;
+std::vector<VSTi::plugin_t> VSTi::PlugIns;
 std::vector<uint8_t> VSTi::Config;
 
 /// <summary>
@@ -22,7 +22,7 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
 
     if (findFile == nullptr)
     {
-        PlugIns.set_size(0);
+        PlugIns.clear();
 
         AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
 
@@ -109,7 +109,7 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
                     Plugin.Id = Player.GetUniqueID();
                     Plugin.HasEditor = Player.HasEditor();
 
-                    PlugIns.append_single(Plugin);
+                    PlugIns.push_back(Plugin);
                 }
             }
         }
