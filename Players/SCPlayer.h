@@ -1,11 +1,11 @@
 
-/** $VER: SCPlayer.h (2023.08.19) Secret Sauce **/
+/** $VER: SCPlayer.h (2024.05.20) Secret Sauce **/
 
 #pragma once
 
 #include "MIDIPlayer.h"
 
-#pragma warning(disable: 4820) // x bytes padding added after data member
+#pragma warning(disable: 4820) // 'x' bytes padding added after data member 'y'
 class SCPlayer : public MIDIPlayer
 {
 public:
@@ -44,10 +44,11 @@ private:
     void WriteBytesOverlapped(uint32_t port, const void * data, uint32_t size) noexcept;
 
 private:
-    uint32_t _PluginArchitecture;
+    uint32_t _ProcessorArchitecture;
     int _COMInitialisationCount;
 
-    std::string _PluginFilePath;
+    std::string _RootPathName;
+    std::string _FilePath;
 
     HANDLE _hReadEvent[3];
     HANDLE _hPipeInRead[3];
@@ -57,7 +58,6 @@ private:
     HANDLE _hProcess[3];
     HANDLE _hThread[3];
 
-    char * _RootPathName;
     float * _Samples;
 
     bool _IsPortTerminating[3];

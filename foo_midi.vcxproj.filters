@@ -33,6 +33,8 @@
     <ClCompile Include="Players\MCIPlayer.cpp" />
     <ClCompile Include="framework.cpp" />
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
+    <ClCompile Include="Players\SecretSauce.cpp" />
+    <ClCompile Include="Players\VSTi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -178,6 +180,8 @@
     <ClInclude Include="Players\MCIPlayer.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Infrastructure\PreferencesProcessingLayout.h" />
+    <ClInclude Include="Players\SecretSauce.h" />
+    <ClInclude Include="Players\VSTi.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

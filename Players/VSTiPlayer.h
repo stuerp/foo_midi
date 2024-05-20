@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2023.08.19) **/
+/** $VER: VSTiPlayer.h (2024.05.20) **/
 
 #pragma once
 
@@ -59,10 +59,10 @@ private:
     void WriteBytesOverlapped(const void * data, uint32_t size) noexcept;
 
 private:
-    uint32_t _PluginArchitecture;
+    uint32_t _ProcessorArchitecture;
     bool _IsCOMInitialized;
 
-    std::string _PluginFilePath;
+    std::string _FilePath;
 
     HANDLE _hReadEvent;
     HANDLE _hPipeInRead;

@@ -7,7 +7,10 @@
 
 #include <fluidsynth.h>
 
-#pragma region("FluidSynth API")
+#include <pfc/string-conv-lite.h>
+
+#pragma region FluidSynth API
+
 typedef char * (WINAPIV * _fluid_version_str)();
 
 typedef fluid_settings_t * (WINAPIV * _new_fluid_settings)();
@@ -48,6 +51,7 @@ typedef int (WINAPIV * _fluid_synth_write_float)(fluid_synth_t * synth, int len,
 typedef int (WINAPIV * _fluid_synth_get_active_voice_count)(fluid_synth_t * synth);
 
 #define InitializeFunction(type, address) { address = (##_##type) ::GetProcAddress(_hModule, #type); if (*address == nullptr) return false; }
+
 #pragma endregion
 
 /// <summary>
@@ -128,6 +132,11 @@ public:
         #pragma warning(default: 4191)
 
         return true;
+    }
+
+    static bool Exists() noexcept
+    {
+        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
     }
 
 public:

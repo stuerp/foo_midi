@@ -585,7 +585,8 @@ void MIDIPlayer::SendEventFiltered(uint32_t data, uint32_t time)
     }
 }
 
-#pragma region("SysEx")
+#pragma region SysEx
+
 static const uint8_t SysExResetGM[]         = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
 static const uint8_t SysExResetGM2[]        = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
 static const uint8_t SysExResetGS[]         = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
@@ -833,9 +834,11 @@ static bool IsSysExEqual(const uint8_t * a, const uint8_t * b)
 
     return (*a == *b);
 }
+
 #pragma endregion
 
-#pragma region("Private")
+#pragma region Private
+
 static uint16_t GetWord(const uint8_t * data) noexcept
 {
     return (uint16_t) (data[0] | (((uint16_t) data[1]) << 8));

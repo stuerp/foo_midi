@@ -1,37 +1,19 @@
 
-/** $VER: SCPlayer.cpp (2023.08.19) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2024.05.20) Secret Sauce **/
 
 #include "framework.h"
 
 #include "SCPlayer.h"
 
 #include <sdk/foobar2000-lite.h>
-#include <pfc/pathUtils.h>
 
 #include <vector>
 
-// It's a secret to everybody!
-char _DLLFileName[] = { 'F', 'P', 'P', 'b', 'e', 'r', '.', 'q', 'y', 'y', 0 };
+#include "SecretSauce.h"
 
-static struct FileNameDecrypter
-{
-    FileNameDecrypter() noexcept
-    {
-        char * p;
+#pragma region Public
 
-        for (p = _DLLFileName; *p; ++p)
-        {
-            if (*p >= 'A' && *p <= 'Z')
-                *p = (((*p - 'A') + 13) % 26) + 'A';
-            else
-            if (*p >= 'a' && *p <= 'z')
-                *p = (((*p - 'a') + 13) % 26) + 'a';
-        }
-    }
-} _FileNameDecrypter;
-
-#pragma region("Public")
-SCPlayer::SCPlayer() noexcept : MIDIPlayer(), _RootPathName(0)
+SCPlayer::SCPlayer() noexcept : MIDIPlayer()
 {
     _IsInitialized = false;
     _COMInitialisationCount = 0;
@@ -62,28 +44,18 @@ SCPlayer::~SCPlayer()
         _Samples = nullptr;
     }
 
-    if (_RootPathName)
-    {
-        ::free(_RootPathName);
-        _RootPathName = nullptr;
-    }
+    _RootPathName.clear();
 }
 
 void SCPlayer::SetRootPath(const char * rootPathName)
 {
-    if (_RootPathName)
-        ::free(_RootPathName);
-
-    size_t Length = ::strlen(rootPathName);
-
-    _RootPathName = (char *) ::malloc(Length + 1);
-
-    if (_RootPathName)
-        ::memcpy(_RootPathName, rootPathName, Length + 1);
+    _RootPathName = rootPathName;
 }
+
 #pragma endregion
 
-#pragma region("Protected")
+#pragma region Protected
+
 bool SCPlayer::Startup()
 {
     pfc::string8 path;
@@ -91,10 +63,10 @@ bool SCPlayer::Startup()
     if (_IsInitialized)
         return true;
 
-    if (!_RootPathName)
+    if (_RootPathName.empty())
         return false;
 
-    path = pfc::io::path::combine(_RootPathName, _DLLFileName);
+    path = pfc::io::path::combine(_RootPathName.c_str(), _DLLFileName);
 
     if (!LoadCore(path))
         return false;
@@ -210,20 +182,20 @@ void SCPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
         SendSysEx(event, size, 2, time);
     }
 }
+
 #pragma endregion
 
-#pragma region("Private")
+#pragma region Private
+
 bool SCPlayer::LoadCore(const char * filePath)
 {
     if ((filePath == nullptr) || (filePath[0] == '\0'))
         return false;
 
-    if (filePath != _PluginFilePath)
-        _PluginFilePath = filePath;
+    _FilePath = filePath;
+    _ProcessorArchitecture = GetProcessorArchitecture(_FilePath);
 
-    _PluginArchitecture = GetProcessorArchitecture(_PluginFilePath);
-
-    if (_PluginArchitecture == 0)
+    if (_ProcessorArchitecture == 0)
         return false;
 
     bool Success = StartHost(0);
@@ -342,9 +314,9 @@ bool SCPlayer::StartHost(uint32_t port)
         if (SlashPosition != std::string::npos)
             CommandLine.erase(CommandLine.begin() + (const __int64)(SlashPosition + 1), CommandLine.end());
 
-        CommandLine += (_PluginArchitecture == 64) ? "scpipe64.exe" : "scpipe32.exe";
+        CommandLine += (_ProcessorArchitecture == 64) ? "scpipe64.exe" : "scpipe32.exe";
         CommandLine += "\" \"";
-        CommandLine += _PluginFilePath;
+        CommandLine += _FilePath;
         CommandLine += "\"";
     }
 
@@ -577,3 +549,5 @@ void SCPlayer::WriteBytesOverlapped(uint32_t port, const void * data, uint32_t s
     if (!::WriteFile(_hPipeInWrite[port], data, size, &BytesWritten, NULL) || BytesWritten < size)
         StopHost(port);
 }
+
+#pragma endregion

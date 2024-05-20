@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2024.05.19) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2024.05.20) P. Stuer **/
 
 #include "framework.h"
 
@@ -17,11 +17,11 @@
 #include <sdk/coreDarkMode.h>
 #include <sdk/hasher_md5.h>
 
-#include <helpers/atl-misc.h>
-#include <helpers/dropdown_helper.h>
-
 #include <pfc/string-conv-lite.h>
 #include <pfc/pathUtils.h>
+
+#include <helpers/atl-misc.h>
+#include <helpers/dropdown_helper.h>
 
 #include "resource.h"
 
@@ -34,12 +34,14 @@
 #include "VSTiPlayer.h"
 #include "FSPlayer.h"
 
+#include "VSTi.h"
+#include "SecretSauce.h"
+
 #pragma hdrstop
 
-extern char _DLLFileName[];
 extern volatile int _IsRunning;
 
-#pragma region("Sample Rate")
+#pragma region Sample Rate
 
 static const GUID GUIDCfgSampleRateHistory = { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
 static cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
@@ -48,7 +50,7 @@ static const int _SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 441
 
 #pragma endregion
 
-#pragma region("FluidSynth")
+#pragma region FluidSynth
 
 #pragma warning(disable: 4820)
 struct InterpolationMethod
@@ -68,7 +70,7 @@ static const InterpolationMethod _InterpolationMethods[] =
 
 #pragma endregion
 
-#pragma region("Munt")
+#pragma region Munt
 
 const char * _MuntGMSets[] =
 {
@@ -80,15 +82,15 @@ const size_t _MuntGMSetCount = _countof(_MuntGMSets);
 
 #pragma endregion
 
+#pragma warning(disable: 4820)
+
 /// <summary>
 /// Implements the main preferences page.
 /// </summary>
-#pragma warning(disable: 4820)
-
 class PreferencesRootPage : public CDialogImpl<PreferencesRootPage>, public preferences_page_instance
 {
 public:
-    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _InstalledKnownPlayerCount(), _HasFluidSynth(), _HasSecretSauce(), _Callback(callback) { }
+    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _InstalledKnownPlayerCount(), _HasSecretSauce(), _HasFluidSynth(), _Callback(callback) { }
 
     PreferencesRootPage(const PreferencesRootPage&) = delete;
     PreferencesRootPage(const PreferencesRootPage&&) = delete;
@@ -97,10 +99,12 @@ public:
 
     virtual ~PreferencesRootPage() { };
 
-    #pragma region("preferences_page_instance")
+    #pragma region preferences_page_instance
+
     t_uint32 get_state() final;
     void apply() final;
     void reset() final;
+
     #pragma endregion
 
     // WTL message map
@@ -223,9 +227,9 @@ private:
         return false;
     }
 
-    static bool IsFluidSynthPresent(PreferencesRootPage *)
+    static bool IsFluidSynthPresent(PreferencesRootPage * p)
     {
-        return HasFluidSynth();
+        return p->_HasFluidSynth;
     }
 
     static bool IsSecretSaucePresent(PreferencesRootPage * p)
@@ -254,33 +258,15 @@ private:
 
     #pragma endregion
 
-    #pragma region VSTi
+    #pragma region Secret Sauce
 
-    pfc::string8 _VSTiPath;
-
-    void GetVSTiPlugins(const char * pathName = nullptr, puFindFile findFile = nullptr);
-
-    struct VSTiPlugin
-    {
-        pfc::string8 Name;
-        pfc::string8 PathName;
-        uint32_t Id;
-        bool HasEditor;
-    };
-
-    pfc::array_t<VSTiPlugin> _VSTiPlugIns;
-    std::vector<uint8_t> _VSTiConfig;
+    bool _HasSecretSauce;
 
     #pragma endregion
 
     #pragma region FluidSynth
 
     bool _HasFluidSynth;
-
-    static bool HasFluidSynth() noexcept
-    {
-        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
-    }
 
     #pragma endregion
 
@@ -317,13 +303,6 @@ private:
     };
 
     pfc::list_t<ADLBank> _ADLBanks;
-
-    #pragma endregion
-
-    #pragma region("Secret Sauce")
-
-    bool _HasSecretSauce;
-    static bool HasSecretSauce() noexcept;
 
     #pragma endregion
 
@@ -394,10 +373,10 @@ void PreferencesRootPage::apply()
 
                 size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
 
-                VSTiPlugin & Plugin = _VSTiPlugIns[VSTiIndex];
+                VSTi::plugin_t & Plugin = VSTi::PlugIns[VSTiIndex];
 
                 CfgVSTiFilePath = Plugin.PathName.c_str();
-                CfgVSTiConfig[Plugin.Id] = _VSTiConfig;
+                CfgVSTiConfig[Plugin.Id] = VSTi::Config;
             }
         }
     }
@@ -487,11 +466,11 @@ void PreferencesRootPage::apply()
         }
 
         {
-            int ChipCount = std::clamp((int) GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE), 1, 100);
+            int Value = std::clamp((int) GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE), 1, 100);
 
-            SetDlgItemInt(IDC_ADL_CHIPS, (UINT) ChipCount, FALSE);
+            SetDlgItemInt(IDC_ADL_CHIPS, (UINT) Value, FALSE);
 
-            CfgADLChipCount = ChipCount;
+            CfgADLChipCount = Value;
         }
 
         CfgADLPanning = (t_int32) SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
@@ -688,7 +667,7 @@ void PreferencesRootPage::reset()
     }
     #pragma endregion
 
-    _VSTiConfig.resize(0);
+    VSTi::Config.resize(0);
 
     UpdateDialog();
 
@@ -706,8 +685,8 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 {
     #pragma region Player Type
 
-    _HasFluidSynth = HasFluidSynth();
-    _HasSecretSauce = HasSecretSauce();
+    _HasFluidSynth = FluidSynth::Exists();
+    _HasSecretSauce = SecretSauce::Exists();
 
     #pragma region Known Players
     {
@@ -735,29 +714,29 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     // Add the VSTi to the installed player list.
     {
+        VSTi::Enumerate();
+
+        size_t VSTiCount = VSTi::PlugIns.get_size();
+
+        if (VSTiCount > 0)
         {
-            GetVSTiPlugins();
+            console::print("Found ", pfc::format_int((t_int64) VSTiCount), " VST instruments.");
 
-            size_t VSTiCount = _VSTiPlugIns.get_size();
-
-            if (VSTiCount > 0)
+            for (size_t i = 0; i < VSTiCount; ++i)
             {
-                console::print("Found ",pfc::format_int((t_int64) VSTiCount), " VST instruments.");
+                struct InstalledPlayer ip;
 
-                for (size_t i = 0; i < VSTiCount; ++i)
-                {
-                    struct InstalledPlayer ip;
+                ip.Name = VSTi::PlugIns[i].Name.c_str();
+                ip.Type = PlayerType::VSTi;
 
-                    ip.Name = _VSTiPlugIns[i].Name.c_str();
-                    ip.Type = PlayerType::VSTi;
+                _InstalledPlayers.push_back(ip);
 
-                    _InstalledPlayers.push_back(ip);
-
-                    if (CfgVSTiFilePath.get() == _VSTiPlugIns[i].PathName)
-                        VSTiIndex = i;
-                }
+                if (CfgVSTiFilePath.get() == VSTi::PlugIns[i].PathName.c_str())
+                    VSTiIndex = i;
             }
         }
+        else
+            console::print("Found no VST instruments.");
     }
 
     #pragma endregion
@@ -787,10 +766,11 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         else
         if (VSTiIndex != ~0u)
         {
-            const VSTiPlugin & Plugin = _VSTiPlugIns[VSTiIndex];
+            const VSTi::plugin_t & Plugin = VSTi::PlugIns[VSTiIndex];
 
             w.EnableWindow(Plugin.HasEditor);
-            _VSTiConfig = CfgVSTiConfig[Plugin.Id];
+
+            VSTi::Config = CfgVSTiConfig[Plugin.Id];
         }
     }
     #pragma endregion
@@ -802,7 +782,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         int SelectedIndex = -1;
         int i = 0;
 
-        for (auto Player : _InstalledPlayers)
+        for (const auto & Player : _InstalledPlayers)
         {
             w.AddString(pfc::wideFromUTF8(Player.Name));
 
@@ -1121,14 +1101,14 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 
     size_t VSTiIndex = SelectedIndex - _InstalledKnownPlayerCount;
 
-    if (Player.LoadVST(_VSTiPlugIns[VSTiIndex].PathName.c_str()))
+    if (Player.LoadVST(VSTi::PlugIns[VSTiIndex].PathName.c_str()))
     {
-        if (_VSTiConfig.size() != 0)
-            Player.SetChunk(_VSTiConfig.data(), _VSTiConfig.size());
+        if (VSTi::Config.size() != 0)
+            Player.SetChunk(VSTi::Config.data(), VSTi::Config.size());
 
         Player.DisplayEditorModal();
 
-        Player.GetChunk(_VSTiConfig);
+        Player.GetChunk(VSTi::Config);
     }
 
     _IsBusy = false;
@@ -1153,38 +1133,49 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
         if ((size_t) SelectedIndex >= _InstalledKnownPlayerCount)
         {
             VSTiIndex = SelectedIndex - _InstalledKnownPlayerCount;
-            _VSTiConfig = CfgVSTiConfig[_VSTiPlugIns[VSTiIndex].Id];
+            VSTi::Config = CfgVSTiConfig[VSTi::PlugIns[VSTiIndex].Id];
         }
     }
 
     // Configure
     {
-        if (PlayerType != PlayerType::VSTi)
-            GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
-        else
-            GetDlgItem(IDC_CONFIGURE).EnableWindow(_VSTiPlugIns[VSTiIndex].HasEditor);
+        const BOOL Enable = (PlayerType == PlayerType::VSTi) ? VSTi::PlugIns[VSTiIndex].HasEditor : FALSE;
+
+        GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
     }
 
     // Sample Rate
     {
-        GetDlgItem(IDC_SAMPLERATE).EnableWindow((PlayerType != PlayerType::EmuDeMIDI) || !_IsRunning);
+        const BOOL Enable = (PlayerType != PlayerType::EmuDeMIDI) || !_IsRunning;
+
+        GetDlgItem(IDC_SAMPLERATE).EnableWindow(Enable);
     }
 
     // Looping
+    {
+    }
 
     // MIDI Flavor and Effects
     {
-        BOOL Enable = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
+        const BOOL Enable = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
 
-        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enable);
+        const int ControlIds[] =
+        {
+            IDC_MIDI_FLAVOR_TEXT, IDC_MIDI_FLAVOR,
+            IDC_MIDI_EFFECTS,
+        };
 
-        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(Enable);
+        for (const auto & Iter : ControlIds)
+            GetDlgItem(Iter).EnableWindow(Enable);
+    }
+
+    // Miscellaneous
+    {
     }
 
     // FluidSynth
     {
-        BOOL Enable = (PlayerType == PlayerType::FluidSynth);
+        const BOOL Enable = (PlayerType == PlayerType::FluidSynth);
 
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(Enable);
@@ -1192,7 +1183,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // BASS MIDI resampling mode and cache status
     {
-        BOOL Enable = (PlayerType == PlayerType::BASSMIDI);
+        const BOOL Enable = (PlayerType == PlayerType::BASSMIDI);
 
         const int ControlIds[] =
         {
@@ -1207,7 +1198,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Munt
     {
-        BOOL Enable = (PlayerType == PlayerType::SuperMunt);
+        const BOOL Enable = (PlayerType == PlayerType::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_MUNT_GM_SET) .EnableWindow(Enable);
@@ -1215,24 +1206,33 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(Enable ? SW_SHOW : SW_HIDE);
     }
 
-    // Nuke
-    {
-        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(PlayerType == PlayerType::Nuke);
-        GetDlgItem(IDC_NUKE_PRESET)     .EnableWindow(PlayerType == PlayerType::Nuke);
-        GetDlgItem(IDC_NUKE_PANNING)    .EnableWindow(PlayerType == PlayerType::Nuke);
-    }
-
     // ADL
     {
-        GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(PlayerType == PlayerType::ADL);
-        GetDlgItem(IDC_ADL_BANK)     .EnableWindow(PlayerType == PlayerType::ADL);
+        const BOOL Enable = (PlayerType == PlayerType::ADL);
+
+        const int ControlIds[] =
+        {
+            IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
+            IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
+            IDC_ADL_PANNING
+        };
+
+        for (const auto & Iter : ControlIds)
+            GetDlgItem(Iter).EnableWindow(Enable);
     }
 
-    // Nuke and ADL
+    // Nuke
     {
-        GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(PlayerType == PlayerType::ADL || PlayerType == PlayerType::Nuke);
-        GetDlgItem(IDC_ADL_CHIPS)     .EnableWindow(PlayerType == PlayerType::ADL || PlayerType == PlayerType::Nuke);
-        GetDlgItem(IDC_ADL_PANNING)   .EnableWindow(PlayerType == PlayerType::ADL || PlayerType == PlayerType::Nuke);
+        const BOOL Enable = (PlayerType == PlayerType::Nuke);
+
+        const int ControlIds[] =
+        {
+            IDC_NUKE_PRESET_TEXT, IDC_NUKE_PRESET,
+            IDC_NUKE_PANNING
+        };
+
+        for (const auto & Iter : ControlIds)
+            GetDlgItem(Iter).EnableWindow(Enable);
     }
 
     OnChanged();
@@ -1275,231 +1275,6 @@ void PreferencesRootPage::OnTimer(UINT_PTR eventId)
     }
 }
 
-#pragma region VSTi
-
-/// <summary>
-/// Gets all the VTSi plugins if a root directory has been specified.
-/// </summary>
-void PreferencesRootPage::GetVSTiPlugins(const char * pathName, puFindFile findFile)
-{
-    pfc::string8 DirectoryPath;
-
-    if (findFile == nullptr)
-    {
-        _VSTiPlugIns.set_size(0);
-
-        AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
-
-        if (DirectoryPath.is_empty())
-            return;
-
-        console::print("Enumerating VST instruments...");
-
-        DirectoryPath = pfc::io::path::combine(DirectoryPath, "*.*");
-
-        pathName = DirectoryPath;
-
-        findFile = ::uFindFirstFile(DirectoryPath);
-    }
-
-    if (findFile == nullptr)
-        return;
-
-    do
-    {
-        pfc::string8 PathName(pathName);
-
-        PathName.truncate(PathName.length() - 3);
-        PathName += findFile->GetFileName();
-
-        // Enter all subdirectories to look voor plug-ins.
-        if (findFile->IsDirectory() && ::strcmp(findFile->GetFileName(), ".") && ::strcmp(findFile->GetFileName(), ".."))
-        {
-            PathName = pfc::io::path::combine(PathName, "*.*");
-
-            puFindFile FindFile = ::uFindFirstFile(PathName);
-
-            if (FindFile)
-                GetVSTiPlugins(PathName, FindFile);
-        }
-        else
-        {
-            if ((PathName.length() < 5) || (pfc::stricmp_ascii(PathName.get_ptr() + PathName.length() - 4, ".dll") != 0))
-                continue;
-
-            // Examine all DLL files.
-            if (findFile->GetFileSize() != 0)
-            {
-                console::print("Examining \"", PathName, "\"...");
-
-                VSTiPlayer Player;
-
-                if (Player.LoadVST(PathName))
-                {
-                    VSTiPlugin Plugin;
-
-                    Plugin.PathName = PathName;
-
-                    pfc::string8 VendorName;
-
-                    Player.GetVendorName(VendorName);
-
-                    pfc::string8 ProductName;
-
-                    Player.GetProductName(ProductName);
-
-                    // Get the plugin name.
-                    {
-                        Plugin.Name = "VSTi ";
-
-                        if (VendorName.length() || ProductName.length())
-                        {
-                            if ((VendorName.length() == 0) || ((ProductName.length() >= VendorName.length()) && (::strncmp(VendorName.c_str(), ProductName.c_str(), VendorName.length()) == 0)))
-                            {
-                                Plugin.Name.add_string(ProductName);
-                            }
-                            else
-                            {
-                                Plugin.Name.add_string(VendorName);
-
-                                if (ProductName.length())
-                                    Plugin.Name.add_string(' ' + ProductName);
-                            }
-                        }
-                        else
-                            Plugin.Name = findFile->GetFileName();
-                    }
-
-                    Plugin.Id = Player.GetUniqueID();
-                    Plugin.HasEditor = Player.HasEditor();
-
-                    _VSTiPlugIns.append_single(Plugin);
-                }
-            }
-        }
-    }
-    while (findFile->FindNext());
-
-    delete findFile;
-}
-
-#pragma endregion
-
-#pragma region Secret Sauce
-
-struct SecretSauceInfo
-{
-    size_t FileSize;
-    hasher_md5_result Hash;
-};
-
-static const SecretSauceInfo SecretSauceInfos[] =
-{
-    #pragma warning(disable: 4310)
-    // 1.0.3 - 32 bit - 27,472,384 - d44d1b8c9a6f956ca2324f2f5d348c44
-    { 27472384, { (char) 0xd4, 0x4d, 0x1b, (char) 0x8c, (char) 0x9a, 0x6f, (char) 0x95, 0x6c, (char) 0xa2, 0x32, 0x4f, 0x2f, 0x5d, 0x34, (char) 0x8c, 0x44 } },
-
-    // 1.0.3 - 64 bit - 27,440,128 - f16b5eb9c7e204de7f9b3a829d2d5500
-    { 27440128, { (char) 0xf1, 0x6b, 0x5e, (char) 0xb9, (char) 0xc7, (char) 0xe2, 0x04, (char) 0xde, 0x7f, (char) 0x9b, 0x3a, (char) 0x82, (char) 0x9d, 0x2d, 0x55, 0x00 } },
-
-    // 1.0.6 - 32 bit - 27,319,296 - 6588e6aa17a57ba874e8b675114214f0
-    { 27319296, { 0x65, (char) 0x88, (char) 0xe6, (char) 0xaa, 0x17, (char) 0xa5, 0x7b, (char) 0xa8, 0x74, (char) 0xe8, (char) 0xb6, 0x75, 0x11, 0x42, 0x14, (char) 0xf0 } },
-
-    // 1.0.6 - 64 bit - 27,358,208 - 6abfbf61869fc436d76c93d1bc7e2735
-    { 27358208, { 0x6a, (char) 0xbf, (char) 0xbf, 0x61, (char) 0x86, (char) 0x9f, (char) 0xc4, 0x36, (char) 0xd7, 0x6c, (char) 0x93, (char) 0xd1, (char) 0xbc, 0x7e, 0x27, 0x35 } },
-
-    // 1.0.7 - 32 bit - 27,319,296 - 25830a6c2ff5751f3a55915fb60702f4
-    { 27319296, { 0x25, (char) 0x83, 0x0a, 0x6c, 0x2f, (char) 0xf5, 0x75, 0x1f, 0x3a, 0x55, (char) 0x91, 0x5f, (char) 0xb6, 0x07, 0x02, (char) 0xf4 } },
-
-    // 1.1.3 - 64 bit - 27,358,208 - 80f1e673d249d1cda67a2936326f866b
-    { 27358208, { (char) 0x80, (char) 0xf1, (char) 0xe6, 0x73, (char) 0xd2, 0x49, (char) 0xd1, (char) 0xcd, (char) 0xa6, 0x7a, 0x29, 0x36, 0x32, 0x6f, (char) 0x86, 0x6b } },
-
-    // 1.1.0 (S) - 64 bit - 27,358,208 - 3703e0dc7bd93abd4c29e1a03f1f6c0a
-    { 27358208, { 0x37, 0x03, (char) 0xe0, (char) 0xdc, 0x7b, (char) 0xd9, 0x3a, (char) 0xbd, 0x4c, 0x29, (char) 0xe1, (char) 0xa0, 0x3f, 0x1f, 0x6c, 0x0a } },
-
-    // 1.1.6 (S) - 64 bit - 27,347,456 - dbd9a30c168efef577d40a28d9adf37d
-    { 27347456, { (char) 0xdb, (char) 0xd9, (char) 0xa3, 0x0c, 0x16, (char) 0x8e, (char) 0xfe, (char) 0xf5, 0x77, (char) 0xd4, 0x0a, 0x28, (char) 0xd9, (char) 0xad, (char) 0xf3, 0x7d } },
-    #pragma warning(default: 4310)
-};
-
-/// <summary>
-/// Is a compatible SecretSauce DLL available?
-/// </summary>
-bool PreferencesRootPage::HasSecretSauce() noexcept
-{
-    FILE * fp = nullptr;
-
-    {
-        pfc::string8 PathName;
-
-        AdvCfgSecretSauceDirectoryPath.get(PathName);
-
-        if (PathName.is_empty())
-            return false;
-
-        pfc::string8 FilePath = pfc::io::path::combine(PathName, _DLLFileName);
-
-        pfc::stringcvt::string_os_from_utf8 FilePathW(FilePath);
-
-        ::_wfopen_s(&fp, FilePathW, L"rb");
-    }
-
-    bool rc = false;
-
-    if (fp)
-    {
-        ::fseek(fp, 0, SEEK_END);
-
-        size_t FileSize = (size_t) ::ftell(fp);
-
-        for (const auto & Iter : SecretSauceInfos)
-        {
-            if (Iter.FileSize == FileSize)
-            {
-                ::fseek(fp, 0, SEEK_SET);
-
-                static_api_ptr_t<hasher_md5> Hasher;
-                hasher_md5_state HasherState;
-
-                Hasher->initialize(HasherState);
-
-                uint8_t Data[1024];
-                size_t BytesReadTotal = 0;
-
-                while (!::feof(fp))
-                {
-                    size_t BytesRead = ::fread(Data, 1, 1024, fp);
-
-                    BytesReadTotal += BytesRead;
-
-                    if (BytesRead != 0)
-                        Hasher->process(HasherState, Data, BytesRead);
-
-                    if (BytesRead < 1024)
-                        break;
-                }
-
-                if (BytesReadTotal == FileSize)
-                {
-                    hasher_md5_result Hash = Hasher->get_result(HasherState);
-
-                    if (Iter.Hash == Hash)
-                    {
-                        rc = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        ::fclose(fp);
-    }
-
-    return rc;
-}
-
-#pragma endregion
-
 /// <summary>
 /// Returns true if the dialog state has changed.
 /// </summary>
@@ -1525,15 +1300,15 @@ bool PreferencesRootPage::HasChanged()
             {
                 size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
 
-                if (CfgVSTiFilePath.get() != _VSTiPlugIns[VSTiIndex].PathName)
+                if (CfgVSTiFilePath.get() != VSTi::PlugIns[VSTiIndex].PathName.c_str())
                     return true;
 
-                t_uint32 Id = _VSTiPlugIns[VSTiIndex].Id;
+                t_uint32 Id = VSTi::PlugIns[VSTiIndex].Id;
 
-                if (_VSTiConfig.size() != CfgVSTiConfig[Id].size())
+                if (VSTi::Config.size() != CfgVSTiConfig[Id].size())
                     return true;
 
-                if ((_VSTiConfig.size() != 0) && (::memcmp(_VSTiConfig.data(), &CfgVSTiConfig[Id][0], _VSTiConfig.size()) != 0))
+                if ((VSTi::Config.size() != 0) && (::memcmp(VSTi::Config.data(), CfgVSTiConfig[Id].data(), VSTi::Config.size()) != 0))
                     return true;
             }
         }
@@ -1624,25 +1399,6 @@ bool PreferencesRootPage::HasChanged()
     }
     #pragma endregion
 
-    #pragma region Nuke
-    {
-        if (SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK) != CfgNukePanning)
-            return true;
-
-        {
-            size_t PresetNumber = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
-
-            uint32_t Synth;
-            uint32_t Bank;
-
-            NukePlayer::GetPreset(PresetNumber, Synth, Bank);
-
-            if (!(Synth == (uint32_t) CfgNukeSynthesizer && Bank == (uint32_t) CfgNukeBank))
-                return true;
-        }
-    }
-    #pragma endregion
-
     #pragma region ADL
     {
         {
@@ -1660,6 +1416,25 @@ bool PreferencesRootPage::HasChanged()
 
         if (SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != CfgADLPanning)
             return true;
+    }
+    #pragma endregion
+
+    #pragma region Nuke
+    {
+        if (SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK) != CfgNukePanning)
+            return true;
+
+        {
+            size_t PresetNumber = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
+
+            uint32_t Synth;
+            uint32_t Bank;
+
+            NukePlayer::GetPreset(PresetNumber, Synth, Bank);
+
+            if (!(Synth == (uint32_t) CfgNukeSynthesizer && Bank == (uint32_t) CfgNukeBank))
+                return true;
+        }
     }
     #pragma endregion
 
