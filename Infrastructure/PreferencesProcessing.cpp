@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2024.05.19) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2024.05.20) P. Stuer **/
 
 #include "framework.h"
 
@@ -51,7 +51,7 @@ ConfigVariable(WolfteamLoopMode,    cfg_bool, bool, false, 0x373c9824,0x32a3,0x4
 ConfigVariable(KeepDummyChannels,   cfg_bool, bool, false, 0x5ded0321,0xc53c,0x4581,0xb3,0x1e,0x3c,0x7b,0x3d,0xc0,0x90,0xb5);
 ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4974,0xaa,0x60,0x3c,0xdf,0xb6,0x07,0x25,0xbc);
 
-ConfigVariable(DefaultTempo,        cfg_int, int,    160, 0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
+ConfigVariable(DefaultTempo,        cfg_int, int,    160,  0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
 
 /// <summary>
 /// Implements a preferences page.
@@ -80,12 +80,18 @@ public:
     BEGIN_MSG_MAP_EX(DialogPageProcessing)
         MSG_WM_INITDIALOG(OnInitDialog)
 
+        // Recomposer
         COMMAND_HANDLER_EX(IDC_LOOP_EXPANSION, EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_DEFAULT_TEMPO, EN_CHANGE, OnEditChange)
 
         COMMAND_HANDLER_EX(IDC_WRITE_BAR_MARKERS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_WRITE_SYSEX_NAMES, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_EXTEND_LOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_WOLFTEAM_LOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_KEEP_DUMMY_CHANNELS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_INCLUDE_CONTROL_DATA, BN_CLICKED, OnButtonClick)
 
-        REFLECT_NOTIFICATIONS()
+        // HMI / HMP
+        COMMAND_HANDLER_EX(IDC_DEFAULT_TEMPO, EN_CHANGE, OnEditChange)
     END_MSG_MAP()
 
     enum

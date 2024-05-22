@@ -56,10 +56,10 @@ bool MIDIPlayer::Load(const midi_container_t & midiContainer, uint32_t subsongIn
     {
         _LoopBegin = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
 
-        uint32_t LoopEnd = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
-
         if (_LoopBegin == ~0UL)
             _LoopBegin = 0;
+
+        uint32_t LoopEnd = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
 
         if (LoopEnd == ~0UL)
             LoopEnd =  _Length;
@@ -98,10 +98,7 @@ bool MIDIPlayer::Load(const midi_container_t & midiContainer, uint32_t subsongIn
 
                 _Stream.resize(i);
 
-                _Length = LoopEnd - 1;
-
-                if (_Length < _Stream[i - 1].Time)
-                    _Length = _Stream[i - 1].Time;
+                _Length = std::max(LoopEnd - 1, _Stream[i - 1].Time);
             }
 
             for (size_t i = 0; i < NoteOnSize; ++i)
