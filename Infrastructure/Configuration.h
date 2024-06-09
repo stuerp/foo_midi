@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2024.05.20) **/
+/** $VER: Configuration.h (2024.06.09) **/
 
 #pragma once
 
@@ -74,10 +74,11 @@ enum
     DefaultOtherLoopType = 0,
     DefaultDecayTime = 1000,
 
-    default_cfg_thloopz = 1,
-    default_cfg_rpgmloopz = 1,
-    default_cfg_xmiloopz = 1,
-    default_cfg_ff7loopz = 1,
+    DefaultDetectTouhouLoops = 1,
+    DefaultDetectRPGMakerLoops = 1,
+    DefaultDetectLeapFrogLoops = 0,
+    DefaultDetectXMILoops = 1,
+    DefaultDetectFF7Loops = 1,
 
     DefaultMIDIFlavor = MIDIFlavor::None,
     DefaultUseMIDIEffects = 1,
@@ -115,10 +116,11 @@ extern cfg_var_modern::cfg_int
     CfgLoopTypeOther,
     CfgDecayTime,
 
+    CfgDetectTouhouLoops,
+    CfgDetectRPGMakerLoops,
+    CfgDetectLeapFrogLoops,
     CfgDetectXMILoops,
     CfgDetectFF7Loops,
-    CfgDetectRPGMakerLoops,
-    CfgDetectTouhouLoops,
 
     CfgEmuDeMIDIExclusion,
 

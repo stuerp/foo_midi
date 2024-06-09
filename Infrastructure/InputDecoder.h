@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2024.05.16) **/
+/** $VER: InputDecoder.h (2024.06.09) **/
 
 #pragma once
 
@@ -63,6 +63,7 @@ public:
         _IsXG(),
 
         _DetectRPGMakerLoops((bool) CfgDetectRPGMakerLoops),
+        _DetectLeapFrogLoops((bool) CfgDetectLeapFrogLoops),
         _DetectXMILoops((bool) CfgDetectXMILoops),
         _DetectTouhouLoops((bool) CfgDetectTouhouLoops),
         _DetectFF7Loops((bool) CfgDetectFF7Loops),
@@ -264,6 +265,7 @@ private:
     bool _IsXG;
 
     bool _DetectRPGMakerLoops;
+    bool _DetectLeapFrogLoops;
     bool _DetectXMILoops;
     bool _DetectTouhouLoops;
     bool _DetectFF7Loops;

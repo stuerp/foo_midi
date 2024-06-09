@@ -35,7 +35,7 @@ The component supports 6 loop modes:
 * Never loop
   * The song will be played once ignoring any loop information.
 * Never loop. Use decay time
-  * The song will be played once ignoring any loop information with a customizable decay period at end for the sound to die down.
+  * The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down.
 * Loop and fade when detected
   * The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences.
 * Loop and fade always
@@ -118,6 +118,7 @@ v2.11.0.0-alpha7, 2024-xx-xx
 * New: Recomposer support (.RCP, .R36, .G18, .G36)
 * New: Preferences page to configure Recomposer and HMI/HMP settings. (alpha7)
 * New: HMI/HMP default tempo can be configured. (alpha7)
+* New: Support for LeapFrog loop markers (CC 110 and 111). (alpha8)
 * Improved: Added support for Unicode paths to RCP converter (alpha3)
 * Improved: Detection of mixed-encoding text in metadata (alpha5)
 * Fixed: RPG Maker loops should work again.

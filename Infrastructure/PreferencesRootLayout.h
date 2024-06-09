@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRootLayout.h (2024.05.19) **/
+/** $VER: PreferencesRootLayout.h (2024.06.09) **/
 
 #pragma once
 
@@ -21,7 +21,7 @@
 #define DY           7
 
 #define IX           4 // Spacing between two related controls
-#define IY           3
+#define IY           2
 
 #pragma region Output
 
@@ -136,7 +136,13 @@
     #define W_A28    W_A27
     #define H_A28    H_CHB
 
-#define H_A20    11 + H_A22 + IY + H_A2A + IY + H_A24 + IY + H_A25 + IY + H_A26 + IY + H_A27 + IY + H_A28 + 7
+    // Checkbox
+    #define X_A2C    X_A28
+    #define Y_A2C    Y_A28 + H_A28 + IY
+    #define W_A2C    W_A28
+    #define H_A2C    H_CHB
+
+#define H_A20    11 + H_A22 + IY + H_A2A + IY + H_A24 + IY + H_A25 + IY + H_A26 + IY + H_A27 + IY + H_A28 + IY + H_A2C + 7
 
 #pragma endregion
 

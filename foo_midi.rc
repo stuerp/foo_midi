@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2024.05.16) **/
+/** $VER: foo_midi.rc (2024.06.09) **/
 
 #include "resource.h"
 
@@ -71,9 +71,10 @@ font 8, "Segoe UI", 400, 0, 1
         ltext       "ms",           IDC_STATIC,         X_A2B, Y_A2B + 2, W_A2B, H_A2B
 
         control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
-        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
-        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
-        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
+        control     "CC 110/111 (LeapFrog)",                            IDC_LEAPFROG_LOOPS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
+        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
+        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
+        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A2C, Y_A2C, W_A2C, H_A2C
 
     groupbox "MIDI", IDC_STATIC, X_A80, Y_A80, W_A80, H_A80
         rtext       "Flavor:",                              IDC_MIDI_FLAVOR_TEXT, X_A81, Y_A81 + 2, W_A81, H_A81

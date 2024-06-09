@@ -128,7 +128,7 @@ private:
     int64_t _DefaultTempo;
 };
 
-#pragma region("preferences_page_instance")
+#pragma region preferences_page_instance
 
 /// <summary>
 /// Gets the state of the dialog.

@@ -140,7 +140,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
                 throw exception_io_data("Invalid MIDI file: No timestamps found in any of the tracks");
         }
 
-        _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops);
+        _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops, _DetectLeapFrogLoops);
     }
 
     // Calculate the hash of the MIDI file.
@@ -983,7 +983,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
         {
             if (_ExtraPercussionChannel != ~0L)
-                fileInfo.info_set(TagMIDIExtraPercusionChannel, pfc::format_int(_ExtraPercussionChannel + 1));
+                fileInfo.info_set(TagMIDIExtraPercusionChannel, pfc::format_int((t_int64) _ExtraPercussionChannel + 1));
         }
 
         _IsFirstChunk = false;

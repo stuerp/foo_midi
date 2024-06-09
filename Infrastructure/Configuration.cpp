@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2024.05.20) **/
+/** $VER: Configuration.cpp (2024.06.09) **/
 
 #include "framework.h"
 
@@ -21,10 +21,11 @@ static const GUID GUIDCfgLoopType = { 0x460a84b6, 0x910a, 0x496c, { 0xbe, 0xb6, 
 static const GUID GUIDCfgOtherLoopType = { 0xab5cc279, 0x1c68, 0x4824, { 0xb4, 0xb8, 0x6, 0x56, 0x85, 0x6a, 0x40, 0xa0 } };
 static const GUID GUIDCfgDecayTime = { 0xee80a18d, 0x7327, 0x4ba4, { 0x9c,0x20,0xae,0xe3,0xea,0x42,0xd6,0xb5 } };
 
-static const GUID GUIDCfgDetectTouhouLoops = { 0x35a32d9e, 0xdf99, 0x4617, { 0x9f, 0xf3, 0x31, 0x2f, 0x9c, 0x20, 0x6e, 0x0 } };
-static const GUID GUIDCfgDetectRPGMakerLoops = { 0x4d11dd87, 0x7a27, 0x4ecc, { 0xbc, 0xb8, 0xf0, 0x18, 0x2, 0xb, 0xa2, 0xd5 } };
-static const GUID GUIDCfgDetectXMILoops = { 0xf580d09, 0xd57b, 0x450c, { 0x84, 0xa2, 0xd6, 0xe, 0x34, 0xbd, 0x64, 0xf5 } };
-static const GUID GUIDCfgDetectFF7Loops = { 0x2e0dbdc2, 0x7436, 0x4b70, { 0x91, 0xfc, 0xfd, 0x98, 0x37, 0x87, 0x32, 0xb2 } };
+static const GUID GUIDCfgDetectTouhouLoops      = { 0x35a32d9e, 0xdf99, 0x4617, { 0x9f, 0xf3, 0x31, 0x2f, 0x9c, 0x20, 0x6e, 0x00 } };
+static const GUID GUIDCfgDetectRPGMakerLoops    = { 0x4d11dd87, 0x7a27, 0x4ecc, { 0xbc, 0xb8, 0xf0, 0x18, 0x02, 0x0b, 0xa2, 0xd5 } };
+static const GUID GUIDCfgDetectLeapFrogLoops    = { 0xa8875345, 0x2be4, 0x44f1, { 0x99, 0x70, 0x4c, 0x3f, 0x23, 0xb7, 0x8a, 0x45 } };
+static const GUID GUIDCfgDetectXMILoops         = { 0x0f580d09, 0xd57b, 0x450c, { 0x84, 0xa2, 0xd6, 0x0e, 0x34, 0xbd, 0x64, 0xf5 } };
+static const GUID GUIDCfgDetectFF7Loops         = { 0x2e0dbdc2, 0x7436, 0x4b70, { 0x91, 0xfc, 0xfd, 0x98, 0x37, 0x87, 0x32, 0xb2 } };
 
 static const GUID GUIDCfgEmuDeMIDIExclusion = { 0xc090f9c7, 0x47f9, 0x4f6f, { 0x84, 0x7a, 0x27, 0xcd, 0x75, 0x96, 0xc9, 0xd4 } };
 
@@ -78,10 +79,11 @@ cfg_var_modern::cfg_int
     CfgUseSuperMuntWithMT32(GUIDCfgUseSuperMuntWithMT32, DefaultUseSuperMuntWithMT32),
     CfgUseVSTiWithXG(CfgUseVSTiWithXGGUID, DefaultUseVSTiWithXG),
 
-    CfgDetectXMILoops(GUIDCfgDetectXMILoops, default_cfg_xmiloopz),
-    CfgDetectFF7Loops(GUIDCfgDetectFF7Loops, default_cfg_ff7loopz),
-    CfgDetectRPGMakerLoops(GUIDCfgDetectRPGMakerLoops, default_cfg_rpgmloopz),
-    CfgDetectTouhouLoops(GUIDCfgDetectTouhouLoops, default_cfg_thloopz),
+    CfgDetectTouhouLoops(GUIDCfgDetectTouhouLoops, DefaultDetectTouhouLoops),
+    CfgDetectRPGMakerLoops(GUIDCfgDetectRPGMakerLoops, DefaultDetectRPGMakerLoops),
+    CfgDetectLeapFrogLoops(GUIDCfgDetectLeapFrogLoops, DefaultDetectLeapFrogLoops),
+    CfgDetectXMILoops(GUIDCfgDetectXMILoops, DefaultDetectXMILoops),
+    CfgDetectFF7Loops(GUIDCfgDetectFF7Loops, DefaultDetectFF7Loops),
 
     CfgEmuDeMIDIExclusion(GUIDCfgEmuDeMIDIExclusion, DefaultEmuDeMIDIExclusion),
 

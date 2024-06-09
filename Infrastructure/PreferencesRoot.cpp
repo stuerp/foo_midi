@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2024.05.20) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2024.06.09) P. Stuer **/
 
 #include "framework.h"
 
@@ -149,6 +149,7 @@ public:
         COMMAND_HANDLER_EX(IDC_FILTER_BANKS, BN_CLICKED, OnButtonClick)
 
         COMMAND_HANDLER_EX(IDC_RPGMAKER_LOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_LEAPFROG_LOOPS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_XMI_LOOPS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_FF7_LOOPS, BN_CLICKED, OnButtonClick)
@@ -422,6 +423,7 @@ void PreferencesRootPage::apply()
 
         CfgDetectTouhouLoops    = (t_int32) SendDlgItemMessage(IDC_TOUHOU_LOOPS, BM_GETCHECK);
         CfgDetectRPGMakerLoops  = (t_int32) SendDlgItemMessage(IDC_RPGMAKER_LOOPS, BM_GETCHECK);
+        CfgDetectLeapFrogLoops  = (t_int32) SendDlgItemMessage(IDC_LEAPFROG_LOOPS, BM_GETCHECK);
         CfgDetectXMILoops       = (t_int32) SendDlgItemMessage(IDC_XMI_LOOPS, BM_GETCHECK);
         CfgDetectFF7Loops       = (t_int32) SendDlgItemMessage(IDC_FF7_LOOPS, BM_GETCHECK);
 
@@ -564,10 +566,12 @@ void PreferencesRootPage::reset()
         SendDlgItemMessage(IDC_EMIDI_EXCLUSION,    BM_SETCHECK, DefaultEmuDeMIDIExclusion);
         SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, DefaultFilterInstruments);
         SendDlgItemMessage(IDC_FILTER_BANKS,       BM_SETCHECK, DefaultFilterBanks);
-        SendDlgItemMessage(IDC_TOUHOU_LOOPS,       BM_SETCHECK, default_cfg_thloopz);
-        SendDlgItemMessage(IDC_RPGMAKER_LOOPS,     BM_SETCHECK, default_cfg_rpgmloopz);
-        SendDlgItemMessage(IDC_XMI_LOOPS,          BM_SETCHECK, default_cfg_xmiloopz);
-        SendDlgItemMessage(IDC_FF7_LOOPS,          BM_SETCHECK, default_cfg_ff7loopz);
+
+        SendDlgItemMessage(IDC_TOUHOU_LOOPS,       BM_SETCHECK, DefaultDetectTouhouLoops);
+        SendDlgItemMessage(IDC_RPGMAKER_LOOPS,     BM_SETCHECK, DefaultDetectRPGMakerLoops);
+        SendDlgItemMessage(IDC_LEAPFROG_LOOPS,     BM_SETCHECK, DefaultDetectLeapFrogLoops);
+        SendDlgItemMessage(IDC_XMI_LOOPS,          BM_SETCHECK, DefaultDetectXMILoops);
+        SendDlgItemMessage(IDC_FF7_LOOPS,          BM_SETCHECK, DefaultDetectFF7Loops);
     }
     #pragma endregion
 
@@ -896,6 +900,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         SendDlgItemMessage(IDC_TOUHOU_LOOPS,       BM_SETCHECK, (WPARAM) CfgDetectTouhouLoops);
         SendDlgItemMessage(IDC_RPGMAKER_LOOPS,     BM_SETCHECK, (WPARAM) CfgDetectRPGMakerLoops);
+        SendDlgItemMessage(IDC_LEAPFROG_LOOPS,     BM_SETCHECK, (WPARAM) CfgDetectLeapFrogLoops);
         SendDlgItemMessage(IDC_XMI_LOOPS,          BM_SETCHECK, (WPARAM) CfgDetectXMILoops);
         SendDlgItemMessage(IDC_FF7_LOOPS,          BM_SETCHECK, (WPARAM) CfgDetectFF7Loops);
     }
@@ -1345,6 +1350,9 @@ bool PreferencesRootPage::HasChanged()
             return true;
 
         if (SendDlgItemMessage(IDC_RPGMAKER_LOOPS, BM_GETCHECK) != CfgDetectRPGMakerLoops)
+            return true;
+
+        if (SendDlgItemMessage(IDC_LEAPFROG_LOOPS, BM_GETCHECK) != CfgDetectLeapFrogLoops)
             return true;
 
         if (SendDlgItemMessage(IDC_XMI_LOOPS, BM_GETCHECK) != CfgDetectXMILoops)
