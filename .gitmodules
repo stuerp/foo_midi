@@ -1,0 +1,3 @@
+[submodule "3rdParty/libmidi"]
+	path = 3rdParty/libmidi
+	url = https://github.com/stuerp/libmidi.git
