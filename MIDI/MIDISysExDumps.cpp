@@ -1,9 +1,11 @@
 
-/** $VER: MIDISysExDumps.cpp (2023.06.12) **/
+/** $VER: MIDISysExDumps.cpp (2024.05.09) **/
 
 #include "framework.h"
 
 #include "MIDISysExDumps.h"
+
+#include <format>
 
 void MIDISysExDumps::Serialize(const char * filePath, pfc::string8 & text) noexcept
 {
@@ -57,7 +59,7 @@ void MIDISysExDumps::Deserialize(const char * text, const char * filePath) noexc
 /// <summary>
 /// Merges these SysEx dumps into the specified container.
 /// </summary>
-void MIDISysExDumps::Merge(MIDIContainer & container, abort_callback & abortHandler)
+void MIDISysExDumps::Merge(midi_container_t & container, abort_callback & abortHandler)
 {
     std::vector<uint8_t> Object;
 
@@ -76,9 +78,9 @@ void MIDISysExDumps::Merge(MIDIContainer & container, abort_callback & abortHand
             File->read_object(Object.data(), (t_size) FileSize, abortHandler);
 
             {
-                MIDIContainer Container;
+                midi_container_t Container;
 
-                if (!MIDIProcessor::Process(Object, nullptr, Container))
+                if (!midi_processor_t::Process(Object, nullptr, Container))
                     break;
 
                 container.MergeTracks(Container);
@@ -86,17 +88,11 @@ void MIDISysExDumps::Merge(MIDIContainer & container, abort_callback & abortHand
         }
         catch (const std::exception & e)
         {
-            pfc::string8 path;
+            pfc::string8 PathName;
 
-            filesystem::g_get_canonical_path(Items[i], path);
+            filesystem::g_get_canonical_path(Items[i], PathName);
 
-            pfc::string8 temp = "Error processing dump ";
-
-            temp += path;
-            temp += ": ";
-            temp += e.what();
-
-            throw exception_io_data(temp);
+            throw exception_io_data(std::format("Error processing SysEx file \"{}\": {}.", PathName.c_str(), e.what()).c_str());
         }
     }
 }

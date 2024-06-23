@@ -1,5 +1,5 @@
 
-/** $VER: KaraokeProcessor.h (2023.05.30) **/
+/** $VER: KaraokeProcessor.h (2024.05.18) **/
 
 #pragma once
 
@@ -26,8 +26,6 @@ public:
     }
 
     void AddSyncedText(const char * text);
-
-    static void UTF8Encode(pfc::string8 ansi, pfc::string8 & utf8);
 
 private:
     void AddLyrics(pfc::string8 & lyrics, uint32_t timestamp, const char * text);

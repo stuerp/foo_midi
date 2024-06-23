@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2024.05.05) **/
+/** $VER: Configuration.h (2024.06.09) **/
 
 #pragma once
 
@@ -16,6 +16,8 @@ using namespace cfg_var_modern;
 
 extern const GUID PreferencesPageGUID;
 extern const GUID PreferencesPathsPageGUID;
+extern const GUID PreferencesProcessingPageGUID;
+extern const GUID PreferencesHMIPageGUID;
 
 enum class PlayerType : int8_t
 {
@@ -72,15 +74,16 @@ enum
     DefaultOtherLoopType = 0,
     DefaultDecayTime = 1000,
 
-    default_cfg_thloopz = 1,
-    default_cfg_rpgmloopz = 1,
-    default_cfg_xmiloopz = 1,
-    default_cfg_ff7loopz = 1,
+    DefaultDetectTouhouLoops = 1,
+    DefaultDetectRPGMakerLoops = 1,
+    DefaultDetectLeapFrogLoops = 0,
+    DefaultDetectXMILoops = 1,
+    DefaultDetectFF7Loops = 1,
 
     DefaultMIDIFlavor = MIDIFlavor::None,
     DefaultUseMIDIEffects = 1,
     DefaultUseSuperMuntWithMT32 = 1,
-    DefaultUseSecretSauceWithXG = 0,
+    DefaultUseVSTiWithXG = 0,
 
     DefaultEmuDeMIDIExclusion = 1,
     DefaultFilterInstruments = 0,
@@ -113,10 +116,11 @@ extern cfg_var_modern::cfg_int
     CfgLoopTypeOther,
     CfgDecayTime,
 
+    CfgDetectTouhouLoops,
+    CfgDetectRPGMakerLoops,
+    CfgDetectLeapFrogLoops,
     CfgDetectXMILoops,
     CfgDetectFF7Loops,
-    CfgDetectRPGMakerLoops,
-    CfgDetectTouhouLoops,
 
     CfgEmuDeMIDIExclusion,
 
@@ -140,7 +144,19 @@ extern cfg_var_modern::cfg_int
     CfgMIDIStandard,
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
-    CfgUseVSTiWithXG;
+    CfgUseVSTiWithXG,
+
+    CfgLoopExpansion,
+
+    CfgDefaultTempo;
+
+extern cfg_var_modern::cfg_bool
+    CfgWriteBarMarkers,
+    CfgWriteSysExNames,
+    CfgExtendLoops,
+    CfgWolfteamLoopMode,
+    CfgKeepDummyChannels,
+    CfgIncludeControlData;
 
 extern cfg_var_modern::cfg_float
     CfgBASSMIDIVolume;
@@ -196,9 +212,6 @@ extern const size_t _FileExtensionCount;
 extern const char * _SysExFileExtensions[];
 extern const size_t _SysExFileExtensionCount;
 
-extern const char TagChannels[];
-extern const char TagEncoding[];
-
 extern const char TagMIDIFormat[];
 extern const char TagMIDITrackCount[];
 extern const char TagMIDIChannelCount[];
@@ -218,7 +231,7 @@ extern const char TagMIDIActiveVoices[];
 extern const char TagMIDIPeakVoices[];
 
 extern const char TagMIDIPlayer[];
-extern const char TagExtraPercusionChannel[];
+extern const char TagMIDIExtraPercusionChannel[];
 
 extern bool IsMIDIFileExtension(const char * fileExtension);
 extern bool IsSysExFileExtension(const char * ext);

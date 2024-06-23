@@ -1,11 +1,11 @@
 
-/** $VER: MIDIPlayer.h (2023.11.01) **/
+/** $VER: MIDIPlayer.h (2024.05.11) **/
 
 #pragma once
 
 #include <sdk/foobar2000-lite.h>
 
-#include <libmidi/MIDIContainer.h>
+#include <MIDIContainer.h>
 #include "Configuration.h"
 
 #include <API.h>
@@ -24,7 +24,7 @@ public:
         Forced = 0x02
     };
 
-    bool Load(const MIDIContainer & midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t cleanFlags);
+    bool Load(const midi_container_t & midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t cleanFlags);
     uint32_t Play(audio_sample * samples, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
@@ -59,7 +59,7 @@ protected:
 protected:
     bool _IsInitialized;
     uint32_t _SampleRate;
-    SysExTable _SysExMap;
+    sysex_table_t _SysExMap;
 
     MIDIFlavor _MIDIFlavor;
     bool _FilterEffects;
@@ -75,7 +75,7 @@ private:
     void SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time);
 
 private:
-    std::vector<MIDIStreamEvent> _Stream;
+    std::vector<midi_item_t> _Stream;
     size_t _StreamPosition; // Current position in the event stream
 
     uint32_t _Position;     // Current position in the sample stream

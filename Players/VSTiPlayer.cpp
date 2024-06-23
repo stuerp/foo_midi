@@ -39,7 +39,7 @@ VSTiPlayer::VSTiPlayer() noexcept : MIDIPlayer()
     _ChannelCount = 0;
     _Samples = nullptr;
 
-    _PluginArchitecture = 0;
+    _ProcessorArchitecture = 0;
     _UniqueId = 0;
     _VendorVersion = 0;
 }
@@ -60,12 +60,10 @@ bool VSTiPlayer::LoadVST(const char * pathName)
     if ((pathName == nullptr) || (pathName[0] == '\0'))
         return false;
 
-    if (pathName != _PluginFilePath)
-        _PluginFilePath = pathName;
+    _FilePath = pathName;
+    _ProcessorArchitecture = GetProcessorArchitecture(_FilePath);
 
-    _PluginArchitecture = GetProcessorArchitecture(_PluginFilePath);
-
-    if (_PluginArchitecture == 0)
+    if (_ProcessorArchitecture == 0)
         return false;
 
     return StartHost();
@@ -165,7 +163,7 @@ bool VSTiPlayer::Startup()
     if (IsHostRunning())
         return true;
 
-    if (!LoadVST(_PluginFilePath.c_str()))
+    if (!LoadVST(_FilePath.c_str()))
         return false;
 
     if (_Chunk.size() != 0)
@@ -371,15 +369,15 @@ bool VSTiPlayer::StartHost()
         if (SlashPosition != std::string::npos)
             CommandLine.erase(CommandLine.begin() + (const __int64)(SlashPosition + 1), CommandLine.end());
 
-        CommandLine += (_PluginArchitecture == 64) ? "vsthost64.exe" : "vsthost32.exe";
+        CommandLine += (_ProcessorArchitecture == 64) ? "vsthost64.exe" : "vsthost32.exe";
         CommandLine += "\" \"";
-        CommandLine += _PluginFilePath;
+        CommandLine += _FilePath;
         CommandLine += "\" ";
 
         uint32_t Sum = 0;
 
         {
-            pfc::stringcvt::string_os_from_utf8 plugin_os(_PluginFilePath.c_str());
+            pfc::stringcvt::string_os_from_utf8 plugin_os(_FilePath.c_str());
 
             const TCHAR * ch = plugin_os.get_ptr();
 

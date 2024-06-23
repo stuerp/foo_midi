@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.05.05) **/
+/** $VER: InputDecoder.cpp (2024.05.20) **/
 
 #include "framework.h"
 
@@ -11,12 +11,13 @@
 
 #include <pfc/string-conv-lite.h>
 
-#include <libmidi/MIDIProcessor.h>
-
 #include "KaraokeProcessor.h"
 #include "Exceptions.h"
 
 #include <math.h>
+#include <string.h>
+
+#include <Encoding.h>
 
 volatile int _IsRunning = 0;
 
@@ -41,7 +42,8 @@ const char * PlayerTypeNames[] =
     "MCI",
 };
 
-#pragma region("input_impl")
+#pragma region input_impl
+
 /// <summary>
 /// Opens the specified file and parses it.
 /// </summary>
@@ -49,6 +51,9 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 {
     if (file.is_empty())
         filesystem::g_open(file, filePath, filesystem::open_mode_read, abortHandler);
+
+    if (_strnicmp(filePath, "file://", 7) == 0)
+        filePath += 7;
 
     _FilePath = filePath;
 
@@ -69,65 +74,54 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     file->read_object(Object.data(), (t_size) _FileStats.m_size, abortHandler);
 
     {
-        _IsSysExFile = IsSysExFileExtension(pfc::string_extension(filePath));
+        _IsSysExFile = IsSysExFileExtension(pfc::string_extension(_FilePath));
 
         if (_IsSysExFile)
         {
-            if (!MIDIProcessor::Process(Object, nullptr, _Container))
-                throw exception_io_data("Invalid SysEx dump");
+            try
+            {
+                midi_processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container);
+            }
+            catch (std::exception & e)
+            {
+                pfc::string8 Message = "Failed to read SysEx file: ";
+
+                throw exception_io_data(Message + e.what());
+            }
 
             return;
         }
     }
 
     {
-        if (!MIDIProcessor::Process(Object, pfc::string_extension(filePath), _Container))
+        try
         {
-            pfc::string8 Message = "Invalid MIDI file: ";
+            midi_processor_options_t Options
+            (
+                (uint16_t) CfgLoopExpansion,
+                CfgWriteBarMarkers,
+                CfgWriteSysExNames,
+                CfgExtendLoops,
+                CfgWolfteamLoopMode,
+                CfgKeepDummyChannels,
+                CfgIncludeControlData,
 
-            switch (MIDIProcessor::GetLastErrorCode())
-            {
-                case None: Message += "No error"; break;
+                (uint16_t) CfgDefaultTempo
+            );
 
-                case UnknownStatusCode: Message += "Unknown MIDI status code"; break;
+            midi_processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, Options);
+        }
+        catch (std::exception & e)
+        {
+            pfc::string8 Message = "Failed to read MIDI file: ";
 
-                case InsufficientData: Message += "Insufficient data in the stream"; break;
-
-                case InvalidSysExMessage: Message += "Invalid System Exclusive message"; break;
-                case InvalidSysExMessageContinuation: Message += "Invalid System Exclusive message"; break;
-                case InvalidSysExEndMessage: Message += "Invalid System Exclusive End message"; break;
-
-                case InvalidMetaDataMessage: Message += "Invalid meta data message"; break;
-
-                // SMF
-                case SMFBadHeaderChunkType: Message += "Bad SMF header chunk type"; break;
-                case SMFBadHeaderChunkSize: Message += "Bad SMF header chunk size"; break;
-                case SMFBadHeaderFormat: Message += "Bad SMF header format"; break;
-                case SMFBadHeaderTrackCount: Message += "Bad SMF header track count"; break;
-                case SMFBadHeaderTimeDivision: Message += "Bad SMF header time division"; break;
-
-                case SMFUnknownChunkType: Message += "Unknown type specified in SMF chunk"; break;
-
-                case SMFBadFirstMessage: Message += "Bad first message of a track"; break;
-
-                // XMI
-                case XMIFORMXDIRNotFound: Message += "FORM XDIR chunk not found"; break;
-                case XMICATXMIDNotFound: Message += "CAT XMID chunk not found"; break;
-                case XMIFORMXMIDNotFound: Message += "FORM XMID chunk not found"; break;
-                case XMIEVNTChunkNotFound: Message += "EVNT chunk not found"; break;
-
-                case XMIInvalidNoteMessage: Message += "Invalid note message"; break;
-
-                default: Message += "Unknown error code"; break;
-            }
-
-            throw exception_io_data(Message);
+            throw exception_io_data(Message + e.what());
         }
 
         _TrackCount = _Container.GetTrackCount();
 
         if (_TrackCount == 0)
-            throw exception_io_data("Invalid MIDI file. No tracks found");
+            throw exception_io_data("Invalid MIDI file: No tracks found");
 
         // Check if we read a valid MIDI file.
         {
@@ -143,10 +137,10 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             }
 
             if (!HasDuration)
-                throw exception_io_data("Invalid MIDI file");
+                throw exception_io_data("Invalid MIDI file: No timestamps found in any of the tracks");
         }
 
-        _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops);
+        _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops, _DetectLeapFrogLoops);
     }
 
     // Calculate the hash of the MIDI file.
@@ -155,24 +149,28 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
         _Container.SerializeAsSMF(Object);
 
-        hasher_md5_state HasherState;
-        static_api_ptr_t<hasher_md5> Hasher;
+        {
+            static_api_ptr_t<hasher_md5> Hasher;
 
-        Hasher->initialize(HasherState);
-        Hasher->process(HasherState, Object.data(), Object.size());
+            hasher_md5_state HasherState;
 
-        _FileHash = Hasher->get_result(HasherState);
+            Hasher->initialize(HasherState);
+            Hasher->process(HasherState, Object.data(), Object.size());
+
+            _FileHash = Hasher->get_result(HasherState);
+        }
     }
 
     if (AdvCfgSkipToFirstNote)
         _Container.TrimStart();
 
-//  _LoopInTicks.Clear();
     _LoopRange.Clear();
 }
+
 #pragma endregion
 
-#pragma region("input_decoder")
+#pragma region input_decoder
+
 /// <summary>
 /// Initializes the decoder before playing the specified subsong.
 /// Resets playback position to the beginning of specified subsong. This must be called first, before any other input_decoder methods (other than those inherited from input_info_reader).
@@ -181,7 +179,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
     if (_IsSysExFile)
-        throw exception_midi("You cannot play SysEx dumps");
+        throw exception_midi("You cannot play SysEx files.");
 
     _IsFirstChunk = true;
 
@@ -189,7 +187,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _TimeInSamples = 0;
 
-    InitializeTime(subSongIndex);
+    // Initialize time.
+    _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
+
+    _LengthInSamples = (uint32_t) ::MulDiv((int) GetDuration(subSongIndex), (int) _SampleRate, 1000);
 
     _Container.SetTrackCount(_TrackCount);
 
@@ -200,6 +201,22 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     // Set the player type based on the content of the container.
     {
+        midi_metadata_table_t MetaData;
+
+        _Container.GetMetaData(subSongIndex, MetaData);
+
+        for (const midi_metadata_item_t & Item : MetaData)
+        {
+            if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
+            {
+                _IsMT32 = (Item.Value == "MT-32");
+                _IsXG = (Item.Value == "XG");
+            }
+        }
+
+        if (_IsMT32 && CfgUseSuperMuntWithMT32)
+            _PlayerType = PlayerType::SuperMunt;
+        else
         if (_IsXG && CfgUseVSTiWithXG)
         {
             _PlayerType = PlayerType::VSTi;
@@ -210,9 +227,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             Preset._VSTiFilePath = FilePath;
         }
-        else
-        if (_IsMT32 && CfgUseSuperMuntWithMT32)
-            _PlayerType = PlayerType::SuperMunt;
     }
 
     // Load the preset from the song if it has one.
@@ -376,7 +390,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     {
                         insync(_Lock);
 
-                        if (++_IsRunning == 1)
+                        _IsRunning += 1;
+
+                        if (_IsRunning == 1)
                             _CurrentSampleRate = _SampleRate;
                         else
                         if (_SampleRate != _CurrentSampleRate)
@@ -398,12 +414,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             {
                 if (Preset._VSTiFilePath.is_empty())
-                    throw exception_midi("No VSTi specified in preset");
+                    throw exception_midi("No VSTi specified in preset.");
 
                 auto Player = new VSTiPlayer;
 
                 if (!Player->LoadVST(Preset._VSTiFilePath))
-                    throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\"");
+                    throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\".");
             
                 if (Preset._VSTiConfig.size() != 0)
                     Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
@@ -440,7 +456,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _PeakVoiceCount = 0;
 
                 if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
-                    throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found");
+                    throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found.");
             }
 
             pfc::string8 FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
@@ -459,7 +475,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Player->SetAbortHandler(&abortHandler);
 
                 if (!Player->Initialize(pfc::wideFromUTF8(FluidSynthDirectoryPath)))
-                    throw exception_midi("FluidSynth path not configured");
+                    throw exception_midi("FluidSynth path not configured.");
 
                 Player->SetSoundFontFile(Preset._SoundFontFilePath);
 
@@ -542,7 +558,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     _PeakVoiceCount = 0;
 
                     if (Preset._SoundFontFilePath.is_empty() && SoundFontFilePath.is_empty())
-                        throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found");
+                        throw exception_midi("No SoundFont defined in preset and no SoundFont file or directory found.");
                 }
 
                 auto Player = new BMPlayer;
@@ -770,7 +786,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     }
 
-    throw exception_midi("No MIDI player specified");
+    throw exception_midi("No MIDI player specified.");
 }
 
 /// <summary>
@@ -967,12 +983,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
         {
             if (_ExtraPercussionChannel != ~0L)
-            {
-                char Text[4];
-
-                ::_itoa_s((int)(_ExtraPercussionChannel + 1), Text, 10);
-                fileInfo.info_set(TagExtraPercusionChannel, Text);
-            }
+                fileInfo.info_set(TagMIDIExtraPercusionChannel, pfc::format_int((t_int64) _ExtraPercussionChannel + 1));
         }
 
         _IsFirstChunk = false;
@@ -1023,9 +1034,11 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
     return Success;
 }
+
 #pragma endregion
 
-#pragma region("input_info_reader")
+#pragma region input_info_reader
+
 /// <summary>
 /// Retrieves information about the specified subsong.
 /// </summary>
@@ -1038,16 +1051,18 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 
     fileInfo.set_length(_Container.GetDuration(subSongIndex, true) * 0.001);
 }
+
 #pragma endregion
 
-#pragma region("input_info_writer")
+#pragma region input_info_writer
+
 /// <summary>
 /// Set the tags for the specified file.
 /// </summary>
 void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const
 {
     if (_IsSysExFile)
-        throw exception_io_data("You cannot tag SysEx dumps");
+        throw exception_io_data("You cannot tag SysEx files.");
 
     file_info_impl fi(fileInfo);
 
@@ -1080,7 +1095,10 @@ void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_ca
         }
     }
 }
+
 #pragma endregion
+
+#pragma region Private
 
 /// <summary>
 /// Initializes the Index Manager.
@@ -1095,20 +1113,9 @@ void InputDecoder::InitializeIndexManager()
 }
 
 /// <summary>
-/// Initializes the time parameters.
+/// Gets the total duration of the specified sub-song taking into account any looping and decay time, in ms.
 /// </summary>
-void InputDecoder::InitializeTime(size_t subSongIndex)
-{
-//  _LoopInTicks.Set(_Container.GetLoopBeginTimestamp(subSongIndex), _Container.GetLoopEndTimestamp(subSongIndex));
-    _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
-
-    _LengthInSamples = (uint32_t) ::MulDiv((int) GetPlaybackTime(subSongIndex), (int) _SampleRate, 1000);
-}
-
-/// <summary>
-/// Gets the total play back time taking into account any looping and decay time, in ms.
-/// </summary>
-uint32_t InputDecoder::GetPlaybackTime(size_t subSongIndex)
+uint32_t InputDecoder::GetDuration(size_t subSongIndex)
 {
     uint32_t LengthInMs = _Container.GetDuration(subSongIndex, true);
 
@@ -1132,9 +1139,9 @@ uint32_t InputDecoder::GetPlaybackTime(size_t subSongIndex)
 /// <summary>
 /// Gets the path name of the matching SoundFont file for the specified file, if any.
 /// </summary>
-bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept
+bool InputDecoder::GetSoundFontFilePath(const pfc::string8 & filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept
 {
-    static const char * Extensions[] =
+    static const char * FileExtensions[] =
     {
         "json",
         "sflist",
@@ -1146,19 +1153,40 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 filePath, pfc::string
 
     soundFontPath = filePath;
 
-    size_t length = soundFontPath.length();
+    size_t Length = soundFontPath.length();
 
-    for (size_t i = 0; i < _countof(Extensions); ++i)
+    for (const char * & FileExtension : FileExtensions)
     {
-        soundFontPath.truncate(length);
+        soundFontPath.truncate(Length);
         soundFontPath += ".";
-        soundFontPath += Extensions[i];
+        soundFontPath += FileExtension;
 
         if (filesystem::g_exists(soundFontPath, abortHandler))
             return true;
     }
 
     return false;
+}
+
+#pragma endregion
+
+#pragma region Tags
+
+/// <summary>
+/// Changes the extension of the file name in the specified file path.
+/// </summary>
+pfc::string8 ChangeExtension(const pfc::string8 & filePath, const pfc::string8 & fileExtension)
+{
+    char FilePath[MAX_PATH];
+
+    ::strcpy_s(FilePath, _countof(FilePath), filePath);
+
+    char * FileExtension = ::strrchr(FilePath, '.');
+
+    if (FileExtension != nullptr)
+        ::strcpy_s(FileExtension + 1, _countof(FilePath) - (FileExtension - FilePath) - 1, fileExtension.c_str());
+
+    return pfc::string8(FilePath);
 }
 
 /// <summary>
@@ -1172,92 +1200,106 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     KaraokeProcessor kp;
 
     {
-        MIDIMetaData MetaData;
+        midi_metadata_table_t MetaData;
 
         _Container.GetMetaData(subSongIndex, MetaData);
 
-        MIDIMetaDataItem Item;
+        midi_metadata_item_t TrackItem;
+
+        bool HasTitle = MetaData.GetItem("title", TrackItem);
 
         {
-            bool HasTitle = MetaData.GetItem("title", Item);
-
-            for (size_t i = 0; i < MetaData.GetCount(); ++i)
+            for (const auto & Item : MetaData)
             {
-                const MIDIMetaDataItem & mdi = MetaData[i];
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
+                {
+                    fileInfo.info_set(TagMIDIType, Item.Value.c_str());
 
-            #ifdef _DEBUG
-//              console::print(mdi.Name.c_str(), ":", mdi.Value.c_str());
-            #endif
-
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "type") == 0)
-                {
-                    fileInfo.info_set(TagMIDIType, mdi.Value.c_str());
-
-                    _IsMT32 = (mdi.Value == "MT-32");
-                    _IsXG = (mdi.Value == "XG");
+                    _IsMT32 = (Item.Value == "MT-32");
+                    _IsXG = (Item.Value == "XG");
                 }
                 else
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "lyrics_type") == 0)
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "lyrics_type") == 0)
                 {
-                    fileInfo.info_set(TagMIDILyricsType, mdi.Value.c_str());
+                    fileInfo.info_set(TagMIDILyricsType, Item.Value.c_str());
                 }
                 else
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "lyrics") == 0)
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "lyrics") == 0)
                 {
-                    kp.AddUnsyncedLyrics(mdi.Timestamp, mdi.Value.c_str());
+                    kp.AddUnsyncedLyrics(Item.Timestamp, Item.Value.c_str());
                 }
                 else
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "soft_karaoke_lyrics") == 0)
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "soft_karaoke_lyrics") == 0)
                 {
-                    kp.AddSyncedLyrics(mdi.Timestamp, mdi.Value.c_str());
+                    kp.AddSyncedLyrics(Item.Timestamp, Item.Value.c_str());
                 }
                 else
-                if (pfc::stricmp_ascii(mdi.Name.c_str(), "soft_karaoke_text") == 0)
+                if (pfc::stricmp_ascii(Item.Name.c_str(), "soft_karaoke_text") == 0)
                 {
-                    kp.AddSyncedText(mdi.Value.c_str());
+                    kp.AddSyncedText(Item.Value.c_str());
                 }
                 else
                 {
-                    std::string Name = mdi.Name;
+                    std::string Name = Item.Name;
 
                     if (!HasTitle && (pfc::stricmp_ascii(Name.c_str(), "display_name") == 0))
                         Name = "title";
 
-                    AddTag(fileInfo, Name.c_str(), mdi.Value.c_str(), 0);
+                    AddTag(fileInfo, Name.c_str(), Item.Value.c_str(), 0);
                 }
             }
+        }
+    }
+
+    // Read a WRD file in the same path and convert it to lyrics.
+    {
+        pfc::string8 FilePath = ChangeExtension(_FilePath, "wrd");
+
+        FILE * fp = nullptr;
+
+        ::fopen_s(&fp, FilePath.c_str(), "r");
+
+        if (fp != nullptr)
+        {
+            char Line[256];
+
+            while (!::feof(fp) && (::fgets(Line, _countof(Line), fp) != NULL))
+            {
+                if (Line[0] != '@')
+                    kp.AddUnsyncedLyrics(0, Line);
+            }
+
+            ::fclose(fp);
         }
     }
 
     if (!kp.GetUnsyncedLyrics().is_empty())
     {
         auto Lyrics = kp.GetUnsyncedLyrics();
-        pfc::string8 UTF8;
 
-        KaraokeProcessor::UTF8Encode(Lyrics, UTF8);
+        std::string UTF8 = TextToUTF8(Lyrics.c_str());
 
-        fileInfo.meta_set("lyrics", UTF8);
+        fileInfo.meta_set("lyrics", UTF8.c_str());
     }
 
     if (!kp.GetSyncedLyrics().is_empty())
     {
         auto Lyrics = kp.GetSyncedLyrics();
-        pfc::string8 UTF8;
 
-        KaraokeProcessor::UTF8Encode(Lyrics, UTF8);
+        std::string UTF8 = TextToUTF8(Lyrics.c_str());
 
-        fileInfo.meta_set("syncedlyrics", UTF8);
+        fileInfo.meta_set("syncedlyrics", UTF8.c_str());
     }
 
     // General info
-    fileInfo.info_set_int(TagChannels, 2);
-    fileInfo.info_set(TagEncoding, "Synthesized");
+    fileInfo.info_set_int("channels", 2);
+    fileInfo.info_set("encoding", "Synthesized");
 
     // Specific info
-    fileInfo.info_set_int(TagMIDIFormat,       _Container.GetFormat());
-    fileInfo.info_set_int(TagMIDITrackCount,   _Container.GetFormat() == 2 ? 1 : _Container.GetTrackCount());
-    fileInfo.info_set_int(TagMIDIChannelCount, _Container.GetChannelCount(subSongIndex));
-    fileInfo.info_set_int(TagMIDITicks,        _Container.GetDuration(subSongIndex));
+    fileInfo.info_set_int   (TagMIDIFormat,       _Container.GetFormat());
+    fileInfo.info_set_int   (TagMIDITrackCount,   _Container.GetFormat() == 2 ? 1 : _Container.GetTrackCount());
+    fileInfo.info_set_int   (TagMIDIChannelCount, _Container.GetChannelCount(subSongIndex));
+    fileInfo.info_set_int   (TagMIDITicks,        _Container.GetDuration(subSongIndex));
 
     {
         uint32_t LoopBegin = _Container.GetLoopBeginTimestamp(subSongIndex);
@@ -1307,141 +1349,6 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         }
     }
 }
-/*
-/// <summary>
-/// Returns the number of bytes required to represent a Shift-JIS character.
-/// </summary>
-static size_t DecodeShiftJISChar(const uint8_t * data, size_t size)
-{
-    if (size == 0)
-        return 0;
-
-    if (size > 2)
-        size = 2;
-
-    if (data[0] < 0x80)
-        return (size_t)((data[0] > 0) ? 1 : 0);
-
-    if (size >= 1)
-    {
-        // TODO: definitely weak
-        if (unsigned(data[0] - 0xA1) < 0x3F)
-            return 1;
-    }
-
-    if (size >= 2)
-    {
-        // TODO: probably very weak
-        if ((unsigned(data[0] - 0x81) < 0x1F || unsigned(data[0] - 0xE0) < 0x10) && unsigned(data[1] - 0x40) < 0xBD)
-            return 2;
-    }
-
-    return 0;
-}
-
-/// <summary>
-/// Is the data a Shift-JIS string?
-/// </summary>
-static bool IsValidShiftJISOld(const char * data, size_t size)
-{
-    for (size_t i = 0; (i < size) && (data[i] != 0);)
-    {
-        size_t n = ::DecodeShiftJISChar((const uint8_t *)data + i, size - i);
-
-        if (n == 0)
-            return false;
-
-        i += n;
-
-        if (i > size)
-            return false;
-    }
-
-    return true;
-}
-*/
-
-#ifdef _DEBUG
-// Test cases
-const uint8_t Data1[] =
-{
-    0x46, 0x69, 0x6e, 0x61, 0x6c, 0x20, 0x46, 0x61, 0x6e, 0x74, 0x61, 0x73, 0x79, 0x20, 0x35, 0x20, 0x5b, 0x20, 0x83, 0x72, 0x83, 0x62, 0x83, 0x4f,
-    0x83, 0x75, 0x83, 0x8a, 0x83, 0x62, 0x83, 0x61, 0x82, 0xcc, 0x8e, 0x80, 0x93, 0xac, 0x20, 0x81, 0x66, 0x82, 0x58, 0x82, 0x58, 0x20, 0x2d, 0x73,
-    0x69, 0x6e, 0x67, 0x6c, 0x65, 0x20, 0x65, 0x64, 0x69, 0x74, 0x2d, 0x20, 0x5d, 0x20, 0x66, 0x6f, 0x72, 0x20, 0x53, 0x43, 0x2d, 0x38, 0x38, 0x50,
-    0x72, 0x6f, 0x20, 0x32, 0x50, 0x6f, 0x72, 0x74, 0x20, 0x76, 0x65, 0x72, 0x37, 0x2e, 0x30, 0x20, 0x62, 0x79, 0x20, 0x4c, 0x69, 0x78, 0x00
-};
-const WCHAR * Text1 = L"Final Fantasy 5 [ ビッグブリッヂの死闘 ’９９ -single edit- ] for SC-88Pro 2Port ver7.0 by Lix";
-
-struct Test
-{
-    const uint8_t * Data;
-    const WCHAR * Text;
-} Tests[] =
-{
-    { Data1, Text1 },   // Mixed ASCII and Shift-JIS
-};
-#endif
-
-/// <summary>
-/// Is the data a EUC-JP string?
-/// http://www.rikai.com/library/kanjitables/kanji_codes.euc.shtml
-/// </summary>
-static bool IsValidEUCJP(const char * data, size_t size)
-{
-    while (size != 0)
-    {
-        uint8_t d1 = (uint8_t) *data++;
-        size--;
-
-        if (d1 > 0x80)
-        {
-            if (size == 0)
-                return true;
-
-            uint8_t d2 = (uint8_t) *data++;
-            size--;
-
-            if (!((d1 >= 0xA1 && d1 <= 0xAD) || (d1 >= 0xB0 && d1 <= 0xFE)))
-                return false;
-
-            if (!(d2 >= 0xA0 && d1 <= 0xFF))
-                return false;
-        }
-    }
-
-    return true;
-}
-
-/// <summary>
-/// Is the data a Shift-JIS string?
-/// char ShiftJIS[] = { 0x82, 0xA0, 0x82, 0xA2, 0x82, 0xA4 }; / char UTF8[] = { 0xE3, 0x81, 0x82, 0xE3, 0x81, 0x84, 0xE3, 0x81, 0x86 };
-/// http://www.rikai.com/library/kanjitables/kanji_codes.sjis.shtml
-/// </summary>
-static bool IsValidShiftJIS(const char * data, size_t size)
-{
-    while (size != 0)
-    {
-        uint8_t d1 = (uint8_t) *data++;
-        size--;
-
-        if (d1 > 0x80)
-        {
-            if (size == 0)
-                return false;
-
-            uint8_t d2 = (uint8_t) *data++;
-            size--;
-
-            if (!((d1 >= 0x81 && d1 <= 0x84) || (d1 >= 0x87 && d1 <= 0x9F) || (d1 >= 0xE0 && d1 <= 0xEF)))
-                return false;
-
-            if (!((d2 >= 0x40 && d2 <= 0x9E) || (d2 >= 0x9F && d2 <= 0xFC)))
-                return false;
-        }
-    }
-
-    return true;
-}
 
 /// <summary>
 /// Adds the specified tag.
@@ -1466,20 +1373,18 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
 
     if (!pfc::is_lower_ascii(value) && !pfc::is_valid_utf8(value, maxLength))
     {
-        if (IsValidShiftJIS(value, ::strlen(value)))
+        if (IsShiftJIS(value, maxLength))
         {
-            // Shift-JIS
             Value = pfc::stringcvt::string_utf8_from_codepage(932, value);
         }
         else
-        if (IsValidEUCJP(value, ::strlen(value)))
+        if (IsEUCJP(value, maxLength))
         {
-            // EUC-JP, http://www.rikai.com/library/kanjitables/kanji_codes.euc.shtml
             Value = pfc::stringcvt::string_utf8_from_codepage(20932, value);
 
             // Try other code pages.
             if (Value.is_empty())
-                Value = pfc::stringcvt::string_utf8_from_codepage(51932, value);
+                Value = pfc::stringcvt::string_utf8_from_codepage(51932, value); // EUC Japanese
         }
         else
             Value = pfc::stringcvt::string_utf8_from_ansi(value);
@@ -1491,14 +1396,6 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
     fileInfo.meta_add(name, value);
 }
 
-/*
-#define XMIDI_CONTROLLER_FOR_LOOP 0x74 // For Loop
-#define XMIDI_CONTROLLER_NEXT_BREAK 0x75 // Next/Break
-
-#define EMIDI_CONTROLLER_TRACK_DESIGNATION 110 // Track Designation
-#define EMIDI_CONTROLLER_TRACK_EXCLUSION 111 // Track Exclusion
-#define EMIDI_CONTROLLER_LOOP_BEGIN XMIDI_CONTROLLER_FOR_LOOP
-#define EMIDI_CONTROLLER_LOOP_END XMIDI_CONTROLLER_NEXT_BREAK
-*/
+#pragma endregion
 
 static input_factory_t<InputDecoder> InputDecoderFactory;

@@ -1,9 +1,11 @@
 
-/** $VER: ContextMenu.cpp (2023.06.04) **/
+/** $VER: ContextMenu.cpp (2024.05.12) **/
 
 #include "framework.h"
 
 #include "ContextMenu.h"
+
+#include <pfc/string-conv-lite.h>
 
 static const char * ItemTexts[5] =
 {
@@ -29,7 +31,7 @@ void ContextMenu::get_item_name(unsigned int itemIndex, pfc::string_base & itemN
     itemName = ItemTexts[itemIndex];
 }
 
-bool ContextMenu::context_get_display(unsigned itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, pfc::string_base & out, unsigned &, const GUID &)
+bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, pfc::string_base & out, unsigned &, const GUID &)
 {
     if (itemIndex >= _countof(ItemTexts))
         uBugCheck();
@@ -80,7 +82,7 @@ bool ContextMenu::context_get_display(unsigned itemIndex, const pfc::list_base_c
     return false;
 }
 
-void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, const GUID &)
+void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, const GUID &)
 {
     if (itemIndex >= _countof(ItemTexts))
         uBugCheck();
@@ -112,9 +114,23 @@ void ContextMenu::context_command(unsigned itemIndex, const pfc::list_base_const
                     File->read_object(Object.data(), (t_size) FileSize, AbortHandler);
 
                     {
-                        MIDIContainer Container;
+                        const char * TmpFilePath = Location.get_path();
 
-                        if (MIDIProcessor::Process(Object, pfc::string_extension(Location.get_path()), Container))
+                        if (_strnicmp(TmpFilePath, "file://", 7) == 0)
+                            TmpFilePath += 7;
+
+                        midi_container_t Container;
+                        bool Success = false;
+
+                        try
+                        {
+                            Success = midi_processor_t::Process(Object, pfc::wideFromUTF8(TmpFilePath), Container);
+                        }
+                        catch (std::exception &)
+                        {
+                        }
+
+                        if (Success)
                         {
                             Object.resize(0);
 

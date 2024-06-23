@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2024.05.05) **/
+/** $VER: InputDecoder.h (2024.06.09) **/
 
 #pragma once
 
@@ -44,10 +44,11 @@ extern volatile int _IsRunning;
 extern critical_section _Lock;
 extern volatile uint32_t _CurrentSampleRate;
 
+#pragma warning(disable: 4820) // x bytes padding added after data member
+
 /// <summary>
 /// Implements an input decoder.
 /// </summary>
-#pragma warning(disable: 4820) // x bytes padding added after data member
 class InputDecoder : public input_stubs
 {
 public:
@@ -62,6 +63,7 @@ public:
         _IsXG(),
 
         _DetectRPGMakerLoops((bool) CfgDetectRPGMakerLoops),
+        _DetectLeapFrogLoops((bool) CfgDetectLeapFrogLoops),
         _DetectXMILoops((bool) CfgDetectXMILoops),
         _DetectTouhouLoops((bool) CfgDetectTouhouLoops),
         _DetectFF7Loops((bool) CfgDetectFF7Loops),
@@ -78,7 +80,6 @@ public:
         _LoopCount((uint32_t) AdvCfgLoopCount.get()),
         _FadeDuration((uint32_t) AdvCfgFadeTimeInMS.get()),
 
-//      _LoopInTicks(),
         _LoopRange(),
 
         _LengthInSamples(0),
@@ -88,9 +89,9 @@ public:
         _BASSMIDIVolume((float) CfgBASSMIDIVolume),
         _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIInterpolationMode)
     {
-        _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? MIDIContainer::CleanFlagEMIDI : 0) |
-                                 (CfgFilterInstruments ? MIDIContainer::CleanFlagInstruments : 0) |
-                                 (CfgFilterBanks ? MIDIContainer::CleanFlagBanks : 0);
+        _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? midi_container_t::CleanFlagEMIDI : 0) |
+                                 (CfgFilterInstruments ? midi_container_t::CleanFlagInstruments : 0) |
+                                 (CfgFilterBanks ? midi_container_t::CleanFlagBanks : 0);
     #ifdef DXISUPPORT
         dxiProxy = nullptr;
     #endif
@@ -109,7 +110,7 @@ public:
         if (_PlayerType == PlayerType::EmuDeMIDI)
         {
             insync(_Lock);
-            _IsRunning--;
+            _IsRunning -= 1;
         }
     #ifdef DXISUPPORT
         if (dxiProxy)
@@ -119,6 +120,7 @@ public:
 
 public:
     #pragma region("input_impl")
+
     void open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler);
 
     static bool g_is_our_content_type(const char * contentType)
@@ -153,9 +155,11 @@ public:
     {
         return false;
     }
+
     #pragma endregion
 
     #pragma region("input_decoder")
+
     void decode_initialize(unsigned subsongIndex, unsigned flags, abort_callback & abortHandler);
 
     bool decode_run(audio_chunk & audioChunk, abort_callback & abortHandler);
@@ -172,9 +176,11 @@ public:
     bool decode_get_dynamic_info_track(file_info &, double &) noexcept { return false; }
 
     void decode_on_idle(abort_callback &) noexcept { }
+
     #pragma endregion
 
     #pragma region("input_info_reader")
+
     unsigned get_subsong_count()
     {
         return _IsSysExFile ? 1 : (unsigned) _Container.GetSubSongCount();
@@ -186,9 +192,11 @@ public:
     }
 
     void get_info(t_uint32 subsongIndex, file_info & fileInfo, abort_callback & abortHandler);
+
     #pragma endregion
 
     #pragma region("input_info_reader_v2")
+
     t_filestats2 get_stats2(uint32_t, abort_callback &) const
     {
         return _FileStats2;
@@ -198,26 +206,28 @@ public:
     {
         return _FileStats;
     }
+
     #pragma endregion
 
     #pragma region("input_info_writer")
+
     void retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const;
 
     void retag_commit(abort_callback &) { }
 
     void remove_tags(abort_callback &) { }
+
     #pragma endregion
 
     static void InitializeIndexManager();
 
 private:
-    void InitializeTime(size_t subsongIndex);
-    uint32_t GetPlaybackTime(size_t subSongIndex);
+    uint32_t GetDuration(size_t subSongIndex);
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
 
-    static bool GetSoundFontFilePath(const pfc::string8 filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept;
+    static bool GetSoundFontFilePath(const pfc::string8 & filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept;
 
     #ifdef DXISUPPORT
     void set_loop()
@@ -243,7 +253,7 @@ private:
     t_filestats _FileStats;
     t_filestats2 _FileStats2;
 
-    MIDIContainer _Container;
+    midi_container_t _Container;
 
     bool _IsSysExFile;
     uint32_t _TrackCount;
@@ -255,6 +265,7 @@ private:
     bool _IsXG;
 
     bool _DetectRPGMakerLoops;
+    bool _DetectLeapFrogLoops;
     bool _DetectXMILoops;
     bool _DetectTouhouLoops;
     bool _DetectFF7Loops;
@@ -273,8 +284,8 @@ private:
 
     uint32_t _FadeDuration; // in ms
 
-    Range _LoopRange;
-    Range _FadeRange;
+    range_t _LoopRange;
+    range_t _FadeRange;
 
     uint32_t _LengthInSamples;
 

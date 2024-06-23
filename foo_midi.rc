@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2024.05.05) **/
+/** $VER: foo_midi.rc (2024.06.09) **/
 
 #include "resource.h"
 
@@ -53,6 +53,7 @@ font 8, "Segoe UI", 400, 0, 1
 //  Used to measure the dialog size.
 //  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
 
+    // Left column
     groupbox "Output", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10
         rtext       "Player:",      IDC_STATIC,     X_A11, Y_A11 + 2, W_A11, H_A11
         combobox                    IDC_PLAYER_TYPE,X_A12, Y_A12,     W_A12, H_A12, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -61,18 +62,19 @@ font 8, "Segoe UI", 400, 0, 1
         combobox                    IDC_SAMPLERATE, X_A15, Y_A15,     W_A15, H_A15, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
     groupbox "Looping", IDC_STATIC, X_A20, Y_A20, W_A20, H_A20
-        rtext       "Playback:",    IDC_STATIC,         X_A21, Y_A21, W_A21, H_A21
-        combobox                    IDC_LOOP_PLAYBACK,  X_A22, Y_A22, W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "Other:",       IDC_STATIC,         X_A23, Y_A23, W_A23, H_A23
-        combobox                    IDC_LOOP_OTHER,     X_A24, Y_A24, W_A24, H_A24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "Decay time:",  IDC_STATIC,         X_A29, Y_A29, W_A29, H_A29
-        edittext                    IDC_DECAY_TIME,     X_A2A, Y_A2A, W_A2A, H_A2A, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
-        ltext       "ms",           IDC_STATIC,         X_A2B, Y_A2B, W_A2B, H_A2B
+        rtext       "Playback:",    IDC_STATIC,         X_A21, Y_A21 + 2, W_A21, H_A21
+        combobox                    IDC_LOOP_PLAYBACK,  X_A22, Y_A22,     W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Other:",       IDC_STATIC,         X_A23, Y_A23 + 2, W_A23, H_A23
+        combobox                    IDC_LOOP_OTHER,     X_A24, Y_A24,     W_A24, H_A24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Decay time:",  IDC_STATIC,         X_A29, Y_A29 + 2, W_A29, H_A29
+        edittext                    IDC_DECAY_TIME,     X_A2A, Y_A2A,     W_A2A, H_A2A, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        ltext       "ms",           IDC_STATIC,         X_A2B, Y_A2B + 2, W_A2B, H_A2B
 
-        control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button",        BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
-        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
-        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS, "Button",          BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
-        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS, "Button",             BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
+        control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+        control     "CC 110/111 (LeapFrog)",                            IDC_LEAPFROG_LOOPS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
+        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
+        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
+        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A2C, Y_A2C, W_A2C, H_A2C
 
     groupbox "MIDI", IDC_STATIC, X_A80, Y_A80, W_A80, H_A80
         rtext       "Flavor:",                              IDC_MIDI_FLAVOR_TEXT, X_A81, Y_A81 + 2, W_A81, H_A81
@@ -82,11 +84,14 @@ font 8, "Segoe UI", 400, 0, 1
         control     "Use VSTi with XG",                     IDC_MIDI_USE_VSTI_WITH_XG, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
 
     groupbox "Miscellaneous", IDC_STATIC, X_A30, Y_A30, W_A30, H_A30
-        control "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EXCLUSION, "Button",      BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
-        control "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS, "Button",   BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
-        control "Disable bank changes",                             IDC_FILTER_BANKS, "Button",         BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
+        control "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EXCLUSION,    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
+        control "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
+        control "Disable bank changes",                             IDC_FILTER_BANKS,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
 
-    ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, 7, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
+    // Right column
+    groupbox "FluidSynth", IDC_STATIC, X_A40, Y_A40, W_A40, H_A40
+        rtext       "Interpolation:",       IDC_FLUIDSYNTH_INTERPOLATION_TEXT, X_A41, Y_A41 + 2, W_A41, H_A41
+        combobox                            IDC_FLUIDSYNTH_INTERPOLATION,      X_A42, Y_A42,     W_A42, H_A42, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     groupbox "BASS MIDI", IDC_STATIC, X_A50, Y_A50, W_A50, H_A50
         rtext           "Volume:",          IDC_BASSMIDI_VOLUME_LBL,X_A57, Y_A57 + 2, W_A57, H_A57
@@ -95,10 +100,6 @@ font 8, "Segoe UI", 400, 0, 1
         combobox                            IDC_RESAMPLING_MODE,    X_A54, Y_A54,     W_A54, H_A54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext           "Cached:",          IDC_CACHED_LBL,        X_A55, Y_A55 + 2, W_A55, H_A55
         ltext                  "",          IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56, WS_VISIBLE
-
-    groupbox "FluidSynth", IDC_STATIC, X_A40, Y_A40, W_A40, H_A40
-        rtext       "Interpolation:",       IDC_FLUIDSYNTH_INTERPOLATION_TEXT, X_A41, Y_A41 + 2, W_A41, H_A41
-        combobox                            IDC_FLUIDSYNTH_INTERPOLATION,      X_A42, Y_A42,     W_A42, H_A42, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     groupbox "Munt", IDC_STATIC, X_A60, Y_A60, W_A60, H_A60
         rtext       "GM Set:",              IDC_MUNT_GM_TEXT,   X_A63, Y_A63 + 2, W_A63, H_A63
@@ -115,6 +116,8 @@ font 8, "Segoe UI", 400, 0, 1
         rtext       "Chips:",               IDC_ADL_CHIPS_TEXT, X_A93, Y_A93 + 2, W_A93, H_A93
         combobox                            IDC_ADL_CHIPS,      X_A94, Y_A94,     W_A94, H_A94, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
         control     "Enable soft panning",  IDC_ADL_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A95, Y_A95, W_A95, H_A95
+
+    ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, X_A50, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 }
 
 #include "Infrastructure\PreferencesPathsLayout.h"
@@ -144,4 +147,36 @@ font 8, "Segoe UI", 400, 0, 1
     pushbutton  "...",              IDC_FLUIDSYNTH_PATH_SELECT,         X_B53, Y_B53,     W_B53, H_B53
 
     ltext "Please close and re-open Preferences to activate the changes.", IDC_PATHS_MESSAGE, 7, H_B00 - 4 - 8, W_B00, 8, NOT WS_VISIBLE
+}
+
+#include "Infrastructure\PreferencesProcessingLayout.h"
+
+IDD_PREFERENCES_PROCESSING dialogex 0, 0, 0, 0
+style DS_SETFONT | WS_CHILD
+font 8, "Segoe UI", 400, 0, 1
+{
+    groupbox "Recomposer", IDC_STATIC, X_C00, Y_C00, W_C00, H_C00
+        rtext       "Expand loops:",            IDC_STATIC,                 X_C11, Y_C11 + 2, W_C11, H_C11
+        edittext                                IDC_LOOP_EXPANSION,         X_C12, Y_C12,     W_C12, H_C12, ES_AUTOHSCROLL | ES_RIGHT
+        ltext       "times",                    IDC_STATIC,                 X_C13, Y_C13 + 2, W_C13, H_C13
+
+        control     "Write bar markers",        IDC_WRITE_BAR_MARKERS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C20, Y_C20, W_C20, H_C20
+        control     "Write SysEx names",        IDC_WRITE_SYSEX_NAMES,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C21, Y_C21, W_C21, H_C21
+        control     "Extend loops ",            IDC_EXTEND_LOOPS,           "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C22, Y_C22, W_C22, H_C22
+        control     "Wolfteam loops ",          IDC_WOLFTEAM_LOOPS,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C23, Y_C23, W_C23, H_C23
+        control     "Keep dummy channels",      IDC_KEEP_DUMMY_CHANNELS,    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C24, Y_C24, W_C24, H_C24
+        control     "Include control data",     IDC_INCLUDE_CONTROL_DATA,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C25, Y_C25, W_C25, H_C25
+
+    groupbox "HMI / HMP", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
+        rtext       "Default tempo:",           IDC_STATIC,                 X_D11, Y_D11 + 2, W_D11, H_D11
+        edittext                                IDC_DEFAULT_TEMPO,          X_D12, Y_D12,     W_D12, H_D12, ES_AUTOHSCROLL | ES_RIGHT
+        ltext       "bpm",                      IDC_STATIC,                 X_D13, Y_D13 + 2, W_D13, H_D13
+}
+
+#include "Infrastructure\PreferencesHMILayout.h"
+
+IDD_PREFERENCES_HMI dialogex 0, 0, 0, 0
+style DS_SETFONT | WS_CHILD
+font 8, "Segoe UI", 400, 0, 1
+{
 }

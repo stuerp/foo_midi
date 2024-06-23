@@ -7,7 +7,7 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Features
 
-* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS).
+* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36).
 * Supports several synthesizers, several of which do not require any additional files to play back music. The bundled synthesizers which do not require additional files may sound rather basic, though.
 * Supports FluidSynth SoundFont (.sf2) based synthesizer, including support for the newer compressed format. (.sf3). SoundFonts may be loaded in a simple, or even complex setup, using either basic .sflist text files encoded in UTF-8 format, but for now, it only supports a bare list of files.
 * Supports 32 and 64-bit VST instruments.
@@ -35,7 +35,7 @@ The component supports 6 loop modes:
 * Never loop
   * The song will be played once ignoring any loop information.
 * Never loop. Use decay time
-  * The song will be played once ignoring any loop information with a customizable decay period at end for the sound to die down.
+  * The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down.
 * Loop and fade when detected
   * The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences.
 * Loop and fade always
@@ -112,6 +112,19 @@ Open `foo_midi.sln` with Visual Studio and build the solution.
 To create the component first build the x86 configuration and next the x64 configuration.
 
 ## Change Log
+
+v2.11.0.0, 2024-06-23
+
+* New: Recomposer support (.RCP, .R36, .G18, .G36). Some files may still have issues.
+* New: Preferences page to configure Recomposer and HMI/HMP settings. (alpha7)
+* New: HMI/HMP default tempo can be configured. (alpha7)
+* New: Support for LeapFrog loop markers (CC 110 and 111). (alpha8)
+* Improved: Added support for Unicode paths to RCP converter (alpha3)
+* Improved: Detection of mixed-encoding text in metadata (alpha5)
+* Fixed: RPG Maker loops should work again.
+* Fixed: Recomposer files with strange tempo changes crashed the component. (alpha4)
+* Fixed: HMI conversion added a second Note On event after every note instead of a Note Off event. (alpha7)
+* Fixed: Apply button remained active even if nothing was changed. (alpha7)
 
 v2.10.0.0, 2024-05-07, *"It's been a while"*
 
@@ -249,7 +262,8 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Vitaly Novichkov](https://github.com/Wohlstand) for [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) and [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI).
 * [Mitsutaka Okazaki](https://github.com/Wohlstand/scc) for Emu de MIDI.
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
-* Tom Moebert for [FluidSynth](https://www.fluidsynth.org/)
+* Tom Moebert for [FluidSynth](https://www.fluidsynth.org/).
+* [Valley Bell](https://github.com/ValleyBell) for [MidiConverters](https://github.com/ValleyBell/MidiConverters).
 
 ## Reference Material
 
@@ -311,6 +325,10 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 * [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX))
 * [MUS Format](https://moddingwiki.shikadi.net/wiki/MUS_Format)
+
+#### RPC (Recomposer)
+
+* [Recomposer Format](http://www.vgmpf.com/Wiki/index.php?title=GMF)
 
 #### XMI (Extended Multiple Instrument Digital Interface)
 

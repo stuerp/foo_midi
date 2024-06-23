@@ -1,12 +1,10 @@
 
-/** $VER: ContextMenu.h (2023.01.04) **/
+/** $VER: ContextMenu.h (2024.05.11) **/
 
 #pragma once
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/contextmenu.h>
-
-#include <libmidi/MIDIProcessor.h>
 
 #include "Configuration.h"
 
@@ -28,15 +26,17 @@ public:
     virtual ~ContextMenu() { };
 
 #pragma region("contextmenu_item_simple")
-    virtual unsigned get_num_items() noexcept;
-    virtual void get_item_name(unsigned n, pfc::string_base & itemName) noexcept;
 
-    virtual bool get_item_description(unsigned n, pfc::string_base & out)
+    virtual unsigned get_num_items() noexcept;
+
+    virtual void get_item_name(unsigned int itemIndex, pfc::string_base & itemName) noexcept;
+
+    virtual bool get_item_description(unsigned itemIndex, pfc::string_base & description)
     {
-        if (n > 4)
+        if (itemIndex > 4)
             ::uBugCheck();
 
-        static const char * descriptions[5] =
+        static const char * Descriptions[5] =
         {
             "Converts the selected files into General MIDI files in the same path as the source.",
             "Applies the current synthesizer setup to this track for future playback.",
@@ -45,12 +45,12 @@ public:
             "Clears all assigned SysEx dumps from the selected MIDI files."
         };
 
-        out = descriptions[n];
+        description = Descriptions[itemIndex];
 
         return true;
     }
 
-    virtual GUID get_item_guid(unsigned n) noexcept
+    virtual GUID get_item_guid(unsigned int itemIndex) noexcept
     {
         static const GUID guids[5] =
         {
@@ -61,21 +61,24 @@ public:
             { 0x2aa8c082, 0x5d84, 0x4982, { 0xb4, 0x5d, 0xde, 0x51, 0xcb, 0x75, 0xff, 0xf2 } }
         };
 
-        if (n > 4)
+        if (itemIndex > 4)
             ::uBugCheck();
 
-        return guids[n];
+        return guids[itemIndex];
     }
 
-    virtual bool context_get_display(unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out, unsigned &, const GUID &);
+    virtual bool context_get_display(unsigned int itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & data, pfc::string_base & out, unsigned &, const GUID &);
 
-    virtual void context_command(unsigned n, const pfc::list_base_const_t<metadb_handle_ptr> & data, const GUID &);
+    virtual void context_command(unsigned int itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & data, const GUID &);
+
 #pragma endregion
 
 #pragma region("contextmenu_item_v2")
+
     GUID get_parent()
     {
         return contextmenu_groups::utilities;
     }
+
 #pragma endregion
 };

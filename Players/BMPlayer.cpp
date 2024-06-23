@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2024.05.05) **/
+/** $VER: BMPlayer.cpp (2024.06.23) **/
 
 #include "framework.h"
 
@@ -17,7 +17,7 @@
 #include <thread>
 #endif
 
-#pragma region("Cache")
+#pragma region Cache
 
 #pragma warning(disable: 4820)
 struct CacheItem
@@ -368,7 +368,7 @@ static void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalS
 
 #pragma endregion
 
-#pragma region("BASS Initializer")
+#pragma region BASS Initializer
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 static class BASSInitializer
@@ -454,7 +454,8 @@ private:
 
 #pragma endregion
 
-#pragma region("BASS MIDI")
+#pragma region Public
+
 BMPlayer::BMPlayer() : MIDIPlayer()
 {
     ::memset(_Stream, 0, sizeof(_Stream));
@@ -578,7 +579,8 @@ uint32_t BMPlayer::GetActiveVoiceCount() const noexcept
     return VoiceCount;
 }
 
-#pragma region("Private")
+#pragma region Private
+
 bool BMPlayer::Startup()
 {
     if (_Stream[0] && _Stream[1] && _Stream[2])
@@ -591,7 +593,11 @@ bool BMPlayer::Startup()
     _Stream[2] = ::BASS_MIDI_StreamCreate(16, Flags, (DWORD) _SampleRate);
 
     if (!_Stream[0] || !_Stream[1] || !_Stream[2])
+    {
+        _ErrorMessage = "Failed to create BASS MIDI streams";
+
         return false;
+    }
 
     ::BASS_ChannelSetAttribute(_Stream[0], BASS_ATTRIB_VOLDSP, (float) _Volume);
     ::BASS_ChannelSetAttribute(_Stream[1], BASS_ATTRIB_VOLDSP, (float) _Volume);
@@ -610,13 +616,21 @@ bool BMPlayer::Startup()
     if (_SoundFontFilePath.length())
     {
         if (!LoadSoundFontConfiguration(SoundFontConfigurations, _SoundFontFilePath))
+        {
+            _ErrorMessage = "Failed to load SoundFont configuration";
+
             return false;
+        }
     }
 
     if (_SoundFontDirectoryPath.length())
     {
         if (!LoadSoundFontConfiguration(SoundFontConfigurations, _SoundFontDirectoryPath))
+        {
+            _ErrorMessage = "Failed to load SoundFont configuration";
+
             return false;
+        }
     }
 
     ::BASS_MIDI_StreamSetFonts(_Stream[0], SoundFontConfigurations.data(), (unsigned int) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
@@ -848,6 +862,7 @@ bool BMPlayer::GetErrorMessage(std::string & errorMessage)
 
     return true;
 }
+
 #pragma endregion
 
 bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoaded)
@@ -861,4 +876,3 @@ bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoad
 }
 
 #pragma endregion
-
