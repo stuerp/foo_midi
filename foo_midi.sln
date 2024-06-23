@@ -50,7 +50,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjson", "3rdParty\libjson
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "foo_vis_midi", "..\foo_vis_midi\foo_vis_midi.vcxproj", "{64C481BC-066D-4049-9DFB-B503A7B6983F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmidi", "..\libmidi\libmidi.vcxproj", "{4573E081-973B-47F0-A67D-551761BA1678}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmidi", "3rdParty\libmidi\libmidi.vcxproj", "{4573E081-973B-47F0-A67D-551761BA1678}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

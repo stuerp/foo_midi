@@ -113,9 +113,9 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v2.11.0.0-alpha7, 2024-xx-xx
+v2.11.0.0, 2024-06-23
 
-* New: Recomposer support (.RCP, .R36, .G18, .G36)
+* New: Recomposer support (.RCP, .R36, .G18, .G36). Some files may still have issues.
 * New: Preferences page to configure Recomposer and HMI/HMP settings. (alpha7)
 * New: HMI/HMP default tempo can be configured. (alpha7)
 * New: Support for LeapFrog loop markers (CC 110 and 111). (alpha8)
