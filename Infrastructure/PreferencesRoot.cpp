@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2024.06.09) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2024.08.04) P. Stuer **/
 
 #include "framework.h"
 
@@ -728,7 +728,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         if (VSTiCount > 0)
         {
-            console::print("Found ", pfc::format_int((t_int64) VSTiCount), " VST instruments.");
+            console::print(STR_COMPONENT_BASENAME " found ", VSTiCount, " VST instruments.");
 
             size_t i = 0;
 
@@ -748,7 +748,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             }
         }
         else
-            console::print("Found no VST instruments.");
+            console::print(STR_COMPONENT_BASENAME " found no VST instruments.");
     }
 
     #pragma endregion

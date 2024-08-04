@@ -1,11 +1,12 @@
 
-/** $VER: VSTi.cpp (2024.05.20) P. Stuer **/
+/** $VER: VSTi.cpp (2024.08.04) P. Stuer **/
 
 #include "framework.h"
 
 #include <sdk/foobar2000-lite.h>
 
 #include "Configuration.h"
+#include "resource.h"
 #include "VSTi.h"
 
 #include "VSTiPlayer.h"
@@ -29,7 +30,7 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
         if (DirectoryPath.is_empty())
             return;
 
-        console::print("Enumerating VST instruments...");
+        console::print(STR_COMPONENT_BASENAME " is enumerating VST instruments...");
 
         DirectoryPath = pfc::io::path::combine(DirectoryPath, "*.*");
 
@@ -66,7 +67,7 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
             // Examine all DLL files.
             if (findFile->GetFileSize() != 0)
             {
-                console::print("Examining \"", PathName, "\"...");
+                console::print(STR_COMPONENT_BASENAME " is examining \"", PathName, "\"...");
 
                 VSTiPlayer Player;
 

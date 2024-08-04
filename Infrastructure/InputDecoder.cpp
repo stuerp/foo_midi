@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.05.20) **/
+/** $VER: InputDecoder.cpp (2024.08.04) **/
 
 #include "framework.h"
 
@@ -240,7 +240,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (MIDIPresetText)
             {
-                console::print("Using preset \"", MIDIPresetText, "\" from file.");
+                console::print(STR_COMPONENT_BASENAME " is using preset \"", MIDIPresetText, "\" from file.");
 
                 Preset.Deserialize(MIDIPresetText);
 
@@ -252,13 +252,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             MIDISysExDumps SysExDumps;
 
-            // Load the sysex from the song if it has one.
+            // Load the SysEx from the song if it has one.
             {
                 const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
 
                 if (MIDISysExDumps)
                 {
-                    console::print("Using sysex \"", MIDISysExDumps , "\" from file.");
+                    console::print(STR_COMPONENT_BASENAME " is using SysEx file \"", MIDISysExDumps , "\".");
 
                     SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
                 }
@@ -310,11 +310,53 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         if (FoundSoundFile)
         {
-            console::print("Setting player type to BASS MIDI because matching SoundFont \"", TempSoundFontFilePath, "\".");
+            console::print(STR_COMPONENT_BASENAME " is setting player type to BASS MIDI because a matching SoundFont \"", TempSoundFontFilePath, "\" was found.");
 
             SoundFontFilePath = TempSoundFontFilePath;
 
             _PlayerType = PlayerType::BASSMIDI;
+        }
+    }
+
+    // Use the embedded sound font (if any).
+    {
+        if (!_EmbeddedSoundFontFilePath.isEmpty())
+            ::remove(_EmbeddedSoundFontFilePath.c_str());
+
+        auto Data = _Container.GetSoundFontData();
+
+        if (Data.size() > 0)
+        {
+            char TempPath[MAX_PATH] = {};
+
+            if (::GetTempPathA(_countof(TempPath), TempPath) != 0)
+            {
+                char TempFilePath[MAX_PATH] = {};
+
+                if (::GetTempFileNameA(TempPath, "SF2", 0, TempFilePath) != 0)
+                {
+                    // Make sure the file extension is "sf2" or the file will fail to load.
+                    if (::strcat_s(TempFilePath, _countof(TempFilePath), ".sf2") == 0)
+                    {
+                        FILE * fp = nullptr;
+
+                        if (::fopen_s(&fp, TempFilePath, "wb") == 0)
+                        {
+                            ::fwrite(Data.data(), Data.size(), 1, fp);
+
+                            ::fclose(fp);
+
+                            _EmbeddedSoundFontFilePath = TempFilePath;
+
+                            console::print(STR_COMPONENT_BASENAME " is setting player type to BASS MIDI and using embedded SoundFont.");
+
+                            SoundFontFilePath = _EmbeddedSoundFontFilePath;
+
+                            _PlayerType = PlayerType::BASSMIDI;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -463,7 +505,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (FluidSynthDirectoryPath.is_empty())
             {
-                console::warning("FluidSynth path configured. Attempting to load libraries from plugin install path");
+                console::warning(STR_COMPONENT_BASENAME " is attempting to load the FluidSynth libraries from the plugin install path because the FluidSynth directory was not configured.");
 
                 FluidSynthDirectoryPath = core_api::get_my_full_path();
                 FluidSynthDirectoryPath.truncate(FluidSynthDirectoryPath.scan_filename());
@@ -479,7 +521,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 Player->SetSoundFontFile(Preset._SoundFontFilePath);
 
-                if (SoundFontFilePath.length())
+                if (SoundFontFilePath.length() != 0)
                     Player->SetSoundFontFile(SoundFontFilePath);
 
                 Player->SetInterpolationMode(_FluidSynthInterpolationMethod);
@@ -521,7 +563,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 if (BasePath.is_empty())
                 {
-                    console::warning("No Munt base path configured, attempting to load ROMs from plugin install path.");
+                    console::warning(STR_COMPONENT_BASENAME " is attempting to load the MT-32 ROMs from the plugin install path because the SuperMunt ROM path was not configured.");
 
                     BasePath = core_api::get_my_full_path();
                     BasePath.truncate(BasePath.scan_filename());
@@ -736,7 +778,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 if (PathName.is_empty())
                 {
-                    console::warning("Secret Sauce path not configured, yet somehow enabled; trying plugin directory...");
+                    console::warning(STR_COMPONENT_BASENAME " is attempting to load Secret Sauce from the plugin install path because the path was not configured.");
 
                     PathName = core_api::get_my_full_path();
                     PathName.truncate(PathName.scan_filename());

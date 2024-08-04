@@ -15,7 +15,7 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Requirements
 
-* [foobar2000](https://www.foobar2000.org/download) v1.6.16 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)
+* [foobar2000](https://www.foobar2000.org/download) v2.0 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)
 * Tested on Microsoft Windows 10 and later.
 
 ## Getting started
@@ -112,6 +112,11 @@ Open `foo_midi.sln` with Visual Studio and build the solution.
 To create the component first build the x86 configuration and next the x64 configuration.
 
 ## Change Log
+
+v2.12.0.0, 2024-xx-xx
+
+* New: Added support for embedded sound fonts in RMI files.
+* Changed: Dropped support for foobar2000 1.x.
 
 v2.11.0.0, 2024-06-23
 
@@ -325,6 +330,10 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 * [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX))
 * [MUS Format](https://moddingwiki.shikadi.net/wiki/MUS_Format)
+
+#### RMI
+
+* [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
 
 #### RPC (Recomposer)
 
