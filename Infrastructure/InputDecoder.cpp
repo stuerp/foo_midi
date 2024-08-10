@@ -323,7 +323,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         if (!_EmbeddedSoundFontFilePath.isEmpty())
             ::remove(_EmbeddedSoundFontFilePath.c_str());
 
-        auto Data = _Container.GetSoundFontData();
+        const auto & Data = _Container.GetSoundFontData();
 
         if (Data.size() > 0)
         {

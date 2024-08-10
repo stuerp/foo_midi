@@ -5,7 +5,7 @@
 
 #include "FSPlayer.h"
 
-FSPlayer::FSPlayer() : MIDIPlayer()
+FSPlayer::FSPlayer() : player_t()
 {
     ::memset(_Settings, 0, sizeof(_Settings));
     ::memset(_Synth, 0, sizeof(_Synth));

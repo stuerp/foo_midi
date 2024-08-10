@@ -276,7 +276,7 @@ private:
     bool _DetectFF7Loops;
 
     // Player Properties
-    MIDIPlayer * _Player;
+    player_t * _Player;
 
     PlayerType _PlayerType;
     uint32_t _SampleRate;

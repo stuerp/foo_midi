@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include "MIDIPlayer.h"
+#include "Player.h"
 
 #pragma warning(disable: 4820) // 'x' bytes padding added after data member 'y'
-class SCPlayer : public MIDIPlayer
+class SCPlayer : public player_t
 {
 public:
     SCPlayer() noexcept;

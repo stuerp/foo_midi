@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2024.06.09) **/
+/** $VER: Configuration.h (2024.08.10) **/
 
 #pragma once
 
@@ -108,6 +108,8 @@ enum
 
 const float DefaultBASSMIDIVolume = 0.15f;
 
+const uint16_t DefaultEnabledChannels = 0xFFFF;
+
 extern cfg_var_modern::cfg_int
     CfgPlayerType,
     CfgSampleRate,
@@ -144,11 +146,7 @@ extern cfg_var_modern::cfg_int
     CfgMIDIStandard,
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
-    CfgUseVSTiWithXG,
-
-    CfgLoopExpansion,
-
-    CfgDefaultTempo;
+    CfgUseVSTiWithXG;
 
 extern cfg_var_modern::cfg_bool
     CfgWriteBarMarkers,
@@ -169,6 +167,15 @@ extern cfg_var_modern::cfg_string
 
 extern cfg_map
     CfgVSTiConfig;
+
+// RCP
+extern cfg_var_modern::cfg_int  CfgLoopExpansion;
+
+// HMI
+extern cfg_var_modern::cfg_int  CfgDefaultTempo;
+
+// Channel Filtering
+extern cfg_var_modern::cfg_int  CfgEnabledChannels;
 
 extern advconfig_string_factory AdvCfgVSTiPluginDirectoryPath;
 extern advconfig_string_factory AdvCfgVSTiXGPlugin;

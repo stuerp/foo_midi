@@ -113,9 +113,11 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v2.12.0.0, 2024-xx-xx
+v2.12.0.0, 2024-08-10
 
 * New: Added support for embedded sound fonts in RMI files.
+* New: MIDI channels can be enabled and disabled during playback.
+  * See MSKB article 84817 [Using the MIDI Mapper](https://www.betaarchive.com/wiki/index.php?title=Microsoft_KB_Archive/84817) for an explanation of the 1 - 10 and 11 - 16 buttons.
 * Changed: Dropped support for foobar2000 1.x.
 
 v2.11.0.0, 2024-06-23

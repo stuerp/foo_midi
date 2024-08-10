@@ -456,7 +456,7 @@ private:
 
 #pragma region Public
 
-BMPlayer::BMPlayer() : MIDIPlayer()
+BMPlayer::BMPlayer() : player_t()
 {
     ::memset(_Stream, 0, sizeof(_Stream));
 

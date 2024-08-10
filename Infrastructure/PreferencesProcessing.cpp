@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2024.05.20) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2024.08.10) P. Stuer **/
 
 #include "framework.h"
 
@@ -43,6 +43,7 @@ const type2 Def##name = value;
 
 #define HasConfigVariableChanged(name) if (_##name != Cfg##name) return true;
 
+// RCP
 ConfigVariable(LoopExpansion,       cfg_int,  int,      0, 0x90c3d952,0xd07f,0x4d76,0x84,0x40,0x03,0x4a,0xb6,0x4e,0xfd,0x35);
 ConfigVariable(WriteBarMarkers,     cfg_bool, bool, false, 0x532741c5,0xe1a3,0x4334,0xa5,0xb6,0xa5,0x99,0x6d,0x08,0xdc,0x9c);
 ConfigVariable(WriteSysExNames,     cfg_bool, bool, false, 0xe00a19b1,0xe0dd,0x46dc,0xb0,0x6c,0xdb,0xb7,0x13,0x5c,0x07,0xc8);
@@ -51,7 +52,11 @@ ConfigVariable(WolfteamLoopMode,    cfg_bool, bool, false, 0x373c9824,0x32a3,0x4
 ConfigVariable(KeepDummyChannels,   cfg_bool, bool, false, 0x5ded0321,0xc53c,0x4581,0xb3,0x1e,0x3c,0x7b,0x3d,0xc0,0x90,0xb5);
 ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4974,0xaa,0x60,0x3c,0xdf,0xb6,0x07,0x25,0xbc);
 
+// HMI / HMP
 ConfigVariable(DefaultTempo,        cfg_int, int,    160,  0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
+
+// Enabled Channels
+ConfigVariable(EnabledChannels,     cfg_int, int, 0xFFFF,  0x813ffb7a,0x59fc,0x4e19,0x9b,0x8d,0x7a,0x4e,0xeb,0x2d,0x8b,0xca);
 
 /// <summary>
 /// Implements a preferences page.
@@ -68,7 +73,7 @@ public:
 
     virtual ~DialogPageProcessing() { };
 
-    #pragma region("preferences_page_instance")
+    #pragma region preferences_page_instance
 
     t_uint32 get_state() final;
     void apply() final;
@@ -80,18 +85,8 @@ public:
     BEGIN_MSG_MAP_EX(DialogPageProcessing)
         MSG_WM_INITDIALOG(OnInitDialog)
 
-        // Recomposer
-        COMMAND_HANDLER_EX(IDC_LOOP_EXPANSION, EN_CHANGE, OnEditChange)
-
-        COMMAND_HANDLER_EX(IDC_WRITE_BAR_MARKERS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_WRITE_SYSEX_NAMES, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_EXTEND_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_WOLFTEAM_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_KEEP_DUMMY_CHANNELS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_INCLUDE_CONTROL_DATA, BN_CLICKED, OnButtonClick)
-
-        // HMI / HMP
-        COMMAND_HANDLER_EX(IDC_DEFAULT_TEMPO, EN_CHANGE, OnEditChange)
+        COMMAND_CODE_HANDLER_EX(EN_CHANGE, OnEditChange)
+        COMMAND_CODE_HANDLER_EX(BN_CLICKED, OnButtonClick)
     END_MSG_MAP()
 
     enum
@@ -106,6 +101,7 @@ private:
     void OnButtonClick(UINT, int id, CWindow) noexcept;
 
     void UpdateDialog() noexcept;
+    void UpdateChannelButtons() noexcept;
 
     bool HasChanged() const noexcept;
     void OnChanged() const noexcept;
@@ -126,6 +122,9 @@ private:
 
     // HMI / HMP
     int64_t _DefaultTempo;
+
+    // Channel Filtering
+    int64_t _EnabledChannels;
 };
 
 #pragma region preferences_page_instance
@@ -158,6 +157,8 @@ void DialogPageProcessing::apply()
 
     ApplyConfigVariable(DefaultTempo);
 
+    ApplyConfigVariable(EnabledChannels);
+
     OnChanged();
 }
 
@@ -176,6 +177,8 @@ void DialogPageProcessing::reset()
 
     ResetConfigVariable(DefaultTempo);
 
+    ResetConfigVariable(EnabledChannels);
+
     UpdateDialog();
 
     OnChanged();
@@ -183,7 +186,7 @@ void DialogPageProcessing::reset()
 
 #pragma endregion
 
-#pragma region("CDialogImpl")
+#pragma region CDialogImpl
 
 /// <summary>
 /// Initializes the dialog.
@@ -201,6 +204,8 @@ BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
     InitializeConfigVariable(IncludeControlData);
 
     InitializeConfigVariable(DefaultTempo);
+
+    InitializeConfigVariable(EnabledChannels);
 
     UpdateDialog();
 
@@ -239,7 +244,7 @@ void DialogPageProcessing::OnEditChange(UINT code, int id, CWindow) noexcept
 /// <summary>
 /// Handles a click on a button.
 /// </summary>
-void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow) noexcept
+void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
 {
     switch (id)
     {
@@ -267,6 +272,52 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow) noexcept
             _IncludeControlData = !_IncludeControlData;
             break;
 
+        case IDC_CHANNEL_01:
+        case IDC_CHANNEL_02:
+        case IDC_CHANNEL_03:
+        case IDC_CHANNEL_04:
+        case IDC_CHANNEL_05:
+        case IDC_CHANNEL_06:
+        case IDC_CHANNEL_07:
+        case IDC_CHANNEL_08:
+        case IDC_CHANNEL_09:
+        case IDC_CHANNEL_10:
+        case IDC_CHANNEL_11:
+        case IDC_CHANNEL_12:
+        case IDC_CHANNEL_13:
+        case IDC_CHANNEL_14:
+        case IDC_CHANNEL_15:
+        case IDC_CHANNEL_16:
+        {
+            int64_t Mask = 1ll << (id - IDC_CHANNEL_01);
+
+            if (_EnabledChannels & Mask)
+                _EnabledChannels &= ~Mask;
+            else
+                _EnabledChannels |= Mask;
+            break;
+        }
+
+        case IDC_CHANNEL_ALL:
+            _EnabledChannels = 0xFFFF;
+            UpdateChannelButtons();
+            break;
+
+        case IDC_CHANNEL_NONE:
+            _EnabledChannels = 0x0000;
+            UpdateChannelButtons();
+            break;
+
+        case IDC_CHANNEL_1_10:
+            _EnabledChannels = 0x03FF;
+            UpdateChannelButtons();
+            break;
+
+        case IDC_CHANNEL_11_16:
+            _EnabledChannels = 0xFC00;
+            UpdateChannelButtons();
+            break;
+
         default:
             return;
     }
@@ -287,6 +338,8 @@ bool DialogPageProcessing::HasChanged() const noexcept
     HasConfigVariableChanged(IncludeControlData);
 
     HasConfigVariableChanged(DefaultTempo);
+
+    HasConfigVariableChanged(EnabledChannels);
 
     return false;
 }
@@ -314,6 +367,16 @@ void DialogPageProcessing::UpdateDialog() noexcept
     SendDlgItemMessageW(IDC_INCLUDE_CONTROL_DATA, BM_SETCHECK, (WPARAM) _IncludeControlData);
 
     ::uSetDlgItemText(m_hWnd, IDC_DEFAULT_TEMPO, pfc::format_int(_DefaultTempo));
+
+    UpdateChannelButtons();
+}
+
+void DialogPageProcessing::UpdateChannelButtons() noexcept
+{
+    int64_t Mask = 1;
+
+    for (int i = IDC_CHANNEL_01; i <= IDC_CHANNEL_16; ++i, Mask <<= 1)
+        SendDlgItemMessageW(i, BM_SETCHECK, (WPARAM)(((_EnabledChannels & Mask) != 0) ? BST_CHECKED: BST_UNCHECKED), 0);
 }
 
 #pragma endregion

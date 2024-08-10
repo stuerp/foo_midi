@@ -6,7 +6,7 @@
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
-#include "MIDIPlayer.h"
+#include "Player.h"
 
 #include <bassmidi.h>
 
@@ -19,7 +19,7 @@ struct sflist_presets;
 /// <summary>
 /// Implements a MIDI player using BASS MIDI.
 /// </summary>
-class BMPlayer : public MIDIPlayer
+class BMPlayer : public player_t
 {
 public:
     BMPlayer();

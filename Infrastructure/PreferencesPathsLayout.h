@@ -21,7 +21,7 @@
 #define DY           7
 
 #define IX           4 // Spacing between two related controls
-#define IY           3
+#define IY           2
 
 #pragma region VSTi Plugin path
 

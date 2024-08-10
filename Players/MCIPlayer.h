@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include "MIDIPlayer.h"
+#include "Player.h"
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
-class MCIPlayer : public MIDIPlayer
+class MCIPlayer : public player_t
 {
 public:
     MCIPlayer() noexcept;

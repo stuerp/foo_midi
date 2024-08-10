@@ -6,7 +6,7 @@
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
-#include <MIDIPlayer.h>
+#include <Player.h>
 
 #include <mt32emu.h>
 
@@ -17,7 +17,7 @@ namespace foobar2000_io
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
-class MT32Player : public MIDIPlayer
+class MT32Player : public player_t
 {
 public:
     MT32Player(bool gm = false, unsigned gm_set = 0);

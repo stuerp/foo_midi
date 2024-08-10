@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2024.06.09) **/
+/** $VER: foo_midi.rc (2024.08.10) **/
 
 #include "resource.h"
 
@@ -171,6 +171,29 @@ font 8, "Segoe UI", 400, 0, 1
         rtext       "Default tempo:",           IDC_STATIC,                 X_D11, Y_D11 + 2, W_D11, H_D11
         edittext                                IDC_DEFAULT_TEMPO,          X_D12, Y_D12,     W_D12, H_D12, ES_AUTOHSCROLL | ES_RIGHT
         ltext       "bpm",                      IDC_STATIC,                 X_D13, Y_D13 + 2, W_D13, H_D13
+
+    groupbox "Channels", IDC_STATIC, X_E00, Y_E00, W_E00, H_E00
+        control     "1"                         IDC_CHANNEL_01              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E11, Y_E11, W_E11, H_E11
+        control     "2"                         IDC_CHANNEL_02              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E12, Y_E12, W_E12, H_E12
+        control     "3"                         IDC_CHANNEL_03              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E13, Y_E13, W_E13, H_E13
+        control     "4"                         IDC_CHANNEL_04              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E14, Y_E14, W_E14, H_E14
+        control     "5"                         IDC_CHANNEL_05              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E15, Y_E15, W_E15, H_E15
+        control     "6"                         IDC_CHANNEL_06              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E16, Y_E16, W_E16, H_E16
+        control     "7"                         IDC_CHANNEL_07              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E17, Y_E17, W_E17, H_E17
+        control     "8"                         IDC_CHANNEL_08              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E18, Y_E18, W_E18, H_E18
+        control     "9"                         IDC_CHANNEL_09              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E19, Y_E19, W_E19, H_E19
+        control     "10"                        IDC_CHANNEL_10              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E20, Y_E20, W_E20, H_E20
+        control     "11"                        IDC_CHANNEL_11              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E21, Y_E21, W_E21, H_E21
+        control     "12"                        IDC_CHANNEL_12              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E22, Y_E22, W_E22, H_E22
+        control     "13"                        IDC_CHANNEL_13              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E23, Y_E23, W_E23, H_E23
+        control     "14"                        IDC_CHANNEL_14              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E24, Y_E24, W_E24, H_E24
+        control     "15"                        IDC_CHANNEL_15              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E25, Y_E25, W_E25, H_E25
+        control     "16"                        IDC_CHANNEL_16              "Button", BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, X_E26, Y_E26, W_E26, H_E26
+
+        pushbutton  "All",                      IDC_CHANNEL_ALL,            X_E30, Y_E30, W_E30, H_E30
+        pushbutton  "None",                     IDC_CHANNEL_NONE,           X_E32, Y_E32, W_E32, H_E32
+        pushbutton  "1 - 10",                   IDC_CHANNEL_1_10,           X_E34, Y_E34, W_E34, H_E34
+        pushbutton  "11 - 16",                  IDC_CHANNEL_11_16,          X_E36, Y_E36, W_E36, H_E36
 }
 
 #include "Infrastructure\PreferencesHMILayout.h"
