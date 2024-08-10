@@ -1,21 +1,22 @@
 
-/** $VER: MIDIPlayer.h (2024.05.11) **/
+/** $VER: Player.h (2024.08.10) **/
 
 #pragma once
 
 #include <sdk/foobar2000-lite.h>
 
 #include <MIDIContainer.h>
+
 #include "Configuration.h"
 
 #include <API.h>
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
-class MIDIPlayer
+class player_t
 {
 public:
-    MIDIPlayer();
-    virtual ~MIDIPlayer() { };
+    player_t();
+    virtual ~player_t() { };
 
     enum LoopMode
     {

@@ -19,7 +19,7 @@ template <class T> void SafeDelete(T& x) noexcept
 }
 
 #pragma region("Public")
-VSTiPlayer::VSTiPlayer() noexcept : MIDIPlayer()
+VSTiPlayer::VSTiPlayer() noexcept : player_t()
 {
     _IsCOMInitialized = false;
     _IsTerminating = false;

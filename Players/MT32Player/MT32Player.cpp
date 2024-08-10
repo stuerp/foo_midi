@@ -12,7 +12,7 @@
 
 #include <pfc/pathUtils.h>
 
-MT32Player::MT32Player(bool isGM, unsigned gmSet) : MIDIPlayer(), _GMSet(gmSet), _IsGM(isGM)
+MT32Player::MT32Player(bool isGM, unsigned gmSet) : player_t(), _GMSet(gmSet), _IsGM(isGM)
 {
     _Synth = nullptr;
 

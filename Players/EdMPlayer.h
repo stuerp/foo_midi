@@ -6,7 +6,7 @@
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
-#include "MIDIPlayer.h"
+#include "Player.h"
 
 #include <CMIDIModule.hpp>
 #include <COpllDevice.hpp>
@@ -15,7 +15,7 @@
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
-class EdMPlayer : public MIDIPlayer
+class EdMPlayer : public player_t
 {
 public:
     EdMPlayer();

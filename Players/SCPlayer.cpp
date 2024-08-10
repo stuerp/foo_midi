@@ -13,7 +13,7 @@
 
 #pragma region Public
 
-SCPlayer::SCPlayer() noexcept : MIDIPlayer()
+SCPlayer::SCPlayer() noexcept : player_t()
 {
     _IsInitialized = false;
     _COMInitialisationCount = 0;

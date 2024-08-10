@@ -5,7 +5,7 @@
 
 #include "ADLPlayer.h"
 
-ADLPlayer::ADLPlayer() : MIDIPlayer()
+ADLPlayer::ADLPlayer() : player_t()
 {
     ::memset(_Player, 0, sizeof(_Player));
 }

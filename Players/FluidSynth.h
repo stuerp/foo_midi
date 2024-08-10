@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "MIDIPlayer.h"
+#include "Player.h"
 
 #include <fluidsynth.h>
 

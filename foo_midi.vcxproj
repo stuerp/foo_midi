@@ -282,7 +282,7 @@
     <ClCompile Include="Infrastructure\InputDecoder.cpp" />
     <ClCompile Include="MIDI\KaraokeProcessor.cpp" />
     <ClCompile Include="Players\MCIPlayer.cpp" />
-    <ClCompile Include="Players\MIDIPlayer.cpp" />
+    <ClCompile Include="Players\Player.cpp" />
     <ClCompile Include="MIDI\MIDIPreset.cpp" />
     <ClCompile Include="MIDI\MIDIPresetFilter.cpp" />
     <ClCompile Include="MIDI\MIDISysExDumps.cpp" />
@@ -415,7 +415,7 @@
     <ClInclude Include="Infrastructure\InputDecoder.h" />
     <ClInclude Include="MIDI\KaraokeProcessor.h" />
     <ClInclude Include="Players\MCIPlayer.h" />
-    <ClInclude Include="MIDI\MIDIPlayer.h" />
+    <ClInclude Include="Players\Player.h" />
     <ClInclude Include="MIDI\MIDIPreset.h" />
     <ClInclude Include="MIDI\MIDIPresetFilter.h" />
     <ClInclude Include="MIDI\MIDISysExDumps.h" />

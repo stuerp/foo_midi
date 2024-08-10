@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include "MIDIPlayer.h"
+#include "Player.h"
 
 typedef void * HANDLE;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
-class VSTiPlayer : public MIDIPlayer
+class VSTiPlayer : public player_t
 {
 public:
     VSTiPlayer() noexcept;

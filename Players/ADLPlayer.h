@@ -6,13 +6,13 @@
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
-#include "MIDIPlayer.h"
+#include "Player.h"
 
 #include <libADLMIDI/include/adlmidi.h>
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
-class ADLPlayer : public MIDIPlayer
+class ADLPlayer : public player_t
 {
 public:
     ADLPlayer();

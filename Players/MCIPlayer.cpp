@@ -9,7 +9,7 @@
 
 #pragma region Public
 
-MCIPlayer::MCIPlayer() noexcept : MIDIPlayer()
+MCIPlayer::MCIPlayer() noexcept : player_t()
 {
     _hDevice = 0;
 }

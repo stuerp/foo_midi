@@ -11,7 +11,7 @@
 #include "gs-by-papiezak-and-sneakernets.wopn.h"
 #include "xg.wopn.h"
 
-OPNPlayer::OPNPlayer() : MIDIPlayer()
+OPNPlayer::OPNPlayer() : player_t()
 {
     ::memset(_Player, 0, sizeof(_Player));
 }

@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2024.06.23) P. Stuer **/
+/** $VER: Resource.h (2024.08.10) P. Stuer **/
 
 #pragma once
 
@@ -25,7 +25,7 @@
 #define STR_COPYRIGHT           TEXT(STR_COMPONENT_COPYRIGHT)
 
 #define NUM_FILE_MAJOR          2
-#define NUM_FILE_MINOR          11
+#define NUM_FILE_MINOR          12
 #define NUM_FILE_PATCH          0
 #define NUM_FILE_PRERELEASE     0
 
@@ -34,7 +34,7 @@
 #define STR_FILE_DESCRIPTION    TEXT(STR_COMPONENT_DESCRIPTION)
 
 #define NUM_PRODUCT_MAJOR       2
-#define NUM_PRODUCT_MINOR       11
+#define NUM_PRODUCT_MINOR       12
 #define NUM_PRODUCT_PATCH       0
 #define NUM_PRODUCT_PRERELEASE  0
 
@@ -144,3 +144,27 @@
 #define IDD_PREFERENCES_HMI_NAME            "HMI / HMP"
 
 #define IDC_DEFAULT_TEMPO                   2210
+
+/** Dialog: Channels **/
+
+#define IDC_CHANNEL_01                      2300
+#define IDC_CHANNEL_02                      2301
+#define IDC_CHANNEL_03                      2302
+#define IDC_CHANNEL_04                      2303
+#define IDC_CHANNEL_05                      2304
+#define IDC_CHANNEL_06                      2305
+#define IDC_CHANNEL_07                      2306
+#define IDC_CHANNEL_08                      2307
+#define IDC_CHANNEL_09                      2308
+#define IDC_CHANNEL_10                      2309
+#define IDC_CHANNEL_11                      2310
+#define IDC_CHANNEL_12                      2311
+#define IDC_CHANNEL_13                      2312
+#define IDC_CHANNEL_14                      2313
+#define IDC_CHANNEL_15                      2314
+#define IDC_CHANNEL_16                      2315
+
+#define IDC_CHANNEL_ALL                     2320
+#define IDC_CHANNEL_NONE                    2322
+#define IDC_CHANNEL_1_10                    2324
+#define IDC_CHANNEL_11_16                   2326

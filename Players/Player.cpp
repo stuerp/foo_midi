@@ -1,15 +1,14 @@
 
-/** $VER: MIDIPlayer.cpp (2023.12.24) **/
+/** $VER: Player.cpp (2024.08.10) **/
 
 #include "framework.h"
 
-#include "MIDIPlayer.h"
-#include "Configuration.h"
+#include "Player.h"
 
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
-MIDIPlayer::MIDIPlayer()
+player_t::player_t()
 {
     _SampleRate = 1000;
     _Length = 0;
@@ -33,7 +32,7 @@ MIDIPlayer::MIDIPlayer()
 /// <summary>
 /// Loads the specified MIDI container.
 /// </summary>
-bool MIDIPlayer::Load(const midi_container_t & midiContainer, uint32_t subsongIndex, LoopType loopType, uint32_t cleanFlags)
+bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongIndex, LoopType loopType, uint32_t cleanFlags)
 {
     _LoopType = loopType;
 
@@ -135,7 +134,7 @@ bool MIDIPlayer::Load(const midi_container_t & midiContainer, uint32_t subsongIn
 /// Renders the specified number of samples to an audio sample buffer.
 /// </summary>
 /// <remarks>All calculations are in samples. MIDIStreamEvent::Timestamp gets converted from ms to samples before playing starts.</remarks>
-uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexcept
+uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcept
 {
     assert(_Stream.size());
 
@@ -329,7 +328,7 @@ uint32_t MIDIPlayer::Play(audio_sample * sampleData, uint32_t sampleCount) noexc
 /// <summary>
 /// Seeks to the specified time (in samples)
 /// </summary>
-void MIDIPlayer::Seek(uint32_t timeInSamples)
+void player_t::Seek(uint32_t timeInSamples)
 {
     if (timeInSamples >= _Length)
     {
@@ -482,7 +481,7 @@ void MIDIPlayer::Seek(uint32_t timeInSamples)
 /// <summary>
 /// Converts the timestamps of the MIDI stream (in ms) to timestamps in samples. Note: that's why the default sample rate is 1000: to force a recalculation before starting to play.
 /// </summary>
-void MIDIPlayer::SetSampleRate(uint32_t sampleRate)
+void player_t::SetSampleRate(uint32_t sampleRate)
 {
     if (sampleRate == _SampleRate)
         return;
@@ -507,7 +506,7 @@ void MIDIPlayer::SetSampleRate(uint32_t sampleRate)
 /// <summary>
 /// Configures the MIDI player.
 /// </summary>
-void MIDIPlayer::Configure(MIDIFlavor midiFlavor, bool filterEffects)
+void player_t::Configure(MIDIFlavor midiFlavor, bool filterEffects)
 {
     _MIDIFlavor = midiFlavor;
     _FilterEffects = filterEffects;
@@ -523,7 +522,7 @@ void MIDIPlayer::Configure(MIDIFlavor midiFlavor, bool filterEffects)
 /// <summary>
 /// 
 /// </summary>
-void MIDIPlayer::SendEventFiltered(uint32_t data)
+void player_t::SendEventFiltered(uint32_t data)
 {
     if (!(data & 0x80000000u))
     {
@@ -535,6 +534,9 @@ void MIDIPlayer::SendEventFiltered(uint32_t data)
             if (Data == 0x5BB0 || Data == 0x5DB0)
                 return;
         }
+
+        if (((uint16_t) CfgEnabledChannels & (1U << (data & 0x0F))) == 0)
+            return;
 
         SendEvent(data);
     }
@@ -554,7 +556,7 @@ void MIDIPlayer::SendEventFiltered(uint32_t data)
 /// <summary>
 /// 
 /// </summary>
-void MIDIPlayer::SendEventFiltered(uint32_t data, uint32_t time)
+void player_t::SendEventFiltered(uint32_t data, uint32_t time)
 {
     if (!(data & 0x80000000u))
     {
@@ -597,7 +599,7 @@ static bool IsSysExEqual(const uint8_t * a, const uint8_t * b);
 /// <summary>
 /// Sends a SysEx.
 /// </summary>
-void MIDIPlayer::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t portNumber)
+void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t portNumber)
 {
     SendSysEx(data, size, portNumber);
 
@@ -608,7 +610,7 @@ void MIDIPlayer::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t po
 /// <summary>
 /// Sends a SysEx with a timestamp.
 /// </summary>
-void MIDIPlayer::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t portNumber, uint32_t time)
+void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t portNumber, uint32_t time)
 {
     SendSysEx(data, size, portNumber, time);
 
@@ -619,7 +621,7 @@ void MIDIPlayer::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t po
 /// <summary>
 /// Sends a SysEx reset message.
 /// </summary>
-void MIDIPlayer::SendSysExReset(uint8_t portNumber, uint32_t time)
+void player_t::SendSysExReset(uint8_t portNumber, uint32_t time)
 {
     if (!_IsInitialized)
         return;
@@ -745,7 +747,7 @@ void MIDIPlayer::SendSysExReset(uint8_t portNumber, uint32_t time)
 /// <summary>
 /// Sends a GS SET TONE MAP-0 NUMBER message.
 /// </summary>
-void MIDIPlayer::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
+void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
 {
     uint8_t Data[11] = { 0 };
 
@@ -800,7 +802,7 @@ void MIDIPlayer::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
 /// <summary>
 /// Sends a Roland GS message after re-calculating the checksum.
 /// </summary>
-void MIDIPlayer::SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time)
+void player_t::SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time)
 {
     uint8_t Checksum = 0;
     size_t i;
@@ -849,7 +851,7 @@ static uint32_t GetDWord(const uint8_t * data) noexcept
 /// <summary>
 /// Determines the processor architecture of a Windows binary file.
 /// </summary>
-uint32_t MIDIPlayer::GetProcessorArchitecture(const std::string & filePath) const
+uint32_t player_t::GetProcessorArchitecture(const std::string & filePath) const
 {
     constexpr size_t MZHeaderSize = 0x40;
     constexpr size_t PEHeaderSize = (size_t) 4 + 20 + 224;

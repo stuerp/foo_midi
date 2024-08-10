@@ -15,7 +15,7 @@ static bool IsGM2Reset(const uint8_t * data, size_t size) noexcept;
 static bool IsGSReset(const uint8_t * data, size_t size) noexcept;
 static bool IsXGReset(const uint8_t * data, size_t size) noexcept;
 
-EdMPlayer::EdMPlayer() : MIDIPlayer()
+EdMPlayer::EdMPlayer() : player_t()
 {
     _Initialized = false;
 

@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2024.06.09) **/
+/** $VER: Configuration.cpp (2024.08.10) **/
 
 #include "framework.h"
 
@@ -33,16 +33,6 @@ static const GUID GUIDCfgFilterInstruments = { 0x6d30c919, 0xb053, 0x43aa, { 0x9
 static const GUID GUIDCfgFilterBanks = { 0x3145963c, 0x7322, 0x4b48, { 0x99, 0xff, 0x75, 0xea, 0xc5, 0xf4, 0xda, 0xcc } };
 
 static const GUID GUIDCfgFluidSynthInterpolationMethod = { 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } };
-
-static const GUID CfgBASSMIDIVolumeGUID = { 0x143e8051, 0xa42b, 0x4225, {0xb9, 0xd2, 0x79, 0xf1, 0x43, 0x1e, 0x70, 0x16 } };
-static const GUID GUIDCfgBASSMIDIInterpolationMode = { 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } };
-
-static const GUID CfgVSTiFilePathGUID = { 0x1a6ea7e5, 0x718a, 0x485a, { 0xb1, 0x67, 0xcf, 0xdf, 0x3b, 0x40, 0x61, 0x45 } };
-static const GUID CfgSoundFontFilePathGUID = { 0x696d12dd, 0xaf32, 0x43d9, { 0x8d, 0xf6, 0xbd, 0xd1, 0x1e, 0x81, 0x83, 0x29 } };
-static const GUID CfgMT32ROMDirectoryPathGUID = { 0xd7e0ec5e, 0x872f, 0x41e3, { 0x9b, 0x5b, 0xd2, 0x2, 0xd8, 0xb9, 0x42, 0xa7 } };
-static const GUID CfgFluidSynthDirectoryPathGUID = { 0x0774129c, 0x3baf, 0x471e, { 0xa3, 0xdd, 0x83, 0x78, 0xc4, 0x2c, 0x1a, 0x4e } };
-
-static const GUID CfgVSTConfigGUID = { 0x44e7c715, 0xd256, 0x44c4, { 0x8f, 0xb6, 0xb7, 0x20, 0xfa, 0x9b, 0x31, 0xfc } };
 
 #ifdef DXISUPPORT
 static const GUID guid_cfg_dxi_plugin = { 0xd5c87282, 0xa9e6, 0x40f3, { 0x93, 0x82, 0x95, 0x68, 0xe6, 0x54, 0x1a, 0x46 } };
@@ -89,8 +79,6 @@ cfg_var_modern::cfg_int
 
     CfgFluidSynthInterpolationMode(GUIDCfgFluidSynthInterpolationMethod, DefaultFluidSynthInterpolationMethod),
 
-    CfgBASSMIDIInterpolationMode(GUIDCfgBASSMIDIInterpolationMode, DefaultBASSMIDIInterpolationMode),
-
     CfgFilterInstruments(GUIDCfgFilterInstruments, DefaultFilterInstruments),
     CfgFilterBanks(GUIDCfgFilterBanks, DefaultFilterBanks),
 
@@ -105,8 +93,8 @@ cfg_var_modern::cfg_int
     CfgNukeBank(CfgNukeBankGUID, DefaultNukeBank),
     CfgNukePanning(CfgNukePanningGUID, DefaultNukePanning);
 
-cfg_var_modern::cfg_float
-    CfgBASSMIDIVolume(CfgBASSMIDIVolumeGUID, DefaultBASSMIDIVolume);
+cfg_var_modern::cfg_float   CfgBASSMIDIVolume           ({ 0x143e8051, 0xa42b, 0x4225, {0xb9, 0xd2, 0x79, 0xf1, 0x43, 0x1e, 0x70, 0x16 } }, DefaultBASSMIDIVolume);
+cfg_var_modern::cfg_int     CfgBASSMIDIInterpolationMode({ 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } }, DefaultBASSMIDIInterpolationMode);
 
 #ifdef DXISUPPORT
 static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
@@ -114,13 +102,12 @@ static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 }
 cfg_guid cfg_dxi_plugin(guid_cfg_dxi_plugin, default_cfg_dxi_plugin);
 #endif
 
-cfg_var_modern::cfg_string
-    CfgVSTiFilePath             (CfgVSTiFilePathGUID, ""),
-    CfgSoundFontFilePath        (CfgSoundFontFilePathGUID, ""),
-    CfgMT32ROMDirectoryPath     (CfgMT32ROMDirectoryPathGUID, ""),
-    CfgFluidSynthDirectoryPath  (CfgFluidSynthDirectoryPathGUID, "");
+cfg_var_modern::cfg_string  CfgVSTiFilePath             ({ 0x1a6ea7e5, 0x718a, 0x485a, { 0xb1, 0x67, 0xcf, 0xdf, 0x3b, 0x40, 0x61, 0x45 } }, "");
+cfg_var_modern::cfg_string  CfgSoundFontFilePath        ({ 0x696d12dd, 0xaf32, 0x43d9, { 0x8d, 0xf6, 0xbd, 0xd1, 0x1e, 0x81, 0x83, 0x29 } }, "");
+cfg_var_modern::cfg_string  CfgMT32ROMDirectoryPath     ({ 0xd7e0ec5e, 0x872f, 0x41e3, { 0x9b, 0x5b, 0xd2, 0x02, 0xd8, 0xb9, 0x42, 0xa7 } }, "");
+cfg_var_modern::cfg_string  CfgFluidSynthDirectoryPath  ({ 0x0774129c, 0x3baf, 0x471e, { 0xa3, 0xdd, 0x83, 0x78, 0xc4, 0x2c, 0x1a, 0x4e } }, "");
 
-cfg_map CfgVSTiConfig(CfgVSTConfigGUID);
+cfg_map CfgVSTiConfig({ 0x44e7c715, 0xd256, 0x44c4, { 0x8f, 0xb6, 0xb7, 0x20, 0xfa, 0x9b, 0x31, 0xfc } });
 
 #pragma region Advanced Configuration GUIDs
 

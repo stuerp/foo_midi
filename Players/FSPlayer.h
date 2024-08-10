@@ -6,7 +6,7 @@
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
-#include "MIDIPlayer.h"
+#include "Player.h"
 
 #include "FluidSynth.h"
 
@@ -15,7 +15,7 @@
 /// <summary>
 /// Implements a MIDI player using FluidSynth.
 /// </summary>
-class FSPlayer : public MIDIPlayer
+class FSPlayer : public player_t
 {
 public:
     FSPlayer();
