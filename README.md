@@ -113,6 +113,11 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
+v2.13.0.0, 2024-xx-xx
+
+* Improved: An All Notes Off channel mode message will be sent when a channel gets turned off.
+* Improved: Only sets the MIDI player to BASSMIDI with SoundFonts unless FluidSynth is used.
+
 v2.12.0.0, 2024-08-10
 
 * New: Added support for embedded sound fonts in RMI files.

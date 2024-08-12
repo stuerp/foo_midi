@@ -310,11 +310,16 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         if (FoundSoundFile)
         {
-            console::print(STR_COMPONENT_BASENAME " is setting player type to BASS MIDI because a matching SoundFont \"", TempSoundFontFilePath, "\" was found.");
-
             SoundFontFilePath = TempSoundFontFilePath;
 
-            _PlayerType = PlayerType::BASSMIDI;
+            console::print(STR_COMPONENT_BASENAME " is using SoundFont \"", SoundFontFilePath, "\".");
+
+            if (_PlayerType != PlayerType::FluidSynth)
+            {
+                console::print(STR_COMPONENT_BASENAME " is setting player type to BASS MIDI.");
+
+                _PlayerType = PlayerType::BASSMIDI;
+            }
         }
     }
 
@@ -348,11 +353,19 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                             _EmbeddedSoundFontFilePath = TempFilePath;
 
-                            console::print(STR_COMPONENT_BASENAME " is setting player type to BASS MIDI and using embedded SoundFont.");
-
                             SoundFontFilePath = _EmbeddedSoundFontFilePath;
 
-                            _PlayerType = PlayerType::BASSMIDI;
+                            if (!SoundFontFilePath.isEmpty())
+                            {
+                                console::print(STR_COMPONENT_BASENAME " is using embedded SoundFont saved to \"", SoundFontFilePath, "\".");
+
+                                if (_PlayerType != PlayerType::FluidSynth)
+                                {
+                                    console::print(STR_COMPONENT_BASENAME " is setting player type to BASS MIDI.");
+
+                                    _PlayerType = PlayerType::BASSMIDI;
+                                }
+                            }
                         }
                     }
                 }

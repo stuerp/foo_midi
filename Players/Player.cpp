@@ -127,6 +127,8 @@ bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongInde
         SetSampleRate(NewSampleRate);
     }
 
+    _EnabledChannels = 0xFFFF;
+
     return true;
 }
 
@@ -524,6 +526,28 @@ void player_t::Configure(MIDIFlavor midiFlavor, bool filterEffects)
 /// </summary>
 void player_t::SendEventFiltered(uint32_t data)
 {
+    if (_EnabledChannels != CfgEnabledChannels)
+    {
+        _EnabledChannels = CfgEnabledChannels;
+
+        // Send an All Notes Off channel mode message for all muted channels whenever the selection changes.
+        for (uint8_t Port = 0; Port < 63; ++Port)
+        {
+            uint32_t Mask = 1;
+
+            for (uint8_t Channel = 0; Channel < 16; ++Channel, Mask <<= 1)
+            {
+                if (_EnabledChannels & Mask)
+                    continue;
+
+                SendEvent((Port << 24) | (ChannelModeMessages::AllNotesOff << 8) | StatusCodes::ControlChange | Channel);
+            }
+        }
+    }
+
+    if (((uint16_t) CfgEnabledChannels & (1U << (data & 0x0F))) == 0)
+        return;
+
     if (!(data & 0x80000000u))
     {
         if (_FilterEffects)
@@ -534,9 +558,6 @@ void player_t::SendEventFiltered(uint32_t data)
             if (Data == 0x5BB0 || Data == 0x5DB0)
                 return;
         }
-
-        if (((uint16_t) CfgEnabledChannels & (1U << (data & 0x0F))) == 0)
-            return;
 
         SendEvent(data);
     }
