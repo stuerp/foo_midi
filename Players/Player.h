@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2024.08.11) **/
+/** $VER: Player.h (2024.08.12) **/
 
 #pragma once
 
@@ -61,6 +61,7 @@ protected:
     bool _IsInitialized;
     uint32_t _SampleRate;
     sysex_table_t _SysExMap;
+    std::vector<uint8_t> _Ports;
 
     MIDIFlavor _MIDIFlavor;
     bool _FilterEffects;
@@ -68,6 +69,8 @@ protected:
 private:
     void SendEventFiltered(uint32_t data);
     void SendEventFiltered(uint32_t data, uint32_t time);
+
+    bool FilterEvent(uint32_t data) noexcept;
 
     void SendSysExFiltered(const uint8_t * event, size_t size, uint8_t portNumber);
     void SendSysExFiltered(const uint8_t * event, size_t size, uint8_t portNumber, uint32_t time);

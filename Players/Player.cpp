@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2024.08.10) **/
+/** $VER: Player.cpp (2024.08.12) **/
 
 #include "framework.h"
 
@@ -38,7 +38,7 @@ bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongInde
 
     assert(_Stream.size() == 0);
 
-    midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
+    midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _Ports, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
 
     if (_Stream.size() == 0)
         return false;
@@ -522,42 +522,14 @@ void player_t::Configure(MIDIFlavor midiFlavor, bool filterEffects)
 }
 
 /// <summary>
-/// 
+/// Sends the event to the engine unless it gets filtered out.
 /// </summary>
 void player_t::SendEventFiltered(uint32_t data)
 {
-    if (_EnabledChannels != CfgEnabledChannels)
-    {
-        _EnabledChannels = CfgEnabledChannels;
-
-        // Send an All Notes Off channel mode message for all muted channels whenever the selection changes.
-        for (uint8_t Port = 0; Port < 63; ++Port)
-        {
-            uint32_t Mask = 1;
-
-            for (uint8_t Channel = 0; Channel < 16; ++Channel, Mask <<= 1)
-            {
-                if (_EnabledChannels & Mask)
-                    continue;
-
-                SendEvent((Port << 24) | (ChannelModeMessages::AllNotesOff << 8) | StatusCodes::ControlChange | Channel);
-            }
-        }
-    }
-
-    if (((uint16_t) CfgEnabledChannels & (1U << (data & 0x0F))) == 0)
-        return;
-
     if (!(data & 0x80000000u))
     {
-        if (_FilterEffects)
-        {
-            const uint32_t Data = data & 0x00007FF0u;
-
-            // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D).
-            if (Data == 0x5BB0 || Data == 0x5DB0)
-                return;
-        }
+        if (FilterEvent(data))
+            return;
 
         SendEvent(data);
     }
@@ -575,20 +547,14 @@ void player_t::SendEventFiltered(uint32_t data)
 }
 
 /// <summary>
-/// 
+/// Sends the event to the engine unless it gets filtered out.
 /// </summary>
 void player_t::SendEventFiltered(uint32_t data, uint32_t time)
 {
     if (!(data & 0x80000000u))
     {
-        if (_FilterEffects)
-        {
-            const uint32_t Data = data & 0x00007FF0u;
-
-            // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
-            if (Data == 0x5BB0 || Data == 0x5DB0)
-                return;
-        }
+        if (FilterEvent(data))
+            return;
 
         SendEvent(data, time);
     }
@@ -603,6 +569,46 @@ void player_t::SendEventFiltered(uint32_t data, uint32_t time)
         if (_SysExMap.GetItem(Index, Data, Size, Port))
             SendSysExFiltered(Data, Size, Port, time);
     }
+}
+
+/// <summary>
+/// Returns true if the event needs to be filtered.
+/// </summary>
+bool player_t::FilterEvent(uint32_t data) noexcept
+{
+    if (_EnabledChannels != CfgEnabledChannels)
+    {
+        _EnabledChannels = CfgEnabledChannels;
+
+        // Send an All Notes Off channel mode message for all disabled channels whenever the selection changes.
+        for (const auto & Port : _Ports)
+        {
+            uint32_t Mask = 1;
+
+            for (uint8_t Channel = 0; Channel < 16; ++Channel, Mask <<= 1)
+            {
+                if (_EnabledChannels & Mask)
+                    continue;
+
+                SendEvent((uint32_t) ((Port << 24) | (ChannelModeMessages::AllNotesOff << 8) | StatusCodes::ControlChange | Channel));
+            }
+        }
+    }
+
+    // Filter out all Note On events for the disabled channels.
+    if (((data & 0xF0) == StatusCodes::NoteOn) && (((uint16_t) CfgEnabledChannels & (1U << (data & 0x0F))) == 0))
+        return true;
+
+    if (_FilterEffects)
+    {
+        const uint32_t Data = data & 0x00007FF0u;
+
+        // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
+        if (Data == 0x5BB0 || Data == 0x5DB0)
+            return true;
+    }
+
+    return false;
 }
 
 #pragma region SysEx
