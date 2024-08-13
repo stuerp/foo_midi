@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2024.08.12) **/
+/** $VER: Player.cpp (2024.08.13) **/
 
 #include "framework.h"
 
@@ -531,6 +531,9 @@ void player_t::SendEventFiltered(uint32_t data)
         if (FilterEvent(data))
             return;
 
+        if (FilterEffect(data))
+            return;
+
         SendEvent(data);
     }
     else
@@ -556,6 +559,9 @@ void player_t::SendEventFiltered(uint32_t data, uint32_t time)
         if (FilterEvent(data))
             return;
 
+        if (FilterEffect(data))
+            return;
+
         SendEvent(data, time);
     }
     else
@@ -572,15 +578,15 @@ void player_t::SendEventFiltered(uint32_t data, uint32_t time)
 }
 
 /// <summary>
-/// Returns true if the event needs to be filtered.
+/// Returns true if the event needs to be filtered out.
 /// </summary>
 bool player_t::FilterEvent(uint32_t data) noexcept
 {
+    // Send an All Notes Off channel mode message for all disabled channels whenever the selection changes.
     if (_EnabledChannels != CfgEnabledChannels)
     {
         _EnabledChannels = CfgEnabledChannels;
 
-        // Send an All Notes Off channel mode message for all disabled channels whenever the selection changes.
         for (const auto & Port : _Ports)
         {
             uint32_t Mask = 1;
@@ -595,20 +601,25 @@ bool player_t::FilterEvent(uint32_t data) noexcept
         }
     }
 
+    const uint8_t StatusCode = data & 0xF0;
+    const uint8_t Channel = data & 0x0F;
+
     // Filter out all Note On events for the disabled channels.
-    if (((data & 0xF0) == StatusCodes::NoteOn) && (((uint16_t) CfgEnabledChannels & (1U << (data & 0x0F))) == 0))
-        return true;
+    return ((StatusCode == StatusCodes::NoteOn) && (((uint16_t) _EnabledChannels & (1U << Channel)) == 0));
+}
 
-    if (_FilterEffects)
-    {
-        const uint32_t Data = data & 0x00007FF0u;
+/// <summary>
+/// Returns true if the effect needs to be filtered out.
+/// </summary>
+bool player_t::FilterEffect(uint32_t data) noexcept
+{
+    if (!_FilterEffects)
+        return false;
 
-        // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
-        if (Data == 0x5BB0 || Data == 0x5DB0)
-            return true;
-    }
+    const uint32_t Data = data & 0x00007FF0u;
 
-    return false;
+    // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
+    return (Data == 0x5BB0 || Data == 0x5DB0);
 }
 
 #pragma region SysEx
