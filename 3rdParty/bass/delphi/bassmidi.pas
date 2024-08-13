@@ -333,7 +333,7 @@ const
 {$ENDIF}
 {$IFDEF MACOS}
   {$IFDEF IOS}
-    bassmididll = 'libbassmidi.a';
+    bassmididll = 'bassmidi.framework/bassmidi';
   {$ELSE}
     bassmididll = 'libbassmidi.dylib';
   {$ENDIF}

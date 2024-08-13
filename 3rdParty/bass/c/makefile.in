@@ -1,5 +1,5 @@
 FLAGS = -Os -I.. -L..
-LIBS = -lbass
+LIBS = -lbass -lbassmidi
 OUTDIR = ..\bin
 
 CC = gcc
