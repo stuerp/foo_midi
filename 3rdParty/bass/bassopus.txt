@@ -1,5 +1,5 @@
 BASSOPUS 2.4
-Copyright (c) 2012-2023 Un4seen Developments Ltd. All rights reserved.
+Copyright (c) 2012-2024 Un4seen Developments Ltd. All rights reserved.
 
 Files that you should have found in the BASSOPUS package
 ========================================================
@@ -115,6 +115,14 @@ History
 These are the major (and not so major) changes in each release, along with the
 functions/options that are introduced/affected by them. There are other little
 tweaks and fixes made along the way too.
+
+2.4.3 - 2/8/2024
+----------------
+* Support for raw Opus without an Ogg container
+	BASS_OPUS_StreamCreate
+	BASS_OPUS_StreamPutData
+	BASS_OPUS_HEAD structure
+* Updated to libOpus 1.5.2
 
 2.4.2.4 - 27/9/2023
 -------------------

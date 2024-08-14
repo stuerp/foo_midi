@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2024.08.10) **/
+/** $VER: Player.cpp (2024.08.13) **/
 
 #include "framework.h"
 
@@ -38,7 +38,7 @@ bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongInde
 
     assert(_Stream.size() == 0);
 
-    midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
+    midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _Ports, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
 
     if (_Stream.size() == 0)
         return false;
@@ -126,6 +126,8 @@ bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongInde
 
         SetSampleRate(NewSampleRate);
     }
+
+    HaveEnabledChannelsChanged = true; // Forces the enabled channels to be re-read from the configuration variable.
 
     return true;
 }
@@ -520,22 +522,16 @@ void player_t::Configure(MIDIFlavor midiFlavor, bool filterEffects)
 }
 
 /// <summary>
-/// 
+/// Sends the event to the engine unless it gets filtered out.
 /// </summary>
 void player_t::SendEventFiltered(uint32_t data)
 {
     if (!(data & 0x80000000u))
     {
-        if (_FilterEffects)
-        {
-            const uint32_t Data = data & 0x00007FF0u;
+        if (FilterEvent(data))
+            return;
 
-            // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D).
-            if (Data == 0x5BB0 || Data == 0x5DB0)
-                return;
-        }
-
-        if (((uint16_t) CfgEnabledChannels & (1U << (data & 0x0F))) == 0)
+        if (FilterEffect(data))
             return;
 
         SendEvent(data);
@@ -554,20 +550,17 @@ void player_t::SendEventFiltered(uint32_t data)
 }
 
 /// <summary>
-/// 
+/// Sends the event to the engine unless it gets filtered out.
 /// </summary>
 void player_t::SendEventFiltered(uint32_t data, uint32_t time)
 {
     if (!(data & 0x80000000u))
     {
-        if (_FilterEffects)
-        {
-            const uint32_t Data = data & 0x00007FF0u;
+        if (FilterEvent(data))
+            return;
 
-            // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
-            if (Data == 0x5BB0 || Data == 0x5DB0)
-                return;
-        }
+        if (FilterEffect(data))
+            return;
 
         SendEvent(data, time);
     }
@@ -582,6 +575,54 @@ void player_t::SendEventFiltered(uint32_t data, uint32_t time)
         if (_SysExMap.GetItem(Index, Data, Size, Port))
             SendSysExFiltered(Data, Size, Port, time);
     }
+}
+
+/// <summary>
+/// Returns true if the event needs to be filtered out.
+/// </summary>
+bool player_t::FilterEvent(uint32_t data) noexcept
+{
+    // Send an All Notes Off channel mode message for all disabled channels whenever the selection changes.
+    if (HaveEnabledChannelsChanged)
+    {
+        HaveEnabledChannelsChanged = false;
+
+        ::memcpy(_EnabledChannels, CfgEnabledChannels.get()->data(), sizeof(_EnabledChannels));
+
+        for (const auto & Port : _Ports)
+        {
+            uint16_t Mask = 1;
+
+            for (uint8_t Channel = 0; Channel < 16; ++Channel, Mask <<= 1)
+            {
+                if (_EnabledChannels[Port] & Mask)
+                    continue; // because the channel is enabled.
+
+                SendEvent((uint32_t) ((Port << 24) | (ChannelModeMessages::AllNotesOff << 8) | StatusCodes::ControlChange | Channel));
+            }
+        }
+    }
+
+    const size_t Port = (data >> 24) & 0x7F;
+    const uint8_t StatusCode = data & 0xF0;
+    const uint8_t Channel = data & 0x0F;
+
+    // Filter out all Note On events for the disabled channels.
+    return ((StatusCode == StatusCodes::NoteOn) && (((uint16_t) _EnabledChannels[Port] & (1U << Channel)) == 0));
+}
+
+/// <summary>
+/// Returns true if the effect needs to be filtered out.
+/// </summary>
+bool player_t::FilterEffect(uint32_t data) noexcept
+{
+    if (!_FilterEffects)
+        return false;
+
+    const uint32_t Data = data & 0x00007FF0u;
+
+    // Filter Control Change "Effects 1 (External Effects) Depth" (0x5B) and "Effects 3 (Chorus) Depth" (0x5D)
+    return (Data == 0x5BB0 || Data == 0x5DB0);
 }
 
 #pragma region SysEx

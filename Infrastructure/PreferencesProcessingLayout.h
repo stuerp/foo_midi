@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessingLayout.h (2024.10.08) **/
+/** $VER: PreferencesProcessingLayout.h (2024.10.14) **/
 
 #pragma once
 
@@ -251,9 +251,31 @@
     #define W_E36    W_BTN
     #define H_E36    H_BTN
 
-    #pragma endregion
+#pragma endregion
+
+#pragma region Port
+
+    // Label
+    #define X_E40    X_E30
+    #define Y_E40    Y_E30 + H_E30 + IY
+    #define W_E40    45
+    #define H_E40    H_LBL
+
+    // Label (Buddy)
+    #define X_E41    X_E40 + W_E40 + IX
+    #define Y_E41    Y_E40
+    #define W_E41    12
+    #define H_E41    H_LBL
+
+    // Slider
+    #define X_E42    X_E41 + W_E41 + IX
+    #define Y_E42    Y_E41
+    #define W_E42    160
+    #define H_E42    15
+
+#pragma endregion
 
 #define W_E00   5 + W_E11 + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + (IX + W_E12) + 5
-#define H_E00   11 + H_E11 + IY + H_E30 + 7
+#define H_E00   11 + H_E11 + IY + H_E30 + IY + H_E42 + 7
 
 #pragma endregion
