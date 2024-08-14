@@ -278,7 +278,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Players\FSPlayer.cpp" />
-    <ClCompile Include="Infrastructure\InitQuitHandler.cpp" />
+    <ClCompile Include="Infrastructure\InitStageCallback.cpp" />
     <ClCompile Include="Infrastructure\InputDecoder.cpp" />
     <ClCompile Include="MIDI\KaraokeProcessor.cpp" />
     <ClCompile Include="Players\MCIPlayer.cpp" />

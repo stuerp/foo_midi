@@ -127,7 +127,7 @@ bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongInde
         SetSampleRate(NewSampleRate);
     }
 
-    _EnabledChannels = 0xFFFF;
+    HaveEnabledChannelsChanged = true; // Forces the enabled channels to be re-read from the configuration variable.
 
     return true;
 }
@@ -583,29 +583,32 @@ void player_t::SendEventFiltered(uint32_t data, uint32_t time)
 bool player_t::FilterEvent(uint32_t data) noexcept
 {
     // Send an All Notes Off channel mode message for all disabled channels whenever the selection changes.
-    if (_EnabledChannels != CfgEnabledChannels)
+    if (HaveEnabledChannelsChanged)
     {
-        _EnabledChannels = CfgEnabledChannels;
+        HaveEnabledChannelsChanged = false;
+
+        ::memcpy(_EnabledChannels, CfgEnabledChannels.get()->data(), sizeof(_EnabledChannels));
 
         for (const auto & Port : _Ports)
         {
-            uint32_t Mask = 1;
+            uint16_t Mask = 1;
 
             for (uint8_t Channel = 0; Channel < 16; ++Channel, Mask <<= 1)
             {
-                if (_EnabledChannels & Mask)
-                    continue;
+                if (_EnabledChannels[Port] & Mask)
+                    continue; // because the channel is enabled.
 
                 SendEvent((uint32_t) ((Port << 24) | (ChannelModeMessages::AllNotesOff << 8) | StatusCodes::ControlChange | Channel));
             }
         }
     }
 
+    const size_t Port = (data >> 24) & 0x7F;
     const uint8_t StatusCode = data & 0xF0;
     const uint8_t Channel = data & 0x0F;
 
     // Filter out all Note On events for the disabled channels.
-    return ((StatusCode == StatusCodes::NoteOn) && (((uint16_t) _EnabledChannels & (1U << Channel)) == 0));
+    return ((StatusCode == StatusCodes::NoteOn) && (((uint16_t) _EnabledChannels[Port] & (1U << Channel)) == 0));
 }
 
 /// <summary>

@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2024.08.13) **/
+/** $VER: Player.h (2024.08.14) **/
 
 #pragma once
 
@@ -94,7 +94,7 @@ private:
 
     uint32_t _LoopBegin;    // Position of the start of a loop in the sample stream
 
-    int64_t _EnabledChannels;
+    uint16_t _EnabledChannels[128];
 
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;
 };

@@ -113,9 +113,10 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v2.13.0.0, 2024-xx-xx
+v2.13.0.0, 2024-08-14
 
 * Improved: An All Notes Off channel mode message will be sent when a channel gets disabled. The overall filtering has been fine-tuned.
+* Improved: Channels can be disabled per port.
 * Improved: Only sets the MIDI player to BASSMIDI with SoundFonts unless FluidSynth is used.
 * Builds with foobar2000 SDK 2024-08-07.
 * 

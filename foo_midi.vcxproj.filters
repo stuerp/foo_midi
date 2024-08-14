@@ -12,7 +12,7 @@
     <ClCompile Include="Players\EdMPlayer.cpp" />
     <ClCompile Include="Infrastructure\FileTypeRegistrar.cpp" />
     <ClCompile Include="foo_midi.cpp" />
-    <ClCompile Include="Infrastructure\InitQuitHandler.cpp" />
+    <ClCompile Include="Infrastructure\InitStageCallback.cpp" />
     <ClCompile Include="Infrastructure\InputDecoder.cpp" />
     <ClCompile Include="Players\Player.cpp" />
     <ClCompile Include="MIDI\MIDIPreset.cpp" />
