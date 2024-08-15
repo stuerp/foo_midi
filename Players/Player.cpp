@@ -614,7 +614,7 @@ bool player_t::FilterEvent(uint32_t data) noexcept
 /// <summary>
 /// Returns true if the effect needs to be filtered out.
 /// </summary>
-bool player_t::FilterEffect(uint32_t data) noexcept
+bool player_t::FilterEffect(uint32_t data) const noexcept
 {
     if (!_FilterEffects)
         return false;

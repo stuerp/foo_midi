@@ -106,7 +106,7 @@ public:
     ~InputDecoder()
     {
         if (!_EmbeddedSoundFontFilePath.isEmpty())
-            ::remove(_EmbeddedSoundFontFilePath.c_str());
+            ::DeleteFileA(_EmbeddedSoundFontFilePath.c_str());
 
         delete _Player;
 

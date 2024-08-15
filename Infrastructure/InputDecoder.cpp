@@ -312,11 +312,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             SoundFontFilePath = TempSoundFontFilePath;
 
-            console::print(STR_COMPONENT_BASENAME " is using SoundFont \"", SoundFontFilePath, "\".");
+            console::print(STR_COMPONENT_BASENAME " is using the SoundFont from \"", SoundFontFilePath, "\".");
 
-            if (_PlayerType != PlayerType::FluidSynth)
+            if ((_PlayerType != PlayerType::BASSMIDI) && (_PlayerType != PlayerType::FluidSynth))
             {
-                console::print(STR_COMPONENT_BASENAME " is setting player type to BASS MIDI.");
+                console::print(STR_COMPONENT_BASENAME " is using BASS MIDI for the current file.");
 
                 _PlayerType = PlayerType::BASSMIDI;
             }
@@ -326,7 +326,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // Use the embedded sound font (if any).
     {
         if (!_EmbeddedSoundFontFilePath.isEmpty())
-            ::remove(_EmbeddedSoundFontFilePath.c_str());
+            ::DeleteFileA(_EmbeddedSoundFontFilePath.c_str());
 
         const auto & Data = _Container.GetSoundFontData();
 
@@ -340,34 +340,35 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 if (::GetTempFileNameA(TempPath, "SF2", 0, TempFilePath) != 0)
                 {
-                    // Make sure the file extension is "sf2" or the file will fail to load.
-                    if (::strcat_s(TempFilePath, _countof(TempFilePath), ".sf2") == 0)
+                    _EmbeddedSoundFontFilePath = TempFilePath;
+
+                    _EmbeddedSoundFontFilePath.add_string(".sf2"); // Make sure the file extension is "sf2" or the SoundFont will fail to load.
+
                     {
                         FILE * fp = nullptr;
 
-                        if (::fopen_s(&fp, TempFilePath, "wb") == 0)
+                        if (::fopen_s(&fp, _EmbeddedSoundFontFilePath, "wb") == 0)
                         {
                             ::fwrite(Data.data(), Data.size(), 1, fp);
 
                             ::fclose(fp);
 
-                            _EmbeddedSoundFontFilePath = TempFilePath;
-
                             SoundFontFilePath = _EmbeddedSoundFontFilePath;
 
-                            if (!SoundFontFilePath.isEmpty())
                             {
-                                console::print(STR_COMPONENT_BASENAME " is using embedded SoundFont saved to \"", SoundFontFilePath, "\".");
+                                console::print(STR_COMPONENT_BASENAME " is using the embedded SoundFont (saved to \"", SoundFontFilePath, "\").");
 
-                                if (_PlayerType != PlayerType::FluidSynth)
+                                if ((_PlayerType != PlayerType::BASSMIDI) && (_PlayerType != PlayerType::FluidSynth))
                                 {
-                                    console::print(STR_COMPONENT_BASENAME " is setting player type to BASS MIDI.");
+                                    console::print(STR_COMPONENT_BASENAME " is using BASS MIDI for the current file.");
 
                                     _PlayerType = PlayerType::BASSMIDI;
                                 }
                             }
                         }
                     }
+
+                    ::DeleteFileA(TempFilePath);
                 }
             }
         }

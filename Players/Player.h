@@ -71,7 +71,7 @@ private:
     void SendEventFiltered(uint32_t data, uint32_t time);
 
     bool FilterEvent(uint32_t data) noexcept;
-    bool FilterEffect(uint32_t data) noexcept;
+    bool FilterEffect(uint32_t data) const noexcept;
 
     void SendSysExFiltered(const uint8_t * event, size_t size, uint8_t portNumber);
     void SendSysExFiltered(const uint8_t * event, size_t size, uint8_t portNumber, uint32_t time);

@@ -113,6 +113,10 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
+v2.13.1.0, 2024-08-15
+
+* Fixed: 0-byte *.tmp files were not deleted after playing an RMI file with an embedded SoundFont.
+
 v2.13.0.0, 2024-08-14
 
 * Improved: An All Notes Off channel mode message will be sent when a channel gets disabled. The overall filtering has been fine-tuned.
