@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2024.08.14) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2024.08.16) P. Stuer **/
 
 #include "framework.h"
 
@@ -394,7 +394,7 @@ bool DialogPageProcessing::HasChanged() const noexcept
 
     HasConfigVariableChanged(DefaultTempo);
 
-    if (::memcmp(_EnabledChannels, CfgEnabledChannels.get().get_ptr(), sizeof(_EnabledChannels)) != 0)
+    if (::memcmp(_EnabledChannels, CfgEnabledChannels.get()->data(), sizeof(_EnabledChannels)) != 0)
         return true;
 
     return false;

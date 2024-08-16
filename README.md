@@ -113,6 +113,10 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
+v2.13.2.0, 2024-08-16
+
+* Fixed: The Apply button remained active again even if nothing was changed.
+
 v2.13.1.0, 2024-08-15
 
 * Fixed: 0-byte *.tmp files were not deleted after playing an RMI file with an embedded SoundFont.
@@ -142,7 +146,7 @@ v2.11.0.0, 2024-06-23
 * Fixed: RPG Maker loops should work again.
 * Fixed: Recomposer files with strange tempo changes crashed the component. (alpha4)
 * Fixed: HMI conversion added a second Note On event after every note instead of a Note Off event. (alpha7)
-* Fixed: Apply button remained active even if nothing was changed. (alpha7)
+* Fixed: The Apply button remained active even if nothing was changed. (alpha7)
 
 v2.10.0.0, 2024-05-07, *"It's been a while"*
 
