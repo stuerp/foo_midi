@@ -18,6 +18,13 @@ public:
         _Artwork = artwork;
     }
 
+    AlbumArtExtractorInstance(const AlbumArtExtractorInstance &) = delete;
+    AlbumArtExtractorInstance(const AlbumArtExtractorInstance &&) = delete;
+    AlbumArtExtractorInstance & operator=(const AlbumArtExtractorInstance &) = delete;
+    AlbumArtExtractorInstance & operator=(AlbumArtExtractorInstance &&) = delete;
+
+    virtual ~AlbumArtExtractorInstance() { };
+
     virtual album_art_data_ptr query(const GUID & what, abort_callback & abortHandler)
     {
         if (what != album_art_ids::cover_front)
@@ -39,6 +46,15 @@ private:
 class AlbumArtExtractor : public album_art_extractor_v2
 {
 public:
+    AlbumArtExtractor() { }
+
+    AlbumArtExtractor(const AlbumArtExtractor &) = delete;
+    AlbumArtExtractor(const AlbumArtExtractor &&) = delete;
+    AlbumArtExtractor & operator=(const AlbumArtExtractor &) = delete;
+    AlbumArtExtractor & operator=(AlbumArtExtractor &&) = delete;
+
+    virtual ~AlbumArtExtractor() { };
+
     /// <summary>
     /// Returns the GUID of the corresponding input class. Null GUID if none.
     /// </summary>
