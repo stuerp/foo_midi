@@ -257,6 +257,7 @@
     <Manifest />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
     <ClCompile Include="Players\ADLPlayer.cpp" />
     <ClCompile Include="Players\BMPlayer.cpp" />

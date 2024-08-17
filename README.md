@@ -113,6 +113,10 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
+v2.14.0.0, 2024-08-xx
+
+* New: Support for embedded artwork (IPIC) and encoding (IENC) chunks in RMI files.
+
 v2.13.2.0, 2024-08-16
 
 * Fixed: The Apply button remained active again even if nothing was changed.
