@@ -35,6 +35,7 @@
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
     <ClCompile Include="Players\SecretSauce.cpp" />
     <ClCompile Include="Players\VSTi.cpp" />
+    <ClCompile Include="Infrastructure\AlbumArt.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />

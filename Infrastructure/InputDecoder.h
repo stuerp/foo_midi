@@ -26,8 +26,8 @@
 #include "EdMPlayer.h"
 #include "FSPlayer.h"
 #include "MCIPlayer.h"
-#include "NukePlayer.h"
 #include <MT32Player/MT32Player.h>
+#include "NukePlayer.h"
 #include <OPNPlayer/OPNPlayer.h>
 #include "SCPlayer.h"
 #include "VSTiPlayer.h"
@@ -232,7 +232,7 @@ private:
 
     static bool GetSoundFontFilePath(const pfc::string8 & filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept;
 
-    #ifdef DXISUPPORT
+#ifdef DXISUPPORT
     void set_loop()
     {
         if (_SelectedPluginIndex == 5 && dxiProxy)
@@ -247,7 +247,7 @@ private:
         else
             _DontLoop = false;
     }
-    #endif
+#endif
 
 private:
     // File Properties
@@ -320,4 +320,5 @@ private:
 #endif
 #endif
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member
