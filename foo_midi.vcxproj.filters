@@ -177,6 +177,7 @@
     <ClInclude Include="Infrastructure\PreferencesProcessingLayout.h" />
     <ClInclude Include="Players\SecretSauce.h" />
     <ClInclude Include="Players\VSTi.h" />
+    <ClInclude Include="Players\SoundFont.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

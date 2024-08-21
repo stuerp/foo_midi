@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2024.08.13) **/
+/** $VER: Player.cpp (2024.08.21) **/
 
 #include "framework.h"
 
@@ -11,10 +11,12 @@
 player_t::player_t()
 {
     _SampleRate = 1000;
+
     _Length = 0;
     _Position = 0;
-    _Remainder = 0;
     _LoopBegin = 0;
+
+    _Remainder = 0;
 
     _IsInitialized = false;
 
@@ -36,95 +38,103 @@ bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongInde
 {
     _LoopType = loopType;
 
-    assert(_Stream.size() == 0);
-
-    midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _Ports, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
-
-    if (_Stream.size() == 0)
-        return false;
-
-    _StreamPosition = 0;
-    _Position = 0;
-
-    _Length = midiContainer.GetDuration(subsongIndex, true);
-
-    if (_LoopType == LoopType::NeverLoopAddDecayTime)
-        _Length += (uint32_t) CfgDecayTime;
-    else
-    if (_LoopType >= LoopType::LoopAndFadeWhenDetected)
+    // Initialize the event stream.
     {
-        _LoopBegin = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
+        assert(_Stream.size() == 0);
 
-        if (_LoopBegin == ~0UL)
-            _LoopBegin = 0;
+        _StreamPosition = 0;
 
-        uint32_t LoopEnd = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
+        midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _Ports, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
 
-        if (LoopEnd == ~0UL)
-            LoopEnd =  _Length;
+        if (_Stream.size() == 0)
+            return false;
+    }
 
-        // FIXME: I don't have a clue what this does.
+    // Initialize the sample stream.
+    {
+        _Position = 0;
+        _Length = midiContainer.GetDuration(subsongIndex, true);
+
+        if (_LoopType == LoopType::NeverLoopAddDecayTime)
+            _Length += (uint32_t) CfgDecayTime;
+        else
+        if (_LoopType >= LoopType::LoopAndFadeWhenDetected)
         {
-            constexpr size_t NoteOnSize = (size_t) 128 * 16;
+            _LoopBegin = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
 
-            std::vector<uint8_t> NoteOn(NoteOnSize, 0);
+            if (_LoopBegin == ~0UL)
+                _LoopBegin = 0;
 
+            uint32_t LoopEnd = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
+
+            if (LoopEnd == ~0UL)
+                LoopEnd =  _Length;
+
+            // FIXME: I don't have a clue what this does.
             {
-                size_t i;
+                constexpr size_t NoteOnSize = (size_t) 128 * 16;
 
-                for (i = 0; (i < _Stream.size()) && (i < _StreamLoopEnd); ++i)
+                std::vector<uint8_t> NoteOn(NoteOnSize, 0);
+
                 {
-                    uint32_t Message = _Stream[i].Data;
+                    size_t i;
 
-                    uint32_t Event = Message & 0x800000F0;
-
-                    if (Event == StatusCodes::NoteOn || Event == StatusCodes::NoteOff)
+                    for (i = 0; (i < _Stream.size()) && (i < _StreamLoopEnd); ++i)
                     {
-                        const unsigned long Port     = (Message >> 24) & 0x7F;
-                        const unsigned long Velocity = (Message >> 16) & 0xFF;
-                        const unsigned long Note     = (Message >>  8) & 0x7F;
-                        const unsigned long Channel  =  Message        & 0x0F;
+                        uint32_t Message = _Stream[i].Data;
 
-                        const bool IsNoteOn = (Event == StatusCodes::NoteOn) && (Velocity > 0);
+                        uint32_t Event = Message & 0x800000F0;
 
-                        const unsigned long bit = (unsigned long) (1 << Port);
+                        if (Event == StatusCodes::NoteOn || Event == StatusCodes::NoteOff)
+                        {
+                            const unsigned long Port     = (Message >> 24) & 0x7F;
+                            const unsigned long Velocity = (Message >> 16) & 0xFF;
+                            const unsigned long Note     = (Message >>  8) & 0x7F;
+                            const unsigned long Channel  =  Message        & 0x0F;
 
-                        size_t Index = (size_t) Channel * 128 + Note;
+                            const bool IsNoteOn = (Event == StatusCodes::NoteOn) && (Velocity > 0);
 
-                        NoteOn[Index] = (uint8_t) ((NoteOn[Index] & ~bit) | (bit * IsNoteOn));
+                            const unsigned long bit = (unsigned long) (1 << Port);
+
+                            size_t Index = (size_t) Channel * 128 + Note;
+
+                            NoteOn[Index] = (uint8_t) ((NoteOn[Index] & ~bit) | (bit * IsNoteOn));
+                        }
                     }
+
+                    _Stream.resize(i);
+
+                    _Length = std::max(LoopEnd - 1, _Stream[i - 1].Time);
                 }
 
-                _Stream.resize(i);
-
-                _Length = std::max(LoopEnd - 1, _Stream[i - 1].Time);
-            }
-
-            for (size_t i = 0; i < NoteOnSize; ++i)
-            {
-                if (NoteOn[i] != 0x00)
+                for (size_t i = 0; i < NoteOnSize; ++i)
                 {
-                    for (size_t j = 0; j < 8; ++j)
+                    if (NoteOn[i] != 0x00)
                     {
-                        if (NoteOn[i] & (1 << j))
+                        for (size_t j = 0; j < 8; ++j)
                         {
-                            _Stream.push_back(midi_item_t(_Length, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                            if (NoteOn[i] & (1 << j))
+                            {
+                                _Stream.push_back(midi_item_t(_Length, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                            }
                         }
                     }
                 }
-            }
 
-            _Length = LoopEnd;
+                _Length = LoopEnd;
+            }
         }
     }
 
-    if (_SampleRate != 1000)
     {
-        uint32_t NewSampleRate = _SampleRate;
+        if (_SampleRate != 1000)
+        {
+            uint32_t NewSampleRate = _SampleRate;
 
-        _SampleRate = 1000;
+            _SampleRate = 1000;
 
-        SetSampleRate(NewSampleRate);
+            SetSampleRate(NewSampleRate);
+        }
     }
 
     HaveEnabledChannelsChanged = true; // Forces the enabled channels to be re-read from the configuration variable.
@@ -136,7 +146,7 @@ bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongInde
 /// Renders the specified number of samples to an audio sample buffer.
 /// </summary>
 /// <remarks>All calculations are in samples. MIDIStreamEvent::Timestamp gets converted from ms to samples before playing starts.</remarks>
-uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcept
+uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
 {
     assert(_Stream.size());
 
@@ -146,7 +156,7 @@ uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcep
     uint32_t OldPosition = _Position;
 
 #ifdef _DEBUG
-    wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Cur: %8d, Len: %8d, Rem: %8d, Cnt: %6d, Evt: %6d/%6d\n", (int) _Position, (int) _Length, (int) _Remainder, (int) sampleCount, (int) _StreamPosition, (int) _Stream.size()); ::OutputDebugStringW(Line);
+    wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Event: %6d/%6d | Sample: %8d/%8d | Chunk: %6d, Rem: %8d\n", (int) _StreamPosition, (int) _Stream.size(), (int) _Position, (int) _Length, (int) size, (int) _Remainder); ::OutputDebugStringW(Line);
 #endif
 
     const uint32_t BlockSize = GetSampleBlockSize();
@@ -154,13 +164,13 @@ uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcep
     uint32_t SampleIndex = 0;
     uint32_t BlockOffset = 0;
 
-    while ((SampleIndex < sampleCount) && (_Remainder > 0))
+    while ((SampleIndex < size) && (_Remainder > 0))
     {
         uint32_t Remainder = _Remainder;
 
         {
-            if (Remainder > sampleCount - SampleIndex)
-                Remainder = sampleCount - SampleIndex;
+            if (Remainder > size - SampleIndex)
+                Remainder = size - SampleIndex;
 
             if ((BlockSize != 0) && (Remainder > BlockSize))
                 Remainder = BlockSize;
@@ -174,7 +184,7 @@ uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcep
         }
 
         {
-            Render(sampleData + (SampleIndex * 2), Remainder);
+            Render(data + (SampleIndex * 2), Remainder);
 
             SampleIndex += Remainder;
             _Position += Remainder;
@@ -183,21 +193,23 @@ uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcep
         _Remainder -= Remainder;
     }
 
-    while (SampleIndex < sampleCount)
+    while (SampleIndex < size)
     {
         uint32_t Remainder = _Length - _Position;
 
-        if (Remainder > sampleCount - SampleIndex)
-            Remainder = sampleCount - SampleIndex;
+        if (Remainder > size - SampleIndex)
+            Remainder = size - SampleIndex;
 
         const uint32_t NewPosition = _Position + Remainder;
 
         {
+            // Determine how many events to process to reach the new position in the sample stream.
             size_t NewStreamPosition = _StreamPosition;
 
             while ((NewStreamPosition < _Stream.size()) && (_Stream[NewStreamPosition].Time < NewPosition))
                 NewStreamPosition++;
 
+            // Process MIDI events until we've generated enough samples to reach the new position in the sample stream.
             if (NewStreamPosition > _StreamPosition)
             {
                 for (; _StreamPosition < NewStreamPosition; ++_StreamPosition)
@@ -211,15 +223,15 @@ uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcep
 
                     if (ToDo > 0)
                     {
-                        if (ToDo > (int64_t) (sampleCount - SampleIndex))
+                        if (ToDo > (int64_t) (size - SampleIndex))
                         {
-                            _Remainder = (uint32_t) (ToDo - (int64_t) (sampleCount - SampleIndex));
-                            ToDo = (int64_t) (sampleCount - SampleIndex);
+                            _Remainder = (uint32_t) (ToDo - (int64_t) (size - SampleIndex));
+                            ToDo = (int64_t) (size - SampleIndex);
                         }
 
                         if ((ToDo > 0) && (BlockSize == 0))
                         {
-                            Render(sampleData + (SampleIndex * 2), (uint32_t) ToDo);
+                            Render(data + (SampleIndex * 2), (uint32_t) ToDo);
 
                             SampleIndex += (uint32_t) ToDo;
                             _Position += (uint32_t) ToDo;
@@ -241,7 +253,7 @@ uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcep
 
                         while (BlockOffset >= BlockSize)
                         {
-                            Render(sampleData + (SampleIndex * 2), BlockSize);
+                            Render(data + (SampleIndex * 2), BlockSize);
 
                             SampleIndex += BlockSize;
                             BlockOffset -= BlockSize;
@@ -254,7 +266,7 @@ uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcep
             }
         }
 
-        if (SampleIndex < sampleCount)
+        if (SampleIndex < size)
         {
             Remainder = ((_StreamPosition < _Stream.size()) ? _Stream[_StreamPosition].Time : _Length) - _Position;
 
@@ -262,8 +274,8 @@ uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcep
                 BlockOffset = Remainder;
 
             {
-                if (Remainder > sampleCount - SampleIndex)
-                    Remainder = sampleCount - SampleIndex;
+                if (Remainder > size - SampleIndex)
+                    Remainder = size - SampleIndex;
 
                 if ((BlockSize != 0) && (Remainder > BlockSize))
                     Remainder = BlockSize;
@@ -272,7 +284,7 @@ uint32_t player_t::Play(audio_sample * sampleData, uint32_t sampleCount) noexcep
             if (Remainder >= BlockSize)
             {
                 {
-                    Render(sampleData + (SampleIndex * 2), Remainder);
+                    Render(data + (SampleIndex * 2), Remainder);
 
                     SampleIndex += Remainder;
                     _Position += Remainder;

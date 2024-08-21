@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2023.08.20) P. Stuer **/
+/** $VER: FSPlayer.cpp (2024.08.21) P. Stuer **/
 
 #include "framework.h"
 
@@ -37,12 +37,12 @@ void FSPlayer::SetSoundFontDirectory(const char * directoryPath)
     Shutdown();
 }
 
-void FSPlayer::SetSoundFontFile(const char * filePath)
+void FSPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)
 {
-    if (_SoundFontFilePath == filePath)
+    if (_SoundFonts == soundFonts)
         return;
 
-    _SoundFontFilePath = filePath;
+    _SoundFonts = soundFonts;
 
     Shutdown();
 }
@@ -170,22 +170,27 @@ bool FSPlayer::Startup()
         _FluidSynth.SetInterpolationMethod(_Synth[i], -1, (int) _InterpolationMode);
     }
 
-    if (_SoundFontFilePath.length() != 0)
+    if (!_SoundFonts.empty())
     {
-        char FilePath[MAX_PATH];
-
-        pfc::stringcvt::convert_utf8_to_ascii(FilePath, _countof(FilePath), _SoundFontFilePath.c_str(), _SoundFontFilePath.size());
-
-        for (size_t i = 0; i < _countof(_Synth); ++i)
+        for (const auto & sf : _SoundFonts)
         {
-            if (_FluidSynth.LoadSoundFont(_Synth[i], FilePath, 1) == FLUID_FAILED)
+            for (size_t i = 0; i < _countof(_Synth); ++i)
             {
-                Shutdown();
+                int SoundFontId = _FluidSynth.LoadSoundFont(_Synth[i], sf.FilePath().c_str(), 1);
 
-                _ErrorMessage = "Failed to load SoundFont bank: ";
-                _ErrorMessage += _SoundFontFilePath;
+                if (SoundFontId != FLUID_FAILED)
+                {
+                    _FluidSynth.SetSoundFontBankOffset(_Synth[i], SoundFontId, sf.BankOffset());
+                }
+                else
+                {
+                    Shutdown();
 
-                return false;
+                    _ErrorMessage = "Failed to load SoundFont ";
+                    _ErrorMessage += sf.FilePath();
+
+                    return false;
+                }
             }
         }
     }

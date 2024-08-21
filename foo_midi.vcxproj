@@ -142,7 +142,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/libsflist;$(ProjectDir)..\libmidi;./include;./;$(ProjectDir)Players;$(ProjectDir)MIDI;$(ProjectDir)Infrastructure;../foo_vis_midi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;EXPERIMENT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;EXPERIMENT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
@@ -223,7 +223,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/libsflist;$(ProjectDir)..\libmidi;./include;./;$(ProjectDir)Players;$(ProjectDir)MIDI;$(ProjectDir)Infrastructure;../foo_vis_midi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -430,6 +430,7 @@
     <ClInclude Include="MIDI\SoundFontCache.h" />
     <ClInclude Include="Infrastructure\FileHasher.h" />
     <ClInclude Include="Players\SecretSauce.h" />
+    <ClInclude Include="Players\SoundFont.h" />
     <ClInclude Include="Players\VSTi.h" />
     <ClInclude Include="Players\VSTiPlayer.h" />
     <CustomBuild Include="Experimental\DXiPlayer.h">

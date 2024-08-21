@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2024.06.23) **/
+/** $VER: BMPlayer.cpp (2024.08.21) **/
 
 #include "framework.h"
 
@@ -397,14 +397,13 @@ public:
 
         if (!_IsInitialized)
         {
-        #ifdef SF2PACK
             SetBasePath();
 
             LoadPlugIn("bassflac.dll");
             LoadPlugIn("basswv.dll");
             LoadPlugIn("bassopus.dll");
             LoadPlugIn("bass_mpc.dll");
-        #endif
+
             ::BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 0);
             ::BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, 0);
 
@@ -476,22 +475,12 @@ BMPlayer::~BMPlayer()
     Shutdown();
 }
 
-void BMPlayer::SetSoundFontDirectory(const char * directoryPath)
+void BMPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)
 {
-    if (_SoundFontDirectoryPath == directoryPath)
+    if (_SoundFonts == soundFonts)
         return;
 
-    _SoundFontDirectoryPath = directoryPath;
-
-    Shutdown();
-}
-
-void BMPlayer::SetSoundFontFile(const char * filePath)
-{
-    if (_SoundFontFilePath == filePath)
-        return;
-
-    _SoundFontFilePath = filePath;
+    _SoundFonts = soundFonts;
 
     Shutdown();
 }
@@ -613,23 +602,16 @@ bool BMPlayer::Startup()
 
     std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
 
-    if (_SoundFontFilePath.length())
+    if (!_SoundFonts.empty())
     {
-        if (!LoadSoundFontConfiguration(SoundFontConfigurations, _SoundFontFilePath))
+        for (const auto & sf : _SoundFonts)
         {
-            _ErrorMessage = "Failed to load SoundFont configuration";
+            if (!LoadSoundFontConfiguration(SoundFontConfigurations, sf))
+            {
+                _ErrorMessage = "Failed to load SoundFont configuration";
 
-            return false;
-        }
-    }
-
-    if (_SoundFontDirectoryPath.length())
-    {
-        if (!LoadSoundFontConfiguration(SoundFontConfigurations, _SoundFontDirectoryPath))
-        {
-            _ErrorMessage = "Failed to load SoundFont configuration";
-
-            return false;
+                return false;
+            }
         }
     }
 
@@ -666,10 +648,10 @@ void BMPlayer::Shutdown()
         _Stream[0] = 0;
     }
 
-    for (auto SoundFont : _SoundFonts)
+    for (auto SoundFont : _SoundFontHandles)
         CacheRemoveSoundFont(SoundFont);
 
-    _SoundFonts.resize(0);
+    _SoundFontHandles.resize(0);
 
     if (_Presets[0])
     {
@@ -781,36 +763,40 @@ void BMPlayer::CompoundPresets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<
     }
 }
 
-bool BMPlayer::LoadSoundFontConfiguration(std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations, std::string pathName)
+bool BMPlayer::LoadSoundFontConfiguration(std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations, const soundfont_t & soundFont)
 {
     std::string FileExtension;
 
-    size_t dot = pathName.find_last_of('.');
+    size_t dot = soundFont.FilePath().find_last_of('.');
 
     if (dot != std::string::npos)
-        FileExtension.assign(pathName.begin() + (const __int64)(dot + 1), pathName.end());
+        FileExtension.assign(soundFont.FilePath().begin() + (const __int64)(dot + 1), soundFont.FilePath().end());
 
-    if ((::stricmp_utf8(FileExtension.c_str(), "sf2") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf3") == 0)
-    #ifdef SF2PACK
-        || (::stricmp_utf8(FileExtension.c_str(), "sf2pack") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sfogg") == 0)
-    #endif
+    if ((::stricmp_utf8(FileExtension.c_str(), "sf2") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf3") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf2pack") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sfogg") == 0)
         )
     {
-        HSOUNDFONT hSoundFont = CacheAddSoundFont(pathName.c_str());
+        HSOUNDFONT hSoundFont = CacheAddSoundFont(soundFont.FilePath().c_str());
 
         if (hSoundFont == 0)
         {
             Shutdown();
 
             _ErrorMessage = "Unable to load SoundFont: ";
-            _ErrorMessage += pathName.c_str();
+            _ErrorMessage += soundFont.FilePath().c_str();
 
             return false;
         }
 
-        _SoundFonts.push_back(hSoundFont);
+        _SoundFontHandles.push_back(hSoundFont);
 
-        BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, 0, 0 };
+        int SrcBankOffset = soundFont.IsEmbedded() ? soundFont.BankOffset() : -1 /* All banks */;
+        int DstBankOffset = soundFont.IsEmbedded() ? soundFont.BankOffset() :  0 /* Default banks */;
+
+        BASS_MIDI_FONTEX fex =
+        {
+            hSoundFont,
+            -1 /* All presets */, SrcBankOffset,
+            -1 /* All Presets */, DstBankOffset >> 8, DstBankOffset & 0xFF };
 
         soundFontConfigurations.push_back(fex);
 
@@ -824,7 +810,7 @@ bool BMPlayer::LoadSoundFontConfiguration(std::vector<BASS_MIDI_FONTEX> & soundF
         if (*__presetList)
             __presetList = &_Presets[1];
 
-        *__presetList = CacheAddSoundFontList(pathName.c_str());
+        *__presetList = CacheAddSoundFontList(soundFont.FilePath().c_str());
 
         if (!*__presetList)
             return false;

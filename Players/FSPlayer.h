@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2023.08.19) **/
+/** $VER: FSPlayer.h (2024.08.21) **/
 
 #pragma once
 
@@ -7,6 +7,7 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "Player.h"
+#include "SoundFont.h"
 
 #include "FluidSynth.h"
 
@@ -24,7 +25,7 @@ public:
     bool Initialize(const WCHAR * basePath);
 
     void SetSoundFontDirectory(const char * directoryPath);
-    void SetSoundFontFile(const char * filePath);
+    void SetSoundFonts(const std::vector<soundfont_t> & _soundFonts);
 
     void EnableDynamicLoading(bool enabled = true);
     void EnableEffects(bool enabled = true);
@@ -56,7 +57,7 @@ private:
     fluid_synth_t * _Synth[3];
 
     pfc::string8 _SoundFontDirectoryPath;
-    std::string _SoundFontFilePath;
+    std::vector<soundfont_t> _SoundFonts;
 
     bool _DoDynamicLoading;
     bool _DoReverbAndChorusProcessing;

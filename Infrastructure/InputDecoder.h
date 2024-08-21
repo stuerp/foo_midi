@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2024.06.09) **/
+/** $VER: InputDecoder.h (2024.08.21) **/
 
 #pragma once
 
@@ -18,6 +18,7 @@
 #include "FileHasher.h"
 #include "MIDIPreset.h"
 #include "MIDISysExDumps.h"
+#include "SoundFont.h"
 
 /** Players **/
 
@@ -105,8 +106,11 @@ public:
 
     ~InputDecoder()
     {
-        if (!_EmbeddedSoundFontFilePath.isEmpty())
-            ::DeleteFileA(_EmbeddedSoundFontFilePath.c_str());
+        for (const auto & sf : _SoundFonts)
+        {
+            if (sf.IsEmbedded())
+                ::DeleteFileA(sf.FilePath().c_str());
+        }
 
         delete _Player;
 
@@ -258,7 +262,7 @@ private:
 
     midi_container_t _Container;
 
-    pfc::string8 _EmbeddedSoundFontFilePath;
+    std::vector <soundfont_t> _SoundFonts;
 
     bool _IsSysExFile;
     uint32_t _TrackCount;

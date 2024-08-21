@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2024.05.05) **/
+/** $VER: BMPlayer.h (2024.08.21) **/
 
 #pragma once
 
@@ -7,6 +7,7 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "Player.h"
+#include "SoundFont.h"
 
 #include <bassmidi.h>
 
@@ -25,8 +26,7 @@ public:
     BMPlayer();
     virtual ~BMPlayer();
 
-    void SetSoundFontDirectory(const char * directoryPath);
-    void SetSoundFontFile(const char * filePath);
+    void SetSoundFonts(const std::vector<soundfont_t> & _soundFonts);
 
     void SetVolume(float volume);
     void SetInterpolationMode(uint32_t interpolationMode);
@@ -48,7 +48,7 @@ private:
     #pragma endregion
 
     void ResetParameters();
-    bool LoadSoundFontConfiguration(std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations, std::string pathName);
+    bool LoadSoundFontConfiguration(std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations, const soundfont_t & soundFont);
 
     void CompoundPresets(std::vector<BASS_MIDI_FONTEX> & out, std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels);
 
@@ -60,13 +60,13 @@ private:
 
     std::string _ErrorMessage;
 
-    std::vector<HSOUNDFONT> _SoundFonts;
+    std::vector<HSOUNDFONT> _SoundFontHandles;
     sflist_presets * _Presets[2];
 
     HSTREAM _Stream[3];
 
     std::string _SoundFontDirectoryPath;
-    std::string _SoundFontFilePath;
+    std::vector<soundfont_t> _SoundFonts;
 
     float _Volume;
     uint32_t _InterpolationMode;

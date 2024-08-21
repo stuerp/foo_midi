@@ -113,6 +113,14 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
+v2.15.0.0, 2024-08-xx
+
+* New: Support for embedded DLS sound fonts in RMI files. Works only with the FluidSynth player.
+* New: Support for the DBNK chunk in RMI files.
+* New: Support for SoundFont layering without using SFList files.
+* Improved: Tweaked the player type override logic.
+* Fixed: A very old bug in the MIDI parsing code when Pitch Bend control change messages were encountered.
+
 v2.14.0.0, 2024-08-17
 
 * New: Support for embedded artwork (IPIC) and encoding (IENC) chunks in RMI files.

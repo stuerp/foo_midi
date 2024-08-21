@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2023.08.02) **/
+/** $VER: FluidSynth.h (2024.08.21) **/
 
 #pragma once
 
@@ -29,7 +29,8 @@ typedef int (WINAPIV * _fluid_sfloader_set_callbacks)(fluid_sfloader_t * loader,
 typedef int (WINAPIV * _fluid_synth_set_interp_method)(fluid_synth_t * synth, int chan, int interp_method);
 
 typedef void (WINAPIV * _fluid_synth_add_sfloader)(fluid_synth_t * synth, fluid_sfloader_t * loader);
-typedef int (WINAPIV * _fluid_synth_sfload)(fluid_synth_t * synth, const char *filename, int reset_presets);
+typedef int (WINAPIV * _fluid_synth_sfload)(fluid_synth_t * synth, const char * filePath, int reset_presets);
+typedef int (WINAPIV * _fluid_synth_set_bank_offset)(fluid_synth_t * synth, int sfont_id, int offset);
 
 typedef int (WINAPIV * _fluid_synth_noteon)(fluid_synth_t * synth, int chan, int key, int vel);
 typedef int (WINAPIV * _fluid_synth_noteoff)(fluid_synth_t * synth, int chan, int key);
@@ -107,6 +108,7 @@ public:
         InitializeFunction(new_fluid_defsfloader, CreateSoundFontLoader);
         InitializeFunction(fluid_sfloader_set_callbacks, SetSoundFontLoaderCallbacks);
         InitializeFunction(fluid_synth_sfload, LoadSoundFont);
+        InitializeFunction(fluid_synth_set_bank_offset, SetSoundFontBankOffset);
 
         InitializeFunction(fluid_synth_set_interp_method, SetInterpolationMethod);
 
@@ -155,6 +157,7 @@ public:
     _new_fluid_defsfloader CreateSoundFontLoader;
     _fluid_sfloader_set_callbacks SetSoundFontLoaderCallbacks;
     _fluid_synth_sfload LoadSoundFont;
+    _fluid_synth_set_bank_offset SetSoundFontBankOffset;
 
     _fluid_synth_set_interp_method SetInterpolationMethod;
 
