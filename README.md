@@ -119,6 +119,7 @@ v2.15.0.0, 2024-08-xx
 * New: Support for the DBNK chunk in RMI files.
 * New: Support for SoundFont layering without using SFList files.
 * Improved: Tweaked the player type override logic.
+* Improved: Increased the number of MIDI ports supported by the BASS MIDI player.
 * Fixed: A very old bug in the MIDI parsing code when Pitch Bend control change messages were encountered.
 
 v2.14.0.0, 2024-08-17

@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2024.08.21) **/
+/** $VER: InputDecoder.h (2024.08.25) **/
 
 #pragma once
 
@@ -126,7 +126,7 @@ public:
     }
 
 public:
-    #pragma region("input_impl")
+    #pragma region input_impl
 
     void open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler);
 
@@ -165,7 +165,7 @@ public:
 
     #pragma endregion
 
-    #pragma region("input_decoder")
+    #pragma region input_decoder
 
     void decode_initialize(unsigned subsongIndex, unsigned flags, abort_callback & abortHandler);
 
@@ -186,7 +186,7 @@ public:
 
     #pragma endregion
 
-    #pragma region("input_info_reader")
+    #pragma region input_info_reader
 
     unsigned get_subsong_count()
     {
@@ -202,7 +202,7 @@ public:
 
     #pragma endregion
 
-    #pragma region("input_info_reader_v2")
+    #pragma region input_info_reader_v2
 
     t_filestats2 get_stats2(uint32_t, abort_callback &) const
     {
@@ -216,7 +216,7 @@ public:
 
     #pragma endregion
 
-    #pragma region("input_info_writer")
+    #pragma region input_info_writer
 
     void retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const;
 

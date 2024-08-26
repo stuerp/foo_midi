@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.08.04) **/
+/** $VER: InputDecoder.cpp (2024.08.25) **/
 
 #include "framework.h"
 
@@ -273,7 +273,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                             ::fclose(fp);
 
-                            _SoundFonts.push_back({ FilePath, IsDLS ? 1 : _Container.GetBankOffset(), true, IsDLS });
+                            _SoundFonts.push_back({ FilePath, 1.f, IsDLS ? 1 : _Container.GetBankOffset(), true, IsDLS });
                         }
                     }
 
@@ -322,16 +322,18 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         if (FoundSoundFile)
-            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), 0, false, false });
+            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, false });
     }
 
     // Finally, add the default sound font.
     {
         if (!Preset._SoundFontFilePath.isEmpty())
-            _SoundFonts.push_back({ Preset._SoundFontFilePath.c_str(), 0, false, false });
+            _SoundFonts.push_back({ Preset._SoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, false });
     }
 
     // Update the player type.
+    bool HasDLS = false;
+
     {
         _PlayerType = Preset._PlayerType;
 
@@ -347,6 +349,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                         if (sf.IsDLS() && FluidSynth::Exists())
                         {
                             _PlayerType = PlayerType::FluidSynth;
+                            HasDLS = true;
                             break;
                         }
                     }
@@ -385,11 +388,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
         {
-            if (_PlayerType == PlayerType::BASSMIDI)
+            if ((_PlayerType == PlayerType::FluidSynth) && !HasDLS)
                 std::reverse(_SoundFonts.begin(), _SoundFonts.end());
 
             for (const auto & sf : _SoundFonts)
-                console::print(STR_COMPONENT_BASENAME, " uses SoundFont \"", sf.FilePath().c_str(), "\".");
+                console::print(STR_COMPONENT_BASENAME, " uses SoundFont \"", sf.FilePath().c_str(), "\" with offset ", sf.BankOffset(), ".");
         }
     }
 
@@ -554,8 +557,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Player->SetSoundFonts(_SoundFonts);
 
                 Player->SetInterpolationMode(_FluidSynthInterpolationMethod);
-                Player->EnableEffects(Preset._EffectsEnabled);
                 Player->SetVoiceCount(Preset._VoiceCount);
+                Player->EnableEffects(Preset._EffectsEnabled);
                 Player->EnableDynamicLoading(AdvCfgLoadSoundFontDynamically.get());
 
                 _Player = Player;
@@ -565,19 +568,19 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
-                if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
-                {
-                    _IsEndOfContainer = false;
-
-                    return;
-                }
-                else
+                if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 {
                     std::string ErrorMessage;
 
                     if (_Player->GetErrorMessage(ErrorMessage))
                         throw exception_io_data(ErrorMessage.c_str());
+
+                    break;
                 }
+
+                _IsEndOfContainer = false;
+
+                return;
             }
             break;
         }
@@ -634,12 +637,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 auto Player = new BMPlayer;
 
-                Player->SetSoundFonts(_SoundFonts);
-
-                Player->SetVolume(_BASSMIDIVolume);
                 Player->SetInterpolationMode(_BASSMIDIInterpolationMode);
-                Player->EnableEffects(Preset._EffectsEnabled);
                 Player->SetVoiceCount(Preset._VoiceCount);
+                Player->EnableEffects(Preset._EffectsEnabled);
+                Player->SetSoundFonts(_SoundFonts);
 
                 _Player = Player;
             }
@@ -648,19 +649,19 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _Player->SetSampleRate(_SampleRate);
                 _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
-                if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
-                {
-                    _IsEndOfContainer = false;
-
-                    return;
-                }
-                else
+                if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 {
                     std::string ErrorMessage;
 
                     if (_Player->GetErrorMessage(ErrorMessage))
                         throw exception_io_data(ErrorMessage.c_str());
+
+                    break;
                 }
+
+                _IsEndOfContainer = false;
+
+                return;
             }
             break;
         }
@@ -851,7 +852,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
             break;
         }
-
     }
 
     throw exception_midi("No MIDI player specified.");
@@ -997,11 +997,12 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
     if (OffsetInMs > _LoopRange.End())
         OffsetInMs = _LoopRange.Begin() + (OffsetInMs - _LoopRange.Begin()) % ((_LoopRange.Size() != 0) ? _LoopRange.Size() : 1);
 
-    uint32_t TimeInSamples = (uint32_t) ::MulDiv((int) OffsetInMs, (int) _SampleRate, 1000);
+    const uint32_t OffsetInSamples = (uint32_t) ::MulDiv((int) OffsetInMs, (int) _SampleRate, 1000);
 
-    if ((_LengthInSamples != 0U) && (TimeInSamples >= (_LengthInSamples - _SampleRate)))
+    if ((_LengthInSamples != 0U) && (OffsetInSamples >= (_LengthInSamples - _SampleRate)))
     {
         _IsEndOfContainer = true;
+
         return;
     }
 
@@ -1011,16 +1012,11 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
         dxiProxy->setPosition(seek_msec);
 
         samples_done = done;
-
-        return;
     }
     else
 #endif
     if (_Player)
-    {
-        _Player->Seek(TimeInSamples);
-        return;
-    }
+        _Player->Seek(OffsetInSamples);
 }
 
 /// <summary>
@@ -1155,7 +1151,7 @@ void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_ca
 
             TagFile->seek(0, abortHandler);
 
-            Tag.set_count((t_size)TagFile->get_size_ex(abortHandler));
+            Tag.set_count((t_size) TagFile->get_size_ex(abortHandler));
 
             TagFile->read_object(Tag.get_ptr(), Tag.get_count(), abortHandler);
 

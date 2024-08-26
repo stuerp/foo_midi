@@ -1,11 +1,11 @@
 
-/** $VER: SoundFontCache.cpp (2023.06.12) **/
+/** $VER: SoundFontCache.cpp (2024.08.25) **/
 
 #include "framework.h"
 
-#include "SoundFontCache.h"
+#include <sdk/foobar2000-lite.h>
 
-#include <sflist.h>
+#include "SoundFontCache.h"
 
 #include <string>
 #include <map>
@@ -18,7 +18,7 @@
 
 static bool _IsCacheRunning = false;
 
-static sflist_presets * LoadSoundFontList(const char * filePath);
+static sflist_presets * LoadSoundFontList(const std::string & filePath);
 static void CacheRun();
 
 #ifdef USE_STD_THREAD
@@ -50,7 +50,7 @@ struct CacheItem
     size_t _ReferenceCount;
     time_t _TimeReleased;
 
-    CacheItem() : _hSoundFont(0), _SoundFontList(nullptr), _ReferenceCount(0), _TimeReleased(0)
+    CacheItem() : _hSoundFont(), _SoundFontList(), _ReferenceCount(), _TimeReleased()
     {
     }
 };
@@ -87,6 +87,8 @@ void CacheDispose()
     _CacheThread = NULL;
 #endif
 
+    insync(_CacheLock);
+
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
         if (it->second._hSoundFont)
@@ -100,7 +102,7 @@ void CacheDispose()
 /// <summary>
 /// Adds a SoundFont to the cache.
 /// </summary>
-HSOUNDFONT CacheAddSoundFont(const char * filePath)
+HSOUNDFONT CacheAddSoundFont(const std::string & filePath)
 {
     HSOUNDFONT hSoundFont = 0;
 
@@ -110,7 +112,7 @@ HSOUNDFONT CacheAddSoundFont(const char * filePath)
 
     if (Item._hSoundFont == 0)
     {
-        const char * FilePath = (::stricmp_utf8_partial(filePath, "file://") == 0) ? filePath + 7 : filePath;
+        const char * FilePath = (::stricmp_utf8_partial(filePath.c_str(), "file://") == 0) ? filePath.c_str() + 7 : filePath.c_str();
 
         if (::strstr(FilePath, "://") != nullptr)
             return 0;
@@ -155,7 +157,7 @@ void CacheRemoveSoundFont(HSOUNDFONT hSoundFont)
 /// <summary>
 /// Adds a SoundFont List to the cache.
 /// </summary>
-sflist_presets * CacheAddSoundFontList(const char * filePath)
+sflist_presets * CacheAddSoundFontList(const std::string & filePath)
 {
     sflist_presets * SoundFontList = nullptr;
 
@@ -276,11 +278,11 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
 /// <summary>
 /// Loads a SoundFont List (*.sflist)
 /// </summary>
-static sflist_presets * LoadSoundFontList(const char * filePath)
+static sflist_presets * LoadSoundFontList(const std::string & filePath)
 {
-    size_t Offset = (size_t)(::stricmp_utf8_partial(filePath, "file://") == 0 ? 7 : 0);
+    size_t Offset = (size_t)(::stricmp_utf8_partial(filePath.c_str(), "file://") == 0 ? 7 : 0);
 
-    pfc::string8 DirectoryPath = filePath + Offset;
+    pfc::string8 DirectoryPath = filePath.c_str() + Offset;
 
     DirectoryPath.truncate(DirectoryPath.scan_filename());
 
@@ -289,7 +291,7 @@ static sflist_presets * LoadSoundFontList(const char * filePath)
     if (Offset == 0)
         FilePath = "file://";
 
-    FilePath += filePath;
+    FilePath += filePath.c_str();
 
     char * Data = nullptr;
 
