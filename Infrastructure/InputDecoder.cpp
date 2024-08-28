@@ -179,7 +179,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
     if (_IsSysExFile)
-        throw exception_midi("You cannot play SysEx files.");
+        throw midi::exception_t("You cannot play SysEx files.");
 
     _IsFirstChunk = true;
 
@@ -491,12 +491,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             {
                 if (Preset._VSTiFilePath.is_empty())
-                    throw exception_midi("No VSTi specified in preset.");
+                    throw midi::exception_t("No VSTi specified in preset.");
 
                 auto Player = new VSTiPlayer;
 
                 if (!Player->LoadVST(Preset._VSTiFilePath))
-                    throw exception_midi(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\".");
+                    throw midi::exception_t(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\".");
             
                 if (Preset._VSTiConfig.size() != 0)
                     Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
@@ -533,7 +533,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _PeakVoiceCount = 0;
 
                 if (_SoundFonts.empty())
-                    throw exception_midi("No compatible SoundFonts found.");
+                    throw midi::exception_t("No compatible SoundFonts found.");
             }
 
             pfc::string8 FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
@@ -551,8 +551,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 Player->SetAbortHandler(&abortHandler);
 
-                if (!Player->Initialize(pfc::wideFromUTF8(FluidSynthDirectoryPath)))
-                    throw exception_midi("FluidSynth path not configured.");
+                Player->Initialize(pfc::wideFromUTF8(FluidSynthDirectoryPath));
 
                 Player->SetSoundFonts(_SoundFonts);
 
@@ -605,7 +604,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Player->SetAbortHandler(&abortHandler);
 
                 if (!Player->isConfigValid())
-                    throw exception_midi("The Munt driver needs to be configured with a valid MT-32 or CM32L ROM set.");
+                    throw midi::exception_t("The Munt driver needs to be configured with a valid MT-32 or CM32L ROM set.");
 
                 _Player = Player;
             }
@@ -632,7 +631,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     _PeakVoiceCount = 0;
 
                     if (_SoundFonts.empty())
-                        throw exception_midi("No compatible SoundFonts found.");
+                        throw midi::exception_t("No compatible SoundFonts found.");
                 }
 
                 auto Player = new BMPlayer;
@@ -854,7 +853,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
-    throw exception_midi("No MIDI player specified.");
+    throw midi::exception_t("No MIDI player specified.");
 }
 
 /// <summary>

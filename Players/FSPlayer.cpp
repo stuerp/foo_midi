@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2024.08.25) P. Stuer **/
+/** $VER: FSPlayer.cpp (2024.08.28) P. Stuer **/
 
 #include "framework.h"
 
@@ -24,9 +24,9 @@ FSPlayer::~FSPlayer()
     Shutdown();
 }
 
-bool FSPlayer::Initialize(const WCHAR * basePath)
+void FSPlayer::Initialize(const WCHAR * basePath)
 {
-    return _FluidSynth.Initialize(basePath);
+    _FluidSynth.Initialize(basePath);
 }
 
 void FSPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)

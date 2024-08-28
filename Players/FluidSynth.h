@@ -1,13 +1,21 @@
 
-/** $VER: FluidSynth.h (2024.08.21) **/
+/** $VER: FluidSynth.h (2024.08.28) **/
 
 #pragma once
 
 #include "Player.h"
 
+#include "resource.h"
+
+#include "Infrastructure\Exception.h"
+
+#include <Encoding.h>
+
 #include <fluidsynth.h>
 
 #include <pfc/string-conv-lite.h>
+
+#include <Shlwapi.h>
 
 #pragma region FluidSynth API
 
@@ -51,7 +59,10 @@ typedef int (WINAPIV * _fluid_synth_write_float)(fluid_synth_t * synth, int len,
 
 typedef int (WINAPIV * _fluid_synth_get_active_voice_count)(fluid_synth_t * synth);
 
-#define InitializeFunction(type, address) { address = (##_##type) ::GetProcAddress(_hModule, #type); if (*address == nullptr) return false; }
+#define TOSTRING_IMPL(x) #x
+#define TOSTRING(x) TOSTRING_IMPL(x)
+
+#define InitializeFunction(type, address) { address = (##_##type) ::GetProcAddress(_hModule, #type); if (*address == nullptr) throw midi::exception_t((std::string("Failed to link FluidSynth function: ") + TOSTRING(type)).c_str()); }
 
 #pragma endregion
 
@@ -76,20 +87,26 @@ public:
 
     bool IsInitialized() const noexcept { return (_hModule != 0); }
 
-    bool Initialize(const WCHAR * basePath) noexcept
+    void Initialize(const WCHAR * basePath)
     {
         if (IsInitialized())
-            return true;
+            return;
+
+        if (*basePath)
+            return;
+
+        if (!::PathIsDirectoryW(L"basePath"))
+            throw midi::exception_t(midi::GetErrorMessage("Invalid FluidSynth directory", ::GetLastError()).c_str());
 
         BOOL Success = ::SetDllDirectoryW(basePath);
 
         if (!Success)
-            return false;
+            throw midi::exception_t(midi::GetErrorMessage("Failed to add FluidSynth directory to the search path", ::GetLastError()).c_str());
 
         _hModule = ::LoadLibraryW(LibraryName);
 
         if (_hModule == 0)
-            return false;
+            throw midi::exception_t(midi::GetErrorMessage("Failed to load FluidSynth library", ::GetLastError(), WideToUTF8(LibraryName).c_str()).c_str());
 
         #pragma warning(disable: 4191) // 'type cast': unsafe conversion from 'FARPROC' to 'xxx'
         InitializeFunction(fluid_version_str, GetVersion);
@@ -132,13 +149,22 @@ public:
         InitializeFunction(fluid_synth_get_active_voice_count, GetActiveVoiceCount);
 
         #pragma warning(default: 4191)
-
-        return true;
     }
 
     static bool Exists() noexcept
     {
-        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
+        try
+        {
+            FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
+
+            return true;
+        }
+        catch (midi::exception_t e)
+        {
+            console::print(STR_COMPONENT_BASENAME, " failed to initialize FluidSynth: ", e.what());
+
+            return false;
+        }
     }
 
 public:

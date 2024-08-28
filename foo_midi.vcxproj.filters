@@ -36,6 +36,7 @@
     <ClCompile Include="Players\SecretSauce.cpp" />
     <ClCompile Include="Players\VSTi.cpp" />
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
+    <ClCompile Include="Infrastructure\Exception.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -132,7 +133,7 @@
     <ClInclude Include="Infrastructure\PreferencesPathsLayout.h" />
     <ClInclude Include="Infrastructure\PreferencesRootLayout.h" />
     <ClInclude Include="MIDI\KaraokeProcessor.h" />
-    <ClInclude Include="Infrastructure\Exceptions.h" />
+    <ClInclude Include="Infrastructure\Exception.h" />
     <ClInclude Include="MIDI\SoundFontCache.h" />
     <ClInclude Include="Players\FSPlayer.h" />
     <ClInclude Include="Players\FluidSynth.h" />

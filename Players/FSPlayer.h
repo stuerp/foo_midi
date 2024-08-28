@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2024.08.25) **/
+/** $VER: FSPlayer.h (2024.08.28) **/
 
 #pragma once
 
@@ -22,7 +22,7 @@ public:
     FSPlayer();
     virtual ~FSPlayer();
 
-    bool Initialize(const WCHAR * basePath);
+    void Initialize(const WCHAR * basePath);
 
     void SetSoundFonts(const std::vector<soundfont_t> & _soundFonts);
 
