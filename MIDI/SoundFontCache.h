@@ -8,7 +8,7 @@
 
 #include <string>
 
-struct sflist_presets;
+struct sflist_t;
 
 extern void CacheInit();
 extern void CacheDispose();
@@ -16,7 +16,7 @@ extern void CacheDispose();
 extern HSOUNDFONT CacheAddSoundFont(const std::string & filePath);
 extern void CacheRemoveSoundFont(HSOUNDFONT hSoundFont);
 
-extern sflist_presets * CacheAddSoundFontList(const std::string & filePath);
-extern void CacheRemoveSoundFontList(sflist_presets * soundFontList);
+extern sflist_t * CacheAddSoundFontList(const std::string & filePath);
+extern void CacheRemoveSoundFontList(sflist_t * soundFontList);
 
 extern void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesDataLoaded);

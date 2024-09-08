@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2024.08.28) **/
+/** $VER: FluidSynth.h (2024.08.29) **/
 
 #pragma once
 
@@ -92,10 +92,7 @@ public:
         if (IsInitialized())
             return;
 
-        if (*basePath)
-            return;
-
-        if (!::PathIsDirectoryW(L"basePath"))
+        if (!::PathIsDirectoryW(basePath))
             throw midi::exception_t(midi::GetErrorMessage("Invalid FluidSynth directory", ::GetLastError()).c_str());
 
         BOOL Success = ::SetDllDirectoryW(basePath);

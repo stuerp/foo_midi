@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2024.08.25) **/
+/** $VER: BMPlayer.h (2024.09.08) **/
 
 #pragma once
 
@@ -13,7 +13,7 @@
 
 extern bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoaded);
 
-struct sflist_presets;
+struct sflist_t;
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
@@ -71,9 +71,9 @@ private:
     std::string _ErrorMessage;
 
     std::vector<HSOUNDFONT> _SoundFontHandles;
-    sflist_presets * _Presets[2];
+    sflist_t * _SFList[2];
 
-    HSTREAM _Stream[16];
+    HSTREAM _Stream[16]; // Each stream corresponds to a port.
 
     std::string _SoundFontDirectoryPath;
     std::vector<soundfont_t> _SoundFonts;

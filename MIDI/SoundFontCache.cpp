@@ -18,7 +18,7 @@
 
 static bool _IsCacheRunning = false;
 
-static sflist_presets * LoadSoundFontList(const std::string & filePath);
+static sflist_t * LoadSoundFontList(const std::string & filePath);
 static void CacheRun();
 
 #ifdef USE_STD_THREAD
@@ -46,7 +46,7 @@ static CacheThread * _CacheThread = nullptr;
 struct CacheItem
 {
     HSOUNDFONT _hSoundFont;
-    sflist_presets * _SoundFontList;
+    sflist_t * _SoundFontList;
     size_t _ReferenceCount;
     time_t _TimeReleased;
 
@@ -157,9 +157,9 @@ void CacheRemoveSoundFont(HSOUNDFONT hSoundFont)
 /// <summary>
 /// Adds a SoundFont List to the cache.
 /// </summary>
-sflist_presets * CacheAddSoundFontList(const std::string & filePath)
+sflist_t * CacheAddSoundFontList(const std::string & filePath)
 {
-    sflist_presets * SoundFontList = nullptr;
+    sflist_t * SoundFontList = nullptr;
 
     insync(_CacheLock);
 
@@ -191,7 +191,7 @@ sflist_presets * CacheAddSoundFontList(const std::string & filePath)
 /// <summary>
 /// Removes a SoundFont List from the cache.
 /// </summary>
-void CacheRemoveSoundFontList(sflist_presets * soundFontList)
+void CacheRemoveSoundFontList(sflist_t * soundFontList)
 {
     insync(_CacheLock);
 
@@ -249,11 +249,11 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
         else
         if (it->second._SoundFontList)
         {
-            sflist_presets * SoundFontList = it->second._SoundFontList;
+            sflist_t * SoundFontList = it->second._SoundFontList;
 
-            for (unsigned int i = 0, j = SoundFontList->count; i < j; ++i)
+            for (unsigned int i = 0, j = SoundFontList->Count; i < j; ++i)
             {
-                HSOUNDFONT hSoundFont = SoundFontList->presets[i].font;
+                HSOUNDFONT hSoundFont = SoundFontList->FontEx[i].font;
 
                 if (hSoundFont)
                 {
@@ -278,7 +278,7 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
 /// <summary>
 /// Loads a SoundFont List (*.sflist)
 /// </summary>
-static sflist_presets * LoadSoundFontList(const std::string & filePath)
+static sflist_t * LoadSoundFontList(const std::string & filePath)
 {
     size_t Offset = (size_t)(::stricmp_utf8_partial(filePath.c_str(), "file://") == 0 ? 7 : 0);
 
@@ -317,7 +317,7 @@ static sflist_presets * LoadSoundFontList(const std::string & filePath)
 
             char ErrorMessage[sflist_max_error];
 
-            sflist_presets * SoundFontList = ::sflist_load(Data, ::strlen(Data), DirectoryPath, ErrorMessage);
+            sflist_t * SoundFontList = ::sflist_load(Data, ::strlen(Data), DirectoryPath, ErrorMessage);
 
             ::free(Data);
 

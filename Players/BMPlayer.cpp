@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2024.08.25) **/
+/** $VER: BMPlayer.cpp (2024.09.08) **/
 
 #include "framework.h"
 
@@ -23,9 +23,10 @@ BMPlayer::BMPlayer() : player_t()
 
     _InterpolationMode = 0;
     _DoReverbAndChorusProcessing = true;
+    _IgnoreCC32 = false;
     _VoiceCount = 256;
-    _Presets[0] = 0;
-    _Presets[1] = 0;
+    _SFList[0] = nullptr;
+    _SFList[1] = nullptr;
 
     if (!_BASSInitializer.Initialize())
         throw std::runtime_error("Unable to initialize BASS MIDI");
@@ -156,10 +157,10 @@ bool BMPlayer::Startup()
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_VOICES, (float) _VoiceCount);
 
-        ::BASS_MIDI_StreamSetFonts(Stream, SoundFontConfigurations.data(), (DWORD) SoundFontConfigurations.size());// | BASS_MIDI_FONT_EX);
+        ::BASS_MIDI_StreamSetFonts(Stream, SoundFontConfigurations.data(), (DWORD) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
     }
 
-    SetBankOverride();
+//  SetBankOverride();
 
     _IsInitialized = true;
 
@@ -184,16 +185,16 @@ void BMPlayer::Shutdown()
 
     _SoundFontHandles.resize(0);
 
-    if (_Presets[0])
+    if (_SFList[0])
     {
-        ::CacheRemoveSoundFontList(_Presets[0]);
-        _Presets[0] = 0;
+        ::CacheRemoveSoundFontList(_SFList[0]);
+        _SFList[0] = nullptr;
     }
 
-    if (_Presets[1])
+    if (_SFList[1])
     {
-        ::CacheRemoveSoundFontList(_Presets[1]);
-        _Presets[1] = 0;
+        ::CacheRemoveSoundFontList(_SFList[1]);
+        _SFList[1] = nullptr;
     }
 
     _IsInitialized = false;
@@ -204,7 +205,7 @@ void BMPlayer::Shutdown()
 /// </summary>
 void BMPlayer::SendEvent(uint32_t message)
 {
-    uint8_t Event[3]
+    const uint8_t Event[3]
     {
         static_cast<uint8_t>(message),
         static_cast<uint8_t>(message >>  8),
@@ -213,15 +214,15 @@ void BMPlayer::SendEvent(uint32_t message)
 
     const uint8_t Status = message & 0xF0;
 
-    if (_IgnoreCC32 && (Status == StatusCodes::ControlChange) && (Event[1] == (ControlChangeNumbers::BankSelect|ControlChangeNumbers::LSB)))
+    if (_IgnoreCC32 && (Status == StatusCodes::ControlChange) && (Event[1] == (ControlChangeNumbers::BankSelect | ControlChangeNumbers::LSB)))
         return;
-
-    const DWORD EventSize = (DWORD)((Status >= 0xF8 && Status <= 0xFF) ? 1 : ((Status == 0xC0 || Status == 0xD0) ? 2 : 3));
 
     uint8_t PortNumber = (message >> 24) & 0x7F;
 
     if (PortNumber > (_countof(_Stream) - 1))
         PortNumber = 0;
+
+    const DWORD EventSize = (DWORD)((Status >= 0xF8 && Status <= 0xFF) ? 1 : ((Status == StatusCodes::ProgramChange || Status == StatusCodes::ChannelPressure) ? 2 : 3));
 
     ::BASS_MIDI_StreamEvents(_Stream[PortNumber], BASS_MIDI_EVENTS_RAW, Event, EventSize);
 }
@@ -309,19 +310,31 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
                     {
                         for (DWORD i = 0; i < SoundFontInfo.presets; ++i)
                         {
-                            const int PresetNumber = LOWORD(Presets[i]);
-                            const int Bank = HIWORD(Presets[i]);
+                            const int    PresetNumber = LOWORD(Presets[i]);
+                            const int    SrcBank      = HIWORD(Presets[i]);
+                            const char * PresetName   = ::BASS_MIDI_FontGetPreset(hSoundFont, PresetNumber, SrcBank);
 
-                            const char * PresetName = ::BASS_MIDI_FontGetPreset(hSoundFont, PresetNumber, Bank);
+                            console::print("Bank ", SrcBank, " Preset ", PresetNumber, ": \"", PresetName, "\"");
+
+                            int DstBank = SrcBank;
+
+                            if (soundFont.BankOffset() != -1)
+                            {
+                                if (DstBank != 128)
+                                    DstBank = soundFont.BankOffset();
+                            }
+                            else
+                            {
+                                if (DstBank != 128)
+                                    DstBank = 1;
+                            }
 
                             BASS_MIDI_FONTEX fex =
                             {
-                                hSoundFont, PresetNumber, Bank, PresetNumber, Bank >> 8, Bank & 0xFF
+                                hSoundFont, PresetNumber, SrcBank, PresetNumber, (DstBank >> 7) & 0x7F, DstBank & 0x7F
                             };
 
                             soundFontConfigurations.push_back(fex);
-
-                            console::print("Bank ", Bank, " Preset ", PresetNumber, " ", PresetName);
                         }
                     }
 
@@ -331,39 +344,6 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
         }
         else
         {
-/*
-            BASS_MIDI_FONTINFO SoundFontInfo;
-
-            if (::BASS_MIDI_FontGetInfo(hSoundFont, &SoundFontInfo))
-            {
-                DWORD * Presets = (DWORD *) ::malloc(SoundFontInfo.presets * sizeof(DWORD));
-
-                if (Presets != nullptr)
-                {
-                    if (::BASS_MIDI_FontGetPresets(hSoundFont, Presets))
-                    {
-                        for (DWORD i = 0; i < SoundFontInfo.presets; ++i)
-                        {
-                            const int PresetNumber = LOWORD(Presets[i]);
-                            const int Bank = HIWORD(Presets[i]);
-
-                            const char * PresetName = ::BASS_MIDI_FontGetPreset(hSoundFont, PresetNumber, Bank);
-
-                            BASS_MIDI_FONTEX fex =
-                            {
-                                hSoundFont, PresetNumber, Bank, PresetNumber, Bank >> 8, Bank & 0xFF
-                            };
-
-                            soundFontConfigurations.push_back(fex);
-
-                            console::print("Bank ", Bank, " Preset ", PresetNumber, " ", PresetName);
-                        }
-                    }
-
-                    ::free(Presets);
-                }
-            }
-*/
             BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, 0, 0 };
 
             soundFontConfigurations.push_back(fex);
@@ -374,19 +354,19 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
 
     if ((::stricmp_utf8(FileExtension.c_str(), "sflist") == 0) || (::stricmp_utf8(FileExtension.c_str(), "json") == 0))
     {
-        sflist_presets ** Presets = &_Presets[0];
+        sflist_t ** SFList = &_SFList[0];
 
-        if (*Presets)
-            Presets = &_Presets[1];
+        if (*SFList)
+            SFList = &_SFList[1];
 
-        *Presets = ::CacheAddSoundFontList(soundFont.FilePath().c_str());
+        *SFList = ::CacheAddSoundFontList(soundFont.FilePath().c_str());
 
-        if (!*Presets)
+        if (!*SFList)
             return false;
 
-        BASS_MIDI_FONTEX * fex = (*Presets)->presets;
+        BASS_MIDI_FONTEX * fex = (*SFList)->FontEx;
 
-        for (size_t i = 0, j = (*Presets)->count; i < j; ++i)
+        for (size_t i = 0, j = (*SFList)->Count; i < j; ++i)
             soundFontConfigurations.push_back(fex[i]);
 
         return true;

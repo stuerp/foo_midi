@@ -241,7 +241,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     _SoundFonts.clear();
 
-    /** IMPORTANT: The following sequence of adding SoundFonts is optimal for FluidSynth. For BASSMIDI, we'll reverse it. **/
+    /** IMPORTANT: The following sequence of adding SoundFonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
 
     // First, add the embedded sound font, if present.
     {
@@ -273,7 +273,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                             ::fclose(fp);
 
-                            _SoundFonts.push_back({ FilePath, 1.f, IsDLS ? 1 : _Container.GetBankOffset(), true, IsDLS });
+                            _SoundFonts.push_back({ FilePath, 1.f, (IsDLS ? 1 : _Container.GetBankOffset()), true, IsDLS });
                         }
                     }
 
@@ -344,13 +344,16 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 {
                     _PlayerType = PlayerType::BASSMIDI;
 
-                    for (const auto & sf : _SoundFonts)
+                    if (FluidSynth::Exists())
                     {
-                        if (sf.IsDLS() && FluidSynth::Exists())
+                        for (const auto & sf : _SoundFonts)
                         {
-                            _PlayerType = PlayerType::FluidSynth;
-                            HasDLS = true;
-                            break;
+                            if (sf.IsDLS())
+                            {
+                                _PlayerType = PlayerType::FluidSynth;
+                                HasDLS = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -388,11 +391,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
         {
+/*
             if ((_PlayerType == PlayerType::FluidSynth) && !HasDLS)
                 std::reverse(_SoundFonts.begin(), _SoundFonts.end());
-
+*/
             for (const auto & sf : _SoundFonts)
-                console::print(STR_COMPONENT_BASENAME, " uses SoundFont \"", sf.FilePath().c_str(), "\" with offset ", sf.BankOffset(), ".");
+                console::print(STR_COMPONENT_BASENAME, " uses SoundFont \"", sf.FilePath().c_str(), "\" with bank offset ", sf.BankOffset(), ".");
         }
     }
 
