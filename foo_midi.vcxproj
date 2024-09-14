@@ -389,6 +389,7 @@
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="Infrastructure\PreferencesProcessingLayout.h" />
     <ClInclude Include="Players\ADLPlayer.h" />
+    <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\BMPlayer.h" />
     <ClInclude Include="Infrastructure\ConfigurationMap.h" />
     <ClInclude Include="Infrastructure\Configuration.h" />

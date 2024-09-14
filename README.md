@@ -52,7 +52,7 @@ The component supports 6 loop modes:
 To build the code you need:
 
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2023-09-23
+* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2024-08-07
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
 The following libraries are included in the code:
@@ -113,14 +113,15 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v2.15.0.0, 2024-08-xx
+v2.15.0.0, 2024-09-14
 
 * New: Support for embedded DLS sound fonts in RMI files. Works only with the FluidSynth player.
 * New: Support for the DBNK chunk in RMI files.
-* New: Support for SoundFont layering without using SFList files.
+* New: Support for SoundFont layering without using SFList files. Not perfect yet but usable.
 * Improved: Tweaked the player type override logic.
 * Improved: Increased the number of MIDI ports supported by the BASS MIDI player.
 * Fixed: A very old bug in the MIDI parsing code when Pitch Bend control change messages were encountered.
+* Fixed: Some preferences were not reset when the Reset button was clicked.
 
 v2.14.0.0, 2024-08-17
 
