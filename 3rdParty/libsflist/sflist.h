@@ -41,16 +41,16 @@
 extern "C" {
 #endif
 
-typedef struct sflist_presets
+typedef struct sflist_t
 {
-   unsigned int count;
-   BASS_MIDI_FONTEX * presets;
-} sflist_presets;
+   unsigned int Count;
+   BASS_MIDI_FONTEX * FontEx;
+} sflist_t;
 
 #define sflist_max_error 1024
 
-sflist_presets * sflist_load(const char * sflist, size_t size, const char * base_path, char * error);
-void sflist_free(sflist_presets *);
+sflist_t * sflist_load(const char * sflist, size_t size, const char * base_path, char * error);
+void sflist_free(sflist_t *);
 
 const char * sflist_upgrade(const char * sflist, size_t size, char * error);
 void sflist_upgrade_free(const char *);
@@ -60,4 +60,3 @@ void sflist_upgrade_free(const char *);
 #endif
 
 #endif
-

@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2023.08.19) **/
+/** $VER: FSPlayer.h (2024.08.28) **/
 
 #pragma once
 
@@ -7,6 +7,7 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "Player.h"
+#include "SoundFont.h"
 
 #include "FluidSynth.h"
 
@@ -21,10 +22,9 @@ public:
     FSPlayer();
     virtual ~FSPlayer();
 
-    bool Initialize(const WCHAR * basePath);
+    void Initialize(const WCHAR * basePath);
 
-    void SetSoundFontDirectory(const char * directoryPath);
-    void SetSoundFontFile(const char * filePath);
+    void SetSoundFonts(const std::vector<soundfont_t> & _soundFonts);
 
     void EnableDynamicLoading(bool enabled = true);
     void EnableEffects(bool enabled = true);
@@ -35,7 +35,7 @@ public:
     uint32_t GetActiveVoiceCount() const noexcept;
 
 private:
-    #pragma region("MIDIPlayer")
+    #pragma region MIDIPlayer
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
@@ -49,14 +49,23 @@ private:
 
     fluid_sfloader_t * GetSoundFontLoader(fluid_settings_t * settings) const;
 
+    bool IsStarted() const noexcept
+    {
+        for (const auto & Synth : _Synth)
+            if (Synth == nullptr)
+                return false;
+
+        return true;
+    }
+
 private:
     std::string _ErrorMessage;
 
-    fluid_settings_t * _Settings[3];
-    fluid_synth_t * _Synth[3];
+    fluid_synth_t * _Synth[16];
+    fluid_settings_t * _Settings[_countof(_Synth)];
 
     pfc::string8 _SoundFontDirectoryPath;
-    std::string _SoundFontFilePath;
+    std::vector<soundfont_t> _SoundFonts;
 
     bool _DoDynamicLoading;
     bool _DoReverbAndChorusProcessing;

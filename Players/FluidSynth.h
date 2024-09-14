@@ -1,13 +1,21 @@
 
-/** $VER: FluidSynth.h (2023.08.02) **/
+/** $VER: FluidSynth.h (2024.08.29) **/
 
 #pragma once
 
 #include "Player.h"
 
+#include "resource.h"
+
+#include "Infrastructure\Exception.h"
+
+#include <Encoding.h>
+
 #include <fluidsynth.h>
 
 #include <pfc/string-conv-lite.h>
+
+#include <Shlwapi.h>
 
 #pragma region FluidSynth API
 
@@ -29,7 +37,8 @@ typedef int (WINAPIV * _fluid_sfloader_set_callbacks)(fluid_sfloader_t * loader,
 typedef int (WINAPIV * _fluid_synth_set_interp_method)(fluid_synth_t * synth, int chan, int interp_method);
 
 typedef void (WINAPIV * _fluid_synth_add_sfloader)(fluid_synth_t * synth, fluid_sfloader_t * loader);
-typedef int (WINAPIV * _fluid_synth_sfload)(fluid_synth_t * synth, const char *filename, int reset_presets);
+typedef int (WINAPIV * _fluid_synth_sfload)(fluid_synth_t * synth, const char * filePath, int reset_presets);
+typedef int (WINAPIV * _fluid_synth_set_bank_offset)(fluid_synth_t * synth, int sfont_id, int offset);
 
 typedef int (WINAPIV * _fluid_synth_noteon)(fluid_synth_t * synth, int chan, int key, int vel);
 typedef int (WINAPIV * _fluid_synth_noteoff)(fluid_synth_t * synth, int chan, int key);
@@ -50,7 +59,10 @@ typedef int (WINAPIV * _fluid_synth_write_float)(fluid_synth_t * synth, int len,
 
 typedef int (WINAPIV * _fluid_synth_get_active_voice_count)(fluid_synth_t * synth);
 
-#define InitializeFunction(type, address) { address = (##_##type) ::GetProcAddress(_hModule, #type); if (*address == nullptr) return false; }
+#define TOSTRING_IMPL(x) #x
+#define TOSTRING(x) TOSTRING_IMPL(x)
+
+#define InitializeFunction(type, address) { address = (##_##type) ::GetProcAddress(_hModule, #type); if (*address == nullptr) throw midi::exception_t((std::string("Failed to link FluidSynth function: ") + TOSTRING(type)).c_str()); }
 
 #pragma endregion
 
@@ -75,20 +87,23 @@ public:
 
     bool IsInitialized() const noexcept { return (_hModule != 0); }
 
-    bool Initialize(const WCHAR * basePath) noexcept
+    void Initialize(const WCHAR * basePath)
     {
         if (IsInitialized())
-            return true;
+            return;
+
+        if (!::PathIsDirectoryW(basePath))
+            throw midi::exception_t(midi::GetErrorMessage("Invalid FluidSynth directory", ::GetLastError()).c_str());
 
         BOOL Success = ::SetDllDirectoryW(basePath);
 
         if (!Success)
-            return false;
+            throw midi::exception_t(midi::GetErrorMessage("Failed to add FluidSynth directory to the search path", ::GetLastError()).c_str());
 
         _hModule = ::LoadLibraryW(LibraryName);
 
         if (_hModule == 0)
-            return false;
+            throw midi::exception_t(midi::GetErrorMessage("Failed to load FluidSynth library", ::GetLastError(), WideToUTF8(LibraryName).c_str()).c_str());
 
         #pragma warning(disable: 4191) // 'type cast': unsafe conversion from 'FARPROC' to 'xxx'
         InitializeFunction(fluid_version_str, GetVersion);
@@ -107,6 +122,7 @@ public:
         InitializeFunction(new_fluid_defsfloader, CreateSoundFontLoader);
         InitializeFunction(fluid_sfloader_set_callbacks, SetSoundFontLoaderCallbacks);
         InitializeFunction(fluid_synth_sfload, LoadSoundFont);
+        InitializeFunction(fluid_synth_set_bank_offset, SetSoundFontBankOffset);
 
         InitializeFunction(fluid_synth_set_interp_method, SetInterpolationMethod);
 
@@ -130,13 +146,22 @@ public:
         InitializeFunction(fluid_synth_get_active_voice_count, GetActiveVoiceCount);
 
         #pragma warning(default: 4191)
-
-        return true;
     }
 
     static bool Exists() noexcept
     {
-        return FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
+        try
+        {
+            FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
+
+            return true;
+        }
+        catch (midi::exception_t e)
+        {
+            console::print(STR_COMPONENT_BASENAME, " failed to initialize FluidSynth: ", e.what());
+
+            return false;
+        }
     }
 
 public:
@@ -155,6 +180,7 @@ public:
     _new_fluid_defsfloader CreateSoundFontLoader;
     _fluid_sfloader_set_callbacks SetSoundFontLoaderCallbacks;
     _fluid_synth_sfload LoadSoundFont;
+    _fluid_synth_set_bank_offset SetSoundFontBankOffset;
 
     _fluid_synth_set_interp_method SetInterpolationMethod;
 

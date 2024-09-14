@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2024.08.04) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2024.09.14) P. Stuer **/
 
 #include "framework.h"
 
@@ -203,7 +203,7 @@ private:
     BOOL OnInitDialog(CWindow, LPARAM);
     void OnTimer(UINT_PTR);
 
-    void OnPlayerTypeChange(UINT, int, CWindow);
+    void OnPlayerTypeChange(UINT, int, CWindow w);
     void OnEditChange(UINT, int, CWindow);
     void OnSelectionChange(UINT, int, CWindow);
     void OnButtonClick(UINT, int, CWindow);
@@ -219,12 +219,12 @@ private:
 
     #pragma region Player Type
 
-    static bool IsPluginAlwaysPresent(PreferencesRootPage *)
+    static bool PlayerIsAlwaysPresent(PreferencesRootPage *)
     {
         return true;
     }
 
-    static bool IsPluginNeverPresent(PreferencesRootPage *)
+    static bool PlayerIsNeverPresent(PreferencesRootPage *)
     {
         return false;
     }
@@ -322,17 +322,17 @@ private:
 /// </summary>
 const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
 {
-    { "Emu de MIDI",    PlayerType::EmuDeMIDI,    IsPluginAlwaysPresent },
+    { "Emu de MIDI",    PlayerType::EmuDeMIDI,    PlayerIsAlwaysPresent },
     { "FluidSynth",     PlayerType::FluidSynth,   IsFluidSynthPresent },
-    { "BASSMIDI",       PlayerType::BASSMIDI,     IsPluginAlwaysPresent },
-    { "DirectX",        PlayerType::DirectX,      IsPluginNeverPresent },
-    { "Super Munt GM",  PlayerType::SuperMunt,    IsPluginAlwaysPresent },
-    { "LibADLMIDI",     PlayerType::ADL,          IsPluginAlwaysPresent },
-    { "LibOPNMIDI",     PlayerType::OPN,          IsPluginAlwaysPresent },
-    { "OPL MIDI",       PlayerType::OPL,          IsPluginNeverPresent },
-    { "Nuke",           PlayerType::Nuke,         IsPluginAlwaysPresent },
+    { "BASSMIDI",       PlayerType::BASSMIDI,     PlayerIsAlwaysPresent },
+    { "DirectX",        PlayerType::DirectX,      PlayerIsNeverPresent },
+    { "Super Munt GM",  PlayerType::SuperMunt,    PlayerIsAlwaysPresent },
+    { "LibADLMIDI",     PlayerType::ADL,          PlayerIsAlwaysPresent },
+    { "LibOPNMIDI",     PlayerType::OPN,          PlayerIsAlwaysPresent },
+    { "OPL MIDI",       PlayerType::OPL,          PlayerIsNeverPresent },
+    { "Nuke",           PlayerType::Nuke,         PlayerIsAlwaysPresent },
     { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent },
-    { "MCI",            PlayerType::MCI,          IsPluginNeverPresent }
+    { "MCI",            PlayerType::MCI,          PlayerIsNeverPresent }
 };
 
 #pragma region preferences_page_instance
@@ -358,7 +358,7 @@ t_uint32 PreferencesRootPage::get_state()
 /// </summary>
 void PreferencesRootPage::apply()
 {
-    #pragma region PlayerType
+    // Player Type
     {
         int SelectedIndex = (int) SendDlgItemMessageW(IDC_PLAYER_TYPE, CB_GETCURSEL);
 
@@ -382,9 +382,12 @@ void PreferencesRootPage::apply()
             }
         }
     }
-    #pragma endregion
 
-    #pragma region Sample Rate
+    // Configure
+    {
+    }
+
+    // Sample Rate
     {
         UINT t = std::clamp(GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE), 6000u, 192000u);
 
@@ -393,18 +396,16 @@ void PreferencesRootPage::apply()
         CfgSampleRateHistory.add_item(pfc::format_int(t));
         CfgSampleRate = (t_int32) t;
     }
-    #pragma endregion
 
-    #pragma region Looping
+    // Looping
     {
         CfgLoopTypePlayback     = (t_int32) SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
         CfgLoopTypeOther        = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
 
         CfgDecayTime            = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
     }
-    #pragma endregion
 
-    #pragma region MIDI Flavor
+    // MIDI Flavor and Effects
     {
         CfgMIDIStandard         = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
 
@@ -412,9 +413,8 @@ void PreferencesRootPage::apply()
         CfgUseSuperMuntWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK);
         CfgUseVSTiWithXG        = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
     }
-    #pragma endregion
 
-    #pragma region("Miscellaneous")
+    // Miscellaneous
     {
         CfgEmuDeMIDIExclusion   = (t_int32) SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_GETCHECK);
 
@@ -428,18 +428,16 @@ void PreferencesRootPage::apply()
         CfgDetectFF7Loops       = (t_int32) SendDlgItemMessage(IDC_FF7_LOOPS, BM_GETCHECK);
 
     }
-    #pragma endregion
 
-    #pragma region("FluidSynth")
+    // FluidSynth
     {
         int SelectedIndex = (int) SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_GETCURSEL);
 
         if (SelectedIndex != -1)
             CfgFluidSynthInterpolationMode = _InterpolationMethods[SelectedIndex].Id;
     }
-    #pragma endregion
 
-    #pragma region BASS MIDI
+    // BASS MIDI resampling mode and cache status
     {
         wchar_t Text[32];
 
@@ -452,15 +450,13 @@ void PreferencesRootPage::apply()
     {
         CfgBASSMIDIInterpolationMode = (t_int32) SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
     }
-    #pragma endregion
 
-    #pragma region Munt
+    // Munt
     {
         CfgMuntGMSet = (t_int32) SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL);
     }
-    #pragma endregion
 
-    #pragma region ADL
+    // ADL
     {
         {
             int SelectedIndex = (int) SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
@@ -481,9 +477,8 @@ void PreferencesRootPage::apply()
 
         CfgADLPanning = (t_int32) SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
     }
-    #pragma endregion
 
-    #pragma region Nuke
+    // Nuke
     {
         size_t SelectedIndex = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
 
@@ -496,7 +491,6 @@ void PreferencesRootPage::apply()
         CfgNukeBank        = (t_int32) Bank;
         CfgNukePanning     = (t_int32) SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK);
     }
-    #pragma endregion
 
     OnChanged();
 }
@@ -508,7 +502,7 @@ void PreferencesRootPage::reset()
 {
     PlayerType PlayerType = PlayerType::Default;
 
-    #pragma region Player Type
+    // Player Type
     {
         int SelectedIndex = -1;
 
@@ -528,40 +522,40 @@ void PreferencesRootPage::reset()
         SendDlgItemMessage(IDC_PLAYER_TYPE, CB_SETCURSEL, (WPARAM) SelectedIndex);
         GetDlgItem(IDC_CONFIGURE).EnableWindow(FALSE);
     }
-    #pragma endregion
 
-    #pragma region Sample Rate
+    // Configure
+    {
+    }
+
+    // Sample Rate
     {
         if ((PlayerType == PlayerType::EmuDeMIDI) && _IsRunning)
             GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
         SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
     }
-    #pragma endregion
 
-    #pragma region Looping
+    // Looping
     {
         SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_SETCURSEL, DefaultPlaybackLoopType);
         SendDlgItemMessage(IDC_LOOP_OTHER,    CB_SETCURSEL, DefaultOtherLoopType);
     }
-    #pragma endregion
 
-    #pragma region MIDI Flavor
+    // MIDI Flavor and Effects
     {
-        bool Enable = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
+        const bool SupportsFlavors = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
 
-        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(Enable);
-        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(Enable);
+        GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(SupportsFlavors);
+        GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(SupportsFlavors);
+        GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(SupportsFlavors);
 
         SendDlgItemMessage(IDC_MIDI_FLAVOR,           CB_SETCURSEL, DefaultMIDIFlavor);
         SendDlgItemMessage(IDC_MIDI_EFFECTS,          BM_SETCHECK,  DefaultUseMIDIEffects ? 0 : 1);
-        SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT,   BM_SETCHECK, DefaultUseSuperMuntWithMT32);
-        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK, DefaultUseVSTiWithXG);
+        SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT,   BM_SETCHECK,  DefaultUseSuperMuntWithMT32);
+        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK,  DefaultUseVSTiWithXG);
     }
-    #pragma endregion
 
-    #pragma region Miscellaneous
+    // Miscellaneous
     {
         SendDlgItemMessage(IDC_EMIDI_EXCLUSION,    BM_SETCHECK, DefaultEmuDeMIDIExclusion);
         SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, DefaultFilterInstruments);
@@ -573,9 +567,8 @@ void PreferencesRootPage::reset()
         SendDlgItemMessage(IDC_XMI_LOOPS,          BM_SETCHECK, DefaultDetectXMILoops);
         SendDlgItemMessage(IDC_FF7_LOOPS,          BM_SETCHECK, DefaultDetectFF7Loops);
     }
-    #pragma endregion
 
-    #pragma region FluidSynth
+    // FluidSynth
     {
         int SelectedIndex = -1;
 
@@ -590,45 +583,44 @@ void PreferencesRootPage::reset()
 
         SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_SETCURSEL, (WPARAM) SelectedIndex);
 
-        bool Enable = (PlayerType == PlayerType::FluidSynth);
+        const bool IsFluidSynth = (PlayerType == PlayerType::FluidSynth);
 
-        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(Enable);
+        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(IsFluidSynth);
+        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(IsFluidSynth);
     }
-    #pragma endregion
 
-    #pragma region BASS MIDI
+    // BASS MIDI resampling mode and cache status
     {
         SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIInterpolationMode);
 
-        bool Enable = (PlayerType == PlayerType::BASSMIDI);
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(DefaultBASSMIDIVolume, 4, 2));
 
-        const int ControlId[] =
+        const bool IsBASSMIDI = (PlayerType == PlayerType::BASSMIDI);
+
+        const int ControlIds[] =
         {
             IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_VOLUME,
             IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
             IDC_CACHED_LBL, IDC_CACHED
         };
 
-        for (size_t i = 0; i < _countof(ControlId); ++i)
-            GetDlgItem(ControlId[i]).EnableWindow(Enable);
+        for (const int & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(IsBASSMIDI);
     }
-    #pragma endregion
 
-    #pragma region Munt
+    // Munt
     {
-        BOOL Enable = (PlayerType == PlayerType::SuperMunt);
+        const bool IsSuperMunt = (PlayerType == PlayerType::SuperMunt);
 
-        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(Enable);
+        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
+        GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(IsSuperMunt);
 
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow((PlayerType == PlayerType::SuperMunt) ? SW_SHOW : SW_HIDE);
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(IsSuperMunt ? SW_SHOW : SW_HIDE);
 
-        SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM) DefaultGMSet);
+        SendDlgItemMessage(IDC_MUNT_GM_SET, CB_SETCURSEL, (WPARAM) DefaultGMSet);
     }
-    #pragma endregion
 
-    #pragma region ADL
+    // ADL
     {
         int SelectedIndex = -1;
         int i = 0;
@@ -646,34 +638,36 @@ void PreferencesRootPage::reset()
         SetDlgItemInt(IDC_ADL_CHIPS, DefaultADLChipCount, 0);
         SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, DefaultADLPanning);
 
-        if (PlayerType != PlayerType::ADL)
+        const bool IsADL = (PlayerType == PlayerType::ADL);
+
+        const int ControlIds[] =
         {
-            const int ControlId[] =
-            {
-                IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
-                IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
-                IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
-                IDC_ADL_PANNING
-            };
+            IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
+            IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
+            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
+            IDC_ADL_PANNING
+        };
 
-            for (const auto & Iter : ControlId)
-                GetDlgItem(Iter).EnableWindow(FALSE);
-        }
+        for (const int & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(IsADL);
     }
-    #pragma endregion
 
-    #pragma region Nuke
+    // Nuke
     {
-        BOOL Enable = (PlayerType == PlayerType::Nuke);
+        const bool IsNuke = (PlayerType == PlayerType::Nuke);
 
-        GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_NUKE_PRESET).EnableWindow(Enable);
-        GetDlgItem(IDC_NUKE_PANNING).EnableWindow(Enable);
+        const int ControlIds[] =
+        {
+            IDC_NUKE_PRESET_TEXT, IDC_NUKE_PRESET,
+            IDC_NUKE_PANNING
+        };
+
+        for (const int & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(IsNuke);
 
         SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultNukeSynth, DefaultNukeBank));
         SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultNukePanning);
     }
-    #pragma endregion
 
     VSTi::Config.resize(0);
 
@@ -969,12 +963,12 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         w.SetCurSel((int) CfgMuntGMSet);
 
-        BOOL Enable = (PlayerType == PlayerType::SuperMunt);
+        BOOL IsSuperMunt = (PlayerType == PlayerType::SuperMunt);
 
-        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(Enable);
+        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
+        GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(IsSuperMunt);
 
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(Enable ? SW_SHOW : SW_HIDE);
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(IsSuperMunt ? SW_SHOW : SW_HIDE);
     }
     #pragma endregion
 
@@ -1152,14 +1146,14 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Configure
     {
-        const BOOL Enable = (PlayerType == PlayerType::VSTi) ? VSTi::PlugIns[VSTiIndex].HasEditor : FALSE;
+        const bool Enable = (PlayerType == PlayerType::VSTi) ? VSTi::PlugIns[VSTiIndex].HasEditor : FALSE;
 
         GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
     }
 
     // Sample Rate
     {
-        const BOOL Enable = (PlayerType != PlayerType::EmuDeMIDI) || !_IsRunning;
+        const bool Enable = (PlayerType != PlayerType::EmuDeMIDI) || !_IsRunning;
 
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(Enable);
     }
@@ -1170,7 +1164,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // MIDI Flavor and Effects
     {
-        const BOOL Enable = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
+        const bool SupportsFlavors = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
 
         const int ControlIds[] =
         {
@@ -1178,8 +1172,8 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
             IDC_MIDI_EFFECTS,
         };
 
-        for (const auto & Iter : ControlIds)
-            GetDlgItem(Iter).EnableWindow(Enable);
+        for (const int & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(SupportsFlavors);
     }
 
     // Miscellaneous
@@ -1188,15 +1182,15 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // FluidSynth
     {
-        const BOOL Enable = (PlayerType == PlayerType::FluidSynth);
+        const bool IsFluidSynth = (PlayerType == PlayerType::FluidSynth);
 
-        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(Enable);
+        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(IsFluidSynth);
+        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(IsFluidSynth);
     }
 
     // BASS MIDI resampling mode and cache status
     {
-        const BOOL Enable = (PlayerType == PlayerType::BASSMIDI);
+        const bool IsBASSMIDI = (PlayerType == PlayerType::BASSMIDI);
 
         const int ControlIds[] =
         {
@@ -1205,38 +1199,39 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
             IDC_CACHED_LBL, IDC_CACHED
         };
 
-        for (const auto & Iter : ControlIds)
-            GetDlgItem(Iter).EnableWindow(Enable);
+        for (const int & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(IsBASSMIDI);
     }
 
     // Munt
     {
-        const BOOL Enable = (PlayerType == PlayerType::SuperMunt);
+        const bool IsSuperMunt = (PlayerType == PlayerType::SuperMunt);
 
-        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_MUNT_GM_SET) .EnableWindow(Enable);
+        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
+        GetDlgItem(IDC_MUNT_GM_SET) .EnableWindow(IsSuperMunt);
 
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(Enable ? SW_SHOW : SW_HIDE);
+        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(IsSuperMunt ? SW_SHOW : SW_HIDE);
     }
 
     // ADL
     {
-        const BOOL Enable = (PlayerType == PlayerType::ADL);
+        const bool IsADL = (PlayerType == PlayerType::ADL);
 
         const int ControlIds[] =
         {
             IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
             IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
+            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
             IDC_ADL_PANNING
         };
 
-        for (const auto & Iter : ControlIds)
-            GetDlgItem(Iter).EnableWindow(Enable);
+        for (const int & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(IsADL);
     }
 
     // Nuke
     {
-        const BOOL Enable = (PlayerType == PlayerType::Nuke);
+        const bool IsNuke = (PlayerType == PlayerType::Nuke);
 
         const int ControlIds[] =
         {
@@ -1244,8 +1239,8 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
             IDC_NUKE_PANNING
         };
 
-        for (const auto & Iter : ControlIds)
-            GetDlgItem(Iter).EnableWindow(Enable);
+        for (const int & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(IsNuke);
     }
 
     OnChanged();

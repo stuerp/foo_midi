@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2024.08.16) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2024.09.14) P. Stuer **/
 
 #include "framework.h"
 
@@ -111,6 +111,21 @@ private:
     bool HasChanged() const noexcept;
     void OnChanged() const noexcept;
 
+    void InitializePortControls() noexcept
+    {
+        _PortNumber = 0;
+
+        auto w = (CTrackBarCtrl) GetDlgItem(IDC_PORT_SLIDER);
+
+        w.SetBuddy(GetDlgItem(IDC_PORT), TRUE);
+        w.SetRange(0, 127);
+        w.SetPageSize(1);
+        w.SetPos(_PortNumber);
+        w.SetTicFreq(8);
+
+        SetDlgItemInt(IDC_PORT, _PortNumber);
+    }
+
 private:
     const preferences_page_callback::ptr _Callback;
 
@@ -186,6 +201,8 @@ void DialogPageProcessing::reset()
 
     ::memset(_EnabledChannels, 0xFF, sizeof(_EnabledChannels));
 
+    InitializePortControls();
+
     UpdateDialog();
 
     OnChanged();
@@ -214,20 +231,7 @@ BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
 
     ::memcpy(_EnabledChannels, CfgEnabledChannels.get()->data(), sizeof(_EnabledChannels));
 
-    // Intialize the port controls.
-    {
-        _PortNumber = 0;
-
-        auto w = (CTrackBarCtrl) GetDlgItem(IDC_PORT_SLIDER);
-
-        w.SetBuddy(GetDlgItem(IDC_PORT), TRUE);
-        w.SetRange(0, 127);
-        w.SetPageSize(1);
-        w.SetPos(_PortNumber);
-        w.SetTicFreq(8);
-
-        SetDlgItemInt(IDC_PORT, _PortNumber);
-    }
+    InitializePortControls();
 
     UpdateDialog();
 
