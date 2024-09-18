@@ -88,7 +88,7 @@ public:
         _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode),
 
         _BASSMIDIVolume((float) CfgBASSMIDIVolume),
-        _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIInterpolationMode)
+        _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIResamplingMode)
     {
         _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? midi_container_t::CleanFlagEMIDI : 0) |
                                  (CfgFilterInstruments ? midi_container_t::CleanFlagInstruments : 0) |

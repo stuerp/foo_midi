@@ -91,7 +91,7 @@ enum
 
     DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT,
 
-    DefaultBASSMIDIInterpolationMode = 1,
+    DefaultBASSMIDIResamplingMode = 1,
 
     DefaultGMSet = 0,
 
@@ -131,7 +131,7 @@ extern cfg_var_modern::cfg_int
 
     CfgFluidSynthInterpolationMode,
 
-    CfgBASSMIDIInterpolationMode,
+    CfgBASSMIDIResamplingMode,
 
     CfgADLBank,
     CfgADLChipCount,

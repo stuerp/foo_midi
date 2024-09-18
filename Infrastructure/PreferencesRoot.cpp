@@ -448,7 +448,7 @@ void PreferencesRootPage::apply()
         ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
     }
     {
-        CfgBASSMIDIInterpolationMode = (t_int32) SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
+        CfgBASSMIDIResamplingMode = (t_int32) SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
     }
 
     // Munt
@@ -591,9 +591,9 @@ void PreferencesRootPage::reset()
 
     // BASS MIDI resampling mode and cache status
     {
-        SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIInterpolationMode);
-
         ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(DefaultBASSMIDIVolume, 4, 2));
+
+        SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIResamplingMode);
 
         const bool IsBASSMIDI = (PlayerType == PlayerType::BASSMIDI);
 
@@ -644,7 +644,6 @@ void PreferencesRootPage::reset()
         {
             IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
             IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
-            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
             IDC_ADL_PANNING
         };
 
@@ -938,7 +937,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         w.AddString(L"8pt Sinc interpolation");
         w.AddString(L"16pt Sinc interpolation");
 
-        w.SetCurSel((int) CfgBASSMIDIInterpolationMode);
+        w.SetCurSel((int) CfgBASSMIDIResamplingMode);
 
         bool Enable = (PlayerType == PlayerType::BASSMIDI);
 
@@ -1221,7 +1220,6 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
         {
             IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
             IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
-            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
             IDC_ADL_PANNING
         };
 
@@ -1405,7 +1403,7 @@ bool PreferencesRootPage::HasChanged()
         if (std::abs(::_wtof(Text) - CfgBASSMIDIVolume) > 0.001)
             return true;
 
-        if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgBASSMIDIInterpolationMode)
+        if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgBASSMIDIResamplingMode)
             return true;
     }
     #pragma endregion

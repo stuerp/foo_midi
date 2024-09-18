@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2024.08.14) **/
+/** $VER: foo_midi.rc (2024.09.18) **/
 
 #include "resource.h"
 
@@ -96,10 +96,10 @@ font 8, "Segoe UI", 400, 0, 1
 
     groupbox "BASS MIDI", IDC_STATIC, X_A50, Y_A50, W_A50, H_A50
         rtext           "Volume:",          IDC_BASSMIDI_VOLUME_LBL,X_A57, Y_A57 + 2, W_A57, H_A57
-        edittext                            IDC_BASSMIDI_VOLUME,    X_A58, Y_A58, W_A58, H_A58, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
-        rtext       "Resampling:",          IDC_RESAMPLING_LBL,    X_A53, Y_A53 + 2, W_A53, H_A53
+        edittext                            IDC_BASSMIDI_VOLUME,    X_A58, Y_A58,     W_A58, H_A58, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        rtext       "Resampling:",          IDC_RESAMPLING_LBL,     X_A53, Y_A53 + 2, W_A53, H_A53
         combobox                            IDC_RESAMPLING_MODE,    X_A54, Y_A54,     W_A54, H_A54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext           "Cached:",          IDC_CACHED_LBL,        X_A55, Y_A55 + 2, W_A55, H_A55
+        rtext           "Cached:",          IDC_CACHED_LBL,         X_A55, Y_A55 + 2, W_A55, H_A55
         ltext                  "",          IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56, WS_VISIBLE
 
     groupbox "Munt", IDC_STATIC, X_A60, Y_A60, W_A60, H_A60
