@@ -243,6 +243,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     /** IMPORTANT: The following sequence of adding SoundFonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
 
+    bool UseSoundFonts = false;
+    bool HasDLS = false;
+
     // First, add the embedded sound font, if present.
     {
         const auto & Data = _Container.GetSoundFontData();
@@ -274,6 +277,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                             ::fclose(fp);
 
                             _SoundFonts.push_back({ FilePath, 1.f, (IsDLS ? 1 : _Container.GetBankOffset()), true, IsDLS });
+
+                            UseSoundFonts = true;
                         }
                     }
 
@@ -322,7 +327,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         if (FoundSoundFile)
+        {
             _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, false });
+
+            UseSoundFonts = true;
+        }
     }
 
     // Finally, add the default sound font.
@@ -331,32 +340,24 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             _SoundFonts.push_back({ Preset._SoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, false });
     }
 
-    // Update the player type.
-    bool HasDLS = false;
+    for (const auto & sf : _SoundFonts)
+    {
+        if (sf.IsDLS())
+        {
+            HasDLS = true;
+            break;
+        }
+    }
 
+    // Update the player type.
     {
         _PlayerType = Preset._PlayerType;
 
         {
-            if ((_PlayerType != PlayerType::FluidSynth))
+            // Force the use of a SoundFont player if an embedded or named SoundFont was found.
+            if ((_PlayerType != PlayerType::FluidSynth) && UseSoundFonts && !_SoundFonts.empty())
             {
-                if (!_SoundFonts.empty())
-                {
-                    _PlayerType = PlayerType::BASSMIDI;
-
-                    if (FluidSynth::Exists())
-                    {
-                        for (const auto & sf : _SoundFonts)
-                        {
-                            if (sf.IsDLS())
-                            {
-                                _PlayerType = PlayerType::FluidSynth;
-                                HasDLS = true;
-                                break;
-                            }
-                        }
-                    }
-                }
+                _PlayerType = (FluidSynth::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
             }
         }
 

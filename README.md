@@ -113,6 +113,11 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
+v2.15.1.0, 2024-09-18
+
+* Fixed: The selected player now only gets overriden to BASSMIDI/FluidSynth when an embedded or a soundfont is found with the same basename as the MIDI file.
+* Fixed: The BASS MIDI Resampling combo box was not always enabled correctly when switching player types.
+
 v2.15.0.0, 2024-09-14
 
 * New: Support for embedded DLS sound fonts in RMI files. Works only with the FluidSynth player.
@@ -365,6 +370,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 #### RMI
 
 * [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
+* [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification)
 
 #### RPC (Recomposer)
 

@@ -94,7 +94,7 @@ cfg_var_modern::cfg_int
     CfgNukePanning(CfgNukePanningGUID, DefaultNukePanning);
 
 cfg_var_modern::cfg_float   CfgBASSMIDIVolume           ({ 0x143e8051, 0xa42b, 0x4225, {0xb9, 0xd2, 0x79, 0xf1, 0x43, 0x1e, 0x70, 0x16 } }, DefaultBASSMIDIVolume);
-cfg_var_modern::cfg_int     CfgBASSMIDIInterpolationMode({ 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } }, DefaultBASSMIDIInterpolationMode);
+cfg_var_modern::cfg_int     CfgBASSMIDIResamplingMode({ 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x1, 0xb5, 0x1d, 0x6d, 0x38 } }, DefaultBASSMIDIResamplingMode);
 
 #ifdef DXISUPPORT
 static const GUID default_cfg_dxi_plugin = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
