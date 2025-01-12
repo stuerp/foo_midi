@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.h (2013.08.19) **/
+/** $VER: MT32Player.h (2024.09.29) **/
 
 #pragma once
 
@@ -28,9 +28,9 @@ public:
         _AbortCallback = abortHandler;
     }
 
-    void setBasePath(const char * in);
+    void SetBasePath(const char * in);
 
-    bool isConfigValid();
+    bool IsConfigValid();
 
     static int GetSampleRate();
 

@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.cpp (2013.08.19) **/
+/** $VER: MT32Player.cpp (2024.09.29) **/
 
 #include "framework.h"
 
@@ -41,7 +41,8 @@ static const char * PCMROMNames[] =
     "MT32_PCM.ROM"
 };
 
-#pragma region("MIDIPlayer")
+#pragma region player_t
+
 bool MT32Player::Startup()
 {
     if (_Synth)
@@ -153,9 +154,10 @@ void MT32Player::SendSysEx(const uint8_t * event, size_t size, uint32_t)
 {
     _Synth->playSysexNow(event, (MT32Emu::Bit32u) size);
 }
+
 #pragma endregion
 
-void MT32Player::setBasePath(const char * in)
+void MT32Player::SetBasePath(const char * in)
 {
     _BasePathName = in;
 
@@ -167,7 +169,7 @@ int MT32Player::GetSampleRate()
     return (int)MT32Emu::Synth::getStereoOutputSampleRate(useMode);
 }
 
-bool MT32Player::isConfigValid()
+bool MT32Player::IsConfigValid()
 {
     return Startup();
 }

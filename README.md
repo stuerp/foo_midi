@@ -115,7 +115,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 v2.15.1.0, 2024-09-18
 
-* Fixed: The selected player now only gets overriden to BASSMIDI/FluidSynth when an embedded or a soundfont is found with the same basename as the MIDI file.
+* Fixed: The selected player now only gets overriden to BASSMIDI/FluidSynth when an embedded soundfont or a soundfont is found with the same basename as the MIDI file.
 * Fixed: The BASS MIDI Resampling combo box was not always enabled correctly when switching player types.
 
 v2.15.0.0, 2024-09-14

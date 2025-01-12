@@ -49,15 +49,27 @@ if ($Platform -eq 'x64')
         Copy-Item "$OutputPath/$TargetFileName" -Destination "$PackagePath";
     }
 
-    if (Test-Path -Path "3rdParty/bass/x64/bass.dll")
+    $DLLPath = "3rdParty/bass/x64/bass.dll";
+
+    if (Test-Path -Path $DLLPath)
     {
         Write-Host "Copying BASS libaries to `"$PackagePath`"...";
-        Copy-Item "3rdParty/bass/x64/bass.dll" -Destination "$PackagePath";
+
+        Copy-Item $DLLPath -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/x64/bass_mpc.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/x64/bassflac.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/x64/bassmidi.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/x64/bassopus.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/x64/basswv.dll" -Destination "$PackagePath";
+    }
+
+    $DLLPath = "3rdParty/sdl2/lib/x64/SDL2.dll";
+
+    if (Test-Path -Path $DLLPath)
+    {
+        Write-Host "Copying SDL libary to `"$PackagePath`"...";
+
+        Copy-Item $DLLPath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")
@@ -88,12 +100,22 @@ elseif ($Platform -eq 'Win32')
     if (Test-Path -Path "3rdParty/bass/bass.dll")
     {
         Write-Host "Copying BASS libaries to `"$PackagePath`"...";
+
         Copy-Item "3rdParty/bass/bass.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/bass_mpc.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/bassflac.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/bassmidi.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/bassopus.dll" -Destination "$PackagePath";
         Copy-Item "3rdParty/bass/basswv.dll" -Destination "$PackagePath";
+    }
+
+    $DLLPath = "3rdParty/sdl2/lib/x86/SDL2.dll";
+
+    if (Test-Path -Path $DLLPath)
+    {
+        Write-Host "Copying SDL libary to `"$PackagePath`"...";
+
+        Copy-Item $DLLPath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")

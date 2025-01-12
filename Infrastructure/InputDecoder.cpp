@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.08.25) **/
+/** $VER: InputDecoder.cpp (2024.09.29) **/
 
 #include "framework.h"
 
@@ -40,6 +40,7 @@ const char * PlayerTypeNames[] =
     "Nuke",
     "Secret Sauce",
     "MCI",
+    "Nuked SC-55"
 };
 
 #pragma region input_impl
@@ -605,10 +606,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     BasePath.truncate(BasePath.scan_filename());
                 }
 
-                Player->setBasePath(BasePath);
+                Player->SetBasePath(BasePath);
                 Player->SetAbortHandler(&abortHandler);
 
-                if (!Player->isConfigValid())
+                if (!Player->IsConfigValid())
                     throw midi::exception_t("The Munt driver needs to be configured with a valid MT-32 or CM32L ROM set.");
 
                 _Player = Player;
@@ -841,6 +842,31 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 auto Player = new MCIPlayer;
 
                 _Player = Player;
+            }
+
+            {
+                _Player->SetSampleRate(_SampleRate);
+                _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
+
+                if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
+                {
+                    _IsEndOfContainer = false;
+
+                    return;
+                }
+            }
+            break;
+        }
+
+        // Nuked SC-55
+        case PlayerType::NukedSC55:
+        {
+            {
+                auto Player = new NukeSC55Player;
+
+                _Player = Player;
+
+                Player->SetBasePath(LR"(F:\MIDI\_foobar2000 Support\Nuked SC55mk2)");
             }
 
             {
@@ -1243,7 +1269,7 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 & filePath, pfc::stri
 /// <summary>
 /// Changes the extension of the file name in the specified file path.
 /// </summary>
-pfc::string8 ChangeExtension(const pfc::string8 & filePath, const pfc::string8 & fileExtension)
+static pfc::string8 ChangeExtension(const pfc::string8 & filePath, const pfc::string8 & fileExtension)
 {
     char FilePath[MAX_PATH];
 

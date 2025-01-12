@@ -331,6 +331,7 @@ const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
     { "LibOPNMIDI",     PlayerType::OPN,          PlayerIsAlwaysPresent },
     { "OPL MIDI",       PlayerType::OPL,          PlayerIsNeverPresent },
     { "Nuke",           PlayerType::Nuke,         PlayerIsAlwaysPresent },
+    { "Nuked SC-55",    PlayerType::NukedSC55,    PlayerIsAlwaysPresent },
     { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent },
     { "MCI",            PlayerType::MCI,          PlayerIsNeverPresent }
 };
