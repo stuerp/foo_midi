@@ -115,7 +115,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 v2.15.2.0, 2025-01-12
 
-* Improved: Update BASSMIDI to v2.4.15.3.
+* Improved: Updated BASSMIDI to v2.4.15.3.
 * Improved: Updated FluidSynth to v2.4.2.
 
 v2.15.1.0, 2024-09-18

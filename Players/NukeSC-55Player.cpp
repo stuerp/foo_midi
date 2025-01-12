@@ -1,5 +1,5 @@
 
-/** $VER: NukeSC-55Player.cpp (2024.09.29) - MCU code based Nuked SC-55 mcu.cpp **/
+/** $VER: NukeSC-55Player.cpp (2025.01.12) - MCU code based Nuked SC-55 mcu.cpp **/
 
 #include "framework.h"
 
@@ -43,111 +43,12 @@ NukeSC55Player::~NukeSC55Player()
     Shutdown();
 }
 
-#pragma region player_t
-
-bool NukeSC55Player::Startup()
-{
-    if (work_thread_run)
-        return true;
-
-    Initialize();
-
-    return true;
-}
-
-void NukeSC55Player::Shutdown()
-{
-    Terminate();
-}
-
-void NukeSC55Player::Render(audio_sample * sampleData, uint32_t sampleCount)
-{
-    ::memset(sampleData, 0, sampleCount * sizeof(*sampleData));
-
-/*
-    while (sampleCount != 0)
-    {
-        const size_t ToDo = std::min(sampleCount, MaxSamples);
-        const size_t SampleCount = ToDo * ChannelCount;
-
-        ::memset(sampleData, 0, SampleCount * sizeof(*sampleData));
-
-        for (auto & Stream : _Stream)
-        {
-            ::BASS_ChannelGetData(Stream, _Buffer, BASS_DATA_FLOAT | (DWORD) (SampleCount * sizeof(*_Buffer)));
-
-            // Convert the format of the rendered output.
-            for (size_t j = 0; j < SampleCount; ++j)
-                sampleData[j] += _Buffer[j];
-        }
-
-        sampleData  += SampleCount;
-        sampleCount -= (uint32_t) ToDo;
-    }
-*/
-}
-
-/// <summary>
-/// Sends a message to the emulator.
-/// </summary>
-void NukeSC55Player::SendEvent(uint32_t data)
-{
-    int PortNumber = (int) ((data >> 24) & 0x7F);
-    int Param2     = (int) ((data >> 16) & 0xFF);
-    int Param1     = (int) ((data >>  8) & 0xFF);
-    int Status     = (int)  (data        & 0xFF);
-
-    MCU_PostUART(Status);
-
-    switch (Status & 0xF0)
-    {
-        case StatusCodes::NoteOff:
-            MCU_PostUART(Param1);
-            break;
-
-        case StatusCodes::NoteOn:
-            MCU_PostUART(Param1);
-            MCU_PostUART(Param2);
-            break;
-
-        case StatusCodes::KeyPressure:
-            break;
-
-        case StatusCodes::ControlChange:
-            MCU_PostUART(Param1);
-            MCU_PostUART(Param2);
-            break;
-
-        case StatusCodes::ProgramChange:
-            MCU_PostUART(Param1);
-            break;
-
-        case StatusCodes::ChannelPressure:
-            MCU_PostUART(Param1);
-            break;
-
-        case StatusCodes::PitchBendChange:
-            MCU_PostUART(Param1);
-            MCU_PostUART(Param2);
-            break;
-    }
-}
-
-/// <summary>
-/// Sends a SysEx message to the library.
-/// </summary>
-void NukeSC55Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
-{
-    for (; size != 0; --size)
-        MCU_PostUART(*data++);
-}
-
-#pragma endregion
-
 void NukeSC55Player::SetBasePath(const std::wstring & basePathName)
 {
     _BasePathName = basePathName;
 }
+
+#pragma region MCU
 
 mcu_t mcu;
 
@@ -209,7 +110,9 @@ uint8_t tempbuf[0x800000];
 
 SDL_atomic_t mcu_button_pressed = { 0 };
 
-static const wchar_t * roms[ROM_SET_COUNT][5] =
+static const int ROM_SET_N_FILES = 6;
+
+static const wchar_t * roms[ROM_SET_COUNT][ROM_SET_N_FILES] =
 {
     {
         L"rom1.bin",
@@ -217,6 +120,7 @@ static const wchar_t * roms[ROM_SET_COUNT][5] =
         L"waverom1.bin",
         L"waverom2.bin",
         L"rom_sm.bin",
+        L"",
     },
     {
         L"rom1.bin",
@@ -224,6 +128,7 @@ static const wchar_t * roms[ROM_SET_COUNT][5] =
         L"waverom1.bin",
         L"waverom2.bin",
         L"rom_sm.bin",
+        L"",
     },
     {
         L"sc55_rom1.bin",
@@ -231,6 +136,7 @@ static const wchar_t * roms[ROM_SET_COUNT][5] =
         L"sc55_waverom1.bin",
         L"sc55_waverom2.bin",
         L"sc55_waverom3.bin",
+        L"",
     },
     {
         L"cm300_rom1.bin",
@@ -238,6 +144,7 @@ static const wchar_t * roms[ROM_SET_COUNT][5] =
         L"cm300_waverom1.bin",
         L"cm300_waverom2.bin",
         L"cm300_waverom3.bin",
+        L"",
     },
     {
         L"jv880_rom1.bin",
@@ -245,6 +152,7 @@ static const wchar_t * roms[ROM_SET_COUNT][5] =
         L"jv880_waverom1.bin",
         L"jv880_waverom2.bin",
         L"jv880_waverom_expansion.bin",
+        L"jv880_waverom_pcmcard.bin",
     },
     {
         L"scb55_rom1.bin",
@@ -252,11 +160,13 @@ static const wchar_t * roms[ROM_SET_COUNT][5] =
         L"scb55_waverom1.bin",
         L"scb55_waverom2.bin",
         L"",
+        L"",
     },
     {
         L"rlp3237_rom1.bin",
         L"rlp3237_rom2.bin",
         L"rlp3237_waverom1.bin",
+        L"",
         L"",
         L"",
     },
@@ -266,6 +176,7 @@ static const wchar_t * roms[ROM_SET_COUNT][5] =
         L"sc155_waverom1.bin",
         L"sc155_waverom2.bin",
         L"sc155_waverom3.bin",
+        L"",
     },
     {
         L"rom1.bin",
@@ -273,6 +184,7 @@ static const wchar_t * roms[ROM_SET_COUNT][5] =
         L"waverom1.bin",
         L"waverom2.bin",
         L"rom_sm.bin",
+        L"",
     },
 };
 
@@ -311,10 +223,11 @@ enum
     ANALOG_LEVEL_BATTERY = 0x2a0,
 };
 
-static const size_t rf_num = 5;
+static const size_t rf_num = ROM_SET_N_FILES;
 
 static FILE * s_rf[rf_num] =
 {
+    nullptr,
     nullptr,
     nullptr,
     nullptr,
@@ -331,7 +244,7 @@ enum class ResetType
 
 void MCU_ErrorTrap(void)
 {
-    printf("%.2x %.4x\n", mcu.cp, mcu.pc);
+    console::printf("%.2x %.4x\n", mcu.cp, mcu.pc);
 }
 
 static uint8_t MCU_DeviceRead(uint32_t address)
@@ -378,7 +291,7 @@ static uint8_t MCU_DeviceRead(uint32_t address)
             if (!mcu_jv880) return 0xff;
 
             uint8_t data = 0xff;
-            uint32_t button_pressed = (uint32_t)SDL_AtomicGet(&mcu_button_pressed);
+            uint32_t button_pressed = (uint32_t) ::SDL_AtomicGet(&mcu_button_pressed);
 
             if (io_sd == 0b11111011)
                 data &= ((button_pressed >> 0) & 0b11111) ^ 0xFF;
@@ -530,19 +443,22 @@ static void MCU_DeviceWrite(uint32_t address, uint8_t data)
             if ((data & 0x80) == 0 && (ssr_rd & 0x80) != 0)
             {
                 dev_register[address] &= ~0x80;
-                uart_tx_delay = mcu.cycles + 1000;
+                uart_tx_delay = mcu.cycles + 3000;
                 MCU_Interrupt_SetRequest(INTERRUPT_SOURCE_UART_TX, 0);
             }
+
             if ((data & 0x40) == 0 && (ssr_rd & 0x40) != 0)
             {
-                uart_rx_delay = mcu.cycles + 100;
+                uart_rx_delay = mcu.cycles + 3000;
                 dev_register[address] &= ~0x40;
                 MCU_Interrupt_SetRequest(INTERRUPT_SOURCE_UART_RX, 0);
             }
+
             if ((data & 0x20) == 0 && (ssr_rd & 0x20) != 0)
             {
                 dev_register[address] &= ~0x20;
             }
+
             if ((data & 0x10) == 0 && (ssr_rd & 0x10) != 0)
             {
                 dev_register[address] &= ~0x10;
@@ -560,184 +476,193 @@ static void MCU_DeviceWrite(uint32_t address, uint8_t data)
 uint8_t MCU_Read(uint32_t address)
 {
     uint32_t address_rom = address & 0x3ffff;
+
     if (address & 0x80000 && !mcu_jv880)
         address_rom |= 0x40000;
+
     uint8_t page = (address >> 16) & 0xf;
     address &= 0xffff;
     uint8_t ret = 0xff;
+
     switch (page)
     {
-    case 0:
-        if (!(address & 0x8000))
-            ret = rom1[address & 0x7fff];
-        else
-        {
-            if (!mcu_mk1)
-            {
-                uint16_t base = mcu_jv880 ? 0xf000 : 0xe000;
-                if (address >= base && address < (base | 0x400))
-                {
-                    ret = PCM_Read(address & 0x3f);
-                }
-                else if (!mcu_scb55 && address >= 0xec00 && address < 0xf000)
-                {
-                    ret = SM_SysRead(address & 0xff);
-                }
-                else if (address >= 0xff80)
-                {
-                    ret = MCU_DeviceRead(address & 0x7f);
-                }
-                else if (address >= 0xfb80 && address < 0xff80
-                    && (dev_register[DEV_RAME] & 0x80) != 0)
-                    ret = ram[(address - 0xfb80) & 0x3ff];
-                else if (address >= 0x8000 && address < 0xe000)
-                {
-                    ret = sram[address & 0x7fff];
-                }
-                else if (address == (base | 0x402))
-                {
-                    ret = ga_int_trigger;
-                    ga_int_trigger = 0;
-                    MCU_Interrupt_SetRequest(mcu_jv880 ? INTERRUPT_SOURCE_IRQ0 : INTERRUPT_SOURCE_IRQ1, 0);
-                }
-                else
-                {
-                    printf("Unknown read %x\n", address);
-                    ret = 0xff;
-                }
-                //
-                // e402:2-0 irq source
-                //
-            }
+        case 0:
+            if (!(address & 0x8000))
+                ret = rom1[address & 0x7fff];
             else
             {
-                if (address >= 0xe000 && address < 0xe040)
+                if (!mcu_mk1)
                 {
-                    ret = PCM_Read(address & 0x3f);
-                }
-                else if (address >= 0xff80)
-                {
-                    ret = MCU_DeviceRead(address & 0x7f);
-                }
-                else if (address >= 0xfb80 && address < 0xff80
-                    && (dev_register[DEV_RAME] & 0x80) != 0)
-                {
-                    ret = ram[(address - 0xfb80) & 0x3ff];
-                }
-                else if (address >= 0x8000 && address < 0xe000)
-                {
-                    ret = sram[address & 0x7fff];
-                }
-                else if (address >= 0xf000 && address < 0xf100)
-                {
-                    io_sd = address & 0xff;
+                    uint16_t base = mcu_jv880 ? (uint16_t) 0xf000 : (uint16_t) 0xe000;
 
-                    if (mcu_cm300)
-                        return 0xff;
+                    if ((address >= base) && (address < (base | 0x400U)))
+                    {
+                        ret = PCM_Read(address & 0x3f);
+                    }
+                    else
+                    if (!mcu_scb55 && address >= 0xec00 && address < 0xf000)
+                    {
+                        ret = SM_SysRead(address & 0xff);
+                    }
+                    else
+                    if (address >= 0xff80)
+                    {
+                        ret = MCU_DeviceRead(address & 0x7f);
+                    }
+                    else
+                    if (address >= 0xfb80 && address < 0xff80 && (dev_register[DEV_RAME] & 0x80) != 0)
+                        ret = ram[(address - 0xfb80) & 0x3ff];
+                    else
+                    if (address >= 0x8000 && address < 0xe000)
+                    {
+                        ret = sram[address & 0x7fff];
+                    }
+                    else
+                    if (address == (base | 0x402U))
+                    {
+                        ret = (uint8_t) ga_int_trigger;
+                        ga_int_trigger = 0;
 
-                    LCD_Enable((io_sd & 8) != 0);
-
-                    uint8_t data = 0xff;
-                    uint32_t button_pressed = (uint32_t)SDL_AtomicGet(&mcu_button_pressed);
-
-                    if ((io_sd & 1) == 0)
-                        data &= ((button_pressed >> 0) & 255) ^ 255;
-                    if ((io_sd & 2) == 0)
-                        data &= ((button_pressed >> 8) & 255) ^ 255;
-                    if ((io_sd & 4) == 0)
-                        data &= ((button_pressed >> 16) & 255) ^ 255;
-                    if ((io_sd & 8) == 0)
-                        data &= ((button_pressed >> 24) & 255) ^ 255;
-                    return data;
-                }
-                else if (address == 0xf106)
-                {
-                    ret = ga_int_trigger;
-                    ga_int_trigger = 0;
-                    MCU_Interrupt_SetRequest(INTERRUPT_SOURCE_IRQ1, 0);
+                        MCU_Interrupt_SetRequest(mcu_jv880 ? INTERRUPT_SOURCE_IRQ0 : INTERRUPT_SOURCE_IRQ1, 0);
+                    }
+                    else
+                    {
+                        console::printf("Unknown read %x", address);
+                        ret = 0xff;
+                    }
+                    //
+                    // e402:2-0 irq source
+                    //
                 }
                 else
                 {
-                    printf("Unknown read %x\n", address);
-                    ret = 0xff;
+                    if (address >= 0xe000 && address < 0xe040)
+                    {
+                        ret = PCM_Read(address & 0x3f);
+                    }
+                    else if (address >= 0xff80)
+                    {
+                        ret = MCU_DeviceRead(address & 0x7f);
+                    }
+                    else if (address >= 0xfb80 && address < 0xff80
+                        && (dev_register[DEV_RAME] & 0x80) != 0)
+                    {
+                        ret = ram[(address - 0xfb80) & 0x3ff];
+                    }
+                    else if (address >= 0x8000 && address < 0xe000)
+                    {
+                        ret = sram[address & 0x7fff];
+                    }
+                    else if (address >= 0xf000 && address < 0xf100)
+                    {
+                        io_sd = address & 0xff;
+
+                        if (mcu_cm300)
+                            return 0xff;
+
+                        LCD_Enable((io_sd & 8) != 0);
+
+                        uint8_t data = 0xff;
+                        uint32_t button_pressed = (uint32_t) ::SDL_AtomicGet(&mcu_button_pressed);
+
+                        if ((io_sd & 1) == 0)
+                            data &= ((button_pressed >> 0) & 255) ^ 255;
+                        if ((io_sd & 2) == 0)
+                            data &= ((button_pressed >> 8) & 255) ^ 255;
+                        if ((io_sd & 4) == 0)
+                            data &= ((button_pressed >> 16) & 255) ^ 255;
+                        if ((io_sd & 8) == 0)
+                            data &= ((button_pressed >> 24) & 255) ^ 255;
+                        return data;
+                    }
+                    else if (address == 0xf106)
+                    {
+                        ret = (uint8_t) ga_int_trigger;
+                        ga_int_trigger = 0;
+                        MCU_Interrupt_SetRequest(INTERRUPT_SOURCE_IRQ1, 0);
+                    }
+                    else
+                    {
+                        console::printf("Unknown read %x", address);
+                        ret = 0xff;
+                    }
+                    //
+                    // f106:2-0 irq source
+                    //
                 }
-                //
-                // f106:2-0 irq source
-                //
             }
-        }
-        break;
-#if 0
-    case 3:
-        ret = rom2[address | 0x30000];
-        break;
-    case 4:
-        ret = rom2[address];
-        break;
-    case 10:
-        ret = rom2[address | 0x60000]; // FIXME
-        break;
-    case 1:
-        ret = rom2[address | 0x10000];
-        break;
-#endif
-    case 1:
-        ret = rom2[address_rom & rom2_mask];
-        break;
-    case 2:
-        ret = rom2[address_rom & rom2_mask];
-        break;
-    case 3:
-        ret = rom2[address_rom & rom2_mask];
-        break;
-    case 4:
-        ret = rom2[address_rom & rom2_mask];
-        break;
-    case 8:
-        if (!mcu_jv880)
+            break;
+    #if 0
+        case 3:
+            ret = rom2[address | 0x30000];
+            break;
+        case 4:
+            ret = rom2[address];
+            break;
+        case 10:
+            ret = rom2[address | 0x60000]; // FIXME
+            break;
+        case 1:
+            ret = rom2[address | 0x10000];
+            break;
+    #endif
+        case 1:
             ret = rom2[address_rom & rom2_mask];
-        else
-            ret = 0xff;
-        break;
-    case 9:
-        if (!mcu_jv880)
+            break;
+        case 2:
             ret = rom2[address_rom & rom2_mask];
-        else
-            ret = 0xff;
-        break;
-    case 14:
-    case 15:
-        if (!mcu_jv880)
+            break;
+        case 3:
             ret = rom2[address_rom & rom2_mask];
-        else
-            ret = cardram[address & 0x7fff]; // FIXME
-        break;
-    case 10:
-    case 11:
-        if (!mcu_mk1)
-            ret = sram[address & 0x7fff]; // FIXME
-        else
-            ret = 0xff;
-        break;
+            break;
+        case 4:
+            ret = rom2[address_rom & rom2_mask];
+            break;
+        case 8:
+            if (!mcu_jv880)
+                ret = rom2[address_rom & rom2_mask];
+            else
+                ret = 0xff;
+            break;
+        case 9:
+            if (!mcu_jv880)
+                ret = rom2[address_rom & rom2_mask];
+            else
+                ret = 0xff;
+            break;
+        case 14:
+        case 15:
+            if (!mcu_jv880)
+                ret = rom2[address_rom & rom2_mask];
+            else
+                ret = cardram[address & 0x7fff]; // FIXME
+            break;
+        case 10:
+        case 11:
+            if (!mcu_mk1)
+                ret = sram[address & 0x7fff]; // FIXME
+            else
+                ret = 0xff;
+            break;
 
-    case 12:
-    case 13:
-        if (mcu_jv880)
-            ret = nvram[address & 0x7fff]; // FIXME
-        else
-            ret = 0xff;
-        break;
+        case 12:
+        case 13:
+            if (mcu_jv880)
+                ret = nvram[address & 0x7fff]; // FIXME
+            else
+                ret = 0xff;
+            break;
 
-    case 5:
-        if (mcu_mk1)
-            ret = sram[address & 0x7fff]; // FIXME
-        else
-            ret = 0xff;
-        break;
+        case 5:
+            if (mcu_mk1)
+                ret = sram[address & 0x7fff]; // FIXME
+            else
+                ret = 0xff;
+            break;
 
-    default:
-        ret = 0x00;
-        break;
+        default:
+            ret = 0x00;
+            break;
     }
 
     return ret;
@@ -746,47 +671,54 @@ uint8_t MCU_Read(uint32_t address)
 uint16_t MCU_Read16(uint32_t address)
 {
     address &= ~1;
-    uint8_t b0, b1;
-    b0 = MCU_Read(address);
-    b1 = MCU_Read(address + 1);
-    return (b0 << 8) + b1;
+
+    uint8_t b0 = MCU_Read(address);
+    uint8_t b1 = MCU_Read(address + 1);
+
+    return (uint16_t) ((b0 << 8) + b1);
 }
 
 uint32_t MCU_Read32(uint32_t address)
 {
     address &= ~3;
-    uint8_t b0, b1, b2, b3;
-    b0 = MCU_Read(address);
-    b1 = MCU_Read(address + 1);
-    b2 = MCU_Read(address + 2);
-    b3 = MCU_Read(address + 3);
-    return (b0 << 24) + (b1 << 16) + (b2 << 8) + b3;
+
+    uint8_t b0 = MCU_Read(address);
+    uint8_t b1 = MCU_Read(address + 1);
+    uint8_t b2 = MCU_Read(address + 2);
+    uint8_t b3 = MCU_Read(address + 3);
+
+    return (uint32_t) ((b0 << 24) + (b1 << 16) + (b2 << 8) + b3);
 }
 
 void MCU_Write(uint32_t address, uint8_t value)
 {
     uint8_t page = (address >> 16) & 0xf;
+
     address &= 0xffff;
+
     if (page == 0)
     {
         if (address & 0x8000)
         {
             if (!mcu_mk1)
             {
-                uint16_t base = mcu_jv880 ? 0xf000 : 0xe000;
-                if (address >= (base | 0x400) && address < (base | 0x800))
+                uint16_t base = mcu_jv880 ? 0xF000U : 0xE000U;
+
+                if (address >= (base | 0x400U) && address < (base | 0x800U))
                 {
-                    if (address == (base | 0x404) || address == (base | 0x405))
+                    if (address == (base | 0x404U) || address == (base | 0x405U))
                         LCD_Write(address & 1, value);
-                    else if (address == (base | 0x401))
+                    else
+                    if (address == (base | 0x401U))
                     {
                         io_sd = value;
                         LCD_Enable((value & 1) == 0);
                     }
-                    else if (address == (base | 0x402))
+                    else
+                    if (address == (base | 0x402U))
                         ga_int_enable = (value << 1);
                     else
-                        printf("Unknown write %x %x\n", address, value);
+                        console::printf("Unknown write %x %x", address, value);
                     //
                     // e400: always 4?
                     // e401: SC0-6?
@@ -798,15 +730,18 @@ void MCU_Write(uint32_t address, uint8_t value)
                     // e407: 0, e406 continuation?
                     //
                 }
-                else if (address >= (base | 0x000) && address < (base | 0x400))
+                else
+                if (address >= (base | 0x000U) && address < (base | 0x400U))
                 {
                     PCM_Write(address & 0x3f, value);
                 }
-                else if (!mcu_scb55 && address >= 0xec00 && address < 0xf000)
+                else
+                if (!mcu_scb55 && address >= 0xec00U && address < 0xf000U)
                 {
                     SM_SysWrite(address & 0xff, value);
                 }
-                else if (address >= 0xff80)
+                else
+                if (address >= 0xff80)
                 {
                     MCU_DeviceWrite(address & 0x7f, value);
                 }
@@ -821,7 +756,7 @@ void MCU_Write(uint32_t address, uint8_t value)
                 }
                 else
                 {
-                    printf("Unknown write %x %x\n", address, value);
+                    console::printf("Unknown write %x %x", address, value);
                 }
             }
             else
@@ -864,13 +799,18 @@ void MCU_Write(uint32_t address, uint8_t value)
                 }
                 else
                 {
-                    printf("Unknown write %x %x\n", address, value);
+                    console::printf("Unknown write %x %x", address, value);
                 }
             }
         }
         else
+        if (mcu_jv880 && address >= 0x6196 && address <= 0x6199)
         {
-            printf("Unknown write %x %x\n", address, value);
+            // nop: the jv880 rom writes into the rom at 002E77-002E7D
+        }
+        else
+        {
+            console::printf("Unknown write %x %x", address, value);
         }
     }
     else
@@ -894,15 +834,16 @@ void MCU_Write(uint32_t address, uint8_t value)
     }
     else
     {
-        printf("Unknown write %x %x\n", (page << 16) | address, value);
+        console::printf("Unknown write %x %x", (page << 16) | address, value);
     }
 }
 
 void MCU_Write16(uint32_t address, uint16_t value)
 {
     address &= ~1;
-    MCU_Write(address, value >> 8);
-    MCU_Write(address + 1, value & 0xff);
+
+    MCU_Write(address,     (uint8_t) (value >> 8));
+    MCU_Write(address + 1, (uint8_t) (value & 0xFF));
 }
 
 void MCU_PostUART(uint8_t data)
@@ -913,12 +854,12 @@ void MCU_PostUART(uint8_t data)
 
 void MCU_WorkThread_Lock(void)
 {
-    SDL_LockMutex(work_thread_lock);
+    ::SDL_LockMutex(work_thread_lock);
 }
 
 void MCU_WorkThread_Unlock(void)
 {
-    SDL_UnlockMutex(work_thread_lock);
+    ::SDL_UnlockMutex(work_thread_lock);
 }
 
 uint8_t MCU_ReadP0(void)
@@ -929,7 +870,7 @@ uint8_t MCU_ReadP0(void)
 uint8_t MCU_ReadP1(void)
 {
     uint8_t data = 0xff;
-    uint32_t button_pressed = (uint32_t)SDL_AtomicGet(&mcu_button_pressed);
+    uint32_t button_pressed = (uint32_t) ::SDL_AtomicGet(&mcu_button_pressed);
 
     if ((mcu_p0_data & 1) == 0)
         data &= ((button_pressed >> 0) & 255) ^ 255;
@@ -971,8 +912,8 @@ void MCU_PostSample(int * sample)
     if (sample[1] < INT16_MIN)
         sample[1] = INT16_MIN;
 
-    sample_buffer[sample_write_ptr + 0] = sample[0];
-    sample_buffer[sample_write_ptr + 1] = sample[1];
+    sample_buffer[sample_write_ptr + 0] = (short) sample[0];
+    sample_buffer[sample_write_ptr + 1] = (short) sample[1];
 
     sample_write_ptr = (sample_write_ptr + 2) % audio_buffer_size;
 }
@@ -1084,15 +1025,18 @@ READ_RCU:
                 case 2: // SW
                     switch (sw_pos)
                     {
-                    case 0:
-                    default:
-                        return ANALOG_LEVEL_SW_0;
-                    case 1:
-                        return ANALOG_LEVEL_SW_1;
-                    case 2:
-                        return ANALOG_LEVEL_SW_2;
-                    case 3:
-                        return ANALOG_LEVEL_SW_3;
+                        default:
+                        case 0:
+                            return ANALOG_LEVEL_SW_0;
+
+                        case 1:
+                            return ANALOG_LEVEL_SW_1;
+
+                        case 2:
+                            return ANALOG_LEVEL_SW_2;
+
+                        case 3:
+                            return ANALOG_LEVEL_SW_3;
                     }
 
                 case 3: // RCU
@@ -1106,10 +1050,11 @@ READ_RCU:
 
 static void MCU_AnalogSample(int channel)
 {
-    int value = MCU_AnalogReadPin(channel);
+    int value = MCU_AnalogReadPin((uint32_t) channel);
     int dest = (channel << 1) & 6;
-    dev_register[DEV_ADDRAH + dest] = value >> 2;
-    dev_register[DEV_ADDRAL + dest] = (value << 6) & 0xc0;
+
+    dev_register[DEV_ADDRAH + dest] = (uint8_t) (value >> 2);
+    dev_register[DEV_ADDRAL + dest] = (uint8_t) ((value << 6) & 0xc0);
 }
 
 static void MCU_DeviceReset(void)
@@ -1239,7 +1184,7 @@ static void MCU_UpdateUART_TX(void)
     // printf("tx:%x\n", dev_register[DEV_TDR]);
 }
 
-static int SDLCALL work_thread(void * data)
+static int SDLCALL work_thread(void * data) noexcept
 {
     work_thread_lock = ::SDL_CreateMutex();
 
@@ -1313,23 +1258,6 @@ static int SDLCALL work_thread(void * data)
     return 0;
 }
 
-static void MCU_Run()
-{
-/*
-    bool working = true;
-
-    while (working)
-    {
-        if (LCD_QuitRequested())
-            working = false;
-
-        LCD_Update();
-
-        ::SDL_Delay(15);
-    }
-*/
-}
-
 static void MCU_PatchROM(void)
 {
     //rom2[0x1333] = 0x11;
@@ -1369,8 +1297,8 @@ static void audio_callback(void * /*userdata*/, Uint8 * stream, int len)
 {
     len /= 2;
 
-    ::memcpy(stream, &sample_buffer[sample_read_ptr], (size_t) len * 2);
-    ::memset(&sample_buffer[sample_read_ptr], 0, (size_t) len * 2);
+    ::memcpy(stream, &sample_buffer[sample_read_ptr], (size_t) len * sizeof(*sample_buffer));
+    ::memset(&sample_buffer[sample_read_ptr], 0,      (size_t) len * sizeof(*sample_buffer));
 
     sample_read_ptr += len;
     sample_read_ptr %= audio_buffer_size;
@@ -1416,79 +1344,63 @@ static const char * audio_format_to_str(int format)
 
 static int MCU_OpenAudio(int deviceIndex, int pageSize, int pageNum)
 {
-    SDL_AudioSpec spec = {};
-    SDL_AudioSpec spec_actual = {};
-
     audio_page_size = (pageSize / 2) * 2; // must be even
     audio_buffer_size = audio_page_size * pageNum;
 
-    spec.format = AUDIO_S16SYS;
-    spec.freq = (mcu_mk1 || mcu_jv880) ? 64000 : 66207;
-    spec.channels = 2;
-    spec.callback = audio_callback;
-    spec.samples = audio_page_size / 4;
+    sample_buffer = (short *) ::calloc((size_t) audio_buffer_size, sizeof(short));
 
-    sample_buffer = (short *) calloc(audio_buffer_size, sizeof(short));
+    if (sample_buffer == nullptr)
+        return 0; // "Cannot allocate audio buffer."
 
-    if (!sample_buffer)
-    {
-        printf("Cannot allocate audio buffer.\n");
-        return 0;
-    }
-
-    sample_read_ptr = 0;
+    sample_read_ptr  = 0;
     sample_write_ptr = 0;
+/*
+    SDL_AudioSpec AudioSpecReq = {};
 
-    int num = SDL_GetNumAudioDevices(0);
+    AudioSpecReq.format   = AUDIO_S16SYS;
+    AudioSpecReq.freq     = (mcu_mk1 || mcu_jv880) ? 64000 : 66207;
+    AudioSpecReq.channels = 2;
+    AudioSpecReq.callback = audio_callback;
+    AudioSpecReq.samples  = (Uint16) (audio_page_size / 4);
 
-    if (num == 0)
+    int AudioDeviceCount = ::SDL_GetNumAudioDevices(0);
+
+    if (AudioDeviceCount == 0)
+        return 0; // "No audio output device found."
+
+    if (deviceIndex < -1 || deviceIndex >= AudioDeviceCount)
     {
-        printf("No audio output device found.\n");
-        return 0;
-    }
-
-    if (deviceIndex < -1 || deviceIndex >= num)
-    {
-        printf("Out of range audio device index is requested. Default audio output device is selected.\n");
+        console::printf("Out of range audio device index is requested. Default audio output device is selected.");
         deviceIndex = -1;
     }
 
-    const char * audioDevicename = deviceIndex == -1 ? "Default device" : SDL_GetAudioDeviceName(deviceIndex, 0);
+    const char * audioDevicename = (deviceIndex == -1) ? "Default device" : SDL_GetAudioDeviceName(deviceIndex, 0);
 
-    sdl_audio = SDL_OpenAudioDevice(deviceIndex == -1 ? NULL : audioDevicename, 0, &spec, &spec_actual, 0);
+    SDL_AudioSpec AudioSpecAct = {};
+
+    sdl_audio = ::SDL_OpenAudioDevice(deviceIndex == -1 ? NULL : audioDevicename, 0, &AudioSpecReq, &AudioSpecAct, 0);
 
     if (!sdl_audio)
         return 0;
 
-    printf("Audio device: %s\n", audioDevicename);
-    printf("Audio Requested: F=%s, C=%d, R=%d, B=%d\n", audio_format_to_str(spec.format), spec.channels, spec.freq, spec.samples);
-    printf("Audio Actual: F=%s, C=%d, R=%d, B=%d\n", audio_format_to_str(spec_actual.format), spec_actual.channels, spec_actual.freq, spec_actual.samples);
-    fflush(stdout);
+    console::printf("Audio device   : %s", audioDevicename);
+    console::printf("Audio Requested: Format: %s, No. of channels: %d, Frequency: %d, No. of samples: %d", audio_format_to_str(AudioSpecReq.format), AudioSpecReq.channels, AudioSpecReq.freq, AudioSpecReq.samples);
+    console::printf("Audio Actual   : Format: %s, No. of channels: %d, Frequency: %d, No. of samples: %d", audio_format_to_str(AudioSpecAct.format), AudioSpecAct.channels, AudioSpecAct.freq, AudioSpecAct.samples);
 
-    SDL_PauseAudioDevice(sdl_audio, 0);
-
+    ::SDL_PauseAudioDevice(sdl_audio, 0);
+*/
     return 1;
 }
 
 static void MCU_CloseAudio(void)
 {
+/*
     ::SDL_CloseAudio();
-
+*/
     if (sample_buffer)
     {
         ::free(sample_buffer);
         sample_buffer = nullptr;
-    }
-}
-
-static void closeAllR()
-{
-    for (size_t i = 0; i < rf_num; ++i)
-    {
-        if (s_rf[i])
-            fclose(s_rf[i]);
-
-        s_rf[i] = nullptr;
     }
 }
 
@@ -1512,34 +1424,6 @@ static void MIDI_Reset(ResetType resetType)
 }
 
 /// <summary>
-/// Reads the specified ROM.
-/// </summary>
-size_t NukeSC55Player::ReadROM(const std::wstring & fileName, uint8_t * data, size_t size) const noexcept
-{
-    std::wstring FilePath;
-
-    FilePath.resize(32768);
-
-    HRESULT hResult = ::PathCchCombine((WCHAR *) FilePath.c_str(), FilePath.size(), _BasePathName.c_str(), fileName.c_str());
-
-    if (!SUCCEEDED(hResult))
-        return 0;
-
-    HANDLE hFile = ::CreateFileW(FilePath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-
-    if (hFile == INVALID_HANDLE_VALUE)
-        return 0;
-
-    DWORD BytesRead;
-
-    bool Success = (::ReadFile(hFile, data, size, &BytesRead, nullptr) != 0);
-
-    ::CloseHandle(hFile);
-
-    return BytesRead;
-}
-
-/// <summary>
 /// Initializes the MCU.
 /// </summary>
 void NukeSC55Player::Initialize()
@@ -1552,7 +1436,7 @@ void NukeSC55Player::Initialize()
     int pageSize = 512;
     int pageNum = 32;
 
-    int MIDIPort = 0;
+//  int MIDIPort = 0;
 
 #ifdef later
     bool autodetect = true;
@@ -1757,6 +1641,9 @@ void NukeSC55Player::Initialize()
 
             lcd_width  = 820;
             lcd_height = 100;
+
+            lcd_col1 = 0x000000;
+            lcd_col2 = 0x78b500;
             break;
 
         case ROM_SET_SCB55:
@@ -1766,12 +1653,12 @@ void NukeSC55Player::Initialize()
     }
 
 #ifdef later
-    std::string rpaths[5];
+    std::string rpaths[ROM_SET_N_FILES];
 
     bool r_ok = true;
     std::string errors_list;
 
-    for (size_t i = 0; i < 5; ++i)
+    for (size_t i = 0; i < ROM_SET_N_FILES; ++i)
     {
         if (roms[romset][i][0] == '\0')
         {
@@ -1783,7 +1670,7 @@ void NukeSC55Player::Initialize()
 
         s_rf[i] = Files::utf8_fopen(rpaths[i].c_str(), "rb");
 
-        bool optional = mcu_jv880 && i == 4;
+        bool optional = mcu_jv880 && i >= 4;
         r_ok &= optional || (s_rf[i] != nullptr);
 
         if (!s_rf[i])
@@ -1814,7 +1701,7 @@ void NukeSC55Player::Initialize()
     Size = ReadROM(roms[romset][1], rom2, ROM2_SIZE);
 
     if (Size == ROM2_SIZE || Size == ROM2_SIZE / 2)
-        rom2_mask = Size - 1;
+        rom2_mask = (int) (Size - 1);
 
     if (mcu_mk1)
     {
@@ -1844,6 +1731,10 @@ void NukeSC55Player::Initialize()
         Size = ReadROM(roms[romset][4], tempbuf, 0x800000); // Optional
 
         unscramble(tempbuf, waverom_exp, 0x800000);
+
+        Size = ReadROM(roms[romset][5], tempbuf, 0x200000); // Optional
+
+        unscramble(tempbuf, waverom_exp, 0x200000);
     }
     else
     {
@@ -1859,19 +1750,10 @@ void NukeSC55Player::Initialize()
     }
 
     if (::SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
-    {
-        fprintf(stderr, "FATAL ERROR: Failed to initialize the SDL2: %s.\n", SDL_GetError());
-        fflush(stderr);
-        return;
-    }
+        return; // fprintf(stderr, "FATAL ERROR: Failed to initialize the SDL2: %s.\n", SDL_GetError());
 
     if (!MCU_OpenAudio(audioDeviceIndex, pageSize, pageNum))
-    {
-        fprintf(stderr, "FATAL ERROR: Failed to open the audio stream.\n");
-        fflush(stderr);
-
-        return;
-    }
+        return; // fprintf(stderr, "FATAL ERROR: Failed to open the audio stream.\n");
 /*
     if (!MIDI_Init(MIDIPort))
     {
@@ -1913,3 +1795,131 @@ void NukeSC55Player::Terminate()
 
     ::SDL_Quit();
 }
+
+/// <summary>
+/// Reads the specified ROM.
+/// </summary>
+size_t NukeSC55Player::ReadROM(const std::wstring & fileName, uint8_t * data, size_t size) const noexcept
+{
+    std::wstring FilePath;
+
+    FilePath.resize(32768);
+
+    HRESULT hResult = ::PathCchCombine((WCHAR *) FilePath.c_str(), FilePath.size(), _BasePathName.c_str(), fileName.c_str());
+
+    if (!SUCCEEDED(hResult))
+        return 0;
+
+    HANDLE hFile = ::CreateFileW(FilePath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+
+    if (hFile == INVALID_HANDLE_VALUE)
+        return 0;
+
+    DWORD BytesRead;
+
+    if (!(::ReadFile(hFile, data, (DWORD) size, &BytesRead, nullptr) && ((DWORD) size == BytesRead)))
+        BytesRead = 0;
+
+    ::CloseHandle(hFile);
+
+    return BytesRead;
+}
+
+#pragma endregion
+
+#pragma region player_t
+
+bool NukeSC55Player::Startup()
+{
+    if (work_thread_run)
+        return true;
+
+    Initialize();
+
+    return true;
+}
+
+void NukeSC55Player::Shutdown()
+{
+    Terminate();
+}
+
+void NukeSC55Player::Render(audio_sample * sampleData, uint32_t sampleSize)
+{
+    static const uint32_t MaxSamples = (sample_write_ptr + audio_buffer_size) - sample_read_ptr;
+
+    while (sampleSize != 0)
+    {
+        const size_t ToDo = std::min(sampleSize, MaxSamples);
+        const size_t SampleCount = ToDo * 2;
+
+        const short * Src = &sample_buffer[sample_read_ptr];
+
+        for (size_t i = 0; i < SampleCount; ++i)
+            sampleData[i] = (audio_sample) *Src++ * (1.0f / 32768.0f);
+
+        sampleData += SampleCount;
+        sampleSize -= (uint32_t) ToDo;
+
+        sample_read_ptr = (sample_read_ptr + (int) SampleCount) % audio_buffer_size;
+
+console::printf("%8d/%8d-%8d/%8d", sample_read_ptr, sample_write_ptr, ToDo, MaxSamples);
+    }
+}
+
+/// <summary>
+/// Sends a message to the emulator.
+/// </summary>
+void NukeSC55Player::SendEvent(uint32_t data)
+{
+//  uint8_t PortNumber = (uint8_t) ((data >> 24) & 0x7F);
+    uint8_t Param2     = (uint8_t) ((data >> 16) & 0xFF);
+    uint8_t Param1     = (uint8_t) ((data >>  8) & 0xFF);
+    uint8_t Status     = (uint8_t)  (data        & 0xFF);
+
+    MCU_PostUART(Status);
+
+    switch (Status & 0xF0)
+    {
+        case StatusCodes::NoteOff:
+            MCU_PostUART(Param1);
+            break;
+
+        case StatusCodes::NoteOn:
+            MCU_PostUART(Param1);
+            MCU_PostUART(Param2);
+            break;
+
+        case StatusCodes::KeyPressure:
+            break;
+
+        case StatusCodes::ControlChange:
+            MCU_PostUART(Param1);
+            MCU_PostUART(Param2);
+            break;
+
+        case StatusCodes::ProgramChange:
+            MCU_PostUART(Param1);
+            break;
+
+        case StatusCodes::ChannelPressure:
+            MCU_PostUART(Param1);
+            break;
+
+        case StatusCodes::PitchBendChange:
+            MCU_PostUART(Param1);
+            MCU_PostUART(Param2);
+            break;
+    }
+}
+
+/// <summary>
+/// Sends a SysEx message to the library.
+/// </summary>
+void NukeSC55Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
+{
+    for (; size != 0; --size)
+        MCU_PostUART(*data++);
+}
+
+#pragma endregion

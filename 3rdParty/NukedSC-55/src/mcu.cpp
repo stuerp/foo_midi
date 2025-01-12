@@ -63,47 +63,56 @@ const char* rs_name[ROM_SET_COUNT] = {
     "SC-155mk2"
 };
 
-const char* roms[ROM_SET_COUNT][5] =
+static const int ROM_SET_N_FILES = 6;
+
+const char* roms[ROM_SET_COUNT][ROM_SET_N_FILES] =
 {
     "rom1.bin",
     "rom2.bin",
     "waverom1.bin",
     "waverom2.bin",
     "rom_sm.bin",
+    "",
 
     "rom1.bin",
     "rom2_st.bin",
     "waverom1.bin",
     "waverom2.bin",
     "rom_sm.bin",
+    "",
 
     "sc55_rom1.bin",
     "sc55_rom2.bin",
     "sc55_waverom1.bin",
     "sc55_waverom2.bin",
     "sc55_waverom3.bin",
+    "",
 
     "cm300_rom1.bin",
     "cm300_rom2.bin",
     "cm300_waverom1.bin",
     "cm300_waverom2.bin",
     "cm300_waverom3.bin",
+    "",
 
     "jv880_rom1.bin",
     "jv880_rom2.bin",
     "jv880_waverom1.bin",
     "jv880_waverom2.bin",
     "jv880_waverom_expansion.bin",
+    "jv880_waverom_pcmcard.bin",
 
     "scb55_rom1.bin",
     "scb55_rom2.bin",
     "scb55_waverom1.bin",
     "scb55_waverom2.bin",
     "",
+    "",
 
     "rlp3237_rom1.bin",
     "rlp3237_rom2.bin",
     "rlp3237_waverom1.bin",
+    "",
     "",
     "",
 
@@ -112,12 +121,14 @@ const char* roms[ROM_SET_COUNT][5] =
     "sc155_waverom1.bin",
     "sc155_waverom2.bin",
     "sc155_waverom3.bin",
+    "",
 
     "rom1.bin",
     "rom2.bin",
     "waverom1.bin",
     "waverom2.bin",
     "rom_sm.bin",
+    "",
 };
 
 int romset = ROM_SET_MK2;
@@ -388,12 +399,12 @@ void MCU_DeviceWrite(uint32_t address, uint8_t data)
         if ((data & 0x80) == 0 && (ssr_rd & 0x80) != 0)
         {
             dev_register[address] &= ~0x80;
-            uart_tx_delay = mcu.cycles + 1000;
+            uart_tx_delay = mcu.cycles + 3000;
             MCU_Interrupt_SetRequest(INTERRUPT_SOURCE_UART_TX, 0);
         }
         if ((data & 0x40) == 0 && (ssr_rd & 0x40) != 0)
         {
-            uart_rx_delay = mcu.cycles + 100;
+            uart_rx_delay = mcu.cycles + 3000;
             dev_register[address] &= ~0x40;
             MCU_Interrupt_SetRequest(INTERRUPT_SOURCE_UART_RX, 0);
         }
@@ -855,6 +866,10 @@ void MCU_Write(uint32_t address, uint8_t value)
                 }
             }
         }
+        else if (mcu_jv880 && address >= 0x6196 && address <= 0x6199)
+        {
+            // nop: the jv880 rom writes into the rom at 002E77-002E7D
+        }
         else
         {
             printf("Unknown write %x %x\n", address, value);
@@ -1301,10 +1316,9 @@ void MCU_EncoderTrigger(int dir)
     MCU_GA_SetGAInt(dir == 0 ? 3 : 4, 1);
 }
 
-
-static const size_t rf_num = 5;
-static FILE *s_rf[rf_num] =
+static FILE *s_rf[ROM_SET_N_FILES] =
 {
+    nullptr,
     nullptr,
     nullptr,
     nullptr,
@@ -1314,7 +1328,7 @@ static FILE *s_rf[rf_num] =
 
 static void closeAllR()
 {
-    for(size_t i = 0; i < rf_num; ++i)
+    for(size_t i = 0; i < ROM_SET_N_FILES; ++i)
     {
         if(s_rf[i])
             fclose(s_rf[i]);
@@ -1551,6 +1565,8 @@ int main(int argc, char *argv[])
             rom2_mask /= 2; // rom is half the size
             lcd_width = 820;
             lcd_height = 100;
+            lcd_col1 = 0x000000;
+            lcd_col2 = 0x78b500;
             break;
         case ROM_SET_SCB55:
         case ROM_SET_RLP3237:
@@ -1558,12 +1574,12 @@ int main(int argc, char *argv[])
             break;
     }
 
-    std::string rpaths[5];
+    std::string rpaths[ROM_SET_N_FILES];
 
     bool r_ok = true;
     std::string errors_list;
 
-    for(size_t i = 0; i < 5; ++i)
+    for(size_t i = 0; i < ROM_SET_N_FILES; ++i)
     {
         if (roms[romset][i][0] == '\0')
         {
@@ -1572,7 +1588,7 @@ int main(int argc, char *argv[])
         }
         rpaths[i] = basePath + "/" + roms[romset][i];
         s_rf[i] = Files::utf8_fopen(rpaths[i].c_str(), "rb");
-        bool optional = mcu_jv880 && i == 4;
+        bool optional = mcu_jv880 && i >= 4;
         r_ok &= optional || (s_rf[i] != nullptr);
         if(!s_rf[i])
         {
@@ -1671,11 +1687,16 @@ int main(int argc, char *argv[])
         }
 
         unscramble(tempbuf, waverom2, 0x200000);
-
+        
         if (s_rf[4] && fread(tempbuf, 1, 0x800000, s_rf[4]))
             unscramble(tempbuf, waverom_exp, 0x800000);
         else
             printf("WaveRom EXP not found, skipping it.\n");
+        
+        if (s_rf[5] && fread(tempbuf, 1, 0x200000, s_rf[5]))
+            unscramble(tempbuf, waverom_card, 0x200000);
+        else
+            printf("WaveRom PCM not found, skipping it.\n");
     }
     else
     {

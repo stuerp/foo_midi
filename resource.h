@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2024.09.18) P. Stuer **/
+/** $VER: Resource.h (2025.01.12) P. Stuer **/
 
 #pragma once
 
@@ -13,7 +13,7 @@
 #define STR_COMPONENT_BASENAME      "foo_midi"
 #define STR_COMPONENT_FILENAME      STR_COMPONENT_BASENAME ".dll"
 #define STR_COMPONENT_COMPANY_NAME  "LoSno.co"
-#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2022-2024 " STR_COMPONENT_COMPANY_NAME ". All rights reserved."
+#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2022-2025 " STR_COMPONENT_COMPANY_NAME ". All rights reserved."
 #define STR_COMPONENT_COMMENTS      "Written by Christopher Snowhill, P. Stuer"
 #define STR_COMPONENT_DESCRIPTION   "Adds playback of MIDI files to foobar2000"
 
@@ -26,7 +26,7 @@
 
 #define NUM_FILE_MAJOR          2
 #define NUM_FILE_MINOR          15
-#define NUM_FILE_PATCH          1
+#define NUM_FILE_PATCH          2
 #define NUM_FILE_PRERELEASE     0
 
 #define STR_FILE_NAME           TEXT(STR_COMPONENT_FILENAME)
@@ -35,7 +35,7 @@
 
 #define NUM_PRODUCT_MAJOR       2
 #define NUM_PRODUCT_MINOR       15
-#define NUM_PRODUCT_PATCH       1
+#define NUM_PRODUCT_PATCH       2
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRODUCT_NAME        STR_COMPANY_NAME TEXT(" ") STR_INTERNAL_NAME

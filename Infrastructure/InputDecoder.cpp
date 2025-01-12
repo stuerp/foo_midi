@@ -866,7 +866,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 _Player = Player;
 
-                Player->SetBasePath(LR"(F:\MIDI\_foobar2000 Support\Nuked SC55mk2)");
+                Player->SetBasePath(LR"(F:\MIDI\_foobar2000 Support\Nuked SC55mk2\SC-55mk2-v1.01)");
             }
 
             {
