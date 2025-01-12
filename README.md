@@ -59,7 +59,7 @@ The following libraries are included in the code:
 
 * [BASS](https://www.un4seen.com/) 2.4.17
   * [BASSFLAC](https://www.un4seen.com/) 2.4.5.5
-  * [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
+  * [BASSMIDI](https://www.un4seen.com/) 2.4.15.3
   * [BASSWV](https://www.un4seen.com/) 2.4.7.4
   * [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
   * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
@@ -78,7 +78,7 @@ The following libraries are included in the code:
 * [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
 * [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 * [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
-* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.6
+* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
 
 To create the deployment package you need:
 
@@ -112,6 +112,11 @@ Open `foo_midi.sln` with Visual Studio and build the solution.
 To create the component first build the x86 configuration and next the x64 configuration.
 
 ## Change Log
+
+v2.15.2.0, 2025-01-12
+
+* Improved: Update BASSMIDI to v2.4.15.3.
+* Improved: Updated FluidSynth to v2.4.2.
 
 v2.15.1.0, 2024-09-18
 

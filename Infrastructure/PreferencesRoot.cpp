@@ -573,7 +573,7 @@ void PreferencesRootPage::reset()
     {
         int SelectedIndex = -1;
 
-        for (int i = 0; i < _countof(_InterpolationMethods); ++i)
+        for (int i = 0; i < (int) _countof(_InterpolationMethods); ++i)
         {
             if (_InterpolationMethods[i].Id == DefaultFluidSynthInterpolationMethod)
             {
@@ -798,7 +798,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             i++;
         }
 
-        if ((PlayerType == PlayerType::VSTi) && (VSTiIndex != ~0))
+        if ((PlayerType == PlayerType::VSTi) && (VSTiIndex != (size_t) ~0))
             SelectedIndex = (int) (_InstalledKnownPlayerCount + VSTiIndex);
 
          w.SetCurSel(SelectedIndex);

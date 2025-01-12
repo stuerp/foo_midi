@@ -1,6 +1,6 @@
 Attribute VB_Name = "BASSMIDI"
 ' BASSMIDI 2.4 Visual Basic module
-' Copyright (c) 2006-2022 Un4seen Developments Ltd.
+' Copyright (c) 2006-2024 Un4seen Developments Ltd.
 '
 ' See the BASSMIDI.CHM file for more detailed documentation
 
@@ -33,6 +33,7 @@ Global Const BASS_SYNC_MIDI_TIMESIG = &H10006
 Global Const BASS_SYNC_MIDI_KEYSIG = &H10007
 
 ' Additional BASS_MIDI_StreamCreateFile/etc flags
+Global Const BASS_MIDI_NODRUMPARAMUSER = &H200
 Global Const BASS_MIDI_NODRUMPARAM = &H400
 Global Const BASS_MIDI_NOSYSRESET = &H800
 Global Const BASS_MIDI_DECAYEND = &H1000
@@ -51,8 +52,10 @@ Global Const BASS_MIDI_FONT_NOFX = &H80000
 Global Const BASS_MIDI_FONT_LINATTMOD = &H100000
 Global Const BASS_MIDI_FONT_LINDECVOL = &H200000
 Global Const BASS_MIDI_FONT_NORAMPIN = &H400000
-Global Const BASS_MIDI_FONT_NOLIMITS = &H800000
+Global Const BASS_MIDI_FONT_NOSBLIMITS = &H800000
+Global Const BASS_MIDI_FONT_NOLIMITS = BASS_MIDI_FONT_NOSBLIMITS
 Global Const BASS_MIDI_FONT_MINFX = &H1000000
+Global Const BASS_MIDI_FONT_SBLIMITS = &H2000000
 
 Type BASS_MIDI_FONT
     font As Long            ' soundfont
@@ -111,6 +114,7 @@ Global Const BASS_MIDI_MARK_COPY = 6    ' copyright notice
 Global Const BASS_MIDI_MARK_TRACK = 7   ' track name
 Global Const BASS_MIDI_MARK_INST = 8    ' instrument name
 Global Const BASS_MIDI_MARK_TRACKSTART = 9 ' track start (SMF2)
+Global Const BASS_MIDI_MARK_SEQSPEC = 10 ' sequencer-specific
 Global Const BASS_MIDI_MARK_TICK = &H10000 ' FLAG: get position in ticks (otherwise bytes)
 
 ' MIDI events
@@ -253,6 +257,9 @@ Global Const BASS_ATTRIB_MIDI_KILL = &H12007
 Global Const BASS_ATTRIB_MIDI_SPEED = &H12008
 Global Const BASS_ATTRIB_MIDI_REVERB = &H12009
 Global Const BASS_ATTRIB_MIDI_VOL = &H1200A
+Global Const BASS_ATTRIB_MIDI_QUEUE_TICK = &H1200B
+Global Const BASS_ATTRIB_MIDI_QUEUE_BYTE = &H1200C
+Global Const BASS_ATTRIB_MIDI_QUEUE_ASYNC = &H1200D
 Global Const BASS_ATTRIB_MIDI_TRACK_VOL = &H12100 ' + track #
 
 ' Additional BASS_ChannelGetTags type

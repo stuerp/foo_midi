@@ -1,5 +1,5 @@
 BASSMIDI 2.4
-Copyright (c) 2006-2022 Un4seen Developments Ltd. All rights reserved.
+Copyright (c) 2006-2024 Un4seen Developments Ltd. All rights reserved.
 
 Files that you should have found in the BASSMIDI package
 ========================================================
@@ -46,8 +46,8 @@ NOTE: You may need to "Unblock" the BASSMIDI.CHM file in its "Properties" to
 NOTE: To run the example EXEs, first you will have to copy BASSMIDI.DLL and
       BASS.DLL into the same directory as them.
 
-NOTE: To build the examples, you will need to copy the BASS API into the
-      same directory as the BASSMIDI API.
+NOTE: To build the examples, you will need to copy the BASS API into the same
+      directory as the BASSMIDI API.
 
 NOTE: The Delphi and VB examples may not always be up to date with the C
       examples, so the latter should be preferred as references if possible.
@@ -66,8 +66,8 @@ SF2PACK\        Soundfont packer
 SYNTH\          Real-time MIDI example
   ...
 
-NOTE: To build the examples, you will need to copy the BASS API into the
-      same directory as the BASSMIDI API.
+NOTE: To build the examples, you will need to copy the BASS API into the same
+      directory as the BASSMIDI API.
 
 Linux version
 -------------
@@ -85,8 +85,8 @@ SF2PACK\        Soundfont packer
 SYNTH\          Real-time MIDI example
   ...
 
-NOTE: To build the examples, you will need to copy the BASS API into the
-      same directory as the BASSMIDI API.
+NOTE: To build the examples, you will need to copy the BASS API into the same
+      directory as the BASSMIDI API.
 
 Android version
 ---------------
@@ -105,8 +105,8 @@ EXAMPLES\       Java examples
   MIDITEST\       MIDI playback example
     ...
 
-NOTE: To build the examples, you will need to copy the BASS API into the
-      same directory as the BASSMIDI API.
+NOTE: To build the examples, you will need to copy the BASS API into the same
+      directory as the BASSMIDI API.
 
 iOS version
 -----------
@@ -183,6 +183,53 @@ History
 These are the major (and not so major) changes in each release, along with the
 functions/options that are introduced/affected by them. There are other little
 tweaks and fixes made along the way too.
+
+2.4.15 - 9/10/2024
+------------------
+* Support for Key On Velocity to attackModEnv/decayModEnv/releaseModEnv and
+  Key Number to startAddrsOffset SF2 modulators
+	BASS_MIDI_FontInit/User
+* Support for fileg_vel2attack/fileg_vel2decay/fileg_vel2release/pitcheg_vel2attack/
+  pitcheg_vel2decay/pitcheg_vel2release SFZ opcodes
+	BASS_MIDI_FontInit/User
+* Improved SFZ variable parsing compatibility (uses the shortest match)
+	BASS_MIDI_FontInit/User
+* Support for high-pass filter in fil_type SFZ opcode
+	BASS_MIDI_FontInit/User
+* SoundBlaster hardware limit emulation is disabled by default for modern SF2 soundfonts
+	BASS_MIDI_FONT_SBLIMITS/NOSBLIMITS (BASS_MIDI_FontInit/User flags)
+* Extended filter cutoff range when SB limits are disabled
+	BASS_MIDI_FONT_NOSBLIMITS (BASS_MIDI_FontInit/User flag)
+* Improved single note releasing when there are overlapping instances of the same note
+	BASS_MIDI_NOTEOFF1 (BASS_MIDI_StreamCreateFile/User/URL flag)
+* Ports above 7 are mapped to lower ports (modulo 8)
+	BASS_MIDI_StreamCreateFile
+* Higher ports are shifted to lower channels when lower ports are unused
+	BASS_MIDI_StreamCreateFile
+* Default per-drum USERFX levels to 127 instead of 0 in all modes
+	BASS_MIDI_NODRUMPARAMUSER (BASS_MIDI_StreamCreate/Events/File/User/URL flag)
+* Per-drum key settings may be applied to all keys at once
+	MIDI_EVENT_DRUM_xxx (BASS_MIDI_StreamEvent/s)
+* System mode/reset events are ignored from additional ports
+	BASS_MIDI_StreamCreateFile/User/URL
+	BASS_MIDI_StreamEvents
+* Sequencer specific meta-event retrieval
+	BASS_MIDI_MARK_SEQSPEC (BASS_MIDI_StreamGetMark type)
+* Queued event buffer preallocation
+	BASS_ATTRIB_MIDI_QUEUE_TICK/BYTE/ASYNC (BASS_ChannelSetAttribute options)
+* Faster SFZ info retrieval
+	BASS_MIDI_FontGetInfo
+* Support for SF2 soundfonts embedded in RMID files
+	BASS_MIDI_StreamCreateFile/User/URL
+* RIFF/RMID "INFO" tag support
+	BASS_TAG_RIFF_INFO (BASS_ChannelGetTags type)
+* MIDI filename retrieval
+	BASS_CHANNELINFO (filename member)
+* Approximate support for AWE32 filter NRPN (7f15/7f16)
+	MIDI_EVENT_CUTOFF/RESONANCE
+* Maximum voices is practically unlimited (~14 million)
+	BASS_CONFIG_MIDI_VOICES (BASS_SetConfig option)
+	BASS_ATTRIB_MIDI_VOICES (BASS_ChannelSetAttribute option)
 
 2.4.14 - 3/5/2022
 -----------------
