@@ -63,13 +63,13 @@ if ($Platform -eq 'x64')
         Copy-Item "3rdParty/bass/x64/basswv.dll" -Destination "$PackagePath";
     }
 
-    $DLLPath = "3rdParty/sdl2/lib/x64/SDL2.dll";
+    $DLLPath = "3rdParty/sdl2/lib/x64/sdl2.dll";
 
     if (Test-Path -Path $DLLPath)
     {
         Write-Host "Copying SDL libary to `"$PackagePath`"...";
 
-        Copy-Item $DLLPath -Destination "$PackagePath";
+#       Copy-Item $DLLPath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")
@@ -109,13 +109,13 @@ elseif ($Platform -eq 'Win32')
         Copy-Item "3rdParty/bass/basswv.dll" -Destination "$PackagePath";
     }
 
-    $DLLPath = "3rdParty/sdl2/lib/x86/SDL2.dll";
+    $DLLPath = "3rdParty/sdl2/lib/x86/sdl2.dll";
 
     if (Test-Path -Path $DLLPath)
     {
         Write-Host "Copying SDL libary to `"$PackagePath`"...";
 
-        Copy-Item $DLLPath -Destination "$PackagePath";
+#       Copy-Item $DLLPath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")
