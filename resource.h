@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.01.12) P. Stuer **/
+/** $VER: Resource.h (2025.02.23) P. Stuer **/
 
 #pragma once
 
@@ -25,8 +25,8 @@
 #define STR_COPYRIGHT           TEXT(STR_COMPONENT_COPYRIGHT)
 
 #define NUM_FILE_MAJOR          2
-#define NUM_FILE_MINOR          15
-#define NUM_FILE_PATCH          2
+#define NUM_FILE_MINOR          16
+#define NUM_FILE_PATCH          0
 #define NUM_FILE_PRERELEASE     0
 
 #define STR_FILE_NAME           TEXT(STR_COMPONENT_FILENAME)
@@ -34,8 +34,8 @@
 #define STR_FILE_DESCRIPTION    TEXT(STR_COMPONENT_DESCRIPTION)
 
 #define NUM_PRODUCT_MAJOR       2
-#define NUM_PRODUCT_MINOR       15
-#define NUM_PRODUCT_PATCH       2
+#define NUM_PRODUCT_MINOR       16
+#define NUM_PRODUCT_PATCH       0
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRODUCT_NAME        STR_COMPANY_NAME TEXT(" ") STR_INTERNAL_NAME

@@ -113,6 +113,9 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
+v2.16.0.0, 2025-02-xx
+* New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
+
 v2.15.2.0, 2025-01-12
 
 * Improved: Updated BASSMIDI to v2.4.15.3.
@@ -385,6 +388,15 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 * [XMI](http://www.vgmpf.com/Wiki/index.php?title=XMI)
 * [XMI Format](https://moddingwiki.shikadi.net/wiki/XMI_Format)
+
+#### XMF (Extensible Music Format)
+
+* [Media Type](https://www.rfc-editor.org/rfc/rfc4723.html)
+* [MIDI Manufacturers Association Tech Specs & Info](https://web.archive.org/web/20080618001530/http://www.midi.org/techspecs/index.php)
+* [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000121.shtml)
+* [FileFormats](http://fileformats.archiveteam.org/wiki/Extensible_Music_Format)
+* [MultimediaWiki](https://wiki.multimedia.cx/index.php/Extensible_Music_Format_(XMF))
+* [XmfExtractor](https://github.com/benryves/XmfExtractor)
 
 ## Links
 

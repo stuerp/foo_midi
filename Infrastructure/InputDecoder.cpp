@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2024.09.29) **/
+/** $VER: InputDecoder.cpp (2025.02.23) **/
 
 #include "framework.h"
 
@@ -1242,17 +1242,20 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 & filePath, pfc::stri
         "sf2pack",
         "sfogg",
         "sf2",
-        "sf3"
+        "sf3",
+        "dls"
     };
 
     soundFontPath = filePath;
 
-    size_t Length = soundFontPath.length();
+    const char * Period = ::strrchr(soundFontPath.c_str(), '.');
+
+    if (Period == nullptr)
+        return false;
 
     for (const char * & FileExtension : FileExtensions)
     {
-        soundFontPath.truncate(Length);
-        soundFontPath += ".";
+        soundFontPath.truncate((Period - soundFontPath.c_str()) + (size_t) 1);
         soundFontPath += FileExtension;
 
         if (filesystem::g_exists(soundFontPath, abortHandler))
