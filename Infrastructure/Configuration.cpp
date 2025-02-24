@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2024.08.10) **/
+/** $VER: Configuration.cpp (2025.02.23) **/
 
 #include "framework.h"
 
@@ -246,7 +246,7 @@ const char * _FileExtensions[] =
     "HMP",
     "HMQ",
     "MUS",
-    "XMI", "XFM",
+    "XMI",
     "LDS",
 
     // Recomposer
@@ -254,6 +254,8 @@ const char * _FileExtensions[] =
     "R36",
     "G18",
     "G36",
+
+    "XMF", "MXMF",  // Extensible Music Format and Mobile Extensible Music Format
 };
 
 const size_t _FileExtensionCount = _countof(_FileExtensions);

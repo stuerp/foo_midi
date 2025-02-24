@@ -156,7 +156,7 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
     uint32_t OldPosition = _Position;
 
 #ifdef _DEBUG
-    wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Event: %6d/%6d | Sample: %8d/%8d | Chunk: %6d, Rem: %8d\n", (int) _StreamPosition, (int) _Stream.size(), (int) _Position, (int) _Length, (int) size, (int) _Remainder); ::OutputDebugStringW(Line);
+//  wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Event: %6d/%6d | Sample: %8d/%8d | Chunk: %6d, Rem: %8d\n", (int) _StreamPosition, (int) _Stream.size(), (int) _Position, (int) _Length, (int) size, (int) _Remainder); ::OutputDebugStringW(Line);
 #endif
 
     const uint32_t BlockSize = GetSampleBlockSize();

@@ -200,7 +200,8 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_TIMER:
 			{
-				char text[16];
+				static int updatefont = 0;
+				char text[80];
 				float active = 0;
 				if (chan) {
 					DWORD tick = BASS_ChannelGetPosition(chan, BASS_POS_MIDI_TICK); // get position in ticks
@@ -216,15 +217,13 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 				MESS(51, WM_SETTEXT, 0, text); // display voices
 				sprintf(text, "CPU: %d%%", (int)BASS_GetCPU());
 				MESS(52, WM_SETTEXT, 0, text); // display CPU usage
-				{
-					static int updatefont = 0;
-					if (++updatefont & 1) { // only updating font info once a second
-						char text[80] = "no soundfont";
-						BASS_MIDI_FONTINFO i;
-						if (BASS_MIDI_FontGetInfo(font, &i))
-							_snprintf(text, sizeof(text), "name: %s\nloaded: %d / %d", i.name, i.samload, i.samsize);
-						MESS(41, WM_SETTEXT, 0, text);
-					}
+				if (++updatefont & 1) { // only updating font info once a second
+					BASS_MIDI_FONTINFO i;
+					if (BASS_MIDI_FontGetInfo(font, &i))
+						_snprintf(text, sizeof(text), "name: %s\nloaded: %d / %d", i.name, i.samload, i.samsize);
+					else
+						strcpy(text, "no soundfont");
+					MESS(41, WM_SETTEXT, 0, text);
 				}
 			}
 			break;

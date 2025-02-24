@@ -234,7 +234,7 @@ void FSPlayer::SendEvent(uint32_t message)
     int Code       = (int)  (message        & 0xF0);
     int Channel    = (int)  (message        & 0x0F);
 
-    if (PortNumber >= _countof(_Synth))
+    if (PortNumber >= (int) _countof(_Synth))
         PortNumber = 0;
 
     switch (Code)

@@ -1,6 +1,6 @@
 {
   BASSMIDI 2.4 Delphi unit
-  Copyright (c) 2006-2022 Un4seen Developments Ltd.
+  Copyright (c) 2006-2024 Un4seen Developments Ltd.
 
   See the BASSMIDI.CHM file for more detailed documentation
 }
@@ -45,6 +45,7 @@ const
   BASS_SYNC_MIDI_KEYSIG      = $10007;
 
   // Additional BASS_MIDI_StreamCreateFile/etc flags
+  BASS_MIDI_NODRUMPARAMUSER  = $200;
   BASS_MIDI_NODRUMPARAM      = $400;
   BASS_MIDI_NOSYSRESET       = $800;
   BASS_MIDI_DECAYEND         = $1000;
@@ -63,8 +64,10 @@ const
   BASS_MIDI_FONT_LINATTMOD   = $100000;
   BASS_MIDI_FONT_LINDECVOL   = $200000;
   BASS_MIDI_FONT_NORAMPIN    = $400000;
-  BASS_MIDI_FONT_NOLIMITS    = $800000;
+  BASS_MIDI_FONT_NOSBLIMITS  = $800000;
+  BASS_MIDI_FONT_NOLIMITS    = BASS_MIDI_FONT_NOSBLIMITS;
   BASS_MIDI_FONT_MINFX       = $1000000;
+  BASS_MIDI_FONT_SBLIMITS    = $2000000;
 
   // BASS_MIDI_StreamSet/GetFonts flag
   BASS_MIDI_FONT_EX          = $1000000; // BASS_MIDI_FONTEX
@@ -81,6 +84,7 @@ const
   BASS_MIDI_MARK_TRACK       = 7; // track name
   BASS_MIDI_MARK_INST        = 8; // instrument name
   BASS_MIDI_MARK_TRACKSTART  = 9; // track start (SMF2)
+  BASS_MIDI_MARK_SEQSPEC     = 10; // sequencer-specific
   BASS_MIDI_MARK_TICK        = $10000; // flag: get position in ticks (otherwise bytes)
 
   // MIDI events
@@ -215,6 +219,9 @@ const
   BASS_ATTRIB_MIDI_SPEED     = $12008;
   BASS_ATTRIB_MIDI_REVERB    = $12009;
   BASS_ATTRIB_MIDI_VOL       = $1200a;
+  BASS_ATTRIB_MIDI_QUEUE_TICK = $1200b;
+  BASS_ATTRIB_MIDI_QUEUE_BYTE = $1200c;
+  BASS_ATTRIB_MIDI_QUEUE_ASYNC = $1200d;
   BASS_ATTRIB_MIDI_TRACK_VOL = $12100; // + track #
 
   // Additional tag type

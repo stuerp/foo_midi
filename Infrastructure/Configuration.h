@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2024.08.14) **/
+/** $VER: Configuration.h (2024.09.29) **/
 
 #pragma once
 
@@ -37,8 +37,9 @@ enum class PlayerType : int8_t
     Nuke = 9,
     SecretSauce = 10,
     MCI = 11,
+    NukedSC55 = 12,
 
-    Max = MCI,
+    Max = NukedSC55,
 
     Default = ADL,
 };

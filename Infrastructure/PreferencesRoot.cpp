@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2024.09.14) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2025.02.16) P. Stuer **/
 
 #include "framework.h"
 
@@ -331,6 +331,7 @@ const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
     { "LibOPNMIDI",     PlayerType::OPN,          PlayerIsAlwaysPresent },
     { "OPL MIDI",       PlayerType::OPL,          PlayerIsNeverPresent },
     { "Nuke",           PlayerType::Nuke,         PlayerIsAlwaysPresent },
+    { "Nuked SC-55",    PlayerType::NukedSC55,    PlayerIsNeverPresent }, // 16/02/25: Timing is not working yet.
     { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent },
     { "MCI",            PlayerType::MCI,          PlayerIsNeverPresent }
 };
@@ -572,7 +573,7 @@ void PreferencesRootPage::reset()
     {
         int SelectedIndex = -1;
 
-        for (int i = 0; i < _countof(_InterpolationMethods); ++i)
+        for (int i = 0; i < (int) _countof(_InterpolationMethods); ++i)
         {
             if (_InterpolationMethods[i].Id == DefaultFluidSynthInterpolationMethod)
             {
@@ -797,7 +798,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             i++;
         }
 
-        if ((PlayerType == PlayerType::VSTi) && (VSTiIndex != ~0))
+        if ((PlayerType == PlayerType::VSTi) && (VSTiIndex != (size_t) ~0))
             SelectedIndex = (int) (_InstalledKnownPlayerCount + VSTiIndex);
 
          w.SetCurSel(SelectedIndex);

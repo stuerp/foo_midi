@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2024.08.25) **/
+/** $VER: InputDecoder.h (2024.09.29) **/
 
 #pragma once
 
@@ -27,9 +27,10 @@
 #include "EdMPlayer.h"
 #include "FSPlayer.h"
 #include "MCIPlayer.h"
-#include <MT32Player/MT32Player.h>
+#include "MT32Player/MT32Player.h"
 #include "NukePlayer.h"
-#include <OPNPlayer/OPNPlayer.h>
+#include "NukeSC-55Player.h"
+#include "OPNPlayer/OPNPlayer.h"
 #include "SCPlayer.h"
 #include "VSTiPlayer.h"
 
@@ -234,7 +235,7 @@ private:
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
 
-    static bool GetSoundFontFilePath(const pfc::string8 & filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept;
+    static bool GetSoundFontFilePath(const pfc::string & filePath, pfc::string & soundFontPath, abort_callback & abortHandler) noexcept;
 
 #ifdef DXISUPPORT
     void set_loop()
@@ -255,7 +256,7 @@ private:
 
 private:
     // File Properties
-    pfc::string8 _FilePath;
+    pfc::string _FilePath;
 
     t_filestats _FileStats;
     t_filestats2 _FileStats2;

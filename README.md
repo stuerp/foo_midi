@@ -7,7 +7,7 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Features
 
-* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36).
+* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36, .XMF/.MXMF).
 * Supports several synthesizers, several of which do not require any additional files to play back music. The bundled synthesizers which do not require additional files may sound rather basic, though.
 * Supports FluidSynth SoundFont (.sf2) based synthesizer, including support for the newer compressed format. (.sf3). SoundFonts may be loaded in a simple, or even complex setup, using either basic .sflist text files encoded in UTF-8 format, but for now, it only supports a bare list of files.
 * Supports 32 and 64-bit VST instruments.
@@ -52,14 +52,14 @@ The component supports 6 loop modes:
 To build the code you need:
 
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2024-08-07
+* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2024-12-03
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
 The following libraries are included in the code:
 
 * [BASS](https://www.un4seen.com/) 2.4.17
   * [BASSFLAC](https://www.un4seen.com/) 2.4.5.5
-  * [BASSMIDI](https://www.un4seen.com/) 2.4.14.1
+  * [BASSMIDI](https://www.un4seen.com/) 2.4.15.3
   * [BASSWV](https://www.un4seen.com/) 2.4.7.4
   * [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
   * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
@@ -78,7 +78,8 @@ The following libraries are included in the code:
 * [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
 * [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 * [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
-* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.3.6
+* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
+* [zlib](https://www.zlib.net/) 1.3.1
 
 To create the deployment package you need:
 
@@ -109,13 +110,24 @@ Open `foo_midi.sln` with Visual Studio and build the solution.
 
 ### Packaging
 
-To create the component first build the x86 configuration and next the x64 configuration.
+To create the component first build the x64 configuration and next the x86 configuration.
 
 ## Change Log
 
+v2.16.0.0, 2025-02-24
+* New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
+* New: Metadata XMF_META_FILE_VERSION, XMF_FILE_TYPE and XMF_FILE_TYPE_REVSION.
+* Fixed: VSTi plugins did not load or save their configuration anymore (regression).
+* Fixed: VSTi plugins did not always show the correct name in the Preferences dialog (regression).
+
+v2.15.2.0, 2025-01-12
+
+* Improved: Updated BASSMIDI to v2.4.15.3.
+* Improved: Updated FluidSynth to v2.4.2.
+
 v2.15.1.0, 2024-09-18
 
-* Fixed: The selected player now only gets overriden to BASSMIDI/FluidSynth when an embedded or a soundfont is found with the same basename as the MIDI file.
+* Fixed: The selected player now only gets overriden to BASSMIDI/FluidSynth when an embedded soundfont or a soundfont is found with the same basename as the MIDI file.
 * Fixed: The BASS MIDI Resampling combo box was not always enabled correctly when switching player types.
 
 v2.15.0.0, 2024-09-14
@@ -305,6 +317,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
 * Tom Moebert for [FluidSynth](https://www.fluidsynth.org/).
 * [Valley Bell](https://github.com/ValleyBell) for [MidiConverters](https://github.com/ValleyBell/MidiConverters).
+* [Jean-loup Gailly](http://gailly.net/) and [Mark Adler](http://en.wikipedia.org/wiki/Mark_Adler) for [zlib](https://www.zlib.net/).
 
 ## Reference Material
 
@@ -380,6 +393,15 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 
 * [XMI](http://www.vgmpf.com/Wiki/index.php?title=XMI)
 * [XMI Format](https://moddingwiki.shikadi.net/wiki/XMI_Format)
+
+#### XMF (Extensible Music Format)
+
+* [Media Type](https://www.rfc-editor.org/rfc/rfc4723.html)
+* [MIDI Manufacturers Association Tech Specs & Info](https://web.archive.org/web/20080618001530/http://www.midi.org/techspecs/index.php)
+* [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000121.shtml)
+* [FileFormats](http://fileformats.archiveteam.org/wiki/Extensible_Music_Format)
+* [MultimediaWiki](https://wiki.multimedia.cx/index.php/Extensible_Music_Format_(XMF))
+* [XmfExtractor](https://github.com/benryves/XmfExtractor)
 
 ## Links
 
