@@ -116,6 +116,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 v2.16.0.0, 2025-02-24
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
+* New: Metadata XMF_META_FILE_VERSION, XMF_FILE_TYPE and XMF_FILE_TYPE_REVSION.
 * Fixed: VSTi plugins did not load or save their configuration anymore (regression).
 
 v2.15.2.0, 2025-01-12
