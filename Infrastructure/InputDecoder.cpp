@@ -874,6 +874,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         // Nuked SC-55
         case PlayerType::NukedSC55:
         {
+/*
             {
                 auto Player = new NukeSC55Player;
 
@@ -893,6 +894,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     return;
                 }
             }
+*/
             break;
         }
     }

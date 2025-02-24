@@ -37,7 +37,6 @@
     <ClCompile Include="Players\VSTi.cpp" />
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Exception.cpp" />
-    <ClCompile Include="Players\NukeSC-55Player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -181,7 +180,6 @@
     <ClInclude Include="Players\VSTi.h" />
     <ClInclude Include="Players\SoundFont.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
-    <ClInclude Include="Players\NukeSC-55Player.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
