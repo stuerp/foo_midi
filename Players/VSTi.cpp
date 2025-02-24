@@ -1,5 +1,5 @@
 
-/** $VER: VSTi.cpp (2024.08.04) P. Stuer **/
+/** $VER: VSTi.cpp (2025.02.24) P. Stuer **/
 
 #include "framework.h"
 
@@ -19,7 +19,7 @@ std::vector<uint8_t> VSTi::Config;
 /// </summary>
 void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
 {
-    pfc::string8 DirectoryPath;
+    pfc::string DirectoryPath;
 
     if (findFile == nullptr)
     {
@@ -44,7 +44,7 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
 
     do
     {
-        pfc::string8 PathName(pathName);
+        pfc::string PathName(pathName);
 
         PathName.truncate(PathName.length() - 3);
         PathName += findFile->GetFileName();
@@ -77,19 +77,19 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
 
                     Plugin.PathName = PathName;
 
-                    pfc::string8 VendorName;
+                    std::string VendorName;
 
                     Player.GetVendorName(VendorName);
 
-                    pfc::string8 ProductName;
+                    std::string ProductName;
 
                     Player.GetProductName(ProductName);
 
-                    // Get the plugin name.
+                    // Create the plugin name.
                     {
                         Plugin.Name = "VSTi ";
 
-                        if (VendorName.length() || ProductName.length())
+                        if ((VendorName.length() != 0) || (ProductName.length() != 0))
                         {
                             if ((VendorName.length() == 0) || ((ProductName.length() >= VendorName.length()) && (::strncmp(VendorName.c_str(), ProductName.c_str(), VendorName.length()) == 0)))
                             {
@@ -99,7 +99,7 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
                             {
                                 Plugin.Name += VendorName;
 
-                                if (ProductName.length())
+                                if (ProductName.length() != 0)
                                     Plugin.Name += std::string(' ' + ProductName);
                             }
                         }

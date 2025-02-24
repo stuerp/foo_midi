@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.cpp (2023.08.19) **/
+/** $VER: VSTiPlayer.cpp (2025.02.24) **/
 
 #include "framework.h"
 
@@ -18,7 +18,8 @@ template <class T> void SafeDelete(T& x) noexcept
     }
 }
 
-#pragma region("Public")
+#pragma region Public
+
 VSTiPlayer::VSTiPlayer() noexcept : player_t()
 {
     _IsCOMInitialized = false;
@@ -69,12 +70,12 @@ bool VSTiPlayer::LoadVST(const char * pathName)
     return StartHost();
 }
 
-void VSTiPlayer::GetVendorName(pfc::string8 & vendorName) const
+void VSTiPlayer::GetVendorName(std::string & vendorName) const
 {
     vendorName = _VendorName;
 }
 
-void VSTiPlayer::GetProductName(pfc::string8 & productName) const 
+void VSTiPlayer::GetProductName(std::string & productName) const 
 {
     productName = _ProductName;
 }
@@ -157,7 +158,8 @@ void VSTiPlayer::DisplayEditorModal()
 }
 #pragma endregion
 
-#pragma region("Protected")
+#pragma region Protected
+
 bool VSTiPlayer::Startup()
 {
     if (IsHostRunning())
@@ -277,7 +279,8 @@ void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumbe
 }
 #pragma endregion
 
-#pragma region("Private")
+#pragma region Private
+
 static bool CreatePipeName(pfc::string_base & pipeName)
 {
     GUID guid;
@@ -312,7 +315,7 @@ bool VSTiPlayer::StartHost()
         TRUE,
     };
 
-    pfc::string8 InPipeName, OutPipeName;
+    pfc::string InPipeName, OutPipeName;
 
     {
         if (!CreatePipeName(InPipeName) || !CreatePipeName(OutPipeName))

@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2024.05.20) **/
+/** $VER: VSTiPlayer.h (2025.02.24) **/
 
 #pragma once
 
@@ -16,8 +16,8 @@ public:
 
     bool LoadVST(const char * path);
 
-    void GetVendorName(pfc::string8 & out) const;
-    void GetProductName(pfc::string8 & out) const;
+    void GetVendorName(std::string & out) const;
+    void GetProductName(std::string & out) const;
     uint32_t GetVendorVersion() const noexcept;
     uint32_t GetUniqueID() const noexcept;
 
