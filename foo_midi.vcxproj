@@ -121,7 +121,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -198,7 +198,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>

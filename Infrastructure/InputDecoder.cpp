@@ -53,7 +53,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     if (file.is_empty())
         filesystem::g_open(file, filePath, filesystem::open_mode_read, abortHandler);
 
-    if (_strnicmp(filePath, "file://", 7) == 0)
+    if (::_strnicmp(filePath, "file://", 7) == 0)
         filePath += 7;
 
     _FilePath = filePath;
@@ -74,6 +74,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
     file->read_object(Object.data(), (t_size) _FileStats.m_size, abortHandler);
 
+    // Try to process the data as a SysEx sequence.
     {
         _IsSysExFile = IsSysExFileExtension(pfc::string_extension(_FilePath));
 
@@ -85,7 +86,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             }
             catch (std::exception & e)
             {
-                pfc::string8 Message = "Failed to read SysEx file: ";
+                const pfc::string Message = "Failed to read SysEx file: ";
 
                 throw exception_io_data(Message + e.what());
             }
@@ -94,6 +95,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         }
     }
 
+    // Try to process the data as a MIDI sequence.
     {
         try
         {
@@ -114,7 +116,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         }
         catch (std::exception & e)
         {
-            pfc::string8 Message = "Failed to read MIDI file: ";
+            const pfc::string Message = "Failed to read MIDI file: ";
 
             throw exception_io_data(Message + e.what());
         }
@@ -124,7 +126,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         if (_TrackCount == 0)
             throw exception_io_data("Invalid MIDI file: No tracks found");
 
-        // Check if we read a valid MIDI file.
+        // Validate the MIDI data.
         {
             bool HasDuration = false;
 
@@ -144,7 +146,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops, _DetectLeapFrogLoops);
     }
 
-    // Calculate the hash of the MIDI file.
+    // Calculate the hash of the MIDI data.
     {
         Object.resize(0);
 
@@ -234,13 +236,16 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
-    for (const auto & sf : _SoundFonts)
+    // Delete all embedded SoundFont files from a previous run.
     {
-        if (sf.IsEmbedded())
-            ::DeleteFileA(sf.FilePath().c_str());
-    }
+        for (const auto & sf : _SoundFonts)
+        {
+            if (sf.IsEmbedded())
+                ::DeleteFileA(sf.FilePath().c_str());
+        }
 
-    _SoundFonts.clear();
+        _SoundFonts.clear();
+    }
 
     /** IMPORTANT: The following sequence of adding SoundFonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
 
@@ -277,7 +282,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                             ::fclose(fp);
 
-                            _SoundFonts.push_back({ FilePath, 1.f, (IsDLS ? 1 : _Container.GetBankOffset()), true, IsDLS });
+                            _SoundFonts.push_back({ FilePath, _BASSMIDIVolume, (IsDLS ? 1 : _Container.GetBankOffset()), true, IsDLS });
 
                             UseSoundFonts = true;
                         }
@@ -291,8 +296,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         
     // Then, add the sound font named like the MIDI file, if present.
     {
-        pfc::string8 FilePath = _FilePath;
-        pfc::string8 TempSoundFontFilePath;
+        pfc::string FilePath = _FilePath;
+        pfc::string TempSoundFontFilePath;
 
         bool FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
 
@@ -329,7 +334,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         if (FoundSoundFile)
         {
-            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, false });
+            bool IsDLS = TempSoundFontFilePath.toLower().endsWith(".dls");
+
+            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, IsDLS });
 
             UseSoundFonts = true;
         }
@@ -338,7 +345,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // Finally, add the default sound font.
     {
         if (!Preset._SoundFontFilePath.isEmpty())
-            _SoundFonts.push_back({ Preset._SoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, false });
+        {
+            bool IsDLS = Preset._SoundFontFilePath.toLower().endsWith(".dls");
+
+            _SoundFonts.push_back({ Preset._SoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, IsDLS });
+        }
     }
 
     for (const auto & sf : _SoundFonts)
@@ -383,20 +394,22 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 _PlayerType = PlayerType::VSTi;
 
-                pfc::string8 FilePath;
+                pfc::string FilePath;
 
                 AdvCfgVSTiXGPlugin.get(FilePath);
 
                 Preset._VSTiFilePath = FilePath;
             }
         }
+    }
 
+    // Show which SoundFonts we'll be using in the console.
+    {
         if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
         {
-/*
-            if ((_PlayerType == PlayerType::FluidSynth) && !HasDLS)
+            if (_PlayerType == PlayerType::FluidSynth)
                 std::reverse(_SoundFonts.begin(), _SoundFonts.end());
-*/
+
             for (const auto & sf : _SoundFonts)
                 console::print(STR_COMPONENT_BASENAME, " uses SoundFont \"", sf.FilePath().c_str(), "\" with bank offset ", sf.BankOffset(), ".");
         }
@@ -407,9 +420,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         _SampleRate = (uint32_t) MT32Player::GetSampleRate();
 
     // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
-    _FadeRange.Clear();
-
     {
+        _FadeRange.Clear();
+
         switch (_LoopType)
         {
             case LoopType::NeverLoop:
@@ -502,7 +515,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 auto Player = new VSTiPlayer;
 
                 if (!Player->LoadVST(Preset._VSTiFilePath))
-                    throw midi::exception_t(pfc::string8("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\".");
+                    throw midi::exception_t(pfc::string("Unable to load VSTi from \"") + Preset._VSTiFilePath + "\".");
             
                 if (Preset._VSTiConfig.size() != 0)
                     Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
@@ -542,7 +555,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     throw midi::exception_t("No compatible SoundFonts found.");
             }
 
-            pfc::string8 FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
+            pfc::string FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
 
             if (FluidSynthDirectoryPath.isEmpty())
             {
@@ -596,7 +609,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 auto Player = new MT32Player(!_IsMT32, Preset._MuntGMSet);
 
-                pfc::string8 BasePath = CfgMT32ROMDirectoryPath;
+                pfc::string BasePath = CfgMT32ROMDirectoryPath;
 
                 if (BasePath.is_empty())
                 {
@@ -804,7 +817,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 auto Player = new SCPlayer();
 
-                pfc::string8 PathName;
+                pfc::string PathName;
 
                 AdvCfgSecretSauceDirectoryPath.get(PathName);
 
@@ -1233,7 +1246,7 @@ uint32_t InputDecoder::GetDuration(size_t subSongIndex)
 /// <summary>
 /// Gets the path name of the matching SoundFont file for the specified file, if any.
 /// </summary>
-bool InputDecoder::GetSoundFontFilePath(const pfc::string8 & filePath, pfc::string8 & soundFontPath, abort_callback & abortHandler) noexcept
+bool InputDecoder::GetSoundFontFilePath(const pfc::string & filePath, pfc::string & soundFontPath, abort_callback & abortHandler) noexcept
 {
     static const char * FileExtensions[] =
     {
@@ -1272,7 +1285,7 @@ bool InputDecoder::GetSoundFontFilePath(const pfc::string8 & filePath, pfc::stri
 /// <summary>
 /// Changes the extension of the file name in the specified file path.
 /// </summary>
-static pfc::string8 ChangeExtension(const pfc::string8 & filePath, const pfc::string8 & fileExtension)
+static pfc::string ChangeExtension(const pfc::string & filePath, const pfc::string & fileExtension)
 {
     char FilePath[MAX_PATH];
 
@@ -1283,7 +1296,7 @@ static pfc::string8 ChangeExtension(const pfc::string8 & filePath, const pfc::st
     if (FileExtension != nullptr)
         ::strcpy_s(FileExtension + 1, _countof(FilePath) - (FileExtension - FilePath) - 1, fileExtension.c_str());
 
-    return pfc::string8(FilePath);
+    return pfc::string(FilePath);
 }
 
 /// <summary>
@@ -1350,7 +1363,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
     // Read a WRD file in the same path and convert it to lyrics.
     {
-        pfc::string8 FilePath = ChangeExtension(_FilePath, "wrd");
+        pfc::string FilePath = ChangeExtension(_FilePath, "wrd");
 
         FILE * fp = nullptr;
 
@@ -1411,7 +1424,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     }
 
     {
-        pfc::string8 FileHashString;
+        pfc::string FileHashString;
 
         for (size_t i = 0U; i < 16; ++i)
             FileHashString += pfc::format_uint((t_uint8)_FileHash.m_data[i], 2, 16);
@@ -1458,7 +1471,7 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
     if (value[0] == '\0')
         return;
 
-    pfc::string8 Value;
+    pfc::string Value;
 
     if ((maxLength != 0) && value[maxLength - 1])
     {

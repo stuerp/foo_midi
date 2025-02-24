@@ -1,5 +1,5 @@
 
-/** $VER: ConfigurationMap.h (2023.12.23) **/
+/** $VER: ConfigurationMap.h (2025.02.24) **/
 
 #pragma once
 
@@ -17,17 +17,20 @@ using namespace cfg_var_modern;
 /// <summary>
 /// Implements a configuration variable for maps.
 /// </summary>
-class cfg_map : public cfg_var_common, public std::map<uint32_t, std::vector<uint8_t>>
+class cfg_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>>
 {
 public:
-    cfg_map(const GUID& guid) : cfg_var_common(guid), std::map<t_uint32, std::vector<uint8_t>>() { }
+    cfg_map(const GUID& guid) noexcept : cfg_var(guid), std::map<t_uint32, std::vector<uint8_t>>() { }
+
     cfg_map(const cfg_map&) = delete;
     cfg_map(const cfg_map&&) = delete;
     cfg_map& operator=(const cfg_map&) = delete;
     cfg_map& operator=(cfg_map&&) = delete;
+
     virtual ~cfg_map() { };
 
-    #pragma region("cfg_var_writer")
+    #pragma region cfg_var_writer
+
     virtual void get_data_raw(stream_writer * streamWriter, abort_callback & handleAbort)
     {
         if (streamWriter == nullptr)
@@ -49,9 +52,11 @@ public:
                 out << it->second[walk];
         }
     }
+
     #pragma endregion
 
-    #pragma region("cfg_var_reader")
+    #pragma region cfg_var_reader
+
     virtual void set_data_raw(stream_reader * streamReader, t_size, abort_callback & handleAbort)
     {
         if (streamReader == nullptr)
@@ -83,5 +88,6 @@ public:
             operator[](Key) = Value;
         }
     }
+
     #pragma endregion
 };

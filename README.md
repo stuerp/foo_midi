@@ -7,7 +7,7 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Features
 
-* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36).
+* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36, .XMF/.MXMF).
 * Supports several synthesizers, several of which do not require any additional files to play back music. The bundled synthesizers which do not require additional files may sound rather basic, though.
 * Supports FluidSynth SoundFont (.sf2) based synthesizer, including support for the newer compressed format. (.sf3). SoundFonts may be loaded in a simple, or even complex setup, using either basic .sflist text files encoded in UTF-8 format, but for now, it only supports a bare list of files.
 * Supports 32 and 64-bit VST instruments.
@@ -52,7 +52,7 @@ The component supports 6 loop modes:
 To build the code you need:
 
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2024-08-07
+* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2024-12-03
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
 The following libraries are included in the code:
@@ -79,6 +79,7 @@ The following libraries are included in the code:
 * [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
 * [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
 * [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
+* [zlib](https://www.zlib.net/) 1.3.1
 
 To create the deployment package you need:
 
@@ -113,8 +114,9 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v2.16.0.0, 2025-02-xx
+v2.16.0.0, 2025-02-24
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
+* Fixed: VSTi plugins did not load or save their configuration anymore (regression).
 
 v2.15.2.0, 2025-01-12
 
@@ -313,6 +315,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
 * Tom Moebert for [FluidSynth](https://www.fluidsynth.org/).
 * [Valley Bell](https://github.com/ValleyBell) for [MidiConverters](https://github.com/ValleyBell/MidiConverters).
+* [Jean-loup Gailly](http://gailly.net/) and [Mark Adler](http://en.wikipedia.org/wiki/Mark_Adler) for [zlib](https://www.zlib.net/).
 
 ## Reference Material
 
