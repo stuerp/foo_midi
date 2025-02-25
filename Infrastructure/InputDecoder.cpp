@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2025.02.23) **/
+/** $VER: InputDecoder.cpp (2025.02.25) **/
 
 #include "framework.h"
 
@@ -249,7 +249,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     /** IMPORTANT: The following sequence of adding SoundFonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
 
-    bool UseSoundFonts = false;
+    bool HasNonDefaultSoundFonts = false; // True if an embedded or named SoundFont is found.
     bool HasDLS = false;
 
     // First, add the embedded sound font, if present.
@@ -260,36 +260,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
 
-            char TempPath[MAX_PATH] = {};
+            std::string FilePath;
 
-            if (::GetTempPathA(_countof(TempPath), TempPath) != 0)
+            if (WriteSoundFontFile(Data, IsDLS, FilePath))
             {
-                char TempFilePath[MAX_PATH] = {};
+                _SoundFonts.push_back({ FilePath, _BASSMIDIVolume, (IsDLS ? 1 : _Container.GetBankOffset()), true, IsDLS });
 
-                if (::GetTempFileNameA(TempPath, "SF-", 0, TempFilePath) != 0)
-                {
-                    std::string FilePath = TempFilePath;
-
-                    // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 extension. FluidSynth also supports DLS.
-                    FilePath.append(IsDLS ? ".dls" : ".sf2");
-
-                    {
-                        FILE * fp = nullptr;
-
-                        if (::fopen_s(&fp, FilePath.c_str(), "wb") == 0)
-                        {
-                            ::fwrite(Data.data(), Data.size(), 1, fp);
-
-                            ::fclose(fp);
-
-                            _SoundFonts.push_back({ FilePath, _BASSMIDIVolume, (IsDLS ? 1 : _Container.GetBankOffset()), true, IsDLS });
-
-                            UseSoundFonts = true;
-                        }
-                    }
-
-                    ::DeleteFileA(TempFilePath);
-                }
+                HasNonDefaultSoundFonts = true;
             }
         }
     }
@@ -336,9 +313,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             bool IsDLS = TempSoundFontFilePath.toLower().endsWith(".dls");
 
-            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, IsDLS });
+            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), _BASSMIDIVolume, (IsDLS ? 1 : _Container.GetBankOffset()), false, IsDLS });
 
-            UseSoundFonts = true;
+            HasNonDefaultSoundFonts = true;
         }
     }
 
@@ -367,7 +344,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         {
             // Force the use of a SoundFont player if an embedded or named SoundFont was found.
-            if ((_PlayerType != PlayerType::FluidSynth) && UseSoundFonts && !_SoundFonts.empty())
+            if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundFonts && !_SoundFonts.empty())
             {
                 _PlayerType = (FluidSynth::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
             }
@@ -1243,6 +1220,44 @@ uint32_t InputDecoder::GetDuration(size_t subSongIndex)
     }
 
     return LengthInMs;
+}
+
+/// <summary>
+/// Writes a buffer containing SoundFont data to a temporary file.
+/// </summary>
+bool InputDecoder::WriteSoundFontFile(const std::vector<uint8_t> data, bool isDLS, std::string & filePath) noexcept
+{
+    char TempPath[MAX_PATH] = {};
+
+    if (::GetTempPathA(_countof(TempPath), TempPath) == 0)
+        return false;
+
+    char TempFilePath[MAX_PATH] = {};
+
+    if (::GetTempFileNameA(TempPath, "SF-", 0, TempFilePath) == 0)
+        return false;
+
+    std::string FilePath = TempFilePath;
+
+    // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 extension. FluidSynth also supports DLS.
+    FilePath.append(isDLS ? ".dls" : ".sf2");
+
+    {
+        FILE * fp = nullptr;
+
+        if (::fopen_s(&fp, FilePath.c_str(), "wb") == 0)
+        {
+            ::fwrite(data.data(), data.size(), 1, fp);
+
+            ::fclose(fp);
+
+            filePath = FilePath;
+        }
+    }
+
+    ::DeleteFileA(TempFilePath);
+
+    return true;
 }
 
 /// <summary>

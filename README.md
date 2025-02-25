@@ -116,7 +116,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v2.16.0.0, 2025-02-24
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
-* New: Metadata XMF_META_FILE_VERSION, XMF_FILE_TYPE and XMF_FILE_TYPE_REVSION.
+* New: Metadata XMF_META_FILE_VERSION, XMF_FILE_TYPE and XMF_FILE_TYPE_REVISION.
 * Fixed: VSTi plugins did not load or save their configuration anymore (regression).
 * Fixed: VSTi plugins did not always show the correct name in the Preferences dialog (regression).
 
@@ -401,6 +401,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000121.shtml)
 * [FileFormats](http://fileformats.archiveteam.org/wiki/Extensible_Music_Format)
 * [MultimediaWiki](https://wiki.multimedia.cx/index.php/Extensible_Music_Format_(XMF))
+* [Introducing the Interactive XMF Audio File Format](https://www.gamedeveloper.com/audio/introducing-the-interactive-xmf-audio-file-format)
 * [XmfExtractor](https://github.com/benryves/XmfExtractor)
 
 ## Links

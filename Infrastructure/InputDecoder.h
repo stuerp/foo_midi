@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2024.09.29) **/
+/** $VER: InputDecoder.h (2025.02.25) **/
 
 #pragma once
 
@@ -235,6 +235,7 @@ private:
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
 
+    static bool WriteSoundFontFile(const std::vector<uint8_t> data, bool isDLS, std::string & filePath) noexcept;
     static bool GetSoundFontFilePath(const pfc::string & filePath, pfc::string & soundFontPath, abort_callback & abortHandler) noexcept;
 
 #ifdef DXISUPPORT
