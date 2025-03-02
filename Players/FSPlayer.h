@@ -35,23 +35,25 @@ public:
     uint32_t GetActiveVoiceCount() const noexcept;
 
 private:
-    #pragma region MIDIPlayer
+    #pragma region player_t
+
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
     virtual bool Reset() override;
 
-    virtual bool GetErrorMessage(std::string & errorMessage) override;
-
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
+
+    virtual bool GetErrorMessage(std::string & errorMessage) override;
+
     #pragma endregion
 
     fluid_sfloader_t * GetSoundFontLoader(fluid_settings_t * settings) const;
 
     bool IsStarted() const noexcept
     {
-        for (const auto & Synth : _Synth)
+        for (const auto & Synth : _Synths)
             if (Synth == nullptr)
                 return false;
 
@@ -61,8 +63,8 @@ private:
 private:
     std::string _ErrorMessage;
 
-    fluid_synth_t * _Synth[16];
-    fluid_settings_t * _Settings[_countof(_Synth)];
+    fluid_synth_t * _Synths[16];
+    fluid_settings_t * _Settings[_countof(_Synths)];
 
     pfc::string8 _SoundFontDirectoryPath;
     std::vector<soundfont_t> _SoundFonts;

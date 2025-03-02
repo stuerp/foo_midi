@@ -114,6 +114,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
+v2.16.1.0, 2025-03-xx
+* Improved: Support for XMF/MXMF files with raw deflated content.
+
 v2.16.0.0, 2025-02-24
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
 * New: Metadata XMF_META_FILE_VERSION, XMF_FILE_TYPE and XMF_FILE_TYPE_REVISION.

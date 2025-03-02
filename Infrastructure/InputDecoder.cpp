@@ -264,7 +264,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (WriteSoundFontFile(Data, IsDLS, FilePath))
             {
-                _SoundFonts.push_back({ FilePath, _BASSMIDIVolume, (IsDLS ? 1 : _Container.GetBankOffset()), true, IsDLS });
+                _SoundFonts.push_back({ FilePath, 1.f, (IsDLS ? 0 : _Container.GetBankOffset()), true, IsDLS });
 
                 HasNonDefaultSoundFonts = true;
             }
@@ -313,7 +313,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             bool IsDLS = TempSoundFontFilePath.toLower().endsWith(".dls");
 
-            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), _BASSMIDIVolume, (IsDLS ? 1 : _Container.GetBankOffset()), false, IsDLS });
+            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), 1.0f, (IsDLS ? 1 : _Container.GetBankOffset()), false, IsDLS });
 
             HasNonDefaultSoundFonts = true;
         }
@@ -536,7 +536,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (FluidSynthDirectoryPath.isEmpty())
             {
-                console::warning(STR_COMPONENT_BASENAME " is attempting to load the FluidSynth libraries from the plugin install path because the FluidSynth directory was not configured.");
+                console::warning(STR_COMPONENT_BASENAME " will attempt to load the FluidSynth libraries from the plugin install path because the FluidSynth directory path was not configured.");
 
                 FluidSynthDirectoryPath = core_api::get_my_full_path();
                 FluidSynthDirectoryPath.truncate(FluidSynthDirectoryPath.scan_filename());

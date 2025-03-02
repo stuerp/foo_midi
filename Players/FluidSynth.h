@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2024.08.29) **/
+/** $VER: FluidSynth.h (2025.03.01) **/
 
 #pragma once
 
@@ -22,8 +22,17 @@
 typedef char * (WINAPIV * _fluid_version_str)();
 
 typedef fluid_settings_t * (WINAPIV * _new_fluid_settings)();
+
 typedef int (WINAPIV * _fluid_settings_setnum)(fluid_settings_t * settings, const char * name, double val);
 typedef int (WINAPIV * _fluid_settings_setint)(fluid_settings_t * settings, const char * name, int val);
+typedef int (WINAPIV * _fluid_settings_setstr)(fluid_settings_t * settings, const char * name, const char * val);
+typedef int (WINAPIV * _fluid_settings_dupstr)(fluid_settings_t * settings, const char * name, char ** val);
+
+typedef int (WINAPIV * _fluid_settings_get_type)(fluid_settings_t * settings, const char * name);
+
+typedef int (WINAPIV * _fluid_settings_foreach)(fluid_settings_t * settings, void * data, fluid_settings_foreach_t func);
+
+typedef void (WINAPIV * _fluid_free)(void * data);
 typedef void (WINAPIV * _delete_fluid_settings)(fluid_settings_t * settings);
 
 typedef fluid_synth_t * (WINAPIV * _new_fluid_synth)(fluid_settings_t * settings);
@@ -58,6 +67,8 @@ typedef int (WINAPIV * _fluid_synth_bank_select)(fluid_synth_t * synth, int chan
 typedef int (WINAPIV * _fluid_synth_write_float)(fluid_synth_t * synth, int len, void * lout, int loff, int lincr, void * rout, int roff, int rincr);
 
 typedef int (WINAPIV * _fluid_synth_get_active_voice_count)(fluid_synth_t * synth);
+
+typedef fluid_settings_t * (WINAPIV * _fluid_synth_get_settings)(fluid_synth_t * synth);
 
 #define TOSTRING_IMPL(x) #x
 #define TOSTRING(x) TOSTRING_IMPL(x)
@@ -112,6 +123,14 @@ public:
 
         InitializeFunction(fluid_settings_setnum, SetNumericSetting);
         InitializeFunction(fluid_settings_setint, SetIntegerSetting);
+        InitializeFunction(fluid_settings_setstr, SetStringSetting);
+        InitializeFunction(fluid_settings_dupstr, GetStringSetting);
+    
+        InitializeFunction(fluid_settings_get_type, GetSettingType);
+
+        InitializeFunction(fluid_free, Free);
+        InitializeFunction(fluid_settings_foreach, ForEachSetting);
+
         InitializeFunction(delete_fluid_settings, DeleteSettings);
 
         InitializeFunction(new_fluid_synth, CreateSynthesizer);
@@ -145,6 +164,8 @@ public:
 
         InitializeFunction(fluid_synth_get_active_voice_count, GetActiveVoiceCount);
 
+        InitializeFunction(fluid_synth_get_settings, GetSettings);
+
         #pragma warning(default: 4191)
     }
 
@@ -168,8 +189,17 @@ public:
     _fluid_version_str GetVersion;
 
     _new_fluid_settings CreateSettings;
+
     _fluid_settings_setnum SetNumericSetting;
     _fluid_settings_setint SetIntegerSetting;
+    _fluid_settings_setstr SetStringSetting;
+    _fluid_settings_dupstr GetStringSetting;
+
+    _fluid_settings_get_type GetSettingType;
+
+    _fluid_settings_foreach ForEachSetting;
+
+    _fluid_free Free;
     _delete_fluid_settings DeleteSettings;
 
     _new_fluid_synth CreateSynthesizer;
@@ -202,6 +232,8 @@ public:
     _fluid_synth_write_float WriteFloat;
 
     _fluid_synth_get_active_voice_count GetActiveVoiceCount;
+
+    _fluid_synth_get_settings GetSettings;
 
 private:
     HMODULE _hModule;

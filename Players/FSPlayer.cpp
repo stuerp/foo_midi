@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2024.08.28) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.03.01) P. Stuer **/
 
 #include "framework.h"
 
@@ -9,7 +9,7 @@
 
 FSPlayer::FSPlayer() : player_t()
 {
-    ::memset(_Synth, 0, sizeof(_Synth));
+    ::memset(_Synths, 0, sizeof(_Synths));
     ::memset(_Settings, 0, sizeof(_Settings));
 
     _DoDynamicLoading = true;
@@ -79,7 +79,7 @@ void FSPlayer::SetInterpolationMode(uint32_t method)
     if (_InterpolationMode == method)
         return;
 
-    for (const auto & Synth : _Synth)
+    for (const auto & Synth : _Synths)
     {
         if (Synth != nullptr)
             _FluidSynth.SetInterpolationMethod(Synth, -1, (int) method);
@@ -92,7 +92,7 @@ uint32_t FSPlayer::GetActiveVoiceCount() const noexcept
 {
     uint32_t VoiceCount = 0;
 
-    for (const auto & Synth : _Synth)
+    for (const auto & Synth : _Synths)
     {
         if (Synth != nullptr)
             VoiceCount += _FluidSynth.GetActiveVoiceCount(Synth);
@@ -100,6 +100,63 @@ uint32_t FSPlayer::GetActiveVoiceCount() const noexcept
 
     return VoiceCount;
 }
+
+struct context_t
+{
+    FluidSynth * _FluidSynth;
+    fluid_settings_t * _Settings;
+};
+
+#pragma region player_t
+
+void Callback(void * data, const char * name, int type)
+{
+    switch (type)
+    {
+/*
+        case FLUID_NUM_TYPE:
+        {
+            double value;
+            fluid_settings_getnum(d->settings, name, &value);
+            fluid_ostream_printf(d->out, "%.3f\n", value);
+            break;
+        }
+
+        case FLUID_INT_TYPE:
+        {
+            int value, hints;
+            fluid_settings_getint(d->settings, name, &value);
+
+            if(fluid_settings_get_hints(d->settings, name, &hints) == FLUID_OK)
+            {
+                if(!(hints & FLUID_HINT_TOGGLED))
+                {
+                    fluid_ostream_printf(d->out, "%d\n", value);
+                }
+                else
+                {
+                    fluid_ostream_printf(d->out, "%s\n", value ? "True" : "False");
+                }
+            }
+
+            break;
+        }
+*/
+        case FLUID_STR_TYPE:
+        {
+            auto Context = (context_t *) data;
+
+            char * Value = nullptr;
+
+            Context->_FluidSynth->GetStringSetting(Context->_Settings, name, &Value);
+
+            console::printf("%s: %s", name, Value);
+
+            Context->_FluidSynth->Free(Value);
+            break;
+        }
+    }
+};
 
 bool FSPlayer::Startup()
 {
@@ -110,7 +167,7 @@ bool FSPlayer::Startup()
         return true;
 
     // Create the settings.
-    int i = 0;
+    size_t i = 0;
 
     for (auto & Setting : _Settings)
     {
@@ -142,6 +199,18 @@ bool FSPlayer::Startup()
         // Defines how many voices can be played in parallel.
         _FluidSynth.SetIntegerSetting(Setting, "synth.polyphony", (int ) _VoiceCount);
 
+//      char * Value = nullptr; _FluidSynth.GetDefaultStringSetting(Setting, "synth.midi-bank-select", &Value);
+
+        /*
+         This setting defines how the synthesizer interprets Bank Select messages.
+
+            gs: (default) CC0 becomes the bank number, CC32 is ignored.
+            gm: ignores CC0 and CC32 messages.
+            mma: bank is calculated as CC0*128+CC32.
+            xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum and the bank number is set to 128 (CC32 is ignored). Otherwise the channel is set to melodic and CC32 is the bank number.
+        */
+        _FluidSynth.SetStringSetting(Setting, "synth.midi-bank-select", "mma");
+
         ++i;
     }
 
@@ -159,17 +228,17 @@ bool FSPlayer::Startup()
             return false;
         }
 
-        _Synth[i] = _FluidSynth.CreateSynthesizer(Setting);
+        _Synths[i] = _FluidSynth.CreateSynthesizer(Setting);
 
-        if (_Synth[i] == nullptr)
+        if (_Synths[i] == nullptr)
         {
             _ErrorMessage = "Out of memory";
 
             return false;
         }
 
-        _FluidSynth.AddSoundFontLoader(_Synth[i], Loader);
-        _FluidSynth.SetInterpolationMethod(_Synth[i], -1, (int) _InterpolationMode);
+        _FluidSynth.AddSoundFontLoader(_Synths[i], Loader);
+        _FluidSynth.SetInterpolationMethod(_Synths[i], -1, (int) _InterpolationMode);
 
         ++i;
     }
@@ -178,7 +247,7 @@ bool FSPlayer::Startup()
     {
         for (const auto & sf : _SoundFonts)
         {
-            for (const auto & Synth : _Synth)
+            for (const auto & Synth : _Synths)
             {
                 int SoundFontId = _FluidSynth.LoadSoundFont(Synth, sf.FilePath().c_str(), TRUE);
 
@@ -195,17 +264,28 @@ bool FSPlayer::Startup()
             }
         }
     }
+/*
+    if (_Synths[0])
+    {
+        auto Settings = _FluidSynth.GetSettings(_Synths[0]);
 
+        context_t Context = { &_FluidSynth, Settings };
+
+        _FluidSynth.ForEachSetting(Settings, &Context, Callback);
+    }
+*/
     _ErrorMessage = "";
 
     _IsInitialized = true;
+
+    Configure(_MIDIFlavor, _FilterEffects);
 
     return true;
 }
 
 void FSPlayer::Shutdown()
 {
-    for (auto & Synth : _Synth)
+    for (auto & Synth : _Synths)
     {
         if (Synth != nullptr)
         {
@@ -226,68 +306,6 @@ void FSPlayer::Shutdown()
     _IsInitialized = false;
 }
 
-void FSPlayer::SendEvent(uint32_t message)
-{
-    int PortNumber = (int) ((message >> 24) & 0x7F);
-    int Param2     = (int) ((message >> 16) & 0xFF);
-    int Param1     = (int) ((message >>  8) & 0xFF);
-    int Code       = (int)  (message        & 0xF0);
-    int Channel    = (int)  (message        & 0x0F);
-
-    if (PortNumber >= (int) _countof(_Synth))
-        PortNumber = 0;
-
-    switch (Code)
-    {
-        case StatusCodes::NoteOff:
-            _FluidSynth.NoteOff(_Synth[PortNumber], Channel, Param1);
-            break;
-
-        case StatusCodes::NoteOn:
-            _FluidSynth.NoteOn(_Synth[PortNumber], Channel, Param1, Param2);
-            break;
-
-        case StatusCodes::KeyPressure:
-            break;
-
-        case StatusCodes::ControlChange:
-            _FluidSynth.ControlChange(_Synth[PortNumber], Channel, Param1, Param2);
-            break;
-
-        case StatusCodes::ProgramChange:
-            _FluidSynth.ProgramChange(_Synth[PortNumber], Channel, Param1);
-            break;
-
-        case StatusCodes::ChannelPressure:
-            _FluidSynth.ChannelPressure(_Synth[PortNumber], Channel, Param1);
-            break;
-
-        case StatusCodes::PitchBendChange:
-            _FluidSynth.PitchBend(_Synth[PortNumber], Channel, (Param2 << 7) | Param1);
-            break;
-    }
-}
-
-void FSPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
-{
-    if ((data != nullptr) && (size > 2) && (data[0] == StatusCodes::SysEx) && (data[size - 1] == StatusCodes::SysExEnd))
-    {
-        ++data;
-        size -= 2;
-
-        if (portNumber >= _countof(_Synth))
-            portNumber = 0;
-
-        if (portNumber == 0)
-        {
-            for (const auto & Synth : _Synth)
-                _FluidSynth.SysEx(Synth, (const char *) data, (int) size, NULL, NULL, NULL, 0);
-        }
-        else
-            _FluidSynth.SysEx(_Synth[portNumber], (const char *) data, (int) size, NULL, NULL, NULL, 0);
-    }
-}
-
 void FSPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     ::memset(sampleData, 0, ((size_t) sampleCount * 2) * sizeof(audio_sample));
@@ -303,7 +321,7 @@ void FSPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         if (ToDo > 512)
             ToDo = 512;
 
-        for (const auto & Synth : _Synth)
+        for (const auto & Synth : _Synths)
         {
             ::memset(Data, 0, sizeof(Data));
 
@@ -328,7 +346,7 @@ bool FSPlayer::Reset()
 
     uint8_t PortNumber = 0;
 
-    for (const auto & Synth : _Synth)
+    for (const auto & Synth : _Synths)
     {
         if (Synth != nullptr)
         {
@@ -342,7 +360,81 @@ bool FSPlayer::Reset()
         ++PortNumber;
     }
 
-    return (ResetCount == _countof(_Synth));
+    return (ResetCount == _countof(_Synths));
+}
+
+/// <summary>
+/// Sends a message to the library.
+/// </summary>
+void FSPlayer::SendEvent(uint32_t message)
+{
+    int PortNumber = (int) ((message >> 24) & 0x7F);
+    int Param2     = (int) ((message >> 16) & 0xFF);
+    int Param1     = (int) ((message >>  8) & 0xFF);
+    int Code       = (int)  (message        & 0xF0);
+    int Channel    = (int)  (message        & 0x0F);
+
+    if (PortNumber >= (int) _countof(_Synths))
+        PortNumber = 0;
+
+    switch (Code)
+    {
+        case StatusCodes::NoteOff:
+            _FluidSynth.NoteOff(_Synths[PortNumber], Channel, Param1);
+            break;
+
+        case StatusCodes::NoteOn:
+            _FluidSynth.NoteOn(_Synths[PortNumber], Channel, Param1, Param2);
+            break;
+
+        case StatusCodes::KeyPressure:
+            break;
+
+        case StatusCodes::ControlChange:
+            _FluidSynth.ControlChange(_Synths[PortNumber], Channel, Param1, Param2);
+            break;
+
+        case StatusCodes::ProgramChange:
+            _FluidSynth.ProgramChange(_Synths[PortNumber], Channel, Param1);
+            break;
+
+        case StatusCodes::ChannelPressure:
+            _FluidSynth.ChannelPressure(_Synths[PortNumber], Channel, Param1);
+            break;
+
+        case StatusCodes::PitchBendChange:
+            _FluidSynth.PitchBend(_Synths[PortNumber], Channel, (Param2 << 7) | Param1);
+            break;
+    }
+}
+
+/// <summary>
+/// Sends a SysEx message to the library.
+/// </summary>
+void FSPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
+{
+    if ((data != nullptr) && (size > 2) && (data[0] == StatusCodes::SysEx) && (data[size - 1] == StatusCodes::SysExEnd))
+    {
+/** Filter GM2 On events
+        const uint8_t GM2[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
+
+        if (::memcmp(data, GM2, _countof(GM2)) == 0)
+            return;
+**/
+        ++data;
+        size -= 2;
+
+        if (portNumber >= _countof(_Synths))
+            portNumber = 0;
+
+        if (portNumber == 0)
+        {
+            for (const auto & Synth : _Synths)
+                _FluidSynth.SysEx(Synth, (const char *) data, (int) size, NULL, NULL, NULL, 0);
+        }
+        else
+            _FluidSynth.SysEx(_Synths[portNumber], (const char *) data, (int) size, NULL, NULL, NULL, 0);
+    }
 }
 
 bool FSPlayer::GetErrorMessage(std::string & errorMessage)
@@ -357,11 +449,13 @@ bool FSPlayer::GetErrorMessage(std::string & errorMessage)
     return false;
 }
 
+#pragma endregion
+
 static void * HandleOpen(const char * filePath) noexcept
 {
     try
     {
-        pfc::string8 FilePath = "";
+        pfc::string FilePath = "";
 
         if (::strstr(filePath, "://") == 0)
             FilePath = "file://";

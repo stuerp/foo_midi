@@ -639,10 +639,11 @@ bool player_t::FilterEffect(uint32_t data) const noexcept
 
 #pragma region SysEx
 
-static const uint8_t SysExResetGM[]         = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-static const uint8_t SysExResetGM2[]        = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-static const uint8_t SysExResetGS[]         = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const uint8_t SysExResetXG[]         = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
+static const uint8_t SysExEnableGM1[]       = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
+static const uint8_t SysExDisableGM1[]      = { 0xF0, 0x7E, 0x7F, 0x09, 0x02, 0xF7 };
+static const uint8_t SysExEnableGM2[]       = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
+static const uint8_t SysExEnableGS[]        = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
+static const uint8_t SysExEnableXG[]        = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
 
 static const uint8_t SysExGSToneMapNumber[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x41, 0x00, 0x03, 0x00, 0xF7 };
 
@@ -681,52 +682,60 @@ void player_t::SendSysExReset(uint8_t portNumber, uint32_t time)
 
     if (time != 0)
     {
-        SendSysEx(SysExResetXG, sizeof(SysExResetXG), portNumber, time);
-        SendSysEx(SysExResetGM2, sizeof(SysExResetGM2), portNumber, time);
-        SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber, time);
+        SendSysEx(SysExEnableXG, _countof(SysExEnableXG), portNumber, time);
+        SendSysEx(SysExEnableGM2, _countof(SysExEnableGM2), portNumber, time);
+        SendSysEx(SysExEnableGM1, _countof(SysExEnableGM1), portNumber, time);
     }
     else
     {
-        SendSysEx(SysExResetXG, sizeof(SysExResetXG), portNumber);
-        SendSysEx(SysExResetGM2, sizeof(SysExResetGM2), portNumber);
-        SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber);
+        SendSysEx(SysExEnableXG, _countof(SysExEnableXG), portNumber);
+        SendSysEx(SysExEnableGM2, _countof(SysExEnableGM2), portNumber);
+        SendSysEx(SysExEnableGM1, _countof(SysExEnableGM1), portNumber);
     }
 
     switch (_MIDIFlavor)
     {
         case MIDIFlavor::GM:
+        {
             if (time != 0)
-                SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber, time);
+                SendSysEx(SysExEnableGM1, _countof(SysExEnableGM1), portNumber, time);
             else
-                SendSysEx(SysExResetGM, sizeof(SysExResetGM), portNumber);
+                SendSysEx(SysExEnableGM1, _countof(SysExEnableGM1), portNumber);
             break;
+        }
 
         case MIDIFlavor::GM2:
+        {
             if (time != 0)
-                SendSysEx(SysExResetGM2, sizeof(SysExResetGM2), portNumber, time);
+                SendSysEx(SysExEnableGM2, _countof(SysExEnableGM2), portNumber, time);
             else
-                SendSysEx(SysExResetGM2, sizeof(SysExResetGM2), portNumber);
+                SendSysEx(SysExEnableGM2, _countof(SysExEnableGM2), portNumber);
             break;
+        }
 
         case MIDIFlavor::SC55:
         case MIDIFlavor::SC88:
         case MIDIFlavor::SC88Pro:
         case MIDIFlavor::SC8850:
         case MIDIFlavor::None:
+        {
             if (time != 0)
-                SendSysEx(SysExResetGS, sizeof(SysExResetGS), portNumber, time);
+                SendSysEx(SysExEnableGS, _countof(SysExEnableGS), portNumber, time);
             else
-                SendSysEx(SysExResetGS, sizeof(SysExResetGS), portNumber);
+                SendSysEx(SysExEnableGS, _countof(SysExEnableGS), portNumber);
 
             SendSysExSetToneMapNumber(portNumber, time);
             break;
+        }
 
         case MIDIFlavor::XG:
+        {
             if (time != 0)
-                SendSysEx(SysExResetXG, sizeof(SysExResetXG), portNumber, time);
+                SendSysEx(SysExEnableXG, _countof(SysExEnableXG), portNumber, time);
             else
-                SendSysEx(SysExResetXG, sizeof(SysExResetXG), portNumber);
+                SendSysEx(SysExEnableXG, _countof(SysExEnableXG), portNumber);
             break;
+        }
     }
 
     {
@@ -804,7 +813,7 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
 {
     uint8_t Data[11] = { 0 };
 
-    ::memcpy(Data, SysExGSToneMapNumber, sizeof(Data));
+    ::memcpy(Data, SysExGSToneMapNumber, _countof(Data));
 
     Data[7] = 1; // Tone Map-0 Number
 
@@ -837,18 +846,18 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
     for (uint8_t i = 0x41; i <= 0x49; ++i)
     {
         Data[6] = i;
-        SendSysExGS(Data, sizeof(Data), portNumber, time);
+        SendSysExGS(Data, _countof(Data), portNumber, time);
     }
 
     {
         Data[6] = 0x40;
-        SendSysExGS(Data, sizeof(Data), portNumber, time);
+        SendSysExGS(Data, _countof(Data), portNumber, time);
     }
 
     for (uint8_t i = 0x4A; i <= 0x4F; ++i)
     {
         Data[6] = i;
-        SendSysExGS(Data, sizeof(Data), portNumber, time);
+        SendSysExGS(Data, _countof(Data), portNumber, time);
     }
 }
 
@@ -873,7 +882,7 @@ void player_t::SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint
 
 static bool IsSysExReset(const uint8_t * data)
 {
-    return IsSysExEqual(data, SysExResetGM) || IsSysExEqual(data, SysExResetGM2) || IsSysExEqual(data, SysExResetGS) || IsSysExEqual(data, SysExResetXG);
+    return IsSysExEqual(data, SysExEnableGM1) || IsSysExEqual(data, SysExEnableGM2) || IsSysExEqual(data, SysExEnableGS) || IsSysExEqual(data, SysExEnableXG);
 }
 
 static bool IsSysExEqual(const uint8_t * a, const uint8_t * b)
