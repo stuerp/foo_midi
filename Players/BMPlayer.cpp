@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2024.09.08) **/
+/** $VER: BMPlayer.cpp (2025.03.07) **/
 
 #include "framework.h"
 
@@ -14,6 +14,7 @@
 
 #include <map>
 #include <time.h>
+#include <filesystem>
 
 static BASSInitializer _BASSInitializer;
 
@@ -129,25 +130,22 @@ bool BMPlayer::Startup()
 
     std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
 
-    if (!_SoundFonts.empty())
+    for (const auto & sf : _SoundFonts)
     {
-        for (const auto & sf : _SoundFonts)
+        if (!LoadSoundFontConfiguration(sf, SoundFontConfigurations))
         {
-            if (!LoadSoundFontConfiguration(sf, SoundFontConfigurations))
-            {
-                _ErrorMessage = "Unable to load configuration for soundfont \"" + sf.FilePath() + "\"";
+            _ErrorMessage = "Unable to load configuration for soundfont \"" + sf.FilePath() + "\"";
 
-                return false;
-            }
+            return false;
         }
     }
 
-    const DWORD MIDIChannelCount = 16;
+    const DWORD ChannelsPerStream = 32;
     const DWORD Flags = (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_DoReverbAndChorusProcessing ? 0 : BASS_MIDI_NOFX));
 
     for (auto & Stream : _Stream)
     {
-        Stream = ::BASS_MIDI_StreamCreate(MIDIChannelCount, Flags, (DWORD) _SampleRate);
+        Stream = ::BASS_MIDI_StreamCreate(ChannelsPerStream, Flags, (DWORD) _SampleRate);
 
         if (Stream == 0)
         {
@@ -291,6 +289,61 @@ bool BMPlayer::GetErrorMessage(std::string & errorMessage)
 /// </summary>
 bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
 {
+    std::filesystem::path FilePath(soundFont.FilePath());
+
+    if (IsOneOf(FilePath.extension().string(), { ".sf2", ".sf3", ".sf2pack", ".sfogg" }))
+    {
+        HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath());
+
+        if (hSoundFont == 0)
+        {
+            Shutdown();
+
+            _ErrorMessage = "Unable to load SoundFont \"" + soundFont.FilePath() + "\"";
+
+            return false;
+        }
+
+        _SoundFontHandles.push_back(hSoundFont);
+
+        ::BASS_MIDI_FontSetVolume(hSoundFont, soundFont.Volume());
+
+        BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, soundFont.BankOffset(), 0 }; // Load the whole sound font.
+
+        soundFontConfigurations.push_back(fex);
+
+        return true;
+    }
+
+    if (IsOneOf(FilePath.extension().string(), { ".sflist", ".json" }))
+    {
+        sflist_t ** SFList = &_SFList[0];
+
+        if (*SFList)
+            SFList = &_SFList[1];
+
+        *SFList = ::CacheAddSoundFontList(soundFont.FilePath());
+
+        if (!*SFList)
+            return false;
+
+        BASS_MIDI_FONTEX * fex = (*SFList)->FontEx;
+
+        for (size_t i = 0, j = (*SFList)->Count; i < j; ++i)
+            soundFontConfigurations.push_back(fex[i]);
+
+        return true;
+    }
+
+    return false;
+}
+
+#ifdef Old
+/// <summary>
+/// Loads the configuration from the specified soundfont.
+/// </summary>
+bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
+{
     std::string FileExtension;
 
     size_t dot = soundFont.FilePath().find_last_of('.');
@@ -300,7 +353,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
 
     if ((::stricmp_utf8(FileExtension.c_str(), "sf2") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf3") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf2pack") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sfogg") == 0))
     {
-        HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath().c_str());
+        HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath());
 
         if (hSoundFont == 0)
         {
@@ -375,7 +428,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
         if (*SFList)
             SFList = &_SFList[1];
 
-        *SFList = ::CacheAddSoundFontList(soundFont.FilePath().c_str());
+        *SFList = ::CacheAddSoundFontList(soundFont.FilePath());
 
         if (!*SFList)
             return false;
@@ -390,6 +443,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
 
     return false;
 }
+#endif
 
 /// <summary>
 /// Sets the bank override, if any, for all channels of all streams.
@@ -439,6 +493,20 @@ void BMPlayer::CompoundPresets(std::vector<BASS_MIDI_FONTEX> & src, std::vector<
         for (auto & sf : src)
             dst.push_back(sf);
     }
+}
+
+/// <summary>
+/// Returns true if the string matches on of the list.
+/// </summary>
+bool BMPlayer::IsOneOf(const std::string & ext, const std::vector<std::string> & extensions)
+{
+    for (const auto & Extension : extensions)
+    {
+        if (::stricmp_utf8(ext.c_str(), Extension.c_str()) == 0)
+            return true;
+    }
+
+    return false;
 }
 
 #pragma endregion

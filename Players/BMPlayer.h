@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2024.09.08) **/
+/** $VER: BMPlayer.h (2025.03.07) **/
 
 #pragma once
 
@@ -17,6 +17,7 @@ struct sflist_t;
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 /// <summary>
 /// Implements a MIDI player using BASS MIDI.
 /// </summary>
@@ -62,6 +63,8 @@ private:
         return true;
     }
 
+    static bool IsOneOf(const std::string & ext, const std::vector<std::string> & extensions);
+
 private:
     static const uint32_t MaxSamples = 512;
     static const uint32_t ChannelCount = 2;
@@ -87,4 +90,5 @@ private:
     bool _DoReverbAndChorusProcessing;
     bool _IgnoreCC32; // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

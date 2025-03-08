@@ -116,6 +116,8 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v2.16.1.0, 2025-03-xx
 * Improved: Support for XMF/MXMF files with raw deflated content.
+* Improved: Tweaked the handling of embedded sound fonts for BASS MIDI again.
+  * The [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification) example files seem to work now.
 
 v2.16.0.0, 2025-02-24
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
