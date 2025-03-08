@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.03.02) P. Stuer **/
+/** $VER: Resource.h (2025.03.08) P. Stuer **/
 
 #pragma once
 
@@ -9,7 +9,7 @@
 /** Component specific **/
 
 #define STR_COMPONENT_NAME          "MIDI Player"
-#define STR_COMPONENT_VERSION       TOSTRING(NUM_FILE_MAJOR) "." TOSTRING(NUM_FILE_MINOR) "." TOSTRING(NUM_FILE_PATCH) "." TOSTRING(NUM_FILE_PRERELEASE)
+#define STR_COMPONENT_VERSION       TOSTRING(NUM_FILE_MAJOR) "." TOSTRING(NUM_FILE_MINOR) "." TOSTRING(NUM_FILE_PATCH) "." TOSTRING(NUM_FILE_PRERELEASE) "-alpha1"
 #define STR_COMPONENT_BASENAME      "foo_midi"
 #define STR_COMPONENT_FILENAME      STR_COMPONENT_BASENAME ".dll"
 #define STR_COMPONENT_COMPANY_NAME  "LoSno.co"

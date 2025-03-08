@@ -1,5 +1,5 @@
 
-/** $VER: SoundFontCache.h (2024.08.25) **/
+/** $VER: SoundFontCache.h (2024.08.25) - Sound font cache for the BASSMIDI player **/
 
 #pragma once
 

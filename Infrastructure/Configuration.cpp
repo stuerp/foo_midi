@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2025.02.23) **/
+/** $VER: Configuration.cpp (2025.03.08) **/
 
 #include "framework.h"
 
@@ -268,6 +268,9 @@ const char * _SysExFileExtensions[] =
 
 const size_t _SysExFileExtensionCount = _countof(_SysExFileExtensions);
 
+/// <summary>
+/// Returns true if the specified file extension is recognized as a MIDI file.
+/// </summary>
 bool IsMIDIFileExtension(const char * fileExtension)
 {
     for (size_t i = 0; i < _FileExtensionCount; ++i)
@@ -279,6 +282,9 @@ bool IsMIDIFileExtension(const char * fileExtension)
     return false;
 }
 
+/// <summary>
+/// Returns true if the specified file extension is recognized as a SysEx file.
+/// </summary>
 bool IsSysExFileExtension(const char * fileExtension)
 {
     for (size_t i = 0; i < _SysExFileExtensionCount; ++i)

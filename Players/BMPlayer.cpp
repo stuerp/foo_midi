@@ -291,7 +291,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
 {
     std::filesystem::path FilePath(soundFont.FilePath());
 
-    if (IsOneOf(FilePath.extension().string(), { ".sf2", ".sf3", ".sf2pack", ".sfogg" }))
+    if (IsOneOf(FilePath.extension(), { L".sf2", L".sf3", L".sf2pack", L".sfogg" }))
     {
         HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath());
 
@@ -315,7 +315,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
         return true;
     }
 
-    if (IsOneOf(FilePath.extension().string(), { ".sflist", ".json" }))
+    if (IsOneOf(FilePath.extension(), { L".sflist", L".json" }))
     {
         sflist_t ** SFList = &_SFList[0];
 
@@ -498,11 +498,11 @@ void BMPlayer::CompoundPresets(std::vector<BASS_MIDI_FONTEX> & src, std::vector<
 /// <summary>
 /// Returns true if the string matches on of the list.
 /// </summary>
-bool BMPlayer::IsOneOf(const std::string & ext, const std::vector<std::string> & extensions)
+bool BMPlayer::IsOneOf(const std::wstring & ext, const std::vector<std::wstring> & extensions)
 {
     for (const auto & Extension : extensions)
     {
-        if (::stricmp_utf8(ext.c_str(), Extension.c_str()) == 0)
+        if (::_wcsicmp(ext.c_str(), Extension.c_str()) == 0)
             return true;
     }
 

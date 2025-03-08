@@ -63,7 +63,7 @@ private:
         return true;
     }
 
-    static bool IsOneOf(const std::string & ext, const std::vector<std::string> & extensions);
+    static bool IsOneOf(const std::wstring & ext, const std::vector<std::wstring> & extensions);
 
 private:
     static const uint32_t MaxSamples = 512;

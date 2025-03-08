@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2025.02.25) **/
+/** $VER: InputDecoder.cpp (2025.03.08) **/
 
 #include "framework.h"
 
@@ -12,10 +12,11 @@
 #include <pfc/string-conv-lite.h>
 
 #include "KaraokeProcessor.h"
-#include "Exceptions.h"
+#include "SoundFonts.h"
 
 #include <math.h>
 #include <string.h>
+#include <filesystem>
 
 #include <Encoding.h>
 
@@ -236,7 +237,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
-    // Delete all embedded SoundFont files from a previous run.
+    // Delete all embedded sound font files from a previous run.
     {
         for (const auto & sf : _SoundFonts)
         {
@@ -247,9 +248,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         _SoundFonts.clear();
     }
 
-    /** IMPORTANT: The following sequence of adding SoundFonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
+    /** IMPORTANT: The following sequence of adding sound fonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
 
-    bool HasNonDefaultSoundFonts = false; // True if an embedded or named SoundFont is found.
+    bool HasNonDefaultSoundFonts = false; // True if an embedded or named sound font is found.
     bool HasDLS = false;
 
     // First, add the embedded sound font, if present.
@@ -343,7 +344,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         _PlayerType = Preset._PlayerType;
 
         {
-            // Force the use of a SoundFont player if an embedded or named SoundFont was found.
+            // Force the use of a sound font player if an embedded or named sound font was found.
             if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundFonts && !_SoundFonts.empty())
             {
                 _PlayerType = (FluidSynth::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
@@ -380,7 +381,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
-    // Show which SoundFonts we'll be using in the console.
+    // Show which sound fonts we'll be using in the console.
     {
         if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
         {
@@ -388,7 +389,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 std::reverse(_SoundFonts.begin(), _SoundFonts.end());
 
             for (const auto & sf : _SoundFonts)
-                console::print(STR_COMPONENT_BASENAME, " uses SoundFont \"", sf.FilePath().c_str(), "\" with bank offset ", sf.BankOffset(), ".");
+                console::print(STR_COMPONENT_BASENAME, " uses sound font \"", sf.FilePath().c_str(), "\" with bank offset ", sf.BankOffset(), ".");
         }
     }
 
@@ -529,7 +530,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _PeakVoiceCount = 0;
 
                 if (_SoundFonts.empty())
-                    throw midi::exception_t("No compatible SoundFonts found.");
+                    throw midi::exception_t("No compatible sound fonts found.");
             }
 
             pfc::string FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
@@ -627,7 +628,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     _PeakVoiceCount = 0;
 
                     if (_SoundFonts.empty())
-                        throw midi::exception_t("No compatible SoundFonts found.");
+                        throw midi::exception_t("No compatible sound fonts found.");
                 }
 
                 auto Player = new BMPlayer;
@@ -1222,99 +1223,9 @@ uint32_t InputDecoder::GetDuration(size_t subSongIndex)
     return LengthInMs;
 }
 
-/// <summary>
-/// Writes a buffer containing SoundFont data to a temporary file.
-/// </summary>
-bool InputDecoder::WriteSoundFontFile(const std::vector<uint8_t> data, bool isDLS, std::string & filePath) noexcept
-{
-    char TempPath[MAX_PATH] = {};
-
-    if (::GetTempPathA(_countof(TempPath), TempPath) == 0)
-        return false;
-
-    char TempFilePath[MAX_PATH] = {};
-
-    if (::GetTempFileNameA(TempPath, "SF-", 0, TempFilePath) == 0)
-        return false;
-
-    std::string FilePath = TempFilePath;
-
-    // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 extension. FluidSynth also supports DLS.
-    FilePath.append(isDLS ? ".dls" : ".sf2");
-
-    {
-        FILE * fp = nullptr;
-
-        if (::fopen_s(&fp, FilePath.c_str(), "wb") == 0)
-        {
-            ::fwrite(data.data(), data.size(), 1, fp);
-
-            ::fclose(fp);
-
-            filePath = FilePath;
-        }
-    }
-
-    ::DeleteFileA(TempFilePath);
-
-    return true;
-}
-
-/// <summary>
-/// Gets the path name of the matching SoundFont file for the specified file, if any.
-/// </summary>
-bool InputDecoder::GetSoundFontFilePath(const pfc::string & filePath, pfc::string & soundFontPath, abort_callback & abortHandler) noexcept
-{
-    static const char * FileExtensions[] =
-    {
-        "json",
-        "sflist",
-        "sf2pack",
-        "sfogg",
-        "sf2",
-        "sf3",
-        "dls"
-    };
-
-    soundFontPath = filePath;
-
-    const char * Period = ::strrchr(soundFontPath.c_str(), '.');
-
-    if (Period == nullptr)
-        return false;
-
-    for (const char * & FileExtension : FileExtensions)
-    {
-        soundFontPath.truncate((Period - soundFontPath.c_str()) + (size_t) 1);
-        soundFontPath += FileExtension;
-
-        if (filesystem::g_exists(soundFontPath, abortHandler))
-            return true;
-    }
-
-    return false;
-}
-
 #pragma endregion
 
 #pragma region Tags
-
-/// <summary>
-/// Changes the extension of the file name in the specified file path.
-/// </summary>
-static pfc::string ChangeExtension(const pfc::string & filePath, const pfc::string & fileExtension)
-{
-    char FilePath[MAX_PATH];
-
-    ::strcpy_s(FilePath, _countof(FilePath), filePath);
-
-    char * FileExtension = ::strrchr(FilePath, '.');
-
-    if (FileExtension != nullptr)
-        ::strcpy_s(FileExtension + 1, _countof(FilePath) - (FileExtension - FilePath) - 1, fileExtension.c_str());
-
-    return pfc::string(FilePath);
-}
 
 /// <summary>
 /// Converts the MIDI metadata to tags.
@@ -1380,11 +1291,13 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
     // Read a WRD file in the same path and convert it to lyrics.
     {
-        pfc::string FilePath = ChangeExtension(_FilePath, "wrd");
+        std::filesystem::path FilePath(_FilePath.c_str());
+
+        FilePath.replace_extension(L".wrd");
 
         FILE * fp = nullptr;
 
-        ::fopen_s(&fp, FilePath.c_str(), "r");
+        ::_wfopen_s(&fp, FilePath.c_str(), L"r");
 
         if (fp != nullptr)
         {
