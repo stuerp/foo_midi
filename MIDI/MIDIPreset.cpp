@@ -303,7 +303,7 @@ void MIDIPreset::Deserialize(const char * text)
     uint32_t NukeBank = 0;
     bool NukeUsePanning = false;
 
-    MIDIFlavor Flavor = MIDIFlavor::None;
+    MIDIFlavor Flavor = MIDIFlavor::Default;
 
     bool UseMIDIEffects = false;
     bool UseSuperMuntWithMT32 = false;
@@ -510,7 +510,7 @@ void MIDIPreset::Deserialize(const char * text)
             Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
             if (Flavor > MIDIFlavor::XG)
-                Flavor = MIDIFlavor::None;
+                Flavor = MIDIFlavor::Default;
 
             GetValue(Separator, text);
             UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));

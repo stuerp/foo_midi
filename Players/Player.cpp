@@ -619,7 +619,7 @@ bool player_t::FilterEvent(uint32_t data) noexcept
     const uint8_t StatusCode = data & 0xF0;
     const uint8_t Channel = data & 0x0F;
 
-    // Filter out all Note On events for the disabled channels.
+    // Filter Note On events for the disabled channels.
     return ((StatusCode == StatusCodes::NoteOn) && (((uint16_t) _EnabledChannels[Port] & (1U << Channel)) == 0));
 }
 
@@ -657,7 +657,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
 {
     SendSysEx(data, size, portNumber);
 
-    if (IsSysExReset(data) && (_MIDIFlavor != MIDIFlavor::None))
+    if (IsSysExReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
         SendSysExReset(portNumber, 0);
 }
 
@@ -668,7 +668,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
 {
     SendSysEx(data, size, portNumber, time);
 
-    if (IsSysExReset(data) && (_MIDIFlavor != MIDIFlavor::None))
+    if (IsSysExReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
         SendSysExReset(portNumber, time);
 }
 
@@ -717,7 +717,7 @@ void player_t::SendSysExReset(uint8_t portNumber, uint32_t time)
         case MIDIFlavor::SC88:
         case MIDIFlavor::SC88Pro:
         case MIDIFlavor::SC8850:
-        case MIDIFlavor::None:
+        case MIDIFlavor::Default:
         {
             if (time != 0)
                 SendSysEx(SysExEnableGS, _countof(SysExEnableGS), portNumber, time);
@@ -832,7 +832,7 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
             break;
 
         case MIDIFlavor::SC8850:
-        case MIDIFlavor::None:
+        case MIDIFlavor::Default:
             Data[8] = 4;
             break;
 

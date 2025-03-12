@@ -41,6 +41,7 @@ private:
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
+    virtual bool Reset() override;
 
     virtual void SendEvent(uint32_t b) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
@@ -56,7 +57,7 @@ private:
 
     bool IsStarted() const noexcept
     {
-        for (const auto & Stream : _Stream)
+        for (const auto & Stream : _Streams)
             if (Stream == 0)
                 return false;
 
@@ -76,7 +77,9 @@ private:
     std::vector<HSOUNDFONT> _SoundFontHandles;
     sflist_t * _SFList[2];
 
-    HSTREAM _Stream[16]; // Each stream corresponds to a port.
+    static const size_t MaxPorts = 16;
+
+    HSTREAM _Streams[MaxPorts]; // Each stream corresponds to a port.
 
     std::string _SoundFontDirectoryPath;
     std::vector<soundfont_t> _SoundFonts;
@@ -85,7 +88,9 @@ private:
     uint32_t _InterpolationMode;
     uint32_t _VoiceCount;
 
-    uint8_t _BankLSBOverride[_countof(_Stream) * 16]; // No. of streams times 16 channels
+    static const size_t MaxChannels = 16;
+
+    uint8_t _BankLSBOverride[_countof(_Streams) * MaxChannels]; // No. of streams times 16 channels
 
     bool _DoReverbAndChorusProcessing;
     bool _IgnoreCC32; // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.

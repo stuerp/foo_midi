@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2024.09.29) **/
+/** $VER: Configuration.h (2025.03.09) **/
 
 #pragma once
 
@@ -58,13 +58,16 @@ enum class LoopType
 
 enum class MIDIFlavor
 {
-    None = 0,
+    Default = 0,                        // Defaults to SC88.
+
     GM,
     GM2,
+
     SC55,
     SC88,
     SC88Pro,
     SC8850,
+
     XG
 };
 
@@ -81,7 +84,7 @@ enum
     DefaultDetectXMILoops = 1,
     DefaultDetectFF7Loops = 1,
 
-    DefaultMIDIFlavor = MIDIFlavor::None,
+    DefaultMIDIFlavor = MIDIFlavor::Default,
     DefaultUseMIDIEffects = 1,
     DefaultUseSuperMuntWithMT32 = 1,
     DefaultUseVSTiWithXG = 0,

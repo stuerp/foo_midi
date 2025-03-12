@@ -118,6 +118,9 @@ v2.16.1.0, 2025-03-xx
 * Improved: Support for XMF/MXMF files with raw deflated content.
 * Improved: Tweaked the handling of embedded sound fonts for BASS MIDI again.
   * The [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification) example files seem to work now.
+* Fixed: A pending SysEx message would get skipped when the next event used the running status.
+* Fixed: More Multi Port MIDI files play correctly now
+  * MIDI Port messages are now inserted at the start of a sequence of events with the same timestamp to make sure they occur before any Program Change in that sequence.
 
 v2.16.0.0, 2025-02-24
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.

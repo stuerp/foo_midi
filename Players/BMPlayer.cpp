@@ -20,7 +20,7 @@ static BASSInitializer _BASSInitializer;
 
 BMPlayer::BMPlayer() : player_t()
 {
-    ::memset(_Stream, 0, sizeof(_Stream));
+    ::memset(_Streams, 0, sizeof(_Streams));
 
     _InterpolationMode = 0;
     _DoReverbAndChorusProcessing = true;
@@ -90,7 +90,7 @@ uint32_t BMPlayer::GetActiveVoiceCount() const noexcept
 
     float Voices;
 
-    for (const auto & Stream : _Stream)
+    for (const auto & Stream : _Streams)
     {
         if (Stream)
         {
@@ -143,7 +143,7 @@ bool BMPlayer::Startup()
     const DWORD ChannelsPerStream = 32;
     const DWORD Flags = (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_DoReverbAndChorusProcessing ? 0 : BASS_MIDI_NOFX));
 
-    for (auto & Stream : _Stream)
+    for (auto & Stream : _Streams)
     {
         Stream = ::BASS_MIDI_StreamCreate(ChannelsPerStream, Flags, (DWORD) _SampleRate);
 
@@ -167,13 +167,14 @@ bool BMPlayer::Startup()
     _IsInitialized = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
+    Reset();
 
     return true;
 }
 
 void BMPlayer::Shutdown()
 {
-    for (auto & Stream : _Stream)
+    for (auto & Stream : _Streams)
     {
         if (Stream)
         {
@@ -211,7 +212,7 @@ void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 
         ::memset(sampleData, 0, SampleCount * sizeof(*sampleData));
 
-        for (auto & Stream : _Stream)
+        for (auto & Stream : _Streams)
         {
             ::BASS_ChannelGetData(Stream, _Buffer, BASS_DATA_FLOAT | (DWORD) (SampleCount * sizeof(*_Buffer)));
 
@@ -225,6 +226,13 @@ void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     }
 }
 
+bool BMPlayer::Reset()
+{
+    for (uint8_t PortNumber = 0; PortNumber < MaxPorts; ++PortNumber)
+        SendSysExReset(PortNumber, 0);
+
+    return true;
+}
 /// <summary>
 /// Sends a message to the library.
 /// </summary>
@@ -232,24 +240,24 @@ void BMPlayer::SendEvent(uint32_t message)
 {
     const uint8_t Event[3]
     {
-        static_cast<uint8_t>(message),
-        static_cast<uint8_t>(message >>  8),
-        static_cast<uint8_t>(message >> 16)
+        static_cast<uint8_t>(message),          // Status
+        static_cast<uint8_t>(message >>  8),    // Param 1
+        static_cast<uint8_t>(message >> 16)     // Param 2
     };
 
-    const uint8_t Status = message & 0xF0;
+    const uint8_t Status = Event[0] & 0xF0u;
 
-    if (_IgnoreCC32 && (Status == StatusCodes::ControlChange) && (Event[1] == (ControlChangeNumbers::BankSelect | ControlChangeNumbers::LSB)))
+    if (_IgnoreCC32 && (Status == StatusCodes::ControlChange) && (Event[1] == (ControlChangeNumbers::BankSelect | ControlChangeNumbers::BankSelectLSB)))
         return;
 
-    uint8_t PortNumber = (message >> 24) & 0x7F;
+    uint8_t PortNumber = (message >> 24) & 0x7Fu;
 
-    if (PortNumber > (_countof(_Stream) - 1))
+    if (PortNumber > (_countof(_Streams) - 1))
         PortNumber = 0;
 
-    const DWORD EventSize = (DWORD)((Status >= 0xF8 && Status <= 0xFF) ? 1 : ((Status == StatusCodes::ProgramChange || Status == StatusCodes::ChannelPressure) ? 2 : 3));
+    const DWORD EventSize = (DWORD)((Status >= 0xF8u && Status <= 0xFFu) ? 1 : ((Status == StatusCodes::ProgramChange || Status == StatusCodes::ChannelPressure) ? 2 : 3));
 
-    ::BASS_MIDI_StreamEvents(_Stream[PortNumber], BASS_MIDI_EVENTS_RAW, Event, EventSize);
+    ::BASS_MIDI_StreamEvents(_Streams[PortNumber], BASS_MIDI_EVENTS_RAW, Event, EventSize);
 }
 
 /// <summary>
@@ -257,16 +265,16 @@ void BMPlayer::SendEvent(uint32_t message)
 /// </summary>
 void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber)
 {
-    if (portNumber > (_countof(_Stream) - 1))
+    if (portNumber > (_countof(_Streams) - 1))
         portNumber = 0;
 
     if (portNumber == 0)
     {
-        for (auto & Stream : _Stream)
+        for (auto & Stream : _Streams)
             ::BASS_MIDI_StreamEvents(Stream, BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
     }
     else
-        ::BASS_MIDI_StreamEvents(_Stream[portNumber], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
+        ::BASS_MIDI_StreamEvents(_Streams[portNumber], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
 }
 
 /// <summary>
@@ -458,7 +466,7 @@ void BMPlayer::SetBankOverride() noexcept
         if (_BankLSBOverride[i] != 0)
             _IgnoreCC32 = true;
 
-        ::BASS_MIDI_StreamEvent(_Stream[i / 16], i % 16, MIDI_EVENT_BANK_LSB, _BankLSBOverride[i]);
+        ::BASS_MIDI_StreamEvent(_Streams[i / MaxChannels], i % MaxChannels, MIDI_EVENT_BANK_LSB, _BankLSBOverride[i]);
     }
 }
 
