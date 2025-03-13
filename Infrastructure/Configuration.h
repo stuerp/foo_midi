@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.03.09) **/
+/** $VER: Configuration.h (2025.03.12) **/
 
 #pragma once
 
@@ -237,6 +237,7 @@ extern const char TagMIDIPreset[];
 extern const char TagMIDISysExDumps[];
 extern const char TagMIDILyricsType[];
 extern const char TagMIDIHash[];
+extern const char TagMIDIEmbeddedSoundFont[];
 
 extern const char TagSampleRate[];
 extern const char TagMIDIActiveVoices[];

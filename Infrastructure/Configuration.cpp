@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2025.03.08) **/
+/** $VER: Configuration.cpp (2025.03.12) **/
 
 #include "framework.h"
 
@@ -219,6 +219,7 @@ const char TagMIDILoopStartInMs[]           = "midi_loop_start_ms";
 const char TagMIDILoopEndInMs[]             = "midi_loop_end_ms";
 const char TagMIDILyricsType[]              = "midi_lyrics_type";
 const char TagMIDIHash[]                    = "midi_hash";
+const char TagMIDIEmbeddedSoundFont[]       = "midi_embedded_soundfont";
 
 // Names of the meta data fields
 const char TagMIDIPreset[]                  = "midi_preset";

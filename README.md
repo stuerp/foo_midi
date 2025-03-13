@@ -116,11 +116,14 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v2.17.0.0, 2025-03-xx
 * Improved: Support for XMF/MXMF files with raw deflated content.
-* Improved: Tweaked the handling of embedded sound fonts for BASS MIDI again.
+* Improved: Tweaked the handling of embedded sound fonts for BASSMIDI again.
   * The [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification) example files seem to work now.
+* Improved: Tweaked the handling of embedded sound fonts for BASSMIDI again.
 * Fixed: A pending SysEx message would get skipped when the next event used the running status.
-* Fixed: More Multi Port MIDI files play correctly now.
+* Fixed: More Multi Port MIDI files play correctly in BASSMIDI now.
   * The first MIDI Port message of a track is now added at the start of a track to make sure it occurs before any Program Change events.
+* New: Metadata MIDI_EMBEDDED_SOUNDFONT: Contains "SF" or "DLS" if the MIDI file contains an embedded soundfont.
+* Improved: The RIFF IPRD chunk will also be used to add an Album tag in case an IALB chunk is not found.
 
 v2.16.0.0, 2025-02-24
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
@@ -136,7 +139,7 @@ v2.15.2.0, 2025-01-12
 v2.15.1.0, 2024-09-18
 
 * Fixed: The selected player now only gets overriden to BASSMIDI/FluidSynth when an embedded soundfont or a soundfont is found with the same basename as the MIDI file.
-* Fixed: The BASS MIDI Resampling combo box was not always enabled correctly when switching player types.
+* Fixed: The BASSMIDI Resampling combo box was not always enabled correctly when switching player types.
 
 v2.15.0.0, 2024-09-14
 
@@ -144,7 +147,7 @@ v2.15.0.0, 2024-09-14
 * New: Support for the DBNK chunk in RMI files.
 * New: Support for SoundFont layering without using SFList files. Not perfect yet but usable.
 * Improved: Tweaked the player type override logic.
-* Improved: Increased the number of MIDI ports supported by the BASS MIDI player.
+* Improved: Increased the number of MIDI ports supported by the BASSMIDI player.
 * Fixed: A very old bug in the MIDI parsing code when Pitch Bend control change messages were encountered.
 * Fixed: Some preferences were not reset when the Reset button was clicked.
 
@@ -189,11 +192,11 @@ v2.11.0.0, 2024-06-23
 
 v2.10.0.0, 2024-05-07, *"It's been a while"*
 
-* New: The volume of BASS MIDI can be tweaked independently of the overall volume. Defaults to 0.15, determined experimentally to align with the other players.
+* New: The volume of BASSMIDI can be tweaked independently of the overall volume. Defaults to 0.15, determined experimentally to align with the other players.
 * Improved: Added detection of EUC-JP encoded meta data.
 * Improved: Added Shift-JIS and EUC-JP detection and conversion for lyrics.
 * Fixed: Mixed ANSI and Shift-JIS wasn't detected (anymore?).
-* Fixed: The BASS MIDI voice count was not initialized correctly when using a preset.
+* Fixed: The BASSMIDI voice count was not initialized correctly when using a preset.
 * Fixed: Emu de MIDI sysex recognition.
 * Fixed: Emu de MIDI potential buffer overflow during rendering.
 
@@ -286,7 +289,7 @@ v2.8.0.0, 2023-04-30, *"A New Beginning...?"*
 v2.7.4.4, 2022-11-21, *"I'm SoundFont of it"*
 
 * Fixed: The new scpipe32 and scpipe64 in the previous version had issues. Secret Sauce is back.
-* Added support for compressed SoundFonts (.sf3) to BASS MIDI player.
+* Added support for compressed SoundFonts (.sf3) to BASSMIDI player.
 * Updated Munt (MT32 emulator) to v2.7.0.
 * Reduced the component package size a bit. Only one copy of each vsthost and scpipe executable is included.
 
@@ -326,6 +329,8 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * Tom Moebert for [FluidSynth](https://www.fluidsynth.org/).
 * [Valley Bell](https://github.com/ValleyBell) for [MidiConverters](https://github.com/ValleyBell/MidiConverters).
 * [Jean-loup Gailly](http://gailly.net/) and [Mark Adler](http://en.wikipedia.org/wiki/Mark_Adler) for [zlib](https://www.zlib.net/).
+* [Spessasus](https://github.com/spessasus) for testing, advice and [SpessaSynth](https://github.com/spessasus/SpessaSynth).
+* [Zoltán Bacskó](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
 
 ## Reference Material
 

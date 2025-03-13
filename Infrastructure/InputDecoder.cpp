@@ -1353,6 +1353,14 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         if (LoopEndInMS != ~0U) fileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
     }
 
+
+    {
+        const auto & Data = _Container.GetSoundFontData();
+
+        if (Data.size() > 12)
+            fileInfo.info_set(TagMIDIEmbeddedSoundFont, (::memcmp(Data.data() + 8, "DLS ", 4) == 0) ? "DLS" : "SF");
+    }
+
     {
         pfc::string FileHashString;
 
