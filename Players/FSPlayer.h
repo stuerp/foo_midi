@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2024.08.28) **/
+/** $VER: FSPlayer.h (2025.03.15) **/
 
 #pragma once
 
@@ -13,6 +13,7 @@
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 /// <summary>
 /// Implements a MIDI player using FluidSynth.
 /// </summary>
@@ -39,11 +40,11 @@ private:
 
     virtual bool Startup() override;
     virtual void Shutdown() override;
-    virtual void Render(audio_sample *, uint32_t) override;
+    virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
     virtual bool Reset() override;
 
     virtual void SendEvent(uint32_t data) override;
-    virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
+    virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
 
     virtual bool GetErrorMessage(std::string & errorMessage) override;
 
@@ -63,7 +64,9 @@ private:
 private:
     std::string _ErrorMessage;
 
-    fluid_synth_t * _Synths[16];
+    static const size_t MaxPorts = 16;
+
+    fluid_synth_t * _Synths[MaxPorts]; // Each synth corresponds to a port.
     fluid_settings_t * _Settings[_countof(_Synths)];
 
     pfc::string8 _SoundFontDirectoryPath;
@@ -73,7 +76,7 @@ private:
     bool _DoReverbAndChorusProcessing;
     uint32_t _VoiceCount;
 
-    uint32_t _InterpolationMode;
+    uint32_t _InterpolationMethod;
 
     FluidSynth _FluidSynth;
 };

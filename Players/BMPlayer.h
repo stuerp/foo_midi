@@ -43,7 +43,7 @@ private:
     virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
     virtual bool Reset() override;
 
-    virtual void SendEvent(uint32_t b) override;
+    virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
 
     virtual bool GetErrorMessage(std::string & errorMessage) override;

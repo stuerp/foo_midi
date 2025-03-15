@@ -528,36 +528,34 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         case PlayerType::FluidSynth:
         {
             {
-                _ActiveVoiceCount = 0;
-                _PeakVoiceCount = 0;
+                {
+                    _ActiveVoiceCount = 0;
+                    _PeakVoiceCount = 0;
 
-                if (_SoundFonts.empty())
-                    throw midi::exception_t("No compatible sound fonts found.");
-            }
+                    if (_SoundFonts.empty())
+                        throw midi::exception_t("No compatible sound fonts found.");
+                }
 
-            pfc::string FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
+                pfc::string FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
 
-            if (FluidSynthDirectoryPath.isEmpty())
-            {
-                console::warning(STR_COMPONENT_BASENAME " will attempt to load the FluidSynth libraries from the plugin install path because the FluidSynth directory path was not configured.");
+                if (FluidSynthDirectoryPath.isEmpty())
+                {
+                    console::warning(STR_COMPONENT_BASENAME " will attempt to load the FluidSynth libraries from the plugin install path because the FluidSynth directory path was not configured.");
 
-                FluidSynthDirectoryPath = core_api::get_my_full_path();
-                FluidSynthDirectoryPath.truncate(FluidSynthDirectoryPath.scan_filename());
-            }
+                    FluidSynthDirectoryPath = core_api::get_my_full_path();
+                    FluidSynthDirectoryPath.truncate(FluidSynthDirectoryPath.scan_filename());
+                }
 
-            {
                 auto Player = new FSPlayer;
 
                 Player->SetAbortHandler(&abortHandler);
-
                 Player->Initialize(pfc::wideFromUTF8(FluidSynthDirectoryPath));
-
-                Player->SetSoundFonts(_SoundFonts);
 
                 Player->SetInterpolationMode(_FluidSynthInterpolationMethod);
                 Player->SetVoiceCount(Preset._VoiceCount);
                 Player->EnableEffects(Preset._EffectsEnabled);
                 Player->EnableDynamicLoading(AdvCfgLoadSoundFontDynamically.get());
+                Player->SetSoundFonts(_SoundFonts);
 
                 _Player = Player;
             }

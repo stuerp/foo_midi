@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.03.07) **/
+/** $VER: BMPlayer.cpp (2025.03.15) **/
 
 #include "framework.h"
 
@@ -38,6 +38,9 @@ BMPlayer::~BMPlayer()
     Shutdown();
 }
 
+/// <summary>
+/// Sets the synthesis interpolation mode.
+/// </summary>
 void BMPlayer::SetInterpolationMode(uint32_t interpolationMode)
 {
     if (_InterpolationMode == interpolationMode)
@@ -48,6 +51,9 @@ void BMPlayer::SetInterpolationMode(uint32_t interpolationMode)
     Shutdown();
 }
 
+/// <summary>
+/// Sets the number of voices to use.
+/// </summary>
 void BMPlayer::SetVoiceCount(uint32_t voiceCount)
 {
     if (_VoiceCount == voiceCount)
@@ -58,6 +64,9 @@ void BMPlayer::SetVoiceCount(uint32_t voiceCount)
     Shutdown();
 }
 
+/// <summary>
+/// Enables or disables reverb and chorus processing.
+/// </summary>
 void BMPlayer::EnableEffects(bool enabled)
 {
     if (_DoReverbAndChorusProcessing == enabled)
@@ -69,7 +78,7 @@ void BMPlayer::EnableEffects(bool enabled)
 }
 
 /// <summary>
-/// Sets the list of soundfonts that will be used.
+/// Sets the sound fonts to use for synthesis.
 /// </summary>
 void BMPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)
 {
@@ -105,7 +114,7 @@ uint32_t BMPlayer::GetActiveVoiceCount() const noexcept
 }
 
 /// <summary>
-/// Gets statistics about the use of the soundfonts.
+/// Gets statistics about the use of the soundfonts. BASS MIDI specific.
 /// </summary>
 bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoaded)
 {
@@ -226,6 +235,9 @@ void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     }
 }
 
+/// <summary>
+/// Resets the player.
+/// </summary>
 bool BMPlayer::Reset()
 {
     for (uint8_t PortNumber = 0; PortNumber < MaxPorts; ++PortNumber)
@@ -233,6 +245,7 @@ bool BMPlayer::Reset()
 
     return true;
 }
+
 /// <summary>
 /// Sends a message to the library.
 /// </summary>

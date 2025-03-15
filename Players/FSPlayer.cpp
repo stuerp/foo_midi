@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2025.03.01) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.03.15) P. Stuer **/
 
 #include "framework.h"
 
@@ -16,7 +16,7 @@ FSPlayer::FSPlayer() : player_t()
     _DoReverbAndChorusProcessing = true;
     _VoiceCount = 256;
 
-    _InterpolationMode = FLUID_INTERP_DEFAULT;
+    _InterpolationMethod = FLUID_INTERP_DEFAULT;
 }
 
 FSPlayer::~FSPlayer()
@@ -24,31 +24,48 @@ FSPlayer::~FSPlayer()
     Shutdown();
 }
 
+/// <summary>
+/// Initialize the engine. (FluidSynth specific)
+/// </summary>
 void FSPlayer::Initialize(const WCHAR * basePath)
 {
     _FluidSynth.Initialize(basePath);
 }
 
-void FSPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)
+/// <summary>
+/// Sets the synthesis interpolation mode.
+/// </summary>
+void FSPlayer::SetInterpolationMode(uint32_t method)
 {
-    if (_SoundFonts == soundFonts)
+    if (_InterpolationMethod == method)
         return;
 
-    _SoundFonts = soundFonts;
+    for (const auto & Synth : _Synths)
+    {
+        if (Synth != nullptr)
+            _FluidSynth.SetInterpolationMethod(Synth, -1, (int) method);
+    }
 
-    Shutdown();
+    _InterpolationMethod = method;
 }
 
-void FSPlayer::EnableDynamicLoading(bool enabled)
+/// <summary>
+/// Sets the number of voices to use.
+/// </summary>
+void FSPlayer::SetVoiceCount(uint32_t voiceCount)
 {
-    if (_DoDynamicLoading == enabled)
+    if (_VoiceCount == voiceCount)
         return;
 
-    _DoDynamicLoading = enabled;
+    for (auto & Setting : _Settings)
+        _FluidSynth.SetIntegerSetting(Setting, "synth.polyphony", (int) voiceCount);
 
-    Shutdown();
+    _VoiceCount = voiceCount;
 }
 
+/// <summary>
+/// Enables or disables reverb and chorus processing.
+/// </summary>
 void FSPlayer::EnableEffects(bool enabled)
 {
     if (_DoReverbAndChorusProcessing == enabled)
@@ -63,31 +80,35 @@ void FSPlayer::EnableEffects(bool enabled)
     _DoReverbAndChorusProcessing = enabled;
 }
 
-void FSPlayer::SetVoiceCount(uint32_t voiceCount)
+/// <summary>
+/// Enables or disables dynamic loading of the sound fonts.
+/// </summary>
+void FSPlayer::EnableDynamicLoading(bool enabled)
 {
-    if (_VoiceCount == voiceCount)
+    if (_DoDynamicLoading == enabled)
         return;
 
-    for (auto & Setting : _Settings)
-        _FluidSynth.SetIntegerSetting(Setting, "synth.polyphony", (int) voiceCount);
+    _DoDynamicLoading = enabled;
 
-    _VoiceCount = voiceCount;
+    Shutdown();
 }
 
-void FSPlayer::SetInterpolationMode(uint32_t method)
+/// <summary>
+/// Sets the sound fonts to use for synthesis.
+/// </summary>
+void FSPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)
 {
-    if (_InterpolationMode == method)
+    if (_SoundFonts == soundFonts)
         return;
 
-    for (const auto & Synth : _Synths)
-    {
-        if (Synth != nullptr)
-            _FluidSynth.SetInterpolationMethod(Synth, -1, (int) method);
-    }
+    _SoundFonts = soundFonts;
 
-    _InterpolationMode = method;
+    Shutdown();
 }
 
+/// <summary>
+/// Gets the numbers of voices that are currently active.
+/// </summary>
 uint32_t FSPlayer::GetActiveVoiceCount() const noexcept
 {
     uint32_t VoiceCount = 0;
@@ -101,62 +122,20 @@ uint32_t FSPlayer::GetActiveVoiceCount() const noexcept
     return VoiceCount;
 }
 
+#pragma region player_t
+
 struct context_t
 {
     FluidSynth * _FluidSynth;
     fluid_settings_t * _Settings;
 };
 
-#pragma region player_t
-
-void Callback(void * data, const char * name, int type)
+#ifdef _DEBUG
+static void Log(int level, const char * message, void * data)
 {
-    switch (type)
-    {
-/*
-        case FLUID_NUM_TYPE:
-        {
-            double value;
-            fluid_settings_getnum(d->settings, name, &value);
-            fluid_ostream_printf(d->out, "%.3f\n", value);
-            break;
-        }
-
-        case FLUID_INT_TYPE:
-        {
-            int value, hints;
-            fluid_settings_getint(d->settings, name, &value);
-
-            if(fluid_settings_get_hints(d->settings, name, &hints) == FLUID_OK)
-            {
-                if(!(hints & FLUID_HINT_TOGGLED))
-                {
-                    fluid_ostream_printf(d->out, "%d\n", value);
-                }
-                else
-                {
-                    fluid_ostream_printf(d->out, "%s\n", value ? "True" : "False");
-                }
-            }
-
-            break;
-        }
-*/
-        case FLUID_STR_TYPE:
-        {
-            auto Context = (context_t *) data;
-
-            char * Value = nullptr;
-
-            Context->_FluidSynth->GetStringSetting(Context->_Settings, name, &Value);
-
-            console::printf("%s: %s", name, Value);
-
-            Context->_FluidSynth->Free(Value);
-            break;
-        }
-    }
-};
+    console::print(STR_COMPONENT_BASENAME " FluidSynth: \"", message , "\".");
+}
+#endif
 
 bool FSPlayer::Startup()
 {
@@ -171,14 +150,19 @@ bool FSPlayer::Startup()
 
     for (auto & Setting : _Settings)
     {
+        // https://www.fluidsynth.org/api/fluidsettings.xml
         Setting = _FluidSynth.CreateSettings();
 
-        // https://www.fluidsynth.org/api/fluidsettings.xml#synth.audio-channels
+        // The sample rate of the audio generated by the synthesizer.
         _FluidSynth.SetNumericSetting(Setting, "synth.sample-rate", (double) _SampleRate);
-        _FluidSynth.SetIntegerSetting(Setting, "synth.midi-channels", 16);
+
+        // The number of MIDI channels of the synthesizer. The MIDI standard defines 16 channels, so MIDI hardware is limited to this number. Internally FluidSynth can use more channels which can be mapped to different MIDI sources.
+        const int ChannelsPerSynth = 32;
+
+        _FluidSynth.SetIntegerSetting(Setting, "synth.midi-channels", ChannelsPerSynth);
 
         // Gain applied to the final output of the synthesizer.
-        _FluidSynth.SetNumericSetting(Setting, "synth.gain", 0.2f);
+        _FluidSynth.SetNumericSetting(Setting, "synth.gain", 0.8f);
 
         // Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands.
         // Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID).
@@ -199,10 +183,8 @@ bool FSPlayer::Startup()
         // Defines how many voices can be played in parallel.
         _FluidSynth.SetIntegerSetting(Setting, "synth.polyphony", (int ) _VoiceCount);
 
-//      char * Value = nullptr; _FluidSynth.GetDefaultStringSetting(Setting, "synth.midi-bank-select", &Value);
-
         /*
-         This setting defines how the synthesizer interprets Bank Select messages.
+        This setting defines how the synthesizer interprets Bank Select messages.
 
             gs: (default) CC0 becomes the bank number, CC32 is ignored.
             gm: ignores CC0 and CC32 messages.
@@ -238,47 +220,49 @@ bool FSPlayer::Startup()
         }
 
         _FluidSynth.AddSoundFontLoader(_Synths[i], Loader);
-        _FluidSynth.SetInterpolationMethod(_Synths[i], -1, (int) _InterpolationMode);
+        _FluidSynth.SetInterpolationMethod(_Synths[i], -1, (int) _InterpolationMethod);
+
+        _FluidSynth.SetReverbRoomSize(_Synths[i], -1, 0.5f); // 0.0 - 1.0, Default: 0.5
+        _FluidSynth.SetReverbDamp(_Synths[i], -1, 0.3f); // 0.0 - 1.0, Default: 0.3
+        _FluidSynth.SetReverbWidth(_Synths[i], -1, 0.8f); // 0.0 - 1.0, Default: 0.8
+        _FluidSynth.SetReverbLevel(_Synths[i], -1, 0.7f); // 0.0 - 1.0, Default: 0.7
+        _FluidSynth.SetReverb(_Synths[i], _DoReverbAndChorusProcessing ? 0 : 0);
 
         ++i;
     }
 
-    if (!_SoundFonts.empty())
+    #ifdef _DEBUG
+    _FluidSynth.SetLogFunction(FLUID_PANIC, Log, NULL);
+    _FluidSynth.SetLogFunction(FLUID_ERR, Log, NULL);
+    _FluidSynth.SetLogFunction(FLUID_WARN, Log, NULL);
+    _FluidSynth.SetLogFunction(FLUID_DBG, NULL, NULL);
+    #endif
+
+    for (const auto & sf : _SoundFonts)
     {
-        for (const auto & sf : _SoundFonts)
+        for (const auto & Synth : _Synths)
         {
-            for (const auto & Synth : _Synths)
+            int SoundFontId = _FluidSynth.LoadSoundFont(Synth, sf.FilePath().c_str(), TRUE);
+
+            if (SoundFontId == FLUID_FAILED)
             {
-                int SoundFontId = _FluidSynth.LoadSoundFont(Synth, sf.FilePath().c_str(), TRUE);
+                Shutdown();
 
-                if (SoundFontId == FLUID_FAILED)
-                {
-                    Shutdown();
+                _ErrorMessage = "Failed to load SoundFont \"" + sf.FilePath() + "\"";
 
-                    _ErrorMessage = "Failed to load SoundFont \"" + sf.FilePath() + "\"";
-
-                    return false;
-                }
-
-                _FluidSynth.SetSoundFontBankOffset(Synth, SoundFontId, sf.BankOffset());
+                return false;
             }
+
+//          _FluidSynth.SetSoundFontBankOffset(Synth, SoundFontId, sf.BankOffset());
         }
     }
-/*
-    if (_Synths[0])
-    {
-        auto Settings = _FluidSynth.GetSettings(_Synths[0]);
 
-        context_t Context = { &_FluidSynth, Settings };
-
-        _FluidSynth.ForEachSetting(Settings, &Context, Callback);
-    }
-*/
     _ErrorMessage = "";
 
     _IsInitialized = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
+    Reset();
 
     return true;
 }
@@ -340,6 +324,9 @@ void FSPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     }
 }
 
+/// <summary>
+/// Resets the player.
+/// </summary>
 bool FSPlayer::Reset()
 {
     size_t ResetCount = 0;
@@ -388,6 +375,7 @@ void FSPlayer::SendEvent(uint32_t message)
             break;
 
         case StatusCodes::KeyPressure:
+            _FluidSynth.KeyPressure(_Synths[PortNumber], Channel, Param1, Param2);
             break;
 
         case StatusCodes::ControlChange:
@@ -415,12 +403,6 @@ void FSPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
     if ((data != nullptr) && (size > 2) && (data[0] == StatusCodes::SysEx) && (data[size - 1] == StatusCodes::SysExEnd))
     {
-/** Filter GM2 On events
-        const uint8_t GM2[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-
-        if (::memcmp(data, GM2, _countof(GM2)) == 0)
-            return;
-**/
         ++data;
         size -= 2;
 
@@ -450,6 +432,8 @@ bool FSPlayer::GetErrorMessage(std::string & errorMessage)
 }
 
 #pragma endregion
+
+#pragma region Sound font loader
 
 static void * HandleOpen(const char * filePath) noexcept
 {
@@ -548,3 +532,56 @@ fluid_sfloader_t * FSPlayer::GetSoundFontLoader(fluid_settings_t * settings) con
 
     return Loader;
 }
+
+#pragma endregion
+
+#ifdef LATER
+static void Callback(void * data, const char * name, int type)
+{
+    switch (type)
+    {
+/*
+        case FLUID_NUM_TYPE:
+        {
+            double value;
+            fluid_settings_getnum(d->settings, name, &value);
+            fluid_ostream_printf(d->out, "%.3f\n", value);
+            break;
+        }
+
+        case FLUID_INT_TYPE:
+        {
+            int value, hints;
+            fluid_settings_getint(d->settings, name, &value);
+
+            if(fluid_settings_get_hints(d->settings, name, &hints) == FLUID_OK)
+            {
+                if(!(hints & FLUID_HINT_TOGGLED))
+                {
+                    fluid_ostream_printf(d->out, "%d\n", value);
+                }
+                else
+                {
+                    fluid_ostream_printf(d->out, "%s\n", value ? "True" : "False");
+                }
+            }
+
+            break;
+        }
+*/
+        case FLUID_STR_TYPE:
+        {
+            auto Context = (context_t *) data;
+
+            char * Value = nullptr;
+
+            Context->_FluidSynth->GetStringSetting(Context->_Settings, name, &Value);
+
+            console::printf("%s: %s", name, Value);
+
+            Context->_FluidSynth->Free(Value);
+            break;
+        }
+    }
+};
+#endif

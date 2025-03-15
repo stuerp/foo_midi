@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2025.03.01) **/
+/** $VER: FluidSynth.h (2025.03.15) **/
 
 #pragma once
 
@@ -51,6 +51,7 @@ typedef int (WINAPIV * _fluid_synth_set_bank_offset)(fluid_synth_t * synth, int 
 
 typedef int (WINAPIV * _fluid_synth_noteon)(fluid_synth_t * synth, int chan, int key, int vel);
 typedef int (WINAPIV * _fluid_synth_noteoff)(fluid_synth_t * synth, int chan, int key);
+typedef int (WINAPIV * _fluid_synth_key_pressure)(fluid_synth_t * synth, int chan, int key, int val);
 typedef int (WINAPIV * _fluid_synth_cc)(fluid_synth_t * synth, int chan, int ctrl, int val);
 typedef int (WINAPIV * _fluid_synth_get_cc)(fluid_synth_t * synth, int chan, int ctrl, int *pval);
 typedef int (WINAPIV * _fluid_synth_sysex)(fluid_synth_t * synth, const char * data, int len, char * response, int * response_len, int * handled, int dryrun);
@@ -61,14 +62,21 @@ typedef int (WINAPIV * _fluid_synth_pitch_wheel_sens)(fluid_synth_t * synth, int
 typedef int (WINAPIV * _fluid_synth_get_pitch_wheel_sens)(fluid_synth_t * synth, int chan, int *pval);
 typedef int (WINAPIV * _fluid_synth_program_change)(fluid_synth_t * synth, int chan, int program);
 typedef int (WINAPIV * _fluid_synth_channel_pressure)(fluid_synth_t * synth, int chan, int val);
-typedef int (WINAPIV * _fluid_synth_key_pressure)(fluid_synth_t * synth, int chan, int key, int val);
 typedef int (WINAPIV * _fluid_synth_bank_select)(fluid_synth_t * synth, int chan, int bank);
+
+typedef int (WINAPIV * _fluid_synth_set_reverb_group_roomsize)(fluid_synth_t * synth, int fxGroup, double roomSize);
+typedef int (WINAPIV * _fluid_synth_set_reverb_group_damp)(fluid_synth_t * synth, int fxGroup, double damping);
+typedef int (WINAPIV * _fluid_synth_set_reverb_group_width)(fluid_synth_t * synth, int fxGroup, double width);
+typedef int (WINAPIV * _fluid_synth_set_reverb_group_level)(fluid_synth_t * synth, int fxGroup, double level);
+typedef int (WINAPIV * _fluid_synth_set_reverb_on)(fluid_synth_t * synth, int on);
 
 typedef int (WINAPIV * _fluid_synth_write_float)(fluid_synth_t * synth, int len, void * lout, int loff, int lincr, void * rout, int roff, int rincr);
 
 typedef int (WINAPIV * _fluid_synth_get_active_voice_count)(fluid_synth_t * synth);
 
 typedef fluid_settings_t * (WINAPIV * _fluid_synth_get_settings)(fluid_synth_t * synth);
+
+typedef fluid_log_function_t (WINAPIV * _fluid_set_log_function)(int level, fluid_log_function_t fun, void * data);
 
 #define TOSTRING_IMPL(x) #x
 #define TOSTRING(x) TOSTRING_IMPL(x)
@@ -160,11 +168,19 @@ public:
         InitializeFunction(fluid_synth_key_pressure, KeyPressure);
         InitializeFunction(fluid_synth_bank_select, BankSelect);
 
+        InitializeFunction(fluid_synth_set_reverb_group_roomsize, SetReverbRoomSize);
+        InitializeFunction(fluid_synth_set_reverb_group_damp, SetReverbDamp);
+        InitializeFunction(fluid_synth_set_reverb_group_width, SetReverbWidth);
+        InitializeFunction(fluid_synth_set_reverb_group_level, SetReverbLevel);
+        InitializeFunction(fluid_synth_set_reverb_on, SetReverb);
+
         InitializeFunction(fluid_synth_write_float, WriteFloat);
 
         InitializeFunction(fluid_synth_get_active_voice_count, GetActiveVoiceCount);
 
         InitializeFunction(fluid_synth_get_settings, GetSettings);
+
+        InitializeFunction(fluid_set_log_function, SetLogFunction);
 
         #pragma warning(default: 4191)
     }
@@ -216,6 +232,7 @@ public:
 
     _fluid_synth_noteon NoteOn;
     _fluid_synth_noteoff NoteOff;
+    _fluid_synth_key_pressure KeyPressure;
     _fluid_synth_cc ControlChange;
     _fluid_synth_get_cc GetControlChange;
     _fluid_synth_sysex SysEx;
@@ -226,14 +243,21 @@ public:
     _fluid_synth_get_pitch_wheel_sens GetPitchWheelSensitivity;
     _fluid_synth_program_change ProgramChange;
     _fluid_synth_channel_pressure ChannelPressure;
-    _fluid_synth_key_pressure KeyPressure;
     _fluid_synth_bank_select BankSelect;
+
+    _fluid_synth_set_reverb_group_roomsize SetReverbRoomSize;
+    _fluid_synth_set_reverb_group_damp SetReverbDamp;
+    _fluid_synth_set_reverb_group_width SetReverbWidth;
+    _fluid_synth_set_reverb_group_level SetReverbLevel;
+    _fluid_synth_set_reverb_on SetReverb;
 
     _fluid_synth_write_float WriteFloat;
 
     _fluid_synth_get_active_voice_count GetActiveVoiceCount;
 
     _fluid_synth_get_settings GetSettings;
+
+    _fluid_set_log_function SetLogFunction;
 
 private:
     HMODULE _hModule;
