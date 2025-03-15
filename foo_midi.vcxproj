@@ -104,7 +104,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;EXPERIMENT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>EnableAllWarnings</WarningLevel>
@@ -141,7 +141,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;EXPERIMENT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -157,7 +157,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;$(OutDir)libsf.lib</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -179,7 +179,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -222,7 +222,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/Emu de MIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -241,7 +241,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;$(OutDir)libsf.lib</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -511,6 +511,12 @@
     </ProjectReference>
     <ProjectReference Include="3rdParty\libsflist\libsflist.vcxproj">
       <Project>{12bcec19-75dd-49cf-8822-2f290ce7eb36}</Project>
+    </ProjectReference>
+    <ProjectReference Include="3rdParty\libsf\libriff\libriff.vcxproj">
+      <Project>{a73864f1-7953-47ff-99b6-4ac39892a915}</Project>
+    </ProjectReference>
+    <ProjectReference Include="3rdParty\libsf\libsf\libsf.vcxproj">
+      <Project>{f228afa2-be24-4416-9f4c-5bd927f0aa0f}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\munt\mt32emu\mt32emu.vcxproj">
       <Project>{e1a15ce7-2670-4e0b-b4e9-e6e36bb4a579}</Project>

@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2025.03.08) **/
+/** $VER: InputDecoder.cpp (2025.03.15) **/
 
 #include "framework.h"
 
@@ -19,6 +19,8 @@
 #include <filesystem>
 
 #include <Encoding.h>
+
+#include <libsf.h>
 
 volatile int _IsRunning = 0;
 
@@ -1354,11 +1356,40 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     }
 
 
+    // Add a tag that identifies the embedded sound font, if present.
     {
         const auto & Data = _Container.GetSoundFontData();
 
         if (Data.size() > 12)
-            fileInfo.info_set(TagMIDIEmbeddedSoundFont, (::memcmp(Data.data() + 8, "DLS ", 4) == 0) ? "DLS" : "SF");
+        {
+            std::string TagValue("DLS");
+
+            if (::memcmp(Data.data() + 8, "DLS ", 4) == 0)
+            {
+            }
+            else
+            {
+                sf::soundfont_t sf;
+
+                riff::memory_stream_t ms;
+
+                if (ms.Open(Data.data(), Data.size()))
+                {
+                    sf::soundfont_reader_t sr;
+
+                    if (sr.Open(&ms, riff::reader_t::option_t::None))
+                    {
+                        sr.Process({ false }, sf); // Don't load the sample data.
+
+                        TagValue = ::FormatText("SF %d.%d", sf.Major, sf.Minor);
+                    }
+
+                    ms.Close();
+                }
+            }
+
+            fileInfo.info_set(TagMIDIEmbeddedSoundFont, TagValue.c_str());
+        }
     }
 
     {

@@ -122,7 +122,7 @@ v2.17.0.0, 2025-03-xx
 * Fixed: A pending SysEx message would get skipped when the next event used the running status.
 * Fixed: More Multi Port MIDI files play correctly in BASSMIDI now.
   * The first MIDI Port message of a track is now added at the start of a track to make sure it occurs before any Program Change events.
-* New: Metadata MIDI_EMBEDDED_SOUNDFONT: Contains "SF" or "DLS" if the MIDI file contains an embedded soundfont.
+* New: Metadata MIDI_EMBEDDED_SOUNDFONT: Contains "SF x.x" (where x.x is the version number of the SoundFont specification) or "DLS" if the MIDI file contains an embedded soundfont.
 * Improved: The RIFF IPRD chunk will also be used to add an Album tag in case an IALB chunk is not found.
 
 v2.16.0.0, 2025-02-24
