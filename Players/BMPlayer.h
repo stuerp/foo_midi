@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2024.09.08) **/
+/** $VER: BMPlayer.h (2025.03.16) **/
 
 #pragma once
 
@@ -17,6 +17,7 @@ struct sflist_t;
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 /// <summary>
 /// Implements a MIDI player using BASS MIDI.
 /// </summary>
@@ -40,8 +41,9 @@ private:
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
+    virtual bool Reset() override;
 
-    virtual void SendEvent(uint32_t b) override;
+    virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
 
     virtual bool GetErrorMessage(std::string & errorMessage) override;
@@ -49,18 +51,17 @@ private:
     #pragma endregion
 
     bool LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept;
-    void SetBankOverride() noexcept;
-
-    void CompoundPresets(std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels, std::vector<BASS_MIDI_FONTEX> & out) noexcept;
 
     bool IsStarted() const noexcept
     {
-        for (const auto & Stream : _Stream)
+        for (const auto & Stream : _Streams)
             if (Stream == 0)
                 return false;
 
         return true;
     }
+
+    static bool IsOneOf(const std::wstring & ext, const std::vector<std::wstring> & extensions);
 
 private:
     static const uint32_t MaxSamples = 512;
@@ -73,7 +74,9 @@ private:
     std::vector<HSOUNDFONT> _SoundFontHandles;
     sflist_t * _SFList[2];
 
-    HSTREAM _Stream[16]; // Each stream corresponds to a port.
+    static const size_t MaxPorts = 16;
+
+    HSTREAM _Streams[MaxPorts]; // Each stream corresponds to a port.
 
     std::string _SoundFontDirectoryPath;
     std::vector<soundfont_t> _SoundFonts;
@@ -82,9 +85,8 @@ private:
     uint32_t _InterpolationMode;
     uint32_t _VoiceCount;
 
-    uint8_t _BankLSBOverride[_countof(_Stream) * 16]; // No. of streams times 16 channels
-
     bool _DoReverbAndChorusProcessing;
     bool _IgnoreCC32; // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

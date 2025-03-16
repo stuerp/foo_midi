@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPresetFilter.cpp (2023.07.23) **/
+/** $VER: MIDIPresetFilter.cpp (2025.03.16) **/
 
 #include "framework.h"
 
@@ -10,7 +10,8 @@
 /// </summary>
 MIDIPresetFilter::MIDIPresetFilter(const pfc::list_base_const_t<metadb_handle_ptr> & itemList, const char * midiPreset)
 {
-    _MIDIPreset = midiPreset ? midiPreset : "";
+    if (midiPreset != nullptr)
+        _MIDIPreset = midiPreset;
 
     pfc::array_t<t_size> Order;
 
@@ -41,7 +42,7 @@ bool MIDIPresetFilter::apply_filter(metadb_handle_ptr location, t_filestats, fil
     if (!_Handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, location, index))
         return false;
 
-    if (_MIDIPreset.get_length())
+    if (!_MIDIPreset.empty())
         fileInfo.meta_set(TagMIDIPreset, _MIDIPreset);
     else
         fileInfo.meta_remove_field(TagMIDIPreset);

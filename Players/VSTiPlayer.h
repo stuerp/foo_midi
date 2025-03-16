@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2025.02.24) **/
+/** $VER: VSTiPlayer.h (2025.03.16) **/
 
 #pragma once
 
@@ -8,6 +8,7 @@
 typedef void * HANDLE;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 class VSTiPlayer : public player_t
 {
 public:
@@ -30,7 +31,7 @@ public:
     void DisplayEditorModal();
 
     // Setup
-    virtual uint32_t GetChannelCount() const noexcept override { return _ChannelCount; }
+    virtual uint32_t GetAudioChannelCount() const noexcept override { return _ChannelCount; }
 
 protected:
     virtual bool Startup() override;
@@ -86,4 +87,5 @@ private:
 
     bool _IsTerminating;
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

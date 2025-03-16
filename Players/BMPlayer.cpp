@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2024.09.08) **/
+/** $VER: BMPlayer.cpp (2025.03.15) **/
 
 #include "framework.h"
 
@@ -14,12 +14,13 @@
 
 #include <map>
 #include <time.h>
+#include <filesystem>
 
 static BASSInitializer _BASSInitializer;
 
 BMPlayer::BMPlayer() : player_t()
 {
-    ::memset(_Stream, 0, sizeof(_Stream));
+    ::memset(_Streams, 0, sizeof(_Streams));
 
     _InterpolationMode = 0;
     _DoReverbAndChorusProcessing = true;
@@ -37,6 +38,9 @@ BMPlayer::~BMPlayer()
     Shutdown();
 }
 
+/// <summary>
+/// Sets the synthesis interpolation mode.
+/// </summary>
 void BMPlayer::SetInterpolationMode(uint32_t interpolationMode)
 {
     if (_InterpolationMode == interpolationMode)
@@ -47,6 +51,9 @@ void BMPlayer::SetInterpolationMode(uint32_t interpolationMode)
     Shutdown();
 }
 
+/// <summary>
+/// Sets the number of voices to use.
+/// </summary>
 void BMPlayer::SetVoiceCount(uint32_t voiceCount)
 {
     if (_VoiceCount == voiceCount)
@@ -57,6 +64,9 @@ void BMPlayer::SetVoiceCount(uint32_t voiceCount)
     Shutdown();
 }
 
+/// <summary>
+/// Enables or disables reverb and chorus processing.
+/// </summary>
 void BMPlayer::EnableEffects(bool enabled)
 {
     if (_DoReverbAndChorusProcessing == enabled)
@@ -68,7 +78,7 @@ void BMPlayer::EnableEffects(bool enabled)
 }
 
 /// <summary>
-/// Sets the list of soundfonts that will be used.
+/// Sets the sound fonts to use for synthesis.
 /// </summary>
 void BMPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)
 {
@@ -89,7 +99,7 @@ uint32_t BMPlayer::GetActiveVoiceCount() const noexcept
 
     float Voices;
 
-    for (const auto & Stream : _Stream)
+    for (const auto & Stream : _Streams)
     {
         if (Stream)
         {
@@ -104,7 +114,7 @@ uint32_t BMPlayer::GetActiveVoiceCount() const noexcept
 }
 
 /// <summary>
-/// Gets statistics about the use of the soundfonts.
+/// Gets statistics about the use of the soundfonts. BASS MIDI specific.
 /// </summary>
 bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoaded)
 {
@@ -118,34 +128,31 @@ bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoad
 
 #pragma region Private
 
+#pragma region player_t
+
 bool BMPlayer::Startup()
 {
     if (IsStarted())
         return true;
 
-    ::memset(_BankLSBOverride, 0, sizeof(_BankLSBOverride));
-
     std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
 
-    if (!_SoundFonts.empty())
+    for (const auto & sf : _SoundFonts)
     {
-        for (const auto & sf : _SoundFonts)
+        if (!LoadSoundFontConfiguration(sf, SoundFontConfigurations))
         {
-            if (!LoadSoundFontConfiguration(sf, SoundFontConfigurations))
-            {
-                _ErrorMessage = "Unable to load configuration for soundfont \"" + sf.FilePath() + "\"";
+            _ErrorMessage = "Unable to load configuration for soundfont \"" + sf.FilePath() + "\"";
 
-                return false;
-            }
+            return false;
         }
     }
 
-    const DWORD MIDIChannelCount = 16;
+    const DWORD ChannelsPerStream = 32;
     const DWORD Flags = (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_DoReverbAndChorusProcessing ? 0 : BASS_MIDI_NOFX));
 
-    for (auto & Stream : _Stream)
+    for (auto & Stream : _Streams)
     {
-        Stream = ::BASS_MIDI_StreamCreate(MIDIChannelCount, Flags, (DWORD) _SampleRate);
+        Stream = ::BASS_MIDI_StreamCreate(ChannelsPerStream, Flags, (DWORD) _SampleRate);
 
         if (Stream == 0)
         {
@@ -160,18 +167,19 @@ bool BMPlayer::Startup()
         ::BASS_MIDI_StreamSetFonts(Stream, SoundFontConfigurations.data(), (DWORD) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
     }
 
-//  SetBankOverride();
+    _ErrorMessage = "";
 
     _IsInitialized = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
+    Reset();
 
     return true;
 }
 
 void BMPlayer::Shutdown()
 {
-    for (auto & Stream : _Stream)
+    for (auto & Stream : _Streams)
     {
         if (Stream)
         {
@@ -200,50 +208,6 @@ void BMPlayer::Shutdown()
     _IsInitialized = false;
 }
 
-/// <summary>
-/// Sends a message to the library.
-/// </summary>
-void BMPlayer::SendEvent(uint32_t message)
-{
-    const uint8_t Event[3]
-    {
-        static_cast<uint8_t>(message),
-        static_cast<uint8_t>(message >>  8),
-        static_cast<uint8_t>(message >> 16)
-    };
-
-    const uint8_t Status = message & 0xF0;
-
-    if (_IgnoreCC32 && (Status == StatusCodes::ControlChange) && (Event[1] == (ControlChangeNumbers::BankSelect | ControlChangeNumbers::LSB)))
-        return;
-
-    uint8_t PortNumber = (message >> 24) & 0x7F;
-
-    if (PortNumber > (_countof(_Stream) - 1))
-        PortNumber = 0;
-
-    const DWORD EventSize = (DWORD)((Status >= 0xF8 && Status <= 0xFF) ? 1 : ((Status == StatusCodes::ProgramChange || Status == StatusCodes::ChannelPressure) ? 2 : 3));
-
-    ::BASS_MIDI_StreamEvents(_Stream[PortNumber], BASS_MIDI_EVENTS_RAW, Event, EventSize);
-}
-
-/// <summary>
-/// Sends a SysEx message to the library.
-/// </summary>
-void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber)
-{
-    if (portNumber > (_countof(_Stream) - 1))
-        portNumber = 0;
-
-    if (portNumber == 0)
-    {
-        for (auto & Stream : _Stream)
-            ::BASS_MIDI_StreamEvents(Stream, BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
-    }
-    else
-        ::BASS_MIDI_StreamEvents(_Stream[portNumber], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
-}
-
 void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     while (sampleCount != 0)
@@ -253,7 +217,7 @@ void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 
         ::memset(sampleData, 0, SampleCount * sizeof(*sampleData));
 
-        for (auto & Stream : _Stream)
+        for (auto & Stream : _Streams)
         {
             ::BASS_ChannelGetData(Stream, _Buffer, BASS_DATA_FLOAT | (DWORD) (SampleCount * sizeof(*_Buffer)));
 
@@ -268,6 +232,131 @@ void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 }
 
 /// <summary>
+/// Resets the player.
+/// </summary>
+bool BMPlayer::Reset()
+{
+    for (uint8_t PortNumber = 0; PortNumber < MaxPorts; ++PortNumber)
+        ResetPort(PortNumber, 0);
+
+    return true;
+}
+
+/// <summary>
+/// Sends a message to the library.
+/// </summary>
+void BMPlayer::SendEvent(uint32_t message)
+{
+    const uint8_t Event[3]
+    {
+        static_cast<uint8_t>(message),          // Status
+        static_cast<uint8_t>(message >>  8),    // Param 1
+        static_cast<uint8_t>(message >> 16)     // Param 2
+    };
+
+    const uint8_t Status = Event[0] & 0xF0u;
+
+    if (_IgnoreCC32 && (Status == StatusCodes::ControlChange) && (Event[1] == (ControlChangeNumbers::BankSelect | ControlChangeNumbers::BankSelectLSB)))
+        return;
+
+    uint8_t PortNumber = (message >> 24) & 0x7Fu;
+
+    if (PortNumber > (_countof(_Streams) - 1))
+        PortNumber = 0;
+
+    const DWORD EventSize = (DWORD)((Status >= 0xF8u && Status <= 0xFFu) ? 1 : ((Status == StatusCodes::ProgramChange || Status == StatusCodes::ChannelPressure) ? 2 : 3));
+
+    ::BASS_MIDI_StreamEvents(_Streams[PortNumber], BASS_MIDI_EVENTS_RAW, Event, EventSize);
+}
+
+/// <summary>
+/// Sends a SysEx message to the library.
+/// </summary>
+void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber)
+{
+    if (portNumber > (_countof(_Streams) - 1))
+        portNumber = 0;
+
+    if (portNumber == 0)
+    {
+        for (auto & Stream : _Streams)
+            ::BASS_MIDI_StreamEvents(Stream, BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
+    }
+    else
+        ::BASS_MIDI_StreamEvents(_Streams[portNumber], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
+}
+
+/// <summary>
+/// Gets the current error message.
+/// </summary>
+bool BMPlayer::GetErrorMessage(std::string & errorMessage)
+{
+    if (_ErrorMessage.length() == 0)
+        return false;
+
+    errorMessage = _ErrorMessage;
+
+    return true;
+}
+
+#pragma endregion
+
+/// <summary>
+/// Loads the configuration from the specified soundfont.
+/// </summary>
+bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
+{
+    std::filesystem::path FilePath(soundFont.FilePath());
+
+    if (IsOneOf(FilePath.extension(), { L".sf2", L".sf3", L".sf2pack", L".sfogg" }))
+    {
+        HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath());
+
+        if (hSoundFont == 0)
+        {
+            Shutdown();
+
+            _ErrorMessage = "Unable to load SoundFont \"" + soundFont.FilePath() + "\"";
+
+            return false;
+        }
+
+        _SoundFontHandles.push_back(hSoundFont);
+
+        ::BASS_MIDI_FontSetVolume(hSoundFont, soundFont.Volume());
+
+        BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, soundFont.BankOffset(), 0 }; // Load the whole sound font.
+
+        soundFontConfigurations.push_back(fex);
+
+        return true;
+    }
+
+    if (IsOneOf(FilePath.extension(), { L".sflist", L".json" }))
+    {
+        sflist_t ** SFList = &_SFList[0];
+
+        if (*SFList)
+            SFList = &_SFList[1];
+
+        *SFList = ::CacheAddSoundFontList(soundFont.FilePath());
+
+        if (!*SFList)
+            return false;
+
+        BASS_MIDI_FONTEX * fex = (*SFList)->FontEx;
+
+        for (size_t i = 0, j = (*SFList)->Count; i < j; ++i)
+            soundFontConfigurations.push_back(fex[i]);
+
+        return true;
+    }
+
+    return false;
+}
+
+#ifdef Old
+/// <summary>
 /// Loads the configuration from the specified soundfont.
 /// </summary>
 bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
@@ -281,7 +370,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
 
     if ((::stricmp_utf8(FileExtension.c_str(), "sf2") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf3") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf2pack") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sfogg") == 0))
     {
-        HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath().c_str());
+        HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath());
 
         if (hSoundFont == 0)
         {
@@ -308,33 +397,30 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
                 {
                     if (::BASS_MIDI_FontGetPresets(hSoundFont, Presets))
                     {
+                        console::print("Mapping ", SoundFontInfo.presets, " presets from embedded sound font \"", SoundFontInfo.name, "\":");
+
                         for (DWORD i = 0; i < SoundFontInfo.presets; ++i)
                         {
                             const int    PresetNumber = LOWORD(Presets[i]);
                             const int    SrcBank      = HIWORD(Presets[i]);
                             const char * PresetName   = ::BASS_MIDI_FontGetPreset(hSoundFont, PresetNumber, SrcBank);
 
-                            console::print("Bank ", SrcBank, " Preset ", PresetNumber, ": \"", PresetName, "\"");
-
                             int DstBank = SrcBank;
 
-                            if (soundFont.BankOffset() != -1)
+/* FIXME: This is the only way to get Rock_test.rmi working.
+                            if (SrcBank != 128)
                             {
-                                if (DstBank != 128)
-                                    DstBank = soundFont.BankOffset();
+                                DstBank += soundFont.BankOffset();
                             }
-                            else
-                            {
-                                if (DstBank != 128)
-                                    DstBank = 1;
-                            }
-
+*/
                             BASS_MIDI_FONTEX fex =
                             {
                                 hSoundFont, PresetNumber, SrcBank, PresetNumber, (DstBank >> 7) & 0x7F, DstBank & 0x7F
                             };
 
                             soundFontConfigurations.push_back(fex);
+
+                            console::printf("SrcBank %3d DstBank %3d Preset %3d: \"%s\"", SrcBank, DstBank, PresetNumber, PresetName);
                         }
                     }
 
@@ -344,7 +430,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
         }
         else
         {
-            BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, 0, 0 };
+            BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, 0, 0 }; // Load the whole sound font.
 
             soundFontConfigurations.push_back(fex);
         }
@@ -359,7 +445,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
         if (*SFList)
             SFList = &_SFList[1];
 
-        *SFList = ::CacheAddSoundFontList(soundFont.FilePath().c_str());
+        *SFList = ::CacheAddSoundFontList(soundFont.FilePath());
 
         if (!*SFList)
             return false;
@@ -374,68 +460,20 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
 
     return false;
 }
+#endif
 
 /// <summary>
-/// Sets the bank override, if any, for all channels of all streams.
+/// Returns true if the string matches on of the list.
 /// </summary>
-void BMPlayer::SetBankOverride() noexcept
+bool BMPlayer::IsOneOf(const std::wstring & ext, const std::vector<std::wstring> & extensions)
 {
-    _IgnoreCC32 = false;
-
-    // Send a Control Change 32 message (Bank Select LSB) to each channel of each stream.
-    for (size_t i = 0; i < _countof(_BankLSBOverride); ++i)
+    for (const auto & Extension : extensions)
     {
-        if (_BankLSBOverride[i] != 0)
-            _IgnoreCC32 = true;
-
-        ::BASS_MIDI_StreamEvent(_Stream[i / 16], i % 16, MIDI_EVENT_BANK_LSB, _BankLSBOverride[i]);
-    }
-}
-
-/// <summary>
-/// Unused
-/// </summary>
-void BMPlayer::CompoundPresets(std::vector<BASS_MIDI_FONTEX> & src, std::vector<long> & channels, std::vector<BASS_MIDI_FONTEX> & dst) noexcept
-{
-    if (src.size() == 0)
-    {
-        BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
-
-        src.push_back(fex);
+        if (::_wcsicmp(ext.c_str(), Extension.c_str()) == 0)
+            return true;
     }
 
-    if (channels.size() > 0)
-    {
-        for (auto & sf : src)
-        {
-            for (auto & Channel : channels)
-            {
-                _BankLSBOverride[Channel - 1] = (uint8_t) Channel;
-
-                sf.dbanklsb = (int) Channel;
-
-                dst.push_back(sf);
-            }
-        }
-    }
-    else
-    {
-        for (auto & sf : src)
-            dst.push_back(sf);
-    }
-}
-
-/// <summary>
-/// Gets the current error message.
-/// </summary>
-bool BMPlayer::GetErrorMessage(std::string & errorMessage)
-{
-    if (_ErrorMessage.length() == 0)
-        return false;
-
-    errorMessage = _ErrorMessage;
-
-    return true;
+    return false;
 }
 
 #pragma endregion
