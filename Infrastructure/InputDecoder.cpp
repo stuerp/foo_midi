@@ -816,7 +816,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     if (_Player)
     {
         const uint32_t SamplesToDo = 4096;
-        const uint32_t ChannelCount = _Player->GetChannelCount();
+        const uint32_t ChannelCount = _Player->GetAudioChannelCount();
 
         audioChunk.set_data_size((t_size) SamplesToDo * ChannelCount);
 

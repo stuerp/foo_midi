@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2024.08.21) **/
+/** $VER: Player.h (2025.03.16) **/
 
 #pragma once
 
@@ -33,7 +33,7 @@ public:
 
     void Configure(MIDIFlavor midiFlavor, bool filterEffects);
 
-    virtual uint32_t GetChannelCount() const noexcept { return 2; }
+    virtual uint32_t GetAudioChannelCount() const noexcept { return 2; } // Gets the number of audio channels the player supports.
     virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept { UNREFERENCED_PARAMETER(abortHandler); }
     virtual bool GetErrorMessage(std::string &) { return false; }
 
@@ -53,7 +53,7 @@ protected:
     virtual void SendEvent(uint32_t, uint32_t) { };
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t, uint32_t) { };
 
-    void SendSysExReset(uint8_t portNumber, uint32_t time);
+    void ResetPort(uint8_t portNumber, uint32_t time);
 
     uint32_t GetProcessorArchitecture(const std::string & filePath) const;
 

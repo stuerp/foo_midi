@@ -135,8 +135,6 @@ bool BMPlayer::Startup()
     if (IsStarted())
         return true;
 
-    ::memset(_BankLSBOverride, 0, sizeof(_BankLSBOverride));
-
     std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
 
     for (const auto & sf : _SoundFonts)
@@ -168,8 +166,6 @@ bool BMPlayer::Startup()
 
         ::BASS_MIDI_StreamSetFonts(Stream, SoundFontConfigurations.data(), (DWORD) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
     }
-
-//  SetBankOverride();
 
     _ErrorMessage = "";
 
@@ -241,7 +237,7 @@ void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 bool BMPlayer::Reset()
 {
     for (uint8_t PortNumber = 0; PortNumber < MaxPorts; ++PortNumber)
-        SendSysExReset(PortNumber, 0);
+        ResetPort(PortNumber, 0);
 
     return true;
 }
@@ -465,56 +461,6 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
     return false;
 }
 #endif
-
-/// <summary>
-/// Sets the bank override, if any, for all channels of all streams.
-/// </summary>
-void BMPlayer::SetBankOverride() noexcept
-{
-    _IgnoreCC32 = false;
-
-    // Send a Control Change 32 message (Bank Select LSB) to each channel of each stream.
-    for (size_t i = 0; i < _countof(_BankLSBOverride); ++i)
-    {
-        if (_BankLSBOverride[i] != 0)
-            _IgnoreCC32 = true;
-
-        ::BASS_MIDI_StreamEvent(_Streams[i / MaxChannels], i % MaxChannels, MIDI_EVENT_BANK_LSB, _BankLSBOverride[i]);
-    }
-}
-
-/// <summary>
-/// Unused
-/// </summary>
-void BMPlayer::CompoundPresets(std::vector<BASS_MIDI_FONTEX> & src, std::vector<long> & channels, std::vector<BASS_MIDI_FONTEX> & dst) noexcept
-{
-    if (src.size() == 0)
-    {
-        BASS_MIDI_FONTEX fex = { 0, -1, -1, -1, 0, 0 };
-
-        src.push_back(fex);
-    }
-
-    if (channels.size() > 0)
-    {
-        for (auto & sf : src)
-        {
-            for (auto & Channel : channels)
-            {
-                _BankLSBOverride[Channel - 1] = (uint8_t) Channel;
-
-                sf.dbanklsb = (int) Channel;
-
-                dst.push_back(sf);
-            }
-        }
-    }
-    else
-    {
-        for (auto & sf : src)
-            dst.push_back(sf);
-    }
-}
 
 /// <summary>
 /// Returns true if the string matches on of the list.

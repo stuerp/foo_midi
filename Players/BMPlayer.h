@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.03.07) **/
+/** $VER: BMPlayer.h (2025.03.16) **/
 
 #pragma once
 
@@ -51,9 +51,6 @@ private:
     #pragma endregion
 
     bool LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept;
-    void SetBankOverride() noexcept;
-
-    void CompoundPresets(std::vector<BASS_MIDI_FONTEX> & in, std::vector<long> & channels, std::vector<BASS_MIDI_FONTEX> & out) noexcept;
 
     bool IsStarted() const noexcept
     {
@@ -87,10 +84,6 @@ private:
     float _Volume;
     uint32_t _InterpolationMode;
     uint32_t _VoiceCount;
-
-    static const size_t MaxChannels = 16;
-
-    uint8_t _BankLSBOverride[_countof(_Streams) * MaxChannels]; // No. of streams times 16 channels
 
     bool _DoReverbAndChorusProcessing;
     bool _IgnoreCC32; // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.

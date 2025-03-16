@@ -114,18 +114,19 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v2.17.0.0, 2025-03-xx
+v2.17.0.0, 2025-03-16
+* New: Metadata MIDI_EMBEDDED_SOUNDFONT: Contains "SF x.x" (where x.x is the version number of the SoundFont specification) or "DLS" if the MIDI file contains an embedded soundfont.
 * Improved: Support for XMF/MXMF files with raw deflated content.
 * Improved: Tweaked the handling of embedded sound fonts for BASSMIDI and FluidSynth again.
   * The [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification) example files seem to work now.
 * Improved: Tweaked the handling of embedded sound fonts for BASSMIDI again.
+* Improved: The RIFF IPRD chunk will also be used to add an Album tag in case an IALB chunk is not found.
+* Improved: FluidSynth player understands Polyphonic Key Pressure (Aftertouch) now.
+* Changed: Increased the gain of the FluidSynth player.
+* Changed: Disabled dynamic sample loading in the FluidSynth player. It causes distortion when playing some very short samples.
 * Fixed: A pending SysEx message would get skipped when the next event used the running status.
 * Fixed: More Multi Port MIDI files play correctly in BASSMIDI now.
   * The first MIDI Port message of a track is now added at the start of a track to make sure it occurs before any Program Change events.
-* Improved: The RIFF IPRD chunk will also be used to add an Album tag in case an IALB chunk is not found.
-* New: Metadata MIDI_EMBEDDED_SOUNDFONT: Contains "SF x.x" (where x.x is the version number of the SoundFont specification) or "DLS" if the MIDI file contains an embedded soundfont.
-* Improved: FluidSynth player understands Polyphonic Key Pressure (Aftertouch) now.
-* Changed: Increased the gain of the FluidSynth player.
 
 v2.16.0.0, 2025-02-24
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.

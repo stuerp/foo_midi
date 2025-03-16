@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.03.15) P. Stuer **/
+/** $VER: Resource.h (2025.03.16) P. Stuer **/
 
 #pragma once
 
@@ -9,7 +9,7 @@
 /** Component specific **/
 
 #define STR_COMPONENT_NAME          "MIDI Player"
-#define STR_COMPONENT_VERSION       TOSTRING(NUM_FILE_MAJOR) "." TOSTRING(NUM_FILE_MINOR) "." TOSTRING(NUM_FILE_PATCH) "." TOSTRING(NUM_FILE_PRERELEASE) "-alpha4"
+#define STR_COMPONENT_VERSION       TOSTRING(NUM_FILE_MAJOR) "." TOSTRING(NUM_FILE_MINOR) "." TOSTRING(NUM_FILE_PATCH) "." TOSTRING(NUM_FILE_PRERELEASE)
 #define STR_COMPONENT_BASENAME      "foo_midi"
 #define STR_COMPONENT_FILENAME      STR_COMPONENT_BASENAME ".dll"
 #define STR_COMPONENT_COMPANY_NAME  "LoSno.co"
@@ -25,8 +25,8 @@
 #define STR_COPYRIGHT           TEXT(STR_COMPONENT_COPYRIGHT)
 
 #define NUM_FILE_MAJOR          2
-#define NUM_FILE_MINOR          16
-#define NUM_FILE_PATCH          1
+#define NUM_FILE_MINOR          17
+#define NUM_FILE_PATCH          0
 #define NUM_FILE_PRERELEASE     0
 
 #define STR_FILE_NAME           TEXT(STR_COMPONENT_FILENAME)
@@ -34,8 +34,8 @@
 #define STR_FILE_DESCRIPTION    TEXT(STR_COMPONENT_DESCRIPTION)
 
 #define NUM_PRODUCT_MAJOR       2
-#define NUM_PRODUCT_MINOR       16
-#define NUM_PRODUCT_PATCH       1
+#define NUM_PRODUCT_MINOR       17
+#define NUM_PRODUCT_PATCH       0
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRODUCT_NAME        STR_COMPANY_NAME TEXT(" ") STR_INTERNAL_NAME

@@ -42,7 +42,7 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
 
             if (WriteSoundFontFile(Data, IsDLS, FilePath))
             {
-                _SoundFonts.push_back({ FilePath, 1.f, (IsDLS ? 0 : _Container.GetBankOffset()), true, IsDLS });
+                _SoundFonts.push_back({ FilePath, 1.f, _Container.GetBankOffset(), true, IsDLS });
 
                 HasNonDefaultSoundFonts = true;
             }
@@ -91,7 +91,7 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
         {
             bool IsDLS = TempSoundFontFilePath.toLower().endsWith(".dls");
 
-            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), 1.0f, (IsDLS ? 1 : _Container.GetBankOffset()), false, IsDLS });
+            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), 1.0f, _Container.GetBankOffset(), false, IsDLS });
 
             HasNonDefaultSoundFonts = true;
         }

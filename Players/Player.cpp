@@ -527,9 +527,8 @@ void player_t::Configure(MIDIFlavor midiFlavor, bool filterEffects)
 
     if (_IsInitialized)
     {
-        SendSysExReset(0, 0);
-        SendSysExReset(1, 0);
-        SendSysExReset(2, 0);
+        for (uint8_t Port = 0; Port < 127; ++Port)
+            ResetPort(Port, 0);
     }
 }
 
@@ -658,7 +657,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
     SendSysEx(data, size, portNumber);
 
     if (IsSysExReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
-        SendSysExReset(portNumber, 0);
+        ResetPort(portNumber, 0);
 }
 
 /// <summary>
@@ -669,13 +668,13 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
     SendSysEx(data, size, portNumber, time);
 
     if (IsSysExReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
-        SendSysExReset(portNumber, time);
+        ResetPort(portNumber, time);
 }
 
 /// <summary>
-/// Sends a SysEx reset message.
+/// Resets the specified port.
 /// </summary>
-void player_t::SendSysExReset(uint8_t portNumber, uint32_t time)
+void player_t::ResetPort(uint8_t portNumber, uint32_t time)
 {
     if (!_IsInitialized)
         return;
