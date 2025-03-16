@@ -114,12 +114,14 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
+v2.17.1.0, 2025-03-16
+* Fixed: Secret Sauce crashed due to too many port resets.
+
 v2.17.0.0, 2025-03-16
 * New: Metadata MIDI_EMBEDDED_SOUNDFONT: Contains "SF x.x" (where x.x is the version number of the SoundFont specification) or "DLS" if the MIDI file contains an embedded soundfont.
 * Improved: Support for XMF/MXMF files with raw deflated content.
 * Improved: Tweaked the handling of embedded sound fonts for BASSMIDI and FluidSynth again.
   * The [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification) example files seem to work now.
-* Improved: Tweaked the handling of embedded sound fonts for BASSMIDI again.
 * Improved: The RIFF IPRD chunk will also be used to add an Album tag in case an IALB chunk is not found.
 * Improved: FluidSynth player understands Polyphonic Key Pressure (Aftertouch) now.
 * Changed: Increased the gain of the FluidSynth player.
