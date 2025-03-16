@@ -527,7 +527,7 @@ void player_t::Configure(MIDIFlavor midiFlavor, bool filterEffects)
 
     if (_IsInitialized)
     {
-        for (uint8_t Port = 0; Port < 127; ++Port)
+        for (uint8_t Port = 0; Port < 3; ++Port)
             ResetPort(Port, 0);
     }
 }
