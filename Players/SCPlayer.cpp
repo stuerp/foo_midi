@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.cpp (2024.05.20) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2025.03.16) Secret Sauce **/
 
 #include "framework.h"
 
@@ -18,10 +18,8 @@ SCPlayer::SCPlayer() noexcept : player_t()
     _IsInitialized = false;
     _COMInitialisationCount = 0;
 
-    for (size_t i = 0; i < 3; ++i)
+    for (size_t i = 0; i < _countof(_hProcess); ++i)
     {
-        _IsPortTerminating[i] = false;
-
         _hProcess[i] = NULL;
         _hThread[i] = NULL;
         _hReadEvent[i] = NULL;
@@ -29,6 +27,8 @@ SCPlayer::SCPlayer() noexcept : player_t()
         _hPipeInWrite[i] = NULL;
         _hPipeOutRead[i] = NULL;
         _hPipeOutWrite[i] = NULL;
+
+        _IsPortTerminating[i] = false;
     }
 
     _Samples = new(std::nothrow) float[4096 * 2];
@@ -47,6 +47,9 @@ SCPlayer::~SCPlayer()
     _RootPathName.clear();
 }
 
+/// <summary>
+/// Sets the root path name of Secret Sauce.
+/// </summary>
 void SCPlayer::SetRootPath(const char * rootPathName)
 {
     _RootPathName = rootPathName;
@@ -56,6 +59,9 @@ void SCPlayer::SetRootPath(const char * rootPathName)
 
 #pragma region Protected
 
+/// <summary>
+/// Starts the player.
+/// </summary>
 bool SCPlayer::Startup()
 {
     pfc::string8 path;
@@ -68,10 +74,10 @@ bool SCPlayer::Startup()
 
     path = pfc::io::path::combine(_RootPathName.c_str(), _DLLFileName);
 
-    if (!LoadCore(path))
+    if (!StartHosts(path))
         return false;
 
-    for (uint32_t i = 0; i < 3; ++i)
+    for (uint32_t i = 0; i < _countof(_hProcess); ++i)
     {
         WriteBytes(i, 1);
         WriteBytes(i, sizeof(uint32_t));
@@ -88,14 +94,20 @@ bool SCPlayer::Startup()
     return true;
 }
 
+/// <summary>
+/// Stops the player.
+/// </summary>
 void SCPlayer::Shutdown()
 {
-    for (uint32_t i = 0; i < 3; ++i)
+    for (uint32_t i = 0; i < _countof(_hProcess); ++i)
         StopHost(i);
 
     _IsInitialized = false;
 }
 
+/// <summary>
+/// Renders a block of samples.
+/// </summary>
 void SCPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     ::memset(sampleData, 0, sampleCount * 2 * sizeof(audio_sample));
@@ -104,7 +116,7 @@ void SCPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     {
         unsigned long ToDo = (sampleCount > 4096) ? 4096 : sampleCount;
 
-        for (size_t i = 0; i < 3; ++i)
+        for (size_t i = 0; i < _countof(_hProcess); ++i)
         {
             RenderPort((uint32_t) i, _Samples, (uint32_t) ToDo);
 
@@ -121,20 +133,26 @@ void SCPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     }
 }
 
+/// <summary>
+/// Sends the specified MIDI event.
+/// </summary>
 void SCPlayer::SendEvent(uint32_t event)
 {
-    uint32_t PorNumber = (event >> 24) & 0xFF;
+    uint32_t PortNumber = (event >> 24) & 0xFF;
 
-    if (PorNumber > 2)
-        PorNumber = 0;
+    if (PortNumber > (_countof(_hProcess) - 1))
+        PortNumber = 0;
 
-    WriteBytes(PorNumber, 2);
-    WriteBytes(PorNumber, event & 0xFFFFFF);
+    WriteBytes(PortNumber, 2);
+    WriteBytes(PortNumber, event & 0xFFFFFF);
 
-    if (ReadCode(PorNumber) != 0)
-        StopHost(PorNumber);
+    if (ReadCode(PortNumber) != 0)
+        StopHost(PortNumber);
 }
 
+/// <summary>
+/// Sends the specified MIDI event with a timestamp.
+/// </summary>
 void SCPlayer::SendEvent(uint32_t data, uint32_t time)
 {
     uint32_t PortNumber = (data >> 24) & 0xFF;
@@ -150,6 +168,9 @@ void SCPlayer::SendEvent(uint32_t data, uint32_t time)
         StopHost(PortNumber);
 }
 
+/// <summary>
+/// Sends the specified SysEx event.
+/// </summary>
 void SCPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
     WriteBytes(portNumber, 3);
@@ -166,6 +187,9 @@ void SCPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
     }
 }
 
+/// <summary>
+/// Sends the specified SysEx event with a timestamp.
+/// </summary>
 void SCPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber, uint32_t time)
 {
     WriteBytes(portNumber, 7);
@@ -187,7 +211,10 @@ void SCPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
 
 #pragma region Private
 
-bool SCPlayer::LoadCore(const char * filePath)
+/// <summary>
+/// Starts the host processes.
+/// </summary>
+bool SCPlayer::StartHosts(const char * filePath)
 {
     if ((filePath == nullptr) || (filePath[0] == '\0'))
         return false;
@@ -198,48 +225,43 @@ bool SCPlayer::LoadCore(const char * filePath)
     if (_ProcessorArchitecture == 0)
         return false;
 
-    bool Success = StartHost(0);
+    for (uint32_t i = 0; i < _countof(_hProcess); ++i)
+        if (!StartHost(i))
+            return false;
 
-    if (Success)
-        Success = StartHost(1);
-
-    if (Success)
-        Success = StartHost(2);
-
-    return Success;
+    return true;
 }
 
-void SCPlayer::RenderPort(uint32_t port, float * data, uint32_t size) noexcept
+/// <summary>
+/// Renders samples on the specified port.
+/// </summary>
+void SCPlayer::RenderPort(uint32_t portNumber, float * data, uint32_t size) noexcept
 {
-    WriteBytes(port, 4);
-    WriteBytes(port, size);
+    if (portNumber >= _countof(_hProcess))
+        return;
 
-    if (ReadCode(port) != 0)
+    WriteBytes(portNumber, 4);
+    WriteBytes(portNumber, size);
+
+    if (ReadCode(portNumber) != 0)
     {
-        StopHost(port);
+        StopHost(portNumber);
 
         ::memset(data, 0, size * sizeof(float) * 2);
         return;
     }
 
-    ReadBytes(port, data, size * sizeof(float) * 2);
+    ReadBytes(portNumber, data, size * sizeof(float) * 2);
 }
 
-static bool CreatePipeName(pfc::string_base & pipeName)
+/// <summary>
+/// Starts the host process of the specified port.
+/// </summary>
+bool SCPlayer::StartHost(uint32_t portNumber)
 {
-    GUID guid;
-
-    if (FAILED(::CoCreateGuid(&guid)))
+    if (portNumber >= _countof(_hProcess))
         return false;
 
-    pipeName = "\\\\.\\pipe\\";
-    pipeName += pfc::print_guid(guid);
-
-    return true;
-}
-
-bool SCPlayer::StartHost(uint32_t port)
-{
     if (_COMInitialisationCount == 0)
     {
         if (FAILED(::CoInitialize(NULL)))
@@ -248,7 +270,7 @@ bool SCPlayer::StartHost(uint32_t port)
 
     ++_COMInitialisationCount;
 
-    _hReadEvent[port] = ::CreateEvent(NULL, TRUE, FALSE, NULL);
+    _hReadEvent[portNumber] = ::CreateEvent(NULL, TRUE, FALSE, NULL);
 
     SECURITY_ATTRIBUTES sa =
     {
@@ -262,7 +284,7 @@ bool SCPlayer::StartHost(uint32_t port)
     {
         if (!CreatePipeName(InPipeName) || !CreatePipeName(OutPipeName))
         {
-            StopHost(port);
+            StopHost(portNumber);
 
             return false;
         }
@@ -275,14 +297,14 @@ bool SCPlayer::StartHost(uint32_t port)
 
         if (hPipe == INVALID_HANDLE_VALUE)
         {
-            StopHost(port);
+            StopHost(portNumber);
 
             return false;
         }
 
-        _hPipeInRead[port] = ::CreateFile(InPipeNameOS, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
+        _hPipeInRead[portNumber] = ::CreateFile(InPipeNameOS, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
 
-        ::DuplicateHandle(::GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &_hPipeInWrite[port], 0, FALSE, DUPLICATE_SAME_ACCESS);
+        ::DuplicateHandle(::GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &_hPipeInWrite[portNumber], 0, FALSE, DUPLICATE_SAME_ACCESS);
 
         ::CloseHandle(hPipe);
     }
@@ -292,14 +314,14 @@ bool SCPlayer::StartHost(uint32_t port)
 
         if (hPipe == INVALID_HANDLE_VALUE)
         {
-            StopHost(port);
+            StopHost(portNumber);
 
             return false;
         }
 
-        _hPipeOutWrite[port] = ::CreateFile(OutPipeNameOS, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
+        _hPipeOutWrite[portNumber] = ::CreateFile(OutPipeNameOS, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
 
-        ::DuplicateHandle(GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &_hPipeOutRead[port], 0, FALSE, DUPLICATE_SAME_ACCESS);
+        ::DuplicateHandle(GetCurrentProcess(), hPipe, ::GetCurrentProcess(), &_hPipeOutRead[portNumber], 0, FALSE, DUPLICATE_SAME_ACCESS);
 
         ::CloseHandle(hPipe);
     }
@@ -323,8 +345,8 @@ bool SCPlayer::StartHost(uint32_t port)
     {
         STARTUPINFO si = { sizeof(si) };
 
-        si.hStdInput = _hPipeInRead[port];
-        si.hStdOutput = _hPipeOutWrite[port];
+        si.hStdInput = _hPipeInRead[portNumber];
+        si.hStdOutput = _hPipeOutWrite[portNumber];
         si.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
     //  si.wShowWindow = SW_HIDE;
         si.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
@@ -333,108 +355,107 @@ bool SCPlayer::StartHost(uint32_t port)
 
         if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
         {
-            StopHost(port);
+            StopHost(portNumber);
 
             return false;
         }
 
         // Close remote handles so pipes will break when process terminates.
-        ::CloseHandle(_hPipeOutWrite[port]);
-        _hPipeOutWrite[port] = nullptr;
+        ::CloseHandle(_hPipeOutWrite[portNumber]);
+        _hPipeOutWrite[portNumber] = nullptr;
 
-        ::CloseHandle(_hPipeInRead[port]);
-        _hPipeInRead[port] = nullptr;
+        ::CloseHandle(_hPipeInRead[portNumber]);
+        _hPipeInRead[portNumber] = nullptr;
 
-        _hProcess[port] = pi.hProcess;
-        _hThread[port] = pi.hThread;
+        _hProcess[portNumber] = pi.hProcess;
+        _hThread[portNumber] = pi.hThread;
 
     #ifdef _DEBUG
-        FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess[port], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread[port], 8), ")");
+        FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess[portNumber], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread[portNumber], 8), ")");
     #else
-        ::SetPriorityClass(_hProcess[port], ::GetPriorityClass(::GetCurrentProcess()));
-        ::SetThreadPriority(_hThread[port], ::GetThreadPriority(::GetCurrentThread()));
+        ::SetPriorityClass(_hProcess[portNumber], ::GetPriorityClass(::GetCurrentProcess()));
+        ::SetThreadPriority(_hThread[portNumber], ::GetThreadPriority(::GetCurrentThread()));
     #endif
     }
 
     // Get the startup information.
-    const uint32_t Code = ReadCode(port);
+    const uint32_t Code = ReadCode(portNumber);
 
     if (Code != 0)
     {
-        StopHost(port);
+        StopHost(portNumber);
+
         return false;
     }
 
     return true;
 }
 
-void SCPlayer::StopHost(uint32_t port) noexcept
+/// <summary>
+/// Starts the host process of the specified port.
+/// </summary>
+void SCPlayer::StopHost(uint32_t portNumber) noexcept
 {
-    if (_IsPortTerminating[port])
+    if (portNumber >= _countof(_hProcess))
         return;
 
-    _IsPortTerminating[port] = true;
+    if (_IsPortTerminating[portNumber])
+        return;
+
+    _IsPortTerminating[portNumber] = true;
 
     #ifdef _DEBUG
-        FB2K_console_print("Stopping host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess[port], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread[port], 8), ")");
+        FB2K_console_print("Stopping host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess[portNumber], 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread[portNumber], 8), ")");
     #endif
 
-    if (_hProcess[port])
+    if (_hProcess[portNumber])
     {
-        WriteBytes(port, 0);
+        WriteBytes(portNumber, 0);
 
-        ::WaitForSingleObject(_hProcess[port], 5000);
-        ::TerminateProcess(_hProcess[port], 0);
+        ::WaitForSingleObject(_hProcess[portNumber], 5000);
+        ::TerminateProcess(_hProcess[portNumber], 0);
 
-        ::CloseHandle(_hThread[port]);
-        _hThread[port] = NULL;
+        ::CloseHandle(_hThread[portNumber]);
+        _hThread[portNumber] = NULL;
 
-        ::CloseHandle(_hProcess[port]);
-        _hProcess[port] = NULL;
+        ::CloseHandle(_hProcess[portNumber]);
+        _hProcess[portNumber] = NULL;
     }
 
-    if (_hPipeInRead[port])
+    if (_hPipeInRead[portNumber])
     {
-        ::CloseHandle(_hPipeInRead[port]);
-        _hPipeInRead[port] = NULL;
+        ::CloseHandle(_hPipeInRead[portNumber]);
+        _hPipeInRead[portNumber] = NULL;
     }
 
-    if (_hPipeInWrite[port])
+    if (_hPipeInWrite[portNumber])
     {
-        ::CloseHandle(_hPipeInWrite[port]);
-        _hPipeInWrite[port] = NULL;
+        ::CloseHandle(_hPipeInWrite[portNumber]);
+        _hPipeInWrite[portNumber] = NULL;
     }
 
-    if (_hPipeOutRead[port])
+    if (_hPipeOutRead[portNumber])
     {
-        ::CloseHandle(_hPipeOutRead[port]);
-        _hPipeOutRead[port] = NULL;
+        ::CloseHandle(_hPipeOutRead[portNumber]);
+        _hPipeOutRead[portNumber] = NULL;
     }
 
-    if (_hPipeOutWrite[port])
+    if (_hPipeOutWrite[portNumber])
     {
-        ::CloseHandle(_hPipeOutWrite[port]);
-        _hPipeOutWrite[port] = NULL;
+        ::CloseHandle(_hPipeOutWrite[portNumber]);
+        _hPipeOutWrite[portNumber] = NULL;
     }
 
-    if (_hReadEvent[port])
+    if (_hReadEvent[portNumber])
     {
-        ::CloseHandle(_hReadEvent[port]);
-        _hReadEvent[port] = NULL;
+        ::CloseHandle(_hReadEvent[portNumber]);
+        _hReadEvent[portNumber] = NULL;
     }
 
     if (--_COMInitialisationCount == 0)
         ::CoUninitialize();
 
-    _IsPortTerminating[port] = false;
-}
-
-bool SCPlayer::IsHostRunning(uint32_t port) noexcept
-{
-    if (_hProcess[port] && ::WaitForSingleObject(_hProcess[port], 0) == WAIT_TIMEOUT)
-        return true;
-
-    return false;
+    _IsPortTerminating[portNumber] = false;
 }
 
 #ifdef LOG_EXCHANGE
@@ -453,28 +474,50 @@ static void ProcessPendingMessages()
 }
 #endif
 
-uint32_t SCPlayer::ReadCode(uint32_t port) noexcept
+/// <summary>
+/// Creates a unique pipe name.
+/// </summary>
+bool SCPlayer::CreatePipeName(pfc::string_base & pipeName)
+{
+    GUID guid;
+
+    if (FAILED(::CoCreateGuid(&guid)))
+        return false;
+
+    pipeName = "\\\\.\\pipe\\";
+    pipeName += pfc::print_guid(guid);
+
+    return true;
+}
+
+/// <summary>
+/// Reads a code from a port.
+/// </summary>
+uint32_t SCPlayer::ReadCode(uint32_t portNumber) noexcept
 {
     uint32_t Code;
 
-    ReadBytes(port, &Code, sizeof(Code));
+    ReadBytes(portNumber, &Code, sizeof(Code));
 
     return Code;
 }
 
-void SCPlayer::ReadBytes(uint32_t port, void * data, uint32_t size) noexcept
+/// <summary>
+/// Reads a number of bytes from a port.
+/// </summary>
+void SCPlayer::ReadBytes(uint32_t portNumber, void * data, uint32_t size) noexcept
 {
-    if (size == 0)
+    if ((portNumber >= _countof(_hProcess)) || (size == 0))
         return;
 
-    if (IsHostRunning(port))
+    if (IsHostRunning(portNumber))
     {
         uint8_t * Data = (uint8_t *) data;
         uint32_t BytesTotal = 0;
 
         while (BytesTotal < size)
         {
-            const uint32_t BytesRead = ReadBytesOverlapped(port, Data + BytesTotal, size - BytesTotal);
+            const uint32_t BytesRead = ReadBytesOverlapped(portNumber, Data + BytesTotal, size - BytesTotal);
 
             if (BytesRead == 0)
             {
@@ -489,8 +532,14 @@ void SCPlayer::ReadBytes(uint32_t port, void * data, uint32_t size) noexcept
         ::memset(data, 0xFF, size);
 }
 
-uint32_t SCPlayer::ReadBytesOverlapped(uint32_t port, void * out, uint32_t size) noexcept
+/// <summary>
+/// Reads a number of bytes from a port using overlapped I/O.
+/// </summary>
+uint32_t SCPlayer::ReadBytesOverlapped(uint32_t portNumber, void * out, uint32_t size) noexcept
 {
+    if ((portNumber >= _countof(_hProcess)) || (size == 0))
+        return 0;
+
     ::ResetEvent(_hReadEvent);
 
     ::SetLastError(NO_ERROR);
@@ -498,35 +547,35 @@ uint32_t SCPlayer::ReadBytesOverlapped(uint32_t port, void * out, uint32_t size)
     DWORD BytesRead;
     OVERLAPPED ol = { 0 };
 
-    ol.hEvent = _hReadEvent[port];
+    ol.hEvent = _hReadEvent[portNumber];
 
-    if (::ReadFile(_hPipeOutRead[port], out, size, &BytesRead, &ol))
+    if (::ReadFile(_hPipeOutRead[portNumber], out, size, &BytesRead, &ol))
         return BytesRead;
 
     if (::GetLastError() != ERROR_IO_PENDING)
         return 0;
 
-    const HANDLE handles[1] = { _hReadEvent[port] };
+    const HANDLE WaitHandles[1] = { _hReadEvent[portNumber] };
 
     ::SetLastError(NO_ERROR);
 
-    DWORD state;
+    DWORD Result;
 
 #ifdef MESSAGE_PUMP
     for (;;)
     {
-        state = ::MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
+        Result = ::MsgWaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE, QS_ALLEVENTS);
 
-        if (state == WAIT_OBJECT_0 + _countof(handles))
+        if (Result == WAIT_OBJECT_0 + _countof(WaitHandles))
             ProcessPendingMessages();
         else
             break;
     }
 #else
-    state = ::WaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE);
+    Result = ::WaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE);
 #endif
 
-    if (state == WAIT_OBJECT_0 && ::GetOverlappedResult(_hPipeOutRead[port], &ol, &BytesRead, TRUE))
+    if ((Result == WAIT_OBJECT_0) && ::GetOverlappedResult(_hPipeOutRead[portNumber], &ol, &BytesRead, TRUE))
         return BytesRead;
 
     ::CancelIoEx(_hPipeOutRead, &ol);
@@ -534,20 +583,40 @@ uint32_t SCPlayer::ReadBytesOverlapped(uint32_t port, void * out, uint32_t size)
     return 0;
 }
 
-void SCPlayer::WriteBytes(uint32_t port, uint32_t code) noexcept
+/// <summary>
+/// Writes a number of bytes to a port.
+/// </summary>
+void SCPlayer::WriteBytes(uint32_t portNumber, uint32_t code) noexcept
 {
-    WriteBytesOverlapped(port, &code, sizeof(code));
+    WriteBytesOverlapped(portNumber, &code, sizeof(code));
 }
 
-void SCPlayer::WriteBytesOverlapped(uint32_t port, const void * data, uint32_t size) noexcept
+/// <summary>
+/// Writes a number of bytes to a port using overlapped I/O.
+/// </summary>
+void SCPlayer::WriteBytesOverlapped(uint32_t portNumber, const void * data, uint32_t size) noexcept
 {
-    if ((size == 0) || !IsHostRunning(port))
+    if ((portNumber >= _countof(_hProcess)) || (size == 0) || !IsHostRunning(portNumber))
         return;
 
     DWORD BytesWritten;
 
-    if (!::WriteFile(_hPipeInWrite[port], data, size, &BytesWritten, NULL) || BytesWritten < size)
-        StopHost(port);
+    if (!::WriteFile(_hPipeInWrite[portNumber], data, size, &BytesWritten, NULL) || (BytesWritten < size))
+        StopHost(portNumber);
+}
+
+/// <summary>
+/// Returns true if the host process of the specified port is running.
+/// </summary>
+bool SCPlayer::IsHostRunning(uint32_t portNumber) noexcept
+{
+    if (portNumber >= _countof(_hProcess))
+        return false;
+
+    if ((_hProcess[portNumber] != NULL) && (::WaitForSingleObject(_hProcess[portNumber], 0) == WAIT_TIMEOUT))
+        return true;
+
+    return false;
 }
 
 #pragma endregion

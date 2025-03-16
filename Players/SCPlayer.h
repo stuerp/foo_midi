@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.h (2024.05.20) Secret Sauce **/
+/** $VER: SCPlayer.h (2025.03.16) Secret Sauce **/
 
 #pragma once
 
@@ -28,12 +28,14 @@ protected:
     virtual void SendSysEx(const uint8_t * data, size_t size , uint32_t portNumber, uint32_t time) override;
 
 private:
-    bool LoadCore(const char * filePath);
+    bool StartHosts(const char * filePath);
     void RenderPort(uint32_t port, float * data, uint32_t size) noexcept;
 
     bool StartHost(uint32_t port);
     void StopHost(uint32_t port) noexcept;
     bool IsHostRunning(uint32_t port) noexcept;
+
+    static bool CreatePipeName(pfc::string_base & pipeName);
 
     uint32_t ReadCode(uint32_t port) noexcept;
 
@@ -50,16 +52,18 @@ private:
     std::string _RootPathName;
     std::string _FilePath;
 
-    HANDLE _hReadEvent[3];
-    HANDLE _hPipeInRead[3];
-    HANDLE _hPipeInWrite[3];
-    HANDLE _hPipeOutRead[3];
-    HANDLE _hPipeOutWrite[3];
-    HANDLE _hProcess[3];
-    HANDLE _hThread[3];
+    static const size_t MaxPorts = 3;
+
+    HANDLE _hReadEvent[MaxPorts];
+    HANDLE _hPipeInRead[MaxPorts];
+    HANDLE _hPipeInWrite[MaxPorts];
+    HANDLE _hPipeOutRead[MaxPorts];
+    HANDLE _hPipeOutWrite[MaxPorts];
+    HANDLE _hProcess[MaxPorts];
+    HANDLE _hThread[MaxPorts];
 
     float * _Samples;
 
-    bool _IsPortTerminating[3];
+    bool _IsPortTerminating[MaxPorts];
 };
 #pragma warning(default: 4820) // x bytes padding added after data member
