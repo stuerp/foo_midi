@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2025.03.15) **/
+/** $VER: InputDecoder.cpp (2025.03.16) **/
 
 #include "framework.h"
 
@@ -12,7 +12,6 @@
 #include <pfc/string-conv-lite.h>
 
 #include "KaraokeProcessor.h"
-#include "SoundFonts.h"
 
 #include <math.h>
 #include <string.h>
@@ -205,12 +204,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // The preset collects a number of settings that will configure the player.
     MIDIPreset Preset;
 
+    // Load the preset from the song if it has one.
     {
         file_info_impl FileInfo;
 
         get_info(subSongIndex, FileInfo, abortHandler);
 
-        // Load the preset from the song if it has one.
         {
             const char * MIDIPresetText = FileInfo.meta_get(TagMIDIPreset, 0);
 
@@ -221,7 +220,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Preset.Deserialize(MIDIPresetText);
             }
         }
-
+    
         // Load the SysEx from the song if it has one.
         {
             MIDISysExDumps SysExDumps;
@@ -239,161 +238,41 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
-    // Delete all embedded sound font files from a previous run.
+    // Set the player based on the preset. It can be overridden by the metadata or the sound fonts.
+    _PlayerType = Preset._PlayerType;
+
+    // Set the player depending on the metadata and some configuration settings.
     {
-        for (const auto & sf : _SoundFonts)
+        midi_metadata_table_t MetaData;
+
+        _Container.GetMetaData(subSongIndex, MetaData);
+
+        for (const midi_metadata_item_t & Item : MetaData)
         {
-            if (sf.IsEmbedded())
-                ::DeleteFileA(sf.FilePath().c_str());
-        }
-
-        _SoundFonts.clear();
-    }
-
-    /** IMPORTANT: The following sequence of adding sound fonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
-
-    bool HasNonDefaultSoundFonts = false; // True if an embedded or named sound font is found.
-    bool HasDLS = false;
-
-    // First, add the embedded sound font, if present.
-    {
-        const auto & Data = _Container.GetSoundFontData();
-
-        if (Data.size() > 12)
-        {
-            bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
-
-            std::string FilePath;
-
-            if (WriteSoundFontFile(Data, IsDLS, FilePath))
+            if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
             {
-                _SoundFonts.push_back({ FilePath, 1.f, (IsDLS ? 0 : _Container.GetBankOffset()), true, IsDLS });
-
-                HasNonDefaultSoundFonts = true;
-            }
-        }
-    }
-        
-    // Then, add the sound font named like the MIDI file, if present.
-    {
-        pfc::string FilePath = _FilePath;
-        pfc::string TempSoundFontFilePath;
-
-        bool FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
-
-        if (!FoundSoundFile)
-        {
-            size_t FileExtensionIndex = FilePath.find_last('.');
-
-            if (FileExtensionIndex > FilePath.scan_filename())
-            {
-                FilePath.truncate(FileExtensionIndex);
-
-                FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
-            }
-
-            if (!FoundSoundFile)
-            {
-                FilePath.truncate(FilePath.scan_filename());
-
-                TempSoundFontFilePath = "";
-                TempSoundFontFilePath.add_byte(FilePath[FilePath.length() - 1]);
-                FilePath.truncate(FilePath.length() - 1);
-
-                size_t FileNameIndex = FilePath.scan_filename();
-
-                if (FileNameIndex != pfc::infinite_size)
-                {
-                    FilePath += TempSoundFontFilePath;
-                    FilePath.add_string(&FilePath[FileNameIndex], FilePath.length() - FileNameIndex - 1);
-
-                    FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
-                }
+                _IsMT32 = (Item.Value == "MT-32");
+                _IsXG = (Item.Value == "XG");
             }
         }
 
-        if (FoundSoundFile)
+        if (_IsMT32 && CfgUseSuperMuntWithMT32)
+            _PlayerType = PlayerType::SuperMunt;
+        else
+        if (_IsXG && CfgUseVSTiWithXG)
         {
-            bool IsDLS = TempSoundFontFilePath.toLower().endsWith(".dls");
+            _PlayerType = PlayerType::VSTi;
 
-            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), 1.0f, (IsDLS ? 1 : _Container.GetBankOffset()), false, IsDLS });
+            pfc::string FilePath;
 
-            HasNonDefaultSoundFonts = true;
+            AdvCfgVSTiXGPlugin.get(FilePath);
+
+            Preset._VSTiFilePath = FilePath;
         }
     }
 
-    // Finally, add the default sound font.
-    {
-        if (!Preset._SoundFontFilePath.isEmpty())
-        {
-            bool IsDLS = Preset._SoundFontFilePath.toLower().endsWith(".dls");
-
-            _SoundFonts.push_back({ Preset._SoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, IsDLS });
-        }
-    }
-
-    for (const auto & sf : _SoundFonts)
-    {
-        if (sf.IsDLS())
-        {
-            HasDLS = true;
-            break;
-        }
-    }
-
-    // Update the player type.
-    {
-        _PlayerType = Preset._PlayerType;
-
-        {
-            // Force the use of a sound font player if an embedded or named sound font was found.
-            if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundFonts && !_SoundFonts.empty())
-            {
-                _PlayerType = (FluidSynth::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
-            }
-        }
-
-        {
-            midi_metadata_table_t MetaData;
-
-            _Container.GetMetaData(subSongIndex, MetaData);
-
-            for (const midi_metadata_item_t & Item : MetaData)
-            {
-                if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
-                {
-                    _IsMT32 = (Item.Value == "MT-32");
-                    _IsXG = (Item.Value == "XG");
-                }
-            }
-
-            if (_IsMT32 && CfgUseSuperMuntWithMT32)
-                _PlayerType = PlayerType::SuperMunt;
-            else
-            if (_IsXG && CfgUseVSTiWithXG)
-            {
-                _PlayerType = PlayerType::VSTi;
-
-                pfc::string FilePath;
-
-                AdvCfgVSTiXGPlugin.get(FilePath);
-
-                Preset._VSTiFilePath = FilePath;
-            }
-        }
-    }
-
-    // Show which sound fonts we'll be using in the console.
-    {
-        if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
-        {
-            if (_PlayerType == PlayerType::FluidSynth)
-                std::reverse(_SoundFonts.begin(), _SoundFonts.end());
-
-            for (const auto & sf : _SoundFonts)
-                console::print(STR_COMPONENT_BASENAME, " uses sound font \"", sf.FilePath().c_str(), "\" with bank offset ", sf.BankOffset(), ".");
-        }
-    }
+    // Load the sound fonts.
+    GetSoundFonts(Preset._SoundFontFilePath, abortHandler);
 
     // Update sample rate before initializing the fade-out range.
     if (_PlayerType == PlayerType::SuperMunt)

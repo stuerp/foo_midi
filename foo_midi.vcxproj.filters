@@ -16,7 +16,7 @@
     <ClCompile Include="Infrastructure\InputDecoder.cpp" />
     <ClCompile Include="Players\Player.cpp" />
     <ClCompile Include="MIDI\MIDIPreset.cpp" />
-    <ClCompile Include="MIDI\MIDIPresetFilter.cpp" />
+    <ClCompile Include="Infrastructure\MIDIPresetFilter.cpp" />
     <ClCompile Include="MIDI\MIDISysExDumps.cpp" />
     <ClCompile Include="MIDI\MIDISysExFilter.cpp" />
     <ClCompile Include="Players\NukePlayer.cpp" />
@@ -37,7 +37,7 @@
     <ClCompile Include="Players\VSTi.cpp" />
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Exception.cpp" />
-    <ClCompile Include="MIDI\SoundFonts.cpp" />
+    <ClCompile Include="Infrastructure\SoundFonts.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -111,7 +111,7 @@
     <ClInclude Include="Infrastructure\InputDecoder.h" />
     <ClInclude Include="Players\Player.h" />
     <ClInclude Include="MIDI\MIDIPreset.h" />
-    <ClInclude Include="MIDI\MIDIPresetFilter.h" />
+    <ClInclude Include="Infrastructure\MIDIPresetFilter.h" />
     <ClInclude Include="MIDI\MIDISysExDumps.h" />
     <ClInclude Include="MIDI\MIDISysExFilter.h" />
     <ClInclude Include="Players\NukePlayer.h" />
@@ -181,7 +181,6 @@
     <ClInclude Include="Players\VSTi.h" />
     <ClInclude Include="Players\SoundFont.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
-    <ClInclude Include="MIDI\SoundFonts.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

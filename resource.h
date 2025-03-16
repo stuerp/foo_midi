@@ -13,7 +13,7 @@
 #define STR_COMPONENT_BASENAME      "foo_midi"
 #define STR_COMPONENT_FILENAME      STR_COMPONENT_BASENAME ".dll"
 #define STR_COMPONENT_COMPANY_NAME  "LoSno.co"
-#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2022-2025 " STR_COMPONENT_COMPANY_NAME ". All rights reserved."
+#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2004-2025 " STR_COMPONENT_COMPANY_NAME ". All rights reserved."
 #define STR_COMPONENT_COMMENTS      "Written by Christopher Snowhill, P. Stuer"
 #define STR_COMPONENT_DESCRIPTION   "Adds playback of MIDI files to foobar2000"
 

@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.03.08) **/
+/** $VER: InputDecoder.h (2025.03.16) **/
 
 #pragma once
 
@@ -230,6 +230,7 @@ public:
     static void InitializeIndexManager();
 
 private:
+    void GetSoundFonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
     uint32_t GetDuration(size_t subSongIndex);
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);

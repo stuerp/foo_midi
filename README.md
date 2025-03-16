@@ -116,7 +116,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v2.17.0.0, 2025-03-xx
 * Improved: Support for XMF/MXMF files with raw deflated content.
-* Improved: Tweaked the handling of embedded sound fonts for BASSMIDI again.
+* Improved: Tweaked the handling of embedded sound fonts for BASSMIDI and FluidSynth again.
   * The [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification) example files seem to work now.
 * Improved: Tweaked the handling of embedded sound fonts for BASSMIDI again.
 * Fixed: A pending SysEx message would get skipped when the next event used the running status.

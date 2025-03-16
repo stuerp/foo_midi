@@ -260,7 +260,7 @@
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Exception.cpp" />
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
-    <ClCompile Include="MIDI\SoundFonts.cpp" />
+    <ClCompile Include="Infrastructure\SoundFonts.cpp" />
     <ClCompile Include="Players\ADLPlayer.cpp" />
     <ClCompile Include="Players\BMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Configuration.cpp" />
@@ -287,7 +287,7 @@
     <ClCompile Include="Players\MCIPlayer.cpp" />
     <ClCompile Include="Players\Player.cpp" />
     <ClCompile Include="MIDI\MIDIPreset.cpp" />
-    <ClCompile Include="MIDI\MIDIPresetFilter.cpp" />
+    <ClCompile Include="Infrastructure\MIDIPresetFilter.cpp" />
     <ClCompile Include="MIDI\MIDISysExDumps.cpp" />
     <ClCompile Include="MIDI\MIDISysExFilter.cpp" />
     <ClCompile Include="Players\NukePlayer.cpp" />
@@ -389,7 +389,6 @@
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="Infrastructure\PreferencesProcessingLayout.h" />
-    <ClInclude Include="MIDI\SoundFonts.h" />
     <ClInclude Include="Players\ADLPlayer.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\BMPlayer.h" />
@@ -416,7 +415,7 @@
     <ClInclude Include="Players\MCIPlayer.h" />
     <ClInclude Include="Players\Player.h" />
     <ClInclude Include="MIDI\MIDIPreset.h" />
-    <ClInclude Include="MIDI\MIDIPresetFilter.h" />
+    <ClInclude Include="Infrastructure\MIDIPresetFilter.h" />
     <ClInclude Include="MIDI\MIDISysExDumps.h" />
     <ClInclude Include="MIDI\MIDISysExFilter.h" />
     <ClInclude Include="Players\NukePlayer.h" />
