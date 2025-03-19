@@ -430,6 +430,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Player->SetAbortHandler(&abortHandler);
                 Player->Initialize(pfc::wideFromUTF8(FluidSynthDirectoryPath));
 
+                {
+                    DWORD Version = Player->GetVersion();
+
+                    console::print(STR_COMPONENT_BASENAME " is using FluidSynth ", (Version >> 24) & 0xFF, ".", (Version >> 16) & 0xFF, ".", (Version >> 8) & 0xFF, ".");
+                }
+
                 Player->SetInterpolationMode(_FluidSynthInterpolationMethod);
                 Player->SetVoiceCount(Preset._VoiceCount);
                 Player->EnableEffects(Preset._EffectsEnabled);
@@ -515,11 +521,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 {
                     DWORD BASSVersion = Player->GetVersion();
 
-                    console::print(STR_COMPONENT_BASENAME " is using BASS ", (BASSVersion >> 24) & 0xFF, ".", (BASSVersion >> 16) & 0xFF, ".", (BASSVersion >> 8) & 0xFF, ".", BASSVersion & 0xFF);
+                    console::print(STR_COMPONENT_BASENAME " is using BASS ", (BASSVersion >> 24) & 0xFF, ".", (BASSVersion >> 16) & 0xFF, ".", (BASSVersion >> 8) & 0xFF, ".", BASSVersion & 0xFF, ".");
 
                     DWORD BASSMIDIVersion = Player->GetMIDIVersion();
 
-                    console::print(STR_COMPONENT_BASENAME " is using BASS MIDI ", (BASSMIDIVersion >> 24) & 0xFF, ".", (BASSMIDIVersion >> 16) & 0xFF, ".", (BASSMIDIVersion >> 8) & 0xFF, ".", BASSMIDIVersion & 0xFF);
+                    console::print(STR_COMPONENT_BASENAME " is using BASS MIDI ", (BASSMIDIVersion >> 24) & 0xFF, ".", (BASSMIDIVersion >> 16) & 0xFF, ".", (BASSMIDIVersion >> 8) & 0xFF, ".", BASSMIDIVersion & 0xFF, ".");
                 }
 
                 Player->SetInterpolationMode(_BASSMIDIInterpolationMode);

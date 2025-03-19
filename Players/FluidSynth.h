@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2025.03.15) **/
+/** $VER: FluidSynth.h (2025.03.19) **/
 
 #pragma once
 
@@ -19,7 +19,7 @@
 
 #pragma region FluidSynth API
 
-typedef char * (WINAPIV * _fluid_version_str)();
+typedef void (WINAPIV * _fluid_version)(int * major, int * minor, int * micro);
 
 typedef fluid_settings_t * (WINAPIV * _new_fluid_settings)();
 
@@ -125,7 +125,7 @@ public:
             throw midi::exception_t(midi::GetErrorMessage("Failed to load FluidSynth library", ::GetLastError(), WideToUTF8(LibraryName).c_str()).c_str());
 
         #pragma warning(disable: 4191) // 'type cast': unsafe conversion from 'FARPROC' to 'xxx'
-        InitializeFunction(fluid_version_str, GetVersion);
+        InitializeFunction(fluid_version, GetVersion);
 
         InitializeFunction(new_fluid_settings, CreateSettings);
 
@@ -202,7 +202,7 @@ public:
     }
 
 public:
-    _fluid_version_str GetVersion;
+    _fluid_version GetVersion;
 
     _new_fluid_settings CreateSettings;
 

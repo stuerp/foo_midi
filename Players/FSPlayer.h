@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.03.15) **/
+/** $VER: FSPlayer.h (2025.03.19) **/
 
 #pragma once
 
@@ -35,6 +35,18 @@ public:
 
     uint32_t GetActiveVoiceCount() const noexcept;
 
+    DWORD GetVersion()
+    {
+        if (!_FluidSynth.IsInitialized() || (_FluidSynth.GetVersion == nullptr))
+            throw midi::exception_t("FluidSynth not yet initialized");
+
+        int Major, Minor, Micro;
+
+        _FluidSynth.GetVersion(&Major, &Minor, &Micro);
+
+        return ((DWORD) Major << 24) | (Minor << 16) | (Micro << 8);
+    }
+
 private:
     #pragma region player_t
 
@@ -59,6 +71,11 @@ private:
                 return false;
 
         return true;
+    }
+
+    DWORD MakeDWORD(int a, int b, int c, int d) const noexcept
+    {
+        return ((DWORD) a << 24) | (b << 16) | (c << 8) | d;
     }
 
 private:

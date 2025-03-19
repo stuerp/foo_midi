@@ -114,6 +114,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
+vNext,2025-xx-xx
+* Changed: Enabled dynamic sample loading in the FluidSynth player again when using [FluidSynth 2.4.4](https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.4) or later. 
+
 v2.17.2.0, 2025-03-19
 * Fixed: Crash while attempting to open a MIDI file with a file name containing non-ASCII characters. An old bug suddenly surfaced while attempting to open a WRD file containing external lyrics.
   * Thank you to [ha7pro](https://hydrogenaud.io/index.php?action=profile;u=163651) for reporting the bug and helping me fix it.

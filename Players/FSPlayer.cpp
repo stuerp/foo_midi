@@ -168,8 +168,9 @@ bool FSPlayer::Startup()
         // Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID).
         _FluidSynth.SetIntegerSetting(Setting, "synth.device-id", (int)(0x10 + i));
 
-        // Load and unload samples from memory whenever presets are being selected or unselected for a MIDI channel.
-//      _FluidSynth.SetIntegerSetting(Setting, "synth.dynamic-sample-loading", _DoDynamicLoading ? 1 : 0); // Causes clicking in the cymbals of "ran.rmi".
+        // Load and unload samples from memory whenever presets are being selected or unselected for a MIDI channel. Supported when using FluidSynth 2.4.4 or later. Earlier versions generate a clicking sound when using incorrectly padded samples. (see https://github.com/FluidSynth/fluidsynth/issues/1484)
+        if (GetVersion() >= MakeDWORD(2, 4, 4, 0))
+            _FluidSynth.SetIntegerSetting(Setting, "synth.dynamic-sample-loading", _DoDynamicLoading ? 1 : 0); // Causes clicking in the cymbals of "ran.rmi".
 
         // Reverb effects module
         _FluidSynth.SetIntegerSetting(Setting, "synth.reverb.active", _DoReverbAndChorusProcessing ? 1 : 0);
