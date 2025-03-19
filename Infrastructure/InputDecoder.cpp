@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2025.03.16) **/
+/** $VER: InputDecoder.cpp (2025.03.19) **/
 
 #include "framework.h"
 
@@ -213,7 +213,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             const char * MIDIPresetText = FileInfo.meta_get(TagMIDIPreset, 0);
 
-            if (MIDIPresetText)
+            if (MIDIPresetText != nullptr)
             {
                 console::print(STR_COMPONENT_BASENAME " is using preset \"", MIDIPresetText, "\" from tags.");
 
@@ -227,7 +227,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             const char * MIDISysExDumps = FileInfo.meta_get(TagMIDISysExDumps, 0);
 
-            if (MIDISysExDumps)
+            if (MIDISysExDumps != nullptr)
             {
                 console::print(STR_COMPONENT_BASENAME " is using SysEx file \"", MIDISysExDumps , "\".");
 
@@ -1170,7 +1170,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
     // Read a WRD file in the same path and convert it to lyrics.
     {
-        std::filesystem::path FilePath(_FilePath.c_str());
+        std::filesystem::path FilePath(pfc::wideFromUTF8(_FilePath.c_str()).c_str());
 
         FilePath.replace_extension(L".wrd");
 
@@ -1201,6 +1201,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         fileInfo.meta_set("lyrics", UTF8.c_str());
     }
 
+
     if (!kp.GetSyncedLyrics().is_empty())
     {
         auto Lyrics = kp.GetSyncedLyrics();
@@ -1211,8 +1212,8 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     }
 
     // General info
-    fileInfo.info_set_int("channels", 2);
-    fileInfo.info_set("encoding", "Synthesized");
+    fileInfo.info_set_int   ("channels", 2);
+    fileInfo.info_set       ("encoding", "Synthesized");
 
     // Specific info
     fileInfo.info_set_int   (TagMIDIFormat,       _Container.GetFormat());
@@ -1226,14 +1227,14 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         uint32_t LoopBeginInMS = _Container.GetLoopBeginTimestamp(subSongIndex, true);
         uint32_t LoopEndInMS = _Container.GetLoopEndTimestamp(subSongIndex, true);
 
-        if (LoopBegin != ~0U) fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
-        if (LoopEnd != ~0U) fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
+        if (LoopBegin != ~0U)     fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
+        if (LoopEnd != ~0U)       fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);
         if (LoopBeginInMS != ~0U) fileInfo.info_set_int(TagMIDILoopStartInMs, LoopBeginInMS);
-        if (LoopEndInMS != ~0U) fileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
+        if (LoopEndInMS != ~0U)   fileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
     }
 
-
     // Add a tag that identifies the embedded sound font, if present.
+    try
     {
         const auto & Data = _Container.GetSoundFontData();
 
@@ -1241,10 +1242,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         {
             std::string TagValue("DLS");
 
-            if (::memcmp(Data.data() + 8, "DLS ", 4) == 0)
-            {
-            }
-            else
+            if (::memcmp(Data.data() + 8, "DLS ", 4) != 0)
             {
                 sf::soundfont_t sf;
 
@@ -1267,6 +1265,10 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
             fileInfo.info_set(TagMIDIEmbeddedSoundFont, TagValue.c_str());
         }
+    }
+    catch (std::exception e)
+    {
+        console::print(STR_COMPANY_NAME " is unable to create tag \"", TagMIDIEmbeddedSoundFont, "\": ", e.what());
     }
 
     {
