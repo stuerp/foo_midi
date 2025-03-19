@@ -69,7 +69,6 @@ private:
     fluid_synth_t * _Synths[MaxPorts]; // Each synth corresponds to a port.
     fluid_settings_t * _Settings[_countof(_Synths)];
 
-    pfc::string8 _SoundFontDirectoryPath;
     std::vector<soundfont_t> _SoundFonts;
 
     bool _DoDynamicLoading;

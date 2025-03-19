@@ -512,6 +512,16 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 auto Player = new BMPlayer;
 
+                {
+                    DWORD BASSVersion = Player->GetVersion();
+
+                    console::print(STR_COMPONENT_BASENAME " is using BASS ", (BASSVersion >> 24) & 0xFF, ".", (BASSVersion >> 16) & 0xFF, ".", (BASSVersion >> 8) & 0xFF, ".", BASSVersion & 0xFF);
+
+                    DWORD BASSMIDIVersion = Player->GetMIDIVersion();
+
+                    console::print(STR_COMPONENT_BASENAME " is using BASS MIDI ", (BASSMIDIVersion >> 24) & 0xFF, ".", (BASSMIDIVersion >> 16) & 0xFF, ".", (BASSMIDIVersion >> 8) & 0xFF, ".", BASSMIDIVersion & 0xFF);
+                }
+
                 Player->SetInterpolationMode(_BASSMIDIInterpolationMode);
                 Player->SetVoiceCount(Preset._VoiceCount);
                 Player->EnableEffects(Preset._EffectsEnabled);

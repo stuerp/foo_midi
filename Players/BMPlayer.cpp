@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.03.15) **/
+/** $VER: BMPlayer.cpp (2025.03.19) **/
 
 #include "framework.h"
 
@@ -30,7 +30,7 @@ BMPlayer::BMPlayer() : player_t()
     _SFList[1] = nullptr;
 
     if (!_BASSInitializer.Initialize())
-        throw std::runtime_error("Unable to initialize BASS MIDI");
+        throw std::runtime_error("Unable to initialize BASSMIDI");
 }
 
 BMPlayer::~BMPlayer()
