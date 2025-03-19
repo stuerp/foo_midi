@@ -114,6 +114,10 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
+v2.17.2.0, 2025-03-19
+* Fixed: Crash while attempting to open a MIDI file containing non-ASCII characters. An old bug suddenly surfaced while attempting to open a WRD file containing external lyrics.
+  * Thank you to [ha7pro](https://hydrogenaud.io/index.php?action=profile;u=163651) for reporting the bug and helping me fix it.
+
 v2.17.1.0, 2025-03-16
 * Fixed: Secret Sauce crashed due to too many port resets.
 
