@@ -256,7 +256,7 @@ void BMPlayer::SendEvent(uint32_t message)
 
     const uint8_t Status = Event[0] & 0xF0u;
 
-    if (_IgnoreCC32 && (Status == StatusCodes::ControlChange) && (Event[1] == (ControlChangeNumbers::BankSelect | ControlChangeNumbers::BankSelectLSB)))
+    if (_IgnoreCC32 && (Status == midi::ControlChange) && (Event[1] == (midi::BankSelect | midi::BankSelectLSB)))
         return;
 
     uint8_t PortNumber = (message >> 24) & 0x7Fu;
@@ -264,7 +264,7 @@ void BMPlayer::SendEvent(uint32_t message)
     if (PortNumber > (_countof(_Streams) - 1))
         PortNumber = 0;
 
-    const DWORD EventSize = (DWORD)((Status >= 0xF8u && Status <= 0xFFu) ? 1 : ((Status == StatusCodes::ProgramChange || Status == StatusCodes::ChannelPressure) ? 2 : 3));
+    const DWORD EventSize = (DWORD)((Status >= midi::TimingClock && Status <= midi::MetaData) ? 1 : ((Status == midi::ProgramChange || Status == midi::ChannelPressure) ? 2 : 3));
 
     ::BASS_MIDI_StreamEvents(_Streams[PortNumber], BASS_MIDI_EVENTS_RAW, Event, EventSize);
 }
@@ -316,7 +316,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
         {
             Shutdown();
 
-            _ErrorMessage = "Unable to load SoundFont \"" + soundFont.FilePath() + "\"";
+            _ErrorMessage = "Unable to load sound font \"" + soundFont.FilePath() + "\"";
 
             return false;
         }

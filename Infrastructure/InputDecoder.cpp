@@ -84,7 +84,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         {
             try
             {
-                midi_processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container);
+                midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container);
             }
             catch (std::exception & e)
             {
@@ -101,7 +101,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     {
         try
         {
-            midi_processor_options_t Options
+            midi::processor_options_t Options
             (
                 (uint16_t) CfgLoopExpansion,
                 CfgWriteBarMarkers,
@@ -114,7 +114,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
                 (uint16_t) CfgDefaultTempo
             );
 
-            midi_processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, Options);
+            midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, Options);
         }
         catch (std::exception & e)
         {
@@ -243,11 +243,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     // Set the player depending on the metadata and some configuration settings.
     {
-        midi_metadata_table_t MetaData;
+        midi::metadata_table_t MetaData;
 
         _Container.GetMetaData(subSongIndex, MetaData);
 
-        for (const midi_metadata_item_t & Item : MetaData)
+        for (const midi::metadata_item_t & Item : MetaData)
         {
             if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
             {
@@ -1133,11 +1133,11 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     KaraokeProcessor kp;
 
     {
-        midi_metadata_table_t MetaData;
+        midi::metadata_table_t MetaData;
 
         _Container.GetMetaData(subSongIndex, MetaData);
 
-        midi_metadata_item_t TrackItem;
+        midi::metadata_item_t TrackItem;
 
         bool HasTitle = MetaData.GetItem("title", TrackItem);
 

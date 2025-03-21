@@ -91,9 +91,9 @@ public:
         _BASSMIDIVolume((float) CfgBASSMIDIVolume),
         _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIResamplingMode)
     {
-        _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? midi_container_t::CleanFlagEMIDI : 0) |
-                                 (CfgFilterInstruments ? midi_container_t::CleanFlagInstruments : 0) |
-                                 (CfgFilterBanks ? midi_container_t::CleanFlagBanks : 0);
+        _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? midi::container_t::CleanFlagEMIDI : 0) |
+                                 (CfgFilterInstruments ? midi::container_t::CleanFlagInstruments : 0) |
+                                 (CfgFilterBanks ? midi::container_t::CleanFlagBanks : 0);
     #ifdef DXISUPPORT
         dxiProxy = nullptr;
     #endif
@@ -260,7 +260,7 @@ private:
     t_filestats _FileStats;
     t_filestats2 _FileStats2;
 
-    midi_container_t _Container;
+    midi::container_t _Container;
 
     std::vector <soundfont_t> _SoundFonts;
 

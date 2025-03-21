@@ -59,7 +59,7 @@ void MIDISysExDumps::Deserialize(const char * text, const char * filePath) noexc
 /// <summary>
 /// Merges these SysEx dumps into the specified container.
 /// </summary>
-void MIDISysExDumps::Merge(midi_container_t & container, abort_callback & abortHandler)
+void MIDISysExDumps::Merge(midi::container_t & container, abort_callback & abortHandler)
 {
     std::vector<uint8_t> Object;
 
@@ -78,9 +78,9 @@ void MIDISysExDumps::Merge(midi_container_t & container, abort_callback & abortH
             File->read_object(Object.data(), (t_size) FileSize, abortHandler);
 
             {
-                midi_container_t Container;
+                midi::container_t Container;
 
-                if (!midi_processor_t::Process(Object, nullptr, Container))
+                if (!midi::processor_t::Process(Object, nullptr, Container))
                     break;
 
                 container.MergeTracks(Container);

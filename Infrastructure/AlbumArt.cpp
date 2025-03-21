@@ -82,11 +82,11 @@ public:
 
         File->read_object(Object.data(), (t_size) _FileStats.m_size, abortHandler);
 
-        midi_container_t Container;
+        midi::container_t Container;
 
         try
         {
-            midi_processor_options_t Options
+            midi::processor_options_t Options
             (
                 (uint16_t) CfgLoopExpansion,
                 CfgWriteBarMarkers,
@@ -99,7 +99,7 @@ public:
                 (uint16_t) CfgDefaultTempo
             );
 
-            midi_processor_t::Process(Object, pfc::wideFromUTF8(filePath), Container, Options);
+            midi::processor_t::Process(Object, pfc::wideFromUTF8(filePath), Container, Options);
         }
         catch (std::exception & e)
         {

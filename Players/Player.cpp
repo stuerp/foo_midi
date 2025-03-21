@@ -34,7 +34,7 @@ player_t::player_t()
 /// <summary>
 /// Loads the specified MIDI container.
 /// </summary>
-bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongIndex, LoopType loopType, uint32_t cleanFlags)
+bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopType loopType, uint32_t cleanFlags)
 {
     _LoopType = loopType;
 
@@ -85,14 +85,14 @@ bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongInde
 
                         uint32_t Event = Message & 0x800000F0;
 
-                        if (Event == StatusCodes::NoteOn || Event == StatusCodes::NoteOff)
+                        if (Event == midi::NoteOn || Event == midi::NoteOff)
                         {
                             const unsigned long Port     = (Message >> 24) & 0x7F;
                             const unsigned long Velocity = (Message >> 16) & 0xFF;
                             const unsigned long Note     = (Message >>  8) & 0x7F;
                             const unsigned long Channel  =  Message        & 0x0F;
 
-                            const bool IsNoteOn = (Event == StatusCodes::NoteOn) && (Velocity > 0);
+                            const bool IsNoteOn = (Event == midi::NoteOn) && (Velocity > 0);
 
                             const unsigned long bit = (unsigned long) (1 << Port);
 
@@ -115,7 +115,7 @@ bool player_t::Load(const midi_container_t & midiContainer, uint32_t subsongInde
                         {
                             if (NoteOn[i] & (1 << j))
                             {
-                                _Stream.push_back(midi_item_t(_Length, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                                _Stream.push_back(midi::message_t(_Length, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
                             }
                         }
                     }
@@ -214,7 +214,7 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
             {
                 for (; _StreamPosition < NewStreamPosition; ++_StreamPosition)
                 {
-                    const midi_item_t& mse = _Stream[_StreamPosition];
+                    const midi::message_t& mse = _Stream[_StreamPosition];
 
                     if (_MusicKeyboard.is_valid())
                         _MusicKeyboard->ProcessMessage(mse.Data, mse.Time);
@@ -386,13 +386,13 @@ void player_t::Seek(uint32_t timeInSamples)
     if (_StreamPosition <= OldStreamPosition)
         return;
 
-    std::vector<midi_item_t> FillerEvents(_StreamPosition - OldStreamPosition);
+    std::vector<midi::message_t> FillerEvents(_StreamPosition - OldStreamPosition);
 
     FillerEvents.assign(&_Stream[OldStreamPosition], &_Stream[_StreamPosition]);
 
     for (size_t i = 0; i < FillerEvents.size(); ++i)
     {
-        midi_item_t & mse1 = FillerEvents[i];
+        midi::message_t & mse1 = FillerEvents[i];
 
         if ((mse1.Data & 0x800000F0) == 0x90 && (mse1.Data & 0x00FF0000)) // note on
         {
@@ -407,7 +407,7 @@ void player_t::Seek(uint32_t timeInSamples)
 
             for (size_t j = i + 1; j < FillerEvents.size(); ++j)
             {
-                midi_item_t & mse2 = FillerEvents[j];
+                midi::message_t & mse2 = FillerEvents[j];
 
                 if ((mse2.Data & 0xFF00FFFF) == m1 || mse2.Data == m2)
                 {
@@ -435,7 +435,7 @@ void player_t::Seek(uint32_t timeInSamples)
             uint32_t LastTimestamp = 0;
             bool IsTimestampSet = false;
 
-            for (const midi_item_t & Event : FillerEvents)
+            for (const midi::message_t & Event : FillerEvents)
             {
                 if (Event.Data != 0)
                 {
@@ -471,7 +471,7 @@ void player_t::Seek(uint32_t timeInSamples)
             uint32_t LastTimestamp = 0;
             bool IsTimestampSet = false;
 
-            for (const midi_item_t & Event : FillerEvents)
+            for (const midi::message_t & Event : FillerEvents)
             {
                 if (Event.Data != 0)
                 {
@@ -500,7 +500,7 @@ void player_t::SetSampleRate(uint32_t sampleRate)
     if (sampleRate == _SampleRate)
         return;
 
-    for (midi_item_t & it : _Stream)
+    for (midi::message_t & it : _Stream)
         it.Time = (uint32_t) ::MulDiv((int) it.Time, (int) sampleRate, (int) _SampleRate);
 
     if (_Length != 0)
@@ -609,7 +609,7 @@ bool player_t::FilterEvent(uint32_t data) noexcept
                 if (_EnabledChannels[Port] & Mask)
                     continue; // because the channel is enabled.
 
-                SendEvent((uint32_t) ((Port << 24) | (ChannelModeMessages::AllNotesOff << 8) | StatusCodes::ControlChange | Channel));
+                SendEvent((uint32_t) ((Port << 24) | (midi::ChannelModeMessages::AllNotesOff << 8) | midi::ControlChange | Channel));
             }
         }
     }
@@ -619,7 +619,7 @@ bool player_t::FilterEvent(uint32_t data) noexcept
     const uint8_t Channel = data & 0x0F;
 
     // Filter Note On events for the disabled channels.
-    return ((StatusCode == StatusCodes::NoteOn) && (((uint16_t) _EnabledChannels[Port] & (1U << Channel)) == 0));
+    return ((StatusCode == midi::NoteOn) && (((uint16_t) _EnabledChannels[Port] & (1U << Channel)) == 0));
 }
 
 /// <summary>
@@ -868,7 +868,7 @@ void player_t::SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint
     uint8_t Checksum = 0;
     size_t i;
 
-    for (i = 5; (i + 1 < size) && (data[i + 1] != StatusCodes::SysExEnd); ++i)
+    for (i = 5; (i + 1 < size) && (data[i + 1] != midi::SysExEnd); ++i)
         Checksum += data[i];
 
     data[i] = (uint8_t) ((128 - Checksum) & 127);
@@ -886,7 +886,7 @@ static bool IsSysExReset(const uint8_t * data)
 
 static bool IsSysExEqual(const uint8_t * a, const uint8_t * b)
 {
-    while ((*a != StatusCodes::SysExEnd) && (*b != StatusCodes::SysExEnd) && (*a == *b))
+    while ((*a != midi::SysExEnd) && (*b != midi::SysExEnd) && (*a == *b))
     {
         a++;
         b++;

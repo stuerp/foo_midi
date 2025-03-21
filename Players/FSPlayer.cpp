@@ -361,31 +361,31 @@ void FSPlayer::SendEvent(uint32_t message)
 
     switch (Code)
     {
-        case StatusCodes::NoteOff:
+        case midi::NoteOff:
             _FluidSynth.NoteOff(_Synths[PortNumber], Channel, Param1);
             break;
 
-        case StatusCodes::NoteOn:
+        case midi::NoteOn:
             _FluidSynth.NoteOn(_Synths[PortNumber], Channel, Param1, Param2);
             break;
 
-        case StatusCodes::KeyPressure:
+        case midi::KeyPressure:
             _FluidSynth.KeyPressure(_Synths[PortNumber], Channel, Param1, Param2);
             break;
 
-        case StatusCodes::ControlChange:
+        case midi::ControlChange:
             _FluidSynth.ControlChange(_Synths[PortNumber], Channel, Param1, Param2);
             break;
 
-        case StatusCodes::ProgramChange:
+        case midi::ProgramChange:
             _FluidSynth.ProgramChange(_Synths[PortNumber], Channel, Param1);
             break;
 
-        case StatusCodes::ChannelPressure:
+        case midi::ChannelPressure:
             _FluidSynth.ChannelPressure(_Synths[PortNumber], Channel, Param1);
             break;
 
-        case StatusCodes::PitchBendChange:
+        case midi::PitchBendChange:
             _FluidSynth.PitchBend(_Synths[PortNumber], Channel, (Param2 << 7) | Param1);
             break;
     }
@@ -396,7 +396,7 @@ void FSPlayer::SendEvent(uint32_t message)
 /// </summary>
 void FSPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
-    if ((data != nullptr) && (size > 2) && (data[0] == StatusCodes::SysEx) && (data[size - 1] == StatusCodes::SysExEnd))
+    if ((data != nullptr) && (size > 2) && (data[0] == midi::SysEx) && (data[size - 1] == midi::SysExEnd))
     {
         ++data;
         size -= 2;

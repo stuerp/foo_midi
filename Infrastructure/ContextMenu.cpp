@@ -119,12 +119,12 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
                         if (_strnicmp(TmpFilePath, "file://", 7) == 0)
                             TmpFilePath += 7;
 
-                        midi_container_t Container;
+                        midi::container_t Container;
                         bool Success = false;
 
                         try
                         {
-                            Success = midi_processor_t::Process(Object, pfc::wideFromUTF8(TmpFilePath), Container);
+                            Success = midi::processor_t::Process(Object, pfc::wideFromUTF8(TmpFilePath), Container);
                         }
                         catch (std::exception &)
                         {

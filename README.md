@@ -410,7 +410,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
 * [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification)
 
-#### RPC (Recomposer)
+#### RCP (Recomposer)
 
 * [Recomposer Format](http://www.vgmpf.com/Wiki/index.php?title=GMF)
 
