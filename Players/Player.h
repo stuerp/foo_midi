@@ -50,8 +50,8 @@ protected:
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) { };
 
     // Only implemented by Secret Sauce and VSTi-specific
-    virtual void SendEvent(uint32_t, uint32_t) { };
-    virtual void SendSysEx(const uint8_t *, size_t, uint32_t, uint32_t) { };
+    virtual void SendEvent(uint32_t, uint32_t time) { };
+    virtual void SendSysEx(const uint8_t *, size_t, uint32_t, uint32_t time) { };
 
     void ResetPort(uint8_t portNumber, uint32_t time);
 

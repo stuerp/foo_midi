@@ -225,6 +225,9 @@ bool FSPlayer::Startup()
 
             for (const auto & sf : _SoundFonts)
             {
+//              if (!_FluidSynth.IsSoundFont(sf.FilePath().c_str()))
+//                  continue;
+
                 int SoundFontId = _FluidSynth.LoadSoundFont(_Synths[i], sf.FilePath().c_str(), TRUE);
 
                 if (SoundFontId == FLUID_FAILED)
@@ -249,7 +252,7 @@ bool FSPlayer::Startup()
     _FluidSynth.SetLogFunction(FLUID_PANIC, Log, NULL);
     _FluidSynth.SetLogFunction(FLUID_ERR, Log, NULL);
     _FluidSynth.SetLogFunction(FLUID_WARN, Log, NULL);
-    _FluidSynth.SetLogFunction(FLUID_DBG, NULL, NULL);
+    _FluidSynth.SetLogFunction(FLUID_DBG,Log, NULL);
     #endif
 
     _ErrorMessage = "";

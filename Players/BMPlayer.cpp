@@ -29,6 +29,12 @@ BMPlayer::BMPlayer() : player_t()
     _SFList[0] = nullptr;
     _SFList[1] = nullptr;
 
+    for (auto & LSB : _NRPNLSB)
+        LSB = 0xFF;
+
+    for (auto & MSB : _NRPNMSB)
+        MSB = 0xFF;
+
     if (!_BASSInitializer.Initialize())
         throw std::runtime_error("Unable to initialize BASSMIDI");
 }
@@ -239,6 +245,12 @@ bool BMPlayer::Reset()
     for (uint8_t PortNumber = 0; PortNumber < MaxPorts; ++PortNumber)
         ResetPort(PortNumber, 0);
 
+    for (auto & LSB : _NRPNLSB)
+        LSB = 0xFF;
+
+    for (auto & MSB : _NRPNMSB)
+        MSB = 0xFF;
+
     return true;
 }
 
@@ -256,8 +268,31 @@ void BMPlayer::SendEvent(uint32_t message)
 
     const uint8_t Status = Event[0] & 0xF0u;
 
-    if (_IgnoreCC32 && (Status == midi::ControlChange) && (Event[1] == (midi::BankSelect | midi::BankSelectLSB)))
+    if (_IgnoreCC32 && (Status == midi::ControlChange) && (Event[1] == midi::BankSelectLSB))
         return;
+
+    // Ignore the Data Entry message for a NRPN Vibrato Depth. BASSMIDI overreacts to this SC-88Pro specific parameter.
+    if ((_MIDIFlavor == MIDIFlavor::SC88Pro) && (Status == midi::ControlChange))
+    {
+        size_t Channel = Event[0] & 0x0Fu;
+
+        if ((Event[1] == midi::ControlChangeNumbers::NRPNMSB) && (Event[2] == 0x01)) // Set NRPN MSB Vibrato Depth
+        {
+            _NRPNMSB[Channel] = Event[2];
+        }
+        else
+        if ((Event[1] == midi::ControlChangeNumbers::NRPNLSB) && (Event[2] == 0x09)) // Set NRPN LSB Vibrato Depth
+        {
+            _NRPNLSB[Channel] = Event[2];
+        }
+        else
+        if ((Event[1] == midi::ControlChangeNumbers::DataEntry) && (_NRPNMSB[Channel] == 0x01) && (_NRPNLSB[Channel] == 0x09))
+        {
+            _NRPNMSB[Channel] = _NRPNLSB[Channel] = 0xFF;
+
+            return; // Ignore the Data Entry message.
+        }
+    }
 
     uint8_t PortNumber = (message >> 24) & 0x7Fu;
 

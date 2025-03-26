@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2025.03.19) **/
+/** $VER: FluidSynth.h (2025.03.23) **/
 
 #pragma once
 
@@ -34,6 +34,8 @@ typedef int (WINAPIV * _fluid_settings_foreach)(fluid_settings_t * settings, voi
 
 typedef void (WINAPIV * _fluid_free)(void * data);
 typedef void (WINAPIV * _delete_fluid_settings)(fluid_settings_t * settings);
+
+typedef int (WINAPIV * _fluid_is_soundfont)(const char * filePath);
 
 typedef fluid_synth_t * (WINAPIV * _new_fluid_synth)(fluid_settings_t * settings);
 typedef void (WINAPIV * _fluid_synth_add_sfloader)(fluid_synth_t * synth, fluid_sfloader_t * loader);
@@ -139,6 +141,8 @@ public:
         InitializeFunction(fluid_free, Free);
         InitializeFunction(fluid_settings_foreach, ForEachSetting);
 
+        InitializeFunction(fluid_is_soundfont, IsSoundFont);
+
         InitializeFunction(delete_fluid_settings, DeleteSettings);
 
         InitializeFunction(new_fluid_synth, CreateSynthesizer);
@@ -218,6 +222,8 @@ public:
     _fluid_free Free;
     _delete_fluid_settings DeleteSettings;
 
+    _fluid_is_soundfont IsSoundFont;
+    
     _new_fluid_synth CreateSynthesizer;
     _fluid_synth_add_sfloader AddSoundFontLoader;
     _fluid_synth_system_reset ResetSynthesizer;
