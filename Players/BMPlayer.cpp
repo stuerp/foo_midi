@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.03.19) **/
+/** $VER: BMPlayer.cpp (2025.03.27) **/
 
 #include "framework.h"
 
@@ -29,11 +29,8 @@ BMPlayer::BMPlayer() : player_t()
     _SFList[0] = nullptr;
     _SFList[1] = nullptr;
 
-    for (auto & LSB : _NRPNLSB)
-        LSB = 0xFF;
-
-    for (auto & MSB : _NRPNMSB)
-        MSB = 0xFF;
+    ::memset(_NRPNLSB, 0xFF, sizeof(_NRPNLSB));
+    ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
 
     if (!_BASSInitializer.Initialize())
         throw std::runtime_error("Unable to initialize BASSMIDI");
@@ -245,11 +242,8 @@ bool BMPlayer::Reset()
     for (uint8_t PortNumber = 0; PortNumber < MaxPorts; ++PortNumber)
         ResetPort(PortNumber, 0);
 
-    for (auto & LSB : _NRPNLSB)
-        LSB = 0xFF;
-
-    for (auto & MSB : _NRPNMSB)
-        MSB = 0xFF;
+    ::memset(_NRPNLSB, 0xFF, sizeof(_NRPNLSB));
+    ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
 
     return true;
 }

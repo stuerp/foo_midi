@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenu.cpp (2024.05.12) **/
+/** $VER: ContextMenu.cpp (2025.03.31) **/
 
 #include "framework.h"
 
@@ -9,7 +9,7 @@
 
 static const char * ItemTexts[5] =
 {
-    "Convert to General MIDI",
+    "Save as Standard MIDI File (SMF)",
 
     "Save synthesizer preset",
     "Remove synthesizer preset",
@@ -34,7 +34,7 @@ void ContextMenu::get_item_name(unsigned int itemIndex, pfc::string_base & itemN
 bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, pfc::string_base & out, unsigned &, const GUID &)
 {
     if (itemIndex >= _countof(ItemTexts))
-        uBugCheck();
+        ::uBugCheck();
 
     size_t MatchCount = 0, SysExMatchCount = 0;
     size_t ItemCount = itemList.get_count();
@@ -85,10 +85,11 @@ bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_ba
 void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_const_t<metadb_handle_ptr> & itemList, const GUID &)
 {
     if (itemIndex >= _countof(ItemTexts))
-        uBugCheck();
+        ::uBugCheck();
 
     switch (itemIndex)
     {
+        // Convert to Standard MIDI File (SMF)
         case 0: 
         {
             std::vector<uint8_t> Object;
@@ -146,6 +147,8 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
             break;
         }
 
+        // "Save synthesizer preset"
+        // "Remove synthesizer preset"
         case 1:
         case 2:
         {
@@ -169,6 +172,9 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
             break;
         }
 
+
+        // "Assign SysEx dumps"
+        // "Clear SysEx dumps"
         case 3:
         case 4:
         {

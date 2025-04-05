@@ -177,9 +177,9 @@ bool FSPlayer::Startup()
 
         // Chorus effects module
         _FluidSynth.SetIntegerSetting(Setting, "synth.chorus.active", _DoReverbAndChorusProcessing ? 1 : 0);
-        //      _FluidSynth.SetNumericSetting(Setting, "synth.chorus.depth", 8.0f); // 0.0 - 256.0
-        //      _FluidSynth.SetNumericSetting(Setting, "synth.chorus.level", 2.0f); // 0.0 - 10.0
-        //      _FluidSynth.SetIntegerSetting(Setting, "synth.chorus.nr", 3); // 0 - 99
+//      _FluidSynth.SetNumericSetting(Setting, "synth.chorus.depth", 8.0f); // 0.0 - 256.0
+//      _FluidSynth.SetNumericSetting(Setting, "synth.chorus.level", 2.0f); // 0.0 - 10.0
+//      _FluidSynth.SetIntegerSetting(Setting, "synth.chorus.nr", 3); // 0 - 99
 
                 // Defines how many voices can be played in parallel.
         _FluidSynth.SetIntegerSetting(Setting, "synth.polyphony", (int)_VoiceCount);
@@ -252,7 +252,7 @@ bool FSPlayer::Startup()
     _FluidSynth.SetLogFunction(FLUID_PANIC, Log, NULL);
     _FluidSynth.SetLogFunction(FLUID_ERR, Log, NULL);
     _FluidSynth.SetLogFunction(FLUID_WARN, Log, NULL);
-    _FluidSynth.SetLogFunction(FLUID_DBG,Log, NULL);
+//  _FluidSynth.SetLogFunction(FLUID_DBG,Log, NULL);
     #endif
 
     _ErrorMessage = "";

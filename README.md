@@ -7,7 +7,7 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Features
 
-* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36, .XMF/.MXMF).
+* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36, .XMF/.MXMF, .MMF).
 * Supports several synthesizers, several of which do not require any additional files to play back music. The bundled synthesizers which do not require additional files may sound rather basic, though.
 * Supports FluidSynth SoundFont (.sf2) based synthesizer, including support for the newer compressed format. (.sf3). SoundFonts may be loaded in a simple, or even complex setup, using either basic .sflist text files encoded in UTF-8 format, but for now, it only supports a bare list of files.
 * Supports 32 and 64-bit VST instruments.
@@ -114,8 +114,10 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-vNext,2025-xx-xx
-* Changed: Enabled dynamic sample loading in the FluidSynth player again when using [FluidSynth 2.4.4](https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.4) or later. 
+v2.18.0.0, 2025-04-05
+* Changed: Enabled dynamic sample loading in the FluidSynth player again when using [FluidSynth 2.4.4](https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.4) or later.
+* Added: BASSMIDI will ignore NRPN Vibrato Depth events in SC-88Pro mode. It overreacts to this parameter.
+* Added: Support for MMF/SMAF MA-2 files.
 
 v2.17.2.0, 2025-03-19
 * Fixed: Crash while attempting to open a MIDI file with a file name containing non-ASCII characters. An old bug suddenly surfaced while attempting to open a WRD file containing external lyrics.
@@ -343,6 +345,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Jean-loup Gailly](http://gailly.net/) and [Mark Adler](http://en.wikipedia.org/wiki/Mark_Adler) for [zlib](https://www.zlib.net/).
 * [Spessasus](https://github.com/spessasus) for testing, advice and [SpessaSynth](https://github.com/spessasus/SpessaSynth).
 * [Zoltán Bacskó](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
+* [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool)
 
 ## Reference Material
 
