@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.03.15) **/
+/** $VER: BMPlayer.cpp (2025.03.27) **/
 
 #include "framework.h"
 
@@ -29,8 +29,11 @@ BMPlayer::BMPlayer() : player_t()
     _SFList[0] = nullptr;
     _SFList[1] = nullptr;
 
+    ::memset(_NRPNLSB, 0xFF, sizeof(_NRPNLSB));
+    ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
+
     if (!_BASSInitializer.Initialize())
-        throw std::runtime_error("Unable to initialize BASS MIDI");
+        throw std::runtime_error("Unable to initialize BASSMIDI");
 }
 
 BMPlayer::~BMPlayer()
@@ -239,6 +242,9 @@ bool BMPlayer::Reset()
     for (uint8_t PortNumber = 0; PortNumber < MaxPorts; ++PortNumber)
         ResetPort(PortNumber, 0);
 
+    ::memset(_NRPNLSB, 0xFF, sizeof(_NRPNLSB));
+    ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
+
     return true;
 }
 
@@ -256,15 +262,38 @@ void BMPlayer::SendEvent(uint32_t message)
 
     const uint8_t Status = Event[0] & 0xF0u;
 
-    if (_IgnoreCC32 && (Status == StatusCodes::ControlChange) && (Event[1] == (ControlChangeNumbers::BankSelect | ControlChangeNumbers::BankSelectLSB)))
+    if (_IgnoreCC32 && (Status == midi::ControlChange) && (Event[1] == midi::BankSelectLSB))
         return;
+
+    // Ignore the Data Entry message for a NRPN Vibrato Depth. BASSMIDI overreacts to this SC-88Pro specific parameter.
+    if ((_MIDIFlavor == MIDIFlavor::SC88Pro) && (Status == midi::ControlChange))
+    {
+        size_t Channel = Event[0] & 0x0Fu;
+
+        if ((Event[1] == midi::ControlChangeNumbers::NRPNMSB) && (Event[2] == 0x01)) // Set NRPN MSB Vibrato Depth
+        {
+            _NRPNMSB[Channel] = Event[2];
+        }
+        else
+        if ((Event[1] == midi::ControlChangeNumbers::NRPNLSB) && (Event[2] == 0x09)) // Set NRPN LSB Vibrato Depth
+        {
+            _NRPNLSB[Channel] = Event[2];
+        }
+        else
+        if ((Event[1] == midi::ControlChangeNumbers::DataEntry) && (_NRPNMSB[Channel] == 0x01) && (_NRPNLSB[Channel] == 0x09))
+        {
+            _NRPNMSB[Channel] = _NRPNLSB[Channel] = 0xFF;
+
+            return; // Ignore the Data Entry message.
+        }
+    }
 
     uint8_t PortNumber = (message >> 24) & 0x7Fu;
 
     if (PortNumber > (_countof(_Streams) - 1))
         PortNumber = 0;
 
-    const DWORD EventSize = (DWORD)((Status >= 0xF8u && Status <= 0xFFu) ? 1 : ((Status == StatusCodes::ProgramChange || Status == StatusCodes::ChannelPressure) ? 2 : 3));
+    const DWORD EventSize = (DWORD)((Status >= midi::TimingClock && Status <= midi::MetaData) ? 1 : ((Status == midi::ProgramChange || Status == midi::ChannelPressure) ? 2 : 3));
 
     ::BASS_MIDI_StreamEvents(_Streams[PortNumber], BASS_MIDI_EVENTS_RAW, Event, EventSize);
 }
@@ -316,7 +345,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
         {
             Shutdown();
 
-            _ErrorMessage = "Unable to load SoundFont \"" + soundFont.FilePath() + "\"";
+            _ErrorMessage = "Unable to load sound font \"" + soundFont.FilePath() + "\"";
 
             return false;
         }

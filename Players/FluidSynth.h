@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2025.03.15) **/
+/** $VER: FluidSynth.h (2025.03.23) **/
 
 #pragma once
 
@@ -19,7 +19,7 @@
 
 #pragma region FluidSynth API
 
-typedef char * (WINAPIV * _fluid_version_str)();
+typedef void (WINAPIV * _fluid_version)(int * major, int * minor, int * micro);
 
 typedef fluid_settings_t * (WINAPIV * _new_fluid_settings)();
 
@@ -34,6 +34,8 @@ typedef int (WINAPIV * _fluid_settings_foreach)(fluid_settings_t * settings, voi
 
 typedef void (WINAPIV * _fluid_free)(void * data);
 typedef void (WINAPIV * _delete_fluid_settings)(fluid_settings_t * settings);
+
+typedef int (WINAPIV * _fluid_is_soundfont)(const char * filePath);
 
 typedef fluid_synth_t * (WINAPIV * _new_fluid_synth)(fluid_settings_t * settings);
 typedef void (WINAPIV * _fluid_synth_add_sfloader)(fluid_synth_t * synth, fluid_sfloader_t * loader);
@@ -125,7 +127,7 @@ public:
             throw midi::exception_t(midi::GetErrorMessage("Failed to load FluidSynth library", ::GetLastError(), WideToUTF8(LibraryName).c_str()).c_str());
 
         #pragma warning(disable: 4191) // 'type cast': unsafe conversion from 'FARPROC' to 'xxx'
-        InitializeFunction(fluid_version_str, GetVersion);
+        InitializeFunction(fluid_version, GetVersion);
 
         InitializeFunction(new_fluid_settings, CreateSettings);
 
@@ -138,6 +140,8 @@ public:
 
         InitializeFunction(fluid_free, Free);
         InitializeFunction(fluid_settings_foreach, ForEachSetting);
+
+        InitializeFunction(fluid_is_soundfont, IsSoundFont);
 
         InitializeFunction(delete_fluid_settings, DeleteSettings);
 
@@ -202,7 +206,7 @@ public:
     }
 
 public:
-    _fluid_version_str GetVersion;
+    _fluid_version GetVersion;
 
     _new_fluid_settings CreateSettings;
 
@@ -218,6 +222,8 @@ public:
     _fluid_free Free;
     _delete_fluid_settings DeleteSettings;
 
+    _fluid_is_soundfont IsSoundFont;
+    
     _new_fluid_synth CreateSynthesizer;
     _fluid_synth_add_sfloader AddSoundFontLoader;
     _fluid_synth_system_reset ResetSynthesizer;

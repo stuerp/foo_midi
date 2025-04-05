@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.03.16) **/
+/** $VER: BMPlayer.h (2025.03.26) **/
 
 #pragma once
 
@@ -34,6 +34,16 @@ public:
     void SetVoiceCount(uint32_t voices);
 
     uint32_t GetActiveVoiceCount() const noexcept;
+
+    DWORD GetVersion() const noexcept
+    {
+        return ::BASS_GetVersion();
+    }
+
+    DWORD GetMIDIVersion() const noexcept
+    {
+        return ::BASS_MIDI_GetVersion();
+    }
 
 private:
     #pragma region player_t
@@ -78,7 +88,6 @@ private:
 
     HSTREAM _Streams[MaxPorts]; // Each stream corresponds to a port.
 
-    std::string _SoundFontDirectoryPath;
     std::vector<soundfont_t> _SoundFonts;
 
     float _Volume;
@@ -87,6 +96,9 @@ private:
 
     bool _DoReverbAndChorusProcessing;
     bool _IgnoreCC32; // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.
+
+    uint8_t _NRPNLSB[16]; // The last NRPN LSB seen for a channel.
+    uint8_t _NRPNMSB[16]; // The last NRPN MSB seen for a channel.
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member

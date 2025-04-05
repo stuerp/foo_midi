@@ -29,7 +29,7 @@ public:
     void Serialize(const char * filePath, pfc::string8 & text) noexcept;
     void Deserialize(const char * text, const char * filePath) noexcept;
 
-    void Merge(midi_container_t & container, abort_callback & abortHandler);
+    void Merge(midi::container_t & container, abort_callback & abortHandler);
 
 private:
     static void CreateRelativeFromAbsolutePath(const char * filePath, const char * directoryPath, pfc::string_base & relativePath);

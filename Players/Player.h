@@ -25,7 +25,7 @@ public:
         Forced = 0x02
     };
 
-    bool Load(const midi_container_t & midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t cleanFlags);
+    bool Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t cleanFlags);
     uint32_t Play(audio_sample * samplesData, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
@@ -50,8 +50,8 @@ protected:
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) { };
 
     // Only implemented by Secret Sauce and VSTi-specific
-    virtual void SendEvent(uint32_t, uint32_t) { };
-    virtual void SendSysEx(const uint8_t *, size_t, uint32_t, uint32_t) { };
+    virtual void SendEvent(uint32_t, uint32_t time) { };
+    virtual void SendSysEx(const uint8_t *, size_t, uint32_t, uint32_t time) { };
 
     void ResetPort(uint8_t portNumber, uint32_t time);
 
@@ -60,7 +60,7 @@ protected:
 protected:
     bool _IsInitialized;
     uint32_t _SampleRate;
-    sysex_table_t _SysExMap;
+    midi::sysex_table_t _SysExMap;
     std::vector<uint8_t> _Ports;
 
     MIDIFlavor _MIDIFlavor;
@@ -82,7 +82,7 @@ private:
 private:
     LoopType _LoopType;         // Type of looping requested by the user.
 
-    std::vector<midi_item_t> _Stream;
+    std::vector<midi::message_t> _Stream;
     size_t _StreamPosition;     // Current position in the event stream
     uint32_t _StreamLoopBegin;  // Start of the loop in the event stream
     uint32_t _StreamLoopEnd;    // End of the loop in the event stream

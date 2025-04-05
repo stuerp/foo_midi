@@ -168,17 +168,18 @@ bool FSPlayer::Startup()
         // Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID).
         _FluidSynth.SetIntegerSetting(Setting, "synth.device-id", (int)(0x10 + i));
 
-        // Load and unload samples from memory whenever presets are being selected or unselected for a MIDI channel.
-//      _FluidSynth.SetIntegerSetting(Setting, "synth.dynamic-sample-loading", _DoDynamicLoading ? 1 : 0); // Causes clicking in the cymbals of "ran.rmi".
+        // Load and unload samples from memory whenever presets are being selected or unselected for a MIDI channel. Supported when using FluidSynth 2.4.4 or later. Earlier versions generate a clicking sound when using incorrectly padded samples. (see https://github.com/FluidSynth/fluidsynth/issues/1484)
+        if (GetVersion() >= MakeDWORD(2, 4, 4, 0))
+            _FluidSynth.SetIntegerSetting(Setting, "synth.dynamic-sample-loading", _DoDynamicLoading ? 1 : 0); // Causes clicking in the cymbals of "ran.rmi".
 
         // Reverb effects module
         _FluidSynth.SetIntegerSetting(Setting, "synth.reverb.active", _DoReverbAndChorusProcessing ? 1 : 0);
 
         // Chorus effects module
         _FluidSynth.SetIntegerSetting(Setting, "synth.chorus.active", _DoReverbAndChorusProcessing ? 1 : 0);
-        //      _FluidSynth.SetNumericSetting(Setting, "synth.chorus.depth", 8.0f); // 0.0 - 256.0
-        //      _FluidSynth.SetNumericSetting(Setting, "synth.chorus.level", 2.0f); // 0.0 - 10.0
-        //      _FluidSynth.SetIntegerSetting(Setting, "synth.chorus.nr", 3); // 0 - 99
+//      _FluidSynth.SetNumericSetting(Setting, "synth.chorus.depth", 8.0f); // 0.0 - 256.0
+//      _FluidSynth.SetNumericSetting(Setting, "synth.chorus.level", 2.0f); // 0.0 - 10.0
+//      _FluidSynth.SetIntegerSetting(Setting, "synth.chorus.nr", 3); // 0 - 99
 
                 // Defines how many voices can be played in parallel.
         _FluidSynth.SetIntegerSetting(Setting, "synth.polyphony", (int)_VoiceCount);
@@ -224,6 +225,9 @@ bool FSPlayer::Startup()
 
             for (const auto & sf : _SoundFonts)
             {
+//              if (!_FluidSynth.IsSoundFont(sf.FilePath().c_str()))
+//                  continue;
+
                 int SoundFontId = _FluidSynth.LoadSoundFont(_Synths[i], sf.FilePath().c_str(), TRUE);
 
                 if (SoundFontId == FLUID_FAILED)
@@ -248,7 +252,7 @@ bool FSPlayer::Startup()
     _FluidSynth.SetLogFunction(FLUID_PANIC, Log, NULL);
     _FluidSynth.SetLogFunction(FLUID_ERR, Log, NULL);
     _FluidSynth.SetLogFunction(FLUID_WARN, Log, NULL);
-    _FluidSynth.SetLogFunction(FLUID_DBG, NULL, NULL);
+//  _FluidSynth.SetLogFunction(FLUID_DBG,Log, NULL);
     #endif
 
     _ErrorMessage = "";
@@ -360,31 +364,31 @@ void FSPlayer::SendEvent(uint32_t message)
 
     switch (Code)
     {
-        case StatusCodes::NoteOff:
+        case midi::NoteOff:
             _FluidSynth.NoteOff(_Synths[PortNumber], Channel, Param1);
             break;
 
-        case StatusCodes::NoteOn:
+        case midi::NoteOn:
             _FluidSynth.NoteOn(_Synths[PortNumber], Channel, Param1, Param2);
             break;
 
-        case StatusCodes::KeyPressure:
+        case midi::KeyPressure:
             _FluidSynth.KeyPressure(_Synths[PortNumber], Channel, Param1, Param2);
             break;
 
-        case StatusCodes::ControlChange:
+        case midi::ControlChange:
             _FluidSynth.ControlChange(_Synths[PortNumber], Channel, Param1, Param2);
             break;
 
-        case StatusCodes::ProgramChange:
+        case midi::ProgramChange:
             _FluidSynth.ProgramChange(_Synths[PortNumber], Channel, Param1);
             break;
 
-        case StatusCodes::ChannelPressure:
+        case midi::ChannelPressure:
             _FluidSynth.ChannelPressure(_Synths[PortNumber], Channel, Param1);
             break;
 
-        case StatusCodes::PitchBendChange:
+        case midi::PitchBendChange:
             _FluidSynth.PitchBend(_Synths[PortNumber], Channel, (Param2 << 7) | Param1);
             break;
     }
@@ -395,7 +399,7 @@ void FSPlayer::SendEvent(uint32_t message)
 /// </summary>
 void FSPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
-    if ((data != nullptr) && (size > 2) && (data[0] == StatusCodes::SysEx) && (data[size - 1] == StatusCodes::SysExEnd))
+    if ((data != nullptr) && (size > 2) && (data[0] == midi::SysEx) && (data[size - 1] == midi::SysExEnd))
     {
         ++data;
         size -= 2;

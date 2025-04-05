@@ -1,5 +1,5 @@
 
-/** $VER: EdMPlayer.cpp (2024.05.05) **/
+/** $VER: EdMPlayer.cpp (2025.03.21) **/
 
 #include "framework.h"
 
@@ -105,15 +105,15 @@ void EdMPlayer::SendEvent(uint32_t data)
 
     mi.Interpret(Data[0]);
 
-    if (Data[0] < 0xF8)
+    if (Data[0] < midi::TimingClock)
     {
         mi.Interpret(Data[1]);
 
-        if (StatusCode != 0xC0 && StatusCode != 0xD0)
+        if (StatusCode != midi::ProgramChange && StatusCode != midi::ChannelPressure)
             mi.Interpret(Data[2]);
     }
 
-    if (StatusCode == 0xB0 && Data[1] == 0)
+    if (StatusCode == midi::ControlChange && Data[1] == 0)
     {
         if (_SynthMode == ModeXG)
         {
@@ -133,7 +133,7 @@ void EdMPlayer::SendEvent(uint32_t data)
         }
     }
     else
-    if (StatusCode == 0xC0)
+    if (StatusCode == midi::ProgramChange)
     {
         SetDrumChannel((int)Channel, _DrumChannels[Channel]);
     }
