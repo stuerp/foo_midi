@@ -1,5 +1,5 @@
  
-/** $VER: SoundFonts.cpp (2025.03.16) - Support functions for working with sound font files **/
+/** $VER: SoundFonts.cpp (2025.04.13) - Support functions for working with sound font files **/
 
 #include "framework.h"
 
@@ -161,8 +161,12 @@ bool GetSoundFontFilePath(const pfc::string & filePath, pfc::string & soundFontP
         soundFontPath.truncate((Period - soundFontPath.c_str()) + (size_t) 1);
         soundFontPath += FileExtension;
 
-        if (filesystem::g_exists(soundFontPath, abortHandler))
-            return true;
+        try
+        {
+            if (filesystem::g_exists(soundFontPath, abortHandler))
+                return true;
+        }
+        catch(...) {};
     }
 
     return false;
