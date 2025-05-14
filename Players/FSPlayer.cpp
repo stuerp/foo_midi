@@ -225,8 +225,8 @@ bool FSPlayer::Startup()
 
             for (const auto & sf : _SoundFonts)
             {
-//              if (!_FluidSynth.IsSoundFont(sf.FilePath().c_str()))
-//                  continue;
+                if (!_FluidSynth.IsSoundFont(sf.FilePath().c_str()))
+                    continue;
 
                 int SoundFontId = _FluidSynth.LoadSoundFont(_Synths[i], sf.FilePath().c_str(), TRUE);
 

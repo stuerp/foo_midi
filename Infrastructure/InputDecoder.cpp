@@ -1260,13 +1260,13 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
             if (::memcmp(Data.data() + 8, "DLS ", 4) != 0)
             {
-                sf::soundfont_t sf;
+                sf::bank_t sf;
 
                 riff::memory_stream_t ms;
 
                 if (ms.Open(Data.data(), Data.size()))
                 {
-                    sf::soundfont_reader_t sr;
+                    sf::reader_t sr;
 
                     if (sr.Open(&ms, riff::reader_t::option_t::None))
                     {

@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2024.09.18) **/
+/** $VER: foo_midi.rc (2025.05.14) **/
 
 #include "resource.h"
 
@@ -48,8 +48,8 @@ filesubtype     VFT2_UNKNOWN
 #include "Infrastructure\PreferencesRootLayout.h"
 
 IDD_PREFERENCES_ROOT dialogex 0, 0, 0, 0
-style DS_SETFONT | WS_CHILD
-font 8, "Segoe UI", 400, 0, 1
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
 {
 //  Used to measure the dialog size.
 //  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
@@ -124,8 +124,8 @@ font 8, "Segoe UI", 400, 0, 1
 #include "Infrastructure\PreferencesPathsLayout.h"
 
 IDD_PREFERENCES_PATHS dialogex 0, 0, 0, 0
-style DS_SETFONT | WS_CHILD
-font 8, "Segoe UI", 400, 0, 1
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
 {
     rtext       "VSTi Plugins:",    IDC_STATIC,                         X_B11, Y_B11 + 2, W_B11, H_B11
     edittext                        IDC_VST_PATH,                       X_B12, Y_B12,     W_B12, H_B12, ES_AUTOHSCROLL
@@ -153,8 +153,8 @@ font 8, "Segoe UI", 400, 0, 1
 #include "Infrastructure\PreferencesProcessingLayout.h"
 
 IDD_PREFERENCES_PROCESSING dialogex 0, 0, 0, 0
-style DS_SETFONT | WS_CHILD
-font 8, "Segoe UI", 400, 0, 1
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
 {
     groupbox "Recomposer", IDC_STATIC, X_C00, Y_C00, W_C00, H_C00
         rtext       "Expand loops:",            IDC_STATIC,                 X_C11, Y_C11 + 2, W_C11, H_C11
@@ -204,7 +204,7 @@ font 8, "Segoe UI", 400, 0, 1
 #include "Infrastructure\PreferencesHMILayout.h"
 
 IDD_PREFERENCES_HMI dialogex 0, 0, 0, 0
-style DS_SETFONT | WS_CHILD
-font 8, "Segoe UI", 400, 0, 1
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
 {
 }

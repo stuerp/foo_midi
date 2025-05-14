@@ -114,6 +114,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
+v2.xx.0.0, 2025-xx-xx
+* Fixed: Preferences dialog should adapt to High DPI setttings now.
+
 v2.18.0.0, 2025-04-05
 * Changed: Enabled dynamic sample loading in the FluidSynth player again when using [FluidSynth 2.4.4](https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.4) or later.
 * Added: BASSMIDI will ignore NRPN Vibrato Depth events in SC-88Pro mode. It overreacts to this parameter.
