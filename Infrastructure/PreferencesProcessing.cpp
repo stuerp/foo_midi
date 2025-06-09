@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2024.09.14) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2025.06.09) P. Stuer **/
 
 #include "framework.h"
 
@@ -137,7 +137,7 @@ private:
     bool _WriteSysExNames;
     bool _ExtendLoops;
     bool _WolfteamLoopMode;
-    bool _KeepDummyChannels;
+    bool _KeepMutedChannels;
     bool _IncludeControlData;
 
     // HMI / HMP
@@ -309,8 +309,8 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
             _WolfteamLoopMode   = !_WolfteamLoopMode;
             break;
 
-        case IDC_KEEP_DUMMY_CHANNELS:
-            _KeepDummyChannels  = !_KeepDummyChannels;
+        case IDC_KEEP_MUTED_CHANNELS:
+            _KeepMutedChannels  = !_KeepMutedChannels;
             break;
 
         case IDC_INCLUDE_CONTROL_DATA:
@@ -423,7 +423,7 @@ void DialogPageProcessing::UpdateDialog() noexcept
     SendDlgItemMessageW(IDC_WRITE_SYSEX_NAMES,    BM_SETCHECK, (WPARAM) _WriteSysExNames);
     SendDlgItemMessageW(IDC_EXTEND_LOOPS,         BM_SETCHECK, (WPARAM) _ExtendLoops);
     SendDlgItemMessageW(IDC_WOLFTEAM_LOOPS,       BM_SETCHECK, (WPARAM) _WolfteamLoopMode);
-    SendDlgItemMessageW(IDC_KEEP_DUMMY_CHANNELS,  BM_SETCHECK, (WPARAM) _KeepDummyChannels);
+    SendDlgItemMessageW(IDC_KEEP_MUTED_CHANNELS,  BM_SETCHECK, (WPARAM) _KeepMutedChannels);
     SendDlgItemMessageW(IDC_INCLUDE_CONTROL_DATA, BM_SETCHECK, (WPARAM) _IncludeControlData);
 
     ::uSetDlgItemText(m_hWnd, IDC_DEFAULT_TEMPO, pfc::format_int(_DefaultTempo));

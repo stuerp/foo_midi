@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.04.05) P. Stuer **/
+/** $VER: Resource.h (2025.06.09) P. Stuer **/
 
 #pragma once
 
@@ -135,7 +135,7 @@
 #define IDC_WRITE_SYSEX_NAMES               2130
 #define IDC_EXTEND_LOOPS                    2140
 #define IDC_WOLFTEAM_LOOPS                  2150
-#define IDC_KEEP_DUMMY_CHANNELS             2160
+#define IDC_KEEP_MUTED_CHANNELS             2160
 #define IDC_INCLUDE_CONTROL_DATA            2170
 
 /** Dialog: Preferences HMI **/

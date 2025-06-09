@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2025.05.14) **/
+/** $VER: foo_midi.rc (2025.06.09) **/
 
 #include "resource.h"
 
@@ -165,7 +165,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
         control     "Write SysEx names",        IDC_WRITE_SYSEX_NAMES,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C21, Y_C21, W_C21, H_C21
         control     "Extend loops ",            IDC_EXTEND_LOOPS,           "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C22, Y_C22, W_C22, H_C22
         control     "Wolfteam loops ",          IDC_WOLFTEAM_LOOPS,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C23, Y_C23, W_C23, H_C23
-        control     "Keep dummy channels",      IDC_KEEP_DUMMY_CHANNELS,    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C24, Y_C24, W_C24, H_C24
+        control     "Keep muted channels",      IDC_KEEP_MUTED_CHANNELS,    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C24, Y_C24, W_C24, H_C24
         control     "Include control data",     IDC_INCLUDE_CONTROL_DATA,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C25, Y_C25, W_C25, H_C25
 
     groupbox "HMI / HMP", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
