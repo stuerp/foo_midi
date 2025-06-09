@@ -49,7 +49,7 @@ ConfigVariable(WriteBarMarkers,     cfg_bool, bool, false, 0x532741c5,0xe1a3,0x4
 ConfigVariable(WriteSysExNames,     cfg_bool, bool, false, 0xe00a19b1,0xe0dd,0x46dc,0xb0,0x6c,0xdb,0xb7,0x13,0x5c,0x07,0xc8);
 ConfigVariable(ExtendLoops,         cfg_bool, bool, true,  0x0d8983e5,0x748e,0x456d,0xb3,0x20,0x74,0x33,0x81,0xb5,0xd0,0x11);
 ConfigVariable(WolfteamLoopMode,    cfg_bool, bool, false, 0x373c9824,0x32a3,0x4ebe,0x87,0x3f,0xb2,0xda,0x7e,0xb8,0x50,0x29);
-ConfigVariable(KeepDummyChannels,   cfg_bool, bool, false, 0x5ded0321,0xc53c,0x4581,0xb3,0x1e,0x3c,0x7b,0x3d,0xc0,0x90,0xb5);
+ConfigVariable(KeepMutedChannels,   cfg_bool, bool, false, 0x5ded0321,0xc53c,0x4581,0xb3,0x1e,0x3c,0x7b,0x3d,0xc0,0x90,0xb5);
 ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4974,0xaa,0x60,0x3c,0xdf,0xb6,0x07,0x25,0xbc);
 
 // HMI / HMP
@@ -173,7 +173,7 @@ void DialogPageProcessing::apply()
     ApplyConfigVariable(WriteSysExNames);
     ApplyConfigVariable(ExtendLoops);
     ApplyConfigVariable(WolfteamLoopMode);
-    ApplyConfigVariable(KeepDummyChannels);
+    ApplyConfigVariable(KeepMutedChannels);
     ApplyConfigVariable(IncludeControlData);
 
     ApplyConfigVariable(DefaultTempo);
@@ -194,7 +194,7 @@ void DialogPageProcessing::reset()
     ResetConfigVariable(WriteSysExNames);
     ResetConfigVariable(ExtendLoops);
     ResetConfigVariable(WolfteamLoopMode);
-    ResetConfigVariable(KeepDummyChannels);
+    ResetConfigVariable(KeepMutedChannels);
     ResetConfigVariable(IncludeControlData);
 
     ResetConfigVariable(DefaultTempo);
@@ -224,7 +224,7 @@ BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
     InitializeConfigVariable(WriteSysExNames);
     InitializeConfigVariable(ExtendLoops);
     InitializeConfigVariable(WolfteamLoopMode);
-    InitializeConfigVariable(KeepDummyChannels);
+    InitializeConfigVariable(KeepMutedChannels);
     InitializeConfigVariable(IncludeControlData);
 
     InitializeConfigVariable(DefaultTempo);
@@ -393,7 +393,7 @@ bool DialogPageProcessing::HasChanged() const noexcept
     HasConfigVariableChanged(WriteBarMarkers);
     HasConfigVariableChanged(WriteSysExNames);
     HasConfigVariableChanged(ExtendLoops);
-    HasConfigVariableChanged(KeepDummyChannels);
+    HasConfigVariableChanged(KeepMutedChannels);
     HasConfigVariableChanged(IncludeControlData);
 
     HasConfigVariableChanged(DefaultTempo);

@@ -108,7 +108,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
                 CfgWriteSysExNames,
                 CfgExtendLoops,
                 CfgWolfteamLoopMode,
-                CfgKeepDummyChannels,
+                CfgKeepMutedChannels,
                 CfgIncludeControlData,
 
                 (uint16_t) CfgDefaultTempo

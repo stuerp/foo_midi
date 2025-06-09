@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.03.12) **/
+/** $VER: Configuration.h (2025.06.09) **/
 
 #pragma once
 
@@ -157,7 +157,7 @@ extern cfg_var_modern::cfg_bool
     CfgWriteSysExNames,
     CfgExtendLoops,
     CfgWolfteamLoopMode,
-    CfgKeepDummyChannels,
+    CfgKeepMutedChannels,
     CfgIncludeControlData;
 
 extern cfg_var_modern::cfg_float

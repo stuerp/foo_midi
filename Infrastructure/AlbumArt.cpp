@@ -1,5 +1,5 @@
 
-/** $VER: AlbumArt.cpp (2024.08.17) **/
+/** $VER: AlbumArt.cpp (2025.06.09) **/
 
 #include "framework.h"
 
@@ -93,7 +93,7 @@ public:
                 CfgWriteSysExNames,
                 CfgExtendLoops,
                 CfgWolfteamLoopMode,
-                CfgKeepDummyChannels,
+                CfgKeepMutedChannels,
                 CfgIncludeControlData,
 
                 (uint16_t) CfgDefaultTempo
