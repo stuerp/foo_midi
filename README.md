@@ -115,6 +115,7 @@ To create the component first build the x64 configuration and next the x86 confi
 ## Change Log
 
 v2.xx.0.0, 2025-xx-xx
+* New: Resurrected yuno's fmmidi player.
 * Fixed: Preferences dialog should adapt to High DPI settings now.
 * Improved: Stricter interpretation of the RCP mute mode that prevents an RCP track from being included in the MIDI stream.
 
@@ -349,7 +350,8 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Jean-loup Gailly](http://gailly.net/) and [Mark Adler](http://en.wikipedia.org/wiki/Mark_Adler) for [zlib](https://www.zlib.net/).
 * [Spessasus](https://github.com/spessasus) for testing, advice and [SpessaSynth](https://github.com/spessasus/SpessaSynth).
 * [Zoltán Bacskó](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
-* [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool)
+* [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool).
+* [yuno (Yoshio Uno)](yuno@users.sourceforge.jp) for [fmmidi](http://milkpot.sakura.ne.jp/fmmidi/).
 
 ## Reference Material
 

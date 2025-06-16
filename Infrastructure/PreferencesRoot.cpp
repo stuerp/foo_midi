@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2025.02.16) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2025.06.16) P. Stuer **/
 
 #include "framework.h"
 
@@ -333,7 +333,8 @@ const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
     { "Nuke",           PlayerType::Nuke,         PlayerIsAlwaysPresent },
     { "Nuked SC-55",    PlayerType::NukedSC55,    PlayerIsNeverPresent }, // 16/02/25: Timing is not working yet.
     { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent },
-    { "MCI",            PlayerType::MCI,          PlayerIsNeverPresent }
+    { "MCI",            PlayerType::MCI,          PlayerIsNeverPresent },
+    { "fmmidi",         PlayerType::FMMIDI,       PlayerIsAlwaysPresent }
 };
 
 #pragma region preferences_page_instance

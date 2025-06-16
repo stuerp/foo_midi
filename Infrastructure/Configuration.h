@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.06.09) **/
+/** $VER: Configuration.h (2025.06.16) **/
 
 #pragma once
 
@@ -38,8 +38,9 @@ enum class PlayerType : int8_t
     SecretSauce = 10,
     MCI = 11,
     NukedSC55 = 12,
+    FMMIDI = 13,
 
-    Max = NukedSC55,
+    Max = FMMIDI,
 
     Default = ADL,
 };

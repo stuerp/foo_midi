@@ -67,9 +67,19 @@ if ($Platform -eq 'x64')
 
     if (Test-Path -Path $DLLPath)
     {
-        Write-Host "Copying SDL libary to `"$PackagePath`"...";
+        Write-Host "Copying SDL library to `"$PackagePath`"...";
 
 #       Copy-Item $DLLPath -Destination "$PackagePath";
+    }
+
+    # juno's fmmidi
+    $ProgramsPath = "3rdParty/midisynth/Programs.txt";
+
+    if (Test-Path -Path $ProgramsPath)
+    {
+        Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
+
+        Copy-Item $ProgramsPath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")
@@ -113,9 +123,19 @@ elseif ($Platform -eq 'Win32')
 
     if (Test-Path -Path $DLLPath)
     {
-        Write-Host "Copying SDL libary to `"$PackagePath`"...";
+        Write-Host "Copying SDL library to `"$PackagePath`"...";
 
 #       Copy-Item $DLLPath -Destination "$PackagePath";
+    }
+
+    # juno's fmmidi
+    $ProgramsPath = "3rdParty/midisynth/Programs.txt";
+
+    if (Test-Path -Path $ProgramsPath)
+    {
+        Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
+
+        Copy-Item $ProgramsPath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")

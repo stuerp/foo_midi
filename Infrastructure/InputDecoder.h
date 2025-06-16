@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.03.16) **/
+/** $VER: InputDecoder.h (2025.06.16) **/
 
 #pragma once
 
@@ -25,6 +25,7 @@
 #include "ADLPlayer.h"
 #include "BMPlayer.h"
 #include "EdMPlayer.h"
+#include "FMMPlayer.h"
 #include "FSPlayer.h"
 #include "MCIPlayer.h"
 #include "MT32Player/MT32Player.h"

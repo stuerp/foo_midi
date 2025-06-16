@@ -38,6 +38,7 @@
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Exception.cpp" />
     <ClCompile Include="Infrastructure\SoundFonts.cpp" />
+    <ClCompile Include="Players\FMMPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -181,6 +182,7 @@
     <ClInclude Include="Players\VSTi.h" />
     <ClInclude Include="Players\SoundFont.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
+    <ClInclude Include="Players\FMMPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

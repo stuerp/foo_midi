@@ -1,5 +1,5 @@
 ﻿ 
-/** $VER: InputDecoder.cpp (2025.03.19) **/
+/** $VER: InputDecoder.cpp (2025.06.16) **/
 
 #include "framework.h"
 
@@ -42,7 +42,8 @@ const char * PlayerTypeNames[] =
     "Nuke",
     "Secret Sauce",
     "MCI",
-    "Nuked SC-55"
+    "Nuked SC-55",
+    "FMMIDI"
 };
 
 #pragma region input_impl
@@ -768,6 +769,31 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 }
             }
 */
+            break;
+        }
+
+        // fmmidi (juno)
+        case PlayerType::FMMIDI:
+        {
+            {
+                auto Player = new FMMPlayer;
+
+                Player->SetProgramPath(pfc::io::path::getParent( core_api::get_my_full_path()).c_str());
+
+                _Player = Player;
+            }
+
+            {
+                _Player->SetSampleRate(_SampleRate);
+                _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
+
+                if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
+                {
+                    _IsEndOfContainer = false;
+
+                    return;
+                }
+            }
             break;
         }
     }
