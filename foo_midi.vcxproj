@@ -121,7 +121,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -157,7 +157,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;$(OutDir)libsf.lib</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;winmm.lib;$(OutDir)libsf.lib</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -198,7 +198,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -241,7 +241,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;./3rdParty/sdl2/lib/$(LibrariesArchitecture)/SDL2.lib;winmm.lib;$(OutDir)libsf.lib</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;winmm.lib;$(OutDir)libsf.lib</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -527,9 +527,6 @@
     </ProjectReference>
     <ProjectReference Include="3rdParty\munt\mt32emu\mt32emu.vcxproj">
       <Project>{e1a15ce7-2670-4e0b-b4e9-e6e36bb4a579}</Project>
-    </ProjectReference>
-    <ProjectReference Include="3rdParty\NukedSC-55\NukedSC-55.vcxproj">
-      <Project>{a11715a0-9ec8-4af6-9216-1dce2db41736}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\Nuke\Nuke.vcxproj">
       <Project>{388eb9a8-764e-4a90-be37-fb28cae70d03}</Project>

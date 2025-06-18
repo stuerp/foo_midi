@@ -30,7 +30,7 @@
 #include "MCIPlayer.h"
 #include "MT32Player/MT32Player.h"
 #include "NukePlayer.h"
-#include "NukeSC-55Player.h"
+//#include "NukeSC-55Player.h"
 #include "OPNPlayer/OPNPlayer.h"
 #include "SCPlayer.h"
 #include "VSTiPlayer.h"
