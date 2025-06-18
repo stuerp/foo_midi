@@ -52,7 +52,7 @@ The component supports 6 loop modes:
 To build the code you need:
 
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2024-12-03
+* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2025-03-07
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
 The following libraries are included in the code:
@@ -67,17 +67,17 @@ The following libraries are included in the code:
 * [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2)
 * [Nuke.YKT](http://nukeykt.retrohost.net/)
   * [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver)
-  * [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) Yamaha YMF262 and CT1747 (OPL3)
-  * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL) Yamaha YM2413 and VRC7 (OPLL)
-  * [Nuked-OPM](https://github.com/nukeykt/Nuked-OPM) Yamaha YM2151
-  * [Nuked-OPN2](https://github.com/nukeykt/Nuked-OPN2) Yamaha YM3438 (YM2612) 1.0.9
-  * [Nuked-OPNB](https://github.com/nukeykt/Nuked-OPNB) Yamaha YM2610
-  * [Nuked-PSG](https://github.com/nukeykt/Nuked-PSG) Yamaha YM7101
-* [emu2149](https://github.com/digital-sound-antiques/emu2149) Yamaha YM2149 (PSG)
-* [emu2212](https://github.com/digital-sound-antiques/emu2212) Konami SCC
-* [emu8950](https://github.com/digital-sound-antiques/emu8950) Yamaha Y8950, YM3526 and YM3812
-* [emu76489](https://github.com/digital-sound-antiques/emu76489) SN76489
-* [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) Roland MT-32, CM-32L and LAPC-I synthesiser modules 1.8.1
+  * [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3), Yamaha YMF262 and CT1747 (OPL3)
+  * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL), Yamaha YM2413 and VRC7 (OPLL)
+  * [Nuked-OPM](https://github.com/nukeykt/Nuked-OPM), Yamaha YM2151
+  * [Nuked-OPN2](https://github.com/nukeykt/Nuked-OPN2) 1.0.9, Yamaha YM3438 (YM2612)
+  * [Nuked-OPNB](https://github.com/nukeykt/Nuked-OPNB), Yamaha YM2610
+  * [Nuked-PSG](https://github.com/nukeykt/Nuked-PSG), Yamaha YM7101
+* [emu2149](https://github.com/digital-sound-antiques/emu2149), Yamaha YM2149 (PSG)
+* [emu2212](https://github.com/digital-sound-antiques/emu2212), Konami SCC
+* [emu8950](https://github.com/digital-sound-antiques/emu8950), Yamaha Y8950, YM3526 and YM3812
+* [emu76489](https://github.com/digital-sound-antiques/emu76489), SN76489
+* [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) 1.8.1, Roland MT-32, CM-32L and LAPC-I synthesiser modules
 * [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
 * [zlib](https://www.zlib.net/) 1.3.1
 
@@ -97,12 +97,16 @@ Create the following directory structure:
     out
     sdk
 
-* `3rdParty/WTL10_10320` contains WTL 10.0.10320.
+* `3rdParty/WTL10_10320` contains [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL).
 * `bin` contains a portable version of foobar2000 64-bit for debugging purposes.
 * `bin/x86` contains a portable version of foobar2000 32-bit for debugging purposes.
 * `foo_midi` contains the [Git](https://github.com/stuerp/foo_midi) repository.
 * `out` receives a deployable version of the component.
-* `sdk` contains the foobar2000 SDK.
+* `sdk` contains the [foobar2000 SDK](https://www.foobar2000.org/SDK).
+
+    git clone --recurse https://github.com/stuerp/foo_midi
+    cd foo_midi
+    git submodule update --recursive --init
 
 ### Building
 
