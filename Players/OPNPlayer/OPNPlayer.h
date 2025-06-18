@@ -25,10 +25,10 @@ public:
         OPNMIDI_EMU_GENS,       // GENS
     };
 
-    void setCore(uint32_t);
-    void setBank(uint32_t);
-    void setChipCount(uint32_t);
-    void setFullPanning(bool);
+    void SetCore(uint32_t);
+    void SetBank(uint32_t);
+    void SetChipCount(uint32_t);
+    void SetFullPanning(bool);
 
 protected:
     virtual bool Startup() override;

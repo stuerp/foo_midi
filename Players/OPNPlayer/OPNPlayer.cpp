@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2023.08.19) **/
+/** $VER: OPNPlayer.cpp (2026.06.16) **/
 
 #include "framework.h"
 
@@ -19,6 +19,26 @@ OPNPlayer::OPNPlayer() : player_t()
 OPNPlayer::~OPNPlayer()
 {
     Shutdown();
+}
+
+void OPNPlayer::SetCore(unsigned emuCore)
+{
+    _EmuCore = emuCore;
+}
+
+void OPNPlayer::SetBank(unsigned bankNumber)
+{
+    _BankNumber = bankNumber;
+}
+
+void OPNPlayer::SetChipCount(unsigned chipCount)
+{
+    _ChipCount = chipCount;
+}
+
+void OPNPlayer::SetFullPanning(bool enabled)
+{
+    _FullPanning = enabled;
 }
 
 bool OPNPlayer::Startup()
@@ -120,26 +140,6 @@ void OPNPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         sampleData += (ToDo * 2);
         sampleCount -= (unsigned long) ToDo;
     }
-}
-
-void OPNPlayer::setCore(unsigned emuCore)
-{
-    _EmuCore = emuCore;
-}
-
-void OPNPlayer::setBank(unsigned bankNumber)
-{
-    _BankNumber = bankNumber;
-}
-
-void OPNPlayer::setChipCount(unsigned chipCount)
-{
-    _ChipCount = chipCount;
-}
-
-void OPNPlayer::setFullPanning(bool enabled)
-{
-    _FullPanning = enabled;
 }
 
 void OPNPlayer::SendEvent(uint32_t message)

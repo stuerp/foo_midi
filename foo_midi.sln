@@ -63,7 +63,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsf", "3rdParty\libsf\lib
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libriff", "3rdParty\libsf\libriff\libriff.vcxproj", "{A73864F1-7953-47FF-99B6-4AC39892A915}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "midisynth", "3rdParty\midisynth\midisynth.vcxproj", "{A66A32CB-CAA8-47A9-8C99-8D58AE5C8B15}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmmidi", "3rdParty\fmmidi\fmmidi.vcxproj", "{A66A32CB-CAA8-47A9-8C99-8D58AE5C8B15}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

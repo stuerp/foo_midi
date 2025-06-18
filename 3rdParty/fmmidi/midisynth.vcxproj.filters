@@ -7,5 +7,6 @@
   <ItemGroup>
     <ClInclude Include="midisynth.hpp" />
     <ClInclude Include="fmmidi.hpp" />
+    <ClInclude Include="midisynth_common.hpp" />
   </ItemGroup>
 </Project>

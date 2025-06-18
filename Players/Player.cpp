@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2024.08.21) **/
+/** $VER: Player.cpp (2025.06.18) **/
 
 #include "framework.h"
 
@@ -422,7 +422,37 @@ void player_t::Seek(uint32_t timeInSamples)
 
     const uint32_t BlockSize = GetSampleBlockSize();
 
-    if (BlockSize != 0)
+    if (BlockSize == 0)
+    {
+        audio_sample * Temp = new audio_sample[16 * 2];
+
+        if (Temp != nullptr)
+        {
+            Render(Temp, 16); // Flush events
+
+            uint32_t LastTimestamp = 0;
+            bool IsTimestampSet = false;
+
+            for (const midi::message_t & Event : FillerEvents)
+            {
+                if (Event.Data != 0)
+                {
+                    if (IsTimestampSet && (Event.Time != LastTimestamp))
+                        Render(Temp, 16); // Flush events
+
+                    LastTimestamp = Event.Time;
+                    IsTimestampSet = true;
+
+                    SendEventFiltered(Event.Data);
+                }
+            }
+
+            Render(Temp, 16); // Flush events
+
+            delete[] Temp;
+        }
+    }
+    else
     {
         audio_sample * Temp = new audio_sample[BlockSize * 2];
 
@@ -456,36 +486,6 @@ void player_t::Seek(uint32_t timeInSamples)
             }
 
             Render(Temp, BlockSize); // Flush events
-
-            delete[] Temp;
-        }
-    }
-    else
-    {
-        audio_sample * Temp = new audio_sample[16 * 2];
-
-        if (Temp != nullptr)
-        {
-            Render(Temp, 16); // Flush events
-
-            uint32_t LastTimestamp = 0;
-            bool IsTimestampSet = false;
-
-            for (const midi::message_t & Event : FillerEvents)
-            {
-                if (Event.Data != 0)
-                {
-                    if (IsTimestampSet && (Event.Time != LastTimestamp))
-                        Render(Temp, 16); // Flush events
-
-                    LastTimestamp = Event.Time;
-                    IsTimestampSet = true;
-
-                    SendEventFiltered(Event.Data);
-                }
-            }
-
-            Render(Temp, 16); // Flush events
 
             delete[] Temp;
         }

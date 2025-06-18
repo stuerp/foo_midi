@@ -1,5 +1,5 @@
 
-/** $VER: FMMPlayer.h (2025.06.16) - Wrapper for juno's fmmidi **/
+/** $VER: FMMPlayer.h (2025.06.16) - Wrapper for yuno's fmmidi **/
 
 #pragma once
 
@@ -25,7 +25,7 @@ public:
 
     virtual ~FMMPlayer();
 
-    void SetProgramPath(const char *);
+    void SetProgramPath(const std::string & programPath);
 
 private:
     virtual bool Startup();

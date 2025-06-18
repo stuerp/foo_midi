@@ -279,7 +279,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     if (_PlayerType == PlayerType::SuperMunt)
         _SampleRate = (uint32_t) MT32Player::GetSampleRate();
 
-    // Initialize the fade-out range. Case "Never loop", "Never, add 1s decay time", "Loop and fade when detected" or "Always loop and fade",
+    // Initialize the fade-out range.
     {
         _FadeRange.Clear();
 
@@ -631,10 +631,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 auto Player = new OPNPlayer;
 
-                Player->setBank(Preset._OPNBankNumber);
-                Player->setChipCount(Preset._ADLChipCount);
-                Player->setFullPanning(Preset._ADLUsePanning);
-                Player->setCore(Preset._OPNEmulatorCore);
+                Player->SetBank(Preset._OPNBankNumber);
+                Player->SetChipCount(Preset._ADLChipCount);
+                Player->SetFullPanning(Preset._ADLUsePanning);
+                Player->SetCore(Preset._OPNEmulatorCore);
 
                 _Player = Player;
             }
@@ -772,14 +772,36 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             break;
         }
 
-        // fmmidi (juno)
+        // fmmidi (yuno) (Yamaha YM2608)
         case PlayerType::FMMIDI:
         {
             {
                 auto Player = new FMMPlayer;
 
-                Player->SetProgramPath(pfc::io::path::getParent( core_api::get_my_full_path()).c_str());
+                Player->SetProgramPath(pfc::io::path::getParent(core_api::get_my_full_path()).c_str());
+/*
+    auto SystemMode = midisynth::system_mode_t::system_mode_default;
 
+    switch (_MIDIFlavor)
+    {
+        case MIDIFlavor::GM: SystemMode = midisynth::system_mode_t::system_mode_default; break;
+        case MIDIFlavor::GM2: SystemMode = midisynth::system_mode_t::system_mode_gm2; break;
+        case MIDIFlavor::XG: SystemMode = midisynth::system_mode_t::system_mode_xg; break;
+
+        case MIDIFlavor::Default:
+
+        case MIDIFlavor::SC55:
+        case MIDIFlavor::SC88:
+        case MIDIFlavor::SC88Pro:
+        case MIDIFlavor::SC8850:
+
+        default: SystemMode = midisynth::system_mode_t::system_mode_gs; break;
+    }
+
+    for (size_t i = 0; i < 4; ++i)
+        _Synthesizers[i]->set_system_mode(SystemMode);
+
+*/
                 _Player = Player;
             }
 
