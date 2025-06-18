@@ -8,6 +8,8 @@
 #include <fmmidi.hpp>
 #include <midisynth.hpp>
 
+#include <filesystem>
+
 #pragma region player_t
 
 FMMPlayer::FMMPlayer() : player_t()
@@ -32,7 +34,7 @@ bool FMMPlayer::Startup()
 
     FILE * fp = nullptr;
 
-    if (::_wfopen_s(&fp, pfc::stringcvt::string_os_from_utf8(_ProgramPath.c_str()), L"rt") != 0)
+    if (::_wfopen_s(&fp, _ProgramPath.c_str(), L"rt") != 0)
          throw std::runtime_error("Unable to find \"Programs.txt\"");
 
     while (!::feof(fp))
@@ -138,7 +140,7 @@ void FMMPlayer::SendEvent(uint32_t data)
 /// <summary>
 /// Sets the path to the program file.
 /// </summary>
-void FMMPlayer::SetProgramPath(const std::string & programPath)
+void FMMPlayer::SetProgramPath(const std::wstring & programPath)
 {
-    _ProgramPath = pfc::io::path::combine(programPath.c_str(), "Programs.txt");
+    _ProgramPath = (std::filesystem::path(programPath) / std::filesystem::path("Programs.txt")).wstring();
 }

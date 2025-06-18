@@ -25,7 +25,7 @@ public:
 
     virtual ~FMMPlayer();
 
-    void SetProgramPath(const std::string & programPath);
+    void SetProgramPath(const std::wstring & programPath);
 
 private:
     virtual bool Startup();
@@ -36,7 +36,7 @@ private:
     virtual void SendEvent(uint32_t);
     virtual void SendEvent(uint32_t, uint32_t time) { };
 
-    std::string _ProgramPath;
+    std::wstring _ProgramPath;
 
     midisynth::opn::fm_note_factory * _Factory;
 

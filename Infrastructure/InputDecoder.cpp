@@ -778,7 +778,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 auto Player = new FMMPlayer;
 
-                Player->SetProgramPath(pfc::io::path::getParent(core_api::get_my_full_path()).c_str());
+                Player->SetProgramPath(pfc::stringcvt::string_os_from_utf8(pfc::io::path::getParent(core_api::get_my_full_path())).get_ptr());
 /*
     auto SystemMode = midisynth::system_mode_t::system_mode_default;
 
