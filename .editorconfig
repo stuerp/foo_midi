@@ -1,0 +1,14 @@
+# Top-most EditorConfig file
+root = true
+
+# Apply settings to all files
+[*]
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = lf
+insert_final_newline = true
+
+# C++ specific settings
+[*.{c,h,cpp,hpp}]
+indent_style = space
+indent_size = 4

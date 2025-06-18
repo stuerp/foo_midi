@@ -104,9 +104,9 @@ Create the following directory structure:
 * `out` receives a deployable version of the component.
 * `sdk` contains the [foobar2000 SDK](https://www.foobar2000.org/SDK).
 
-    git clone --recurse https://github.com/stuerp/foo_midi
-    cd foo_midi
-    git submodule update --recursive --init
+> git clone --recurse [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)  
+> cd foo_midi  
+> git submodule update --recursive --init
 
 ### Building
 
@@ -119,23 +119,28 @@ To create the component first build the x64 configuration and next the x86 confi
 ## Change Log
 
 v2.xx.0.0, 2025-xx-xx
+
 * New: Resurrected yuno's fmmidi player.
 * Fixed: Preferences dialog should adapt to High DPI settings now.
 * Improved: Stricter interpretation of the RCP mute mode that prevents an RCP track from being included in the MIDI stream.
 
 v2.18.0.0, 2025-04-05
+
 * Changed: Enabled dynamic sample loading in the FluidSynth player again when using [FluidSynth 2.4.4](https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.4) or later.
 * Added: BASSMIDI will ignore NRPN Vibrato Depth events in SC-88Pro mode. It overreacts to this parameter.
 * Added: Support for MMF/SMAF MA-2 files.
 
 v2.17.2.0, 2025-03-19
+
 * Fixed: Crash while attempting to open a MIDI file with a file name containing non-ASCII characters. An old bug suddenly surfaced while attempting to open a WRD file containing external lyrics.
   * Thank you to [ha7pro](https://hydrogenaud.io/index.php?action=profile;u=163651) for reporting the bug and helping me fix it.
 
 v2.17.1.0, 2025-03-16
+
 * Fixed: Secret Sauce crashed due to too many port resets.
 
 v2.17.0.0, 2025-03-16
+
 * New: Metadata MIDI_EMBEDDED_SOUNDFONT: Contains "SF x.x" (where x.x is the version number of the SoundFont specification) or "DLS" if the MIDI file contains an embedded soundfont.
 * Improved: Support for XMF/MXMF files with raw deflated content.
 * Improved: Tweaked the handling of embedded sound fonts for BASSMIDI and FluidSynth again.
@@ -149,6 +154,7 @@ v2.17.0.0, 2025-03-16
   * The first MIDI Port message of a track is now added at the start of a track to make sure it occurs before any Program Change events.
 
 v2.16.0.0, 2025-02-24
+
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
 * New: Metadata XMF_META_FILE_VERSION, XMF_FILE_TYPE and XMF_FILE_TYPE_REVISION.
 * Fixed: VSTi plugins did not load or save their configuration anymore (regression).
@@ -250,7 +256,7 @@ v2.9.1.3, 2023-11-02, *"Loop de loop"*
 v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
 
 * New: Added FluidSynth player again.
-  * It can be selected after setting the path to the directory that contains the FluidSynth libraries. You can download FluidSynth [here](https://github.com/FluidSynth/fluidsynth/releases). Make sure you download the version that has the same CPU architecture as foobar2000 (x64 or x86).
+  * It can be selected after setting the path to the directory that contains the FluidSynth libraries. Here you can download [FluidSynth](https://github.com/FluidSynth/fluidsynth/releases). Make sure you download the version that has the same CPU architecture as foobar2000 (x64 or x86).
 * New: Added .XFM as an alternative file extension for XMI files.
 * Improved: Added FluidSynth settings to preferences page.
 * Improved: MIDI standard detection

@@ -1,5 +1,5 @@
-﻿ 
-/** $VER: InputDecoder.cpp (2025.06.16) **/
+ 
+/** $VER: InputDecoder.cpp (2025.06.18) **/
 
 #include "framework.h"
 

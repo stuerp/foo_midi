@@ -545,6 +545,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include=".editorconfig" />
     <None Include="3rdParty\bass\bass.dll" />
     <None Include="3rdParty\BASS\bassflac.dll" />
     <None Include="3rdParty\bass\bassmidi.dll" />

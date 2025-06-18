@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2025.06.16) **/
+/** $VER: Player.h (2025.06.18) **/
 
 #pragma once
 
@@ -9,7 +9,9 @@
 
 #include "Configuration.h"
 
+#ifdef HAVE_FOO_VIS_MIDI
 #include <API.h>
+#endif
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 class player_t
@@ -95,6 +97,8 @@ private:
 
     uint16_t _EnabledChannels[128];
 
+#ifdef HAVE_FOO_VIS_MIDI
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;
+#endif
 };
 #pragma warning(default: 4820)

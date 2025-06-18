@@ -225,6 +225,7 @@
     <None Include="3rdParty\bass\x64\bassmidi.dll" />
     <None Include="3rdParty\bass\x64\bassopus.dll" />
     <None Include="3rdParty\bass\x64\basswv.dll" />
+    <None Include=".editorconfig" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

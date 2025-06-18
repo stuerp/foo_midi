@@ -1,4 +1,4 @@
-﻿// ソフトウェアMIDIシンセサイザ。
+// ソフトウェアMIDIシンセサイザ。
 // Copyright(c)2003-2004 yuno
 #pragma once
 

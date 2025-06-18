@@ -1,4 +1,4 @@
-﻿// ソフトウェアMIDIシンセサイザ。
+// ソフトウェアMIDIシンセサイザ。
 // Copyright(c)2003-2004 yuno
 #pragma once
 
@@ -18,10 +18,9 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 #include "midisynth_common.hpp"
-
-#include <algorithm>
 
 namespace midisynth
 {

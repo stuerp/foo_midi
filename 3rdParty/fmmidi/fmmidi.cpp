@@ -1,4 +1,4 @@
-﻿// ソフトウェアMIDIシンセサイザ。
+// ソフトウェアMIDIシンセサイザ。
 // Copyright(c)2003-2004 yuno
 #include "fmmidi.hpp"
 
@@ -6,13 +6,6 @@
 #include <cmath>
 #include <cstring>
 #include <utility>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#undef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
 
 namespace midisynth
 {
@@ -254,9 +247,9 @@ namespace midisynth
             this->fSR = static_cast<uint_least32_t>(fSR);
             this->fRR = static_cast<uint_least32_t>(fRR);
             this->fOR = static_cast<uint_least32_t>(fm_envelope_table.RR[63][0] / rate);
-            this->fSS = max(this->fDR, fSL);
-            this->fDRR = max(this->fDR, this->fRR);
-            this->fDSS = max(this->fDRR, this->fSS);
+            this->fSS  = std::max(this->fDR, fSL);
+            this->fDRR = std::max(this->fDR, this->fRR);
+            this->fDSS = std::max(this->fDRR, this->fSS);
         }
 
         // キーオフ。リリースに入る。

@@ -20,6 +20,7 @@ player_t::player_t()
 
     _IsInitialized = false;
 
+#ifdef HAVE_FOO_VIS_MIDI
     {
         foo_vis_midi::IAPI::ptr api;
 
@@ -29,6 +30,7 @@ player_t::player_t()
         if (_MusicKeyboard.is_valid())
             _MusicKeyboard->Initialize(foo_vis_midi::InterfaceVersion);
     }
+#endif
 }
 
 /// <summary>
@@ -153,7 +155,9 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
     if (!Startup())
         return 0;
 
+#ifdef HAVE_FOO_VIS_MIDI
     uint32_t OldPosition = _Position;
+#endif
 
 #ifdef _DEBUG
 //  wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Event: %6d/%6d | Sample: %8d/%8d | Chunk: %6d, Rem: %8d\n", (int) _StreamPosition, (int) _Stream.size(), (int) _Position, (int) _Length, (int) size, (int) _Remainder); ::OutputDebugStringW(Line);
@@ -216,8 +220,10 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
                 {
                     const midi::message_t& mse = _Stream[_StreamPosition];
 
+                #ifdef HAVE_FOO_VIS_MIDI
                     if (_MusicKeyboard.is_valid())
                         _MusicKeyboard->ProcessMessage(mse.Data, mse.Time);
+                #endif
 
                     int64_t ToDo = (int64_t) mse.Time - (int64_t) _Position - (int64_t) BlockOffset;
 
@@ -333,8 +339,10 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
 
     _Remainder = BlockOffset;
 
+#ifdef HAVE_FOO_VIS_MIDI
     if (_MusicKeyboard.is_valid())
         _MusicKeyboard->SetPosition(OldPosition);
+#endif
 
     return SampleIndex;
 }
