@@ -516,11 +516,14 @@
     <ProjectReference Include="3rdParty\libsflist\libsflist.vcxproj">
       <Project>{12bcec19-75dd-49cf-8822-2f290ce7eb36}</Project>
     </ProjectReference>
+    <ProjectReference Include="3rdParty\fmmidi\fmmidi.vcxproj">
+      <Project>{a66a32cb-caa8-47a9-8c99-8d58ae5c8b15}</Project>
+    </ProjectReference>
     <ProjectReference Include="3rdParty\libsf\libriff\libriff.vcxproj">
       <Project>{a73864f1-7953-47ff-99b6-4ac39892a915}</Project>
     </ProjectReference>
-    <ProjectReference Include="3rdParty\fmmidi\fmmidi.vcxproj">
-      <Project>{a66a32cb-caa8-47a9-8c99-8d58ae5c8b15}</Project>
+    <ProjectReference Include="3rdParty\libsf\libsf\libsf.vcxproj">
+      <Project>{f228afa2-be24-4416-9f4c-5bd927f0aa0f}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\munt\mt32emu\mt32emu.vcxproj">
       <Project>{e1a15ce7-2670-4e0b-b4e9-e6e36bb4a579}</Project>
