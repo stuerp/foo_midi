@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2025.06.09) **/
+/** $VER: foo_midi.rc (2025.06.19) **/
 
 #include "resource.h"
 
@@ -131,7 +131,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
     edittext                        IDC_VST_PATH,                       X_B12, Y_B12,     W_B12, H_B12, ES_AUTOHSCROLL
     pushbutton  "...",              IDC_VST_PATH_SELECT,                X_B13, Y_B13,     W_B13, H_B13
 
-    rtext       "SoundFont:",       IDC_STATIC,                         X_B21, Y_B21 + 2, W_B21, H_B21
+    rtext       "Sound Font:",      IDC_STATIC,                         X_B21, Y_B21 + 2, W_B21, H_B21
     edittext                        IDC_SOUNDFONT_FILE_PATH,            X_B22, Y_B22,     W_B22, H_B22, ES_AUTOHSCROLL
     pushbutton  "...",              IDC_SOUNDFONT_FILE_PATH_SELECT ,    X_B23, Y_B23,     W_B23, H_B23
 
@@ -146,6 +146,10 @@ font 8, "MS Shell Dlg", 400, 0, 1
     rtext       "FluidSynth:",      IDC_STATIC,                         X_B51, Y_B51 + 2, W_B51, H_B51
     edittext                        IDC_FLUIDSYNTH_PATH, ,              X_B52, Y_B52,     W_B52, H_B52, ES_AUTOHSCROLL
     pushbutton  "...",              IDC_FLUIDSYNTH_PATH_SELECT,         X_B53, Y_B53,     W_B53, H_B53
+
+    rtext       "fmmidi Programs:", IDC_STATIC,                         X_B54, Y_B54 + 2, W_B54, H_B54
+    edittext                        IDC_PROGRAMS_FILE_PATH, ,           X_B55, Y_B55,     W_B55, H_B55, ES_AUTOHSCROLL
+    pushbutton  "...",              IDC_PROGRAMS_FILE_PATH_SELECT,      X_B56, Y_B56,     W_B56, H_B56
 
     ltext "Please close and re-open Preferences to activate the changes.", IDC_PATHS_MESSAGE, 7, H_B00 - 4 - 8, W_B00, 8, NOT WS_VISIBLE
 }

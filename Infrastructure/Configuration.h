@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.06.16) **/
+/** $VER: Configuration.h (2025.06.19) **/
 
 #pragma once
 
@@ -168,7 +168,8 @@ extern cfg_var_modern::cfg_string
     CfgVSTiFilePath,
     CfgSoundFontFilePath,
     CfgMT32ROMDirectoryPath,
-    CfgFluidSynthDirectoryPath;
+    CfgFluidSynthDirectoryPath,
+    CfgProgramsFilePath;
 
 extern cfg_map
     CfgVSTiConfig;

@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2023.07.30) **/
+/** $VER: PreferencesPaths.cpp (2025.06.19) **/
 
 #include "framework.h"
 
@@ -48,6 +48,7 @@ public:
         _MT32ROMDirectoryPath = CfgMT32ROMDirectoryPath;
         AdvCfgSecretSauceDirectoryPath.get(_SecretSauceDirectoryPath);
         _FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
+        _ProgramsFilePath = CfgProgramsFilePath;
     }
 
     PreferencesPathsPage(const PreferencesPathsPage&) = delete;
@@ -77,6 +78,8 @@ public:
         COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_PROGRAMS_FILE_PATH, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_PROGRAMS_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
     END_MSG_MAP()
 
     enum
@@ -97,23 +100,27 @@ private:
 
 private:
 #pragma region("VSTi")
-    pfc::string8 _VSTiPluginDirectoryPath;
+    pfc::string _VSTiPluginDirectoryPath;
 #pragma endregion
 
 #pragma region("SoundFont")
-    pfc::string8 _SoundFontFilePath;
+    pfc::string _SoundFontFilePath;
 #pragma endregion
 
 #pragma region("Munt")
-    pfc::string8 _MT32ROMDirectoryPath;
+    pfc::string _MT32ROMDirectoryPath;
 #pragma endregion
 
 #pragma region("Secret Sauce")
-    pfc::string8 _SecretSauceDirectoryPath;
+    pfc::string _SecretSauceDirectoryPath;
 #pragma endregion
 
 #pragma region("FluidSynth")
-    pfc::string8 _FluidSynthDirectoryPath;
+    pfc::string _FluidSynthDirectoryPath;
+#pragma endregion
+
+#pragma region("fmmidi")
+    pfc::string _ProgramsFilePath;
 #pragma endregion
 
     const preferences_page_callback::ptr _Callback;
@@ -145,6 +152,7 @@ void PreferencesPathsPage::apply()
     CfgMT32ROMDirectoryPath = _MT32ROMDirectoryPath;
     AdvCfgSecretSauceDirectoryPath.set(_SecretSauceDirectoryPath);
     CfgFluidSynthDirectoryPath = _FluidSynthDirectoryPath;
+    CfgProgramsFilePath = _ProgramsFilePath;
 
     OnChanged();
 }
@@ -159,6 +167,7 @@ void PreferencesPathsPage::reset()
     _MT32ROMDirectoryPath.reset();
     _SecretSauceDirectoryPath.reset();
     _FluidSynthDirectoryPath.reset();
+    _ProgramsFilePath.reset();
 
     UpdateDialog();
 
@@ -213,6 +222,10 @@ void PreferencesPathsPage::OnEditChange(UINT code, int id, CWindow) noexcept
             _FluidSynthDirectoryPath = pfc::utf8FromWide(Text);
             break;
 
+        case IDC_PROGRAMS_FILE_PATH:
+            _ProgramsFilePath = pfc::utf8FromWide(Text);
+            break;
+
         default:
             return;
     }
@@ -227,7 +240,7 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 {
     if (id == IDC_VST_PATH_SELECT)
     {
-        pfc::string8 DirectoryPath = _VSTiPluginDirectoryPath;
+        pfc::string DirectoryPath = _VSTiPluginDirectoryPath;
 
         if (::uBrowseForFolder(m_hWnd, "Locate VSTi plug-ins...", DirectoryPath))
         {
@@ -243,11 +256,11 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
     else
     if (id == IDC_SOUNDFONT_FILE_PATH_SELECT)
     {
-        pfc::string8 DirectoryPath = _SoundFontFilePath;
+        pfc::string DirectoryPath = _SoundFontFilePath;
 
         DirectoryPath.truncate_filename();
 
-        pfc::string8 FilePath = _SoundFontFilePath;
+        pfc::string FilePath = _SoundFontFilePath;
 
         if (::uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;*.sf3;*.sflist"
             "*.sf2pack;*.sfogg;"
@@ -272,7 +285,7 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
     else
     if (id == IDC_MUNT_FILE_PATH_SELECT)
     {
-        pfc::string8 DirectoryPath = _MT32ROMDirectoryPath;
+        pfc::string DirectoryPath = _MT32ROMDirectoryPath;
 
         if (::uBrowseForFolder(m_hWnd, "Locate MT-32 or CM-32L ROM sets...", DirectoryPath))
         {
@@ -288,7 +301,7 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
     else
     if (id == IDC_SECRET_SAUCE_PATH_SELECT)
     {
-        pfc::string8 DirectoryPath = _SecretSauceDirectoryPath;
+        pfc::string DirectoryPath = _SecretSauceDirectoryPath;
 
         if (::uBrowseForFolder(m_hWnd, "Locate Secret Sauce...", DirectoryPath))
         {
@@ -304,7 +317,7 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
     else
     if (id == IDC_FLUIDSYNTH_PATH_SELECT)
     {
-        pfc::string8 DirectoryPath = _FluidSynthDirectoryPath;
+        pfc::string DirectoryPath = _FluidSynthDirectoryPath;
 
         if (::uBrowseForFolder(m_hWnd, "Locate FluidSynth...", DirectoryPath))
         {
@@ -313,6 +326,29 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
             pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
 
             SetDlgItemText(IDC_FLUIDSYNTH_PATH, w);
+
+            OnChanged();
+        }
+    }
+    else
+    if (id == IDC_PROGRAMS_FILE_PATH_SELECT)
+    {
+        pfc::string DirectoryPath = _ProgramsFilePath;
+
+        if (!DirectoryPath.isEmpty())
+            DirectoryPath.truncate_filename();
+        else
+            DirectoryPath = pfc::io::path::getParent(core_api::get_my_full_path());
+
+        pfc::string FilePath = _ProgramsFilePath;
+
+        if (::uGetOpenFileName(m_hWnd, "fmmidi Program files|*.*", 0, "txt", "Choose a Programs file...", DirectoryPath, FilePath, FALSE))
+        {
+            _ProgramsFilePath = FilePath;
+
+            pfc::wstringLite w = pfc::wideFromUTF8(FilePath);
+
+            SetDlgItemText(IDC_PROGRAMS_FILE_PATH, w);
 
             OnChanged();
         }
@@ -326,7 +362,7 @@ bool PreferencesPathsPage::HasChanged() const noexcept
 {
     bool HasChanged = false;
 
-    pfc::string8 DirectoryPath;
+    pfc::string DirectoryPath;
 
     AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
 
@@ -345,6 +381,9 @@ bool PreferencesPathsPage::HasChanged() const noexcept
         HasChanged = true;
 
     if (_FluidSynthDirectoryPath != CfgFluidSynthDirectoryPath)
+        HasChanged = true;
+
+    if (_ProgramsFilePath != CfgProgramsFilePath)
         HasChanged = true;
 
     GetDlgItem(IDC_PATHS_MESSAGE).ShowWindow(HasChanged ? SW_SHOW : SW_HIDE);
@@ -370,6 +409,7 @@ void PreferencesPathsPage::UpdateDialog() const noexcept
     ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, _MT32ROMDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_SECRET_SAUCE_PATH, _SecretSauceDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_PATH, _FluidSynthDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_PROGRAMS_FILE_PATH, _ProgramsFilePath);
 }
 #pragma endregion
 

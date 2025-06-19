@@ -1,5 +1,5 @@
 
-/** $VER: FMMPlayer.h (2025.06.16) - Wrapper for yuno's fmmidi **/
+/** $VER: FMMPlayer.h (2025.06.19) - Wrapper for yuno's fmmidi **/
 
 #pragma once
 
@@ -25,7 +25,9 @@ public:
 
     virtual ~FMMPlayer();
 
-    void SetProgramPath(const std::wstring & programPath);
+    void SetProgramsFilePath(const std::wstring & programPath);
+
+    static const std::string DefaultProgramsFileName;
 
 private:
     virtual bool Startup();
@@ -36,7 +38,7 @@ private:
     virtual void SendEvent(uint32_t);
     virtual void SendEvent(uint32_t, uint32_t time) { };
 
-    std::wstring _ProgramPath;
+    std::wstring _ProgramsFilePath;
 
     midisynth::opn::fm_note_factory * _Factory;
 

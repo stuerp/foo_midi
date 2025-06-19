@@ -1,5 +1,5 @@
 
-/** $VER: FMMPlayer.cpp (2025.06.18) - Wrapper for yuno's fmmidi **/
+/** $VER: FMMPlayer.cpp (2025.06.19) - Wrapper for yuno's fmmidi **/
 
 #include "framework.h"
 
@@ -9,6 +9,10 @@
 #include <midisynth.hpp>
 
 #include <filesystem>
+
+#include "Encoding.h"
+
+const std::string FMMPlayer::DefaultProgramsFileName = "Programs.txt";
 
 #pragma region player_t
 
@@ -34,7 +38,7 @@ bool FMMPlayer::Startup()
 
     FILE * fp = nullptr;
 
-    if (::_wfopen_s(&fp, _ProgramPath.c_str(), L"rt") != 0)
+    if (::_wfopen_s(&fp, _ProgramsFilePath.c_str(), L"rt") != 0)
          throw std::runtime_error("Unable to find \"Programs.txt\"");
 
     while (!::feof(fp))
@@ -138,9 +142,12 @@ void FMMPlayer::SendEvent(uint32_t data)
 }
 
 /// <summary>
-/// Sets the path to the program file.
+/// Sets the path to the file containing the programs.
 /// </summary>
-void FMMPlayer::SetProgramPath(const std::wstring & programPath)
+void FMMPlayer::SetProgramsFilePath(const std::wstring & programsFilePath)
 {
-    _ProgramPath = (std::filesystem::path(programPath) / std::filesystem::path("Programs.txt")).wstring();
+    if (!std::filesystem::exists(programsFilePath))
+         throw std::runtime_error("fmmidi Programs file not found at \"" + ::WideToUTF8(programsFilePath) + "\"");
+
+    _ProgramsFilePath = programsFilePath;
 }

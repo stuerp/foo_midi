@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPathsLayout.h (2024.05.19) **/
+/** $VER: PreferencesPathsLayout.h (2025.06.19) **/
 
 #pragma once
 
@@ -28,7 +28,7 @@
 // Label
 #define X_B11    0
 #define Y_B11    0
-#define W_B11    48
+#define W_B11    64
 #define H_B11    8
 
 // EditBox
@@ -129,5 +129,26 @@
 #define Y_B53    Y_B52
 #define W_B53    16
 #define H_B53    H_BTN
+
+#pragma endregion
+
+#pragma region fmmidi path
+// Label
+#define X_B54    X_B51
+#define Y_B54    Y_B52 + H_B52 + 4
+#define W_B54    W_B51
+#define H_B54    8
+
+// EditBox
+#define X_B55    X_B54 + W_B54 + IX
+#define Y_B55    Y_B54
+#define W_B55    200
+#define H_B55    H_EBX
+
+// Button
+#define X_B56    X_B55 + W_B55 + IX
+#define Y_B56    Y_B55
+#define W_B56    16
+#define H_B56    H_BTN
 
 #pragma endregion
