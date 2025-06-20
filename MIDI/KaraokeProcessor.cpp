@@ -1,31 +1,28 @@
 
-/** $VER: KaraokeProcessor.h (2024.05.18) **/
+/** $VER: KaraokeProcessor.h (2025.06.20) **/
 
 #include "framework.h"
 
 #include "KaraokeProcessor.h"
 
-#include <string>
 #include <chrono>
-
-#include <Encoding.h>
 
 /// <summary>
 /// Adds a text line.
 /// </summary>
 void KaraokeProcessor::AddSyncedText(const char * text)
 {
-    _SyncedLyrics += "[by:";
-    _SyncedLyrics += text;
-    _SyncedLyrics += "]\r\n";
+    _SyncedLyrics += u8"[by:";
+    _SyncedLyrics += (const char8_t *) text;
+    _SyncedLyrics += u8"]\r\n";
 }
 
 /// <summary>
 /// Adds a lyrics line.
 /// </summary>
-void KaraokeProcessor::AddLyrics(pfc::string8 & lyrics, uint32_t timestamp, const char * text)
+void KaraokeProcessor::AddLyrics(std::u8string & lyrics, uint32_t timestamp, const char * text)
 {
-    char Timestamp[64];
+    char Timestamp[64] = { };
 
     std::string Line = text;
 
@@ -34,7 +31,7 @@ void KaraokeProcessor::AddLyrics(pfc::string8 & lyrics, uint32_t timestamp, cons
 
         if (n != std::string::npos)
         {
-            lyrics += "\r\n";
+            lyrics += u8"\r\n";
 
             KaraokeProcessor::FormatTimestamp(timestamp, Timestamp, _countof(Timestamp));
 
@@ -47,7 +44,7 @@ void KaraokeProcessor::AddLyrics(pfc::string8 & lyrics, uint32_t timestamp, cons
 
         if (n != std::string::npos)
         {
-            lyrics += "\r\n";
+            lyrics += u8"\r\n";
 
             KaraokeProcessor::FormatTimestamp(timestamp, Timestamp, _countof(Timestamp));
 
@@ -55,7 +52,7 @@ void KaraokeProcessor::AddLyrics(pfc::string8 & lyrics, uint32_t timestamp, cons
         }
     }
 
-    lyrics += Line.c_str();
+    lyrics += (const char8_t *) Line.c_str();
 }
 
 /// <summary>
@@ -66,14 +63,11 @@ void KaraokeProcessor::FormatTimestamp(uint32_t timestamp, char * text, size_t s
 {
     using namespace std::chrono;
 
-    std::chrono::milliseconds ms = (std::chrono::milliseconds)timestamp;
+    std::chrono::milliseconds ms = (std::chrono::milliseconds) timestamp;
 
-    auto ss = duration_cast<seconds>(ms);
-    ms -= duration_cast<milliseconds>(ss);
-    auto mm = duration_cast<minutes>(ss);
-    ss -= duration_cast<seconds>(mm);
-    auto hh = duration_cast<hours>(mm);
-    mm -= duration_cast<minutes>(hh);
+    auto ss = duration_cast<seconds>(ms); ms -= duration_cast<milliseconds>(ss);
+    auto mm = duration_cast<minutes>(ss); ss -= duration_cast<seconds>(mm);
+    auto hh = duration_cast<hours>  (mm); mm -= duration_cast<minutes>(hh);
 
     ::sprintf_s(text, size, "[%02d:%02lld.%02lld]", mm.count(), ss.count(), ms.count() / 10);
 }

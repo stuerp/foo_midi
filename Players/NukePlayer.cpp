@@ -109,7 +109,7 @@ void NukePlayer::SendEvent(uint32_t data)
 /// <summary>
 /// Initializes the presets list.
 /// </summary>
-void NukePlayer::InitializePresets(std::function<void (const pfc::string8 name, unsigned int synth, unsigned int bank)> functor) noexcept
+void NukePlayer::InitializePresets(std::function<void (const pfc::string name, unsigned int synth, unsigned int bank)> functor) noexcept
 {
     nomidisynth * Synthsizers[] =
     {
@@ -122,7 +122,7 @@ void NukePlayer::InitializePresets(std::function<void (const pfc::string8 name, 
     {
         nomidisynth * Synth = Synthsizers[j];
 
-        const pfc::string8 Name = Synth->midi_synth_name();
+        const pfc::string Name = Synth->midi_synth_name();
 
         const size_t BankCount = Synth->midi_bank_count();
 
@@ -130,7 +130,7 @@ void NukePlayer::InitializePresets(std::function<void (const pfc::string8 name, 
         {
             for (size_t i = 0; i < BankCount; ++i)
             {
-                pfc::string8 Text;
+                pfc::string Text;
 
                 Text.prealloc(512);
 
@@ -149,7 +149,7 @@ void NukePlayer::InitializePresets(std::function<void (const pfc::string8 name, 
 /// <summary>
 /// Enumerates the presets of this instance.
 /// </summary>
-void NukePlayer::EnumeratePresets(std::function<void (const pfc::string8 name, unsigned int synthId, unsigned int bankId)> functor) noexcept
+void NukePlayer::EnumeratePresets(std::function<void (const pfc::string name, unsigned int synthId, unsigned int bankId)> functor) noexcept
 {
     for (size_t i = 0; i < _NukePresets.get_count(); ++i)
     {
@@ -162,7 +162,7 @@ void NukePlayer::EnumeratePresets(std::function<void (const pfc::string8 name, u
 /// <summary>
 /// Gets the Nuke preset with the specified name.
 /// </summary>
-void NukePlayer::GetPreset(pfc::string8 name, unsigned int & synth, unsigned int & bank)
+void NukePlayer::GetPreset(pfc::string name, unsigned int & synth, unsigned int & bank)
 {
     for (size_t i = 0; i < _NukePresets.get_count(); ++i)
     {
@@ -196,7 +196,7 @@ void NukePlayer::GetPreset(size_t index, unsigned int & synth, unsigned int & ba
 /// <summary>
 /// Gets the name of the Nuke preset for the specified synthesizer and bank.
 /// </summary>
-pfc::string8 NukePlayer::GetPresetName(unsigned int synth, unsigned int bank)
+pfc::string NukePlayer::GetPresetName(unsigned int synth, unsigned int bank)
 {
     for (size_t i = 0; i < _NukePresets.get_count(); ++i)
     {
@@ -234,7 +234,7 @@ class NukePresetsImporter
 public:
     NukePresetsImporter()
     {
-        NukePlayer::InitializePresets([] (pfc::string8 name, unsigned int synth, unsigned int bank)
+        NukePlayer::InitializePresets([] (pfc::string name, unsigned int synth, unsigned int bank)
         {
             NukePreset Preset = { name, synth, bank };
 

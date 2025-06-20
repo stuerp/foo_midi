@@ -26,7 +26,7 @@ public:
 
     virtual ~MIDISysExDumps() { };
 
-    void Serialize(const char * filePath, pfc::string8 & text) noexcept;
+    void Serialize(const char * filePath, pfc::string & text) noexcept;
     void Deserialize(const char * text, const char * filePath) noexcept;
 
     void Merge(midi::container_t & container, abort_callback & abortHandler);
@@ -36,5 +36,5 @@ private:
     static void CreateAbsoluteFromRelativePath(const char * relativePath, const char * directoryPath, pfc::string_base & filePath);
 
 public:
-    pfc::array_t<pfc::string8> Items;
+    pfc::array_t<pfc::string> Items;
 };

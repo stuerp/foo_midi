@@ -15,7 +15,7 @@ MIDIPreset::MIDIPreset() noexcept
 /* Test Code
     for (_PlayerType = 0; _PlayerType < PlayerType::Max; _PlayerType++)
     {
-        pfc::string8 Preset;
+        pfc::string Preset;
 
         Serialize(Preset);
         Deserialize(Preset);
@@ -134,7 +134,7 @@ MIDIPreset::MIDIPreset() noexcept
     }
 }
 
-void MIDIPreset::Serialize(pfc::string8 & text)
+void MIDIPreset::Serialize(pfc::string & text)
 {
     text.reset();
     text.prealloc(512);
@@ -277,9 +277,9 @@ void MIDIPreset::Deserialize(const char * text)
 
     PlayerType PlayerType = (enum PlayerType) (uint8_t) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
-    pfc::string8 VSTiPath;
+    pfc::string VSTiPath;
     std::vector<uint8_t> VSTiConfig;
-    pfc::string8 SoundFontPath;
+    pfc::string SoundFontPath;
 
     bool EffectsEnabled = false;
     uint32_t VoiceCount = 256;
@@ -488,7 +488,7 @@ void MIDIPreset::Deserialize(const char * text)
     else
     if (PlayerType == PlayerType::Nuke)
     {
-        pfc::string8 Text;
+        pfc::string Text;
 
         Text.set_string(text, (t_size) (Separator - text));
 

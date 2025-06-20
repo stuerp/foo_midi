@@ -282,11 +282,11 @@ static sflist_t * LoadSoundFontList(const std::string & filePath)
 {
     size_t Offset = (size_t)(::stricmp_utf8_partial(filePath.c_str(), "file://") == 0 ? 7 : 0);
 
-    pfc::string8 DirectoryPath = filePath.c_str() + Offset;
+    pfc::string DirectoryPath = filePath.c_str() + Offset;
 
     DirectoryPath.truncate(DirectoryPath.scan_filename());
 
-    pfc::string8 FilePath = "";
+    pfc::string FilePath = "";
 
     if (Offset == 0)
         FilePath = "file://";

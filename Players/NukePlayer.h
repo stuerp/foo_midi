@@ -27,13 +27,13 @@ public:
     void SetBank(unsigned int bank);
     void SetExtp(unsigned int extp);
 
-    static void GetPreset(const pfc::string8 name, unsigned int & synth, unsigned int & bank);
+    static void GetPreset(const pfc::string name, unsigned int & synth, unsigned int & bank);
     static void GetPreset(size_t index, unsigned int & synth, unsigned int & bank);
-    static pfc::string8 GetPresetName(unsigned int synth, unsigned int bank);
+    static pfc::string GetPresetName(unsigned int synth, unsigned int bank);
     static size_t GetPresetIndex(unsigned int synth, unsigned int bank);
 
-    static void InitializePresets(std::function<void (const pfc::string8 name, unsigned int synth, unsigned int bank)> functor) noexcept;
-    static void EnumeratePresets(std::function<void (const pfc::string8 name, unsigned int synth, unsigned int bank)> functor) noexcept;
+    static void InitializePresets(std::function<void (const pfc::string name, unsigned int synth, unsigned int bank)> functor) noexcept;
+    static void EnumeratePresets(std::function<void (const pfc::string name, unsigned int synth, unsigned int bank)> functor) noexcept;
 
 protected:
     virtual bool Startup() override;
@@ -54,7 +54,7 @@ private:
 #pragma region("Nuke Presets")
 struct NukePreset
 {
-    pfc::string8 Name;
+    pfc::string Name;
     unsigned int SynthId;
     unsigned int BankId;
 };

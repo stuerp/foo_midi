@@ -250,7 +250,7 @@ private:
 
     struct InstalledPlayer
     {
-        pfc::string8 Name;
+        pfc::string Name;
         PlayerType Type;
     };
 
@@ -274,8 +274,8 @@ private:
 
     #pragma region BASS MIDI
 
-    pfc::string8 _CacheStatusText;
-    pfc::string8 _CacheStatusTextCurrent;
+    pfc::string _CacheStatusText;
+    pfc::string _CacheStatusTextCurrent;
 
     #pragma endregion
 
@@ -284,7 +284,7 @@ private:
     struct ADLBank
     {
         int Number;
-        pfc::string8 Name;
+        pfc::string Name;
 
         ADLBank() : Number(-1), Name() { }
         ADLBank(const ADLBank & b) : Number(b.Number), Name(b.Name) { }
@@ -1036,7 +1036,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         size_t PresetNumber = 0;
 
-        NukePlayer::EnumeratePresets([w, PresetNumber] (const pfc::string8 name, unsigned int synth, unsigned int bank) mutable noexcept
+        NukePlayer::EnumeratePresets([w, PresetNumber] (const pfc::string name, unsigned int synth, unsigned int bank) mutable noexcept
         {
             ::uSendMessageText(w, CB_ADDSTRING, 0, name.c_str());
 
@@ -1474,7 +1474,7 @@ void PreferencesRootPage::UpdateDialog() const noexcept
 {
     #pragma region MIDI Flavors
 
-    pfc::string8 FilePath; AdvCfgVSTiXGPlugin.get(FilePath);
+    pfc::string FilePath; AdvCfgVSTiXGPlugin.get(FilePath);
 
     GetDlgItem(IDC_MIDI_USE_VSTI_WITH_XG).EnableWindow(!FilePath.isEmpty());
 

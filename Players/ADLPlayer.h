@@ -30,7 +30,7 @@ public:
     void SetChipCount(uint32_t);
     void Set4OpCount(uint32_t);
     void SetFullPanning(bool);
-    void SetBankFilePath(pfc::string8 filePath);
+    void SetBankFilePath(pfc::string filePath);
 
 protected:
     virtual bool Startup() override;
@@ -48,6 +48,6 @@ private:
     uint32_t _ChipCount;
     uint32_t _4OpCount;
     bool _FullPanning;
-    pfc::string8 _BankFilePath;
+    pfc::string _BankFilePath;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

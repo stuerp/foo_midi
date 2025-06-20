@@ -32,7 +32,7 @@ MIDISysExFilter::MIDISysExFilter(const pfc::list_base_const_t<metadb_handle_ptr>
 
 bool MIDISysExFilter::apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo)
 {
-    pfc::string8 FileExtension = pfc::string_extension(location->get_path());
+    pfc::string FileExtension = pfc::string_extension(location->get_path());
 
     for (size_t i = 0; i < _SysExFileExtensionCount; ++i)
     {
@@ -45,7 +45,7 @@ bool MIDISysExFilter::apply_filter(metadb_handle_ptr location, t_filestats, file
     if (!_Handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, location, Index))
         return false;
 
-    pfc::string8 Text;
+    pfc::string Text;
 
     _SysExDumps.Serialize(location->get_path(), Text);
 

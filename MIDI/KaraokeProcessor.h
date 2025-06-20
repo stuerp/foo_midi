@@ -1,19 +1,18 @@
 
-/** $VER: KaraokeProcessor.h (2024.05.18) **/
+/** $VER: KaraokeProcessor.h (2025.06.20) **/
 
 #pragma once
 
 #include <stdint.h>
-
-#include <pfc/pfc-lite.h>
+#include <string>
 
 class KaraokeProcessor
 {
 public:
     KaraokeProcessor() noexcept { }
 
-    pfc::string8 GetUnsyncedLyrics() const { return _UnsyncedLyrics; }
-    pfc::string8 GetSyncedLyrics() const { return _SyncedLyrics; }
+    std::u8string GetUnsyncedLyrics() const { return _UnsyncedLyrics; }
+    std::u8string GetSyncedLyrics() const { return _SyncedLyrics; }
 
     void AddUnsyncedLyrics(uint32_t timestamp, const char * text)
     {
@@ -28,11 +27,11 @@ public:
     void AddSyncedText(const char * text);
 
 private:
-    void AddLyrics(pfc::string8 & lyrics, uint32_t timestamp, const char * text);
+    void AddLyrics(std::u8string & lyrics, uint32_t timestamp, const char * text);
 
     static void FormatTimestamp(uint32_t timestamp, char * text, size_t size) noexcept;
 
 private:
-    pfc::string8 _UnsyncedLyrics;
-    pfc::string8 _SyncedLyrics;
+    std::u8string _UnsyncedLyrics;
+    std::u8string _SyncedLyrics;
 };

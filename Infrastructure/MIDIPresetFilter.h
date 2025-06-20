@@ -28,6 +28,6 @@ public:
     bool apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo) override;
 
 private:
-    pfc::string8 _MIDIPreset;
+    pfc::string _MIDIPreset;
     metadb_handle_list _Handles;
 };
