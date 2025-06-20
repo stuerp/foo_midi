@@ -117,7 +117,12 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
                     File->read_object(Object.data(), (t_size) FileSize, AbortHandler);
 
                     {
-                        const char * TmpFilePath = filesystem::g_get_native_path(Location.get_path());
+                        const char * TmpFilePath = Location.get_path();
+
+const auto t = filesystem::g_get_native_path(Location.get_path());
+
+                        if (_strnicmp(TmpFilePath, "file://", 7) == 0)
+                            TmpFilePath += 7;
 
                         midi::container_t Container;
                         bool Success = false;
