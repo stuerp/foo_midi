@@ -103,7 +103,7 @@ public:
         }
         catch (std::exception & e)
         {
-            pfc::string8 Message = "Failed to read MIDI file: ";
+            pfc::string Message = "Failed to read MIDI file: ";
 
             throw exception_io_data(Message + e.what());
         }

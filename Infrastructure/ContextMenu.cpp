@@ -7,6 +7,8 @@
 
 #include <pfc/string-conv-lite.h>
 
+#include "filesystem.h"
+
 static const char * ItemTexts[5] =
 {
     "Save as Standard MIDI File (SMF)",
@@ -43,7 +45,7 @@ bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_ba
     {
         const playable_location& Location = itemList.get_item(i)->get_location();
 
-        pfc::string8 Extension = pfc::string_extension(Location.get_path());
+        pfc::string Extension = pfc::string_extension(Location.get_path());
 
         size_t FileExtensionIndex;
 
@@ -99,7 +101,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
             {
                 const playable_location & Location = itemList.get_item(i)->get_location();
 
-                pfc::string8 FilePath = Location.get_path();
+                pfc::string FilePath = Location.get_path();
 
                 FilePath += ".mid";
 
@@ -116,6 +118,8 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
 
                     {
                         const char * TmpFilePath = Location.get_path();
+
+const auto t = filesystem::g_get_native_path(Location.get_path());
 
                         if (_strnicmp(TmpFilePath, "file://", 7) == 0)
                             TmpFilePath += 7;
@@ -152,7 +156,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
         case 1:
         case 2:
         {
-            pfc::string8 PresetText;
+            pfc::string PresetText;
 
             if (itemIndex == 1)
             {

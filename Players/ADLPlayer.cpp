@@ -40,7 +40,7 @@ void ADLPlayer::SetFullPanning(bool enabled)
     _FullPanning = enabled;
 }
 
-void ADLPlayer::SetBankFilePath(pfc::string8 filePath)
+void ADLPlayer::SetBankFilePath(pfc::string filePath)
 {
     _BankFilePath = filePath;
 }

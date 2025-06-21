@@ -51,7 +51,7 @@ private:
 
 private:
     MT32Emu::Synth * _Synth;
-    pfc::string8 _BasePathName;
+    pfc::string _BasePathName;
     foobar2000_io::abort_callback * _AbortCallback;
 
     MT32Emu::File * controlRomFile, * pcmRomFile;

@@ -23,7 +23,7 @@ public:
 
     virtual ~MIDIPreset() { };
 
-    void Serialize(pfc::string8 & text);
+    void Serialize(pfc::string & text);
     void Deserialize(const char * text);
 
 public:
@@ -31,10 +31,10 @@ public:
 
     PlayerType _PlayerType;
 
-    pfc::string8 _VSTiFilePath;
+    pfc::string _VSTiFilePath;
     std::vector<uint8_t> _VSTiConfig;
 
-    pfc::string8 _SoundFontFilePath;
+    pfc::string _SoundFontFilePath;
 
 #ifdef DXISUPPORT
     GUID dxi_plugin;
@@ -46,7 +46,7 @@ public:
     bool _ADLUsePanning;
     bool _ADLUseChorus;
     uint32_t _ADLEmulatorCore;
-    pfc::string8 _ADLBankFilePath;
+    pfc::string _ADLBankFilePath;
 
     // OPN
     uint32_t _OPNBankNumber;

@@ -64,7 +64,7 @@ void SCPlayer::SetRootPath(const char * rootPathName)
 /// </summary>
 bool SCPlayer::Startup()
 {
-    pfc::string8 path;
+    pfc::string path;
 
     if (_IsInitialized)
         return true;
@@ -279,7 +279,7 @@ bool SCPlayer::StartHost(uint32_t portNumber)
         TRUE,
     };
 
-    pfc::string8 InPipeName, OutPipeName;
+    pfc::string InPipeName, OutPipeName;
 
     {
         if (!CreatePipeName(InPipeName) || !CreatePipeName(OutPipeName))

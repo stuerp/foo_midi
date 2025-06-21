@@ -1265,23 +1265,19 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         }
     }
 
-    if (!kp.GetUnsyncedLyrics().is_empty())
+    if (!kp.GetUnsyncedLyrics().empty())
     {
-        auto Lyrics = kp.GetUnsyncedLyrics();
+        const auto Lyrics = kp.GetUnsyncedLyrics();
 
-        std::string UTF8 = TextToUTF8(Lyrics.c_str());
-
-        fileInfo.meta_set("lyrics", UTF8.c_str());
+        fileInfo.meta_set("lyrics", (const char *) Lyrics.c_str());
     }
 
 
-    if (!kp.GetSyncedLyrics().is_empty())
+    if (!kp.GetSyncedLyrics().empty())
     {
-        auto Lyrics = kp.GetSyncedLyrics();
+        const auto Lyrics = kp.GetSyncedLyrics();
 
-        std::string UTF8 = TextToUTF8(Lyrics.c_str());
-
-        fileInfo.meta_set("syncedlyrics", UTF8.c_str());
+        fileInfo.meta_set("syncedlyrics", (const char *) Lyrics.c_str());
     }
 
     // General info

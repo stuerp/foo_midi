@@ -7,12 +7,12 @@
 
 #include <format>
 
-void MIDISysExDumps::Serialize(const char * filePath, pfc::string8 & text) noexcept
+void MIDISysExDumps::Serialize(const char * filePath, pfc::string & text) noexcept
 {
     if (filePath == nullptr)
         return;
 
-    pfc::string8 RelativePath;
+    pfc::string RelativePath;
 
     text.reset();
 
@@ -32,7 +32,7 @@ void MIDISysExDumps::Deserialize(const char * text, const char * filePath) noexc
     if ((text == nullptr) || (filePath == nullptr))
         return;
 
-    pfc::string8 RelativePath, AbsolutePath;
+    pfc::string RelativePath, AbsolutePath;
 
     const char * end = text + ::strlen(text);
 
@@ -88,7 +88,7 @@ void MIDISysExDumps::Merge(midi::container_t & container, abort_callback & abort
         }
         catch (const std::exception & e)
         {
-            pfc::string8 PathName;
+            pfc::string PathName;
 
             filesystem::g_get_canonical_path(Items[i], PathName);
 
@@ -148,7 +148,7 @@ void MIDISysExDumps::CreateAbsoluteFromRelativePath(const char * relativePath, c
     }
     else
     {
-        pfc::string8 t = directoryPath;
+        pfc::string t = directoryPath;
 
         t.truncate(t.scan_filename());
         t += relativePath;

@@ -233,7 +233,7 @@ MT32Emu::File * MT32Player::openFile(const char * fileName)
     {
         service_ptr_t<file> File;
 
-        pfc::string8 FilePath = pfc::io::path::combine(_BasePathName, fileName);
+        pfc::string FilePath = pfc::io::path::combine(_BasePathName, fileName);
 
         filesystem::g_open(File, FilePath, filesystem::open_mode_read, *_AbortCallback);
 

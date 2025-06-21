@@ -121,6 +121,7 @@ To create the component first build the x64 configuration and next the x86 confi
 v2.xx.0.0, 2025-xx-xx
 
 * New: Resurrected yuno's fmmidi player.
+  * The default Programs definition file is located in the component directory but can be changed in the Preferences dialog.
 * Fixed: Preferences dialog should adapt to High DPI settings now.
 * Improved: Stricter interpretation of the RCP mute mode that prevents an RCP track from being included in the MIDI stream.
 

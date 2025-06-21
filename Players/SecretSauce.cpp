@@ -72,14 +72,14 @@ bool SecretSauce::Exists() noexcept
     FILE * fp = nullptr;
 
     {
-        pfc::string8 PathName;
+        pfc::string PathName;
 
         AdvCfgSecretSauceDirectoryPath.get(PathName);
 
         if (PathName.is_empty())
             return false;
 
-        pfc::string8 FilePath = pfc::io::path::combine(PathName, _DLLFileName);
+        pfc::string FilePath = pfc::io::path::combine(PathName, _DLLFileName);
 
         pfc::stringcvt::string_os_from_utf8 FilePathW(FilePath);
 
