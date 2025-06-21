@@ -185,6 +185,7 @@
     <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\FMMPlayer.h" />
     <ClInclude Include="Infrastructure\Channels.h" />
+    <ClInclude Include="Infrastructure\CriticalSection.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

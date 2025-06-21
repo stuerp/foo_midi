@@ -1,75 +1,53 @@
 
-/** $VER: SoundFontCache.cpp (2024.08.25) - Sound font cache for the BASSMIDI player **/
+/** $VER: SoundFontCache.cpp (2025.06.21) - Sound font cache for the BASSMIDI player **/
 
 #include "framework.h"
 
-#include <sdk/foobar2000-lite.h>
-
 #include "SoundFontCache.h"
+#include "Encoding.h"
+#include "CriticalSection.h"
 
 #include <string>
 #include <map>
-#include <time.h>
-
-#undef USE_STD_THREAD
-#ifdef USE_STD_THREAD
+#include <filesystem>
 #include <thread>
-#endif
+#include <mutex>
+
+namespace fs = std::filesystem;
+
+#include <time.h>
 
 static bool _IsCacheRunning = false;
 
 static sflist_t * LoadSoundFontList(const std::string & filePath);
 static void CacheRun();
 
-#ifdef USE_STD_THREAD
-static std::thread * Cache_Thread = NULL;
-#else
-class CacheThread : public pfc::thread
-{
-public:
-    virtual void threadProc()
-    {
-        CacheRun();
-    }
-
-    virtual ~CacheThread()
-    {
-        _IsCacheRunning = false;
-        waitTillDone();
-    }
-};
-
-static CacheThread * _CacheThread = nullptr;
-#endif
+static std::thread * _CacheThread = nullptr;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 struct CacheItem
 {
+    CacheItem() : _hSoundFont(), _SoundFontList(), _ReferenceCount(), _TimeReleased()
+    {
+    }
+
     HSOUNDFONT _hSoundFont;
     sflist_t * _SoundFontList;
     size_t _ReferenceCount;
     time_t _TimeReleased;
-
-    CacheItem() : _hSoundFont(), _SoundFontList(), _ReferenceCount(), _TimeReleased()
-    {
-    }
 };
 #pragma warning(default: 4820) // x bytes padding added after data member
 
+
 static std::map<std::string, CacheItem> _CacheItems;
-static critical_section _CacheLock;
+static CriticalSection _CacheCriticalSection;
 
 /// <summary>
 /// Initializes the cache.
 /// </summary>
 void CacheInit()
 {
-#ifdef USE_STD_THREAD
-    Cache_Thread = new std::thread(cache_run);
-#else
-    _CacheThread = new CacheThread;
-    _CacheThread->start();
-#endif
+    _CacheThread = new std::thread(CacheRun);
 }
 
 /// <summary>
@@ -77,17 +55,14 @@ void CacheInit()
 /// </summary>
 void CacheDispose()
 {
-#ifdef USE_STD_THREAD
-    Cache_Running = false;
-    Cache_Thread->join();
-    delete Cache_Thread;
-    Cache_Thread = NULL;
-#else
-    delete _CacheThread;
-    _CacheThread = NULL;
-#endif
+    _IsCacheRunning = false;
 
-    insync(_CacheLock);
+    _CacheThread->join();
+
+    delete _CacheThread;
+    _CacheThread = nullptr;
+
+    CriticalSectionLock Lock(_CacheCriticalSection);
 
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
@@ -106,18 +81,13 @@ HSOUNDFONT CacheAddSoundFont(const std::string & filePath)
 {
     HSOUNDFONT hSoundFont = 0;
 
-    insync(_CacheLock);
+    CriticalSectionLock Lock(_CacheCriticalSection);
 
     CacheItem & Item = _CacheItems[filePath];
 
     if (Item._hSoundFont == 0)
     {
-        const char * FilePath = (::stricmp_utf8_partial(filePath.c_str(), "file://") == 0) ? filePath.c_str() + 7 : filePath.c_str();
-
-        if (::strstr(FilePath, "://") != nullptr)
-            return 0;
-
-        hSoundFont = ::BASS_MIDI_FontInit(pfc::stringcvt::string_wide_from_utf8(FilePath), 0);
+        hSoundFont = ::BASS_MIDI_FontInit(::UTF8ToWide(filePath).c_str(), 0);
 
         if (hSoundFont)
         {
@@ -141,7 +111,7 @@ HSOUNDFONT CacheAddSoundFont(const std::string & filePath)
 /// </summary>
 void CacheRemoveSoundFont(HSOUNDFONT hSoundFont)
 {
-    insync(_CacheLock);
+    CriticalSectionLock Lock(_CacheCriticalSection);
 
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
@@ -161,7 +131,7 @@ sflist_t * CacheAddSoundFontList(const std::string & filePath)
 {
     sflist_t * SoundFontList = nullptr;
 
-    insync(_CacheLock);
+    CriticalSectionLock Lock(_CacheCriticalSection);
 
     CacheItem & Item = _CacheItems[filePath];
 
@@ -193,7 +163,7 @@ sflist_t * CacheAddSoundFontList(const std::string & filePath)
 /// </summary>
 void CacheRemoveSoundFontList(sflist_t * soundFontList)
 {
-    insync(_CacheLock);
+    CriticalSectionLock Lock(_CacheCriticalSection);
 
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
@@ -222,7 +192,7 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
 {
     std::map<HSOUNDFONT, SoundFontMarker> SoundFontMarkers;
 
-    insync(_CacheLock);
+    CriticalSectionLock Lock(_CacheCriticalSection);
 
     totalSampleDataSize = 0;
     totalSamplesDataLoaded = 0;
@@ -280,55 +250,36 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
 /// </summary>
 static sflist_t * LoadSoundFontList(const std::string & filePath)
 {
-    size_t Offset = (size_t)(::stricmp_utf8_partial(filePath.c_str(), "file://") == 0 ? 7 : 0);
-
-    pfc::string DirectoryPath = filePath.c_str() + Offset;
-
-    DirectoryPath.truncate(DirectoryPath.scan_filename());
-
-    pfc::string FilePath = "";
-
-    if (Offset == 0)
-        FilePath = "file://";
-
-    FilePath += filePath.c_str();
-
-    char * Data = nullptr;
-
     try
     {
-        abort_callback_dummy AbortHandler;
+        std::uintmax_t Size = fs::file_size(filePath);
 
-        file::ptr f;
+        std::vector<char> Data(Size + 1);
 
-        filesystem::g_open_read(f, FilePath, AbortHandler);
+        FILE * fp = nullptr;
 
-        size_t Size = (size_t)f->get_size_ex(AbortHandler);
+        ::_wfopen_s(&fp, ::UTF8ToWide(filePath).c_str(), L"r");
 
-        Data = (char *) ::malloc(Size + 1);
+        if (fp == nullptr)
+            return nullptr;
 
-        if (Data == nullptr)
-            return 0;
+        ::fread(Data.data(), Data.size(), 1, fp);
 
-        f->read_object(Data, Size, AbortHandler);
+        ::fclose(fp);
 
         {
             Data[Size] = '\0';
 
             char ErrorMessage[sflist_max_error];
+            fs::path FilePath = filePath;
 
-            sflist_t * SoundFontList = ::sflist_load(Data, ::strlen(Data), DirectoryPath, ErrorMessage);
-
-            ::free(Data);
+            sflist_t * SoundFontList = ::sflist_load(Data.data(), ::strlen(Data.data()), ::WideToUTF8(FilePath.parent_path()).c_str(), ErrorMessage);
 
             return SoundFontList;
         }
     }
     catch (...)
     {
-        if (Data)
-            ::free(Data);
-
         return nullptr;
     }
 }
@@ -344,7 +295,7 @@ static void CacheRun()
         ::time(&Now);
 
         {
-            insync(_CacheLock);
+            CriticalSectionLock Lock(_CacheCriticalSection);
 
             for (auto it = _CacheItems.begin(); it != _CacheItems.end();)
             {
