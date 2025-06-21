@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2025.06.18) **/
+/** $VER: Player.h (2025.06.21) **/
 
 #pragma once
 
@@ -95,6 +95,7 @@ private:
 
     uint32_t _Remainder;        // Remaining number of samples that need to be rendered before the audio chunk is complete (in case the block size of the player is smaller than the audio chunk size).
 
+    uint64_t _CfgChannelsVersion;  // Version number of the channel configuration
     uint16_t _EnabledChannels[128];
 
 #ifdef HAVE_FOO_VIS_MIDI

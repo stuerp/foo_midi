@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.06.19) **/
+/** $VER: Configuration.h (2025.06.21) **/
 
 #pragma once
 
@@ -181,7 +181,6 @@ extern cfg_var_modern::cfg_int  CfgLoopExpansion;
 extern cfg_var_modern::cfg_int  CfgDefaultTempo;
 
 // Channel Filtering
-extern cfg_var_modern::cfg_blob CfgEnabledChannels;
 extern cfg_var_modern::cfg_bool HaveEnabledChannelsChanged;
 
 extern advconfig_string_factory AdvCfgVSTiPluginDirectoryPath;

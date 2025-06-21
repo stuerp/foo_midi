@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2025.06.09) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2025.06.21) P. Stuer **/
 
 #include "framework.h"
 
@@ -10,6 +10,7 @@
 #include <atlmisc.h>
 
 #include <map>
+#include <algorithm>
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/console.h>
@@ -25,8 +26,7 @@
 #include "resource.h"
 
 #include "Configuration.h"
-
-#include <algorithm>
+#include "Channels.h"
 
 #pragma hdrstop
 
@@ -56,8 +56,6 @@ ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4
 ConfigVariable(DefaultTempo,        cfg_int, int,    160,  0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
 
 // Enabled Channels
-const uint64_t DefEnabledChannels[32] = { ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull };
-cfg_var_modern::cfg_blob CfgEnabledChannels({ 0x813ffb7a,0x59fc,0x4e19,{0x9b,0x8d,0x7a,0x4e,0xeb,0x2d,0x8b,0xca } }, DefEnabledChannels, sizeof(DefEnabledChannels));
 cfg_var_modern::cfg_bool HaveEnabledChannelsChanged({ 0x3fb2fd00, 0xc23d, 0x4793, { 0xaf, 0x33, 0x61, 0x4, 0x29, 0x95, 0x2f, 0xc2 } }, false);
 
 /// <summary>
@@ -143,9 +141,8 @@ private:
     // HMI / HMP
     int64_t _DefaultTempo;
 
-    // Channel Filtering
+    uint64_t _CfgChannelsVersion; // Version number of the channel configuration
     uint8_t _PortNumber;
-    uint16_t _EnabledChannels[128];
 };
 
 #pragma region preferences_page_instance
@@ -178,8 +175,7 @@ void DialogPageProcessing::apply()
 
     ApplyConfigVariable(DefaultTempo);
 
-    CfgEnabledChannels.set(_EnabledChannels, sizeof(_EnabledChannels));
-    HaveEnabledChannelsChanged = true; // Tell the player to re-read the channel configuration.
+    CfgChannels.Apply();
 
     OnChanged();
 }
@@ -199,7 +195,7 @@ void DialogPageProcessing::reset()
 
     ResetConfigVariable(DefaultTempo);
 
-    ::memset(_EnabledChannels, 0xFF, sizeof(_EnabledChannels));
+    CfgChannels.Reset();
 
     InitializePortControls();
 
@@ -229,7 +225,7 @@ BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
 
     InitializeConfigVariable(DefaultTempo);
 
-    ::memcpy(_EnabledChannels, CfgEnabledChannels.get()->data(), sizeof(_EnabledChannels));
+    CfgChannels.Initialize();
 
     InitializePortControls();
 
@@ -334,18 +330,13 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
         case IDC_CHANNEL_15:
         case IDC_CHANNEL_16:
         {
-            int64_t Mask = 1ll << (id - IDC_CHANNEL_01);
-
-            if (_EnabledChannels[_PortNumber] & Mask)
-                _EnabledChannels[_PortNumber] &= ~Mask;
-            else
-                _EnabledChannels[_PortNumber] |= Mask;
+            CfgChannels.Toggle(_PortNumber, (uint32_t) (id - IDC_CHANNEL_01));
             break;
         }
 
         case IDC_CHANNEL_ALL:
         {
-            ::memset(_EnabledChannels, 0xFF, sizeof(_EnabledChannels));
+            CfgChannels.All();
 
             UpdateChannelButtons();
             break;
@@ -353,7 +344,7 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
 
         case IDC_CHANNEL_NONE:
         {
-            ::memset(_EnabledChannels, 0, sizeof(_EnabledChannels));
+            CfgChannels.None();
 
             UpdateChannelButtons();
             break;
@@ -361,8 +352,7 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
 
         case IDC_CHANNEL_1_10:
         {
-            for (size_t i = 0; i < 128; ++i)
-                _EnabledChannels[i] = 0x03FF;
+            CfgChannels.OnlyLow();
 
             UpdateChannelButtons();
             break;
@@ -370,8 +360,7 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
 
         case IDC_CHANNEL_11_16:
         {
-            for (size_t i = 0; i < 128; ++i)
-                _EnabledChannels[i] = 0xFC00;
+            CfgChannels.OnlyHigh();
 
             UpdateChannelButtons();
             break;
@@ -398,7 +387,7 @@ bool DialogPageProcessing::HasChanged() const noexcept
 
     HasConfigVariableChanged(DefaultTempo);
 
-    if (::memcmp(_EnabledChannels, CfgEnabledChannels.get()->data(), sizeof(_EnabledChannels)) != 0)
+    if (CfgChannels.HasChanged(_CfgChannelsVersion))
         return true;
 
     return false;
@@ -433,10 +422,8 @@ void DialogPageProcessing::UpdateDialog() noexcept
 
 void DialogPageProcessing::UpdateChannelButtons() noexcept
 {
-    uint16_t Mask = 1;
-
-    for (int i = IDC_CHANNEL_01; i <= IDC_CHANNEL_16; ++i, Mask <<= 1)
-        SendDlgItemMessageW(i, BM_SETCHECK, (WPARAM)(((_EnabledChannels[_PortNumber] & Mask) != 0) ? BST_CHECKED: BST_UNCHECKED), 0);
+    for (int i = IDC_CHANNEL_01; i <= IDC_CHANNEL_16; ++i)
+        SendDlgItemMessageW(i, BM_SETCHECK, (WPARAM)(CfgChannels.IsEnabled(_PortNumber, (uint32_t) i) ? BST_CHECKED: BST_UNCHECKED), 0);
 }
 
 #pragma endregion

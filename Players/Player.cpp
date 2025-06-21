@@ -1,9 +1,11 @@
 
-/** $VER: Player.cpp (2025.06.18) **/
+/** $VER: Player.cpp (2025.06.21) **/
 
 #include "framework.h"
 
 #include "Player.h"
+
+#include "Channels.h"
 
 /// <summary>
 /// Initializes a new instance.
@@ -139,7 +141,8 @@ bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongInd
         }
     }
 
-    HaveEnabledChannelsChanged = true; // Forces the enabled channels to be re-read from the configuration variable.
+    _CfgChannelsVersion = ~0u;
+    CfgChannels.Get(_EnabledChannels, sizeof(_EnabledChannels), _CfgChannelsVersion);
 
     return true;
 }
@@ -602,11 +605,9 @@ void player_t::SendEventFiltered(uint32_t data, uint32_t time)
 bool player_t::FilterEvent(uint32_t data) noexcept
 {
     // Send an All Notes Off channel mode message for all disabled channels whenever the selection changes.
-    if (HaveEnabledChannelsChanged)
+    if (CfgChannels.HasChanged(_CfgChannelsVersion))
     {
-        HaveEnabledChannelsChanged = false;
-
-        ::memcpy(_EnabledChannels, CfgEnabledChannels.get()->data(), sizeof(_EnabledChannels));
+        CfgChannels.Get(_EnabledChannels, sizeof(_EnabledChannels), _CfgChannelsVersion);
 
         for (const auto & Port : _Ports)
         {
