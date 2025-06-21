@@ -225,7 +225,7 @@ size_t NukePlayer::GetPresetIndex(unsigned int synth, unsigned int bank)
     return 0;
 }
 
-#pragma region("Nuke Preset Importer")
+#pragma region Nuke Preset Importer
 /// <summary>
 /// Imports the presets of the Nuke player.
 /// </summary>

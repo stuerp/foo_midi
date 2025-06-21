@@ -175,7 +175,7 @@ public:
 
         #pragma endregion
 
-        #pragma region Nuke
+        #pragma region Nuked OPL3
 
         COMMAND_HANDLER_EX(IDC_NUKE_PRESET, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_NUKE_PANNING, BN_CLICKED, OnButtonClick)
@@ -330,8 +330,8 @@ const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
     { "LibADLMIDI",     PlayerType::ADL,          PlayerIsAlwaysPresent },
     { "LibOPNMIDI",     PlayerType::OPN,          PlayerIsAlwaysPresent },
     { "OPL MIDI",       PlayerType::OPL,          PlayerIsNeverPresent },
-    { "Nuke",           PlayerType::Nuke,         PlayerIsAlwaysPresent },
-    { "Nuked SC-55",    PlayerType::NukedSC55,    PlayerIsNeverPresent }, // 16/02/25: Timing is not working yet.
+    { "Nuked OPL3",     PlayerType::NukedOPL3,     PlayerIsAlwaysPresent },
+    { "Nuked SC-55",    PlayerType::NukedSC55,     PlayerIsNeverPresent }, // 16/02/25: Timing is not working yet.
     { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent },
     { "MCI",            PlayerType::MCI,          PlayerIsNeverPresent },
     { "fmmidi",         PlayerType::FMMIDI,       PlayerIsAlwaysPresent }
@@ -480,7 +480,7 @@ void PreferencesRootPage::apply()
         CfgADLPanning = (t_int32) SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
     }
 
-    // Nuke
+    // Nuked OPL3
     {
         size_t SelectedIndex = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
 
@@ -653,9 +653,9 @@ void PreferencesRootPage::reset()
             GetDlgItem(ControlId).EnableWindow(IsADL);
     }
 
-    // Nuke
+    // Nuked OPL3
     {
-        const bool IsNuke = (PlayerType == PlayerType::Nuke);
+        const bool IsNuke = (PlayerType == PlayerType::NukedOPL3);
 
         const int ControlIds[] =
         {
@@ -1030,7 +1030,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     }
     #pragma endregion
 
-    #pragma region Nuke
+    #pragma region Nuked OPL3
     {
         auto w = GetDlgItem(IDC_NUKE_PRESET);
 
@@ -1048,7 +1048,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, (WPARAM) CfgNukePanning);
 
-        if (PlayerType != PlayerType::Nuke)
+        if (PlayerType != PlayerType::NukedOPL3)
         {
             GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
             GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
@@ -1229,9 +1229,9 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
             GetDlgItem(ControlId).EnableWindow(IsADL);
     }
 
-    // Nuke
+    // Nuked OPL3
     {
-        const bool IsNuke = (PlayerType == PlayerType::Nuke);
+        const bool IsNukeOPL3 = (PlayerType == PlayerType::NukedOPL3);
 
         const int ControlIds[] =
         {
@@ -1240,7 +1240,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
         };
 
         for (const int & ControlId : ControlIds)
-            GetDlgItem(ControlId).EnableWindow(IsNuke);
+            GetDlgItem(ControlId).EnableWindow(IsNukeOPL3);
     }
 
     OnChanged();
@@ -1437,7 +1437,7 @@ bool PreferencesRootPage::HasChanged()
     }
     #pragma endregion
 
-    #pragma region Nuke
+    #pragma region Nuked OPL3
     {
         if (SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK) != CfgNukePanning)
             return true;

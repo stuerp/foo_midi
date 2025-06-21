@@ -33,13 +33,13 @@ const char * PlayerTypeNames[] =
     "LibEDMIDI",
     "VSTi",
     "FluidSynth",
-    "SuperMunt",
+    "LibMT32Emu",
     "BASS MIDI",
     "DirectX",
     "LibADLMIDI",
     "LibOPNMIDI",
     "OPL",
-    "Nuke",
+    "Nuked OPL3",
     "Secret Sauce",
     "MCI",
     "Nuked SC-55",
@@ -656,8 +656,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             break;
         }
 
-        // Nuke
-        case PlayerType::Nuke:
+        // Nuked OPL3
+        case PlayerType::NukedOPL3:
         {
             {
                 auto Player = new NukePlayer();

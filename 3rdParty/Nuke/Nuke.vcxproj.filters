@@ -18,12 +18,6 @@
     <ClCompile Include="fmopl3lib\opl3.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fmopl3lib\opl3class.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="synthlib_apogee\al_midi.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="synthlib_doom\i_oplmusic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -33,12 +27,15 @@
     <ClCompile Include="resampler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fmopl3lib\opl3class.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="synthlib_apogee\al_midi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fmopl3lib\opl3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="fmopl3lib\opl3class.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="synthlib_apogee\inst\apogee_blood.h">
@@ -96,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resampler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fmopl3lib\opl3class.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

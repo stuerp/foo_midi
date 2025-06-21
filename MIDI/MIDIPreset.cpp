@@ -230,7 +230,7 @@ void MIDIPreset::Serialize(pfc::string & text)
         text += pfc::format_int(_OPNEmulatorCore);
     }
     else
-    if (_PlayerType == PlayerType::Nuke)
+    if (_PlayerType == PlayerType::NukedOPL3)
     {
         text += "|";
         text += NukePlayer::GetPresetName(_NukeSynth, _NukeBank);
@@ -486,7 +486,7 @@ void MIDIPreset::Deserialize(const char * text)
         }
     }
     else
-    if (PlayerType == PlayerType::Nuke)
+    if (PlayerType == PlayerType::NukedOPL3)
     {
         pfc::string Text;
 

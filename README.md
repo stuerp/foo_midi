@@ -48,23 +48,13 @@ The following libraries are included in the code:
   * [BASSWV](https://www.un4seen.com/) 2.4.7.4
   * [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
   * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
-* [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
-* [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2)
-* [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
-* [Nuke.YKT](http://nukeykt.retrohost.net/), 
-  * [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver)
-  * [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3), Yamaha YMF262 and CT1747 (OPL3)
-  * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL), Yamaha YM2413 and VRC7 (OPLL)
-  * [Nuked-OPM](https://github.com/nukeykt/Nuked-OPM), Yamaha YM2151
-  * [Nuked-OPN2](https://github.com/nukeykt/Nuked-OPN2) 1.0.9, Yamaha YM3438 (YM2612)
-  * [Nuked-OPNB](https://github.com/nukeykt/Nuked-OPNB), Yamaha YM2610
-  * [Nuked-PSG](https://github.com/nukeykt/Nuked-PSG), Yamaha YM7101
-* [emu2149](https://github.com/digital-sound-antiques/emu2149), Yamaha YM2149 (PSG)
-* [emu2212](https://github.com/digital-sound-antiques/emu2212), Konami SCC
-* [emu8950](https://github.com/digital-sound-antiques/emu8950), Yamaha Y8950, YM3526 and YM3812
-* [emu76489](https://github.com/digital-sound-antiques/emu76489), SN76489
-* [LibMT32Emu](https://github.com/munt/munt) 2.7.2, Roland MT-32, CM-32L and LAPC-I synthesiser modules
 * [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
+* [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
+* [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2) and Yamaha YM2608 (OPNA)
+* [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
+* [LibMT32Emu](https://github.com/munt/munt) 2.7.2, Roland MT-32, CM-32L and LAPC-I synthesiser modules
+* [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3), Yamaha YMF262 and CT1747 (OPL3)
+* [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver), Emulated OPL3 MIDI Driver for Windows
 * [zlib](https://www.zlib.net/) 1.3.1
 
 To create the deployment package you need:
@@ -106,8 +96,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 * v2.19.0.0-alpha2, 2025-xx-xx
 
-* Fixed: An old threading issue caused by allowing the MIDI channels to be enabled or disabled during playback.
+* New: Started to write end user [documentation](docs/README.md).
 * Improved: Updated LibMT32Emu to v2.7.2.
+* Fixed: An old threading issue caused by allowing the MIDI channels to be enabled or disabled during playback.
 
 * v2.19.0.0-alpha1, 2025-06-16
 
@@ -342,7 +333,6 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * Peter Pawlowski for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
 * [kode54](https://gitlab.com/kode54/) for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
 * [Un4seen Developments](https://www.un4seen.com/) for the BASS audio library.
-* Mitsutaka Okazaki for [Emu de MIDI]https://github.com/Wohlstand/scc.
 * [Munt](https://github.com/munt/munt/) for a multi-platform software synthesiser emulating pre-GM MIDI devices such as the Roland MT-32, CM-32L, CM-64 and LAPC-I.
 * [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) for [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3).
 * [Vitaly Novichkov](https://github.com/Wohlstand) for [libADLMIDI](https://github.com/Wohlstand/libADLMIDI), [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) and [libEDMIDI](https://github.com/Wohlstand/libEDMIDI).
@@ -371,75 +361,9 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
 * [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
 
-### Electronic Music
-
-* [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
-* [File format samples](https://telparia.com/fileFormatSamples/)
-
-### SoundFonts
-
-* [SoundFont](https://musical-artifacts.com/artifacts?tags=soundfont), Musical Artifacts
-
 ### FluidSynth
 
 * [FluidSynth Documentation](https://github.com/FluidSynth/fluidsynth/wiki/Documentation)
-
-### MIDI
-
-* [Introduction to Computer Music: MIDI](https://cmtext.indiana.edu/MIDI/chapter3_MIDI.php), Jeffrey Hass
-* [MIDI is the language of the gods](http://midi.teragonaudio.com/), Teragon Audio
-* [Standards in Music](https://www.recordingblogs.com/wiki/standards-in-music-index), Recording Blogs
-* [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
-* [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
-
-#### GMF (Game Music Format)
-
-* [GMF](http://www.vgmpf.com/Wiki/index.php?title=GMF)
-
-#### HMI (Human Machine Interface)
-
-* [HMI](http://www.vgmpf.com/Wiki/index.php?title=HMI)
-
-#### HMP (Human Machine Interface P)
-
-* [HMP](http://www.vgmpf.com/Wiki/index.php?title=HMP)
-
-#### LDS (Loudness Sound System)
-
-* [LDS](http://www.vgmpf.com/Wiki/index.php?title=LDS)
-
-#### MDS (MIDI Stream)
-
-* [MDS](http://www.vgmpf.com/Wiki/index.php?title=MDS)
-
-#### MUS (DMX)
-
-* [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX))
-* [MUS Format](https://moddingwiki.shikadi.net/wiki/MUS_Format)
-
-#### RMI
-
-* [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
-* [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification)
-
-#### RCP (Recomposer)
-
-* [Recomposer Format](http://www.vgmpf.com/Wiki/index.php?title=GMF)
-
-#### XMI (Extended Multiple Instrument Digital Interface)
-
-* [XMI](http://www.vgmpf.com/Wiki/index.php?title=XMI)
-* [XMI Format](https://moddingwiki.shikadi.net/wiki/XMI_Format)
-
-#### XMF (Extensible Music Format)
-
-* [Media Type](https://www.rfc-editor.org/rfc/rfc4723.html)
-* [MIDI Manufacturers Association Tech Specs & Info](https://web.archive.org/web/20080618001530/http://www.midi.org/techspecs/index.php)
-* [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000121.shtml)
-* [FileFormats](http://fileformats.archiveteam.org/wiki/Extensible_Music_Format)
-* [MultimediaWiki](https://wiki.multimedia.cx/index.php/Extensible_Music_Format_(XMF))
-* [Introducing the Interactive XMF Audio File Format](https://www.gamedeveloper.com/audio/introducing-the-interactive-xmf-audio-file-format)
-* [XmfExtractor](https://github.com/benryves/XmfExtractor)
 
 ## Links
 

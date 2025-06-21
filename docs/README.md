@@ -65,27 +65,23 @@ foo_midi implements and suports several players. A player is emulates an FM or s
 
 ### LibADLMIDI (Built-in)
 
-LibADLMIDI uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
+This player uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
 
 ### LibOPNMIDI (Built-in)
 
-LibOPNMIDI uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) FM synthesis sound chip.
+This player uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) and [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
 
 ### LibEDMIDI aka Emu de MIDI (Built-in)
 
-Emu de MIDI uses the [libEDMIDI](https://github.com/Wohlstand/libEDMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2413 and VRC7 (OPLL)](https://en.wikipedia.org/wiki/Yamaha_YM2413) FM synthesis sound chip, the [Sega Programmable Sound Generator (PSG, SN76496)](https://segaretro.org/SN76489) and the [Konami SCC](http://bifi.msxnet.org/msxnet/tech/scc).
+This player uses the [libEDMIDI](https://github.com/Wohlstand/libEDMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2413 and VRC7 (OPLL)](https://en.wikipedia.org/wiki/Yamaha_YM2413) FM synthesis sound chip, the [Sega Programmable Sound Generator (PSG, SN76496)](https://segaretro.org/SN76489) and the [Konami SCC](http://bifi.msxnet.org/msxnet/tech/scc).
 
-### Nuke
+### Nuked OPL3
 
-[Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip
-[Yamaha YM2413 and VRC7 (OPLL)](https://en.wikipedia.org/wiki/Yamaha_YM2413) FM synthesis sound chip
-Yamaha YM2151
-Yamaha YM2610
-Yamaha YM7101
+This player uses the [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) library by [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) to emulate the [Yamaha YMF262 and CT1747 (OPL3)]() FM synthesis sound chip.
 
 ### Super Munt (MT-32)
 
-Roland MT-32, CM-32L and LAPC-I synthesiser modules
+This player uses the [libMT32Emu](https://github.com/munt/munt) library to emulated the [Roland MT-32, CM-32L and LAPC-I synthesiser modules](https://en.wikipedia.org/wiki/Roland_MT-32).
 
 ### fmmidi (yuno)
 
@@ -105,7 +101,7 @@ This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) libra
 
 Supports 32 and 64-bit VST instruments.
 
-### Secret Sauce (Roland’s Sound Canvas VA)
+### Secret Sauce
 
 Secret Sauce is a wrapper for the SCCore.dll that comes bundled with Roland’s [Sound Canvas VA](https://www.roland.com/us/products/rc_sound_canvas_va/).
 
@@ -158,16 +154,11 @@ The component supports 6 loop modes that can be selected in the Preferences dial
 
 ## Support
 
-For further assistance, contact our support team:  
-📧 Email: [support@example.com](mailto:support@example.com)  
-📞 Phone: +123-456-7890  
-🌐 Website: [www.example.com/support](https://www.example.com/support)
+For further assistance:
 
-
-
-
-
-
+🌐 Home page: [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)
+🌐 Issue tracker: [https://github.com/stuerp/foo_midi/issues](https://github.com/stuerp/foo_midi/issues)
+🌐 Forum: [Hydrogenaudio foo_midi (foobar v2.0)](https://hydrogenaud.io/index.php/topic,123301.25.html)
 
 ## Change Log
 
@@ -489,12 +480,69 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Introducing the Interactive XMF Audio File Format](https://www.gamedeveloper.com/audio/introducing-the-interactive-xmf-audio-file-format)
 * [XmfExtractor](https://github.com/benryves/XmfExtractor)
 
-## Links
+### Electronic Music
 
-* Home page: [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)
-* Repository: [https://github.com/stuerp/foo_midi.git](https://github.com/stuerp/foo_midi.git)
-* Issue tracker: [https://github.com/stuerp/foo_midi/issues](https://github.com/stuerp/foo_midi/issues)
+* [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
+* [File format samples](https://telparia.com/fileFormatSamples/)
 
-## License
+### SoundFonts
 
-![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)
+* [SoundFont](https://musical-artifacts.com/artifacts?tags=soundfont), Musical Artifacts
+
+### MIDI
+
+* [Introduction to Computer Music: MIDI](https://cmtext.indiana.edu/MIDI/chapter3_MIDI.php), Jeffrey Hass
+* [MIDI is the language of the gods](http://midi.teragonaudio.com/), Teragon Audio
+* [Standards in Music](https://www.recordingblogs.com/wiki/standards-in-music-index), Recording Blogs
+* [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
+* [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
+
+#### GMF (Game Music Format)
+
+* [GMF](http://www.vgmpf.com/Wiki/index.php?title=GMF)
+
+#### HMI (Human Machine Interface)
+
+* [HMI](http://www.vgmpf.com/Wiki/index.php?title=HMI)
+
+#### HMP (Human Machine Interface P)
+
+* [HMP](http://www.vgmpf.com/Wiki/index.php?title=HMP)
+
+#### LDS (Loudness Sound System)
+
+* [LDS](http://www.vgmpf.com/Wiki/index.php?title=LDS)
+
+#### MDS (MIDI Stream)
+
+* [MDS](http://www.vgmpf.com/Wiki/index.php?title=MDS)
+
+#### MUS (DMX)
+
+* [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX))
+* [MUS Format](https://moddingwiki.shikadi.net/wiki/MUS_Format)
+
+#### RMI
+
+* [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
+* [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification)
+
+#### RCP (Recomposer)
+
+* [Recomposer Format](http://www.vgmpf.com/Wiki/index.php?title=GMF)
+
+#### XMI (Extended Multiple Instrument Digital Interface)
+
+* [XMI](http://www.vgmpf.com/Wiki/index.php?title=XMI)
+* [XMI Format](https://moddingwiki.shikadi.net/wiki/XMI_Format)
+
+#### XMF (Extensible Music Format)
+
+* [Media Type](https://www.rfc-editor.org/rfc/rfc4723.html)
+* [MIDI Manufacturers Association Tech Specs & Info](https://web.archive.org/web/20080618001530/http://www.midi.org/techspecs/index.php)
+* [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000121.shtml)
+* [FileFormats](http://fileformats.archiveteam.org/wiki/Extensible_Music_Format)
+* [MultimediaWiki](https://wiki.multimedia.cx/index.php/Extensible_Music_Format_(XMF))
+* [Introducing the Interactive XMF Audio File Format](https://www.gamedeveloper.com/audio/introducing-the-interactive-xmf-audio-file-format)
+* [XmfExtractor](https://github.com/benryves/XmfExtractor)
+
