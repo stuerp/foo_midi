@@ -63,7 +63,7 @@ The following libraries are included in the code:
 * [emu2212](https://github.com/digital-sound-antiques/emu2212), Konami SCC
 * [emu8950](https://github.com/digital-sound-antiques/emu8950), Yamaha Y8950, YM3526 and YM3812
 * [emu76489](https://github.com/digital-sound-antiques/emu76489), SN76489
-* [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) 1.8.1, Roland MT-32, CM-32L and LAPC-I synthesiser modules
+* [LibMT32Emu](https://github.com/munt/munt) 2.7.2, Roland MT-32, CM-32L and LAPC-I synthesiser modules
 * [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
 * [zlib](https://www.zlib.net/) 1.3.1
 
@@ -107,6 +107,7 @@ To create the component first build the x64 configuration and next the x86 confi
 * v2.19.0.0-alpha2, 2025-xx-xx
 
 * Fixed: An old threading issue caused by allowing the MIDI channels to be enabled or disabled during playback.
+* Improved: Updated LibMT32Emu to v2.7.2.
 
 * v2.19.0.0-alpha1, 2025-06-16
 

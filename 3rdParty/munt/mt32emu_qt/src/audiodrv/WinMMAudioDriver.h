@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <mt32emu/mt32emu.h>
 #include "AudioDriver.h"
+#include "../MasterClock.h"
 
 #ifndef _UINTPTR_T_DEFINED
 // For MinGW

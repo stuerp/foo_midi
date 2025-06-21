@@ -36,7 +36,6 @@
 
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
-#include "SynthWidget.h"
 #include "Master.h"
 
 #include "AudioFileWriter.h"

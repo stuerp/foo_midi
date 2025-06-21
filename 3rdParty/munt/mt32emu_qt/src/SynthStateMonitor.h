@@ -7,10 +7,9 @@
 
 #include <mt32emu/mt32emu.h>
 
-#include "QSynth.h"
+#include "SynthWidget.h"
 
 class SynthRoute;
-class SynthStateMonitor;
 
 namespace Ui {
 	class SynthWidget;

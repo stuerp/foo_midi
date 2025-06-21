@@ -1,24 +1,3 @@
-HEAD:
-
-	* Fixed UI that may show obsolete state of a stopped synth.
-	  After stopping the pinned synth, the SynthStateMonitor occasionally left displaying the last
-	  state change generated immediately before stopping, e.g. the partial states. This happened
-	  due to asynchronous nature of state updates, so now, we explicitly check the synth state
-	  before applying such updates. (#107)
-	* Fixed occasional crashes when JACK audio device started.
-	  On some platforms, when a relatively small JACK buffer size is configured, the JACK server
-	  manages to invoke the first audio rendering callback early enough, so that the previous
-	  implementation of JACKClient sometimes hasn't had initialised yet. The new implementation
-	  activates the JACK client in a separate step, when the initialisation is complete. (#106)
-	* Added a couple of spin boxes into the synth properties dialog to allow for finer control over
-	  the synth output gain factors. (#104)
-
-2022-08-03:
-
-	1.11.1 released.
-
-	* Fixed compilation on macOS with SDK versions prior to 12.0. (#96)
-
 2022-07-23:
 
 	1.11.0 released.

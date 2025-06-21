@@ -27,8 +27,7 @@
 #include <mt32emu/mt32emu.h>
 
 #include "../Master.h"
-#include "../MasterClock.h"
-#include "../SynthRoute.h"
+#include "../QSynth.h"
 
 using namespace MT32Emu;
 

@@ -7,10 +7,9 @@
 #include <jack/midiport.h>
 
 enum JACKClientState {
-	JACKClientState_CLOSED,
-	JACKClientState_OPENING,
 	JACKClientState_OPEN,
-	JACKClientState_CLOSING
+	JACKClientState_CLOSING,
+	JACKClientState_CLOSED
 };
 
 class MidiSession;
@@ -23,7 +22,6 @@ public:
 
 	JACKClientState open(MidiSession *midiSession, JACKAudioStream *audioStream);
 	JACKClientState close();
-	JACKClientState start();
 	void connectToPhysicalPorts();
 	bool isRealtimeProcessing() const;
 	quint32 getSampleRate() const;
