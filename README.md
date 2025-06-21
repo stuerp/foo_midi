@@ -118,7 +118,11 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v2.xx.0.0, 2025-xx-xx
+* v2.19.0.0-alpha2, 2025-xx-xx
+
+* Fixed: An old threading issue caused by allowing the MIDI channels to be enabled or disabled during playback.
+
+* v2.19.0.0-alpha1, 2025-06-16
 
 * New: Resurrected yuno's fmmidi player.
   * The default Programs definition file is located in the component directory but can be changed in the Preferences dialog.

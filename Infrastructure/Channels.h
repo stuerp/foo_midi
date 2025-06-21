@@ -12,6 +12,8 @@
 #include <sdk/cfg_var.h>
 #include <sdk/advconfig_impl.h>
 
+#include "CriticalSection.h"
+
 extern cfg_var_modern::cfg_blob CfgEnabledChannels;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
@@ -31,7 +33,7 @@ public:
 
     void Get(uint16_t * data, size_t size, uint64_t & version)
     {
-        std::lock_guard<std::mutex> lock(_Mutex);
+        critical_section_lock_t Lock(_CriticalSection);
 
         ::memcpy(data, CfgEnabledChannels.get()->data(), size);
         version = _Version.load();
@@ -39,7 +41,7 @@ public:
 
     void Initialize()
     {
-        std::lock_guard<std::mutex> lock(_Mutex);
+        critical_section_lock_t Lock(_CriticalSection);
 
         ::memcpy(_Data, CfgEnabledChannels.get()->data(), sizeof(_Data));
         ++_Version;
@@ -127,7 +129,7 @@ private:
     uint16_t _Data[MaxPorts];
 
     std::atomic<uint64_t> _Version;
-    std::mutex _Mutex;
+    critical_section_t _CriticalSection;
 };
 #pragma warning(default: 4820)
 

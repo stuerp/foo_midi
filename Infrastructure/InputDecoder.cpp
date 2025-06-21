@@ -56,10 +56,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     if (file.is_empty())
         filesystem::g_open(file, filePath, filesystem::open_mode_read, abortHandler);
 
-    if (::_strnicmp(filePath, "file://", 7) == 0)
-        filePath += 7;
-
-    _FilePath = filePath;
+    _FilePath = filesystem::g_get_native_path(filePath);
 
     {
         _FileStats = file->get_stats(abortHandler);

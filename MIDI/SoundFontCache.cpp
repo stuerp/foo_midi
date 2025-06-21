@@ -40,7 +40,7 @@ struct CacheItem
 
 
 static std::map<std::string, CacheItem> _CacheItems;
-static CriticalSection _CacheCriticalSection;
+static critical_section_t _CacheCriticalSection;
 
 /// <summary>
 /// Initializes the cache.
@@ -62,7 +62,7 @@ void CacheDispose()
     delete _CacheThread;
     _CacheThread = nullptr;
 
-    CriticalSectionLock Lock(_CacheCriticalSection);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
@@ -81,7 +81,7 @@ HSOUNDFONT CacheAddSoundFont(const std::string & filePath)
 {
     HSOUNDFONT hSoundFont = 0;
 
-    CriticalSectionLock Lock(_CacheCriticalSection);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     CacheItem & Item = _CacheItems[filePath];
 
@@ -111,7 +111,7 @@ HSOUNDFONT CacheAddSoundFont(const std::string & filePath)
 /// </summary>
 void CacheRemoveSoundFont(HSOUNDFONT hSoundFont)
 {
-    CriticalSectionLock Lock(_CacheCriticalSection);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
@@ -131,7 +131,7 @@ sflist_t * CacheAddSoundFontList(const std::string & filePath)
 {
     sflist_t * SoundFontList = nullptr;
 
-    CriticalSectionLock Lock(_CacheCriticalSection);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     CacheItem & Item = _CacheItems[filePath];
 
@@ -163,7 +163,7 @@ sflist_t * CacheAddSoundFontList(const std::string & filePath)
 /// </summary>
 void CacheRemoveSoundFontList(sflist_t * soundFontList)
 {
-    CriticalSectionLock Lock(_CacheCriticalSection);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
@@ -192,7 +192,7 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
 {
     std::map<HSOUNDFONT, SoundFontMarker> SoundFontMarkers;
 
-    CriticalSectionLock Lock(_CacheCriticalSection);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     totalSampleDataSize = 0;
     totalSamplesDataLoaded = 0;
@@ -295,7 +295,7 @@ static void CacheRun()
         ::time(&Now);
 
         {
-            CriticalSectionLock Lock(_CacheCriticalSection);
+            critical_section_lock_t Lock(_CacheCriticalSection);
 
             for (auto it = _CacheItems.begin(); it != _CacheItems.end();)
             {

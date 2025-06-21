@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2025.03.16) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.06.21) P. Stuer **/
 
 #include "framework.h"
 
@@ -437,16 +437,13 @@ static void * HandleOpen(const char * filePath) noexcept
 {
     try
     {
-        pfc::string FilePath = "";
+        std::string URI = "file://";
 
-        if (::strstr(filePath, "://") == 0)
-            FilePath = "file://";
-
-        FilePath += filePath;
+        URI += filePath;
 
         file::ptr * File = new file::ptr;
 
-        filesystem::g_open(*File, FilePath, filesystem::open_mode_read, fb2k::noAbort);
+        filesystem::g_open(*File, URI.c_str(), filesystem::open_mode_read, fb2k::noAbort);
 
         return (void *) File;
     }

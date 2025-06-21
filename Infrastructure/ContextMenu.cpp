@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenu.cpp (2025.03.31) **/
+/** $VER: ContextMenu.cpp (2025.06.21) **/
 
 #include "framework.h"
 
@@ -117,18 +117,14 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
                     File->read_object(Object.data(), (t_size) FileSize, AbortHandler);
 
                     {
-                        const char * TmpFilePath = Location.get_path();
-
-const auto t = filesystem::g_get_native_path(Location.get_path());
-
-                        if (_strnicmp(TmpFilePath, "file://", 7) == 0)
-                            TmpFilePath += 7;
-
                         midi::container_t Container;
+
                         bool Success = false;
 
                         try
                         {
+                            const auto TmpFilePath = filesystem::g_get_native_path(Location.get_path());
+
                             Success = midi::processor_t::Process(Object, pfc::wideFromUTF8(TmpFilePath), Container);
                         }
                         catch (std::exception &)
