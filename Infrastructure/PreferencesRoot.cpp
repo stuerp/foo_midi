@@ -1,7 +1,7 @@
 
-/** $VER: PreferencesRoot.cpp (2025.06.16) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2025.06.21) P. Stuer **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include <atlbase.h>
 #include <atlapp.h>
@@ -322,7 +322,7 @@ private:
 /// </summary>
 const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
 {
-    { "Emu de MIDI",    PlayerType::EmuDeMIDI,    PlayerIsAlwaysPresent },
+    { "LibEDMIDI",      PlayerType::EmuDeMIDI,    PlayerIsAlwaysPresent },
     { "FluidSynth",     PlayerType::FluidSynth,   IsFluidSynthPresent },
     { "BASSMIDI",       PlayerType::BASSMIDI,     PlayerIsAlwaysPresent },
     { "DirectX",        PlayerType::DirectX,      PlayerIsNeverPresent },

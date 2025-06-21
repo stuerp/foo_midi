@@ -31,7 +31,7 @@
     <ClCompile Include="MIDI\SoundFontCache.cpp" />
     <ClCompile Include="Players\FSPlayer.cpp" />
     <ClCompile Include="Players\MCIPlayer.cpp" />
-    <ClCompile Include="framework.cpp" />
+    <ClCompile Include="pch.cpp" />
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
     <ClCompile Include="Players\SecretSauce.cpp" />
     <ClCompile Include="Players\VSTi.cpp" />
@@ -177,7 +177,7 @@
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth.h" />
     <ClInclude Include="Players\MCIPlayer.h" />
-    <ClInclude Include="framework.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="Infrastructure\PreferencesProcessingLayout.h" />
     <ClInclude Include="Players\SecretSauce.h" />
     <ClInclude Include="Players\VSTi.h" />

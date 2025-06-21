@@ -1,7 +1,7 @@
 
 /** $VER: VSTiPlayer.cpp (2025.02.24) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "VSTiPlayer.h"
 

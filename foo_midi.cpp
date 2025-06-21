@@ -1,7 +1,7 @@
 
 /** $VER: foo_midi.cpp (2024.06.09) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/componentversion.h>

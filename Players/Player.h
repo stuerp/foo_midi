@@ -6,6 +6,7 @@
 #include <sdk/foobar2000-lite.h>
 
 #include <MIDIContainer.h>
+#include <SysEx.h>
 
 #include "Configuration.h"
 

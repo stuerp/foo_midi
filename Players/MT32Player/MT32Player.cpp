@@ -1,7 +1,7 @@
 
-/** $VER: MT32Player.cpp (2024.09.29) **/
+/** $VER: MT32Player.cpp (2025.06.21) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "MT32Player.h"
 
@@ -176,9 +176,7 @@ bool MT32Player::IsConfigValid()
 
 void MT32Player::_reset()
 {
-    static const uint8_t mt32_reset[10] = { 0xF0, MT32Emu::SYSEX_MANUFACTURER_ROLAND, 0x10, MT32Emu::SYSEX_MDL_MT32, MT32Emu::SYSEX_CMD_DT1, 0x7F, 0, 0, 0xF7 };
-
-    _Synth->playSysexNow(mt32_reset, sizeof(mt32_reset));
+    _Synth->playSysexNow(midi::sysex_t::MT32Reset, sizeof(midi::sysex_t::MT32Reset));
 
     if (_IsGM)
     {

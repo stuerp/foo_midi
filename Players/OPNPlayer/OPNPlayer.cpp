@@ -1,7 +1,7 @@
 
 /** $VER: OPNPlayer.cpp (2026.06.16) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "OPNPlayer.h"
 

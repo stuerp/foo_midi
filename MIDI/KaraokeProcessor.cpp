@@ -1,7 +1,7 @@
 
 /** $VER: KaraokeProcessor.h (2025.06.20) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "KaraokeProcessor.h"
 

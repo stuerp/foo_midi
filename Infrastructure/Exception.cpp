@@ -1,7 +1,7 @@
 
 /** $VER: Exception.cpp (2024.08.28) P. Stuer **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "Exception.h"
 #include "Encoding.h"

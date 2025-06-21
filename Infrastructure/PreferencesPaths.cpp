@@ -1,7 +1,7 @@
 
 /** $VER: PreferencesPaths.cpp (2025.06.19) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include <atlbase.h>
 #include <atlapp.h>

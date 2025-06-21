@@ -1,19 +1,11 @@
 
-/** $VER: EdMPlayer.cpp (2025.03.21) **/
+/** $VER: EdMPlayer.cpp (2025.06.21) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "EdMPlayer.h"
 
-static const uint8_t SysExGMReset[]  = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-static const uint8_t SysExGM2Reset[] = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-static const uint8_t SysExGSReset[]  = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const uint8_t SysExXGReset[]  = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
-
-static bool IsGMReset(const uint8_t * data, size_t size) noexcept;
-static bool IsGM2Reset(const uint8_t * data, size_t size) noexcept;
-static bool IsGSReset(const uint8_t * data, size_t size) noexcept;
-static bool IsXGReset(const uint8_t * data, size_t size) noexcept;
+#include <SysEx.h>
 
 EdMPlayer::EdMPlayer() : player_t()
 {
@@ -36,7 +28,7 @@ bool EdMPlayer::Startup()
     if (_Initialized)
         return true;
 
-    for (size_t i = 0; i < 8; ++i)
+    for (size_t i = 0; i < _countof(_Module); ++i)
     {
         if (i & 1)
             _Module[i].AttachDevice(new dsa::CSccDevice(_SampleRate, 2));
@@ -56,7 +48,7 @@ bool EdMPlayer::Startup()
 void EdMPlayer::Shutdown()
 {
     if (_Initialized)
-        for (size_t i = 0; i < 8; ++i)
+        for (size_t i = 0; i < _countof(_Module); ++i)
             delete _Module[i].DetachDevice();
 
     _Initialized = false;
@@ -94,46 +86,57 @@ void EdMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     }
 }
 
-void EdMPlayer::SendEvent(uint32_t data)
+/// <summary>
+/// Sends a message to the library.
+/// </summary>
+void EdMPlayer::SendEvent(uint32_t message)
 {
+    const uint8_t Event[3]
+    {
+        (uint8_t) (message),        // Status
+        (uint8_t) (message >>  8),  // Param 1
+        (uint8_t) (message >> 16)   // Param 2
+    };
+
+    const uint8_t Status   = Event[0] & 0xF0u;
+    const uint32_t Channel = Event[0] & 0x0Fu;
+
     dsa::CMIDIMsgInterpreter mi;
 
-    uint8_t Data[3] = { (uint8_t) data, (uint8_t) (data >> 8), (uint8_t) (data >> 16) };
+    mi.Interpret(Event[0]);
 
-    uint32_t StatusCode = data & 0xF0;
-    uint32_t Channel = data & 0x0F;
-
-    mi.Interpret(Data[0]);
-
-    if (Data[0] < midi::TimingClock)
+    if (Event[0] < midi::TimingClock)
     {
-        mi.Interpret(Data[1]);
+        mi.Interpret(Event[1]);
 
-        if (StatusCode != midi::ProgramChange && StatusCode != midi::ChannelPressure)
-            mi.Interpret(Data[2]);
+        if (Status != midi::ProgramChange && Status != midi::ChannelPressure)
+            mi.Interpret(Event[2]);
     }
 
-    if (StatusCode == midi::ControlChange && Data[1] == 0)
+    if (Status == midi::ControlChange)
     {
-        if (_SynthMode == ModeXG)
+        if (Event[1] == 0)
         {
-            if (Data[2] == 127)
-                _DrumChannels[Channel] = 1;
+            if (_SynthMode == ModeXG)
+            {
+                if (Event[2] == 127)
+                    _DrumChannels[Channel] = 1;
+                else
+                    _DrumChannels[Channel] = 0;
+            }
             else
-                _DrumChannels[Channel] = 0;
-        }
-        else
-        if (_SynthMode == ModeGM2)
-        {
-            if (Data[2] == 120)
-                _DrumChannels[Channel] = 1;
-            else
-            if (Data[2] == 121)
-                _DrumChannels[Channel] = 0;
+            if (_SynthMode == ModeGM2)
+            {
+                if (Event[2] == 120)
+                    _DrumChannels[Channel] = 1;
+                else
+                if (Event[2] == 121)
+                    _DrumChannels[Channel] = 0;
+            }
         }
     }
     else
-    if (StatusCode == midi::ProgramChange)
+    if (Status == midi::ProgramChange)
     {
         SetDrumChannel((int)Channel, _DrumChannels[Channel]);
     }
@@ -151,6 +154,9 @@ void EdMPlayer::SendEvent(uint32_t data)
     }
 }
 
+/// <summary>
+/// Sends a SysEx message to the library.
+/// </summary>
 void EdMPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
 {
     dsa::CMIDIMsgInterpreter mi;
@@ -158,28 +164,28 @@ void EdMPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
     for (size_t n = 0; n < size; ++n)
         mi.Interpret(data[n]);
 
-    if (IsGMReset(data, size))
+    if (midi::sysex_t::IsGMReset(data, size))
     {
         ResetDrumChannels();
 
         _SynthMode = ModeGM;
     }
     else
-    if (IsGM2Reset(data, size))
+    if (midi::sysex_t::IsGM2Reset(data, size))
     {
         ResetDrumChannels();
 
         _SynthMode = ModeGM2;
     }
     else
-    if (IsGSReset(data, size))
+    if (midi::sysex_t::IsGSReset(data, size))
     {
         ResetDrumChannels();
 
         _SynthMode = ModeGS;
     }
     else
-    if (IsXGReset(data, size))
+    if (midi::sysex_t::IsXGReset(data, size))
     {
         ResetDrumChannels();
 
@@ -226,47 +232,12 @@ void EdMPlayer::ResetDrumChannels()
 
     ::memcpy(_GSPartToChannel, PartToChannel, sizeof(_GSPartToChannel));
 
-    for (size_t i = 0; i < 16; ++i)
+    for (size_t i = 0; i < _countof(_DrumChannels); ++i)
         SetDrumChannel((int) i, _DrumChannels[i]);
 }
 
 void EdMPlayer::SetDrumChannel(int channel, int enable)
 {
-    for (size_t i = 0; i < 8; ++i)
+    for (size_t i = 0; i < _countof(_Module); ++i)
         _Module[i].SetDrumChannel(channel, enable);
-}
-
-static bool IsGMReset(const uint8_t * data, size_t size) noexcept
-{
-    return (size == _countof(SysExGMReset) && ::memcmp(data, SysExGMReset, _countof(SysExGMReset)) == 0);
-}
-
-static bool IsGM2Reset(const uint8_t * data, size_t size) noexcept
-{
-    return (size == _countof(SysExGM2Reset) && ::memcmp(data, SysExGM2Reset, _countof(SysExGM2Reset)) == 0);
-}
-
-static bool IsGSReset(const uint8_t * data, size_t size) noexcept
-{
-    if (size != _countof(SysExGSReset))
-        return false;
-
-    if (::memcmp(data, SysExGSReset, 5) != 0)
-        return false;
-
-    if (::memcmp(data + 7, SysExGSReset + 7, 2) != 0)
-        return false;
-
-    if (((data[5] + data[6] + 1) & 127) != data[9])
-        return false;
-
-    if (data[10] != SysExGSReset[10])
-        return false;
-
-    return true;
-}
-
-static bool IsXGReset(const uint8_t * data, size_t size) noexcept
-{
-    return (size == _countof(SysExXGReset) && ::memcmp(data, SysExXGReset, _countof(SysExXGReset)) == 0);
 }

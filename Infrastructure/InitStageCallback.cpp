@@ -1,7 +1,7 @@
 
 /** $VER: InitStageCallback.cpp (2024.08.14) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/initquit.h>

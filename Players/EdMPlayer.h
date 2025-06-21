@@ -1,5 +1,5 @@
 
-/** $VER: EdMPlayer.h (2024.05.05) **/
+/** $VER: EdMPlayer.h (2025.06.21) **/
 
 #pragma once
 

@@ -1,7 +1,7 @@
  
 /** $VER: InputDecoder.cpp (2025.06.18) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "InputDecoder.h"
 
@@ -30,7 +30,7 @@ const GUID GUIDTagMIDIHash = { 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0
 
 const char * PlayerTypeNames[] =
 {
-    "Emu de MIDI",
+    "LibEDMIDI",
     "VSTi",
     "FluidSynth",
     "SuperMunt",

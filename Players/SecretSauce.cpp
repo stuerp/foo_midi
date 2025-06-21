@@ -1,7 +1,7 @@
 
 /** $VER: SecretSauce.cpp (2024.05.20) P. Stuer **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/hasher_md5.h>

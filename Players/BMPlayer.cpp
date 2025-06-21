@@ -1,7 +1,7 @@
 
 /** $VER: BMPlayer.cpp (2025.03.27) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "BMPlayer.h"
 
@@ -255,9 +255,9 @@ void BMPlayer::SendEvent(uint32_t message)
 {
     const uint8_t Event[3]
     {
-        static_cast<uint8_t>(message),          // Status
-        static_cast<uint8_t>(message >>  8),    // Param 1
-        static_cast<uint8_t>(message >> 16)     // Param 2
+        (uint8_t) (message),        // Status
+        (uint8_t) (message >>  8),  // Param 1
+        (uint8_t) (message >> 16)   // Param 2
     };
 
     const uint8_t Status = Event[0] & 0xF0u;

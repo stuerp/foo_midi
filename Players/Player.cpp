@@ -1,7 +1,7 @@
 
 /** $VER: Player.cpp (2025.06.21) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "Player.h"
 
@@ -647,17 +647,6 @@ bool player_t::FilterEffect(uint32_t data) const noexcept
 
 #pragma region SysEx
 
-static const uint8_t SysExEnableGM1[]       = { 0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 };
-//static const uint8_t SysExDisableGM1[]      = { 0xF0, 0x7E, 0x7F, 0x09, 0x02, 0xF7 };
-static const uint8_t SysExEnableGM2[]       = { 0xF0, 0x7E, 0x7F, 0x09, 0x03, 0xF7 };
-static const uint8_t SysExEnableGS[]        = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, 0xF7 };
-static const uint8_t SysExEnableXG[]        = { 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xF7 };
-
-static const uint8_t SysExGSToneMapNumber[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x41, 0x00, 0x03, 0x00, 0xF7 };
-
-static bool IsSysExReset(const uint8_t * data);
-static bool IsSysExEqual(const uint8_t * a, const uint8_t * b);
-
 /// <summary>
 /// Sends a SysEx.
 /// </summary>
@@ -665,7 +654,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
 {
     SendSysEx(data, size, portNumber);
 
-    if (IsSysExReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
+    if (midi::sysex_t::IsReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
         ResetPort(portNumber, 0);
 }
 
@@ -676,7 +665,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
 {
     SendSysEx(data, size, portNumber, time);
 
-    if (IsSysExReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
+    if (midi::sysex_t::IsReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
         ResetPort(portNumber, time);
 }
 
@@ -690,15 +679,15 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
 
     if (time != 0)
     {
-        SendSysEx(SysExEnableXG, _countof(SysExEnableXG), portNumber, time);
-        SendSysEx(SysExEnableGM2, _countof(SysExEnableGM2), portNumber, time);
-        SendSysEx(SysExEnableGM1, _countof(SysExEnableGM1), portNumber, time);
+        SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber, time);
+        SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber, time);
+        SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber, time);
     }
     else
     {
-        SendSysEx(SysExEnableXG, _countof(SysExEnableXG), portNumber);
-        SendSysEx(SysExEnableGM2, _countof(SysExEnableGM2), portNumber);
-        SendSysEx(SysExEnableGM1, _countof(SysExEnableGM1), portNumber);
+        SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber);
+        SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber);
+        SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber);
     }
 
     switch (_MIDIFlavor)
@@ -706,18 +695,18 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         case MIDIFlavor::GM:
         {
             if (time != 0)
-                SendSysEx(SysExEnableGM1, _countof(SysExEnableGM1), portNumber, time);
+                SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber, time);
             else
-                SendSysEx(SysExEnableGM1, _countof(SysExEnableGM1), portNumber);
+                SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber);
             break;
         }
 
         case MIDIFlavor::GM2:
         {
             if (time != 0)
-                SendSysEx(SysExEnableGM2, _countof(SysExEnableGM2), portNumber, time);
+                SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber, time);
             else
-                SendSysEx(SysExEnableGM2, _countof(SysExEnableGM2), portNumber);
+                SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber);
             break;
         }
 
@@ -728,9 +717,9 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         case MIDIFlavor::Default:
         {
             if (time != 0)
-                SendSysEx(SysExEnableGS, _countof(SysExEnableGS), portNumber, time);
+                SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
             else
-                SendSysEx(SysExEnableGS, _countof(SysExEnableGS), portNumber);
+                SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
 
             SendSysExSetToneMapNumber(portNumber, time);
             break;
@@ -739,9 +728,9 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         case MIDIFlavor::XG:
         {
             if (time != 0)
-                SendSysEx(SysExEnableXG, _countof(SysExEnableXG), portNumber, time);
+                SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber, time);
             else
-                SendSysEx(SysExEnableXG, _countof(SysExEnableXG), portNumber);
+                SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber);
             break;
         }
     }
@@ -821,7 +810,7 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
 {
     uint8_t Data[11] = { 0 };
 
-    ::memcpy(Data, SysExGSToneMapNumber, _countof(Data));
+    ::memcpy(Data, midi::sysex_t::GSToneMapNumber, _countof(Data));
 
     Data[7] = 1; // Tone Map-0 Number
 
@@ -848,7 +837,8 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
         case MIDIFlavor::GM2:
         case MIDIFlavor::XG:
         default:
-            break; // Use SC88Pro Map (3)
+            Data[8] = 3; // Use SC88Pro Map (3)
+            break; 
     }
 
     for (uint8_t i = 0x41; i <= 0x49; ++i)
@@ -874,34 +864,12 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
 /// </summary>
 void player_t::SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time)
 {
-    uint8_t Checksum = 0;
-    size_t i;
-
-    for (i = 5; (i + 1 < size) && (data[i + 1] != midi::SysExEnd); ++i)
-        Checksum += data[i];
-
-    data[i] = (uint8_t) ((128 - Checksum) & 127);
+    midi::sysex_t::SetRolandCheckSum(data, size);
 
     if (time > 0)
         SendSysEx(data, size, portNumber, time);
     else
         SendSysEx(data, size, portNumber);
-}
-
-static bool IsSysExReset(const uint8_t * data)
-{
-    return IsSysExEqual(data, SysExEnableGM1) || IsSysExEqual(data, SysExEnableGM2) || IsSysExEqual(data, SysExEnableGS) || IsSysExEqual(data, SysExEnableXG);
-}
-
-static bool IsSysExEqual(const uint8_t * a, const uint8_t * b)
-{
-    while ((*a != midi::SysExEnd) && (*b != midi::SysExEnd) && (*a == *b))
-    {
-        a++;
-        b++;
-    }
-
-    return (*a == *b);
 }
 
 #pragma endregion

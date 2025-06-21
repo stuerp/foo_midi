@@ -1,137 +1,189 @@
 
-# foo_midi
+# foo_midi - End User Guide
 
-[foo_midi](https://github.com/stuerp/foo_midi/releases) is a [foobar2000](https://www.foobar2000.org/) component that adds playback of MIDI files to foobar2000.
+## Table of Contents
 
-It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https://gitlab.com/kode54).
+1. [Introduction](#introduction)
+2. [Getting started](#getting-started)
+3. [Features](#features)
+4. [Usage](#usage)
+5. [Troubleshooting](#troubleshooting)
+6. [FAQs](#faqs)
+7. [Support](#support)
 
-## Features
+---
 
-* Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36, .XMF/.MXMF, .MMF).
-* Supports several synthesizers, several of which do not require any additional files to play back music. The bundled synthesizers which do not require additional files may sound rather basic, though.
-* Supports FluidSynth SoundFont (.sf2) based synthesizer, including support for the newer compressed format. (.sf3). SoundFonts may be loaded in a simple, or even complex setup, using either basic .sflist text files encoded in UTF-8 format, but for now, it only supports a bare list of files.
-* Supports 32 and 64-bit VST instruments.
-* Supports dark mode.
+## Introduction
 
-## Requirements
+Welcome to [foo_midi](https://github.com/stuerp/foo_midi/releases), a [foobar2000](https://www.foobar2000.org/) component that adds playback of MIDI files to foobar2000. It's based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https://gitlab.com/kode54).
 
-* [foobar2000](https://www.foobar2000.org/download) v2.0 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)
-* Tested on Microsoft Windows 10 and later.
+This guide will help you understand how to use the product effectively and get the most out of its features.
+
+---
 
 ## Getting started
 
-* Double-click `foo_midi.fbk2-component`.
+### System Requirements
 
-or
+- [foobar2000](https://www.foobar2000.org/download) v2.0 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)
+- Tested on Microsoft Windows 10 and later.
+- To use FluidSynth you need to [download](https://github.com/FluidSynth/fluidsynth/releases/) and install the latest libraries from its GitHub page.
 
-* Import `foo_midi.fbk2-component` into foobar2000 using the "*File / Preferences / Components / Install...*" menu item.
+### Installation
+
+- Double-click `foo_midi.fbk2-component` or import `foo_midi.fbk2-component` into foobar2000 using the "*File / Preferences / Components / Install...*" menu item.
+- Follow the foobar2000 instructions.
+- Add a supported MIDI file to a foobar2000 playlist.
+- Play the file.
+
+---
+
+## Features
+
+### File Formats
+
+foo_midi can decode the following file formats:
+
+| Name | Extensions | Description |
+| --- | --- | --- |
+| Standard MIDI File | .MID, .MIDI, .KAR | Created by the [MIDI Association](https://midi.org/standard-midi-files). |
+| RIFF-based MIDI File | .RMI | Wrapper format for MIDI data, as first specified by Microsoft, and later extended by MIDI.org (an arm of the MIDI Manufacturers Association) to permit the bundling of both MIDI files and Downloadable Sounds (DLS) files. See [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000120.shtml). |
+| Game Music Format | .GMF | Created by Adventure Soft for their Adventure Game Operating System (AGOS) engine. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=GMF). |
+| MIDI Stream | .MIDS, .MDS | Created by Microsoft with the release of Windows 95. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=MDS). |
+| Human Machine Interface MIDI P/R | .HMP | Used by Human Machine Interface's Sound Operating System. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMP). |
+| Human Machine Interface |.HMI| Used by Human Machine Interface's Sound Operating System. It is a revision of the HMP format. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMI). |
+| MUS |.MUS | Created by Paul Radek for his DMX audio library. Used by id Software for Doom and several other games.  See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/MUS_Format). |
+| Extended MIDI |.XMI | Used by the Miles Sound System (MSS) for storing game music. See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/XMI_Format). |
+| Loudness Sound System | .LDS | Created with the Loudness Sound System by Andras Molnar. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=LDS). |
+| Recomposer |.RCP, .R36, .G18, .G36 | Created with Recomposer, a popular music editing application on the Japanese [PC-98](https://en.wikipedia.org/wiki/PC-98) platform. |
+| Extensible Music Format | .XMF, .MXMF | Created by the [MIDI Association](https://midi.org/extensible-music-format-xmf). See also [Video Game Music Preservation Foundation (VGMPF)](https://www.vgmpf.com/Wiki/index.php?title=XMF). |
+| Mobile Music File |.MMF| Synthetic-music Mobile Application Format (SMAF). See [FileFormat.com](https://docs.fileformat.com/audio/mmf/). |
+
+### Players
+
+foo_midi implements and suports several players. A player is emulates an FM or sample-based synthesizer. The build-in players do not require any additional files to play back music. Additional players become available when you install and configure the required support files.
+
+### LibADLMIDI (Built-in)
+
+LibADLMIDI uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
+
+### LibOPNMIDI (Built-in)
+
+LibOPNMIDI uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) FM synthesis sound chip.
+
+### LibEDMIDI aka Emu de MIDI (Built-in)
+
+Emu de MIDI uses the [libEDMIDI](https://github.com/Wohlstand/libEDMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2413 and VRC7 (OPLL)](https://en.wikipedia.org/wiki/Yamaha_YM2413) FM synthesis sound chip, the [Sega Programmable Sound Generator (PSG, SN76496)](https://segaretro.org/SN76489) and the [Konami SCC](http://bifi.msxnet.org/msxnet/tech/scc).
+
+### Nuke
+
+[Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip
+[Yamaha YM2413 and VRC7 (OPLL)](https://en.wikipedia.org/wiki/Yamaha_YM2413) FM synthesis sound chip
+Yamaha YM2151
+Yamaha YM2610
+Yamaha YM7101
+
+### Super Munt (MT-32)
+
+Roland MT-32, CM-32L and LAPC-I synthesiser modules
+
+### fmmidi (yuno)
+
+[fmmidi](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
+
+### BASSMIDI
+
+This player is a wrapper for the BASSMIDI library by [Un4seen](https://www.un4seen.com/). The required libraries to use it are included with the component.
+
+It requires an SF2, SF2Pack, SFZ or SF3 soundfont to provide the instrument samples. See [Sound Fonts](#sound-fonts).
+
+### FluidSynth
+
+This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) library. You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path the Preferences dialog to use it.
+
+### VST Instruments (VSTi)
+
+Supports 32 and 64-bit VST instruments.
+
+### Secret Sauce (Roland’s Sound Canvas VA)
+
+Secret Sauce is a wrapper for the SCCore.dll that comes bundled with Roland’s [Sound Canvas VA](https://www.roland.com/us/products/rc_sound_canvas_va/).
+
+---
 
 ## Usage
 
-You can find the user documentation [here](docs/README.md).
+### Playing files
 
-## Developing
+*Work in Progress*
 
-### Requirements
+#### Loops
 
-To build the code you need:
+The component supports 6 loop modes that can be selected in the Preferences dialog:
 
-* [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2025-03-07
-* [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
+| --- | --- |
+| Never loop | The song will be played once ignoring any loop information. |
+| Never loop. Use decay time | The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down. |
+| Loop and fade when detected|The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences. |
+| Loop and fade always|The song will be played and looped a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences. |
+| Play indefinitely when detected | The song will be played and the loop will play until stopped. |
+| Play indefinitely | The song will be played and loop until stopped. |
 
-The following libraries are included in the code:
+#### Sound Fonts
 
-* [BASS](https://www.un4seen.com/) 2.4.17
-  * [BASSFLAC](https://www.un4seen.com/) 2.4.5.5
-  * [BASSMIDI](https://www.un4seen.com/) 2.4.15.3
-  * [BASSWV](https://www.un4seen.com/) 2.4.7.4
-  * [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
-  * [BASSMPC](https://www.un4seen.com/) 2.4.1.2
-* [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
-* [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2)
-* [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
-* [Nuke.YKT](http://nukeykt.retrohost.net/), 
-  * [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver)
-  * [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3), Yamaha YMF262 and CT1747 (OPL3)
-  * [Nuked-OPLL](https://github.com/nukeykt/Nuked-OPLL), Yamaha YM2413 and VRC7 (OPLL)
-  * [Nuked-OPM](https://github.com/nukeykt/Nuked-OPM), Yamaha YM2151
-  * [Nuked-OPN2](https://github.com/nukeykt/Nuked-OPN2) 1.0.9, Yamaha YM3438 (YM2612)
-  * [Nuked-OPNB](https://github.com/nukeykt/Nuked-OPNB), Yamaha YM2610
-  * [Nuked-PSG](https://github.com/nukeykt/Nuked-PSG), Yamaha YM7101
-* [emu2149](https://github.com/digital-sound-antiques/emu2149), Yamaha YM2149 (PSG)
-* [emu2212](https://github.com/digital-sound-antiques/emu2212), Konami SCC
-* [emu8950](https://github.com/digital-sound-antiques/emu8950), Yamaha Y8950, YM3526 and YM3812
-* [emu76489](https://github.com/digital-sound-antiques/emu76489), SN76489
-* [Munt win32drv](https://github.com/munt/munt/releases/tag/mt32emu_win32drv_1_8_1) 1.8.1, Roland MT-32, CM-32L and LAPC-I synthesiser modules
-* [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
-* [zlib](https://www.zlib.net/) 1.3.1
 
-To create the deployment package you need:
+### Metadata
 
-* [PowerShell 7.2](https://github.com/PowerShell/PowerShell) or later
+*Work in Progress*
 
-### Setup
+### Info Tags
 
-Create the following directory structure:
+*Work in Progress*
 
-    3rdParty
-        WTL10_10320
-    bin
-        x86
-    foo_midi
-    out
-    sdk
+---
 
-* `3rdParty/WTL10_10320` contains [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL).
-* `bin` contains a portable version of foobar2000 64-bit for debugging purposes.
-* `bin/x86` contains a portable version of foobar2000 32-bit for debugging purposes.
-* `foo_midi` contains the [Git](https://github.com/stuerp/foo_midi) repository.
-* `out` receives a deployable version of the component.
-* `sdk` contains the [foobar2000 SDK](https://www.foobar2000.org/SDK).
+## Troubleshooting
 
-> git clone --recurse [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)  
-> cd foo_midi  
-> git submodule update --recursive --init
+---
 
-### Building
+## FAQs
 
-Open `foo_midi.sln` with Visual Studio and build the solution.
+**Q:** Common question 1  
+**A:** Clear, concise answer.
 
-### Packaging
+**Q:** Common question 2  
+**A:** Clear, concise answer.
 
-To create the component first build the x64 configuration and next the x86 configuration.
+---
+
+## Support
+
+For further assistance, contact our support team:  
+📧 Email: [support@example.com](mailto:support@example.com)  
+📞 Phone: +123-456-7890  
+🌐 Website: [www.example.com/support](https://www.example.com/support)
+
+
+
+
+
+
 
 ## Change Log
 
-* v2.19.0.0-alpha2, 2025-xx-xx
-
-* Fixed: An old threading issue caused by allowing the MIDI channels to be enabled or disabled during playback.
-
-* v2.19.0.0-alpha1, 2025-06-16
-
-* New: Resurrected yuno's fmmidi player.
-  * The default Programs definition file is located in the component directory but can be changed in the Preferences dialog.
-* Fixed: Preferences dialog should adapt to High DPI settings now.
-* Improved: Stricter interpretation of the RCP mute mode that prevents an RCP track from being included in the MIDI stream.
-
 v2.18.0.0, 2025-04-05
-
 * Changed: Enabled dynamic sample loading in the FluidSynth player again when using [FluidSynth 2.4.4](https://github.com/FluidSynth/fluidsynth/releases/tag/v2.4.4) or later.
 * Added: BASSMIDI will ignore NRPN Vibrato Depth events in SC-88Pro mode. It overreacts to this parameter.
 * Added: Support for MMF/SMAF MA-2 files.
 
 v2.17.2.0, 2025-03-19
-
 * Fixed: Crash while attempting to open a MIDI file with a file name containing non-ASCII characters. An old bug suddenly surfaced while attempting to open a WRD file containing external lyrics.
   * Thank you to [ha7pro](https://hydrogenaud.io/index.php?action=profile;u=163651) for reporting the bug and helping me fix it.
 
 v2.17.1.0, 2025-03-16
-
 * Fixed: Secret Sauce crashed due to too many port resets.
 
 v2.17.0.0, 2025-03-16
-
 * New: Metadata MIDI_EMBEDDED_SOUNDFONT: Contains "SF x.x" (where x.x is the version number of the SoundFont specification) or "DLS" if the MIDI file contains an embedded soundfont.
 * Improved: Support for XMF/MXMF files with raw deflated content.
 * Improved: Tweaked the handling of embedded sound fonts for BASSMIDI and FluidSynth again.
@@ -145,7 +197,6 @@ v2.17.0.0, 2025-03-16
   * The first MIDI Port message of a track is now added at the start of a track to make sure it occurs before any Program Change events.
 
 v2.16.0.0, 2025-02-24
-
 * New: Support for XMF (Extensible Music Format) and MXMF (Mobile Extensible Music Format) files.
 * New: Metadata XMF_META_FILE_VERSION, XMF_FILE_TYPE and XMF_FILE_TYPE_REVISION.
 * Fixed: VSTi plugins did not load or save their configuration anymore (regression).
@@ -247,7 +298,7 @@ v2.9.1.3, 2023-11-02, *"Loop de loop"*
 v2.9.0.0, 2023-08-02, *"Revenge of the FluidSynth"*
 
 * New: Added FluidSynth player again.
-  * It can be selected after setting the path to the directory that contains the FluidSynth libraries. Here you can download [FluidSynth](https://github.com/FluidSynth/fluidsynth/releases). Make sure you download the version that has the same CPU architecture as foobar2000 (x64 or x86).
+  * It can be selected after setting the path to the directory that contains the FluidSynth libraries. You can download FluidSynth [here](https://github.com/FluidSynth/fluidsynth/releases). Make sure you download the version that has the same CPU architecture as foobar2000 (x64 or x86).
 * New: Added .XFM as an alternative file extension for XMI files.
 * Improved: Added FluidSynth settings to preferences page.
 * Improved: MIDI standard detection
@@ -341,10 +392,9 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * Peter Pawlowski for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
 * [kode54](https://gitlab.com/kode54/) for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
 * [Un4seen Developments](https://www.un4seen.com/) for the BASS audio library.
-* Mitsutaka Okazaki for [Emu de MIDI]https://github.com/Wohlstand/scc.
 * [Munt](https://github.com/munt/munt/) for a multi-platform software synthesiser emulating pre-GM MIDI devices such as the Roland MT-32, CM-32L, CM-64 and LAPC-I.
 * [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) for [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3).
-* [Vitaly Novichkov](https://github.com/Wohlstand) for [libADLMIDI](https://github.com/Wohlstand/libADLMIDI), [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) and [libEDMIDI](https://github.com/Wohlstand/libEDMIDI).
+* [Vitaly Novichkov](https://github.com/Wohlstand) for [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) and [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI).
 * [Mitsutaka Okazaki](https://github.com/Wohlstand/scc) for Emu de MIDI.
 * [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
 * Tom Moebert for [FluidSynth](https://www.fluidsynth.org/).
@@ -352,8 +402,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 * [Jean-loup Gailly](http://gailly.net/) and [Mark Adler](http://en.wikipedia.org/wiki/Mark_Adler) for [zlib](https://www.zlib.net/).
 * [Spessasus](https://github.com/spessasus) for testing, advice and [SpessaSynth](https://github.com/spessasus/SpessaSynth).
 * [Zoltán Bacskó](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
-* [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool).
-* [yuno (Yoshio Uno)](yuno@users.sourceforge.jp) for [fmmidi](http://milkpot.sakura.ne.jp/fmmidi/).
+* [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool)
 
 ## Reference Material
 

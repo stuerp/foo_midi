@@ -1,7 +1,7 @@
 
 /** $VER: VSTi.cpp (2025.02.24) P. Stuer **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include <sdk/foobar2000-lite.h>
 

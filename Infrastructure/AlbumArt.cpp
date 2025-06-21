@@ -1,7 +1,7 @@
 
 /** $VER: AlbumArt.cpp (2025.06.09) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "InputDecoder.h"
 

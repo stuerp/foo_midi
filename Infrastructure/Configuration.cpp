@@ -1,7 +1,7 @@
 
 /** $VER: Configuration.cpp (2025.06.19) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "Configuration.h"
 
