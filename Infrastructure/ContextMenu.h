@@ -8,8 +8,8 @@
 
 #include "Configuration.h"
 
-#include "MIDIPreset.h"
-#include "MIDIPresetFilter.h"
+#include "Preset.h"
+#include "PresetFilter.h"
 #include "MIDISysExDumps.h"
 #include "MIDISysExFilter.h"
 
@@ -25,7 +25,7 @@ public:
 
     virtual ~ContextMenu() { };
 
-#pragma region("contextmenu_item_simple")
+#pragma region contextmenu_item_simple
 
     virtual unsigned get_num_items() noexcept;
 
@@ -73,7 +73,7 @@ public:
 
 #pragma endregion
 
-#pragma region("contextmenu_item_v2")
+#pragma region contextmenu_item_v2
 
     GUID get_parent()
     {

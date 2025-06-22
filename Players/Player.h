@@ -28,13 +28,13 @@ public:
         Forced = 0x02
     };
 
-    bool Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t cleanFlags);
+    bool Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopTypes loopMode, uint32_t cleanFlags);
     uint32_t Play(audio_sample * samplesData, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
     void SetSampleRate(uint32_t sampleRate);
 
-    void Configure(MIDIFlavor midiFlavor, bool filterEffects);
+    void Configure(MIDIFlavors midiFlavor, bool filterEffects);
 
     virtual uint32_t GetAudioChannelCount() const noexcept { return 2; } // Gets the number of audio channels the player supports.
     virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept { UNREFERENCED_PARAMETER(abortHandler); }
@@ -66,7 +66,7 @@ protected:
     midi::sysex_table_t _SysExMap;
     std::vector<uint8_t> _Ports;
 
-    MIDIFlavor _MIDIFlavor;
+    MIDIFlavors _MIDIFlavor;
     bool _FilterEffects;
 
 private:
@@ -83,7 +83,7 @@ private:
     void SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time);
 
 private:
-    LoopType _LoopType;         // Type of looping requested by the user.
+    LoopTypes _LoopType;         // Type of looping requested by the user.
 
     std::vector<midi::message_t> _Stream;
     size_t _StreamPosition;     // Current position in the event stream

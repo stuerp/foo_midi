@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.06.18) **/
+/** $VER: InputDecoder.cpp (2025.06.22) **/
 
 #include "pch.h"
 
@@ -186,7 +186,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     _IsFirstChunk = true;
 
-    _PlayerType = (PlayerType) (uint32_t) CfgPlayerType;
+    _PlayerType = (PlayerTypes) (uint32_t) CfgPlayerType;
     _LoopType = (flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
     _TimeInSamples = 0;
 
@@ -200,7 +200,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     _ExtraPercussionChannel = _Container.GetExtraPercussionChannel();
 
     // The preset collects a number of settings that will configure the player.
-    MIDIPreset Preset;
+    preset_t Preset;
 
     // Load the preset from the song if it has one.
     {
@@ -209,13 +209,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         get_info(subSongIndex, FileInfo, abortHandler);
 
         {
-            const char * MIDIPresetText = FileInfo.meta_get(TagMIDIPreset, 0);
+            const char * PresetText = FileInfo.meta_get(TagPreset, 0);
 
-            if (MIDIPresetText != nullptr)
+            if (PresetText != nullptr)
             {
-                console::print(STR_COMPONENT_BASENAME " is using preset \"", MIDIPresetText, "\" from tags.");
+                console::print(STR_COMPONENT_BASENAME " is using preset \"", PresetText, "\" from tags.");
 
-                Preset.Deserialize(MIDIPresetText);
+                Preset.Deserialize(PresetText);
             }
         }
     
@@ -255,11 +255,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         if (_IsMT32 && CfgUseSuperMuntWithMT32)
-            _PlayerType = PlayerType::SuperMunt;
+            _PlayerType = PlayerTypes::SuperMunt;
         else
         if (_IsXG && CfgUseVSTiWithXG)
         {
-            _PlayerType = PlayerType::VSTi;
+            _PlayerType = PlayerTypes::VSTi;
 
             pfc::string FilePath;
 
@@ -273,7 +273,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     GetSoundFonts(Preset._SoundFontFilePath, abortHandler);
 
     // Update sample rate before initializing the fade-out range.
-    if (_PlayerType == PlayerType::SuperMunt)
+    if (_PlayerType == PlayerTypes::SuperMunt)
         _SampleRate = (uint32_t) MT32Player::GetSampleRate();
 
     // Initialize the fade-out range.
@@ -282,13 +282,13 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
         switch (_LoopType)
         {
-            case LoopType::NeverLoop:
+            case LoopTypes::NeverLoop:
                 break;
 
-            case LoopType::NeverLoopAddDecayTime:
+            case LoopTypes::NeverLoopAddDecayTime:
                 break;
 
-            case LoopType::LoopAndFadeWhenDetected:
+            case LoopTypes::LoopAndFadeWhenDetected:
             {
                 if (_LoopRange.IsSet())
                 {
@@ -302,7 +302,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 break;
             }
 
-            case LoopType::LoopAndFadeAlways:
+            case LoopTypes::LoopAndFadeAlways:
             {
                 uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1000);
                 uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1000);
@@ -311,10 +311,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 break;
             }
 
-            case LoopType::PlayIndefinitelyWhenDetected:
+            case LoopTypes::PlayIndefinitelyWhenDetected:
                 break;
 
-            case LoopType::PlayIndefinitely:
+            case LoopTypes::PlayIndefinitely:
                 break;
         }
     }
@@ -325,11 +325,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     switch (_PlayerType)
     {
-        case PlayerType::Unknown:
+        case PlayerTypes::Unknown:
             break;
 
         // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413))
-        case PlayerType::EmuDeMIDI:
+        case PlayerTypes::EmuDeMIDI:
         {
             {
                 auto Player = new EdMPlayer;
@@ -363,7 +363,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // VSTi
-        case PlayerType::VSTi:
+        case PlayerTypes::VSTi:
         {
             {
                 if (Preset._VSTiFilePath.is_empty())
@@ -402,7 +402,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // FluidSynth
-        case PlayerType::FluidSynth:
+        case PlayerTypes::FluidSynth:
         {
             {
                 {
@@ -465,7 +465,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // Munt (MT-32)
-        case PlayerType::SuperMunt:
+        case PlayerTypes::SuperMunt:
         {
             {
                 auto Player = new MT32Player(!_IsMT32, Preset._MuntGMSet);
@@ -503,7 +503,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // BASS MIDI
-        case PlayerType::BASSMIDI:
+        case PlayerTypes::BASSMIDI:
         {
             {
                 {
@@ -556,7 +556,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // DirectX
-        case PlayerType::DirectX:
+        case PlayerTypes::DirectX:
         {
     #ifdef DXISUPPORT
             pfc::array_t<t_uint8> serialized_midi_file;
@@ -592,8 +592,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             break;
         }
 
-        // ADL
-        case PlayerType::ADL:
+        // LibADLMIDI
+        case PlayerTypes::ADL:
         {
             {
                 auto Player = new ADLPlayer;
@@ -602,15 +602,15 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Player->SetBankFilePath(Preset._ADLBankFilePath.c_str());
                 Player->SetChipCount(Preset._ADLChipCount);
                 Player->Set4OpChannelCount(Preset._ADLChipCount * 4);
-                Player->SetFullPanning(Preset._ADLUsePanning); // Call after SetBankNumber()!
+                Player->SetSoftPanning(Preset._ADLSoftPanning); // Call after SetBankNumber()!
                 Player->SetEmulatorCore(Preset._ADLEmulatorCore);
-                Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
                 _Player = Player;
             }
 
             {
                 _Player->SetSampleRate(_SampleRate);
+                _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
                 if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 {
@@ -622,15 +622,15 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             break;
         }
 
-        // OPN
-        case PlayerType::OPN:
+        // LibOPNMIDI
+        case PlayerTypes::OPN:
         {
             {
                 auto Player = new OPNPlayer;
 
-                Player->SetBank(Preset._OPNBankNumber);
-                Player->SetChipCount(Preset._ADLChipCount);
-                Player->SetFullPanning(Preset._ADLUsePanning);
+                Player->SetBankNumber(Preset._OPNBankNumber);
+                Player->SetChipCount(Preset._OPNChipCount);
+                Player->SetSoftPanning(Preset._OPNSoftPanning); // Call after SetBankNumber()!
                 Player->SetEmulatorCore(Preset._OPNEmulatorCore);
 
                 _Player = Player;
@@ -651,19 +651,19 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // OPL
-        case PlayerType::OPL:
+        case PlayerTypes::OPL:
         {
             break;
         }
 
         // Nuked OPL3
-        case PlayerType::NukedOPL3:
+        case PlayerTypes::NukedOPL3:
         {
             {
                 auto Player = new NukePlayer();
 
                 Player->SetSynth(Preset._NukeSynth);
-                Player->SetBank(Preset._NukeBank);
+                Player->SetBankNumber(Preset._NukeBank);
                 Player->SetExtp(Preset._NukeUsePanning);
 
                 _Player = Player;
@@ -671,6 +671,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             {
                 _Player->SetSampleRate(_SampleRate);
+                _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
                 if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 {
@@ -683,7 +684,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // Secret Sauce
-        case PlayerType::SecretSauce:
+        case PlayerTypes::SecretSauce:
         {
             {
                 auto Player = new SCPlayer();
@@ -706,8 +707,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
 
             {
-                _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
                 _Player->SetSampleRate(_SampleRate);
+                _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
                 if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 {
@@ -720,7 +721,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // MCI
-        case PlayerType::MCI:
+        case PlayerTypes::MCI:
         {
             {
                 auto Player = new MCIPlayer;
@@ -743,7 +744,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // Nuked SC-55
-        case PlayerType::NukedSC55:
+        case PlayerTypes::NukedSC55:
         {
 /*
             {
@@ -770,7 +771,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
 
         // fmmidi (yuno) (Yamaha YM2608)
-        case PlayerType::FMMIDI:
+        case PlayerTypes::FMMIDI:
         {
             {
                 auto Player = new FMMPlayer;
@@ -785,29 +786,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 }
 
                 Player->SetProgramsFilePath(pfc::stringcvt::string_os_from_utf8(ProgramsFilePath).get_ptr());
-/*
-    auto SystemMode = midisynth::system_mode_t::system_mode_default;
 
-    switch (_MIDIFlavor)
-    {
-        case MIDIFlavor::GM: SystemMode = midisynth::system_mode_t::system_mode_default; break;
-        case MIDIFlavor::GM2: SystemMode = midisynth::system_mode_t::system_mode_gm2; break;
-        case MIDIFlavor::XG: SystemMode = midisynth::system_mode_t::system_mode_xg; break;
-
-        case MIDIFlavor::Default:
-
-        case MIDIFlavor::SC55:
-        case MIDIFlavor::SC88:
-        case MIDIFlavor::SC88Pro:
-        case MIDIFlavor::SC8850:
-
-        default: SystemMode = midisynth::system_mode_t::system_mode_gs; break;
-    }
-
-    for (size_t i = 0; i < 4; ++i)
-        _Synthesizers[i]->set_system_mode(SystemMode);
-
-*/
                 _Player = Player;
             }
 
@@ -1005,11 +984,11 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         }
 
         {
-            assert(_countof(PlayerTypeNames) == ((size_t) PlayerType::Max + 1));
+            assert(_countof(PlayerTypeNames) == ((size_t) PlayerTypes::Max + 1));
 
             const char * PlayerName = "Unknown";
 
-            if ((_PlayerType >= PlayerType::Min) && (_PlayerType <= PlayerType::Max))
+            if ((_PlayerType >= PlayerTypes::Min) && (_PlayerType <= PlayerTypes::Max))
                 PlayerName = PlayerTypeNames[(size_t) _PlayerType];
             else
                 PlayerName = "VSTi";
@@ -1028,18 +1007,18 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         timestampDelta = 0.;
     }
 
-    if ((_PlayerType == PlayerType::FluidSynth) || (_PlayerType == PlayerType::BASSMIDI))
+    if ((_PlayerType == PlayerTypes::FluidSynth) || (_PlayerType == PlayerTypes::BASSMIDI))
     {
         uint32_t VoiceCount = 0;
 
-        if (_PlayerType == PlayerType::FluidSynth)
+        if (_PlayerType == PlayerTypes::FluidSynth)
         {
             auto Player = (FSPlayer *) _Player;
 
             VoiceCount = Player->GetActiveVoiceCount();
         }
         else
-        if (_PlayerType == PlayerType::BASSMIDI)
+        if (_PlayerType == PlayerTypes::BASSMIDI)
         {
             auto Player = (BMPlayer *) _Player;
 
@@ -1155,10 +1134,10 @@ uint32_t InputDecoder::GetDuration(size_t subSongIndex)
 {
     uint32_t LengthInMs = _Container.GetDuration(subSongIndex, true);
 
-    if (_LoopType == LoopType::NeverLoopAddDecayTime)
+    if (_LoopType == LoopTypes::NeverLoopAddDecayTime)
         LengthInMs += (uint32_t) CfgDecayTime;
     else
-    if (_LoopType > LoopType::LoopAndFadeWhenDetected)
+    if (_LoopType > LoopTypes::LoopAndFadeWhenDetected)
     {
         if (!_LoopRange.HasBegin())
             _LoopRange.SetBegin(0);

@@ -23,7 +23,7 @@ public:
     void SetBankNumber(uint32_t);
     void SetChipCount(uint32_t);
     void Set4OpChannelCount(uint32_t) noexcept;
-    void SetFullPanning(bool) noexcept;
+    void SetSoftPanning(bool) noexcept;
     void SetBankFilePath(const std::string & filePath) noexcept;
 
 protected:
@@ -41,7 +41,7 @@ private:
     uint32_t _BankNumber;
     uint32_t _ChipCount;
     uint32_t _4OpChannelCount;
-    bool _FullPanning;
+    bool _IsSoftPanningEnabled;
     std::string _BankFilePath;
 };
 

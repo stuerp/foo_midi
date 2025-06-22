@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.06.19) P. Stuer **/
+/** $VER: Resource.h (2025.06.22) P. Stuer **/
 
 #pragma once
 
@@ -30,7 +30,7 @@
 #define NUM_FILE_PRERELEASE     0
 
 #define STR_FILE_NAME           TEXT(STR_COMPONENT_FILENAME)
-#define STR_FILE_VERSION        TOSTRING(NUM_FILE_MAJOR) TEXT(".") TOSTRING(NUM_FILE_MINOR) TEXT(".") TOSTRING(NUM_FILE_PATCH) TEXT(".") TOSTRING(NUM_FILE_PRERELEASE)
+#define STR_FILE_VERSION        TOSTRING(NUM_FILE_MAJOR) TEXT(".") TOSTRING(NUM_FILE_MINOR) TEXT(".") TOSTRING(NUM_FILE_PATCH) TEXT(".") TOSTRING(NUM_FILE_PRERELEASE) TEXT("-alpha2")
 #define STR_FILE_DESCRIPTION    TEXT(STR_COMPONENT_DESCRIPTION)
 
 #define NUM_PRODUCT_MAJOR       2
@@ -39,7 +39,7 @@
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRODUCT_NAME        STR_COMPANY_NAME TEXT(" ") STR_INTERNAL_NAME
-#define STR_PRODUCT_VERSION     TOSTRING(NUM_PRODUCT_MAJOR) TEXT(".") TOSTRING(NUM_PRODUCT_MINOR) TEXT(".") TOSTRING(NUM_PRODUCT_PATCH) TEXT(".") TOSTRING(NUM_PRODUCT_PRERELEASE)
+#define STR_PRODUCT_VERSION     TOSTRING(NUM_PRODUCT_MAJOR) TEXT(".") TOSTRING(NUM_PRODUCT_MINOR) TEXT(".") TOSTRING(NUM_PRODUCT_PATCH) TEXT(".") TOSTRING(NUM_PRODUCT_PRERELEASE) TEXT("-alpha2")
 
 #define STR_ABOUT_NAME          STR_INTERNAL_NAME
 #define STR_ABOUT_WEB           TEXT("https://github.com/stuerp/") STR_COMPONENT_BASENAME
@@ -80,12 +80,6 @@
 #define IDC_CACHED_LBL                      1017
 #define IDC_CACHED                          1018
 
-#define IDC_ADL_BANK                        1019
-#define IDC_ADL_BANK_TEXT                   1020
-#define IDC_ADL_CHIPS                       1021
-#define IDC_ADL_CHIPS_TEXT                  1022
-#define IDC_ADL_PANNING                     1023
-
 #define IDC_MUNT_GM_TEXT                    1024
 #define IDC_MUNT_GM_SET                     1025
 
@@ -101,6 +95,27 @@
 
 #define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   1034
 #define IDC_FLUIDSYNTH_INTERPOLATION        1035
+
+/** Dialog: Preferences FM Synthesis **/
+
+#define IDC_ADL_BANK                        1100
+#define IDC_ADL_BANK_TEXT                   1101
+#define IDC_ADL_CORE                        1102
+#define IDC_ADL_CORE_TEXT                   1103
+#define IDC_ADL_CHIPS                       1104
+#define IDC_ADL_CHIPS_TEXT                  1105
+#define IDC_ADL_SOFT_PANNING                1106
+#define IDC_ADL_BANK_FILE_PATH_TEXT         1107
+#define IDC_ADL_BANK_FILE_PATH              1108
+#define IDC_ADL_BANK_FILE_PATH_SELECT       1109
+
+#define IDC_OPN_BANK                        1200
+#define IDC_OPN_BANK_TEXT                   1201
+#define IDC_OPN_CORE                        1202
+#define IDC_OPN_CORE_TEXT                   1203
+#define IDC_OPN_CHIPS                       1204
+#define IDC_OPN_CHIPS_TEXT                  1205
+#define IDC_OPN_SOFT_PANNING                1206
 
 /** Dialog: Preferences Paths **/
 
@@ -175,3 +190,8 @@
 #define IDC_PORT_LBL                        2330
 #define IDC_PORT                            2331
 #define IDC_PORT_SLIDER                     2332
+
+/** Dialog: Preferences FM SynthesisL **/
+
+#define IDD_PREFERENCES_FM                 2400
+#define IDD_PREFERENCES_FM_NAME            "FM Synthesis"

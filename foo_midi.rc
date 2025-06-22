@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.rc (2025.06.19) **/
+/** $VER: foo_midi.rc (2025.06.22) **/
 
 #include "resource.h"
 
@@ -110,13 +110,6 @@ font 8, "MS Shell Dlg", 400, 0, 1
         rtext       "Preset:",              IDC_NUKE_PRESET_TEXT,     X_A71, Y_A71 + 2, W_A71, H_A71
         combobox                            IDC_NUKE_PRESET,          X_A72, Y_A72,     W_A72, H_A72, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         control     "Enable soft panning",  IDC_NUKE_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A73, Y_A73, W_A73, H_A73
-
-    groupbox "ADL", IDC_STATIC, X_A90, Y_A90, W_A90, H_A90
-        rtext       "Bank:",                IDC_ADL_BANK_TEXT,  X_A91, Y_A91 + 2, W_A91, H_A91
-        combobox                            IDC_ADL_BANK,       X_A92, Y_A92,     W_A92, H_A92, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "Chips:",               IDC_ADL_CHIPS_TEXT, X_A93, Y_A93 + 2, W_A93, H_A93
-        combobox                            IDC_ADL_CHIPS,      X_A94, Y_A94,     W_A94, H_A94, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-        control     "Enable soft panning",  IDC_ADL_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A95, Y_A95, W_A95, H_A95
 
     ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, X_A50, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 }

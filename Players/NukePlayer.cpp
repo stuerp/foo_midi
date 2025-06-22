@@ -1,5 +1,5 @@
 
-/** $VER: NukePlayer.cpp (2023.08.19) **/
+/** $VER: NukePlayer.cpp (2025.06.22) **/
 
 #include "pch.h"
 
@@ -24,19 +24,19 @@ NukePlayer::~NukePlayer()
     Shutdown();
 }
 
-void NukePlayer::SetSynth(unsigned int synthId)
+void NukePlayer::SetSynth(uint32_t synthId)
 {
     Shutdown();
     _SynthId = synthId;
 }
 
-void NukePlayer::SetBank(unsigned int bankId)
+void NukePlayer::SetBankNumber(uint32_t bankNumber)
 {
     Shutdown();
-    _BankId = bankId;
+    _BankId = bankNumber;
 }
 
-void NukePlayer::SetExtp(unsigned int extp)
+void NukePlayer::SetExtp(uint32_t extp)
 {
     Shutdown();
     _Extp = extp;
@@ -226,6 +226,7 @@ size_t NukePlayer::GetPresetIndex(unsigned int synth, unsigned int bank)
 }
 
 #pragma region Nuke Preset Importer
+
 /// <summary>
 /// Imports the presets of the Nuke player.
 /// </summary>
@@ -244,4 +245,5 @@ public:
 };
 
 NukePresetsImporter _NukePresetsImporter;
+
 #pragma endregion

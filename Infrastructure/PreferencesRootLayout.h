@@ -309,53 +309,12 @@
 
 #pragma endregion
 
-#pragma region ADL
-
-// ADL
-#define X_A90    X_A60
-#define Y_A90    Y_A60 + H_A60 + IY
-#define W_A90    W_A60
-
-    // Label: Bank
-    #define X_A91    X_A90 + 5
-    #define Y_A91    Y_A90 + 11
-    #define W_A91    22
-    #define H_A91    H_LBL
-
-    // Combobox: Bank
-    #define X_A92    X_A91 + W_A91 + IX
-    #define Y_A92    Y_A91
-    #define W_A92    W_A90 - 5 - W_A91 - IX - 5
-    #define H_A92    H_CBX
-
-    // Label: Chips
-    #define X_A93    X_A91
-    #define Y_A93    Y_A92 + H_A92 + IY
-    #define W_A93    W_A91
-    #define H_A93    H_LBL
-
-    // Combobox: Chips
-    #define X_A94    X_A93 + W_A93 + IX
-    #define Y_A94    Y_A93
-    #define W_A94    40
-    #define H_A94    H_CBX
-
-    // Checkbox: Enable soft panning
-    #define X_A95    X_A93
-    #define Y_A95    Y_A94 + H_A94 + IX
-    #define W_A95    W_A90 - 5 - 5
-    #define H_A95    H_CHB
-
-#define H_A90    11 + H_A92 + IY + H_A94 + IY + H_A95 + 7
-
-#pragma endregion
-
 #pragma region Nuke
 
 // Groupbox
-#define X_A70    X_A90
-#define Y_A70    Y_A90 + H_A90 + IY
-#define W_A70    W_A90
+#define X_A70    X_A60
+#define Y_A70    Y_A60 + H_A60 + IY
+#define W_A70    W_A60
 
     // Label: Preset
     #define X_A71    X_A70 + 5

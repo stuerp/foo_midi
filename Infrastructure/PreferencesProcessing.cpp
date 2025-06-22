@@ -55,9 +55,6 @@ ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4
 // HMI / HMP
 ConfigVariable(DefaultTempo,        cfg_int, int,    160,  0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
 
-// Enabled Channels
-cfg_var_modern::cfg_bool HaveEnabledChannelsChanged({ 0x3fb2fd00, 0xc23d, 0x4793, { 0xaf, 0x33, 0x61, 0x4, 0x29, 0x95, 0x2f, 0xc2 } }, false);
-
 /// <summary>
 /// Implements a preferences page.
 /// </summary>
@@ -427,6 +424,8 @@ void DialogPageProcessing::UpdateChannelButtons() noexcept
 }
 
 #pragma endregion
+
+static const GUID PreferencesProcessingPageGUID = { 0x19bb1820, 0x3b64, 0x403c, { 0xab, 0xf0, 0x3d, 0xd0, 0x06, 0x37, 0xf2, 0x7a } };
 
 class PageProcessing : public preferences_page_impl<DialogPageProcessing>
 {

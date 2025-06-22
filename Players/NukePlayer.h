@@ -23,9 +23,9 @@ public:
     NukePlayer();
     virtual ~NukePlayer();
 
-    void SetSynth(unsigned int synth);
-    void SetBank(unsigned int bank);
-    void SetExtp(unsigned int extp);
+    void SetSynth(uint32_t);
+    void SetBankNumber(uint32_t);
+    void SetExtp(uint32_t);
 
     static void GetPreset(const pfc::string name, unsigned int & synth, unsigned int & bank);
     static void GetPreset(size_t index, unsigned int & synth, unsigned int & bank);
@@ -51,7 +51,7 @@ private:
 };
 #pragma warning(default: 4820) // x bytes padding added after data member
 
-#pragma region("Nuke Presets")
+#pragma region Nuke Presets
 struct NukePreset
 {
     pfc::string Name;

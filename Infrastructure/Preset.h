@@ -1,5 +1,5 @@
 
-/** $VER: MIDIPreset.h (2023.09.27) **/
+/** $VER: Preset.h (2025.06.22) **/
 
 #pragma once
 
@@ -11,17 +11,18 @@
 #include "VSTiPlayer.h"
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
-class MIDIPreset
+
+class preset_t
 {
 public:
-    MIDIPreset() noexcept;
+    preset_t() noexcept;
 
-    MIDIPreset(const MIDIPreset &) = delete;
-    MIDIPreset(MIDIPreset &&) = delete;
-    MIDIPreset & operator=(const MIDIPreset &) = delete;
-    MIDIPreset & operator=(MIDIPreset &&) = delete;
+    preset_t(const preset_t &) = delete;
+    preset_t(preset_t &&) = delete;
+    preset_t & operator=(const preset_t &) = delete;
+    preset_t & operator=(preset_t &&) = delete;
 
-    virtual ~MIDIPreset() { };
+    virtual ~preset_t() { };
 
     void Serialize(pfc::string & text);
     void Deserialize(const char * text);
@@ -29,7 +30,7 @@ public:
 public:
     const uint32_t CurrentSchemaVersion = 12;
 
-    PlayerType _PlayerType;
+    PlayerTypes _PlayerType;
 
     pfc::string _VSTiFilePath;
     std::vector<uint8_t> _VSTiConfig;
@@ -42,15 +43,17 @@ public:
 
     // ADL
     uint32_t _ADLBankNumber;
-    uint32_t _ADLChipCount;
-    bool _ADLUsePanning;
-    bool _ADLUseChorus;
     uint32_t _ADLEmulatorCore;
+    uint32_t _ADLChipCount;
+    bool _ADLSoftPanning;
+    bool _ADLUseChorus;
     pfc::string _ADLBankFilePath;
 
     // OPN
     uint32_t _OPNBankNumber;
     uint32_t _OPNEmulatorCore;
+    uint32_t _OPNChipCount;
+    bool _OPNSoftPanning;
 
     // Munt
     uint32_t _MuntGMSet;
@@ -64,9 +67,10 @@ public:
     uint32_t _NukeBank;
     bool _NukeUsePanning;
 
-    MIDIFlavor _MIDIFlavor;
+    MIDIFlavors _MIDIFlavor;
     bool _UseMIDIEffects;
     bool _UseSuperMuntWithMT32;
     bool _UseVSTiWithXG;
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

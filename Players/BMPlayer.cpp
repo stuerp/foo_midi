@@ -251,13 +251,13 @@ bool BMPlayer::Reset()
 /// <summary>
 /// Sends a message to the library.
 /// </summary>
-void BMPlayer::SendEvent(uint32_t message)
+void BMPlayer::SendEvent(uint32_t data)
 {
     const uint8_t Event[3]
     {
-        (uint8_t) (message),        // Status
-        (uint8_t) (message >>  8),  // Param 1
-        (uint8_t) (message >> 16)   // Param 2
+        (uint8_t) (data),        // Status
+        (uint8_t) (data >>  8),  // Param 1
+        (uint8_t) (data >> 16)   // Param 2
     };
 
     const uint8_t Status = Event[0] & 0xF0u;
@@ -266,7 +266,7 @@ void BMPlayer::SendEvent(uint32_t message)
         return;
 
     // Ignore the Data Entry message for a NRPN Vibrato Depth. BASSMIDI overreacts to this SC-88Pro specific parameter.
-    if ((_MIDIFlavor == MIDIFlavor::SC88Pro) && (Status == midi::ControlChange))
+    if ((_MIDIFlavor == MIDIFlavors::SC88Pro) && (Status == midi::ControlChange))
     {
         size_t Channel = Event[0] & 0x0Fu;
 
@@ -288,7 +288,7 @@ void BMPlayer::SendEvent(uint32_t message)
         }
     }
 
-    uint8_t PortNumber = (message >> 24) & 0x7Fu;
+    uint8_t PortNumber = (data >> 24) & 0x7Fu;
 
     if (PortNumber > (_countof(_Streams) - 1))
         PortNumber = 0;

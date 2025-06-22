@@ -78,8 +78,30 @@ bool FMMPlayer::Startup()
 
     ::fclose(fp);
 
+    auto SystemMode = midisynth::system_mode_t::system_mode_default;
+
+    switch (_MIDIFlavor)
+    {
+        case MIDIFlavors::GM: SystemMode = midisynth::system_mode_t::system_mode_default; break;
+        case MIDIFlavors::GM2: SystemMode = midisynth::system_mode_t::system_mode_gm2; break;
+        case MIDIFlavors::XG: SystemMode = midisynth::system_mode_t::system_mode_xg; break;
+
+        case MIDIFlavors::Default:
+
+        case MIDIFlavors::SC55:
+        case MIDIFlavors::SC88:
+        case MIDIFlavors::SC88Pro:
+        case MIDIFlavors::SC8850:
+
+        default: SystemMode = midisynth::system_mode_t::system_mode_gs; break;
+    }
+
     for (size_t i = 0; i < _countof(_Synthesizers); ++i)
+    {
         _Synthesizers[i] = new midisynth::synthesizer(_Factory);
+
+        _Synthesizers[i]->set_system_mode(SystemMode);
+    }
 
     return true;
 }
@@ -98,7 +120,7 @@ void FMMPlayer::Shutdown()
 
 void FMMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
-    int32_t Data[512];
+    int32_t Data[256 * 2];
 
     while (sampleCount != 0)
     {
@@ -114,7 +136,7 @@ void FMMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 
         audio_math::convert_from_int32((const t_int32 *) Data, ToDo * 2, sampleData, 65536.0);
 
-        sampleData  += ToDo * 2;
+        sampleData += ToDo * 2;
         sampleCount -= ToDo;
     }
 }
@@ -125,7 +147,7 @@ void FMMPlayer::SendEvent(uint32_t data)
     {
         size_t Port = (data >> 24) & 0x7F;
 
-        _Synthesizers[Port & 3]->midi_event(data);
+        _Synthesizers[Port % _countof(_Synthesizers)]->midi_event(data);
     }
     else
     {
@@ -137,7 +159,7 @@ void FMMPlayer::SendEvent(uint32_t data)
 
         _SysExMap.GetItem(Index, Data, Size, Port);
 
-        _Synthesizers[Port & 3]->sysex_message(Data, Size);
+        _Synthesizers[Port % _countof(_Synthesizers)]->sysex_message(Data, Size);
     }
 }
 

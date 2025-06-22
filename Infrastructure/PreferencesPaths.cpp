@@ -25,7 +25,7 @@
 #include "resource.h"
 
 #include "Configuration.h"
-#include "MIDIPreset.h"
+#include "Preset.h"
 
 #include "ADLPlayer.h"
 #include "BMPlayer.h"
@@ -58,7 +58,7 @@ public:
 
     virtual ~PreferencesPathsPage() { };
 
-    #pragma region("preferences_page_instance")
+    #pragma region preferences_page_instance
     t_uint32 get_state() final;
     void apply() final;
     void reset() final;
@@ -99,27 +99,27 @@ private:
     void OnChanged() const noexcept;
 
 private:
-#pragma region("VSTi")
+#pragma region VSTi
     pfc::string _VSTiPluginDirectoryPath;
 #pragma endregion
 
-#pragma region("SoundFont")
+#pragma region SoundFont
     pfc::string _SoundFontFilePath;
 #pragma endregion
 
-#pragma region("Munt")
+#pragma region libMT32Emu
     pfc::string _MT32ROMDirectoryPath;
 #pragma endregion
 
-#pragma region("Secret Sauce")
+#pragma region Secret Sauce
     pfc::string _SecretSauceDirectoryPath;
 #pragma endregion
 
-#pragma region("FluidSynth")
+#pragma region FluidSynth
     pfc::string _FluidSynthDirectoryPath;
 #pragma endregion
 
-#pragma region("fmmidi")
+#pragma region fmmidi
     pfc::string _ProgramsFilePath;
 #pragma endregion
 
@@ -128,7 +128,7 @@ private:
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
 };
 
-#pragma region("preferences_page_instance")
+#pragma region preferences_page_instance
 /// <summary>
 /// Gets the state of the Preference dialog.
 /// </summary>
@@ -175,7 +175,7 @@ void PreferencesPathsPage::reset()
 }
 #pragma endregion
 
-#pragma region("CDialogImpl")
+#pragma region CDialogImpl
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
@@ -262,14 +262,10 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 
         pfc::string FilePath = _SoundFontFilePath;
 
-        if (::uGetOpenFileName(m_hWnd, "SoundFont and list files|*.sf2;*.sf3;*.sflist"
-            "*.sf2pack;*.sfogg;"
-            ";*.json"
-
-            "*.sflist|SoundFont files|*.sf2;*.sf3"
-            ";*.sf2pack;*.sfogg;"
-
-            "|SoundFont list files|*.sflist;*.json"
+        if (::uGetOpenFileName(m_hWnd,
+                "SoundFont and list files|*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sflist;*.json|"
+                "SoundFont files|*.sf2;*.sf3;*.sf2pack;*.sfogg|"
+                "SoundFont list files|*.sflist;*.json"
             ,
             0, "sf2", "Choose a SoundFont bank or list...", DirectoryPath, FilePath, FALSE))
         {
@@ -412,6 +408,8 @@ void PreferencesPathsPage::UpdateDialog() const noexcept
     ::uSetDlgItemText(m_hWnd, IDC_PROGRAMS_FILE_PATH, _ProgramsFilePath);
 }
 #pragma endregion
+
+static const GUID PreferencesPathsPageGUID = { 0x9d601e5c, 0xd542, 0x435e, { 0x8a, 0x05, 0x4e, 0x88, 0xd1, 0x4d, 0xa3, 0xed } };
 
 class PreferencesPathsPageImpl : public preferences_page_impl<PreferencesPathsPage>
 {

@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesHMI.cpp (2024.05.19) P. Stuer **/
+/** $VER: PreferencesHMI.cpp (2025.06.22) P. Stuer **/
 
 #include "framework.h"
 
@@ -221,6 +221,8 @@ void DialogPage::UpdateDialog() const noexcept
 }
 
 #pragma endregion
+
+const GUID PreferencesHMIPageGUID = { 0x089187c1, 0x6344, 0x4c86, { 0xa8, 0x94, 0xf5, 0x95, 0x1e, 0xf9, 0xdc, 0x6c } };
 
 class Page : public preferences_page_impl<DialogPage>
 {

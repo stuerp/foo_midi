@@ -67,16 +67,16 @@ foo_midi implements and suports several players. A player is emulates an FM or s
 
 This player uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
 
-You can choose which emulator core this plauer uses:
+You can choose which emulator core this player uses:
 
-- Nuked OPL3 v1.8
-- Nuked OPL3 v1.7.4
-- DOSBox
-- Opal (Only suitable for Reality Adlib Tracker tunes)
+- Nuked OPL3 v1.8: Slowest but most accurate
+- Nuked OPL3 v1.7.4: Slow, slightly less accurate
+- DOSBox: Fast, mostly accurate
+- Opal: Only suitable for Reality Adlib Tracker tunes
 - Java
-- ESFMu
+- ESFMu: ESS “ESFM” enhanced OPL3 clone
 - MAME OPL2
-- YMFM OPL2
+- YMFM OPL2: Yamaha FM sound cores (OPM, OPN, OPL, and others), written by Aaron Giles
 - YMFM OPL3
 - Nuked OPL2 LLE
 - Nuked OPL3 LLE
@@ -84,6 +84,16 @@ You can choose which emulator core this plauer uses:
 ### LibOPNMIDI (Built-in)
 
 This player uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) and [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
+
+You can choose which emulator core this player uses:
+
+- MAME YM2612
+- Nuked OPN2
+- GENS
+- Genesis Plus GX
+- Neko Project II OPNA
+- MAME YM2608
+- PMDWin OPNA
 
 ### LibEDMIDI aka Emu de MIDI (Built-in)
 
@@ -100,6 +110,8 @@ This player uses the [libMT32Emu](https://github.com/munt/munt) library to emula
 ### fmmidi (yuno) (Built-in)
 
 [fmmidi](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
+
+It requires a text file that specifies the programs or instrument definitions. A Programs.txt file is installed with the component in component directory.
 
 ### BASSMIDI (Built-in)
 

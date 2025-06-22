@@ -1,5 +1,5 @@
 
-/** $VER: OPN Player (2023.08.19) **/
+/** $VER: OPN Player (2025.06.22) **/
 
 #pragma once
 
@@ -26,9 +26,9 @@ public:
     };
 
     void SetEmulatorCore(uint32_t);
-    void SetBank(uint32_t);
+    void SetBankNumber(uint32_t);
     void SetChipCount(uint32_t);
-    void SetFullPanning(bool);
+    void SetSoftPanning(bool) noexcept;
 
 protected:
     virtual bool Startup() override;
@@ -44,6 +44,6 @@ private:
     unsigned _EmulatorCore;
     unsigned _BankNumber;
     unsigned _ChipCount;
-    bool _FullPanning;
+    bool _IsSoftPanningEnabled;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

@@ -351,13 +351,13 @@ bool FSPlayer::Reset()
 /// <summary>
 /// Sends a message to the library.
 /// </summary>
-void FSPlayer::SendEvent(uint32_t message)
+void FSPlayer::SendEvent(uint32_t data)
 {
-    int PortNumber = (int) ((message >> 24) & 0x7F);
-    int Param2     = (int) ((message >> 16) & 0xFF);
-    int Param1     = (int) ((message >>  8) & 0xFF);
-    int Code       = (int)  (message        & 0xF0);
-    int Channel    = (int)  (message        & 0x0F);
+    int PortNumber = (int) ((data >> 24) & 0x7F);
+    int Param2     = (int) ((data >> 16) & 0xFF);
+    int Param1     = (int) ((data >>  8) & 0xFF);
+    int Code       = (int)  (data        & 0xF0);
+    int Channel    = (int)  (data        & 0x0F);
 
     if (PortNumber >= (int) _countof(_Synths))
         PortNumber = 0;

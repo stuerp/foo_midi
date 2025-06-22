@@ -156,7 +156,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
 
             if (itemIndex == 1)
             {
-                MIDIPreset Preset;
+                preset_t Preset;
 
                 Preset.Serialize(PresetText);
             }
@@ -165,7 +165,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
             {
                 static_api_ptr_t<metadb_io_v2> TagIO;
 
-                service_ptr_t<MIDIPresetFilter> Filter = new service_impl_t<MIDIPresetFilter>(itemList, PresetText);
+                service_ptr_t<preset_filter_t> Filter = new service_impl_t<preset_filter_t>(itemList, PresetText);
 
                 TagIO->update_info_async(itemList, Filter, core_api::get_main_window(), 0, 0);
             }

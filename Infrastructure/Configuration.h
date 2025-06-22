@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.06.21) **/
+/** $VER: Configuration.h (2025.06.22) **/
 
 #pragma once
 
@@ -15,11 +15,8 @@
 using namespace cfg_var_modern;
 
 extern const GUID PreferencesPageGUID;
-extern const GUID PreferencesPathsPageGUID;
-extern const GUID PreferencesProcessingPageGUID;
-extern const GUID PreferencesHMIPageGUID;
 
-enum class PlayerType : int8_t
+enum class PlayerTypes : int8_t
 {
     Unknown = -1,
 
@@ -45,7 +42,7 @@ enum class PlayerType : int8_t
     Default = ADL,
 };
 
-enum class LoopType
+enum class LoopTypes
 {
     NeverLoop = 0,                      // Never loop
     NeverLoopAddDecayTime = 1,          // Never loop, add configured decay time at the end
@@ -57,7 +54,7 @@ enum class LoopType
     PlayIndefinitely = 5,               // Play indefinitely
 };
 
-enum class MIDIFlavor
+enum class MIDIFlavors
 {
     Default = 0,                        // Defaults to SC88.
 
@@ -85,7 +82,7 @@ enum
     DefaultDetectXMILoops = 1,
     DefaultDetectFF7Loops = 1,
 
-    DefaultMIDIFlavor = MIDIFlavor::Default,
+    DefaultMIDIFlavor = MIDIFlavors::Default,
     DefaultUseMIDIEffects = 1,
     DefaultUseSuperMuntWithMT32 = 1,
     DefaultUseVSTiWithXG = 0,
@@ -106,9 +103,14 @@ enum
     DefaultNukePanning = 0,
 
     DefaultADLBank = 72,
+    DefaultADLCore = 0,
     DefaultADLChipCount = 10,
-    DefaultADLPanning = 1,
-//  DefaultADL4Op = 14,
+    DefaultADLSoftPanning = 1,
+
+    DefaultOPNBank = 0,
+    DefaultOPNCore = 0,
+    DefaultOPNChipCount = 10,
+    DefaultOPNSoftPanning = 1,
 };
 
 const float DefaultBASSMIDIVolume = 0.15f;
@@ -139,8 +141,14 @@ extern cfg_var_modern::cfg_int
     CfgBASSMIDIResamplingMode,
 
     CfgADLBank,
+    CfgADLCore,
     CfgADLChipCount,
-    CfgADLPanning,
+    CfgADLSoftPanning,
+
+    CfgOPNBank,
+    CfgOPNCore,
+    CfgOPNChipCount,
+    CfgOPNSoftPanning,
 
     CfgMuntGMSet,
 
@@ -169,7 +177,8 @@ extern cfg_var_modern::cfg_string
     CfgSoundFontFilePath,
     CfgMT32ROMDirectoryPath,
     CfgFluidSynthDirectoryPath,
-    CfgProgramsFilePath;
+    CfgProgramsFilePath,
+    CfgADLBankFilePath;
 
 extern cfg_map
     CfgVSTiConfig;
@@ -180,9 +189,6 @@ extern cfg_var_modern::cfg_int  CfgLoopExpansion;
 // HMI
 extern cfg_var_modern::cfg_int  CfgDefaultTempo;
 
-// Channel Filtering
-extern cfg_var_modern::cfg_bool HaveEnabledChannelsChanged;
-
 extern advconfig_string_factory AdvCfgVSTiPluginDirectoryPath;
 extern advconfig_string_factory AdvCfgVSTiXGPlugin;
 extern advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath;
@@ -190,24 +196,6 @@ extern advconfig_checkbox_factory AdvCfgSkipToFirstNote;
 
 extern advconfig_integer_factory AdvCfgLoopCount;
 extern advconfig_integer_factory AdvCfgFadeTimeInMS;
-
-extern advconfig_radio_factory AdvCfgADLCoreNuked;
-extern advconfig_radio_factory AdvCfgADLCoreNuked174;
-extern advconfig_radio_factory AdvCfgADLCoreDOSBox;
-extern advconfig_radio_factory AdvCfgADLCoreOpal;
-extern advconfig_radio_factory AdvCfgADLCoreJava;
-
-extern advconfig_string_factory AdvCfgADLBankFilePath;
-
-extern advconfig_radio_factory AdvCfgOPNCoreMAME;
-extern advconfig_radio_factory AdvCfgOPNCoreNuked;
-extern advconfig_radio_factory AdvCfgOPNCoreGens;
-
-extern advconfig_radio_factory AdvCfgOPNBankXG;
-extern advconfig_radio_factory AdvCfgOPNBankGS;
-extern advconfig_radio_factory AdvCfgOPNBankGEMS;
-extern advconfig_radio_factory AdvCfgOPNBankTomSoft;
-extern advconfig_radio_factory AdvCfgOPNBankFMMIDI;
 
 extern advconfig_integer_factory AdvCfgFluidSynthVoices;
 extern advconfig_checkbox_factory AdvCfgFluidSynthEffectsEnabled;
@@ -234,7 +222,7 @@ extern const char TagMIDILoopStart[];
 extern const char TagMIDILoopEnd[];
 extern const char TagMIDILoopStartInMs[];
 extern const char TagMIDILoopEndInMs[];
-extern const char TagMIDIPreset[];
+extern const char TagPreset[];
 extern const char TagMIDISysExDumps[];
 extern const char TagMIDILyricsType[];
 extern const char TagMIDIHash[];

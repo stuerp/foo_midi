@@ -1,17 +1,17 @@
 
-/** $VER: MIDIPresetFilter.cpp (2025.03.16) **/
+/** $VER: PresetFilter.cpp (2025.06.22) **/
 
 #include "pch.h"
 
-#include "MIDIPresetFilter.h"
+#include "PresetFilter.h"
 
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
-MIDIPresetFilter::MIDIPresetFilter(const pfc::list_base_const_t<metadb_handle_ptr> & itemList, const char * midiPreset)
+preset_filter_t::preset_filter_t(const pfc::list_base_const_t<metadb_handle_ptr> & itemList, const char * midiPreset)
 {
     if (midiPreset != nullptr)
-        _MIDIPreset = midiPreset;
+        _Preset = midiPreset;
 
     pfc::array_t<t_size> Order;
 
@@ -34,7 +34,7 @@ MIDIPresetFilter::MIDIPresetFilter(const pfc::list_base_const_t<metadb_handle_pt
 /// <summary>
 /// Called by metadb_io_v2::update_info_async().
 /// </summary>
-bool MIDIPresetFilter::apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo)
+bool preset_filter_t::apply_filter(metadb_handle_ptr location, t_filestats, file_info & fileInfo)
 {
     // Find the database entry.
     t_size index;
@@ -42,10 +42,10 @@ bool MIDIPresetFilter::apply_filter(metadb_handle_ptr location, t_filestats, fil
     if (!_Handles.bsearch_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, location, index))
         return false;
 
-    if (!_MIDIPreset.empty())
-        fileInfo.meta_set(TagMIDIPreset, _MIDIPreset);
+    if (!_Preset.empty())
+        fileInfo.meta_set(TagPreset, _Preset);
     else
-        fileInfo.meta_remove_field(TagMIDIPreset);
+        fileInfo.meta_remove_field(TagPreset);
 
     return true;
 }

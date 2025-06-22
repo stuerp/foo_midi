@@ -38,7 +38,7 @@ player_t::player_t()
 /// <summary>
 /// Loads the specified MIDI container.
 /// </summary>
-bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopType loopType, uint32_t cleanFlags)
+bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopTypes loopType, uint32_t cleanFlags)
 {
     _LoopType = loopType;
 
@@ -59,10 +59,10 @@ bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongInd
         _Position = 0;
         _Length = midiContainer.GetDuration(subsongIndex, true);
 
-        if (_LoopType == LoopType::NeverLoopAddDecayTime)
+        if (_LoopType == LoopTypes::NeverLoopAddDecayTime)
             _Length += (uint32_t) CfgDecayTime;
         else
-        if (_LoopType >= LoopType::LoopAndFadeWhenDetected)
+        if (_LoopType >= LoopTypes::LoopAndFadeWhenDetected)
         {
             _LoopBegin = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
 
@@ -319,7 +319,7 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
                     SendEventFiltered(_Stream[_StreamPosition].Data, BlockOffset);
             }
 
-            if ((_LoopType == LoopType::LoopAndFadeWhenDetected) || (_LoopType == LoopType::PlayIndefinitelyWhenDetected))
+            if ((_LoopType == LoopTypes::LoopAndFadeWhenDetected) || (_LoopType == LoopTypes::PlayIndefinitelyWhenDetected))
             {
                 if (_StreamLoopBegin != ~0)
                 {
@@ -330,7 +330,7 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
                     break;
             }
             else
-            if ((_LoopType == LoopType::LoopAndFadeAlways) || (_LoopType == LoopType::PlayIndefinitely))
+            if ((_LoopType == LoopTypes::LoopAndFadeAlways) || (_LoopType == LoopTypes::PlayIndefinitely))
             {
                 _StreamPosition = 0;
                 _Position = 0;
@@ -357,7 +357,7 @@ void player_t::Seek(uint32_t timeInSamples)
 {
     if (timeInSamples >= _Length)
     {
-        if (_LoopType >= LoopType::LoopAndFadeWhenDetected)
+        if (_LoopType >= LoopTypes::LoopAndFadeWhenDetected)
         {
             while (timeInSamples >= _Length)
                 timeInSamples -= _Length - _LoopBegin;
@@ -531,7 +531,7 @@ void player_t::SetSampleRate(uint32_t sampleRate)
 /// <summary>
 /// Configures the MIDI player.
 /// </summary>
-void player_t::Configure(MIDIFlavor midiFlavor, bool filterEffects)
+void player_t::Configure(MIDIFlavors midiFlavor, bool filterEffects)
 {
     _MIDIFlavor = midiFlavor;
     _FilterEffects = filterEffects;
@@ -654,7 +654,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
 {
     SendSysEx(data, size, portNumber);
 
-    if (midi::sysex_t::IsReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
+    if (midi::sysex_t::IsReset(data) && (_MIDIFlavor != MIDIFlavors::Default))
         ResetPort(portNumber, 0);
 }
 
@@ -665,7 +665,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
 {
     SendSysEx(data, size, portNumber, time);
 
-    if (midi::sysex_t::IsReset(data) && (_MIDIFlavor != MIDIFlavor::Default))
+    if (midi::sysex_t::IsReset(data) && (_MIDIFlavor != MIDIFlavors::Default))
         ResetPort(portNumber, time);
 }
 
@@ -692,7 +692,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
 
     switch (_MIDIFlavor)
     {
-        case MIDIFlavor::GM:
+        case MIDIFlavors::GM:
         {
             if (time != 0)
                 SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber, time);
@@ -701,7 +701,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
             break;
         }
 
-        case MIDIFlavor::GM2:
+        case MIDIFlavors::GM2:
         {
             if (time != 0)
                 SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber, time);
@@ -710,11 +710,11 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
             break;
         }
 
-        case MIDIFlavor::SC55:
-        case MIDIFlavor::SC88:
-        case MIDIFlavor::SC88Pro:
-        case MIDIFlavor::SC8850:
-        case MIDIFlavor::Default:
+        case MIDIFlavors::SC55:
+        case MIDIFlavors::SC88:
+        case MIDIFlavors::SC88Pro:
+        case MIDIFlavors::SC8850:
+        case MIDIFlavors::Default:
         {
             if (time != 0)
                 SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
@@ -725,7 +725,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
             break;
         }
 
-        case MIDIFlavor::XG:
+        case MIDIFlavors::XG:
         {
             if (time != 0)
                 SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber, time);
@@ -743,7 +743,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
                 SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24)), time); // CC 120 Channel Mute / Sound Off
                 SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24)), time); // CC 121 Reset All Controllers
 
-                if (_MIDIFlavor != MIDIFlavor::XG || i != 9)
+                if (_MIDIFlavor != MIDIFlavors::XG || i != 9)
                 {
                     SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24)), time); // CC 32 Bank select LSB
                     SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24)), time); // CC  0 Bank select MSB
@@ -755,7 +755,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
                 SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24))); // CC 120 Channel Mute / Sound Off
                 SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24))); // CC 121 Reset All Controllers
 
-                if (_MIDIFlavor != MIDIFlavor::XG || i != 9)
+                if (_MIDIFlavor != MIDIFlavors::XG || i != 9)
                 {
                     SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24))); // CC 32 Bank select LSB
                     SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24))); // CC  0 Bank select MSB
@@ -766,7 +766,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
     }
 
     // Configure channel 10 as drum kit in XG mode.
-    if (_MIDIFlavor == MIDIFlavor::XG)
+    if (_MIDIFlavor == MIDIFlavors::XG)
     {
         if (time != 0)
         {
@@ -816,26 +816,26 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
 
     switch (_MIDIFlavor)
     {
-        case MIDIFlavor::SC55:
+        case MIDIFlavors::SC55:
             Data[8] = 1;
             break;
 
-        case MIDIFlavor::SC88:
+        case MIDIFlavors::SC88:
             Data[8] = 2;
             break;
 
-        case MIDIFlavor::SC88Pro:
+        case MIDIFlavors::SC88Pro:
             Data[8] = 3;
             break;
 
-        case MIDIFlavor::SC8850:
-        case MIDIFlavor::Default:
+        case MIDIFlavors::SC8850:
+        case MIDIFlavors::Default:
             Data[8] = 4;
             break;
 
-        case MIDIFlavor::GM:
-        case MIDIFlavor::GM2:
-        case MIDIFlavor::XG:
+        case MIDIFlavors::GM:
+        case MIDIFlavors::GM2:
+        case MIDIFlavors::XG:
         default:
             Data[8] = 3; // Use SC88Pro Map (3)
             break; 

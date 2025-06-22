@@ -103,7 +103,7 @@ void MCIPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
 
 #pragma endregion
 
-#pragma region("Private")
+#pragma region Private
 
 void MCIPlayer::LogMessage(MMRESULT result) const
 {

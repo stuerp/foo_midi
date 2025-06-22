@@ -15,8 +15,8 @@
     <ClCompile Include="Infrastructure\InitStageCallback.cpp" />
     <ClCompile Include="Infrastructure\InputDecoder.cpp" />
     <ClCompile Include="Players\Player.cpp" />
-    <ClCompile Include="MIDI\MIDIPreset.cpp" />
-    <ClCompile Include="Infrastructure\MIDIPresetFilter.cpp" />
+    <ClCompile Include="Infrastructure\Preset.cpp" />
+    <ClCompile Include="Infrastructure\PresetFilter.cpp" />
     <ClCompile Include="MIDI\MIDISysExDumps.cpp" />
     <ClCompile Include="MIDI\MIDISysExFilter.cpp" />
     <ClCompile Include="Players\NukePlayer.cpp" />
@@ -40,6 +40,7 @@
     <ClCompile Include="Infrastructure\SoundFonts.cpp" />
     <ClCompile Include="Players\FMMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Channels.cpp" />
+    <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -112,8 +113,8 @@
     <ClInclude Include="History.h" />
     <ClInclude Include="Infrastructure\InputDecoder.h" />
     <ClInclude Include="Players\Player.h" />
-    <ClInclude Include="MIDI\MIDIPreset.h" />
-    <ClInclude Include="Infrastructure\MIDIPresetFilter.h" />
+    <ClInclude Include="Infrastructure\Preset.h" />
+    <ClInclude Include="Infrastructure\PresetFilter.h" />
     <ClInclude Include="MIDI\MIDISysExDumps.h" />
     <ClInclude Include="MIDI\MIDISysExFilter.h" />
     <ClInclude Include="Players\NukePlayer.h" />
@@ -232,6 +233,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
+    <ResourceCompile Include="Infrastructure\PreferencesFM.rc" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="3rdParty\bass\c\x64\bass.lib" />

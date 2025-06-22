@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.06.16) **/
+/** $VER: InputDecoder.h (2025.06.22) **/
 
 #pragma once
 
@@ -16,7 +16,7 @@
 
 #include "Configuration.h"
 #include "FileHasher.h"
-#include "MIDIPreset.h"
+#include "Preset.h"
 #include "MIDISysExDumps.h"
 #include "SoundFont.h"
 
@@ -77,9 +77,9 @@ public:
         _SampleRate((uint32_t) CfgSampleRate),
         _ExtraPercussionChannel(~0U),
 
-        _LoopType(LoopType::NeverLoop),
-        _LoopTypePlayback((LoopType) (int) CfgLoopTypePlayback),
-        _LoopTypeOther((LoopType) (int) CfgLoopTypeOther),
+        _LoopType(LoopTypes::NeverLoop),
+        _LoopTypePlayback((LoopTypes) (int) CfgLoopTypePlayback),
+        _LoopTypeOther((LoopTypes) (int) CfgLoopTypeOther),
         _LoopCount((uint32_t) AdvCfgLoopCount.get()),
         _FadeDuration((uint32_t) AdvCfgFadeTimeInMS.get()),
 
@@ -116,7 +116,7 @@ public:
 
         delete _Player;
 
-        if (_PlayerType == PlayerType::EmuDeMIDI)
+        if (_PlayerType == PlayerTypes::EmuDeMIDI)
         {
             insync(_Lock);
             _IsRunning -= 1;
@@ -283,13 +283,13 @@ private:
     // Player Properties
     player_t * _Player;
 
-    PlayerType _PlayerType;
+    PlayerTypes _PlayerType;
     uint32_t _SampleRate;
     uint32_t _ExtraPercussionChannel;
 
-    LoopType _LoopType;
-    LoopType _LoopTypePlayback;
-    LoopType _LoopTypeOther;
+    LoopTypes _LoopType;
+    LoopTypes _LoopTypePlayback;
+    LoopTypes _LoopTypeOther;
     uint32_t _LoopCount;
 
     uint32_t _FadeDuration; // in ms

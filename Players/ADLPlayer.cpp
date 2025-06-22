@@ -58,9 +58,9 @@ void ADLPlayer::SetBankNumber(uint32_t bankNumber)
 /// <summary>
 /// Enables or disables soft panning with chip emulators.
 /// </summary>
-void ADLPlayer::SetFullPanning(bool enabled) noexcept
+void ADLPlayer::SetSoftPanning(bool enabled) noexcept
 {
-    _FullPanning = enabled;
+    _IsSoftPanningEnabled = enabled;
 }
 
 /// <summary>
@@ -92,7 +92,7 @@ bool ADLPlayer::Startup()
 
         ::adl_setNumChips(Player, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0));
         ::adl_setNumFourOpsChn(Player, (int) _4OpChannelCount);
-        ::adl_setSoftPanEnabled(Player, _FullPanning);
+        ::adl_setSoftPanEnabled(Player, _IsSoftPanningEnabled);
         ::adl_setDeviceIdentifier(Player, (unsigned int) i); // Set 4-bit device identifier. Used by the SysEx processor.
         ::adl_switchEmulator(Player, (int) _EmulatorCore);
         ::adl_reset(Player);
@@ -143,50 +143,50 @@ void ADLPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     }
 }
 
-void ADLPlayer::SendEvent(uint32_t message)
+void ADLPlayer::SendEvent(uint32_t data)
 {
     ADL_UInt8 Event[3]
     {
-        (ADL_UInt8) (message),
-        (ADL_UInt8) (message >>  8),
-        (ADL_UInt8) (message >> 16)
+        (ADL_UInt8) (data),
+        (ADL_UInt8) (data >>  8),
+        (ADL_UInt8) (data >> 16)
     };
 
-    size_t Port = (message >> 24) & _countof(_Player);
+    size_t Port = (data >> 24) & _countof(_Player);
 
-    const ADL_UInt8 Status = message & 0xF0;
-    const ADL_UInt8 Channel = message & 0x0F;
-
-    if (Port > 2)
+    if (Port > (_countof(_Player) - 1))
         Port = 0;
+
+    const ADL_UInt8 Status = data & 0xF0;
+    const ADL_UInt8 Channel = data & 0x0F;
 
     switch (Status)
     {
-        case 0x80:
+        case midi::StatusCodes::NoteOff:
             ::adl_rt_noteOff(_Player[Port], Channel, Event[1]);
             break;
 
-        case 0x90:
+        case midi::StatusCodes::NoteOn:
             ::adl_rt_noteOn(_Player[Port], Channel, Event[1], Event[2]);
             break;
 
-        case 0xA0:
+        case midi::StatusCodes::KeyPressure:
             ::adl_rt_noteAfterTouch(_Player[Port], Channel, Event[1], Event[2]);
             break;
 
-        case 0xB0:
+        case midi::StatusCodes::ControlChange:
             ::adl_rt_controllerChange(_Player[Port], Channel, Event[1], Event[2]);
             break;
 
-        case 0xC0:
+        case midi::StatusCodes::ProgramChange:
             ::adl_rt_patchChange(_Player[Port], Channel, Event[1]);
             break;
 
-        case 0xD0:
+        case midi::StatusCodes::ChannelPressure:
             ::adl_rt_channelAfterTouch(_Player[Port], Channel, Event[1]);
             break;
 
-        case 0xE0:
+        case midi::StatusCodes::PitchBendChange:
             ::adl_rt_pitchBendML(_Player[Port], Channel, Event[2], Event[1]);
             break;
     }

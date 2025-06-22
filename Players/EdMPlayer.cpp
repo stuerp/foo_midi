@@ -89,13 +89,13 @@ void EdMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 /// <summary>
 /// Sends a message to the library.
 /// </summary>
-void EdMPlayer::SendEvent(uint32_t message)
+void EdMPlayer::SendEvent(uint32_t data)
 {
     const uint8_t Event[3]
     {
-        (uint8_t) (message),        // Status
-        (uint8_t) (message >>  8),  // Param 1
-        (uint8_t) (message >> 16)   // Param 2
+        (uint8_t) (data),        // Status
+        (uint8_t) (data >>  8),  // Param 1
+        (uint8_t) (data >> 16)   // Param 2
     };
 
     const uint8_t Status   = Event[0] & 0xF0u;

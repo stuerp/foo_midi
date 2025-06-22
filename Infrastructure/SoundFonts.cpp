@@ -117,15 +117,15 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
     }
 
     // Force the use of a sound font player if an embedded or named sound font was found.
-    if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundFonts && !_SoundFonts.empty())
+    if ((_PlayerType != PlayerTypes::FluidSynth) && HasNonDefaultSoundFonts && !_SoundFonts.empty())
     {
-        _PlayerType = (FluidSynth::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
+        _PlayerType = (FluidSynth::Exists() && HasDLS) ? PlayerTypes::FluidSynth : PlayerTypes::BASSMIDI;
     }
 
     // Show which sound fonts we'll be using in the console.
-    if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
+    if ((_PlayerType == PlayerTypes::BASSMIDI) || (_PlayerType == PlayerTypes::FluidSynth))
     {
-        if (_PlayerType == PlayerType::FluidSynth)
+        if (_PlayerType == PlayerTypes::FluidSynth)
             std::reverse(_SoundFonts.begin(), _SoundFonts.end());
 
         for (const auto & sf : _SoundFonts)

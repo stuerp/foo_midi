@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2025.06.21) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2025.06.22) P. Stuer **/
 
 #include "pch.h"
 
@@ -26,9 +26,8 @@
 #include "resource.h"
 
 #include "Configuration.h"
-#include "MIDIPreset.h"
+#include "Preset.h"
 
-#include "ADLPlayer.h"
 #include "BMPlayer.h"
 #include "NukePlayer.h"
 #include "VSTiPlayer.h"
@@ -70,7 +69,7 @@ static const InterpolationMethod _InterpolationMethods[] =
 
 #pragma endregion
 
-#pragma region Munt
+#pragma region libMT32Emu
 
 const char * _MuntGMSets[] =
 {
@@ -181,15 +180,6 @@ public:
         COMMAND_HANDLER_EX(IDC_NUKE_PANNING, BN_CLICKED, OnButtonClick)
 
         #pragma endregion
-
-        #pragma region ADL
-
-        COMMAND_HANDLER_EX(IDC_ADL_BANK, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_EDITCHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_ADL_PANNING, BN_CLICKED, OnButtonClick)
-
-        #pragma endregion
     END_MSG_MAP()
 
     enum
@@ -242,7 +232,7 @@ private:
     struct KnownPlayer
     {
         const char * Name;
-        PlayerType Type;
+        PlayerTypes Type;
         bool (*IsPresent)(PreferencesRootPage *);
     };
 
@@ -251,7 +241,7 @@ private:
     struct InstalledPlayer
     {
         pfc::string Name;
-        PlayerType Type;
+        PlayerTypes Type;
     };
 
     std::vector<InstalledPlayer> _InstalledPlayers;
@@ -279,35 +269,6 @@ private:
 
     #pragma endregion
 
-    #pragma region ADL
-
-    struct ADLBank
-    {
-        int Number;
-        pfc::string Name;
-
-        ADLBank() : Number(-1), Name() { }
-        ADLBank(const ADLBank & b) : Number(b.Number), Name(b.Name) { }
-        ADLBank(int number, const char * name) : Number(number), Name(name) { }
-
-        ADLBank & operator =(const ADLBank & b)
-        {
-            Number = b.Number;
-            Name = b.Name;
-
-            return *this;
-        }
-
-        bool operator ==(const ADLBank & b) const { return Number == b.Number; }
-        bool operator !=(const ADLBank & b) const { return !operator ==(b); }
-        bool operator < (const ADLBank & b) const { return Name < b.Name; }
-        bool operator > (const ADLBank & b) const { return Name > b.Name; }
-    };
-
-    pfc::list_t<ADLBank> _ADLBanks;
-
-    #pragma endregion
-
 #ifdef DXISUPPORT
     pfc::array_t<CLSID> dxi_plugins;
 #endif
@@ -322,19 +283,19 @@ private:
 /// </summary>
 const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
 {
-    { "LibEDMIDI",      PlayerType::EmuDeMIDI,    PlayerIsAlwaysPresent },
-    { "FluidSynth",     PlayerType::FluidSynth,   IsFluidSynthPresent },
-    { "BASSMIDI",       PlayerType::BASSMIDI,     PlayerIsAlwaysPresent },
-    { "DirectX",        PlayerType::DirectX,      PlayerIsNeverPresent },
-    { "Super Munt GM",  PlayerType::SuperMunt,    PlayerIsAlwaysPresent },
-    { "LibADLMIDI",     PlayerType::ADL,          PlayerIsAlwaysPresent },
-    { "LibOPNMIDI",     PlayerType::OPN,          PlayerIsAlwaysPresent },
-    { "OPL MIDI",       PlayerType::OPL,          PlayerIsNeverPresent },
-    { "Nuked OPL3",     PlayerType::NukedOPL3,     PlayerIsAlwaysPresent },
-    { "Nuked SC-55",    PlayerType::NukedSC55,     PlayerIsNeverPresent }, // 16/02/25: Timing is not working yet.
-    { "Secret Sauce",   PlayerType::SecretSauce,  IsSecretSaucePresent },
-    { "MCI",            PlayerType::MCI,          PlayerIsNeverPresent },
-    { "fmmidi",         PlayerType::FMMIDI,       PlayerIsAlwaysPresent }
+    { "LibEDMIDI",      PlayerTypes::EmuDeMIDI,     PlayerIsAlwaysPresent },
+    { "FluidSynth",     PlayerTypes::FluidSynth,    IsFluidSynthPresent },
+    { "BASSMIDI",       PlayerTypes::BASSMIDI,      PlayerIsAlwaysPresent },
+    { "DirectX",        PlayerTypes::DirectX,       PlayerIsNeverPresent },
+    { "Super Munt GM",  PlayerTypes::SuperMunt,     PlayerIsAlwaysPresent },
+    { "LibADLMIDI",     PlayerTypes::ADL,           PlayerIsAlwaysPresent },
+    { "LibOPNMIDI",     PlayerTypes::OPN,           PlayerIsAlwaysPresent },
+    { "OPL MIDI",       PlayerTypes::OPL,           PlayerIsNeverPresent },
+    { "Nuked OPL3",     PlayerTypes::NukedOPL3,     PlayerIsAlwaysPresent },
+    { "Nuked SC-55",    PlayerTypes::NukedSC55,     PlayerIsNeverPresent }, // 16/02/25: Timing is not working yet.
+    { "Secret Sauce",   PlayerTypes::SecretSauce,   IsSecretSaucePresent },
+    { "MCI",            PlayerTypes::MCI,           PlayerIsNeverPresent },
+    { "fmmidi",         PlayerTypes::FMMIDI,        PlayerIsAlwaysPresent }
 };
 
 #pragma region preferences_page_instance
@@ -373,7 +334,7 @@ void PreferencesRootPage::apply()
             }
             else
             {
-                CfgPlayerType = (int) PlayerType::VSTi;
+                CfgPlayerType = (int) PlayerTypes::VSTi;
 
                 size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
 
@@ -458,28 +419,6 @@ void PreferencesRootPage::apply()
         CfgMuntGMSet = (t_int32) SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL);
     }
 
-    // ADL
-    {
-        {
-            int SelectedIndex = (int) SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
-
-            if (SelectedIndex < 0 || SelectedIndex >= (int)_ADLBanks.get_count())
-                SelectedIndex = 0;
-
-            CfgADLBank = _ADLBanks[(size_t) SelectedIndex].Number;
-        }
-
-        {
-            int Value = std::clamp((int) GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE), 1, 100);
-
-            SetDlgItemInt(IDC_ADL_CHIPS, (UINT) Value, FALSE);
-
-            CfgADLChipCount = Value;
-        }
-
-        CfgADLPanning = (t_int32) SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK);
-    }
-
     // Nuked OPL3
     {
         size_t SelectedIndex = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
@@ -502,7 +441,7 @@ void PreferencesRootPage::apply()
 /// </summary>
 void PreferencesRootPage::reset()
 {
-    PlayerType PlayerType = PlayerType::Default;
+    auto PlayerType = PlayerTypes::Default;
 
     // Player Type
     {
@@ -531,7 +470,7 @@ void PreferencesRootPage::reset()
 
     // Sample Rate
     {
-        if ((PlayerType == PlayerType::EmuDeMIDI) && _IsRunning)
+        if ((PlayerType == PlayerTypes::EmuDeMIDI) && _IsRunning)
             GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
         SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
@@ -545,7 +484,7 @@ void PreferencesRootPage::reset()
 
     // MIDI Flavor and Effects
     {
-        const bool SupportsFlavors = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
+        const bool SupportsFlavors = (PlayerType == PlayerTypes::VSTi) || (PlayerType == PlayerTypes::FluidSynth) || (PlayerType == PlayerTypes::BASSMIDI) || (PlayerType == PlayerTypes::SecretSauce);
 
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(SupportsFlavors);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(SupportsFlavors);
@@ -585,7 +524,7 @@ void PreferencesRootPage::reset()
 
         SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_SETCURSEL, (WPARAM) SelectedIndex);
 
-        const bool IsFluidSynth = (PlayerType == PlayerType::FluidSynth);
+        const bool IsFluidSynth = (PlayerType == PlayerTypes::FluidSynth);
 
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(IsFluidSynth);
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(IsFluidSynth);
@@ -597,7 +536,7 @@ void PreferencesRootPage::reset()
 
         SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIResamplingMode);
 
-        const bool IsBASSMIDI = (PlayerType == PlayerType::BASSMIDI);
+        const bool IsBASSMIDI = (PlayerType == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
         {
@@ -612,7 +551,7 @@ void PreferencesRootPage::reset()
 
     // Munt
     {
-        const bool IsSuperMunt = (PlayerType == PlayerType::SuperMunt);
+        const bool IsSuperMunt = (PlayerType == PlayerTypes::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
         GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(IsSuperMunt);
@@ -622,40 +561,9 @@ void PreferencesRootPage::reset()
         SendDlgItemMessage(IDC_MUNT_GM_SET, CB_SETCURSEL, (WPARAM) DefaultGMSet);
     }
 
-    // ADL
-    {
-        int SelectedIndex = -1;
-        int i = 0;
-
-        for (const auto & Iter : _ADLBanks)
-        {
-            if (Iter.Number == DefaultADLBank)
-            {
-                SelectedIndex = i;
-                break;
-            }
-        }
-
-        SendDlgItemMessage(IDC_ADL_BANK, CB_SETCURSEL, (WPARAM) SelectedIndex);
-        SetDlgItemInt(IDC_ADL_CHIPS, DefaultADLChipCount, 0);
-        SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, DefaultADLPanning);
-
-        const bool IsADL = (PlayerType == PlayerType::ADL);
-
-        const int ControlIds[] =
-        {
-            IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
-            IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
-            IDC_ADL_PANNING
-        };
-
-        for (const int & ControlId : ControlIds)
-            GetDlgItem(ControlId).EnableWindow(IsADL);
-    }
-
     // Nuked OPL3
     {
-        const bool IsNuke = (PlayerType == PlayerType::NukedOPL3);
+        const bool IsNuke = (PlayerType == PlayerTypes::NukedOPL3);
 
         const int ControlIds[] =
         {
@@ -732,7 +640,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
                 struct InstalledPlayer ip;
 
                 ip.Name = it.Name.c_str();
-                ip.Type = PlayerType::VSTi;
+                ip.Type = PlayerTypes::VSTi;
 
                 _InstalledPlayers.push_back(ip);
 
@@ -749,16 +657,16 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     #pragma endregion
 
     // Determine the selected player.
-    PlayerType PlayerType = (enum PlayerType) (uint8_t) CfgPlayerType;
+    auto PlayerType = (PlayerTypes) (uint8_t) CfgPlayerType;
 
-    if ((PlayerType == PlayerType::VSTi) && (VSTiIndex == ~0u))
-        PlayerType = PlayerType::Default; // In case the VSTi is no longer available.
+    if ((PlayerType == PlayerTypes::VSTi) && (VSTiIndex == ~0u))
+        PlayerType = PlayerTypes::Default; // In case the VSTi is no longer available.
     else
-    if ((PlayerType == PlayerType::FluidSynth) && !_HasFluidSynth)
-        PlayerType = PlayerType::BASSMIDI; // In case FluidSynth is no longer available.
+    if ((PlayerType == PlayerTypes::FluidSynth) && !_HasFluidSynth)
+        PlayerType = PlayerTypes::BASSMIDI; // In case FluidSynth is no longer available.
     else
-    if ((PlayerType == PlayerType::SecretSauce) && !_HasSecretSauce)
-        PlayerType = PlayerType::BASSMIDI; // In case Secret Sauce is no longer available.
+    if ((PlayerType == PlayerTypes::SecretSauce) && !_HasSecretSauce)
+        PlayerType = PlayerTypes::BASSMIDI; // In case Secret Sauce is no longer available.
 
     #pragma endregion
 
@@ -766,7 +674,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     {
         auto w = (CComboBox) GetDlgItem(IDC_CONFIGURE);
 
-        if (PlayerType != PlayerType::VSTi)
+        if (PlayerType != PlayerTypes::VSTi)
         {
             w.EnableWindow(FALSE);
         }
@@ -799,7 +707,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             i++;
         }
 
-        if ((PlayerType == PlayerType::VSTi) && (VSTiIndex != (size_t) ~0))
+        if ((PlayerType == PlayerTypes::VSTi) && (VSTiIndex != (size_t) ~0))
             SelectedIndex = (int) (_InstalledKnownPlayerCount + VSTiIndex);
 
          w.SetCurSel(SelectedIndex);
@@ -823,7 +731,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
              w.SetCurSel(0);
 
-            if ((PlayerType == PlayerType::EmuDeMIDI) && _IsRunning)
+            if ((PlayerType == PlayerTypes::EmuDeMIDI) && _IsRunning)
                 w.EnableWindow(FALSE);
         }
     }
@@ -878,7 +786,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT,   BM_SETCHECK, (WPARAM) CfgUseSuperMuntWithMT32);
         SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
 
-        bool Enabled = ((PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce));
+        bool Enabled = ((PlayerType == PlayerTypes::VSTi) || (PlayerType == PlayerTypes::FluidSynth) || (PlayerType == PlayerTypes::BASSMIDI) || (PlayerType == PlayerTypes::SecretSauce));
 
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enabled);
         GetDlgItem(IDC_MIDI_FLAVOR)     .EnableWindow(Enabled);
@@ -920,7 +828,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         w.SetCurSel(SelectedIndex);
 
-        bool Enable = (PlayerType == PlayerType::FluidSynth);
+        bool Enable = (PlayerType == PlayerTypes::FluidSynth);
 
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(Enable);
@@ -941,7 +849,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         w.SetCurSel((int) CfgBASSMIDIResamplingMode);
 
-        bool Enable = (PlayerType == PlayerType::BASSMIDI);
+        bool Enable = (PlayerType == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
         {
@@ -964,69 +872,12 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         w.SetCurSel((int) CfgMuntGMSet);
 
-        BOOL IsSuperMunt = (PlayerType == PlayerType::SuperMunt);
+        BOOL IsSuperMunt = (PlayerType == PlayerTypes::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
         GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(IsSuperMunt);
 
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(IsSuperMunt ? SW_SHOW : SW_HIDE);
-    }
-    #pragma endregion
-
-    #pragma region ADL
-    {
-        const char * const * BankNames = ::adl_getBankNames();
-        const size_t BankCount = (size_t) ::adl_getBanksCount();
-
-        if (BankNames && (BankCount > 0))
-        {
-            for (size_t i = 0; i < BankCount; ++i)
-                _ADLBanks += ADLBank((int) i, BankNames[i]);
-
-            _ADLBanks.sort();
-        }
-
-        {
-            auto w = (CComboBox) GetDlgItem(IDC_ADL_BANK);
-
-            int SelectedBank = 0;
-
-            for (size_t i = 0; i < _ADLBanks.get_count(); ++i)
-            {
-                w.AddString(pfc::wideFromUTF8(_ADLBanks[i].Name));
-
-                if (_ADLBanks[i].Number == CfgADLBank)
-                    SelectedBank = (int) i;
-            }
-
-            w.SetCurSel(SelectedBank);
-        }
-
-        {
-            static const wchar_t * ChipCounts[] = { L"1", L"2", L"5", L"10", L"25", L"50", L"100" };
-
-            auto w = (CComboBox) GetDlgItem(IDC_ADL_CHIPS);
-
-            for (const auto & Iter : ChipCounts)
-                w.AddString(Iter);
-
-            SetDlgItemInt(IDC_ADL_CHIPS, (UINT) CfgADLChipCount, 0);
-        }
-
-        SendDlgItemMessage(IDC_ADL_PANNING, BM_SETCHECK, (WPARAM) CfgADLPanning);
-
-        if (PlayerType != PlayerType::ADL)
-        {
-            GetDlgItem(IDC_ADL_BANK_TEXT).EnableWindow(FALSE);
-            GetDlgItem(IDC_ADL_BANK).EnableWindow(FALSE);
-        }
-
-        if (PlayerType != PlayerType::ADL && PlayerType != PlayerType::OPN)
-        {
-            GetDlgItem(IDC_ADL_CHIPS_TEXT).EnableWindow(FALSE);
-            GetDlgItem(IDC_ADL_CHIPS).EnableWindow(FALSE);
-            GetDlgItem(IDC_ADL_PANNING).EnableWindow(FALSE);
-        }
     }
     #pragma endregion
 
@@ -1048,7 +899,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, (WPARAM) CfgNukePanning);
 
-        if (PlayerType != PlayerType::NukedOPL3)
+        if (PlayerType != PlayerTypes::NukedOPL3)
         {
             GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
             GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
@@ -1128,7 +979,7 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 /// </summary>
 void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 {
-    PlayerType PlayerType = PlayerType::Unknown;
+    auto PlayerType = PlayerTypes::Unknown;
 
     int SelectedIndex = (int) ::SendMessage(w, CB_GETCURSEL, 0, 0);
     size_t VSTiIndex = ~0u;
@@ -1147,14 +998,14 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Configure
     {
-        const bool Enable = (PlayerType == PlayerType::VSTi) ? VSTi::PlugIns[VSTiIndex].HasEditor : FALSE;
+        const bool Enable = (PlayerType == PlayerTypes::VSTi) ? VSTi::PlugIns[VSTiIndex].HasEditor : FALSE;
 
         GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
     }
 
     // Sample Rate
     {
-        const bool Enable = (PlayerType != PlayerType::EmuDeMIDI) || !_IsRunning;
+        const bool Enable = (PlayerType != PlayerTypes::EmuDeMIDI) || !_IsRunning;
 
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(Enable);
     }
@@ -1165,7 +1016,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // MIDI Flavor and Effects
     {
-        const bool SupportsFlavors = (PlayerType == PlayerType::VSTi) || (PlayerType == PlayerType::FluidSynth) || (PlayerType == PlayerType::BASSMIDI) || (PlayerType == PlayerType::SecretSauce);
+        const bool SupportsFlavors = (PlayerType == PlayerTypes::VSTi) || (PlayerType == PlayerTypes::FluidSynth) || (PlayerType == PlayerTypes::BASSMIDI) || (PlayerType == PlayerTypes::SecretSauce);
 
         const int ControlIds[] =
         {
@@ -1183,7 +1034,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // FluidSynth
     {
-        const bool IsFluidSynth = (PlayerType == PlayerType::FluidSynth);
+        const bool IsFluidSynth = (PlayerType == PlayerTypes::FluidSynth);
 
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(IsFluidSynth);
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(IsFluidSynth);
@@ -1191,7 +1042,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // BASS MIDI resampling mode and cache status
     {
-        const bool IsBASSMIDI = (PlayerType == PlayerType::BASSMIDI);
+        const bool IsBASSMIDI = (PlayerType == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
         {
@@ -1206,7 +1057,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Munt
     {
-        const bool IsSuperMunt = (PlayerType == PlayerType::SuperMunt);
+        const bool IsSuperMunt = (PlayerType == PlayerTypes::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
         GetDlgItem(IDC_MUNT_GM_SET) .EnableWindow(IsSuperMunt);
@@ -1214,24 +1065,9 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
         GetDlgItem(IDC_MUNT_WARNING).ShowWindow(IsSuperMunt ? SW_SHOW : SW_HIDE);
     }
 
-    // ADL
-    {
-        const bool IsADL = (PlayerType == PlayerType::ADL);
-
-        const int ControlIds[] =
-        {
-            IDC_ADL_BANK_TEXT, IDC_ADL_BANK,
-            IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS,
-            IDC_ADL_PANNING
-        };
-
-        for (const int & ControlId : ControlIds)
-            GetDlgItem(ControlId).EnableWindow(IsADL);
-    }
-
     // Nuked OPL3
     {
-        const bool IsNukeOPL3 = (PlayerType == PlayerType::NukedOPL3);
+        const bool IsNukeOPL3 = (PlayerType == PlayerTypes::NukedOPL3);
 
         const int ControlIds[] =
         {
@@ -1290,7 +1126,7 @@ bool PreferencesRootPage::HasChanged()
 {
     #pragma region Player Type
     {
-        PlayerType PlayerType = PlayerType::Unknown;
+        auto PlayerType = PlayerTypes::Unknown;
 
         int SelectedIndex = (int) SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
 
@@ -1299,12 +1135,12 @@ bool PreferencesRootPage::HasChanged()
             if ((size_t) SelectedIndex < _InstalledKnownPlayerCount)
                 PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
             else
-                PlayerType = PlayerType::VSTi;
+                PlayerType = PlayerTypes::VSTi;
 
-            if (PlayerType != (enum PlayerType) (int) CfgPlayerType)
+            if (PlayerType != (PlayerTypes) (int) CfgPlayerType)
                 return true;
 
-            if (PlayerType == PlayerType::VSTi)
+            if (PlayerType == PlayerTypes::VSTi)
             {
                 size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
 
@@ -1413,26 +1249,6 @@ bool PreferencesRootPage::HasChanged()
     #pragma region Munt
     {
         if (SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL) != CfgMuntGMSet)
-            return true;
-    }
-    #pragma endregion
-
-    #pragma region ADL
-    {
-        {
-            int SelectedIndex = (int) SendDlgItemMessage(IDC_ADL_BANK, CB_GETCURSEL);
-
-            if ((SelectedIndex < 0) || (SelectedIndex >= (int) _ADLBanks.get_count()))
-                SelectedIndex = 0;
-
-            if (_ADLBanks[(t_size) SelectedIndex].Number != CfgADLBank)
-                return true;
-        }
-
-        if (GetDlgItemInt(IDC_ADL_CHIPS, NULL, FALSE) != (UINT) CfgADLChipCount)
-            return true;
-
-        if (SendDlgItemMessage(IDC_ADL_PANNING, BM_GETCHECK) != CfgADLPanning)
             return true;
     }
     #pragma endregion

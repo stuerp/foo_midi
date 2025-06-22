@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2026.06.16) **/
+/** $VER: OPNPlayer.cpp (2025.06.22) **/
 
 #include "pch.h"
 
@@ -11,6 +11,8 @@
 #include "gs-by-papiezak-and-sneakernets.wopn.h"
 #include "xg.wopn.h"
 
+#include "Encoding.h"
+
 OPNPlayer::OPNPlayer() : player_t()
 {
     ::memset(_Player, 0, sizeof(_Player));
@@ -21,24 +23,39 @@ OPNPlayer::~OPNPlayer()
     Shutdown();
 }
 
-void OPNPlayer::SetEmulatorCore(unsigned emuCore)
+/// <summary>
+/// Sets the emulator core to use.
+/// </summary>
+void OPNPlayer::SetEmulatorCore(uint32_t emulatorCore)
 {
-    _EmulatorCore = emuCore;
+    _EmulatorCore = emulatorCore;
 }
 
-void OPNPlayer::SetBank(unsigned bankNumber)
+/// <summary>
+/// Sets the index of the selected patches bank (0 to opn_getBanksCount()).
+/// </summary>
+void OPNPlayer::SetBankNumber(uint32_t bankNumber)
 {
+    if (bankNumber > 4)
+        throw std::out_of_range(::FormatText("Invalid bank number %u. Must be less than 5", bankNumber));
+
     _BankNumber = bankNumber;
 }
 
+/// <summary>
+/// Sets the number of emulated chips (from 1 to 100). Emulation of multiple chips extends polyphony limits.
+/// </summary>
 void OPNPlayer::SetChipCount(unsigned chipCount)
 {
     _ChipCount = chipCount;
 }
 
-void OPNPlayer::SetFullPanning(bool enabled)
+/// <summary>
+/// Enables or disables soft panning with chip emulators.
+/// </summary>
+void OPNPlayer::SetSoftPanning(bool enabled) noexcept
 {
-    _FullPanning = enabled;
+    _IsSoftPanningEnabled = enabled;
 }
 
 bool OPNPlayer::Startup()
@@ -46,11 +63,11 @@ bool OPNPlayer::Startup()
     if (_Player[0] && _Player[1] && _Player[2])
         return true;
 
-    int chips_per_port = (int)_ChipCount / 3;
-    int chips_round = (_ChipCount % 3) != 0;
-    int chips_min = _ChipCount < 3;
+    const int ChipsPerPort = (int) (_ChipCount / _countof(_Player));
+    const int ChipsRound = (_ChipCount % _countof(_Player)) != 0;
+    const int ChipsMin = _ChipCount < _countof(_Player);
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < _countof(_Player); ++i)
     {
         OPN2_MIDIPlayer * Player = this->_Player[i] = ::opn2_init((long)_SampleRate);
         
@@ -89,12 +106,12 @@ bool OPNPlayer::Startup()
                 break;
         }
 
-        ::opn2_openBankData(Player, Bank, (long)BankSize);
+        ::opn2_openBankData(Player, Bank, (long) BankSize);
 
-        ::opn2_setNumChips(Player, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
-        ::opn2_setSoftPanEnabled(Player, _FullPanning);
-        ::opn2_setDeviceIdentifier(Player, (unsigned int)i);
-        ::opn2_switchEmulator(Player, (int)_EmulatorCore);
+        ::opn2_setNumChips(Player, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0));
+        ::opn2_setSoftPanEnabled(Player, _IsSoftPanningEnabled);
+        ::opn2_setDeviceIdentifier(Player, (unsigned int) i);
+        ::opn2_switchEmulator(Player, (int) _EmulatorCore);
         ::opn2_reset(Player);
     }
 
@@ -107,7 +124,7 @@ bool OPNPlayer::Startup()
 
 void OPNPlayer::Shutdown()
 {
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < _countof(_Player); ++i)
     {
         ::opn2_close(_Player[i]);
         _Player[i] = nullptr;
@@ -122,70 +139,71 @@ void OPNPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 
     while (sampleCount != 0)
     {
-        size_t ToDo = sampleCount;
+        uint32_t ToDo = sampleCount;
 
         if (ToDo > 256)
             ToDo = 256;
 
-        ::memset(sampleData, 0, (ToDo * 2) * sizeof(audio_sample));
+        ::memset(sampleData, 0, ((size_t) ToDo * 2) * sizeof(audio_sample));
 
-        for (size_t i = 0; i < 3; i++)
+        for (size_t i = 0; i < _countof(_Player); ++i)
         {
             ::opn2_generate(_Player[i], (int) (ToDo * 2), Data);
 
+            // Convert the format of the rendered output.
             for (size_t j = 0, k = (ToDo * 2); j < k; j++)
                 sampleData[j] += (audio_sample) Data[j] * (1.0f / 32768.0f);
         }
 
         sampleData += (ToDo * 2);
-        sampleCount -= (unsigned long) ToDo;
+        sampleCount -= ToDo;
     }
 }
 
-void OPNPlayer::SendEvent(uint32_t message)
+void OPNPlayer::SendEvent(uint32_t data)
 {
     OPN2_UInt8 Event[3]
     {
-        static_cast<OPN2_UInt8>(message),
-        static_cast<OPN2_UInt8>(message >> 8),
-        static_cast<OPN2_UInt8>(message >> 16)
+        static_cast<OPN2_UInt8>(data),
+        static_cast<OPN2_UInt8>(data >>  8),
+        static_cast<OPN2_UInt8>(data >> 16)
     };
 
-    unsigned Port = (message >> 24) & 3;
+    size_t Port = (data >> 24) & _countof(_Player);
 
-    const OPN2_UInt8 Channel = message & 0x0F;
-    const OPN2_UInt8 Command = message & 0xF0;
-
-    if (Port > 2)
+    if (Port > (_countof(_Player) - 1))
         Port = 0;
 
-    switch (Command)
+    const OPN2_UInt8 Status = data & 0xF0;
+    const OPN2_UInt8 Channel = data & 0x0F;
+
+    switch (Status)
     {
-        case 0x80:
+        case midi::StatusCodes::NoteOff:
             ::opn2_rt_noteOff(_Player[Port], Channel, Event[1]);
             break;
 
-        case 0x90:
+        case midi::StatusCodes::NoteOn:
             ::opn2_rt_noteOn(_Player[Port], Channel, Event[1], Event[2]);
             break;
 
-        case 0xA0:
+        case midi::StatusCodes::KeyPressure:
             ::opn2_rt_noteAfterTouch(_Player[Port], Channel, Event[1], Event[2]);
             break;
 
-        case 0xB0:
+        case midi::StatusCodes::ControlChange:
             ::opn2_rt_controllerChange(_Player[Port], Channel, Event[1], Event[2]);
             break;
 
-        case 0xC0:
+        case midi::StatusCodes::ProgramChange:
             ::opn2_rt_patchChange(_Player[Port], Channel, Event[1]);
             break;
 
-        case 0xD0:
+        case midi::StatusCodes::ChannelPressure:
             ::opn2_rt_channelAfterTouch(_Player[Port], Channel, Event[1]);
             break;
 
-        case 0xE0:
+        case midi::StatusCodes::PitchBendChange:
             ::opn2_rt_pitchBendML(_Player[Port], Channel, Event[2], Event[1]);
             break;
     }
