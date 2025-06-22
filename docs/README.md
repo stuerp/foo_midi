@@ -9,7 +9,8 @@
 4. [Usage](#usage)
 5. [Troubleshooting](#troubleshooting)
 6. [FAQs](#faqs)
-7. [Support](#support)
+7. [Reference Material](#reference-material)
+8. [Support](#support)
 
 ---
 
@@ -53,7 +54,7 @@ foo_midi can decode the following file formats:
 | Human Machine Interface MIDI P/R | .HMP | Used by Human Machine Interface's Sound Operating System. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMP). |
 | Human Machine Interface |.HMI| Used by Human Machine Interface's Sound Operating System. It is a revision of the HMP format. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMI). |
 | MUS |.MUS | Created by Paul Radek for his DMX audio library. Used by id Software for Doom and several other games.  See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/MUS_Format). |
-| Extended MIDI |.XMI | Used by the Miles Sound System (MSS) for storing game music. See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/XMI_Format). |
+| Extended MIDI |.XMI | Used by the Miles Sound System (MSS) for storing game music. See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/XMI_Format) and [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=XMI). |
 | Loudness Sound System | .LDS | Created with the Loudness Sound System by Andras Molnar. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=LDS). |
 | Recomposer |.RCP, .R36, .G18, .G36 | Created with Recomposer, a popular music editing application on the Japanese [PC-98](https://en.wikipedia.org/wiki/PC-98) platform. |
 | Extensible Music Format | .XMF, .MXMF | Created by the [MIDI Association](https://midi.org/extensible-music-format-xmf). See also [Video Game Music Preservation Foundation (VGMPF)](https://www.vgmpf.com/Wiki/index.php?title=XMF). |
@@ -179,10 +180,35 @@ The component supports 6 loop modes that can be selected in the Preferences dial
 
 ---
 
+## Reference Material
+
+### SoundFonts
+
+- [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
+
+### Electronic Music
+
+- [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
+- [File format samples](https://telparia.com/fileFormatSamples/)
+
+### SoundFonts
+
+- [SoundFont](https://musical-artifacts.com/artifacts?tags=soundfont), Musical Artifacts
+
+### MIDI
+
+- [Introduction to Computer Music: MIDI](https://cmtext.indiana.edu/MIDI/chapter3_MIDI.php), Jeffrey Hass
+- [MIDI is the language of the gods](http://midi.teragonaudio.com/), Teragon Audio
+- [Standards in Music](https://www.recordingblogs.com/wiki/standards-in-music-index), Recording Blogs
+- [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
+- [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
+
+---
+
 ## Support
 
 For further assistance:
 
-🌐 Home page: [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)
-🌐 Issue tracker: [https://github.com/stuerp/foo_midi/issues](https://github.com/stuerp/foo_midi/issues)
+🌐 Home page: [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)  
+🌐 Issue tracker: [https://github.com/stuerp/foo_midi/issues](https://github.com/stuerp/foo_midi/issues)  
 🌐 Forum: [Hydrogenaudio foo_midi (foobar v2.0)](https://hydrogenaud.io/index.php/topic,123301.25.html)
