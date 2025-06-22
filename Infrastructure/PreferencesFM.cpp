@@ -88,8 +88,6 @@ public:
 private:
     BOOL OnInitDialog(CWindow, LPARAM) noexcept;
 
-    void OnShowWindow(CWindow wndOther) noexcept;
-
     void OnEditChange(UINT, int, CWindow) noexcept;
     void OnSelectionChange(UINT, int, CWindow) noexcept;
     void OnButtonClicked(UINT, int, CWindow) noexcept;

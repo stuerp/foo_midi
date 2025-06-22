@@ -48,7 +48,7 @@ bool FMMPlayer::Startup()
         if (c == '@')
         {
             int Program;
-            midisynth::opn::FMPARAMETER p;
+            midisynth::opn::FMPARAMETER p = { };
 
             if (::fscanf_s(fp, "%d%d%d%d", &Program, &p.ALG, &p.FB, &p.LFO) == 4 &&
                 ::fscanf_s(fp, "%d%d%d%d%d%d%d%d%d%d", &p.op1.AR, &p.op1.DR, &p.op1.SR, &p.op1.RR, &p.op1.SL, &p.op1.TL, &p.op1.KS, &p.op1.ML, &p.op1.DT, &p.op1.AMS) == 10 &&
@@ -63,7 +63,7 @@ bool FMMPlayer::Startup()
         if (c == '*')
         {
             int Program;
-            midisynth::opn::DRUMPARAMETER p;
+            midisynth::opn::DRUMPARAMETER p = { };
 
             if (::fscanf_s(fp, "%d%d%d%d%d%d%d", &Program, &p.ALG, &p.FB, &p.LFO, &p.key, &p.panpot, &p.assign) == 7 &&
                 ::fscanf_s(fp, "%d%d%d%d%d%d%d%d%d%d", &p.op1.AR, &p.op1.DR, &p.op1.SR, &p.op1.RR, &p.op1.SL, &p.op1.TL, &p.op1.KS, &p.op1.ML, &p.op1.DT, &p.op1.AMS) == 10 &&

@@ -1,0 +1,8 @@
+// Hint files help the Visual Studio IDE interpret Visual C++ identifiers
+// such as names of functions and macros.
+// For more information see https://go.microsoft.com/fwlink/?linkid=865984
+
+#define BEGIN_MSG_MAP_EX(theClass) public: BOOL m_bMsgHandled; BOOL IsMsgHandled() const { return m_bMsgHandled; } void SetMsgHandled(BOOL bHandled) { m_bMsgHandled = bHandled; } BOOL ProcessWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult, DWORD dwMsgMapID = 0) { BOOL bOldMsgHandled = m_bMsgHandled; BOOL bRet = _ProcessWindowMessage(hWnd, uMsg, wParam, lParam, lResult, dwMsgMapID); m_bMsgHandled = bOldMsgHandled; return bRet; } BOOL _ProcessWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult, DWORD dwMsgMapID) { BOOL bHandled = TRUE; (hWnd); (uMsg); (wParam); (lParam); (lResult); (bHandled); switch(dwMsgMapID) { case 0:
+#MSG_WM_INITDIALOG
+#define COMMAND_HANDLER_EX
+#define REFLECT_NOTIFICATIONS
