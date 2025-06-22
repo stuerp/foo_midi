@@ -25,7 +25,7 @@ public:
         OPNMIDI_EMU_GENS,       // GENS
     };
 
-    void SetCore(uint32_t);
+    void SetEmulatorCore(uint32_t);
     void SetBank(uint32_t);
     void SetChipCount(uint32_t);
     void SetFullPanning(bool);
@@ -41,7 +41,7 @@ protected:
 private:
     struct OPN2_MIDIPlayer * _Player[3];
 
-    unsigned _EmuCore;
+    unsigned _EmulatorCore;
     unsigned _BankNumber;
     unsigned _ChipCount;
     bool _FullPanning;

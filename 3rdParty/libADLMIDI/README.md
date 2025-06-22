@@ -3,7 +3,7 @@ libADLMIDI is a free Software MIDI synthesizer library with OPL3 emulation
 
 Original ADLMIDI code: Copyright (c) 2010-2014 Joel Yliluoma <bisqwit@iki.fi>
 
-ADLMIDI Library API:   Copyright (c) 2015-2022 Vitaly Novichkov <admin@wohlnet.ru>
+ADLMIDI Library API:   Copyright (c) 2015-2025 Vitaly Novichkov <admin@wohlnet.ru>
 
 Library is based on the ADLMIDI, a MIDI player for Linux and Windows with OPL3 emulation:
 
@@ -97,6 +97,7 @@ The library is licensed under in it's parts LGPL 2.1+, GPL v2+, GPL v3+, and MIT
 ### Utils and extras
 * **WITH_GENADLDATA**  - (ON/OFF, default OFF) Build and execute the utility which will rebuild the embedded banks database (which is an adldata.cpp file).
 * **WITH_GENADLDATA_COMMENTS** - (ON/OFF, default OFF) Enable comments in generated ADLDATA cache file
+* **GENADLDATA_CUSTOM_BANKLIST** - (Path) Set the absolute path to the custom INI file that declares a list of embedded banks. If not specified, the banks.ini at the repository root will be used.
 
 * **WITH_MIDIPLAY** - (ON/OFF, default OFF) Build demo MIDI player (Requires SDL2 and also pthread on Windows with MinGW)
 * **MIDIPLAY_WAVE_ONLY** - (ON/OFF, default OFF) Build Demo MIDI player without support of real time playing. It will output into WAV only.
@@ -119,7 +120,12 @@ You need to make in the any IDE a library project and put into it next files
 * `ADLMIDI_DISABLE_MIDI_SEQUENCER` - Completely disables built-in MIDI sequencer.
 * `ADLMIDI_DISABLE_DOSBOX_EMULATOR` - Disables DosBox 0.74 OPL3 emulator.
 * `ADLMIDI_DISABLE_NUKED_EMULATOR` - Disables Nuked OPL3 emulator.
+* `ADLMIDI_DISABLE_JAVA_EMULATOR` - Disable JavaOPL3 emulator.
+* `ADLMIDI_DISABLE_OPAL_EMULATOR` - Disable Opal OPL3-only emulator.
+* `ADLMIDI_DISABLE_ESFMU_EMULATOR` - Disable ESFMu ESFM/OPL3 emulator.
+* `ENABLE_HW_OPL_SERIAL_PORT` and `ADLMIDI_ENABLE_HW_SERIAL` - Enable support of the Serial Port support for hardware OPL3 chip interfaces.
 * `DISABLE_EMBEDDED_BANKS` - Disables usage of embedded banks. Use it to use custom-only banks.
+* `ADLMIDI_ENABLE_HQ_RESAMPLER` - Enable high-quality resampler (requires `zipa-resampler` external dependency).
 
 ### Public header (include)
 * adlmidi.h     - Library Public API header, use it to control library
@@ -178,6 +184,24 @@ To build that example you will need to have installed SDL2 library.
 * Add support of MIDI Format 2 files
 
 # Changelog
+## dev
+ * Fixed the work on big endian processors
+ * Fixed ARM64 build on some platforms
+ * Improved support of the EA-MUS files (Thanks to [dashodanger](https://github.com/dashodanger))
+ * Fixed crash on attempt to change the volume of a blank note
+ * Added an ability to supply the custom list of embedded banks using `-DGENADLDATA_CUSTOM_BANKLIST=/path/to/ini/file.ini` argument
+ * Improved support of the CMF files: added support for previously missing transpose, depth control, and song marker controllers
+ * Added ESFMu emulator for the future ESFM support (Currently used as one another OPL3 emulator and without panned stereo support yet).
+ * Added YMFM emulator support (OPL3 and OPL2).
+ * Added support for OPL2 mode when some emulators enabled.
+ * Added ability to change the hardware address at the DOS version of MIDI player.
+ * Added an ability to manually specify the chip type (OPL2 or OPL3) at the DOS version of MIDI player.
+ * Added an automatical detection of OPL2 or OPL3 chip depending on the BLASTER environment variable's value at the DOS version of MIDI player.
+ * Added Nuked OPL2 and OPL3 Low-Level emulators (Kept disabled by default because they are too heavy for ordinary processors).
+ * Fixed a dead loop that might happen when final tone gets lower than zero.
+ * Added possibility to play the same note multiple times at the same MIDI channel (Resolved playback of some music, like Heretic's E1M6).
+ * Dual-voice 2-op instruments will be squashed to single 2-op voice when available chip channels are overflow (The stability of DMX-oriented music has been improved).
+
 ## 1.5.1   2022-10-31
  * Added an ability to disable the automatical arpeggio
  * Added an ability to set the count of loops (how many times to play the song)
@@ -191,7 +215,6 @@ To build that example you will need to have installed SDL2 library.
 ## 1.5.0.1 2020-10-11
  * Fixed an incorrect timer processing when using a real-time interface
 
-# Changelog
 ## 1.5.0   2020-09-28
  * Drum note length expanding is now supported in real-time mode (Thanks to [Jean Pierre Cimalando](https://github.com/jpcima) for a work!)
  * Channels manager has been improved (Thanks to [Jean Pierre Cimalando](https://github.com/jpcima) for a work!)

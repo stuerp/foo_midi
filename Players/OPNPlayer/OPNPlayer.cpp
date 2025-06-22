@@ -21,9 +21,9 @@ OPNPlayer::~OPNPlayer()
     Shutdown();
 }
 
-void OPNPlayer::SetCore(unsigned emuCore)
+void OPNPlayer::SetEmulatorCore(unsigned emuCore)
 {
-    _EmuCore = emuCore;
+    _EmulatorCore = emuCore;
 }
 
 void OPNPlayer::SetBank(unsigned bankNumber)
@@ -94,7 +94,7 @@ bool OPNPlayer::Startup()
         ::opn2_setNumChips(Player, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
         ::opn2_setSoftPanEnabled(Player, _FullPanning);
         ::opn2_setDeviceIdentifier(Player, (unsigned int)i);
-        ::opn2_switchEmulator(Player, (int)_EmuCore);
+        ::opn2_switchEmulator(Player, (int)_EmulatorCore);
         ::opn2_reset(Player);
     }
 

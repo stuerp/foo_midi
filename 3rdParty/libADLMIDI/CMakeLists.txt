@@ -1,13 +1,35 @@
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.2...3.10)
 project (libADLMIDI VERSION 1.5.1 LANGUAGES C CXX)
 
 include(GNUInstallDirs)
 include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
 
 # Prefer C90 standard
 set(CMAKE_C_STANDARD 90)
 # Prefer C++98 standard
 set(CMAKE_CXX_STANDARD 98)
+
+if(MSVC)
+    check_cxx_compiler_flag("/std:c++14" COMPILER_SUPPORTS_CXX14)
+    if(COMPILER_SUPPORTS_CXX14)
+        set(FLAG_CPP14 "/std:c++14")
+    endif()
+    if(MSVC_VERSION LESS 1910)
+        unset(COMPILER_SUPPORTS_CXX14) # MSVC older than 2017 fails to build YMFM
+    endif()
+else()
+    check_cxx_compiler_flag("-std=c++14" COMPILER_SUPPORTS_CXX14)
+    if(COMPILER_SUPPORTS_CXX14)
+        set(FLAG_CPP14 "-std=c++14")
+    endif()
+endif()
+
+if(COMPILER_SUPPORTS_CXX14)
+    message("== Your C++ compiler supports C++14, YMFM emulator will be ENABLED")
+else()
+    message("== Your C++ compiler does NOT supports C++14, YMFM emulator will be DISABLED")
+endif()
 
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -26,19 +48,24 @@ if(DJGPP OR MSDOS)
     add_definitions(-DADLMIDI_HW_OPL)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Nintendo3DS")
+if(NINTENDO_3DS)
     set(ADLMIDI_3DS 1)
     add_definitions(-DDOSBOX_NO_MUTEX)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "NintendoDS")
+if(NINTENDO_DS)
     set(ADLMIDI_DS 1)
     add_definitions(-DDOSBOX_NO_MUTEX)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "NintendoWii")
+if(NINTENDO_WII)
     set(ADLMIDI_WII 1)
     add_definitions(-DUSE_LIBOGC_MUTEX)
+endif()
+
+if(NINTENDO_WIIU)
+    set(ADLMIDI_WIIU 1)
+    add_definitions(-DUSE_WUT_MUTEX)
 endif()
 
 #===========================================================================================
@@ -81,10 +108,30 @@ if(NOT MSVC AND NOT MSDOS)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DVITA -DVITA=1 -fcompare-debug-second")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVITA -DVITA=1 -fcompare-debug-second")
     endif()
+    if(NINTENDO_3DS OR NINTENDO_WII OR NINTENDO_WIIU OR NINTENDO_SWITCH)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fcompare-debug-second")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcompare-debug-second")
+    endif()
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release")
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    if(NINTENDO_3DS OR NINTENDO_WII OR NINTENDO_WIIU OR NINTENDO_SWITCH)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu90")
+    else()
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c89")
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98")
+endif()
+
+if(DEFINED CMAKE_BUILD_TYPE)
+    string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
+endif()
+if(CMAKE_BUILD_TYPE_LOWER EQUAL "release")
+    add_definitions(-DNDEBUG)
+ENDIF()
+
+if(CMAKE_BUILD_TYPE_LOWER STREQUAL "debug" AND CMAKE_COMPILER_IS_GNUCXX)
+    add_definitions(-D_GLIBCXX_DEBUG=1 -D_GLIBCXX_ASSERTIONS=1)
 endif()
 
 # Disable bogus MSVC warnings
@@ -111,7 +158,7 @@ function(set_legacy_standard destTarget)
     if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
         # Turn on warnings and legacy C/C++ standards to support more compilers
         target_compile_options(${destTarget} PRIVATE
-            $<$<COMPILE_LANGUAGE:C>:-Wall -pedantic -std=c90 -Wno-long-long>
+            $<$<COMPILE_LANGUAGE:C>:-Wall -pedantic -std=gnu90 -Wno-long-long>
             $<$<COMPILE_LANGUAGE:CXX>:-Wall -pedantic -std=gnu++98>
         )
     endif()
@@ -142,8 +189,18 @@ if(NOT EMSCRIPTEN
    AND NOT NINTENDO_WII
    AND NOT NINTENDO_WIIU
    AND NOT ADLMIDI_DOS)
-    option(libADLMIDI_STATIC   "Build static library of libADLMIDI" ON)
-    option(libADLMIDI_SHARED   "Build shared library of libADLMIDI" OFF)
+
+    set(libADLMIDI_STATIC_ENABLED_BY_DEFAULT ON)
+    set(libADLMIDI_SHARED_ENABLED_BY_DEFAULT OFF)
+
+    # When defined, respect CMake's BUILD_SHARED_LIBS setting
+    if (BUILD_SHARED_LIBS)
+        set(libADLMIDI_SHARED_ENABLED_BY_DEFAULT ON)
+        set(libADLMIDI_STATIC_ENABLED_BY_DEFAULT OFF)
+    endif()
+
+    option(libADLMIDI_STATIC   "Build static library of libADLMIDI" ${libADLMIDI_STATIC_ENABLED_BY_DEFAULT})
+    option(libADLMIDI_SHARED   "Build shared library of libADLMIDI" ${libADLMIDI_SHARED_ENABLED_BY_DEFAULT})
 else()
     set(libADLMIDI_STATIC ON)
     set(libADLMIDI_SHARED OFF)
@@ -158,9 +215,18 @@ option(USE_DOSBOX_EMULATOR  "Use DosBox 0.74 OPL3 emulator (semi-accurate, sugge
 option(USE_NUKED_EMULATOR   "Use Nuked OPL3 emulator (most accurate, powerful)" ${DEFAULT_HEAVY_EMULATORS})
 option(USE_OPAL_EMULATOR    "Use Opal emulator (inaccurate)" ${DEFAULT_HEAVY_EMULATORS})
 option(USE_JAVA_EMULATOR    "Use JavaOPL emulator" ${DEFAULT_HEAVY_EMULATORS})
+option(USE_ESFMU_EMULATOR   "Use ESFMu emulator (Based on Nuked OPL3, powerful)" ${DEFAULT_HEAVY_EMULATORS})
+option(USE_MAME_EMULATOR    "Use MAME OPL2 emulator" ${DEFAULT_HEAVY_EMULATORS})
+if(COMPILER_SUPPORTS_CXX14)
+    option(USE_YMFM_EMULATOR    "Use YMFM emulator (requires C++14 support)" ON)
+endif()
+option(USE_NUKED_OPL2_LLE_EMULATOR  "Use Nuked OPL2-LLE emulator [!EXTRA HEAVY!]" OFF)
+option(USE_NUKED_OPL3_LLE_EMULATOR  "Use Nuked OPL3-LLE emulator [!EXTRA HEAVY!]" OFF)
+option(USE_HW_SERIAL        "Use the hardware OPL3 chip via Serial on modern systems" OFF)
 
 option(WITH_GENADLDATA      "Build and run full rebuild of embedded banks cache" OFF)
 option(WITH_GENADLDATA_COMMENTS "Enable comments in a generated embedded instruments cache file" OFF)
+set(GENADLDATA_CUSTOM_BANKLIST "" CACHE PATH "Use the custom INI file to build the database")
 
 option(WITH_MIDIPLAY        "Build also demo MIDI player" OFF)
 option(MIDIPLAY_WAVE_ONLY   "Build Demo MIDI player without support of real time playing. It will output into WAV only." OFF)
@@ -176,6 +242,8 @@ if(WIN32)
     option(WITH_WINMMDRV    "Build a WinMM MIDI driver" OFF)
 endif()
 
+option(ENABLE_ADDRESS_SANITIZER "Enable the Address Sanitizer GCC feature" OFF)
+
 if(NOT WIN32
    AND NOT VITA
    AND NOT NINTENDO_3DS
@@ -187,6 +255,15 @@ if(NOT WIN32
     option(ENABLE_FPIC "Build static libraries as position independent code" ON)
 else()
     set(ENABLE_FPIC OFF)
+endif()
+
+if(WITH_EMBEDDED_BANKS)
+    if(NOT WITH_GENADLDATA OR "${GENADLDATA_CUSTOM_BANKLIST}" STREQUAL "")
+        set(ADLDATA_DATABASE "${libADLMIDI_SOURCE_DIR}/src/inst_db.cpp")
+    else()
+        make_directory("${CMAKE_BINARY_DIR}/instdb")
+        set(ADLDATA_DATABASE "${CMAKE_BINARY_DIR}/instdb/inst_db.cpp")
+    endif()
 endif()
 
 function(handle_options targetLib)
@@ -203,7 +280,15 @@ function(handle_options targetLib)
         target_compile_definitions(${targetLib} PUBLIC BWMIDI_DISABLE_XMI_SUPPORT)
     endif()
 
-    if(NOT ADLMIDI_DOS)
+    if(ADLMIDI_DOS)
+        set(HAS_EMULATOR TRUE)
+        target_sources(${targetLib} PRIVATE
+            ${libADLMIDI_SOURCE_DIR}/src/chips/dos_hw_opl.cpp
+            ${libADLMIDI_SOURCE_DIR}/src/chips/dos_hw_opl.h
+        )
+        target_compile_definitions(${targetLib} PRIVATE ENABLE_HW_OPL_DOS)
+        target_compile_definitions(${targetLib} PUBLIC ADLMIDI_ENABLE_HW_DOS)
+    else()
         if(USE_DOSBOX_EMULATOR)
             set(HAS_EMULATOR TRUE)
             target_sources(${targetLib} PRIVATE
@@ -218,9 +303,13 @@ function(handle_options targetLib)
             set(HAS_EMULATOR TRUE)
             target_sources(${targetLib} PRIVATE
                 ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3.cpp       # v 1.8
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3.h
                 ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3.h
                 ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3_v174.cpp  # v 1.7.4
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3_v174.h
                 ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3_174.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3_174.h
             )
         else()
             target_compile_definitions(${targetLib} PUBLIC ADLMIDI_DISABLE_NUKED_EMULATOR)
@@ -230,6 +319,9 @@ function(handle_options targetLib)
             set(HAS_EMULATOR TRUE)
             target_sources(${targetLib} PRIVATE
                 ${libADLMIDI_SOURCE_DIR}/src/chips/opal_opl3.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/opal_opl3.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/opal/opal.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/opal/opal.h
             )
         else()
             target_compile_definitions(${targetLib} PUBLIC ADLMIDI_DISABLE_OPAL_EMULATOR)
@@ -244,15 +336,110 @@ function(handle_options targetLib)
             target_compile_definitions(${targetLib} PUBLIC ADLMIDI_DISABLE_JAVA_EMULATOR)
         endif()
 
+        if(USE_ESFMU_EMULATOR)
+            set(HAS_EMULATOR TRUE)
+            target_sources(${targetLib} PRIVATE
+                ${libADLMIDI_SOURCE_DIR}/src/chips/esfmu_opl3.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/esfmu_opl3.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/esfmu/esfm.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/esfmu/esfm_registers.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/esfmu/esfm.h
+            )
+        else()
+            target_compile_definitions(${targetLib} PUBLIC ADLMIDI_DISABLE_ESFMU_EMULATOR)
+        endif()
+
+        if(USE_MAME_EMULATOR)
+            set(HAS_EMULATOR TRUE)
+            target_sources(${targetLib} PRIVATE
+                ${libADLMIDI_SOURCE_DIR}/src/chips/mame_opl2.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/mame_opl2.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/mame/opl.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/mame/mame_fmopl.cpp
+            )
+        else()
+            target_compile_definitions(${targetLib} PUBLIC ADLMIDI_DISABLE_MAME_OPL2_EMULATOR)
+        endif()
+
+        if(USE_YMFM_EMULATOR)
+            set(YMFM_SOURCES
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm_opl2.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm_opl2.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm_opl3.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm_opl3.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_adpcm.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_adpcm.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_fm.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_fm.ipp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_misc.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_misc.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_opl.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_opl.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_pcm.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_pcm.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_ssg.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymfm/ymfm_ssg.h
+            )
+            if(DEFINED FLAG_CPP14)
+                set_source_files_properties(${YMFM_SOURCES} COMPILE_FLAGS ${FLAG_CPP14})
+            endif()
+            target_sources(${targetLib} PRIVATE ${YMFM_SOURCES})
+            set(HAS_EMULATOR TRUE)
+        else()
+            target_compile_definitions(${targetLib} PUBLIC -DADLMIDI_DISABLE_YMFM_EMULATOR)
+        endif()
+
+        if(USE_NUKED_OPL2_LLE_EMULATOR)
+            set(HAS_EMULATOR TRUE)
+            target_sources(${targetLib} PRIVATE
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ym3812_lle.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ym3812_lle.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ym3812_lle/nopl2.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ym3812_lle/nopl2.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ym3812_lle/nuked_fmopl2.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ym3812_lle/nuked_fmopl2.h
+            )
+            target_compile_definitions(${targetLib} PUBLIC ADLMIDI_ENABLE_OPL2_LLE_EMULATOR)
+        endif()
+
+        if(USE_NUKED_OPL3_LLE_EMULATOR)
+            set(HAS_EMULATOR TRUE)
+            target_sources(${targetLib} PRIVATE
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymf262_lle.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymf262_lle.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymf262_lle/nopl3.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymf262_lle/nopl3.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymf262_lle/nuked_fmopl3.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/ymf262_lle/nuked_fmopl3.h
+            )
+            target_compile_definitions(${targetLib} PUBLIC ADLMIDI_ENABLE_OPL3_LLE_EMULATOR)
+        endif()
+
+        if(USE_NUKED_OPL3_LLE_EMULATOR)
+        endif()
+
+        if(USE_HW_SERIAL)
+            set(HAS_EMULATOR TRUE)
+            target_sources(${targetLib} PRIVATE
+                ${libADLMIDI_SOURCE_DIR}/src/chips/opl_serial_port.cpp
+            )
+            target_compile_definitions(${targetLib} PRIVATE ENABLE_HW_OPL_SERIAL_PORT)
+            target_compile_definitions(${targetLib} PUBLIC ADLMIDI_ENABLE_HW_SERIAL)
+        endif()
+
         if(NOT HAS_EMULATOR)
             message(FATAL_ERROR "No emulators enabled! You must enable at least one emulator!")
         endif()
     endif()
 
     if(WITH_EMBEDDED_BANKS)
-        target_sources(${targetLib} PRIVATE
-            ${libADLMIDI_SOURCE_DIR}/src/inst_db.cpp
-        )
+        target_sources(${targetLib} PRIVATE ${ADLDATA_DATABASE})
+        if(WITH_GENADLDATA)
+            set_property(SOURCE "${ADLDATA_DATABASE}" PROPERTY INCLUDE_DIRECTORIES "${libADLMIDI_SOURCE_DIR}/src")
+            if(NOT "${GENADLDATA_CUSTOM_BANKLIST}" STREQUAL "")
+                set_property(SOURCE "${ADLDATA_DATABASE}" PROPERTY GENERATED TRUE)
+            endif()
+        endif()
     else()
         target_compile_definitions(${targetLib} PUBLIC DISABLE_EMBEDDED_BANKS)
     endif()
@@ -262,7 +449,9 @@ function(handle_options targetLib)
     endif()
 
     if(WITH_EMBEDDED_BANKS AND WITH_GENADLDATA AND NOT ADLMIDI_DOS)
-        add_dependencies(${targetLib} gen-adldata-run)
+        if("${GENADLDATA_CUSTOM_BANKLIST}" STREQUAL "")
+            add_dependencies(${targetLib} gen-adldata-run)
+        endif()
     endif()
 
     if(WITH_HQ_RESAMPLER AND NOT ADLMIDI_DOS)
@@ -272,6 +461,11 @@ function(handle_options targetLib)
         endif()
         target_compile_definitions(${targetLib} PRIVATE ADLMIDI_ENABLE_HQ_RESAMPLER)
         target_link_libraries(${targetLib} PUBLIC ${ZITA_RESAMPLER_LIBRARY})
+    endif()
+
+    if(ENABLE_ADDRESS_SANITIZER)
+        target_compile_options(${targetLib} PUBLIC -fsanitize=address)
+        target_link_options(${targetLib} PUBLIC -fsanitize=address)
     endif()
 endfunction()
 
@@ -296,7 +490,7 @@ file(GLOB libADLMIDI_HEADERS
     ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox/*.h
     ${libADLMIDI_SOURCE_DIR}/src/chips/java/*.hpp
     ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/*.h
-    ${libADLMIDI_SOURCE_DIR}/src/chips/opal/*.hpp
+    ${libADLMIDI_SOURCE_DIR}/src/chips/opal/*.h
 )
 list(APPEND libADLMIDI_SOURCES ${libADLMIDI_HEADERS})
 
@@ -308,7 +502,7 @@ if(libADLMIDI_STATIC OR WITH_VLC_PLUGIN)
     else()
         set_target_properties(ADLMIDI_static PROPERTIES OUTPUT_NAME ADLMIDI)
     endif()
-    target_include_directories(ADLMIDI_static PUBLIC ${libADLMIDI_SOURCE_DIR}/include)
+    target_include_directories(ADLMIDI_static PUBLIC $<BUILD_INTERFACE:${libADLMIDI_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
     set_legacy_standard(ADLMIDI_static)
     set_visibility_hidden(ADLMIDI_static)
     handle_options(ADLMIDI_static)
@@ -331,7 +525,7 @@ if(libADLMIDI_SHARED)
         VERSION ${libADLMIDI_VERSION}
         SOVERSION ${libADLMIDI_VERSION_MAJOR}
     )
-    target_include_directories(ADLMIDI_shared PUBLIC ${libADLMIDI_SOURCE_DIR}/include)
+    target_include_directories(ADLMIDI_shared PUBLIC $<BUILD_INTERFACE:${libADLMIDI_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
     set_legacy_standard(ADLMIDI_shared)
     set_visibility_hidden(ADLMIDI_shared)
     handle_options(ADLMIDI_shared)
@@ -366,6 +560,7 @@ function(libADLMIDI_find_SDL2)
         add_library(ADLMIDI_SDL2 INTERFACE)
         if(TARGET SDL2::SDL2)
             target_link_libraries(ADLMIDI_SDL2 INTERFACE SDL2::SDL2)
+            target_include_directories(ADLMIDI_SDL2 INTERFACE ${SDL2_INCLUDE_DIRS})
         else()
             string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
             target_include_directories(ADLMIDI_SDL2 INTERFACE ${SDL2_INCLUDE_DIRS})
@@ -413,22 +608,44 @@ if(WIN32 AND WITH_WINMMDRV)
     add_subdirectory(utils/winmm_drv)
 endif()
 
-set(libADLMIDI_INSTALLS )
-foreach(lib ADLMIDI_static ADLMIDI_shared)
-    if(TARGET ${lib})
-        list(APPEND libADLMIDI_INSTALLS ${lib})
-    endif()
-endforeach()
+if(libADLMIDI_STATIC)
+    install(TARGETS ADLMIDI_static
+            EXPORT libADLMIDIStaticTargets
+            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
-install(TARGETS ${libADLMIDI_INSTALLS}
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+    install(EXPORT libADLMIDIStaticTargets
+            FILE libADLMIDI-static-targets.cmake
+            NAMESPACE libADLMIDI::
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libADLMIDI")
+endif()
+
+if(libADLMIDI_SHARED)
+    install(TARGETS ADLMIDI_shared
+            EXPORT libADLMIDISharedTargets
+            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+
+    install(EXPORT libADLMIDISharedTargets
+            FILE libADLMIDI-shared-targets.cmake
+            NAMESPACE libADLMIDI::
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libADLMIDI")
+endif()
 
 install(FILES
         include/adlmidi.h
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(libADLMIDIConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/libADLMIDIConfig.cmake"
+    PATH_VARS CMAKE_INSTALL_PREFIX CMAKE_INSTALL_FULL_BINDIR CMAKE_INSTALL_FULL_INCLUDEDIR CMAKE_INSTALL_FULL_LIBDIR
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libADLMIDI"
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libADLMIDIConfig.cmake
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libADLMIDI"
+)
 
 file(GLOB DOCTXT_FILES
     "${libADLMIDI_SOURCE_DIR}/LICENSE*.txt"
@@ -477,6 +694,21 @@ message("USE_DOSBOX_EMULATOR      = ${USE_DOSBOX_EMULATOR}")
 message("USE_NUKED_EMULATOR       = ${USE_NUKED_EMULATOR}")
 message("USE_OPAL_EMULATOR        = ${USE_OPAL_EMULATOR}")
 message("USE_JAVA_EMULATOR        = ${USE_JAVA_EMULATOR}")
+message("USE_ESFMU_EMULATOR       = ${USE_ESFMU_EMULATOR}")
+message("USE_MAME_EMULATOR        = ${USE_MAME_EMULATOR}")
+if(COMPILER_SUPPORTS_CXX14)
+    message("USE_YMFM_EMULATOR        = ${USE_YMFM_EMULATOR}")
+endif()
+message("USE_HW_SERIAL            = ${USE_HW_SERIAL}")
+if(USE_NUKED_OPL2_LLE_EMULATOR OR USE_NUKED_OPL3_LLE_EMULATOR)
+    message(WARNING "You enabled EXTRA-HEAVY LLE emulators, they do REALLY require \
+VERY POWERFUL processor to work (For example, on Intel Core i7-11700KF (8 cores, 3.60 GHz) \
+they can work in real-time only when they built with Release optimisations, Debug builds \
+are choppy even single chip run). You can't use them on weak devices, don't even think to \
+run theom mobile. I warned. If you want, feel free to optimize them and contribute your \
+updates to @NukeYkt who created them. The only way you can use them on weaker hardware \
+is record WAVs where real-time performance doesn't matter.")
+endif()
 
 message("===== Utils and extras =====")
 message("WITH_GENADLDATA          = ${WITH_GENADLDATA}")

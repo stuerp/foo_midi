@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <mmsystem.h>
 #include <commctrl.h>
 #include <commdlg.h>
 #include <string.h>
@@ -7,6 +8,7 @@
 #include <stdlib.h>
 
 #include "config_dialog.h"
+#include "adlmidi.h" /* For ENUMs only */
 #include "resource.h"
 
 #include "regconfig.h"
@@ -38,6 +40,49 @@ static const char *const volume_models_descriptions[] =
     NULL
 };
 
+static const char *const channel_allocation_descriptions[] =
+{
+    "Auto (defined by bank)",
+    "Sounding off delay based",
+    "Same instrument",
+    "Any first released",
+    NULL
+};
+
+static const enum ADL_Emulator emulator_type_id[] =
+{
+#ifndef ADLMIDI_DISABLE_NUKED_EMULATOR
+    ADLMIDI_EMU_NUKED,
+    ADLMIDI_EMU_NUKED_174,
+#endif
+#ifndef ADLMIDI_DISABLE_DOSBOX_EMULATOR
+    ADLMIDI_EMU_DOSBOX,
+#endif
+#ifndef ADLMIDI_DISABLE_OPAL_EMULATOR
+    ADLMIDI_EMU_OPAL,
+#endif
+#ifndef ADLMIDI_DISABLE_JAVA_EMULATOR
+    ADLMIDI_EMU_JAVA,
+#endif
+#ifndef ADLMIDI_DISABLE_ESFMU_EMULATOR
+    ADLMIDI_EMU_ESFMu,
+#endif
+#ifndef ADLMIDI_DISABLE_MAME_OPL2_EMULATOR
+    ADLMIDI_EMU_MAME_OPL2,
+#endif
+#ifndef ADLMIDI_DISABLE_YMFM_EMULATOR
+    ADLMIDI_EMU_YMFM_OPL2,
+    ADLMIDI_EMU_YMFM_OPL3,
+#endif
+#ifdef ADLMIDI_ENABLE_OPL2_LLE_EMULATOR
+    ADLMIDI_EMU_NUKED_OPL2_LLE,
+#endif
+#ifdef ADLMIDI_ENABLE_OPL3_LLE_EMULATOR
+    ADLMIDI_EMU_NUKED_OPL3_LLE,
+#endif
+    ADLMIDI_EMU_end
+};
+
 static const char * const emulator_type_descriptions[] =
 {
     "Nuked OPL3 1.8",
@@ -45,11 +90,24 @@ static const char * const emulator_type_descriptions[] =
     "DOSBox",
     "Opal",
     "Java OPL3",
+    "ESFMu",
+    "MAME OPL2",
+#ifndef ADLMIDI_DISABLE_YMFM_EMULATOR
+    "YMFM OPL2",
+    "YMFM OPL3",
+#endif
+#ifdef ADLMIDI_ENABLE_OPL2_LLE_EMULATOR
+    "Nuked OPL2-LLE [!EXTRA HEAVY!]",
+#endif
+#ifdef ADLMIDI_ENABLE_OPL3_LLE_EMULATOR
+    "Nuked OPL3-LLE [!EXTRA HEAVY!]",
+#endif
     NULL
 };
 
 static DriverSettings g_setup;
 static HINSTANCE      s_hModule;
+static UINT           s_audioOutPrev = WAVE_MAPPER;
 
 static void syncBankType(HWND hwnd, int type);
 static void sync4ops(HWND hwnd);
@@ -88,6 +146,11 @@ static void syncWidget(HWND hwnd)
     else
         SendDlgItemMessage(hwnd, IDC_BANK_INTERNAL, BM_SETCHECK, 1, 0);
 
+    SendDlgItemMessage(hwnd, IDC_GAIN, TBM_SETRANGE, TRUE, MAKELPARAM(0, 1000));
+    SendDlgItemMessage(hwnd, IDC_GAIN, TBM_SETPAGESIZE, 0, 10);
+    SendDlgItemMessage(hwnd, IDC_GAIN, TBM_SETTICFREQ, 100, 0);
+    SendDlgItemMessage(hwnd, IDC_GAIN, TBM_SETPOS, TRUE, g_setup.gain100);
+
     syncBankType(hwnd, g_setup.useExternalBank);
 
     SendDlgItemMessage(hwnd, IDC_FLAG_TREMOLO, BM_SETCHECK, g_setup.flagDeepTremolo, 0);
@@ -109,6 +172,12 @@ static void syncWidget(HWND hwnd)
     updateBankName(hwnd, g_setup.bankPath);
     SendDlgItemMessageA(hwnd, IDC_EMULATOR, CB_SETCURSEL, (WPARAM)g_setup.emulatorId, (LPARAM)0);
     SendDlgItemMessageA(hwnd, IDC_VOLUMEMODEL, CB_SETCURSEL, (WPARAM)g_setup.volumeModel, (LPARAM)0);
+    SendDlgItemMessageA(hwnd, IDC_CHANALLOC, CB_SETCURSEL, (WPARAM)g_setup.chanAlloc + 1, (LPARAM)0);
+
+    if(g_setup.outputDevice == WAVE_MAPPER)
+        SendDlgItemMessageA(hwnd, IDC_AUDIOOUT, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
+    else
+        SendDlgItemMessageA(hwnd, IDC_AUDIOOUT, CB_SETCURSEL, (WPARAM)g_setup.outputDevice + 1, (LPARAM)0);
 
     sync4ops(hwnd);
 }
@@ -116,6 +185,8 @@ static void syncWidget(HWND hwnd)
 static void buildLists(HWND hwnd)
 {
     int i, bMax;
+    UINT ai, aMax;
+    WAVEOUTCAPSW wavDev;
     HMODULE lib;
     const char *const* list;
     BankNamesCount adl_getBanksCount;
@@ -152,10 +223,26 @@ static void buildLists(HWND hwnd)
         SendDlgItemMessageA(hwnd, IDC_VOLUMEMODEL, CB_ADDSTRING, (LPARAM)0, (LPARAM)volume_models_descriptions[i]);
     }
 
+    // Channel allocation mode
+    for(i = 0; channel_allocation_descriptions[i] != NULL; ++i)
+    {
+        SendDlgItemMessageA(hwnd, IDC_CHANALLOC, CB_ADDSTRING, (LPARAM)0, (LPARAM)channel_allocation_descriptions[i]);
+    }
+
     // Emulators list
     for(i = 0; emulator_type_descriptions[i] != NULL; ++i)
     {
         SendDlgItemMessageA(hwnd, IDC_EMULATOR, CB_ADDSTRING, (LPARAM)0, (LPARAM)emulator_type_descriptions[i]);
+    }
+
+    // Audio devices
+    aMax = waveOutGetNumDevs();
+    SendDlgItemMessageW(hwnd, IDC_AUDIOOUT, CB_ADDSTRING, (LPARAM)0, (WPARAM)L"[Default device]");
+    for(ai = 0; ai < aMax; ++ai)
+    {
+        memset(&wavDev, 0, sizeof(wavDev));
+        waveOutGetDevCapsW(ai, &wavDev, sizeof(wavDev));
+        SendDlgItemMessageW(hwnd, IDC_AUDIOOUT, CB_ADDSTRING, (LPARAM)0, (WPARAM)wavDev.szPname);
     }
 }
 
@@ -209,14 +296,38 @@ static void openCustomBank(HWND hwnd)
     }
 }
 
+static void warnIfOutChanged(HWND hwnd)
+{
+    if(s_audioOutPrev != g_setup.outputDevice)
+    {
+        s_audioOutPrev = g_setup.outputDevice;
+        MessageBoxW(hwnd,
+                    L"To apply the change of the audio output device, you should reload your applications.",
+                    L"Audio output device changed",
+                    MB_OK|MB_ICONINFORMATION);
+    }
+}
+
 INT_PTR CALLBACK ToolDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
+    int ret;
+
     switch(Message)
     {
     case WM_INITDIALOG:
         buildLists(hwnd);
         syncWidget(hwnd);
         return TRUE;
+
+    case WM_HSCROLL:
+        if(lParam == (LPARAM)GetDlgItem(hwnd, IDC_GAIN))
+        {
+            g_setup.gain100 = SendMessageW((HWND)lParam, (UINT)TBM_GETPOS, (WPARAM)0, (LPARAM)0);
+            saveGain(&g_setup);
+            sendSignal(DRV_SIGNAL_UPDATE_GAIN);
+            break;
+        }
+        break;
 
     case WM_COMMAND:
         switch(LOWORD(wParam))
@@ -229,6 +340,17 @@ INT_PTR CALLBACK ToolDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPar
                         L"About this driver",
                         MB_OK);
         break;
+
+        case IDC_AUDIOOUT:
+            if(HIWORD(wParam) == CBN_SELCHANGE)
+            {
+                g_setup.outputDevice = SendMessageW((HWND)lParam, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                if(g_setup.outputDevice == 0)
+                    g_setup.outputDevice = WAVE_MAPPER;
+                else
+                    g_setup.outputDevice--;
+            }
+            break;
 
         case IDC_NUM_CHIPS:
             if(HIWORD(wParam) == CBN_SELCHANGE)
@@ -249,7 +371,9 @@ INT_PTR CALLBACK ToolDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPar
         case IDC_EMULATOR:
             if(HIWORD(wParam) == CBN_SELCHANGE)
             {
-                g_setup.emulatorId = SendMessageW((HWND)lParam, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                ret = SendMessageW((HWND)lParam, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                if(ret >= 0 && ret < ADLMIDI_EMU_end)
+                    g_setup.emulatorId = (int)emulator_type_id[ret];
             }
             break;
 
@@ -257,6 +381,13 @@ INT_PTR CALLBACK ToolDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPar
             if(HIWORD(wParam) == CBN_SELCHANGE)
             {
                 g_setup.volumeModel = SendMessageW((HWND)lParam, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+            }
+            break;
+
+        case IDC_CHANALLOC:
+            if(HIWORD(wParam) == CBN_SELCHANGE)
+            {
+                g_setup.chanAlloc = SendMessageW((HWND)lParam, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0) - 1;
             }
             break;
 
@@ -329,11 +460,13 @@ INT_PTR CALLBACK ToolDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPar
         case IDC_APPLYBUTTON:
             saveSetup(&g_setup);
             sendSignal(DRV_SIGNAL_RELOAD_SETUP);
+            warnIfOutChanged(hwnd);
             break;
 
         case IDOK:
             saveSetup(&g_setup);
             sendSignal(DRV_SIGNAL_RELOAD_SETUP);
+            warnIfOutChanged(hwnd);
             EndDialog(hwnd, IDOK);
             break;
 
@@ -358,6 +491,8 @@ BOOL runAdlSetupBox(HINSTANCE hModule, HWND hwnd)
     s_hModule = hModule;
 
     loadSetup(&g_setup);
+    // Keep the last audio output setup for the future
+    s_audioOutPrev = g_setup.outputDevice;
 
     DialogBoxW(hModule, MAKEINTRESOURCEW(IDD_CONFIG_BOX), hwnd, ToolDlgProc);
 

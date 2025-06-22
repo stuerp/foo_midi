@@ -15,6 +15,9 @@
 #include "../../libADLMIDI/src/chips/nuked/nukedopl3.h"
 #include "../interface.h"
 
+typedef uint64_t    Bit64u;
+typedef int16_t     Bit16s;
+
 class opl3class : public fm_chip {
 	private:
 	opl3_chip chip;

@@ -1,7 +1,7 @@
 /*
  * BW_Midi_Sequencer - MIDI Sequencer for C++
  *
- * Copyright (c) 2015-2022 Vitaly Novichkov <admin@wohlnet.ru>
+ * Copyright (c) 2015-2025 Vitaly Novichkov <admin@wohlnet.ru>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -225,8 +225,15 @@ class BW_MidiSequencer
             {}
         };
         std::vector<TrackInfo> track;
-        Position(): began(false), wait(0.0), absTimePosition(0.0), track()
-        {}
+        Position():
+            began(false),
+            wait(0.0),
+            absTimePosition(0.0),
+            track()
+        {
+            for(size_t i = 0; i < 7; ++i)
+                __padding[i] = 0;
+        }
     };
 
     //! MIDI Output interface context
@@ -450,6 +457,13 @@ private:
         //! Current level on the loop stack (<0 - out of loop, 0++ - the index in the loop stack)
         int                         stackLevel;
 
+        //! Constructor to initialize member variables
+        LoopState()
+                : caughtStart(false), caughtEnd(false), caughtStackStart(false),
+                caughtStackEnd(false), caughtStackBreak(false), skipStackStart(false),
+                invalidLoop(false), temporaryBroken(false), loopsCount(-1), loopsLeft(0),
+                stackLevel(-1)
+                {}
         /**
          * @brief Reset loop state to initial
          */

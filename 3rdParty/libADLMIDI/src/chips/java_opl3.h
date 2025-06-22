@@ -1,7 +1,7 @@
 /*
  * Interfaces over Yamaha OPL3 (YMF262) chip emulators
  *
- * Copyright (c) 2017-2022 Vitaly Novichkov (Wohlstand)
+ * Copyright (c) 2017-2025 Vitaly Novichkov (Wohlstand)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,6 +40,7 @@ public:
     void nativeGenerateN(int16_t *output, size_t frames) override;
     const char *emulatorName() override;
     ChipType chipType() override;
+    bool hasFullPanning() override;
 };
 
 #endif // JAVA_OPL3_H

@@ -3,7 +3,7 @@
  * a Software MIDI synthesizer library with OPL3 emulation
  *
  * Original ADLMIDI code: Copyright (c) 2010-2014 Joel Yliluoma <bisqwit@iki.fi>
- * ADLMIDI Library API:   Copyright (c) 2015-2022 Vitaly Novichkov <admin@wohlnet.ru>
+ * ADLMIDI Library API:   Copyright (c) 2015-2025 Vitaly Novichkov <admin@wohlnet.ru>
  *
  * Library is based on the ADLMIDI, a MIDI player for Linux and Windows with OPL3 emulation:
  * http://iki.fi/bisqwit/source/adlmidi.html
@@ -46,13 +46,33 @@ int audio_init(struct AudioOutputSpec *in_spec, struct AudioOutputSpec *out_obta
     case ADLMIDI_SampleType_U8:
         spec.format = AUDIO_U8; break;
     case ADLMIDI_SampleType_S16:
-        spec.format = in_spec->is_msb ? AUDIO_S16MSB : AUDIO_S16; break;
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        spec.format = AUDIO_S16;
+#else
+        spec.format = AUDIO_S16MSB;
+#endif
+        break;
     case ADLMIDI_SampleType_U16:
-        spec.format = in_spec->is_msb ? AUDIO_U16MSB : AUDIO_U16; break;
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        spec.format = AUDIO_U16;
+#else
+        spec.format = AUDIO_U16MSB;
+#endif
+        break;
     case ADLMIDI_SampleType_S32:
-        spec.format = in_spec->is_msb ? AUDIO_S32MSB : AUDIO_S32; break;
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        spec.format = AUDIO_S32;
+#else
+        spec.format = AUDIO_S32MSB;
+#endif
+        break;
     case ADLMIDI_SampleType_F32:
-        spec.format = in_spec->is_msb ? AUDIO_F32MSB : AUDIO_F32; break;
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        spec.format = AUDIO_F32;
+#else
+        spec.format = AUDIO_F32MSB;
+#endif
+        break;
     }
 
     ret = SDL_OpenAudio(&spec, &obtained);

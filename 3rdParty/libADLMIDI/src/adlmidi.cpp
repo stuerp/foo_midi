@@ -2,7 +2,7 @@
  * libADLMIDI is a free Software MIDI synthesizer library with OPL3 emulation
  *
  * Original ADLMIDI code: Copyright (c) 2010-2014 Joel Yliluoma <bisqwit@iki.fi>
- * ADLMIDI Library API:   Copyright (c) 2015-2022 Vitaly Novichkov <admin@wohlnet.ru>
+ * ADLMIDI Library API:   Copyright (c) 2015-2025 Vitaly Novichkov <admin@wohlnet.ru>
  *
  * Library is based on the ADLMIDI, a MIDI player for Linux and Windows with OPL3 emulation:
  * http://iki.fi/bisqwit/source/adlmidi.html
@@ -24,11 +24,12 @@
 #include "adlmidi_midiplay.hpp"
 #include "adlmidi_opl3.hpp"
 #include "adlmidi_private.hpp"
-#ifndef ADLMIDI_HW_OPL
 #include "chips/opl_chip_base.h"
-#endif
 #ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
-#include "midi_sequencer.hpp"
+#   include "midi_sequencer.hpp"
+#endif
+#ifdef ENABLE_HW_OPL_DOS
+#   include "chips/dos_hw_opl.h"
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
@@ -131,13 +132,19 @@ ADLMIDI_EXPORT int adl_setNumChips(ADL_MIDIPlayer *device, int numChips)
 
     MidiPlayer *play = GET_MIDI_PLAYER(device);
     assert(play);
+
+#ifdef ADLMIDI_ENABLE_HW_SERIAL
+    if(play->m_setup.serial)
+        numChips = 1;
+#endif
+
 #ifdef ADLMIDI_HW_OPL
-    ADL_UNUSED(numChips);
-    play->m_setup.numChips = 1;
+    play->m_setup.numChips = numChips > 2 ? 1 : static_cast<unsigned int>(numChips);
 #else
     play->m_setup.numChips = static_cast<unsigned int>(numChips);
 #endif
-    if(play->m_setup.numChips < 1 || play->m_setup.numChips > ADL_MAX_CHIPS)
+
+    if((play->m_setup.numChips < 1) || (play->m_setup.numChips > ADL_MAX_CHIPS))
     {
         play->setErrorString("number of chips may only be 1.." ADL_MAX_CHIPS_STR ".\n");
         return -1;
@@ -618,6 +625,10 @@ ADLMIDI_EXPORT void adl_setSoftPanEnabled(ADL_MIDIPlayer *device, int softPanEn)
     MidiPlayer *play = GET_MIDI_PLAYER(device);
     assert(play);
     play->m_synth->m_softPanning = (softPanEn != 0);
+#ifdef ADLMIDI_ENABLE_HW_SERIAL
+    if(play->m_setup.serial) // Soft-panning won't work while serial is active
+        play->m_synth->m_softPanning = false;
+#endif
 }
 
 /* !!!DEPRECATED!!! */
@@ -824,15 +835,11 @@ ADLMIDI_EXPORT const char *adl_chipEmulatorName(struct ADL_MIDIPlayer *device)
 {
     if(device)
     {
-#ifndef ADLMIDI_HW_OPL
         MidiPlayer *play = GET_MIDI_PLAYER(device);
         assert(play);
         Synth &synth = *play->m_synth;
         if(!synth.m_chips.empty())
             return synth.m_chips[0]->emulatorName();
-#else
-        return "Hardware OPL3 chip on 0x330";
-#endif
     }
     return "Unknown";
 }
@@ -846,6 +853,9 @@ ADLMIDI_EXPORT int adl_switchEmulator(struct ADL_MIDIPlayer *device, int emulato
         if(adl_isEmulatorAvailable(emulator))
         {
             play->m_setup.emulator = emulator;
+#ifdef ADLMIDI_ENABLE_HW_SERIAL
+            play->m_setup.serial = false;
+#endif
             play->partialReset();
             return 0;
         }
@@ -870,6 +880,56 @@ ADLMIDI_EXPORT int adl_setRunAtPcmRate(ADL_MIDIPlayer *device, int enabled)
     return -1;
 }
 
+ADLMIDI_EXPORT int adl_switchSerialHW(struct ADL_MIDIPlayer *device,
+                                      const char *name,
+                                      unsigned baud,
+                                      unsigned protocol)
+{
+    if(device)
+    {
+        MidiPlayer *play = GET_MIDI_PLAYER(device);
+        assert(play);
+#ifdef ADLMIDI_ENABLE_HW_SERIAL
+        play->m_setup.serial = true;
+        play->m_setup.serialName = std::string(name);
+        play->m_setup.serialBaud = baud;
+        play->m_setup.serialProtocol = protocol;
+        play->partialReset();
+        return 0;
+#else
+        (void)name; (void)baud; (void)protocol;
+        play->setErrorString("ADLMIDI: The hardware serial mode is not enabled in this build");
+        return -1;
+#endif
+    }
+
+    return -1;
+}
+
+int adl_switchDOSHW(int chipType, ADL_UInt16 baseAddress)
+{
+#ifdef ENABLE_HW_OPL_DOS
+    if(baseAddress > 0)
+        DOS_HW_OPL::setOplAddress(baseAddress);
+
+    switch(chipType)
+    {
+    case ADLMIDI_DOS_ChipAuto:
+        break;
+
+    case ADLMIDI_DOS_ChipOPL2:
+        DOS_HW_OPL::setChipType(OPLChipBase::CHIPTYPE_OPL2);
+        break;
+    case ADLMIDI_DOS_ChipOPL3:
+        DOS_HW_OPL::setChipType(OPLChipBase::CHIPTYPE_OPL3);
+        break;
+    }
+#else
+    (void)chipType;
+    (void)baseAddress;
+#endif
+    return -1;
+}
 
 ADLMIDI_EXPORT const char *adl_linkedLibraryVersion()
 {
@@ -1476,10 +1536,8 @@ ADLMIDI_EXPORT int adl_playFormat(ADL_MIDIPlayer *device, int sampleCount,
             Synth &synth = *player->m_synth;
             unsigned int chips = synth.m_numChips;
             if(chips == 1)
-            {
                 synth.m_chips[0]->generate32(out_buf, (size_t)in_generatedStereo);
-            }
-            else if(n_periodCountStereo > 0)
+            else/* if(n_periodCountStereo > 0)*/
             {
                 /* Generate data from every chip and mix result */
                 for(size_t card = 0; card < chips; ++card)
@@ -1500,7 +1558,10 @@ ADLMIDI_EXPORT int adl_playFormat(ADL_MIDIPlayer *device, int sampleCount,
             hasSkipped = setup.tick_skip_samples_delay > 0;
         }
         else
+        {
             setup.delay = player->Tick(eat_delay, setup.mindelay);
+            player->TickIterators(eat_delay);
+        }
     }
 
     return static_cast<int>(gotten_len);
@@ -1595,6 +1656,24 @@ ADLMIDI_EXPORT double adl_tickEvents(struct ADL_MIDIPlayer *device, double secon
         return -1.0;
     MidiPlayer *play = GET_MIDI_PLAYER(device);
     assert(play);
+    double ret = play->Tick(seconds, granulality);
+    play->TickIterators(seconds);
+    return ret;
+#else
+    ADL_UNUSED(device);
+    ADL_UNUSED(seconds);
+    ADL_UNUSED(granulality);
+    return -1.0;
+#endif
+}
+
+ADLMIDI_EXPORT double adl_tickEventsOnly(struct ADL_MIDIPlayer *device, double seconds, double granulality)
+{
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
+    if(!device)
+        return -1.0;
+    MidiPlayer *play = GET_MIDI_PLAYER(device);
+    assert(play);
     return play->Tick(seconds, granulality);
 #else
     ADL_UNUSED(device);
@@ -1602,6 +1681,14 @@ ADLMIDI_EXPORT double adl_tickEvents(struct ADL_MIDIPlayer *device, double secon
     ADL_UNUSED(granulality);
     return -1.0;
 #endif
+}
+
+ADLMIDI_EXPORT void adl_tickIterators(struct ADL_MIDIPlayer *device, double seconds)
+{
+    if(!device)
+        return;
+    MidiPlayer *play = GET_MIDI_PLAYER(device);
+    play->TickIterators(seconds);
 }
 
 ADLMIDI_EXPORT int adl_atEnd(struct ADL_MIDIPlayer *device)

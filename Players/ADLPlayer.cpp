@@ -1,9 +1,11 @@
 
-/** $VER: ADLPlayer.cpp (2023.09.27) **/
+/** $VER: ADLPlayer.cpp (2025.06.22) **/
 
 #include "pch.h"
 
 #include "ADLPlayer.h"
+
+#include "Encoding.h"
 
 ADLPlayer::ADLPlayer() : player_t()
 {
@@ -15,32 +17,56 @@ ADLPlayer::~ADLPlayer()
     Shutdown();
 }
 
-void ADLPlayer::SetCore(uint32_t emuCore)
-{
-    _EmuCore = emuCore;
-}
-
-void ADLPlayer::SetBank(uint32_t bankNumber)
-{
-    _BankNumber = bankNumber;
-}
-
+/// <summary>
+/// Sets the number of emulated chips (from 1 to 100). Emulation of multiple chips extends polyphony limits.
+/// </summary>
 void ADLPlayer::SetChipCount(uint32_t chipCount)
 {
+    if (chipCount < 1 || chipCount > 100)
+        throw std::out_of_range(::FormatText("Invalid chip count %u. Should be between 1 and 100", chipCount));
+
     _ChipCount = chipCount;
 }
 
-void ADLPlayer::Set4OpCount(uint32_t count)
+/// <summary>
+/// Sets the number of 4-operator channels between all chips.
+/// </summary>
+void ADLPlayer::Set4OpChannelCount(uint32_t fourOpChannelCount) noexcept
 {
-    _4OpCount = count;
+    _4OpChannelCount = fourOpChannelCount;
 }
 
-void ADLPlayer::SetFullPanning(bool enabled)
+/// <summary>
+/// Sets the emulator core to use.
+/// </summary>
+void ADLPlayer::SetEmulatorCore(uint32_t emulatorCore) noexcept
+{
+    _EmulatorCore = emulatorCore;
+}
+
+/// <summary>
+/// Sets the index of the selected patches bank (0 to adl_getBanksCount()).
+/// </summary>
+void ADLPlayer::SetBankNumber(uint32_t bankNumber)
+{
+    if (bankNumber >= (uint32_t) ::adl_getBanksCount())
+        throw std::out_of_range(::FormatText("Invalid bank number %u. Must be less than %u", bankNumber, ::adl_getBanksCount()));
+
+    _BankNumber = bankNumber;
+}
+
+/// <summary>
+/// Enables or disables soft panning with chip emulators.
+/// </summary>
+void ADLPlayer::SetFullPanning(bool enabled) noexcept
 {
     _FullPanning = enabled;
 }
 
-void ADLPlayer::SetBankFilePath(pfc::string filePath)
+/// <summary>
+/// Sets the file path of the WOPL bank file.
+/// </summary>
+void ADLPlayer::SetBankFilePath(const std::string & filePath) noexcept
 {
     _BankFilePath = filePath;
 }
@@ -50,25 +76,25 @@ bool ADLPlayer::Startup()
     if (_Player[0] && _Player[1] && _Player[2])
         return true;
 
-    int chips_per_port = (int)(_ChipCount / 3);
-    int chips_round = (_ChipCount % 3) != 0;
-    int chips_min = _ChipCount < 3;
+    const int ChipsPerPort = (int) (_ChipCount / _countof(_Player));
+    const int ChipsRound   = (_ChipCount % _countof(_Player)) != 0;
+    const int ChipsMin     = _ChipCount < _countof(_Player);
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < _countof(_Player); ++i)
     {
-        ADL_MIDIPlayer * Player = this->_Player[i] = ::adl_init((long) _SampleRate);
+        ADL_MIDIPlayer * Player = _Player[i] = ::adl_init((long) _SampleRate);
 
         if (Player == nullptr)
             return false;
 
-        if ((_BankFilePath.length() == 0) || (::adl_openBankFile(Player, _BankFilePath.c_str()) == -1))
-            ::adl_setBank(Player, (int)_BankNumber);
+        if (_BankFilePath.empty() || (::adl_openBankFile(Player, _BankFilePath.c_str()) == -1))
+            ::adl_setBank(Player, (int) _BankNumber);
 
-        ::adl_setNumChips(Player, chips_per_port + chips_round * (i == 0) + chips_min * (i != 0));
-        ::adl_setNumFourOpsChn(Player, (int) _4OpCount);
+        ::adl_setNumChips(Player, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0));
+        ::adl_setNumFourOpsChn(Player, (int) _4OpChannelCount);
         ::adl_setSoftPanEnabled(Player, _FullPanning);
-        ::adl_setDeviceIdentifier(Player, (unsigned int) i);
-        ::adl_switchEmulator(Player, (int) _EmuCore);
+        ::adl_setDeviceIdentifier(Player, (unsigned int) i); // Set 4-bit device identifier. Used by the SysEx processor.
+        ::adl_switchEmulator(Player, (int) _EmulatorCore);
         ::adl_reset(Player);
     }
 
@@ -81,7 +107,7 @@ bool ADLPlayer::Startup()
 
 void ADLPlayer::Shutdown()
 {
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < _countof(_Player); ++i)
     {
         ::adl_close(_Player[i]);
         _Player[i] = nullptr;
@@ -103,7 +129,7 @@ void ADLPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 
         ::memset(sampleData, 0, ((size_t) ToDo * 2) * sizeof(audio_sample));
 
-        for (size_t i = 0; i < 3; ++i)
+        for (size_t i = 0; i < _countof(_Player); ++i)
         {
             ::adl_generate(_Player[i], (int) (ToDo * 2), Data);
 
@@ -121,20 +147,20 @@ void ADLPlayer::SendEvent(uint32_t message)
 {
     ADL_UInt8 Event[3]
     {
-        static_cast<ADL_UInt8>(message),
-        static_cast<ADL_UInt8>(message >> 8),
-        static_cast<ADL_UInt8>(message >> 16)
+        (ADL_UInt8) (message),
+        (ADL_UInt8) (message >>  8),
+        (ADL_UInt8) (message >> 16)
     };
 
-    unsigned Port = (message >> 24) & 3;
+    size_t Port = (message >> 24) & _countof(_Player);
 
+    const ADL_UInt8 Status = message & 0xF0;
     const ADL_UInt8 Channel = message & 0x0F;
-    const ADL_UInt8 Command = message & 0xF0;
 
     if (Port > 2)
         Port = 0;
 
-    switch (Command)
+    switch (Status)
     {
         case 0x80:
             ::adl_rt_noteOff(_Player[Port], Channel, Event[1]);

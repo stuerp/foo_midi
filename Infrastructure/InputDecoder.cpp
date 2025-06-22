@@ -598,12 +598,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             {
                 auto Player = new ADLPlayer;
 
-                Player->SetBank(Preset._ADLBankNumber);
-                Player->SetBankFilePath(Preset._ADLBankFilePath);
+                Player->SetBankNumber(Preset._ADLBankNumber);
+                Player->SetBankFilePath(Preset._ADLBankFilePath.c_str());
                 Player->SetChipCount(Preset._ADLChipCount);
-                Player->SetFullPanning(Preset._ADLUsePanning);
-                Player->Set4OpCount(Preset._ADLChipCount * 4 /*cfg_adl_4op*/);
-                Player->SetCore(Preset._ADLEmulatorCore);
+                Player->Set4OpChannelCount(Preset._ADLChipCount * 4);
+                Player->SetFullPanning(Preset._ADLUsePanning); // Call after SetBankNumber()!
+                Player->SetEmulatorCore(Preset._ADLEmulatorCore);
                 Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
                 _Player = Player;
@@ -631,7 +631,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Player->SetBank(Preset._OPNBankNumber);
                 Player->SetChipCount(Preset._ADLChipCount);
                 Player->SetFullPanning(Preset._ADLUsePanning);
-                Player->SetCore(Preset._OPNEmulatorCore);
+                Player->SetEmulatorCore(Preset._OPNEmulatorCore);
 
                 _Player = Player;
             }

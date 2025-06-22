@@ -1,7 +1,7 @@
 /*
  * Interfaces over Yamaha OPL3 (YMF262) chip emulators
  *
- * Copyright (c) 2017-2022 Vitaly Novichkov (Wohlstand)
+ * Copyright (c) 2017-2025 Vitaly Novichkov (Wohlstand)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,7 +32,7 @@ JavaOPL3::JavaOPL3() :
     OPLChipBaseBufferedT(),
     m_chip(new ADL_JavaOPL3::OPL3(true))
 {
-    reset();
+    JavaOPL3::reset();
 }
 
 JavaOPL3::~JavaOPL3()
@@ -109,6 +109,11 @@ void JavaOPL3::nativeGenerateN(int16_t *output, size_t frames)
 const char *JavaOPL3::emulatorName()
 {
     return "Java 1.0.6 OPL3";
+}
+
+bool JavaOPL3::hasFullPanning()
+{
+    return true;
 }
 
 OPLChipBase::ChipType JavaOPL3::chipType()

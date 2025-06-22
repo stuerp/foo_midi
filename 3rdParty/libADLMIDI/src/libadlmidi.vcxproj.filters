@@ -9,15 +9,8 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\adlmidi_bankmap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -96,13 +89,88 @@
     <ClInclude Include="..\src\chips\nuked\nukedopl3_174.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\chips\opal\opal.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\wopl\wopl_file.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\structures\pl_list.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\chips\esfmu\esfm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\dos_hw_opl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\esfmu_opl3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\mame_opl2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ym3812_lle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymf262_lle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm_opl2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm_opl3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm\ymfm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm\ymfm_adpcm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm\ymfm_fm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm\ymfm_fm.ipp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm\ymfm_misc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm\ymfm_opl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm\ymfm_pcm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymfm\ymfm_ssg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\java\JavaOPL3.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\mame\opl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\opal\old\opal-orig.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\opal\opal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ym3812_lle\nopl2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ym3812_lle\nuked_fmopl2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymf262_lle\nopl3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\ymf262_lle\nuked_fmopl3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\opl_serial_misc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chips\opl_serial_port.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -153,6 +221,69 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\wopl\wopl_file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\chips\esfmu\esfm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\chips\esfmu\esfm_registers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\dos_hw_opl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\esfmu_opl3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\mame_opl2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ym3812_lle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymf262_lle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymfm_opl2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymfm_opl3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymfm\ymfm_adpcm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymfm\ymfm_misc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymfm\ymfm_opl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymfm\ymfm_pcm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymfm\ymfm_ssg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\mame\mame_fmopl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\opal\opal.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ym3812_lle\nopl2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ym3812_lle\nuked_fmopl2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymf262_lle\nopl3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\ymf262_lle\nuked_fmopl3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chips\opl_serial_port.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

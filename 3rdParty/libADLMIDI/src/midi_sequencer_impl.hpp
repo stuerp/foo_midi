@@ -1,7 +1,7 @@
 /*
  * BW_Midi_Sequencer - MIDI Sequencer for C++
  *
- * Copyright (c) 2015-2022 Vitaly Novichkov <admin@wohlnet.ru>
+ * Copyright (c) 2015-2025 Vitaly Novichkov <admin@wohlnet.ru>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,7 @@
 #include <assert.h>
 
 #if defined(VITA)
+#define timingsafe_memcmp  timingsafe_memcmp_workaround // Workaround to fix the C declaration conflict
 #include <psp2kern/kernel/sysclib.h> // snprintf
 #endif
 
@@ -853,7 +854,7 @@ void BW_MidiSequencer::buildTimeLine(const std::vector<MidiEvent> &tempos,
     {
         fraction<uint64_t> currentTempo = m_tempo;
         double  time = 0.0;
-        uint64_t abs_position = 0;
+        // uint64_t abs_position = 0;
         size_t tempo_change_index = 0;
         MidiTrackQueue &track = m_trackData[tk];
         if(track.empty())
@@ -965,7 +966,7 @@ void BW_MidiSequencer::buildTimeLine(const std::vector<MidiEvent> &tempos,
             std::fflush(stdout);
 #endif
 
-            abs_position += pos.delay;
+            // abs_position += pos.delay;
             posPrev = &pos;
         }
 
@@ -1760,7 +1761,7 @@ BW_MidiSequencer::MidiEvent BW_MidiSequencer::parseEvent(const uint8_t **pptr, c
                 }
             }
 
-            if(m_format == Format_XMIDI)
+            else if(m_format == Format_XMIDI)
             {
                 switch(evt.data[0])
                 {
@@ -1806,6 +1807,38 @@ BW_MidiSequencer::MidiEvent BW_MidiSequencer::parseEvent(const uint8_t **pptr, c
                     evt.subtype = MidiEvent::ST_CALLBACK_TRIGGER;
                     evt.data.assign(1, evt.data[1]);
                     break;
+                }
+            }
+
+            else if(m_format == Format_CMF)
+            {
+                switch(evt.data[0])
+                {
+                case 102: // Song markers (0x66)
+                    evt.type = MidiEvent::T_SPECIAL;
+                    evt.subtype = MidiEvent::ST_CALLBACK_TRIGGER;
+                    evt.data.assign(1, evt.data[1]);
+                    break;
+
+                case 104: // Transpose Up (0x68), convert into pitch bend
+                {
+                    int16_t bend = 8192 + (((int)evt.data[1] * 8192) / 128);
+                    evt.type = MidiEvent::T_WHEEL;
+                    evt.data.resize(2);
+                    evt.data[0] = (bend & 0x7F);
+                    evt.data[1] = ((bend >> 7) & 0x7F);
+                    break;
+                }
+
+                case 105: // Transpose Down (0x69), convert into pitch bend
+                {
+                    int16_t bend = 8192 - (((int)evt.data[1] * 8192) / 128);
+                    evt.type = MidiEvent::T_WHEEL;
+                    evt.data.resize(2);
+                    evt.data[0] = (bend & 0x7F);
+                    evt.data[1] = ((bend >> 7) & 0x7F);
+                    break;
+                }
                 }
             }
         }
@@ -2250,9 +2283,9 @@ static bool detectRSXX(const char *head, FileAndMemReader &fr)
     bool ret = false;
 
     // Try to identify RSXX format
-    if(head[0] == 0x7D)
+    if(head[0] >= 0x5D && fr.fileSize() > reinterpret_cast<const uint8_t*>(head)[0])
     {
-        fr.seek(0x6D, FileAndMemReader::SET);
+        fr.seek(head[0] - 0x10, FileAndMemReader::SET);
         fr.read(headerBuf, 1, 6);
         if(std::memcmp(headerBuf, "rsxx}u", 6) == 0)
             ret = true;
@@ -2496,14 +2529,20 @@ bool BW_MidiSequencer::parseRSXX(FileAndMemReader &fr)
     }
 
     // Try to identify RSXX format
-    if(headerBuf[0] == 0x7D)
+    char start = headerBuf[0];
+    if(start < 0x5D)
     {
-        fr.seek(0x6D, FileAndMemReader::SET);
+        m_errorString = "RSXX song too short!\n";
+        return false;
+    }
+    else
+    {
+        fr.seek(start - 0x10, FileAndMemReader::SET);
         fr.read(headerBuf, 1, 6);
         if(std::memcmp(headerBuf, "rsxx}u", 6) == 0)
         {
             m_format = Format_RSXX;
-            fr.seek(0x7D, FileAndMemReader::SET);
+            fr.seek(start, FileAndMemReader::SET);
             trackCount = 1;
             deltaTicks = 60;
         }

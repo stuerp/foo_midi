@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.h (2023.09.27) **/
+/** $VER: ADLPlayer.h (2025.06.22) **/
 
 #pragma once
 
@@ -12,25 +12,19 @@
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 class ADLPlayer : public player_t
 {
 public:
     ADLPlayer();
     virtual ~ADLPlayer();
 
-    enum
-    {
-        ADLMIDI_EMU_NUKED = 0,
-        ADLMIDI_EMU_NUKED_174,
-        ADLMIDI_EMU_DOSBOX
-    };
-
-    void SetCore(uint32_t);
-    void SetBank(uint32_t);
+    void SetEmulatorCore(uint32_t) noexcept;
+    void SetBankNumber(uint32_t);
     void SetChipCount(uint32_t);
-    void Set4OpCount(uint32_t);
-    void SetFullPanning(bool);
-    void SetBankFilePath(pfc::string filePath);
+    void Set4OpChannelCount(uint32_t) noexcept;
+    void SetFullPanning(bool) noexcept;
+    void SetBankFilePath(const std::string & filePath) noexcept;
 
 protected:
     virtual bool Startup() override;
@@ -43,11 +37,12 @@ protected:
 private:
     struct ADL_MIDIPlayer * _Player[3];
 
-    uint32_t _EmuCore;
+    uint32_t _EmulatorCore;
     uint32_t _BankNumber;
     uint32_t _ChipCount;
-    uint32_t _4OpCount;
+    uint32_t _4OpChannelCount;
     bool _FullPanning;
-    pfc::string _BankFilePath;
+    std::string _BankFilePath;
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

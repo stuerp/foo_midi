@@ -96,8 +96,11 @@ To create the component first build the x64 configuration and next the x86 confi
 
 * v2.19.0.0-alpha2, 2025-xx-xx
 
-* New: Started to write end user [documentation](docs/README.md).
+* New: End User [documentation](docs/README.md) (*Work in Progress*)
 * Improved: Updated LibMT32Emu to v2.7.2.
+* Improved: LibADLMIDI configuration
+  * Separate Preferences page.
+  * Added Opal, Java, ESFMu, MAME OPL2, YMFM OPL2, YMFM OPL3, Nuked OPL2 LLE and Nuked OPL3 LLE as selectable emulator cores.
 * Fixed: An old threading issue caused by allowing the MIDI channels to be enabled or disabled during playback.
 
 * v2.19.0.0-alpha1, 2025-06-16

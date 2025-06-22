@@ -2,7 +2,7 @@
  * libADLMIDI is a free Software MIDI synthesizer library with OPL3 emulation
  *
  * Original ADLMIDI code: Copyright (c) 2010-2014 Joel Yliluoma <bisqwit@iki.fi>
- * ADLMIDI Library API:   Copyright (c) 2015-2022 Vitaly Novichkov <admin@wohlnet.ru>
+ * ADLMIDI Library API:   Copyright (c) 2015-2025 Vitaly Novichkov <admin@wohlnet.ru>
  *
  * Library is based on the ADLMIDI, a MIDI player for Linux and Windows with OPL3 emulation:
  * http://iki.fi/bisqwit/source/adlmidi.html
@@ -26,17 +26,20 @@
 #include <stdlib.h>
 #include <cassert>
 
-#ifndef DISABLE_EMBEDDED_BANKS
-#include "wopl/wopl_file.h"
-#endif
 
-#ifdef ADLMIDI_HW_OPL
-static const unsigned OPLBase = 0x388;
+#ifdef ENABLE_HW_OPL_DOS
+#   include "chips/dos_hw_opl.h"
 #else
 #   if defined(ADLMIDI_DISABLE_NUKED_EMULATOR) && \
        defined(ADLMIDI_DISABLE_DOSBOX_EMULATOR) && \
        defined(ADLMIDI_DISABLE_OPAL_EMULATOR) && \
-       defined(ADLMIDI_DISABLE_JAVA_EMULATOR)
+       defined(ADLMIDI_DISABLE_JAVA_EMULATOR) && \
+       defined(ADLMIDI_DISABLE_ESFMU_EMULATOR) && \
+       defined(ADLMIDI_DISABLE_MAME_OPL2_EMULATOR) && \
+       defined(ADLMIDI_DISABLE_YMFM_EMULATOR) && \
+       !defined(ADLMIDI_ENABLE_OPL2_LLE_EMULATOR) && \
+       !defined(ADLMIDI_ENABLE_OPL3_LLE_EMULATOR) && \
+       !defined(ADLMIDI_ENABLE_HW_SERIAL)
 #       error "No emulators enabled. You must enable at least one emulator to use this library!"
 #   endif
 
@@ -60,10 +63,41 @@ static const unsigned OPLBase = 0x388;
 #   ifndef ADLMIDI_DISABLE_JAVA_EMULATOR
 #       include "chips/java_opl3.h"
 #   endif
+
+// ESFMu emulator
+#   ifndef ADLMIDI_DISABLE_ESFMU_EMULATOR
+#       include "chips/esfmu_opl3.h"
+#   endif
+
+// MAME OPL2 emulator
+#   ifndef ADLMIDI_DISABLE_MAME_OPL2_EMULATOR
+#       include "chips/mame_opl2.h"
+#   endif
+
+// YMFM emulators
+#   ifndef ADLMIDI_DISABLE_YMFM_EMULATOR
+#       include "chips/ymfm_opl2.h"
+#       include "chips/ymfm_opl3.h"
+#   endif
+
+// Nuked OPL2 LLE emulator
+#   ifdef ADLMIDI_ENABLE_OPL2_LLE_EMULATOR
+#       include "chips/ym3812_lle.h"
+#   endif
+
+// Nuked OPL3 LLE emulator
+#   ifdef ADLMIDI_ENABLE_OPL3_LLE_EMULATOR
+#       include "chips/ymf262_lle.h"
+#   endif
+
+// HW OPL Serial
+#   ifdef ADLMIDI_ENABLE_HW_SERIAL
+#       include "chips/opl_serial_port.h"
+#   endif
 #endif
 
 static const unsigned adl_emulatorSupport = 0
-#ifndef ADLMIDI_HW_OPL
+#ifndef ENABLE_HW_OPL_DOS
 #   ifndef ADLMIDI_DISABLE_NUKED_EMULATOR
     | (1u << ADLMIDI_EMU_NUKED) | (1u << ADLMIDI_EMU_NUKED_174)
 #   endif
@@ -76,8 +110,29 @@ static const unsigned adl_emulatorSupport = 0
     | (1u << ADLMIDI_EMU_OPAL)
 #   endif
 
+#   ifndef ADLMIDI_DISABLE_ESFMU_EMULATOR
+    | (1u << ADLMIDI_EMU_ESFMu)
+#   endif
+
 #   ifndef ADLMIDI_DISABLE_JAVA_EMULATOR
     | (1u << ADLMIDI_EMU_JAVA)
+#   endif
+
+#   ifndef ADLMIDI_DISABLE_MAME_OPL2_EMULATOR
+    | (1u << ADLMIDI_EMU_MAME_OPL2)
+#   endif
+
+#   ifndef ADLMIDI_DISABLE_YMFM_EMULATOR
+    | (1u << ADLMIDI_EMU_YMFM_OPL2)
+    | (1u << ADLMIDI_EMU_YMFM_OPL3)
+#   endif
+
+#   ifdef ADLMIDI_ENABLE_OPL2_LLE_EMULATOR
+    | (1u << ADLMIDI_EMU_NUKED_OPL2_LLE)
+#   endif
+
+#   ifdef ADLMIDI_ENABLE_OPL3_LLE_EMULATOR
+    | (1u << ADLMIDI_EMU_NUKED_OPL3_LLE)
 #   endif
 #endif
 ;
@@ -148,7 +203,7 @@ static const uint16_t g_operatorsMap[(NUM_OF_CHANNELS + NUM_OF_RM_CHANNELS) * 2]
     0x011, 0xFFF   // operator 13
 };
 
-//! Channel map to regoster offsets
+//! Channel map to register offsets
 static const uint16_t g_channelsMap[NUM_OF_CHANNELS] =
 {
     0x000, 0x001, 0x002, 0x003, 0x004, 0x005, 0x006, 0x007, 0x008, // 0..8
@@ -156,12 +211,20 @@ static const uint16_t g_channelsMap[NUM_OF_CHANNELS] =
     0x006, 0x007, 0x008, 0x008, 0x008 // <- hw percussions, hihats and cymbals using tom-tom's channel as pitch source
 };
 
-//! Channel map to regoster offsets (separated copy for panning)
+//! Channel map to register offsets (separated copy for panning and for CMF)
 static const uint16_t g_channelsMapPan[NUM_OF_CHANNELS] =
 {
     0x000, 0x001, 0x002, 0x003, 0x004, 0x005, 0x006, 0x007, 0x008, // 0..8
     0x100, 0x101, 0x102, 0x103, 0x104, 0x105, 0x106, 0x107, 0x108, // 9..17 (secondary set)
     0x006, 0x007, 0x008, 0xFFF, 0xFFF // <- hw percussions, 0xFFF = no support for pitch/pan
+};
+
+//! Channel map to register offsets (separated copy for feedback+connection bits)
+static const uint16_t g_channelsMapFBConn[NUM_OF_CHANNELS] =
+{
+    0x000, 0x001, 0x002, 0x003, 0x004, 0x005, 0x006, 0x007, 0x008, // 0..8
+    0x100, 0x101, 0x102, 0x103, 0x104, 0x105, 0x106, 0x107, 0x108, // 9..17 (secondary set)
+    0x006, 0xFFF, 0xFFF, 0xFFF, 0xFFF // <- hw percussions, 0xFFF = no support for pitch/pan
 };
 
 /*
@@ -860,6 +923,14 @@ static OplInstMeta makeEmptyInstrument()
 const OplInstMeta OPL3::m_emptyInstrument = makeEmptyInstrument();
 
 OPL3::OPL3() :
+#ifdef ADLMIDI_ENABLE_HW_SERIAL
+    m_serial(false),
+    m_serialBaud(0),
+    m_serialProtocol(0),
+#endif
+    m_softPanningSup(false),
+    m_currentChipType((int)OPLChipBase::CHIPTYPE_OPL3),
+    m_perChipChannels(OPL3_CHANNELS_RHYTHM_BASE),
     m_numChips(1),
     m_numFourOps(0),
     m_deepTremoloMode(false),
@@ -886,7 +957,9 @@ OPL3::OPL3() :
 
 OPL3::~OPL3()
 {
-#ifdef ADLMIDI_HW_OPL
+    m_curState.clear();
+
+#ifdef ENABLE_HW_OPL_DOS
     silenceAll();
     writeRegI(0, 0x0BD, 0);
     writeRegI(0, 0x104, 0);
@@ -954,48 +1027,17 @@ void OPL3::setEmbeddedBank(uint32_t bank)
 
 void OPL3::writeReg(size_t chip, uint16_t address, uint8_t value)
 {
-#ifdef ADLMIDI_HW_OPL
-    ADL_UNUSED(chip);
-    unsigned o = address >> 8;
-    unsigned port = OPLBase + o * 2;
-
-#   ifdef __DJGPP__
-    outportb(port, address);
-    for(unsigned c = 0; c < 6; ++c) inportb(port);
-    outportb(port + 1, value);
-    for(unsigned c = 0; c < 35; ++c) inportb(port);
-#   endif
-
-#   ifdef __WATCOMC__
-    outp(port, address);
-    for(uint16_t c = 0; c < 6; ++c)  inp(port);
-    outp(port + 1, value);
-    for(uint16_t c = 0; c < 35; ++c) inp(port);
-#   endif//__WATCOMC__
-
-#else//ADLMIDI_HW_OPL
     m_chips[chip]->writeReg(address, value);
-#endif
 }
 
 void OPL3::writeRegI(size_t chip, uint32_t address, uint32_t value)
 {
-#ifdef ADLMIDI_HW_OPL
-    writeReg(chip, static_cast<uint16_t>(address), static_cast<uint8_t>(value));
-#else//ADLMIDI_HW_OPL
     m_chips[chip]->writeReg(static_cast<uint16_t>(address), static_cast<uint8_t>(value));
-#endif
 }
 
 void OPL3::writePan(size_t chip, uint32_t address, uint32_t value)
 {
-#ifndef ADLMIDI_HW_OPL
     m_chips[chip]->writePan(static_cast<uint16_t>(address), static_cast<uint8_t>(value));
-#else
-    ADL_UNUSED(chip);
-    ADL_UNUSED(address);
-    ADL_UNUSED(value);
-#endif
 }
 
 
@@ -1009,6 +1051,8 @@ void OPL3::noteOff(size_t c)
         writeRegI(chip, 0xBD, m_regBD[chip]);
         return;
     }
+    else if(m_currentChipType == OPLChipBase::CHIPTYPE_OPL2 && cc >= NUM_OF_OPL2_CHANNELS)
+        return;
 
     writeRegI(chip, 0xB0 + g_channelsMap[cc], m_keyBlockFNumCache[c] & 0xDF);
 }
@@ -1019,6 +1063,9 @@ void OPL3::noteOn(size_t c1, size_t c2, double tone)
     uint32_t octave = 0, ftone = 0, mul_offset = 0;
     // Hertz range: 0..131071
     double hertz;
+
+    if(tone < 0.0)
+        tone = 0.0; // Lower than 0 is impossible!
 
     // Use different frequency formulas in depend on a volume model
     switch(m_volumeScale)
@@ -1068,7 +1115,7 @@ void OPL3::noteOn(size_t c1, size_t c2, double tone)
     }
 
     ftone = octave + static_cast<uint32_t>(hertz /*+ 0.5*/);
-    uint32_t chn = g_channelsMap[cc1];
+    uint32_t chn = m_musicMode == MODE_CMF ? g_channelsMapPan[cc1] : g_channelsMap[cc1];
     const OplTimbre &patch1 = m_insCache[c1];
     const OplTimbre &patch2 = m_insCache[c2 < m_insCache.size() ? c2 : 0];
 
@@ -1179,6 +1226,8 @@ void OPL3::touchNote(size_t c,
         { true,  true  }  /* 4 op AM-AM ops 3&4 */
     };
 
+    if(m_currentChipType == OPLChipBase::CHIPTYPE_OPL2 && m_channelCategory[c] == ChanCat_None)
+        return; // Do nothing
 
     // ------ Mix volumes and compute average ------
 
@@ -1436,9 +1485,10 @@ void OPL3::touchNote(size_t c,
         }
 
         if(isDrum) // TODO: VERIFY A CORRECTNESS OF THIS!!!
-            vol = s_hmi_volume_table[velocity >> 1];
+            vol = (64 - s_hmi_volume_table[velocity >> 1]) << 1;
+        else
+            vol = (64 - volume) << 1;
 
-        vol = (64 - volume) << 1;
         vol *= (64 - tlCar);
         tlCar = (8192 - vol) >> 7;
     }
@@ -1484,6 +1534,8 @@ void OPL3::setPatch(size_t c, const OplTimbre &instrument)
     uint16_t o1 = g_operatorsMap[cc * 2 + 0 + cmf_offset];
     uint16_t o2 = g_operatorsMap[cc * 2 + 1 + cmf_offset];
     unsigned x = instrument.modulator_E862, y = instrument.carrier_E862;
+    uint8_t fbconn = 0;
+    uint16_t fbconn_reg = 0x00;
 
     for(size_t a = 0; a < 4; ++a, x >>= 8, y >>= 8)
     {
@@ -1492,28 +1544,53 @@ void OPL3::setPatch(size_t c, const OplTimbre &instrument)
         if(o2 != 0xFFF)
             writeRegI(chip, data[a] + o2, y & 0xFF);
     }
+
+    if(g_channelsMapFBConn[cc] != 0xFFF)
+    {
+        fbconn |= instrument.feedconn;
+        fbconn_reg = 0xC0 + g_channelsMapFBConn[cc];
+    }
+
+    if(m_currentChipType != OPLChipBase::CHIPTYPE_OPL2 && g_channelsMapPan[cc] != 0xFFF)
+    {
+        fbconn |= (m_regC0[c] & OPL_PANNING_BOTH);
+        if(!fbconn_reg)
+            fbconn_reg = 0xC0 + g_channelsMapPan[cc];
+    }
+
+    if(fbconn_reg != 0x00)
+        writeRegI(chip, fbconn_reg, fbconn);
 }
 
 void OPL3::setPan(size_t c, uint8_t value)
 {
     size_t chip = c / NUM_OF_CHANNELS, cc = c % NUM_OF_CHANNELS;
+
+    if(m_currentChipType == OPLChipBase::CHIPTYPE_OPL2)
+    {
+        m_regC0[c] = OPL_PANNING_BOTH;
+        return; // OPL2 chip doesn't support panning at all
+    }
+
     if(g_channelsMapPan[cc] != 0xFFF)
     {
-#ifndef ADLMIDI_HW_OPL
-        if (m_softPanning)
+#ifndef ENABLE_HW_OPL_DOS
+        if (m_softPanningSup && m_softPanning)
         {
             writePan(chip, g_channelsMapPan[cc], value);
+            m_regC0[c] = OPL_PANNING_BOTH;
             writeRegI(chip, 0xC0 + g_channelsMapPan[cc], m_insCache[c].feedconn | OPL_PANNING_BOTH);
         }
         else
         {
 #endif
-            int panning = 0;
-            if(value  < 64 + 32) panning |= OPL_PANNING_LEFT;
-            if(value >= 64 - 32) panning |= OPL_PANNING_RIGHT;
+            uint8_t panning = 0;
+            if(value  < 64 + 16) panning |= OPL_PANNING_LEFT;
+            if(value >= 64 - 16) panning |= OPL_PANNING_RIGHT;
+            m_regC0[c] = panning;
             writePan(chip, g_channelsMapPan[cc], 64);
             writeRegI(chip, 0xC0 + g_channelsMapPan[cc], m_insCache[c].feedconn | panning);
-#ifndef ADLMIDI_HW_OPL
+#ifndef ENABLE_HW_OPL_DOS
         }
 #endif
     }
@@ -1530,38 +1607,40 @@ void OPL3::silenceAll() // Silence all OPL channels.
 
 void OPL3::updateChannelCategories()
 {
-    const uint32_t fours = m_numFourOps;
+    const uint32_t fours = (m_currentChipType != OPLChipBase::CHIPTYPE_OPL2) ? m_numFourOps : 0;
 
     for(uint32_t chip = 0, fours_left = fours; chip < m_numChips; ++chip)
     {
         m_regBD[chip] = (m_deepTremoloMode * 0x80 + m_deepVibratoMode * 0x40 + m_rhythmMode * 0x20);
         writeRegI(chip, 0x0BD, m_regBD[chip]);
         uint32_t fours_this_chip = std::min(fours_left, static_cast<uint32_t>(6u));
-        writeRegI(chip, 0x104, (1 << fours_this_chip) - 1);
+        if(m_currentChipType != OPLChipBase::CHIPTYPE_OPL2)
+            writeRegI(chip, 0x104, (1 << fours_this_chip) - 1);
         fours_left -= fours_this_chip;
     }
 
-    if(!m_rhythmMode)
+    for(size_t p = 0, a = 0, n = m_numChips; a < n; ++a)
     {
-        for(size_t a = 0, n = m_numChips; a < n; ++a)
+        for(size_t b = 0; b < OPL3_CHANNELS_RHYTHM_BASE; ++b, ++p)
         {
-            for(size_t b = 0; b < NUM_OF_CHANNELS; ++b)
-            {
-                m_channelCategory[a * NUM_OF_CHANNELS + b] =
-                    (b >= OPL3_CHANNELS_RHYTHM_BASE) ? ChanCat_Rhythm_Secondary : ChanCat_Regular;
-            }
+            if(m_currentChipType == OPLChipBase::CHIPTYPE_OPL2 && b >= NUM_OF_OPL2_CHANNELS)
+                m_channelCategory[p] = ChanCat_None;
+            else
+                m_channelCategory[p] = ChanCat_Regular;
+
+            if(m_rhythmMode && b >= 6 && b < 9)
+                m_channelCategory[p] = ChanCat_Rhythm_Secondary;
         }
-    }
-    else
-    {
-        for(size_t a = 0, n = m_numChips; a < n; ++a)
+
+        if(!m_rhythmMode)
         {
-            for(size_t b = 0; b < NUM_OF_CHANNELS; ++b)
-            {
-                m_channelCategory[a * NUM_OF_CHANNELS + b] =
-                    (b >= OPL3_CHANNELS_RHYTHM_BASE) ? static_cast<ChanCat>(ChanCat_Rhythm_Bass + (b - OPL3_CHANNELS_RHYTHM_BASE)) :
-                    (b >= 6 && b < 9) ? ChanCat_Rhythm_Secondary : ChanCat_Regular;
-            }
+            for(size_t b = 0; b < NUM_OF_RM_CHANNELS; ++b)
+                m_channelCategory[p++] = ChanCat_Rhythm_Secondary;
+        }
+        else
+        {
+            for(size_t b = 0; b < NUM_OF_RM_CHANNELS; ++b)
+                m_channelCategory[p++] = (ChanCat_Rhythm_Bass + b);
         }
     }
 
@@ -1711,61 +1790,89 @@ ADLMIDI_VolumeModels OPL3::getVolumeScaleModel()
     }
 }
 
-#ifndef ADLMIDI_HW_OPL
 void OPL3::clearChips()
 {
     for(size_t i = 0; i < m_chips.size(); i++)
         m_chips[i].reset(NULL);
     m_chips.clear();
 }
-#endif
 
 void OPL3::reset(int emulator, unsigned long PCM_RATE, void *audioTickHandler)
 {
-#ifndef ADLMIDI_HW_OPL
-    clearChips();
-#else
-    (void)emulator;
-    (void)PCM_RATE;
-#endif
+    bool rebuild_needed = m_curState.cmp(emulator, m_numChips);
+
+    if(rebuild_needed)
+        clearChips();
+
 #if !defined(ADLMIDI_AUDIO_TICK_HANDLER)
     (void)audioTickHandler;
 #endif
-    m_insCache.clear();
-    m_keyBlockFNumCache.clear();
-    m_regBD.clear();
-
-#ifndef ADLMIDI_HW_OPL
-    m_chips.resize(m_numChips, AdlMIDI_SPtr<OPLChipBase>());
-#endif
 
     const struct OplTimbre defaultInsCache = { 0x1557403,0x005B381, 0x49,0x80, 0x4, +0 };
-    m_numChannels = m_numChips * NUM_OF_CHANNELS;
-    m_insCache.resize(m_numChannels, defaultInsCache);
-    m_keyBlockFNumCache.resize(m_numChannels,   0);
-    m_regBD.resize(m_numChips,    0);
-    m_channelCategory.resize(m_numChannels, 0);
 
-    for(size_t p = 0, a = 0; a < m_numChips; ++a)
+    if(rebuild_needed)
     {
-        for(size_t b = 0; b < OPL3_CHANNELS_RHYTHM_BASE; ++b)
-            m_channelCategory[p++] = ChanCat_Regular;
-        for(size_t b = 0; b < NUM_OF_RM_CHANNELS; ++b)
-            m_channelCategory[p++] = ChanCat_Rhythm_Secondary;
+        m_insCache.clear();
+        m_keyBlockFNumCache.clear();
+        m_regBD.clear();
+        m_regC0.clear();
+        m_channelCategory.clear();
+        m_chips.resize(m_numChips, AdlMIDI_SPtr<OPLChipBase>());
+    }
+    else
+    {
+        adl_fill_vector<OplTimbre>(m_insCache, defaultInsCache);
+        adl_fill_vector<uint32_t>(m_channelCategory, 0);
+        adl_fill_vector<uint32_t>(m_keyBlockFNumCache, 0);
+        adl_fill_vector<uint32_t>(m_regBD, 0);
+        adl_fill_vector<uint8_t>(m_regC0, OPL_PANNING_BOTH);
     }
 
-    static const uint16_t data[] =
-    {
-        0x004, 96, 0x004, 128,        // Pulse timer
-        0x105, 0, 0x105, 1, 0x105, 0, // Pulse OPL3 enable
-        0x001, 32, 0x105, 1           // Enable wave, OPL3 extensions
-    };
-//    size_t fours = m_numFourOps;
+#ifdef ADLMIDI_ENABLE_HW_SERIAL
+    if(emulator >= 0) // If less than zero - it's hardware synth!
+        m_serial = false;
+#endif
 
-    for(size_t i = 0; i < m_numChips; ++i)
+    if(rebuild_needed)
     {
-#ifndef ADLMIDI_HW_OPL
+        m_numChannels = m_numChips * NUM_OF_CHANNELS;
+        m_insCache.resize(m_numChannels, defaultInsCache);
+        m_channelCategory.resize(m_numChannels, 0);
+        m_keyBlockFNumCache.resize(m_numChannels,   0);
+        m_regBD.resize(m_numChips,    0);
+        m_regC0.resize(m_numChips * m_numChannels, OPL_PANNING_BOTH);
+    }
+
+    if(!rebuild_needed)
+    {
+        bool newRate = m_curState.cmp_rate(PCM_RATE);
+
+        for(size_t i = 0; i < m_numChips; ++i)
+        {
+            if(newRate)
+                m_chips[i]->setRate(PCM_RATE);
+
+            initChip(i);
+        }
+    }
+    else for(size_t i = 0; i < m_numChips; ++i)
+    {
+#ifdef ADLMIDI_ENABLE_HW_SERIAL
+        if(emulator < 0)
+        {
+            OPL_SerialPort *serial = new OPL_SerialPort;
+            serial->connectPort(m_serialName, m_serialBaud, m_serialProtocol);
+            m_chips[i].reset(serial);
+            initChip(i);
+            break; // Only one REAL chip!
+        }
+#endif
+
         OPLChipBase *chip;
+#ifdef ENABLE_HW_OPL_DOS
+        chip = new DOS_HW_OPL();
+
+#else // ENABLE_HW_OPL_DOS
         switch(emulator)
         {
         default:
@@ -1794,24 +1901,120 @@ void OPL3::reset(int emulator, unsigned long PCM_RATE, void *audioTickHandler)
             chip = new JavaOPL3;
             break;
 #endif
+#ifndef ADLMIDI_DISABLE_ESFMU_EMULATOR
+        case ADLMIDI_EMU_ESFMu:
+            chip = new ESFMuOPL3;
+            break;
+#endif
+#ifndef ADLMIDI_DISABLE_MAME_OPL2_EMULATOR
+        case ADLMIDI_EMU_MAME_OPL2:
+            chip = new MameOPL2;
+            break;
+#endif
+#ifndef ADLMIDI_DISABLE_YMFM_EMULATOR
+        case ADLMIDI_EMU_YMFM_OPL2:
+            chip = new YmFmOPL2;
+            break;
+        case ADLMIDI_EMU_YMFM_OPL3:
+            chip = new YmFmOPL3;
+            break;
+#endif
+#ifdef ADLMIDI_ENABLE_OPL2_LLE_EMULATOR
+        case ADLMIDI_EMU_NUKED_OPL2_LLE:
+            chip = new Ym3812LLEOPL2;
+            break;
+#endif
+#ifdef ADLMIDI_ENABLE_OPL3_LLE_EMULATOR
+        case ADLMIDI_EMU_NUKED_OPL3_LLE:
+            chip = new Ymf262LLEOPL3;
+            break;
+#endif
         }
+#endif // ENABLE_HW_OPL_DOS
+
         m_chips[i].reset(chip);
         chip->setChipId((uint32_t)i);
         chip->setRate((uint32_t)PCM_RATE);
+
+#ifndef ENABLE_HW_OPL_DOS
         if(m_runAtPcmRate)
             chip->setRunningAtPcmRate(true);
-#   if defined(ADLMIDI_AUDIO_TICK_HANDLER)
+#endif
+
+#   if defined(ADLMIDI_AUDIO_TICK_HANDLER) && !defined(ENABLE_HW_OPL_DOS)
         chip->setAudioTickHandlerInstance(audioTickHandler);
 #   endif
-#endif // ADLMIDI_HW_OPL
 
-        /* Clean-up channels from any playing junk sounds */
-        for(size_t a = 0; a < OPL3_CHANNELS_RHYTHM_BASE; ++a)
-            writeRegI(i, 0xB0 + g_channelsMap[a], 0x00);
-        for(size_t a = 0; a < sizeof(data) / sizeof(*data); a += 2)
-            writeRegI(i, data[a], (data[a + 1]));
+        initChip(i);
     }
 
     updateChannelCategories();
     silenceAll();
 }
+
+void OPL3::initChip(size_t chip)
+{
+    static const uint16_t data_opl3[] =
+    {
+        0x004, 96, 0x004, 128,        // Pulse timer
+        0x105, 0, 0x105, 1, 0x105, 0, // Pulse OPL3 enable
+        0x001, 32, 0x105, 1,          // Enable wave, OPL3 extensions
+        0x08, 0                       // CSW/Note Sel
+    };
+    static const size_t data_opl3_size = sizeof(data_opl3) / sizeof(uint16_t);
+
+    static const uint16_t data_opl2[] =
+    {
+        0x004, 96, 0x004, 128,          // Pulse timer
+        0x001, 32,                      // Enable wave
+        0x08, 0                         // CSW/Note Sel
+    };
+    static const size_t data_opl2_size = sizeof(data_opl2) / sizeof(uint16_t);
+
+    // Report does emulator/interface supports full-panning stereo or not
+    if(chip == 0)
+    {
+        m_softPanningSup = m_chips[chip]->hasFullPanning();
+        m_currentChipType = (int)m_chips[chip]->chipType();
+        m_perChipChannels = OPL3_CHANNELS_RHYTHM_BASE;
+
+        if(m_currentChipType == OPLChipBase::CHIPTYPE_OPL2)
+        {
+            m_perChipChannels = NUM_OF_OPL2_CHANNELS;
+            m_numFourOps = 0; // Can't have 4ops on OPL2 chip
+        }
+    }
+
+    /* Clean-up channels from any playing junk sounds */
+    for(size_t a = 0; a < m_perChipChannels; ++a)
+    {
+        writeRegI(chip, 0x20 + g_operatorsMap[a * 2], 0x00);
+        writeRegI(chip, 0x20 + g_operatorsMap[(a * 2) + 1], 0x00);
+        writeRegI(chip, 0xA0 + g_channelsMap[a], 0x00);
+        writeRegI(chip, 0xB0 + g_channelsMap[a], 0x00);
+    }
+
+    if(m_currentChipType == OPLChipBase::CHIPTYPE_OPL2)
+    {
+        for(size_t a = 0; a < data_opl2_size; a += 2)
+            writeRegI(chip, data_opl2[a], (data_opl2[a + 1]));
+    }
+    else
+    {
+        for(size_t a = 0; a < data_opl3_size; a += 2)
+            writeRegI(chip, data_opl3[a], (data_opl3[a + 1]));
+    }
+}
+
+#ifdef ADLMIDI_ENABLE_HW_SERIAL
+void OPL3::resetSerial(const std::string &serialName, unsigned int baud, unsigned int protocol)
+{
+    m_serial = true;
+    m_serialName = serialName;
+    m_serialBaud = baud;
+    m_serialProtocol = protocol;
+    m_numChips = 1; // Only one chip!
+    m_softPanning = false; // Soft-panning doesn't work on hardware
+    reset(-1, 0, NULL);
+}
+#endif

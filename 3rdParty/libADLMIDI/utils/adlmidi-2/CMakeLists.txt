@@ -16,14 +16,21 @@ endif()
 try_compile(HAS_TERMIO ${CMAKE_BINARY_DIR}/compile_tests "${CMAKE_CURRENT_SOURCE_DIR}/cmake/check-termio.c")
 try_compile(HAS_TERMIOS ${CMAKE_BINARY_DIR}/compile_tests "${CMAKE_CURRENT_SOURCE_DIR}/cmake/check-termios.c")
 
+include(../midiplay/utf8main.cmake)
+
 set(adlmidi2_src)
 list(APPEND adlmidi2_src
     midiplay.cc
     input.cc
+    input.hpp
+    6x9.hpp
+    8x16.hpp
+    9x15.hpp
+    ${UTF8MAIN_SRCS}
 )
 
 if(ADLMIDI2_HAS_PUZZLE_GAME)
-    list(APPEND adlmidi2_src puzzlegame.cc)
+    list(APPEND adlmidi2_src puzzlegame.cc puzzlegame.hpp)
 endif()
 
 add_executable(adlmidi2 ${adlmidi2_src})
@@ -59,6 +66,7 @@ endif()
 
 if(WIN32)
     target_link_libraries(adlmidi2 PRIVATE winmm)
+    set_property(TARGET adlmidi2 PROPERTY WIN32_EXECUTABLE TRUE)
 elseif(NOT ADLMIDI_DOS)
     if(NOT OPENBSD_LOCALBASE AND NOT HAIKU)
         target_link_libraries(adlmidi2 PRIVATE dl)
