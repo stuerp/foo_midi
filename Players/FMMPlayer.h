@@ -18,6 +18,9 @@ namespace midisynth
    class synthesizer;
 }
 
+/// <summary>
+/// Implements the fmmidi player.
+/// </summary>
 class FMMPlayer : public player_t
 {
 public:

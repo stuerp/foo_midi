@@ -169,7 +169,7 @@ void FMMPlayer::SendEvent(uint32_t data)
 void FMMPlayer::SetProgramsFilePath(const std::wstring & programsFilePath)
 {
     if (!std::filesystem::exists(programsFilePath))
-         throw std::runtime_error("fmmidi Programs file not found at \"" + ::WideToUTF8(programsFilePath) + "\"");
+         throw std::runtime_error("FMMIDI Programs file not found at \"" + ::WideToUTF8(programsFilePath) + "\"");
 
     _ProgramsFilePath = programsFilePath;
 }

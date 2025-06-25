@@ -1,5 +1,5 @@
 
-/** $VER: Preset.h (2025.06.22) **/
+/** $VER: Preset.h (2025.06.25) **/
 
 #pragma once
 
@@ -32,8 +32,9 @@ public:
 
     PlayerTypes _PlayerType;
 
-    pfc::string _VSTiFilePath;
+    pfc::string _PlugInFilePath; // VSTi or CLAP
     std::vector<uint8_t> _VSTiConfig;
+    uint32_t _PlugInIndex; // CLAP plug-in index in the factory
 
     pfc::string _SoundFontFilePath;
 

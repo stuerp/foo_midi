@@ -1,28 +1,27 @@
 
-# foo_midi - End User Guide
+# foo_midi User Guide
+
+Welcome to [foo_midi](https://github.com/stuerp/foo_midi/releases). This guide will help you understand how to use the component effectively and get the most out of its features.
+
+---
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
-2. [Getting started](#getting-started)
-3. [Features](#features)
-4. [Usage](#usage)
-5. [Troubleshooting](#troubleshooting)
-6. [FAQs](#faqs)
-7. [Reference Material](#reference-material)
-8. [Support](#support)
+2. [Features](#features)
+3. [Playing files](#playing-files)
+4. [Troubleshooting](#troubleshooting)
+5. [FAQs](#faqs)
+6. [Reference Material](#reference-material)
+7. [Support](#support)
 
 ---
 
 ## Introduction
 
-Welcome to [foo_midi](https://github.com/stuerp/foo_midi/releases), a [foobar2000](https://www.foobar2000.org/) component that adds playback of MIDI files to foobar2000. It's based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https://gitlab.com/kode54).
-
-This guide will help you understand how to use the product effectively and get the most out of its features.
+[foo_midi](https://github.com/stuerp/foo_midi/releases) is a [foobar2000](https://www.foobar2000.org/) component that adds playback of MIDI files to foobar2000. It's based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https://gitlab.com/kode54).
 
 ---
-
-## Getting started
 
 ### System Requirements
 
@@ -30,12 +29,20 @@ This guide will help you understand how to use the product effectively and get t
 - Tested on Microsoft Windows 10 and later.
 - To use FluidSynth you need to [download](https://github.com/FluidSynth/fluidsynth/releases/) and install the latest libraries from its GitHub page.
 
+### Download foo_midi
+
+You can download the component from the foobar2000 [Components](https://www.foobar2000.org/components/view/foo_midi+%28x64%29) repository or from the GitHub [Releases](https://github.com/stuerp/foo_midi/releases) page.
+
+> [!IMPORTANT]
+> Updating the component from within foobar2000 does not work.
+
 ### Installation
 
-- Double-click `foo_midi.fbk2-component` or import `foo_midi.fbk2-component` into foobar2000 using the "*File / Preferences / Components / Install...*" menu item.
+- Double-click `foo_midi.fbk2-component` or import `foo_midi.fbk2-component` using the foobar2000 Preferences dialog. Select the **File / Preferences / Components** menu item, select the **Components** page and click the **Install...** button.
 - Follow the foobar2000 instructions.
-- Add a supported MIDI file to a foobar2000 playlist.
-- Play the file.
+
+> [!TIP]
+> To verify if the installation was successful open the foobar2000 Preferences using the **File / Preferences / Components** menu item and look for **MIDI Player** in the **Installed components** list.
 
 ---
 
@@ -108,9 +115,9 @@ This player uses the [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3) library
 
 This player uses the [libMT32Emu](https://github.com/munt/munt) library to emulated the [Roland MT-32, CM-32L and LAPC-I synthesiser modules](https://en.wikipedia.org/wiki/Roland_MT-32).
 
-### fmmidi (yuno) (Built-in)
+### FMMIDI (yuno) (Built-in)
 
-[fmmidi](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
+[FMMIDI](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
 
 It requires a text file that specifies the programs or instrument definitions. A Programs.txt file is installed with the component in component directory.
 
@@ -132,28 +139,58 @@ Supports 32 and 64-bit VST instruments.
 
 Secret Sauce is a wrapper for the SCCore.dll that comes bundled with Roland’s [Sound Canvas VA](https://www.roland.com/us/products/rc_sound_canvas_va/).
 
+### CLAP (Optional)
+
+The CLAP player allows you to use [CLAP ((CLever Audio Plug-in API))](https://u-he.com/community/clap/) plug-ins to render the audio stream.
+
 ---
 
-## Usage
+## Playing files
 
-### Playing files
+To play a supported MIDI file simply add it to foobar2000 playlist and press play.
 
-*Work in Progress*
+If the file format is not supported or there's an error in the file an error message will appear in the Playback Error popup and in the foobar2000 console.
 
-#### Loops
+### Configuring the output
 
-The component supports 6 loop modes that can be selected in the Preferences dialog:
+By default the [LibADLMIDI (Built-in)](#libadlmidi-built-in) player is used. You can change the player on the **Playback / Decoding / MIDI Player** page of the foobar2000 Preferences. The **Player** droplist contains all available players.
+
+If you have configured VSTi the compatible instruments will added to the list as a player prefixed with *VSTi*.
+
+The **Configure** button will be enabled if the player has an additional dialog in which to configure settings specific to that player.
+
+The **Sample rate** combobox allows you to specify the frequency the player will use to synthesize the samples. Select any of the predefined values or enter a custom value between 6000Hz and 192000Hz.
+
+### Looping
+
+Some MIDI files contain markers to specify which part of the message stream can be played in a loop. These markers are not part of the Standard MIDI Format standard. If the file does not contain markers foo_midi can also play the entire file in a loop.
+
+The following loop markers are supported:
+
+| Name | Description|
+| --- | --- |
+| EMIDI / XMI | Used by [EMIDI / XMI](http://www.shikadi.net/moddingwiki/XMI_Format#MIDI_controller_assignments) files with Control Change 116 and 117 as loop markers. This format also can specify the number of times the sequence should be looped. |
+| Final Fantasy | Used by Final Fantasy files (starting with [Final Fantasy VII](http://www.midishrine.com/index.php?id=85)) with "loopStart" en "loopEnd" meta events as a marker |
+| LeapFrog | Used by [LeapFrog](https://leapfrog.fandom.com/wiki/The_Leap-font_(Music)) files with Control Change 110 and 111 |
+| RPG Maker | Used by [RPG Maker](https://en.wikipedia.org/wiki/RPG_Maker) files. Control Change 111 marks the loop start. The loop end is always the end of the stream. |
+| Touhou | Used by [Touhou Project](https://en.wikipedia.org/wiki/Touhou_Project) files with Control Change 2 and 4 |
+
+The component supports 6 loop modes that can be selected in the foobar2000 Preferences dialog:
 
 | Type | Description |
 | --- | --- |
 | Never loop | The song will be played once ignoring any loop information. |
 | Never loop. Use decay time | The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down. |
-| Loop and fade when detected|The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences. |
-| Loop and fade always|The song will be played and looped a customizable number of times (defined in Advanced Preferences by "Loop count"). At the end of the last loop the song will fade out over the period defined by the "Fade time" settings in Advanced Preferences. |
-| Play indefinitely when detected | The song will be played and the loop will play until stopped. |
+| Loop and fade when detected |The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by **Loop count**). At the end of the last loop the song will fade out over the period defined by the **Fade time** settings in Advanced Preferences. |
+| Loop and fade always |The song will be played and looped a customizable number of times (defined in Advanced Preferences by **Loop count**). At the end of the last loop the song will fade out over the period defined by the **Fade time** settings in Advanced Preferences. |
+| Play indefinitely when detected | The song will be played and the loop, when detected, will play until stopped. |
 | Play indefinitely | The song will be played and loop until stopped. |
 
-#### Sound Fonts
+The **Playback** droplist specifies how loops are processed during normal playback. The **Other** droplist determines how loops are processed during other foobar2000 operations such as converting a MIDI file to another format.
+
+The **Decay time** setting specifies the time in milliseconds that the player will wait before starting to play another track. This allows the last MIDI notes of a stream to decay instead of being abruptly cut when the new track starts playing.
+
+### Sound Fonts
 
 
 ### Metadata

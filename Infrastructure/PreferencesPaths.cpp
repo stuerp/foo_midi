@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2025.06.19) **/
+/** $VER: PreferencesPaths.cpp (2025.06.23) **/
 
 #include "pch.h"
 
@@ -103,6 +103,10 @@ private:
     pfc::string _VSTiPluginDirectoryPath;
 #pragma endregion
 
+#pragma region CLAP
+    pfc::string _CLAPPlugInDirectoryPath;
+#pragma endregion
+
 #pragma region SoundFont
     pfc::string _SoundFontFilePath;
 #pragma endregion
@@ -119,7 +123,7 @@ private:
     pfc::string _FluidSynthDirectoryPath;
 #pragma endregion
 
-#pragma region fmmidi
+#pragma region FMMIDI
     pfc::string _ProgramsFilePath;
 #pragma endregion
 
@@ -148,6 +152,7 @@ t_uint32 PreferencesPathsPage::get_state()
 void PreferencesPathsPage::apply()
 {
     AdvCfgVSTiPluginDirectoryPath.set(_VSTiPluginDirectoryPath);
+    CfgCLAPPlugInDirectoryPath = _CLAPPlugInDirectoryPath;
     CfgSoundFontFilePath = _SoundFontFilePath;
     CfgMT32ROMDirectoryPath = _MT32ROMDirectoryPath;
     AdvCfgSecretSauceDirectoryPath.set(_SecretSauceDirectoryPath);
@@ -338,7 +343,7 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 
         pfc::string FilePath = _ProgramsFilePath;
 
-        if (::uGetOpenFileName(m_hWnd, "fmmidi Program files|*.*", 0, "txt", "Choose a Programs file...", DirectoryPath, FilePath, FALSE))
+        if (::uGetOpenFileName(m_hWnd, "FMMIDI Program files|*.*", 0, "txt", "Choose a Programs file...", DirectoryPath, FilePath, FALSE))
         {
             _ProgramsFilePath = FilePath;
 

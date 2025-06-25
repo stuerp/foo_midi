@@ -141,7 +141,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/libEDMIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/libEDMIDI;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;EXPERIMENT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -179,7 +179,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/libEDMIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/libEDMIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;SF2PACK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -224,7 +224,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/libEDMIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;./3rdParty;./3rdParty/BASS/c;./3rdParty/libEDMIDI;./3rdParty/FluidSynth/$(PlatformTarget)/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/sdl2/include;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./Infrastructure;./MIDI;./Players;.;../foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -269,6 +269,9 @@
     <ClCompile Include="Players\BMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Configuration.cpp" />
     <ClCompile Include="Infrastructure\ContextMenu.cpp" />
+    <ClCompile Include="Players\CLAPEventList.cpp" />
+    <ClCompile Include="Players\CLAPHost.cpp" />
+    <ClCompile Include="Players\CLAPPlayer.cpp" />
     <ClCompile Include="Players\EdMPlayer.cpp" />
     <ClCompile Include="Experimental\DXiProxy.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -290,6 +293,7 @@
     <ClCompile Include="Infrastructure\InputDecoder.cpp" />
     <ClCompile Include="MIDI\KaraokeProcessor.cpp" />
     <ClCompile Include="Players\MCIPlayer.cpp" />
+    <ClCompile Include="Players\NukedSC-55Player.cpp" />
     <ClCompile Include="Players\Player.cpp" />
     <ClCompile Include="Infrastructure\Preset.cpp" />
     <ClCompile Include="Infrastructure\PresetFilter.cpp" />
@@ -402,6 +406,9 @@
     <ClInclude Include="Infrastructure\ConfigurationMap.h" />
     <ClInclude Include="Infrastructure\Configuration.h" />
     <ClInclude Include="Infrastructure\ContextMenu.h" />
+    <ClInclude Include="Players\CLAPEventList.h" />
+    <ClInclude Include="Players\CLAPHost.h" />
+    <ClInclude Include="Players\CLAPPlayer.h" />
     <ClInclude Include="Players\EdMPlayer.h" />
     <ClInclude Include="Infrastructure\Exception.h" />
     <ClInclude Include="Experimental\DXiProxy.h">
@@ -421,6 +428,7 @@
     <ClInclude Include="Infrastructure\InputDecoder.h" />
     <ClInclude Include="MIDI\KaraokeProcessor.h" />
     <ClInclude Include="Players\MCIPlayer.h" />
+    <ClInclude Include="Players\NukedSC-55Player.h" />
     <ClInclude Include="Players\Player.h" />
     <ClInclude Include="Infrastructure\Preset.h" />
     <ClInclude Include="Infrastructure\PresetFilter.h" />
@@ -459,7 +467,7 @@
     </CustomBuild>
     <ClInclude Include="Patrons.h" />
     <ClInclude Include="3rdParty\Nuke\resampler.h" />
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="Resource.h" />
     <ClInclude Include="Players\SCPlayer.h" />
     <ClInclude Include="Experimental\SFPlayer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

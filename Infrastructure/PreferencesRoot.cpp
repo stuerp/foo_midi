@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2025.06.22) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2025.06.24) P. Stuer **/
 
 #include "pch.h"
 
@@ -29,12 +29,14 @@
 #include "Preset.h"
 
 #include "BMPlayer.h"
+#include "FSPlayer.h"
+#include "CLAPPlayer.h"
 #include "NukePlayer.h"
 #include "VSTiPlayer.h"
-#include "FSPlayer.h"
 
 #include "VSTi.h"
 #include "SecretSauce.h"
+#include "CLAPHost.h"
 
 #pragma hdrstop
 
@@ -89,7 +91,7 @@ const size_t _MuntGMSetCount = _countof(_MuntGMSets);
 class PreferencesRootPage : public CDialogImpl<PreferencesRootPage>, public preferences_page_instance
 {
 public:
-    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _InstalledKnownPlayerCount(), _HasSecretSauce(), _HasFluidSynth(), _Callback(callback) { }
+    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _FirstVSTiIndex(~0u), _FirstCLAPIndex(~0u), _HasSecretSauce(), _HasFluidSynth(), _Callback(callback) { }
 
     PreferencesRootPage(const PreferencesRootPage&) = delete;
     PreferencesRootPage(const PreferencesRootPage&&) = delete;
@@ -229,24 +231,25 @@ private:
         return p->_HasSecretSauce;
     }
 
-    struct KnownPlayer
+    struct known_player_t
     {
         const char * Name;
         PlayerTypes Type;
         bool (*IsPresent)(PreferencesRootPage *);
     };
 
-    static const KnownPlayer _KnownPlayers[];
+    static const known_player_t _KnownPlayers[];
 
-    struct InstalledPlayer
+    struct installed_player_t
     {
         pfc::string Name;
         PlayerTypes Type;
     };
 
-    std::vector<InstalledPlayer> _InstalledPlayers;
+    std::vector<installed_player_t> _InstalledPlayers;
 
-    size_t _InstalledKnownPlayerCount; // Number of installed known players.
+    size_t _FirstVSTiIndex; // Index of the first VSTi player.
+    size_t _FirstCLAPIndex; // Index of the first CLAP player.
 
     #pragma endregion
 
@@ -279,9 +282,9 @@ private:
 };
 
 /// <summary>
-/// Contains all the plugins that are build into the component.
+/// Contains all the plug-ins that are build into the component.
 /// </summary>
-const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
+const PreferencesRootPage::known_player_t PreferencesRootPage::_KnownPlayers[] =
 {
     { "LibEDMIDI",      PlayerTypes::EmuDeMIDI,     PlayerIsAlwaysPresent },
     { "FluidSynth",     PlayerTypes::FluidSynth,    IsFluidSynthPresent },
@@ -292,10 +295,10 @@ const PreferencesRootPage::KnownPlayer PreferencesRootPage::_KnownPlayers[] =
     { "LibOPNMIDI",     PlayerTypes::OPN,           PlayerIsAlwaysPresent },
     { "OPL MIDI",       PlayerTypes::OPL,           PlayerIsNeverPresent },
     { "Nuked OPL3",     PlayerTypes::NukedOPL3,     PlayerIsAlwaysPresent },
-    { "Nuked SC-55",    PlayerTypes::NukedSC55,     PlayerIsNeverPresent }, // 16/02/25: Timing is not working yet.
+    { "Nuked SC-55",    PlayerTypes::NukedSC55,     PlayerIsNeverPresent },
     { "Secret Sauce",   PlayerTypes::SecretSauce,   IsSecretSaucePresent },
     { "MCI",            PlayerTypes::MCI,           PlayerIsNeverPresent },
-    { "fmmidi",         PlayerTypes::FMMIDI,        PlayerIsAlwaysPresent }
+    { "FMMIDI",         PlayerTypes::FMMIDI,        PlayerIsAlwaysPresent },
 };
 
 #pragma region preferences_page_instance
@@ -327,21 +330,32 @@ void PreferencesRootPage::apply()
 
         if (SelectedIndex != -1)
         {
-            if ((size_t) SelectedIndex < _InstalledKnownPlayerCount)
+            auto PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
+
+            CfgPlayerType = (int) PlayerType;
+
+            if ((size_t) SelectedIndex < _FirstVSTiIndex)
             {
-                CfgPlayerType = (int) _InstalledPlayers[(size_t) SelectedIndex].Type;
-                CfgVSTiFilePath = "";
+                CfgPlugInFilePath = "";
             }
             else
+            if (PlayerType == PlayerTypes::VSTi)
             {
-                CfgPlayerType = (int) PlayerTypes::VSTi;
+                size_t VSTiIndex = (size_t) (SelectedIndex - _FirstVSTiIndex);
 
-                size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
+                auto & PlugIn = VSTi::PlugIns[VSTiIndex];
 
-                VSTi::plugin_t & Plugin = VSTi::PlugIns[VSTiIndex];
+                CfgPlugInFilePath = PlugIn.PathName.c_str();
+                CfgVSTiConfig[PlugIn.Id] = VSTi::Config;
+            }
+            else
+            if (PlayerType == PlayerTypes::CLAP)
+            {
+                size_t CLAPIndex = (size_t) (SelectedIndex - _FirstCLAPIndex);
 
-                CfgVSTiFilePath = Plugin.PathName.c_str();
-                CfgVSTiConfig[Plugin.Id] = VSTi::Config;
+                auto & PlugIn = foo_midi::clap_host_t::PlugIns[CLAPIndex];
+
+                CfgPlugInFilePath = PlugIn.PathName.c_str();
             }
         }
     }
@@ -594,6 +608,8 @@ void PreferencesRootPage::reset()
 /// </summary>
 BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 {
+    size_t PlugInIndex = ~0u;
+
     #pragma region Player Type
 
     _HasFluidSynth = FluidSynth::Exists();
@@ -606,7 +622,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         {
             if (Iter.IsPresent(this))
             {
-                struct InstalledPlayer ip;
+                struct installed_player_t ip;
 
                 ip.Name = Iter.Name;
                 ip.Type = Iter.Type;
@@ -614,14 +630,10 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
                 _InstalledPlayers.push_back(ip);
             }
         }
-
-        _InstalledKnownPlayerCount = _InstalledPlayers.size();
     }
     #pragma endregion
 
     #pragma region VSTi Players
-
-    size_t VSTiIndex = ~0u;
 
     // Add the VSTi to the installed player list.
     {
@@ -633,34 +645,83 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         {
             console::print(STR_COMPONENT_BASENAME " found ", VSTiCount, " VST instruments.");
 
+            _FirstVSTiIndex = _InstalledPlayers.size();
+
             size_t i = 0;
 
             for (const auto & it : VSTi::PlugIns)
             {
-                struct InstalledPlayer ip;
+                struct installed_player_t ip;
 
                 ip.Name = it.Name.c_str();
                 ip.Type = PlayerTypes::VSTi;
 
                 _InstalledPlayers.push_back(ip);
 
-                if (CfgVSTiFilePath.get() == it.PathName.c_str())
-                    VSTiIndex = i;
+                if (CfgPlugInFilePath.get() == it.PathName.c_str())
+                    PlugInIndex = i;
 
                 ++i;
             }
         }
         else
-            console::print(STR_COMPONENT_BASENAME " found no VST instruments.");
+            console::print(STR_COMPONENT_BASENAME " found no compatible VST instruments.");
     }
 
     #pragma endregion
 
+    #pragma region CLAP Players
+
+    // Add the CLAP plug-ins to the installed player list.
+    {
+        console::print(STR_COMPONENT_BASENAME " is enumerating CLAP plug-ins...");
+
+//      fs::path BaseDirectory(R"(f:\MIDI\_foobar2000 Support\CLAP Plugins\)");//CfgCLAPDirectoryPath.get(DirectoryPath));
+        fs::path BaseDirectory(R"(c:\Users\Peter\Code\C++\Media\CLAP\x64\Debug\)");//CfgCLAPDirectoryPath.get(DirectoryPath));
+
+        foo_midi::clap_host_t::GetPlugIns(BaseDirectory);
+
+        size_t CLAPCount = foo_midi::clap_host_t::PlugIns.size();
+
+        if (CLAPCount > 0)
+        {
+            console::print(STR_COMPONENT_BASENAME " found ", CLAPCount, " CLAP plug-ins.");
+
+            _FirstCLAPIndex = _InstalledPlayers.size();
+
+            size_t i = 0;
+
+            for (const auto & PlugIn : foo_midi::clap_host_t::PlugIns)
+            {
+                struct installed_player_t ip;
+
+                ip.Name = PlugIn.Name.c_str();
+                ip.Type = PlayerTypes::CLAP;
+
+                _InstalledPlayers.push_back(ip);
+
+                if (CfgPlugInFilePath.get() == PlugIn.PathName.c_str())
+                    PlugInIndex = i;
+
+                ++i;
+            }
+        }
+        else
+            console::print(STR_COMPONENT_BASENAME " found no compatible CLAP plug-ins.");
+    }
+
+    #pragma endregion
+
+//  std::sort(_InstalledPlayers.begin(), _InstalledPlayers.end(), [](InstalledPlayer a, InstalledPlayer b) { return a.Name < b.Name; });
+
     // Determine the selected player.
     auto PlayerType = (PlayerTypes) (uint8_t) CfgPlayerType;
 
-    if ((PlayerType == PlayerTypes::VSTi) && (VSTiIndex == ~0u))
+    if ((PlayerType == PlayerTypes::VSTi) && (PlugInIndex == ~0u))
         PlayerType = PlayerTypes::Default; // In case the VSTi is no longer available.
+    else
+    if ((PlayerType == PlayerTypes::CLAP) && (PlugInIndex == ~0u))
+        PlayerType = PlayerTypes::Default; // In case the CLAP plug-in is no longer available.
     else
     if ((PlayerType == PlayerTypes::FluidSynth) && !_HasFluidSynth)
         PlayerType = PlayerTypes::BASSMIDI; // In case FluidSynth is no longer available.
@@ -668,26 +729,6 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     if ((PlayerType == PlayerTypes::SecretSauce) && !_HasSecretSauce)
         PlayerType = PlayerTypes::BASSMIDI; // In case Secret Sauce is no longer available.
 
-    #pragma endregion
-
-    #pragma region Configure
-    {
-        auto w = (CComboBox) GetDlgItem(IDC_CONFIGURE);
-
-        if (PlayerType != PlayerTypes::VSTi)
-        {
-            w.EnableWindow(FALSE);
-        }
-        else
-        if (VSTiIndex != ~0u)
-        {
-            const VSTi::plugin_t & Plugin = VSTi::PlugIns[VSTiIndex];
-
-            w.EnableWindow(Plugin.HasEditor);
-
-            VSTi::Config = CfgVSTiConfig[Plugin.Id];
-        }
-    }
     #pragma endregion
 
     #pragma region Player Type
@@ -704,13 +745,30 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             if (Player.Type == PlayerType)
                 SelectedIndex = i;
 
-            i++;
+            ++i;
         }
 
-        if ((PlayerType == PlayerTypes::VSTi) && (VSTiIndex != (size_t) ~0))
-            SelectedIndex = (int) (_InstalledKnownPlayerCount + VSTiIndex);
+        w.SetCurSel(SelectedIndex);
+    }
+    #pragma endregion
 
-         w.SetCurSel(SelectedIndex);
+    #pragma region Configure
+    {
+        auto w = (CComboBox) GetDlgItem(IDC_CONFIGURE);
+
+        if (PlayerType != PlayerTypes::VSTi)
+        {
+            w.EnableWindow(FALSE);
+        }
+        else
+        if (PlugInIndex != ~0u)
+        {
+            const VSTi::plugin_t & Plugin = VSTi::PlugIns[PlugInIndex];
+
+            w.EnableWindow(Plugin.HasEditor);
+
+            VSTi::Config = CfgVSTiConfig[Plugin.Id];
+        }
     }
     #pragma endregion
 
@@ -950,24 +1008,32 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 {
     int SelectedIndex = (int) GetDlgItem(IDC_PLAYER_TYPE).SendMessage(CB_GETCURSEL, 0, 0);
 
-    if ((SelectedIndex != -1) && ((size_t) SelectedIndex < _InstalledKnownPlayerCount))
+    if (SelectedIndex != -1)
         return;
 
     _IsBusy = true;
     OnChanged();
 
-    VSTiPlayer Player;
-
-    size_t VSTiIndex = SelectedIndex - _InstalledKnownPlayerCount;
-
-    if (Player.LoadVST(VSTi::PlugIns[VSTiIndex].PathName.c_str()))
+    if ((size_t) SelectedIndex >= _FirstCLAPIndex)
     {
-        if (VSTi::Config.size() != 0)
-            Player.SetChunk(VSTi::Config.data(), VSTi::Config.size());
+        CLAPPlayer Player;
 
-        Player.DisplayEditorModal();
+        /* Configure CLAP */
+    }
+    else
+    if ((size_t) SelectedIndex >= _FirstVSTiIndex)
+    {
+        VSTiPlayer Player;
 
-        Player.GetChunk(VSTi::Config);
+        if (Player.LoadVST(VSTi::PlugIns[SelectedIndex - _FirstVSTiIndex].PathName.c_str()))
+        {
+            if (VSTi::Config.size() != 0)
+                Player.SetChunk(VSTi::Config.data(), VSTi::Config.size());
+
+            Player.DisplayEditorModal();
+
+            Player.GetChunk(VSTi::Config);
+        }
     }
 
     _IsBusy = false;
@@ -982,23 +1048,28 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
     auto PlayerType = PlayerTypes::Unknown;
 
     int SelectedIndex = (int) ::SendMessage(w, CB_GETCURSEL, 0, 0);
-    size_t VSTiIndex = ~0u;
+    size_t PlugInIndex = ~0u;
 
     // Player Type
     if (SelectedIndex != -1)
     {
         PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
 
-        if ((size_t) SelectedIndex >= _InstalledKnownPlayerCount)
+        if (PlayerType == PlayerTypes::VSTi)
         {
-            VSTiIndex = SelectedIndex - _InstalledKnownPlayerCount;
-            VSTi::Config = CfgVSTiConfig[VSTi::PlugIns[VSTiIndex].Id];
+            PlugInIndex = SelectedIndex - _FirstVSTiIndex;
+            VSTi::Config = CfgVSTiConfig[VSTi::PlugIns[PlugInIndex].Id];
+        }
+        else
+        if (PlayerType == PlayerTypes::CLAP)
+        {
+            PlugInIndex = SelectedIndex - _FirstCLAPIndex;
         }
     }
 
     // Configure
     {
-        const bool Enable = (PlayerType == PlayerTypes::VSTi) ? VSTi::PlugIns[VSTiIndex].HasEditor : FALSE;
+        const bool Enable = (PlayerType == PlayerTypes::VSTi) ? VSTi::PlugIns[PlugInIndex].HasEditor : FALSE;
 
         GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
     }
@@ -1132,27 +1203,32 @@ bool PreferencesRootPage::HasChanged()
 
         if (SelectedIndex != -1)
         {
-            if ((size_t) SelectedIndex < _InstalledKnownPlayerCount)
-                PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
-            else
-                PlayerType = PlayerTypes::VSTi;
+            PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
 
             if (PlayerType != (PlayerTypes) (int) CfgPlayerType)
                 return true;
 
             if (PlayerType == PlayerTypes::VSTi)
             {
-                size_t VSTiIndex = (size_t) (SelectedIndex - _InstalledKnownPlayerCount);
+                size_t PlugInIndex = (size_t) (SelectedIndex - _FirstVSTiIndex);
 
-                if (CfgVSTiFilePath.get() != VSTi::PlugIns[VSTiIndex].PathName.c_str())
+                if (CfgPlugInFilePath.get() != VSTi::PlugIns[PlugInIndex].PathName.c_str())
                     return true;
 
-                t_uint32 Id = VSTi::PlugIns[VSTiIndex].Id;
+                t_uint32 Id = VSTi::PlugIns[PlugInIndex].Id;
 
                 if (VSTi::Config.size() != CfgVSTiConfig[Id].size())
                     return true;
 
                 if ((VSTi::Config.size() != 0) && (::memcmp(VSTi::Config.data(), CfgVSTiConfig[Id].data(), VSTi::Config.size()) != 0))
+                    return true;
+            }
+            else
+            if (PlayerType == PlayerTypes::CLAP)
+            {
+                size_t PlugInIndex = (size_t) (SelectedIndex - _FirstCLAPIndex);
+
+                if (CfgPlugInFilePath.get() != foo_midi::clap_host_t::PlugIns[PlugInIndex].PathName.c_str())
                     return true;
             }
         }

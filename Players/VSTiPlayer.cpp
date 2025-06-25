@@ -226,14 +226,14 @@ void VSTiPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     }
 }
 
-void VSTiPlayer::SendEvent(uint32_t b)
+void VSTiPlayer::SendEvent(uint32_t data)
 {
     WriteBytes(7);
-    WriteBytes(b);
+    WriteBytes(data);
 
-    const uint32_t code = ReadCode();
+    const uint32_t Code = ReadCode();
 
-    if (code != 0)
+    if (Code != 0)
         StopHost();
 }
 

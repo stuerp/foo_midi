@@ -135,7 +135,7 @@ void ADLPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 
             // Convert the format of the rendered output.
             for (size_t j = 0; j < ((size_t) ToDo * 2); ++j)
-                sampleData[j] += (audio_sample) Data[j] * (1.0f / 32768.0f);
+                sampleData[j] += (audio_sample) Data[j] * (audio_sample) (1.0 / 32768.0);
         }
 
         sampleData += (ToDo * 2);

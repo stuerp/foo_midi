@@ -49,7 +49,7 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
         PathName.truncate(PathName.length() - 3);
         PathName += findFile->GetFileName();
 
-        // Enter all subdirectories to look voor plug-ins.
+        // Enter all subdirectories.
         if (findFile->IsDirectory() && ::strcmp(findFile->GetFileName(), ".") && ::strcmp(findFile->GetFileName(), ".."))
         {
             PathName = pfc::io::path::combine(PathName, "*.*");

@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.06.22) **/
+/** $VER: Configuration.h (2025.06.23) **/
 
 #pragma once
 
@@ -36,8 +36,9 @@ enum class PlayerTypes : int8_t
     MCI = 11,
     NukedSC55 = 12,
     FMMIDI = 13,
+    CLAP = 14,
 
-    Max = FMMIDI,
+    Max = CLAP,
 
     Default = ADL,
 };
@@ -173,12 +174,13 @@ extern cfg_var_modern::cfg_float
     CfgBASSMIDIVolume;
 
 extern cfg_var_modern::cfg_string
-    CfgVSTiFilePath,
+    CfgCLAPPlugInDirectoryPath,
     CfgSoundFontFilePath,
     CfgMT32ROMDirectoryPath,
     CfgFluidSynthDirectoryPath,
     CfgProgramsFilePath,
-    CfgADLBankFilePath;
+    CfgADLBankFilePath,
+    CfgPlugInFilePath;
 
 extern cfg_map
     CfgVSTiConfig;

@@ -41,6 +41,10 @@
     <ClCompile Include="Players\FMMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Channels.cpp" />
     <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
+    <ClCompile Include="Players\NukedSC-55Player.cpp" />
+    <ClCompile Include="Players\CLAPPlayer.cpp" />
+    <ClCompile Include="Players\CLAPHost.cpp" />
+    <ClCompile Include="Players\CLAPEventList.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -120,7 +124,7 @@
     <ClInclude Include="Players\NukePlayer.h" />
     <ClInclude Include="Patrons.h" />
     <ClInclude Include="3rdParty\Nuke\resampler.h" />
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="Resource.h" />
     <ClInclude Include="Players\SCPlayer.h" />
     <ClInclude Include="Infrastructure\FileHasher.h" />
     <ClInclude Include="Players\VSTiPlayer.h" />
@@ -187,6 +191,10 @@
     <ClInclude Include="Players\FMMPlayer.h" />
     <ClInclude Include="Infrastructure\Channels.h" />
     <ClInclude Include="Infrastructure\CriticalSection.h" />
+    <ClInclude Include="Players\NukedSC-55Player.h" />
+    <ClInclude Include="Players\CLAPPlayer.h" />
+    <ClInclude Include="Players\CLAPHost.h" />
+    <ClInclude Include="Players\CLAPEventList.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

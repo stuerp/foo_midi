@@ -140,7 +140,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
     edittext                        IDC_FLUIDSYNTH_PATH, ,              X_B52, Y_B52,     W_B52, H_B52, ES_AUTOHSCROLL
     pushbutton  "...",              IDC_FLUIDSYNTH_PATH_SELECT,         X_B53, Y_B53,     W_B53, H_B53
 
-    rtext       "fmmidi Programs:", IDC_STATIC,                         X_B54, Y_B54 + 2, W_B54, H_B54
+    rtext       "FMMIDI Programs:", IDC_STATIC,                         X_B54, Y_B54 + 2, W_B54, H_B54
     edittext                        IDC_PROGRAMS_FILE_PATH, ,           X_B55, Y_B55,     W_B55, H_B55, ES_AUTOHSCROLL
     pushbutton  "...",              IDC_PROGRAMS_FILE_PATH_SELECT,      X_B56, Y_B56,     W_B56, H_B56
 

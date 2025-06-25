@@ -132,7 +132,7 @@
 
 #pragma endregion
 
-#pragma region fmmidi path
+#pragma region FMMIDI path
 // Label
 #define X_B54    X_B51
 #define Y_B54    Y_B52 + H_B52 + 4

@@ -52,7 +52,7 @@ protected:
     virtual void SendEvent(uint32_t) { }
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) { };
 
-    // Only implemented by Secret Sauce and VSTi-specific
+    // Only implemented by Secret Sauce, VSTi and CLAP
     virtual void SendEvent(uint32_t, uint32_t time) { };
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t, uint32_t time) { };
 

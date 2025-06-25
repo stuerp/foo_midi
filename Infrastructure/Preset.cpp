@@ -1,5 +1,5 @@
 
-/** $VER: Preset.cpp (2025.06.22) **/
+/** $VER: Preset.cpp (2025.06.23) **/
 
 #include "pch.h"
 
@@ -23,14 +23,18 @@ preset_t::preset_t() noexcept
 */
     {
         _PlayerType = (PlayerTypes) (uint32_t) CfgPlayerType;
-        _VSTiFilePath = CfgVSTiFilePath;
 
+        _PlugInFilePath = CfgPlugInFilePath;
+        _PlugInIndex = 3; // CfgPlugInId; FIXME
+
+        // Get the configuration of the VSTi.
+        if (_PlayerType == PlayerTypes::VSTi)
         {
             try
             {
                 auto Player = new VSTiPlayer;
 
-                if (Player->LoadVST(_VSTiFilePath))
+                if (Player->LoadVST(_PlugInFilePath))
                 {
                     _VSTiConfig = CfgVSTiConfig[Player->GetUniqueID()];
 
@@ -40,8 +44,13 @@ preset_t::preset_t() noexcept
             catch (...)
             {
                 if (_PlayerType == PlayerTypes::VSTi)
-                    _PlayerType = PlayerTypes::EmuDeMIDI;
+                    _PlayerType = PlayerTypes::Default;
             }
+        }
+        else
+        // Get the configuration of the CLAP plug-in.
+        if (_PlayerType == PlayerTypes::CLAP)
+        {
         }
 
         _SoundFontFilePath = CfgSoundFontFilePath;
@@ -116,7 +125,7 @@ void preset_t::Serialize(pfc::string & text)
     if (_PlayerType == PlayerTypes::VSTi)
     {
         text += "|";
-        text += _VSTiFilePath;
+        text += _PlugInFilePath;
 
         text += "|";
 
@@ -497,7 +506,7 @@ void preset_t::Deserialize(const char * text)
 
     _PlayerType = PlayerType;
 
-    _VSTiFilePath = VSTiPath;
+    _PlugInFilePath = VSTiPath;
     _VSTiConfig = VSTiConfig;
 
     _SoundFontFilePath = SoundFontPath;
