@@ -123,6 +123,11 @@ public:
             _Data[i] = 0xFC00;
     }
 
+    uint64_t Version() const noexcept
+    {
+        return _Version;
+    }
+
 private:
     static const size_t MaxPorts = 128;
 

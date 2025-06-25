@@ -223,6 +223,7 @@ BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
     InitializeConfigVariable(DefaultTempo);
 
     CfgChannels.Initialize();
+    _CfgChannelsVersion = CfgChannels.Version();
 
     InitializePortControls();
 
@@ -384,8 +385,8 @@ bool DialogPageProcessing::HasChanged() const noexcept
 
     HasConfigVariableChanged(DefaultTempo);
 
-    if (CfgChannels.HasChanged(_CfgChannelsVersion))
-        return true;
+//  if (CfgChannels.HasChanged(_CfgChannelsVersion))
+//      return true;
 
     return false;
 }
@@ -420,7 +421,7 @@ void DialogPageProcessing::UpdateDialog() noexcept
 void DialogPageProcessing::UpdateChannelButtons() noexcept
 {
     for (int i = IDC_CHANNEL_01; i <= IDC_CHANNEL_16; ++i)
-        SendDlgItemMessageW(i, BM_SETCHECK, (WPARAM)(CfgChannels.IsEnabled(_PortNumber, (uint32_t) i) ? BST_CHECKED: BST_UNCHECKED), 0);
+        SendDlgItemMessageW(i, BM_SETCHECK, (WPARAM) (CfgChannels.IsEnabled(_PortNumber, (uint32_t) i - IDC_CHANNEL_01) ? BST_CHECKED: BST_UNCHECKED));
 }
 
 #pragma endregion
