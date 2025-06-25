@@ -28,7 +28,7 @@ public:
 
     void SetBasePath(const std::wstring & basePath) noexcept;
 
-    virtual uint32_t GetSampleBlockSize() const noexcept override { return 2 * 256; } // 2 channels, 256 samples
+    virtual uint32_t GetSampleBlockSize() const noexcept override { return 2 * 1024; } // 2 channels
 
 private:
     virtual bool Startup();

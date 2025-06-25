@@ -444,7 +444,6 @@
     <ClInclude Include="Players\OPNPlayer\OPNPlayer.h" />
     <ClInclude Include="Players\OPNPlayer\Tomsoft.wopn.h" />
     <ClInclude Include="Players\OPNPlayer\xg.wopn.h" />
-    <ClInclude Include="Infrastructure\PreferencesPathsLayout.h" />
     <ClInclude Include="Infrastructure\PreferencesRootLayout.h" />
     <ClInclude Include="MIDI\SoundFontCache.h" />
     <ClInclude Include="Infrastructure\FileHasher.h" />
@@ -577,6 +576,7 @@
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesFM.rc" />
+    <ResourceCompile Include="Infrastructure\PreferencesPaths.rc" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="3rdParty\bass\c\bass.lib" />

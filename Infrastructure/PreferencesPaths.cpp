@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2025.06.23) **/
+/** $VER: PreferencesPaths.cpp (2025.06.25) **/
 
 #include "pch.h"
 
@@ -43,7 +43,8 @@ class PreferencesPathsPage : public CDialogImpl<PreferencesPathsPage>, public pr
 public:
     PreferencesPathsPage(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
     {
-        AdvCfgVSTiPluginDirectoryPath.get(_VSTiPluginDirectoryPath);
+        AdvCfgVSTiPluginDirectoryPath.get(_VSTiPlugInDirectoryPath);
+        _CLAPPlugInDirectoryPath = CfgCLAPPlugInDirectoryPath;
         _SoundFontFilePath = CfgSoundFontFilePath;
         _MT32ROMDirectoryPath = CfgMT32ROMDirectoryPath;
         AdvCfgSecretSauceDirectoryPath.get(_SecretSauceDirectoryPath);
@@ -68,8 +69,10 @@ public:
     BEGIN_MSG_MAP_EX(PreferencesPathsPage)
         MSG_WM_INITDIALOG(OnInitDialog)
 
-        COMMAND_HANDLER_EX(IDC_VST_PATH, EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_VST_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_VSTi_PATH, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_VSTi_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_CLAP_PATH, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_CLAP_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH, EN_CHANGE, OnEditChange)
@@ -100,7 +103,7 @@ private:
 
 private:
 #pragma region VSTi
-    pfc::string _VSTiPluginDirectoryPath;
+    pfc::string _VSTiPlugInDirectoryPath;
 #pragma endregion
 
 #pragma region CLAP
@@ -151,7 +154,7 @@ t_uint32 PreferencesPathsPage::get_state()
 /// </summary>
 void PreferencesPathsPage::apply()
 {
-    AdvCfgVSTiPluginDirectoryPath.set(_VSTiPluginDirectoryPath);
+    AdvCfgVSTiPluginDirectoryPath.set(_VSTiPlugInDirectoryPath);
     CfgCLAPPlugInDirectoryPath = _CLAPPlugInDirectoryPath;
     CfgSoundFontFilePath = _SoundFontFilePath;
     CfgMT32ROMDirectoryPath = _MT32ROMDirectoryPath;
@@ -167,7 +170,8 @@ void PreferencesPathsPage::apply()
 /// </summary>
 void PreferencesPathsPage::reset()
 {
-    _VSTiPluginDirectoryPath.reset();
+    _VSTiPlugInDirectoryPath.reset();
+    _CLAPPlugInDirectoryPath.reset();
     _SoundFontFilePath.reset();
     _MT32ROMDirectoryPath.reset();
     _SecretSauceDirectoryPath.reset();
@@ -207,8 +211,12 @@ void PreferencesPathsPage::OnEditChange(UINT code, int id, CWindow) noexcept
 
     switch (id)
     {
-        case IDC_VST_PATH:
-            _VSTiPluginDirectoryPath = pfc::utf8FromWide(Text);
+        case IDC_VSTi_PATH:
+            _VSTiPlugInDirectoryPath = pfc::utf8FromWide(Text);
+            break;
+
+        case IDC_CLAP_PATH:
+            _CLAPPlugInDirectoryPath = pfc::utf8FromWide(Text);
             break;
 
         case IDC_SOUNDFONT_FILE_PATH:
@@ -243,115 +251,141 @@ void PreferencesPathsPage::OnEditChange(UINT code, int id, CWindow) noexcept
 /// </summary>
 void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 {
-    if (id == IDC_VST_PATH_SELECT)
+    switch (id)
     {
-        pfc::string DirectoryPath = _VSTiPluginDirectoryPath;
-
-        if (::uBrowseForFolder(m_hWnd, "Locate VSTi plug-ins...", DirectoryPath))
+        case IDC_VSTi_PATH_SELECT:
         {
-            _VSTiPluginDirectoryPath = DirectoryPath;
+            pfc::string DirectoryPath = _VSTiPlugInDirectoryPath;
 
-            pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
+            if (::uBrowseForFolder(m_hWnd, "Locate VSTi plug-ins...", DirectoryPath))
+            {
+                _VSTiPlugInDirectoryPath = DirectoryPath;
 
-            SetDlgItemText(IDC_VST_PATH, w);
+                pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
 
-            OnChanged();
+                SetDlgItemText(IDC_VSTi_PATH, w);
+
+                OnChanged();
+            }
+            break;
         }
-    }
-    else
-    if (id == IDC_SOUNDFONT_FILE_PATH_SELECT)
-    {
-        pfc::string DirectoryPath = _SoundFontFilePath;
 
-        DirectoryPath.truncate_filename();
-
-        pfc::string FilePath = _SoundFontFilePath;
-
-        if (::uGetOpenFileName(m_hWnd,
-                "SoundFont and list files|*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sflist;*.json|"
-                "SoundFont files|*.sf2;*.sf3;*.sf2pack;*.sfogg|"
-                "SoundFont list files|*.sflist;*.json"
-            ,
-            0, "sf2", "Choose a SoundFont bank or list...", DirectoryPath, FilePath, FALSE))
+        case IDC_SOUNDFONT_FILE_PATH_SELECT:
         {
-            _SoundFontFilePath = FilePath;
+            pfc::string DirectoryPath = _SoundFontFilePath;
 
-            pfc::wstringLite w = pfc::wideFromUTF8(FilePath);
-
-            SetDlgItemText(IDC_SOUNDFONT_FILE_PATH, w);
-
-            OnChanged();
-        }
-    }
-    else
-    if (id == IDC_MUNT_FILE_PATH_SELECT)
-    {
-        pfc::string DirectoryPath = _MT32ROMDirectoryPath;
-
-        if (::uBrowseForFolder(m_hWnd, "Locate MT-32 or CM-32L ROM sets...", DirectoryPath))
-        {
-            _MT32ROMDirectoryPath = DirectoryPath;
-
-            pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
-
-            SetDlgItemText(IDC_MUNT_FILE_PATH, w);
-
-            OnChanged();
-        }
-    }
-    else
-    if (id == IDC_SECRET_SAUCE_PATH_SELECT)
-    {
-        pfc::string DirectoryPath = _SecretSauceDirectoryPath;
-
-        if (::uBrowseForFolder(m_hWnd, "Locate Secret Sauce...", DirectoryPath))
-        {
-            _SecretSauceDirectoryPath = DirectoryPath;
-
-            pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
-
-            SetDlgItemText(IDC_SECRET_SAUCE_PATH, w);
-
-            OnChanged();
-        }
-    }
-    else
-    if (id == IDC_FLUIDSYNTH_PATH_SELECT)
-    {
-        pfc::string DirectoryPath = _FluidSynthDirectoryPath;
-
-        if (::uBrowseForFolder(m_hWnd, "Locate FluidSynth...", DirectoryPath))
-        {
-            _FluidSynthDirectoryPath = DirectoryPath;
-
-            pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
-
-            SetDlgItemText(IDC_FLUIDSYNTH_PATH, w);
-
-            OnChanged();
-        }
-    }
-    else
-    if (id == IDC_PROGRAMS_FILE_PATH_SELECT)
-    {
-        pfc::string DirectoryPath = _ProgramsFilePath;
-
-        if (!DirectoryPath.isEmpty())
             DirectoryPath.truncate_filename();
-        else
-            DirectoryPath = pfc::io::path::getParent(core_api::get_my_full_path());
 
-        pfc::string FilePath = _ProgramsFilePath;
+            pfc::string FilePath = _SoundFontFilePath;
 
-        if (::uGetOpenFileName(m_hWnd, "FMMIDI Program files|*.*", 0, "txt", "Choose a Programs file...", DirectoryPath, FilePath, FALSE))
+            if (::uGetOpenFileName(m_hWnd,
+                    "SoundFont and list files|*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sflist;*.json|"
+                    "SoundFont files|*.sf2;*.sf3;*.sf2pack;*.sfogg|"
+                    "SoundFont list files|*.sflist;*.json"
+                ,
+                0, "sf2", "Choose a SoundFont bank or list...", DirectoryPath, FilePath, FALSE))
+            {
+                _SoundFontFilePath = FilePath;
+
+                pfc::wstringLite w = pfc::wideFromUTF8(FilePath);
+
+                SetDlgItemText(IDC_SOUNDFONT_FILE_PATH, w);
+
+                OnChanged();
+            }
+            break;
+        }
+
+        case IDC_MUNT_FILE_PATH_SELECT:
         {
-            _ProgramsFilePath = FilePath;
+            pfc::string DirectoryPath = _MT32ROMDirectoryPath;
 
-            pfc::wstringLite w = pfc::wideFromUTF8(FilePath);
+            if (::uBrowseForFolder(m_hWnd, "Locate MT-32 or CM-32L ROM sets...", DirectoryPath))
+            {
+                _MT32ROMDirectoryPath = DirectoryPath;
 
-            SetDlgItemText(IDC_PROGRAMS_FILE_PATH, w);
+                pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
 
-            OnChanged();
+                SetDlgItemText(IDC_MUNT_FILE_PATH, w);
+
+                OnChanged();
+            }
+            break;
+        }
+
+        case IDC_SECRET_SAUCE_PATH_SELECT:
+        {
+            pfc::string DirectoryPath = _SecretSauceDirectoryPath;
+
+            if (::uBrowseForFolder(m_hWnd, "Locate Secret Sauce...", DirectoryPath))
+            {
+                _SecretSauceDirectoryPath = DirectoryPath;
+
+                pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
+
+                SetDlgItemText(IDC_SECRET_SAUCE_PATH, w);
+
+                OnChanged();
+            }
+            break;
+        }
+
+        case IDC_FLUIDSYNTH_PATH_SELECT:
+        {
+            pfc::string DirectoryPath = _FluidSynthDirectoryPath;
+
+            if (::uBrowseForFolder(m_hWnd, "Locate FluidSynth...", DirectoryPath))
+            {
+                _FluidSynthDirectoryPath = DirectoryPath;
+
+                pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
+
+                SetDlgItemText(IDC_FLUIDSYNTH_PATH, w);
+
+                OnChanged();
+            }
+            break;
+        }
+
+        case IDC_PROGRAMS_FILE_PATH_SELECT:
+        {
+            pfc::string DirectoryPath = _ProgramsFilePath;
+
+            if (!DirectoryPath.isEmpty())
+                DirectoryPath.truncate_filename();
+            else
+                DirectoryPath = pfc::io::path::getParent(core_api::get_my_full_path());
+
+            pfc::string FilePath = _ProgramsFilePath;
+
+            if (::uGetOpenFileName(m_hWnd, "FMMIDI Program files|*.*", 0, "txt", "Choose a Programs file...", DirectoryPath, FilePath, FALSE))
+            {
+                _ProgramsFilePath = FilePath;
+
+                pfc::wstringLite w = pfc::wideFromUTF8(FilePath);
+
+                SetDlgItemText(IDC_PROGRAMS_FILE_PATH, w);
+
+                OnChanged();
+            }
+            break;
+        }
+
+        case IDC_CLAP_PATH_SELECT:
+        {
+            pfc::string DirectoryPath = _CLAPPlugInDirectoryPath;
+
+            if (::uBrowseForFolder(m_hWnd, "Locate CLAP plug-ins...", DirectoryPath))
+            {
+                _CLAPPlugInDirectoryPath = DirectoryPath;
+
+                pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
+
+                SetDlgItemText(IDC_CLAP_PATH, w);
+
+                OnChanged();
+            }
+            break;
         }
     }
 }
@@ -367,7 +401,10 @@ bool PreferencesPathsPage::HasChanged() const noexcept
 
     AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
 
-    if (_VSTiPluginDirectoryPath != DirectoryPath)
+    if (_VSTiPlugInDirectoryPath != DirectoryPath)
+        HasChanged = true;
+
+    if (_CLAPPlugInDirectoryPath != CfgCLAPPlugInDirectoryPath)
         HasChanged = true;
 
     if (_SoundFontFilePath != CfgSoundFontFilePath)
@@ -405,7 +442,8 @@ void PreferencesPathsPage::OnChanged() const noexcept
 /// </summary>
 void PreferencesPathsPage::UpdateDialog() const noexcept
 {
-    ::uSetDlgItemText(m_hWnd, IDC_VST_PATH, _VSTiPluginDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_VSTi_PATH, _VSTiPlugInDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_CLAP_PATH, _CLAPPlugInDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, _SoundFontFilePath);
     ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, _MT32ROMDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_SECRET_SAUCE_PATH, _SecretSauceDirectoryPath);

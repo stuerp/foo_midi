@@ -334,11 +334,6 @@ void PreferencesRootPage::apply()
 
             CfgPlayerType = (int) PlayerType;
 
-            if ((size_t) SelectedIndex < _FirstVSTiIndex)
-            {
-                CfgPlugInFilePath = "";
-            }
-            else
             if (PlayerType == PlayerTypes::VSTi)
             {
                 size_t VSTiIndex = (size_t) (SelectedIndex - _FirstVSTiIndex);
@@ -356,6 +351,11 @@ void PreferencesRootPage::apply()
                 auto & PlugIn = foo_midi::clap_host_t::PlugIns[CLAPIndex];
 
                 CfgPlugInFilePath = PlugIn.PathName.c_str();
+                CfgPlugInIndex = PlugIn.Index;
+            }
+            else
+            {
+                CfgPlugInFilePath = "";
             }
         }
     }
@@ -676,8 +676,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     {
         console::print(STR_COMPONENT_BASENAME " is enumerating CLAP plug-ins...");
 
-//      fs::path BaseDirectory(R"(f:\MIDI\_foobar2000 Support\CLAP Plugins\)");//CfgCLAPDirectoryPath.get(DirectoryPath));
-        fs::path BaseDirectory(R"(c:\Users\Peter\Code\C++\Media\CLAP\x64\Debug\)");//CfgCLAPDirectoryPath.get(DirectoryPath));
+        fs::path BaseDirectory(CfgCLAPPlugInDirectoryPath.get().c_str());
 
         foo_midi::clap_host_t::GetPlugIns(BaseDirectory);
 
@@ -700,7 +699,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
                 _InstalledPlayers.push_back(ip);
 
-                if (CfgPlugInFilePath.get() == PlugIn.PathName.c_str())
+                if ((CfgPlugInFilePath.get() == PlugIn.PathName.c_str()) && (CfgPlugInIndex == PlugIn.Index))
                     PlugInIndex = i;
 
                 ++i;
@@ -1229,6 +1228,9 @@ bool PreferencesRootPage::HasChanged()
                 size_t PlugInIndex = (size_t) (SelectedIndex - _FirstCLAPIndex);
 
                 if (CfgPlugInFilePath.get() != foo_midi::clap_host_t::PlugIns[PlugInIndex].PathName.c_str())
+                    return true;
+
+                if (CfgPlugInIndex != foo_midi::clap_host_t::PlugIns[PlugInIndex].Index)
                     return true;
             }
         }

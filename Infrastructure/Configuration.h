@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.06.23) **/
+/** $VER: Configuration.h (2025.06.25) **/
 
 #pragma once
 
@@ -160,7 +160,9 @@ extern cfg_var_modern::cfg_int
     CfgMIDIStandard,
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
-    CfgUseVSTiWithXG;
+    CfgUseVSTiWithXG,
+
+    CfgPlugInIndex;
 
 extern cfg_var_modern::cfg_bool
     CfgWriteBarMarkers,

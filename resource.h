@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.06.22) P. Stuer **/
+/** $VER: Resource.h (2025.06.25) P. Stuer **/
 
 #pragma once
 
@@ -122,8 +122,8 @@
 #define IDD_PREFERENCES_PATHS               2000
 #define IDD_PREFERENCES_PATHS_NAME          "Paths"
 
-#define IDC_VST_PATH                        2010
-#define IDC_VST_PATH_SELECT                 2011
+#define IDC_VSTi_PATH                       2010
+#define IDC_VSTi_PATH_SELECT                2011
 
 #define IDC_SOUNDFONT_FILE_PATH             2020
 #define IDC_SOUNDFONT_FILE_PATH_SELECT      2021
@@ -140,7 +140,10 @@
 #define IDC_PROGRAMS_FILE_PATH              2060
 #define IDC_PROGRAMS_FILE_PATH_SELECT       2061
 
-#define IDC_PATHS_MESSAGE                   2070
+#define IDC_CLAP_PATH                       2070
+#define IDC_CLAP_PATH_SELECT                2071
+
+#define IDC_PATHS_MESSAGE                   2080
 
 /** Dialog: Preferences Recomposer **/
 

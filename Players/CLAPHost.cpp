@@ -20,6 +20,9 @@ namespace foo_midi
 /// </summary>
 void clap_host_t::GetPlugIns(const fs::path & directoryPath)
 {
+    if (directoryPath.empty())
+        return;
+
     for (const auto & Entry : std::filesystem::directory_iterator(directoryPath))
     {
         if (Entry.is_directory())
