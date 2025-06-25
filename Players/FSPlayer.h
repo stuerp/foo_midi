@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.03.19) **/
+/** $VER: FSPlayer.h (2025.06.25) **/
 
 #pragma once
 
@@ -9,7 +9,7 @@
 #include "Player.h"
 #include "SoundFont.h"
 
-#include "FluidSynth.h"
+#include "FS.h"
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member

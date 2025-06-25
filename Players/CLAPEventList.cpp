@@ -1,5 +1,5 @@
 
-/** $VER: CLAPEventList.cpp (2025.06.25) - Based on event_list.cpp from dosbox-staging **/
+/** $VER: CLAPEventList.cpp (2025.06.25) P. Stuer **/
 
 #include "pch.h"
 

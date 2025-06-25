@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.h (2025.06.25) **/
+/** $VER: CLAPHost.h (2025.06.25) P. Stuer **/
 
 #pragma once
 
@@ -27,7 +27,7 @@ public:
         std::string PathName;
     };
 
-    static void GetPlugIns(const fs::path & directoryPath);
+    static void GetPlugIns(const fs::path & directoryPath) noexcept;
 
 public:
     static std::vector<plugin_t> PlugIns;

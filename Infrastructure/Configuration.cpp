@@ -5,7 +5,7 @@
 
 #include "Configuration.h"
 
-#include "resource.h"
+#include "Resource.h"
 
 #pragma region Configuration GUIDs
 

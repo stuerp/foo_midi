@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2025.06.24) P. Stuer **/
+/** $VER: PreferencesRoot.cpp (2025.06.25) P. Stuer **/
 
 #include "pch.h"
 
@@ -674,6 +674,8 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     // Add the CLAP plug-ins to the installed player list.
     {
+        foo_midi::clap_host_t::PlugIns.clear();
+
         console::print(STR_COMPONENT_BASENAME " is enumerating CLAP plug-ins...");
 
         fs::path BaseDirectory(CfgCLAPPlugInDirectoryPath.get().c_str());

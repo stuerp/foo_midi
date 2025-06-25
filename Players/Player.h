@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2025.06.21) **/
+/** $VER: Player.h (2025.06.25) P. Stuer **/
 
 #pragma once
 
@@ -15,6 +15,7 @@
 #endif
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 class player_t
 {
 public:
@@ -103,4 +104,5 @@ private:
     foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;
 #endif
 };
+
 #pragma warning(default: 4820)

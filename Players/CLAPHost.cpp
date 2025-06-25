@@ -18,7 +18,7 @@ namespace foo_midi
 /// <summary>
 /// Gets the CLAP plug-ins.
 /// </summary>
-void clap_host_t::GetPlugIns(const fs::path & directoryPath)
+void clap_host_t::GetPlugIns(const fs::path & directoryPath) noexcept
 {
     if (directoryPath.empty())
         return;
@@ -53,8 +53,6 @@ void clap_host_t::GetPlugIns(const fs::path & filePath, const std::function<void
 
     if (hPlugIn == NULL)
         return;
-
-    PlugIns.clear();
 
     auto Entry = (const clap_plugin_entry_t *) ::GetProcAddress(hPlugIn, "clap_entry");
 

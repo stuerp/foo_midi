@@ -94,7 +94,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-- v2.19.0.0-alpha3, 2025-xx-xx
+- v2.19.0.0-alpha3, 2025-06-25
 
 - New: CLAP host functionality. foo_midi can now use [CLAP ((CLever Audio Plug-in API))](https://u-he.com/community/clap/) MIDI plug-ins to render the audio stream.
   - Specify the directory containing CLAP plug-ins in the Paths preferences page.
