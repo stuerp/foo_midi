@@ -183,7 +183,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
     if (_IsSysExFile)
-        throw midi::exception_t("You cannot play SysEx files.");
+        throw midi::exception_t("You cannot play SysEx files");
 
     _IsFirstChunk = true;
 
@@ -368,12 +368,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             {
                 if (Preset._PlugInFilePath.is_empty())
-                    throw midi::exception_t("No plug-in specified in preset.");
+                    throw midi::exception_t("No plug-in specified in preset");
 
                 auto Player = new VSTiPlayer;
 
                 if (!Player->LoadVST(Preset._PlugInFilePath))
-                    throw midi::exception_t(pfc::string("Unable to load VSTi plu-in from \"") + Preset._PlugInFilePath + "\".");
+                    throw midi::exception_t(pfc::string("Unable to load VSTi plu-in from \"") + Preset._PlugInFilePath + "\"");
             
                 if (Preset._VSTiConfig.size() != 0)
                     Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
@@ -396,7 +396,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     std::string ErrorMessage;
 
                     if (_Player->GetErrorMessage(ErrorMessage))
-                        throw exception_io_data(ErrorMessage.c_str());
+                        throw midi::exception_t(ErrorMessage.c_str());
                 }
             }
             break;
@@ -408,17 +408,15 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             {
                 if (Preset._PlugInFilePath.is_empty())
-                    throw midi::exception_t("No plug-in specified in preset.");
+                    throw midi::exception_t("No plug-in specified in preset");
 
                 auto Player = new CLAPPlayer;
 
                 _Player = Player;
 
                 if (!Player->LoadPlugIn(Preset._PlugInFilePath, Preset._PlugInIndex))
-                    throw midi::exception_t(pfc::string("Unable to load CLAP plug-in from \"") + Preset._PlugInFilePath + "\".");
+                    throw midi::exception_t(pfc::string("Unable to load CLAP plug-in from \"") + Preset._PlugInFilePath + "\"");
             
-                Player->SetBasePath(LR"(F:\MIDI\_foobar2000 Support\Nuked SC55mk2\SC-55mk2-v1.01)");
-
                 _Player = Player;
             }
 
@@ -445,7 +443,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     _PeakVoiceCount = 0;
 
                     if (_SoundFonts.empty())
-                        throw midi::exception_t("No compatible sound fonts found.");
+                        throw midi::exception_t("No compatible sound fonts found");
                 }
 
                 auto Player = new BMPlayer;
@@ -477,7 +475,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     std::string ErrorMessage;
 
                     if (_Player->GetErrorMessage(ErrorMessage))
-                        throw exception_io_data(ErrorMessage.c_str());
+                        throw midi::exception_t(ErrorMessage.c_str());
 
                     break;
                 }
@@ -498,7 +496,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     _PeakVoiceCount = 0;
 
                     if (_SoundFonts.empty())
-                        throw midi::exception_t("No compatible sound fonts found.");
+                        throw midi::exception_t("No compatible sound fonts found");
                 }
 
                 pfc::string FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
@@ -540,7 +538,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     std::string ErrorMessage;
 
                     if (_Player->GetErrorMessage(ErrorMessage))
-                        throw exception_io_data(ErrorMessage.c_str());
+                        throw midi::exception_t(ErrorMessage.c_str());
 
                     break;
                 }
@@ -838,7 +836,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
-    throw midi::exception_t("No MIDI player specified.");
+    throw midi::exception_t("No MIDI player specified");
 }
 
 /// <summary>
@@ -1110,7 +1108,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const
 {
     if (_IsSysExFile)
-        throw exception_io_data("You cannot tag SysEx files.");
+        throw midi::exception_t("You cannot tag SysEx files.");
 
     file_info_impl fi(fileInfo);
 

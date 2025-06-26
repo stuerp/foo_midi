@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.03.27) **/
+/** $VER: BMPlayer.cpp (2025.06.25) **/
 
 #include "pch.h"
 
@@ -7,11 +7,11 @@
 
 #include "BASSInitializer.h"
 #include "SoundFontCache.h"
+#include "Exception.h"
 
 #include <sflist.h>
 
 #include <string>
-
 #include <map>
 #include <time.h>
 #include <filesystem>
@@ -33,7 +33,7 @@ BMPlayer::BMPlayer() : player_t()
     ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
 
     if (!_BASSInitializer.Initialize())
-        throw std::runtime_error("Unable to initialize BASSMIDI");
+        throw midi::exception_t("Unable to initialize BASSMIDI");
 }
 
 BMPlayer::~BMPlayer()

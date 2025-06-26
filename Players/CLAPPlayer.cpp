@@ -6,6 +6,7 @@
 #include "CLAPPlayer.h"
 #include "Resource.h"
 #include "Encoding.h"
+#include "Exception.h"
 
 #include <filesystem>
 
@@ -25,8 +26,6 @@ bool CLAPPlayer::Startup()
     if (_PlugIn != nullptr)
         return true;
 
-    console::print(STR_COMPONENT_BASENAME ": CLAPPlayer.Startup()");
-
     LChannel.resize(GetSampleBlockSize());
     RChannel.resize(GetSampleBlockSize());
 
@@ -42,24 +41,31 @@ bool CLAPPlayer::Startup()
 
             if (Descriptor != nullptr)
             {
-                const clap_host_t Host = { CLAP_VERSION, nullptr, STR_COMPONENT_BASENAME, "", "", "1.0", nullptr, nullptr, nullptr };
+                const clap_host_t Host = { CLAP_VERSION, nullptr, STR_COMPONENT_BASENAME, "", "", STR_CLAP_HOST_VERSION, nullptr, nullptr, nullptr };
 
                 _PlugIn = Factory->create_plugin(Factory, &Host, Descriptor->id);
 
-                if ((_PlugIn != nullptr) && _PlugIn->init(_PlugIn))
+                if (_PlugIn != nullptr)
                 {
-                    if (!VerifyNotePorts())
-                        return false;
+                    if (_PlugIn->init(_PlugIn))
+                    {
+                        if (!VerifyNotePorts())
+                            return false;
 
-                    if (!VerifyAudioPorts())
-                        return false;
+                        if (!VerifyAudioPorts())
+                            return false;
 
-                    const double SampleRate = 33103.0; // 44100.0;
-                    const uint32_t MinFrames = 1;
-                    const uint32_t MaxFrames = GetSampleBlockSize();
+                        const double SampleRate  = _SampleRate;
+                        const uint32_t MinFrames = 1;
+                        const uint32_t MaxFrames = GetSampleBlockSize();
 
-                    return _PlugIn->activate(_PlugIn, SampleRate, MinFrames, MaxFrames);
+                        return _PlugIn->activate(_PlugIn, SampleRate, MinFrames, MaxFrames);
+                    }
+                    else
+                        console::error(STR_COMPONENT_BASENAME " failed to initialized CLAP plug-in.");
                 }
+                else
+                    console::error(STR_COMPONENT_BASENAME " failed to create CLAP plug-in.");
             }
         }
     }
@@ -72,8 +78,6 @@ void CLAPPlayer::Shutdown()
     if (_PlugIn == nullptr)
         return;
 
-    console::print(STR_COMPONENT_BASENAME ": CLAPPlayer.Shutdown()");
-
     _PlugIn->deactivate(_PlugIn);
                     
     _PlugIn->destroy(_PlugIn);
@@ -83,44 +87,42 @@ void CLAPPlayer::Shutdown()
 
 void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
-    console::print(STR_COMPONENT_BASENAME ": CLAPPlayer.Render(", sampleCount, "), ", (int64_t) _EventList.Events.size(), " events");
+//  console::print(STR_COMPONENT_BASENAME ": CLAPPlayer.Render(", sampleCount, "), ", (int64_t) _EventList.Events.size(), " events");
 
     const int64_t SteadyTimeNotAvailable = -1;
 
-   // Render the samples.
+    float * OutChannels[2] = { LChannel.data(), RChannel.data() };
+
+    clap_audio_buffer_t AudioOut;
+
+    AudioOut.data32        = OutChannels;
+    AudioOut.channel_count = _countof(OutChannels);
+    AudioOut.latency       = 0;
+
+    clap_audio_buffer_t AudioOutputs[1] = { AudioOut };
+
+    clap_process_t Process =
     {
-        float * OutChannels[2] = { LChannel.data(), RChannel.data() };
+        .steady_time         = SteadyTimeNotAvailable,
+        .frames_count        = sampleCount,
+        .transport           = nullptr,
+        .audio_inputs        = nullptr,
+        .audio_outputs       = AudioOutputs,
+        .audio_inputs_count  = 0,
+        .audio_outputs_count = _countof(AudioOutputs),
+        .in_events           = &_EventList,
+        .out_events          = nullptr
+    };
 
-        clap_audio_buffer_t AudioOut;
+    ::memset(sampleData, 0, ((size_t) sampleCount * _countof(OutChannels)) * sizeof(audio_sample));
 
-        AudioOut.data32        = OutChannels;
-        AudioOut.channel_count = _countof(OutChannels);
-        AudioOut.latency       = 0;
+    if (_PlugIn->process(_PlugIn, &Process) == CLAP_PROCESS_ERROR)
+        return; // throw exception_io_data("CLAP plug-in event processing failed");
 
-        clap_audio_buffer_t AudioOutputs[1] = { AudioOut };
-
-        clap_process_t Process =
-        {
-            .steady_time         = SteadyTimeNotAvailable,
-            .frames_count        = sampleCount,
-            .transport           = nullptr,
-            .audio_inputs        = nullptr,
-            .audio_outputs       = AudioOutputs,
-            .audio_inputs_count  = 0,
-            .audio_outputs_count = _countof(AudioOutputs),
-            .in_events           = &_EventList,
-            .out_events          = nullptr
-        };
-
-        _PlugIn->process(_PlugIn, &Process);
-
-        ::memset(sampleData, 0, ((size_t) sampleCount * _countof(OutChannels)) * sizeof(audio_sample));
-
-        for (size_t j = 0; j < sampleCount; ++j)
-        {
-            sampleData[j * 2 + 0] = (audio_sample) LChannel[j];
-            sampleData[j * 2 + 1] = (audio_sample) RChannel[j];
-        }
+    for (size_t j = 0; j < sampleCount; ++j)
+    {
+        sampleData[j * 2 + 0] = (audio_sample) LChannel[j];
+        sampleData[j * 2 + 1] = (audio_sample) RChannel[j];
     }
 
     _EventList.Clear();
@@ -160,7 +162,7 @@ bool CLAPPlayer::VerifyNotePorts() const noexcept
 
     if (NotePorts == nullptr)
     {
-        console::warning(STR_COMPONENT_BASENAME ": Plug-in not supported. Note Ports extension not implemented.");
+        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins without Note Ports extension.");
 
         return false;
     }
@@ -171,22 +173,22 @@ bool CLAPPlayer::VerifyNotePorts() const noexcept
 
     if (InputPortCount != 1)
     {
-        console::warning(STR_COMPONENT_BASENAME ": Plug-in not supported. Should have only 1 MIDI input port.");
+        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 1 MIDI input port.");
 
         return false;
     }
-
+/*
     constexpr auto OutputPort = false;
 
     const auto OutputPortCount = NotePorts->count(_PlugIn, OutputPort);
 
     if (OutputPortCount != 0)
     {
-        console::warning(STR_COMPONENT_BASENAME ": Plug-in not supported. Should have no MIDI output ports.");
+        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with MIDI output ports.");
 
         return false;
     }
-
+*/
     clap_note_port_info PortInfo = {};
 
     const auto PortIndex = 0;
@@ -195,7 +197,7 @@ bool CLAPPlayer::VerifyNotePorts() const noexcept
 
     if ((PortInfo.supported_dialects & CLAP_NOTE_DIALECT_MIDI) == 0)
     {
-        console::warning(STR_COMPONENT_BASENAME ": Plug-in not supported. Should have MIDI dialect support.");
+        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins without MIDI dialect support.");
 
         return false;
     }
@@ -212,7 +214,7 @@ bool CLAPPlayer::VerifyAudioPorts() const noexcept
 
     if (AudioPorts == nullptr)
     {
-        console::warning(STR_COMPONENT_BASENAME ": Plug-in not supported. Audio Ports extension not implemented.");
+        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins without Audio Ports extension.");
 
         return false;
     }
@@ -223,7 +225,7 @@ bool CLAPPlayer::VerifyAudioPorts() const noexcept
 
     if (InputPortCount != 0)
     {
-        console::warning(STR_COMPONENT_BASENAME ": Plug-in not supported. Should have no input audio ports.");
+        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with audio input ports.");
 
         return false;
     }
@@ -234,7 +236,7 @@ bool CLAPPlayer::VerifyAudioPorts() const noexcept
 
     if (OutputPortCount != 1)
     {
-        console::warning(STR_COMPONENT_BASENAME ": Plug-in not supported. Should have only 1 output audio port.");
+        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 1 audio output port.");
 
         return false;
     }
@@ -247,15 +249,10 @@ bool CLAPPlayer::VerifyAudioPorts() const noexcept
 
     if (!(PortInfo.channel_count == 2 && ::strcmp(PortInfo.port_type, CLAP_PORT_STEREO) == 0))
     {
-        console::warning(STR_COMPONENT_BASENAME ": Plug-in not supported. Should have only 2 stereo output channels.");
+        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 2 output channels in stereo.");
 
         return false;
     }
 
     return true;
-}
-
-void CLAPPlayer::SetBasePath(const std::wstring & basePathName) noexcept
-{
-    _BasePathName = basePathName;
 }

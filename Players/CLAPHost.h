@@ -15,10 +15,13 @@ namespace foo_midi
 #pragma warning(disable: 4820) // 'x' bytes padding added after data member 'y'
 
 /// <summary>
-/// Supports the CLAP player.
+/// Implements a host for CLAP plug-ins.
 /// </summary>
 class clap_host_t
 {
+public:
+    static void GetPlugIns(const fs::path & directoryPath) noexcept;
+
 public:
     struct plugin_t
     {
@@ -27,9 +30,6 @@ public:
         std::string PathName;
     };
 
-    static void GetPlugIns(const fs::path & directoryPath) noexcept;
-
-public:
     static std::vector<plugin_t> PlugIns;
 
 private:

@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.06.25) **/
+/** $VER: Configuration.h (2025.06.26) **/
 
 #pragma once
 
@@ -118,8 +118,11 @@ const float DefaultBASSMIDIVolume = 0.15f;
 
 const uint16_t DefaultEnabledChannels = 0xFFFF;
 
+extern cfg_var_modern::cfg_int      CfgPlayerType;
+extern cfg_var_modern::cfg_string   CfgPlugInFilePath;
+extern cfg_var_modern::cfg_int      CfgPlugInIndex;
+
 extern cfg_var_modern::cfg_int
-    CfgPlayerType,
     CfgSampleRate,
 
     CfgLoopTypePlayback,
@@ -157,12 +160,10 @@ extern cfg_var_modern::cfg_int
     CfgNukeBank,
     CfgNukePanning,
 
-    CfgMIDIStandard,
+    CfgMIDIFlavor,
     CfgUseMIDIEffects,
     CfgUseSuperMuntWithMT32,
-    CfgUseVSTiWithXG,
-
-    CfgPlugInIndex;
+    CfgUseVSTiWithXG;
 
 extern cfg_var_modern::cfg_bool
     CfgWriteBarMarkers,
@@ -181,8 +182,7 @@ extern cfg_var_modern::cfg_string
     CfgMT32ROMDirectoryPath,
     CfgFluidSynthDirectoryPath,
     CfgProgramsFilePath,
-    CfgADLBankFilePath,
-    CfgPlugInFilePath;
+    CfgADLBankFilePath;
 
 extern cfg_map
     CfgVSTiConfig;
@@ -208,8 +208,8 @@ extern advconfig_checkbox_factory AdvCfgLoadSoundFontDynamically;
 extern advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled;
 extern advconfig_integer_factory AdvCfgBASSMIDIVoices;
 
-extern const char * _MuntGMSets[];
-extern const size_t _MuntGMSetCount;
+extern const char * _MuntSets[];
+extern const size_t _MuntSetCount;
 
 extern const char * _FileExtensions[];
 extern const size_t _FileExtensionCount;

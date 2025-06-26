@@ -105,7 +105,7 @@ preset_t::preset_t() noexcept
     }
 
     {
-        _MIDIFlavor = (MIDIFlavors) (uint32_t) CfgMIDIStandard;
+        _MIDIFlavor = (MIDIFlavors) (uint32_t) CfgMIDIFlavor;
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
         _UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
         _UseVSTiWithXG = (bool) CfgUseVSTiWithXG;
@@ -148,7 +148,7 @@ void preset_t::Serialize(pfc::string & text)
     if (_PlayerType == PlayerTypes::SuperMunt)
     {
         text += "|";
-        text += _MuntGMSets[_MuntGMSet];
+        text += _MuntSets[_MuntGMSet];
     }
 #ifdef DXISUPPORT
     else
@@ -361,18 +361,18 @@ void preset_t::Deserialize(const char * text)
     {
         size_t i;
 
-        for (i = 0; i < _MuntGMSetCount; ++i)
+        for (i = 0; i < _MuntSetCount; ++i)
         {
-            size_t len = ::strlen(_MuntGMSets[i]);
+            size_t len = ::strlen(_MuntSets[i]);
 
-            if (len == (size_t) (Separator - text) && (::strncmp(text, _MuntGMSets[i], len) == 0))
+            if (len == (size_t) (Separator - text) && (::strncmp(text, _MuntSets[i], len) == 0))
             {
                 MuntGMSet = (uint32_t) i;
                 break;
             }
         }
 
-        if (i == _MuntGMSetCount)
+        if (i == _MuntSetCount)
             return;
     }
     else

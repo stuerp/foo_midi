@@ -26,8 +26,6 @@ public:
 
     bool LoadPlugIn(const char * pathName, uint32_t index);
 
-    void SetBasePath(const std::wstring & basePath) noexcept;
-
     virtual uint32_t GetSampleBlockSize() const noexcept override { return 2 * 1024; } // 2 channels
 
 private:
@@ -52,8 +50,6 @@ private:
 
     std::vector<float> LChannel;
     std::vector<float> RChannel;
-
-    std::wstring _BasePathName;
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member

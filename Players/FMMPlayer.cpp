@@ -1,5 +1,5 @@
 
-/** $VER: FMMPlayer.cpp (2025.06.19) - Wrapper for yuno's fmmidi **/
+/** $VER: FMMPlayer.cpp (2025.06.25) - Wrapper for yuno's fmmidi **/
 
 #include "pch.h"
 
@@ -11,6 +11,7 @@
 #include <filesystem>
 
 #include "Encoding.h"
+#include "Exception.h"
 
 const std::string FMMPlayer::DefaultProgramsFileName = "Programs.txt";
 
@@ -39,7 +40,7 @@ bool FMMPlayer::Startup()
     FILE * fp = nullptr;
 
     if (::_wfopen_s(&fp, _ProgramsFilePath.c_str(), L"rt") != 0)
-         throw std::runtime_error("Unable to find \"Programs.txt\"");
+         throw midi::exception_t("Unable to find \"Programs.txt\"");
 
     while (!::feof(fp))
     {
@@ -169,7 +170,7 @@ void FMMPlayer::SendEvent(uint32_t data)
 void FMMPlayer::SetProgramsFilePath(const std::wstring & programsFilePath)
 {
     if (!std::filesystem::exists(programsFilePath))
-         throw std::runtime_error("FMMIDI Programs file not found at \"" + ::WideToUTF8(programsFilePath) + "\"");
+         throw midi::exception_t(pfc::string("FMMIDI Programs file not found at \"") + ::WideToUTF8(programsFilePath).c_str() + "\"");
 
     _ProgramsFilePath = programsFilePath;
 }

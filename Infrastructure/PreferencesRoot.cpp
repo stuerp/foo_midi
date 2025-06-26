@@ -42,46 +42,7 @@
 
 extern volatile int _IsRunning;
 
-#pragma region Sample Rate
-
-static const GUID GUIDCfgSampleRateHistory = { 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } };
-static cfg_dropdown_history CfgSampleRateHistory(GUIDCfgSampleRateHistory, 16);
-
-static const int _SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
-
-#pragma endregion
-
-#pragma region FluidSynth
-
-#pragma warning(disable: 4820)
-struct InterpolationMethod
-{
-    const wchar_t * Name;
-    int Id;
-};
-#pragma warning(default: 4820)
-
-static const InterpolationMethod _InterpolationMethods[] =
-{
-    { L"None", FLUID_INTERP_NONE },
-    { L"Linear", FLUID_INTERP_LINEAR },
-    { L"Cubic", FLUID_INTERP_4THORDER },
-    { L"7th Order Sinc", FLUID_INTERP_7THORDER }
-};
-
-#pragma endregion
-
-#pragma region libMT32Emu
-
-const char * _MuntGMSets[] =
-{
-    "Roland",
-    "Sierra / King's Quest 6",
-};
-
-const size_t _MuntGMSetCount = _countof(_MuntGMSets);
-
-#pragma endregion
+static cfg_dropdown_history CfgSampleRateHistory({ 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } }, 16);
 
 #pragma warning(disable: 4820)
 
@@ -91,7 +52,7 @@ const size_t _MuntGMSetCount = _countof(_MuntGMSets);
 class PreferencesRootPage : public CDialogImpl<PreferencesRootPage>, public preferences_page_instance
 {
 public:
-    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _FirstVSTiIndex(~0u), _FirstCLAPIndex(~0u), _HasSecretSauce(), _HasFluidSynth(), _Callback(callback) { }
+    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _HasSecretSauce(), _HasFluidSynth(), _Callback(callback) { }
 
     PreferencesRootPage(const PreferencesRootPage&) = delete;
     PreferencesRootPage(const PreferencesRootPage&&) = delete;
@@ -242,14 +203,51 @@ private:
 
     struct installed_player_t
     {
-        pfc::string Name;
         PlayerTypes Type;
+        pfc::string Name;
+        fs::path PathName;  // Path name of the VSTi or CLAP plug-in
+        size_t Index;       // Index with a CLAP plug-in
+
+        size_t PlugInIndex; // Index in the VSTi or CLAP plug-in list
+
+        installed_player_t() : Type(PlayerTypes::Unknown), Index(~0u), PlugInIndex(~0u) { }
+        installed_player_t(PlayerTypes type, pfc::string name, fs::path pathName, size_t index, size_t plugInIndex) : Type(type), Name(name), PathName(pathName), Index(index), PlugInIndex(plugInIndex) { }
+
+        bool operator ==(const installed_player_t & other) const noexcept
+        {
+            if (Type != other.Type)
+                return false;
+
+            if (((Type == PlayerTypes::VSTi) || (Type == PlayerTypes::CLAP)))
+            {
+                if (PathName != other.PathName)
+                    return false;
+
+                if (Type == PlayerTypes::CLAP)
+                    return Index == other.Index;
+            }
+
+            return true;
+        }
+
+        bool SupportsMIDIFlavor() const noexcept
+        {
+            return ((Type == PlayerTypes::VSTi) || (Type == PlayerTypes::FluidSynth) || (Type == PlayerTypes::BASSMIDI) || (Type == PlayerTypes::SecretSauce));
+        }
     };
 
     std::vector<installed_player_t> _InstalledPlayers;
+    installed_player_t _SelectedPlayer;
 
-    size_t _FirstVSTiIndex; // Index of the first VSTi player.
-    size_t _FirstCLAPIndex; // Index of the first CLAP player.
+    static const int _SampleRates[];
+
+    struct InterpolationMethod
+    {
+        const wchar_t * Name;
+        int Id;
+    };
+
+    static const InterpolationMethod _InterpolationMethods[];
 
     #pragma endregion
 
@@ -301,6 +299,24 @@ const PreferencesRootPage::known_player_t PreferencesRootPage::_KnownPlayers[] =
     { "FMMIDI",         PlayerTypes::FMMIDI,        PlayerIsAlwaysPresent },
 };
 
+const int PreferencesRootPage::_SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
+
+const PreferencesRootPage::InterpolationMethod PreferencesRootPage::_InterpolationMethods[] =
+{
+    { L"None", FLUID_INTERP_NONE },
+    { L"Linear", FLUID_INTERP_LINEAR },
+    { L"Cubic", FLUID_INTERP_4THORDER },
+    { L"7th Order Sinc", FLUID_INTERP_7THORDER }
+};
+
+const char * _MuntSets[] =
+{
+    "Roland",
+    "Sierra / King's Quest 6",
+};
+
+const size_t _MuntSetCount = _countof(_MuntSets);
+
 #pragma region preferences_page_instance
 
 /// <summary>
@@ -330,32 +346,31 @@ void PreferencesRootPage::apply()
 
         if (SelectedIndex != -1)
         {
-            auto PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
+            _SelectedPlayer = _InstalledPlayers[(size_t) SelectedIndex];
 
-            CfgPlayerType = (int) PlayerType;
+            CfgPlayerType = (int) _SelectedPlayer.Type;
 
-            if (PlayerType == PlayerTypes::VSTi)
+            if (_SelectedPlayer.Type == PlayerTypes::VSTi)
             {
-                size_t VSTiIndex = (size_t) (SelectedIndex - _FirstVSTiIndex);
-
-                auto & PlugIn = VSTi::PlugIns[VSTiIndex];
+                const auto & PlugIn = VSTi::PlugIns[_SelectedPlayer.PlugInIndex];
 
                 CfgPlugInFilePath = PlugIn.PathName.c_str();
+                CfgPlugInIndex    = ~0;
+
                 CfgVSTiConfig[PlugIn.Id] = VSTi::Config;
             }
             else
-            if (PlayerType == PlayerTypes::CLAP)
+            if (_SelectedPlayer.Type == PlayerTypes::CLAP)
             {
-                size_t CLAPIndex = (size_t) (SelectedIndex - _FirstCLAPIndex);
-
-                auto & PlugIn = foo_midi::clap_host_t::PlugIns[CLAPIndex];
+                const auto & PlugIn = foo_midi::clap_host_t::PlugIns[_SelectedPlayer.PlugInIndex];
 
                 CfgPlugInFilePath = PlugIn.PathName.c_str();
-                CfgPlugInIndex = PlugIn.Index;
+                CfgPlugInIndex    = PlugIn.Index;
             }
             else
             {
                 CfgPlugInFilePath = "";
+                CfgPlugInIndex    = ~0;
             }
         }
     }
@@ -384,7 +399,7 @@ void PreferencesRootPage::apply()
 
     // MIDI Flavor and Effects
     {
-        CfgMIDIStandard         = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
+        CfgMIDIFlavor         = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
 
         CfgUseMIDIEffects       = (t_int32) SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) ? 0 : 1;
         CfgUseSuperMuntWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK);
@@ -455,7 +470,7 @@ void PreferencesRootPage::apply()
 /// </summary>
 void PreferencesRootPage::reset()
 {
-    auto PlayerType = PlayerTypes::Default;
+    _SelectedPlayer = installed_player_t(PlayerTypes::Default, "", "", ~0u, ~0u);
 
     // Player Type
     {
@@ -463,9 +478,9 @@ void PreferencesRootPage::reset()
 
         int i = 0;
 
-        for (const auto & Iter : _InstalledPlayers)
+        for (const auto & Player : _InstalledPlayers)
         {
-            if (Iter.Type == PlayerType)
+            if (Player == _SelectedPlayer)
             {
                 SelectedIndex = i;
                 break;
@@ -484,7 +499,7 @@ void PreferencesRootPage::reset()
 
     // Sample Rate
     {
-        if ((PlayerType == PlayerTypes::EmuDeMIDI) && _IsRunning)
+        if ((_SelectedPlayer.Type == PlayerTypes::EmuDeMIDI) && _IsRunning)
             GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
 
         SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
@@ -498,7 +513,7 @@ void PreferencesRootPage::reset()
 
     // MIDI Flavor and Effects
     {
-        const bool SupportsFlavors = (PlayerType == PlayerTypes::VSTi) || (PlayerType == PlayerTypes::FluidSynth) || (PlayerType == PlayerTypes::BASSMIDI) || (PlayerType == PlayerTypes::SecretSauce);
+        const BOOL SupportsFlavors = _SelectedPlayer.SupportsMIDIFlavor();
 
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(SupportsFlavors);
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(SupportsFlavors);
@@ -538,7 +553,7 @@ void PreferencesRootPage::reset()
 
         SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_SETCURSEL, (WPARAM) SelectedIndex);
 
-        const bool IsFluidSynth = (PlayerType == PlayerTypes::FluidSynth);
+        const BOOL IsFluidSynth = (_SelectedPlayer.Type == PlayerTypes::FluidSynth);
 
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(IsFluidSynth);
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(IsFluidSynth);
@@ -550,7 +565,7 @@ void PreferencesRootPage::reset()
 
         SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIResamplingMode);
 
-        const bool IsBASSMIDI = (PlayerType == PlayerTypes::BASSMIDI);
+        const BOOL IsBASSMIDI = (_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
         {
@@ -565,7 +580,7 @@ void PreferencesRootPage::reset()
 
     // Munt
     {
-        const bool IsSuperMunt = (PlayerType == PlayerTypes::SuperMunt);
+        const BOOL IsSuperMunt = (_SelectedPlayer.Type == PlayerTypes::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
         GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(IsSuperMunt);
@@ -577,7 +592,7 @@ void PreferencesRootPage::reset()
 
     // Nuked OPL3
     {
-        const bool IsNuke = (PlayerType == PlayerTypes::NukedOPL3);
+        const BOOL IsNuke = (_SelectedPlayer.Type == PlayerTypes::NukedOPL3);
 
         const int ControlIds[] =
         {
@@ -608,34 +623,31 @@ void PreferencesRootPage::reset()
 /// </summary>
 BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 {
-    size_t PlugInIndex = ~0u;
-
     #pragma region Player Type
 
     _HasFluidSynth = FluidSynth::Exists();
     _HasSecretSauce = SecretSauce::Exists();
 
     #pragma region Known Players
-    {
-        // Gets the installed players. FluidSynth and Secret Sauce are optional.
-        for (const auto & Iter : _KnownPlayers)
-        {
-            if (Iter.IsPresent(this))
-            {
-                struct installed_player_t ip;
 
-                ip.Name = Iter.Name;
-                ip.Type = Iter.Type;
+    // Add the available known players to the installed player list. FluidSynth and Secret Sauce are optional.
+    {
+        for (const auto & Player : _KnownPlayers)
+        {
+            if (Player.IsPresent(this))
+            {
+                installed_player_t ip(Player.Type, Player.Name, "", ~0u, ~0u);
 
                 _InstalledPlayers.push_back(ip);
             }
         }
     }
+
     #pragma endregion
 
     #pragma region VSTi Players
 
-    // Add the VSTi to the installed player list.
+    // Add the VSTi plug-ins to the installed player list.
     {
         VSTi::Enumerate();
 
@@ -643,29 +655,21 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         if (VSTiCount > 0)
         {
-            console::print(STR_COMPONENT_BASENAME " found ", VSTiCount, " VST instruments.");
-
-            _FirstVSTiIndex = _InstalledPlayers.size();
+            console::print(STR_COMPONENT_BASENAME " found ", VSTiCount, " VSTi plug-insinstruments.");
 
             size_t i = 0;
 
-            for (const auto & it : VSTi::PlugIns)
+            for (const auto & PlugIn : VSTi::PlugIns)
             {
-                struct installed_player_t ip;
-
-                ip.Name = it.Name.c_str();
-                ip.Type = PlayerTypes::VSTi;
+                installed_player_t ip(PlayerTypes::VSTi, PlugIn.Name.c_str(), PlugIn.PathName, ~0u, i);
 
                 _InstalledPlayers.push_back(ip);
-
-                if (CfgPlugInFilePath.get() == it.PathName.c_str())
-                    PlugInIndex = i;
 
                 ++i;
             }
         }
         else
-            console::print(STR_COMPONENT_BASENAME " found no compatible VST instruments.");
+            console::print(STR_COMPONENT_BASENAME " found no compatible VSTi plug-ins.");
     }
 
     #pragma endregion
@@ -688,21 +692,13 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         {
             console::print(STR_COMPONENT_BASENAME " found ", CLAPCount, " CLAP plug-ins.");
 
-            _FirstCLAPIndex = _InstalledPlayers.size();
-
             size_t i = 0;
 
             for (const auto & PlugIn : foo_midi::clap_host_t::PlugIns)
             {
-                struct installed_player_t ip;
-
-                ip.Name = PlugIn.Name.c_str();
-                ip.Type = PlayerTypes::CLAP;
+                installed_player_t ip(PlayerTypes::CLAP, PlugIn.Name.c_str(), PlugIn.PathName, PlugIn.Index, i);
 
                 _InstalledPlayers.push_back(ip);
-
-                if ((CfgPlugInFilePath.get() == PlugIn.PathName.c_str()) && (CfgPlugInIndex == PlugIn.Index))
-                    PlugInIndex = i;
 
                 ++i;
             }
@@ -716,19 +712,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 //  std::sort(_InstalledPlayers.begin(), _InstalledPlayers.end(), [](InstalledPlayer a, InstalledPlayer b) { return a.Name < b.Name; });
 
     // Determine the selected player.
-    auto PlayerType = (PlayerTypes) (uint8_t) CfgPlayerType;
-
-    if ((PlayerType == PlayerTypes::VSTi) && (PlugInIndex == ~0u))
-        PlayerType = PlayerTypes::Default; // In case the VSTi is no longer available.
-    else
-    if ((PlayerType == PlayerTypes::CLAP) && (PlugInIndex == ~0u))
-        PlayerType = PlayerTypes::Default; // In case the CLAP plug-in is no longer available.
-    else
-    if ((PlayerType == PlayerTypes::FluidSynth) && !_HasFluidSynth)
-        PlayerType = PlayerTypes::BASSMIDI; // In case FluidSynth is no longer available.
-    else
-    if ((PlayerType == PlayerTypes::SecretSauce) && !_HasSecretSauce)
-        PlayerType = PlayerTypes::BASSMIDI; // In case Secret Sauce is no longer available.
+    _SelectedPlayer = installed_player_t((PlayerTypes) CfgPlayerType.get(), "", CfgPlugInFilePath.get().c_str(), (size_t) CfgPlugInIndex, ~0u);
 
     #pragma endregion
 
@@ -743,10 +727,28 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         {
             w.AddString(pfc::wideFromUTF8(Player.Name));
 
-            if (Player.Type == PlayerType)
+            if (Player == _SelectedPlayer)
                 SelectedIndex = i;
 
             ++i;
+        }
+
+        if (SelectedIndex == -1)
+        {
+            _SelectedPlayer = installed_player_t(PlayerTypes::Default, "", "", ~0u, ~0u);
+
+            i = 0;
+
+            for (const auto & Player : _InstalledPlayers)
+            {
+                if (Player == _SelectedPlayer)
+                {
+                    SelectedIndex = i;
+                    break;
+                }
+
+                ++i;
+            }
         }
 
         w.SetCurSel(SelectedIndex);
@@ -757,18 +759,20 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     {
         auto w = (CComboBox) GetDlgItem(IDC_CONFIGURE);
 
-        if (PlayerType != PlayerTypes::VSTi)
+        if (_SelectedPlayer.Type != PlayerTypes::VSTi)
         {
             w.EnableWindow(FALSE);
         }
         else
-        if (PlugInIndex != ~0u)
         {
-            const VSTi::plugin_t & Plugin = VSTi::PlugIns[PlugInIndex];
+            if (_SelectedPlayer.PlugInIndex != ~0u)
+            {
+                const VSTi::plugin_t & Plugin = VSTi::PlugIns[_SelectedPlayer.PlugInIndex];
 
-            w.EnableWindow(Plugin.HasEditor);
+                w.EnableWindow(Plugin.HasEditor);
 
-            VSTi::Config = CfgVSTiConfig[Plugin.Id];
+                VSTi::Config = CfgVSTiConfig[Plugin.Id];
+            }
         }
     }
     #pragma endregion
@@ -790,7 +794,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
              w.SetCurSel(0);
 
-            if ((PlayerType == PlayerTypes::EmuDeMIDI) && _IsRunning)
+            if ((_SelectedPlayer.Type == PlayerTypes::EmuDeMIDI) && _IsRunning)
                 w.EnableWindow(FALSE);
         }
     }
@@ -812,10 +816,10 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             auto w1 = (CComboBox) GetDlgItem(IDC_LOOP_PLAYBACK);
             auto w2 = (CComboBox) GetDlgItem(IDC_LOOP_OTHER);
 
-            for (const auto & Iter : LoopTypeDescriptions)
+            for (const auto & Description : LoopTypeDescriptions)
             {
-                w1.AddString(Iter);
-                w2.AddString(Iter);
+                w1.AddString(Description);
+                w2.AddString(Description);
             }
  
              w1.SetCurSel((int) CfgLoopTypePlayback);
@@ -839,13 +843,13 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-8820");
         ::uSendMessageText(w, CB_ADDSTRING, 0, "XG");
 
-        ::SendMessage(w, CB_SETCURSEL, (WPARAM) CfgMIDIStandard, 0);
+        ::SendMessage(w, CB_SETCURSEL, (WPARAM) CfgMIDIFlavor, 0);
 
         SendDlgItemMessage(IDC_MIDI_EFFECTS,          BM_SETCHECK, (WPARAM) (CfgUseMIDIEffects ? 0 : 1));
         SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT,   BM_SETCHECK, (WPARAM) CfgUseSuperMuntWithMT32);
         SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
 
-        bool Enabled = ((PlayerType == PlayerTypes::VSTi) || (PlayerType == PlayerTypes::FluidSynth) || (PlayerType == PlayerTypes::BASSMIDI) || (PlayerType == PlayerTypes::SecretSauce));
+        const bool Enabled = _SelectedPlayer.SupportsMIDIFlavor();
 
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enabled);
         GetDlgItem(IDC_MIDI_FLAVOR)     .EnableWindow(Enabled);
@@ -875,11 +879,11 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         int SelectedIndex = -1;
         int i = 0;
 
-        for (const auto & Iter : _InterpolationMethods)
+        for (const auto & InterpolationMethod : _InterpolationMethods)
         {
-            w.AddString(Iter.Name);
+            w.AddString(InterpolationMethod.Name);
 
-            if (Iter.Id == CfgFluidSynthInterpolationMode)
+            if (InterpolationMethod.Id == CfgFluidSynthInterpolationMode)
                 SelectedIndex = (int) i;
 
             ++i;
@@ -887,7 +891,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         w.SetCurSel(SelectedIndex);
 
-        bool Enable = (PlayerType == PlayerTypes::FluidSynth);
+        const BOOL Enable = (_SelectedPlayer.Type == PlayerTypes::FluidSynth);
 
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(Enable);
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(Enable);
@@ -908,7 +912,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         w.SetCurSel((int) CfgBASSMIDIResamplingMode);
 
-        bool Enable = (PlayerType == PlayerTypes::BASSMIDI);
+        const BOOL Enable = (_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
         {
@@ -917,21 +921,21 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             IDC_CACHED_LBL, IDC_CACHED
         };
 
-        for (const auto & Iter : ControlIds)
-            GetDlgItem(Iter).EnableWindow(Enable);
+        for (const auto & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(Enable);
     }
     #pragma endregion
 
-    #pragma region Super Munt
+    #pragma region Munt
     {
         auto w = (CComboBox) GetDlgItem(IDC_MUNT_GM_SET);
 
-        for (const auto & Iter : _MuntGMSets)
-            ::uSendMessageText(w, CB_ADDSTRING, 0, Iter);
+        for (const auto & Set : _MuntSets)
+            ::uSendMessageText(w, CB_ADDSTRING, 0, Set);
 
         w.SetCurSel((int) CfgMuntGMSet);
 
-        BOOL IsSuperMunt = (PlayerType == PlayerTypes::SuperMunt);
+        const BOOL IsSuperMunt = (_SelectedPlayer.Type == PlayerTypes::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
         GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(IsSuperMunt);
@@ -958,7 +962,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, (WPARAM) CfgNukePanning);
 
-        if (PlayerType != PlayerTypes::NukedOPL3)
+        if (_SelectedPlayer.Type != PlayerTypes::NukedOPL3)
         {
             GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
             GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
@@ -1007,26 +1011,19 @@ void PreferencesRootPage::OnButtonClick(UINT, int, CWindow)
 /// </summary>
 void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 {
-    int SelectedIndex = (int) GetDlgItem(IDC_PLAYER_TYPE).SendMessage(CB_GETCURSEL, 0, 0);
+    const int SelectedIndex = (int) GetDlgItem(IDC_PLAYER_TYPE).SendMessage(CB_GETCURSEL, 0, 0);
 
-    if (SelectedIndex != -1)
+    if (SelectedIndex == -1)
         return;
 
     _IsBusy = true;
     OnChanged();
 
-    if ((size_t) SelectedIndex >= _FirstCLAPIndex)
-    {
-        CLAPPlayer Player;
-
-        /* Configure CLAP */
-    }
-    else
-    if ((size_t) SelectedIndex >= _FirstVSTiIndex)
+    if (_SelectedPlayer.Type == PlayerTypes::VSTi)
     {
         VSTiPlayer Player;
 
-        if (Player.LoadVST(VSTi::PlugIns[SelectedIndex - _FirstVSTiIndex].PathName.c_str()))
+        if (Player.LoadVST(_SelectedPlayer.PathName.string().c_str()))
         {
             if (VSTi::Config.size() != 0)
                 Player.SetChunk(VSTi::Config.data(), VSTi::Config.size());
@@ -1035,6 +1032,13 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 
             Player.GetChunk(VSTi::Config);
         }
+    }
+    else
+    if (_SelectedPlayer.Type == PlayerTypes::CLAP)
+    {
+        CLAPPlayer Player;
+
+        /* Configure CLAP */
     }
 
     _IsBusy = false;
@@ -1046,38 +1050,27 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 /// </summary>
 void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 {
-    auto PlayerType = PlayerTypes::Unknown;
-
     int SelectedIndex = (int) ::SendMessage(w, CB_GETCURSEL, 0, 0);
-    size_t PlugInIndex = ~0u;
 
     // Player Type
     if (SelectedIndex != -1)
     {
-        PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
+        _SelectedPlayer = _InstalledPlayers[(size_t) SelectedIndex];
 
-        if (PlayerType == PlayerTypes::VSTi)
-        {
-            PlugInIndex = SelectedIndex - _FirstVSTiIndex;
-            VSTi::Config = CfgVSTiConfig[VSTi::PlugIns[PlugInIndex].Id];
-        }
-        else
-        if (PlayerType == PlayerTypes::CLAP)
-        {
-            PlugInIndex = SelectedIndex - _FirstCLAPIndex;
-        }
+        if (_SelectedPlayer.Type == PlayerTypes::VSTi)
+            VSTi::Config = CfgVSTiConfig[VSTi::PlugIns[_SelectedPlayer.PlugInIndex].Id];
     }
 
     // Configure
     {
-        const bool Enable = (PlayerType == PlayerTypes::VSTi) ? VSTi::PlugIns[PlugInIndex].HasEditor : FALSE;
+        const BOOL Enable = (_SelectedPlayer.Type == PlayerTypes::VSTi) ? VSTi::PlugIns[_SelectedPlayer.PlugInIndex].HasEditor : FALSE;
 
         GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
     }
 
     // Sample Rate
     {
-        const bool Enable = (PlayerType != PlayerTypes::EmuDeMIDI) || !_IsRunning;
+        const BOOL Enable = (_SelectedPlayer.Type != PlayerTypes::EmuDeMIDI) || !_IsRunning;
 
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(Enable);
     }
@@ -1088,7 +1081,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // MIDI Flavor and Effects
     {
-        const bool SupportsFlavors = (PlayerType == PlayerTypes::VSTi) || (PlayerType == PlayerTypes::FluidSynth) || (PlayerType == PlayerTypes::BASSMIDI) || (PlayerType == PlayerTypes::SecretSauce);
+        const BOOL SupportsFlavors = _SelectedPlayer.SupportsMIDIFlavor();
 
         const int ControlIds[] =
         {
@@ -1106,7 +1099,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // FluidSynth
     {
-        const bool IsFluidSynth = (PlayerType == PlayerTypes::FluidSynth);
+        const BOOL IsFluidSynth = (_SelectedPlayer.Type == PlayerTypes::FluidSynth);
 
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(IsFluidSynth);
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(IsFluidSynth);
@@ -1114,7 +1107,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // BASS MIDI resampling mode and cache status
     {
-        const bool IsBASSMIDI = (PlayerType == PlayerTypes::BASSMIDI);
+        const BOOL IsBASSMIDI = (_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
         {
@@ -1129,7 +1122,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Munt
     {
-        const bool IsSuperMunt = (PlayerType == PlayerTypes::SuperMunt);
+        const BOOL IsSuperMunt = (_SelectedPlayer.Type == PlayerTypes::SuperMunt);
 
         GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
         GetDlgItem(IDC_MUNT_GM_SET) .EnableWindow(IsSuperMunt);
@@ -1139,7 +1132,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Nuked OPL3
     {
-        const bool IsNukeOPL3 = (PlayerType == PlayerTypes::NukedOPL3);
+        const BOOL IsNukeOPL3 = (_SelectedPlayer.Type == PlayerTypes::NukedOPL3);
 
         const int ControlIds[] =
         {
@@ -1198,25 +1191,21 @@ bool PreferencesRootPage::HasChanged()
 {
     #pragma region Player Type
     {
-        auto PlayerType = PlayerTypes::Unknown;
-
         int SelectedIndex = (int) SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
 
         if (SelectedIndex != -1)
         {
-            PlayerType = _InstalledPlayers[(size_t) SelectedIndex].Type;
+            _SelectedPlayer = _InstalledPlayers[(size_t) SelectedIndex];
 
-            if (PlayerType != (PlayerTypes) (int) CfgPlayerType)
+            if (_SelectedPlayer.Type != (PlayerTypes) (int) CfgPlayerType)
                 return true;
 
-            if (PlayerType == PlayerTypes::VSTi)
+            if (_SelectedPlayer.Type == PlayerTypes::VSTi)
             {
-                size_t PlugInIndex = (size_t) (SelectedIndex - _FirstVSTiIndex);
-
-                if (CfgPlugInFilePath.get() != VSTi::PlugIns[PlugInIndex].PathName.c_str())
+                if (CfgPlugInFilePath.get() != _SelectedPlayer.PathName.string().c_str())
                     return true;
 
-                t_uint32 Id = VSTi::PlugIns[PlugInIndex].Id;
+                t_uint32 Id = VSTi::PlugIns[_SelectedPlayer.PlugInIndex].Id;
 
                 if (VSTi::Config.size() != CfgVSTiConfig[Id].size())
                     return true;
@@ -1225,14 +1214,12 @@ bool PreferencesRootPage::HasChanged()
                     return true;
             }
             else
-            if (PlayerType == PlayerTypes::CLAP)
+            if (_SelectedPlayer.Type == PlayerTypes::CLAP)
             {
-                size_t PlugInIndex = (size_t) (SelectedIndex - _FirstCLAPIndex);
-
-                if (CfgPlugInFilePath.get() != foo_midi::clap_host_t::PlugIns[PlugInIndex].PathName.c_str())
+                if (CfgPlugInFilePath.get() != _SelectedPlayer.PathName.string().c_str())
                     return true;
 
-                if (CfgPlugInIndex != foo_midi::clap_host_t::PlugIns[PlugInIndex].Index)
+                if (CfgPlugInIndex != (int64_t) _SelectedPlayer.Index)
                     return true;
             }
         }
@@ -1276,7 +1263,7 @@ bool PreferencesRootPage::HasChanged()
 
     #pragma region MIDI
     {
-        if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIStandard)
+        if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIFlavor)
             return true;
 
         if (SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != (CfgUseMIDIEffects ? 0 : 1))

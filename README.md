@@ -28,7 +28,7 @@ or
 
 ## Usage
 
-You can find the user documentation [here](docs/README.md).
+You can find the user guide [here](docs/README.md).
 
 ## Developing
 
@@ -102,7 +102,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 - v2.19.0.0-alpha2, 2025-06-22
 
-- New: End User [documentation](docs/README.md) (*Work in Progress*)
+- New: User Guide [documentation](docs/README.md) (*Work in Progress*)
 - Improved: Updated LibMT32Emu to v2.7.2.
 - Improved: LibADLMIDI configuration
   - Moved to separate **FM Synthesis*- page. All the advanced settings can now be set here.
@@ -357,6 +357,7 @@ v2.7.4, 2022-11-03, *"Scratchin' the itch"*
 - [Zoltán Bacskó](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
 - [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool).
 - [yuno (Yoshio Uno)](yuno@users.sourceforge.jp) for [fmmidi](http://milkpot.sakura.ne.jp/fmmidi/).
+- [John Novak](https://github.com/johnnovak) for [Nuked-SC55-CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP).
 
 ## Reference Material
 
