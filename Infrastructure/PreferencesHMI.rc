@@ -1,0 +1,5 @@
+IDD_PREFERENCES_HMI dialogex 0, 0, 0, 0
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
+{
+}

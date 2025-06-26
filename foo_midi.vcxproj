@@ -322,7 +322,7 @@
     </ClCompile>
     <ClCompile Include="Players\MT32Player\MT32Player.cpp" />
     <ClCompile Include="Players\OPNPlayer\OPNPlayer.cpp" />
-    <ClCompile Include="Infrastructure\PreferencesRoot.cpp" />
+    <ClCompile Include="Infrastructure\Preferences.cpp" />
     <ClCompile Include="Infrastructure\PreferencesPaths.cpp" />
     <ClCompile Include="Players\SCPlayer.cpp" />
     <ClCompile Include="Experimental\SFPlayer.cpp">
@@ -399,7 +399,6 @@
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="Infrastructure\Channels.h" />
     <ClInclude Include="Infrastructure\CriticalSection.h" />
-    <ClInclude Include="Infrastructure\PreferencesProcessingLayout.h" />
     <ClInclude Include="Players\ADLPlayer.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\BMPlayer.h" />
@@ -444,7 +443,6 @@
     <ClInclude Include="Players\OPNPlayer\OPNPlayer.h" />
     <ClInclude Include="Players\OPNPlayer\Tomsoft.wopn.h" />
     <ClInclude Include="Players\OPNPlayer\xg.wopn.h" />
-    <ClInclude Include="Infrastructure\PreferencesRootLayout.h" />
     <ClInclude Include="MIDI\SoundFontCache.h" />
     <ClInclude Include="Infrastructure\FileHasher.h" />
     <ClInclude Include="Players\SecretSauce.h" />
@@ -577,6 +575,8 @@
     <ResourceCompile Include="foo_midi.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesFM.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesPaths.rc" />
+    <ResourceCompile Include="Infrastructure\PreferencesProcessing.rc" />
+    <ResourceCompile Include="Infrastructure\Preferences.rc" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="3rdParty\bass\c\bass.lib" />

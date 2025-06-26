@@ -1,7 +1,13 @@
 
-/** $VER: PreferencesRootLayout.h (2024.06.09) **/
+/** $VER: Preferences.rc (2025.06.26) **/
 
-#pragma once
+#include "Resource.h"
+
+#include <winres.h>
+#include <commctrl.h>
+
+language LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
 
 #define W_A00    332 // Dialog width as set by foobar2000, in dialog units
 #define H_A00    288 // Dialog height as set by foobar2000, in dialog units
@@ -336,4 +342,69 @@
 
 #define H_A70    11 + H_A72 + IY + H_A73 + 7
 
-#pragma endregion
+IDD_PREFERENCES_ROOT dialogex 0, 0, 0, 0
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
+{
+//  Used to measure the dialog size.
+//  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
+
+    // Left column
+    groupbox "Output", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10
+        rtext       "Player:",      IDC_STATIC,     X_A11, Y_A11 + 2, W_A11, H_A11
+        combobox                    IDC_PLAYER_TYPE,X_A12, Y_A12,     W_A12, H_A12, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        pushbutton  "Configure",    IDC_CONFIGURE,  X_A13, Y_A13,     W_A13, H_A13, WS_TABSTOP
+        rtext       "Sample rate:", IDC_STATIC,     X_A14, Y_A14 + 2, W_A14, H_A14
+        combobox                    IDC_SAMPLERATE, X_A15, Y_A15,     W_A15, H_A15, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+
+    groupbox "Looping", IDC_STATIC, X_A20, Y_A20, W_A20, H_A20
+        rtext       "Playback:",    IDC_STATIC,         X_A21, Y_A21 + 2, W_A21, H_A21
+        combobox                    IDC_LOOP_PLAYBACK,  X_A22, Y_A22,     W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Other:",       IDC_STATIC,         X_A23, Y_A23 + 2, W_A23, H_A23
+        combobox                    IDC_LOOP_OTHER,     X_A24, Y_A24,     W_A24, H_A24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Decay time:",  IDC_STATIC,         X_A29, Y_A29 + 2, W_A29, H_A29
+        edittext                    IDC_DECAY_TIME,     X_A2A, Y_A2A,     W_A2A, H_A2A, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        ltext       "ms",           IDC_STATIC,         X_A2B, Y_A2B + 2, W_A2B, H_A2B
+
+        control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+        control     "CC 110/111 (LeapFrog)",                            IDC_LEAPFROG_LOOPS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
+        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
+        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
+        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A2C, Y_A2C, W_A2C, H_A2C
+
+    groupbox "MIDI", IDC_STATIC, X_A80, Y_A80, W_A80, H_A80
+        rtext       "Flavor:",                              IDC_MIDI_FLAVOR_TEXT, X_A81, Y_A81 + 2, W_A81, H_A81
+        combobox                                            IDC_MIDI_FLAVOR,      X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        control     "Filter effects (Reverb and Chorus)",   IDC_MIDI_EFFECTS,          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
+        control     "Use Super Munt with MT-32",            IDC_MIDI_USE_SUPER_MUNT,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
+        control     "Use VSTi with XG",                     IDC_MIDI_USE_VSTI_WITH_XG, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
+
+    groupbox "Miscellaneous", IDC_STATIC, X_A30, Y_A30, W_A30, H_A30
+        control "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EXCLUSION,    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
+        control "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
+        control "Disable bank changes",                             IDC_FILTER_BANKS,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
+
+    // Right column
+    groupbox "FluidSynth", IDC_STATIC, X_A40, Y_A40, W_A40, H_A40
+        rtext       "Interpolation:",       IDC_FLUIDSYNTH_INTERPOLATION_TEXT, X_A41, Y_A41 + 2, W_A41, H_A41
+        combobox                            IDC_FLUIDSYNTH_INTERPOLATION,      X_A42, Y_A42,     W_A42, H_A42, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    groupbox "BASS MIDI", IDC_STATIC, X_A50, Y_A50, W_A50, H_A50
+        rtext           "Volume:",          IDC_BASSMIDI_VOLUME_LBL,X_A57, Y_A57 + 2, W_A57, H_A57
+        edittext                            IDC_BASSMIDI_VOLUME,    X_A58, Y_A58,     W_A58, H_A58, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        rtext       "Resampling:",          IDC_RESAMPLING_LBL,     X_A53, Y_A53 + 2, W_A53, H_A53
+        combobox                            IDC_RESAMPLING_MODE,    X_A54, Y_A54,     W_A54, H_A54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext           "Cached:",          IDC_CACHED_LBL,         X_A55, Y_A55 + 2, W_A55, H_A55
+        ltext                  "",          IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56, WS_VISIBLE
+
+    groupbox "Munt", IDC_STATIC, X_A60, Y_A60, W_A60, H_A60
+        rtext       "GM Set:",              IDC_MUNT_GM_TEXT,   X_A63, Y_A63 + 2, W_A63, H_A63
+        combobox                            IDC_MUNT_GM_SET,    X_A64, Y_A64,     W_A64, H_A64, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    groupbox "Nuke", IDC_STATIC, X_A70, Y_A70, W_A70, H_A70
+        rtext       "Preset:",              IDC_NUKE_PRESET_TEXT,     X_A71, Y_A71 + 2, W_A71, H_A71
+        combobox                            IDC_NUKE_PRESET,          X_A72, Y_A72,     W_A72, H_A72, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        control     "Enable soft panning",  IDC_NUKE_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A73, Y_A73, W_A73, H_A73
+
+    ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, X_A50, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
+}
