@@ -56,7 +56,7 @@ foo_midi can decode the following file formats:
 | --- | --- | --- |
 | Standard MIDI File | .MID, .MIDI, .KAR | Created by the [MIDI Association](https://midi.org/standard-midi-files). |
 | RIFF-based MIDI File | .RMI | Wrapper format for MIDI data, as first specified by Microsoft, and later extended by MIDI.org (an arm of the MIDI Manufacturers Association) to permit the bundling of both MIDI files and Downloadable Sounds (DLS) files. See [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000120.shtml). |
-| Game Music Format | .GMF | Created by Adventure Soft for their Adventure Game Operating System (AGOS) engine. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=GMF). |
+| Game Music Format ![Proposed](https://img.shields.io/badge/proposed-blue) | .GMF | Created by Adventure Soft for their Adventure Game Operating System (AGOS) engine. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=GMF). |
 | MIDI Stream | .MIDS, .MDS | Created by Microsoft with the release of Windows 95. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=MDS). |
 | Human Machine Interface MIDI P/R | .HMP | Used by Human Machine Interface's Sound Operating System. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMP). |
 | Human Machine Interface |.HMI| Used by Human Machine Interface's Sound Operating System. It is a revision of the HMP format. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMI). |
@@ -141,7 +141,20 @@ Secret Sauce is a wrapper for the SCCore.dll that comes bundled with Roland’s 
 
 ### CLAP (Optional)
 
-The CLAP player allows you to use [CLAP ((CLever Audio Plug-in API))](https://u-he.com/community/clap/) plug-ins to render the audio stream.
+The CLAP player allows you to use [CLAP ((CLever Audio Plug-in API))](https://u-he.com/community/clap/) plug-ins to render the audio stream. The plug-in must meet a few requirements:
+
+- Implement the Note Ports and Audio Ports extension.
+- Have only 1 MIDI input port and no MIDI output ports.
+- Support MIDI dialect.
+- Have no audio input ports and 1 audio output port.
+- Have only 2 output channels in stereo configuration.
+
+Here are some examples of CLAP plug-ins:
+
+| Name | Description | Status |
+| --- | --- | --- |
+| [Dexed](https://asb2m10.github.io/dexed/) | Plug-in modeled on the [Yamaha DX7](https://en.wikipedia.org/wiki/Yamaha_DX7) | ![Broken](https://img.shields.io/badge/broken-red) The plug-in loads but does not process any MIDI events. |
+| [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP) | [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator | ![Working](https://img.shields.io/badge/working-green) |
 
 ---
 
