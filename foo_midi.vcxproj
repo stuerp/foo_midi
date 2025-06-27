@@ -261,6 +261,7 @@
   <ItemGroup>
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Channels.cpp" />
+    <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
     <ClCompile Include="Infrastructure\Exception.cpp" />
     <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
@@ -398,6 +399,7 @@
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="Infrastructure\Channels.h" />
+    <ClInclude Include="Infrastructure\CLAPWindow.h" />
     <ClInclude Include="Infrastructure\CriticalSection.h" />
     <ClInclude Include="Players\ADLPlayer.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
@@ -491,6 +493,9 @@
     <ClInclude Include="3rdParty\Nuke\synthlib_opl3w\opl3type.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\CLAP\Nuked-SC55-CLAP\Nuked-SC55-CLAP.vcxproj">
+      <Project>{b8261801-cbb0-4017-b094-c12c5662b11c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
       <Project>{71ad2674-065b-48f5-b8b0-e1f9d3892081}</Project>
     </ProjectReference>
@@ -573,6 +578,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />
+    <ResourceCompile Include="Infrastructure\CLAPWindow.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesFM.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesPaths.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesProcessing.rc" />

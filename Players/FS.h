@@ -5,7 +5,7 @@
 
 //#include "Player.h"
 
-#include "resource.h"
+#include "Resource.h"
 
 #include "Infrastructure\Exception.h"
 

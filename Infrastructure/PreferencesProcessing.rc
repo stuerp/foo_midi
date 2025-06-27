@@ -1,7 +1,7 @@
 
 /** $VER: PreferencesFM.rc (2025.06.22) **/
 
-#include "resource.h"
+#include "Resource.h"
 
 #include <winres.h>
 #include <commctrl.h>

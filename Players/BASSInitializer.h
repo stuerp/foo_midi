@@ -7,7 +7,7 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "SoundFontCache.h"
-#include "resource.h"
+#include "Resource.h"
 
 #include <bassmidi.h>
 

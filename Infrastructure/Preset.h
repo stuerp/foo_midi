@@ -34,7 +34,7 @@ public:
 
     pfc::string _PlugInFilePath; // VSTi or CLAP
     std::vector<uint8_t> _VSTiConfig;
-    uint32_t _PlugInIndex; // CLAP plug-in index in the factory
+    uint32_t _PlugInCLAPIndex; // CLAP plug-in index in the factory
 
     pfc::string _SoundFontFilePath;
 

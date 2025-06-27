@@ -1,5 +1,5 @@
 
-/** $VER: CLAPEventList.h (2025.06.25) P. Stuer **/
+/** $VER: CLAPEventList.h (2025.06.27) P. Stuer **/
 
 #pragma once
 
@@ -11,26 +11,29 @@
 
 #include <clap/clap.h>
 
+namespace CLAP
+{
+
 /// <summary>
 /// Implements an event list in the format expected by the CLAP interface.
 /// </summary>
-struct clap_event_list_t : clap_input_events
+struct EventList : clap_input_events
 {
 public:
-    clap_event_list_t()
+    EventList()
     {
         this->ctx = this;
 
         this->size = [](const clap_input_events * self) -> uint32_t
         {
-            const auto * This = static_cast<const clap_event_list_t *>(self->ctx);
+            const auto * This = static_cast<const EventList *>(self->ctx);
 
             return (uint32_t) This->Events.size();
         };
 
         this->get = [](const clap_input_events * self, uint32_t index) -> const clap_event_header *
         {
-            const auto * This = static_cast<const clap_event_list_t *>(self->ctx);
+            const auto * This = static_cast<const EventList *>(self->ctx);
 
             return (index < This->Events.size()) ? This->Events[index].get() : nullptr;
         };
@@ -79,3 +82,5 @@ public:
 public:
     std::vector<std::unique_ptr<clap_event_header>> Events;
 };
+
+}

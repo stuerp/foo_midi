@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.h (2025.06.25) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.h (2025.06.27) P. Stuer - Wrapper for CLAP plugins **/
 
 #pragma once
 
@@ -24,7 +24,7 @@ public:
 
     virtual ~CLAPPlayer();
 
-    bool LoadPlugIn(const char * pathName, uint32_t index);
+    bool LoadPlugIn(const char * filePath, uint32_t index);
 
     virtual uint32_t GetSampleBlockSize() const noexcept override { return 2 * 1024; } // 2 channels
 
@@ -37,16 +37,13 @@ private:
     virtual void SendEvent(uint32_t, uint32_t time);
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time);
 
-    bool VerifyNotePorts() const noexcept;
-    bool VerifyAudioPorts() const noexcept;
-
 private:
     HMODULE _hPlugin;
-    std::string _PathName;
+    std::string _FilePath;
     uint32_t _PlugInIndex;
 
     const clap_plugin_t * _PlugIn;
-    clap_event_list_t _EventList;
+    CLAP::EventList _EventList;
 
     std::vector<float> LChannel;
     std::vector<float> RChannel;

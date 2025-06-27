@@ -6,13 +6,10 @@
 #include <sdk/foobar2000-lite.h>
 
 #include "Configuration.h"
-#include "resource.h"
+#include "Resource.h"
 #include "VSTi.h"
 
 #include "VSTiPlayer.h"
-
-std::vector<VSTi::plugin_t> VSTi::PlugIns;
-std::vector<uint8_t> VSTi::Config;
 
 /// <summary>
 /// Gets all VTSi from the specified path.
@@ -75,7 +72,7 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
                 {
                     plugin_t Plugin;
 
-                    Plugin.PathName = PathName;
+                    Plugin.FilePath = PathName;
 
                     std::string VendorName;
 
@@ -119,3 +116,6 @@ void VSTi::Enumerate(const char * pathName, uFindFile * findFile)
 
     delete findFile;
 }
+
+std::vector<VSTi::plugin_t> VSTi::PlugIns;
+std::vector<uint8_t> VSTi::Config;

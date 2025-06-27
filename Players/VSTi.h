@@ -19,7 +19,7 @@ public:
     struct plugin_t
     {
         std::string Name;
-        std::string PathName;
+        std::string FilePath;
         uint32_t Id;
         bool HasEditor;
     };

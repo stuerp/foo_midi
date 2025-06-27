@@ -45,6 +45,7 @@
     <ClCompile Include="Players\CLAPPlayer.cpp" />
     <ClCompile Include="Players\CLAPHost.cpp" />
     <ClCompile Include="Players\CLAPEventList.cpp" />
+    <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -192,6 +193,7 @@
     <ClInclude Include="Players\CLAPPlayer.h" />
     <ClInclude Include="Players\CLAPHost.h" />
     <ClInclude Include="Players\CLAPEventList.h" />
+    <ClInclude Include="Infrastructure\CLAPWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
@@ -242,6 +244,7 @@
     <ResourceCompile Include="Infrastructure\PreferencesPaths.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesProcessing.rc" />
     <ResourceCompile Include="Infrastructure\Preferences.rc" />
+    <ResourceCompile Include="Infrastructure\CLAPWindow.rc" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="3rdParty\bass\c\x64\bass.lib" />

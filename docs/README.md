@@ -13,7 +13,8 @@ Welcome to [foo_midi](https://github.com/stuerp/foo_midi/releases). This guide w
 4. [Troubleshooting](#troubleshooting)
 5. [FAQs](#faqs)
 6. [Reference Material](#reference-material)
-7. [Support](#support)
+7. [History](#history)
+8. [Support](#support)
 
 ---
 
@@ -52,26 +53,28 @@ You can download the component from the foobar2000 [Components](https://www.foob
 
 foo_midi can decode the following file formats:
 
-| Name | Extensions | Description |
-| --- | --- | --- |
-| Standard MIDI File | .MID, .MIDI, .KAR | Created by the [MIDI Association](https://midi.org/standard-midi-files). |
-| RIFF-based MIDI File | .RMI | Wrapper format for MIDI data, as first specified by Microsoft, and later extended by MIDI.org (an arm of the MIDI Manufacturers Association) to permit the bundling of both MIDI files and Downloadable Sounds (DLS) files. See [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000120.shtml). |
+| Name                             | Extensions  | Description |
+| -------------------------------- | ----------- | ----------- |
+| Standard MIDI File               | .MID, .MIDI | MIDI file conforming to the [MIDI Association](https://midi.org/standard-midi-files) standard |
+| Standard MIDI File               | .KAR        | MIDI file with embedded song lyrics for karaoke |
+| Extensible Music Format          | .XMF, .MXMF | Format created by the [MIDI Association](https://midi.org/extensible-music-format-xmf). See also [Video Game Music Preservation Foundation (VGMPF)](https://www.vgmpf.com/Wiki/index.php?title=XMF). |
+| RIFF-based MIDI File             | .RMI        | Format created by Microsoft and later extended by MIDI.org (an arm of the MIDI Manufacturers Association) to permit the bundling of both MIDI files and Downloadable Sounds (DLS) files. See [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000120.shtml). |
 | Game Music Format ![Proposed](https://img.shields.io/badge/proposed-blue) | .GMF | Created by Adventure Soft for their Adventure Game Operating System (AGOS) engine. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=GMF). |
-| MIDI Stream | .MIDS, .MDS | Created by Microsoft with the release of Windows 95. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=MDS). |
-| Human Machine Interface MIDI P/R | .HMP | Used by Human Machine Interface's Sound Operating System. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMP). |
-| Human Machine Interface |.HMI| Used by Human Machine Interface's Sound Operating System. It is a revision of the HMP format. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMI). |
-| MUS |.MUS | Created by Paul Radek for his DMX audio library. Used by id Software for Doom and several other games.  See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/MUS_Format). |
-| Extended MIDI |.XMI | Used by the Miles Sound System (MSS) for storing game music. See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/XMI_Format) and [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=XMI). |
-| Loudness Sound System | .LDS | Created with the Loudness Sound System by Andras Molnar. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=LDS). |
-| Recomposer |.RCP, .R36, .G18, .G36 | Created with Recomposer, a popular music editing application on the Japanese [PC-98](https://en.wikipedia.org/wiki/PC-98) platform. |
-| Extensible Music Format | .XMF, .MXMF | Created by the [MIDI Association](https://midi.org/extensible-music-format-xmf). See also [Video Game Music Preservation Foundation (VGMPF)](https://www.vgmpf.com/Wiki/index.php?title=XMF). |
-| Mobile Music File |.MMF| Synthetic-music Mobile Application Format (SMAF). See [FileFormat.com](https://docs.fileformat.com/audio/mmf/). |
+| MIDI Stream                      | .MIDS, .MDS | Format created by Microsoft with the release of Windows 95. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=MDS). |
+| Human Machine Interface MIDI P/R | .HMP        | Format used by Human Machine Interface's Sound Operating System. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMP). |
+| Human Machine Interface          | .HMI, .HMQ  | Format used by Human Machine Interface's Sound Operating System. It is a revision of the HMP format. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMI). |
+| MUS                              | .MUS        | Format created by Paul Radek for his DMX audio library. Used by id Software for Doom and several other games.  See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/MUS_Format) and [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX)). |
+| Extended MIDI                    | .XMI, .XFM  | Format used by the Miles Sound System (MSS) for storing game music. See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/XMI_Format) and [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=XMI). |
+| Loudness Sound System            | .LDS        | File created with the Loudness Sound System by Andras Molnar. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=LDS). |
+| Recomposer                       | .RCP, .R36, .G18, .G36 | Formats used by Recomposer, a popular music editing application on the Japanese [PC-98](https://en.wikipedia.org/wiki/PC-98) platform. |
+| Mobile Music File                | .MMF        | Synthetic-music Mobile Application Format (SMAF). See [FileFormat.com](https://docs.fileformat.com/audio/mmf/). |
+| System Exclusive data file       | .SYX, .DMP  | File containing System Exclusive (SysEx) messages. |
 
 ### Players
 
-foo_midi implements and suports several players. A player is emulates an FM or sample-based synthesizer. The build-in players do not require any additional files to play back music. Additional players become available when you install and configure the required support files.
+foo_midi implements and suports several players. A player is emulates an FM or sample-based synthesizer. The build-in players do not require you to download and install any additional files to play back music. Additional players become available when you install and configure the required support files.
 
-### LibADLMIDI (Built-in)
+### LibADLMIDI (Built-in, FM Synthesis)
 
 This player uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
 
@@ -89,7 +92,9 @@ You can choose which emulator core this player uses:
 - Nuked OPL2 LLE
 - Nuked OPL3 LLE
 
-### LibOPNMIDI (Built-in)
+Many built-in FM patches from various known PC games can be selected on the **MIDI Player / FM Synthesis** preferences page.
+
+### LibOPNMIDI (Built-in, FM Synthesis)
 
 This player uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) and [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
 
@@ -103,11 +108,15 @@ You can choose which emulator core this player uses:
 - MAME YM2608
 - PMDWin OPNA
 
-### LibEDMIDI aka Emu de MIDI (Built-in)
+Many built-in FM patches from various known PC games can be selected on the **MIDI Player / FM Synthesis** preferences page.
+
+### LibEDMIDI aka Emu de MIDI (Built-in, FM Synthesis)
 
 This player uses the [libEDMIDI](https://github.com/Wohlstand/libEDMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2413 and VRC7 (OPLL)](https://en.wikipedia.org/wiki/Yamaha_YM2413) FM synthesis sound chip, the [Sega Programmable Sound Generator (PSG, SN76496)](https://segaretro.org/SN76489) and the [Konami SCC](http://bifi.msxnet.org/msxnet/tech/scc).
 
-### Nuked OPL3 (Built-in)
+It requires you to specify the location of the MT-32 or CM-32L PCM and control ROMS on the **MIDI Player / Paths** preferences page.
+
+### Nuked OPL3 (Built-in, FM Synthesis)
 
 This player uses the [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3) library by [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) to emulate the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
 
@@ -115,11 +124,11 @@ This player uses the [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3) library
 
 This player uses the [libMT32Emu](https://github.com/munt/munt) library to emulated the [Roland MT-32, CM-32L and LAPC-I synthesiser modules](https://en.wikipedia.org/wiki/Roland_MT-32).
 
-### FMMIDI (yuno) (Built-in)
+### FMMIDI (yuno) (Built-in, FM Synthesis)
 
 [FMMIDI](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
 
-It requires a text file that specifies the programs or instrument definitions. A Programs.txt file is installed with the component in component directory.
+It requires a text file that specifies the programs or instrument definitions. A default **Programs.txt** file is installed with the component in component directory. This file can be overriden by selecting a different one on the **MIDI Player / Paths** preferences page.
 
 ### BASSMIDI (Built-in)
 
@@ -127,17 +136,21 @@ This player is a wrapper for the BASSMIDI library by [Un4seen](https://www.un4se
 
 It requires an SF2, SF2Pack, SFZ or SF3 soundfont to provide the instrument samples. See [Sound Fonts](#sound-fonts).
 
+A custom SFList format is also supported to further tweak the sound fonts and instruments used during playback.
+
 ### FluidSynth (Optional)
 
 This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) library. You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path the Preferences dialog to use it.
 
-### VST Instruments (VSTi) (Optional)
-
-Supports 32 and 64-bit VST instruments.
+It requires an SF2, SF2Pack, SFZ or SF3 soundfont or a DLS-compatible wave set to provide the instrument samples. See [Sound Fonts](#sound-fonts).
 
 ### Secret Sauce (Optional)
 
 Secret Sauce is a wrapper for the SCCore.dll that comes bundled with Roland’s [Sound Canvas VA](https://www.roland.com/us/products/rc_sound_canvas_va/).
+
+### VSTi (VST Instruments) (Optional)
+
+Supports 32 and 64-bit VST instruments.
 
 ### CLAP (Optional)
 
@@ -146,13 +159,15 @@ The CLAP player allows you to use [CLAP ((CLever Audio Plug-in API))](https://u-
 - Implement the Note Ports and Audio Ports extension.
 - Have only 1 MIDI input port and no MIDI output ports.
 - Support MIDI dialect.
-- Have no audio input ports and 1 audio output port.
+- Have no audio input ports and only 1 audio output port.
 - Have only 2 output channels in stereo configuration.
+
+You must specify the directory that foo_midi will scan to look for on the **MIDI Player / Paths** page. All files with extension .dll or .clap are examined. A CLAP plug-in file can contain multiple plug-ins.
 
 Here are some examples of CLAP plug-ins:
 
 | Name | Description | Status |
-| --- | --- | --- |
+| ---- | ----------- | ------ |
 | [Dexed](https://asb2m10.github.io/dexed/) | Plug-in modeled on the [Yamaha DX7](https://en.wikipedia.org/wiki/Yamaha_DX7) | ![Broken](https://img.shields.io/badge/broken-red) The plug-in loads but does not process any MIDI events. |
 | [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP) | [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator | ![Working](https://img.shields.io/badge/working-green) |
 
@@ -170,9 +185,9 @@ By default the [LibADLMIDI (Built-in)](#libadlmidi-built-in) player is used. You
 
 If you have configured VSTi the compatible instruments will added to the list as a player prefixed with *VSTi*.
 
-The **Configure** button will be enabled if the player has an additional dialog in which to configure settings specific to that player.
+The **Configure** button will be enabled if the player has an additional dialog to configure settings specific to that player.
 
-The **Sample rate** combobox allows you to specify the frequency the player will use to synthesize the samples. Select any of the predefined values or enter a custom value between 6000Hz and 192000Hz.
+The **Sample rate** combobox allows you to specify the sample rate the player will use create samples. Select any of the predefined values or enter a custom value between 6000Hz and 192000Hz.
 
 ### Looping
 
@@ -190,14 +205,14 @@ The following loop markers are supported:
 
 The component supports 6 loop modes that can be selected in the foobar2000 Preferences dialog:
 
-| Type | Description |
-| --- | --- |
-| Never loop | The song will be played once ignoring any loop information. |
-| Never loop. Use decay time | The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down. |
-| Loop and fade when detected |The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by **Loop count**). At the end of the last loop the song will fade out over the period defined by the **Fade time** settings in Advanced Preferences. |
-| Loop and fade always |The song will be played and looped a customizable number of times (defined in Advanced Preferences by **Loop count**). At the end of the last loop the song will fade out over the period defined by the **Fade time** settings in Advanced Preferences. |
+| Type                            | Description |
+| ------------------------------- | ----------- |
+| Never loop                      | The song will be played once ignoring any loop information. |
+| Never loop. Use decay time      | The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down. |
+| Loop and fade when detected     | The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by **Loop count**). At the end of the last loop the song will fade out over the period defined by the **Fade time** settings in Advanced Preferences. |
+| Loop and fade always            | The song will be played and looped a customizable number of times (defined in Advanced Preferences by **Loop count**). At the end of the last loop the song will fade out over the period defined by the **Fade time** settings in Advanced Preferences. |
 | Play indefinitely when detected | The song will be played and the loop, when detected, will play until stopped. |
-| Play indefinitely | The song will be played and loop until stopped. |
+| Play indefinitely               | The song will be played and loop until stopped. |
 
 The **Playback** droplist specifies how loops are processed during normal playback. The **Other** droplist determines how loops are processed during other foobar2000 operations such as converting a MIDI file to another format.
 
@@ -205,6 +220,7 @@ The **Decay time** setting specifies the time in milliseconds that the player wi
 
 ### Sound Fonts
 
+*Work in Progress*
 
 ### Metadata
 
@@ -241,10 +257,6 @@ The **Decay time** setting specifies the time in milliseconds that the player wi
 - [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
 - [File format samples](https://telparia.com/fileFormatSamples/)
 
-### SoundFonts
-
-- [SoundFont](https://musical-artifacts.com/artifacts?tags=soundfont), Musical Artifacts
-
 ### MIDI
 
 - [Introduction to Computer Music: MIDI](https://cmtext.indiana.edu/MIDI/chapter3_MIDI.php), Jeffrey Hass
@@ -252,6 +264,27 @@ The **Decay time** setting specifies the time in milliseconds that the player wi
 - [Standards in Music](https://www.recordingblogs.com/wiki/standards-in-music-index), Recording Blogs
 - [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
 - [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
+
+### RMI
+
+- [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
+- [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification)
+
+### XMF (Extensible Music Format)
+
+- [Media Type](https://www.rfc-editor.org/rfc/rfc4723.html)
+- [MIDI Manufacturers Association Tech Specs & Info](https://web.archive.org/web/20080618001530/http://www.midi.org/techspecs/index.php)
+- [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000121.shtml)
+- [FileFormats](http://fileformats.archiveteam.org/wiki/Extensible_Music_Format)
+- [MultimediaWiki](https://wiki.multimedia.cx/index.php/Extensible_Music_Format_(XMF))
+- [Introducing the Interactive XMF Audio File Format](https://www.gamedeveloper.com/audio/introducing-the-interactive-xmf-audio-file-format)
+- [XmfExtractor](https://github.com/benryves/XmfExtractor)
+
+---
+
+## History
+
+The history of foo_midi development can be found [here](History.md).
 
 ---
 

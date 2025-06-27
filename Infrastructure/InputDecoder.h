@@ -42,7 +42,7 @@
 #pragma comment(lib, "strmiids.lib")
 #endif
 
-#include "resource.h"
+#include "Resource.h"
 
 extern volatile int _IsRunning;
 extern critical_section _Lock;

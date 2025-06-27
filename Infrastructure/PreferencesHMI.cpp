@@ -22,7 +22,7 @@
 
 #include <pfc/string-conv-lite.h>
 
-#include "resource.h"
+#include "Resource.h"
 
 #include "Configuration.h"
 

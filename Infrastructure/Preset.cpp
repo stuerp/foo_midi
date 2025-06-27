@@ -1,5 +1,5 @@
 
-/** $VER: Preset.cpp (2025.06.25) **/
+/** $VER: Preset.cpp (2025.06.27) **/
 
 #include "pch.h"
 
@@ -25,7 +25,7 @@ preset_t::preset_t() noexcept
         _PlayerType = (PlayerTypes) (uint32_t) CfgPlayerType;
 
         _PlugInFilePath = CfgPlugInFilePath;
-        _PlugInIndex = (uint32_t) CfgPlugInIndex;
+        _PlugInCLAPIndex = (uint32_t) CfgCLAPIndex;
 
         // Get the configuration of the VSTi.
         if (_PlayerType == PlayerTypes::VSTi)
@@ -43,8 +43,7 @@ preset_t::preset_t() noexcept
             }
             catch (...)
             {
-                if (_PlayerType == PlayerTypes::VSTi)
-                    _PlayerType = PlayerTypes::Default;
+                _PlayerType = PlayerTypes::Default;
             }
         }
         else

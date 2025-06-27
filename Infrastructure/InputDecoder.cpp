@@ -414,7 +414,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
                 _Player = Player;
 
-                if (!Player->LoadPlugIn(Preset._PlugInFilePath, Preset._PlugInIndex))
+                if (!Player->LoadPlugIn(Preset._PlugInFilePath, Preset._PlugInCLAPIndex))
                     throw midi::exception_t(pfc::string("Unable to load CLAP plug-in from \"") + Preset._PlugInFilePath + "\"");
             
                 _Player = Player;

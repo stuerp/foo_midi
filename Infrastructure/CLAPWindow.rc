@@ -1,0 +1,17 @@
+
+/** $VER: CLAPWindow.rc (2025.06.28) **/
+
+#include "Resource.h"
+
+#include <winres.h>
+#include <commctrl.h>
+
+language LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+IDD_CLAP_WINDOW dialogex 0, 0, 0, 0
+caption "CLAP Plug-in"
+font 8, "MS Shell Dlg", 400, 0, 0x1
+style DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+{
+}

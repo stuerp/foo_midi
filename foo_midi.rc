@@ -1,7 +1,7 @@
 
 /** $VER: foo_midi.rc (2025.06.26) **/
 
-#include "resource.h"
+#include "Resource.h"
 
 #include <winres.h>
 #include <commctrl.h>

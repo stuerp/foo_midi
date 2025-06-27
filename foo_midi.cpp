@@ -8,7 +8,7 @@
 
 #include "History.h"
 
-#include "resource.h"
+#include "Resource.h"
 
 #pragma hdrstop
 
