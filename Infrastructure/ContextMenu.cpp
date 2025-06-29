@@ -121,7 +121,7 @@ bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_ba
 
         auto & Instance = CLAP::Host::GetInstance();
 
-        flags = Instance.HasGUI() ? (Instance.IsGUIVisible() ?  FLAG_CHECKED : 0) : FLAG_DISABLED_GRAYED;
+        flags = !Instance.HasGUI() ? FLAG_DISABLED_GRAYED : 0;
 
         return true;
     }

@@ -409,7 +409,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 if (Preset._PlugInFilePath.is_empty())
                     throw midi::exception_t("No plug-in specified in preset");
 
-                auto Player = new CLAPPlayer(Preset._PlugInFilePath.c_str(), Preset._CLAPPlugInIndex);
+                auto Player = new CLAPPlayer();
 
                 _Player = Player;
             }

@@ -44,7 +44,7 @@
     <ClCompile Include="Players\NukedSC-55Player.cpp" />
     <ClCompile Include="Players\CLAPPlayer.cpp" />
     <ClCompile Include="Infrastructure\CLAPHost.cpp" />
-    <ClCompile Include="Infrastructure\CLAPEventList.cpp" />
+    <ClCompile Include="Infrastructure\CLAPEvents.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -192,7 +192,7 @@
     <ClInclude Include="Players\NukedSC-55Player.h" />
     <ClInclude Include="Players\CLAPPlayer.h" />
     <ClInclude Include="Infrastructure\CLAPHost.h" />
-    <ClInclude Include="Infrastructure\CLAPEventList.h" />
+    <ClInclude Include="Infrastructure\CLAPEvents.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
   </ItemGroup>
   <ItemGroup>
@@ -237,6 +237,14 @@
     <None Include="3rdParty\bass\x64\bassopus.dll" />
     <None Include="3rdParty\bass\x64\basswv.dll" />
     <None Include=".editorconfig" />
+    <None Include="docs\History.md" />
+    <None Include="docs\README.md" />
+    <None Include="LICENSE" />
+    <None Include="README.md" />
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
+    <None Include=".gitmodules" />
+    <None Include="Infrastructure\cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

@@ -5,16 +5,15 @@
 
 #include "CLAPPlayer.h"
 #include "CLAPHost.h"
+
 #include "Resource.h"
 #include "Encoding.h"
 #include "Exception.h"
 
 #pragma region player_t
 
-CLAPPlayer::CLAPPlayer(const fs::path & filePath, uint32_t index) noexcept : player_t(), _hPlugIn(), _PlugInIndex(~0u), _PlugIn()
+CLAPPlayer::CLAPPlayer() noexcept : player_t()
 {
-    _FilePath = filePath;
-    _PlugInIndex = index;
 }
 
 CLAPPlayer::~CLAPPlayer()
@@ -24,88 +23,41 @@ CLAPPlayer::~CLAPPlayer()
 
 bool CLAPPlayer::Startup()
 {
-    if (_PlugIn != nullptr)
+    if (_IsInitialized)
         return true;
 
-    _hPlugIn = ::LoadLibraryA(_FilePath.string().c_str());
+    auto & Host = CLAP::Host::GetInstance();
 
-    if (_hPlugIn == NULL)
-        throw midi::exception_t(pfc::string("Unable to load CLAP plug-in from \"") + _FilePath.string().c_str() + "\"");
+    if (!Host.IsPlugInLoaded())
+        return false;
 
     LChannel.resize(GetSampleBlockSize());
     RChannel.resize(GetSampleBlockSize());
 
-    auto Entry = (const clap_plugin_entry_t *) ::GetProcAddress(_hPlugIn, "clap_entry");
+    if (!Host.ActivatePlugIn((double) _SampleRate, 1, GetSampleBlockSize()))
+        return false;
 
-    if ((Entry != nullptr) && (Entry->init != nullptr) && Entry->init(_FilePath.string().c_str()))
-    {
-        const auto * Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
+    _IsInitialized = true;
 
-        if (Factory != nullptr)
-        {
-            const auto * Descriptor = Factory->get_plugin_descriptor(Factory, _PlugInIndex);
+    Configure(_MIDIFlavor, _FilterEffects);
+    Reset();
 
-            if (Descriptor != nullptr)
-            {
-                _PlugIn = Factory->create_plugin(Factory, &CLAP::Host::GetInstance(), Descriptor->id);
-
-                if (_PlugIn != nullptr)
-                {
-                    if (_PlugIn->init(_PlugIn))
-                    {
-                        const double SampleRate  = _SampleRate;
-                        const uint32_t MinFrames = 1;
-                        const uint32_t MaxFrames = GetSampleBlockSize();
-
-                        if (_PlugIn->activate(_PlugIn, SampleRate, MinFrames, MaxFrames))
-                        {
-                            if (_PlugIn->start_processing(_PlugIn))
-                            {
-                                _IsInitialized = true;
-
-                                Configure(_MIDIFlavor, _FilterEffects);
-                                Reset();
-
-                                return true;
-                            }
-                        }
-                    }
-                    else
-                        console::error(STR_COMPONENT_BASENAME " failed to initialize CLAP plug-in.");
-                }
-                else
-                    console::error(STR_COMPONENT_BASENAME " failed to create CLAP plug-in.");
-            }
-            else
-                console::error(STR_COMPONENT_BASENAME " failed to get CLAP plug-in descriptor.");
-        }
-        else
-            console::error(STR_COMPONENT_BASENAME " failed to initialize CLAP factory.");
-    }
-    else
-        console::error(STR_COMPONENT_BASENAME " failed to get CLAP plug-in entry point.");
-
-    return false;
+    return true;
 }
 
 void CLAPPlayer::Shutdown()
 {
-    if (_PlugIn != nullptr)
-    {
-        _PlugIn->stop_processing(_PlugIn);
+    if (!_IsInitialized)
+        return;
 
-        _PlugIn->deactivate(_PlugIn);
-                    
-        _PlugIn->destroy(_PlugIn);
+    _IsInitialized = false;
 
-        _PlugIn = nullptr;
-    }
+    auto & Host = CLAP::Host::GetInstance();
 
-    if (_hPlugIn != NULL)
-    {
-        ::FreeLibrary(_hPlugIn);
-        _hPlugIn = NULL;
-    }
+    if (!Host.IsPlugInLoaded())
+        return;
+
+    Host.DeactivatePlugIn();
 }
 
 void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
@@ -139,7 +91,7 @@ void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 
 //  console::print(STR_COMPONENT_BASENAME ": CLAPPlayer.Render(", sampleCount, "), ", (int64_t) _InEvents.Events.size(), " events");
 
-    if (_PlugIn->process(_PlugIn, &Processor) == CLAP_PROCESS_ERROR)
+    if (CLAP::Host::GetInstance().Process(Processor))
         return; // throw exception_io_data("CLAP plug-in event processing failed");
 
 //  console::print(STR_COMPONENT_BASENAME ": CLAPPlayer.Render()");

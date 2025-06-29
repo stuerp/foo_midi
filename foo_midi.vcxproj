@@ -270,7 +270,7 @@
     <ClCompile Include="Players\BMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Configuration.cpp" />
     <ClCompile Include="Infrastructure\ContextMenu.cpp" />
-    <ClCompile Include="Infrastructure\CLAPEventList.cpp" />
+    <ClCompile Include="Infrastructure\CLAPEvents.cpp" />
     <ClCompile Include="Infrastructure\CLAPHost.cpp" />
     <ClCompile Include="Players\CLAPPlayer.cpp" />
     <ClCompile Include="Players\EdMPlayer.cpp" />
@@ -407,7 +407,7 @@
     <ClInclude Include="Infrastructure\ConfigurationMap.h" />
     <ClInclude Include="Infrastructure\Configuration.h" />
     <ClInclude Include="Infrastructure\ContextMenu.h" />
-    <ClInclude Include="Infrastructure\CLAPEventList.h" />
+    <ClInclude Include="Infrastructure\CLAPEvents.h" />
     <ClInclude Include="Infrastructure\CLAPHost.h" />
     <ClInclude Include="Players\CLAPPlayer.h" />
     <ClInclude Include="Players\EdMPlayer.h" />
@@ -562,6 +562,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
+    <None Include=".gitmodules" />
     <None Include="3rdParty\bass\bass.dll" />
     <None Include="3rdParty\BASS\bassflac.dll" />
     <None Include="3rdParty\bass\bassmidi.dll" />
@@ -575,6 +578,11 @@
     <None Include="3rdParty\bass\x64\basswv.dll" />
     <None Include="3rdParty\bass\x64\bass_mpc.dll" />
     <None Include="Build-FB2KComponent.ps1" />
+    <None Include="docs\History.md" />
+    <None Include="docs\README.md" />
+    <None Include="Infrastructure\cpp.hint" />
+    <None Include="LICENSE" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="foo_midi.rc" />

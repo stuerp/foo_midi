@@ -113,7 +113,7 @@ bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
             {
                 _PlugIn = Factory->create_plugin(Factory, this, _PlugInDescriptor->id);
 
-                if (_PlugIn != nullptr)
+                if (IsPlugInLoaded())
                 {
                     return GetGUI();
                 }
@@ -129,15 +129,15 @@ bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
 /// </summary>
 void Host::UnLoad() noexcept
 {
-    HideGUI();
-
-    if (_PlugInGUI != nullptr)
+    if (HasGUI())
     {
+        HideGUI();
+
         _PlugInGUI->destroy(_PlugIn);
         _PlugInGUI = nullptr;
     }
 
-    if (_PlugIn != nullptr)
+    if (IsPlugInLoaded())
     {
         _PlugIn->destroy(_PlugIn);
         _PlugIn = nullptr;
@@ -150,6 +150,53 @@ void Host::UnLoad() noexcept
         ::FreeLibrary(_hPlugIn);
         _hPlugIn = NULL;
     }
+}
+
+/// <summary>
+/// Returns true if the host has loaded a plug-in.
+/// </summary>
+bool Host::IsPlugInLoaded() const noexcept
+{
+    return (_PlugIn != nullptr);
+}
+
+/// <summary>
+/// Activates the loaded plug-in.
+/// </summary>
+bool Host::ActivatePlugIn(double  sampleRate, uint32_t minFrames, uint32_t maxFrames) noexcept
+{
+    if (!IsPlugInLoaded())
+        return false;
+
+    if (!_PlugIn->init(_PlugIn))
+        return false;
+
+    if (!_PlugIn->activate(_PlugIn, sampleRate, minFrames, maxFrames))
+        return false;
+
+    return _PlugIn->start_processing(_PlugIn);
+}
+
+/// <summary>
+/// Deactivates the loaded plug-in.
+/// </summary>
+void Host::DeactivatePlugIn() const noexcept
+{
+    if (!IsPlugInLoaded())
+        return;
+
+    _PlugIn->stop_processing(_PlugIn);
+
+    _PlugIn->deactivate(_PlugIn);
+
+}
+
+/// <summary>
+/// Processes events.
+/// </summary>
+bool Host::Process(const clap_process_t & processor) noexcept
+{
+    return (_PlugIn->process(_PlugIn, &processor) == CLAP_PROCESS_ERROR);
 }
 
 /// <summary>

@@ -47,6 +47,12 @@ public:
 
     bool Load(const fs::path & filePath, uint32_t index) noexcept;
     void UnLoad() noexcept;
+    bool IsPlugInLoaded() const noexcept;
+
+    bool ActivatePlugIn(double sampleRate, uint32_t minFrames, uint32_t maxFrames) noexcept;
+    void DeactivatePlugIn() const noexcept;
+
+    bool Process(const clap_process_t & processor) noexcept;
 
     bool HasGUI() const noexcept;
     void ShowGUI(HWND hWnd) noexcept;
