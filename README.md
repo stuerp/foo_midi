@@ -94,17 +94,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-- v2.19.0.0-alpha4, 2025-06-29
-
-- Improved: CLAP host functionality.
-  - Added support for sample rate and MIDI flavor preferences.
-  - Added support for CLAP plug-ins with a GUI.
-    - Known limitation: The GUI does not control the player yet and vice versa.
-    - Known problem: The Dexed GUI does not reappear when the GUI is closed and re-opened.
-  - Extended CLAP host functionality to support [Dexed](https://asb2m10.github.io/dexed/) and other plug-ins with the same requirements.
-- Changed: MIDI flavor **Default** is now just that. Previous versions used GS as a default. Let me know if this breaks things.
-- Fixed: Player selection in Preferences was broken. ![Regression](https://img.shields.io/badge/regression-red)
-- Fixed: FluidSynth reverb processing was always disabled. ![Regression](https://img.shields.io/badge/regression-red)
+- v2.19.0.0-alpha5, 2025-xx-xx
 
 You can read the full history [here](docs/History.md).
 
