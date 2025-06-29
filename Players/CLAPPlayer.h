@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.h (2025.06.27) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.h (2025.06.28) P. Stuer - Wrapper for CLAP plugins **/
 
 #pragma once
 
@@ -32,7 +32,7 @@ private:
     virtual bool Startup();
     virtual void Shutdown();
     virtual void Render(audio_sample *, uint32_t);
-    virtual bool Reset() { return false; }
+    virtual bool Reset();
 
     virtual void SendEvent(uint32_t, uint32_t time);
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time);
@@ -43,7 +43,8 @@ private:
     uint32_t _PlugInIndex;
 
     const clap_plugin_t * _PlugIn;
-    CLAP::EventList _EventList;
+    CLAP::InputEvents _InEvents;
+    CLAP::OutputEvents _OutEvents;
 
     std::vector<float> LChannel;
     std::vector<float> RChannel;

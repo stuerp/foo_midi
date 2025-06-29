@@ -42,7 +42,7 @@ bool CLAPPlayer::Startup()
 
             if (Descriptor != nullptr)
             {
-                _PlugIn = Factory->create_plugin(Factory, &CLAP::Host::Parameters, Descriptor->id);
+                _PlugIn = Factory->create_plugin(Factory, &CLAP::_Host, Descriptor->id);
 
                 if (_PlugIn != nullptr)
                 {
@@ -52,7 +52,18 @@ bool CLAPPlayer::Startup()
                         const uint32_t MinFrames = 1;
                         const uint32_t MaxFrames = GetSampleBlockSize();
 
-                        return _PlugIn->activate(_PlugIn, SampleRate, MinFrames, MaxFrames);
+                        if (_PlugIn->activate(_PlugIn, SampleRate, MinFrames, MaxFrames))
+                        {
+                            if (_PlugIn->start_processing(_PlugIn))
+                            {
+                                _IsInitialized = true;
+
+                                Configure(_MIDIFlavor, _FilterEffects);
+                                Reset();
+
+                                return true;
+                            }
+                        }
                     }
                     else
                         console::error(STR_COMPONENT_BASENAME " failed to initialized CLAP plug-in.");
@@ -71,6 +82,8 @@ void CLAPPlayer::Shutdown()
     if (_PlugIn == nullptr)
         return;
 
+    _PlugIn->stop_processing(_PlugIn);
+
     _PlugIn->deactivate(_PlugIn);
                     
     _PlugIn->destroy(_PlugIn);
@@ -80,8 +93,6 @@ void CLAPPlayer::Shutdown()
 
 void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
-//  console::print(STR_COMPONENT_BASENAME ": CLAPPlayer.Render(", sampleCount, "), ", (int64_t) _EventList.Events.size(), " events");
-
     float * OutChannels[2] = { LChannel.data(), RChannel.data() };
 
     const clap_audio_buffer_t AudioOut =
@@ -94,7 +105,7 @@ void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 
     const int64_t SteadyTimeNotAvailable = -1;
 
-    clap_process_t Process =
+    clap_process_t Processor =
     {
         .steady_time         = SteadyTimeNotAvailable,
         .frames_count        = sampleCount,
@@ -103,14 +114,18 @@ void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         .audio_outputs       = AudioOutputs,
         .audio_inputs_count  = 0,
         .audio_outputs_count = _countof(AudioOutputs),
-        .in_events           = &_EventList,
-        .out_events          = nullptr
+        .in_events           = &_InEvents,
+        .out_events          = &_OutEvents,
     };
 
     ::memset(sampleData, 0, ((size_t) sampleCount * _countof(OutChannels)) * sizeof(audio_sample));
 
-    if (_PlugIn->process(_PlugIn, &Process) == CLAP_PROCESS_ERROR)
+//  console::print(STR_COMPONENT_BASENAME ": CLAPPlayer.Render(", sampleCount, "), ", (int64_t) _InEvents.Events.size(), " events");
+
+    if (_PlugIn->process(_PlugIn, &Processor) == CLAP_PROCESS_ERROR)
         return; // throw exception_io_data("CLAP plug-in event processing failed");
+
+//  console::print(STR_COMPONENT_BASENAME ": CLAPPlayer.Render()");
 
     for (size_t j = 0; j < sampleCount; ++j)
     {
@@ -118,7 +133,17 @@ void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         sampleData[j * 2 + 1] = (audio_sample) RChannel[j];
     }
 
-    _EventList.Clear();
+    _InEvents.Clear();
+}
+
+/// <summary>
+/// Resets the player.
+/// </summary>
+bool CLAPPlayer::Reset()
+{
+    ResetPort(0, 0);
+
+    return true;
 }
 
 void CLAPPlayer::SendEvent(uint32_t data, uint32_t time)
@@ -128,12 +153,28 @@ void CLAPPlayer::SendEvent(uint32_t data, uint32_t time)
     auto Data2  = (uint8_t) (data >> 16);
 //  auto Port   = (uint8_t) (data >> 24);
 
-    _EventList.Add(Status, Data1, Data2, time);
+    console::print(::FormatText("%8u: %02X %02X %02X", time, Status, Data1, Data2).c_str());
+
+    _InEvents.Add(Status, Data1, Data2, time);
 }
 
 void CLAPPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
 {
-    _EventList.Add(data, size, time);
+#ifdef _DEBUG
+    std::string Buffer; Buffer.resize((size * 3) + 1); // 3 characters + terminator
+
+    char * p = Buffer.data();
+
+    for (size_t i = 0; i < size; ++i)
+    {
+        ::sprintf_s(p, 4, "%02X ", data[i]);
+        p += 3;
+    }
+
+    console::print(::FormatText("%8u: %s", time, Buffer.c_str()).c_str());
+#endif
+
+    _InEvents.Add(data, size, time);
 };
 
 bool CLAPPlayer::LoadPlugIn(const char * pathName, uint32_t index)

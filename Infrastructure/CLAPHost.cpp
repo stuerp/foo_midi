@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.06.27) P. Stuer **/
+/** $VER: CLAPHost.cpp (2025.06.28) P. Stuer **/
 
 #include "pch.h"
 
@@ -12,56 +12,56 @@
 
 namespace CLAP
 {
-const clap_host_t Host::Parameters =
-{
-    .clap_version     = CLAP_VERSION,
-    .host_data        = nullptr,
-    .name             = STR_COMPONENT_BASENAME,
-    .vendor           = STR_COMPONENT_COMPANY_NAME,
-    .url              = STR_COMPONENT_URL,
-    .version          = STR_COMPONENT_VERSION,
-    .get_extension    = nullptr,
-    .request_restart  = nullptr,
-    .request_process  = nullptr,
-    .request_callback = nullptr
-};
 
 /// <summary>
 /// Gets the CLAP plug-ins.
 /// </summary>
-void Host::GetPlugIns(const fs::path & directoryPath) noexcept
+std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 {
-    if (directoryPath.empty())
-        return;
+    _PlugIns.clear();
 
+    if (directoryPath.empty())
+        return _PlugIns;
+
+    GetPlugIns_(directoryPath);
+
+    std::sort(_PlugIns.begin(), _PlugIns.end(), [](PlugIn a, PlugIn b) { return a.Name < b.Name; });
+
+    return _PlugIns;
+}
+
+/// <summary>
+/// Gets the CLAP plug-ins.
+/// </summary>
+void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
+{
     for (const auto & Entry : fs::directory_iterator(directoryPath))
     {
         if (Entry.is_directory())
         {
-            GetPlugIns(Entry.path());
+            GetPlugIns_(Entry.path());
         }
         else
         if ((Entry.path().extension() == ".clap") || (Entry.path().extension() == ".dll"))
         {
             console::print(STR_COMPONENT_BASENAME " is examining \"", Entry.path().string().c_str(), "\"...");
 
-            GetPlugIns(Entry.path(), [Entry](const std::string & name, uint32_t index, bool hasGUI)
+            GetPlugIns(Entry.path(), [this, Entry](const std::string & plugInName, uint32_t index, bool hasGUI)
             {
                 PlugIn PlugIn =
                 {
-                    .Name     = "CLAP " + name,
+                    .Name     = "CLAP " + plugInName,
                     .Index    = index,
                     .FilePath = Entry.path(),
                     .HasGUI   = hasGUI
                 };
 
-                PlugIns.push_back(PlugIn);
+                _PlugIns.push_back(PlugIn);
             });
-
-            std::sort(PlugIns.begin(), PlugIns.end(), [](PlugIn a, PlugIn b) { return a.Name < b.Name; });
         }
     }
 }
+
 
 /// <summary>
 /// Gets the CLAP plug-ins in plug-in file.
@@ -105,7 +105,7 @@ void Host::GetPlugIns(const fs::path & filePath, const std::function<void(const 
 
                         if (::clap_version_is_compatible(Descriptor->clap_version))
                         {
-                            const auto * PlugIn = Factory->create_plugin(Factory, &Parameters, Descriptor->id);
+                            const auto * PlugIn = Factory->create_plugin(Factory, this, Descriptor->id);
 
                             if (PlugIn != nullptr)
                             {
@@ -252,5 +252,56 @@ bool Host::HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept
     return Result;
 }
 
-std::vector<PlugIn> Host::PlugIns;
+/// <summary>
+/// Implements the CLAP_EXT_LOG extension.
+/// </summary>
+const clap_host_log Host::LogHandler
+{
+    // Logs a message from the plug-in.
+    .log =  [](const clap_host_t * self, clap_log_severity severity, const char * message)
+    {
+    #ifndef _DEBUG
+        if (severity < CLAP_LOG_WARNING)
+            return;
+    #endif
+
+        const char * Severities[] =
+        {
+            "Debug", "Info", "Warning", "Error", "Fatal", "Host Misbehaving", "Plug-in misbehaving",
+        };
+
+        const char * Severity = ((size_t) severity < _countof(Severities)) ? Severities[severity] : "Unknown";
+
+        console::print(STR_COMPONENT_BASENAME, " received message from CLAP plug-in: ", message, " (", Severity, ")");
+    }
+};
+
+/// <summary>
+/// Implements the CLAP_EXT_NOTE_PORTS extension.
+/// </summary>
+const clap_host_note_ports_t Host::NotePortsHandler =
+{
+    // Queries which dialects the host supports.
+    .supported_dialects = [](const clap_host_t * self) -> uint32_t
+    {
+        return (uint32_t) 0; // None
+    },
+
+    // Rescans the full list of note ports according to the flags.
+    .rescan = [](const clap_host_t * self, uint32_t flags)
+    {
+    }
+};
+
+/// <summary>
+/// Implements the CLAP_EXT_STATE extension. The plug-in reports its state has changed and should be saved again. If a parameter value changes, then it is implicit that the state is dirty.
+/// </summary>
+const clap_host_state Host::StateHandler
+{
+    .mark_dirty = [](const clap_host_t * self)
+    {
+    }
+};
+
+Host _Host;
 }

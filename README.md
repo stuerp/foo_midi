@@ -99,13 +99,8 @@ To create the component first build the x64 configuration and next the x86 confi
 - Improved: CLAP host functionality.
   - Added support for sample rate and MIDI flavor preferences.
   - Added support for CLAP plug-ins with a GUI.
-  - Fixed player selection.
-
-- v2.19.0.0-alpha3, 2025-06-25
-
-- New: CLAP host functionality. foo_midi can now use [CLAP ((CLever Audio Plug-in API))](https://u-he.com/community/clap/) MIDI plug-ins to render the audio stream.
-  - Specify the directory containing CLAP plug-ins in the Paths preferences page.
-  - Take a look at [Nuked-SC55-CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP) for an example.
+  - Extended CLAP host functionality to support [Dexed](https://asb2m10.github.io/dexed/) and other plug-ins with the same requirements.
+- Fixed: Player selection in Preferences was broken (regression).
 
 You can read the full history [here](docs/History.md).
 

@@ -236,7 +236,7 @@ private:
 
         bool SupportsMIDIFlavor() const noexcept
         {
-            return ((Type == PlayerTypes::VSTi) || (Type == PlayerTypes::FluidSynth) || (Type == PlayerTypes::BASSMIDI) || (Type == PlayerTypes::SecretSauce));
+            return ((Type == PlayerTypes::VSTi) || (Type == PlayerTypes::CLAP) || (Type == PlayerTypes::FluidSynth) || (Type == PlayerTypes::BASSMIDI) || (Type == PlayerTypes::SecretSauce));
         }
     };
 
@@ -280,6 +280,7 @@ private:
 
     const preferences_page_callback::ptr _Callback;
 
+    std::vector<CLAP::PlugIn> _CLAPPlugIns;
     CLAPWindow _CLAPWindow;
 
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
@@ -368,7 +369,7 @@ void PreferencesRootPage::apply()
             else
             if (_SelectedPlayer.Type == PlayerTypes::CLAP)
             {
-                const auto & PlugIn = CLAP::Host::PlugIns[_SelectedPlayer.PlugInIndex];
+                const auto & PlugIn = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
 
                 CfgPlugInFilePath = PlugIn.FilePath.string().c_str();
                 CfgCLAPIndex      = (int64_t) PlugIn.Index;
@@ -690,23 +691,19 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     // Add the CLAP plug-ins to the installed player list.
     {
-        CLAP::Host::PlugIns.clear();
-
         console::print(STR_COMPONENT_BASENAME " is enumerating CLAP plug-ins...");
 
         fs::path BaseDirectory(CfgCLAPPlugInDirectoryPath.get().c_str());
 
-        CLAP::Host::GetPlugIns(BaseDirectory);
+        _CLAPPlugIns = CLAP::_Host.GetPlugIns(BaseDirectory);
 
-        size_t CLAPCount = CLAP::Host::PlugIns.size();
-
-        if (CLAPCount > 0)
+        if (!_CLAPPlugIns.empty())
         {
-            console::print(STR_COMPONENT_BASENAME " found ", CLAPCount, " CLAP plug-ins.");
+            console::print(STR_COMPONENT_BASENAME " found ", _CLAPPlugIns.size(), " CLAP plug-ins.");
 
             size_t i = 0;
 
-            for (const auto & PlugIn : CLAP::Host::PlugIns)
+            for (const auto & PlugIn : _CLAPPlugIns)
             {
                 installed_player_t ip(PlugIn.Name.c_str(), PlayerTypes::CLAP, PlugIn.FilePath, PlugIn.Index, i);
 
@@ -1380,7 +1377,7 @@ void PreferencesRootPage::UpdateConfigureButton() const noexcept
     else
     if ((_SelectedPlayer.Type == PlayerTypes::CLAP) && (_SelectedPlayer.PlugInIndex != (size_t) -1))
     {
-        const auto &  Plugin = CLAP::Host::PlugIns[_SelectedPlayer.PlugInIndex];
+        const auto &  Plugin = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
 
         Enable = Plugin.HasGUI;
     }

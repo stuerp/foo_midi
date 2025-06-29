@@ -43,8 +43,8 @@
     <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
     <ClCompile Include="Players\NukedSC-55Player.cpp" />
     <ClCompile Include="Players\CLAPPlayer.cpp" />
-    <ClCompile Include="Players\CLAPHost.cpp" />
-    <ClCompile Include="Players\CLAPEventList.cpp" />
+    <ClCompile Include="Infrastructure\CLAPHost.cpp" />
+    <ClCompile Include="Infrastructure\CLAPEventList.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -191,8 +191,8 @@
     <ClInclude Include="Infrastructure\CriticalSection.h" />
     <ClInclude Include="Players\NukedSC-55Player.h" />
     <ClInclude Include="Players\CLAPPlayer.h" />
-    <ClInclude Include="Players\CLAPHost.h" />
-    <ClInclude Include="Players\CLAPEventList.h" />
+    <ClInclude Include="Infrastructure\CLAPHost.h" />
+    <ClInclude Include="Infrastructure\CLAPEventList.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
   </ItemGroup>
   <ItemGroup>
