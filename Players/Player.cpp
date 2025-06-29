@@ -535,12 +535,13 @@ void player_t::Configure(MIDIFlavors midiFlavor, bool filterEffects)
 {
     _MIDIFlavor = midiFlavor;
     _FilterEffects = filterEffects;
-
+/*
     if (_IsInitialized)
     {
         for (uint8_t PortNumber = 0; PortNumber < 3; ++PortNumber)
             ResetPort(PortNumber, 0);
     }
+*/
 }
 
 /// <summary>
@@ -677,17 +678,19 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
     if (!_IsInitialized)
         return;
 
-    if (time != 0)
-    {
-        SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber, time);
-        SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber, time);
-        SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber, time);
-    }
-    else
+    if (time == 0)
     {
         SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber);
         SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber);
+        SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
         SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber);
+    }
+    else
+    {
+        SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber, time);
+        SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber, time);
+        SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
+        SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber, time);
     }
 
     switch (_MIDIFlavor)
@@ -714,7 +717,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         case MIDIFlavors::SC88:
         case MIDIFlavors::SC88Pro:
         case MIDIFlavors::SC8850:
-        case MIDIFlavors::Default:
+//      case MIDIFlavors::Default: // Removed in v2.19: Default flavor = Don't send anything
         {
             if (time != 0)
                 SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
@@ -733,6 +736,9 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
                 SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber);
             break;
         }
+
+        case MIDIFlavors::Default:
+            break;
     }
 
     {

@@ -493,9 +493,6 @@
     <ClInclude Include="3rdParty\Nuke\synthlib_opl3w\opl3type.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\CLAP\Nuked-SC55-CLAP\Nuked-SC55-CLAP.vcxproj">
-      <Project>{b8261801-cbb0-4017-b094-c12c5662b11c}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
       <Project>{71ad2674-065b-48f5-b8b0-e1f9d3892081}</Project>
     </ProjectReference>

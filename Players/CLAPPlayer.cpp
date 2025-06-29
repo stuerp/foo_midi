@@ -122,7 +122,9 @@ void CLAPPlayer::SendEvent(uint32_t data, uint32_t time)
     auto Data2  = (uint8_t) (data >> 16);
 //  auto Port   = (uint8_t) (data >> 24);
 
-    console::print(::FormatText("%8u: %02X %02X %02X", time, Status, Data1, Data2).c_str());
+#ifdef _DEBUG
+//  console::print(::FormatText("%8u: %02X %02X %02X", time, Status, Data1, Data2).c_str());
+#endif
 
     _InEvents.Add(Status, Data1, Data2, time);
 }

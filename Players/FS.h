@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2025.03.23) **/
+/** $VER: FluidSynth.h (2025.06.29) **/
 
 #pragma once
 
@@ -71,6 +71,13 @@ typedef int (WINAPIV * _fluid_synth_set_reverb_group_damp)(fluid_synth_t * synth
 typedef int (WINAPIV * _fluid_synth_set_reverb_group_width)(fluid_synth_t * synth, int fxGroup, double width);
 typedef int (WINAPIV * _fluid_synth_set_reverb_group_level)(fluid_synth_t * synth, int fxGroup, double level);
 typedef int (WINAPIV * _fluid_synth_set_reverb_on)(fluid_synth_t * synth, int on);
+
+typedef int (WINAPIV * _fluid_synth_set_chorus_nr)(fluid_synth_t * 	synth, int nr);
+typedef int (WINAPIV * _fluid_synth_set_chorus_level)(fluid_synth_t * synth, double level);
+typedef int (WINAPIV * _fluid_synth_set_chorus_speed)(fluid_synth_t * synth, double speed);
+typedef int (WINAPIV * _fluid_synth_set_chorus_depth)(fluid_synth_t * synth, double depth_ms);
+typedef int (WINAPIV * _fluid_synth_set_chorus_type)(fluid_synth_t * synth,int type);
+typedef int (WINAPIV * _fluid_synth_set_chorus_on)(fluid_synth_t * synth, int on);
 
 typedef int (WINAPIV * _fluid_synth_write_float)(fluid_synth_t * synth, int len, void * lout, int loff, int lincr, void * rout, int roff, int rincr);
 
@@ -178,6 +185,13 @@ public:
         InitializeFunction(fluid_synth_set_reverb_group_level, SetReverbLevel);
         InitializeFunction(fluid_synth_set_reverb_on, SetReverb);
 
+        InitializeFunction(fluid_synth_set_chorus_nr, SetChorusVoiceCount);
+        InitializeFunction(fluid_synth_set_chorus_level, SetChorusLevel);
+        InitializeFunction(fluid_synth_set_chorus_speed, SetChorusSpeed);
+        InitializeFunction(fluid_synth_set_chorus_depth, SetChorusDepth);
+        InitializeFunction(fluid_synth_set_chorus_type, SetChorusType);
+        InitializeFunction(fluid_synth_set_chorus_on, SetChorus);
+
         InitializeFunction(fluid_synth_write_float, WriteFloat);
 
         InitializeFunction(fluid_synth_get_active_voice_count, GetActiveVoiceCount);
@@ -256,6 +270,13 @@ public:
     _fluid_synth_set_reverb_group_width SetReverbWidth;
     _fluid_synth_set_reverb_group_level SetReverbLevel;
     _fluid_synth_set_reverb_on SetReverb;
+
+    _fluid_synth_set_chorus_nr SetChorusVoiceCount;
+    _fluid_synth_set_chorus_level SetChorusLevel;
+    _fluid_synth_set_chorus_speed SetChorusSpeed;
+    _fluid_synth_set_chorus_depth SetChorusDepth;
+    _fluid_synth_set_chorus_type SetChorusType;
+    _fluid_synth_set_chorus_on SetChorus;
 
     _fluid_synth_write_float WriteFloat;
 

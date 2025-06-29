@@ -168,7 +168,7 @@ Here are some examples of CLAP plug-ins:
 
 | Name | Description | Status |
 | ---- | ----------- | ------ |
-| [Dexed](https://asb2m10.github.io/dexed/) | Plug-in modeled on the [Yamaha DX7](https://en.wikipedia.org/wiki/Yamaha_DX7) | ![Broken](https://img.shields.io/badge/broken-red) The plug-in loads but does not process any MIDI events. |
+| [Dexed](https://asb2m10.github.io/dexed/) | Plug-in modeled on the [Yamaha DX7](https://en.wikipedia.org/wiki/Yamaha_DX7) | ![Working](https://img.shields.io/badge/working-green) |
 | [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP) | [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator | ![Working](https://img.shields.io/badge/working-green) |
 
 ---

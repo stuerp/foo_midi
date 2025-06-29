@@ -25,13 +25,20 @@ public:
     virtual uint32_t GetSampleBlockSize() const noexcept override { return 2 * 1024; } // 2 channels
 
 private:
-    virtual bool Startup();
-    virtual void Shutdown();
-    virtual void Render(audio_sample *, uint32_t);
-    virtual bool Reset();
+    #pragma region player_t
 
-    virtual void SendEvent(uint32_t, uint32_t time);
-    virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time);
+    virtual bool Startup() override;
+    virtual void Shutdown() override;
+    virtual void Render(audio_sample *, uint32_t) override;
+    virtual bool Reset() override;
+
+    virtual void SendEvent(uint32_t data) override { SendEvent(data, 0); }
+    virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override { SendSysEx(data, size, portNumber, 0); }
+
+    virtual void SendEvent(uint32_t, uint32_t time) override;
+    virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time) override;
+
+    #pragma endregion
 
 private:
     CLAP::InputEvents _InEvents;

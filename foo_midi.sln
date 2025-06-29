@@ -443,9 +443,7 @@ Global
 		{B8261801-CBB0-4017-B094-C12C5662B11C}.Release FB2K|x86.ActiveCfg = Release|Win32
 		{B8261801-CBB0-4017-B094-C12C5662B11C}.Release FB2K|x86.Build.0 = Release|Win32
 		{B8261801-CBB0-4017-B094-C12C5662B11C}.Release|x64.ActiveCfg = Release|x64
-		{B8261801-CBB0-4017-B094-C12C5662B11C}.Release|x64.Build.0 = Release|x64
 		{B8261801-CBB0-4017-B094-C12C5662B11C}.Release|x86.ActiveCfg = Release|Win32
-		{B8261801-CBB0-4017-B094-C12C5662B11C}.Release|x86.Build.0 = Release|Win32
 		{5DD32E23-DDC8-46BF-B394-C0D7DC4AE1DF}.Debug FB2K|x64.ActiveCfg = Debug|x64
 		{5DD32E23-DDC8-46BF-B394-C0D7DC4AE1DF}.Debug FB2K|x64.Build.0 = Debug|x64
 		{5DD32E23-DDC8-46BF-B394-C0D7DC4AE1DF}.Debug FB2K|x86.ActiveCfg = Debug|Win32
@@ -459,9 +457,7 @@ Global
 		{5DD32E23-DDC8-46BF-B394-C0D7DC4AE1DF}.Release FB2K|x86.ActiveCfg = Release|Win32
 		{5DD32E23-DDC8-46BF-B394-C0D7DC4AE1DF}.Release FB2K|x86.Build.0 = Release|Win32
 		{5DD32E23-DDC8-46BF-B394-C0D7DC4AE1DF}.Release|x64.ActiveCfg = Release|x64
-		{5DD32E23-DDC8-46BF-B394-C0D7DC4AE1DF}.Release|x64.Build.0 = Release|x64
 		{5DD32E23-DDC8-46BF-B394-C0D7DC4AE1DF}.Release|x86.ActiveCfg = Release|Win32
-		{5DD32E23-DDC8-46BF-B394-C0D7DC4AE1DF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
