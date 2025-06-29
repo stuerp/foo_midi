@@ -171,7 +171,7 @@ bool Host::ActivatePlugIn(double  sampleRate, uint32_t minFrames, uint32_t maxFr
     #define CLAP_SDK_VERSION TOSTRING(CLAP_VERSION_MAJOR) "." TOSTRING(CLAP_VERSION_MINOR) "." TOSTRING(CLAP_VERSION_REVISION)
 
     console::print(STR_COMPONENT_BASENAME " is using CLAP ", CLAP_SDK_VERSION ".");
-    console::print("CLAP plug-in ", _PlugInDescriptor->name, _PlugInDescriptor->version, " is using CLAP ", _PlugInDescriptor->clap_version.major, ".", _PlugInDescriptor->clap_version.minor, ".", _PlugInDescriptor->clap_version.revision, ".");
+    console::print("CLAP plug-in ", _PlugInDescriptor->name, " ", _PlugInDescriptor->version, " is using CLAP ", _PlugInDescriptor->clap_version.major, ".", _PlugInDescriptor->clap_version.minor, ".", _PlugInDescriptor->clap_version.revision, ".");
 
     if (!_PlugIn->init(_PlugIn))
         return false;
@@ -332,9 +332,9 @@ void Host::GetPlugIns(const fs::path & filePath, const std::function<void(const 
                             "Id: \"", Descriptor->id, "\", ",
                             "Name: \"", Descriptor->name, "\", ",
                             "Version: \"", Descriptor->version, "\", ",
-                            "Description: \"", Descriptor->description, "\"",
+                            "Description: \"", Descriptor->description, "\", ",
                             "Vendor: \"", Descriptor->vendor, "\", ",
-                            "URL: \"", Descriptor->url, "\"",
+                            "URL: \"", Descriptor->url, "\", ",
                             "Manual URL: \"", Descriptor->manual_url, "\", ",
                             "Support URL: \"", Descriptor->support_url, "\", "
                         );
@@ -377,6 +377,10 @@ void Host::GetPlugIns(const fs::path & filePath, const std::function<void(const 
 /// </summary>
 bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 {
+    // Odin2 has no get_extension method.
+    if (plugIn->get_extension == nullptr)
+        return true;
+
     const auto NotePorts = (const clap_plugin_note_ports_t *)(plugIn->get_extension(plugIn, CLAP_EXT_NOTE_PORTS));
 
     if (NotePorts == nullptr)
@@ -429,6 +433,10 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 /// </summary>
 bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 {
+    // Odin2 has no get_extension method.
+    if (plugIn->get_extension == nullptr)
+        return true;
+
     const auto AudioPorts = static_cast<const clap_plugin_audio_ports_t *>(plugIn->get_extension(plugIn, CLAP_EXT_AUDIO_PORTS));
 
     if (AudioPorts == nullptr)
@@ -481,6 +489,10 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 /// </summary>
 bool Host::HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept
 {
+    // Odin2 has no get_extension method.
+    if (plugIn->get_extension == nullptr)
+        return false;
+
     const auto * GUI = (const clap_plugin_gui_t *) plugIn->get_extension(plugIn, CLAP_EXT_GUI);
 
     const bool Result = (GUI != nullptr) && GUI->is_api_supported(plugIn, "win32", isFloatingGUI);
@@ -544,6 +556,10 @@ const clap_host_state Host::StateHandler
 /// </summary>
 bool Host::GetGUI() noexcept
 {
+    // Odin2 has no get_extension method.
+    if (_PlugIn->get_extension == nullptr)
+        return false;
+
     _PlugInGUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
 
     if (_PlugInGUI == nullptr)

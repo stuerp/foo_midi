@@ -169,7 +169,8 @@ Here are some examples of CLAP plug-ins:
 | Name | Description | Status |
 | ---- | ----------- | ------ |
 | [Dexed](https://asb2m10.github.io/dexed/) | Plug-in modeled on the [Yamaha DX7](https://en.wikipedia.org/wiki/Yamaha_DX7) | ![Working](https://img.shields.io/badge/working-green) |
-| [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP) | [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator | ![Working](https://img.shields.io/badge/working-green) |
+| [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP/) | [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator | ![Working](https://img.shields.io/badge/working-green) |
+| [Odin 2](https://thewavewarden.com/pages/odin-2/) | 24-voice polyphonic powerhouse | ![Working](https://img.shields.io/badge/working-green) |
 
 ---
 
@@ -279,6 +280,15 @@ The **Decay time** setting specifies the time in milliseconds that the player wi
 - [MultimediaWiki](https://wiki.multimedia.cx/index.php/Extensible_Music_Format_(XMF))
 - [Introducing the Interactive XMF Audio File Format](https://www.gamedeveloper.com/audio/introducing-the-interactive-xmf-audio-file-format)
 - [XmfExtractor](https://github.com/benryves/XmfExtractor)
+
+### CLAP Plug-ins
+
+- [Dexed](https://asb2m10.github.io/dexed/)
+  - [GitHub repository](https://github.com/asb2m10/dexed)
+- [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP), [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator, John Novak
+  - Nuked SC-55, [GitHub repository](https://github.com/nukeykt/Nuked-SC55)
+- [Odin 2](https://thewavewarden.com/pages/odin-2), 24-voice polyphonic powerhouse, [The WaveWarden](https://thewavewarden.com/)
+  - [GitHub repository](https://github.com/TheWaveWarden/odin2)
 
 ---
 
