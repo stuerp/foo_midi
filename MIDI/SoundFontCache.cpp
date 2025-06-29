@@ -7,9 +7,7 @@
 #include "Encoding.h"
 #include "CriticalSection.h"
 
-#include <string>
 #include <map>
-#include <filesystem>
 #include <thread>
 #include <mutex>
 

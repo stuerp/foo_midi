@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2025.06.21) **/
+/** $VER: Player.cpp (2025.06.29) **/
 
 #include "pch.h"
 
@@ -903,19 +903,18 @@ uint32_t player_t::GetProcessorArchitecture(const std::string & filePath) const
     try
     {
         file::ptr File;
-        abort_callback_dummy AbortHandler;
 
-        filesystem::g_open(File, URI.c_str(), filesystem::open_mode_read, AbortHandler);
+        filesystem::g_open(File, URI.c_str(), filesystem::open_mode_read, fb2k::noAbort);
 
-        File->read_object(PEHeader, MZHeaderSize, AbortHandler);
+        File->read_object(PEHeader, MZHeaderSize, fb2k::noAbort);
 
         if (GetWord(PEHeader) != 0x5A4D)
             return 0;
 
         uint32_t OffsetPEHeader = GetDWord(PEHeader + 0x3C);
 
-        File->seek(OffsetPEHeader, AbortHandler);
-        File->read_object(PEHeader, PEHeaderSize, AbortHandler);
+        File->seek(OffsetPEHeader, fb2k::noAbort);
+        File->read_object(PEHeader, PEHeaderSize, fb2k::noAbort);
 
         if (GetDWord(PEHeader) != 0x00004550)
             return 0;

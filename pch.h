@@ -1,5 +1,5 @@
 
-/** $VER: framework.h (2024.05.05) P. Stuer **/
+/** $VER: pch.h (2025.06.09) P. Stuer **/
 
 #pragma once
 
@@ -22,6 +22,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cassert>
+#include <filesystem>
+#include <string>
+
+namespace fs = std::filesystem;
 
 #ifndef Assert
 #if defined(DEBUG) || defined(_DEBUG)

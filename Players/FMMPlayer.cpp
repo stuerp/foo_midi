@@ -8,8 +8,6 @@
 #include <fmmidi.hpp>
 #include <midisynth.hpp>
 
-#include <filesystem>
-
 #include "Encoding.h"
 #include "Exception.h"
 

@@ -1,35 +1,76 @@
 
-/** $VER: CLAPWindow.cpp (2025.06.27) P. Stuer **/
+/** $VER: Window.cpp (2025.06.29) P. Stuer **/
 
 #include "pch.h"
 
 #include "CLAPWindow.h"
+#include "CLAPHost.h"
+#include "Encoding.h"
 
-//CAppModule _Module;
+namespace CLAP
+{
 
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL CLAPWindow::OnInitDialog(CWindow w, LPARAM lParam)
+BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
 {
-    if (lParam != NULL)
-    {
-        _Parameters = *(DialogParameters *) lParam;
+    if (lParam == NULL)
+        return FALSE;
 
-        if (IsRectEmpty(&_Parameters._Bounds))
-        {
-            _Parameters._Bounds =
-            {
-                .right  = 320,
-                .bottom = 200
-            };
+    _Parameters = *(Parameters *) lParam;
 
-            //::MapDialogRect(m_hWnd, &_Parameters._Bounds);
-            MapDialogRect(&_Parameters._Bounds);
-        }
+    _MinMaxBounds = _Parameters._GUIBounds;
 
-        MoveWindow(&_Parameters._Bounds);
-    }
+    AdjustSize(_MinMaxBounds);
+
+    if (::IsRectEmpty(&_Parameters._Bounds))
+        _Parameters._Bounds = _MinMaxBounds;
+
+    MoveWindow(&_Parameters._Bounds);
+
+    std::string Name = CLAP::Host::GetInstance().GetPlugInName();
+
+    SetWindowTextW((std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(Name)).c_str());
 
     return TRUE;
+}
+
+/// <summary>
+/// Handles the WM_CLOSE message.
+/// </summary>
+void Window::OnClose() noexcept
+{
+    GetWindowRect(&_Parameters._Bounds);
+
+    DestroyWindow();
+}
+
+/// <summary>
+/// Handles the WM_GETMINMAXINFO message.
+/// </summary>
+void Window::OnGetMinMaxInfo(LPMINMAXINFO mmi) const noexcept
+{
+    mmi->ptMinTrackSize.x = 64;
+    mmi->ptMinTrackSize.y = 48;
+
+    mmi->ptMaxTrackSize.x = _MinMaxBounds.Width();
+    mmi->ptMaxTrackSize.y = _MinMaxBounds.Height();
+}
+
+/// <summary>
+/// Gets the size of the host window.
+/// </summary>
+void Window::AdjustSize(RECT & wr) const noexcept
+{
+    LONG Style = GetWindowLongW(GWL_STYLE);
+
+    ::AdjustWindowRect(&wr, (DWORD) Style, FALSE);
+
+    wr.right  -= wr.left;
+    wr.bottom -= wr.top;
+
+    wr.left = wr.top = 0;
+}
+
 }

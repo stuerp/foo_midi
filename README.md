@@ -99,6 +99,8 @@ To create the component first build the x64 configuration and next the x86 confi
 - Improved: CLAP host functionality.
   - Added support for sample rate and MIDI flavor preferences.
   - Added support for CLAP plug-ins with a GUI.
+    - Known limitation: The GUI does not control the player yet.
+    - Known problem: The Dexed GUI does not reappear when the GUI is closed and re-opened.
   - Extended CLAP host functionality to support [Dexed](https://asb2m10.github.io/dexed/) and other plug-ins with the same requirements.
 - Fixed: Player selection in Preferences was broken (regression).
 

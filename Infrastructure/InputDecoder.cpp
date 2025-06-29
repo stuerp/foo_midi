@@ -15,7 +15,6 @@
 
 #include <math.h>
 #include <string.h>
-#include <filesystem>
 
 #include <Encoding.h>
 
@@ -410,13 +409,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 if (Preset._PlugInFilePath.is_empty())
                     throw midi::exception_t("No plug-in specified in preset");
 
-                auto Player = new CLAPPlayer;
+                auto Player = new CLAPPlayer(Preset._PlugInFilePath.c_str(), Preset._CLAPPlugInIndex);
 
-                _Player = Player;
-
-                if (!Player->LoadPlugIn(Preset._PlugInFilePath, Preset._PlugInCLAPIndex))
-                    throw midi::exception_t(pfc::string("Unable to load CLAP plug-in from \"") + Preset._PlugInFilePath + "\"");
-            
                 _Player = Player;
             }
 

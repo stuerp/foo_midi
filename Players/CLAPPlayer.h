@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.h (2025.06.28) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.h (2025.06.29) P. Stuer - Wrapper for CLAP plugins **/
 
 #pragma once
 
@@ -8,6 +8,10 @@
 
 #include "Player.h"
 #include "CLAPEventList.h"
+
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 #include <clap/clap.h>
 
@@ -20,11 +24,9 @@
 class CLAPPlayer : public player_t
 {
 public:
-    CLAPPlayer();
+    CLAPPlayer(const fs::path & pathName, uint32_t index) noexcept;
 
     virtual ~CLAPPlayer();
-
-    bool LoadPlugIn(const char * filePath, uint32_t index);
 
     virtual uint32_t GetSampleBlockSize() const noexcept override { return 2 * 1024; } // 2 channels
 
@@ -38,8 +40,8 @@ private:
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time);
 
 private:
-    HMODULE _hPlugin;
-    std::string _FilePath;
+    HMODULE _hPlugIn;
+    fs::path _FilePath;
     uint32_t _PlugInIndex;
 
     const clap_plugin_t * _PlugIn;

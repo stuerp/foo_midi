@@ -11,10 +11,9 @@
 
 #include <sflist.h>
 
-#include <string>
 #include <map>
+
 #include <time.h>
-#include <filesystem>
 
 static BASSInitializer _BASSInitializer;
 

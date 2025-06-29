@@ -1,15 +1,11 @@
 
-/** $VER: CLAPHost.h (2025.06.28) P. Stuer **/
+/** $VER: CLAPHost.h (2025.06.29) P. Stuer **/
 
 #pragma once
 
-#include <sdk/foobar2000-lite.h>
-
-#include <filesystem>
-
 #include <clap/clap.h>
 
-namespace fs = std::filesystem;
+#include "CLAPWindow.h"
 
 namespace CLAP
 {
@@ -33,66 +29,31 @@ struct PlugIn
 class Host : public clap_host_t
 {
 public:
-    Host() noexcept
+    Host() noexcept;
+
+    Host(const Host &) = delete;
+    Host(const Host &&) = delete;
+    Host & operator=(const Host &) = delete;
+    Host & operator=(Host &&) = delete;
+
+    static Host & GetInstance()
     {
-        clap_version     = CLAP_VERSION;
-        host_data        = nullptr;
+        static Host Instance;
 
-        name             = STR_COMPONENT_BASENAME;
-        vendor           = STR_COMPONENT_COMPANY_NAME;
-        url              = STR_COMPONENT_URL;
-        version          = STR_COMPONENT_VERSION;
-
-        get_extension    = [](const clap_host * self, const char * extensionId) -> const void *
-        {
-            if (::strcmp(extensionId, CLAP_EXT_LOG) == 0)
-                return &LogHandler;
-
-            if (::strcmp(extensionId, CLAP_EXT_STATE) == 0)
-                return &StateHandler;
-
-            if (::strcmp(extensionId, CLAP_EXT_NOTE_PORTS) == 0)
-                return &NotePortsHandler;
-
-    /* Queried by Dexed 
-        clap.thread-check
-        clap.thread-pool
-        clap.audio-ports
-        clap.audio-ports-config
-        clap.timer-support
-        clap.posix-fd-support
-        clap.latency
-        clap.gui
-        clap.params
-        clap.note-name
-        clap.voice-info
-
-        clap.resource-directory.draft/0
-        clap.track-info.draft/1
-        clap.context-menu.draft/0
-        clap.preset-load.draft/2
-        clap.remote-controls.draft/2
-    */
-            return nullptr;
-        };
-
-        // Handles a request to deactivate and reactivate the plug-in.
-        request_restart  = [](const clap_host * self)
-        {
-        };
-
-        // Handles a request to activate and start processing the plug-in.
-        request_process  =  [](const clap_host * self)
-        {
-        };
-
-        // Handles a request to schedule a call to plugin->on_main_thread(plugin) on the main thread.
-        request_callback = [](const clap_host * self)
-        {
-        };
+        return Instance;
     }
 
     std::vector<PlugIn> GetPlugIns(const fs::path & directoryPath) noexcept;
+
+    bool Load(const fs::path & filePath, uint32_t index) noexcept;
+    void UnLoad() noexcept;
+
+    bool HasGUI() const noexcept;
+    void ShowGUI(HWND hWnd) noexcept;
+    void HideGUI() noexcept;
+    bool IsGUIVisible() const noexcept;
+
+    std::string GetPlugInName() const noexcept { return (_PlugInDescriptor != nullptr) ? _PlugInDescriptor->name : ""; }
 
 private:
     void GetPlugIns_(const fs::path & directoryPath) noexcept;
@@ -102,14 +63,25 @@ private:
     static bool VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept;
     static bool HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept;
 
+    bool GetGUI() noexcept;
+    void GetGUISize(const clap_plugin_gui_t * gui, RECT & wr) const noexcept;
+
 private:
     static const clap_host_log LogHandler;
     static const clap_host_note_ports_t NotePortsHandler;
     static const clap_host_state StateHandler;
 
     std::vector<PlugIn> _PlugIns;
-};
 
-extern Host _Host;
+    fs::path _FilePath;
+    uint32_t _Index;
+
+    HMODULE _hPlugIn;
+    const clap_plugin_descriptor_t * _PlugInDescriptor;
+    const clap_plugin_t * _PlugIn;
+    const clap_plugin_gui_t * _PlugInGUI;
+
+    Window _Window;
+};
 
 }

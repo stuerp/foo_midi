@@ -1,9 +1,7 @@
 
-/** $VER: CLAPHost.cpp (2025.06.28) P. Stuer **/
+/** $VER: CLAPHost.cpp (2025.06.29) P. Stuer **/
 
 #include "pch.h"
-
-#include <sdk/foobar2000-lite.h>
 
 #include "Configuration.h"
 #include "Resource.h"
@@ -12,6 +10,65 @@
 
 namespace CLAP
 {
+
+Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor(), _PlugIn(), _PlugInGUI()
+{
+    clap_version     = CLAP_VERSION;
+    host_data        = nullptr;
+
+    name             = STR_COMPONENT_BASENAME;
+    vendor           = STR_COMPONENT_COMPANY_NAME;
+    url              = STR_COMPONENT_URL;
+    version          = STR_COMPONENT_VERSION;
+
+    get_extension    = [](const clap_host * self, const char * extensionId) -> const void *
+    {
+        if (::strcmp(extensionId, CLAP_EXT_LOG) == 0)
+            return &LogHandler;
+
+        if (::strcmp(extensionId, CLAP_EXT_STATE) == 0)
+            return &StateHandler;
+
+        if (::strcmp(extensionId, CLAP_EXT_NOTE_PORTS) == 0)
+            return &NotePortsHandler;
+
+/* Queried by Dexed 
+    clap.thread-check
+    clap.thread-pool
+    clap.audio-ports
+    clap.audio-ports-config
+    clap.timer-support
+    clap.posix-fd-support
+    clap.latency
+    clap.gui
+    clap.params
+    clap.note-name
+    clap.voice-info
+
+    clap.resource-directory.draft/0
+    clap.track-info.draft/1
+    clap.context-menu.draft/0
+    clap.preset-load.draft/2
+    clap.remote-controls.draft/2
+*/
+        return nullptr;
+    };
+
+    // Handles a request to deactivate and reactivate the plug-in.
+    request_restart  = [](const clap_host * self)
+    {
+    };
+
+    // Handles a request to activate and start processing the plug-in.
+    request_process  =  [](const clap_host * self)
+    {
+    };
+
+    // Handles a request to schedule a call to plugin->on_main_thread(plugin) on the main thread.
+    request_callback = [](const clap_host * self)
+    {
+    };
+}
 
 /// <summary>
 /// Gets the CLAP plug-ins.
@@ -29,6 +86,134 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 
     return _PlugIns;
 }
+
+/// <summary>
+/// Loads a plug-in file and creates the plug-ing with the specified index.
+/// </summary>
+bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
+{
+    UnLoad();
+
+    _hPlugIn = ::LoadLibraryA(filePath.string().c_str());
+
+    if (_hPlugIn == NULL)
+        return false;
+
+    auto Entry = (const clap_plugin_entry_t *) ::GetProcAddress(_hPlugIn, "clap_entry");
+
+    if ((Entry != nullptr) && (Entry->init != nullptr) && Entry->init(filePath.string().c_str()))
+    {
+        const auto * Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
+
+        if (Factory != nullptr)
+        {
+            _PlugInDescriptor = Factory->get_plugin_descriptor(Factory, index);
+
+            if (_PlugInDescriptor != nullptr)
+            {
+                _PlugIn = Factory->create_plugin(Factory, this, _PlugInDescriptor->id);
+
+                if (_PlugIn != nullptr)
+                {
+                    return GetGUI();
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+/// <summary>
+/// Unloads the currently hosted plug-in.
+/// </summary>
+void Host::UnLoad() noexcept
+{
+    HideGUI();
+
+    if (_PlugInGUI != nullptr)
+    {
+        _PlugInGUI->destroy(_PlugIn);
+        _PlugInGUI = nullptr;
+    }
+
+    if (_PlugIn != nullptr)
+    {
+        _PlugIn->destroy(_PlugIn);
+        _PlugIn = nullptr;
+    }
+
+    _PlugInDescriptor = nullptr;
+
+    if (_hPlugIn != NULL)
+    {
+        ::FreeLibrary(_hPlugIn);
+        _hPlugIn = NULL;
+    }
+}
+
+/// <summary>
+/// Returns true if the host has loaded a plug-in that has a GUI.
+/// </summary>
+bool Host::HasGUI() const noexcept
+{
+    return (_PlugInGUI != nullptr);
+}
+
+/// <summary>
+/// Shows the GUI of the hosted plug-in.
+/// </summary>
+void Host::ShowGUI(HWND hWnd) noexcept
+{
+    if (!HasGUI() || (hWnd == NULL))
+        return;
+
+    if (!_Window.IsWindow())
+    {
+        CLAP::Window::Parameters dp =
+        {
+            ._Bounds = { },
+            ._FilePath = _FilePath,
+            ._Index = _Index,
+            ._GUIBounds = { },
+        };
+
+        GetGUISize(_PlugInGUI, dp._GUIBounds);
+
+        if (_Window.Create(hWnd, (LPARAM) &dp) != NULL)
+        {
+            clap_window_t Window = { .api = "win32", .win32 = _Window };
+
+            if (_PlugInGUI->set_parent(_PlugIn, &Window))
+            {
+                _Window.ShowWindow(SW_SHOW);
+            }
+        }
+    }
+    else
+        _Window.BringWindowToTop();
+}
+
+/// <summary>
+/// Hides the GUI of the hosted plug-in.
+/// </summary>
+void Host::HideGUI() noexcept
+{
+    if (!_Window.IsWindow())
+        return;
+
+    _Window.DestroyWindow();
+}
+
+/// <summary>
+/// Returns true if the plug-in GUI is shown.
+/// </summary>
+bool Host::IsGUIVisible() const noexcept
+{
+    return _Window.IsWindow() && _Window.IsWindowVisible();
+}
+
+#pragma region Private
 
 /// <summary>
 /// Gets the CLAP plug-ins.
@@ -61,7 +246,6 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
         }
     }
 }
-
 
 /// <summary>
 /// Gets the CLAP plug-ins in plug-in file.
@@ -303,5 +487,41 @@ const clap_host_state Host::StateHandler
     }
 };
 
-Host _Host;
+/// <summary>
+/// Gets the GUI extension.
+/// </summary>
+bool Host::GetGUI() noexcept
+{
+    _PlugInGUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
+
+    if (_PlugInGUI == nullptr)
+        return false;
+
+    if (!_PlugInGUI->is_api_supported(_PlugIn, "win32", false))
+        return false;
+
+    if (!_PlugInGUI->create(_PlugIn, "win32", false))
+        return false;
+
+    return true;
+}
+
+/// <summary>
+/// Gets the preferred size of the GUI window.
+/// </summary>
+void Host::GetGUISize(const clap_plugin_gui_t * gui, RECT & wr) const noexcept
+{
+    uint32_t Width = 0, Height = 0;
+
+    if (!gui->get_size(_PlugIn, &Width, &Height))
+    {
+        Width  = 320;
+        Height = 200;
+    }
+
+    wr.right  = (long) Width;
+    wr.bottom = (long) Height;
+}
+
+#pragma endregion
 }

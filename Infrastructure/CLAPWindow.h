@@ -1,5 +1,5 @@
 
-/** $VER: CLAPWindow.h (2025.06.27) P. Stuer **/
+/** $VER: CLAPWindow.h (2025.06.29) P. Stuer **/
 
 #pragma once
 
@@ -12,48 +12,52 @@
 #include <atlctrls.h>
 #include <atlmisc.h>
 
+#include <clap/clap.h>
+
 #include "Resource.h"
 
 #pragma hdrstop
 
-#pragma warning(disable: 4820) // x bytes padding added after data member
-
-struct DialogParameters
+namespace CLAP
 {
-    HWND _hWnd;
-    RECT _Bounds;
-};
+
+#pragma warning(disable: 4820) // x bytes padding added after data member
 
 /// <summary>
 /// Implements a parent window for non-floating CLAP GUI's.
 /// </summary>
-class CLAPWindow : public CDialogImpl<CLAPWindow>
+class Window : public CDialogImpl<Window>
 {
 public:
-    CLAPWindow() noexcept : m_bMsgHandled(false), _Parameters() { }
+    Window() noexcept : m_bMsgHandled(false), _Parameters(), _MinMaxBounds() { }
 
-    CLAPWindow(const CLAPWindow &) = delete;
-    CLAPWindow & operator=(const CLAPWindow &) = delete;
-    CLAPWindow(CLAPWindow &&) = delete;
-    CLAPWindow & operator=(CLAPWindow &&) = delete;
+    Window(const Window &) = delete;
+    Window & operator=(const Window &) = delete;
+    Window(Window &&) = delete;
+    Window & operator=(Window &&) = delete;
 
-    virtual ~CLAPWindow() { }
+    virtual ~Window() { }
 
     enum { IDD = IDD_CLAP_WINDOW };
 
+    struct Parameters
+    {
+        CRect _Bounds;
+
+        fs::path _FilePath;
+        uint32_t _Index;
+        CRect _GUIBounds;
+    };
+
+    void AdjustSize(RECT & wr) const noexcept;
+
 private:
     #pragma region CDialogImpl
-    BOOL OnInitDialog(CWindow w, LPARAM lParam);
 
-    /// <summary>
-    /// Handles the WM_CLOSE message.
-    /// </summary>
-    void OnClose()
-    {
-        GetWindowRect(&_Parameters._Bounds);
+    BOOL OnInitDialog(CWindow w, LPARAM lParam) noexcept;
+    void OnClose() noexcept;
 
-        DestroyWindow();
-    }
+    void OnGetMinMaxInfo(LPMINMAXINFO mmi) const noexcept;
 
 #ifdef _DEBUG
     /// <summary>
@@ -65,11 +69,17 @@ private:
     }
 #endif
 
-    BEGIN_MSG_MAP_EX(CLAPWindow)
+    BEGIN_MSG_MAP_EX(Window)
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_CLOSE(OnClose)
+        MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
     END_MSG_MAP()
 
+    #pragma endregion
+
 private:
-    DialogParameters _Parameters;
+    Parameters _Parameters;
+    CRect _MinMaxBounds;
 };
+
+}

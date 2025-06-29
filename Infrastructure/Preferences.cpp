@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesRoot.cpp (2025.06.27) P. Stuer **/
+/** $VER: Preferences.cpp (2025.06.29) P. Stuer **/
 
 #include "pch.h"
 
@@ -37,7 +37,6 @@
 #include "VSTi.h"
 #include "SecretSauce.h"
 #include "CLAPHost.h"
-#include "CLAPWindow.h"
 
 #pragma hdrstop
 
@@ -281,7 +280,6 @@ private:
     const preferences_page_callback::ptr _Callback;
 
     std::vector<CLAP::PlugIn> _CLAPPlugIns;
-    CLAPWindow _CLAPWindow;
 
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
 };
@@ -357,27 +355,33 @@ void PreferencesRootPage::apply()
 
             CfgPlayerType = (int) _SelectedPlayer.Type;
 
-            if (_SelectedPlayer.Type == PlayerTypes::VSTi)
-            {
-                const auto & PlugIn = VSTi::PlugIns[_SelectedPlayer.PlugInIndex];
-
-                CfgPlugInFilePath = PlugIn.FilePath.c_str();
-                CfgCLAPIndex      = (int64_t) -1;
-
-                CfgVSTiConfig[PlugIn.Id] = VSTi::Config;
-            }
-            else
             if (_SelectedPlayer.Type == PlayerTypes::CLAP)
             {
                 const auto & PlugIn = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
 
                 CfgPlugInFilePath = PlugIn.FilePath.string().c_str();
                 CfgCLAPIndex      = (int64_t) PlugIn.Index;
+
+                CLAP::Host::GetInstance().Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
             }
             else
             {
-                CfgPlugInFilePath = "";
-                CfgCLAPIndex      = (int64_t) -1;
+                CLAP::Host::GetInstance().UnLoad();
+
+                if (_SelectedPlayer.Type == PlayerTypes::VSTi)
+                {
+                    const auto & PlugIn = VSTi::PlugIns[_SelectedPlayer.PlugInIndex];
+
+                    CfgPlugInFilePath = PlugIn.FilePath.c_str();
+                    CfgCLAPIndex      = (int64_t) -1;
+
+                    CfgVSTiConfig[PlugIn.Id] = VSTi::Config;
+                }
+                else
+                {
+                    CfgPlugInFilePath = "";
+                    CfgCLAPIndex      = (int64_t) -1;
+                }
             }
         }
     }
@@ -695,7 +699,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         fs::path BaseDirectory(CfgCLAPPlugInDirectoryPath.get().c_str());
 
-        _CLAPPlugIns = CLAP::_Host.GetPlugIns(BaseDirectory);
+        _CLAPPlugIns = CLAP::Host::GetInstance().GetPlugIns(BaseDirectory);
 
         if (!_CLAPPlugIns.empty())
         {
@@ -1022,19 +1026,6 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
             Player.DisplayEditorModal();
 
             Player.GetChunk(VSTi::Config);
-        }
-    }
-    else
-    if (_SelectedPlayer.Type == PlayerTypes::CLAP)
-    {
-        if (!_CLAPWindow.IsWindow())
-        {
-            CLAPPlayer Player;
-
-            DialogParameters dp = { m_hWnd, { } };
-
-            if (_CLAPWindow.Create(m_hWnd, (LPARAM) &dp) != NULL)
-                _CLAPWindow.ShowWindow(SW_SHOW);
         }
     }
 
@@ -1374,6 +1365,7 @@ void PreferencesRootPage::UpdateConfigureButton() const noexcept
 
         VSTi::Config = CfgVSTiConfig[Plugin.Id];
     }
+/*
     else
     if ((_SelectedPlayer.Type == PlayerTypes::CLAP) && (_SelectedPlayer.PlugInIndex != (size_t) -1))
     {
@@ -1381,7 +1373,7 @@ void PreferencesRootPage::UpdateConfigureButton() const noexcept
 
         Enable = Plugin.HasGUI;
     }
-
+*/
     GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
 }
 

@@ -5,8 +5,6 @@
 
 #include "NukedSC-55Player.h"
 
-#include <filesystem>
-
 #include "Encoding.h"
 
 #pragma region player_t

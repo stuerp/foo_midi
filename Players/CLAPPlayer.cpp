@@ -9,12 +9,12 @@
 #include "Encoding.h"
 #include "Exception.h"
 
-#include <filesystem>
-
 #pragma region player_t
 
-CLAPPlayer::CLAPPlayer() : player_t(), _hPlugin(), _PlugInIndex(~0u), _PlugIn()
+CLAPPlayer::CLAPPlayer(const fs::path & filePath, uint32_t index) noexcept : player_t(), _hPlugIn(), _PlugInIndex(~0u), _PlugIn()
 {
+    _FilePath = filePath;
+    _PlugInIndex = index;
 }
 
 CLAPPlayer::~CLAPPlayer()
@@ -27,12 +27,17 @@ bool CLAPPlayer::Startup()
     if (_PlugIn != nullptr)
         return true;
 
+    _hPlugIn = ::LoadLibraryA(_FilePath.string().c_str());
+
+    if (_hPlugIn == NULL)
+        throw midi::exception_t(pfc::string("Unable to load CLAP plug-in from \"") + _FilePath.string().c_str() + "\"");
+
     LChannel.resize(GetSampleBlockSize());
     RChannel.resize(GetSampleBlockSize());
 
-    auto Entry = (const clap_plugin_entry_t *) ::GetProcAddress(_hPlugin, "clap_entry");
+    auto Entry = (const clap_plugin_entry_t *) ::GetProcAddress(_hPlugIn, "clap_entry");
 
-    if ((Entry != nullptr) && (Entry->init != nullptr) && Entry->init(_FilePath.c_str()))
+    if ((Entry != nullptr) && (Entry->init != nullptr) && Entry->init(_FilePath.string().c_str()))
     {
         const auto * Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
 
@@ -42,7 +47,7 @@ bool CLAPPlayer::Startup()
 
             if (Descriptor != nullptr)
             {
-                _PlugIn = Factory->create_plugin(Factory, &CLAP::_Host, Descriptor->id);
+                _PlugIn = Factory->create_plugin(Factory, &CLAP::Host::GetInstance(), Descriptor->id);
 
                 if (_PlugIn != nullptr)
                 {
@@ -66,29 +71,41 @@ bool CLAPPlayer::Startup()
                         }
                     }
                     else
-                        console::error(STR_COMPONENT_BASENAME " failed to initialized CLAP plug-in.");
+                        console::error(STR_COMPONENT_BASENAME " failed to initialize CLAP plug-in.");
                 }
                 else
                     console::error(STR_COMPONENT_BASENAME " failed to create CLAP plug-in.");
             }
+            else
+                console::error(STR_COMPONENT_BASENAME " failed to get CLAP plug-in descriptor.");
         }
+        else
+            console::error(STR_COMPONENT_BASENAME " failed to initialize CLAP factory.");
     }
+    else
+        console::error(STR_COMPONENT_BASENAME " failed to get CLAP plug-in entry point.");
 
     return false;
 }
 
 void CLAPPlayer::Shutdown()
 {
-    if (_PlugIn == nullptr)
-        return;
+    if (_PlugIn != nullptr)
+    {
+        _PlugIn->stop_processing(_PlugIn);
 
-    _PlugIn->stop_processing(_PlugIn);
-
-    _PlugIn->deactivate(_PlugIn);
+        _PlugIn->deactivate(_PlugIn);
                     
-    _PlugIn->destroy(_PlugIn);
+        _PlugIn->destroy(_PlugIn);
 
-    _PlugIn = nullptr;
+        _PlugIn = nullptr;
+    }
+
+    if (_hPlugIn != NULL)
+    {
+        ::FreeLibrary(_hPlugIn);
+        _hPlugIn = NULL;
+    }
 }
 
 void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
@@ -176,13 +193,3 @@ void CLAPPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumbe
 
     _InEvents.Add(data, size, time);
 };
-
-bool CLAPPlayer::LoadPlugIn(const char * pathName, uint32_t index)
-{
-    _hPlugin = ::LoadLibraryA(pathName);
-
-    _FilePath = pathName;
-    _PlugInIndex = index;
-
-    return (_hPlugin != NULL);
-}
