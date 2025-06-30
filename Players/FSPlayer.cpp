@@ -217,9 +217,9 @@ bool FSPlayer::Startup()
             if (_DoReverbAndChorusProcessing)
             {
                 _FluidSynth.SetChorusVoiceCount (_Synths[i], 3);            // 0 - 99, CPU time consumption proportional to this value.
-                _FluidSynth.SetChorusLevel      (_Synths[i], 2.0f);         // 0.0 - 10.0.
-                _FluidSynth.SetChorusSpeed      (_Synths[i], 2.0f);         // 0.1 - 5.0 Hz.
-                _FluidSynth.SetChorusDepth      (_Synths[i], 8.0f);         // Max. value depends on synth sample-rate. 0.0 - 21.0 is safe for sample-rate values up to 96KHz.
+                _FluidSynth.SetChorusLevel      (_Synths[i], 0.6f);         // 0.0 - 10.0.
+                _FluidSynth.SetChorusSpeed      (_Synths[i], 0.2f);         // 0.1 - 5.0 Hz.
+                _FluidSynth.SetChorusDepth      (_Synths[i], 4.25f);        // Max. value depends on synth sample-rate. 0.0 - 21.0 is safe for sample-rate values up to 96KHz.
                 _FluidSynth.SetChorusType       (_Synths[i], fluid_chorus_mod::FLUID_CHORUS_MOD_SINE);
             }
 
