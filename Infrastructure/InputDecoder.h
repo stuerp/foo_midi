@@ -170,7 +170,8 @@ public:
 
 private:
     void GetSoundFonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
-    uint32_t GetDuration(size_t subSongIndex);
+    uint32_t GetDuration(size_t subSongIndex) noexcept;
+    void SetFadeOutRange() noexcept;
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);

@@ -97,6 +97,10 @@ To create the component first build the x64 configuration and next the x86 confi
 - v2.19.0.0-alpha5, 2025-xx-xx
   - Fixed: CLAP Player is thread safe again. ![Regression](https://img.shields.io/badge/regression-red)
   - Fixed: Event timing was not always correctly sent to the CLAP plug-in.
+  - Improved: Rewrote MuntPlayer to use LibMT32Emu API version 3.
+    - Supports [Versioned ROMs](https://github.com/dosbox-staging/dosbox-staging/wiki/MIDI#mt-32-roms).
+    - Samples are rendered as floating-point numbers.
+    - Limitation: Most of options are still hardcoded.
 
 You can read the full history [here](docs/History.md).
 

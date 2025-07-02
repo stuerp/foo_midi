@@ -142,7 +142,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./3rdParty;./3rdParty/BASS/c;./3rdParty/libEDMIDI;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/Munt/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;../foo_vis_midi</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=0;BASSMIDISUPPORT;EXPERIMENT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;BASSMIDISUPPORT;EXPERIMENT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
@@ -438,9 +438,9 @@
     <ClInclude Include="MIDI\MIDISysExDumps.h" />
     <ClInclude Include="MIDI\MIDISysExFilter.h" />
     <ClInclude Include="Players\NukePlayer.h" />
-    <ClInclude Include="Players\MT32Player\kq6mtgm.h" />
+    <ClInclude Include="Players\MT32Player\MT32SetupGMKQ6.h" />
     <ClInclude Include="Players\MT32Player\MT32Player.h" />
-    <ClInclude Include="Players\MT32Player\mtgm.h" />
+    <ClInclude Include="Players\MT32Player\MT32SetupGM.h" />
     <ClInclude Include="Players\OPNPlayer\fmmidi.wopn.h" />
     <ClInclude Include="Players\OPNPlayer\gems-fmlib-gmize.wopn.h" />
     <ClInclude Include="Players\OPNPlayer\gs-by-papiezak-and-sneakernets.wopn.h" />

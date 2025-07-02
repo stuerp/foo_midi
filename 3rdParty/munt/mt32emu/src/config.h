@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher
+    /* Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher
  * Copyright (C) 2011-2017 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -33,6 +33,6 @@
  *    is exported, and thus the client application may ONLY use MT32EMU_API_TYPE 2.
  * 3: All the available API types are provided by the library build.
  */
-#define MT32EMU_EXPORTS_TYPE 0
+#define MT32EMU_EXPORTS_TYPE 3
 
 #endif

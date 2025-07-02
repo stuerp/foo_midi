@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="src\Analog.cpp" />
     <ClCompile Include="src\BReverbModel.cpp" />
+    <ClCompile Include="src\c_interface\c_interface.cpp" />
     <ClCompile Include="src\Display.cpp" />
     <ClCompile Include="src\File.cpp" />
     <ClCompile Include="src\FileStream.cpp" />
@@ -46,6 +47,9 @@
     <ClInclude Include="src\Analog.h" />
     <ClInclude Include="src\BReverbModel.h" />
     <ClInclude Include="src\config.h" />
+    <ClInclude Include="src\c_interface\cpp_interface.h" />
+    <ClInclude Include="src\c_interface\c_interface.h" />
+    <ClInclude Include="src\c_interface\c_types.h" />
     <ClInclude Include="src\Display.h" />
     <ClInclude Include="src\Enumerations.h" />
     <ClInclude Include="src\File.h" />
@@ -172,7 +176,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;MT32EMU_API_TYPE=3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>

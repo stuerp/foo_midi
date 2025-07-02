@@ -345,52 +345,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // Load the sound fonts.
     GetSoundFonts(Preset._SoundFontFilePath, abortHandler);
 
-    // Update sample rate before initializing the fade-out range.
-    if (_PlayerType == PlayerTypes::SuperMunt)
-        _SampleRate = (uint32_t) MT32Player::GetSampleRate();
-
     // Initialize the fade-out range.
-    {
-        _FadeRange.Clear();
-
-        switch (_LoopType)
-        {
-            case LoopTypes::NeverLoop:
-                break;
-
-            case LoopTypes::NeverLoopAddDecayTime:
-                break;
-
-            case LoopTypes::LoopAndFadeWhenDetected:
-            {
-                if (_LoopRange.IsSet())
-                {
-                    uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1000);
-                    uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1000);
-
-                    _FadeRange.Set(Begin, End);
-                }
-                else
-                    _FadeRange.Set(_LengthInSamples, _LengthInSamples);
-                break;
-            }
-
-            case LoopTypes::LoopAndFadeAlways:
-            {
-                uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1000);
-                uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1000);
-
-                _FadeRange.Set(Begin, End);
-                break;
-            }
-
-            case LoopTypes::PlayIndefinitelyWhenDetected:
-                break;
-
-            case LoopTypes::PlayIndefinitely:
-                break;
-        }
-    }
+    SetFadeOutRange();
 
     // Create and initialize the MIDI player.
     switch (_PlayerType)
@@ -607,7 +563,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         // Munt (MT-32)
         case PlayerTypes::SuperMunt:
         {
-            auto Player = new MT32Player(!_IsMT32, Preset._MuntGMSet);
+            auto Player = new MT32Player(_IsMT32, Preset._MuntGMSet);
+
+            console::print(STR_COMPONENT_BASENAME " is using mt32emu ", Player->GetVersion().c_str(), ".");
 
             pfc::string BasePath = CfgMT32ROMDirectoryPath;
 
@@ -619,11 +577,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 BasePath.truncate(BasePath.scan_filename());
             }
 
-            Player->SetBasePath(BasePath);
+            Player->SetROMDirectory(BasePath.c_str());
             Player->SetAbortHandler(&abortHandler);
 
             if (!Player->IsConfigValid())
-                throw pfc::exception("The Munt driver needs to be configured with a valid MT-32 or CM32L ROM set.");
+                throw pfc::exception("The Munt driver needs a valid MT-32 or CM32L ROM set to play.");
 
             _Player = Player;
 
@@ -1175,7 +1133,7 @@ void InputDecoder::InitializeIndexManager()
 /// <summary>
 /// Gets the total duration of the specified sub-song taking into account any looping and decay time, in ms.
 /// </summary>
-uint32_t InputDecoder::GetDuration(size_t subSongIndex)
+uint32_t InputDecoder::GetDuration(size_t subSongIndex) noexcept
 {
     uint32_t LengthInMs = _Container.GetDuration(subSongIndex, true);
 
@@ -1194,6 +1152,52 @@ uint32_t InputDecoder::GetDuration(size_t subSongIndex)
     }
 
     return LengthInMs;
+}
+
+/// <summary>
+/// Sets the fade-out range.
+/// </summary>
+void InputDecoder::SetFadeOutRange() noexcept
+{
+    _FadeRange.Clear();
+
+    switch (_LoopType)
+    {
+        case LoopTypes::NeverLoop:
+            break;
+
+        case LoopTypes::NeverLoopAddDecayTime:
+            break;
+
+        case LoopTypes::LoopAndFadeWhenDetected:
+        {
+            if (_LoopRange.IsSet())
+            {
+                uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1000);
+                uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1000);
+
+                _FadeRange.Set(Begin, End);
+            }
+            else
+                _FadeRange.Set(_LengthInSamples, _LengthInSamples);
+            break;
+        }
+
+        case LoopTypes::LoopAndFadeAlways:
+        {
+            uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1000);
+            uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1000);
+
+            _FadeRange.Set(Begin, End);
+            break;
+        }
+
+        case LoopTypes::PlayIndefinitelyWhenDetected:
+            break;
+
+        case LoopTypes::PlayIndefinitely:
+            break;
+    }
 }
 
 #pragma endregion

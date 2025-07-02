@@ -137,9 +137,9 @@
     <ClInclude Include="Players\OPNPlayer\OPNPlayer.h" />
     <ClInclude Include="Players\OPNPlayer\Tomsoft.wopn.h" />
     <ClInclude Include="Players\OPNPlayer\xg.wopn.h" />
-    <ClInclude Include="Players\MT32Player\kq6mtgm.h" />
+    <ClInclude Include="Players\MT32Player\MT32SetupGMKQ6.h" />
     <ClInclude Include="Players\MT32Player\MT32Player.h" />
-    <ClInclude Include="Players\MT32Player\mtgm.h" />
+    <ClInclude Include="Players\MT32Player\MT32SetupGM.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="MIDI\KaraokeProcessor.h" />
     <ClInclude Include="Infrastructure\Exception.h" />
