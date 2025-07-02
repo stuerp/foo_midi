@@ -12,7 +12,7 @@
 
 #pragma region player_t
 
-CLAPPlayer::CLAPPlayer(CLAP::Host * host) noexcept : player_t()
+CLAPPlayer::CLAPPlayer(CLAP::Host * host) noexcept : player_t(), _OutChannels { }, _AudioOut { }, _AudioOutputs { }
 {
     _Host = host;
 }
@@ -32,6 +32,14 @@ bool CLAPPlayer::Startup()
 
     LChannel.resize(GetSampleBlockSize());
     RChannel.resize(GetSampleBlockSize());
+
+    _OutChannels[0] = LChannel.data();
+    _OutChannels[1] = RChannel.data();
+
+    _AudioOut.data32        = _OutChannels;
+    _AudioOut.channel_count = _countof(_OutChannels);
+
+    _AudioOutputs[0] = _AudioOut;
 
     if (!_Host->ActivatePlugIn((double) _SampleRate, 1, GetSampleBlockSize()))
         return false;
@@ -59,41 +67,35 @@ void CLAPPlayer::Shutdown()
 
 void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
-    float * OutChannels[2] = { LChannel.data(), RChannel.data() };
+    ::memset(sampleData, 0, ((size_t) sampleCount * _countof(_OutChannels)) * sizeof(audio_sample));
 
-    const clap_audio_buffer_t AudioOut =
+    try
     {
-        .data32        = OutChannels,
-        .channel_count = _countof(OutChannels)
-    };
+        const int64_t SteadyTimeNotAvailable = -1;
 
-    clap_audio_buffer_t AudioOutputs[1] = { AudioOut };
+        clap_process_t Processor =
+        {
+            .steady_time         = SteadyTimeNotAvailable,
+            .frames_count        = sampleCount,
+            .transport           = nullptr,
+            .audio_inputs        = nullptr,
+            .audio_outputs       = _AudioOutputs,
+            .audio_inputs_count  = 0,
+            .audio_outputs_count = _countof(_AudioOutputs),
+            .in_events           = &_InEvents,
+            .out_events          = &_OutEvents,
+        };
 
-    const int64_t SteadyTimeNotAvailable = -1;
+        if (_Host->Process(Processor))
+            return; // throw exception_io_data("CLAP plug-in event processing failed");
 
-    clap_process_t Processor =
-    {
-        .steady_time         = SteadyTimeNotAvailable,
-        .frames_count        = sampleCount,
-        .transport           = nullptr,
-        .audio_inputs        = nullptr,
-        .audio_outputs       = AudioOutputs,
-        .audio_inputs_count  = 0,
-        .audio_outputs_count = _countof(AudioOutputs),
-        .in_events           = &_InEvents,
-        .out_events          = &_OutEvents,
-    };
-
-    ::memset(sampleData, 0, ((size_t) sampleCount * _countof(OutChannels)) * sizeof(audio_sample));
-
-    if (_Host->Process(Processor))
-        return; // throw exception_io_data("CLAP plug-in event processing failed");
-
-    for (size_t j = 0; j < sampleCount; ++j)
-    {
-        sampleData[j * 2 + 0] = (audio_sample) LChannel[j];
-        sampleData[j * 2 + 1] = (audio_sample) RChannel[j];
+        for (size_t j = 0; j < sampleCount; ++j)
+        {
+            sampleData[j * 2 + 0] = (audio_sample) LChannel[j];
+            sampleData[j * 2 + 1] = (audio_sample) RChannel[j];
+        }
     }
+    catch (...) { }
 
     _InEvents.Clear();
 }

@@ -53,6 +53,10 @@ private:
 
     std::vector<float> LChannel;
     std::vector<float> RChannel;
+
+    float * _OutChannels[2];
+    clap_audio_buffer_t _AudioOut;
+    clap_audio_buffer_t _AudioOutputs[1];
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member
