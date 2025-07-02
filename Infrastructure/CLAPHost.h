@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.h (2025.06.29) P. Stuer **/
+/** $VER: CLAPHost.h (2025.07.02) P. Stuer **/
 
 #pragma once
 
@@ -33,15 +33,10 @@ public:
 
     Host(const Host &) = delete;
     Host(const Host &&) = delete;
-    Host & operator=(const Host &) = delete;
+    Host & operator=(const Host &) { return *this; }
     Host & operator=(Host &&) = delete;
 
-    static Host & GetInstance()
-    {
-        static Host Instance;
-
-        return Instance;
-    }
+    virtual ~Host() { };
 
     std::vector<PlugIn> GetPlugIns(const fs::path & directoryPath) noexcept;
 
@@ -69,7 +64,7 @@ private:
     static bool VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept;
     static bool HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept;
 
-    bool GetGUI() noexcept;
+    void InitializeGUI() noexcept;
     void GetGUISize(const clap_plugin_gui_t * gui, RECT & wr) const noexcept;
 
 private:
@@ -90,4 +85,6 @@ private:
     Window _Window;
 };
 
+// This instance must only be used by the UI (e.g. menu items) and the playback thread.
+extern Host _Host;
 }

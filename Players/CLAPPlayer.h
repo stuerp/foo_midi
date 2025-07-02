@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.h (2025.06.29) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.h (2025.07.02) P. Stuer - Wrapper for CLAP plugins **/
 
 #pragma once
 
@@ -7,6 +7,8 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "Player.h"
+
+#include "CLAPHost.h"
 #include "CLAPEvents.h"
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
@@ -18,11 +20,11 @@
 class CLAPPlayer : public player_t
 {
 public:
-    CLAPPlayer() noexcept;
+    CLAPPlayer(CLAP::Host * host) noexcept;
 
     virtual ~CLAPPlayer();
 
-    virtual uint32_t GetSampleBlockSize() const noexcept override { return 2 * 1024; } // 2 channels
+    virtual uint32_t GetSampleBlockSize() const noexcept override { return 2 * 256; } // 2 channels
 
 private:
     #pragma region player_t
@@ -41,6 +43,11 @@ private:
     #pragma endregion
 
 private:
+    CLAP::Host * _Host;
+
+    fs::path _FilePath;
+    uint32_t _Index;
+
     CLAP::InputEvents _InEvents;
     CLAP::OutputEvents _OutEvents;
 

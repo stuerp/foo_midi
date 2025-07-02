@@ -18,6 +18,7 @@ protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
+    virtual bool Reset() override;
 
     virtual uint32_t GetSampleBlockSize() const noexcept override { return 0; } // 4096; This doesn't work for some reason.
 

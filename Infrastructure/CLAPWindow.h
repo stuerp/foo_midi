@@ -42,6 +42,7 @@ public:
 
     struct Parameters
     {
+        std::string Name;
         CRect _Bounds;
 
         fs::path _FilePath;

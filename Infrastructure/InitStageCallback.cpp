@@ -1,5 +1,5 @@
 
-/** $VER: InitStageCallback.cpp (2025.06.29) **/
+/** $VER: InitStageCallback.cpp (2025.06.30) **/
 
 #include "pch.h"
 
@@ -7,7 +7,6 @@
 #include <sdk/initquit.h>
 
 #include "InputDecoder.h"
-#include "CLAPHost.h"
 
 #pragma warning(disable: 26409)
 
@@ -28,9 +27,6 @@ public:
         if (stage == init_stages::after_ui_init)
         {
             InputDecoder::InitializeIndexManager();
-
-            if ((PlayerTypes) (uint32_t) CfgPlayerType == PlayerTypes::CLAP)
-                CLAP::Host::GetInstance().Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
         }
     }
 };

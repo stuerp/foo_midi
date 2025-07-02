@@ -32,7 +32,7 @@ BMPlayer::BMPlayer() : player_t()
     ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
 
     if (!_BASSInitializer.Initialize())
-        throw midi::exception_t("Unable to initialize BASSMIDI");
+        throw component::runtime_error("Unable to initialize BASSMIDI");
 }
 
 BMPlayer::~BMPlayer()

@@ -1,5 +1,5 @@
 
-/** $VER: Exception.cpp (2024.08.28) P. Stuer **/
+/** $VER: Exception.cpp (2025.01.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -9,7 +9,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-namespace midi
+namespace component
 {
 
 const char * strrstr(const char * __restrict s1, const char *__restrict s2);

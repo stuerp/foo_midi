@@ -92,6 +92,9 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 /// </summary>
 bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
 {
+    if ((_FilePath == filePath) && (_Index == index) && IsPlugInLoaded())
+        return true; // Already loaded
+
     UnLoad();
 
     _hPlugIn = ::LoadLibraryA(filePath.string().c_str());
@@ -115,7 +118,9 @@ bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
 
                 if (IsPlugInLoaded())
                 {
-                    return GetGUI();
+                    InitializeGUI();
+
+                    return true;
                 }
             }
         }
@@ -139,7 +144,10 @@ void Host::UnLoad() noexcept
 
     if (IsPlugInLoaded())
     {
-        _PlugIn->destroy(_PlugIn);
+        // FIXME: Ugly hack for Odin2 plug-in
+        if (::strcmp(_PlugInDescriptor->id, "com.thewavewarden.odin2") != 0)
+            _PlugIn->destroy(_PlugIn);
+
         _PlugIn = nullptr;
     }
 
@@ -554,24 +562,22 @@ const clap_host_state Host::StateHandler
 /// <summary>
 /// Gets the GUI extension.
 /// </summary>
-bool Host::GetGUI() noexcept
+void Host::InitializeGUI() noexcept
 {
     // Odin2 has no get_extension method.
     if (_PlugIn->get_extension == nullptr)
-        return false;
+        return;
 
     _PlugInGUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
 
     if (_PlugInGUI == nullptr)
-        return false;
+        return;
 
     if (!_PlugInGUI->is_api_supported(_PlugIn, "win32", false))
-        return false;
+        return;
 
     if (!_PlugInGUI->create(_PlugIn, "win32", false))
-        return false;
-
-    return true;
+        return;
 }
 
 /// <summary>
@@ -592,4 +598,6 @@ void Host::GetGUISize(const clap_plugin_gui_t * gui, RECT & wr) const noexcept
 }
 
 #pragma endregion
+
+Host _Host;
 }

@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.cpp (2025.03.16) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2025.07.01) Secret Sauce **/
 
 #include "pch.h"
 
@@ -89,7 +89,7 @@ bool SCPlayer::Startup()
 
     _IsInitialized = true;
 
-    Configure(_MIDIFlavor, _FilterEffects);
+    Reset();
 
     return true;
 }
@@ -131,6 +131,17 @@ void SCPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         sampleData += ToDo * 2;
         sampleCount -= ToDo;
     }
+}
+
+/// <summary>
+/// Resets the player.
+/// </summary>
+bool SCPlayer::Reset()
+{
+    for (uint8_t i = 0; i < MaxPorts; ++i)
+        ResetPort(i, 0);
+
+    return true;
 }
 
 /// <summary>

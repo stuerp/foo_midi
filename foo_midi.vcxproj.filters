@@ -46,6 +46,8 @@
     <ClCompile Include="Infrastructure\CLAPHost.cpp" />
     <ClCompile Include="Infrastructure\CLAPEvents.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
+    <ClCompile Include="Infrastructure\MainMenu.cpp" />
+    <ClCompile Include="Players\FS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />

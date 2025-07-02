@@ -169,24 +169,22 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
     const uint32_t BlockSize = GetSampleBlockSize();
 
     uint32_t SampleIndex = 0;
-    uint32_t BlockOffset = 0;
+    uint32_t BlockToDo = 0;
 
     while ((SampleIndex < size) && (_Remainder > 0))
     {
         uint32_t Remainder = _Remainder;
 
-        {
-            if (Remainder > size - SampleIndex)
-                Remainder = size - SampleIndex;
+        if (Remainder > size - SampleIndex)
+            Remainder = size - SampleIndex;
 
-            if ((BlockSize != 0) && (Remainder > BlockSize))
-                Remainder = BlockSize;
-        }
+        if ((BlockSize != 0) && (Remainder > BlockSize))
+            Remainder = BlockSize;
 
         if (Remainder < BlockSize)
         {
             _Remainder = 0;
-            BlockOffset = Remainder;
+            BlockToDo = Remainder;
             break;
         }
 
@@ -221,14 +219,14 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
             {
                 for (; _StreamPosition < NewStreamPosition; ++_StreamPosition)
                 {
-                    const midi::message_t& mse = _Stream[_StreamPosition];
+                    const midi::message_t & mse = _Stream[_StreamPosition];
 
                 #ifdef HAVE_FOO_VIS_MIDI
                     if (_MusicKeyboard.is_valid())
                         _MusicKeyboard->ProcessMessage(mse.Data, mse.Time);
                 #endif
 
-                    int64_t ToDo = (int64_t) mse.Time - (int64_t) _Position - (int64_t) BlockOffset;
+                    int64_t ToDo = (int64_t) mse.Time - (int64_t) _Position - (int64_t) BlockToDo;
 
                     if (ToDo > 0)
                     {
@@ -248,7 +246,7 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
 
                         if (_Remainder > 0)
                         {
-                            _Remainder += BlockOffset;
+                            _Remainder += BlockToDo;
 
                             return SampleIndex;
                         }
@@ -258,18 +256,18 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
                         SendEventFiltered(mse.Data);
                     else
                     {
-                        BlockOffset += (uint32_t) ToDo;
+                        BlockToDo += (uint32_t) ToDo;
 
-                        while (BlockOffset >= BlockSize)
+                        while (BlockToDo >= BlockSize)
                         {
                             Render(data + (SampleIndex * 2), BlockSize);
 
                             SampleIndex += BlockSize;
-                            BlockOffset -= BlockSize;
+                            BlockToDo -= BlockSize;
                             _Position += BlockSize;
                         }
 
-                        SendEventFiltered(mse.Data, BlockOffset);
+                        SendEventFiltered(mse.Data, BlockToDo);
                     }
                 }
             }
@@ -280,7 +278,7 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
             Remainder = ((_StreamPosition < _Stream.size()) ? _Stream[_StreamPosition].Time : _Length) - _Position;
 
             if (BlockSize != 0)
-                BlockOffset = Remainder;
+                BlockToDo = Remainder;
 
             {
                 if (Remainder > size - SampleIndex)
@@ -300,7 +298,7 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
                 }
 
                 if (BlockSize != 0)
-                    BlockOffset -= Remainder;
+                    BlockToDo -= Remainder;
             }
         }
 
@@ -316,7 +314,7 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
                 if (BlockSize == 0)
                     SendEventFiltered(_Stream[_StreamPosition].Data);
                 else
-                    SendEventFiltered(_Stream[_StreamPosition].Data, BlockOffset);
+                    SendEventFiltered(_Stream[_StreamPosition].Data, BlockToDo);
             }
 
             if ((_LoopType == LoopTypes::LoopAndFadeWhenDetected) || (_LoopType == LoopTypes::PlayIndefinitelyWhenDetected))
@@ -340,7 +338,7 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
         }
     }
 
-    _Remainder = BlockOffset;
+    _Remainder = BlockToDo;
 
 #ifdef HAVE_FOO_VIS_MIDI
     if (_MusicKeyboard.is_valid())

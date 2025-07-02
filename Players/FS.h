@@ -3,19 +3,11 @@
 
 #pragma once
 
-//#include "Player.h"
-
 #include "Resource.h"
-
-#include "Infrastructure\Exception.h"
-
-#include <Encoding.h>
 
 #include <fluidsynth.h>
 
 #include <pfc/string-conv-lite.h>
-
-#include <Shlwapi.h>
 
 #pragma region FluidSynth API
 
@@ -90,7 +82,7 @@ typedef fluid_log_function_t (WINAPIV * _fluid_set_log_function)(int level, flui
 #define TOSTRING_IMPL(x) #x
 #define TOSTRING(x) TOSTRING_IMPL(x)
 
-#define InitializeFunction(type, address) { address = (##_##type) ::GetProcAddress(_hModule, #type); if (*address == nullptr) throw midi::exception_t((std::string("Failed to link FluidSynth function: ") + TOSTRING(type)).c_str()); }
+#define InitializeFunction(type, address) { address = (##_##type) ::GetProcAddress(_hModule, #type); if (*address == nullptr) throw component::runtime_error((std::string("Failed to link FluidSynth function: ") + TOSTRING(type)).c_str()); }
 
 #pragma endregion
 
@@ -115,109 +107,9 @@ public:
 
     bool IsInitialized() const noexcept { return (_hModule != 0); }
 
-    void Initialize(const WCHAR * basePath)
-    {
-        if (IsInitialized())
-            return;
+    void Initialize(const WCHAR * basePath);
 
-        if (!::PathIsDirectoryW(basePath))
-            throw midi::exception_t(midi::GetErrorMessage("Invalid FluidSynth directory", ::GetLastError()).c_str());
-
-        BOOL Success = ::SetDllDirectoryW(basePath);
-
-        if (!Success)
-            throw midi::exception_t(midi::GetErrorMessage("Failed to add FluidSynth directory to the search path", ::GetLastError()).c_str());
-
-        _hModule = ::LoadLibraryW(LibraryName);
-
-        if (_hModule == 0)
-            throw midi::exception_t(midi::GetErrorMessage("Failed to load FluidSynth library", ::GetLastError(), WideToUTF8(LibraryName).c_str()).c_str());
-
-        #pragma warning(disable: 4191) // 'type cast': unsafe conversion from 'FARPROC' to 'xxx'
-        InitializeFunction(fluid_version, GetVersion);
-
-        InitializeFunction(new_fluid_settings, CreateSettings);
-
-        InitializeFunction(fluid_settings_setnum, SetNumericSetting);
-        InitializeFunction(fluid_settings_setint, SetIntegerSetting);
-        InitializeFunction(fluid_settings_setstr, SetStringSetting);
-        InitializeFunction(fluid_settings_dupstr, GetStringSetting);
-    
-        InitializeFunction(fluid_settings_get_type, GetSettingType);
-
-        InitializeFunction(fluid_free, Free);
-        InitializeFunction(fluid_settings_foreach, ForEachSetting);
-
-        InitializeFunction(fluid_is_soundfont, IsSoundFont);
-
-        InitializeFunction(delete_fluid_settings, DeleteSettings);
-
-        InitializeFunction(new_fluid_synth, CreateSynthesizer);
-        InitializeFunction(fluid_synth_add_sfloader, AddSoundFontLoader);
-        InitializeFunction(fluid_synth_system_reset, ResetSynthesizer);
-        InitializeFunction(delete_fluid_synth, DeleteSynthesizer);
-
-        InitializeFunction(new_fluid_defsfloader, CreateSoundFontLoader);
-        InitializeFunction(fluid_sfloader_set_callbacks, SetSoundFontLoaderCallbacks);
-        InitializeFunction(fluid_synth_sfload, LoadSoundFont);
-        InitializeFunction(fluid_synth_set_bank_offset, SetSoundFontBankOffset);
-
-        InitializeFunction(fluid_synth_set_interp_method, SetInterpolationMethod);
-
-        InitializeFunction(fluid_synth_noteon, NoteOn);
-        InitializeFunction(fluid_synth_noteoff, NoteOff);
-        InitializeFunction(fluid_synth_cc, ControlChange);
-        InitializeFunction(fluid_synth_get_cc, GetControlChange);
-        InitializeFunction(fluid_synth_sysex, SysEx);
-
-        InitializeFunction(fluid_synth_pitch_bend, PitchBend);
-        InitializeFunction(fluid_synth_get_pitch_bend, GetPitchBend);
-        InitializeFunction(fluid_synth_pitch_wheel_sens, PitchWheelSensitivity);
-        InitializeFunction(fluid_synth_get_pitch_wheel_sens, GetPitchWheelSensitivity);
-        InitializeFunction(fluid_synth_program_change, ProgramChange);
-        InitializeFunction(fluid_synth_channel_pressure, ChannelPressure);
-        InitializeFunction(fluid_synth_key_pressure, KeyPressure);
-        InitializeFunction(fluid_synth_bank_select, BankSelect);
-
-        InitializeFunction(fluid_synth_set_reverb_group_roomsize, SetReverbRoomSize);
-        InitializeFunction(fluid_synth_set_reverb_group_damp, SetReverbDamp);
-        InitializeFunction(fluid_synth_set_reverb_group_width, SetReverbWidth);
-        InitializeFunction(fluid_synth_set_reverb_group_level, SetReverbLevel);
-        InitializeFunction(fluid_synth_set_reverb_on, SetReverb);
-
-        InitializeFunction(fluid_synth_set_chorus_nr, SetChorusVoiceCount);
-        InitializeFunction(fluid_synth_set_chorus_level, SetChorusLevel);
-        InitializeFunction(fluid_synth_set_chorus_speed, SetChorusSpeed);
-        InitializeFunction(fluid_synth_set_chorus_depth, SetChorusDepth);
-        InitializeFunction(fluid_synth_set_chorus_type, SetChorusType);
-        InitializeFunction(fluid_synth_set_chorus_on, SetChorus);
-
-        InitializeFunction(fluid_synth_write_float, WriteFloat);
-
-        InitializeFunction(fluid_synth_get_active_voice_count, GetActiveVoiceCount);
-
-        InitializeFunction(fluid_synth_get_settings, GetSettings);
-
-        InitializeFunction(fluid_set_log_function, SetLogFunction);
-
-        #pragma warning(default: 4191)
-    }
-
-    static bool Exists() noexcept
-    {
-        try
-        {
-            FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
-
-            return true;
-        }
-        catch (midi::exception_t e)
-        {
-            console::print(STR_COMPONENT_BASENAME, " failed to initialize FluidSynth: ", e.what());
-
-            return false;
-        }
-    }
+    static bool Exists() noexcept;
 
 public:
     _fluid_version GetVersion;

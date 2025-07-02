@@ -1,5 +1,5 @@
 
-/** $VER: CLAPEventList.cpp (2025.06.29) P. Stuer **/
+/** $VER: CLAPEventList.cpp (2025.07.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -35,7 +35,7 @@ InputEvents::InputEvents()
 /// <summary>
 /// Adds a MIDI message.
 /// </summary>
-void InputEvents::Add(uint8_t status, uint8_t data1, uint8_t data2, uint32_t time)
+void InputEvents::Add(uint8_t status, uint8_t data1, uint8_t data2, uint16_t portNumber, uint32_t time)
 {
     auto evt = std::make_unique<clap_event_midi_t>();
 
@@ -45,7 +45,7 @@ void InputEvents::Add(uint8_t status, uint8_t data1, uint8_t data2, uint32_t tim
     evt->header.type     = CLAP_EVENT_MIDI;
     evt->header.flags    = 0;
 
-    evt->port_index = 0;
+    evt->port_index = portNumber;
     evt->data[0] = status;
     evt->data[1] = data1;
     evt->data[2] = data2;
@@ -56,7 +56,7 @@ void InputEvents::Add(uint8_t status, uint8_t data1, uint8_t data2, uint32_t tim
 /// <summary>
 /// Adds a SysEx message.
 /// </summary>
-void InputEvents::Add(const uint8_t * data, size_t size_, uint32_t portNumber, uint32_t time)
+void InputEvents::Add(const uint8_t * data, uint32_t size_, uint16_t portNumber, uint32_t time)
 {
     auto evt = std::make_unique<clap_event_midi_sysex>();
 
@@ -66,9 +66,9 @@ void InputEvents::Add(const uint8_t * data, size_t size_, uint32_t portNumber, u
     evt->header.type     = CLAP_EVENT_MIDI_SYSEX;
     evt->header.flags    = 0;
 
-    evt->port_index = 0;
+    evt->port_index = portNumber;
     evt->buffer = data;
-    evt->size   = (uint32_t) size_;
+    evt->size   = size_;
 
     Events.push_back(std::unique_ptr<clap_event_header>((clap_event_header *) evt.release()));
 }

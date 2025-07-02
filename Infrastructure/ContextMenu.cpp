@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenu.cpp (2025.06.29) **/
+/** $VER: ContextMenu.cpp (2025.07.02) **/
 
 #include "pch.h"
 
@@ -41,7 +41,6 @@ bool ContextMenu::get_item_description(unsigned index, pfc::string_base & descri
         "Removes a saved synthesizer preset from this track.",
         "Assigns the selected SysEx dumps to the selected MIDI files.",
         "Clears all assigned SysEx dumps from the selected MIDI files.",
-        "Shows the GUI of a plug-in."
     };
 
     assert(_countof(Descriptions) == _countof(Names));
@@ -63,7 +62,6 @@ GUID ContextMenu::get_item_guid(unsigned int index) noexcept
         { 0x5bcb6efe, 0x2eb5, 0x4331, { 0xb9, 0xc1, 0x92, 0x4b, 0x77, 0xba, 0xcc, 0x10 } },
         { 0xd0e4a166, 0x010c, 0x41f0, { 0xad, 0x5a, 0x51, 0x84, 0x44, 0xa3, 0x92, 0x9c } },
         { 0x2aa8c082, 0x5d84, 0x4982, { 0xb4, 0x5d, 0xde, 0x51, 0xcb, 0x75, 0xff, 0xf2 } },
-        { 0x9cf2855b, 0x7e96, 0x4699, { 0x82, 0xfc, 0x23, 0xd3, 0x39, 0x22, 0x02, 0xec } },
     };
 
     assert(_countof(GUIDs) == _countof(Names));
@@ -118,11 +116,11 @@ bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_ba
     if (itemIndex == 5)
     {
         out = Names[itemIndex];
-
+/*
         auto & Instance = CLAP::Host::GetInstance();
 
         flags = !Instance.HasGUI() ? FLAG_DISABLED_GRAYED : 0;
-
+*/
         return true;
     }
 
@@ -259,17 +257,10 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
             }
             break;
         }
-
-        // Show the CLAP plug-in GUI
-        case 5:
-        {
-            CLAP::Host::GetInstance().ShowGUI(core_api::get_main_window());
-            break;
-        }
     }
 }
 
-const char * ContextMenu::Names[6] =
+const char * ContextMenu::Names[5] =
 {
     "Save as Standard MIDI File (SMF)",
 
@@ -278,8 +269,6 @@ const char * ContextMenu::Names[6] =
 
     "Assign SysEx dumps",
     "Clear SysEx dumps",
-
-    "Show plug-in GUI",
 };
 
 static contextmenu_item_factory_t<ContextMenu> _ContextMenuFactory;

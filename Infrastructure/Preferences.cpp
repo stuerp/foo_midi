@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.06.29) P. Stuer **/
+/** $VER: Preferences.cpp (2025.06.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -272,6 +272,13 @@ private:
     pfc::string _CacheStatusTextCurrent;
 
     #pragma endregion
+    
+    #pragma region CLAP
+
+    CLAP::Host _CLAPHost;
+    std::vector<CLAP::PlugIn> _CLAPPlugIns;
+
+    #pragma endregion
 
 #ifdef DXISUPPORT
     pfc::array_t<CLSID> dxi_plugins;
@@ -279,7 +286,6 @@ private:
 
     const preferences_page_callback::ptr _Callback;
 
-    std::vector<CLAP::PlugIn> _CLAPPlugIns;
 
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
 };
@@ -362,11 +368,11 @@ void PreferencesRootPage::apply()
                 CfgPlugInFilePath = PlugIn.FilePath.string().c_str();
                 CfgCLAPIndex      = (int64_t) PlugIn.Index;
 
-                CLAP::Host::GetInstance().Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
+                _CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
             }
             else
             {
-                CLAP::Host::GetInstance().UnLoad();
+                _CLAPHost.UnLoad();
 
                 if (_SelectedPlayer.Type == PlayerTypes::VSTi)
                 {
@@ -699,7 +705,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         fs::path BaseDirectory(CfgCLAPPlugInDirectoryPath.get().c_str());
 
-        _CLAPPlugIns = CLAP::Host::GetInstance().GetPlugIns(BaseDirectory);
+        _CLAPPlugIns = _CLAPHost.GetPlugIns(BaseDirectory);
 
         if (!_CLAPPlugIns.empty())
         {

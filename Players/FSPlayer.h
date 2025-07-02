@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.06.25) **/
+/** $VER: FSPlayer.h (2025.07.01) **/
 
 #pragma once
 
@@ -8,6 +8,7 @@
 
 #include "Player.h"
 #include "SoundFont.h"
+#include "Exception.h"
 
 #include "FS.h"
 
@@ -38,7 +39,7 @@ public:
     DWORD GetVersion()
     {
         if (!_FluidSynth.IsInitialized() || (_FluidSynth.GetVersion == nullptr))
-            throw midi::exception_t("FluidSynth not yet initialized");
+            throw component::runtime_error("FluidSynth not yet initialized");
 
         int Major, Minor, Micro;
 

@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenu.h (2025.06.29) **/
+/** $VER: ContextMenu.h (2025.07.02) **/
 
 #pragma once
 
@@ -42,5 +42,5 @@ public:
 #pragma endregion
 
 private:
-    static const char * Names[6];
+    static const char * Names[5];
 };

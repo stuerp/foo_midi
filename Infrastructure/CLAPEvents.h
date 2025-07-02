@@ -1,5 +1,5 @@
 
-/** $VER: CLAPEventList.h (2025.06.28) P. Stuer **/
+/** $VER: CLAPEventList.h (2025.07.02) P. Stuer **/
 
 #pragma once
 
@@ -25,8 +25,8 @@ struct InputEvents : clap_input_events
 public:
     InputEvents();
 
-    void Add(uint8_t status, uint8_t data1, uint8_t data2, uint32_t time = 0);
-    void Add(const uint8_t * data, size_t size_, uint32_t portNumber, uint32_t time = 0);
+    void Add(uint8_t status, uint8_t data1, uint8_t data2, uint16_t portNumber, uint32_t time);
+    void Add(const uint8_t * data, uint32_t size_, uint16_t portNumber, uint32_t time);
 
     void Clear() noexcept
     {

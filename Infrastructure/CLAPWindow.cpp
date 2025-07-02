@@ -1,5 +1,5 @@
 
-/** $VER: Window.cpp (2025.06.29) P. Stuer **/
+/** $VER: Window.cpp (2025.06.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -29,9 +29,7 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
 
     MoveWindow(&_Parameters._Bounds);
 
-    std::string Name = CLAP::Host::GetInstance().GetPlugInName();
-
-    SetWindowTextW((std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(Name)).c_str());
+    SetWindowTextW((std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(_Parameters.Name)).c_str());
 
     return TRUE;
 }

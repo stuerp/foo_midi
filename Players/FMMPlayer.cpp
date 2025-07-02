@@ -38,7 +38,7 @@ bool FMMPlayer::Startup()
     FILE * fp = nullptr;
 
     if (::_wfopen_s(&fp, _ProgramsFilePath.c_str(), L"rt") != 0)
-         throw midi::exception_t("Unable to find \"Programs.txt\"");
+         throw component::runtime_error("Unable to find \"Programs.txt\"");
 
     while (!::feof(fp))
     {
@@ -168,7 +168,7 @@ void FMMPlayer::SendEvent(uint32_t data)
 void FMMPlayer::SetProgramsFilePath(const std::wstring & programsFilePath)
 {
     if (!std::filesystem::exists(programsFilePath))
-         throw midi::exception_t(pfc::string("FMMIDI Programs file not found at \"") + ::WideToUTF8(programsFilePath).c_str() + "\"");
+         throw component::runtime_error(std::string("FMMIDI Programs file not found at \"") + ::WideToUTF8(programsFilePath).c_str() + "\"");
 
     _ProgramsFilePath = programsFilePath;
 }

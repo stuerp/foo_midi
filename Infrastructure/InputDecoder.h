@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.06.29) **/
+/** $VER: InputDecoder.h (2025.07.02) **/
 
 #pragma once
 
@@ -56,77 +56,14 @@ extern volatile uint32_t _CurrentSampleRate;
 class InputDecoder : public input_stubs
 {
 public:
-    InputDecoder() :
-        _FileStats{},
-        _FileStats2{},
-
-        _IsSysExFile(false),
-        _TrackCount(),
-
-        _IsMT32(),
-        _IsXG(),
-
-        _DetectRPGMakerLoops((bool) CfgDetectRPGMakerLoops),
-        _DetectLeapFrogLoops((bool) CfgDetectLeapFrogLoops),
-        _DetectXMILoops((bool) CfgDetectXMILoops),
-        _DetectTouhouLoops((bool) CfgDetectTouhouLoops),
-        _DetectFF7Loops((bool) CfgDetectFF7Loops),
-
-        _Player(nullptr),
-
-        _PlayerType(),
-        _SampleRate((uint32_t) CfgSampleRate),
-        _ExtraPercussionChannel(~0U),
-
-        _LoopType(LoopTypes::NeverLoop),
-        _LoopTypePlayback((LoopTypes) (int) CfgLoopTypePlayback),
-        _LoopTypeOther((LoopTypes) (int) CfgLoopTypeOther),
-        _LoopCount((uint32_t) AdvCfgLoopCount.get()),
-        _FadeDuration((uint32_t) AdvCfgFadeTimeInMS.get()),
-
-        _LoopRange(),
-
-        _LengthInSamples(0),
-
-        _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode),
-
-        _BASSMIDIVolume((float) CfgBASSMIDIVolume),
-        _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIResamplingMode)
-    {
-        _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? midi::container_t::CleanFlagEMIDI : 0) |
-                                 (CfgFilterInstruments ? midi::container_t::CleanFlagInstruments : 0) |
-                                 (CfgFilterBanks ? midi::container_t::CleanFlagBanks : 0);
-    #ifdef DXISUPPORT
-        dxiProxy = nullptr;
-    #endif
-        _CurrentSampleRate = _SampleRate;
-    }
+    InputDecoder() noexcept;
 
     InputDecoder(const InputDecoder &) = delete;
     InputDecoder(InputDecoder &&) = delete;
     InputDecoder & operator=(const InputDecoder &) = delete;
     InputDecoder & operator=(InputDecoder &&) = delete;
 
-    ~InputDecoder()
-    {
-        for (const auto & sf : _SoundFonts)
-        {
-            if (sf.IsEmbedded())
-                ::DeleteFileA(sf.FilePath().c_str());
-        }
-
-        delete _Player;
-
-        if (_PlayerType == PlayerTypes::EmuDeMIDI)
-        {
-            insync(_Lock);
-            _IsRunning -= 1;
-        }
-    #ifdef DXISUPPORT
-        if (dxiProxy)
-            delete dxiProxy;
-    #endif
-    }
+    virtual ~InputDecoder() noexcept;
 
 public:
     #pragma region input_impl
@@ -256,6 +193,8 @@ private:
 #endif
 
 private:
+    unsigned _Flags;
+
     // File Properties
     pfc::string _FilePath;
 
@@ -283,6 +222,7 @@ private:
 
     // Player Properties
     player_t * _Player;
+    CLAP::Host * _Host;
 
     PlayerTypes _PlayerType;
     uint32_t _SampleRate;
@@ -311,7 +251,7 @@ private:
     uint32_t _BASSMIDIInterpolationMode;
 
     bool _IsEndOfContainer;
-    bool _IsFirstChunk;
+    bool _IsFirstBlock;
 
     double _AudioChunkDuration;
 
@@ -325,6 +265,8 @@ private:
     pfc::array_t<float> sample_buffer;
 #endif
 #endif
+    static constexpr GUID GUIDTagMIDIHash = { 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0x61, 0xc3, 0x26, 0x87, 0xd0 } };
+    static const char * PlayerTypeNames[15];
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member
