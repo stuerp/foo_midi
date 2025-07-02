@@ -1,6 +1,14 @@
 
 # foo_midi History
 
+- v2.19.0.0-alpha5, 2025-07-02
+  - Fixed: CLAP Player is thread safe again. ![Regression](https://img.shields.io/badge/regression-red)
+  - Fixed: Event timing was not always correctly sent to the CLAP plug-in.
+  - Improved: Rewrote MuntPlayer to use LibMT32Emu API version 3.
+    - Supports [Versioned ROMs](https://github.com/dosbox-staging/dosbox-staging/wiki/MIDI#mt-32-roms).
+    - Samples are rendered as floating-point numbers.
+    - Limitation: Most of options are still hardcoded.
+
 - v2.19.0.0-alpha4, 2025-06-29
 
 - Improved: CLAP host functionality.

@@ -229,6 +229,24 @@ The **Decay time** setting specifies the time in milliseconds that the player wi
 
 ### Info Tags
 
+foo_midi provides you with the following info tags during playback:
+
+| Name | Contents |
+| ---- | -------- |
+| samplerate | The sample rate currently being used to generate the samples |
+| midi_player | The name of the MIDI player  |
+| midi_plug_in | The name of the MIDI player plug-in if the player supports it |
+| midi_active_voices | The number of active voices used by a wave table player |
+| midi_peak_voices | The highest number of voices used by a wave table player |
+| midi_extra_percussion_channel | The number of the MIDI channel being used as an extra percussion channel (1-based) |
+
+Here's an example on how to use them in your status bar:
+
+`%samplerate%Hz, [, "$info(midi_player)"][, "$info(midi_plug_in)"][, $info(midi_active_voices) voices '(peak ' $info(midi_peak_voices)')'][, extra percussion channel $info(midi_extra_percussion_channel)]`
+
+> [!TIP]
+> You can configure the foobar2000 status bar on the  **Display / Default User Interface** preferences page.
+
 *Work in Progress*
 
 ---

@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.06.30) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -367,6 +367,7 @@ void PreferencesRootPage::apply()
 
                 CfgPlugInFilePath = PlugIn.FilePath.string().c_str();
                 CfgCLAPIndex      = (int64_t) PlugIn.Index;
+                CfgPlugInName     = PlugIn.Name.c_str();
 
                 _CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
             }
@@ -380,6 +381,7 @@ void PreferencesRootPage::apply()
 
                     CfgPlugInFilePath = PlugIn.FilePath.c_str();
                     CfgCLAPIndex      = (int64_t) -1;
+                    CfgPlugInName     = PlugIn.Name.c_str();
 
                     CfgVSTiConfig[PlugIn.Id] = VSTi::Config;
                 }
@@ -387,6 +389,7 @@ void PreferencesRootPage::apply()
                 {
                     CfgPlugInFilePath = "";
                     CfgCLAPIndex      = (int64_t) -1;
+                    CfgPlugInName     = "";
                 }
             }
         }

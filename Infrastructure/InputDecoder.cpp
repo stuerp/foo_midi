@@ -983,7 +983,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
     if (_IsFirstBlock)
     {
         {
-            fileInfo.info_set_int(TagSampleRate, _SampleRate);
+            fileInfo.info_set_int(InfoSampleRate, _SampleRate);
         }
 
         {
@@ -996,12 +996,18 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             else
                 PlayerName = "VSTi";
 
-            fileInfo.info_set(TagMIDIPlayer, PlayerName);
+            fileInfo.info_set(InfoMIDIPlayer, PlayerName);
+        }
+
+        {
+            auto PlugInName = ((_PlayerType == PlayerTypes::VSTi) || (_PlayerType == PlayerTypes::CLAP)) ? CfgPlugInName.get() : pfc::string("");
+
+            fileInfo.info_set(InfoMIDIPlugIn, PlugInName);
         }
 
         {
             if (_ExtraPercussionChannel != ~0L)
-                fileInfo.info_set(TagMIDIExtraPercusionChannel, pfc::format_int((t_int64) _ExtraPercussionChannel + 1));
+                fileInfo.info_set(InfoMIDIExtraPercusionChannel, pfc::format_int((t_int64) _ExtraPercussionChannel + 1));
         }
 
         _IsFirstBlock = false;
@@ -1030,7 +1036,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
         if (VoiceCount != _ActiveVoiceCount)
         {
-            fileInfo.info_set_int(TagMIDIActiveVoices, (t_int64) VoiceCount);
+            fileInfo.info_set_int(InfoMIDIActiveVoices, (t_int64) VoiceCount);
 
             _ActiveVoiceCount = VoiceCount;
 
@@ -1039,7 +1045,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
         if (VoiceCount > _PeakVoiceCount)
         {
-            fileInfo.info_set_int(TagMIDIPeakVoices, (t_int64) VoiceCount);
+            fileInfo.info_set_int(InfoMIDIPeakVoices, (t_int64) VoiceCount);
 
             _PeakVoiceCount = VoiceCount;
 

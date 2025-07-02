@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2025.06.27) **/
+/** $VER: Configuration.cpp (2025.07.02) **/
 
 #include "pch.h"
 
@@ -72,6 +72,8 @@ cfg_var_modern::cfg_string  CfgADLBankFilePath              ({ 0xd5b8c8ed, 0x203
 
 cfg_map CfgVSTiConfig({ 0x44e7c715, 0xd256, 0x44c4, { 0x8f, 0xb6, 0xb7, 0x20, 0xfa, 0x9b, 0x31, 0xfc } });
 
+cfg_var_modern::cfg_string  CfgPlugInName                   ({ 0xf6b1bdff, 0x5d92, 0x4bee, { 0xb6, 0x5f, 0xec, 0x0f, 0x45, 0xe8, 0xd9, 0x39 } }, "");
+
 #pragma region Advanced Configuration GUIDs
 
 static const GUID AdvCfgMIDIPlayerBranchGUID = { 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0xfd, 0xc0, 0xfb, 0xae, 0x74, 0xe5, 0xfc } };
@@ -140,12 +142,14 @@ const char TagPreset[]                      = "midi_preset";
 const char TagMIDISysExDumps[]              = "midi_sysex_dumps";
 
 // Names of the dynamic info fields
-const char TagSampleRate[]                  = "samplerate";
-const char TagMIDIActiveVoices[]            = "midi_active_voices";
-const char TagMIDIPeakVoices[]              = "midi_peak_voices";
+const char InfoSampleRate[]                  = "samplerate";
+const char InfoMIDIActiveVoices[]            = "midi_active_voices";
+const char InfoMIDIPeakVoices[]              = "midi_peak_voices";
 
-const char TagMIDIPlayer[]                  = "midi_player";
-const char TagMIDIExtraPercusionChannel[]   = "midi_extra_percussion_channel";
+const char InfoMIDIPlayer[]                  = "midi_player";
+const char InfoMIDIPlugIn[]                  = "midi_plug_in";
+
+const char InfoMIDIExtraPercusionChannel[]   = "midi_extra_percussion_channel";
 
 const char * _FileExtensions[] =
 {

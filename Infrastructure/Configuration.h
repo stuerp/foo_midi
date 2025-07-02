@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.06.26) **/
+/** $VER: Configuration.h (2025.07.02) **/
 
 #pragma once
 
@@ -187,6 +187,9 @@ extern cfg_var_modern::cfg_string
 extern cfg_map
     CfgVSTiConfig;
 
+extern cfg_var_modern::cfg_string
+    CfgPlugInName;
+
 // RCP
 extern cfg_var_modern::cfg_int  CfgLoopExpansion;
 
@@ -232,12 +235,14 @@ extern const char TagMIDILyricsType[];
 extern const char TagMIDIHash[];
 extern const char TagMIDIEmbeddedSoundFont[];
 
-extern const char TagSampleRate[];
-extern const char TagMIDIActiveVoices[];
-extern const char TagMIDIPeakVoices[];
+extern const char InfoSampleRate[];
+extern const char InfoMIDIActiveVoices[];
+extern const char InfoMIDIPeakVoices[];
 
-extern const char TagMIDIPlayer[];
-extern const char TagMIDIExtraPercusionChannel[];
+extern const char InfoMIDIPlayer[];
+extern const char InfoMIDIPlugIn[];
+
+extern const char InfoMIDIExtraPercusionChannel[];
 
 extern bool IsMIDIFileExtension(const char * fileExtension);
 extern bool IsSysExFileExtension(const char * ext);
