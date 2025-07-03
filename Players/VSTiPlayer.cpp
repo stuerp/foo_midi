@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.cpp (2025.02.24) **/
+/** $VER: VSTiPlayer.cpp (2025.07.03) **/
 
 #include "pch.h"
 
@@ -8,6 +8,9 @@
 #define NOMINMAX
 
 // #define LOG_EXCHANGE
+
+namespace VSTi
+{
 
 template <class T> void SafeDelete(T& x) noexcept
 {
@@ -20,7 +23,7 @@ template <class T> void SafeDelete(T& x) noexcept
 
 #pragma region Public
 
-VSTiPlayer::VSTiPlayer() noexcept : player_t()
+Player::Player() noexcept : player_t()
 {
     _IsCOMInitialized = false;
     _IsTerminating = false;
@@ -45,7 +48,7 @@ VSTiPlayer::VSTiPlayer() noexcept : player_t()
     _VendorVersion = 0;
 }
 
-VSTiPlayer::~VSTiPlayer()
+Player::~Player()
 {
     StopHost();
 
@@ -56,12 +59,12 @@ VSTiPlayer::~VSTiPlayer()
     SafeDelete(_Samples);
 }
 
-bool VSTiPlayer::LoadVST(const char * pathName)
+bool Player::LoadVST(const fs::path & filePath)
 {
-    if ((pathName == nullptr) || (pathName[0] == '\0'))
+    if (filePath.empty())
         return false;
 
-    _FilePath = pathName;
+    _FilePath = filePath;
     _ProcessorArchitecture = GetProcessorArchitecture(_FilePath);
 
     if (_ProcessorArchitecture == 0)
@@ -70,27 +73,27 @@ bool VSTiPlayer::LoadVST(const char * pathName)
     return StartHost();
 }
 
-void VSTiPlayer::GetVendorName(std::string & vendorName) const
+void Player::GetVendorName(std::string & vendorName) const
 {
     vendorName = _VendorName;
 }
 
-void VSTiPlayer::GetProductName(std::string & productName) const 
+void Player::GetProductName(std::string & productName) const 
 {
     productName = _ProductName;
 }
 
-uint32_t VSTiPlayer::GetVendorVersion() const noexcept
+uint32_t Player::GetVendorVersion() const noexcept
 {
     return _VendorVersion;
 }
 
-uint32_t VSTiPlayer::GetUniqueID() const noexcept
+uint32_t Player::GetUniqueID() const noexcept
 {
     return _UniqueId;
 }
 
-void VSTiPlayer::GetChunk(std::vector<uint8_t> & chunk)
+void Player::GetChunk(std::vector<uint8_t> & chunk)
 {
     WriteBytes(1);
 
@@ -110,7 +113,7 @@ void VSTiPlayer::GetChunk(std::vector<uint8_t> & chunk)
         ReadBytes(chunk.data(), Size);
 }
 
-void VSTiPlayer::SetChunk(const void * data, size_t size)
+void Player::SetChunk(const void * data, size_t size)
 {
     if ((_Chunk.size() == 0) || ((_Chunk.size() == size) && (size != 0) && (data != (const void *) _Chunk.data())))
     {
@@ -130,7 +133,7 @@ void VSTiPlayer::SetChunk(const void * data, size_t size)
         StopHost();
 }
 
-bool VSTiPlayer::HasEditor()
+bool Player::HasEditor()
 {
     WriteBytes(3);
 
@@ -147,7 +150,7 @@ bool VSTiPlayer::HasEditor()
     return Code != 0;
 }
 
-void VSTiPlayer::DisplayEditorModal()
+void Player::DisplayEditorModal()
 {
     WriteBytes(4);
 
@@ -156,11 +159,12 @@ void VSTiPlayer::DisplayEditorModal()
     if (Code != 0)
         StopHost();
 }
+
 #pragma endregion
 
 #pragma region Protected
 
-bool VSTiPlayer::Startup()
+bool Player::Startup()
 {
     if (IsHostRunning())
         return true;
@@ -187,12 +191,12 @@ bool VSTiPlayer::Startup()
     return true;
 }
 
-void VSTiPlayer::Shutdown()
+void Player::Shutdown()
 {
     StopHost();
 }
 
-void VSTiPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void Player::Render(audio_sample * sampleData, uint32_t sampleCount)
 {
     WriteBytes(9);
     WriteBytes(sampleCount);
@@ -226,7 +230,7 @@ void VSTiPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     }
 }
 
-void VSTiPlayer::SendEvent(uint32_t data)
+void Player::SendEvent(uint32_t data)
 {
     WriteBytes(7);
     WriteBytes(data);
@@ -237,7 +241,7 @@ void VSTiPlayer::SendEvent(uint32_t data)
         StopHost();
 }
 
-void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
+void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
     const uint32_t SizeAndPort = ((uint32_t) size & 0xFFFFFF) | (portNumber << 24);
 
@@ -251,7 +255,7 @@ void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumbe
         StopHost();
 }
 
-void VSTiPlayer::SendEvent(uint32_t data, uint32_t time)
+void Player::SendEvent(uint32_t data, uint32_t time)
 {
     WriteBytes(10);
     WriteBytes(data);
@@ -263,7 +267,7 @@ void VSTiPlayer::SendEvent(uint32_t data, uint32_t time)
         StopHost();
 }
 
-void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
+void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
 {
     const uint32_t SizeAndPort = ((uint32_t) size & 0xFFFFFF) | (portNumber << 24);
 
@@ -294,7 +298,7 @@ static bool CreatePipeName(pfc::string_base & pipeName)
     return true;
 }
 
-bool VSTiPlayer::StartHost()
+bool Player::StartHost()
 {
     if (!_IsCOMInitialized)
     {
@@ -374,13 +378,13 @@ bool VSTiPlayer::StartHost()
 
         CommandLine += (_ProcessorArchitecture == 64) ? "vsthost64.exe" : "vsthost32.exe";
         CommandLine += "\" \"";
-        CommandLine += _FilePath;
+        CommandLine += (const char *) _FilePath.u8string().c_str();
         CommandLine += "\" ";
 
         uint32_t Sum = 0;
 
         {
-            pfc::stringcvt::string_os_from_utf8 plugin_os(_FilePath.c_str());
+            pfc::stringcvt::string_os_from_utf8 plugin_os((const char *) _FilePath.u8string().c_str());
 
             const TCHAR * ch = plugin_os.get_ptr();
 
@@ -394,15 +398,19 @@ bool VSTiPlayer::StartHost()
     }
 
     {
-        STARTUPINFO si = { sizeof(si) };
+        STARTUPINFO si =
+        {
+            .cb =  sizeof(si),
 
-        si.hStdInput = _hPipeInRead;
-        si.hStdOutput = _hPipeOutWrite;
-        si.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
-    //  si.wShowWindow = SW_HIDE;
-        si.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
+            .dwFlags = STARTF_USESTDHANDLES, // | STARTF_USESHOWWINDOW;
+        //  .wShowWindow = SW_HIDE,
 
-        PROCESS_INFORMATION pi;
+            .hStdInput = _hPipeInRead,
+            .hStdOutput = _hPipeOutWrite,
+            .hStdError = ::GetStdHandle(STD_ERROR_HANDLE),
+        };
+
+        PROCESS_INFORMATION pi = { };
 
         if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
         {
@@ -472,7 +480,7 @@ bool VSTiPlayer::StartHost()
     return true;
 }
 
-void VSTiPlayer::StopHost() noexcept
+void Player::StopHost() noexcept
 {
     if (_IsTerminating)
         return;
@@ -538,7 +546,7 @@ void VSTiPlayer::StopHost() noexcept
     _IsInitialized = false;
 }
 
-bool VSTiPlayer::IsHostRunning() noexcept
+bool Player::IsHostRunning() noexcept
 {
     if (_hProcess && ::WaitForSingleObject(_hProcess, 0) == WAIT_TIMEOUT)
         return true;
@@ -562,7 +570,7 @@ static void ProcessPendingMessages()
 }
 #endif
 
-uint32_t VSTiPlayer::ReadCode() noexcept
+uint32_t Player::ReadCode() noexcept
 {
     uint32_t Code;
 
@@ -571,7 +579,7 @@ uint32_t VSTiPlayer::ReadCode() noexcept
     return Code;
 }
 
-void VSTiPlayer::ReadBytes(void * data, uint32_t size) noexcept
+void Player::ReadBytes(void * data, uint32_t size) noexcept
 {
     if (size == 0)
         return;
@@ -598,7 +606,7 @@ void VSTiPlayer::ReadBytes(void * data, uint32_t size) noexcept
         ::memset(data, 0xFF, size);
 }
 
-uint32_t VSTiPlayer::ReadBytesOverlapped(void * data, uint32_t size) noexcept
+uint32_t Player::ReadBytesOverlapped(void * data, uint32_t size) noexcept
 {
     ::ResetEvent(_hReadEvent);
 
@@ -643,12 +651,12 @@ uint32_t VSTiPlayer::ReadBytesOverlapped(void * data, uint32_t size) noexcept
     return 0;
 }
 
-void VSTiPlayer::WriteBytes(uint32_t code) noexcept
+void Player::WriteBytes(uint32_t code) noexcept
 {
     WriteBytesOverlapped(&code, sizeof(code));
 }
 
-void VSTiPlayer::WriteBytesOverlapped(const void * data, uint32_t size) noexcept
+void Player::WriteBytesOverlapped(const void * data, uint32_t size) noexcept
 {
     if ((size == 0) || !IsHostRunning())
         return;
@@ -658,4 +666,7 @@ void VSTiPlayer::WriteBytesOverlapped(const void * data, uint32_t size) noexcept
     if (!::WriteFile(_hPipeInWrite, data, size, &BytesWritten, nullptr) || (BytesWritten < size))
         StopHost();
 }
+
 #pragma endregion
+
+}

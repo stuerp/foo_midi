@@ -27,6 +27,7 @@
 
 #include "Configuration.h"
 #include "Preset.h"
+#include "Encoding.h"
 
 #include "BMPlayer.h"
 #include "FSPlayer.h"
@@ -34,7 +35,7 @@
 #include "NukePlayer.h"
 #include "VSTiPlayer.h"
 
-#include "VSTi.h"
+#include "VSTiHost.h"
 #include "SecretSauce.h"
 #include "CLAPHost.h"
 
@@ -166,7 +167,7 @@ private:
     void OnChanged();
 
     void UpdateDialog() const noexcept;
-    void UpdateConfigureButton() const noexcept;
+    void UpdateConfigureButton() noexcept;
 
 private:
     bool _IsBusy;
@@ -204,7 +205,7 @@ private:
 
     struct installed_player_t
     {
-        pfc::string Name;
+        std::string Name;
 
         // Unique key
         PlayerTypes Type;
@@ -214,7 +215,7 @@ private:
         size_t PlugInIndex; // Index in the VSTi or CLAP plug-in list
 
         installed_player_t() : Type(PlayerTypes::Unknown), Index((size_t) -1), PlugInIndex((size_t) -1) { }
-        installed_player_t(pfc::string name, PlayerTypes type, fs::path filePath, size_t index, size_t plugInIndex) : Name(name), Type(type), FilePath(filePath), Index(index), PlugInIndex(plugInIndex) { }
+        installed_player_t(const std::string & name, PlayerTypes type, fs::path filePath, size_t index, size_t plugInIndex) : Name(name), Type(type), FilePath(filePath), Index(index), PlugInIndex(plugInIndex) { }
 
         bool operator ==(const installed_player_t & other) const noexcept
         {
@@ -273,6 +274,13 @@ private:
 
     #pragma endregion
     
+    #pragma region VSTi
+
+    VSTi::Host _VSTiHost;
+    std::vector<VSTi::PlugIn> _VSTiPlugIns;
+
+    #pragma endregion
+
     #pragma region CLAP
 
     CLAP::Host _CLAPHost;
@@ -310,7 +318,7 @@ const PreferencesRootPage::known_player_t PreferencesRootPage::_KnownPlayers[] =
     { "FMMIDI",         PlayerTypes::FMMIDI,        PlayerIsAlwaysPresent },
 };
 
-const int PreferencesRootPage::_SampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 49716, 64000, 88200, 96000 };
+const int PreferencesRootPage::_SampleRates[] = { 8'000, 11'025, 16'000, 22'050, 24'000, 32'000, 44'100, 48'000, 49'716, 64'000, 88'200, 96'000 };
 
 const PreferencesRootPage::InterpolationMethod PreferencesRootPage::_InterpolationMethods[] =
 {
@@ -377,13 +385,12 @@ void PreferencesRootPage::apply()
 
                 if (_SelectedPlayer.Type == PlayerTypes::VSTi)
                 {
-                    const auto & PlugIn = VSTi::PlugIns[_SelectedPlayer.PlugInIndex];
+                    const auto & PlugIn = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
 
-                    CfgPlugInFilePath = PlugIn.FilePath.c_str();
-                    CfgCLAPIndex      = (int64_t) -1;
-                    CfgPlugInName     = PlugIn.Name.c_str();
-
-                    CfgVSTiConfig[PlugIn.Id] = VSTi::Config;
+                    CfgPlugInFilePath        = (const char *) PlugIn.FilePath.u8string().c_str();
+                    CfgCLAPIndex             = (int64_t) -1;
+                    CfgPlugInName            = PlugIn.Name.c_str();
+                    CfgVSTiConfig[PlugIn.Id] = _VSTiHost.Config;
                 }
                 else
                 {
@@ -628,7 +635,7 @@ void PreferencesRootPage::reset()
         SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultNukePanning);
     }
 
-    VSTi::Config.resize(0);
+    _VSTiHost.Config.resize(0);
 
     UpdateDialog();
 
@@ -672,19 +679,23 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     // Add the VSTi plug-ins to the installed player list.
     {
-        VSTi::Enumerate();
+        console::print(STR_COMPONENT_BASENAME " is enumerating VSTi plug-ins...");
 
-        size_t VSTiCount = VSTi::PlugIns.size();
+        pfc::string DirectoryPath;
 
-        if (VSTiCount > 0)
+        AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
+
+        _VSTiPlugIns = _VSTiHost.GetPlugIns(DirectoryPath.c_str());
+
+        if (!_VSTiPlugIns.empty())
         {
-            console::print(STR_COMPONENT_BASENAME " found ", VSTiCount, " VSTi plug-insinstruments.");
+            console::print(STR_COMPONENT_BASENAME " found ", _VSTiPlugIns.size(), " VSTi plug-insinstruments.");
 
             size_t i = 0;
 
-            for (const auto & PlugIn : VSTi::PlugIns)
+            for (const auto & PlugIn : _VSTiPlugIns)
             {
-                installed_player_t ip(PlugIn.Name.c_str(), PlayerTypes::VSTi, PlugIn.FilePath, (size_t) -1, i);
+                installed_player_t ip((std::string("VSTi ") + PlugIn.Name), PlayerTypes::VSTi, PlugIn.FilePath, (size_t) -1, i);
 
                 _InstalledPlayers.push_back(ip);
 
@@ -718,7 +729,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
             for (const auto & PlugIn : _CLAPPlugIns)
             {
-                installed_player_t ip(PlugIn.Name.c_str(), PlayerTypes::CLAP, PlugIn.FilePath, PlugIn.Index, i);
+                installed_player_t ip((std::string("CLAP ") + PlugIn.Name), PlayerTypes::CLAP, PlugIn.FilePath, PlugIn.Index, i);
 
                 _InstalledPlayers.push_back(ip);
 
@@ -734,9 +745,6 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     #pragma endregion
 
-    #pragma endregion
-
-    #pragma region Player Type
     {
         auto w = (CComboBox) GetDlgItem(IDC_PLAYER_TYPE);
 
@@ -745,7 +753,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         for (const auto & Player : _InstalledPlayers)
         {
-            w.AddString(pfc::wideFromUTF8(Player.Name));
+            w.AddString(::UTF8ToWide(Player.Name).c_str());
 
             if (Player == _SelectedPlayer)
                 SelectedIndex = i;
@@ -773,6 +781,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         w.SetCurSel(SelectedIndex);
     }
+
     #pragma endregion
 
     #pragma region Configure
@@ -1025,16 +1034,16 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 
     if (_SelectedPlayer.Type == PlayerTypes::VSTi)
     {
-        VSTiPlayer Player;
+        VSTi::Player Player;
 
         if (Player.LoadVST((const char *) _SelectedPlayer.FilePath.u8string().c_str()))
         {
-            if (VSTi::Config.size() != 0)
-                Player.SetChunk(VSTi::Config.data(), VSTi::Config.size());
+            if (_VSTiHost.Config.size() != 0)
+                Player.SetChunk(_VSTiHost.Config.data(), _VSTiHost.Config.size());
 
             Player.DisplayEditorModal();
 
-            Player.GetChunk(VSTi::Config);
+            Player.GetChunk(_VSTiHost.Config);
         }
     }
 
@@ -1055,7 +1064,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
         _SelectedPlayer = _InstalledPlayers[(size_t) SelectedIndex];
 
         if (_SelectedPlayer.Type == PlayerTypes::VSTi)
-            VSTi::Config = CfgVSTiConfig[VSTi::PlugIns[_SelectedPlayer.PlugInIndex].Id];
+            _VSTiHost.Config = CfgVSTiConfig[_VSTiPlugIns[_SelectedPlayer.PlugInIndex].Id];
     }
 
     // Configure
@@ -1200,12 +1209,12 @@ bool PreferencesRootPage::HasChanged()
                 if (CfgPlugInFilePath.get() != (const char *) _SelectedPlayer.FilePath.u8string().c_str())
                     return true;
 
-                t_uint32 Id = VSTi::PlugIns[_SelectedPlayer.PlugInIndex].Id;
+                t_uint32 Id = _VSTiPlugIns[_SelectedPlayer.PlugInIndex].Id;
 
-                if (VSTi::Config.size() != CfgVSTiConfig[Id].size())
+                if (_VSTiHost.Config.size() != CfgVSTiConfig[Id].size())
                     return true;
 
-                if ((VSTi::Config.size() != 0) && (::memcmp(VSTi::Config.data(), CfgVSTiConfig[Id].data(), VSTi::Config.size()) != 0))
+                if ((_VSTiHost.Config.size() != 0) && (::memcmp(_VSTiHost.Config.data(), CfgVSTiConfig[Id].data(), _VSTiHost.Config.size()) != 0))
                     return true;
             }
             else
@@ -1362,17 +1371,17 @@ void PreferencesRootPage::UpdateDialog() const noexcept
 /// <summary>
 /// Updates the Configure button.
 /// </summary>
-void PreferencesRootPage::UpdateConfigureButton() const noexcept
+void PreferencesRootPage::UpdateConfigureButton() noexcept
 {
     BOOL Enable = FALSE;
 
     if ((_SelectedPlayer.Type == PlayerTypes::VSTi) && (_SelectedPlayer.PlugInIndex != (size_t) -1))
     {
-        const auto &  Plugin = VSTi::PlugIns[_SelectedPlayer.PlugInIndex];
+        const auto &  Plugin = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
 
         Enable = Plugin.HasEditor;
 
-        VSTi::Config = CfgVSTiConfig[Plugin.Id];
+        _VSTiHost.Config = CfgVSTiConfig[Plugin.Id];
     }
 /*
     else

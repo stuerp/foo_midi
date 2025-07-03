@@ -893,16 +893,16 @@ static uint32_t GetDWord(const uint8_t * data) noexcept
 /// <summary>
 /// Determines the processor architecture of a Windows binary file.
 /// </summary>
-uint32_t player_t::GetProcessorArchitecture(const std::string & filePath) const
+uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
 {
     constexpr size_t MZHeaderSize = 0x40;
     constexpr size_t PEHeaderSize = (size_t) 4 + 20 + 224;
 
     uint8_t PEHeader[PEHeaderSize];
 
-    std::string URI = "file://";
+    pfc::string URI = "file://";
 
-    URI += filePath;
+    URI += (const char *) filePath.u8string().c_str();
 
     try
     {

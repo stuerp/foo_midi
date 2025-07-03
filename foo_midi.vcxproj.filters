@@ -34,7 +34,7 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
     <ClCompile Include="Players\SecretSauce.cpp" />
-    <ClCompile Include="Players\VSTi.cpp" />
+    <ClCompile Include="Infrastructure\VSTiHost.cpp" />
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Exception.cpp" />
     <ClCompile Include="Infrastructure\SoundFonts.cpp" />
@@ -185,7 +185,7 @@
     <ClInclude Include="Players\MCIPlayer.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Players\SecretSauce.h" />
-    <ClInclude Include="Players\VSTi.h" />
+    <ClInclude Include="Infrastructure\VSTiHost.h" />
     <ClInclude Include="Players\SoundFont.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\FMMPlayer.h" />

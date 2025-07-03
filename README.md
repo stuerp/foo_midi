@@ -96,6 +96,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 - v2.19.0.0-alpha6, 2025-xx-xx
   - New: **midi_plug_in** info tag that contains the name of the active plug-in when a player supports it.
+  - Improved: Support for Unicode paths.
 
 - You can read the full history [here](docs/History.md).
 

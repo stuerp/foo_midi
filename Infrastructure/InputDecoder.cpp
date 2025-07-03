@@ -389,9 +389,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (Preset._PlugInFilePath.is_empty())
                 throw pfc::exception("No plug-in specified in preset");
 
-            auto Player = new VSTiPlayer;
+            auto Player = new VSTi::Player;
 
-            if (!Player->LoadVST(Preset._PlugInFilePath))
+            if (!Player->LoadVST(Preset._PlugInFilePath.c_str()))
                 throw pfc::exception(pfc::string("Unable to load VSTi plu-in from \"") + Preset._PlugInFilePath + "\"");
             
             if (Preset._VSTiConfig.size() != 0)
@@ -725,7 +725,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 PathName.truncate(PathName.scan_filename());
             }
 
-            Player->SetRootPath(PathName);
+            Player->SetRootPath(PathName.c_str());
 
             _Player = Player;
 

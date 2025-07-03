@@ -59,7 +59,7 @@ protected:
 
     void ResetPort(uint8_t portNumber, uint32_t time);
 
-    uint32_t GetProcessorArchitecture(const std::string & filePath) const;
+    uint32_t GetProcessorArchitecture(const fs::path & filePath) const;
 
 protected:
     bool _IsInitialized;

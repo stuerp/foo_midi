@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.cpp (2025.07.01) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2025.07.03) Secret Sauce **/
 
 #include "pch.h"
 
@@ -13,7 +13,7 @@
 
 #pragma region Public
 
-SCPlayer::SCPlayer() noexcept : player_t()
+SCPlayer::SCPlayer() noexcept : player_t(),  _Samples()
 {
     _IsInitialized = false;
     _COMInitialisationCount = 0;
@@ -44,15 +44,15 @@ SCPlayer::~SCPlayer()
         _Samples = nullptr;
     }
 
-    _RootPathName.clear();
+    _RootPath.clear();
 }
 
 /// <summary>
 /// Sets the root path name of Secret Sauce.
 /// </summary>
-void SCPlayer::SetRootPath(const char * rootPathName)
+void SCPlayer::SetRootPath(const fs::path & directoryPath)
 {
-    _RootPathName = rootPathName;
+    _RootPath = directoryPath;
 }
 
 #pragma endregion
@@ -64,17 +64,15 @@ void SCPlayer::SetRootPath(const char * rootPathName)
 /// </summary>
 bool SCPlayer::Startup()
 {
-    pfc::string path;
-
     if (_IsInitialized)
         return true;
 
-    if (_RootPathName.empty())
+    if (_RootPath.empty())
         return false;
 
-    path = pfc::io::path::combine(_RootPathName.c_str(), _DLLFileName);
+    fs::path FilePath = _RootPath / _DLLFileName;
 
-    if (!StartHosts(path))
+    if (!StartHosts(FilePath))
         return false;
 
     for (uint32_t i = 0; i < _countof(_hProcess); ++i)
@@ -225,9 +223,9 @@ void SCPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
 /// <summary>
 /// Starts the host processes.
 /// </summary>
-bool SCPlayer::StartHosts(const char * filePath)
+bool SCPlayer::StartHosts(const fs::path & filePath)
 {
-    if ((filePath == nullptr) || (filePath[0] == '\0'))
+    if (filePath.empty())
         return false;
 
     _FilePath = filePath;
@@ -349,20 +347,24 @@ bool SCPlayer::StartHost(uint32_t portNumber)
 
         CommandLine += (_ProcessorArchitecture == 64) ? "scpipe64.exe" : "scpipe32.exe";
         CommandLine += "\" \"";
-        CommandLine += _FilePath;
+        CommandLine += (const char *) _FilePath.u8string().c_str();
         CommandLine += "\"";
     }
 
     {
-        STARTUPINFO si = { sizeof(si) };
+        STARTUPINFO si =
+        {
+            .cb = sizeof(si),
 
-        si.hStdInput = _hPipeInRead[portNumber];
-        si.hStdOutput = _hPipeOutWrite[portNumber];
-        si.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
-    //  si.wShowWindow = SW_HIDE;
-        si.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
+            .dwFlags = STARTF_USESTDHANDLES, // | STARTF_USESHOWWINDOW;
+        //  .wShowWindow = SW_HIDE,
 
-        PROCESS_INFORMATION pi;
+            .hStdInput = _hPipeInRead[portNumber],
+            .hStdOutput = _hPipeOutWrite[portNumber],
+            .hStdError = ::GetStdHandle(STD_ERROR_HANDLE),
+        };
+
+        PROCESS_INFORMATION pi = { };
 
         if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
         {

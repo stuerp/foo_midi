@@ -32,9 +32,9 @@ preset_t::preset_t() noexcept
         {
             try
             {
-                auto Player = new VSTiPlayer;
+                auto Player = new VSTi::Player;
 
-                if (Player->LoadVST(_PlugInFilePath))
+                if (Player->LoadVST(_PlugInFilePath.c_str()))
                 {
                     _VSTiConfig = CfgVSTiConfig[Player->GetUniqueID()];
 

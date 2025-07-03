@@ -295,7 +295,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
             {
                 PlugIn PlugIn =
                 {
-                    .Name     = "CLAP " + plugInName,
+                    .Name     = plugInName,
                     .Index    = index,
                     .FilePath = Entry.path(),
                     .HasGUI   = hasGUI

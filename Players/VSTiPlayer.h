@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2025.03.16) **/
+/** $VER: VSTiPlayer.h (2025.07.03) **/
 
 #pragma once
 
@@ -7,15 +7,18 @@
 
 typedef void * HANDLE;
 
+namespace VSTi
+{
+
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
-class VSTiPlayer : public player_t
+class Player : public player_t
 {
 public:
-    VSTiPlayer() noexcept;
-    virtual ~VSTiPlayer();
+    Player() noexcept;
+    virtual ~Player();
 
-    bool LoadVST(const char * path);
+    bool LoadVST(const fs::path & filePath);
 
     void GetVendorName(std::string & out) const;
     void GetProductName(std::string & out) const;
@@ -63,7 +66,7 @@ private:
     uint32_t _ProcessorArchitecture;
     bool _IsCOMInitialized;
 
-    std::string _FilePath;
+    fs::path _FilePath;
 
     HANDLE _hReadEvent;
     HANDLE _hPipeInRead;
@@ -89,3 +92,5 @@ private:
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member
+
+}
