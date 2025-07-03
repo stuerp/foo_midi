@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.cpp (2025.07.02) **/
+/** $VER: MT32Player.cpp (2025.07.03) **/
 
 #include "pch.h"
 
@@ -264,9 +264,9 @@ bool MT32Player::LoadMachineROMs(const std::string & machineID)
 
     for (const auto & Entry : fs::directory_iterator(_ROMDirectory))
     {
-//      console::print(STR_COMPONENT_BASENAME, ": ", machineID.c_str(), " / ", Entry.path().string().c_str());
+//      console::print(STR_COMPONENT_BASENAME, ": ", machineID.c_str(), " / ", (const char *) Entry.path().u8string().c_str());
 
-        auto rc = _Service.addMachineROMFile(machineID.c_str(), Entry.path().string().c_str());
+        auto rc = _Service.addMachineROMFile(machineID.c_str(), (const char *) Entry.path().u8string().c_str());
 
         if (rc == MT32EMU_RC_MACHINE_NOT_IDENTIFIED)
             continue;
@@ -292,7 +292,7 @@ std::set<std::string> MT32Player::IdentifyControlROMs()
 
     for (const auto & Entry : fs::directory_iterator(_ROMDirectory))
     {
-        if ((_Service.identifyROMFile(&ROMInfo, Entry.path().string().c_str(), nullptr) == MT32EMU_RC_OK) && (ROMInfo.control_rom_id != nullptr))
+        if ((_Service.identifyROMFile(&ROMInfo, (const char *) Entry.path().u8string().c_str(), nullptr) == MT32EMU_RC_OK) && (ROMInfo.control_rom_id != nullptr))
             ROMs.insert(ROMInfo.control_rom_id);
     }
 

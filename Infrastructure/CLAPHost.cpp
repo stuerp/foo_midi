@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.06.29) P. Stuer **/
+/** $VER: CLAPHost.cpp (2025.07.03) P. Stuer **/
 
 #include "pch.h"
 
@@ -97,14 +97,14 @@ bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
 
     UnLoad();
 
-    _hPlugIn = ::LoadLibraryA(filePath.string().c_str());
+    _hPlugIn = ::LoadLibraryA((const char *) filePath.u8string().c_str());
 
     if (_hPlugIn == NULL)
         return false;
 
     auto Entry = (const clap_plugin_entry_t *) ::GetProcAddress(_hPlugIn, "clap_entry");
 
-    if ((Entry != nullptr) && (Entry->init != nullptr) && Entry->init(filePath.string().c_str()))
+    if ((Entry != nullptr) && (Entry->init != nullptr) && Entry->init((const char *) filePath.u8string().c_str()))
     {
         const auto * Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
 
@@ -289,7 +289,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
         else
         if ((Entry.path().extension() == ".clap") || (Entry.path().extension() == ".dll"))
         {
-            console::print(STR_COMPONENT_BASENAME " is examining \"", Entry.path().string().c_str(), "\"...");
+            console::print(STR_COMPONENT_BASENAME " is examining \"", (const char *) Entry.path().u8string().c_str(), "\"...");
 
             GetPlugIns(Entry.path(), [this, Entry](const std::string & plugInName, uint32_t index, bool hasGUI)
             {
@@ -312,7 +312,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
 /// </summary>
 void Host::GetPlugIns(const fs::path & filePath, const std::function<void(const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept
 {
-    HMODULE hPlugIn = ::LoadLibraryA(filePath.string().c_str());
+    HMODULE hPlugIn = ::LoadLibraryA((const char *) filePath.u8string().c_str());
 
     if (hPlugIn == NULL)
         return;
@@ -321,7 +321,7 @@ void Host::GetPlugIns(const fs::path & filePath, const std::function<void(const 
 
     try
     {
-        if ((PlugInEntry != nullptr) && (PlugInEntry->init != nullptr) && PlugInEntry->init(filePath.string().c_str()))
+        if ((PlugInEntry != nullptr) && (PlugInEntry->init != nullptr) && PlugInEntry->init((const char *) filePath.u8string().c_str()))
         {
             const auto * Factory = (const clap_plugin_factory_t *) PlugInEntry->get_factory(CLAP_PLUGIN_FACTORY_ID);
 

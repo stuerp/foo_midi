@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.02) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.03) P. Stuer **/
 
 #include "pch.h"
 
@@ -365,7 +365,7 @@ void PreferencesRootPage::apply()
             {
                 const auto & PlugIn = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
 
-                CfgPlugInFilePath = PlugIn.FilePath.string().c_str();
+                CfgPlugInFilePath = (const char *) PlugIn.FilePath.u8string().c_str();
                 CfgCLAPIndex      = (int64_t) PlugIn.Index;
                 CfgPlugInName     = PlugIn.Name.c_str();
 
@@ -1027,7 +1027,7 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
     {
         VSTiPlayer Player;
 
-        if (Player.LoadVST(_SelectedPlayer.FilePath.string().c_str()))
+        if (Player.LoadVST((const char *) _SelectedPlayer.FilePath.u8string().c_str()))
         {
             if (VSTi::Config.size() != 0)
                 Player.SetChunk(VSTi::Config.data(), VSTi::Config.size());
@@ -1197,7 +1197,7 @@ bool PreferencesRootPage::HasChanged()
 
             if (_SelectedPlayer.Type == PlayerTypes::VSTi)
             {
-                if (CfgPlugInFilePath.get() != _SelectedPlayer.FilePath.string().c_str())
+                if (CfgPlugInFilePath.get() != (const char *) _SelectedPlayer.FilePath.u8string().c_str())
                     return true;
 
                 t_uint32 Id = VSTi::PlugIns[_SelectedPlayer.PlugInIndex].Id;
@@ -1211,7 +1211,7 @@ bool PreferencesRootPage::HasChanged()
             else
             if (_SelectedPlayer.Type == PlayerTypes::CLAP)
             {
-                if (CfgPlugInFilePath.get() != _SelectedPlayer.FilePath.string().c_str())
+                if (CfgPlugInFilePath.get() != (const char *) _SelectedPlayer.FilePath.u8string().c_str())
                     return true;
 
                 if (CfgCLAPIndex != (int64_t) _SelectedPlayer.Index)
