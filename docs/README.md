@@ -225,19 +225,43 @@ The **Decay time** setting specifies the time in milliseconds that the player wi
 
 ### Metadata
 
-*Work in Progress*
-
-### Info Tags
-
-foo_midi provides you with the following info tags during playback:
+foo_midi supports the following tags:
 
 | Name | Contents |
 | ---- | -------- |
-| samplerate | The sample rate currently being used to generate the samples |
-| midi_player | The name of the MIDI player  |
-| midi_plug_in | The name of the MIDI player plug-in if the player supports it |
-| midi_active_voices | The number of active voices used by a wave table player |
-| midi_peak_voices | The highest number of voices used by a wave table player |
+| midi_preset      | The preferences that will be use to play the file, overriding any settings selected in Preferences. |
+| midi_sysex_dumps | |
+
+### Information fields
+
+foo_midi provides you with two types of information fields.
+
+In rest and during playback:
+
+| Name                    | Contents |
+| ----------------------- | -------- |
+| midi_format             | |
+| midi_tracks             | |
+| midi_channels           | |
+| midi_ticks              | |
+| midi_type               | |
+| midi_loop_start         | |
+| midi_loop_end           | |
+| midi_loop_start_ms      | |
+| midi_loop_end_ms        | |
+| midi_lyrics_type        | |
+| midi_hash               | |
+| midi_embedded_soundfont | |
+
+During playback:
+
+| Name                          | Contents |
+| ----------------------------- | -------- |
+| samplerate                    | The sample rate currently being used to generate the samples |
+| midi_player                   | The name of the MIDI player  |
+| midi_plug_in                  | The name of the MIDI player plug-in if the player supports it |
+| midi_active_voices            | The number of active voices used by a wave table player |
+| midi_peak_voices              | The highest number of voices used by a wave table player |
 | midi_extra_percussion_channel | The number of the MIDI channel being used as an extra percussion channel (1-based) |
 
 Here's an example on how to use them in your status bar:

@@ -123,6 +123,10 @@ advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, AdvCfgMIDIPl
         advconfig_integer_factory AdvCfgBASSMIDIVoices         ("Maximum voice count",                 AdvCfgBASSMIDIVoicesGUID,         AdvCfgBASSMIDIBranchGUID,  1.0, 256, 1, 100000);
         advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled("Enable reverb and chorus processing", AdvCfgBASSMIDIEffectsEnabledGUID, AdvCfgBASSMIDIBranchGUID, 2.0, true);
 
+// Names of the meta data fields
+const char TagPreset[]                      = "midi_preset";
+const char TagMIDISysExDumps[]              = "midi_sysex_dumps";
+
 // Names of the info fields
 const char TagMIDIFormat[]                  = "midi_format";
 const char TagMIDITrackCount[]              = "midi_tracks";
@@ -137,19 +141,15 @@ const char TagMIDILyricsType[]              = "midi_lyrics_type";
 const char TagMIDIHash[]                    = "midi_hash";
 const char TagMIDIEmbeddedSoundFont[]       = "midi_embedded_soundfont";
 
-// Names of the meta data fields
-const char TagPreset[]                      = "midi_preset";
-const char TagMIDISysExDumps[]              = "midi_sysex_dumps";
-
 // Names of the dynamic info fields
-const char InfoSampleRate[]                  = "samplerate";
-const char InfoMIDIActiveVoices[]            = "midi_active_voices";
-const char InfoMIDIPeakVoices[]              = "midi_peak_voices";
+const char InfoSampleRate[]                 = "samplerate";
+const char InfoMIDIActiveVoices[]           = "midi_active_voices";
+const char InfoMIDIPeakVoices[]             = "midi_peak_voices";
 
-const char InfoMIDIPlayer[]                  = "midi_player";
-const char InfoMIDIPlugIn[]                  = "midi_plug_in";
+const char InfoMIDIPlayer[]                 = "midi_player";
+const char InfoMIDIPlugIn[]                 = "midi_plug_in";
 
-const char InfoMIDIExtraPercusionChannel[]   = "midi_extra_percussion_channel";
+const char InfoMIDIExtraPercusionChannel[]  = "midi_extra_percussion_channel";
 
 const char * _FileExtensions[] =
 {
