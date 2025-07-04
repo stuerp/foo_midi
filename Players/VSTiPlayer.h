@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2025.07.03) **/
+/** $VER: VSTiPlayer.h (2025.07.04) **/
 
 #pragma once
 
@@ -19,11 +19,6 @@ public:
     virtual ~Player();
 
     bool LoadVST(const fs::path & filePath);
-
-    void GetVendorName(std::string & out) const;
-    void GetProductName(std::string & out) const;
-    uint32_t GetVendorVersion() const noexcept;
-    uint32_t GetUniqueID() const noexcept;
 
     // Configuration
     void GetChunk(std::vector<uint8_t> & data);
@@ -62,6 +57,13 @@ private:
     void WriteBytes(uint32_t code) noexcept;
     void WriteBytesOverlapped(const void * data, uint32_t size) noexcept;
 
+public:
+    std::string Name;
+    std::string VendorName;
+    std::string ProductName;
+    uint32_t VendorVersion;
+    uint32_t Id;
+
 private:
     uint32_t _ProcessorArchitecture;
     bool _IsCOMInitialized;
@@ -75,13 +77,6 @@ private:
     HANDLE _hPipeOutWrite;
     HANDLE _hProcess;
     HANDLE _hThread;
-
-    char * _Name;
-    char * _VendorName;
-    char * _ProductName;
-
-    uint32_t _VendorVersion;
-    uint32_t _UniqueId;
 
     uint32_t _ChannelCount;
 

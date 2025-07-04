@@ -36,7 +36,7 @@ preset_t::preset_t() noexcept
 
                 if (Player->LoadVST(_PlugInFilePath.c_str()))
                 {
-                    _VSTiConfig = CfgVSTiConfig[Player->GetUniqueID()];
+                    _VSTiConfig = CfgVSTiConfig[Player->Id];
 
                     delete Player;
                 }

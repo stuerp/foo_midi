@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.cpp (2025.06.29) **/
+/** $VER: foo_midi.cpp (2025.07.04) **/
 
 #include "pch.h"
 
@@ -11,9 +11,9 @@
 #include "Resource.h"
 
 #include <bass/c/bass.h>
-#include <FluidSynth/include/fluidsynth.h>
 #include <clap/version.h>
-
+#include <FluidSynth/include/fluidsynth.h>
+#include <mt32emu/config.h>
 #pragma hdrstop
 
 #define CLAP_SDK_VERSION TOSTRING(CLAP_VERSION_MAJOR) "." TOSTRING(CLAP_VERSION_MINOR) "." TOSTRING(CLAP_VERSION_REVISION)
@@ -31,7 +31,7 @@ namespace
             "\n"
             STR_COMPONENT_DESCRIPTION "\n"
             "\n"
-            "Built with foobar2000 SDK " TOSTRING(FOOBAR2000_SDK_VERSION) ", BASS SDK " BASSVERSIONTEXT ", FluidSynth SDK " FLUIDSYNTH_VERSION " and CLAP SDK " CLAP_SDK_VERSION "\n"
+            "Built with foobar2000 SDK " TOSTRING(FOOBAR2000_SDK_VERSION) ", BASS SDK " BASSVERSIONTEXT ", FluidSynth SDK " FLUIDSYNTH_VERSION ", mt32emu " MT32EMU_VERSION " and CLAP SDK " CLAP_SDK_VERSION "\n"
             "on " __DATE__ " " __TIME__ ".\n"
     );
 

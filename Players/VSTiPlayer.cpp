@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.cpp (2025.07.03) **/
+/** $VER: VSTiPlayer.cpp (2025.07.04) **/
 
 #include "pch.h"
 
@@ -23,7 +23,7 @@ template <class T> void SafeDelete(T& x) noexcept
 
 #pragma region Public
 
-Player::Player() noexcept : player_t()
+Player::Player() noexcept : player_t(), VendorVersion(), Id()
 {
     _IsCOMInitialized = false;
     _IsTerminating = false;
@@ -36,25 +36,16 @@ Player::Player() noexcept : player_t()
     _hProcess = NULL;
     _hThread = NULL;
 
-    _Name = nullptr;
-    _VendorName = nullptr;
-    _ProductName = nullptr;
-
     _ChannelCount = 0;
     _Samples = nullptr;
 
     _ProcessorArchitecture = 0;
-    _UniqueId = 0;
-    _VendorVersion = 0;
+
 }
 
 Player::~Player()
 {
     StopHost();
-
-    SafeDelete(_Name);
-    SafeDelete(_VendorName);
-    SafeDelete(_ProductName);
 
     SafeDelete(_Samples);
 }
@@ -71,26 +62,6 @@ bool Player::LoadVST(const fs::path & filePath)
         return false;
 
     return StartHost();
-}
-
-void Player::GetVendorName(std::string & vendorName) const
-{
-    vendorName = _VendorName;
-}
-
-void Player::GetProductName(std::string & productName) const 
-{
-    productName = _ProductName;
-}
-
-uint32_t Player::GetVendorVersion() const noexcept
-{
-    return _VendorVersion;
-}
-
-uint32_t Player::GetUniqueID() const noexcept
-{
-    return _UniqueId;
 }
 
 void Player::GetChunk(std::vector<uint8_t> & chunk)
@@ -447,12 +418,12 @@ bool Player::StartHost()
     }
 
     {
-        uint32_t NameLength = ReadCode();
-        uint32_t VendorNameLength = ReadCode();
+        uint32_t NameLength        = ReadCode();
+        uint32_t VendorNameLength  = ReadCode();
         uint32_t ProductNameLength = ReadCode();
 
-        _VendorVersion = ReadCode();
-        _UniqueId = ReadCode();
+        VendorVersion = ReadCode();
+        Id            = ReadCode();
         _ChannelCount = ReadCode();
 
         {
@@ -460,20 +431,17 @@ bool Player::StartHost()
             SafeDelete(_Samples);
             _Samples = new float[4096 * _ChannelCount];
 
-            SafeDelete(_Name);
-            _Name = new char[NameLength + 1];
-            ReadBytes(_Name, NameLength);
-            _Name[NameLength] = 0;
+            Name.resize(NameLength + 1);
+            ReadBytes(Name.data(), NameLength);
+            Name[NameLength] = 0;
 
-            SafeDelete(_VendorName);
-            _VendorName = new char[VendorNameLength + 1];
-            ReadBytes(_VendorName, VendorNameLength);
-            _VendorName[VendorNameLength] = 0;
+            VendorName.resize(VendorNameLength);
+            ReadBytes(VendorName.data(), VendorNameLength);
+            VendorName[VendorNameLength] = 0;
 
-            SafeDelete(_ProductName);
-            _ProductName = new char[ProductNameLength + 1];
-            ReadBytes(_ProductName, ProductNameLength);
-            _ProductName[ProductNameLength] = 0;
+            ProductName.resize(ProductNameLength + 1);
+            ReadBytes(ProductName.data(), ProductNameLength);
+            ProductName[ProductNameLength] = 0;
         }
     }
 

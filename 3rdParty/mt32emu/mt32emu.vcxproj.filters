@@ -15,185 +15,186 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Analog.cpp">
+    <ClCompile Include="repo\mt32emu\src\Analog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\BReverbModel.cpp">
+    <ClCompile Include="repo\mt32emu\src\BReverbModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\File.cpp">
+    <ClCompile Include="repo\mt32emu\src\c_interface\c_interface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\FileStream.cpp">
+    <ClCompile Include="repo\mt32emu\src\Display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\LA32FloatWaveGenerator.cpp">
+    <ClCompile Include="repo\mt32emu\src\File.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\LA32Ramp.cpp">
+    <ClCompile Include="repo\mt32emu\src\FileStream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\LA32WaveGenerator.cpp">
+    <ClCompile Include="repo\mt32emu\src\LA32FloatWaveGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\MidiStreamParser.cpp">
+    <ClCompile Include="repo\mt32emu\src\LA32Ramp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Part.cpp">
+    <ClCompile Include="repo\mt32emu\src\LA32WaveGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Partial.cpp">
+    <ClCompile Include="repo\mt32emu\src\MidiStreamParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\PartialManager.cpp">
+    <ClCompile Include="repo\mt32emu\src\Part.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Poly.cpp">
+    <ClCompile Include="repo\mt32emu\src\Partial.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ROMInfo.cpp">
+    <ClCompile Include="repo\mt32emu\src\PartialManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\SampleRateConverter.cpp">
+    <ClCompile Include="repo\mt32emu\src\Poly.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Synth.cpp">
+    <ClCompile Include="repo\mt32emu\src\ROMInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Tables.cpp">
+    <ClCompile Include="repo\mt32emu\src\SampleRateConverter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\TVA.cpp">
+    <ClCompile Include="repo\mt32emu\src\sha1\sha1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\TVF.cpp">
+    <ClCompile Include="repo\mt32emu\src\Synth.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\TVP.cpp">
+    <ClCompile Include="repo\mt32emu\src\Tables.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\sha1\sha1.cpp">
+    <ClCompile Include="repo\mt32emu\src\TVA.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Display.cpp">
+    <ClCompile Include="repo\mt32emu\src\TVF.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VersionTagging.cpp">
+    <ClCompile Include="repo\mt32emu\src\TVP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\c_interface\c_interface.cpp">
+    <ClCompile Include="repo\mt32emu\src\VersionTagging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Analog.h">
+    <ClInclude Include="config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\BReverbModel.h">
+    <ClInclude Include="repo\mt32emu\src\Analog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\config.h">
+    <ClInclude Include="repo\mt32emu\src\BReverbModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Enumerations.h">
+    <ClInclude Include="repo\mt32emu\src\c_interface\cpp_interface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\File.h">
+    <ClInclude Include="repo\mt32emu\src\c_interface\c_interface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\FileStream.h">
+    <ClInclude Include="repo\mt32emu\src\c_interface\c_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\globals.h">
+    <ClInclude Include="repo\mt32emu\src\Display.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\internals.h">
+    <ClInclude Include="repo\mt32emu\src\Enumerations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\LA32FloatWaveGenerator.h">
+    <ClInclude Include="repo\mt32emu\src\File.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\LA32Ramp.h">
+    <ClInclude Include="repo\mt32emu\src\FileStream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\LA32WaveGenerator.h">
+    <ClInclude Include="repo\mt32emu\src\globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\MemoryRegion.h">
+    <ClInclude Include="repo\mt32emu\src\internals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\MidiEventQueue.h">
+    <ClInclude Include="repo\mt32emu\src\LA32FloatWaveGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\MidiStreamParser.h">
+    <ClInclude Include="repo\mt32emu\src\LA32Ramp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\mmath.h">
+    <ClInclude Include="repo\mt32emu\src\LA32WaveGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\mt32emu.h">
+    <ClInclude Include="repo\mt32emu\src\MemoryRegion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Part.h">
+    <ClInclude Include="repo\mt32emu\src\MidiEventQueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Partial.h">
+    <ClInclude Include="repo\mt32emu\src\MidiStreamParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\PartialManager.h">
+    <ClInclude Include="repo\mt32emu\src\mmath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Poly.h">
+    <ClInclude Include="repo\mt32emu\src\mt32emu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ROMInfo.h">
+    <ClInclude Include="repo\mt32emu\src\Part.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\SampleRateConverter.h">
+    <ClInclude Include="repo\mt32emu\src\Partial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Structures.h">
+    <ClInclude Include="repo\mt32emu\src\PartialManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Synth.h">
+    <ClInclude Include="repo\mt32emu\src\Poly.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Tables.h">
+    <ClInclude Include="repo\mt32emu\src\ROMInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\TVA.h">
+    <ClInclude Include="repo\mt32emu\src\SampleRateConverter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\TVF.h">
+    <ClInclude Include="repo\mt32emu\src\sha1\sha1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\TVP.h">
+    <ClInclude Include="repo\mt32emu\src\Structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Types.h">
+    <ClInclude Include="repo\mt32emu\src\Synth.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\sha1\sha1.h">
+    <ClInclude Include="repo\mt32emu\src\Tables.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Display.h">
+    <ClInclude Include="repo\mt32emu\src\TVA.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VersionTagging.h">
+    <ClInclude Include="repo\mt32emu\src\TVF.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\c_interface\c_interface.h">
+    <ClInclude Include="repo\mt32emu\src\TVP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\c_interface\c_types.h">
+    <ClInclude Include="repo\mt32emu\src\Types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\c_interface\cpp_interface.h">
+    <ClInclude Include="repo\mt32emu\src\VersionTagging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\config.h.in" />
-    <None Include="src\mt32emu.pc.in" />
+    <None Include="repo\mt32emu\src\config.h.in" />
+    <None Include="repo\mt32emu\src\mt32emu.pc.in" />
+    <None Include="repo\README.md" />
   </ItemGroup>
 </Project>

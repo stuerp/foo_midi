@@ -48,42 +48,35 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
 
             if (Player.LoadVST(Entry.path()))
             {
-                PlugIn p;
+                std::string Name;
 
-                p.FilePath = Entry.path();
-
-                std::string VendorName;
-
-                Player.GetVendorName(VendorName);
-
-                std::string ProductName;
-
-                Player.GetProductName(ProductName);
-
-                // Create the plugin name.
                 {
-                    if (!VendorName.empty() || !ProductName.empty())
+                    // Create the plugin name.
+                    if (!Player.VendorName.empty() || !Player.ProductName.empty())
                     {
-                        p.Name = "";
-
-                        if (VendorName.empty() || ((ProductName.length() >= VendorName.length()) && (::strncmp(VendorName.c_str(), ProductName.c_str(), VendorName.length()) == 0)))
+                        if (Player.VendorName.empty() || ((Player.ProductName.length() >= Player.VendorName.length()) && (::strncmp(Player.VendorName.c_str(), Player.ProductName.c_str(), Player.VendorName.length()) == 0)))
                         {
-                            p.Name += ProductName;
+                            Name = Player.ProductName;
                         }
                         else
                         {
-                            p.Name += VendorName;
+                            Name = Player.VendorName;
 
-                            if (!ProductName.empty())
-                                p.Name += std::string(' ' + ProductName);
+                            if (!Player.ProductName.empty())
+                                Name += std::string(' ' + Player.ProductName);
                         }
                     }
                     else
-                        p.Name = (const char *) Entry.path().stem().u8string().c_str();
+                        Name = (const char *) Entry.path().stem().u8string().c_str();
                 }
 
-                p.Id = Player.GetUniqueID();
-                p.HasEditor = Player.HasEditor();
+                PlugIn p =
+                {
+                    .Name = Name,
+                    .FilePath = Entry.path(),
+                    .Id = Player.Id,
+                    .HasEditor = Player.HasEditor()
+                };
 
                 _PlugIns.push_back(p);
             }
