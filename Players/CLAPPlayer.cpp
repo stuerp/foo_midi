@@ -33,6 +33,9 @@ bool CLAPPlayer::Startup()
     LChannel.resize(GetSampleBlockSize());
     RChannel.resize(GetSampleBlockSize());
 
+    if (_Host->Use64Bits())
+        return false; // Not supported yet
+
     _OutChannels[0] = LChannel.data();
     _OutChannels[1] = RChannel.data();
 

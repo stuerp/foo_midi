@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.07.03) P. Stuer **/
+/** $VER: CLAPHost.cpp (2025.07.04) P. Stuer **/
 
 #include "pch.h"
 
@@ -32,25 +32,26 @@ Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor(), _PlugIn(), _PlugInGUI()
         if (::strcmp(extensionId, CLAP_EXT_NOTE_PORTS) == 0)
             return &NotePortsHandler;
 
-/* Queried by Dexed 
-    clap.thread-check
-    clap.thread-pool
-    clap.audio-ports
-    clap.audio-ports-config
-    clap.timer-support
-    clap.posix-fd-support
-    clap.latency
-    clap.gui
-    clap.params
-    clap.note-name
-    clap.voice-info
+        /* Queried by Dexed 
+            clap.thread-check
+            clap.thread-pool
+            clap.audio-ports
+            clap.audio-ports-config
+            clap.timer-support
+            clap.posix-fd-support
+            clap.latency
+            clap.gui
+            clap.params
+            clap.note-name
+            clap.voice-info
 
-    clap.resource-directory.draft/0
-    clap.track-info.draft/1
-    clap.context-menu.draft/0
-    clap.preset-load.draft/2
-    clap.remote-controls.draft/2
-*/
+            clap.resource-directory.draft/0
+            clap.track-info.draft/1
+            clap.context-menu.draft/0
+            clap.preset-load.draft/2
+            clap.remote-controls.draft/2
+        */
+
         return nullptr;
     };
 
@@ -117,11 +118,7 @@ bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
                 _PlugIn = Factory->create_plugin(Factory, this, _PlugInDescriptor->id);
 
                 if (IsPlugInLoaded())
-                {
-                    InitializeGUI();
-
                     return true;
-                }
             }
         }
     }
@@ -184,8 +181,12 @@ bool Host::ActivatePlugIn(double  sampleRate, uint32_t minFrames, uint32_t maxFr
     if (!_PlugIn->init(_PlugIn))
         return false;
 
+    GetGUI(); // Must be called after init().
+
     if (!_PlugIn->activate(_PlugIn, sampleRate, minFrames, maxFrames))
         return false;
+
+    GetVoiceInfo(); // Must be called after activate().
 
     return _PlugIn->start_processing(_PlugIn);
 }
@@ -291,7 +292,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
         {
             console::print(STR_COMPONENT_BASENAME " is examining \"", (const char *) Entry.path().u8string().c_str(), "\"...");
 
-            GetPlugIns(Entry.path(), [this, Entry](const std::string & plugInName, uint32_t index, bool hasGUI)
+            GetPlugInEntries(Entry.path(), [this, Entry](const std::string & plugInName, uint32_t index, bool hasGUI)
             {
                 PlugIn PlugIn =
                 {
@@ -310,7 +311,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
 /// <summary>
 /// Gets the CLAP plug-ins in plug-in file.
 /// </summary>
-void Host::GetPlugIns(const fs::path & filePath, const std::function<void(const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept
+void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept
 {
     HMODULE hPlugIn = ::LoadLibraryA((const char *) filePath.u8string().c_str());
 
@@ -335,16 +336,18 @@ void Host::GetPlugIns(const fs::path & filePath, const std::function<void(const 
 
                     if (Descriptor != nullptr)
                     {
+                        #define SafeString(x) ((x) != nullptr ? (x) : "")
+
                         console::print
                         (
-                            "Id: \"", Descriptor->id, "\", ",
-                            "Name: \"", Descriptor->name, "\", ",
-                            "Version: \"", Descriptor->version, "\", ",
-                            "Description: \"", Descriptor->description, "\", ",
-                            "Vendor: \"", Descriptor->vendor, "\", ",
-                            "URL: \"", Descriptor->url, "\", ",
-                            "Manual URL: \"", Descriptor->manual_url, "\", ",
-                            "Support URL: \"", Descriptor->support_url, "\", "
+                            "Id: \"", SafeString(Descriptor->id), "\", ",
+                            "Name: \"", SafeString(Descriptor->name), "\", ",
+                            "Version: \"", SafeString(Descriptor->version), "\", ",
+                            "Description: \"", SafeString(Descriptor->description), "\", ",
+                            "Vendor: \"", SafeString(Descriptor->vendor), "\", ",
+                            "URL: \"", SafeString(Descriptor->url), "\", ",
+                            "Manual URL: \"", SafeString(Descriptor->manual_url), "\", ",
+                            "Support URL: \"", SafeString(Descriptor->support_url), "\", "
                         );
 
                         if (::clap_version_is_compatible(Descriptor->clap_version))
@@ -476,13 +479,11 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
         return false;
     }
 
-    clap_audio_port_info PortInfo = {};
-
     const auto PortIndex = 0;
 
-    AudioPorts->get(plugIn, PortIndex, OutputPort, &PortInfo);
+    AudioPorts->get(plugIn, PortIndex, OutputPort, &_PortInfo);
 
-    if (!(PortInfo.channel_count == 2 && ::strcmp(PortInfo.port_type, CLAP_PORT_STEREO) == 0))
+    if (!(_PortInfo.channel_count == 2 && ::strcmp(_PortInfo.port_type, CLAP_PORT_STEREO) == 0))
     {
         console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 2 output channels in stereo.");
 
@@ -560,9 +561,30 @@ const clap_host_state Host::StateHandler
 };
 
 /// <summary>
-/// Gets the GUI extension.
+/// Gets the plug-in voice info extension.
 /// </summary>
-void Host::InitializeGUI() noexcept
+void Host::GetVoiceInfo() noexcept
+{
+    if ((_PlugIn == nullptr) || (_PlugIn->get_extension == nullptr)) // Odin2 has no get_extension method.
+        return;
+
+    auto _PlugInVoiceInfo = (const clap_plugin_voice_info *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_VOICE_INFO);
+
+    if (_PlugInVoiceInfo == nullptr)
+        return;
+
+    clap_voice_info VoiceInfo = { };
+
+    if (!_PlugInVoiceInfo->get(_PlugIn, &VoiceInfo))
+        return;
+
+    // TODO: Process voice info information.
+}
+
+/// <summary>
+/// Gets the plug-in GUI extension.
+/// </summary>
+void Host::GetGUI() noexcept
 {
     // Odin2 has no get_extension method.
     if (_PlugIn->get_extension == nullptr)

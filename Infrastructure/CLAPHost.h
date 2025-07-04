@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.h (2025.07.02) P. Stuer **/
+/** $VER: CLAPHost.h (2025.07.04) P. Stuer **/
 
 #pragma once
 
@@ -56,15 +56,19 @@ public:
 
     std::string GetPlugInName() const noexcept { return (_PlugInDescriptor != nullptr) ? _PlugInDescriptor->name : ""; }
 
+    bool Use64Bits() const noexcept { return ((_PortInfo.flags & CLAP_AUDIO_PORT_PREFERS_64BITS) == CLAP_AUDIO_PORT_PREFERS_64BITS); }
+
 private:
     void GetPlugIns_(const fs::path & directoryPath) noexcept;
-    void GetPlugIns(const fs::path & filePath, const std::function<void (const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept;
+    void GetPlugInEntries(const fs::path & filePath, const std::function<void (const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept;
 
     static bool VerifyNotePorts(const clap_plugin_t * plugIn) noexcept;
-    static bool VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept;
+    bool VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept;
     static bool HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept;
 
-    void InitializeGUI() noexcept;
+    void GetVoiceInfo() noexcept;
+
+    void GetGUI() noexcept;
     void GetGUISize(const clap_plugin_gui_t * gui, RECT & wr) const noexcept;
 
 private:
@@ -81,6 +85,8 @@ private:
     const clap_plugin_descriptor_t * _PlugInDescriptor;
     const clap_plugin_t * _PlugIn;
     const clap_plugin_gui_t * _PlugInGUI;
+
+    clap_audio_port_info _PortInfo;
 
     Window _Window;
 };

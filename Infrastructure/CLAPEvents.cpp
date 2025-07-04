@@ -83,6 +83,18 @@ OutputEvents::OutputEvents()
     #ifdef DEBUG
         switch (event->type)
         {
+            case CLAP_EVENT_NOTE_ON:
+            case CLAP_EVENT_NOTE_OFF:
+            case CLAP_EVENT_NOTE_CHOKE:
+            case CLAP_EVENT_NOTE_END:
+            case CLAP_EVENT_NOTE_EXPRESSION:        // Represents a note expression. Uses clap_event_note_expression.
+            case CLAP_EVENT_PARAM_VALUE:            // PARAM_VALUE sets the parameter's value; uses clap_event_param_value.
+            case CLAP_EVENT_PARAM_MOD:              // PARAM_MOD sets the parameter's modulation amount; uses clap_event_param_mod.
+            case CLAP_EVENT_PARAM_GESTURE_BEGIN:    // Indicates that the user started or finished adjusting a knob.
+            case CLAP_EVENT_PARAM_GESTURE_END:
+            case CLAP_EVENT_TRANSPORT:              // Update the transport info; clap_event_transport.
+                break;
+
             case CLAP_EVENT_MIDI:
             {
 //              const auto * me = (clap_event_midi *) event;
@@ -103,6 +115,9 @@ OutputEvents::OutputEvents()
                 console::print(Buffer.c_str());
                 break;
             }
+
+            case CLAP_EVENT_MIDI2:
+                break;
 
             default:
             {
