@@ -115,7 +115,7 @@ bool OPNPlayer::Startup()
         ::opn2_reset(Player);
     }
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
 
@@ -130,7 +130,7 @@ void OPNPlayer::Shutdown()
         _Player[i] = nullptr;
     }
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
 void OPNPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)

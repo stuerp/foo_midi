@@ -98,7 +98,7 @@ bool ADLPlayer::Startup()
         ::adl_reset(Player);
     }
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
 
@@ -113,7 +113,7 @@ void ADLPlayer::Shutdown()
         _Player[i] = nullptr;
     }
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
 void ADLPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)

@@ -137,11 +137,8 @@ void Player::DisplayEditorModal()
 
 bool Player::Startup()
 {
-    if (IsHostRunning())
+    if (_IsStarted)
         return true;
-
-    if (!LoadVST(_FilePath.c_str()))
-        return false;
 
     if (_Chunk.size() != 0)
         SetChunk(_Chunk.data(), _Chunk.size());
@@ -155,7 +152,7 @@ bool Player::Startup()
     if (code != 0)
         StopHost();
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
 
@@ -511,7 +508,7 @@ void Player::StopHost() noexcept
 
     _IsTerminating = false;
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
 bool Player::IsHostRunning() noexcept

@@ -392,8 +392,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             auto Player = new VSTi::Player;
 
             if (!Player->LoadVST(Preset._PlugInFilePath.c_str()))
-                throw pfc::exception(pfc::string("Unable to load VSTi plu-in from \"") + Preset._PlugInFilePath + "\"");
-            
+                throw pfc::exception(pfc::string("Unable to load VSTi plug-in from \"") + Preset._PlugInFilePath + "\"");
+
             if (Preset._VSTiConfig.size() != 0)
                 Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
 
@@ -467,16 +467,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             auto Player = new BMPlayer;
 
-            {
-                DWORD BASSVersion = Player->GetVersion();
-
-                console::print(STR_COMPONENT_BASENAME " is using BASS ", (BASSVersion >> 24) & 0xFF, ".", (BASSVersion >> 16) & 0xFF, ".", (BASSVersion >> 8) & 0xFF, ".", BASSVersion & 0xFF, ".");
-
-                DWORD BASSMIDIVersion = Player->GetMIDIVersion();
-
-                console::print(STR_COMPONENT_BASENAME " is using BASS MIDI ", (BASSMIDIVersion >> 24) & 0xFF, ".", (BASSMIDIVersion >> 16) & 0xFF, ".", (BASSMIDIVersion >> 8) & 0xFF, ".", BASSMIDIVersion & 0xFF, ".");
-            }
-
             Player->SetInterpolationMode(_BASSMIDIInterpolationMode);
             Player->SetVoiceCount(Preset._VoiceCount);
             Player->EnableEffects(Preset._EffectsEnabled);
@@ -514,12 +504,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
 
             auto Player = new FSPlayer;
-
-            {
-                DWORD Version = Player->GetVersion();
-
-                console::print(STR_COMPONENT_BASENAME " is using FluidSynth ", (Version >> 24) & 0xFF, ".", (Version >> 16) & 0xFF, ".", (Version >> 8) & 0xFF, ".");
-            }
 
             pfc::string DirectoryPath = CfgFluidSynthDirectoryPath;
 

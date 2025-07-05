@@ -24,7 +24,7 @@ CLAPPlayer::~CLAPPlayer()
 
 bool CLAPPlayer::Startup()
 {
-    if (_IsInitialized)
+    if (_IsStarted)
         return true;
 
     if (!_Host->IsPlugInLoaded())
@@ -47,7 +47,7 @@ bool CLAPPlayer::Startup()
     if (!_Host->ActivatePlugIn((double) _SampleRate, 1, GetSampleBlockSize()))
         return false;
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
     Reset();
@@ -57,7 +57,7 @@ bool CLAPPlayer::Startup()
 
 void CLAPPlayer::Shutdown()
 {
-    if (!_IsInitialized)
+    if (!_IsStarted)
         return;
 
     if (!_Host->IsPlugInLoaded())
@@ -65,7 +65,7 @@ void CLAPPlayer::Shutdown()
 
     _Host->DeactivatePlugIn();
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
 void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)

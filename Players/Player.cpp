@@ -20,7 +20,7 @@ player_t::player_t()
 
     _Remainder = 0;
 
-    _IsInitialized = false;
+    _IsStarted = false;
 
 #ifdef HAVE_FOO_VIS_MIDI
     {
@@ -534,7 +534,7 @@ void player_t::Configure(MIDIFlavors midiFlavor, bool filterEffects)
     _MIDIFlavor = midiFlavor;
     _FilterEffects = filterEffects;
 /*
-    if (_IsInitialized)
+    if (_IsStarted)
     {
         for (uint8_t PortNumber = 0; PortNumber < 3; ++PortNumber)
             ResetPort(PortNumber, 0);
@@ -673,7 +673,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
 /// </summary>
 void player_t::ResetPort(uint8_t portNumber, uint32_t time)
 {
-    if (!_IsInitialized)
+    if (!_IsStarted)
         return;
 
     if (time == 0)

@@ -188,7 +188,10 @@ If you have configured VSTi the compatible instruments will added to the list as
 
 The **Configure** button will be enabled if the player has an additional dialog to configure settings specific to that player.
 
-The **Sample rate** combobox allows you to specify the sample rate the player will use create samples. Select any of the predefined values or enter a custom value between 6000Hz and 192000Hz.
+The **Sample rate** combobox allows you to specify the sample rate the player will be asked to create samples. Select any of the predefined values or enter a custom value between 8000Hz and 192000Hz.
+
+> [!IMPORTANT]
+> Some players may ignore this setting because player-specific parameters cause it to render at a higher or lower sample rate. F.e. [FluidSynth](#fluidsynth-optional) may get a different sample rate from a configuration file or [LibMT32EMU](#libmt32emu-mt-32-built-in) will use a different sample rate resulting from a combination of other settings. The actual sample rate can be read from the [samplerate](#information-fields) information field.
 
 ### Looping
 
@@ -257,7 +260,7 @@ During playback:
 
 | Name                          | Contents |
 | ----------------------------- | -------- |
-| samplerate                    | The sample rate currently being used to generate the samples |
+| samplerate                    | The sample rate currently being used to generate the samples. This can be different from sample rate specified in the preferences. |
 | midi_player                   | The name of the MIDI player  |
 | midi_plug_in                  | The name of the MIDI player plug-in if the player supports it |
 | midi_active_voices            | The number of active voices used by a wave table player |

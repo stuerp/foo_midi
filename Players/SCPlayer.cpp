@@ -15,7 +15,7 @@
 
 SCPlayer::SCPlayer() noexcept : player_t(),  _Samples()
 {
-    _IsInitialized = false;
+    _IsStarted = false;
     _COMInitialisationCount = 0;
 
     for (size_t i = 0; i < _countof(_hProcess); ++i)
@@ -64,7 +64,7 @@ void SCPlayer::SetRootPath(const fs::path & directoryPath)
 /// </summary>
 bool SCPlayer::Startup()
 {
-    if (_IsInitialized)
+    if (_IsStarted)
         return true;
 
     if (_RootPath.empty())
@@ -85,7 +85,7 @@ bool SCPlayer::Startup()
             return false;
     }
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
     Reset();
 
@@ -100,7 +100,7 @@ void SCPlayer::Shutdown()
     for (uint32_t i = 0; i < _countof(_hProcess); ++i)
         StopHost(i);
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
 /// <summary>

@@ -63,7 +63,7 @@ protected:
     uint32_t GetProcessorArchitecture(const fs::path & filePath) const;
 
 protected:
-    bool _IsInitialized;
+    bool _IsStarted;
     uint32_t _SampleRate;
     midi::sysex_table_t _SysExMap;
     std::vector<uint8_t> _Ports;

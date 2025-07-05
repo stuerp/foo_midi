@@ -123,8 +123,17 @@ static void Log(int level, const char * message, void * data)
 
 bool FSPlayer::Startup()
 {
+    if (_IsStarted)
+        return true;
+
     if (!_API.IsInitialized())
         return false;
+
+    {
+        DWORD Version = GetVersion();
+
+        console::print(STR_COMPONENT_BASENAME " is using FluidSynth ", (Version >> 24) & 0xFF, ".", (Version >> 16) & 0xFF, ".", (Version >> 8) & 0xFF, ".");
+    }
 
     if (IsStarted())
         return true;
@@ -252,7 +261,7 @@ bool FSPlayer::Startup()
 
     _ErrorMessage = "";
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
     Reset();
@@ -277,7 +286,7 @@ void FSPlayer::Shutdown()
         _Settings = nullptr;
     }
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
 void FSPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)

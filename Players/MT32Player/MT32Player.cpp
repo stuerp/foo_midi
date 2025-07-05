@@ -26,7 +26,7 @@ MT32Player::~MT32Player()
 
 bool MT32Player::Startup()
 {
-    if (_IsInitialized)
+    if (_IsStarted)
         return true;
 
     _Service.createContext();
@@ -56,7 +56,7 @@ bool MT32Player::Startup()
 
     Reset();
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
     return true;
 }
@@ -65,7 +65,7 @@ void MT32Player::Shutdown()
 {
     _Service.freeContext();
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
 void MT32Player::Render(audio_sample * sampleData, uint32_t sampleCount)

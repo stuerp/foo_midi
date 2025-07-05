@@ -134,8 +134,18 @@ bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoad
 
 bool BMPlayer::Startup()
 {
-    if (IsStarted())
+    if (_IsStarted)
         return true;
+
+    {
+        DWORD BASSVersion = GetVersion();
+
+        console::print(STR_COMPONENT_BASENAME " is using BASS ", (BASSVersion >> 24) & 0xFF, ".", (BASSVersion >> 16) & 0xFF, ".", (BASSVersion >> 8) & 0xFF, ".", BASSVersion & 0xFF, ".");
+
+        DWORD BASSMIDIVersion = GetMIDIVersion();
+
+        console::print(STR_COMPONENT_BASENAME " is using BASS MIDI ", (BASSMIDIVersion >> 24) & 0xFF, ".", (BASSMIDIVersion >> 16) & 0xFF, ".", (BASSMIDIVersion >> 8) & 0xFF, ".", BASSMIDIVersion & 0xFF, ".");
+    }
 
     std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
 
@@ -171,7 +181,7 @@ bool BMPlayer::Startup()
 
     _ErrorMessage = "";
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
     Reset();
@@ -207,7 +217,7 @@ void BMPlayer::Shutdown()
         _SFList[1] = nullptr;
     }
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
 void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
