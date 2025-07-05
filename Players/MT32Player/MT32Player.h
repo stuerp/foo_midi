@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.h (2025.07.02) **/
+/** $VER: MT32Player.h (2025.07.05) **/
 
 #pragma once
 
@@ -33,7 +33,7 @@ public:
 
     void SetROMDirectory(const fs::path & directoryPath) noexcept;
 
-    bool IsConfigValid() noexcept;
+//  bool IsConfigValid() noexcept;
 
     std::string GetVersion() noexcept { return _Service.getLibraryVersionString(); }
 

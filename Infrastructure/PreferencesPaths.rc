@@ -95,7 +95,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #pragma endregion
 
-#pragma region Munt path
+#pragma region MT32Emu path
 
 // Label
 #define X_B31    X_B21
@@ -222,8 +222,8 @@ font 8, "MS Shell Dlg", 400, 0, 1
     pushbutton  "...",                  IDC_SOUNDFONT_FILE_PATH_SELECT ,    X_B23, Y_B23,     W_B23, H_B23
 
     rtext       "MT-32 ROMs:",          IDC_STATIC,                         X_B31, Y_B31 + 2, W_B31, H_B31
-    edittext                            IDC_MUNT_FILE_PATH,                 X_B32, Y_B32,     W_B32, H_B32, ES_AUTOHSCROLL
-    pushbutton  "...",                  IDC_MUNT_FILE_PATH_SELECT,          X_B33, Y_B33,     W_B33, H_B33
+    edittext                            IDC_MT32EMU_FILE_PATH,              X_B32, Y_B32,     W_B32, H_B32, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_MT32EMU_FILE_PATH_SELECT,       X_B33, Y_B33,     W_B33, H_B33
 
     rtext       "Secret Sauce:",        IDC_STATIC,                         X_B41, Y_B41 + 2, W_B41, H_B41
     edittext                            IDC_SECRET_SAUCE_PATH,              X_B42, Y_B42,     W_B42, H_B42, ES_AUTOHSCROLL

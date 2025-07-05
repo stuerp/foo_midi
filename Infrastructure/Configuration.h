@@ -11,6 +11,7 @@
 #include "ConfigurationMap.h"
 
 #include <fluidsynth.h>
+#include <mt32emu.h>
 
 using namespace cfg_var_modern;
 
@@ -25,7 +26,7 @@ enum class PlayerTypes : int8_t
     EmuDeMIDI = Min,
     VSTi = 1,
     FluidSynth = 2,
-    SuperMunt = 3,
+    MT32Emu = 3,
     BASSMIDI = 4,
     DirectX = 5,
     ADL = 6,
@@ -85,7 +86,7 @@ enum
 
     DefaultMIDIFlavor = MIDIFlavors::Default,
     DefaultUseMIDIEffects = 1,
-    DefaultUseSuperMuntWithMT32 = 1,
+    DefaultUseMT32EmuWithMT32 = 1,
     DefaultUseVSTiWithXG = 0,
 
     DefaultEmuDeMIDIExclusion = 1,
@@ -96,9 +97,17 @@ enum
 
     DefaultBASSMIDIResamplingMode = 1,
 
-    DefaultGMSet = 0,
+    DefaultMT32EmuConversionQuality = MT32Emu::SamplerateConversionQuality::SamplerateConversionQuality_BEST,
+    DefaultMT32EmuMaxPartials = 32, // MT32EMU_DEFAULT_MAX_PARTIALS,
+    DefaultMT32EmuAnalogOutputMode = MT32Emu::AnalogOutputMode::AnalogOutputMode_OVERSAMPLED,
+    DefaultMT32EmuGMSet = 0,
+    DefaultMT32EmuDACInputMode = MT32Emu::DACInputMode_NICE,
 
-    // Munt
+    DefaultMT32EmuNiceAmpRamp = false,
+    DefaultMT32EmuNicePanning = true,
+    DefaultMT32EmuNicePartialMixing = true,
+
+    // MT32Emu
     DefaultNukeSynth = 0,
     DefaultNukeBank = 2,
     DefaultNukePanning = 0,
@@ -154,7 +163,14 @@ extern cfg_var_modern::cfg_int
     CfgOPNChipCount,
     CfgOPNSoftPanning,
 
-    CfgMuntGMSet,
+    CfgMT32EmuConversionQuality,
+    CfgMT32EmuMaxPartials,
+    CfgMT32EmuAnalogOutputMode,
+    CfgMT32EmuGMSet,
+    CfgMT32EmuDACInputMode,
+    CfgMT32EmuNiceAmpRamp,
+    CfgMT32EmuNicePanning,
+    CfgMT32EmuNicePartialMixing,
 
     CfgNukeSynthesizer,
     CfgNukeBank,
@@ -162,7 +178,7 @@ extern cfg_var_modern::cfg_int
 
     CfgMIDIFlavor,
     CfgUseMIDIEffects,
-    CfgUseSuperMuntWithMT32,
+    CfgUseMT32EmuWithMT32,
     CfgUseVSTiWithXG;
 
 extern cfg_var_modern::cfg_bool
@@ -212,8 +228,8 @@ extern advconfig_checkbox_factory AdvCfgLoadSoundFontDynamically;
 extern advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled;
 extern advconfig_integer_factory AdvCfgBASSMIDIVoices;
 
-extern const char * _MuntSets[];
-extern const size_t _MuntSetCount;
+extern const char * _MT32EmuSets[];
+extern const size_t _MT32EmuSetCount;
 
 extern const char * _FileExtensions[];
 extern const size_t _FileExtensionCount;

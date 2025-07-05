@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.rc (2025.06.22) **/
+/** $VER: PreferencesFM.rc (2025.07.05) **/
 
 #include "Resource.h"
 
@@ -146,6 +146,93 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #define H_C00    11 + H_C02 + IY + H_C04 + IY + H_C06 + IY + H_C07 + 7
 
+
+// Groupbox LibMT32Emu
+
+#define X_D00    0
+#define Y_D00    Y_C00 + H_C00
+#define W_D00    281
+
+    // Label: Conversion Quality
+    #define X_D01    X_D00 +  5
+    #define Y_D01    Y_D00 + 11
+    #define W_D01    64
+    #define H_D01    H_LBL
+
+    // Combobox: Conversion Quality
+    #define X_D02    X_D01 + W_D01 + IX
+    #define Y_D02    Y_D01
+    #define W_D02    64
+    #define H_D02    H_CBX
+
+    // Label: Max. Partials
+    #define X_D03    X_D02 + W_D02 + IX
+    #define Y_D03    Y_D01
+    #define W_D03    48
+    #define H_D03    H_LBL
+
+    // Combobox: Max. Partials
+    #define X_D04    X_D03 + W_D03 + IX
+    #define Y_D04    Y_D03
+    #define W_D04    32
+    #define H_D04    H_EBX
+
+    // Label: Analog Output Mode
+    #define X_D05    X_D01
+    #define Y_D05    Y_D02 + H_D02 + IY
+    #define W_D05    64
+    #define H_D05    H_LBL
+
+    // Combobox: Analog Output Mode
+    #define X_D06    X_D05 + W_D05 + IX
+    #define Y_D06    Y_D05
+    #define W_D06    64
+    #define H_D06    H_CBX
+
+    // Label: GM Set
+    #define X_D07    X_D06 + W_D06 + IX
+    #define Y_D07    Y_D05
+    #define W_D07    48
+    #define H_D07    H_LBL
+
+    // Combobox: GM Set
+    #define X_D08    X_D07 + W_D07 + IX
+    #define Y_D08    Y_D07
+    #define W_D08    80
+    #define H_D08    H_CBX
+
+    // Label: DAC Input Mode
+    #define X_D09    X_D05
+    #define Y_D09    Y_D06 + H_D06 + IY
+    #define W_D09    64
+    #define H_D09    H_LBL
+
+    // Combobox: DAC Input Mode
+    #define X_D10    X_D09 + W_D09 + IX
+    #define Y_D10    Y_D09
+    #define W_D10    64
+    #define H_D10    H_CBX
+
+    // Checkbox Nice Amp Ramp
+    #define X_D11    X_D09
+    #define Y_D11    Y_D10 + H_D10 + IY
+    #define W_D11    64
+    #define H_D11    H_CHB
+
+    // Checkbox Nice Panning
+    #define X_D12    X_D11 + W_D11 + IX
+    #define Y_D12    Y_D11
+    #define W_D12    64
+    #define H_D12    H_CHB
+
+    // Checkbox Nice Partial Mixing
+    #define X_D13    X_D12 + W_D12 + IX
+    #define Y_D13    Y_D12
+    #define W_D13    80
+    #define H_D13    H_CHB
+
+#define H_D00    11 + H_D02 + IY + H_D06 + IY + H_D10 + IY + H_D11 + 7
+
 IDD_PREFERENCES_FM dialogex 0, 0, 0, 0
 style DS_SHELLFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 1
@@ -173,4 +260,20 @@ font 8, "MS Shell Dlg", 400, 0, 1
         combobox                            IDC_OPN_CHIPS,      X_C06, Y_C06,     W_C06, H_C06, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
         control     "Enable soft panning",  IDC_OPN_SOFT_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C07, Y_C07, W_C07, H_C07
+
+    groupbox "MT32Emu (Munt)", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
+        rtext       "Conversion Quality:"   IDC_MT32_CONVERSION_QUALITY_TEXT,   X_D01, Y_D01 + 2, W_D01, H_D01
+        combobox                            IDC_MT32_CONVERSION_QUALITY,        X_D02, Y_D02,     W_D02, H_D02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Max. Partials:",       IDC_MT32_MAX_PARTIALS_TEXT,         X_D03, Y_D03 + 2, W_D03, H_D03
+        edittext                            IDC_MT32_MAX_PARTIALS,              X_D04, Y_D04,     W_D04, H_D04, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        rtext       "Analog Output Mode:"   IDC_MT32_ANALOG_OUTPUT_MODE_TEXT,   X_D05, Y_D05 + 2, W_D05, H_D05
+        combobox                            IDC_MT32_ANALOG_OUTPUT_MODE,        X_D06, Y_D06,     W_D06, H_D06, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "GM Set:",              IDC_MT32_GM_SET_TEXT,               X_D07, Y_D07 + 2, W_D07, H_D07
+        combobox                            IDC_MT32_GM_SET,                    X_D08, Y_D08,     W_D08, H_D08, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "DAC Input Mode:"       IDC_MT32_DAC_INPUT_MODE_TEXT,       X_D09, Y_D09 + 2, W_D09, H_D09
+        combobox                            IDC_MT32_DAC_INPUT_MODE,            X_D10, Y_D10,     W_D10, H_D10, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+        control     "Nice Amp Ramp",        IDC_MT32_NICE_AMP_RAMP,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D11, Y_D11, W_D11, H_D11
+        control     "Nice Panning",         IDC_MT32_NICE_PANNING,              "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D12, Y_D12, W_D12, H_D12
+        control     "Nice Partial Mixing",  IDC_MT32_NICE_PARTIAL_MIXING,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D13, Y_D13, W_D13, H_D13
 }

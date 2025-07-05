@@ -327,8 +327,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
         }
 
-        if (_IsMT32 && CfgUseSuperMuntWithMT32)
-            _PlayerType = PlayerTypes::SuperMunt;
+        if (_IsMT32 && CfgUseMT32EmuWithMT32)
+            _PlayerType = PlayerTypes::MT32Emu;
         else
         if (_IsXG && CfgUseVSTiWithXG)
         {
@@ -544,10 +544,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             return;
         }
 
-        // Munt (MT-32)
-        case PlayerTypes::SuperMunt:
+        // MT32Emu (MT-32)
+        case PlayerTypes::MT32Emu:
         {
-            auto Player = new MT32Player(_IsMT32, Preset._MuntGMSet);
+            auto Player = new MT32Player(_IsMT32, Preset._MT32EmuGMSet);
 
             {
                 console::print(STR_COMPONENT_BASENAME " is using mt32emu ", Player->GetVersion().c_str(), ".");
@@ -557,7 +557,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (DirectoryPath.is_empty())
             {
-                console::warning(STR_COMPONENT_BASENAME " is attempting to load the MT-32 ROMs from the plugin install path because the SuperMunt ROM path was not configured.");
+                console::warning(STR_COMPONENT_BASENAME " is attempting to load the MT-32 ROMs from the plugin install path because the MT32Emu ROM path was not configured.");
 
                 DirectoryPath = core_api::get_my_full_path();
                 DirectoryPath.truncate(DirectoryPath.scan_filename());
@@ -567,7 +567,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             Player->SetROMDirectory(DirectoryPath.c_str());
 /*
             if (!Player->IsConfigValid())
-                throw pfc::exception("The Munt driver needs a valid MT-32 or CM32L ROM set to play.");
+                throw pfc::exception("The MT32Emu driver needs a valid MT-32 or CM32L ROM set to play.");
 */
             _Player = Player;
 

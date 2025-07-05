@@ -66,7 +66,7 @@
 #define IDC_XMI_LOOPS                       1009
 #define IDC_FF7_LOOPS                       1010
 
-#define IDC_MUNT_WARNING                    1011
+#define IDC_MT32EMU_WARNING                 1011
 
 #define IDC_EMIDI_EXCLUSION                 1012
 #define IDC_FILTER_INSTRUMENTS              1013
@@ -81,9 +81,6 @@
 #define IDC_CACHED_LBL                      1017
 #define IDC_CACHED                          1018
 
-#define IDC_MUNT_GM_TEXT                    1024
-#define IDC_MUNT_GM_SET                     1025
-
 #define IDC_NUKE_PRESET_TEXT                1026
 #define IDC_NUKE_PRESET                     1027
 #define IDC_NUKE_PANNING                    1028
@@ -91,7 +88,7 @@
 #define IDC_MIDI_FLAVOR_TEXT                1029
 #define IDC_MIDI_FLAVOR                     1030
 #define IDC_MIDI_EFFECTS                    1031
-#define IDC_MIDI_USE_SUPER_MUNT             1032
+#define IDC_MIDI_USE_MT32EMU_WITH_MT32                1032
 #define IDC_MIDI_USE_VSTI_WITH_XG           1033
 
 #define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   1034
@@ -118,6 +115,20 @@
 #define IDC_OPN_CHIPS_TEXT                  1205
 #define IDC_OPN_SOFT_PANNING                1206
 
+#define IDC_MT32_CONVERSION_QUALITY_TEXT    1300
+#define IDC_MT32_CONVERSION_QUALITY         1301
+#define IDC_MT32_MAX_PARTIALS_TEXT          1303
+#define IDC_MT32_MAX_PARTIALS               1304
+#define IDC_MT32_ANALOG_OUTPUT_MODE_TEXT    1305
+#define IDC_MT32_ANALOG_OUTPUT_MODE         1306
+#define IDC_MT32_GM_SET_TEXT                1307
+#define IDC_MT32_GM_SET                     1308
+#define IDC_MT32_DAC_INPUT_MODE_TEXT        1309
+#define IDC_MT32_DAC_INPUT_MODE             1310
+#define IDC_MT32_NICE_AMP_RAMP              1311
+#define IDC_MT32_NICE_PANNING               1312
+#define IDC_MT32_NICE_PARTIAL_MIXING        1313
+
 /** Dialog: Preferences Paths **/
 
 #define IDD_PREFERENCES_PATHS               2000
@@ -129,8 +140,8 @@
 #define IDC_SOUNDFONT_FILE_PATH             2020
 #define IDC_SOUNDFONT_FILE_PATH_SELECT      2021
 
-#define IDC_MUNT_FILE_PATH                  2030
-#define IDC_MUNT_FILE_PATH_SELECT           2031
+#define IDC_MT32EMU_FILE_PATH               2030
+#define IDC_MT32EMU_FILE_PATH_SELECT        2031
 
 #define IDC_SECRET_SAUCE_PATH               2040
 #define IDC_SECRET_SAUCE_PATH_SELECT        2041
@@ -198,7 +209,9 @@
 #define IDC_PORT                            2331
 #define IDC_PORT_SLIDER                     2332
 
-/** Dialog: Preferences FM SynthesisL **/
+/** Dialog: Preferences FM Synthesis **/
+
+#define GUID_PREFS_FM { 0xbe9aebaa, 0x5b66, 0x4374, { 0xa3, 0xad, 0x94, 0x6e, 0xb6, 0xc7, 0xe2, 0x61 } }
 
 #define IDD_PREFERENCES_FM                 2400
 #define IDD_PREFERENCES_FM_NAME            "FM Synthesis"

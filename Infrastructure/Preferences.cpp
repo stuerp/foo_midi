@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.03) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.05) P. Stuer **/
 
 #include "pch.h"
 
@@ -97,10 +97,10 @@ public:
 
         #pragma region MIDI
 
-        COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_USE_SUPER_MUNT, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR,                CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS,               BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_MT32EMU_WITH_MT32, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,      BN_CLICKED, OnButtonClick)
 
         #pragma endregion
 
@@ -132,18 +132,13 @@ public:
 
         #pragma endregion
 
-        #pragma region Munt
-
-        COMMAND_HANDLER_EX(IDC_MUNT_GM_SET, CBN_SELCHANGE, OnSelectionChange)
-
-        #pragma endregion
-
         #pragma region Nuked OPL3
 
         COMMAND_HANDLER_EX(IDC_NUKE_PRESET, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_NUKE_PANNING, BN_CLICKED, OnButtonClick)
 
         #pragma endregion
+
     END_MSG_MAP()
 
     enum
@@ -307,7 +302,7 @@ const PreferencesRootPage::known_player_t PreferencesRootPage::_KnownPlayers[] =
     { "FluidSynth",     PlayerTypes::FluidSynth,    IsFluidSynthPresent },
     { "BASSMIDI",       PlayerTypes::BASSMIDI,      PlayerIsAlwaysPresent },
     { "DirectX",        PlayerTypes::DirectX,       PlayerIsNeverPresent },
-    { "Super Munt GM",  PlayerTypes::SuperMunt,     PlayerIsAlwaysPresent },
+    { "MT32Emu",        PlayerTypes::MT32Emu,       PlayerIsAlwaysPresent },
     { "LibADLMIDI",     PlayerTypes::ADL,           PlayerIsAlwaysPresent },
     { "LibOPNMIDI",     PlayerTypes::OPN,           PlayerIsAlwaysPresent },
     { "OPL MIDI",       PlayerTypes::OPL,           PlayerIsNeverPresent },
@@ -327,14 +322,6 @@ const PreferencesRootPage::InterpolationMethod PreferencesRootPage::_Interpolati
     { L"Cubic", FLUID_INTERP_4THORDER },
     { L"7th Order Sinc", FLUID_INTERP_7THORDER }
 };
-
-const char * _MuntSets[] =
-{
-    "Roland",
-    "Sierra / King's Quest 6",
-};
-
-const size_t _MuntSetCount = _countof(_MuntSets);
 
 #pragma region preferences_page_instance
 
@@ -428,9 +415,9 @@ void PreferencesRootPage::apply()
     {
         CfgMIDIFlavor         = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
 
-        CfgUseMIDIEffects       = (t_int32) SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) ? 0 : 1;
-        CfgUseSuperMuntWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK);
-        CfgUseVSTiWithXG        = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
+        CfgUseMIDIEffects     = (t_int32) SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) ? 0 : 1;
+        CfgUseMT32EmuWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_GETCHECK);
+        CfgUseVSTiWithXG      = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
     }
 
     // Miscellaneous
@@ -468,11 +455,6 @@ void PreferencesRootPage::apply()
     }
     {
         CfgBASSMIDIResamplingMode = (t_int32) SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
-    }
-
-    // Munt
-    {
-        CfgMuntGMSet = (t_int32) SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL);
     }
 
     // Nuked OPL3
@@ -547,10 +529,10 @@ void PreferencesRootPage::reset()
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(SupportsFlavors);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(SupportsFlavors);
 
-        SendDlgItemMessage(IDC_MIDI_FLAVOR,           CB_SETCURSEL, DefaultMIDIFlavor);
-        SendDlgItemMessage(IDC_MIDI_EFFECTS,          BM_SETCHECK,  DefaultUseMIDIEffects ? 0 : 1);
-        SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT,   BM_SETCHECK,  DefaultUseSuperMuntWithMT32);
-        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK,  DefaultUseVSTiWithXG);
+        SendDlgItemMessage(IDC_MIDI_FLAVOR,                CB_SETCURSEL, DefaultMIDIFlavor);
+        SendDlgItemMessage(IDC_MIDI_EFFECTS,               BM_SETCHECK,  DefaultUseMIDIEffects ? 0 : 1);
+        SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_SETCHECK,  DefaultUseMT32EmuWithMT32);
+        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,      BM_SETCHECK,  DefaultUseVSTiWithXG);
     }
 
     // Miscellaneous
@@ -604,18 +586,6 @@ void PreferencesRootPage::reset()
 
         for (const int & ControlId : ControlIds)
             GetDlgItem(ControlId).EnableWindow(IsBASSMIDI);
-    }
-
-    // Munt
-    {
-        const BOOL IsSuperMunt = (_SelectedPlayer.Type == PlayerTypes::SuperMunt);
-
-        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
-        GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(IsSuperMunt);
-
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(IsSuperMunt ? SW_SHOW : SW_HIDE);
-
-        SendDlgItemMessage(IDC_MUNT_GM_SET, CB_SETCURSEL, (WPARAM) DefaultGMSet);
     }
 
     // Nuked OPL3
@@ -858,9 +828,9 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         ::SendMessage(w, CB_SETCURSEL, (WPARAM) CfgMIDIFlavor, 0);
 
-        SendDlgItemMessage(IDC_MIDI_EFFECTS,          BM_SETCHECK, (WPARAM) (CfgUseMIDIEffects ? 0 : 1));
-        SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT,   BM_SETCHECK, (WPARAM) CfgUseSuperMuntWithMT32);
-        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
+        SendDlgItemMessage(IDC_MIDI_EFFECTS,               BM_SETCHECK, (WPARAM) (CfgUseMIDIEffects ? 0 : 1));
+        SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_SETCHECK, (WPARAM) CfgUseMT32EmuWithMT32);
+        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,      BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
 
         const bool Enabled = _SelectedPlayer.SupportsMIDIFlavor();
 
@@ -936,24 +906,6 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         for (const auto & ControlId : ControlIds)
             GetDlgItem(ControlId).EnableWindow(Enable);
-    }
-    #pragma endregion
-
-    #pragma region Munt
-    {
-        auto w = (CComboBox) GetDlgItem(IDC_MUNT_GM_SET);
-
-        for (const auto & Set : _MuntSets)
-            ::uSendMessageText(w, CB_ADDSTRING, 0, Set);
-
-        w.SetCurSel((int) CfgMuntGMSet);
-
-        const BOOL IsSuperMunt = (_SelectedPlayer.Type == PlayerTypes::SuperMunt);
-
-        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
-        GetDlgItem(IDC_MUNT_GM_SET).EnableWindow(IsSuperMunt);
-
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(IsSuperMunt ? SW_SHOW : SW_HIDE);
     }
     #pragma endregion
 
@@ -1046,7 +998,11 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
             Player.GetChunk(_VSTiHost.Config);
         }
     }
-
+/*
+    else
+    if (_SelectedPlayer.Type == PlayerTypes::ADL)
+        ui_control::get()->show_preferences(GUID_PREFS_FM);
+*/
     _IsBusy = false;
     OnChanged();
 }
@@ -1122,16 +1078,6 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
         for (const int & ControlId : ControlIds)
             GetDlgItem(ControlId).EnableWindow(IsBASSMIDI);
-    }
-
-    // Munt
-    {
-        const BOOL IsSuperMunt = (_SelectedPlayer.Type == PlayerTypes::SuperMunt);
-
-        GetDlgItem(IDC_MUNT_GM_TEXT).EnableWindow(IsSuperMunt);
-        GetDlgItem(IDC_MUNT_GM_SET) .EnableWindow(IsSuperMunt);
-
-        GetDlgItem(IDC_MUNT_WARNING).ShowWindow(IsSuperMunt ? SW_SHOW : SW_HIDE);
     }
 
     // Nuked OPL3
@@ -1273,7 +1219,7 @@ bool PreferencesRootPage::HasChanged()
         if (SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) != (CfgUseMIDIEffects ? 0 : 1))
             return true;
 
-        if (SendDlgItemMessage(IDC_MIDI_USE_SUPER_MUNT, BM_GETCHECK) != CfgUseSuperMuntWithMT32)
+        if (SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_GETCHECK) != CfgUseMT32EmuWithMT32)
             return true;
 
         if (SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK) != CfgUseVSTiWithXG)
@@ -1313,13 +1259,6 @@ bool PreferencesRootPage::HasChanged()
             return true;
 
         if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgBASSMIDIResamplingMode)
-            return true;
-    }
-    #pragma endregion
-
-    #pragma region Munt
-    {
-        if (SendDlgItemMessage(IDC_MUNT_GM_SET, CB_GETCURSEL) != CfgMuntGMSet)
             return true;
     }
     #pragma endregion
@@ -1383,6 +1322,11 @@ void PreferencesRootPage::UpdateConfigureButton() noexcept
 
         _VSTiHost.Config = CfgVSTiConfig[Plugin.Id];
     }
+/*
+    else
+    if (_SelectedPlayer.Type == PlayerTypes::ADL)
+        Enable = TRUE;
+*/
 /*
     else
     if ((_SelectedPlayer.Type == PlayerTypes::CLAP) && (_SelectedPlayer.PlugInIndex != (size_t) -1))

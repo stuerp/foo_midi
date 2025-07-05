@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.cpp (2025.07.03) **/
+/** $VER: MT32Player.cpp (2025.07.05) **/
 
 #include "pch.h"
 
@@ -8,6 +8,10 @@
 
 #include "MT32SetupGM.h"
 #include "MT32SetupGMKQ6.h"
+
+#include "Configuration.h"
+
+#include <mt32emu.h>
 
 #pragma warning(disable: 5045)
 
@@ -35,19 +39,19 @@ bool MT32Player::Startup()
         return false;
 
     _Service.setStereoOutputSampleRate(0);
-    _Service.setSamplerateConversionQuality(MT32Emu::SamplerateConversionQuality::SamplerateConversionQuality_BEST);
-    _Service.setPartialCount(MT32Emu::DEFAULT_MAX_PARTIALS);
-    _Service.setAnalogOutputMode(MT32Emu::AnalogOutputMode::AnalogOutputMode_ACCURATE);
+    _Service.setSamplerateConversionQuality((MT32Emu::SamplerateConversionQuality) (int64_t) CfgMT32EmuConversionQuality);
+    _Service.setPartialCount((MT32Emu::Bit32u) (int64_t) CfgMT32EmuMaxPartials);
+    _Service.setAnalogOutputMode((MT32Emu::AnalogOutputMode) (int64_t) CfgMT32EmuAnalogOutputMode);
     _Service.selectRendererType(MT32Emu::RendererType::RendererType_FLOAT);
 
     if (_Service.openSynth() != MT32EMU_RC_OK)
         return false;
 
-    _Service.setDACInputMode(MT32Emu::DACInputMode_NICE);
+    _Service.setDACInputMode((MT32Emu::DACInputMode) (int64_t) CfgMT32EmuDACInputMode);
 
-    _Service.setNiceAmpRampEnabled(false);
-    _Service.setNicePanningEnabled(true);
-    _Service.setNicePartialMixingEnabled(true);
+    _Service.setNiceAmpRampEnabled((bool) CfgMT32EmuNiceAmpRamp);
+    _Service.setNicePanningEnabled((bool) CfgMT32EmuNicePanning);
+    _Service.setNicePartialMixingEnabled((bool) CfgMT32EmuNicePartialMixing);
 
     MT32Emu::Bit32u ActualSampleRate = _Service.getActualStereoOutputSamplerate();
 
@@ -166,7 +170,7 @@ uint32_t MT32Player::GetSampleRate() noexcept
 {
     return _Service.getActualStereoOutputSamplerate();
 }
-
+/*
 /// <summary>
 /// Forces the player to startup. This is necessary because we need the real sample rate before we actually start rendering frames.
 /// </summary>
@@ -174,7 +178,7 @@ bool MT32Player::IsConfigValid() noexcept
 {
     return Startup();
 }
-
+*/
 /// <summary>
 /// Loads the ROMs for the specified machine.
 /// </summary>

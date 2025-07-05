@@ -56,8 +56,8 @@ public:
     uint32_t _OPNChipCount;
     bool _OPNSoftPanning;
 
-    // Munt
-    uint32_t _MuntGMSet;
+    // MT32Emu
+    uint32_t _MT32EmuGMSet;
 
     // FluidSynth / BASS MIDI
     bool _EffectsEnabled;
@@ -70,7 +70,7 @@ public:
 
     MIDIFlavors _MIDIFlavor;
     bool _UseMIDIEffects;
-    bool _UseSuperMuntWithMT32;
+    bool _UseMT32EmuWithMT32;
     bool _UseVSTiWithXG;
 };
 

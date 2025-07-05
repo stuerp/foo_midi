@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2025.06.26) **/
+/** $VER: Preferences.rc (2025.07.05) **/
 
 #include "Resource.h"
 
@@ -177,7 +177,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_A83    W_A80 - 5 - 5
     #define H_A83    H_CHB
 
-    // Checkbox: Use Super Munt with MT-32
+    // Checkbox: Use MT32Emu with MT-32
     #define X_A84    X_A81
     #define Y_A84    Y_A83 + H_A83 + 4
     #define W_A84    W_A80 - 5 - 5
@@ -292,7 +292,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #pragma endregion
 
-#pragma region Munt 
+#pragma region MT32Emu
 
 // Groupbox
 #define X_A60    X_A50
@@ -376,7 +376,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
         rtext       "Flavor:",                              IDC_MIDI_FLAVOR_TEXT, X_A81, Y_A81 + 2, W_A81, H_A81
         combobox                                            IDC_MIDI_FLAVOR,      X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         control     "Filter effects (Reverb and Chorus)",   IDC_MIDI_EFFECTS,          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
-        control     "Use Super Munt with MT-32",            IDC_MIDI_USE_SUPER_MUNT,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
+        control     "Use MT32Emu with MT-32",               IDC_MIDI_USE_MT32EMU_WITH_MT32,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
         control     "Use VSTi with XG",                     IDC_MIDI_USE_VSTI_WITH_XG, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
 
     groupbox "Miscellaneous", IDC_STATIC, X_A30, Y_A30, W_A30, H_A30
@@ -397,14 +397,10 @@ font 8, "MS Shell Dlg", 400, 0, 1
         rtext           "Cached:",          IDC_CACHED_LBL,         X_A55, Y_A55 + 2, W_A55, H_A55
         ltext                  "",          IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56, WS_VISIBLE
 
-    groupbox "Munt", IDC_STATIC, X_A60, Y_A60, W_A60, H_A60
-        rtext       "GM Set:",              IDC_MUNT_GM_TEXT,   X_A63, Y_A63 + 2, W_A63, H_A63
-        combobox                            IDC_MUNT_GM_SET,    X_A64, Y_A64,     W_A64, H_A64, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
     groupbox "Nuke", IDC_STATIC, X_A70, Y_A70, W_A70, H_A70
         rtext       "Preset:",              IDC_NUKE_PRESET_TEXT,     X_A71, Y_A71 + 2, W_A71, H_A71
         combobox                            IDC_NUKE_PRESET,          X_A72, Y_A72,     W_A72, H_A72, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         control     "Enable soft panning",  IDC_NUKE_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A73, Y_A73, W_A73, H_A73
 
-    ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, X_A50, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
+//  ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, X_A50, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 }

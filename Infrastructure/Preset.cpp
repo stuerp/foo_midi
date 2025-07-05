@@ -70,7 +70,7 @@ preset_t::preset_t() noexcept
         _VoiceCount = 256;
 
     {
-        _MuntGMSet = (uint32_t) CfgMuntGMSet;
+        _MT32EmuGMSet = (uint32_t) CfgMT32EmuGMSet;
     }
 
 #ifdef DXISUPPORT
@@ -106,7 +106,7 @@ preset_t::preset_t() noexcept
     {
         _MIDIFlavor = (MIDIFlavors) (uint32_t) CfgMIDIFlavor;
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
-        _UseSuperMuntWithMT32 = (bool) CfgUseSuperMuntWithMT32;
+        _UseMT32EmuWithMT32 = (bool) CfgUseMT32EmuWithMT32;
         _UseVSTiWithXG = (bool) CfgUseVSTiWithXG;
     }
 }
@@ -144,10 +144,10 @@ void preset_t::Serialize(pfc::string & text)
         text += pfc::format_int(_VoiceCount);
     }
     else
-    if (_PlayerType == PlayerTypes::SuperMunt)
+    if (_PlayerType == PlayerTypes::MT32Emu)
     {
         text += "|";
-        text += _MuntSets[_MuntGMSet];
+        text += _MT32EmuSets[_MT32EmuGMSet];
     }
 #ifdef DXISUPPORT
     else
@@ -228,7 +228,7 @@ void preset_t::Serialize(pfc::string & text)
     text += pfc::format_int(_UseMIDIEffects);
 
     text += "|";
-    text += pfc::format_int(_UseSuperMuntWithMT32);
+    text += pfc::format_int(_UseMT32EmuWithMT32);
 
     text += "|";
     text += pfc::format_int(_UseVSTiWithXG);
@@ -274,7 +274,7 @@ void preset_t::Deserialize(const char * text)
     uint32_t OPNBankNumber = 0;
     uint32_t OPNEmulatorCore = 0;
 
-    uint32_t MuntGMSet = 0;
+    uint32_t MT32EmuGMSet = 0;
 
     uint32_t NukeSynth = 0;
     uint32_t NukeBank = 0;
@@ -283,7 +283,7 @@ void preset_t::Deserialize(const char * text)
     MIDIFlavors Flavor = MIDIFlavors::Default;
 
     bool UseMIDIEffects = false;
-    bool UseSuperMuntWithMT32 = false;
+    bool UseMT32EmuWithMT32 = false;
     bool UseSecretSauceWithXG = false;
 
     GetValue(Separator, text);
@@ -356,22 +356,22 @@ void preset_t::Deserialize(const char * text)
         }
     }
     else
-    if (PlayerType == PlayerTypes::SuperMunt)
+    if (PlayerType == PlayerTypes::MT32Emu)
     {
         size_t i;
 
-        for (i = 0; i < _MuntSetCount; ++i)
+        for (i = 0; i < _MT32EmuSetCount; ++i)
         {
-            size_t len = ::strlen(_MuntSets[i]);
+            size_t len = ::strlen(_MT32EmuSets[i]);
 
-            if (len == (size_t) (Separator - text) && (::strncmp(text, _MuntSets[i], len) == 0))
+            if (len == (size_t) (Separator - text) && (::strncmp(text, _MT32EmuSets[i], len) == 0))
             {
-                MuntGMSet = (uint32_t) i;
+                MT32EmuGMSet = (uint32_t) i;
                 break;
             }
         }
 
-        if (i == _MuntSetCount)
+        if (i == _MT32EmuSetCount)
             return;
     }
     else
@@ -497,7 +497,7 @@ void preset_t::Deserialize(const char * text)
     if (CurrentSchemaVersion >= 12)
     {
         GetValue(Separator, text);
-        UseSuperMuntWithMT32 = pfc::atodec<bool>(text, (t_size) (Separator - text));
+        UseMT32EmuWithMT32 = pfc::atodec<bool>(text, (t_size) (Separator - text));
 
         GetValue(Separator, text);
         UseSecretSauceWithXG = pfc::atodec<bool>(text, (t_size) (Separator - text));
@@ -526,7 +526,7 @@ void preset_t::Deserialize(const char * text)
     _OPNBankNumber = OPNBankNumber;
     _OPNEmulatorCore = OPNEmulatorCore;
 
-    _MuntGMSet = MuntGMSet;
+    _MT32EmuGMSet = MT32EmuGMSet;
 
     _NukeSynth = NukeSynth;
     _NukeBank = NukeBank;

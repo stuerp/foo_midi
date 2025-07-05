@@ -140,9 +140,22 @@ A custom SFList format is also supported to further tweak the sound fonts and in
 
 ### FluidSynth (Optional)
 
-This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) library. You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path the Preferences dialog to use it.
+This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) library. You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path in the Preferences dialog to use it.
 
 It requires an SF2, SF2Pack, SFZ or SF3 soundfont or a DLS-compatible wave set to provide the instrument samples. See [Sound Fonts](#sound-fonts).
+
+#### Configuration file
+
+You can use a text file to specify FluidSynth settings. The file must have the following format:
+
+- Empty lines and comment lines starting with a '#' character are ignored.
+- Each line contains one setting in the following format: `name` *spaces* `value`.
+- Settings with invalid values are ignored.
+- Any valid setting will override the foo_midi defaults and the values set in the Preferences.
+
+Refer to [FluidSettings](https://www.fluidsynth.org/api/fluidsettings.xml) for the available settings.
+
+Specify the path to the file on the **MIDI Player / Paths** preferences page. An example file is included in the component directory.
 
 ### Secret Sauce (Optional)
 
@@ -230,8 +243,8 @@ The **Decay time** setting specifies the time in milliseconds that the player wi
 
 foo_midi supports the following tags:
 
-| Name | Contents |
-| ---- | -------- |
+| Name | Contents  |
+| ---- | --------- |
 | midi_preset      | The preferences that will be use to play the file, overriding any settings selected in Preferences. |
 | midi_sysex_dumps | |
 
@@ -333,6 +346,10 @@ Here's an example on how to use them in your status bar:
 - Development
   - [FluidSynth GitHub](https://github.com/FluidSynth/fluidsynth)
   - [FluidSynth Developer Documentation](https://www.fluidsynth.org/api/index.html)
+
+### CLAP Host
+
+- [BaconPaul's Test microhost](https://github.com/baconpaul/micro-clap-host)
 
 ### CLAP Plug-ins
 

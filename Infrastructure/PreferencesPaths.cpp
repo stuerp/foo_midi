@@ -76,8 +76,8 @@ public:
         COMMAND_HANDLER_EX(IDC_CLAP_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH, EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_MUNT_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_MT32EMU_FILE_PATH, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_MT32EMU_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH, EN_CHANGE, OnEditChange)
@@ -228,7 +228,7 @@ void PreferencesPathsPage::OnEditChange(UINT code, int id, CWindow) noexcept
             _SoundFontFilePath = pfc::utf8FromWide(Text);
             break;
 
-        case IDC_MUNT_FILE_PATH:
+        case IDC_MT32EMU_FILE_PATH:
             _MT32ROMDirectoryPath = pfc::utf8FromWide(Text);
             break;
 
@@ -305,7 +305,7 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
             break;
         }
 
-        case IDC_MUNT_FILE_PATH_SELECT:
+        case IDC_MT32EMU_FILE_PATH_SELECT:
         {
             pfc::string DirectoryPath = _MT32ROMDirectoryPath;
 
@@ -315,7 +315,7 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 
                 pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
 
-                SetDlgItemText(IDC_MUNT_FILE_PATH, w);
+                SetDlgItemText(IDC_MT32EMU_FILE_PATH, w);
 
                 OnChanged();
             }
@@ -481,7 +481,7 @@ void PreferencesPathsPage::UpdateDialog() const noexcept
     ::uSetDlgItemText(m_hWnd, IDC_VSTi_PATH, _VSTiPlugInDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_CLAP_PATH, _CLAPPlugInDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, _SoundFontFilePath);
-    ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, _MT32ROMDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_MT32EMU_FILE_PATH, _MT32ROMDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_SECRET_SAUCE_PATH, _SecretSauceDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_PATH, _FluidSynthDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_CONFIG_PATH, _FluidSynthConfigFilePath);

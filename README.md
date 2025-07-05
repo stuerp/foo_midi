@@ -95,15 +95,12 @@ To create the component first build the x64 configuration and next the x86 confi
 ## Change Log
 
 - v2.19.0.0-alpha6, 2025-xx-xx
-  - New: **midi_plug_in** info tag that contains the name of the active plug-in when a player supports it.
-  - New: FluidSynth can be configured using a configuration file.
-    - Specify the path to the file on the **MIDI Player / Paths** preferences page.
-    - Empty lines and lines starting with '#' are ignored.
-    - Each line contains one setting in the following format: `name` *spaces* `value`.
-    - Any valid setting will override the foo_midi defaults or values set in the Preferences.
-    - An example file is included in the component directory.
-    - Refer to [FluidSettings](https://www.fluidsynth.org/api/fluidsettings.xml) for possible values.
+  - New: **midi_plug_in** info field that contains the name of the active plug-in when a player supports it.
+  - New: FluidSynth can be configured using a configuration file. See [Configuration file](docs/README.md#configuration-file)
   - Improved: Support for Unicode paths.
+  - Improved: Hardened the CLAP Host.
+  - Improved: Move MT32Emu settings to FM Synthesis preferences page and added a couple of new settings.
+  - Fixed: Some startup and sample rate related issues.
 
 - You can read the full history [here](docs/History.md).
 
