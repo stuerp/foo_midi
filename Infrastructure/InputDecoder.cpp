@@ -266,7 +266,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // Initialize time.
     _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
 
-    _LengthInSamples = (uint32_t) ::MulDiv((int) GetDuration(subSongIndex), (int) _SampleRate, 1000);
+    _LengthInSamples = (uint32_t) ::MulDiv((int) GetDuration(subSongIndex), (int) _SampleRate, 1'000);
 
     _Container.SetTrackCount(_TrackCount);
 
@@ -513,26 +513,26 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     throw pfc::exception("No compatible sound fonts found");
             }
 
-            pfc::string FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
-
-            if (FluidSynthDirectoryPath.isEmpty())
-            {
-                console::warning(STR_COMPONENT_BASENAME " will attempt to load the FluidSynth libraries from the plugin install path because the FluidSynth directory path was not configured.");
-
-                FluidSynthDirectoryPath = core_api::get_my_full_path();
-                FluidSynthDirectoryPath.truncate(FluidSynthDirectoryPath.scan_filename());
-            }
-
             auto Player = new FSPlayer;
-
-            Player->SetAbortHandler(&abortHandler);
-            Player->Initialize(pfc::wideFromUTF8(FluidSynthDirectoryPath));
 
             {
                 DWORD Version = Player->GetVersion();
 
                 console::print(STR_COMPONENT_BASENAME " is using FluidSynth ", (Version >> 24) & 0xFF, ".", (Version >> 16) & 0xFF, ".", (Version >> 8) & 0xFF, ".");
             }
+
+            pfc::string DirectoryPath = CfgFluidSynthDirectoryPath;
+
+            if (DirectoryPath.isEmpty())
+            {
+                console::warning(STR_COMPONENT_BASENAME " will attempt to load the FluidSynth libraries from the plugin install path because the FluidSynth directory path was not configured.");
+
+                DirectoryPath = core_api::get_my_full_path();
+                DirectoryPath.truncate(DirectoryPath.scan_filename());
+            }
+
+            Player->SetAbortHandler(&abortHandler);
+            Player->Initialize(pfc::wideFromUTF8(DirectoryPath));
 
             Player->SetInterpolationMode(_FluidSynthInterpolationMethod);
             Player->SetVoiceCount(Preset._VoiceCount);
@@ -565,24 +565,26 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             auto Player = new MT32Player(_IsMT32, Preset._MuntGMSet);
 
-            console::print(STR_COMPONENT_BASENAME " is using mt32emu ", Player->GetVersion().c_str(), ".");
+            {
+                console::print(STR_COMPONENT_BASENAME " is using mt32emu ", Player->GetVersion().c_str(), ".");
+            }
 
-            pfc::string BasePath = CfgMT32ROMDirectoryPath;
+            pfc::string DirectoryPath = CfgMT32ROMDirectoryPath;
 
-            if (BasePath.is_empty())
+            if (DirectoryPath.is_empty())
             {
                 console::warning(STR_COMPONENT_BASENAME " is attempting to load the MT-32 ROMs from the plugin install path because the SuperMunt ROM path was not configured.");
 
-                BasePath = core_api::get_my_full_path();
-                BasePath.truncate(BasePath.scan_filename());
+                DirectoryPath = core_api::get_my_full_path();
+                DirectoryPath.truncate(DirectoryPath.scan_filename());
             }
 
-            Player->SetROMDirectory(BasePath.c_str());
             Player->SetAbortHandler(&abortHandler);
-
+            Player->SetROMDirectory(DirectoryPath.c_str());
+/*
             if (!Player->IsConfigValid())
                 throw pfc::exception("The Munt driver needs a valid MT-32 or CM32L ROM set to play.");
-
+*/
             _Player = Player;
 
             _Player->SetSampleRate(_SampleRate);
@@ -948,12 +950,12 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
     _IsFirstBlock = true;
     _IsEndOfContainer = false;
 
-    uint32_t OffsetInMs = (uint32_t) (timeInSeconds * 1000.);
+    uint32_t OffsetInMs = (uint32_t) (timeInSeconds * 1'000.);
 
     if (OffsetInMs > _LoopRange.End())
         OffsetInMs = _LoopRange.Begin() + (OffsetInMs - _LoopRange.Begin()) % ((_LoopRange.Size() != 0) ? _LoopRange.Size() : 1);
 
-    const uint32_t OffsetInSamples = (uint32_t) ::MulDiv((int) OffsetInMs, (int) _SampleRate, 1000);
+    const uint32_t OffsetInSamples = (uint32_t) ::MulDiv((int) OffsetInMs, (int) _SampleRate, 1'000);
 
     if ((_LengthInSamples != 0U) && (OffsetInSamples >= (_LengthInSamples - _SampleRate)))
     {
@@ -1181,8 +1183,8 @@ void InputDecoder::SetFadeOutRange() noexcept
         {
             if (_LoopRange.IsSet())
             {
-                uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1000);
-                uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1000);
+                uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1'000);
+                uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1'000);
 
                 _FadeRange.Set(Begin, End);
             }
@@ -1193,8 +1195,8 @@ void InputDecoder::SetFadeOutRange() noexcept
 
         case LoopTypes::LoopAndFadeAlways:
         {
-            uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1000);
-            uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1000);
+            uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1'000);
+            uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1'000);
 
             _FadeRange.Set(Begin, End);
             break;

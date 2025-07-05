@@ -184,10 +184,10 @@ bool FSPlayer::Startup()
 
     Host.LoadConfig(_API, pfc::string(CfgFluidSynthConfigFilePath).c_str(), _Settings);
 
-    double SampleRate = 0.;
+    double ActualSampleRate = 0.;
 
-    if ((_API.GetNumericSetting(_Settings, "synth.sample-rate", &SampleRate) == FLUID_OK) && (_SampleRate != (uint32_t) SampleRate))
-        SetSampleRate((uint32_t) SampleRate);
+    if ((_API.GetNumericSetting(_Settings, "synth.sample-rate", &ActualSampleRate) == FLUID_OK) && (_SampleRate != (uint32_t) ActualSampleRate))
+        SetSampleRate((uint32_t) ActualSampleRate);
 
 //  _API.SetNumericSetting(_Settings, "synth.sample-rate", (double) _SampleRate);
 

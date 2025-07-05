@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2025.06.29) **/
+/** $VER: Player.cpp (2025.07.05) **/
 
 #include "pch.h"
 
@@ -12,7 +12,7 @@
 /// </summary>
 player_t::player_t()
 {
-    _SampleRate = 1000;
+    _SampleRate = 1'000;
 
     _Length = 0;
     _Position = 0;

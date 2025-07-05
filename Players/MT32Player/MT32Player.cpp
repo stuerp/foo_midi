@@ -49,6 +49,11 @@ bool MT32Player::Startup()
     _Service.setNicePanningEnabled(true);
     _Service.setNicePartialMixingEnabled(true);
 
+    MT32Emu::Bit32u ActualSampleRate = _Service.getActualStereoOutputSamplerate();
+
+    if (ActualSampleRate != _SampleRate)
+        SetSampleRate((uint32_t) ActualSampleRate);
+
     Reset();
 
     _IsInitialized = true;
