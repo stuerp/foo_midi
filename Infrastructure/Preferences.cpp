@@ -653,7 +653,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 {
     #pragma region Player Type
 
-    _HasFluidSynth = FluidSynth::Exists();
+    _HasFluidSynth = FluidSynth::API::Exists();
     _HasSecretSauce = SecretSauce::Exists();
 
     #pragma region Known Players

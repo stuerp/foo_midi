@@ -672,7 +672,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             _Player->SetSampleRate(_SampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
-            if (_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
+            if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
             _IsEndOfContainer = false;
@@ -887,6 +887,8 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
             return false;
         }
+
+        _SampleRate = _Player->GetSampleRate();
 
         audioChunk.set_srate(_SampleRate);
         audioChunk.set_channels(ChannelCount);

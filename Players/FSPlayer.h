@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.07.01) **/
+/** $VER: FSPlayer.h (2025.07.05) **/
 
 #pragma once
 
@@ -38,12 +38,12 @@ public:
 
     DWORD GetVersion()
     {
-        if (!_FluidSynth.IsInitialized() || (_FluidSynth.GetVersion == nullptr))
+        if (!_API.IsInitialized() || (_API.GetVersion == nullptr))
             throw component::runtime_error("FluidSynth not yet initialized");
 
         int Major, Minor, Micro;
 
-        _FluidSynth.GetVersion(&Major, &Minor, &Micro);
+        _API.GetVersion(&Major, &Minor, &Micro);
 
         return ((DWORD) Major << 24) | (Minor << 16) | (Micro << 8);
     }
@@ -82,11 +82,12 @@ private:
 private:
     std::string _ErrorMessage;
 
+    fluid_settings_t * _Settings; // All synths share the same config.
+
     static const size_t MaxPorts = 16;
 
     fluid_synth_t * _Synths[MaxPorts]; // Each synth corresponds to a port.
-    fluid_settings_t * _Settings[_countof(_Synths)];
-
+    
     std::vector<soundfont_t> _SoundFonts;
 
     bool _DoDynamicLoading;
@@ -95,6 +96,6 @@ private:
 
     uint32_t _InterpolationMethod;
 
-    FluidSynth _FluidSynth;
+    FluidSynth::API _API;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

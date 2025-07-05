@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.07.02) **/
+/** $VER: Configuration.h (2025.07.05) **/
 
 #pragma once
 
@@ -181,6 +181,7 @@ extern cfg_var_modern::cfg_string
     CfgSoundFontFilePath,
     CfgMT32ROMDirectoryPath,
     CfgFluidSynthDirectoryPath,
+    CfgFluidSynthConfigFilePath,
     CfgProgramsFilePath,
     CfgADLBankFilePath;
 

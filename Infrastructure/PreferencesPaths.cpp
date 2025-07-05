@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2025.06.25) **/
+/** $VER: PreferencesPaths.cpp (2025.07.05) **/
 
 #include "pch.h"
 
@@ -49,6 +49,7 @@ public:
         _MT32ROMDirectoryPath = CfgMT32ROMDirectoryPath;
         AdvCfgSecretSauceDirectoryPath.get(_SecretSauceDirectoryPath);
         _FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
+        _FluidSynthConfigFilePath = CfgFluidSynthConfigFilePath;
         _ProgramsFilePath = CfgProgramsFilePath;
     }
 
@@ -81,6 +82,8 @@ public:
         COMMAND_HANDLER_EX(IDC_SECRET_SAUCE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_CONFIG_PATH, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_CONFIG_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_PROGRAMS_FILE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_PROGRAMS_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
     END_MSG_MAP()
@@ -124,6 +127,7 @@ private:
 
 #pragma region FluidSynth
     pfc::string _FluidSynthDirectoryPath;
+    pfc::string _FluidSynthConfigFilePath;
 #pragma endregion
 
 #pragma region FMMIDI
@@ -160,6 +164,7 @@ void PreferencesPathsPage::apply()
     CfgMT32ROMDirectoryPath = _MT32ROMDirectoryPath;
     AdvCfgSecretSauceDirectoryPath.set(_SecretSauceDirectoryPath);
     CfgFluidSynthDirectoryPath = _FluidSynthDirectoryPath;
+    CfgFluidSynthConfigFilePath = _FluidSynthConfigFilePath;
     CfgProgramsFilePath = _ProgramsFilePath;
 
     OnChanged();
@@ -233,6 +238,10 @@ void PreferencesPathsPage::OnEditChange(UINT code, int id, CWindow) noexcept
 
         case IDC_FLUIDSYNTH_PATH:
             _FluidSynthDirectoryPath = pfc::utf8FromWide(Text);
+            break;
+
+        case IDC_FLUIDSYNTH_CONFIG_PATH:
+            _FluidSynthConfigFilePath = pfc::utf8FromWide(Text);
             break;
 
         case IDC_PROGRAMS_FILE_PATH:
@@ -347,6 +356,30 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
             break;
         }
 
+        case IDC_FLUIDSYNTH_CONFIG_PATH_SELECT:
+        {
+            pfc::string DirectoryPath = _FluidSynthConfigFilePath;
+
+            if (!DirectoryPath.isEmpty())
+                DirectoryPath.truncate_filename();
+            else
+                DirectoryPath = pfc::io::path::getParent(core_api::get_my_full_path());
+
+            pfc::string FilePath = _FluidSynthConfigFilePath;
+
+            if (::uGetOpenFileName(m_hWnd, "FluidSynth configuration files|*.cfg|All files|*.*", 0, "cfg", "Choose a configuration file...", DirectoryPath, FilePath, FALSE))
+            {
+                _FluidSynthConfigFilePath = FilePath;
+
+                pfc::wstringLite w = pfc::wideFromUTF8(FilePath);
+
+                SetDlgItemText(IDC_FLUIDSYNTH_CONFIG_PATH, w);
+
+                OnChanged();
+            }
+            break;
+        }
+
         case IDC_PROGRAMS_FILE_PATH_SELECT:
         {
             pfc::string DirectoryPath = _ProgramsFilePath;
@@ -421,6 +454,9 @@ bool PreferencesPathsPage::HasChanged() const noexcept
     if (_FluidSynthDirectoryPath != CfgFluidSynthDirectoryPath)
         HasChanged = true;
 
+    if (_FluidSynthConfigFilePath != CfgFluidSynthConfigFilePath)
+        HasChanged = true;
+
     if (_ProgramsFilePath != CfgProgramsFilePath)
         HasChanged = true;
 
@@ -448,6 +484,7 @@ void PreferencesPathsPage::UpdateDialog() const noexcept
     ::uSetDlgItemText(m_hWnd, IDC_MUNT_FILE_PATH, _MT32ROMDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_SECRET_SAUCE_PATH, _SecretSauceDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_PATH, _FluidSynthDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_CONFIG_PATH, _FluidSynthConfigFilePath);
     ::uSetDlgItemText(m_hWnd, IDC_PROGRAMS_FILE_PATH, _ProgramsFilePath);
 }
 #pragma endregion

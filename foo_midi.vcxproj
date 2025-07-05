@@ -290,7 +290,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Players\FMMPlayer.cpp" />
-    <ClCompile Include="Players\FS.cpp" />
+    <ClCompile Include="Infrastructure\FS.cpp" />
     <ClCompile Include="Players\FSPlayer.cpp" />
     <ClCompile Include="Infrastructure\InitStageCallback.cpp" />
     <ClCompile Include="Infrastructure\InputDecoder.cpp" />
@@ -424,7 +424,7 @@
     <ClInclude Include="3rdParty\Nuke\fmopl3lib\opl3class.h" />
     <ClInclude Include="3rdParty\Nuke\interface.h" />
     <ClInclude Include="Infrastructure\FileTypeRegistrar.h" />
-    <ClInclude Include="Players\FS.h" />
+    <ClInclude Include="Infrastructure\FS.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Players\FMMPlayer.h" />
     <ClInclude Include="Players\FSPlayer.h" />

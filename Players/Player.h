@@ -33,6 +33,7 @@ public:
     uint32_t Play(audio_sample * samplesData, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
+    uint32_t GetSampleRate() const noexcept { return _SampleRate; };
     void SetSampleRate(uint32_t sampleRate);
 
     void Configure(MIDIFlavors midiFlavor, bool filterEffects);

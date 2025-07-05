@@ -502,11 +502,11 @@ void player_t::Seek(uint32_t timeInSamples)
 }
 
 /// <summary>
-/// Converts the timestamps of the MIDI stream (in ms) to timestamps in samples. Note: that's why the default sample rate is 1000: to force a recalculation before starting to play.
+/// Re-calculates the timestamps whenever the sample rate changes.
 /// </summary>
 void player_t::SetSampleRate(uint32_t sampleRate)
 {
-    if (sampleRate == _SampleRate)
+    if (_SampleRate == sampleRate)
         return;
 
     for (midi::message_t & it : _Stream)
@@ -523,7 +523,7 @@ void player_t::SetSampleRate(uint32_t sampleRate)
 
     _SampleRate = sampleRate;
 
-    Shutdown();
+//  Shutdown(); FIXME
 }
 
 /// <summary>

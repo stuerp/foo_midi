@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.07.02) P. Stuer **/
+/** $VER: Resource.h (2025.07.05) P. Stuer **/
 
 #pragma once
 
@@ -138,13 +138,16 @@
 #define IDC_FLUIDSYNTH_PATH                 2050
 #define IDC_FLUIDSYNTH_PATH_SELECT          2051
 
-#define IDC_PROGRAMS_FILE_PATH              2060
-#define IDC_PROGRAMS_FILE_PATH_SELECT       2061
+#define IDC_FLUIDSYNTH_CONFIG_PATH          2060
+#define IDC_FLUIDSYNTH_CONFIG_PATH_SELECT   2061
 
-#define IDC_CLAP_PATH                       2070
-#define IDC_CLAP_PATH_SELECT                2071
+#define IDC_PROGRAMS_FILE_PATH              2070
+#define IDC_PROGRAMS_FILE_PATH_SELECT       2071
 
-#define IDC_PATHS_MESSAGE                   2080
+#define IDC_CLAP_PATH                       2080
+#define IDC_CLAP_PATH_SELECT                2081
+
+#define IDC_PATHS_MESSAGE                   2090
 
 /** Dialog: Preferences Recomposer **/
 

@@ -1,5 +1,5 @@
 
-/** $VER: FluidSynth.h (2025.06.29) **/
+/** $VER: FS.h (2025.07.05) **/
 
 #pragma once
 
@@ -8,6 +8,9 @@
 #include <fluidsynth.h>
 
 #include <pfc/string-conv-lite.h>
+
+namespace FluidSynth
+{
 
 #pragma region FluidSynth API
 
@@ -18,9 +21,15 @@ typedef fluid_settings_t * (WINAPIV * _new_fluid_settings)();
 typedef int (WINAPIV * _fluid_settings_setnum)(fluid_settings_t * settings, const char * name, double val);
 typedef int (WINAPIV * _fluid_settings_setint)(fluid_settings_t * settings, const char * name, int val);
 typedef int (WINAPIV * _fluid_settings_setstr)(fluid_settings_t * settings, const char * name, const char * val);
-typedef int (WINAPIV * _fluid_settings_dupstr)(fluid_settings_t * settings, const char * name, char ** val);
 
 typedef int (WINAPIV * _fluid_settings_get_type)(fluid_settings_t * settings, const char * name);
+
+typedef int (WINAPIV * _fluid_settings_getnum_range)(fluid_settings_t * settings, const char * name, double * min, double * max);
+typedef int (WINAPIV * _fluid_settings_getint_range)(fluid_settings_t * settings, const char * name, int * min, int * max);
+typedef int (WINAPIV * _fluid_settings_dupstr)(fluid_settings_t * settings, const char * name, char ** val);
+
+typedef int (WINAPIV * _fluid_settings_getnum)(fluid_settings_t * settings, const char * name, double * val);
+typedef int (WINAPIV * _fluid_settings_getint)(fluid_settings_t * settings, const char * name, int * val);
 
 typedef int (WINAPIV * _fluid_settings_foreach)(fluid_settings_t * settings, void * data, fluid_settings_foreach_t func);
 
@@ -89,14 +98,14 @@ typedef fluid_log_function_t (WINAPIV * _fluid_set_log_function)(int level, flui
 /// <summary>
 /// Implements a FluidSynth driver.
 /// </summary>
-class FluidSynth
+class API
 {
 public:
-    FluidSynth() : GetVersion(), _hModule()
+    API() : GetVersion(), _hModule()
     {
     }
 
-    ~FluidSynth()
+    ~API()
     {
         if (_hModule)
         {
@@ -119,9 +128,15 @@ public:
     _fluid_settings_setnum SetNumericSetting;
     _fluid_settings_setint SetIntegerSetting;
     _fluid_settings_setstr SetStringSetting;
-    _fluid_settings_dupstr GetStringSetting;
 
     _fluid_settings_get_type GetSettingType;
+
+    _fluid_settings_getnum GetNumericSetting;
+    _fluid_settings_getint GetIntegerSetting;
+    _fluid_settings_dupstr GetStringSetting;
+
+    _fluid_settings_getnum_range GetNumericSettingRange;
+    _fluid_settings_getint_range GetIntegerSettingRange;
 
     _fluid_settings_foreach ForEachSetting;
 
@@ -183,3 +198,13 @@ private:
 
     static inline const WCHAR * LibraryName = L"libfluidsynth-3.dll";
 };
+
+class Host
+{
+public:
+    bool LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_settings_t * Settings) noexcept;
+
+private:
+};
+
+}

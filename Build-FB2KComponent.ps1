@@ -73,13 +73,23 @@ if ($Platform -eq 'x64')
     }
 
     # juno's fmmidi
-    $ProgramsPath = "3rdParty/midisynth/Programs.txt";
+    $FilePath = "3rdParty/midisynth/Programs.txt";
 
-    if (Test-Path -Path $ProgramsPath)
+    if (Test-Path -Path $FilePath)
     {
         Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
 
-        Copy-Item $ProgramsPath -Destination "$PackagePath";
+        Copy-Item $FilePath -Destination "$PackagePath";
+    }
+
+    # FluidSynth configuration
+    $FilePath = "3rdParty/FluidSynth/FluidSynth.cfg";
+
+    if (Test-Path -Path $FilePath)
+    {
+        Write-Host "Copying FluidSynth configuration to `"$PackagePath`"...";
+
+        Copy-Item $FilePath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")
@@ -129,13 +139,23 @@ elseif ($Platform -eq 'Win32')
     }
 
     # juno's fmmidi
-    $ProgramsPath = "3rdParty/midisynth/Programs.txt";
+    $FilePath = "3rdParty/midisynth/Programs.txt";
 
-    if (Test-Path -Path $ProgramsPath)
+    if (Test-Path -Path $FilePath)
     {
         Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
 
-        Copy-Item $ProgramsPath -Destination "$PackagePath";
+        Copy-Item $FilePath -Destination "$PackagePath";
+    }
+
+    # FluidSynth configuration
+    $FilePath = "3rdParty/FluidSynth/FluidSynth.cfg";
+
+    if (Test-Path -Path $FilePath)
+    {
+        Write-Host "Copying FluidSynth configuration to `"$PackagePath`"...";
+
+        Copy-Item $FilePath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")

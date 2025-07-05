@@ -1,5 +1,5 @@
  
-/** $VER: SoundFonts.cpp (2025.04.13) - Support functions for working with sound font files **/
+/** $VER: SoundFonts.cpp (2025.07.05) - Support functions for working with sound font files **/
 
 #include "pch.h"
 
@@ -119,7 +119,7 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
     // Force the use of a sound font player if an embedded or named sound font was found.
     if ((_PlayerType != PlayerTypes::FluidSynth) && HasNonDefaultSoundFonts && !_SoundFonts.empty())
     {
-        _PlayerType = (FluidSynth::Exists() && HasDLS) ? PlayerTypes::FluidSynth : PlayerTypes::BASSMIDI;
+        _PlayerType = (FluidSynth::API::Exists() && HasDLS) ? PlayerTypes::FluidSynth : PlayerTypes::BASSMIDI;
     }
 
     // Show which sound fonts we'll be using in the console.

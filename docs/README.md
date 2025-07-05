@@ -294,6 +294,7 @@ Here's an example on how to use them in your status bar:
 ### SoundFonts
 
 - [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
+- [FluidSynth SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont)
 
 ### Electronic Music
 
@@ -322,6 +323,13 @@ Here's an example on how to use them in your status bar:
 - [MultimediaWiki](https://wiki.multimedia.cx/index.php/Extensible_Music_Format_(XMF))
 - [Introducing the Interactive XMF Audio File Format](https://www.gamedeveloper.com/audio/introducing-the-interactive-xmf-audio-file-format)
 - [XmfExtractor](https://github.com/benryves/XmfExtractor)
+
+### FluidSynth
+
+- [FluidSynth User Manual](https://github.com/FluidSynth/fluidsynth/wiki/UserManual)
+- Development
+  - [FluidSynth GitHub](https://github.com/FluidSynth/fluidsynth)
+  - [FluidSynth Developer Documentation](https://www.fluidsynth.org/api/index.html)
 
 ### CLAP Plug-ins
 

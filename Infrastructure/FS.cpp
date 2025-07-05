@@ -1,5 +1,5 @@
 
-/** $VER: FS.cpp (2025.07.01) P. Stuer **/
+/** $VER: FS.cpp (2025.07.05) P. Stuer **/
 
 #include "pch.h"
 
@@ -12,7 +12,14 @@
 
 #include <shlwapi.h>
 
-void FluidSynth::Initialize(const WCHAR * basePath)
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
+namespace FluidSynth
+{
+
+void API::Initialize(const WCHAR * basePath)
 {
     if (IsInitialized())
         return;
@@ -31,6 +38,7 @@ void FluidSynth::Initialize(const WCHAR * basePath)
         throw component::runtime_error(component::GetErrorMessage("Failed to load FluidSynth library \"%s\"", ::GetLastError(), ::WideToUTF8(LibraryName).c_str()));
 
     #pragma warning(disable: 4191) // 'type cast': unsafe conversion from 'FARPROC' to 'xxx'
+
     InitializeFunction(fluid_version, GetVersion);
 
     InitializeFunction(new_fluid_settings, CreateSettings);
@@ -38,9 +46,15 @@ void FluidSynth::Initialize(const WCHAR * basePath)
     InitializeFunction(fluid_settings_setnum, SetNumericSetting);
     InitializeFunction(fluid_settings_setint, SetIntegerSetting);
     InitializeFunction(fluid_settings_setstr, SetStringSetting);
-    InitializeFunction(fluid_settings_dupstr, GetStringSetting);
     
     InitializeFunction(fluid_settings_get_type, GetSettingType);
+
+    InitializeFunction(fluid_settings_getnum_range, GetNumericSettingRange);
+    InitializeFunction(fluid_settings_getint_range, GetIntegerSettingRange);
+
+    InitializeFunction(fluid_settings_getnum, GetNumericSetting);
+    InitializeFunction(fluid_settings_getint, GetIntegerSetting);
+    InitializeFunction(fluid_settings_dupstr, GetStringSetting);
 
     InitializeFunction(fluid_free, Free);
     InitializeFunction(fluid_settings_foreach, ForEachSetting);
@@ -100,11 +114,11 @@ void FluidSynth::Initialize(const WCHAR * basePath)
     #pragma warning(default: 4191)
 }
 
-bool FluidSynth::Exists() noexcept
+bool API::Exists() noexcept
 {
     try
     {
-        FluidSynth().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
+        FluidSynth::API().Initialize(pfc::wideFromUTF8(CfgFluidSynthDirectoryPath.get()));
 
         return true;
     }
@@ -114,4 +128,103 @@ bool FluidSynth::Exists() noexcept
 
         return false;
     }
+}
+
+/// <summary>
+/// Loads a FluidSynth configuration file.
+/// </summary>
+bool Host::LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_settings_t * Settings) noexcept
+{
+    if (filePath.empty() || (Settings == nullptr))
+        return false;
+
+    std::ifstream Stream(filePath);
+
+    if (!Stream.is_open())
+        return false;
+
+    std::string Line;
+
+    while (std::getline(Stream, Line))
+    {
+        std::stringstream ss(Line);
+
+        if (Line.empty() || Line.starts_with('#'))
+            continue;
+
+        std::string Name;
+        std::string Value;
+
+        ss >> Name >> Value;
+
+        if (Name.empty() || Value.empty())
+            continue;
+
+        auto Type = api.GetSettingType(Settings, Name.c_str());
+
+        switch (Type)
+        {
+            case FLUID_NUM_TYPE: // Numeric (double)
+            {
+                try
+                {
+                    double Numeric = std::stod(Value.c_str()), Min, Max;
+
+                    if (api.SetNumericSetting(Settings, Name.c_str(), Numeric) != FLUID_OK)
+                    {
+                        api.GetNumericSettingRange(Settings, Name.c_str(), &Min, &Max);
+
+                        console::print(STR_COMPONENT_BASENAME " found invalid numeric value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file. Valid range is ", pfc::format_float(Min, 0, 2), " to ", pfc::format_float(Max, 0, 2), ".");
+                    }
+                }
+                catch (...)
+                {
+                    console::print(STR_COMPONENT_BASENAME " found invalid numeric value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file.");
+                }
+                break;
+            }
+
+            case FLUID_INT_TYPE: // Integer
+            {
+                try
+                {
+                    int Integer = std::stoi(Value.c_str()), Min, Max;
+
+                    if (api.SetIntegerSetting(Settings, Name.c_str(), Integer) != FLUID_OK)
+                    {
+                        api.GetIntegerSettingRange(Settings, Name.c_str(), &Min, &Max);
+
+                        console::print(STR_COMPONENT_BASENAME " found invalid integer value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file. Valid range is ", Min, " to ", Max, ".");
+                    }
+                }
+                catch (...)
+                {
+                    console::print(STR_COMPONENT_BASENAME " found invalid integer value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file.");
+                }
+                break;
+            }
+
+            case FLUID_STR_TYPE: // String
+            {
+                if (api.SetStringSetting(Settings, Name.c_str(), Value.c_str()) != FLUID_OK)
+                {
+                    console::print(STR_COMPONENT_BASENAME " found invalid string value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file.");
+                }
+                break;
+            }
+
+            case FLUID_SET_TYPE: // Set of values
+            {
+                break;
+            }
+
+            case FLUID_NO_TYPE:
+            default:
+                console::print(STR_COMPONENT_BASENAME " found unknown setting \"", Name.c_str() ,"\" in FluidSynth configuration file.");
+        }
+    }
+
+    return true;
+}
+
 }

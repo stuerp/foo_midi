@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.cpp (2025.07.04) **/
+/** $VER: foo_midi.cpp (2025.07.05) **/
 
 #include "pch.h"
 
@@ -31,8 +31,13 @@ namespace
             "\n"
             STR_COMPONENT_DESCRIPTION "\n"
             "\n"
-            "Built with foobar2000 SDK " TOSTRING(FOOBAR2000_SDK_VERSION) ", BASS SDK " BASSVERSIONTEXT ", FluidSynth SDK " FLUIDSYNTH_VERSION ", mt32emu " MT32EMU_VERSION " and CLAP SDK " CLAP_SDK_VERSION "\n"
+            "Built with foobar2000 SDK " TOSTRING(FOOBAR2000_SDK_VERSION) "\n"
             "on " __DATE__ " " __TIME__ ".\n"
+            "\n"
+            "BASS SDK " BASSVERSIONTEXT "\n"
+            "FluidSynth SDK " FLUIDSYNTH_VERSION "\n"
+            "mt32emu " MT32EMU_VERSION "\n"
+            "CLAP SDK " CLAP_SDK_VERSION "\n"
     );
 
     VALIDATE_COMPONENT_FILENAME(STR_COMPONENT_FILENAME);

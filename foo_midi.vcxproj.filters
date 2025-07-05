@@ -47,7 +47,7 @@
     <ClCompile Include="Infrastructure\CLAPEvents.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
     <ClCompile Include="Infrastructure\MainMenu.cpp" />
-    <ClCompile Include="Players\FS.cpp" />
+    <ClCompile Include="Infrastructure\FS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -145,7 +145,7 @@
     <ClInclude Include="Infrastructure\Exception.h" />
     <ClInclude Include="MIDI\SoundFontCache.h" />
     <ClInclude Include="Players\FSPlayer.h" />
-    <ClInclude Include="Players\FS.h" />
+    <ClInclude Include="Infrastructure\FS.h" />
     <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\audio.h" />
     <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\event.h" />
     <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\gen.h" />
