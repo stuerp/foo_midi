@@ -251,7 +251,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
         rtext       "Chips:",               IDC_ADL_CHIPS_TEXT, X_B05, Y_B05 + 2, W_B05, H_B05
         combobox                            IDC_ADL_CHIPS,      X_B06, Y_B06,     W_B06, H_B06, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
-        control     "Enable soft panning",  IDC_ADL_SOFT_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B07, Y_B07, W_B07, H_B07
+        control     "Soft panning",         IDC_ADL_SOFT_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B07, Y_B07, W_B07, H_B07
 
         rtext       "Bank File:",           IDC_ADL_BANK_FILE_PATH_TEXT,    X_B08, Y_B08 + 2, W_B08, H_B08
         edittext                            IDC_ADL_BANK_FILE_PATH,         X_B09, Y_B09,     W_B09, H_B09, ES_AUTOHSCROLL
@@ -265,7 +265,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
         rtext       "Chips:",               IDC_OPN_CHIPS_TEXT, X_C05, Y_C05 + 2, W_C05, H_C05
         combobox                            IDC_OPN_CHIPS,      X_C06, Y_C06,     W_C06, H_C06, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
-        control     "Enable soft panning",  IDC_OPN_SOFT_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C07, Y_C07, W_C07, H_C07
+        control     "Soft panning",         IDC_OPN_SOFT_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C07, Y_C07, W_C07, H_C07
 
     groupbox "MT32Emu (Munt)", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
         rtext       "Conversion Quality:"   IDC_MT32_CONVERSION_QUALITY_TEXT,   X_D01, Y_D01 + 2, W_D01, H_D01

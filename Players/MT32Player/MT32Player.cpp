@@ -56,8 +56,7 @@ bool MT32Player::Startup()
 
     MT32Emu::Bit32u ActualSampleRate = _Service.getActualStereoOutputSamplerate();
 
-    if (ActualSampleRate != _SampleRate)
-        SetSampleRate((uint32_t) ActualSampleRate);
+    SetSampleRate((uint32_t) ActualSampleRate);
 
     Reset();
 

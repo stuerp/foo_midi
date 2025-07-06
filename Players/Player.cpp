@@ -14,11 +14,11 @@ player_t::player_t()
 {
     _SampleRate = 1'000;
 
-    _Length = 0;
-    _Position = 0;
-    _LoopBegin = 0;
+    _Time = 0;
+    _TotalTime = 0;
+    _LoopBeginTime = 0;
 
-    _Remainder = 0;
+    _TimeRemaining = 0;
 
     _IsStarted = false;
 
@@ -44,35 +44,35 @@ bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongInd
 
     // Initialize the event stream.
     {
-        assert(_Stream.size() == 0);
+        assert(_Messages.size() == 0);
 
-        _StreamPosition = 0;
+        _MessageIndex = 0;
 
-        midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _Ports, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
+        midiContainer.SerializeAsStream(subsongIndex, _Messages, _SysExMap, _Ports, _LoopBeginIndex, _LoopEndIndex, cleanFlags);
 
-        if (_Stream.size() == 0)
+        if (_Messages.size() == 0)
             return false;
     }
 
     // Initialize the sample stream.
     {
-        _Position = 0;
-        _Length = midiContainer.GetDuration(subsongIndex, true);
+        _Time = 0;
+        _TotalTime = midiContainer.GetDuration(subsongIndex, true);
 
         if (_LoopType == LoopTypes::NeverLoopAddDecayTime)
-            _Length += (uint32_t) CfgDecayTime;
+            _TotalTime += (uint32_t) CfgDecayTime;
         else
         if (_LoopType >= LoopTypes::LoopAndFadeWhenDetected)
         {
-            _LoopBegin = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
+            _LoopBeginTime = midiContainer.GetLoopBeginTimestamp(subsongIndex, true);
 
-            if (_LoopBegin == ~0UL)
-                _LoopBegin = 0;
+            if (_LoopBeginTime == ~0UL)
+                _LoopBeginTime = 0;
 
-            uint32_t LoopEnd = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
+            uint32_t LoopEndTime = midiContainer.GetLoopEndTimestamp(subsongIndex, true);
 
-            if (LoopEnd == ~0UL)
-                LoopEnd =  _Length;
+            if (LoopEndTime == ~0UL)
+                LoopEndTime =  _TotalTime;
 
             // FIXME: I don't have a clue what this does.
             {
@@ -83,9 +83,9 @@ bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongInd
                 {
                     size_t i;
 
-                    for (i = 0; (i < _Stream.size()) && (i < _StreamLoopEnd); ++i)
+                    for (i = 0; (i < _Messages.size()) && (i < _LoopEndIndex); ++i)
                     {
-                        uint32_t Message = _Stream[i].Data;
+                        uint32_t Message = _Messages[i].Data;
 
                         uint32_t Event = Message & 0x800000F0;
 
@@ -106,9 +106,9 @@ bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongInd
                         }
                     }
 
-                    _Stream.resize(i);
+                    _Messages.resize(i);
 
-                    _Length = std::max(LoopEnd - 1, _Stream[i - 1].Time);
+                    _TotalTime = std::max(LoopEndTime - 1, _Messages[i - 1].Time);
                 }
 
                 for (size_t i = 0; i < NoteOnSize; ++i)
@@ -119,13 +119,13 @@ bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongInd
                         {
                             if (NoteOn[i] & (1 << j))
                             {
-                                _Stream.push_back(midi::message_t(_Length, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                                _Messages.push_back(midi::message_t(_TotalTime, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
                             }
                         }
                     }
                 }
 
-                _Length = LoopEnd;
+                _TotalTime = LoopEndTime;
             }
         }
     }
@@ -150,105 +150,106 @@ bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongInd
 /// <summary>
 /// Renders the specified number of samples to an audio sample buffer.
 /// </summary>
-/// <remarks>All calculations are in samples. MIDIStreamEvent::Timestamp gets converted from ms to samples before playing starts.</remarks>
-uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
+/// <remarks>All calculations are in samples. The MIDIStreamEvent::Timestamps have already been from ms to samples before playing starts.</remarks>
+uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
 {
-    assert(_Stream.size());
+    assert(_Messages.size());
 
     if (!Startup())
         return 0;
 
 #ifdef HAVE_FOO_VIS_MIDI
-    uint32_t OldPosition = _Position;
+    uint32_t OldPosition = _Time;
 #endif
 
 #ifdef _DEBUG
-//  wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Event: %6d/%6d | Sample: %8d/%8d | Chunk: %6d, Rem: %8d\n", (int) _StreamPosition, (int) _Stream.size(), (int) _Position, (int) _Length, (int) size, (int) _Remainder); ::OutputDebugStringW(Line);
+//  wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Event: %6d/%6d | Sample: %8d/%8d | Chunk: %6d, Rem: %8d\n", (int) _MessageIndex, (int) _Messages.size(), (int) _Time, (int) _TotalTime, (int) size, (int) _TimeRemaining); ::OutputDebugStringW(Line);
 #endif
 
-    const uint32_t BlockSize = GetSampleBlockSize();
+    const uint32_t BlockSize = GetBlockSize();
+    const uint32_t ChannelCount = 2;
 
-    uint32_t SampleIndex = 0;
+    uint32_t FrameIndex = 0;
     uint32_t BlockToDo = 0;
 
-    while ((SampleIndex < size) && (_Remainder > 0))
+    while ((FrameIndex < frameCount) && (_TimeRemaining != 0))
     {
-        uint32_t Remainder = _Remainder;
+        uint32_t Remainder = _TimeRemaining;
 
-        if (Remainder > size - SampleIndex)
-            Remainder = size - SampleIndex;
+        if (Remainder > frameCount - FrameIndex)
+            Remainder = frameCount - FrameIndex;
 
         if ((BlockSize != 0) && (Remainder > BlockSize))
             Remainder = BlockSize;
 
         if (Remainder < BlockSize)
         {
-            _Remainder = 0;
+            _TimeRemaining = 0;
             BlockToDo = Remainder;
             break;
         }
 
         {
-            Render(data + (SampleIndex * 2), Remainder);
+            Render(frameData + (FrameIndex * ChannelCount), Remainder);
 
-            SampleIndex += Remainder;
-            _Position += Remainder;
+            FrameIndex += Remainder;
+            _Time += Remainder;
         }
 
-        _Remainder -= Remainder;
+        _TimeRemaining -= Remainder;
     }
 
-    while (SampleIndex < size)
+    while (FrameIndex < frameCount)
     {
-        uint32_t Remainder = _Length - _Position;
+        uint32_t Remainder = _TotalTime - _Time;
 
-        if (Remainder > size - SampleIndex)
-            Remainder = size - SampleIndex;
+        if (Remainder > frameCount - FrameIndex)
+            Remainder = frameCount - FrameIndex;
 
-        const uint32_t NewPosition = _Position + Remainder;
+        const uint32_t NewPosition = _Time + Remainder;
 
         {
-            // Determine how many events to process to reach the new position in the sample stream.
-            size_t NewStreamPosition = _StreamPosition;
+            // Determine how many messages to process to reach the new position in the sample stream.
+            size_t NewMessageIndex = _MessageIndex;
 
-            while ((NewStreamPosition < _Stream.size()) && (_Stream[NewStreamPosition].Time < NewPosition))
-                NewStreamPosition++;
+            while ((NewMessageIndex < _Messages.size()) && (_Messages[NewMessageIndex].Time < NewPosition))
+                NewMessageIndex++;
 
             // Process MIDI events until we've generated enough samples to reach the new position in the sample stream.
-            if (NewStreamPosition > _StreamPosition)
+            if (NewMessageIndex > _MessageIndex)
             {
-                for (; _StreamPosition < NewStreamPosition; ++_StreamPosition)
+                for (; _MessageIndex < NewMessageIndex; ++_MessageIndex)
                 {
-                    const midi::message_t & mse = _Stream[_StreamPosition];
+                    const midi::message_t & mse = _Messages[_MessageIndex];
 
                 #ifdef HAVE_FOO_VIS_MIDI
                     if (_MusicKeyboard.is_valid())
                         _MusicKeyboard->ProcessMessage(mse.Data, mse.Time);
                 #endif
 
-                    int64_t ToDo = (int64_t) mse.Time - (int64_t) _Position - (int64_t) BlockToDo;
+                    int64_t ToDo = (int64_t) mse.Time - (int64_t) _Time - (int64_t) BlockToDo;
 
                     if (ToDo > 0)
                     {
-                        if (ToDo > (int64_t) (size - SampleIndex))
+                        if (ToDo > (int64_t) (frameCount - FrameIndex))
                         {
-                            _Remainder = (uint32_t) (ToDo - (int64_t) (size - SampleIndex));
-                            ToDo = (int64_t) (size - SampleIndex);
+                            _TimeRemaining = (uint32_t) (ToDo - (int64_t) (frameCount - FrameIndex));
+                            ToDo = (int64_t) (frameCount - FrameIndex);
                         }
 
                         if ((ToDo > 0) && (BlockSize == 0))
                         {
-                            Render(data + (SampleIndex * 2), (uint32_t) ToDo);
+                            Render(frameData + (FrameIndex * 2), (uint32_t) ToDo);
 
-                            SampleIndex += (uint32_t) ToDo;
-                            _Position += (uint32_t) ToDo;
+                            FrameIndex += (uint32_t) ToDo;
+                            _Time += (uint32_t) ToDo;
                         }
 
-                        if (_Remainder > 0)
+                        if (_TimeRemaining != 0)
                         {
-                            _Remainder += BlockToDo;
+                            _TimeRemaining += BlockToDo;
 
-                            return SampleIndex;
+                            return FrameIndex;
                         }
                     }
 
@@ -260,11 +261,11 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
 
                         while (BlockToDo >= BlockSize)
                         {
-                            Render(data + (SampleIndex * 2), BlockSize);
+                            Render(frameData + (FrameIndex * 2), BlockSize);
 
-                            SampleIndex += BlockSize;
+                            FrameIndex += BlockSize;
                             BlockToDo -= BlockSize;
-                            _Position += BlockSize;
+                            _Time += BlockSize;
                         }
 
                         SendEventFiltered(mse.Data, BlockToDo);
@@ -273,16 +274,16 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
             }
         }
 
-        if (SampleIndex < size)
+        if (FrameIndex < frameCount)
         {
-            Remainder = ((_StreamPosition < _Stream.size()) ? _Stream[_StreamPosition].Time : _Length) - _Position;
+            Remainder = ((_MessageIndex < _Messages.size()) ? _Messages[_MessageIndex].Time : _TotalTime) - _Time;
 
             if (BlockSize != 0)
                 BlockToDo = Remainder;
 
             {
-                if (Remainder > size - SampleIndex)
-                    Remainder = size - SampleIndex;
+                if (Remainder > frameCount - FrameIndex)
+                    Remainder = frameCount - FrameIndex;
 
                 if ((BlockSize != 0) && (Remainder > BlockSize))
                     Remainder = BlockSize;
@@ -291,10 +292,10 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
             if (Remainder >= BlockSize)
             {
                 {
-                    Render(data + (SampleIndex * 2), Remainder);
+                    Render(frameData + (FrameIndex * 2), Remainder);
 
-                    SampleIndex += Remainder;
-                    _Position += Remainder;
+                    FrameIndex += Remainder;
+                    _Time += Remainder;
                 }
 
                 if (BlockSize != 0)
@@ -303,26 +304,26 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
         }
 
         if (BlockSize == 0)
-            _Position = NewPosition;
+            _Time = NewPosition;
 
         // Have we reached the end of the song?
-        if (NewPosition >= _Length)
+        if (NewPosition >= _TotalTime)
         {
-            // Process any remaining events.
-            for (; _StreamPosition < _Stream.size(); _StreamPosition++)
+            // Process any remaining messages.
+            for (; _MessageIndex < _Messages.size(); ++_MessageIndex)
             {
                 if (BlockSize == 0)
-                    SendEventFiltered(_Stream[_StreamPosition].Data);
+                    SendEventFiltered(_Messages[_MessageIndex].Data);
                 else
-                    SendEventFiltered(_Stream[_StreamPosition].Data, BlockToDo);
+                    SendEventFiltered(_Messages[_MessageIndex].Data, BlockToDo);
             }
 
             if ((_LoopType == LoopTypes::LoopAndFadeWhenDetected) || (_LoopType == LoopTypes::PlayIndefinitelyWhenDetected))
             {
-                if (_StreamLoopBegin != ~0)
+                if (_LoopBeginIndex != ~0)
                 {
-                    _StreamPosition = _StreamLoopBegin;
-                    _Position = _LoopBegin;
+                    _MessageIndex = _LoopBeginIndex;
+                    _Time = _LoopBeginTime;
                 }
                 else
                     break;
@@ -330,22 +331,22 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
             else
             if ((_LoopType == LoopTypes::LoopAndFadeAlways) || (_LoopType == LoopTypes::PlayIndefinitely))
             {
-                _StreamPosition = 0;
-                _Position = 0;
+                _MessageIndex = 0;
+                _Time = 0;
             }
             else
                 break;
         }
     }
 
-    _Remainder = BlockToDo;
+    _TimeRemaining = BlockToDo;
 
 #ifdef HAVE_FOO_VIS_MIDI
     if (_MusicKeyboard.is_valid())
         _MusicKeyboard->SetPosition(OldPosition);
 #endif
 
-    return SampleIndex;
+    return FrameIndex;
 }
 
 /// <summary>
@@ -353,22 +354,22 @@ uint32_t player_t::Play(audio_sample * data, uint32_t size) noexcept
 /// </summary>
 void player_t::Seek(uint32_t timeInSamples)
 {
-    if (timeInSamples >= _Length)
+    if (timeInSamples >= _TotalTime)
     {
         if (_LoopType >= LoopTypes::LoopAndFadeWhenDetected)
         {
-            while (timeInSamples >= _Length)
-                timeInSamples -= _Length - _LoopBegin;
+            while (timeInSamples >= _TotalTime)
+                timeInSamples -= _TotalTime - _LoopBeginTime;
         }
         else
         {
-            timeInSamples = _Length;
+            timeInSamples = _TotalTime;
         }
     }
 
-    if (_Position > timeInSamples)
+    if (_Time > timeInSamples)
     {
-        _StreamPosition = 0;
+        _MessageIndex = 0;
 
         if (!Reset())
             Shutdown();
@@ -377,27 +378,27 @@ void player_t::Seek(uint32_t timeInSamples)
     if (!Startup())
         return;
 
-    _Position = timeInSamples;
+    _Time = timeInSamples;
 
-    size_t OldStreamPosition = _StreamPosition;
+    size_t OldMessageIndex = _MessageIndex;
 
     {
-        // Find the position in the MIDI stream that corresponds with the seek time.
-        for (; (_StreamPosition < _Stream.size()) && (_Stream[_StreamPosition].Time < _Position); _StreamPosition++)
+        // Find the message that corresponds with the seek time.
+        for (; (_MessageIndex < _Messages.size()) && (_Messages[_MessageIndex].Time < _Time); _MessageIndex++)
             ;
 
-        if (_StreamPosition == _Stream.size())
-            _Remainder = _Length - _Position;
+        if (_MessageIndex == _Messages.size())
+            _TimeRemaining = _TotalTime - _Time;
         else
-            _Remainder = _Stream[_StreamPosition].Time - _Position;
+            _TimeRemaining = _Messages[_MessageIndex].Time - _Time;
     }
 
-    if (_StreamPosition <= OldStreamPosition)
+    if (_MessageIndex <= OldMessageIndex)
         return;
 
-    std::vector<midi::message_t> FillerEvents(_StreamPosition - OldStreamPosition);
+    std::vector<midi::message_t> FillerEvents(_MessageIndex - OldMessageIndex);
 
-    FillerEvents.assign(&_Stream[OldStreamPosition], &_Stream[_StreamPosition]);
+    FillerEvents.assign(&_Messages[OldMessageIndex], &_Messages[_MessageIndex]);
 
     for (size_t i = 0; i < FillerEvents.size(); ++i)
     {
@@ -429,7 +430,7 @@ void player_t::Seek(uint32_t timeInSamples)
         }
     }
 
-    const uint32_t BlockSize = GetSampleBlockSize();
+    const uint32_t BlockSize = GetBlockSize();
 
     if (BlockSize == 0)
     {
@@ -509,17 +510,17 @@ void player_t::SetSampleRate(uint32_t sampleRate)
     if (_SampleRate == sampleRate)
         return;
 
-    for (midi::message_t & it : _Stream)
+    for (midi::message_t & it : _Messages)
         it.Time = (uint32_t) ::MulDiv((int) it.Time, (int) sampleRate, (int) _SampleRate);
 
-    if (_Length != 0)
-        _Length = (uint32_t) ::MulDiv((int) _Length, (int) sampleRate, (int) _SampleRate);
+    if (_Time != 0)
+        _Time = (uint32_t) ::MulDiv((int) _Time, (int) sampleRate, (int) _SampleRate);
 
-    if (_LoopBegin != 0)
-        _LoopBegin = (uint32_t) ::MulDiv((int) _LoopBegin, (int) sampleRate, (int) _SampleRate);
+    if (_TotalTime != 0)
+        _TotalTime = (uint32_t) ::MulDiv((int) _TotalTime, (int) sampleRate, (int) _SampleRate);
 
-    if (_Position != 0)
-        _Position = (uint32_t) ::MulDiv((int) _Position, (int) sampleRate, (int) _SampleRate);
+    if (_LoopBeginTime != 0)
+        _LoopBeginTime = (uint32_t) ::MulDiv((int) _LoopBeginTime, (int) sampleRate, (int) _SampleRate);
 
     _SampleRate = sampleRate;
 

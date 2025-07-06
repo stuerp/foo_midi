@@ -129,12 +129,6 @@ bool FSPlayer::Startup()
     if (!_API.IsInitialized())
         return false;
 
-    {
-        DWORD Version = GetVersion();
-
-        console::print(STR_COMPONENT_BASENAME " is using FluidSynth ", (Version >> 24) & 0xFF, ".", (Version >> 16) & 0xFF, ".", (Version >> 8) & 0xFF, ".");
-    }
-
     if (IsStarted())
         return true;
 
@@ -195,7 +189,7 @@ bool FSPlayer::Startup()
 
     double ActualSampleRate = 0.;
 
-    if ((_API.GetNumericSetting(_Settings, "synth.sample-rate", &ActualSampleRate) == FLUID_OK) && (_SampleRate != (uint32_t) ActualSampleRate))
+    if (_API.GetNumericSetting(_Settings, "synth.sample-rate", &ActualSampleRate) == FLUID_OK)
         SetSampleRate((uint32_t) ActualSampleRate);
 
 //  _API.SetNumericSetting(_Settings, "synth.sample-rate", (double) _SampleRate);
@@ -262,6 +256,12 @@ bool FSPlayer::Startup()
     _ErrorMessage = "";
 
     _IsStarted = true;
+
+    {
+        DWORD Version = GetVersion();
+
+        console::print(STR_COMPONENT_BASENAME " is using FluidSynth ", (Version >> 24) & 0xFF, ".", (Version >> 16) & 0xFF, ".", (Version >> 8) & 0xFF, ".");
+    }
 
     Configure(_MIDIFlavor, _FilterEffects);
     Reset();

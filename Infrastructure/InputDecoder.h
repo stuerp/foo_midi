@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.07.02) **/
+/** $VER: InputDecoder.h (2025.07.06) **/
 
 #pragma once
 
@@ -44,9 +44,11 @@
 
 #include "Resource.h"
 
+/* KEEP? 06/07/25
 extern volatile int _IsRunning;
 extern critical_section _Lock;
 extern volatile uint32_t _CurrentSampleRate;
+*/
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
@@ -171,7 +173,7 @@ public:
 private:
     void GetSoundFonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
     uint32_t GetDuration(size_t subSongIndex) noexcept;
-    void SetFadeOutRange() noexcept;
+    void InitializeFade() noexcept;
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
@@ -225,23 +227,21 @@ private:
     CLAP::Host * _Host;
 
     PlayerTypes _PlayerType;
-    uint32_t _SampleRate;
-    uint32_t _ExtraPercussionChannel;
+
+    uint32_t _SampleRate;       // in Hz
+    uint32_t _ActualSampleRate; // in Hz
+
+    uint32_t _Time;             // in frames
+    uint32_t _TotalTime;        // in frames
 
     LoopTypes _LoopType;
-    LoopTypes _LoopTypePlayback;
-    LoopTypes _LoopTypeOther;
     uint32_t _LoopCount;
+    range_t _LoopRange;         // in ms
 
-    uint32_t _FadeDuration; // in ms
+    uint32_t _FadeDuration;     // in ms
+    range_t _FadeRange;         // in ms
 
-    range_t _LoopRange;
-    range_t _FadeRange;
-
-    uint32_t _LengthInSamples;
-
-    uint32_t _TimeInSamples;
-    uint32_t _SamplesDone;
+    uint32_t _ExtraPercussionChannel;
 
     uint32_t _CleanFlags;
 

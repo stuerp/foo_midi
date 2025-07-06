@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.06.30) **/
+/** $VER: InputDecoder.cpp (2025.07.06) **/
 
 #include "pch.h"
 
@@ -21,10 +21,12 @@
 
 #include <libsf.h>
 
+/* KEEP? 06/07/25
 volatile int _IsRunning = 0;
 
 critical_section _Lock;
 volatile uint32_t _CurrentSampleRate;
+*/
 
 /// <summary>
 /// Creates a new instance.
@@ -50,18 +52,21 @@ InputDecoder::InputDecoder() noexcept :
     _Host(nullptr),
 
     _PlayerType(),
+
     _SampleRate((uint32_t) CfgSampleRate),
-    _ExtraPercussionChannel(~0U),
+    _ActualSampleRate(_SampleRate),
+
+    _Time(),
+    _TotalTime(),
 
     _LoopType(LoopTypes::NeverLoop),
-    _LoopTypePlayback((LoopTypes) (int) CfgLoopTypePlayback),
-    _LoopTypeOther((LoopTypes) (int) CfgLoopTypeOther),
     _LoopCount((uint32_t) AdvCfgLoopCount.get()),
-    _FadeDuration((uint32_t) AdvCfgFadeTimeInMS.get()),
-
     _LoopRange(),
 
-    _LengthInSamples(),
+    _FadeDuration((uint32_t) AdvCfgFadeTimeInMS.get()),
+    _FadeRange(),
+
+    _ExtraPercussionChannel(~0U),
 
     _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode),
 
@@ -74,7 +79,9 @@ InputDecoder::InputDecoder() noexcept :
 #ifdef DXISUPPORT
     dxiProxy = nullptr;
 #endif
+/* KEEP? 06/07/25
     _CurrentSampleRate = _SampleRate;
+*/
 }
 
 /// <summary>
@@ -88,12 +95,13 @@ InputDecoder::~InputDecoder() noexcept
             ::DeleteFileA(sf.FilePath().c_str());
     }
 
-#ifdef _DEBUG
-    console::print(::FormatText("%08X: " STR_COMPONENT_BASENAME " is deleting player 0x%016llX.", ::GetCurrentThreadId(), _Player).c_str());
-#endif
+    if (_Player != nullptr)
+    {
+    //  console::print(::FormatText("%08X: " STR_COMPONENT_BASENAME " is deleting player 0x%016llX.", ::GetCurrentThreadId(), _Player).c_str());
 
-    delete _Player;
-    _Player = nullptr;
+        delete _Player;
+        _Player = nullptr;
+    }
 
     if ((_Flags & input_flag_playback) == 0)
     {
@@ -103,8 +111,10 @@ InputDecoder::~InputDecoder() noexcept
 
     if (_PlayerType == PlayerTypes::EmuDeMIDI)
     {
+/*
         insync(_Lock);
         _IsRunning -= 1;
+*/
     }
 #ifdef DXISUPPORT
     if (dxiProxy)
@@ -255,13 +265,17 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     _IsFirstBlock = true;
 
     _PlayerType = (PlayerTypes) (uint32_t) CfgPlayerType;
-    _LoopType = (_Flags & input_flag_playback) ? _LoopTypePlayback : _LoopTypeOther;
-    _TimeInSamples = 0;
+    _LoopType = (LoopTypes) ((_Flags & input_flag_playback) ? (int) CfgLoopTypePlayback : (int) CfgLoopTypeOther);
 
-    // Initialize time.
-    _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
+    // Initialize time parameters.
+    {
+        _Time = 0;
+        _TotalTime = (uint32_t) ::MulDiv((int) GetDuration(subSongIndex), (int) _SampleRate, 1'000);
 
-    _LengthInSamples = (uint32_t) ::MulDiv((int) GetDuration(subSongIndex), (int) _SampleRate, 1'000);
+        _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
+
+        InitializeFade();
+    }
 
     _ExtraPercussionChannel = _Container.GetExtraPercussionChannel();
 
@@ -338,9 +352,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // Load the sound fonts.
     GetSoundFonts(Preset._SoundFontFilePath, abortHandler);
 
-    // Initialize the fade-out range.
-    SetFadeOutRange();
-
     // Create and initialize the MIDI player.
     switch (_PlayerType)
     {
@@ -356,7 +367,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
-
+/* KEEP? 06/07/25
             {
                 insync(_Lock);
 
@@ -368,7 +379,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 if (_SampleRate != _CurrentSampleRate)
                     _SampleRate = _CurrentSampleRate;
             }
-
+*/
             _Player->SetSampleRate(_SampleRate);
 
             _IsEndOfContainer = false;
@@ -846,18 +857,18 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
     if (_Player)
     {
-        const uint32_t SamplesToDo = 4096;
-        const uint32_t ChannelCount = _Player->GetAudioChannelCount();
-
-        audioChunk.set_data_size((t_size) SamplesToDo * ChannelCount);
-
-        audio_sample * Samples = audioChunk.get_data();
-
         _Player->SetAbortHandler(&abortHandler);
 
-        uint32_t SamplesDone = _Player->Play(Samples, SamplesToDo);
+        const uint32_t FrameCount = 4096;
+        const uint32_t ChannelCount = _Player->GetAudioChannelCount();
 
-        if (SamplesDone == 0)
+        audioChunk.set_data_size((t_size) FrameCount * ChannelCount);
+
+        audio_sample * FrameData = audioChunk.get_data();
+
+        uint32_t FramesDone = _Player->Play(FrameData, FrameCount);
+
+        if (FramesDone == 0)
         {
             std::string ErrorMessage;
 
@@ -867,11 +878,11 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
             return false;
         }
 
-        _SampleRate = _Player->GetSampleRate();
+        _ActualSampleRate = _Player->GetSampleRate(); // Allows us to store the actual sample rate in the info field.
 
-        audioChunk.set_srate(_SampleRate);
+        audioChunk.set_srate(_ActualSampleRate);
         audioChunk.set_channels(ChannelCount);
-        audioChunk.set_sample_count(SamplesDone);
+        audioChunk.set_sample_count(FramesDone);
 
         Success = true;
     }
@@ -879,16 +890,16 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     // Scale the samples if fading was requested.
     if (Success && _FadeRange.IsSet())
     {
-        uint32_t BeginOfChunk = _TimeInSamples;
-        uint32_t EndOfChunk   = _TimeInSamples + (uint32_t) audioChunk.get_sample_count();
+        uint32_t BlockBegin = _Time;
+        uint32_t BlockEnd   = _Time + (uint32_t) audioChunk.get_sample_count();
 
-        _TimeInSamples = EndOfChunk;
+        _Time = BlockEnd;
 
-        if (EndOfChunk >= _FadeRange.Begin())
+        if (BlockEnd >= _FadeRange.Begin())
         {
-            for (size_t i = std::max(_FadeRange.Begin(), BeginOfChunk), j = std::min(EndOfChunk, _FadeRange.End()); i < j; ++i)
+            for (size_t i = std::max(_FadeRange.Begin(), BlockBegin), j = std::min(BlockEnd, _FadeRange.End()); i < j; ++i)
             {
-                audio_sample * Sample = audioChunk.get_data() + (i - BeginOfChunk) * 2;
+                audio_sample * Sample = audioChunk.get_data() + (i - BlockBegin) * 2;
 
                 audio_sample Scale = (audio_sample) (_FadeRange.End() - i) / (audio_sample) _FadeRange.Size();
 
@@ -896,18 +907,18 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
                 Sample[1] *= Scale;
             }
 
-            if (EndOfChunk > _FadeRange.End())
+            if (BlockEnd > _FadeRange.End())
             {
-                uint32_t SamplesRemaining = 0;
+                uint32_t FramesRemaining = 0;
 
-                if (_FadeRange.End() > BeginOfChunk)
-                    SamplesRemaining = _FadeRange.End() - BeginOfChunk;
+                if (_FadeRange.End() > BlockBegin)
+                    FramesRemaining = _FadeRange.End() - BlockBegin;
 
-                audioChunk.set_sample_count(SamplesRemaining);
+                audioChunk.set_sample_count(FramesRemaining);
 
                 _IsEndOfContainer = true;
 
-                if (SamplesRemaining == 0)
+                if (FramesRemaining == 0)
                     return false;
             }
         }
@@ -923,7 +934,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 /// </summary>
 void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
 {
-    _TimeInSamples = (uint32_t) (timeInSeconds * _SampleRate);
+    _Time = (uint32_t) (timeInSeconds * _ActualSampleRate);
     _IsFirstBlock = true;
     _IsEndOfContainer = false;
 
@@ -932,9 +943,9 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
     if (OffsetInMs > _LoopRange.End())
         OffsetInMs = _LoopRange.Begin() + (OffsetInMs - _LoopRange.Begin()) % ((_LoopRange.Size() != 0) ? _LoopRange.Size() : 1);
 
-    const uint32_t OffsetInSamples = (uint32_t) ::MulDiv((int) OffsetInMs, (int) _SampleRate, 1'000);
+    const uint32_t OffsetInSamples = (uint32_t) ::MulDiv((int) OffsetInMs, (int) _ActualSampleRate, 1'000);
 
-    if ((_LengthInSamples != 0U) && (OffsetInSamples >= (_LengthInSamples - _SampleRate)))
+    if ((_TotalTime != 0U) && (OffsetInSamples >= (_TotalTime - _ActualSampleRate)))
     {
         _IsEndOfContainer = true;
 
@@ -964,7 +975,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
     if (_IsFirstBlock)
     {
         {
-            fileInfo.info_set_int(InfoSampleRate, _SampleRate);
+            fileInfo.info_set_int(InfoSampleRate, _ActualSampleRate);
         }
 
         {
@@ -1054,7 +1065,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 
     ConvertMetaDataToTags(subSongIndex, fileInfo, abortHandler);
 
-    fileInfo.set_length(_Container.GetDuration(subSongIndex, true) * 0.001);
+    fileInfo.set_length((double) _Container.GetDuration(subSongIndex, true) * 0.001); // Without loops, fade-out or decay.
 }
 
 #pragma endregion
@@ -1118,7 +1129,7 @@ void InputDecoder::InitializeIndexManager()
 }
 
 /// <summary>
-/// Gets the total duration of the specified sub-song taking into account any looping and decay time, in ms.
+/// Gets the total duration of the specified sub-song taking into account looping, fade-out and decay time (in ms).
 /// </summary>
 uint32_t InputDecoder::GetDuration(size_t subSongIndex) noexcept
 {
@@ -1142,9 +1153,9 @@ uint32_t InputDecoder::GetDuration(size_t subSongIndex) noexcept
 }
 
 /// <summary>
-/// Sets the fade-out range.
+/// Initializes the fade-out range.
 /// </summary>
-void InputDecoder::SetFadeOutRange() noexcept
+void InputDecoder::InitializeFade() noexcept
 {
     _FadeRange.Clear();
 
@@ -1166,7 +1177,7 @@ void InputDecoder::SetFadeOutRange() noexcept
                 _FadeRange.Set(Begin, End);
             }
             else
-                _FadeRange.Set(_LengthInSamples, _LengthInSamples);
+                _FadeRange.Set(_TotalTime, _TotalTime);
             break;
         }
 
@@ -1303,10 +1314,10 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     fileInfo.info_set_int   (TagMIDITicks,        _Container.GetDuration(subSongIndex));
 
     {
-        uint32_t LoopBegin = _Container.GetLoopBeginTimestamp(subSongIndex);
-        uint32_t LoopEnd = _Container.GetLoopEndTimestamp(subSongIndex);
+        uint32_t LoopBegin     = _Container.GetLoopBeginTimestamp(subSongIndex);
+        uint32_t LoopEnd       = _Container.GetLoopEndTimestamp  (subSongIndex);
         uint32_t LoopBeginInMS = _Container.GetLoopBeginTimestamp(subSongIndex, true);
-        uint32_t LoopEndInMS = _Container.GetLoopEndTimestamp(subSongIndex, true);
+        uint32_t LoopEndInMS   = _Container.GetLoopEndTimestamp  (subSongIndex, true);
 
         if (LoopBegin != ~0U)     fileInfo.info_set_int(TagMIDILoopStart, LoopBegin);
         if (LoopEnd != ~0U)       fileInfo.info_set_int(TagMIDILoopEnd, LoopEnd);

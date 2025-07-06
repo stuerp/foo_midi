@@ -30,8 +30,8 @@ bool CLAPPlayer::Startup()
     if (!_Host->IsPlugInLoaded())
         return false;
 
-    LChannel.resize(GetSampleBlockSize());
-    RChannel.resize(GetSampleBlockSize());
+    LChannel.resize(GetBlockSize());
+    RChannel.resize(GetBlockSize());
 
     if (_Host->Use64Bits())
         return false; // Not supported yet
@@ -44,7 +44,7 @@ bool CLAPPlayer::Startup()
 
     _AudioOutputs[0] = _AudioOut;
 
-    if (!_Host->ActivatePlugIn((double) _SampleRate, 1, GetSampleBlockSize()))
+    if (!_Host->ActivatePlugIn((double) _SampleRate, 1, GetBlockSize()))
         return false;
 
     _IsStarted = true;

@@ -49,7 +49,7 @@ protected:
     virtual bool Reset() { return false; }
 
     // Should return the block size that the player expects, otherwise 0.
-    virtual uint32_t GetSampleBlockSize() const noexcept { return 0; }
+    virtual uint32_t GetBlockSize() const noexcept { return 0; }
 
     virtual void SendEvent(uint32_t) { }
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) { };
@@ -85,20 +85,21 @@ private:
     void SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time);
 
 private:
-    LoopTypes _LoopType;         // Type of looping requested by the user.
+    LoopTypes _LoopType;        // Type of looping requested by the user.
 
-    std::vector<midi::message_t> _Stream;
-    size_t _StreamPosition;     // Current position in the event stream
-    uint32_t _StreamLoopBegin;  // Start of the loop in the event stream
-    uint32_t _StreamLoopEnd;    // End of the loop in the event stream
+    std::vector<midi::message_t> _Messages;
 
-    uint32_t _Position;         // Current position in the sample stream
-    uint32_t _Length;           // Total length of the sample stream
-    uint32_t _LoopBegin;        // Start of the loop in the sample stream
+    uint32_t _MessageIndex;         // Current MIDI message
+    uint32_t _LoopBeginIndex;       // Start of the loop in the event stream
+    uint32_t _LoopEndIndex;         // End of the loop in the event stream
 
-    uint32_t _Remainder;        // Remaining number of samples that need to be rendered before the audio chunk is complete (in case the block size of the player is smaller than the audio chunk size).
+    uint32_t _Time;                 // Current time in the sample stream (in ms)
+    uint32_t _TotalTime;            // Total length of the sample stream (in ms)
+    uint32_t _LoopBeginTime;        // Timestamp of the start of the loop in the sample stream (in ms)
 
-    uint64_t _CfgChannelsVersion;  // Version number of the channel configuration
+    uint32_t _TimeRemaining;        // Remaining number of samples that need to be rendered before the audio chunk is complete (in case the block size of the player is smaller than the audio chunk size).
+
+    uint64_t _CfgChannelsVersion;   // Version number of the channel configuration
     uint16_t _EnabledChannels[128];
 
 #ifdef HAVE_FOO_VIS_MIDI

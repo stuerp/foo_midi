@@ -41,7 +41,7 @@
 
 #pragma hdrstop
 
-extern volatile int _IsRunning;
+//extern volatile int _IsRunning;
 
 static cfg_dropdown_history CfgSampleRateHistory({ 0x408aa155, 0x4c42, 0x42b5, { 0x8c, 0x3e, 0xd1, 0xc, 0x35, 0xdd, 0x5e, 0xf1 } }, 16);
 
@@ -509,9 +509,10 @@ void PreferencesRootPage::reset()
 
     // Sample Rate
     {
+/*
         if ((_SelectedPlayer.Type == PlayerTypes::EmuDeMIDI) && _IsRunning)
             GetDlgItem(IDC_SAMPLERATE).EnableWindow(FALSE);
-
+*/
         SetDlgItemInt(IDC_SAMPLERATE, DefaultSampleRate, FALSE);
     }
 
@@ -776,9 +777,10 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             CfgSampleRateHistory.setup_dropdown(w);
 
              w.SetCurSel(0);
-
+/*
             if ((_SelectedPlayer.Type == PlayerTypes::EmuDeMIDI) && _IsRunning)
                 w.EnableWindow(FALSE);
+*/
         }
     }
     #pragma endregion
@@ -1030,9 +1032,11 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
     // Sample Rate
     {
+/*
         const BOOL Enable = (_SelectedPlayer.Type != PlayerTypes::EmuDeMIDI) || !_IsRunning;
 
         GetDlgItem(IDC_SAMPLERATE).EnableWindow(Enable);
+*/
     }
 
     // Looping
@@ -1105,7 +1109,7 @@ void PreferencesRootPage::OnTimer(UINT_PTR eventId)
     if (eventId != ID_REFRESH)
         return;
  
-    GetDlgItem(IDC_SAMPLERATE).EnableWindow(CfgPlayerType || !_IsRunning);
+//  GetDlgItem(IDC_SAMPLERATE).EnableWindow(CfgPlayerType || !_IsRunning);
 
     uint64_t SampleDataSize, SampleDataLoaded;
 

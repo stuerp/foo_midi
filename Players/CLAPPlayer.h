@@ -24,7 +24,7 @@ public:
 
     virtual ~CLAPPlayer();
 
-    virtual uint32_t GetSampleBlockSize() const noexcept override { return 2 * 256; } // 2 channels
+    virtual uint32_t GetBlockSize() const noexcept override { return 2 * 256; } // 2 channels
 
 private:
     #pragma region player_t

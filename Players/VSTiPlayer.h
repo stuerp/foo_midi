@@ -36,7 +36,7 @@ protected:
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
 
-    virtual uint32_t GetSampleBlockSize() const noexcept override { return 4096; }
+    virtual uint32_t GetBlockSize() const noexcept override { return 4096; }
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;

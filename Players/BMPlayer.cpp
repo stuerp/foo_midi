@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.06.25) **/
+/** $VER: BMPlayer.cpp (2025.07.06) **/
 
 #include "pch.h"
 
@@ -137,16 +137,6 @@ bool BMPlayer::Startup()
     if (_IsStarted)
         return true;
 
-    {
-        DWORD BASSVersion = GetVersion();
-
-        console::print(STR_COMPONENT_BASENAME " is using BASS ", (BASSVersion >> 24) & 0xFF, ".", (BASSVersion >> 16) & 0xFF, ".", (BASSVersion >> 8) & 0xFF, ".", BASSVersion & 0xFF, ".");
-
-        DWORD BASSMIDIVersion = GetMIDIVersion();
-
-        console::print(STR_COMPONENT_BASENAME " is using BASS MIDI ", (BASSMIDIVersion >> 24) & 0xFF, ".", (BASSMIDIVersion >> 16) & 0xFF, ".", (BASSMIDIVersion >> 8) & 0xFF, ".", BASSMIDIVersion & 0xFF, ".");
-    }
-
     std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
 
     for (const auto & sf : _SoundFonts)
@@ -182,6 +172,16 @@ bool BMPlayer::Startup()
     _ErrorMessage = "";
 
     _IsStarted = true;
+
+    {
+        DWORD BASSVersion = GetVersion();
+
+        console::print(STR_COMPONENT_BASENAME " is using BASS ", (BASSVersion >> 24) & 0xFF, ".", (BASSVersion >> 16) & 0xFF, ".", (BASSVersion >> 8) & 0xFF, ".", BASSVersion & 0xFF, ".");
+
+        DWORD BASSMIDIVersion = GetMIDIVersion();
+
+        console::print(STR_COMPONENT_BASENAME " is using BASS MIDI ", (BASSMIDIVersion >> 24) & 0xFF, ".", (BASSMIDIVersion >> 16) & 0xFF, ".", (BASSMIDIVersion >> 8) & 0xFF, ".", BASSMIDIVersion & 0xFF, ".");
+    }
 
     Configure(_MIDIFlavor, _FilterEffects);
     Reset();
