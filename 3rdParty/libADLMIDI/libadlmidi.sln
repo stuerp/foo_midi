@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36202.13 d17.14
+VisualStudioVersion = 17.14.36202.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libadlmidi", "libadlmidi.vcxproj", "{F6039EEC-6F65-493B-B007-512550690F03}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "midiplay", "midiplay.vcxproj", "{8437071D-0BA3-4693-8EBB-992C137C8A8D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,14 @@ Global
 		{F6039EEC-6F65-493B-B007-512550690F03}.Release|x64.Build.0 = Release|x64
 		{F6039EEC-6F65-493B-B007-512550690F03}.Release|x86.ActiveCfg = Release|Win32
 		{F6039EEC-6F65-493B-B007-512550690F03}.Release|x86.Build.0 = Release|Win32
+		{8437071D-0BA3-4693-8EBB-992C137C8A8D}.Debug|x64.ActiveCfg = Debug|x64
+		{8437071D-0BA3-4693-8EBB-992C137C8A8D}.Debug|x64.Build.0 = Debug|x64
+		{8437071D-0BA3-4693-8EBB-992C137C8A8D}.Debug|x86.ActiveCfg = Debug|Win32
+		{8437071D-0BA3-4693-8EBB-992C137C8A8D}.Debug|x86.Build.0 = Debug|Win32
+		{8437071D-0BA3-4693-8EBB-992C137C8A8D}.Release|x64.ActiveCfg = Release|x64
+		{8437071D-0BA3-4693-8EBB-992C137C8A8D}.Release|x64.Build.0 = Release|x64
+		{8437071D-0BA3-4693-8EBB-992C137C8A8D}.Release|x86.ActiveCfg = Release|Win32
+		{8437071D-0BA3-4693-8EBB-992C137C8A8D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

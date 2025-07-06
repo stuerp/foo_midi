@@ -49,7 +49,7 @@ The following libraries are included in the code:
   - [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
   - [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 - [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
-- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.5.1, Yamaha YMF262 (OPL3)
+- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.0, Yamaha YMF262 (OPL3)
 - [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2) and Yamaha YM2608 (OPNA)
 - [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
 - [LibMT32Emu](https://github.com/munt/munt) 2.7.2, Roland MT-32, CM-32L and LAPC-I synthesiser modules
@@ -94,13 +94,8 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-- v2.19.0.0-alpha6, 2025-07-05
-  - New: **midi_plug_in** info field that contains the name of the active plug-in when a player supports it.
-  - New: FluidSynth can be configured using a configuration file. See [Configuration file](docs/README.md#configuration-file)
-  - Improved: Support for Unicode paths.
-  - Improved: Hardened the CLAP Host.
-  - Improved: Move MT32Emu settings to FM Synthesis preferences page and added a couple of new settings.
-  - Fixed: Some startup and sample rate related issues.
+- v2.19.0.0-alpha7, 2025-xx-xx
+  - Improved: ADL player uses LibADLMIDI 1.6.0 and float/double samples.
 
 - You can read the full history [here](docs/History.md).
 

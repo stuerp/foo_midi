@@ -511,7 +511,7 @@
     <ProjectReference Include="..\sdk\pfc\pfc.vcxproj">
       <Project>{ebfffb4e-261d-44d3-b89c-957b31a0bf9c}</Project>
     </ProjectReference>
-    <ProjectReference Include="3rdParty\libADLMIDI\src\libadlmidi.vcxproj">
+    <ProjectReference Include="3rdParty\libADLMIDI\libadlmidi.vcxproj">
       <Project>{f6039eec-6f65-493b-b007-512550690f03}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\libEDMIDI\libEDMIDI.vcxproj">

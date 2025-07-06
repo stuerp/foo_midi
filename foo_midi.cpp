@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.cpp (2025.07.05) **/
+/** $VER: foo_midi.cpp (2025.07.06) **/
 
 #include "pch.h"
 
@@ -14,6 +14,8 @@
 #include <clap/version.h>
 #include <FluidSynth/include/fluidsynth.h>
 #include <mt32emu/config.h>
+#include <libADLMIDI/repo/include/adlmidi.h>
+
 #pragma hdrstop
 
 #define CLAP_SDK_VERSION TOSTRING(CLAP_VERSION_MAJOR) "." TOSTRING(CLAP_VERSION_MINOR) "." TOSTRING(CLAP_VERSION_REVISION)
@@ -38,6 +40,7 @@ namespace
             "FluidSynth SDK " FLUIDSYNTH_VERSION "\n"
             "mt32emu " MT32EMU_VERSION "\n"
             "CLAP SDK " CLAP_SDK_VERSION "\n"
+            "LibADLMIDI " ADLMIDI_VERSION "\n"
     );
 
     VALIDATE_COMPONENT_FILENAME(STR_COMPONENT_FILENAME);

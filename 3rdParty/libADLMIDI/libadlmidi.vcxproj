@@ -83,7 +83,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;../src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>repo/include;repo/src</AdditionalIncludeDirectories>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
@@ -99,7 +99,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;../src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>repo/include;repo/src</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -122,7 +122,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;../src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>repo/include;repo/src</AdditionalIncludeDirectories>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
@@ -142,7 +142,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
-      <AdditionalIncludeDirectories>../include;../src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>repo/include;repo/src</AdditionalIncludeDirectories>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
@@ -159,104 +159,105 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\adlmidi_bankmap.h" />
-    <ClInclude Include="..\src\adlmidi_cvt.hpp" />
-    <ClInclude Include="..\src\adlmidi_db.h" />
-    <ClInclude Include="..\src\adlmidi_midiplay.hpp" />
-    <ClInclude Include="..\src\adlmidi_opl3.hpp" />
-    <ClInclude Include="..\src\adlmidi_private.hpp" />
-    <ClInclude Include="..\src\adlmidi_ptr.hpp" />
-    <ClInclude Include="..\src\chips\common\mutex.hpp" />
-    <ClInclude Include="..\src\chips\common\ptr.hpp" />
-    <ClInclude Include="..\src\chips\dosbox\dbopl.h" />
-    <ClInclude Include="..\src\chips\dosbox_opl3.h" />
-    <ClInclude Include="..\src\chips\esfmu\esfm.h" />
-    <ClInclude Include="..\src\chips\java_opl3.h" />
-    <ClInclude Include="..\src\chips\nuked\nukedopl3.h" />
-    <ClInclude Include="..\src\chips\nuked\nukedopl3_174.h" />
-    <ClInclude Include="..\src\chips\nuked_opl3.h" />
-    <ClInclude Include="..\src\chips\nuked_opl3_v174.h" />
-    <ClInclude Include="..\src\chips\opal_opl3.h" />
-    <ClInclude Include="..\src\chips\opl_chip_base.h" />
-    <ClInclude Include="..\src\cvt_mus2mid.hpp" />
-    <ClInclude Include="..\src\cvt_xmi2mid.hpp" />
-    <ClInclude Include="..\src\file_reader.hpp" />
-    <ClInclude Include="..\src\fraction.hpp" />
-    <ClInclude Include="..\src\midi_sequencer.h" />
-    <ClInclude Include="..\src\midi_sequencer.hpp" />
-    <ClInclude Include="..\src\midi_sequencer_impl.hpp" />
-    <ClInclude Include="..\src\oplinst.h" />
-    <ClInclude Include="..\src\structures\pl_list.hpp" />
-    <ClInclude Include="..\src\wopl\wopl_file.h" />
-    <ClInclude Include="chips\dos_hw_opl.h" />
-    <ClInclude Include="chips\esfmu_opl3.h" />
-    <ClInclude Include="chips\java\JavaOPL3.hpp" />
-    <ClInclude Include="chips\mame\opl.h" />
-    <ClInclude Include="chips\mame_opl2.h" />
-    <ClInclude Include="chips\opal\old\opal-orig.hpp" />
-    <ClInclude Include="chips\opal\opal.h" />
-    <ClInclude Include="chips\opl_serial_misc.h" />
-    <ClInclude Include="chips\opl_serial_port.h" />
-    <ClInclude Include="chips\ym3812_lle.h" />
-    <ClInclude Include="chips\ym3812_lle\nopl2.h" />
-    <ClInclude Include="chips\ym3812_lle\nuked_fmopl2.h" />
-    <ClInclude Include="chips\ymf262_lle.h" />
-    <ClInclude Include="chips\ymf262_lle\nopl3.h" />
-    <ClInclude Include="chips\ymf262_lle\nuked_fmopl3.h" />
-    <ClInclude Include="chips\ymfm\ymfm.h" />
-    <ClInclude Include="chips\ymfm\ymfm_adpcm.h" />
-    <ClInclude Include="chips\ymfm\ymfm_fm.h" />
-    <ClInclude Include="chips\ymfm\ymfm_fm.ipp" />
-    <ClInclude Include="chips\ymfm\ymfm_misc.h" />
-    <ClInclude Include="chips\ymfm\ymfm_opl.h" />
-    <ClInclude Include="chips\ymfm\ymfm_pcm.h" />
-    <ClInclude Include="chips\ymfm\ymfm_ssg.h" />
-    <ClInclude Include="chips\ymfm_opl2.h" />
-    <ClInclude Include="chips\ymfm_opl3.h" />
+    <ClInclude Include="repo\include\adlmidi.h" />
+    <ClInclude Include="repo\src\adlmidi_bankmap.h" />
+    <ClInclude Include="repo\src\adlmidi_cvt.hpp" />
+    <ClInclude Include="repo\src\adlmidi_db.h" />
+    <ClInclude Include="repo\src\adlmidi_midiplay.hpp" />
+    <ClInclude Include="repo\src\adlmidi_opl3.hpp" />
+    <ClInclude Include="repo\src\adlmidi_private.hpp" />
+    <ClInclude Include="repo\src\adlmidi_ptr.hpp" />
+    <ClInclude Include="repo\src\chips\common\mutex.hpp" />
+    <ClInclude Include="repo\src\chips\common\ptr.hpp" />
+    <ClInclude Include="repo\src\chips\dos_hw_opl.h" />
+    <ClInclude Include="repo\src\chips\dosbox_opl3.h" />
+    <ClInclude Include="repo\src\chips\dosbox\dbopl.h" />
+    <ClInclude Include="repo\src\chips\esfmu_opl3.h" />
+    <ClInclude Include="repo\src\chips\esfmu\esfm.h" />
+    <ClInclude Include="repo\src\chips\java_opl3.h" />
+    <ClInclude Include="repo\src\chips\java\JavaOPL3.hpp" />
+    <ClInclude Include="repo\src\chips\mame_opl2.h" />
+    <ClInclude Include="repo\src\chips\mame\opl.h" />
+    <ClInclude Include="repo\src\chips\nuked_opl3_v174.h" />
+    <ClInclude Include="repo\src\chips\nuked_opl3.h" />
+    <ClInclude Include="repo\src\chips\nuked\nukedopl3_174.h" />
+    <ClInclude Include="repo\src\chips\nuked\nukedopl3.h" />
+    <ClInclude Include="repo\src\chips\opal_opl3.h" />
+    <ClInclude Include="repo\src\chips\opal\old\opal-orig.hpp" />
+    <ClInclude Include="repo\src\chips\opal\opal.h" />
+    <ClInclude Include="repo\src\chips\opl_chip_base.h" />
+    <ClInclude Include="repo\src\chips\opl_serial_misc.h" />
+    <ClInclude Include="repo\src\chips\opl_serial_port.h" />
+    <ClInclude Include="repo\src\chips\ym3812_lle.h" />
+    <ClInclude Include="repo\src\chips\ym3812_lle\nopl2.h" />
+    <ClInclude Include="repo\src\chips\ym3812_lle\nuked_fmopl2.h" />
+    <ClInclude Include="repo\src\chips\ymf262_lle.h" />
+    <ClInclude Include="repo\src\chips\ymf262_lle\nopl3.h" />
+    <ClInclude Include="repo\src\chips\ymf262_lle\nuked_fmopl3.h" />
+    <ClInclude Include="repo\src\chips\ymfm_opl2.h" />
+    <ClInclude Include="repo\src\chips\ymfm_opl3.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_adpcm.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_fm.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_fm.ipp" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_misc.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_opl.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_pcm.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_ssg.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm.h" />
+    <ClInclude Include="repo\src\cvt_mus2mid.hpp" />
+    <ClInclude Include="repo\src\cvt_xmi2mid.hpp" />
+    <ClInclude Include="repo\src\file_reader.hpp" />
+    <ClInclude Include="repo\src\fraction.hpp" />
+    <ClInclude Include="repo\src\midi_sequencer_impl.hpp" />
+    <ClInclude Include="repo\src\midi_sequencer.h" />
+    <ClInclude Include="repo\src\midi_sequencer.hpp" />
+    <ClInclude Include="repo\src\oplinst.h" />
+    <ClInclude Include="repo\src\structures\pl_list.hpp" />
+    <ClInclude Include="repo\src\wopl\wopl_file.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\adlmidi.cpp" />
-    <ClCompile Include="..\src\adlmidi_load.cpp" />
-    <ClCompile Include="..\src\adlmidi_midiplay.cpp" />
-    <ClCompile Include="..\src\adlmidi_opl3.cpp" />
-    <ClCompile Include="..\src\adlmidi_private.cpp" />
-    <ClCompile Include="..\src\adlmidi_sequencer.cpp" />
-    <ClCompile Include="..\src\chips\dosbox\dbopl.cpp" />
-    <ClCompile Include="..\src\chips\dosbox_opl3.cpp" />
-    <ClCompile Include="..\src\chips\esfmu\esfm.c" />
-    <ClCompile Include="..\src\chips\esfmu\esfm_registers.c" />
-    <ClCompile Include="..\src\chips\java_opl3.cpp" />
-    <ClCompile Include="..\src\chips\nuked\nukedopl3.c" />
-    <ClCompile Include="..\src\chips\nuked\nukedopl3_174.c" />
-    <ClCompile Include="..\src\chips\nuked_opl3.cpp" />
-    <ClCompile Include="..\src\chips\nuked_opl3_v174.cpp" />
-    <ClCompile Include="..\src\chips\opal_opl3.cpp" />
-    <ClCompile Include="..\src\inst_db.cpp" />
-    <ClCompile Include="..\src\wopl\wopl_file.c" />
-    <ClCompile Include="chips\dos_hw_opl.cpp" />
-    <ClCompile Include="chips\esfmu_opl3.cpp" />
-    <ClCompile Include="chips\mame\mame_fmopl.cpp" />
-    <ClCompile Include="chips\mame_opl2.cpp" />
-    <ClCompile Include="chips\opal\opal.c" />
-    <ClCompile Include="chips\opl_serial_port.cpp" />
-    <ClCompile Include="chips\ym3812_lle.cpp" />
-    <ClCompile Include="chips\ym3812_lle\nopl2.c" />
-    <ClCompile Include="chips\ym3812_lle\nuked_fmopl2.c" />
-    <ClCompile Include="chips\ymf262_lle.cpp" />
-    <ClCompile Include="chips\ymf262_lle\nopl3.c" />
-    <ClCompile Include="chips\ymf262_lle\nuked_fmopl3.c" />
-    <ClCompile Include="chips\ymfm\ymfm_adpcm.cpp" />
-    <ClCompile Include="chips\ymfm\ymfm_misc.cpp" />
-    <ClCompile Include="chips\ymfm\ymfm_opl.cpp" />
-    <ClCompile Include="chips\ymfm\ymfm_pcm.cpp" />
-    <ClCompile Include="chips\ymfm\ymfm_ssg.cpp" />
-    <ClCompile Include="chips\ymfm_opl2.cpp" />
-    <ClCompile Include="chips\ymfm_opl3.cpp" />
+    <ClCompile Include="repo\src\adlmidi_load.cpp" />
+    <ClCompile Include="repo\src\adlmidi_midiplay.cpp" />
+    <ClCompile Include="repo\src\adlmidi_opl3.cpp" />
+    <ClCompile Include="repo\src\adlmidi_private.cpp" />
+    <ClCompile Include="repo\src\adlmidi_sequencer.cpp" />
+    <ClCompile Include="repo\src\adlmidi.cpp" />
+    <ClCompile Include="repo\src\chips\dos_hw_opl.cpp" />
+    <ClCompile Include="repo\src\chips\dosbox_opl3.cpp" />
+    <ClCompile Include="repo\src\chips\dosbox\dbopl.cpp" />
+    <ClCompile Include="repo\src\chips\esfmu_opl3.cpp" />
+    <ClCompile Include="repo\src\chips\esfmu\esfm_registers.c" />
+    <ClCompile Include="repo\src\chips\esfmu\esfm.c" />
+    <ClCompile Include="repo\src\chips\java_opl3.cpp" />
+    <ClCompile Include="repo\src\chips\mame_opl2.cpp" />
+    <ClCompile Include="repo\src\chips\mame\mame_fmopl.cpp" />
+    <ClCompile Include="repo\src\chips\nuked_opl3_v174.cpp" />
+    <ClCompile Include="repo\src\chips\nuked_opl3.cpp" />
+    <ClCompile Include="repo\src\chips\nuked\nukedopl3_174.c" />
+    <ClCompile Include="repo\src\chips\nuked\nukedopl3.c" />
+    <ClCompile Include="repo\src\chips\opal_opl3.cpp" />
+    <ClCompile Include="repo\src\chips\opal\opal.c" />
+    <ClCompile Include="repo\src\chips\opl_serial_port.cpp" />
+    <ClCompile Include="repo\src\chips\ym3812_lle.cpp" />
+    <ClCompile Include="repo\src\chips\ym3812_lle\nopl2.c" />
+    <ClCompile Include="repo\src\chips\ym3812_lle\nuked_fmopl2.c" />
+    <ClCompile Include="repo\src\chips\ymf262_lle.cpp" />
+    <ClCompile Include="repo\src\chips\ymf262_lle\nopl3.c" />
+    <ClCompile Include="repo\src\chips\ymf262_lle\nuked_fmopl3.c" />
+    <ClCompile Include="repo\src\chips\ymfm_opl2.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm_opl3.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_adpcm.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_misc.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_opl.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_pcm.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_ssg.cpp" />
+    <ClCompile Include="repo\src\inst_db.cpp" />
+    <ClCompile Include="repo\src\wopl\wopl_file.c" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\adlmidi_bankmap.tcc" />
-    <None Include="..\src\chips\opl_chip_base.tcc" />
-    <None Include="..\src\structures\pl_list.tcc" />
+    <None Include="repo\src\adlmidi_bankmap.tcc" />
+    <None Include="repo\src\chips\opl_chip_base.tcc" />
+    <None Include="repo\src\structures\pl_list.tcc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

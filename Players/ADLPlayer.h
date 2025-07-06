@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.h (2025.06.22) **/
+/** $VER: ADLPlayer.h (2025.07.06) **/
 
 #pragma once
 
@@ -8,7 +8,7 @@
 
 #include "Player.h"
 
-#include <libADLMIDI/include/adlmidi.h>
+#include <libADLMIDI/repo/include/adlmidi.h>
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
@@ -35,7 +35,7 @@ protected:
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) override;
 
 private:
-    struct ADL_MIDIPlayer * _Player[3];
+    struct ADL_MIDIPlayer * _Devices[3];
 
     uint32_t _EmulatorCore;
     uint32_t _BankNumber;

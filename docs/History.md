@@ -1,6 +1,14 @@
 
 # foo_midi History
 
+- v2.19.0.0-alpha6, 2025-07-05
+  - New: **midi_plug_in** info field that contains the name of the active plug-in when a player supports it.
+  - New: FluidSynth can be configured using a configuration file. See [Configuration file](docs/README.md#configuration-file)
+  - Improved: Support for Unicode paths.
+  - Improved: Hardened the CLAP Host.
+  - Improved: Moved MT32Emu settings to FM Synthesis preferences page and added a couple of new settings.
+  - Fixed: Some startup and sample rate related issues.
+
 - v2.19.0.0-alpha5, 2025-07-02
   - Fixed: CLAP Player is thread safe again. ![Regression](https://img.shields.io/badge/regression-red)
   - Fixed: Event timing was not always correctly sent to the CLAP plug-in.
