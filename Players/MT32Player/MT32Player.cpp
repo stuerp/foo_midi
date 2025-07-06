@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.cpp (2025.07.05) **/
+/** $VER: MT32Player.cpp (2025.07.06) **/
 
 #include "pch.h"
 
@@ -39,6 +39,7 @@ bool MT32Player::Startup()
         return false;
 
     _Service.setStereoOutputSampleRate(0);
+    _Service.setReversedStereoEnabled(true); // Early MT-32 units (especially those with ROM version 1.07 or earlier) had reversed stereo channels.
     _Service.setSamplerateConversionQuality((MT32Emu::SamplerateConversionQuality) (int64_t) CfgMT32EmuConversionQuality);
     _Service.setPartialCount((MT32Emu::Bit32u) (int64_t) CfgMT32EmuMaxPartials);
     _Service.setAnalogOutputMode((MT32Emu::AnalogOutputMode) (int64_t) CfgMT32EmuAnalogOutputMode);

@@ -97,6 +97,7 @@ To create the component first build the x64 configuration and next the x86 confi
 - v2.19.0.0-alpha7, 2025-xx-xx
   - Improved: ADL player uses LibADLMIDI 1.6.0 and 64-bit floating-point samples.
   - Improved: OPN player uses LibOPNMIDI 1.6.0 and 64-bit floating-point samples.
+  - Fixed: MT-32 player reversed the left and the right channels in the output.
 
 - You can read the full history [here](docs/History.md).
 
