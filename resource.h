@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.07.05) P. Stuer **/
+/** $VER: Resource.h (2025.07.06) P. Stuer **/
 
 #pragma once
 
@@ -128,6 +128,7 @@
 #define IDC_MT32_NICE_AMP_RAMP              1311
 #define IDC_MT32_NICE_PANNING               1312
 #define IDC_MT32_NICE_PARTIAL_MIXING        1313
+#define IDC_MT32_REVERSE_STEREO             1314
 
 /** Dialog: Preferences Paths **/
 

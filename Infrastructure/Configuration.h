@@ -106,6 +106,7 @@ enum
     DefaultMT32EmuNiceAmpRamp = false,
     DefaultMT32EmuNicePanning = true,
     DefaultMT32EmuNicePartialMixing = true,
+    DefaultMT32EmuReverseStereo = true,
 
     // MT32Emu
     DefaultNukeSynth = 0,
@@ -171,6 +172,7 @@ extern cfg_var_modern::cfg_int
     CfgMT32EmuNiceAmpRamp,
     CfgMT32EmuNicePanning,
     CfgMT32EmuNicePartialMixing,
+    CfgMT32EmuReverseStereo,
 
     CfgNukeSynthesizer,
     CfgNukeBank,

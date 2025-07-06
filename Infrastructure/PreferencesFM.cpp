@@ -94,6 +94,7 @@ public:
         COMMAND_HANDLER_EX(IDC_MT32_NICE_AMP_RAMP, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_MT32_NICE_PANNING, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_MT32_NICE_PARTIAL_MIXING, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_MT32_REVERSE_STEREO, BN_CLICKED, OnButtonClicked)
 
         REFLECT_NOTIFICATIONS()
     END_MSG_MAP()
@@ -348,10 +349,11 @@ void DialogPage::apply()
             CfgMT32EmuDACInputMode = SelectedIndex;
         }
 
-        // MT32 Nice Amp Ramp / Nice Panning / Nice Partial Mixing
+        // MT32 Nice Amp Ramp / Nice Panning / Nice Partial Mixing / Reverse Stereo
         CfgMT32EmuNiceAmpRamp       = (t_int32) SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP, BM_GETCHECK);
         CfgMT32EmuNicePanning       = (t_int32) SendDlgItemMessage(IDC_MT32_NICE_PANNING, BM_GETCHECK);
         CfgMT32EmuNicePartialMixing = (t_int32) SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_GETCHECK);
+        CfgMT32EmuReverseStereo     = (t_int32) SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK);
     }
 
     OnChanged();
@@ -449,9 +451,10 @@ void DialogPage::reset()
         SendDlgItemMessage(IDC_MT32_DAC_INPUT_MODE, CB_SETCURSEL, DefaultMT32EmuDACInputMode);
 
         // Nice Amp Ramp / Nice Panning / Nice Partial Mixing
-        CfgMT32EmuNiceAmpRamp       = (t_int32) SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP, BM_GETCHECK);
-        CfgMT32EmuNicePanning       = (t_int32) SendDlgItemMessage(IDC_MT32_NICE_PANNING, BM_GETCHECK);
-        CfgMT32EmuNicePartialMixing = (t_int32) SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_GETCHECK);
+        SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP,       BM_SETCHECK, (WPARAM) DefaultMT32EmuNiceAmpRamp);
+        SendDlgItemMessage(IDC_MT32_NICE_PANNING,        BM_SETCHECK, (WPARAM) DefaultMT32EmuNicePanning);
+        SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_SETCHECK, (WPARAM) DefaultMT32EmuNicePartialMixing);
+        SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) DefaultMT32EmuReverseStereo);
     }
 
     OnChanged();
@@ -636,6 +639,7 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
         SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP,       BM_SETCHECK, (WPARAM) CfgMT32EmuNiceAmpRamp);
         SendDlgItemMessage(IDC_MT32_NICE_PANNING,        BM_SETCHECK, (WPARAM) CfgMT32EmuNicePanning);
         SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_SETCHECK, (WPARAM) CfgMT32EmuNicePartialMixing);
+        SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) CfgMT32EmuReverseStereo);
     }
 /*
     for (const auto Id : { IDC_ADL_BANK_TEXT, IDC_ADL_BANK, IDC_ADL_CORE_TEXT, IDC_ADL_CORE, IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS, IDC_ADL_SOFT_PANNING })
@@ -708,6 +712,7 @@ void DialogPage::OnButtonClicked(UINT, int id, CWindow) noexcept
         case IDC_MT32_NICE_AMP_RAMP:
         case IDC_MT32_NICE_PANNING:
         case IDC_MT32_NICE_PARTIAL_MIXING:
+        case IDC_MT32_REVERSE_STEREO:
         {
             OnChanged();
             break;
@@ -844,6 +849,10 @@ bool DialogPage::HasChanged() noexcept
 
         // MT32 Nice Partial Mixing
         if (SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_GETCHECK) != CfgMT32EmuNicePartialMixing)
+            return true;
+
+        // MT32 Reverse Stereo
+        if (SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK) != CfgMT32EmuReverseStereo)
             return true;
     }
 

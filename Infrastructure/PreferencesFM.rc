@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.rc (2025.07.05) **/
+/** $VER: PreferencesFM.rc (2025.07.06) **/
 
 #include "Resource.h"
 
@@ -222,14 +222,20 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     // Checkbox Nice Panning
     #define X_D12    X_D11 + W_D11 + IX
     #define Y_D12    Y_D11
-    #define W_D12    64
+    #define W_D12    56
     #define H_D12    H_CHB
 
     // Checkbox Nice Partial Mixing
     #define X_D13    X_D12 + W_D12 + IX
     #define Y_D13    Y_D12
-    #define W_D13    80
+    #define W_D13    68
     #define H_D13    H_CHB
+
+    // Checkbox Reverse Stereo
+    #define X_D14    X_D13 + W_D13 + IX
+    #define Y_D14    Y_D13
+    #define W_D14    64
+    #define H_D14    H_CHB
 
 #define H_D00    11 + H_D02 + IY + H_D06 + IY + H_D10 + IY + H_D11 + 7
 
@@ -276,4 +282,5 @@ font 8, "MS Shell Dlg", 400, 0, 1
         control     "Nice Amp Ramp",        IDC_MT32_NICE_AMP_RAMP,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D11, Y_D11, W_D11, H_D11
         control     "Nice Panning",         IDC_MT32_NICE_PANNING,              "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D12, Y_D12, W_D12, H_D12
         control     "Nice Partial Mixing",  IDC_MT32_NICE_PARTIAL_MIXING,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D13, Y_D13, W_D13, H_D13
+        control     "Reverse Stereo",       IDC_MT32_REVERSE_STEREO,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D14, Y_D14, W_D14, H_D14
 }

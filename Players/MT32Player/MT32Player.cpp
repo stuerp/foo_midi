@@ -39,7 +39,6 @@ bool MT32Player::Startup()
         return false;
 
     _Service.setStereoOutputSampleRate(0);
-    _Service.setReversedStereoEnabled(true); // Early MT-32 units (especially those with ROM version 1.07 or earlier) had reversed stereo channels.
     _Service.setSamplerateConversionQuality((MT32Emu::SamplerateConversionQuality) (int64_t) CfgMT32EmuConversionQuality);
     _Service.setPartialCount((MT32Emu::Bit32u) (int64_t) CfgMT32EmuMaxPartials);
     _Service.setAnalogOutputMode((MT32Emu::AnalogOutputMode) (int64_t) CfgMT32EmuAnalogOutputMode);
@@ -53,6 +52,7 @@ bool MT32Player::Startup()
     _Service.setNiceAmpRampEnabled((bool) CfgMT32EmuNiceAmpRamp);
     _Service.setNicePanningEnabled((bool) CfgMT32EmuNicePanning);
     _Service.setNicePartialMixingEnabled((bool) CfgMT32EmuNicePartialMixing);
+    _Service.setReversedStereoEnabled((bool) CfgMT32EmuReverseStereo); // Early MT-32 units (especially those with ROM version 1.07 or earlier) had reversed stereo channels.
 
     MT32Emu::Bit32u ActualSampleRate = _Service.getActualStereoOutputSamplerate();
 
