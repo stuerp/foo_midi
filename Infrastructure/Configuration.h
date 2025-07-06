@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.07.05) **/
+/** $VER: Configuration.h (2025.07.06) **/
 
 #pragma once
 
@@ -98,7 +98,7 @@ enum
     DefaultBASSMIDIResamplingMode = 1,
 
     DefaultMT32EmuConversionQuality = MT32Emu::SamplerateConversionQuality::SamplerateConversionQuality_BEST,
-    DefaultMT32EmuMaxPartials = 32, // MT32EMU_DEFAULT_MAX_PARTIALS,
+    DefaultMT32EmuMaxPartials = 256,
     DefaultMT32EmuAnalogOutputMode = MT32Emu::AnalogOutputMode::AnalogOutputMode_OVERSAMPLED,
     DefaultMT32EmuGMSet = 0,
     DefaultMT32EmuDACInputMode = MT32Emu::DACInputMode_NICE,

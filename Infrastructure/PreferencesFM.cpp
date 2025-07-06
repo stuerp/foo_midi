@@ -311,7 +311,7 @@ void DialogPage::apply()
 
         // MT32 Max. Partials
         {
-            int Value = std::clamp((int) GetDlgItemInt(IDC_MT32_MAX_PARTIALS, NULL, FALSE), 1, 32);
+            int Value = std::clamp((int) GetDlgItemInt(IDC_MT32_MAX_PARTIALS, NULL, FALSE), 8, 256);
 
             SetDlgItemInt(IDC_MT32_MAX_PARTIALS, (UINT) Value, FALSE);
 
