@@ -207,7 +207,6 @@ private:
     std::vector <soundfont_t> _SoundFonts;
 
     bool _IsSysExFile;
-    uint32_t _TrackCount;
 
     metadb_index_hash _Hash;
     hasher_md5_result _FileHash;

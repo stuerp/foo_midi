@@ -36,7 +36,6 @@ InputDecoder::InputDecoder() noexcept :
     _FileStats2 {},
 
     _IsSysExFile(false),
-    _TrackCount(),
 
     _IsMT32(),
     _IsXG(),
@@ -188,16 +187,14 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             throw exception_io_data(Message + e.what());
         }
 
-        _TrackCount = _Container.GetTrackCount();
-
-        if (_TrackCount == 0)
+        if (_Container.IsEmpty())
             throw exception_io_data("Invalid MIDI file: No tracks found");
 
         // Validate the MIDI data.
         {
             bool HasDuration = false;
 
-            for (size_t i = 0; i < _TrackCount; ++i)
+            for (size_t i = 0, TrackCount = _Container.GetTrackCount(); i < TrackCount; ++i)
             {
                 if (_Container.GetDuration(i) != 0)
                 {
@@ -248,9 +245,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 /// </summary>
 void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
-#ifdef _DEBUG
-    console::print(::FormatText("%08X: " STR_COMPONENT_BASENAME " is initializing the decoder.", ::GetCurrentThreadId()).c_str());
-#endif
+//  console::print(::FormatText("%08X: " STR_COMPONENT_BASENAME " is initializing the decoder.", ::GetCurrentThreadId()).c_str());
 
     _Flags = flags;
 
@@ -267,8 +262,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
 
     _LengthInSamples = (uint32_t) ::MulDiv((int) GetDuration(subSongIndex), (int) _SampleRate, 1'000);
-
-    _Container.SetTrackCount(_TrackCount);
 
     _ExtraPercussionChannel = _Container.GetExtraPercussionChannel();
 
