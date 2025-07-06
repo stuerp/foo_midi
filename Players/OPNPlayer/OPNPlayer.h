@@ -1,5 +1,5 @@
 
-/** $VER: OPN Player (2025.06.22) **/
+/** $VER: OPN Player (2025.07.06) **/
 
 #pragma once
 
@@ -8,10 +8,11 @@
 
 #include <Player.h>
 
-#include <libOPNMIDI/include/opnmidi.h>
+#include <libOPNMIDI/repo/include/opnmidi.h>
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 class OPNPlayer : public player_t
 {
 public:
@@ -39,11 +40,12 @@ protected:
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
 
 private:
-    struct OPN2_MIDIPlayer * _Player[3];
+    struct OPN2_MIDIPlayer * _Devices[3];
 
     unsigned _EmulatorCore;
     unsigned _BankNumber;
     unsigned _ChipCount;
     bool _IsSoftPanningEnabled;
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

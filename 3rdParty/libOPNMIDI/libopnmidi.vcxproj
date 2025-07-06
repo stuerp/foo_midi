@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="repo\include\opnmidi.h" />
+    <ClInclude Include="repo\src\chips\gens_opn2.h" />
+    <ClInclude Include="repo\src\chips\gens\Ym2612_p.hpp" />
+    <ClInclude Include="repo\src\chips\gens\Ym2612.hpp" />
+    <ClInclude Include="repo\src\chips\gx_opn2.h" />
+    <ClInclude Include="repo\src\chips\gx\gx_ym2612.h" />
+    <ClInclude Include="repo\src\chips\mame_opn2.h" />
+    <ClInclude Include="repo\src\chips\mame_opna.h" />
+    <ClInclude Include="repo\src\chips\mame\mame_ym2612fm.h" />
+    <ClInclude Include="repo\src\chips\mame\mamedef.h" />
+    <ClInclude Include="repo\src\chips\mamefm\2608intf.h" />
+    <ClInclude Include="repo\src\chips\mamefm\emu.h" />
+    <ClInclude Include="repo\src\chips\mamefm\emu2149.h" />
+    <ClInclude Include="repo\src\chips\mamefm\emutypes.h" />
+    <ClInclude Include="repo\src\chips\mamefm\fm.h" />
+    <ClInclude Include="repo\src\chips\mamefm\fmopn_2608rom.h" />
+    <ClInclude Include="repo\src\chips\mamefm\resampler.hpp" />
+    <ClInclude Include="repo\src\chips\mamefm\ymdeltat.h" />
+    <ClInclude Include="repo\src\chips\np2_opna.h" />
+    <ClInclude Include="repo\src\chips\np2\compiler.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_diag.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_file.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_fmgen.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_fmgeninl.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_fmtimer.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_headers.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_misc.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_opna.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_psg.h" />
+    <ClInclude Include="repo\src\chips\np2\fmgen_types.h" />
+    <ClInclude Include="repo\src\chips\nuked_opn2.h" />
+    <ClInclude Include="repo\src\chips\nuked\ym3438.h" />
+    <ClInclude Include="repo\src\chips\opn_chip_base.h" />
+    <ClInclude Include="repo\src\chips\opn_chip_family.h" />
+    <ClInclude Include="repo\src\chips\pmdwin_opna.h" />
+    <ClInclude Include="repo\src\chips\pmdwin\op.h" />
+    <ClInclude Include="repo\src\chips\pmdwin\opna.h" />
+    <ClInclude Include="repo\src\chips\pmdwin\psg.h" />
+    <ClInclude Include="repo\src\chips\pmdwin\rhythmdata.h" />
+    <ClInclude Include="repo\src\chips\vgm_file_dumper.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_adpcm.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_fm.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_fm.hpp" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_misc.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_opn.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_pcm.h" />
+    <ClInclude Include="repo\src\chips\ymfm\ymfm_ssg.h" />
+    <ClInclude Include="repo\src\chips\ymfm_opn2.h" />
+    <ClInclude Include="repo\src\chips\ymfm_opna.h" />
+    <ClInclude Include="repo\src\cvt_mus2mid.hpp" />
+    <ClInclude Include="repo\src\cvt_xmi2mid.hpp" />
+    <ClInclude Include="repo\src\file_reader.hpp" />
+    <ClInclude Include="repo\src\fraction.hpp" />
+    <ClInclude Include="repo\src\midi_sequencer_impl.hpp" />
+    <ClInclude Include="repo\src\midi_sequencer.h" />
+    <ClInclude Include="repo\src\midi_sequencer.hpp" />
+    <ClInclude Include="repo\src\opnbank.h" />
+    <ClInclude Include="repo\src\opnmidi_bankmap.h" />
+    <ClInclude Include="repo\src\opnmidi_cvt.hpp" />
+    <ClInclude Include="repo\src\opnmidi_midiplay.hpp" />
+    <ClInclude Include="repo\src\opnmidi_opn2.hpp" />
+    <ClInclude Include="repo\src\opnmidi_private.hpp" />
+    <ClInclude Include="repo\src\opnmidi_ptr.hpp" />
+    <ClInclude Include="repo\src\structures\pl_list.hpp" />
+    <ClInclude Include="repo\src\wopn\wopn_file.h" />
+    <ClInclude Include="unistd.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="repo\src\chips\gens_opn2.cpp" />
+    <ClCompile Include="repo\src\chips\gens\Ym2612.cpp" />
+    <ClCompile Include="repo\src\chips\gx_opn2.cpp" />
+    <ClCompile Include="repo\src\chips\gx\gx_ym2612.c" />
+    <ClCompile Include="repo\src\chips\mame_opn2.cpp" />
+    <ClCompile Include="repo\src\chips\mame_opna.cpp" />
+    <ClCompile Include="repo\src\chips\mame\mame_ym2612fm.c" />
+    <ClCompile Include="repo\src\chips\mamefm\emu2149.c" />
+    <ClCompile Include="repo\src\chips\mamefm\fm.cpp" />
+    <ClCompile Include="repo\src\chips\mamefm\resampler.cpp" />
+    <ClCompile Include="repo\src\chips\mamefm\ymdeltat.cpp" />
+    <ClCompile Include="repo\src\chips\np2_opna.cpp" />
+    <ClCompile Include="repo\src\chips\np2\fmgen_file.cpp" />
+    <ClCompile Include="repo\src\chips\np2\fmgen_fmgen.cpp" />
+    <ClCompile Include="repo\src\chips\np2\fmgen_fmtimer.cpp" />
+    <ClCompile Include="repo\src\chips\np2\fmgen_opna.cpp" />
+    <ClCompile Include="repo\src\chips\np2\fmgen_psg.cpp" />
+    <ClCompile Include="repo\src\chips\nuked_opn2.cpp" />
+    <ClCompile Include="repo\src\chips\nuked\ym3438.c" />
+    <ClCompile Include="repo\src\chips\pmdwin_opna.cpp" />
+    <ClCompile Include="repo\src\chips\pmdwin\opna.c" />
+    <ClCompile Include="repo\src\chips\pmdwin\psg.c" />
+    <ClCompile Include="repo\src\chips\pmdwin\rhythmdata.c" />
+    <ClCompile Include="repo\src\chips\vgm_file_dumper.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_adpcm.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_misc.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_opn.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_pcm.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm\ymfm_ssg.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm_opn2.cpp" />
+    <ClCompile Include="repo\src\chips\ymfm_opna.cpp" />
+    <ClCompile Include="repo\src\opnmidi_load.cpp" />
+    <ClCompile Include="repo\src\opnmidi_midiplay.cpp" />
+    <ClCompile Include="repo\src\opnmidi_opn2.cpp" />
+    <ClCompile Include="repo\src\opnmidi_private.cpp" />
+    <ClCompile Include="repo\src\opnmidi_sequencer.cpp" />
+    <ClCompile Include="repo\src\opnmidi.cpp" />
+    <ClCompile Include="repo\src\wopn\wopn_file.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="repo\src\chips\np2\LICENSE" />
+    <None Include="repo\src\chips\opn_chip_base.tcc" />
+    <None Include="repo\src\opnmidi_bankmap.tcc" />
+    <None Include="repo\src\structures\pl_list.tcc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="repo\src\chips\np2\fmgen_changelog_opnmidi.txt" />
+    <Text Include="repo\src\chips\np2\fmgen_readme.txt" />
+    <Text Include="repo\src\chips\np2\fmgen_readme_kai.txt" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{7f212e63-0b40-4ffe-8cd5-19a1a397b5e5}</ProjectGuid>
+    <RootNamespace>libopnmidi</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>repo/include;repo/src;.</AdditionalIncludeDirectories>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>repo/include;repo/src;.</AdditionalIncludeDirectories>
+      <StringPooling>true</StringPooling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <AdditionalIncludeDirectories>repo/include;repo/src;.</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>repo/include;repo/src;.</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

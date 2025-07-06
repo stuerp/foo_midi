@@ -113,12 +113,12 @@ enum
     DefaultNukePanning = 0,
 
     DefaultADLBank = 72,
-    DefaultADLCore = 0,
+    DefaultADLEmulator = 0,
     DefaultADLChipCount = 10,
     DefaultADLSoftPanning = 1,
 
     DefaultOPNBank = 0,
-    DefaultOPNCore = 0,
+    DefaultOPNEmulator = 0,
     DefaultOPNChipCount = 10,
     DefaultOPNSoftPanning = 1,
 };
@@ -154,12 +154,12 @@ extern cfg_var_modern::cfg_int
     CfgBASSMIDIResamplingMode,
 
     CfgADLBank,
-    CfgADLCore,
+    CfgADLEmulator,
     CfgADLChipCount,
     CfgADLSoftPanning,
 
     CfgOPNBank,
-    CfgOPNCore,
+    CfgOPNEmulator,
     CfgOPNChipCount,
     CfgOPNSoftPanning,
 

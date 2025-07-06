@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.cpp (2025.07.05) P. Stuer **/
+/** $VER: PreferencesFM.cpp (2025.07.06) P. Stuer **/
 
 #include "pch.h"
 
@@ -27,6 +27,7 @@
 #include "Configuration.h"
 
 #include "ADLPlayer.h"
+#include "OPNPlayer.h"
 
 #include "Encoding.h"
 
@@ -115,22 +116,45 @@ private:
 private:
     struct bank_t
     {
-        int Number;
+        int Id;
         std::wstring Name;
 
-        bank_t() : Number(-1), Name() { }
-        bank_t(const bank_t & other) : Number(other.Number), Name(other.Name) { }
-        bank_t(int number, const std::wstring & name) : Number(number), Name(name) { }
+        bank_t() : Id(-1), Name() { }
+        bank_t(const bank_t & other) : Id(other.Id), Name(other.Name) { }
+        bank_t(int number, const std::wstring & name) : Id(number), Name(name) { }
 
         bank_t & operator =(const bank_t & other)
         {
-            Number = other.Number;
+            Id = other.Id;
             Name = other.Name;
 
             return *this;
         }
 
-        bool operator ==(const bank_t & b) const { return Number == b.Number; }
+        bool operator ==(const bank_t & b) const { return Id == b.Id; }
+        bool operator !=(const bank_t & b) const { return !operator ==(b); }
+        bool operator < (const bank_t & b) const { return Name < b.Name; }
+        bool operator > (const bank_t & b) const { return Name > b.Name; }
+    };
+
+    struct emulator_t
+    {
+        int Id;
+        std::wstring Name;
+
+        emulator_t() : Id(-1), Name() { }
+        emulator_t(const emulator_t & other) : Id(other.Id), Name(other.Name) { }
+        emulator_t(int number, const std::wstring & name) : Id(number), Name(name) { }
+
+        emulator_t & operator =(const emulator_t & other)
+        {
+            Id = other.Id;
+            Name = other.Name;
+
+            return *this;
+        }
+
+        bool operator ==(const bank_t & b) const { return Id == b.Id; }
         bool operator !=(const bank_t & b) const { return !operator ==(b); }
         bool operator < (const bank_t & b) const { return Name < b.Name; }
         bool operator > (const bank_t & b) const { return Name > b.Name; }
@@ -138,32 +162,33 @@ private:
 
     std::vector<bank_t> _ADLBanks;
 
-    const std::vector<std::wstring> _ADLCores =
+    const std::vector<emulator_t> _ADLEmulators =
     {
-        L"Nuked OPL3 v1.8",
-        L"Nuked OPL3 v1.7.4",
-        L"DOSBox",
-        L"Opal",
-        L"Java",
-        L"ESFMu",
-        L"MAME OPL2",
-        L"YMFM OPL2",
-        L"YMFM OPL3",
-        L"Nuked OPL2 LLE",
-        L"Nuked OPL3 LLE"
+        { ADLMIDI_EMU_NUKED,          L"Nuked OPL3 v1.8" },
+        { ADLMIDI_EMU_NUKED_174,      L"Nuked OPL3 v1.7.4" },
+        { ADLMIDI_EMU_DOSBOX,         L"DOSBox" },
+        { ADLMIDI_EMU_OPAL,           L"Opal" },
+        { ADLMIDI_EMU_JAVA,           L"Java" },
+        { ADLMIDI_EMU_ESFMu,          L"ESFMu" },
+        { ADLMIDI_EMU_MAME_OPL2,      L"MAME OPL2" },
+        { ADLMIDI_EMU_YMFM_OPL2,      L"YMFM OPL2" },
+        { ADLMIDI_EMU_YMFM_OPL3,      L"YMFM OPL3" },
+        { ADLMIDI_EMU_NUKED_OPL2_LLE, L"Nuked OPL2 LLE" },
+        { ADLMIDI_EMU_NUKED_OPL3_LLE, L"Nuked OPL3 LLE" },
     };
 
     std::vector<bank_t> _OPNBanks;
 
-    const std::vector<std::wstring> _OPNCores =
+    const std::vector<emulator_t> _OPNEmulators =
     {
-        L"MAME YM2612",
-        L"Nuked OPN2",
-        L"GENS",
-        L"Genesis Plus GX",
-        L"Neko Project II OPNA",
-        L"MAME YM2608",
-        L"PMDWin OPNA",
+        { OPNMIDI_EMU_MAME,         L"MAME YM2612" },
+        { OPNMIDI_EMU_MAME_2608,    L"MAME YM2608" },
+        { OPNMIDI_EMU_NUKED_YM3438, L"Nuked OPN2 (YM3438 mode)" },
+        { OPNMIDI_EMU_NUKED_YM2612, L"Nuked OPN2 (YM2612 mode)" },
+        { OPNMIDI_EMU_GENS,         L"GENS/GS II OPN2" },
+        { OPNMIDI_EMU_NP2,          L"Neko Project II Kai OPNA" },
+        { OPNMIDI_EMU_YMFM_OPN2,    L"YMFM OPN2" },
+        { OPNMIDI_EMU_YMFM_OPNA,    L"YMFM OPNA" },
     };
 
     const preferences_page_callback::ptr _Callback;
@@ -200,17 +225,17 @@ void DialogPage::apply()
             if (SelectedIndex < 0 || SelectedIndex >= (int) _ADLBanks.size())
                 SelectedIndex = 0;
 
-            CfgADLBank = _ADLBanks[(size_t) SelectedIndex].Number;
+            CfgADLBank = _ADLBanks[(size_t) SelectedIndex].Id;
         }
 
         // ADL Emulator Core
         {
             int SelectedIndex = (int) SendDlgItemMessage(IDC_ADL_CORE, CB_GETCURSEL);
 
-            if (SelectedIndex < 0 || SelectedIndex >= (int) _ADLCores.size())
+            if (SelectedIndex < 0 || SelectedIndex >= (int) _ADLEmulators.size())
                 SelectedIndex = 0;
 
-            CfgADLCore = SelectedIndex;
+            CfgADLEmulator = _ADLEmulators[(size_t) SelectedIndex].Id;
         }
 
         // ADL Chip Count
@@ -244,17 +269,17 @@ void DialogPage::apply()
             if (SelectedIndex < 0 || SelectedIndex >= (int) _OPNBanks.size())
                 SelectedIndex = 0;
 
-            CfgOPNBank = _OPNBanks[(size_t) SelectedIndex].Number;
+            CfgOPNBank = _OPNBanks[(size_t) SelectedIndex].Id;
         }
 
         // OPN Emulator Core
         {
             int SelectedIndex = (int) SendDlgItemMessage(IDC_OPN_CORE, CB_GETCURSEL);
 
-            if (SelectedIndex < 0 || SelectedIndex >= (int) _OPNCores.size())
+            if (SelectedIndex < 0 || SelectedIndex >= (int) _OPNEmulators.size())
                 SelectedIndex = 0;
 
-            CfgOPNCore = SelectedIndex;
+            CfgOPNEmulator = _OPNEmulators[(size_t) SelectedIndex].Id;
         }
 
         // OPN Chip Count
@@ -346,7 +371,7 @@ void DialogPage::reset()
 
             for (const auto & Iter : _ADLBanks)
             {
-                if (Iter.Number == DefaultADLBank)
+                if (Iter.Id == DefaultADLBank)
                 {
                     SelectedIndex = i;
                     break;
@@ -358,7 +383,7 @@ void DialogPage::reset()
 
         // ADL Emulator Core
         {
-            int SelectedIndex = DefaultADLCore;
+            int SelectedIndex = DefaultADLEmulator;
 
             SendDlgItemMessage(IDC_ADL_CORE, CB_SETCURSEL, (WPARAM) SelectedIndex);
         }
@@ -382,7 +407,7 @@ void DialogPage::reset()
 
             for (const auto & Iter : _OPNBanks)
             {
-                if (Iter.Number == DefaultOPNBank)
+                if (Iter.Id == DefaultOPNBank)
                 {
                     SelectedIndex = i;
                     break;
@@ -392,9 +417,9 @@ void DialogPage::reset()
             SendDlgItemMessage(IDC_OPN_BANK, CB_SETCURSEL, (WPARAM) SelectedIndex);
         }
 
-        // OPN Emulator Core
+        // OPN Emulator
         {
-            int SelectedIndex = DefaultOPNCore;
+            int SelectedIndex = DefaultOPNEmulator;
 
             SendDlgItemMessage(IDC_OPN_CORE, CB_SETCURSEL, (WPARAM) SelectedIndex);
         }
@@ -464,7 +489,7 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
         {
             w.AddString(_ADLBanks[i].Name.c_str());
 
-            if (_ADLBanks[i].Number == CfgADLBank)
+            if (_ADLBanks[i].Id == CfgADLBank)
                 w.SetCurSel((int) i);
         }
     }
@@ -473,11 +498,11 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
     {
         auto w = (CComboBox) GetDlgItem(IDC_ADL_CORE);
 
-        for (size_t i = 0; i < _ADLCores.size(); ++i)
+        for (size_t i = 0; i < _ADLEmulators.size(); ++i)
         {
-            w.AddString(_ADLCores[i].c_str());
+            w.AddString(_ADLEmulators[i].Name.c_str());
 
-            if ((int) i == CfgADLCore)
+            if (_ADLEmulators[i].Id == CfgADLEmulator)
                 w.SetCurSel((int) i);
         }
     }
@@ -520,7 +545,7 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
         {
             w.AddString(_OPNBanks[i].Name.c_str());
 
-            if (_OPNBanks[i].Number == CfgOPNBank)
+            if (_OPNBanks[i].Id == CfgOPNBank)
                 w.SetCurSel((int) i);
         }
     }
@@ -529,11 +554,11 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
     {
         auto w = (CComboBox) GetDlgItem(IDC_OPN_CORE);
 
-        for (size_t i = 0; i < _OPNCores.size(); ++i)
+        for (size_t i = 0; i < _OPNEmulators.size(); ++i)
         {
-            w.AddString(_OPNCores[i].c_str());
+            w.AddString(_OPNEmulators[i].Name.c_str());
 
-            if ((int) i == CfgOPNCore)
+            if (_OPNEmulators[i].Id == CfgOPNEmulator)
                 w.SetCurSel((int) i);
         }
     }
@@ -704,7 +729,7 @@ bool DialogPage::HasChanged() noexcept
             if ((SelectedIndex < 0) || (SelectedIndex >= (int) _ADLBanks.size()))
                 SelectedIndex = 0;
 
-            if (_ADLBanks[(t_size) SelectedIndex].Number != CfgADLBank)
+            if (_ADLBanks[(t_size) SelectedIndex].Id != CfgADLBank)
                 return true;
         }
 
@@ -712,10 +737,10 @@ bool DialogPage::HasChanged() noexcept
         {
             int SelectedIndex = (int) SendDlgItemMessage(IDC_ADL_CORE, CB_GETCURSEL);
 
-            if ((SelectedIndex < 0) || (SelectedIndex >= (int) _ADLCores.size()))
+            if ((SelectedIndex < 0) || (SelectedIndex >= (int) _ADLEmulators.size()))
                 SelectedIndex = 0;
 
-            if (SelectedIndex != CfgADLCore)
+            if (SelectedIndex != CfgADLEmulator)
                 return true;
         }
 
@@ -747,7 +772,7 @@ bool DialogPage::HasChanged() noexcept
             if ((SelectedIndex < 0) || (SelectedIndex >= (int) _OPNBanks.size()))
                 SelectedIndex = 0;
 
-            if (_OPNBanks[(t_size) SelectedIndex].Number != CfgOPNBank)
+            if (_OPNBanks[(t_size) SelectedIndex].Id != CfgOPNBank)
                 return true;
         }
 
@@ -755,10 +780,10 @@ bool DialogPage::HasChanged() noexcept
         {
             int SelectedIndex = (int) SendDlgItemMessage(IDC_OPN_CORE, CB_GETCURSEL);
 
-            if ((SelectedIndex < 0) || (SelectedIndex >= (int) _OPNCores.size()))
+            if ((SelectedIndex < 0) || (SelectedIndex >= (int) _OPNEmulators.size()))
                 SelectedIndex = 0;
 
-            if (SelectedIndex != CfgOPNCore)
+            if (_OPNEmulators[(size_t) SelectedIndex].Id != CfgOPNEmulator)
                 return true;
         }
 

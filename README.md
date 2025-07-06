@@ -50,7 +50,7 @@ The following libraries are included in the code:
   - [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 - [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
 - [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.0, Yamaha YMF262 (OPL3)
-- [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.5.1, Yamaha YM2612 (OPN2) and Yamaha YM2608 (OPNA)
+- [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.0, Yamaha YM2612 (OPN2) and Yamaha YM2608 (OPNA)
 - [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
 - [LibMT32Emu](https://github.com/munt/munt) 2.7.2, Roland MT-32, CM-32L and LAPC-I synthesiser modules
 - [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3), Yamaha YMF262 and CT1747 (OPL3)
@@ -95,7 +95,8 @@ To create the component first build the x64 configuration and next the x86 confi
 ## Change Log
 
 - v2.19.0.0-alpha7, 2025-xx-xx
-  - Improved: ADL player uses LibADLMIDI 1.6.0 and float/double samples.
+  - Improved: ADL player uses LibADLMIDI 1.6.0 and 64-bit floating-point samples.
+  - Improved: OPN player uses LibOPNMIDI 1.6.0 and 64-bit floating-point samples.
 
 - You can read the full history [here](docs/History.md).
 

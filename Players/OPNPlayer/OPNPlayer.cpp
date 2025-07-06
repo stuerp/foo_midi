@@ -1,9 +1,10 @@
 
-/** $VER: OPNPlayer.cpp (2025.06.22) **/
+/** $VER: OPNPlayer.cpp (2025.07.06) **/
 
 #include "pch.h"
 
 #include "OPNPlayer.h"
+#include "Resource.h"
 
 #include "Tomsoft.wopn.h"
 #include "fmmidi.wopn.h"
@@ -15,7 +16,7 @@
 
 OPNPlayer::OPNPlayer() : player_t()
 {
-    ::memset(_Player, 0, sizeof(_Player));
+    ::memset(_Devices, 0, sizeof(_Devices));
 }
 
 OPNPlayer::~OPNPlayer()
@@ -60,60 +61,92 @@ void OPNPlayer::SetSoftPanning(bool enabled) noexcept
 
 bool OPNPlayer::Startup()
 {
-    if (_Player[0] && _Player[1] && _Player[2])
+    if (_IsStarted)
         return true;
 
-    const int ChipsPerPort = (int) (_ChipCount / _countof(_Player));
-    const int ChipsRound = (_ChipCount % _countof(_Player)) != 0;
-    const int ChipsMin = _ChipCount < _countof(_Player);
+    const int ChipsPerPort = (int) (_ChipCount / _countof(_Devices));
+    const int ChipsRound = (_ChipCount % _countof(_Devices)) != 0;
+    const int ChipsMin = _ChipCount < _countof(_Devices);
 
-    for (size_t i = 0; i < _countof(_Player); ++i)
+    for (size_t i = 0; i < _countof(_Devices); ++i)
     {
-        OPN2_MIDIPlayer * Player = this->_Player[i] = ::opn2_init((long)_SampleRate);
+        auto * Device = ::opn2_init((long) _SampleRate);
         
-        if (Player == nullptr)
+        if (Device == nullptr)
             return false;
 
-        const void * Bank;
+        ::opn2_setDebugMessageHook
+        (
+            Device,
+            [](void * context, const char * format ...) noexcept
+            {
+                std::string Line; Line.resize(1024);
+
+                std::va_list args;
+
+                va_start(args, format);
+
+                (void) ::vsnprintf(Line.data(), Line.size(), format, args);
+                console::print(STR_COMPONENT_BASENAME " OPN Player says ", Line.c_str());
+
+                va_end(args);
+            },
+            nullptr
+        );
+
+        ::opn2_reset(Device);
+
+        ::opn2_setSoftPanEnabled        (Device, _IsSoftPanningEnabled ? 1 : 0); // Use 1 to turn on soft panning.
+        ::opn2_setScaleModulators       (Device, 0); // Use 1 to turn on modulators scaling by volume.
+        ::opn2_setFullRangeBrightness   (Device, 0); // Use 1 to turn on a full-ranged XG CC74 Brightness.
+        ::opn2_setAutoArpeggio          (Device, 0); // Use 1 to turn on
+
+        ::opn2_setVolumeRangeModel      (Device, OPNMIDI_VolumeModel_AUTO);
+        ::opn2_setChannelAllocMode      (Device, OPNMIDI_ChanAlloc_AUTO);
+
+        ::opn2_switchEmulator(Device, (int) _EmulatorCore);
+
+        const void * BankData;
         size_t BankSize;
 
         switch (_BankNumber)
         {
             default:
             case 0:
-                Bank = bnk_xg;
+                BankData = bnk_xg;
                 BankSize = sizeof(bnk_xg);
                 break;
 
             case 1:
-                Bank = bnk_gs;
+                BankData = bnk_gs;
                 BankSize = sizeof(bnk_gs);
                 break;
 
             case 2:
-                Bank = bnk_gems;
+                BankData = bnk_gems;
                 BankSize = sizeof(bnk_gems);
                 break;
 
             case 3:
-                Bank = bnk_Tomsoft;
+                BankData = bnk_Tomsoft;
                 BankSize = sizeof(bnk_Tomsoft);
                 break;
 
             case 4:
-                Bank = bnk_fmmidi;
+                BankData = bnk_fmmidi;
                 BankSize = sizeof(bnk_fmmidi);
                 break;
         }
 
-        ::opn2_openBankData(Player, Bank, (long) BankSize);
+        ::opn2_openBankData(Device, BankData, (long) BankSize);
 
-        ::opn2_setNumChips(Player, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0));
-        ::opn2_setSoftPanEnabled(Player, _IsSoftPanningEnabled);
-        ::opn2_setDeviceIdentifier(Player, (unsigned int) i);
-        ::opn2_switchEmulator(Player, (int) _EmulatorCore);
-        ::opn2_reset(Player);
+        ::opn2_setNumChips(Device, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0)); // Set number of concurrent emulated chips to excite channels limit of one chip.
+        ::opn2_setDeviceIdentifier(Device, (unsigned int) i); // Set 4-bit device identifier. Used by the SysEx processor.
+
+        _Devices[i] = Device;
     }
+
+    console::print(STR_COMPONENT_BASENAME " is using LibOPNMIDI " OPNMIDI_VERSION " with emulator ", ::opn2_chipEmulatorName(_Devices[0]), ".");
 
     _IsStarted = true;
 
@@ -124,40 +157,71 @@ bool OPNPlayer::Startup()
 
 void OPNPlayer::Shutdown()
 {
-    for (size_t i = 0; i < _countof(_Player); ++i)
+    for (size_t i = 0; i < _countof(_Devices); ++i)
     {
-        ::opn2_close(_Player[i]);
-        _Player[i] = nullptr;
+        ::opn2_close(_Devices[i]);
+        _Devices[i] = nullptr;
     }
 
     _IsStarted = false;
 }
 
-void OPNPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void OPNPlayer::Render(audio_sample * dstData, uint32_t frameCount)
 {
-    int16_t Data[256 * sizeof(audio_sample)];
+    const size_t MaxFrames = 256;
+    const size_t MaxChannels = 2;
 
-    while (sampleCount != 0)
+#ifndef OldCode
+    audio_sample srcData[MaxFrames * MaxChannels];
+
+    const OPNMIDI_AudioFormat AudioFormat = { OPNMIDI_SampleType_F64, sizeof(*srcData), sizeof(*srcData) * MaxChannels };
+
+    while (frameCount != 0)
     {
-        uint32_t ToDo = sampleCount;
+        size_t ToDo = frameCount;
 
-        if (ToDo > 256)
-            ToDo = 256;
+        if (ToDo > MaxFrames)
+            ToDo = MaxFrames;
 
-        ::memset(sampleData, 0, ((size_t) ToDo * 2) * sizeof(audio_sample));
+        ::memset(dstData, 0, ToDo * MaxChannels * sizeof(*dstData));
 
-        for (size_t i = 0; i < _countof(_Player); ++i)
+        for (size_t i = 0; i < _countof(_Devices); ++i)
         {
-            ::opn2_generate(_Player[i], (int) (ToDo * 2), Data);
+            ::opn2_generateFormat(_Devices[i], (int) (ToDo * MaxChannels), (OPN2_UInt8 *) srcData, (OPN2_UInt8 *)(srcData + 1), &AudioFormat);
 
-            // Convert the format of the rendered output.
-            for (size_t j = 0, k = (ToDo * 2); j < k; j++)
-                sampleData[j] += (audio_sample) Data[j] * (1.0f / 32768.0f);
+            // Convert the rendered output.
+            for (size_t j = 0; j < (ToDo * MaxChannels); ++j)
+                dstData[j] += (audio_sample) srcData[j];
         }
 
-        sampleData += (ToDo * 2);
-        sampleCount -= ToDo;
+        dstData += (ToDo * MaxChannels);
+        frameCount -= (uint32_t) ToDo;
     }
+#else
+    int16_t srcData[MaxFrames * MaxChannels];
+
+    while (frameCount != 0)
+    {
+        uint32_t ToDo = frameCount;
+
+        if (ToDo > MaxFrames)
+            ToDo = MaxFrames;
+
+        ::memset(dstData, 0, ToDo * MaxChannels * sizeof(audio_sample));
+
+        for (size_t i = 0; i < _countof(_Devices); ++i)
+        {
+            ::opn2_generate(_Devices[i], (int) (ToDo * MaxChannels), srcData);
+
+            // Convert the rendered output.
+            for (size_t j = 0; j < (ToDo * MaxChannels); ++j)
+                dstData[j] += (audio_sample) srcData[j] * (1.0f / 32768.0f);
+        }
+
+        dstData += (ToDo * MaxChannels);
+        frameCount -= ToDo;
+    }
+#endif
 }
 
 void OPNPlayer::SendEvent(uint32_t data)
@@ -169,9 +233,9 @@ void OPNPlayer::SendEvent(uint32_t data)
         static_cast<OPN2_UInt8>(data >> 16)
     };
 
-    size_t Port = (data >> 24) & _countof(_Player);
+    size_t Port = (data >> 24) & _countof(_Devices);
 
-    if (Port > (_countof(_Player) - 1))
+    if (Port > (_countof(_Devices) - 1))
         Port = 0;
 
     const OPN2_UInt8 Status = data & 0xF0;
@@ -180,31 +244,31 @@ void OPNPlayer::SendEvent(uint32_t data)
     switch (Status)
     {
         case midi::StatusCodes::NoteOff:
-            ::opn2_rt_noteOff(_Player[Port], Channel, Event[1]);
+            ::opn2_rt_noteOff(_Devices[Port], Channel, Event[1]);
             break;
 
         case midi::StatusCodes::NoteOn:
-            ::opn2_rt_noteOn(_Player[Port], Channel, Event[1], Event[2]);
+            ::opn2_rt_noteOn(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
         case midi::StatusCodes::KeyPressure:
-            ::opn2_rt_noteAfterTouch(_Player[Port], Channel, Event[1], Event[2]);
+            ::opn2_rt_noteAfterTouch(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
         case midi::StatusCodes::ControlChange:
-            ::opn2_rt_controllerChange(_Player[Port], Channel, Event[1], Event[2]);
+            ::opn2_rt_controllerChange(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
         case midi::StatusCodes::ProgramChange:
-            ::opn2_rt_patchChange(_Player[Port], Channel, Event[1]);
+            ::opn2_rt_patchChange(_Devices[Port], Channel, Event[1]);
             break;
 
         case midi::StatusCodes::ChannelPressure:
-            ::opn2_rt_channelAfterTouch(_Player[Port], Channel, Event[1]);
+            ::opn2_rt_channelAfterTouch(_Devices[Port], Channel, Event[1]);
             break;
 
         case midi::StatusCodes::PitchBendChange:
-            ::opn2_rt_pitchBendML(_Player[Port], Channel, Event[2], Event[1]);
+            ::opn2_rt_pitchBendML(_Devices[Port], Channel, Event[2], Event[1]);
             break;
     }
 }
@@ -214,11 +278,11 @@ void OPNPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber
     if (portNumber >= 3)
         portNumber = 0;
 
-    ::opn2_rt_systemExclusive(_Player[portNumber], data, size);
+    ::opn2_rt_systemExclusive(_Devices[portNumber], data, size);
 
     if (portNumber == 0)
     {
-        ::opn2_rt_systemExclusive(_Player[1], data, size);
-        ::opn2_rt_systemExclusive(_Player[2], data, size);
+        ::opn2_rt_systemExclusive(_Devices[1], data, size);
+        ::opn2_rt_systemExclusive(_Devices[2], data, size);
     }
 }

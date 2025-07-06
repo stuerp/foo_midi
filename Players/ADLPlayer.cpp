@@ -90,23 +90,25 @@ bool ADLPlayer::Startup()
 
         ::adl_reset(Device);
 
-        ::adl_setHVibrato           (Device, -1); // Use 1 to turn on deep vibrato.
-        ::adl_setHTremolo           (Device, -1); // Use 1 to turn on deep tremolo.
-        ::adl_setScaleModulators    (Device, -1); // Use 1 to turn on modulators scaling by volume.
-        ::adl_setFullRangeBrightness(Device, -1); // Use 1 to turn on a full-ranged XG CC74 brightness.
         ::adl_setSoftPanEnabled     (Device, _IsSoftPanningEnabled);
-        ::adl_setAutoArpeggio       (Device,  0); // Use 1 to turn on auto-arpeggio.
-        ::adl_setChannelAllocMode   (Device, ADLMIDI_ChanAlloc_AUTO);
+        ::adl_setHVibrato           (Device, 0); // Use 1 to turn on deep vibrato.
+        ::adl_setHTremolo           (Device, 0); // Use 1 to turn on deep tremolo.
+        ::adl_setScaleModulators    (Device, 0); // Use 1 to turn on modulators scaling by volume.
+        ::adl_setFullRangeBrightness(Device, 0); // Use 1 to turn on a full-ranged XG CC74 brightness.
+        ::adl_setAutoArpeggio       (Device, 0); // Use 1 to turn on auto-arpeggio.
 
-        ::adl_switchEmulator(Device, (int) _EmulatorCore); // Default = ADLMIDI_EMU_NUKED
+        ::adl_setChannelAllocMode   (Device, ADLMIDI_ChanAlloc_AUTO);
+        ::adl_setVolumeRangeModel   (Device, ADLMIDI_VolumeModel_AUTO);
+
+        ::adl_switchEmulator(Device, (int) _EmulatorCore);
 
         if (_BankFilePath.empty() || (::adl_openBankFile(Device, _BankFilePath.c_str()) == -1))
             ::adl_setBank(Device, (int) _BankNumber);
 
         ::adl_setNumChips           (Device, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0)); // Set number of concurrent emulated chips to excite channels limit of one chip.
-        ::adl_setVolumeRangeModel   (Device, ADLMIDI_VolumeModel_AUTO);
-        ::adl_setNumFourOpsChn      (Device, (int) _4OpChannelCount); // Set total count of 4-operator channels between all emulated chips.
         ::adl_setDeviceIdentifier   (Device, (unsigned int) i); // Set 4-bit device identifier. Used by the SysEx processor.
+
+        ::adl_setNumFourOpsChn      (Device, (int) _4OpChannelCount); // Set total count of 4-operator channels between all emulated chips.
 
         _Devices[i] = Device;
     }

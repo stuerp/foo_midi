@@ -15,6 +15,7 @@
 #include <FluidSynth/include/fluidsynth.h>
 #include <mt32emu/config.h>
 #include <libADLMIDI/repo/include/adlmidi.h>
+#include <libOPNMIDI/repo/include/opnmidi.h>
 
 #pragma hdrstop
 
@@ -41,6 +42,7 @@ namespace
             "mt32emu " MT32EMU_VERSION "\n"
             "CLAP SDK " CLAP_SDK_VERSION "\n"
             "LibADLMIDI " ADLMIDI_VERSION "\n"
+            "LibOPNMIDI " OPNMIDI_VERSION "\n"
     );
 
     VALIDATE_COMPONENT_FILENAME(STR_COMPONENT_FILENAME);

@@ -82,7 +82,7 @@ preset_t::preset_t() noexcept
     // LibADLMIDI
     {
         _ADLBankNumber = (uint32_t) CfgADLBank;
-        _ADLEmulatorCore = (uint32_t) CfgADLCore;
+        _ADLEmulatorCore = (uint32_t) CfgADLEmulator;
         _ADLChipCount = (uint32_t) CfgADLChipCount;
         _ADLSoftPanning = (bool) CfgADLSoftPanning;
         _ADLBankFilePath = CfgADLBankFilePath;
@@ -91,7 +91,7 @@ preset_t::preset_t() noexcept
     // LibOPNMIDI
     {
         _OPNBankNumber = (uint32_t) CfgOPNBank;
-        _OPNEmulatorCore = (uint32_t) CfgOPNCore;
+        _OPNEmulatorCore = (uint32_t) CfgOPNEmulator;
         _OPNChipCount = (uint32_t) CfgOPNChipCount;
         _OPNSoftPanning = (bool) CfgOPNSoftPanning;
     }
