@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.05) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -302,7 +302,7 @@ const PreferencesRootPage::known_player_t PreferencesRootPage::_KnownPlayers[] =
     { "FluidSynth",     PlayerTypes::FluidSynth,    IsFluidSynthPresent },
     { "BASSMIDI",       PlayerTypes::BASSMIDI,      PlayerIsAlwaysPresent },
     { "DirectX",        PlayerTypes::DirectX,       PlayerIsNeverPresent },
-    { "MT32Emu",        PlayerTypes::MT32Emu,       PlayerIsAlwaysPresent },
+    { "LibMT32Emu",     PlayerTypes::MT32Emu,       PlayerIsAlwaysPresent },
     { "LibADLMIDI",     PlayerTypes::ADL,           PlayerIsAlwaysPresent },
     { "LibOPNMIDI",     PlayerTypes::OPN,           PlayerIsAlwaysPresent },
     { "OPL MIDI",       PlayerTypes::OPL,           PlayerIsNeverPresent },
