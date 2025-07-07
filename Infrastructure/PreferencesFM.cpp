@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.cpp (2025.07.06) P. Stuer **/
+/** $VER: PreferencesFM.cpp (2025.07.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -24,6 +24,7 @@
 
 #include "Resource.h"
 
+#include "PreferencesFM.h"
 #include "Configuration.h"
 
 #include "ADLPlayer.h"
@@ -35,13 +36,38 @@
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
-const char * _MT32EmuSets[] =
+const std::vector<emulator_t> _ADLEmulators =
+{
+    { ADLMIDI_EMU_NUKED,          L"Nuked OPL3 v1.8" },
+    { ADLMIDI_EMU_NUKED_174,      L"Nuked OPL3 v1.7.4" },
+    { ADLMIDI_EMU_DOSBOX,         L"DOSBox" },
+    { ADLMIDI_EMU_OPAL,           L"Opal" },
+    { ADLMIDI_EMU_JAVA,           L"Java" },
+    { ADLMIDI_EMU_ESFMu,          L"ESFMu" },
+    { ADLMIDI_EMU_MAME_OPL2,      L"MAME OPL2" },
+    { ADLMIDI_EMU_YMFM_OPL2,      L"YMFM OPL2" },
+    { ADLMIDI_EMU_YMFM_OPL3,      L"YMFM OPL3" },
+    { ADLMIDI_EMU_NUKED_OPL2_LLE, L"Nuked OPL2 LLE" },
+    { ADLMIDI_EMU_NUKED_OPL3_LLE, L"Nuked OPL3 LLE" },
+};
+
+const std::vector<emulator_t> _OPNEmulators =
+{
+    { OPNMIDI_EMU_MAME,         L"MAME YM2612" },
+    { OPNMIDI_EMU_MAME_2608,    L"MAME YM2608" },
+    { OPNMIDI_EMU_NUKED_YM3438, L"Nuked OPN2 (YM3438 mode)" },
+    { OPNMIDI_EMU_NUKED_YM2612, L"Nuked OPN2 (YM2612 mode)" },
+    { OPNMIDI_EMU_GENS,         L"GENS/GS II OPN2" },
+    { OPNMIDI_EMU_NP2,          L"Neko Project II Kai OPNA" },
+    { OPNMIDI_EMU_YMFM_OPN2,    L"YMFM OPN2" },
+    { OPNMIDI_EMU_YMFM_OPNA,    L"YMFM OPNA" },
+};
+
+const std::vector<std::string> _MT32EmuSets =
 {
     "Roland",
     "Sierra / King's Quest 6",
 };
-
-const size_t _MT32EmuSetCount = _countof(_MT32EmuSets);
 
 /// <summary>
 /// Implements a preferences page.
@@ -85,12 +111,15 @@ public:
         COMMAND_HANDLER_EX(IDC_OPN_CHIPS, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_OPN_CHIPS, CBN_EDITCHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_OPN_SOFT_PANNING, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_OPN_BANK_FILE_PATH, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_OPN_BANK_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
 
         COMMAND_HANDLER_EX(IDC_MT32_CONVERSION_QUALITY, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_MT32_MAX_PARTIALS, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_MT32_ANALOG_OUTPUT_MODE, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_MT32_GM_SET, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_MT32_DAC_INPUT_MODE, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MT32_REVERB, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_MT32_NICE_AMP_RAMP, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_MT32_NICE_PANNING, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_MT32_NICE_PARTIAL_MIXING, BN_CLICKED, OnButtonClicked)
@@ -115,82 +144,9 @@ private:
     void OnChanged() const noexcept;
 
 private:
-    struct bank_t
-    {
-        int Id;
-        std::wstring Name;
-
-        bank_t() : Id(-1), Name() { }
-        bank_t(const bank_t & other) : Id(other.Id), Name(other.Name) { }
-        bank_t(int number, const std::wstring & name) : Id(number), Name(name) { }
-
-        bank_t & operator =(const bank_t & other)
-        {
-            Id = other.Id;
-            Name = other.Name;
-
-            return *this;
-        }
-
-        bool operator ==(const bank_t & b) const { return Id == b.Id; }
-        bool operator !=(const bank_t & b) const { return !operator ==(b); }
-        bool operator < (const bank_t & b) const { return Name < b.Name; }
-        bool operator > (const bank_t & b) const { return Name > b.Name; }
-    };
-
-    struct emulator_t
-    {
-        int Id;
-        std::wstring Name;
-
-        emulator_t() : Id(-1), Name() { }
-        emulator_t(const emulator_t & other) : Id(other.Id), Name(other.Name) { }
-        emulator_t(int number, const std::wstring & name) : Id(number), Name(name) { }
-
-        emulator_t & operator =(const emulator_t & other)
-        {
-            Id = other.Id;
-            Name = other.Name;
-
-            return *this;
-        }
-
-        bool operator ==(const bank_t & b) const { return Id == b.Id; }
-        bool operator !=(const bank_t & b) const { return !operator ==(b); }
-        bool operator < (const bank_t & b) const { return Name < b.Name; }
-        bool operator > (const bank_t & b) const { return Name > b.Name; }
-    };
-
     std::vector<bank_t> _ADLBanks;
 
-    const std::vector<emulator_t> _ADLEmulators =
-    {
-        { ADLMIDI_EMU_NUKED,          L"Nuked OPL3 v1.8" },
-        { ADLMIDI_EMU_NUKED_174,      L"Nuked OPL3 v1.7.4" },
-        { ADLMIDI_EMU_DOSBOX,         L"DOSBox" },
-        { ADLMIDI_EMU_OPAL,           L"Opal" },
-        { ADLMIDI_EMU_JAVA,           L"Java" },
-        { ADLMIDI_EMU_ESFMu,          L"ESFMu" },
-        { ADLMIDI_EMU_MAME_OPL2,      L"MAME OPL2" },
-        { ADLMIDI_EMU_YMFM_OPL2,      L"YMFM OPL2" },
-        { ADLMIDI_EMU_YMFM_OPL3,      L"YMFM OPL3" },
-        { ADLMIDI_EMU_NUKED_OPL2_LLE, L"Nuked OPL2 LLE" },
-        { ADLMIDI_EMU_NUKED_OPL3_LLE, L"Nuked OPL3 LLE" },
-    };
-
     std::vector<bank_t> _OPNBanks;
-
-    const std::vector<emulator_t> _OPNEmulators =
-    {
-        { OPNMIDI_EMU_MAME,         L"MAME YM2612" },
-        { OPNMIDI_EMU_MAME_2608,    L"MAME YM2608" },
-        { OPNMIDI_EMU_NUKED_YM3438, L"Nuked OPN2 (YM3438 mode)" },
-        { OPNMIDI_EMU_NUKED_YM2612, L"Nuked OPN2 (YM2612 mode)" },
-        { OPNMIDI_EMU_GENS,         L"GENS/GS II OPN2" },
-        { OPNMIDI_EMU_NP2,          L"Neko Project II Kai OPNA" },
-        { OPNMIDI_EMU_YMFM_OPN2,    L"YMFM OPN2" },
-        { OPNMIDI_EMU_YMFM_OPNA,    L"YMFM OPNA" },
-    };
 
     const preferences_page_callback::ptr _Callback;
 
@@ -249,7 +205,7 @@ void DialogPage::apply()
         }
 
         // ADL Soft Panning
-        CfgADLSoftPanning = (t_int32) SendDlgItemMessage(IDC_ADL_SOFT_PANNING, BM_GETCHECK);
+        CfgADLSoftPanning = (bool) SendDlgItemMessage(IDC_ADL_SOFT_PANNING, BM_GETCHECK);
 
         // ADL Bank File
         {
@@ -294,7 +250,16 @@ void DialogPage::apply()
 
         // OPN Soft Panning
         {
-            CfgOPNSoftPanning = (t_int32) SendDlgItemMessage(IDC_OPN_SOFT_PANNING, BM_GETCHECK);
+            CfgOPNSoftPanning = (bool) SendDlgItemMessage(IDC_OPN_SOFT_PANNING, BM_GETCHECK);
+        }
+
+        // OPN Bank File
+        {
+            wchar_t Text[MAX_PATH] = { };
+
+            GetDlgItemText(IDC_OPN_BANK_FILE_PATH, Text, (int) _countof(Text));
+
+            CfgOPNBankFilePath = ::WideToUTF8(Text).c_str();
         }
     }
 
@@ -333,7 +298,7 @@ void DialogPage::apply()
         {
             int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_GM_SET, CB_GETCURSEL);
 
-            if (SelectedIndex < 0 || SelectedIndex >= (int) _countof(_MT32EmuSets))
+            if (SelectedIndex < 0 || SelectedIndex >= (int) _MT32EmuSets.size())
                 SelectedIndex = 0;
 
             CfgMT32EmuGMSet = SelectedIndex;
@@ -349,11 +314,13 @@ void DialogPage::apply()
             CfgMT32EmuDACInputMode = SelectedIndex;
         }
 
+        CfgMT32EmuReverb            = (bool) SendDlgItemMessage(IDC_MT32_REVERB, BM_GETCHECK);
+
         // MT32 Nice Amp Ramp / Nice Panning / Nice Partial Mixing / Reverse Stereo
-        CfgMT32EmuNiceAmpRamp       = (t_int32) SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP, BM_GETCHECK);
-        CfgMT32EmuNicePanning       = (t_int32) SendDlgItemMessage(IDC_MT32_NICE_PANNING, BM_GETCHECK);
-        CfgMT32EmuNicePartialMixing = (t_int32) SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_GETCHECK);
-        CfgMT32EmuReverseStereo     = (t_int32) SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK);
+        CfgMT32EmuNiceAmpRamp       = (bool) SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP, BM_GETCHECK);
+        CfgMT32EmuNicePanning       = (bool) SendDlgItemMessage(IDC_MT32_NICE_PANNING, BM_GETCHECK);
+        CfgMT32EmuNicePartialMixing = (bool) SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_GETCHECK);
+        CfgMT32EmuReverseStereo     = (bool) SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK);
     }
 
     OnChanged();
@@ -431,6 +398,9 @@ void DialogPage::reset()
 
         // OPN Soft Panning
         SendDlgItemMessage(IDC_OPN_SOFT_PANNING, BM_SETCHECK, DefaultOPNSoftPanning);
+
+        // OPN Bank File
+        SetDlgItemText(IDC_OPN_BANK_FILE_PATH, L"");
     }
 
     // MT32
@@ -449,6 +419,9 @@ void DialogPage::reset()
 
         // MT32 DAC Input Mode
         SendDlgItemMessage(IDC_MT32_DAC_INPUT_MODE, CB_SETCURSEL, DefaultMT32EmuDACInputMode);
+
+        // MT32 Reverb
+        SendDlgItemMessage(IDC_MT32_REVERB, BM_SETCHECK, (WPARAM) DefaultMT32EmuReverb);
 
         // Nice Amp Ramp / Nice Panning / Nice Partial Mixing
         SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP,       BM_SETCHECK, (WPARAM) DefaultMT32EmuNiceAmpRamp);
@@ -583,6 +556,9 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
         SendDlgItemMessage(IDC_OPN_SOFT_PANNING, BM_SETCHECK, (WPARAM) CfgOPNSoftPanning);
     }
 
+    // OPN Bank File
+    SetDlgItemText(IDC_OPN_BANK_FILE_PATH, ::UTF8ToWide(CfgOPNBankFilePath.get().c_str()).c_str());
+
     // MT32Emu Conversion Quality
     {
         static const wchar_t * ConversionQualities[] = { L"Fastest", L"Fast", L"Good", L"Best" };
@@ -617,7 +593,7 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
         auto w = (CComboBox) GetDlgItem(IDC_MT32_GM_SET);
 
         for (const auto & Set : _MT32EmuSets)
-            ::uSendMessageText(w, CB_ADDSTRING, 0, Set);
+            ::uSendMessageText(w, CB_ADDSTRING, 0, Set.c_str());
 
         w.SetCurSel((int) CfgMT32EmuGMSet);
     }
@@ -632,6 +608,11 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
             w.AddString(Iter);
 
         w.SetCurSel((int) CfgMT32EmuDACInputMode);
+    }
+
+    // MT32Emu Reverb
+    {
+        SendDlgItemMessage(IDC_MT32_REVERB, BM_SETCHECK, (WPARAM) CfgMT32EmuReverb);
     }
 
     // MT32Emu Nice Amp Ramp / Nice Panning / Nice Partial Mixing
@@ -707,8 +688,35 @@ void DialogPage::OnButtonClicked(UINT, int id, CWindow) noexcept
             break;
         }
 
+        case IDC_OPN_BANK_FILE_PATH_SELECT:
+        {
+            wchar_t Text[MAX_PATH] = { };
+
+            GetDlgItemText(IDC_OPN_BANK_FILE_PATH, Text, (int) _countof(Text));
+
+            pfc::string FilePath = ::WideToUTF8(Text).c_str();
+
+            pfc::string DirectoryPath = FilePath;
+
+            DirectoryPath.truncate_filename();
+
+            if (::uGetOpenFileName(m_hWnd,
+                    "WOPN files|*.wopn|"
+                    "All files|*.*",
+                0, "wopn", "Choose a bank...", DirectoryPath, FilePath, FALSE))
+            {
+                SetDlgItemText(IDC_OPN_BANK_FILE_PATH, ::UTF8ToWide(FilePath.c_str()).c_str());
+
+                OnChanged();
+            }
+            break;
+        }
+
         case IDC_ADL_SOFT_PANNING:
+
         case IDC_OPN_SOFT_PANNING:
+
+        case IDC_MT32_REVERB:
         case IDC_MT32_NICE_AMP_RAMP:
         case IDC_MT32_NICE_PANNING:
         case IDC_MT32_NICE_PARTIAL_MIXING:
@@ -799,6 +807,16 @@ bool DialogPage::HasChanged() noexcept
         // OPN Soft Panning
         if (SendDlgItemMessage(IDC_OPN_SOFT_PANNING, BM_GETCHECK) != CfgOPNSoftPanning)
             return true;
+
+        // OPN Bank File
+        {
+            wchar_t Text[MAX_PATH] = { };
+
+            GetDlgItemText(IDC_OPN_BANK_FILE_PATH, Text, (int) _countof(Text));
+
+            if (CfgOPNBankFilePath.get_value() != ::WideToUTF8(Text).c_str())
+                return true;
+        }
     }
 
     // MT32
@@ -838,6 +856,10 @@ bool DialogPage::HasChanged() noexcept
             if (SelectedIndex != CfgMT32EmuDACInputMode)
                 return true;
         }
+
+        // MT32 Reverb
+        if (SendDlgItemMessage(IDC_MT32_REVERB, BM_GETCHECK) != CfgMT32EmuReverb)
+            return true;
 
         // MT32 Nice Amp Ramp
         if (SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP, BM_GETCHECK) != CfgMT32EmuNiceAmpRamp)

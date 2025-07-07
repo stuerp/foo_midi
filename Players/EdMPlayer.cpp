@@ -1,5 +1,5 @@
 
-/** $VER: EdMPlayer.cpp (2025.06.21) **/
+/** $VER: EdMPlayer.cpp (2025.07.07) **/
 
 #include "pch.h"
 
@@ -28,14 +28,14 @@ bool EdMPlayer::Startup()
     if (_Initialized)
         return true;
 
-    for (size_t i = 0; i < _countof(_Module); ++i)
+    for (size_t i = 0; i < _countof(_Modules); ++i)
     {
         if (i & 1)
-            _Module[i].AttachDevice(new dsa::CSccDevice(_SampleRate, 2));
+            _Modules[i].AttachDevice(new dsa::CSccDevice(_SampleRate, 2));
         else
-            _Module[i].AttachDevice(new dsa::COpllDevice(_SampleRate, 2));
+            _Modules[i].AttachDevice(new dsa::COpllDevice(_SampleRate, 2));
 
-        _Module[i].Reset();
+        _Modules[i].Reset();
     }
 
     ResetDrumChannels();
@@ -48,8 +48,8 @@ bool EdMPlayer::Startup()
 void EdMPlayer::Shutdown()
 {
     if (_Initialized)
-        for (size_t i = 0; i < _countof(_Module); ++i)
-            delete _Module[i].DetachDevice();
+        for (size_t i = 0; i < _countof(_Modules); ++i)
+            delete _Modules[i].DetachDevice();
 
     _Initialized = false;
 }
@@ -63,7 +63,7 @@ void EdMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 
         ::memset(_Buffer, 0, SampleCount * sizeof(_Buffer[0]));
 
-        for (auto & m : _Module)
+        for (auto & m : _Modules)
         {
             int32_t * Src = _Buffer;
 
@@ -145,10 +145,10 @@ void EdMPlayer::SendEvent(uint32_t data)
     {
         const dsa::CMIDIMsg & msg = mi.GetMsg();
 
-        _Module[(msg.m_ch * 2) & 7].SendMIDIMsg(msg);
+        _Modules[(msg.m_ch * 2) & 7].SendMIDIMsg(msg);
 
         if (!_DrumChannels[msg.m_ch])
-            _Module[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
+            _Modules[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
 
         mi.PopMsg();
     }
@@ -214,10 +214,10 @@ void EdMPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
     {
         const dsa::CMIDIMsg & msg = mi.GetMsg();
 
-        _Module[(msg.m_ch * 2) & 7].SendMIDIMsg(msg);
+        _Modules[(msg.m_ch * 2) & 7].SendMIDIMsg(msg);
 
         if (_DrumChannels[msg.m_ch] == 0)
-            _Module[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
+            _Modules[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
 
         mi.PopMsg();
     }
@@ -238,6 +238,6 @@ void EdMPlayer::ResetDrumChannels()
 
 void EdMPlayer::SetDrumChannel(int channel, int enable)
 {
-    for (size_t i = 0; i < _countof(_Module); ++i)
-        _Module[i].SetDrumChannel(channel, enable);
+    for (size_t i = 0; i < _countof(_Modules); ++i)
+        _Modules[i].SetDrumChannel(channel, enable);
 }

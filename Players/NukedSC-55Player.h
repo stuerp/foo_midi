@@ -29,6 +29,8 @@ private:
     virtual void Render(audio_sample *, uint32_t);
     virtual bool Reset() { return false; }
 
+    virtual uint8_t GetPortCount() const noexcept override { return 1; };
+
     virtual void SendEvent(uint32_t);
     virtual void SendEvent(uint32_t, uint32_t time) { };
 

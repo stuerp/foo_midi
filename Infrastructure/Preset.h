@@ -1,5 +1,5 @@
 
-/** $VER: Preset.h (2025.06.29) **/
+/** $VER: Preset.h (2025.07.07) **/
 
 #pragma once
 
@@ -48,13 +48,14 @@ public:
     uint32_t _ADLChipCount;
     bool _ADLSoftPanning;
     bool _ADLUseChorus;
-    pfc::string _ADLBankFilePath;
+    std::string _ADLBankFilePath;
 
     // OPN
     uint32_t _OPNBankNumber;
     uint32_t _OPNEmulatorCore;
     uint32_t _OPNChipCount;
     bool _OPNSoftPanning;
+    std::string _OPNBankFilePath;
 
     // MT32Emu
     uint32_t _MT32EmuGMSet;

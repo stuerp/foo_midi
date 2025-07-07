@@ -1,5 +1,5 @@
 
-/** $VER: FMMPlayer.h (2025.06.19) - Wrapper for yuno's fmmidi **/
+/** $VER: FMMPlayer.h (2025.07.07) - Wrapper for yuno's fmmidi **/
 
 #pragma once
 
@@ -37,6 +37,8 @@ private:
     virtual void Shutdown();
     virtual void Render(audio_sample *, uint32_t);
     virtual bool Reset() { return false; }
+
+    virtual uint8_t GetPortCount() const noexcept override { return _countof(_Synthesizers); };
 
     virtual void SendEvent(uint32_t);
     virtual void SendEvent(uint32_t, uint32_t time) { };

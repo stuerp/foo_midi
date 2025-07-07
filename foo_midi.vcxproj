@@ -404,6 +404,7 @@
     <ClInclude Include="Infrastructure\Channels.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
     <ClInclude Include="Infrastructure\CriticalSection.h" />
+    <ClInclude Include="Infrastructure\PreferencesFM.h" />
     <ClInclude Include="Players\ADLPlayer.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\BMPlayer.h" />

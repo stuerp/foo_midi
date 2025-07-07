@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.rc (2025.07.06) **/
+/** $VER: PreferencesFM.rc (2025.07.07) **/
 
 #include "Resource.h"
 
@@ -70,15 +70,15 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_B06    40
     #define H_B06    H_CBX
 
-    // Checkbox: Enable soft panning
-    #define X_B07    X_B05
-    #define Y_B07    Y_B06 + H_B06 + IX
-    #define W_B07    W_B00 - 5 - 5
+    // Checkbox: Soft panning
+    #define X_B07    X_B06 + W_B06 + IX
+    #define Y_B07    Y_B06
+    #define W_B07    64
     #define H_B07    H_CHB
 
     // Label: Bank File
-    #define X_B08    X_B07
-    #define Y_B08    Y_B07 + H_B07 + IY
+    #define X_B08    X_B05
+    #define Y_B08    Y_B06 + H_B06 + IY
     #define W_B08    W_B05
     #define H_B08    H_LBL
 
@@ -94,7 +94,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_B10    16
     #define H_B10    H_BTN
 
-#define H_B00    11 + H_B02 + IY + H_B04 + IY + H_B06 + IY + H_B07 + IY + H_B09 + 7
+#define H_B00    11 + H_B02 + IY + H_B04 + IY + H_B06 + IY + H_B09 + 7
 
 // Groupbox LibOPNMIDI
 
@@ -138,13 +138,31 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_C06    40
     #define H_C06    H_CBX
 
-    // Checkbox: Enable soft panning
-    #define X_C07    X_C05
-    #define Y_C07    Y_C06 + H_C06 + IX
-    #define W_C07    W_C00 - 5 - 5
+    // Checkbox: Soft panning
+    #define X_C07    X_C06 + W_C06 + IX 
+    #define Y_C07    Y_C06
+    #define W_C07    64
     #define H_C07    H_CHB
 
-#define H_C00    11 + H_C02 + IY + H_C04 + IY + H_C06 + IY + H_C07 + 7
+    // Label: Bank File
+    #define X_C08    X_C05
+    #define Y_C08    Y_C06 + H_C06 + IY
+    #define W_C08    W_C05
+    #define H_C08    H_LBL
+
+    // EditBox
+    #define X_C09    X_C08 + W_C08 + IX
+    #define Y_C09    Y_C08
+    #define W_C09    200
+    #define H_C09    H_EBX
+
+    // Button
+    #define X_C10    X_C09 + W_C09 + IX
+    #define Y_C10    Y_C09
+    #define W_C10    16
+    #define H_C10    H_BTN
+
+#define H_C00    11 + H_C02 + IY + H_C04 + IY + H_C06 + IY + H_C09 + 7
 
 
 // Groupbox LibMT32Emu
@@ -213,6 +231,12 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_D10    64
     #define H_D10    H_CBX
 
+    // Checkbox Reverb
+    #define X_D15    X_D10 + W_D10 + IX
+    #define Y_D15    Y_D10
+    #define W_D15    64
+    #define H_D15    H_CHB
+
     // Checkbox Nice Amp Ramp
     #define X_D11    X_D09
     #define Y_D11    Y_D10 + H_D10 + IY
@@ -244,43 +268,50 @@ style DS_SHELLFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 1
 {
     groupbox "LibADLMIDI", IDC_STATIC, X_B00, Y_B00, W_B00, H_B00
-        rtext       "Bank:",                IDC_ADL_BANK_TEXT,  X_B01, Y_B01 + 2, W_B01, H_B01
-        combobox                            IDC_ADL_BANK,       X_B02, Y_B02,     W_B02, H_B02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "Emulator Core:",       IDC_ADL_CORE_TEXT,  X_B03, Y_B03 + 2, W_B03, H_B03
-        combobox                            IDC_ADL_CORE,       X_B04, Y_B04,     W_B04, H_B04, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "Chips:",               IDC_ADL_CHIPS_TEXT, X_B05, Y_B05 + 2, W_B05, H_B05
-        combobox                            IDC_ADL_CHIPS,      X_B06, Y_B06,     W_B06, H_B06, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+        rtext       "Bank:",                IDC_ADL_BANK_TEXT,                  X_B01, Y_B01 + 2, W_B01, H_B01
+        combobox                            IDC_ADL_BANK,                       X_B02, Y_B02,     W_B02, H_B02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Emulator Core:",       IDC_ADL_CORE_TEXT,                  X_B03, Y_B03 + 2, W_B03, H_B03
+        combobox                            IDC_ADL_CORE,                       X_B04, Y_B04,     W_B04, H_B04, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Chips:",               IDC_ADL_CHIPS_TEXT,                 X_B05, Y_B05 + 2, W_B05, H_B05
+        combobox                            IDC_ADL_CHIPS,                      X_B06, Y_B06,     W_B06, H_B06, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
-        control     "Soft panning",         IDC_ADL_SOFT_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B07, Y_B07, W_B07, H_B07
+        control     "Soft panning",         IDC_ADL_SOFT_PANNING,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B07, Y_B07 + 2, W_B07, H_B07
 
-        rtext       "Bank File:",           IDC_ADL_BANK_FILE_PATH_TEXT,    X_B08, Y_B08 + 2, W_B08, H_B08
-        edittext                            IDC_ADL_BANK_FILE_PATH,         X_B09, Y_B09,     W_B09, H_B09, ES_AUTOHSCROLL
-        pushbutton  "...",                  IDC_ADL_BANK_FILE_PATH_SELECT,  X_B10, Y_B10,     W_B10, H_B10
+        rtext       "Bank File:",           IDC_ADL_BANK_FILE_PATH_TEXT,        X_B08, Y_B08 + 2, W_B08, H_B08
+        edittext                            IDC_ADL_BANK_FILE_PATH,             X_B09, Y_B09,     W_B09, H_B09, ES_AUTOHSCROLL
+        pushbutton  "...",                  IDC_ADL_BANK_FILE_PATH_SELECT,      X_B10, Y_B10,     W_B10, H_B10
 
     groupbox "LibOPNMIDI", IDC_STATIC, X_C00, Y_C00, W_C00, H_C00
-        rtext       "Bank:",                IDC_OPN_BANK_TEXT,  X_C01, Y_C01 + 2, W_C01, H_C01
-        combobox                            IDC_OPN_BANK,       X_C02, Y_C02,     W_C02, H_C02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "Emulator Core:",       IDC_OPN_CORE_TEXT,  X_C03, Y_C03 + 2, W_C03, H_C03
-        combobox                            IDC_OPN_CORE,       X_C04, Y_C04,     W_C04, H_C04, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "Chips:",               IDC_OPN_CHIPS_TEXT, X_C05, Y_C05 + 2, W_C05, H_C05
-        combobox                            IDC_OPN_CHIPS,      X_C06, Y_C06,     W_C06, H_C06, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+        rtext       "Bank:",                IDC_OPN_BANK_TEXT,                  X_C01, Y_C01 + 2, W_C01, H_C01
+        combobox                            IDC_OPN_BANK,                       X_C02, Y_C02,     W_C02, H_C02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Emulator Core:",       IDC_OPN_CORE_TEXT,                  X_C03, Y_C03 + 2, W_C03, H_C03
+        combobox                            IDC_OPN_CORE,                       X_C04, Y_C04,     W_C04, H_C04, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Chips:",               IDC_OPN_CHIPS_TEXT,                 X_C05, Y_C05 + 2, W_C05, H_C05
+        combobox                            IDC_OPN_CHIPS,                      X_C06, Y_C06,     W_C06, H_C06, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
-        control     "Soft panning",         IDC_OPN_SOFT_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C07, Y_C07, W_C07, H_C07
+        control     "Soft panning",         IDC_OPN_SOFT_PANNING,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C07, Y_C07 + 2, W_C07, H_C07
 
-    groupbox "MT32Emu (Munt)", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
-        rtext       "Conversion Quality:"   IDC_MT32_CONVERSION_QUALITY_TEXT,   X_D01, Y_D01 + 2, W_D01, H_D01
+        rtext       "Bank File:",           IDC_OPN_BANK_FILE_PATH_TEXT,        X_C08, Y_C08 + 2, W_C08, H_C08
+        edittext                            IDC_OPN_BANK_FILE_PATH,             X_C09, Y_C09,     W_C09, H_C09, ES_AUTOHSCROLL
+        pushbutton  "...",                  IDC_OPN_BANK_FILE_PATH_SELECT,      X_C10, Y_C10,     W_C10, H_C10
+
+    groupbox "LibMT32Emu (Munt)", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
+        rtext       "Resampling Quality:"   IDC_MT32_CONVERSION_QUALITY_TEXT,   X_D01, Y_D01 + 2, W_D01, H_D01
         combobox                            IDC_MT32_CONVERSION_QUALITY,        X_D02, Y_D02,     W_D02, H_D02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext       "Max. Partials:",       IDC_MT32_MAX_PARTIALS_TEXT,         X_D03, Y_D03 + 2, W_D03, H_D03
         edittext                            IDC_MT32_MAX_PARTIALS,              X_D04, Y_D04,     W_D04, H_D04, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+
         rtext       "Analog Output Mode:"   IDC_MT32_ANALOG_OUTPUT_MODE_TEXT,   X_D05, Y_D05 + 2, W_D05, H_D05
         combobox                            IDC_MT32_ANALOG_OUTPUT_MODE,        X_D06, Y_D06,     W_D06, H_D06, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         rtext       "GM Set:",              IDC_MT32_GM_SET_TEXT,               X_D07, Y_D07 + 2, W_D07, H_D07
         combobox                            IDC_MT32_GM_SET,                    X_D08, Y_D08,     W_D08, H_D08, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
         rtext       "DAC Input Mode:"       IDC_MT32_DAC_INPUT_MODE_TEXT,       X_D09, Y_D09 + 2, W_D09, H_D09
         combobox                            IDC_MT32_DAC_INPUT_MODE,            X_D10, Y_D10,     W_D10, H_D10, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        control     "Reverb",               IDC_MT32_REVERB,                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D15, Y_D15 + 2, W_D15, H_D15
 
-        control     "Nice Amp Ramp",        IDC_MT32_NICE_AMP_RAMP,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D11, Y_D11, W_D11, H_D11
-        control     "Nice Panning",         IDC_MT32_NICE_PANNING,              "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D12, Y_D12, W_D12, H_D12
-        control     "Nice Partial Mixing",  IDC_MT32_NICE_PARTIAL_MIXING,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D13, Y_D13, W_D13, H_D13
-        control     "Reverse Stereo",       IDC_MT32_REVERSE_STEREO,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D14, Y_D14, W_D14, H_D14
+        control     "Nice Amp Ramp",        IDC_MT32_NICE_AMP_RAMP,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D11, Y_D11 + 2, W_D11, H_D11
+        control     "Nice Panning",         IDC_MT32_NICE_PANNING,              "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D12, Y_D12 + 2, W_D12, H_D12
+        control     "Nice Partial Mixing",  IDC_MT32_NICE_PARTIAL_MIXING,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D13, Y_D13 + 2, W_D13, H_D13
+        control     "Reverse Stereo",       IDC_MT32_REVERSE_STEREO,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D14, Y_D14 + 2, W_D14, H_D14
 }

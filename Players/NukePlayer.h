@@ -1,5 +1,5 @@
 
-/** $VER: NukePlayer.h (2023.08.19) **/
+/** $VER: NukePlayer.h (2025.07.07) **/
 
 #pragma once
 
@@ -39,6 +39,9 @@ protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
+
+    virtual uint8_t GetPortCount() const noexcept override { return 1; };
+
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * /*event*/, size_t /*size*/, uint32_t /*portNumber*/) override { }
 

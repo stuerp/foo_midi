@@ -175,8 +175,8 @@ bool Host::ActivatePlugIn(double  sampleRate, uint32_t minFrames, uint32_t maxFr
 
     #define CLAP_SDK_VERSION TOSTRING(CLAP_VERSION_MAJOR) "." TOSTRING(CLAP_VERSION_MINOR) "." TOSTRING(CLAP_VERSION_REVISION)
 
-    console::print(STR_COMPONENT_BASENAME " is using CLAP ", CLAP_SDK_VERSION ".");
-    console::print("CLAP plug-in ", _PlugInDescriptor->name, " ", _PlugInDescriptor->version, " is using CLAP ", _PlugInDescriptor->clap_version.major, ".", _PlugInDescriptor->clap_version.minor, ".", _PlugInDescriptor->clap_version.revision, ".");
+    console::print(STR_COMPONENT_BASENAME " is built with CLAP ", CLAP_SDK_VERSION "; "
+                   "CLAP plug-in ", _PlugInDescriptor->name, " ", _PlugInDescriptor->version, " is built with CLAP ", _PlugInDescriptor->clap_version.major, ".", _PlugInDescriptor->clap_version.minor, ".", _PlugInDescriptor->clap_version.revision, ".");
 
     if (!_PlugIn->init(_PlugIn))
         return false;

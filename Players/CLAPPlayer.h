@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.h (2025.07.02) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.h (2025.07.07) P. Stuer - Wrapper for CLAP plugins **/
 
 #pragma once
 
@@ -33,6 +33,8 @@ private:
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
     virtual bool Reset() override;
+
+    virtual uint8_t GetPortCount() const noexcept override { return _countof(_AudioOutputs); };
 
     virtual void SendEvent(uint32_t data) override { SendEvent(data, 0); }
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override { SendSysEx(data, size, portNumber, 0); }

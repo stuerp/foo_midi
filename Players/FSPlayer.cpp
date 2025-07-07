@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2025.07.05) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.07.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -416,18 +416,6 @@ void FSPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
         else
             _API.SysEx(_Synths[portNumber], (const char *) data, (int) size, NULL, NULL, NULL, 0);
     }
-}
-
-bool FSPlayer::GetErrorMessage(std::string & errorMessage)
-{
-    if (_ErrorMessage.length())
-    {
-        errorMessage = _ErrorMessage;
-
-        return true;
-    }
-
-    return false;
 }
 
 #pragma endregion

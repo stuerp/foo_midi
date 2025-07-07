@@ -1,10 +1,11 @@
 
-/** $VER: Preset.cpp (2025.06.29) **/
+/** $VER: Preset.cpp (2025.07.07) **/
 
 #include "pch.h"
 
 #include "Preset.h"
 
+#include "PreferencesFM.h"
 #include "Configuration.h"
 #include "NukePlayer.h"
 
@@ -85,7 +86,7 @@ preset_t::preset_t() noexcept
         _ADLEmulatorCore = (uint32_t) CfgADLEmulator;
         _ADLChipCount = (uint32_t) CfgADLChipCount;
         _ADLSoftPanning = (bool) CfgADLSoftPanning;
-        _ADLBankFilePath = CfgADLBankFilePath;
+        _ADLBankFilePath = CfgADLBankFilePath.get();
     }
 
     // LibOPNMIDI
@@ -94,6 +95,7 @@ preset_t::preset_t() noexcept
         _OPNEmulatorCore = (uint32_t) CfgOPNEmulator;
         _OPNChipCount = (uint32_t) CfgOPNChipCount;
         _OPNSoftPanning = (bool) CfgOPNSoftPanning;
+        _OPNBankFilePath = CfgOPNBankFilePath.get();
     }
 
     // Nuke
@@ -147,7 +149,7 @@ void preset_t::Serialize(pfc::string & text)
     if (_PlayerType == PlayerTypes::MT32Emu)
     {
         text += "|";
-        text += _MT32EmuSets[_MT32EmuGMSet];
+        text += _MT32EmuSets[_MT32EmuGMSet].c_str();
     }
 #ifdef DXISUPPORT
     else
@@ -360,18 +362,18 @@ void preset_t::Deserialize(const char * text)
     {
         size_t i;
 
-        for (i = 0; i < _MT32EmuSetCount; ++i)
+        for (i = 0; i < _MT32EmuSets.size(); ++i)
         {
-            size_t len = ::strlen(_MT32EmuSets[i]);
+            size_t len = ::strlen(_MT32EmuSets[i].c_str());
 
-            if (len == (size_t) (Separator - text) && (::strncmp(text, _MT32EmuSets[i], len) == 0))
+            if (len == (size_t) (Separator - text) && (::strncmp(text, _MT32EmuSets[i].c_str(), len) == 0))
             {
                 MT32EmuGMSet = (uint32_t) i;
                 break;
             }
         }
 
-        if (i == _MT32EmuSetCount)
+        if (i == _MT32EmuSets.size())
             return;
     }
     else

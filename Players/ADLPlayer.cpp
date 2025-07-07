@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.cpp (2025.07.06) **/
+/** $VER: ADLPlayer.cpp (2025.07.07) **/
 
 #include "pch.h"
 
@@ -86,16 +86,41 @@ bool ADLPlayer::Startup()
         auto * Device = ::adl_init((long) _SampleRate);
 
         if (Device == nullptr)
+        {
+            _ErrorMessage = ::adl_errorString();
+
             return false;
+        }
+
+    #ifdef _DEBUG
+        ::adl_setDebugMessageHook
+        (
+            Device,
+            [](void * context, const char * format ...) noexcept
+            {
+                std::string Line; Line.resize(1024);
+
+                std::va_list args;
+
+                va_start(args, format);
+
+                (void) ::vsnprintf(Line.data(), Line.size(), format, args);
+                console::print(STR_COMPONENT_BASENAME " ADL Player says ", Line.c_str());
+
+                va_end(args);
+            },
+            nullptr
+        );
+    #endif
 
         ::adl_reset(Device);
 
         ::adl_setSoftPanEnabled     (Device, _IsSoftPanningEnabled);
-        ::adl_setHVibrato           (Device, 0); // Use 1 to turn on deep vibrato.
-        ::adl_setHTremolo           (Device, 0); // Use 1 to turn on deep tremolo.
-        ::adl_setScaleModulators    (Device, 0); // Use 1 to turn on modulators scaling by volume.
-        ::adl_setFullRangeBrightness(Device, 0); // Use 1 to turn on a full-ranged XG CC74 brightness.
-        ::adl_setAutoArpeggio       (Device, 0); // Use 1 to turn on auto-arpeggio.
+        ::adl_setHVibrato           (Device, -1); // -1 for default. Use 1 to turn on deep vibrato.
+        ::adl_setHTremolo           (Device, -1); // -1 for default. Use 1 to turn on deep tremolo.
+        ::adl_setScaleModulators    (Device, -1); // -1 for default. Use 1 to turn on modulators scaling by volume.
+        ::adl_setFullRangeBrightness(Device, -1); // -1 for default. Use 1 to turn on a full-ranged XG CC74 brightness.
+        ::adl_setAutoArpeggio       (Device, -1); // -1 for default. Use 1 to turn on auto-arpeggio.
 
         ::adl_setChannelAllocMode   (Device, ADLMIDI_ChanAlloc_AUTO);
         ::adl_setVolumeRangeModel   (Device, ADLMIDI_VolumeModel_AUTO);
@@ -133,15 +158,15 @@ void ADLPlayer::Shutdown()
     _IsStarted = false;
 }
 
-void ADLPlayer::Render(audio_sample * dstData, uint32_t frameCount)
+void ADLPlayer::Render(audio_sample * dstFrames, uint32_t frameCount)
 {
     const size_t MaxFrames = 256;
     const size_t MaxChannels = 2;
 
 #ifndef OldCode
-    audio_sample srcData[MaxFrames * MaxChannels];
+    audio_sample srcFrames[MaxFrames * MaxChannels];
 
-    const ADLMIDI_AudioFormat AudioFormat = { ADLMIDI_SampleType_F64, sizeof(*srcData), sizeof(*srcData) * MaxChannels };
+    const ADLMIDI_AudioFormat AudioFormat = { ADLMIDI_SampleType_F64, sizeof(*srcFrames), sizeof(*srcFrames) * MaxChannels };
 
     while (frameCount != 0)
     {
@@ -150,18 +175,18 @@ void ADLPlayer::Render(audio_sample * dstData, uint32_t frameCount)
         if (ToDo > MaxFrames)
             ToDo = MaxFrames;
 
-        ::memset(dstData, 0, ToDo * MaxChannels * sizeof(*dstData));
+        ::memset(dstFrames, 0, ToDo * MaxChannels * sizeof(*dstFrames));
 
         for (size_t i = 0; i < _countof(_Devices); ++i)
         {
-            ::adl_generateFormat(_Devices[i], (int) (ToDo * MaxChannels), (ADL_UInt8 *) srcData, (ADL_UInt8 *)(srcData + 1), &AudioFormat);
+            ::adl_generateFormat(_Devices[i], (int) (ToDo * MaxChannels), (ADL_UInt8 *) srcFrames, (ADL_UInt8 *)(srcFrames + 1), &AudioFormat);
 
             // Convert the rendered output.
             for (size_t j = 0; j < (ToDo * MaxChannels); ++j)
-                dstData[j] += (audio_sample) srcData[j];
+                dstFrames[j] += (audio_sample) srcFrames[j];
         }
 
-        dstData += (ToDo * MaxChannels);
+        dstFrames += (ToDo * MaxChannels);
         frameCount -= (uint32_t) ToDo;
     }
 #else

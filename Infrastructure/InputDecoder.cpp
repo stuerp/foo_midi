@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.06) **/
+/** $VER: InputDecoder.cpp (2025.07.07) **/
 
 #include "pch.h"
 
@@ -12,14 +12,15 @@
 #include <pfc/string-conv-lite.h>
 #include <helpers/atl-misc.h>
 
-#include "KaraokeProcessor.h"
-
 #include <math.h>
 #include <string.h>
 
 #include <Encoding.h>
 
 #include <libsf.h>
+
+#include "PreferencesFM.h"
+#include "KaraokeProcessor.h"
 
 /* KEEP? 06/07/25
 volatile int _IsRunning = 0;
@@ -408,9 +409,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
             {
-                std::string ErrorMessage;
+                const std::string ErrorMessage = _Player->GetErrorMessage();
 
-                if (_Player->GetErrorMessage(ErrorMessage))
+                if (!ErrorMessage.empty())
                     throw pfc::exception(ErrorMessage.c_str());
                 else
                     throw pfc::exception("Failed to load MIDI stream");
@@ -483,9 +484,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
             {
-                std::string ErrorMessage;
+                const std::string ErrorMessage = _Player->GetErrorMessage();
 
-                if (_Player->GetErrorMessage(ErrorMessage))
+                if (!ErrorMessage.empty())
                     throw pfc::exception(ErrorMessage.c_str());
                 else
                     throw pfc::exception("Failed to load MIDI stream");
@@ -535,9 +536,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
             {
-                std::string ErrorMessage;
+                const std::string ErrorMessage = _Player->GetErrorMessage();
 
-                if (_Player->GetErrorMessage(ErrorMessage))
+                if (!ErrorMessage.empty())
                     throw pfc::exception(ErrorMessage.c_str());
                 else
                     throw pfc::exception("Failed to load MIDI stream");
@@ -552,10 +553,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         case PlayerTypes::MT32Emu:
         {
             auto Player = new MT32Player(_IsMT32, Preset._MT32EmuGMSet);
-
-            {
-                console::print(STR_COMPONENT_BASENAME " is using mt32emu ", Player->GetVersion().c_str(), ".");
-            }
 
             pfc::string DirectoryPath = CfgMT32ROMDirectoryPath;
 
@@ -628,7 +625,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             auto Player = new ADLPlayer;
 
             Player->SetBankNumber(Preset._ADLBankNumber);
-            Player->SetBankFilePath(Preset._ADLBankFilePath.c_str());
+            Player->SetBankFilePath(Preset._ADLBankFilePath);
             Player->SetChipCount(Preset._ADLChipCount);
             Player->Set4OpChannelCount(Preset._ADLChipCount * 4);
             Player->SetSoftPanning(Preset._ADLSoftPanning); // Call after SetBankNumber()!
@@ -653,6 +650,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             auto Player = new OPNPlayer;
 
             Player->SetBankNumber(Preset._OPNBankNumber);
+            Player->SetBankFilePath(Preset._OPNBankFilePath);
             Player->SetChipCount(Preset._OPNChipCount);
             Player->SetSoftPanning(Preset._OPNSoftPanning); // Call after SetBankNumber()!
             Player->SetEmulatorCore(Preset._OPNEmulatorCore);
@@ -870,9 +868,9 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
         if (FramesDone == 0)
         {
-            std::string ErrorMessage;
+            const std::string ErrorMessage = _Player->GetErrorMessage();
 
-            if (_Player->GetErrorMessage(ErrorMessage) != 0)
+            if (!ErrorMessage.empty())
                 throw exception_io_data(ErrorMessage.c_str());
 
             return false;
@@ -981,20 +979,46 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
         {
             assert(_countof(PlayerTypeNames) == ((size_t) PlayerTypes::Max + 1));
 
-            const char * PlayerName = "Unknown";
+            const char * Value = "Unknown";
 
             if ((_PlayerType >= PlayerTypes::Min) && (_PlayerType <= PlayerTypes::Max))
-                PlayerName = PlayerTypeNames[(size_t) _PlayerType];
+                Value = PlayerTypeNames[(size_t) _PlayerType];
             else
-                PlayerName = "VSTi";
+                Value = "VSTi";
 
-            fileInfo.info_set(InfoMIDIPlayer, PlayerName);
+            fileInfo.info_set(InfoMIDIPlayer, Value);
         }
 
         {
-            auto PlugInName = ((_PlayerType == PlayerTypes::VSTi) || (_PlayerType == PlayerTypes::CLAP)) ? CfgPlugInName.get() : pfc::string("");
+            pfc::string Value;
 
-            fileInfo.info_set(InfoMIDIPlugIn, PlugInName);
+            #pragma warning(disable: 4062) // enumerator x in switch of y is not explicitly handled by a case label
+
+            switch (_PlayerType)
+            {
+                case PlayerTypes::ADL:
+                {
+                    Value = ::WideToUTF8(_ADLEmulators[(size_t) CfgADLEmulator].Name).c_str();
+                    break;
+                }
+
+                case PlayerTypes::OPN:
+                {
+                    Value = ::WideToUTF8(_OPNEmulators[(size_t) CfgOPNEmulator].Name).c_str();
+                    break;
+                }
+
+                case PlayerTypes::VSTi:
+                case PlayerTypes::CLAP:
+                {
+                    Value = CfgPlugInName.get();
+                    break;
+                }
+            };
+
+            #pragma warning(default: 4062)
+
+            fileInfo.info_set(InfoMIDIPlayerExt, Value);
         }
 
         {
@@ -1073,7 +1097,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 #pragma region input_info_writer
 
 /// <summary>
-/// Set the tags for the specified file.
+/// Sets the tags for the specified file.
 /// </summary>
 void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const
 {
@@ -1082,33 +1106,36 @@ void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_ca
 
     file_info_impl fi(fileInfo);
 
+    // Move the SysEx dumps from the information field to a tag.
     {
+        // Remove all instances of the tag.
         fi.meta_remove_field(TagMIDISysExDumps);
 
+        // Get the value from the information field.
         const char * SysExDumps = fi.info_get(TagMIDISysExDumps);
 
-        if (SysExDumps)
+        // Add the tag.
+        if (SysExDumps != nullptr)
             fi.meta_set(TagMIDISysExDumps, SysExDumps);
     }
 
+    // Update the metadb.
     {
-        file::ptr TagFile;
+        file::ptr Stream;
 
-        filesystem::g_open_tempmem(TagFile, abortHandler);
+        filesystem::g_open_tempmem(Stream, abortHandler);
 
-        tag_processor::write_apev2(TagFile, fi, abortHandler);
+        tag_processor::write_apev2(Stream, fi, abortHandler);
 
-        {
-            pfc::array_t<t_uint8> Tag;
+        Stream->seek(0, abortHandler);
 
-            TagFile->seek(0, abortHandler);
+        pfc::array_t<t_uint8> Tags;
 
-            Tag.set_count((t_size) TagFile->get_size_ex(abortHandler));
+        Tags.set_count((t_size) Stream->get_size_ex(abortHandler));
 
-            TagFile->read_object(Tag.get_ptr(), Tag.get_count(), abortHandler);
+        Stream->read_object(Tags.get_ptr(), Tags.get_count(), abortHandler);
 
-            static_api_ptr_t<metadb_index_manager>()->set_user_data(GUIDTagMIDIHash, _Hash, Tag.get_ptr(), Tag.get_count());
-        }
+        static_api_ptr_t<metadb_index_manager>()->set_user_data(GUIDTagMIDIHash, _Hash, Tags.get_ptr(), Tags.get_count());
     }
 }
 

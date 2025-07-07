@@ -197,6 +197,7 @@
     <ClInclude Include="Infrastructure\CLAPEvents.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
     <ClInclude Include="3rdParty\foo_vis_midi\API.h" />
+    <ClInclude Include="Infrastructure\PreferencesFM.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

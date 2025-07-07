@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.cpp (2025.07.06) **/
+/** $VER: foo_midi.cpp (2025.07.07) **/
 
 #include "pch.h"
 
@@ -39,10 +39,10 @@ namespace
             "\n"
             "BASS SDK " BASSVERSIONTEXT "\n"
             "FluidSynth SDK " FLUIDSYNTH_VERSION "\n"
-            "mt32emu " MT32EMU_VERSION "\n"
             "CLAP SDK " CLAP_SDK_VERSION "\n"
             "LibADLMIDI " ADLMIDI_VERSION "\n"
             "LibOPNMIDI " OPNMIDI_VERSION "\n"
+            "LibMT32Emu " MT32EMU_VERSION "\n"
     );
 
     VALIDATE_COMPONENT_FILENAME(STR_COMPONENT_FILENAME);

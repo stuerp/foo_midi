@@ -31,6 +31,8 @@ protected:
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
 
+    virtual uint8_t GetPortCount() const noexcept override { return _countof(_Devices); };
+
     virtual void SendEvent(uint32_t) override;
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) override;
 

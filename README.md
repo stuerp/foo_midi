@@ -96,9 +96,11 @@ To create the component first build the x64 configuration and next the x86 confi
 
 - v2.19.0.0-alpha7, 2025-xx-xx
   - Improved: ADL player uses LibADLMIDI 1.6.0 and 64-bit floating-point samples.
-  - Improved: OPN player uses LibOPNMIDI 1.6.0 and 64-bit floating-point samples.
-  - Improved: Added setting to reverse the stereo channels of the mt32emu player (default is on).
-  - Fixed: The mt32emu player reversed the left and the right channels in the output.
+  - Improved: OPN player uses LibOPNMIDI 1.6.0 and 64-bit floating-point samples. WOPN bank can be set from a file.
+  - Improved: Added setting to reverse the stereo channels of the LibMT32Emu player (default is on).
+  - Improved: Added enable or disable reverb processing by the LibMT32Emu player (default is on).
+  - Fixed: The LibMT32Emu player reversed the left and the right channels in the output.
+  - Changed: Renamed `midi_plug_in` tag to `midi_player_ext`. The ADL and OPN player will set it to the current emulator core.
 
 - You can read the full history [here](docs/History.md).
 

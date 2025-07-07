@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2025.07.06) **/
+/** $VER: OPNPlayer.cpp (2025.07.07) **/
 
 #include "pch.h"
 
@@ -59,6 +59,14 @@ void OPNPlayer::SetSoftPanning(bool enabled) noexcept
     _IsSoftPanningEnabled = enabled;
 }
 
+/// <summary>
+/// Sets the file path of the WOPN bank file.
+/// </summary>
+void OPNPlayer::SetBankFilePath(const std::string & filePath) noexcept
+{
+    _BankFilePath = filePath;
+}
+
 bool OPNPlayer::Startup()
 {
     if (_IsStarted)
@@ -73,8 +81,13 @@ bool OPNPlayer::Startup()
         auto * Device = ::opn2_init((long) _SampleRate);
         
         if (Device == nullptr)
-            return false;
+        {
+            _ErrorMessage = ::opn2_errorString();
 
+            return false;
+        }
+
+    #ifdef _DEBUG
         ::opn2_setDebugMessageHook
         (
             Device,
@@ -93,13 +106,14 @@ bool OPNPlayer::Startup()
             },
             nullptr
         );
+    #endif
 
         ::opn2_reset(Device);
 
-        ::opn2_setSoftPanEnabled        (Device, _IsSoftPanningEnabled ? 1 : 0); // Use 1 to turn on soft panning.
-        ::opn2_setScaleModulators       (Device, 0); // Use 1 to turn on modulators scaling by volume.
-        ::opn2_setFullRangeBrightness   (Device, 0); // Use 1 to turn on a full-ranged XG CC74 Brightness.
-        ::opn2_setAutoArpeggio          (Device, 0); // Use 1 to turn on
+        ::opn2_setSoftPanEnabled        (Device, _IsSoftPanningEnabled ? 1 : 0); // Use -1 for default value.
+        ::opn2_setScaleModulators       (Device, -1); // -1 = default. Use 1 to turn on modulators scaling by volume.
+        ::opn2_setFullRangeBrightness   (Device, -1); // -1 = default. Use 1 to turn on a full-ranged XG CC74 Brightness.
+        ::opn2_setAutoArpeggio          (Device, -1); // -1 = default. Use 1 to turn on
 
         ::opn2_setVolumeRangeModel      (Device, OPNMIDI_VolumeModel_AUTO);
         ::opn2_setChannelAllocMode      (Device, OPNMIDI_ChanAlloc_AUTO);

@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.07.06) P. Stuer **/
+/** $VER: Resource.h (2025.07.07) P. Stuer **/
 
 #pragma once
 
@@ -88,7 +88,7 @@
 #define IDC_MIDI_FLAVOR_TEXT                1029
 #define IDC_MIDI_FLAVOR                     1030
 #define IDC_MIDI_EFFECTS                    1031
-#define IDC_MIDI_USE_MT32EMU_WITH_MT32                1032
+#define IDC_MIDI_USE_MT32EMU_WITH_MT32      1032
 #define IDC_MIDI_USE_VSTI_WITH_XG           1033
 
 #define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   1034
@@ -114,6 +114,9 @@
 #define IDC_OPN_CHIPS                       1204
 #define IDC_OPN_CHIPS_TEXT                  1205
 #define IDC_OPN_SOFT_PANNING                1206
+#define IDC_OPN_BANK_FILE_PATH_TEXT         1207
+#define IDC_OPN_BANK_FILE_PATH              1208
+#define IDC_OPN_BANK_FILE_PATH_SELECT       1209
 
 #define IDC_MT32_CONVERSION_QUALITY_TEXT    1300
 #define IDC_MT32_CONVERSION_QUALITY         1301
@@ -125,10 +128,12 @@
 #define IDC_MT32_GM_SET                     1308
 #define IDC_MT32_DAC_INPUT_MODE_TEXT        1309
 #define IDC_MT32_DAC_INPUT_MODE             1310
-#define IDC_MT32_NICE_AMP_RAMP              1311
-#define IDC_MT32_NICE_PANNING               1312
-#define IDC_MT32_NICE_PARTIAL_MIXING        1313
-#define IDC_MT32_REVERSE_STEREO             1314
+
+#define IDC_MT32_REVERB                     1311
+#define IDC_MT32_NICE_AMP_RAMP              1312
+#define IDC_MT32_NICE_PANNING               1313
+#define IDC_MT32_NICE_PARTIAL_MIXING        1314
+#define IDC_MT32_REVERSE_STEREO             1315
 
 /** Dialog: Preferences Paths **/
 

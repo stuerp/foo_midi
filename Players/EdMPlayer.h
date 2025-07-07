@@ -1,5 +1,5 @@
 
-/** $VER: EdMPlayer.h (2025.06.21) **/
+/** $VER: EdMPlayer.h (2025.07.07) **/
 
 #pragma once
 
@@ -26,6 +26,8 @@ private:
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
 
+    virtual uint8_t GetPortCount() const noexcept override { return _countof(_Modules); };
+
     virtual void SendEvent(uint32_t) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
 
@@ -38,7 +40,7 @@ private:
 
     int32_t * _Buffer;
 
-    dsa::CMIDIModule _Module[8];
+    dsa::CMIDIModule _Modules[8];
 
     enum
     {

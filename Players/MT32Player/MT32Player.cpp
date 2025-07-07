@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.cpp (2025.07.06) **/
+/** $VER: MT32Player.cpp (2025.07.07) **/
 
 #include "pch.h"
 
@@ -16,6 +16,53 @@
 #pragma warning(disable: 5045)
 
 #include <pfc/pathUtils.h>
+
+class ReportHandler : public MT32Emu::IReportHandlerV1
+{
+public:
+    virtual ~ReportHandler() { }
+
+    // IReportHandler
+    virtual void printDebug(const char * format, va_list args) override
+    {
+    #ifdef _DEBUG
+        std::string Line; Line.resize(1024);
+
+        (void) ::vsnprintf(Line.data(), Line.size(), format, args);
+        console::print(STR_COMPONENT_BASENAME " ADL Player Debug: ", Line.c_str());
+    #endif
+    };
+
+    virtual void onErrorControlROM() override { };
+    virtual void onErrorPCMROM() override { };
+
+    virtual void showLCDMessage(const char * message) override
+    {
+    #ifdef _DEBUG
+        console::print(STR_COMPONENT_BASENAME " ADL Player LCD: ", message);
+    #endif
+    }
+
+    virtual void onMIDIMessagePlayed() override { };
+    virtual bool onMIDIQueueOverflow() override { return false; };
+    virtual void onMIDISystemRealtime(MT32Emu::Bit8u system_realtime) override { };
+    virtual void onDeviceReset() override { };
+    virtual void onDeviceReconfig() override { };
+    virtual void onNewReverbMode(MT32Emu::Bit8u mode) override { };
+    virtual void onNewReverbTime(MT32Emu::Bit8u time) override { };
+    virtual void onNewReverbLevel(MT32Emu::Bit8u level) override { };
+    virtual void onPolyStateChanged(MT32Emu::Bit8u part_num) override { };
+    virtual void onProgramChanged(MT32Emu::Bit8u partNumber, const char * soundGroupName, const char * patchName) override
+    {
+    #ifdef _DEBUG
+        console::print(STR_COMPONENT_BASENAME " ADL Player Sound Group: \"", soundGroupName, "\" Patch: ", patchName, " Part: ", partNumber);
+    #endif
+    };
+
+    // IReportHandlerV1
+    virtual void onLCDStateUpdated() override { };
+    virtual void onMidiMessageLEDStateUpdated(bool ledState) override { };
+};
 
 MT32Player::MT32Player(bool isMT32, uint32_t gmSet) : player_t(), _IsMT32(isMT32), _GMSet(gmSet)
 {
@@ -42,6 +89,7 @@ bool MT32Player::Startup()
     _Service.setSamplerateConversionQuality((MT32Emu::SamplerateConversionQuality) (int64_t) CfgMT32EmuConversionQuality);
     _Service.setPartialCount((MT32Emu::Bit32u) (int64_t) CfgMT32EmuMaxPartials);
     _Service.setAnalogOutputMode((MT32Emu::AnalogOutputMode) (int64_t) CfgMT32EmuAnalogOutputMode);
+
     _Service.selectRendererType(MT32Emu::RendererType::RendererType_FLOAT);
 
     if (_Service.openSynth() != MT32EMU_RC_OK)
@@ -49,6 +97,7 @@ bool MT32Player::Startup()
 
     _Service.setDACInputMode((MT32Emu::DACInputMode) (int64_t) CfgMT32EmuDACInputMode);
 
+    _Service.setReverbEnabled((bool) CfgMT32EmuReverb);
     _Service.setNiceAmpRampEnabled((bool) CfgMT32EmuNiceAmpRamp);
     _Service.setNicePanningEnabled((bool) CfgMT32EmuNicePanning);
     _Service.setNicePartialMixingEnabled((bool) CfgMT32EmuNicePartialMixing);
@@ -59,6 +108,8 @@ bool MT32Player::Startup()
     SetSampleRate((uint32_t) ActualSampleRate);
 
     Reset();
+
+    console::print(STR_COMPONENT_BASENAME " is using LibMT32Emu ", _Service.getLibraryVersionString(), ".");
 
     _IsStarted = true;
 

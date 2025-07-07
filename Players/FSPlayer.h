@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.07.05) **/
+/** $VER: FSPlayer.h (2025.07.07) **/
 
 #pragma once
 
@@ -56,10 +56,10 @@ private:
     virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
     virtual bool Reset() override;
 
+    virtual uint8_t GetPortCount() const noexcept override { return _countof(_Synths); };
+
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
-
-    virtual bool GetErrorMessage(std::string & errorMessage) override;
 
     #pragma endregion
 

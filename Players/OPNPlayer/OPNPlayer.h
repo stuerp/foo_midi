@@ -1,5 +1,5 @@
 
-/** $VER: OPN Player (2025.07.06) **/
+/** $VER: OPN Player (2025.07.07) **/
 
 #pragma once
 
@@ -30,11 +30,14 @@ public:
     void SetBankNumber(uint32_t);
     void SetChipCount(uint32_t);
     void SetSoftPanning(bool) noexcept;
+    void SetBankFilePath(const std::string & filePath) noexcept;
 
 protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t);
+
+    virtual uint8_t GetPortCount() const noexcept override { return _countof(_Devices); };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
@@ -42,10 +45,11 @@ protected:
 private:
     struct OPN2_MIDIPlayer * _Devices[3];
 
-    unsigned _EmulatorCore;
-    unsigned _BankNumber;
-    unsigned _ChipCount;
+    uint32_t _EmulatorCore;
+    uint32_t _BankNumber;
+    uint32_t _ChipCount;
     bool _IsSoftPanningEnabled;
+    std::string _BankFilePath;
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member

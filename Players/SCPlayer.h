@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.h (2025.07.03) Secret Sauce **/
+/** $VER: SCPlayer.h (2025.07.07) Secret Sauce **/
 
 #pragma once
 
@@ -22,6 +22,7 @@ protected:
     virtual bool Reset() override;
 
     virtual uint32_t GetBlockSize() const noexcept override { return 0; } // 4096; This doesn't work for some reason.
+    virtual uint8_t GetPortCount() const noexcept override { return MaxPorts; };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;

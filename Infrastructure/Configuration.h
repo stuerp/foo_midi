@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.07.06) **/
+/** $VER: Configuration.h (2025.07.07) **/
 
 #pragma once
 
@@ -97,31 +97,32 @@ enum
 
     DefaultBASSMIDIResamplingMode = 1,
 
+    DefaultADLBank = 72,
+    DefaultADLEmulator = 0,
+    DefaultADLChipCount = 10,
+    DefaultADLSoftPanning = true,
+
+    DefaultOPNBank = 0,
+    DefaultOPNEmulator = 0,
+    DefaultOPNChipCount = 10,
+    DefaultOPNSoftPanning = true,
+
+    // MT32Emu
     DefaultMT32EmuConversionQuality = MT32Emu::SamplerateConversionQuality::SamplerateConversionQuality_BEST,
     DefaultMT32EmuMaxPartials = 256,
     DefaultMT32EmuAnalogOutputMode = MT32Emu::AnalogOutputMode::AnalogOutputMode_OVERSAMPLED,
     DefaultMT32EmuGMSet = 0,
     DefaultMT32EmuDACInputMode = MT32Emu::DACInputMode_NICE,
 
+    DefaultMT32EmuReverb = true,
     DefaultMT32EmuNiceAmpRamp = false,
     DefaultMT32EmuNicePanning = true,
     DefaultMT32EmuNicePartialMixing = true,
     DefaultMT32EmuReverseStereo = true,
 
-    // MT32Emu
     DefaultNukeSynth = 0,
     DefaultNukeBank = 2,
     DefaultNukePanning = 0,
-
-    DefaultADLBank = 72,
-    DefaultADLEmulator = 0,
-    DefaultADLChipCount = 10,
-    DefaultADLSoftPanning = 1,
-
-    DefaultOPNBank = 0,
-    DefaultOPNEmulator = 0,
-    DefaultOPNChipCount = 10,
-    DefaultOPNSoftPanning = 1,
 };
 
 const float DefaultBASSMIDIVolume = 0.15f;
@@ -157,22 +158,16 @@ extern cfg_var_modern::cfg_int
     CfgADLBank,
     CfgADLEmulator,
     CfgADLChipCount,
-    CfgADLSoftPanning,
 
     CfgOPNBank,
     CfgOPNEmulator,
     CfgOPNChipCount,
-    CfgOPNSoftPanning,
 
     CfgMT32EmuConversionQuality,
     CfgMT32EmuMaxPartials,
     CfgMT32EmuAnalogOutputMode,
     CfgMT32EmuGMSet,
     CfgMT32EmuDACInputMode,
-    CfgMT32EmuNiceAmpRamp,
-    CfgMT32EmuNicePanning,
-    CfgMT32EmuNicePartialMixing,
-    CfgMT32EmuReverseStereo,
 
     CfgNukeSynthesizer,
     CfgNukeBank,
@@ -189,7 +184,17 @@ extern cfg_var_modern::cfg_bool
     CfgExtendLoops,
     CfgWolfteamLoopMode,
     CfgKeepMutedChannels,
-    CfgIncludeControlData;
+    CfgIncludeControlData,
+
+    CfgADLSoftPanning,
+
+    CfgOPNSoftPanning,
+
+    CfgMT32EmuReverb,
+    CfgMT32EmuNiceAmpRamp,
+    CfgMT32EmuNicePanning,
+    CfgMT32EmuNicePartialMixing,
+    CfgMT32EmuReverseStereo;
 
 extern cfg_var_modern::cfg_float
     CfgBASSMIDIVolume;
@@ -201,7 +206,8 @@ extern cfg_var_modern::cfg_string
     CfgFluidSynthDirectoryPath,
     CfgFluidSynthConfigFilePath,
     CfgProgramsFilePath,
-    CfgADLBankFilePath;
+    CfgADLBankFilePath,
+    CfgOPNBankFilePath;
 
 extern cfg_map
     CfgVSTiConfig;
@@ -230,9 +236,6 @@ extern advconfig_checkbox_factory AdvCfgLoadSoundFontDynamically;
 extern advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled;
 extern advconfig_integer_factory AdvCfgBASSMIDIVoices;
 
-extern const char * _MT32EmuSets[];
-extern const size_t _MT32EmuSetCount;
-
 extern const char * _FileExtensions[];
 extern const size_t _FileExtensionCount;
 
@@ -259,7 +262,7 @@ extern const char InfoMIDIActiveVoices[];
 extern const char InfoMIDIPeakVoices[];
 
 extern const char InfoMIDIPlayer[];
-extern const char InfoMIDIPlugIn[];
+extern const char InfoMIDIPlayerExt[];
 
 extern const char InfoMIDIExtraPercusionChannel[];
 

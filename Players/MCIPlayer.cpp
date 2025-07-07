@@ -1,5 +1,5 @@
 
-/** $VER: MCIPlayer.cpp (2023.12.23) Implements a player using the Windows MCI API **/
+/** $VER: MCIPlayer.cpp (2023.12.23) P. Stuer - Implements a player using the Windows MCI API **/
 
 #include "pch.h"
 

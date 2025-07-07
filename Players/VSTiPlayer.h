@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2025.07.04) **/
+/** $VER: VSTiPlayer.h (2025.07.07) **/
 
 #pragma once
 
@@ -37,6 +37,7 @@ protected:
     virtual void Render(audio_sample *, uint32_t) override;
 
     virtual uint32_t GetBlockSize() const noexcept override { return 4096; }
+    virtual uint8_t GetPortCount() const noexcept override { return 1; };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;

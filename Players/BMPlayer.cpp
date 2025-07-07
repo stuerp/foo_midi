@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.07.06) **/
+/** $VER: BMPlayer.cpp (2025.07.07) **/
 
 #include "pch.h"
 
@@ -322,19 +322,6 @@ void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
     }
     else
         ::BASS_MIDI_StreamEvents(_Streams[portNumber], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
-}
-
-/// <summary>
-/// Gets the current error message.
-/// </summary>
-bool BMPlayer::GetErrorMessage(std::string & errorMessage)
-{
-    if (_ErrorMessage.length() == 0)
-        return false;
-
-    errorMessage = _ErrorMessage;
-
-    return true;
 }
 
 #pragma endregion

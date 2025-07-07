@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2025.06.25) P. Stuer **/
+/** $VER: Player.h (2025.07.07) P. Stuer **/
 
 #pragma once
 
@@ -40,7 +40,8 @@ public:
 
     virtual uint32_t GetAudioChannelCount() const noexcept { return 2; } // Gets the number of audio channels the player supports.
     virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept { UNREFERENCED_PARAMETER(abortHandler); }
-    virtual bool GetErrorMessage(std::string &) { return false; }
+    
+    std::string GetErrorMessage() const noexcept { return _ErrorMessage; };
 
 protected:
     virtual bool Startup() { return false; }
@@ -50,6 +51,8 @@ protected:
 
     // Should return the block size that the player expects, otherwise 0.
     virtual uint32_t GetBlockSize() const noexcept { return 0; }
+
+    virtual uint8_t GetPortCount() const noexcept = 0;
 
     virtual void SendEvent(uint32_t) { }
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) { };
@@ -70,6 +73,8 @@ protected:
 
     MIDIFlavors _MIDIFlavor;
     bool _FilterEffects;
+
+    std::string _ErrorMessage;
 
 private:
     void SendEventFiltered(uint32_t data);

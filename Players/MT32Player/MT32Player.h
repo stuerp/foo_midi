@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.h (2025.07.05) **/
+/** $VER: MT32Player.h (2025.07.07) **/
 
 #pragma once
 
@@ -35,8 +35,6 @@ public:
 
 //  bool IsConfigValid() noexcept;
 
-    std::string GetVersion() noexcept { return _Service.getLibraryVersionString(); }
-
     uint32_t GetSampleRate() noexcept;
 
 protected:
@@ -44,6 +42,8 @@ protected:
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
     virtual bool Reset() override;
+
+    virtual uint8_t GetPortCount() const noexcept override { return 1; };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
