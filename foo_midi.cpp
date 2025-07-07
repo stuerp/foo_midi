@@ -13,9 +13,9 @@
 #include <bass/c/bass.h>
 #include <clap/version.h>
 #include <FluidSynth/include/fluidsynth.h>
-#include <mt32emu/config.h>
-#include <libADLMIDI/repo/include/adlmidi.h>
-#include <libOPNMIDI/repo/include/opnmidi.h>
+#include <libadlmidi/repo/include/adlmidi.h>
+#include <libopnmidi/repo/include/opnmidi.h>
+#include <libmt32emu/config.h>
 
 #pragma hdrstop
 

@@ -80,6 +80,8 @@ Create the following directory structure:
 - `out` receives a deployable version of the component.
 - `sdk` contains the [foobar2000 SDK](https://www.foobar2000.org/SDK).
 
+Issue the following commands:
+
 > git clone --recurse [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)  
 > cd foo_midi  
 > git submodule update --recursive --init
