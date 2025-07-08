@@ -1,5 +1,5 @@
 
-/** $VER: Preset.cpp (2025.07.07) **/
+/** $VER: Preset.cpp (2025.07.08) **/
 
 #include "pch.h"
 
@@ -7,7 +7,8 @@
 
 #include "PreferencesFM.h"
 #include "Configuration.h"
-#include "NukePlayer.h"
+
+#include "NukedOPL3Player.h"
 
 static void GetValue(const char * & separator, const char * & text);
 
@@ -212,7 +213,7 @@ void preset_t::Serialize(pfc::string & text)
     if (_PlayerType == PlayerTypes::NukedOPL3)
     {
         text += "|";
-        text += NukePlayer::GetPresetName(_NukeSynth, _NukeBank);
+        text += NukedOPL3Player::GetPresetName(_NukeSynth, _NukeBank);
 
         text += "|";
         text += pfc::format_int(_NukeUsePanning);
@@ -471,7 +472,7 @@ void preset_t::Deserialize(const char * text)
 
         Text.set_string(text, (t_size) (Separator - text));
 
-        NukePlayer::GetPreset(Text, NukeSynth, NukeBank);
+        NukedOPL3Player::GetPreset(Text, NukeSynth, NukeBank);
 
         if (CurrentSchemaVersion >= 6)
         {

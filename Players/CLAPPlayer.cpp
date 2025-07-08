@@ -68,9 +68,9 @@ void CLAPPlayer::Shutdown()
     _IsStarted = false;
 }
 
-void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    ::memset(sampleData, 0, ((size_t) sampleCount * _countof(_OutChannels)) * sizeof(audio_sample));
+    ::memset(dstFrames, 0, ((size_t) dstCount * _countof(_OutChannels)) * sizeof(audio_sample));
 
     try
     {
@@ -79,7 +79,7 @@ void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         clap_process_t Processor =
         {
             .steady_time         = SteadyTimeNotAvailable,
-            .frames_count        = sampleCount,
+            .frames_count        = dstCount,
             .transport           = nullptr,
             .audio_inputs        = nullptr,
             .audio_outputs       = _AudioOutputs,
@@ -92,10 +92,10 @@ void CLAPPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         if (_Host->Process(Processor))
             return; // throw exception_io_data("CLAP plug-in event processing failed");
 
-        for (size_t j = 0; j < sampleCount; ++j)
+        for (size_t j = 0; j < dstCount; ++j)
         {
-            sampleData[j * 2 + 0] = (audio_sample) LChannel[j];
-            sampleData[j * 2 + 1] = (audio_sample) RChannel[j];
+            dstFrames[j * 2 + 0] = (audio_sample) LChannel[j];
+            dstFrames[j * 2 + 1] = (audio_sample) RChannel[j];
         }
     }
     catch (...) { }

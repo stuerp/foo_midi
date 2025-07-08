@@ -289,37 +289,42 @@ void FSPlayer::Shutdown()
     _IsStarted = false;
 }
 
-void FSPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void FSPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    ::memset(sampleData, 0, ((size_t) sampleCount * 2) * sizeof(audio_sample));
+    static const uint32_t MaxFrames = 512;
+    static const uint32_t MaxChannels = 2;
 
-    uint32_t Done = 0;
+    ::memset(dstFrames, 0, ((size_t) dstCount * MaxChannels) * sizeof(audio_sample));
 
-    while (Done < sampleCount)
+    uint32_t dstDone = 0;
+
+    while (dstDone < dstCount)
     {
-        float Data[512 * 2];
+        float srcFrames[MaxFrames * MaxChannels];
 
-        uint32_t ToDo = sampleCount - Done;
+        uint32_t srcCount = dstCount - dstDone;
 
-        if (ToDo > 512)
-            ToDo = 512;
+        if (srcCount > MaxFrames)
+            srcCount = MaxFrames;
 
         for (const auto & Synth : _Synths)
         {
-            ::memset(Data, 0, sizeof(Data));
+            ::memset(srcFrames, 0, sizeof(srcFrames));
 
-            _API.WriteFloat(Synth, (int) ToDo, Data, 0, 2, Data, 1, 2);
+            _API.WriteFloat(Synth, (int) srcCount, srcFrames, 0, MaxChannels, srcFrames, 1, MaxChannels);
 
             // Convert the format of the rendered output.
-            for (uint32_t j = 0; j < ToDo; ++j)
+            for (uint32_t i = 0, j = 0; i < srcCount; ++i)
             {
-                sampleData[j * 2 + 0] += Data[j * 2 + 0];
-                sampleData[j * 2 + 1] += Data[j * 2 + 1];
+                dstFrames[j] += srcFrames[j];
+                ++j;
+                dstFrames[j] += srcFrames[j];
+                ++j;
             }
         }
 
-        sampleData += ToDo * 2;
-        Done += ToDo;
+        dstFrames += srcCount * MaxChannels;
+        dstDone += srcCount;
     }
 }
 

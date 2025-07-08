@@ -35,10 +35,10 @@ private:
     void SetDrumChannel(int channel, int enable);
 
 private:
-    static const uint32_t MaxSamples = 256;
-    static const uint32_t ChannelCount = 2;
+    static const uint32_t MaxFrames = 256;
+    static const uint32_t MaxChannels = 2;
 
-    int32_t * _Buffer;
+    std::vector<int32_t> _SrcFrames;
 
     dsa::CMIDIModule _Modules[8];
 

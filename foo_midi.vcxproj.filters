@@ -19,7 +19,7 @@
     <ClCompile Include="Infrastructure\PresetFilter.cpp" />
     <ClCompile Include="MIDI\MIDISysExDumps.cpp" />
     <ClCompile Include="MIDI\MIDISysExFilter.cpp" />
-    <ClCompile Include="Players\NukePlayer.cpp" />
+    <ClCompile Include="Players\NukedOPL3Player.cpp" />
     <ClCompile Include="Players\SCPlayer.cpp" />
     <ClCompile Include="Infrastructure\FileHasher.cpp" />
     <ClCompile Include="Players\VSTiPlayer.cpp" />
@@ -124,7 +124,7 @@
     <ClInclude Include="Infrastructure\PresetFilter.h" />
     <ClInclude Include="MIDI\MIDISysExDumps.h" />
     <ClInclude Include="MIDI\MIDISysExFilter.h" />
-    <ClInclude Include="Players\NukePlayer.h" />
+    <ClInclude Include="Players\NukedOPL3Player.h" />
     <ClInclude Include="Patrons.h" />
     <ClInclude Include="3rdParty\Nuke\resampler.h" />
     <ClInclude Include="Resource.h" />

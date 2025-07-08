@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.07.06) **/
+/** $VER: InputDecoder.h (2025.07.08) **/
 
 #pragma once
 
@@ -30,7 +30,7 @@
 #include "FSPlayer.h"
 #include "MCIPlayer.h"
 #include "MT32Player/MT32Player.h"
-#include "NukePlayer.h"
+#include "NukedOPL3Player.h"
 #include "NukedSC-55Player.h"
 #include "OPNPlayer/OPNPlayer.h"
 #include "SCPlayer.h"

@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2025.07.05) **/
+/** $VER: Preferences.rc (2025.07.08) **/
 
 #include "Resource.h"
 
@@ -397,7 +397,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
         rtext           "Cached:",          IDC_CACHED_LBL,         X_A55, Y_A55 + 2, W_A55, H_A55
         ltext                  "",          IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56, WS_VISIBLE
 
-    groupbox "Nuke", IDC_STATIC, X_A70, Y_A70, W_A70, H_A70
+    groupbox "Nuked OPL3", IDC_STATIC, X_A70, Y_A70, W_A70, H_A70
         rtext       "Preset:",              IDC_NUKE_PRESET_TEXT,     X_A71, Y_A71 + 2, W_A71, H_A71
         combobox                            IDC_NUKE_PRESET,          X_A72, Y_A72,     W_A72, H_A72, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
         control     "Enable soft panning",  IDC_NUKE_PANNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A73, Y_A73, W_A73, H_A73

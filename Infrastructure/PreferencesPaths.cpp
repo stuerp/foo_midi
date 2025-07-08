@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2025.07.05) **/
+/** $VER: PreferencesPaths.cpp (2025.07.08) P. stuer **/
 
 #include "pch.h"
 
@@ -26,11 +26,6 @@
 
 #include "Configuration.h"
 #include "Preset.h"
-
-#include "ADLPlayer.h"
-#include "BMPlayer.h"
-#include "NukePlayer.h"
-#include "VSTiPlayer.h"
 
 #pragma hdrstop
 

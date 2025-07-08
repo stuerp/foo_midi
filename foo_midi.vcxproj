@@ -302,7 +302,7 @@
     <ClCompile Include="Infrastructure\PresetFilter.cpp" />
     <ClCompile Include="MIDI\MIDISysExDumps.cpp" />
     <ClCompile Include="MIDI\MIDISysExFilter.cpp" />
-    <ClCompile Include="Players\NukePlayer.cpp" />
+    <ClCompile Include="Players\NukedOPL3Player.cpp" />
     <ClCompile Include="Experimental\DXiPlayer.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
@@ -439,7 +439,7 @@
     <ClInclude Include="Infrastructure\PresetFilter.h" />
     <ClInclude Include="MIDI\MIDISysExDumps.h" />
     <ClInclude Include="MIDI\MIDISysExFilter.h" />
-    <ClInclude Include="Players\NukePlayer.h" />
+    <ClInclude Include="Players\NukedOPL3Player.h" />
     <ClInclude Include="Players\MT32Player\MT32SetupGMKQ6.h" />
     <ClInclude Include="Players\MT32Player\MT32Player.h" />
     <ClInclude Include="Players\MT32Player\MT32SetupGM.h" />

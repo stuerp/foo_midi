@@ -117,26 +117,26 @@ void FMMPlayer::Shutdown()
     _Factory = nullptr;
 }
 
-void FMMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void FMMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    int32_t Data[256 * 2];
+    const uint32_t MaxFrames = 256;
+    const uint32_t MaxChannels = 2;
 
-    while (sampleCount != 0)
+    int32_t srcFrames[MaxFrames * MaxChannels];
+
+    while (dstCount != 0)
     {
-        uint32_t ToDo = sampleCount;
+        const uint32_t srcCount = std::min(dstCount, MaxFrames);
 
-        if (ToDo > 256)
-            ToDo = 256;
-
-        ::memset(Data, 0, ToDo * 2 * sizeof(*Data));
+        ::memset(srcFrames, 0, (srcCount * MaxChannels) * sizeof(srcFrames[0]));
 
         for (size_t i = 0; i < _countof(_Synthesizers); ++i)
-            _Synthesizers[i]->synthesize_mixing(Data, ToDo, (float) _SampleRate);
+            _Synthesizers[i]->synthesize_mixing(srcFrames, srcCount, (float) _SampleRate);
 
-        audio_math::convert_from_int32((const t_int32 *) Data, ToDo * 2, sampleData, 65536.0);
+        audio_math::convert_from_int32((const t_int32 *) srcFrames, (srcCount * MaxChannels), dstFrames, 65536.0);
 
-        sampleData += ToDo * 2;
-        sampleCount -= ToDo;
+        dstFrames += (srcCount * MaxChannels);
+        dstCount -= srcCount;
     }
 }
 

@@ -220,26 +220,26 @@ void BMPlayer::Shutdown()
     _IsStarted = false;
 }
 
-void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void BMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    while (sampleCount != 0)
+    while (dstCount != 0)
     {
-        const size_t ToDo = std::min(sampleCount, MaxSamples);
-        const size_t SampleCount = ToDo * ChannelCount;
+        const uint32_t srcCount = std::min(dstCount, MaxFrames);
+        const uint32_t NumSamples = srcCount * MaxChannels;
 
-        ::memset(sampleData, 0, SampleCount * sizeof(*sampleData));
+        ::memset(dstFrames, 0, NumSamples * sizeof(dstFrames[0]));
 
         for (auto & Stream : _Streams)
         {
-            ::BASS_ChannelGetData(Stream, _Buffer, BASS_DATA_FLOAT | (DWORD) (SampleCount * sizeof(*_Buffer)));
+            ::BASS_ChannelGetData(Stream, _Buffer, BASS_DATA_FLOAT | (DWORD) (NumSamples * sizeof(_Buffer[0])));
 
             // Convert the format of the rendered output.
-            for (size_t j = 0; j < SampleCount; ++j)
-                sampleData[j] += _Buffer[j];
+            for (size_t j = 0; j < NumSamples; ++j)
+                dstFrames[j] += _Buffer[j];
         }
 
-        sampleData  += SampleCount;
-        sampleCount -= (uint32_t) ToDo;
+        dstFrames += NumSamples;
+        dstCount -= srcCount;
     }
 }
 

@@ -74,10 +74,10 @@ private:
     static bool IsOneOf(const std::wstring & ext, const std::vector<std::wstring> & extensions);
 
 private:
-    static const uint32_t MaxSamples = 512;
-    static const uint32_t ChannelCount = 2;
+    static const uint32_t MaxFrames = 512;
+    static const uint32_t MaxChannels = 2;
 
-    float _Buffer[MaxSamples * ChannelCount];
+    float _Buffer[MaxFrames * MaxChannels];
 
     std::vector<HSOUNDFONT> _SoundFontHandles;
     sflist_t * _SFList[2];

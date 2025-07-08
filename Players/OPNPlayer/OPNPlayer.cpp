@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2025.07.07) **/
+/** $VER: OPNPlayer.cpp (2025.07.08) **/
 
 #include "pch.h"
 
@@ -180,36 +180,33 @@ void OPNPlayer::Shutdown()
     _IsStarted = false;
 }
 
-void OPNPlayer::Render(audio_sample * dstData, uint32_t frameCount)
+void OPNPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    const size_t MaxFrames = 256;
-    const size_t MaxChannels = 2;
+    const uint32_t MaxFrames = 256;
+    const uint32_t MaxChannels = 2;
 
 #ifndef OldCode
-    audio_sample srcData[MaxFrames * MaxChannels];
+    audio_sample srcFrames[MaxFrames * MaxChannels];
 
-    const OPNMIDI_AudioFormat AudioFormat = { OPNMIDI_SampleType_F64, sizeof(*srcData), sizeof(*srcData) * MaxChannels };
+    const OPNMIDI_AudioFormat AudioFormat = { OPNMIDI_SampleType_F64, sizeof(*srcFrames), sizeof(srcFrames[0]) * MaxChannels };
 
-    while (frameCount != 0)
+    while (dstCount != 0)
     {
-        size_t ToDo = frameCount;
+        const uint32_t srcCount = std::min(dstCount, MaxFrames);
 
-        if (ToDo > MaxFrames)
-            ToDo = MaxFrames;
-
-        ::memset(dstData, 0, ToDo * MaxChannels * sizeof(*dstData));
+        ::memset(dstFrames, 0, (srcCount * MaxChannels) * sizeof(dstFrames[0]));
 
         for (size_t i = 0; i < _countof(_Devices); ++i)
         {
-            ::opn2_generateFormat(_Devices[i], (int) (ToDo * MaxChannels), (OPN2_UInt8 *) srcData, (OPN2_UInt8 *)(srcData + 1), &AudioFormat);
+            ::opn2_generateFormat(_Devices[i], (int) (srcCount * MaxChannels), (OPN2_UInt8 *) srcFrames, (OPN2_UInt8 *)(srcFrames + 1), &AudioFormat);
 
             // Convert the rendered output.
-            for (size_t j = 0; j < (ToDo * MaxChannels); ++j)
-                dstData[j] += (audio_sample) srcData[j];
+            for (size_t j = 0; j < (srcCount * MaxChannels); ++j)
+                dstFrames[j] += (audio_sample) srcFrames[j];
         }
 
-        dstData += (ToDo * MaxChannels);
-        frameCount -= (uint32_t) ToDo;
+        dstFrames += (srcCount * MaxChannels);
+        dstCount -= srcCount;
     }
 #else
     int16_t srcData[MaxFrames * MaxChannels];

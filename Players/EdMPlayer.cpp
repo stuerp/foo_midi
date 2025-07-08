@@ -1,5 +1,5 @@
 
-/** $VER: EdMPlayer.cpp (2025.07.07) **/
+/** $VER: EdMPlayer.cpp (2025.07.08) **/
 
 #include "pch.h"
 
@@ -13,13 +13,11 @@ EdMPlayer::EdMPlayer() : player_t()
 
     _SynthMode = ModeGM;
 
-    _Buffer = new int32_t[MaxSamples * ChannelCount];
+    _SrcFrames.resize(MaxFrames * MaxChannels);
 }
 
 EdMPlayer::~EdMPlayer()
 {
-    delete[] _Buffer;
-
     Shutdown();
 }
 
@@ -54,24 +52,23 @@ void EdMPlayer::Shutdown()
     _Initialized = false;
 }
 
-void EdMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void EdMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    while (sampleCount != 0)
+    while (dstCount != 0)
     {
-        const size_t ToDo = std::min(sampleCount, MaxSamples);
-        const size_t SampleCount = ToDo * ChannelCount;
+        const size_t srcCount = std::min(dstCount, MaxFrames);
 
-        ::memset(_Buffer, 0, SampleCount * sizeof(_Buffer[0]));
+        ::memset(_SrcFrames.data(), 0, _SrcFrames.size() * sizeof(_SrcFrames[0]));
 
-        for (auto & m : _Modules)
+        for (auto & Module : _Modules)
         {
-            int32_t * Src = _Buffer;
+            int32_t * Src = _SrcFrames.data();
 
-            for (size_t i = 0; i < ToDo; ++i)
+            for (size_t i = 0; i < srcCount; ++i)
             {
-                int32_t Channel[ChannelCount];
+                int32_t Channel[MaxChannels];
 
-                m.Render(Channel);
+                Module.Render(Channel);
 
                 *Src++ += Channel[0];
                 *Src++ += Channel[1];
@@ -79,10 +76,10 @@ void EdMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         }
 
         // Convert the format of the rendered output.
-        audio_math::convert_from_int32(_Buffer, SampleCount, sampleData, 1 << 16);
+        audio_math::convert_from_int32(_SrcFrames.data(), (srcCount * MaxChannels), dstFrames, 1 << 16);
 
-        sampleData  += SampleCount;
-        sampleCount -= (uint32_t) ToDo;
+        dstFrames += (srcCount * MaxChannels);
+        dstCount -= (uint32_t) srcCount;
     }
 }
 
@@ -227,10 +224,11 @@ void EdMPlayer::ResetDrumChannels()
 {
     static const uint8_t PartToChannel[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
 
-    ::memset(_DrumChannels, 0, sizeof(_DrumChannels));
-    _DrumChannels[9] = 1;
-
     ::memcpy(_GSPartToChannel, PartToChannel, sizeof(_GSPartToChannel));
+
+    ::memset(_DrumChannels, 0, sizeof(_DrumChannels));
+
+    _DrumChannels[9] = 1;
 
     for (size_t i = 0; i < _countof(_DrumChannels); ++i)
         SetDrumChannel((int) i, _DrumChannels[i]);

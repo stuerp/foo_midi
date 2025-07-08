@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.07) **/
+/** $VER: InputDecoder.cpp (2025.07.08) **/
 
 #include "pch.h"
 
@@ -14,6 +14,8 @@
 
 #include <math.h>
 #include <string.h>
+
+#include <ranges>
 
 #include <Encoding.h>
 
@@ -677,7 +679,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         // Nuked OPL3
         case PlayerTypes::NukedOPL3:
         {
-            auto Player = new NukePlayer();
+            auto Player = new NukedOPL3Player();
 
             Player->SetSynth(Preset._NukeSynth);
             Player->SetBankNumber(Preset._NukeBank);
@@ -751,7 +753,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             auto Player = new NukedSC55Player;
 
-            Player->SetBasePath(LR"(F:\MIDI\_foobar2000 Support\Nuked SC55mk2\SC-55mk2-v1.01)");
+            Player->SetBasePath(LR"(*FIXME*\Nuked SC55mk2\SC-55mk2-v1.01)");
 
             _Player = Player;
 
@@ -998,13 +1000,27 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             {
                 case PlayerTypes::ADL:
                 {
-                    Value = ::WideToUTF8(_ADLEmulators[(size_t) CfgADLEmulator].Name).c_str();
+                    const auto TargetId = (int) CfgADLEmulator;
+
+                    auto Match = std::ranges::find_if(_OPNEmulators, [TargetId](const emulator_t & em)
+                    {
+                        return em.Id == TargetId;
+                    });
+
+                    Value = (Match != _ADLEmulators.end()) ? ::WideToUTF8(Match->Name).c_str() : "";
                     break;
                 }
 
                 case PlayerTypes::OPN:
                 {
-                    Value = ::WideToUTF8(_OPNEmulators[(size_t) CfgOPNEmulator].Name).c_str();
+                    const auto TargetId = (int) CfgOPNEmulator;
+
+                    auto Match = std::ranges::find_if(_OPNEmulators, [TargetId](const emulator_t & em)
+                    {
+                        return em.Id == TargetId;
+                    });
+
+                    Value = (Match != _OPNEmulators.end()) ? ::WideToUTF8(Match->Name).c_str() : "";
                     break;
                 }
 

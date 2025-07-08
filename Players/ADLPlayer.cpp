@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.cpp (2025.07.07) **/
+/** $VER: ADLPlayer.cpp (2025.07.08) **/
 
 #include "pch.h"
 
@@ -158,36 +158,33 @@ void ADLPlayer::Shutdown()
     _IsStarted = false;
 }
 
-void ADLPlayer::Render(audio_sample * dstFrames, uint32_t frameCount)
+void ADLPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    const size_t MaxFrames = 256;
-    const size_t MaxChannels = 2;
+    const uint32_t MaxFrames = 256;
+    const uint32_t MaxChannels = 2;
 
 #ifndef OldCode
     audio_sample srcFrames[MaxFrames * MaxChannels];
 
-    const ADLMIDI_AudioFormat AudioFormat = { ADLMIDI_SampleType_F64, sizeof(*srcFrames), sizeof(*srcFrames) * MaxChannels };
+    const ADLMIDI_AudioFormat AudioFormat = { ADLMIDI_SampleType_F64, sizeof(*srcFrames), sizeof(srcFrames[0]) * MaxChannels };
 
-    while (frameCount != 0)
+    while (dstCount != 0)
     {
-        size_t ToDo = frameCount;
+        const uint32_t srcCount = std::min(dstCount, MaxFrames);
 
-        if (ToDo > MaxFrames)
-            ToDo = MaxFrames;
-
-        ::memset(dstFrames, 0, ToDo * MaxChannels * sizeof(*dstFrames));
+        ::memset(dstFrames, 0, (srcCount * MaxChannels) * sizeof(dstFrames[0]));
 
         for (size_t i = 0; i < _countof(_Devices); ++i)
         {
-            ::adl_generateFormat(_Devices[i], (int) (ToDo * MaxChannels), (ADL_UInt8 *) srcFrames, (ADL_UInt8 *)(srcFrames + 1), &AudioFormat);
+            ::adl_generateFormat(_Devices[i], (int) (srcCount * MaxChannels), (ADL_UInt8 *) srcFrames, (ADL_UInt8 *)(srcFrames + 1), &AudioFormat);
 
             // Convert the rendered output.
-            for (size_t j = 0; j < (ToDo * MaxChannels); ++j)
+            for (size_t j = 0; j < (srcCount * MaxChannels); ++j)
                 dstFrames[j] += (audio_sample) srcFrames[j];
         }
 
-        dstFrames += (ToDo * MaxChannels);
-        frameCount -= (uint32_t) ToDo;
+        dstFrames += (srcCount * MaxChannels);
+        dstCount -= srcCount;
     }
 #else
     int16_t Data[MaxFrames * MaxChannels];

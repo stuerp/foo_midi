@@ -1,7 +1,7 @@
 
 /** $VER: PreferencesHMI.cpp (2025.06.22) P. Stuer **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include <atlbase.h>
 #include <atlapp.h>

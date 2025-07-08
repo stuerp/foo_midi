@@ -1,5 +1,5 @@
 
-/** $VER: NukePlayer.h (2025.07.07) **/
+/** $VER: NukedOPL3Player.h (2025.07.08) **/
 
 #pragma once
 
@@ -17,11 +17,12 @@ class nomidisynth;
 /// </summary>
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
-class NukePlayer : public player_t
+
+class NukedOPL3Player : public player_t
 {
 public:
-    NukePlayer();
-    virtual ~NukePlayer();
+    NukedOPL3Player();
+    virtual ~NukedOPL3Player();
 
     void SetSynth(uint32_t);
     void SetBankNumber(uint32_t);
@@ -52,6 +53,7 @@ private:
     unsigned int _BankId;
     unsigned int _Extp;
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member
 
 #pragma region Nuke Presets

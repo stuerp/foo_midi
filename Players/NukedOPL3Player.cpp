@@ -1,9 +1,9 @@
 
-/** $VER: NukePlayer.cpp (2025.06.22) **/
+/** $VER: NukedPlayer.cpp (2025.07.08) **/
 
 #include "pch.h"
 
-#include "NukePlayer.h"
+#include "NukedOPL3Player.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -14,35 +14,35 @@
 
 static pfc::array_t<NukePreset> _NukePresets;
 
-NukePlayer::NukePlayer()
+NukedOPL3Player::NukedOPL3Player()
 {
     _Synth = 0;
 }
 
-NukePlayer::~NukePlayer()
+NukedOPL3Player::~NukedOPL3Player()
 {
     Shutdown();
 }
 
-void NukePlayer::SetSynth(uint32_t synthId)
+void NukedOPL3Player::SetSynth(uint32_t synthId)
 {
     Shutdown();
     _SynthId = synthId;
 }
 
-void NukePlayer::SetBankNumber(uint32_t bankNumber)
+void NukedOPL3Player::SetBankNumber(uint32_t bankNumber)
 {
     Shutdown();
     _BankId = bankNumber;
 }
 
-void NukePlayer::SetExtp(uint32_t extp)
+void NukedOPL3Player::SetExtp(uint32_t extp)
 {
     Shutdown();
     _Extp = extp;
 }
 
-bool NukePlayer::Startup()
+bool NukedOPL3Player::Startup()
 {
     if (_Synth)
         return true;
@@ -72,36 +72,39 @@ bool NukePlayer::Startup()
     return true;
 }
 
-void NukePlayer::Shutdown()
+void NukedOPL3Player::Shutdown()
 {
     delete _Synth;
     _Synth = nullptr;
 }
 
-void NukePlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void NukedOPL3Player::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    const audio_sample ScaleFactor = 1.0f / 16384.0f;
+    const uint32_t MaxFrames = 256;
+    const uint32_t MaxChannels = 2;
 
-    int16_t Data[512];
+    int16_t srcFrames[MaxFrames * MaxChannels];
 
-    while (sampleCount != 0)
+    const audio_sample ScaleFactor = 1.0 / 16384.0;
+
+    while (dstCount != 0)
     {
-        unsigned long Todo = (sampleCount > 256) ? 256 : sampleCount;
+        const uint32_t srcCount = std::min(dstCount, MaxFrames);
 
-        _Synth->midi_generate(Data, Todo);
+        _Synth->midi_generate(srcFrames, srcCount);
 
         // Convert the format of the rendered output.
-        for (size_t i = 0; i < Todo; ++i)
+        for (size_t i = 0, j = 0; i < srcCount; ++i)
         {
-            *sampleData++ = Data[i * 2 + 0] * ScaleFactor;
-            *sampleData++ = Data[i * 2 + 1] * ScaleFactor;
+            *dstFrames++ = srcFrames[j++] * ScaleFactor;
+            *dstFrames++ = srcFrames[j++] * ScaleFactor;
         }
 
-        sampleCount -= Todo;
+        dstCount -= srcCount;
     }
 }
 
-void NukePlayer::SendEvent(uint32_t data)
+void NukedOPL3Player::SendEvent(uint32_t data)
 {
     _Synth->midi_write(data);
 }
@@ -109,18 +112,18 @@ void NukePlayer::SendEvent(uint32_t data)
 /// <summary>
 /// Initializes the presets list.
 /// </summary>
-void NukePlayer::InitializePresets(std::function<void (const pfc::string name, unsigned int synth, unsigned int bank)> functor) noexcept
+void NukedOPL3Player::InitializePresets(std::function<void (const pfc::string name, unsigned int synth, unsigned int bank)> functor) noexcept
 {
-    nomidisynth * Synthsizers[] =
+    nomidisynth * Synthesizers[] =
     {
         ::getsynth_doom(),
         ::getsynth_opl3w(),
         ::getsynth_apogee()
     };
 
-    for (size_t j = 0; j < _countof(Synthsizers); j++)
+    for (size_t j = 0; j < _countof(Synthesizers); j++)
     {
-        nomidisynth * Synth = Synthsizers[j];
+        nomidisynth * Synth = Synthesizers[j];
 
         const pfc::string Name = Synth->midi_synth_name();
 
@@ -149,7 +152,7 @@ void NukePlayer::InitializePresets(std::function<void (const pfc::string name, u
 /// <summary>
 /// Enumerates the presets of this instance.
 /// </summary>
-void NukePlayer::EnumeratePresets(std::function<void (const pfc::string name, unsigned int synthId, unsigned int bankId)> functor) noexcept
+void NukedOPL3Player::EnumeratePresets(std::function<void (const pfc::string name, unsigned int synthId, unsigned int bankId)> functor) noexcept
 {
     for (size_t i = 0; i < _NukePresets.get_count(); ++i)
     {
@@ -162,7 +165,7 @@ void NukePlayer::EnumeratePresets(std::function<void (const pfc::string name, un
 /// <summary>
 /// Gets the Nuke preset with the specified name.
 /// </summary>
-void NukePlayer::GetPreset(pfc::string name, unsigned int & synth, unsigned int & bank)
+void NukedOPL3Player::GetPreset(pfc::string name, unsigned int & synth, unsigned int & bank)
 {
     for (size_t i = 0; i < _NukePresets.get_count(); ++i)
     {
@@ -184,7 +187,7 @@ void NukePlayer::GetPreset(pfc::string name, unsigned int & synth, unsigned int 
 /// <summary>
 /// Gets the Nuke preset at the specified index.
 /// </summary>
-void NukePlayer::GetPreset(size_t index, unsigned int & synth, unsigned int & bank)
+void NukedOPL3Player::GetPreset(size_t index, unsigned int & synth, unsigned int & bank)
 {
     if (index >= _NukePresets.get_count())
         index = 0;
@@ -196,7 +199,7 @@ void NukePlayer::GetPreset(size_t index, unsigned int & synth, unsigned int & ba
 /// <summary>
 /// Gets the name of the Nuke preset for the specified synthesizer and bank.
 /// </summary>
-pfc::string NukePlayer::GetPresetName(unsigned int synth, unsigned int bank)
+pfc::string NukedOPL3Player::GetPresetName(unsigned int synth, unsigned int bank)
 {
     for (size_t i = 0; i < _NukePresets.get_count(); ++i)
     {
@@ -212,7 +215,7 @@ pfc::string NukePlayer::GetPresetName(unsigned int synth, unsigned int bank)
 /// <summary>
 /// Gets the index of the Nuke preset for the specified synthesizer and bank.
 /// </summary>
-size_t NukePlayer::GetPresetIndex(unsigned int synth, unsigned int bank)
+size_t NukedOPL3Player::GetPresetIndex(unsigned int synth, unsigned int bank)
 {
     for (size_t i = 0; i < _NukePresets.get_count(); ++i)
     {
@@ -235,7 +238,7 @@ class NukePresetsImporter
 public:
     NukePresetsImporter()
     {
-        NukePlayer::InitializePresets([] (pfc::string name, unsigned int synth, unsigned int bank)
+        NukedOPL3Player::InitializePresets([] (pfc::string name, unsigned int synth, unsigned int bank)
         {
             NukePreset Preset = { name, synth, bank };
 

@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.07) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.08) P. Stuer **/
 
 #include "pch.h"
 
@@ -32,7 +32,7 @@
 #include "BMPlayer.h"
 #include "FSPlayer.h"
 #include "CLAPPlayer.h"
-#include "NukePlayer.h"
+#include "NukedOPL3Player.h"
 #include "VSTiPlayer.h"
 
 #include "VSTiHost.h"
@@ -464,7 +464,7 @@ void PreferencesRootPage::apply()
         uint32_t Synth;
         uint32_t Bank;
 
-        NukePlayer::GetPreset(SelectedIndex, Synth, Bank);
+        NukedOPL3Player::GetPreset(SelectedIndex, Synth, Bank);
 
         CfgNukeSynthesizer = (t_int32) Synth;
         CfgNukeBank        = (t_int32) Bank;
@@ -602,7 +602,7 @@ void PreferencesRootPage::reset()
         for (const int & ControlId : ControlIds)
             GetDlgItem(ControlId).EnableWindow(IsNuke);
 
-        SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukePlayer::GetPresetIndex(DefaultNukeSynth, DefaultNukeBank));
+        SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukedOPL3Player::GetPresetIndex(DefaultNukeSynth, DefaultNukeBank));
         SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultNukePanning);
     }
 
@@ -917,7 +917,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         size_t PresetNumber = 0;
 
-        NukePlayer::EnumeratePresets([w, PresetNumber] (const pfc::string name, unsigned int synth, unsigned int bank) mutable noexcept
+        NukedOPL3Player::EnumeratePresets([w, PresetNumber] (const pfc::string name, unsigned int synth, unsigned int bank) mutable noexcept
         {
             ::uSendMessageText(w, CB_ADDSTRING, 0, name.c_str());
 
@@ -1278,7 +1278,7 @@ bool PreferencesRootPage::HasChanged()
             uint32_t Synth;
             uint32_t Bank;
 
-            NukePlayer::GetPreset(PresetNumber, Synth, Bank);
+            NukedOPL3Player::GetPreset(PresetNumber, Synth, Bank);
 
             if (!(Synth == (uint32_t) CfgNukeSynthesizer && Bank == (uint32_t) CfgNukeBank))
                 return true;
