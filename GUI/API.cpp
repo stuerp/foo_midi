@@ -1,5 +1,5 @@
 
-/** $VER: API.cpp (2023.01.09) P. Stuer **/
+/** $VER: API.cpp (2025.07.09) P. Stuer **/
 
 #include "pch.h"
 
@@ -8,25 +8,22 @@
 
 #pragma hdrstop
 
-namespace foo_vis_midi
+class API : public IAPI
 {
-    class API : public IAPI
+public:
+    explicit API() { }
+
+    API(const API &) = delete;
+    API & operator=(const API &) = delete;
+    API(API &&) = delete;
+    API & operator=(API &&) = delete;
+
+    virtual ~API() { }
+
+    IMusicKeyboard::ptr GetMusicKeyboard() const override
     {
-    public:
-        explicit API() { }
+        return fb2k::service_new<MusicKeyboard>();
+    }
+};
 
-        API(const API &) = delete;
-        API & operator=(const API &) = delete;
-        API(API &&) = delete;
-        API & operator=(API &&) = delete;
-
-        virtual ~API() { }
-
-        IMusicKeyboard::ptr GetMusicKeyboard() const override
-        {
-            return fb2k::service_new<MusicKeyboard>();
-        }
-    };
-
-    service_factory_t<API> _APIFactory;
-}
+service_factory_t<API> _APIFactory;

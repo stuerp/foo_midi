@@ -101,7 +101,8 @@ To create the component first build the x64 configuration and next the x86 confi
   - Improved: Added setting to reverse the stereo channels of the LibMT32Emu player (default is on).
   - Improved: Added enable or disable reverb processing by the LibMT32Emu player (default is on).
   - Fixed: The LibMT32Emu player reversed the left and the right channels in the output.
-  - Changed: Renamed `midi_plug_in` tag to `midi_player_ext`. The ADL, OPN and Nuked player will set it to the current emulator core.
+  - Changed: Renamed `midi_plug_in` tag to `midi_player_ext`. The ADL, OPN and Nuked OPL3 player will set it to the current emulator core.
+  - Improved: Lots of little fixes, code cleanup and code polishing.
 
 - You can read the full history [here](docs/History.md).
 

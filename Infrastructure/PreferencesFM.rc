@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.rc (2025.07.07) **/
+/** $VER: PreferencesFM.rc (2025.07.09) **/
 
 #include "Resource.h"
 
@@ -98,9 +98,9 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Groupbox LibOPNMIDI
 
-#define X_C00    0
-#define Y_C00    Y_B00 + H_B00
-#define W_C00    281
+#define X_C00    X_B00
+#define Y_C00    Y_B00 + H_B00 + IY
+#define W_C00    W_B00
 
     // Label: Bank
     #define X_C01    X_C00 +  5
@@ -164,12 +164,36 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #define H_C00    11 + H_C02 + IY + H_C04 + IY + H_C06 + IY + H_C09 + 7
 
+// Groupbox Nuked OPL3
+#define X_E00    X_C00
+#define Y_E00    Y_C00 + H_C00 + IY
+#define W_E00    W_C00
+
+    // Label: Preset
+    #define X_E01    X_E00 + 5
+    #define Y_E01    Y_E00 + 11
+    #define W_E01    24
+    #define H_E01    H_LBL
+
+    // Combobox: Preset
+    #define X_E02    X_E01 + W_E01 + IX
+    #define Y_E02    Y_E01
+    #define W_E02    W_E00 - 5 - W_E01 - IX - 5
+    #define H_E02    H_CBX
+
+    // Checkbox
+    #define X_E03    X_E01
+    #define Y_E03    Y_E02 + H_E02 + IY
+    #define W_E03    W_E00 - 5 - 5
+    #define H_E03    H_CHB
+
+#define H_E00    11 + H_E02 + IY + H_E03 + 7
 
 // Groupbox LibMT32Emu
 
-#define X_D00    0
-#define Y_D00    Y_C00 + H_C00
-#define W_D00    281
+#define X_D00    X_E00
+#define Y_D00    Y_E00 + H_E00 + IY
+#define W_D00    W_E00
 
     // Label: Conversion Quality
     #define X_D01    X_D00 +  5
@@ -294,6 +318,12 @@ font 8, "MS Shell Dlg", 400, 0, 1
         rtext       "Bank File:",           IDC_OPN_BANK_FILE_PATH_TEXT,        X_C08, Y_C08 + 2, W_C08, H_C08
         edittext                            IDC_OPN_BANK_FILE_PATH,             X_C09, Y_C09,     W_C09, H_C09, ES_AUTOHSCROLL
         pushbutton  "...",                  IDC_OPN_BANK_FILE_PATH_SELECT,      X_C10, Y_C10,     W_C10, H_C10
+
+    groupbox "Nuked OPL3", IDC_STATIC, X_E00, Y_E00, W_E00, H_E00
+        rtext       "Preset:",              IDC_NUKE_PRESET_TEXT,               X_E01, Y_E01 + 2, W_E01, H_E01
+        combobox                            IDC_NUKE_PRESET,                    X_E02, Y_E02,     W_E02, H_E02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+        control     "Soft panning",         IDC_NUKE_PANNING,                   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_E03, Y_E03 + 2, W_E03, H_E03
 
     groupbox "LibMT32Emu (Munt)", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
         rtext       "Resampling Quality:"   IDC_MT32_CONVERSION_QUALITY_TEXT,   X_D01, Y_D01 + 2, W_D01, H_D01

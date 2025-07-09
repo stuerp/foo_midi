@@ -1,12 +1,10 @@
 
-/** $VER: MusicKeyboardUIElement.h (2023.12.24) P. Stuer **/
+/** $VER: MusicKeyboardUIElement.h (2025.07.09) P. Stuer **/
 
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
 #pragma warning(disable: 5045 5262 ALL_CPPCORECHECK_WARNINGS)
-
-#include "framework.h"
 
 #include <queue>
 
@@ -22,12 +20,11 @@
 
 #include "Resource.h"
 
-namespace foo_vis_midi
-{
+#pragma warning(disable: 4820)
+
 /// <summary>
 /// Implements the UIElement interface.
 /// </summary>
-#pragma warning(disable: 4820)
 class MusicKeyboardWindow : public ui_element_instance, public CWindowImpl<MusicKeyboardWindow>, private play_callback_impl_base
 {
 public:
@@ -55,7 +52,7 @@ public:
 
     #pragma endregion
 
-    #pragma region("ui_element_instance")
+    #pragma region ui_element_instance
 
     /// <summary>
     /// 
@@ -155,7 +152,7 @@ protected:
     const ui_element_instance_callback_ptr m_callback; // Don't rename this.
 
 private:
-    #pragma region("play_callback")
+    #pragma region play_callback
 
     void on_playback_starting(play_control::t_track_command, bool) { }
     void on_playback_new_track(metadb_handle_ptr);
@@ -236,6 +233,7 @@ private:
 
     std::unique_ptr<Keyboard> _Keyboard;
 };
+
 #pragma warning(default: 4820)
 
 /// <summary>
@@ -331,4 +329,3 @@ public:
     /// </summary>
     virtual void on_volume_change(float) { }
 };
-}

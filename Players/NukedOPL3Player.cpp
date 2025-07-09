@@ -5,7 +5,7 @@
 
 #include "NukedOPL3Player.h"
 
-static std::vector<NukedPreset> _NukedPresets;
+std::vector<NukedPreset> _NukedPresets;
 
 NukedOPL3Player::NukedOPL3Player() noexcept
 {

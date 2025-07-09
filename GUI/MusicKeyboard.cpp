@@ -1,5 +1,5 @@
 
-/** $VER: MusicKeyboard.cpp (2023.12.24) P. Stuer **/
+/** $VER: MusicKeyboard.cpp (2025.07.09) P. Stuer **/
 
 #include "pch.h"
 
@@ -11,8 +11,6 @@
 
 #pragma hdrstop
 
-namespace foo_vis_midi
-{
 extern MusicKeyboardWindow * _This;
 
 #pragma region IMusicKeyboard
@@ -36,4 +34,3 @@ extern MusicKeyboardWindow * _This;
 }
 
 #pragma endregion
-}

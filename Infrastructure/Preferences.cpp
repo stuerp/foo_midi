@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.08) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.09) P. Stuer **/
 
 #include "pch.h"
 
@@ -32,7 +32,6 @@
 #include "BMPlayer.h"
 #include "FSPlayer.h"
 #include "CLAPPlayer.h"
-#include "NukedOPL3Player.h"
 #include "VSTiPlayer.h"
 
 #include "VSTiHost.h"
@@ -75,8 +74,7 @@ public:
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_TIMER(OnTimer)
 
-        #pragma region Output
-
+        // Output
         COMMAND_HANDLER_EX(IDC_PLAYER_TYPE, CBN_SELCHANGE, OnPlayerTypeChange)
 
         COMMAND_HANDLER_EX(IDC_CONFIGURE, BN_CLICKED, OnButtonConfig)
@@ -85,27 +83,18 @@ public:
         COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_EDITCHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_SELCHANGE, OnSelectionChange)
 
-        #pragma endregion
-
-        #pragma region Looping
-
+        // Looping
         COMMAND_HANDLER_EX(IDC_LOOP_PLAYBACK, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_LOOP_OTHER, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_DECAY_TIME, EN_CHANGE, OnEditChange)
 
-        #pragma endregion
-
-        #pragma region MIDI
-
+        // MIDI
         COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR,                CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS,               BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_USE_MT32EMU_WITH_MT32, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,      BN_CLICKED, OnButtonClick)
 
-        #pragma endregion
-
-        #pragma region Miscellaneous
-
+        // Miscellaneous
         COMMAND_HANDLER_EX(IDC_EMIDI_EXCLUSION, BN_CLICKED, OnButtonClick)
 
         COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS, BN_CLICKED, OnButtonClick)
@@ -116,29 +105,14 @@ public:
         COMMAND_HANDLER_EX(IDC_XMI_LOOPS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_FF7_LOOPS, BN_CLICKED, OnButtonClick)
-
         #pragma endregion
 
-        #pragma region FluidSynth
-
+        // FluidSynth
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
 
-        #pragma endregion
-
-        #pragma region BASS MIDI
-
+        // BASS MIDI
         COMMAND_HANDLER_EX(IDC_BASSMIDI_VOLUME, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_RESAMPLING_MODE, CBN_SELCHANGE, OnSelectionChange)
-
-        #pragma endregion
-
-        #pragma region Nuked OPL3
-
-        COMMAND_HANDLER_EX(IDC_NUKE_PRESET, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_NUKE_PANNING, BN_CLICKED, OnButtonClick)
-
-        #pragma endregion
-
     END_MSG_MAP()
 
     enum
@@ -453,20 +427,6 @@ void PreferencesRootPage::apply()
         CfgBASSMIDIResamplingMode = (t_int32) SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
     }
 
-    // Nuked OPL3
-    {
-        size_t SelectedIndex = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
-
-        uint32_t Synth;
-        uint32_t Bank;
-
-        NukedOPL3Player::GetPreset(SelectedIndex, Synth, Bank);
-
-        CfgNukeSynthesizer = (t_int32) Synth;
-        CfgNukeBank        = (t_int32) Bank;
-        CfgNukePanning     = (t_int32) SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK);
-    }
-
     OnChanged();
 }
 
@@ -583,23 +543,6 @@ void PreferencesRootPage::reset()
 
         for (const int & ControlId : ControlIds)
             GetDlgItem(ControlId).EnableWindow(IsBASSMIDI);
-    }
-
-    // Nuked OPL3
-    {
-        const BOOL IsNuke = (_SelectedPlayer.Type == PlayerTypes::NukedOPL3);
-
-        const int ControlIds[] =
-        {
-            IDC_NUKE_PRESET_TEXT, IDC_NUKE_PRESET,
-            IDC_NUKE_PANNING
-        };
-
-        for (const int & ControlId : ControlIds)
-            GetDlgItem(ControlId).EnableWindow(IsNuke);
-
-        SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM)NukedOPL3Player::GetPresetIndex(DefaultNukeSynth, DefaultNukeBank));
-        SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultNukePanning);
     }
 
     _VSTiHost.Config.resize(0);
@@ -907,33 +850,6 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     }
     #pragma endregion
 
-    #pragma region Nuked OPL3
-    {
-        auto w = GetDlgItem(IDC_NUKE_PRESET);
-
-        size_t PresetNumber = 0;
-
-        NukedOPL3Player::EnumeratePresets([w, PresetNumber] (const std::string & name, uint32_t synth, uint32_t bank) mutable noexcept
-        {
-            ::uSendMessageText(w, CB_ADDSTRING, 0, name.c_str());
-
-            if ((synth == (uint32_t) CfgNukeSynthesizer) && (bank == (uint32_t) CfgNukeBank))
-                ::SendMessage(w, CB_SETCURSEL, PresetNumber, 0);
-
-            PresetNumber++;
-        });
-
-        SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, (WPARAM) CfgNukePanning);
-
-        if (_SelectedPlayer.Type != PlayerTypes::NukedOPL3)
-        {
-            GetDlgItem(IDC_NUKE_PRESET_TEXT).EnableWindow(FALSE);
-            GetDlgItem(IDC_NUKE_PRESET).EnableWindow(FALSE);
-            GetDlgItem(IDC_NUKE_PANNING).EnableWindow(FALSE);
-        }
-    }
-    #pragma endregion
-
     SetTimer(ID_REFRESH, 20);
 
     _IsBusy = false;
@@ -1078,20 +994,6 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
         for (const int & ControlId : ControlIds)
             GetDlgItem(ControlId).EnableWindow(IsBASSMIDI);
-    }
-
-    // Nuked OPL3
-    {
-        const BOOL IsNukeOPL3 = (_SelectedPlayer.Type == PlayerTypes::NukedOPL3);
-
-        const int ControlIds[] =
-        {
-            IDC_NUKE_PRESET_TEXT, IDC_NUKE_PRESET,
-            IDC_NUKE_PANNING
-        };
-
-        for (const int & ControlId : ControlIds)
-            GetDlgItem(ControlId).EnableWindow(IsNukeOPL3);
     }
 
     OnChanged();
@@ -1260,25 +1162,6 @@ bool PreferencesRootPage::HasChanged()
 
         if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgBASSMIDIResamplingMode)
             return true;
-    }
-    #pragma endregion
-
-    #pragma region Nuked OPL3
-    {
-        if (SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK) != CfgNukePanning)
-            return true;
-
-        {
-            size_t PresetNumber = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
-
-            uint32_t Synth;
-            uint32_t Bank;
-
-            NukedOPL3Player::GetPreset(PresetNumber, Synth, Bank);
-
-            if (!(Synth == (uint32_t) CfgNukeSynthesizer && Bank == (uint32_t) CfgNukeBank))
-                return true;
-        }
     }
     #pragma endregion
 

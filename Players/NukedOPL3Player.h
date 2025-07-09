@@ -58,3 +58,5 @@ struct NukedPreset
     uint32_t SynthId;
     uint32_t BankId;
 };
+
+extern std::vector<NukedPreset> _NukedPresets;

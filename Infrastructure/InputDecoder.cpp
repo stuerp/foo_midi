@@ -937,6 +937,20 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
                     break;
                 }
 
+                case PlayerTypes::NukedOPL3:
+                {
+                    const auto SynthId = (int) CfgNukeSynthesizer;
+                    const auto BankId  = (int) CfgNukeBank;
+
+                    auto Match = std::ranges::find_if(_NukedPresets, [SynthId, BankId](const NukedPreset & np)
+                    {
+                        return (np.SynthId == SynthId) && (np.BankId == BankId);
+                    });
+
+                    Value = (Match != _NukedPresets.end()) ? Match->Name.c_str() : "";
+                    break;
+                }
+
                 case PlayerTypes::VSTi:
                 case PlayerTypes::CLAP:
                 {
@@ -1287,6 +1301,8 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
             if (::memcmp(Data.data() + 8, "DLS ", 4) != 0)
             {
+                std::string TagValue("");
+
                 sf::bank_t sf;
 
                 riff::memory_stream_t ms;

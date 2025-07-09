@@ -1,5 +1,5 @@
 
-/** $VER: MusicKeyboard.h (2023.12.24) P. Stuer **/
+/** $VER: MusicKeyboard.h (2025.07.09) P. Stuer **/
 
 #pragma once
 
@@ -11,8 +11,6 @@
 #include "Keyboard.h"
 #include "API.h"
 
-namespace foo_vis_midi
-{
 class MusicKeyboard : public IMusicKeyboard
 {
 public:
@@ -35,4 +33,3 @@ public:
 
 private:
 };
-}

@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.cpp (2025.07.07) P. Stuer **/
+/** $VER: PreferencesFM.cpp (2025.07.09) P. Stuer **/
 
 #include "pch.h"
 
@@ -29,6 +29,7 @@
 
 #include "ADLPlayer.h"
 #include "OPNPlayer.h"
+#include "NukedOPL3Player.h"
 
 #include "Encoding.h"
 
@@ -98,6 +99,7 @@ public:
     BEGIN_MSG_MAP_EX(DialogPage)
         MSG_WM_INITDIALOG(OnInitDialog)
 
+        // ADL Player
         COMMAND_HANDLER_EX(IDC_ADL_BANK, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_ADL_CORE, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_ADL_CHIPS, CBN_SELCHANGE, OnSelectionChange)
@@ -106,6 +108,7 @@ public:
         COMMAND_HANDLER_EX(IDC_ADL_BANK_FILE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_ADL_BANK_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
 
+        // OPN Player
         COMMAND_HANDLER_EX(IDC_OPN_BANK, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_OPN_CORE, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_OPN_CHIPS, CBN_SELCHANGE, OnSelectionChange)
@@ -114,6 +117,7 @@ public:
         COMMAND_HANDLER_EX(IDC_OPN_BANK_FILE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_OPN_BANK_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
 
+        // MT-32 Player
         COMMAND_HANDLER_EX(IDC_MT32_CONVERSION_QUALITY, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_MT32_MAX_PARTIALS, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_MT32_ANALOG_OUTPUT_MODE, CBN_SELCHANGE, OnSelectionChange)
@@ -124,6 +128,10 @@ public:
         COMMAND_HANDLER_EX(IDC_MT32_NICE_PANNING, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_MT32_NICE_PARTIAL_MIXING, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_MT32_REVERSE_STEREO, BN_CLICKED, OnButtonClicked)
+
+        // Nuked OPL3
+        COMMAND_HANDLER_EX(IDC_NUKE_PRESET, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_NUKE_PANNING, BN_CLICKED, OnButtonClicked)
 
         REFLECT_NOTIFICATIONS()
     END_MSG_MAP()
@@ -323,6 +331,20 @@ void DialogPage::apply()
         CfgMT32EmuReverseStereo     = (bool) SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK);
     }
 
+    // Nuked OPL3
+    {
+        size_t SelectedIndex = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
+
+        uint32_t Synth;
+        uint32_t Bank;
+
+        NukedOPL3Player::GetPreset(SelectedIndex, Synth, Bank);
+
+        CfgNukeSynthesizer = (t_int32) Synth;
+        CfgNukeBank        = (t_int32) Bank;
+        CfgNukePanning     = (t_int32) SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK);
+    }
+
     OnChanged();
 }
 
@@ -428,6 +450,12 @@ void DialogPage::reset()
         SendDlgItemMessage(IDC_MT32_NICE_PANNING,        BM_SETCHECK, (WPARAM) DefaultMT32EmuNicePanning);
         SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_SETCHECK, (WPARAM) DefaultMT32EmuNicePartialMixing);
         SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) DefaultMT32EmuReverseStereo);
+    }
+
+    // Nuked OPL3
+    {
+        SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM) NukedOPL3Player::GetPresetIndex(DefaultNukeSynth, DefaultNukeBank));
+        SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, DefaultNukePanning);
     }
 
     OnChanged();
@@ -622,6 +650,26 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
         SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_SETCHECK, (WPARAM) CfgMT32EmuNicePartialMixing);
         SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) CfgMT32EmuReverseStereo);
     }
+
+    // Nuked OPL3
+    {
+        auto w = GetDlgItem(IDC_NUKE_PRESET);
+
+        size_t PresetNumber = 0;
+
+        NukedOPL3Player::EnumeratePresets([w, PresetNumber] (const std::string & name, uint32_t synth, uint32_t bank) mutable noexcept
+        {
+            ::uSendMessageText(w, CB_ADDSTRING, 0, name.c_str());
+
+            if ((synth == (uint32_t) CfgNukeSynthesizer) && (bank == (uint32_t) CfgNukeBank))
+                ::SendMessage(w, CB_SETCURSEL, PresetNumber, 0);
+
+            PresetNumber++;
+        });
+
+        SendDlgItemMessage(IDC_NUKE_PANNING, BM_SETCHECK, (WPARAM) CfgNukePanning);
+    }
+
 /*
     for (const auto Id : { IDC_ADL_BANK_TEXT, IDC_ADL_BANK, IDC_ADL_CORE_TEXT, IDC_ADL_CORE, IDC_ADL_CHIPS_TEXT, IDC_ADL_CHIPS, IDC_ADL_SOFT_PANNING })
     {
@@ -875,6 +923,22 @@ bool DialogPage::HasChanged() noexcept
 
         // MT32 Reverse Stereo
         if (SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK) != CfgMT32EmuReverseStereo)
+            return true;
+    }
+
+    // Nuked OPL3
+    {
+        if (SendDlgItemMessage(IDC_NUKE_PANNING, BM_GETCHECK) != CfgNukePanning)
+            return true;
+
+        size_t PresetNumber = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
+
+        uint32_t Synth;
+        uint32_t Bank;
+
+        NukedOPL3Player::GetPreset(PresetNumber, Synth, Bank);
+
+        if (!(Synth == (uint32_t) CfgNukeSynthesizer && Bank == (uint32_t) CfgNukeBank))
             return true;
     }
 
