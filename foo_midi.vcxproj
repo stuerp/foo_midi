@@ -121,7 +121,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -157,7 +157,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;winmm.lib;$(OutDir)libsf.lib</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;$(OutDir)libsf.lib</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -200,7 +200,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -243,7 +243,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;winmm.lib;$(OutDir)libsf.lib</AdditionalDependencies>
+      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;$(OutDir)libsf.lib</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -259,6 +259,11 @@
     <Manifest />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GUI\API.cpp" />
+    <ClCompile Include="GUI\Key.cpp" />
+    <ClCompile Include="GUI\Keyboard.cpp" />
+    <ClCompile Include="GUI\MusicKeyboard.cpp" />
+    <ClCompile Include="GUI\MusicKeyboardUIElement.cpp" />
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Channels.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
@@ -401,6 +406,12 @@
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
     <ClInclude Include="3rdParty\foo_vis_midi\API.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
+    <ClInclude Include="GUI\API.h" />
+    <ClInclude Include="GUI\IMIDIReceiver.h" />
+    <ClInclude Include="GUI\Key.h" />
+    <ClInclude Include="GUI\Keyboard.h" />
+    <ClInclude Include="GUI\MusicKeyboard.h" />
+    <ClInclude Include="GUI\MusicKeyboardUIElement.h" />
     <ClInclude Include="Infrastructure\Channels.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
     <ClInclude Include="Infrastructure\CriticalSection.h" />
