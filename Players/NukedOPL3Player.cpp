@@ -1,5 +1,5 @@
 
-/** $VER: NukedPlayer.cpp (2025.07.08) **/
+/** $VER: NukedOPL3Player.cpp (2025.07.09) **/
 
 #include "pch.h"
 
@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <Nuke/interface.h>
+#include <interface.h>
 
 #include "Configuration.h"
 

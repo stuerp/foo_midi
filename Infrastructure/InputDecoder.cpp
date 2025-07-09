@@ -79,9 +79,6 @@ InputDecoder::InputDecoder() noexcept :
     _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? midi::container_t::CleanFlagEMIDI : 0) |
                              (CfgFilterInstruments  ? midi::container_t::CleanFlagInstruments : 0) |
                              (CfgFilterBanks        ? midi::container_t::CleanFlagBanks : 0);
-#ifdef DXISUPPORT
-    dxiProxy = nullptr;
-#endif
 /* KEEP? 06/07/25
     _CurrentSampleRate = _SampleRate;
 */
@@ -119,10 +116,6 @@ InputDecoder::~InputDecoder() noexcept
         _IsRunning -= 1;
 */
     }
-#ifdef DXISUPPORT
-    if (dxiProxy)
-        delete dxiProxy;
-#endif
 }
 
 #pragma region input_impl
@@ -587,38 +580,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         // DirectX
         case PlayerTypes::DirectX:
         {
-    #ifdef DXISUPPORT
-            pfc::array_t<t_uint8> serialized_midi_file;
-            midi_file.SerializeAsSMF(serialized_midi_file);
-
-            delete dxiProxy;
-            dxiProxy = nullptr;
-
-            dxiProxy = new DXiProxy;
-            if (SUCCEEDED(dxiProxy->initialize()))
-            {
-                dxiProxy->SetSampleRate(srate);
-                if (SUCCEEDED(dxiProxy->setSequence(serialized_midi_file.get_ptr(), serialized_midi_file.get_count())))
-                {
-                    if (SUCCEEDED(dxiProxy->setPlugin(thePreset.dxi_plugin)))
-                    {
-                        dxiProxy->Stop();
-                        dxiProxy->Play(TRUE);
-
-                        eof = false;
-                        _DontLoop = true;
-
-                        if (doing_loop)
-                        {
-                            set_loop();
-                        }
-
-                        return;
-                    }
-                }
-            }
-    #endif
-            break;
+            throw pfc::exception("Player not implemented");
         }
 
         // LibADLMIDI
@@ -673,7 +635,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         // OPL
         case PlayerTypes::OPL:
         {
-            break;
+            throw pfc::exception("Player not implemented");
         }
 
         // Nuked OPL3
@@ -753,8 +715,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             auto Player = new NukedSC55Player;
 
-            Player->SetBasePath(LR"(*FIXME*\Nuked SC55mk2\SC-55mk2-v1.01)");
-
             _Player = Player;
 
             _Player->SetSampleRate(_SampleRate);
@@ -813,47 +773,6 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         return false;
 
     bool Success = false;
-
-#ifdef DXISUPPORT
-    if (_PlayerType == PlayerType::DirectX)
-    {
-        unsigned todo = 4096;
-
-        if (_DontLoop)
-        {
-            if (length_samples && samples_done + todo > length_samples)
-            {
-                todo = length_samples - samples_done;
-                if (!todo) return false;
-            }
-        }
-
-    #if audio_sample_size != 32
-        sample_buffer.grow_size(todo * 2);
-
-        float * ptr = sample_buffer.get_ptr();
-
-        thePlayer->FillBuffer(ptr, todo);
-
-        audioChunk.set_data_32(ptr, todo, 2, srate);
-    #else
-        audioChunk.set_data_size(todo * 2);
-
-        float * ptr = audioChunk.get_data();
-
-        dxiProxy->fillBuffer(ptr, todo);
-
-        audioChunk.set_srate(srate);
-        audioChunk.set_channels(2);
-        audioChunk.set_sample_count(todo);
-    #endif
-
-        samples_done += todo;
-
-        rv = true;
-    }
-    else
-#endif
 
     if (_Player)
     {
@@ -952,15 +871,6 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
         return;
     }
 
-#ifdef DXISUPPORT
-    if (_PlayerType == PlayerType::DirectX)
-    {
-        dxiProxy->setPosition(seek_msec);
-
-        samples_done = done;
-    }
-    else
-#endif
     if (_Player)
         _Player->Seek(OffsetInSamples);
 }

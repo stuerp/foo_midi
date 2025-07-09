@@ -8,9 +8,6 @@
 
 #include "Player.h"
 
-#pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
-#pragma warning(disable: 4820) // x bytes padding added after data member
-
 /// <summary>
 /// Implements the Nuked SC-55 player.
 /// </summary>
@@ -20,8 +17,6 @@ public:
     NukedSC55Player();
 
     virtual ~NukedSC55Player();
-
-    void SetBasePath(const std::wstring & basePath) noexcept;
 
 private:
     virtual bool Startup();
@@ -33,9 +28,4 @@ private:
 
     virtual void SendEvent(uint32_t);
     virtual void SendEvent(uint32_t, uint32_t time) { };
-
-private:
-    std::wstring _BasePathName;
 };
-
-#pragma warning(default: 4820) // x bytes padding added after data member

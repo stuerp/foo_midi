@@ -283,10 +283,6 @@ private:
 
     #pragma endregion
 
-#ifdef DXISUPPORT
-    pfc::array_t<CLSID> dxi_plugins;
-#endif
-
     const preferences_page_callback::ptr _Callback;
 
 

@@ -75,12 +75,6 @@ preset_t::preset_t() noexcept
         _MT32EmuGMSet = (uint32_t) CfgMT32EmuGMSet;
     }
 
-#ifdef DXISUPPORT
-    {
-        dxi_plugin = cfg_dxi_plugin;
-    }
-#endif
-
     // LibADLMIDI
     {
         _ADLBankNumber = (uint32_t) CfgADLBank;
@@ -152,28 +146,6 @@ void preset_t::Serialize(pfc::string & text)
         text += "|";
         text += _MT32EmuSets[_MT32EmuGMSet].c_str();
     }
-#ifdef DXISUPPORT
-    else
-    if (plugin == PlayerType::DirectX)
-    {
-        p_out += "|";
-        p_out += pfc::format_hex(dxi_plugin.Data1, 8);
-        p_out += "-";
-        p_out += pfc::format_hex(dxi_plugin.Data2, 4);
-        p_out += "-";
-        p_out += pfc::format_hex(dxi_plugin.Data3, 4);
-        p_out += "-";
-        p_out += pfc::format_hex(dxi_plugin.Data4[0], 2);
-        p_out += pfc::format_hex(dxi_plugin.Data4[1], 2);
-        p_out += "-";
-        p_out += pfc::format_hex(dxi_plugin.Data4[2], 2);
-        p_out += pfc::format_hex(dxi_plugin.Data4[3], 2);
-        p_out += pfc::format_hex(dxi_plugin.Data4[4], 2);
-        p_out += pfc::format_hex(dxi_plugin.Data4[5], 2);
-        p_out += pfc::format_hex(dxi_plugin.Data4[6], 2);
-        p_out += pfc::format_hex(dxi_plugin.Data4[7], 2);
-    }
-#endif
     else
     if (_PlayerType == PlayerTypes::ADL)
     {
@@ -263,10 +235,6 @@ void preset_t::Deserialize(const char * text)
 
     bool EffectsEnabled = false;
     uint32_t VoiceCount = 256;
-
-#ifdef DXISUPPORT
-    GUID DirectXGUID = { 0 };
-#endif
 
     uint32_t ADLBankNumber = 0;
     uint32_t ADLChipCount = 0;
@@ -378,26 +346,6 @@ void preset_t::Deserialize(const char * text)
             return;
     }
     else
-#ifdef DXISUPPORT
-    else
-    if (in_plugin == PlayerType::DirectX)
-    {
-        if (bar_pos - p_in < 8 + 1 + 4 + 1 + 4 + 1 + 4 + 1 + 12)
-            return;
-
-        DirectXGUID.Data1 = pfc::atohex<t_uint32>(p_in, 8);
-        DirectXGUID.Data2 = pfc::atohex<t_uint16>(p_in + 8 + 1, 4);
-        DirectXGUID.Data3 = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1, 4);
-        DirectXGUID.Data4[0] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1, 2);
-        DirectXGUID.Data4[1] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2, 2);
-        DirectXGUID.Data4[2] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1, 2);
-        DirectXGUID.Data4[3] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2, 2);
-        DirectXGUID.Data4[4] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2, 2);
-        DirectXGUID.Data4[5] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2, 2);
-        DirectXGUID.Data4[6] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2, 2);
-        DirectXGUID.Data4[7] = pfc::atohex<t_uint16>(p_in + 8 + 1 + 4 + 1 + 4 + 1 + 2 + 2 + 1 + 2 + 2 + 2 + 2 + 2, 2);
-    }
-#endif
     if (PlayerType == PlayerTypes::ADL)
     {
         {
@@ -515,10 +463,6 @@ void preset_t::Deserialize(const char * text)
 
     _EffectsEnabled = EffectsEnabled;
     _VoiceCount = VoiceCount;
-
-#ifdef DXISUPPORT
-    dxi_plugin = DirectXGUID;
-#endif
 
     _ADLBankNumber = ADLBankNumber;
     _ADLEmulatorCore = ADLEmulatorCore;

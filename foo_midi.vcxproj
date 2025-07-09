@@ -89,9 +89,18 @@
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -104,7 +113,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>EnableAllWarnings</WarningLevel>
@@ -141,7 +150,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -179,7 +188,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -224,7 +233,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/Nuke;./3rdParty/NukedSC-55/src;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -556,7 +565,7 @@
     <ProjectReference Include="3rdParty\libsf\libsf\libsf.vcxproj">
       <Project>{f228afa2-be24-4416-9f4c-5bd927f0aa0f}</Project>
     </ProjectReference>
-    <ProjectReference Include="3rdParty\Nuke\Nuke.vcxproj">
+    <ProjectReference Include="3rdParty\nuked-opl3\nuked-opl3.vcxproj">
       <Project>{388eb9a8-764e-4a90-be37-fb28cae70d03}</Project>
     </ProjectReference>
     <ProjectReference Include="scpipe\scpipe32.vcxproj">

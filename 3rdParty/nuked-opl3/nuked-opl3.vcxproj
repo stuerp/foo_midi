@@ -19,42 +19,42 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="fmopl3lib\opl3.c" />
-    <ClCompile Include="fmopl3lib\opl3class.cpp" />
-    <ClCompile Include="resampler.c" />
-    <ClCompile Include="synthlib_apogee\al_midi.cpp" />
-    <ClCompile Include="synthlib_doom\i_oplmusic.cpp" />
-    <ClCompile Include="synthlib_opl3w\opl3midi.cpp" />
+    <ClCompile Include="repo\fmopl3lib\opl3.c" />
+    <ClCompile Include="repo\fmopl3lib\opl3class.cpp" />
+    <ClCompile Include="repo\resampler.c" />
+    <ClCompile Include="repo\synthlib_apogee\al_midi.cpp" />
+    <ClCompile Include="repo\synthlib_doom\i_oplmusic.cpp" />
+    <ClCompile Include="repo\synthlib_opl3w\opl3midi.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="fmopl3lib\opl3.h" />
-    <ClInclude Include="fmopl3lib\opl3class.h" />
-    <ClInclude Include="interface.h" />
-    <ClInclude Include="resampler.h" />
-    <ClInclude Include="synthlib_apogee\al_midi.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_blood.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_duke3d.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_lee.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_nam.h" />
-    <ClInclude Include="synthlib_apogee\inst\apogee_sw.h" />
-    <ClInclude Include="synthlib_apogee\_al_midi.h" />
-    <ClInclude Include="synthlib_doom\inst\dmxopl.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_dmx.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_doom1.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_doom2.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_raptor.h" />
-    <ClInclude Include="synthlib_doom\inst\dmx_strife.h" />
-    <ClInclude Include="synthlib_doom\i_oplmusic.h" />
-    <ClInclude Include="synthlib_opl3w\gmtimbre.h" />
-    <ClInclude Include="synthlib_opl3w\opl3midi.h" />
-    <ClInclude Include="synthlib_opl3w\opl3type.h" />
+    <ClInclude Include="repo\fmopl3lib\opl3.h" />
+    <ClInclude Include="repo\fmopl3lib\opl3class.h" />
+    <ClInclude Include="repo\interface.h" />
+    <ClInclude Include="repo\resampler.h" />
+    <ClInclude Include="repo\synthlib_apogee\al_midi.h" />
+    <ClInclude Include="repo\synthlib_apogee\inst\apogee_blood.h" />
+    <ClInclude Include="repo\synthlib_apogee\inst\apogee_duke3d.h" />
+    <ClInclude Include="repo\synthlib_apogee\inst\apogee_lee.h" />
+    <ClInclude Include="repo\synthlib_apogee\inst\apogee_nam.h" />
+    <ClInclude Include="repo\synthlib_apogee\inst\apogee_sw.h" />
+    <ClInclude Include="repo\synthlib_apogee\_al_midi.h" />
+    <ClInclude Include="repo\synthlib_doom\inst\dmxopl.h" />
+    <ClInclude Include="repo\synthlib_doom\inst\dmx_dmx.h" />
+    <ClInclude Include="repo\synthlib_doom\inst\dmx_doom1.h" />
+    <ClInclude Include="repo\synthlib_doom\inst\dmx_doom2.h" />
+    <ClInclude Include="repo\synthlib_doom\inst\dmx_raptor.h" />
+    <ClInclude Include="repo\synthlib_doom\inst\dmx_strife.h" />
+    <ClInclude Include="repo\synthlib_doom\i_oplmusic.h" />
+    <ClInclude Include="repo\synthlib_opl3w\gmtimbre.h" />
+    <ClInclude Include="repo\synthlib_opl3w\opl3midi.h" />
+    <ClInclude Include="repo\synthlib_opl3w\opl3type.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{388eb9a8-764e-4a90-be37-fb28cae70d03}</ProjectGuid>
     <RootNamespace>libnuke</RootNamespace>
-    <ProjectName>Nuke</ProjectName>
+    <ProjectName>nuked-opl3</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

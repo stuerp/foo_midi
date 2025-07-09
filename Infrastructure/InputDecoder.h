@@ -36,12 +36,6 @@
 #include "SCPlayer.h"
 #include "VSTiPlayer.h"
 
-#ifdef DXISUPPORT
-#include "DXiProxy.h"
-#include "PlugInInventory.h"
-#pragma comment(lib, "strmiids.lib")
-#endif
-
 #include "Resource.h"
 
 /* KEEP? 06/07/25
@@ -178,23 +172,6 @@ private:
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
 
-#ifdef DXISUPPORT
-    void set_loop()
-    {
-        if (_SelectedPluginIndex == 5 && dxiProxy)
-        {
-            dxiProxy->setLoop(loop_begin != ~0 ? loop_begin : 0, loop_end != ~0 ? loop_end : length_ticks);
-        }
-        /*else
-        {
-            sample_loop_start = theSequence->m_tempoMap.Tick2Sample(loop_begin != -1 ? loop_begin : 0, srate);
-            sample_loop_end = theSequence->m_tempoMap.Tick2Sample((loop_end != -1 ? loop_end : length_ticks) + 1, srate);
-        }*/
-        else
-            _DontLoop = false;
-    }
-#endif
-
 private:
     unsigned _Flags;
 
@@ -258,13 +235,6 @@ private:
     uint32_t _ActiveVoiceCount;
     uint32_t _PeakVoiceCount;
 
-#ifdef DXISUPPORT
-    DXiProxy * dxiProxy;
-
-#if audio_sample_size != 32
-    pfc::array_t<float> sample_buffer;
-#endif
-#endif
     static constexpr GUID GUIDTagMIDIHash = { 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0x61, 0xc3, 0x26, 0x87, 0xd0 } };
     static const char * PlayerTypeNames[15];
 };

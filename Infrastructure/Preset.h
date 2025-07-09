@@ -38,10 +38,6 @@ public:
 
     pfc::string _SoundFontFilePath;
 
-#ifdef DXISUPPORT
-    GUID dxi_plugin;
-#endif
-
     // ADL
     uint32_t _ADLBankNumber;
     uint32_t _ADLEmulatorCore;

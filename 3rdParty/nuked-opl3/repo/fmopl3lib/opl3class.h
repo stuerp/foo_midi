@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 
-#include "../../libADLMIDI/repo/src/chips/nuked/nukedopl3.h"
+#include "../../../libADLMIDI/repo/src/chips/nuked/nukedopl3.h"
 #include "../interface.h"
 
 typedef uint64_t    Bit64u;
