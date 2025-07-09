@@ -184,7 +184,10 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
                 CfgKeepMutedChannels,
                 CfgIncludeControlData,
 
-                (uint16_t) CfgDefaultTempo
+                (uint16_t) CfgDefaultTempo,
+
+                true, // End of Track is required
+                CfgDetectExtraDrum
             );
 
             midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, Options);
@@ -939,8 +942,8 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
                 case PlayerTypes::NukedOPL3:
                 {
-                    const auto SynthId = (int) CfgNukeSynthesizer;
-                    const auto BankId  = (int) CfgNukeBank;
+                    const auto SynthId = (uint32_t) CfgNukeSynthesizer;
+                    const auto BankId  = (uint32_t) CfgNukeBank;
 
                     auto Match = std::ranges::find_if(_NukedPresets, [SynthId, BankId](const NukedPreset & np)
                     {
@@ -1301,7 +1304,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
             if (::memcmp(Data.data() + 8, "DLS ", 4) != 0)
             {
-                std::string TagValue("");
+                TagValue.clear();
 
                 sf::bank_t sf;
 

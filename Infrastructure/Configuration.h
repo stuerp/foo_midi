@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.07.07) **/
+/** $VER: Configuration.h (2025.07.09) **/
 
 #pragma once
 
@@ -88,6 +88,7 @@ enum
     DefaultUseMIDIEffects = 1,
     DefaultUseMT32EmuWithMT32 = 1,
     DefaultUseVSTiWithXG = 0,
+    DefaultDetectExtraDrum = 1,
 
     DefaultEmuDeMIDIExclusion = 1,
     DefaultFilterInstruments = 0,
@@ -185,6 +186,7 @@ extern cfg_var_modern::cfg_bool
     CfgWolfteamLoopMode,
     CfgKeepMutedChannels,
     CfgIncludeControlData,
+    CfgDetectExtraDrum,
 
     CfgADLSoftPanning,
 

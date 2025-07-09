@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.cpp (2025.07.02) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.cpp (2025.07.09) P. Stuer - Wrapper for CLAP plugins **/
 
 #include "pch.h"
 
@@ -30,14 +30,14 @@ bool CLAPPlayer::Startup()
     if (!_Host->IsPlugInLoaded())
         return false;
 
-    LChannel.resize(GetBlockSize());
-    RChannel.resize(GetBlockSize());
+    _LChannel.resize(GetBlockSize());
+    _RChannel.resize(GetBlockSize());
 
     if (_Host->Use64Bits())
         return false; // Not supported yet
 
-    _OutChannels[0] = LChannel.data();
-    _OutChannels[1] = RChannel.data();
+    _OutChannels[0] = _LChannel.data();
+    _OutChannels[1] = _RChannel.data();
 
     _AudioOut.data32        = _OutChannels;
     _AudioOut.channel_count = _countof(_OutChannels);
@@ -72,9 +72,6 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
     ::memset(dstFrames, 0, ((size_t) dstCount * _countof(_OutChannels)) * sizeof(audio_sample));
 
-    if (_InEvents.Events.empty())
-        return;
-
     try
     {
         const int64_t SteadyTimeNotAvailable = -1;
@@ -97,8 +94,8 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 
         for (size_t j = 0; j < dstCount; ++j)
         {
-            dstFrames[j * 2 + 0] = (audio_sample) LChannel[j];
-            dstFrames[j * 2 + 1] = (audio_sample) RChannel[j];
+            dstFrames[j * 2 + 0] = (audio_sample) _LChannel[j];
+            dstFrames[j * 2 + 1] = (audio_sample) _RChannel[j];
         }
     }
     catch (...) { }

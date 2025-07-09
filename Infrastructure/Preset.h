@@ -1,5 +1,5 @@
 
-/** $VER: Preset.h (2025.07.07) **/
+/** $VER: Preset.h (2025.07.09) **/
 
 #pragma once
 
@@ -69,6 +69,7 @@ public:
     bool _UseMIDIEffects;
     bool _UseMT32EmuWithMT32;
     bool _UseVSTiWithXG;
+    bool _DetectExtraDrum;
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member

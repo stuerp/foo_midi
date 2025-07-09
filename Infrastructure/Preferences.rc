@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2025.07.08) **/
+/** $VER: Preferences.rc (2025.07.09) **/
 
 #include "Resource.h"
 
@@ -67,6 +67,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #define W_A10    5 + W_A11 + IX + W_A12 + IX + W_A13 + IX + W_A14 + IX + W_A15 + 5
 #define H_A10    11 + H_A12 + 7
+
 #pragma endregion
 
 #pragma region Looping
@@ -178,26 +179,32 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define H_A83    H_CHB
 
     // Checkbox: Use MT32Emu with MT-32
-    #define X_A84    X_A81
-    #define Y_A84    Y_A83 + H_A83 + 4
+    #define X_A84    X_A83
+    #define Y_A84    Y_A83 + H_A83 + IY
     #define W_A84    W_A80 - 5 - 5
     #define H_A84    H_CHB
 
     // Checkbox: Use VSTi with XG
-    #define X_A85    X_A81
-    #define Y_A85    Y_A84 + H_A84 + 4
+    #define X_A85    X_A84
+    #define Y_A85    Y_A84 + H_A84 + IY
     #define W_A85    W_A80 - 5 - 5
     #define H_A85    H_CHB
 
-#define H_A80    11 + H_A82 + IY + H_A83 + IY + H_A84 + IY + H_A85 + 7
+    // Checkbox: Detect extra percussion channel
+    #define X_A86    X_A85
+    #define Y_A86    Y_A85 + H_A85 + IY
+    #define W_A86    W_A80 - 5 - 5
+    #define H_A86    H_CHB
+
+#define H_A80    11 + H_A82 + IY + H_A83 + IY + H_A84 + IY + H_A85 + IY + H_A86 + 7
 
 #pragma endregion
 
 #pragma region Miscellaneous
 
 // Groupbox
-#define X_A30    X_A80
-#define Y_A30    Y_A80 + H_A80 + IY
+#define X_A30    X_A80 + W_A80 + 4
+#define Y_A30    Y_A80
 #define W_A30    W_A80
 
     // Checkbox
@@ -292,31 +299,6 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #pragma endregion
 
-#pragma region MT32Emu
-
-// Groupbox
-#define X_A60    X_A50
-#define Y_A60    Y_A50 + H_A50 + IY
-#define W_A60    W_A50
-
-    // Label: GM Set
-    #define X_A63    X_A60 + 5
-    #define Y_A63    Y_A60 + 11
-    #define W_A63    40
-    #define H_A63    H_LBL
-
-    // Combobox: GM Set
-    #define X_A64    X_A63 + W_A63 + IX
-    #define Y_A64    Y_A63
-    #define W_A64    W_A60 - 5 - W_A63 - IX - 5
-    #define H_A64    H_CBX
-
-#define H_A60    11 + H_A64 + 7
-
-#pragma endregion
-
-#pragma region Nuke
-
 IDD_PREFERENCES_ROOT dialogex 0, 0, 0, 0
 style DS_SHELLFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 1
@@ -348,16 +330,17 @@ font 8, "MS Shell Dlg", 400, 0, 1
         control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A2C, Y_A2C, W_A2C, H_A2C
 
     groupbox "MIDI", IDC_STATIC, X_A80, Y_A80, W_A80, H_A80
-        rtext       "Flavor:",                              IDC_MIDI_FLAVOR_TEXT, X_A81, Y_A81 + 2, W_A81, H_A81
-        combobox                                            IDC_MIDI_FLAVOR,      X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        control     "Filter effects (Reverb and Chorus)",   IDC_MIDI_EFFECTS,          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
-        control     "Use MT32Emu with MT-32",               IDC_MIDI_USE_MT32EMU_WITH_MT32,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
-        control     "Use VSTi with XG",                     IDC_MIDI_USE_VSTI_WITH_XG, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
+        rtext       "Flavor:",                                          IDC_MIDI_FLAVOR_TEXT,           X_A81, Y_A81 + 2, W_A81, H_A81
+        combobox                                                        IDC_MIDI_FLAVOR,                X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        control     "Filter effects (Reverb and Chorus)",               IDC_MIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
+        control     "Use MT32Emu with MT-32",                           IDC_MIDI_USE_MT32EMU_WITH_MT32, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
+        control     "Use VSTi with XG",                                 IDC_MIDI_USE_VSTI_WITH_XG,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
+        control     "Detect extra percussion channel",                  IDC_MIDI_DETECT_EXTRA_DRUM      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A86, Y_A86, W_A86, H_A86
 
     groupbox "Miscellaneous", IDC_STATIC, X_A30, Y_A30, W_A30, H_A30
-        control "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EXCLUSION,    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
-        control "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
-        control "Disable bank changes",                             IDC_FILTER_BANKS,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
+        control     "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EXCLUSION,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
+        control     "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
+        control     "Disable bank changes",                             IDC_FILTER_BANKS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
 
     // Right column
     groupbox "FluidSynth", IDC_STATIC, X_A40, Y_A40, W_A40, H_A40

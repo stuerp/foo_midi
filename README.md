@@ -103,6 +103,7 @@ To create the component first build the x64 configuration and next the x86 confi
   - Fixed: The LibMT32Emu player reversed the left and the right channels in the output.
   - Changed: Renamed `midi_plug_in` tag to `midi_player_ext`. The ADL, OPN and Nuked OPL3 player will set it to the current emulator core.
   - Improved: Lots of little fixes, code cleanup and code polishing.
+  - New: Detecting the extra percussion channel can be turn on or off in the Preferences.
 
 - You can read the full history [here](docs/History.md).
 

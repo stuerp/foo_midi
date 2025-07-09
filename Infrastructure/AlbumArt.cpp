@@ -96,7 +96,10 @@ public:
                 CfgKeepMutedChannels,
                 CfgIncludeControlData,
 
-                (uint16_t) CfgDefaultTempo
+                (uint16_t) CfgDefaultTempo,
+
+                true, // End of Track is required
+                CfgDetectExtraDrum
             );
 
             midi::processor_t::Process(Object, pfc::wideFromUTF8(filePath), Container, Options);

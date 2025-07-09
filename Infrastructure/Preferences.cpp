@@ -93,6 +93,7 @@ public:
         COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS,               BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_USE_MT32EMU_WITH_MT32, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,      BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_DETECT_EXTRA_DRUM,     BN_CLICKED, OnButtonClick)
 
         // Miscellaneous
         COMMAND_HANDLER_EX(IDC_EMIDI_EXCLUSION, BN_CLICKED, OnButtonClick)
@@ -388,6 +389,7 @@ void PreferencesRootPage::apply()
         CfgUseMIDIEffects     = (t_int32) SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) ? 0 : 1;
         CfgUseMT32EmuWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_GETCHECK);
         CfgUseVSTiWithXG      = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
+        CfgDetectExtraDrum    = (bool)    SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK);
     }
 
     // Miscellaneous
@@ -490,6 +492,7 @@ void PreferencesRootPage::reset()
         SendDlgItemMessage(IDC_MIDI_EFFECTS,               BM_SETCHECK,  DefaultUseMIDIEffects ? 0 : 1);
         SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_SETCHECK,  DefaultUseMT32EmuWithMT32);
         SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,      BM_SETCHECK,  DefaultUseVSTiWithXG);
+        SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM,     BM_SETCHECK,  DefaultDetectExtraDrum);
     }
 
     // Miscellaneous
@@ -772,6 +775,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         SendDlgItemMessage(IDC_MIDI_EFFECTS,               BM_SETCHECK, (WPARAM) (CfgUseMIDIEffects ? 0 : 1));
         SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_SETCHECK, (WPARAM) CfgUseMT32EmuWithMT32);
         SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,      BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
+        SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM,     BM_SETCHECK, (WPARAM) CfgDetectExtraDrum);
 
         const bool Enabled = _SelectedPlayer.SupportsMIDIFlavor();
 
@@ -1125,6 +1129,9 @@ bool PreferencesRootPage::HasChanged()
             return true;
 
         if (SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK) != CfgUseVSTiWithXG)
+            return true;
+
+        if (SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK) != CfgDetectExtraDrum)
             return true;
     }
     #pragma endregion

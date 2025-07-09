@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.07.07) P. Stuer **/
+/** $VER: Resource.h (2025.07.09) P. Stuer **/
 
 #pragma once
 
@@ -81,18 +81,15 @@
 #define IDC_CACHED_LBL                      1017
 #define IDC_CACHED                          1018
 
-#define IDC_NUKE_PRESET_TEXT                1026
-#define IDC_NUKE_PRESET                     1027
-#define IDC_NUKE_PANNING                    1028
-
 #define IDC_MIDI_FLAVOR_TEXT                1029
 #define IDC_MIDI_FLAVOR                     1030
 #define IDC_MIDI_EFFECTS                    1031
 #define IDC_MIDI_USE_MT32EMU_WITH_MT32      1032
 #define IDC_MIDI_USE_VSTI_WITH_XG           1033
+#define IDC_MIDI_DETECT_EXTRA_DRUM          1034
 
-#define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   1034
-#define IDC_FLUIDSYNTH_INTERPOLATION        1035
+#define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   1038
+#define IDC_FLUIDSYNTH_INTERPOLATION        1039
 
 /** Dialog: Preferences FM Synthesis **/
 
@@ -118,22 +115,26 @@
 #define IDC_OPN_BANK_FILE_PATH              1208
 #define IDC_OPN_BANK_FILE_PATH_SELECT       1209
 
-#define IDC_MT32_CONVERSION_QUALITY_TEXT    1300
-#define IDC_MT32_CONVERSION_QUALITY         1301
-#define IDC_MT32_MAX_PARTIALS_TEXT          1303
-#define IDC_MT32_MAX_PARTIALS               1304
-#define IDC_MT32_ANALOG_OUTPUT_MODE_TEXT    1305
-#define IDC_MT32_ANALOG_OUTPUT_MODE         1306
-#define IDC_MT32_GM_SET_TEXT                1307
-#define IDC_MT32_GM_SET                     1308
-#define IDC_MT32_DAC_INPUT_MODE_TEXT        1309
-#define IDC_MT32_DAC_INPUT_MODE             1310
+#define IDC_NUKE_PRESET_TEXT                1300
+#define IDC_NUKE_PRESET                     1301
+#define IDC_NUKE_PANNING                    1302
 
-#define IDC_MT32_REVERB                     1311
-#define IDC_MT32_NICE_AMP_RAMP              1312
-#define IDC_MT32_NICE_PANNING               1313
-#define IDC_MT32_NICE_PARTIAL_MIXING        1314
-#define IDC_MT32_REVERSE_STEREO             1315
+#define IDC_MT32_CONVERSION_QUALITY_TEXT    1400
+#define IDC_MT32_CONVERSION_QUALITY         1401
+#define IDC_MT32_MAX_PARTIALS_TEXT          1403
+#define IDC_MT32_MAX_PARTIALS               1404
+#define IDC_MT32_ANALOG_OUTPUT_MODE_TEXT    1405
+#define IDC_MT32_ANALOG_OUTPUT_MODE         1406
+#define IDC_MT32_GM_SET_TEXT                1407
+#define IDC_MT32_GM_SET                     1408
+#define IDC_MT32_DAC_INPUT_MODE_TEXT        1409
+#define IDC_MT32_DAC_INPUT_MODE             1410
+
+#define IDC_MT32_REVERB                     1411
+#define IDC_MT32_NICE_AMP_RAMP              1412
+#define IDC_MT32_NICE_PANNING               1413
+#define IDC_MT32_NICE_PARTIAL_MIXING        1414
+#define IDC_MT32_REVERSE_STEREO             1415
 
 /** Dialog: Preferences Paths **/
 

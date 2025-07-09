@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.h (2025.07.07) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.h (2025.07.09) P. Stuer - Wrapper for CLAP plugins **/
 
 #pragma once
 
@@ -53,8 +53,8 @@ private:
     CLAP::InputEvents _InEvents;
     CLAP::OutputEvents _OutEvents;
 
-    std::vector<float> LChannel;
-    std::vector<float> RChannel;
+    std::vector<float> _LChannel;
+    std::vector<float> _RChannel;
 
     float * _OutChannels[2];
     clap_audio_buffer_t _AudioOut;

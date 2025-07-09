@@ -77,7 +77,7 @@ private:
     static const uint32_t MaxFrames = 512;
     static const uint32_t MaxChannels = 2;
 
-    float _Buffer[MaxFrames * MaxChannels];
+    float * _SrcFrames;
 
     std::vector<HSOUNDFONT> _SoundFontHandles;
     sflist_t * _SFList[2];

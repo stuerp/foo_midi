@@ -105,6 +105,7 @@ preset_t::preset_t() noexcept
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
         _UseMT32EmuWithMT32 = (bool) CfgUseMT32EmuWithMT32;
         _UseVSTiWithXG = (bool) CfgUseVSTiWithXG;
+        _DetectExtraDrum = (bool) CfgDetectExtraDrum;
     }
 }
 

@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.07.07) **/
+/** $VER: BMPlayer.cpp (2025.07.09) **/
 
 #include "pch.h"
 
@@ -30,6 +30,8 @@ BMPlayer::BMPlayer() : player_t()
 
     ::memset(_NRPNLSB, 0xFF, sizeof(_NRPNLSB));
     ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
+
+    _SrcFrames = nullptr;
 
     if (!_BASSInitializer.Initialize())
         throw component::runtime_error("Unable to initialize BASSMIDI");
@@ -137,6 +139,11 @@ bool BMPlayer::Startup()
     if (_IsStarted)
         return true;
 
+    _SrcFrames = new float[MaxFrames * MaxChannels];
+
+    if (_SrcFrames == nullptr)
+        return false;
+
     std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
 
     for (const auto & sf : _SoundFonts)
@@ -217,6 +224,12 @@ void BMPlayer::Shutdown()
         _SFList[1] = nullptr;
     }
 
+    if (_SrcFrames != nullptr)
+    {
+        delete[] _SrcFrames;
+        _SrcFrames = nullptr;
+    }
+
     _IsStarted = false;
 }
 
@@ -231,11 +244,11 @@ void BMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 
         for (auto & Stream : _Streams)
         {
-            ::BASS_ChannelGetData(Stream, _Buffer, BASS_DATA_FLOAT | (DWORD) (NumSamples * sizeof(_Buffer[0])));
+            ::BASS_ChannelGetData(Stream, _SrcFrames, BASS_DATA_FLOAT | (DWORD) (NumSamples * sizeof(_SrcFrames[0])));
 
             // Convert the format of the rendered output.
             for (size_t j = 0; j < NumSamples; ++j)
-                dstFrames[j] += _Buffer[j];
+                dstFrames[j] += _SrcFrames[j];
         }
 
         dstFrames += NumSamples;
