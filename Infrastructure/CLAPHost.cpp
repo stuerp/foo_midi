@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.07.04) P. Stuer **/
+/** $VER: CLAPHost.cpp (2025.07.09) P. Stuer **/
 
 #include "pch.h"
 
@@ -80,6 +80,10 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 
     if (directoryPath.empty())
         return _PlugIns;
+
+    #define CLAP_SDK_VERSION TOSTRING(CLAP_VERSION_MAJOR) "." TOSTRING(CLAP_VERSION_MINOR) "." TOSTRING(CLAP_VERSION_REVISION)
+
+    console::print(STR_COMPONENT_BASENAME " is built with CLAP ", CLAP_SDK_VERSION ".");
 
     GetPlugIns_(directoryPath);
 
@@ -172,11 +176,6 @@ bool Host::ActivatePlugIn(double  sampleRate, uint32_t minFrames, uint32_t maxFr
 {
     if (!IsPlugInLoaded())
         return false;
-
-    #define CLAP_SDK_VERSION TOSTRING(CLAP_VERSION_MAJOR) "." TOSTRING(CLAP_VERSION_MINOR) "." TOSTRING(CLAP_VERSION_REVISION)
-
-    console::print(STR_COMPONENT_BASENAME " is built with CLAP ", CLAP_SDK_VERSION "; "
-                   "CLAP plug-in ", _PlugInDescriptor->name, " ", _PlugInDescriptor->version, " is built with CLAP ", _PlugInDescriptor->clap_version.major, ".", _PlugInDescriptor->clap_version.minor, ".", _PlugInDescriptor->clap_version.revision, ".");
 
     if (!_PlugIn->init(_PlugIn))
         return false;
@@ -347,7 +346,8 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
                             "Vendor: \"", SafeString(Descriptor->vendor), "\", ",
                             "URL: \"", SafeString(Descriptor->url), "\", ",
                             "Manual URL: \"", SafeString(Descriptor->manual_url), "\", ",
-                            "Support URL: \"", SafeString(Descriptor->support_url), "\", "
+                            "Support URL: \"", SafeString(Descriptor->support_url), "\", ",
+                            "CLAP Version: ", Descriptor->clap_version.major, ".", Descriptor->clap_version.minor, ".", Descriptor->clap_version.revision
                         );
 
                         if (::clap_version_is_compatible(Descriptor->clap_version))
