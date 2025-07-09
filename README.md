@@ -49,12 +49,11 @@ The following libraries are included in the code:
   - [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
   - [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 - [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.2
-- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.0, Yamaha YMF262 (OPL3)
+- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.0, Yamaha YMF262 and CT1747 (OPL3)
 - [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.0, Yamaha YM2612 (OPN2) and Yamaha YM2608 (OPNA)
 - [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
 - [LibMT32Emu](https://github.com/munt/munt) 2.7.2, Roland MT-32, CM-32L and LAPC-I synthesiser modules
 - [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3), Yamaha YMF262 and CT1747 (OPL3)
-- [WinOPL3Driver](https://github.com/nukeykt/WinOPL3Driver), Emulated OPL3 MIDI Driver for Windows
 - [zlib](https://www.zlib.net/) 1.3.1
 
 To create the deployment package you need:
@@ -120,7 +119,7 @@ To create the component first build the x64 configuration and next the x86 confi
 - [Valley Bell](https://github.com/ValleyBell) for [MidiConverters](https://github.com/ValleyBell/MidiConverters).
 - [Jean-loup Gailly](http://gailly.net/) and [Mark Adler](http://en.wikipedia.org/wiki/Mark_Adler) for [zlib](https://www.zlib.net/).
 - [Spessasus](https://github.com/spessasus) for testing, advice and [SpessaSynth](https://github.com/spessasus/SpessaSynth).
-- [Zoltán Bacskó](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
+- [ZoltÃ¡n BacskÃ³](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
 - [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool).
 - [yuno (Yoshio Uno)](yuno@users.sourceforge.jp) for [fmmidi](http://milkpot.sakura.ne.jp/fmmidi/).
 - [John Novak](https://github.com/johnnovak) for [Nuked-SC55-CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP).
@@ -146,9 +145,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Links
 
-🌐 Home page: [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)  
-🌐 Issue tracker: [https://github.com/stuerp/foo_midi/issues](https://github.com/stuerp/foo_midi/issues)  
-🌐 Issue tracker: [https://github.com/stuerp/foo_midi/issues](https://github.com/stuerp/foo_midi/issues)  
+ðŸŒ Home page: [https://github.com/stuerp/foo_midi](https://github.com/stuerp/foo_midi)  
+ðŸŒ Issue tracker: [https://github.com/stuerp/foo_midi/issues](https://github.com/stuerp/foo_midi/issues)  
+ðŸŒ Issue tracker: [https://github.com/stuerp/foo_midi/issues](https://github.com/stuerp/foo_midi/issues)  
 
 ## License
 

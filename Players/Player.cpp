@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2025.07.05) **/
+/** $VER: Player.cpp (2025.07.09) **/
 
 #include "pch.h"
 
@@ -10,7 +10,7 @@
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
-player_t::player_t()
+player_t::player_t() noexcept
 {
     _SampleRate = 1'000;
 

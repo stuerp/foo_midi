@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2025.07.07) P. Stuer **/
+/** $VER: Player.h (2025.07.09) P. Stuer **/
 
 #pragma once
 
@@ -19,7 +19,8 @@
 class player_t
 {
 public:
-    player_t();
+    player_t() noexcept;
+
     virtual ~player_t() { };
 
     enum LoopMode

@@ -645,7 +645,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             Player->SetSynth(Preset._NukeSynth);
             Player->SetBankNumber(Preset._NukeBank);
-            Player->SetExtp(Preset._NukeUsePanning);
+            Player->SetSoftPanning(Preset._NukeUsePanning);
 
             _Player = Player;
 

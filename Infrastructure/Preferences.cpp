@@ -913,11 +913,11 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         size_t PresetNumber = 0;
 
-        NukedOPL3Player::EnumeratePresets([w, PresetNumber] (const pfc::string name, unsigned int synth, unsigned int bank) mutable noexcept
+        NukedOPL3Player::EnumeratePresets([w, PresetNumber] (const std::string & name, uint32_t synth, uint32_t bank) mutable noexcept
         {
             ::uSendMessageText(w, CB_ADDSTRING, 0, name.c_str());
 
-            if ((synth == (unsigned int) CfgNukeSynthesizer) && (bank == (unsigned int) CfgNukeBank))
+            if ((synth == (uint32_t) CfgNukeSynthesizer) && (bank == (uint32_t) CfgNukeBank))
                 ::SendMessage(w, CB_SETCURSEL, PresetNumber, 0);
 
             PresetNumber++;

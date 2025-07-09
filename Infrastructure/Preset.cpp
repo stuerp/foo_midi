@@ -185,7 +185,7 @@ void preset_t::Serialize(pfc::string & text)
     if (_PlayerType == PlayerTypes::NukedOPL3)
     {
         text += "|";
-        text += NukedOPL3Player::GetPresetName(_NukeSynth, _NukeBank);
+        text += NukedOPL3Player::GetPresetName(_NukeSynth, _NukeBank).c_str();
 
         text += "|";
         text += pfc::format_int(_NukeUsePanning);
@@ -416,9 +416,7 @@ void preset_t::Deserialize(const char * text)
     else
     if (PlayerType == PlayerTypes::NukedOPL3)
     {
-        pfc::string Text;
-
-        Text.set_string(text, (t_size) (Separator - text));
+        std::string Text(text, (t_size) (Separator - text));
 
         NukedOPL3Player::GetPreset(Text, NukeSynth, NukeBank);
 

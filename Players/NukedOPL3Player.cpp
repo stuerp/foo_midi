@@ -5,18 +5,11 @@
 
 #include "NukedOPL3Player.h"
 
-#include <stdlib.h>
-#include <string.h>
+static std::vector<NukedPreset> _NukedPresets;
 
-#include <interface.h>
-
-#include "Configuration.h"
-
-static pfc::array_t<NukePreset> _NukePresets;
-
-NukedOPL3Player::NukedOPL3Player()
+NukedOPL3Player::NukedOPL3Player() noexcept
 {
-    _Synth = 0;
+    _Synth = nullptr;
 }
 
 NukedOPL3Player::~NukedOPL3Player()
@@ -27,18 +20,21 @@ NukedOPL3Player::~NukedOPL3Player()
 void NukedOPL3Player::SetSynth(uint32_t synthId)
 {
     Shutdown();
+
     _SynthId = synthId;
 }
 
 void NukedOPL3Player::SetBankNumber(uint32_t bankNumber)
 {
     Shutdown();
+
     _BankId = bankNumber;
 }
 
-void NukedOPL3Player::SetExtp(uint32_t extp)
+void NukedOPL3Player::SetSoftPanning(uint32_t extp)
 {
     Shutdown();
+
     _Extp = extp;
 }
 
@@ -112,7 +108,7 @@ void NukedOPL3Player::SendEvent(uint32_t data)
 /// <summary>
 /// Initializes the presets list.
 /// </summary>
-void NukedOPL3Player::InitializePresets(std::function<void (const pfc::string name, unsigned int synth, unsigned int bank)> functor) noexcept
+void NukedOPL3Player::InitializePresets(std::function<void (const std::string & name, uint32_t synth, uint32_t bank)> functor) noexcept
 {
     nomidisynth * Synthesizers[] =
     {
@@ -121,29 +117,25 @@ void NukedOPL3Player::InitializePresets(std::function<void (const pfc::string na
         ::getsynth_apogee()
     };
 
-    for (size_t j = 0; j < _countof(Synthesizers); j++)
+    for (uint32_t j = 0; j < _countof(Synthesizers); ++j)
     {
-        nomidisynth * Synth = Synthesizers[j];
+        auto * Synth = Synthesizers[j];
 
-        const pfc::string Name = Synth->midi_synth_name();
+        const std::string Name = Synth->midi_synth_name();
 
-        const size_t BankCount = Synth->midi_bank_count();
+        const uint32_t BankCount = Synth->midi_bank_count();
 
         if (BankCount > 1)
         {
-            for (size_t i = 0; i < BankCount; ++i)
+            for (uint32_t i = 0; i < BankCount; ++i)
             {
-                pfc::string Text;
+                std::string FullName = Name + " " + Synth->midi_bank_name(i);
 
-                Text.prealloc(512);
-
-                Text << Name << " " << Synth->midi_bank_name((unsigned int)i);
-
-                functor(Text, (unsigned int)j, (unsigned int)i);
+                functor(FullName, j, i);
             }
         }
         else
-            functor(Name, (unsigned int)j, 0);
+            functor(Name, j, 0);
 
         delete Synth;
     }
@@ -152,26 +144,22 @@ void NukedOPL3Player::InitializePresets(std::function<void (const pfc::string na
 /// <summary>
 /// Enumerates the presets of this instance.
 /// </summary>
-void NukedOPL3Player::EnumeratePresets(std::function<void (const pfc::string name, unsigned int synthId, unsigned int bankId)> functor) noexcept
+void NukedOPL3Player::EnumeratePresets(std::function<void (const std::string & name, uint32_t synthId, uint32_t bankId)> functor) noexcept
 {
-    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
+    for (const auto & Preset : _NukedPresets)
     {
-        const NukePreset & Preset = _NukePresets[i];
-
         functor(Preset.Name, Preset.SynthId, Preset.BankId);
     }
 }
 
 /// <summary>
-/// Gets the Nuke preset with the specified name.
+/// Gets the synthesizer and bank number of the preset with the specified name.
 /// </summary>
-void NukedOPL3Player::GetPreset(pfc::string name, unsigned int & synth, unsigned int & bank)
+void NukedOPL3Player::GetPreset(const std::string & name, uint32_t & synth, uint32_t & bank) noexcept
 {
-    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
+    for (const auto & Preset : _NukedPresets)
     {
-        const NukePreset & Preset = _NukePresets[i];
-
-        if (pfc::stricmp_ascii(Preset.Name, name) == 0)
+        if (::_stricmp(Preset.Name.c_str(), name.c_str()) == 0)
         {
             synth = Preset.SynthId;
             bank = Preset.BankId;
@@ -185,26 +173,24 @@ void NukedOPL3Player::GetPreset(pfc::string name, unsigned int & synth, unsigned
 }
 
 /// <summary>
-/// Gets the Nuke preset at the specified index.
+/// Gets the synthesizer and bank number of the preset at the specified index.
 /// </summary>
-void NukedOPL3Player::GetPreset(size_t index, unsigned int & synth, unsigned int & bank)
+void NukedOPL3Player::GetPreset(size_t index, uint32_t & synth, uint32_t & bank) noexcept
 {
-    if (index >= _NukePresets.get_count())
+    if (index >= _NukedPresets.size())
         index = 0;
 
-    synth = _NukePresets[index].SynthId;
-    bank = _NukePresets[index].BankId;
+    synth = _NukedPresets[index].SynthId;
+    bank  = _NukedPresets[index].BankId;
 }
 
 /// <summary>
-/// Gets the name of the Nuke preset for the specified synthesizer and bank.
+/// Gets the name of the preset with the specified synthesizer and bank.
 /// </summary>
-pfc::string NukedOPL3Player::GetPresetName(unsigned int synth, unsigned int bank)
+std::string NukedOPL3Player::GetPresetName(uint32_t synth, uint32_t bank) noexcept
 {
-    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
+    for (const auto & Preset : _NukedPresets)
     {
-        const NukePreset & Preset = _NukePresets[i];
-
         if ((Preset.SynthId == synth) && (Preset.BankId == bank))
             return Preset.Name;
     }
@@ -215,14 +201,16 @@ pfc::string NukedOPL3Player::GetPresetName(unsigned int synth, unsigned int bank
 /// <summary>
 /// Gets the index of the Nuke preset for the specified synthesizer and bank.
 /// </summary>
-size_t NukedOPL3Player::GetPresetIndex(unsigned int synth, unsigned int bank)
+size_t NukedOPL3Player::GetPresetIndex(uint32_t synth, uint32_t bank) noexcept
 {
-    for (size_t i = 0; i < _NukePresets.get_count(); ++i)
-    {
-        const NukePreset & Preset = _NukePresets[i];
+    size_t i = 0;
 
+    for (const auto & Preset : _NukedPresets)
+    {
         if (Preset.SynthId == synth && Preset.BankId == bank)
             return i;
+
+        ++i;
     }
 
     return 0;
@@ -231,22 +219,22 @@ size_t NukedOPL3Player::GetPresetIndex(unsigned int synth, unsigned int bank)
 #pragma region Nuke Preset Importer
 
 /// <summary>
-/// Imports the presets of the Nuke player.
+/// Imports the presets of the NukedOPL3 player.
 /// </summary>
-class NukePresetsImporter
+class NukedPresetsImporter
 {
 public:
-    NukePresetsImporter()
+    NukedPresetsImporter()
     {
-        NukedOPL3Player::InitializePresets([] (pfc::string name, unsigned int synth, unsigned int bank)
+        NukedOPL3Player::InitializePresets([] (std::string name, uint32_t synth, uint32_t bank)
         {
-            NukePreset Preset = { name, synth, bank };
+            NukedPreset Preset = { name, synth, bank };
 
-            _NukePresets.append_single(Preset);
+            _NukedPresets.push_back(Preset);
         });
     }
 };
 
-NukePresetsImporter _NukePresetsImporter;
+NukedPresetsImporter _NukedPresetsImporter;
 
 #pragma endregion
