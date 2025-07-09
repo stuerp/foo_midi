@@ -72,6 +72,9 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
     ::memset(dstFrames, 0, ((size_t) dstCount * _countof(_OutChannels)) * sizeof(audio_sample));
 
+    if (_InEvents.Events.empty())
+        return;
+
     try
     {
         const int64_t SteadyTimeNotAvailable = -1;
@@ -100,7 +103,7 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
     }
     catch (...) { }
 
-    _InEvents.Clear();
+    _InEvents.Events.clear();
 }
 
 /// <summary>

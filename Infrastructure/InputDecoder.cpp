@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.08) **/
+/** $VER: InputDecoder.cpp (2025.07.09) **/
 
 #include "pch.h"
 
@@ -14,6 +14,9 @@
 
 #include <math.h>
 #include <string.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include <ranges>
 
@@ -1223,21 +1226,17 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
         FilePath.replace_extension(L".wrd");
 
-        FILE * fp = nullptr;
+        std::ifstream Stream(FilePath);
 
-        ::_wfopen_s(&fp, FilePath.c_str(), L"r");
-
-        if (fp != nullptr)
+        if (Stream.is_open())
         {
-            char Line[256];
+            std::string Line;
 
-            while (!::feof(fp) && (::fgets(Line, _countof(Line), fp) != NULL))
+            while (std::getline(Stream, Line))
             {
                 if (Line[0] != '@')
-                    kp.AddUnsyncedLyrics(0, Line);
+                    kp.AddUnsyncedLyrics(0, Line.c_str());
             }
-
-            ::fclose(fp);
         }
     }
 
@@ -1247,7 +1246,6 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
         fileInfo.meta_set("lyrics", (const char *) Lyrics.c_str());
     }
-
 
     if (!kp.GetSyncedLyrics().empty())
     {
@@ -1408,13 +1406,13 @@ const char * InputDecoder::PlayerTypeNames[15] =
     "FluidSynth",
     "LibMT32Emu",
     "BASS MIDI",
-    "DirectX",
+    "DirectX",      // Not implemented
     "LibADLMIDI",
     "LibOPNMIDI",
-    "OPL",
+    "OPL",          // Not implemented
     "Nuked OPL3",
     "Secret Sauce",
-    "MCI",
+    "MCI",          // Not implemented
     "Nuked SC-55",
     "FMMIDI",
     "CLAP",

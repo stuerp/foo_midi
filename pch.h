@@ -1,5 +1,5 @@
 
-/** $VER: pch.h (2025.06.09) P. Stuer **/
+/** $VER: pch.h (2025.07.09) P. Stuer **/
 
 #pragma once
 
@@ -10,9 +10,9 @@
 #include <SDKDDKVer.h>
 
 #define NOMINMAX
+
 #include <helpers/foobar2000+atl.h>
 #include <helpers/helpers.h>
-#undef NOMINMAX
 
 #include <wincodec.h>
 

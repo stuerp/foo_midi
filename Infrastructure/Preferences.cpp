@@ -242,7 +242,7 @@ private:
 
     struct InterpolationMethod
     {
-        const wchar_t * Name;
+        std::string Name;
         int Id;
     };
 
@@ -313,10 +313,10 @@ const int PreferencesRootPage::_SampleRates[] = { 8'000, 11'025, 16'000, 22'050,
 
 const PreferencesRootPage::InterpolationMethod PreferencesRootPage::_InterpolationMethods[] =
 {
-    { L"None", FLUID_INTERP_NONE },
-    { L"Linear", FLUID_INTERP_LINEAR },
-    { L"Cubic", FLUID_INTERP_4THORDER },
-    { L"7th Order Sinc", FLUID_INTERP_7THORDER }
+    { "None", FLUID_INTERP_NONE },
+    { "Linear", FLUID_INTERP_LINEAR },
+    { "Cubic", FLUID_INTERP_4THORDER },
+    { "7th Order Sinc", FLUID_INTERP_7THORDER }
 };
 
 #pragma region preferences_page_instance
@@ -862,7 +862,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         for (const auto & InterpolationMethod : _InterpolationMethods)
         {
-            w.AddString(InterpolationMethod.Name);
+            w.AddString(::UTF8ToWide(InterpolationMethod.Name).c_str());
 
             if (InterpolationMethod.Id == CfgFluidSynthInterpolationMode)
                 SelectedIndex = (int) i;

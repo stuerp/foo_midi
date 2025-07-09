@@ -1,5 +1,5 @@
 
-/** $VER: MCIPlayer.h (2025.07.07) P. Stuer - Implements a player using the Windows MCI API **/
+/** $VER: MCIPlayer.h (2025.07.09) P. Stuer - Implements a player using the Windows MCI API **/
 
 #pragma once
 
@@ -14,6 +14,7 @@ public:
 
 protected:
     #pragma region MIDIPlayer
+
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
@@ -25,13 +26,17 @@ protected:
 
     virtual void SendEvent(uint32_t, uint32_t) { };
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t, uint32_t) { };
+
     #pragma endregion
 
 private:
     void LogMessage(MMRESULT result) const;
 
 private:
-    HMIDIOUT _hDevice;
+    UINT _DeviceId;
+    HMIDISTRM _hStream;
     MIDIHDR _Header;
+
+    std::vector<MIDIEVENT> _Events;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

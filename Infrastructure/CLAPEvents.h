@@ -1,5 +1,5 @@
 
-/** $VER: CLAPEventList.h (2025.07.02) P. Stuer **/
+/** $VER: CLAPEventList.h (2025.07.09) P. Stuer **/
 
 #pragma once
 
@@ -27,11 +27,6 @@ public:
 
     void Add(uint8_t status, uint8_t data1, uint8_t data2, uint16_t portNumber, uint32_t time);
     void Add(const uint8_t * data, uint32_t size_, uint16_t portNumber, uint32_t time);
-
-    void Clear() noexcept
-    {
-        Events.clear();
-    }
 
 public:
     std::vector<std::unique_ptr<clap_event_header>> Events;

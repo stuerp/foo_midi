@@ -1,17 +1,16 @@
 
-/** $VER: MCIPlayer.cpp (2023.12.23) P. Stuer - Implements a player using the Windows MCI API **/
+/** $VER: MCIPlayer.cpp (2025.07.09) P. Stuer - Implements a player using the Windows MCI API **/
 
 #include "pch.h"
 
 #include "MCIPlayer.h"
 
-#define NOMINMAX
+#include "Resource.h"
 
 #pragma region Public
 
-MCIPlayer::MCIPlayer() noexcept : player_t()
+MCIPlayer::MCIPlayer() noexcept : player_t(), _DeviceId(), _hStream()
 {
-    _hDevice = 0;
 }
 
 MCIPlayer::~MCIPlayer()
@@ -28,7 +27,7 @@ MCIPlayer::~MCIPlayer()
 /// </summary>
 bool MCIPlayer::Startup()
 {
-    if (_hDevice != 0)
+    if (_IsStarted)
         return true;
 
     UINT DeviceCount = ::midiOutGetNumDevs();
@@ -43,10 +42,12 @@ bool MCIPlayer::Startup()
     if (Result != MMSYSERR_NOERROR)
         return false;
 
-    Result = ::midiOutOpen(&_hDevice, MIDI_MAPPER, NULL, NULL, CALLBACK_NULL); LogMessage(Result);
+    Result = ::midiStreamOpen(&_hStream, &_DeviceId, 1, NULL, NULL, CALLBACK_NULL); LogMessage(Result);
 
     if (Result != MMSYSERR_NOERROR)
         return false;
+
+    _IsStarted = true;
 
     return true;
 }
@@ -56,21 +57,44 @@ bool MCIPlayer::Startup()
 /// </summary>
 void MCIPlayer::Shutdown()
 {
-    if (_hDevice != 0)
+    if (_hStream != 0)
     {
-        MMRESULT Result = ::midiOutReset(_hDevice); LogMessage(Result);
-
-        Result = ::midiOutClose(_hDevice); LogMessage(Result);
-        _hDevice = 0;
+        MMRESULT Result = ::midiStreamClose(_hStream); LogMessage(Result);
+        _hStream = 0;
     }
+
+    _IsStarted = false;
 }
 
 /// <summary>
 /// Renders a chunk of audio samples.
 /// </summary>
-void MCIPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void MCIPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    ::memset(sampleData, 0, ((size_t) sampleCount * 2) * sizeof(audio_sample));
+    const uint32_t MaxChannels = 2;
+
+    ::memset(dstFrames, 0, ((size_t) dstCount * MaxChannels) * sizeof(audio_sample));
+
+    if (_Events.empty())
+        return;
+
+    MIDIHDR mh =
+    {
+        .lpData = (LPSTR) _Events.data(),
+        .dwBufferLength = (DWORD) _Events.size(),
+        .dwBytesRecorded = mh.dwBufferLength,
+        .dwFlags = 0
+    };
+
+    MMRESULT Result = ::midiOutPrepareHeader((HMIDIOUT) _hStream, &mh, sizeof(MIDIHDR));
+
+    Result = ::midiStreamOut(_hStream, &mh, sizeof(mh));
+
+    Result = ::midiStreamRestart(_hStream);
+
+    Result = ::midiOutUnprepareHeader((HMIDIOUT) _hStream, &mh, sizeof(MIDIHDR));
+
+    _Events.clear();
 }
 
 /// <summary>
@@ -78,7 +102,19 @@ void MCIPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
 /// </summary>
 void MCIPlayer::SendEvent(uint32_t data)
 {
-    MMRESULT Result = ::midiOutShortMsg(_hDevice, data); LogMessage(Result);
+    auto Status     = (uint8_t) (data);
+    auto Data1      = (uint8_t) (data >>  8);
+    auto Data2      = (uint8_t) (data >> 16);
+//  auto PortNumber = (uint8_t) (data >> 24);
+
+    const MIDIEVENT me =
+    {
+        .dwDeltaTime = 0,
+        .dwStreamID  = 0,
+        .dwEvent     = (DWORD) (MEVT_SHORTMSG << 24) | (Status | (Data1 << 8) | (Data2 << 16))
+    };
+
+    _Events.push_back(me);
 }
 
 /// <summary>
@@ -89,7 +125,7 @@ void MCIPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
     _Header.lpData = (LPSTR) data;
     _Header.dwBufferLength = (DWORD) size;
     _Header.dwFlags = 0;
-
+/*
     MMRESULT Result = ::midiOutPrepareHeader(_hDevice, &_Header, sizeof(_Header)); LogMessage(Result);
 
     if (Result == MMSYSERR_NOERROR)
@@ -99,6 +135,7 @@ void MCIPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
     }
 
     Result = ::midiOutUnprepareHeader(_hDevice, &_Header, sizeof(_Header)); LogMessage(Result);
+*/
 }
 
 #pragma endregion
@@ -114,7 +151,7 @@ void MCIPlayer::LogMessage(MMRESULT result) const
 
     ::midiOutGetErrorTextA(result, Text, _countof(Text));
 
-    pfc::outputDebugLine(Text);
+    console::print(STR_COMPONENT_BASENAME, " MCI Player reports ", Text);
 }
 
 #pragma endregion
