@@ -66,10 +66,8 @@ InputDecoder::InputDecoder() noexcept :
     _TotalTime(),
 
     _LoopType(LoopTypes::NeverLoop),
-    _LoopCount((uint32_t) AdvCfgLoopCount.get()),
     _LoopRange(),
 
-    _FadeDuration((uint32_t) AdvCfgFadeTimeInMS.get()),
     _FadeRange(),
 
     _ExtraPercussionChannel(~0U),
@@ -240,7 +238,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         }
     }
 
-    if (AdvCfgSkipToFirstNote)
+    if (CfgSkipToFirstNote)
         _Container.TrimStart();
 
     _LoopRange.Clear();
@@ -1119,7 +1117,7 @@ uint32_t InputDecoder::GetDuration(size_t subSongIndex) noexcept
         if (!_LoopRange.HasEnd())
             _LoopRange.SetEnd(LengthInMs);
 
-        LengthInMs = _LoopRange.Begin() + (_LoopRange.Size() * _LoopCount) + _FadeDuration;
+        LengthInMs = _LoopRange.Begin() + (_LoopRange.Size() * (uint32_t) CfgLoopCount) + (uint32_t) CfgFadeOutTime;
     }
 
     return LengthInMs;
@@ -1144,8 +1142,8 @@ void InputDecoder::InitializeFade() noexcept
         {
             if (_LoopRange.IsSet())
             {
-                uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1'000);
-                uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1'000);
+                uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * CfgLoopCount)), (int) _SampleRate, 1'000);
+                uint32_t End   = Begin + (uint32_t) ::MulDiv((int) CfgFadeOutTime,                                           (int) _SampleRate, 1'000);
 
                 _FadeRange.Set(Begin, End);
             }
@@ -1156,8 +1154,8 @@ void InputDecoder::InitializeFade() noexcept
 
         case LoopTypes::LoopAndFadeAlways:
         {
-            uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * _LoopCount)), (int) _SampleRate, 1'000);
-            uint32_t End   = Begin + (uint32_t) ::MulDiv((int) _FadeDuration,                                          (int) _SampleRate, 1'000);
+            uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * CfgLoopCount)), (int) _SampleRate, 1'000);
+            uint32_t End   = Begin + (uint32_t) ::MulDiv((int) CfgFadeOutTime,                                           (int) _SampleRate, 1'000);
 
             _FadeRange.Set(Begin, End);
             break;

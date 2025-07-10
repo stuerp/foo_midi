@@ -361,14 +361,18 @@ The component supports 6 loop modes that can be selected in the foobar2000 Prefe
 | ------------------------------- | ----------- |
 | Never loop                      | The song will be played once ignoring any loop information. |
 | Never loop. Use decay time      | The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down. |
-| Loop and fade when detected     | The song will be played and any defined loop will be repeated a customizable number of times (defined in Advanced Preferences by **Loop count**). At the end of the last loop the song will fade out over the period defined by the **Fade time** settings in Advanced Preferences. |
-| Loop and fade always            | The song will be played and looped a customizable number of times (defined in Advanced Preferences by **Loop count**). At the end of the last loop the song will fade out over the period defined by the **Fade time** settings in Advanced Preferences. |
+| Loop and fade when detected     | The song will be played and any defined loop will be repeated a customizable number of times. At the end of the last loop the song will fade out. |
+| Loop and fade always            | The song will be played and looped a customizable number of times. If no loop is found the complete song be looped. At the end of the last loop the song will fade out. |
 | Play indefinitely when detected | The song will be played and the loop, when detected, will play until stopped. |
 | Play indefinitely               | The song will be played and loop until stopped. |
 
 The **Playback** droplist specifies how loops are processed during normal playback. The **Other** droplist determines how loops are processed during other foobar2000 operations such as converting a MIDI file to another format.
 
 The **Decay time** setting specifies the time in milliseconds that the player will wait before starting to play another track. This allows the last MIDI notes of a stream to decay instead of being abruptly cut when the new track starts playing.
+
+The **Loop count** setting determines how many times a loop will be played before the song ends.
+
+The **Fade-Out time** setting specifies the time in milliseconds that the player will start to fade-out the song before starting to play another track.
 
 ### Sound Fonts
 
@@ -540,7 +544,15 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 
 #### BASSMIDI
 
+**Gain**
+
+**Resampling**
+
+Cache status
+
 #### FluidSynth
+
+**Interpolation**
 
 ---
 

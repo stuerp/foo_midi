@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2025.07.09) **/
+/** $VER: Configuration.cpp (2025.07.10) **/
 
 #include "pch.h"
 
@@ -17,7 +17,10 @@ cfg_var_modern::cfg_int     CfgSampleRate                   ({ 0xae5ba73b, 0xb0d
 
 cfg_var_modern::cfg_int     CfgLoopTypePlayback             ({ 0x460a84b6, 0x910a, 0x496c, { 0xbe, 0xb6, 0x86, 0xfd, 0xeb, 0x41, 0xab, 0xdc } }, DefaultPlaybackLoopType);
 cfg_var_modern::cfg_int     CfgLoopTypeOther                ({ 0xab5cc279, 0x1c68, 0x4824, { 0xb4, 0xb8, 0x06, 0x56, 0x85, 0x6a, 0x40, 0xa0 } }, DefaultOtherLoopType);
+
 cfg_var_modern::cfg_int     CfgDecayTime                    ({ 0xee80a18d, 0x7327, 0x4ba4, { 0x9c, 0x20, 0xae, 0xe3, 0xea, 0x42, 0xd6, 0xb5 } }, DefaultDecayTime);
+cfg_var_modern::cfg_int     CfgLoopCount                    ({ 0x6d23cdfc, 0x2e0a, 0x466d, { 0x9d, 0x09, 0x8a, 0xe5, 0x2b, 0x90, 0x4d, 0xe6 } }, DefaultLoopCount);
+cfg_var_modern::cfg_int     CfgFadeOutTime                  ({ 0xdcd88167, 0x4d45, 0x4d72, { 0xa8, 0x54, 0xbe, 0x3f, 0x0a, 0xed, 0x00, 0x86 } }, DefaultFadeOutTime);
 
 cfg_var_modern::cfg_int     CfgMIDIFlavor                   ({ 0x1a82a8db, 0x389e, 0x44aa, { 0x97, 0x19, 0x32, 0x6a, 0x5a, 0x2d, 0x7e, 0x8e } }, DefaultMIDIFlavor);
 cfg_var_modern::cfg_int     CfgUseMIDIEffects               ({ 0x091c12a1, 0xd42b, 0x4f4e, { 0x80, 0x58, 0x8b, 0x7f, 0x4c, 0x4d, 0xf3, 0xa1 } }, DefaultUseMIDIEffects);
@@ -31,12 +34,13 @@ cfg_var_modern::cfg_int     CfgDetectLeapFrogLoops          ({ 0xa8875345, 0x2be
 cfg_var_modern::cfg_int     CfgDetectXMILoops               ({ 0x0f580d09, 0xd57b, 0x450c, { 0x84, 0xa2, 0xd6, 0x0e, 0x34, 0xbd, 0x64, 0xf5 } }, DefaultDetectXMILoops);
 cfg_var_modern::cfg_int     CfgDetectFF7Loops               ({ 0x2e0dbdc2, 0x7436, 0x4b70, { 0x91, 0xfc, 0xfd, 0x98, 0x37, 0x87, 0x32, 0xb2 } }, DefaultDetectFF7Loops);
 
-cfg_var_modern::cfg_int     CfgExcludeEMIDITrackDesignation           ({ 0xc090f9c7, 0x47f9, 0x4f6f, { 0x84, 0x7a, 0x27, 0xcd, 0x75, 0x96, 0xc9, 0xd4 } }, DefaultEmuDeMIDIExclusion);
+cfg_var_modern::cfg_int     CfgExcludeEMIDITrackDesignation ({ 0xc090f9c7, 0x47f9, 0x4f6f, { 0x84, 0x7a, 0x27, 0xcd, 0x75, 0x96, 0xc9, 0xd4 } }, DefaultEmuDeMIDIExclusion);
 
 cfg_var_modern::cfg_int     CfgFluidSynthInterpolationMode  ({ 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } }, DefaultFluidSynthInterpolationMethod);
 
 cfg_var_modern::cfg_int     CfgFilterInstruments            ({ 0x6d30c919, 0xb053, 0x43aa, { 0x9f, 0x1b, 0x1d, 0x40, 0x18, 0x82, 0x80, 0x5e } }, DefaultFilterInstruments);
 cfg_var_modern::cfg_int     CfgFilterBanks                  ({ 0x3145963c, 0x7322, 0x4b48, { 0x99, 0xff, 0x75, 0xea, 0xc5, 0xf4, 0xda, 0xcc } }, DefaultFilterBanks);
+cfg_var_modern::cfg_bool    CfgSkipToFirstNote              ({ 0x6d2364cc, 0x9bfd, 0x489d, { 0xbc, 0xe8, 0xa0, 0x07, 0xdf, 0x6e, 0x90, 0xe1 } }, DefaultSkipToFirstNote);
 
 // MT32Emu
 cfg_var_modern::cfg_int     CfgMT32EmuConversionQuality     ({ 0xd94f3792, 0xb2c6, 0x45e3, { 0xab, 0xa2, 0x1a, 0xd3, 0xb1, 0x6c, 0xac, 0x4b } }, DefaultMT32EmuConversionQuality);
@@ -93,13 +97,7 @@ static const GUID AdvCfgMIDIPlayerBranchGUID = { 0x66524470, 0x7ec7, 0x445e, { 0
     static const GUID AdvCfgVSTiXGPluginGUID = { 0xbeccac58, 0x1710, 0x459e, { 0xa0, 0xb1, 0x01, 0xf8, 0x76, 0xe9, 0xf2, 0xdf } };
     static const GUID AdvCfgSecretSauceDirectoryPathGUID = { 0x1bf1799d, 0x7691, 0x4075, { 0x98, 0xae, 0x43, 0xae, 0x82, 0xd8, 0xc9, 0xcf } };
 
-    static const GUID AdvCfgMIDITimingBranchGUID = { 0x851583f7, 0x98b4, 0x44c7, { 0x9d, 0xf4, 0x4c, 0x7f, 0x85, 0x9d, 0x13, 0xba } };
-        static const GUID AdvCfgLoopCountGUID = { 0xd8492ad0, 0x3b70, 0x4768, { 0x8d, 0x7, 0x97, 0xf5, 0x50, 0x8c, 0x8, 0xe8 } };
-        static const GUID AdvCfgFadeTimeInMSGUID = { 0x1cc76581, 0x6fc8, 0x445e, { 0x9e, 0x3d, 0x2, 0x0, 0x43, 0xd9, 0x8b, 0x65 } };
-
     static const GUID AdvCfgBASSMIDIEffectsEnabledGUID = { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };
-
-    static const GUID AdvCfgSkipToFirstNoteGUID = { 0xf90c8abf, 0x68b5, 0x474a, { 0x8d, 0x9c, 0xff, 0xd9, 0xca, 0x80, 0x20, 0x2f } };
 
     static const GUID AdvCfgFluidSynthBranchGUID = { 0xf1ad51c5, 0x4b04, 0x4c8b, { 0x84, 0x65, 0x6c, 0x86, 0x1e, 0x81, 0xc6, 0x69 } };
         static const GUID AdvCfgFluidSynthEnableEffectsEnabledGUID = { 0x996e95ca, 0xce4d, 0x4bd5, { 0xb7, 0xe6, 0x40, 0x61, 0x32, 0x83, 0xc3, 0x27 } };
@@ -116,12 +114,6 @@ advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, AdvCfgMIDIPl
     advconfig_string_factory AdvCfgVSTiPluginDirectoryPath      ("VSTi search path",   AdvCfgVSTiPluginDirectoryPathGUID,  AdvCfgMIDIPlayerBranchGUID, 0.1, "");
     advconfig_string_factory AdvCfgVSTiXGPlugin                 ("VSTi XG plugin",     AdvCfgVSTiXGPluginGUID,             AdvCfgMIDIPlayerBranchGUID, 0.2, "");
     advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath  ("Secret Sauce path",  AdvCfgSecretSauceDirectoryPathGUID, AdvCfgMIDIPlayerBranchGUID, 0.3, "");
-    advconfig_checkbox_factory AdvCfgSkipToFirstNote            ("Skip to first note", AdvCfgSkipToFirstNoteGUID,          AdvCfgMIDIPlayerBranchGUID, 0.4, false);
-
-    advconfig_branch_factory AdvCfgMIDITimingBranch("Playback timing when loops present", AdvCfgMIDITimingBranchGUID, AdvCfgMIDIPlayerBranchGUID, 1.0);
-
-        advconfig_integer_factory AdvCfgLoopCount   ("Loop count",     AdvCfgLoopCountGUID,    AdvCfgMIDITimingBranchGUID, 0.0, 2, 1, 10);
-        advconfig_integer_factory AdvCfgFadeTimeInMS("Fade time (ms)", AdvCfgFadeTimeInMSGUID, AdvCfgMIDITimingBranchGUID, 1.0, 5000, 0, 30000);
 
     advconfig_branch_factory AdvCfgFluidSynthBranch("FluidSynth", AdvCfgFluidSynthBranchGUID, AdvCfgMIDIPlayerBranchGUID, 5.0);
 

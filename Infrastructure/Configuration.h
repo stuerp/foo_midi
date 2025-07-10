@@ -76,7 +76,10 @@ enum
     DefaultSampleRate = 44100,
     DefaultPlaybackLoopType = 0,
     DefaultOtherLoopType = 0,
+
     DefaultDecayTime = 1000,
+    DefaultLoopCount = 2,
+    DefaultFadeOutTime = 5000,
 
     DefaultDetectTouhouLoops = 1,
     DefaultDetectRPGMakerLoops = 1,
@@ -93,6 +96,7 @@ enum
     DefaultEmuDeMIDIExclusion = 1,
     DefaultFilterInstruments = 0,
     DefaultFilterBanks = 0,
+    DefaultSkipToFirstNote = false,
 
     DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT,
 
@@ -139,7 +143,10 @@ extern cfg_var_modern::cfg_int
 
     CfgLoopTypePlayback,
     CfgLoopTypeOther,
+
     CfgDecayTime,
+    CfgLoopCount,
+    CfgFadeOutTime,
 
     CfgDetectTouhouLoops,
     CfgDetectRPGMakerLoops,
@@ -196,7 +203,9 @@ extern cfg_var_modern::cfg_bool
     CfgMT32EmuNiceAmpRamp,
     CfgMT32EmuNicePanning,
     CfgMT32EmuNicePartialMixing,
-    CfgMT32EmuReverseStereo;
+    CfgMT32EmuReverseStereo,
+
+    CfgSkipToFirstNote;
 
 extern cfg_var_modern::cfg_float
     CfgBASSMIDIVolume;
@@ -226,7 +235,6 @@ extern cfg_var_modern::cfg_int  CfgDefaultTempo;
 extern advconfig_string_factory AdvCfgVSTiPluginDirectoryPath;
 extern advconfig_string_factory AdvCfgVSTiXGPlugin;
 extern advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath;
-extern advconfig_checkbox_factory AdvCfgSkipToFirstNote;
 
 extern advconfig_integer_factory AdvCfgLoopCount;
 extern advconfig_integer_factory AdvCfgFadeTimeInMS;

@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.07.08) **/
+/** $VER: InputDecoder.h (2025.07.10) **/
 
 #pragma once
 
@@ -212,10 +212,7 @@ private:
     uint32_t _TotalTime;        // in frames
 
     LoopTypes _LoopType;
-    uint32_t _LoopCount;
     range_t _LoopRange;         // in ms
-
-    uint32_t _FadeDuration;     // in ms
     range_t _FadeRange;         // in ms
 
     uint32_t _ExtraPercussionChannel;

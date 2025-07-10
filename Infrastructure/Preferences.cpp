@@ -85,10 +85,20 @@ public:
         // Looping
         COMMAND_HANDLER_EX(IDC_LOOP_PLAYBACK, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_LOOP_OTHER, CBN_SELCHANGE, OnSelectionChange)
+
         COMMAND_HANDLER_EX(IDC_DECAY_TIME, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_LOOP_COUNT, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_FADE_OUT_TIME, EN_CHANGE, OnEditChange)
+
+        COMMAND_HANDLER_EX(IDC_RPGMAKER_LOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_LEAPFROG_LOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_XMI_LOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_FF7_LOOPS, BN_CLICKED, OnButtonClick)
 
         // MIDI
         COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR,                CBN_SELCHANGE, OnSelectionChange)
+
         COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS,               BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_USE_MT32EMU_WITH_MT32, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,      BN_CLICKED, OnButtonClick)
@@ -98,12 +108,7 @@ public:
 
         COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_FILTER_BANKS, BN_CLICKED, OnButtonClick)
-
-        COMMAND_HANDLER_EX(IDC_RPGMAKER_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_LEAPFROG_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_XMI_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_FF7_LOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_SKIP_TO_FIRST_NOTE, BN_CLICKED, OnButtonClick)
         #pragma endregion
     END_MSG_MAP()
 
@@ -332,6 +337,8 @@ void PreferencesRootPage::apply()
         CfgLoopTypeOther        = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
 
         CfgDecayTime            = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
+        CfgLoopCount            = (t_int32) GetDlgItemInt(IDC_LOOP_COUNT, NULL, FALSE);
+        CfgFadeOutTime          = (t_int32) GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE);
     }
 
     // MIDI
@@ -347,6 +354,7 @@ void PreferencesRootPage::apply()
 
         CfgFilterInstruments    = (t_int32) SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
         CfgFilterBanks          = (t_int32) SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
+        CfgSkipToFirstNote      = (bool) SendDlgItemMessage(IDC_SKIP_TO_FIRST_NOTE, BM_GETCHECK);
 
         CfgDetectTouhouLoops    = (t_int32) SendDlgItemMessage(IDC_TOUHOU_LOOPS, BM_GETCHECK);
         CfgDetectRPGMakerLoops  = (t_int32) SendDlgItemMessage(IDC_RPGMAKER_LOOPS, BM_GETCHECK);
@@ -429,6 +437,7 @@ void PreferencesRootPage::reset()
         SendDlgItemMessage(IDC_EMIDI_EXCLUSION,             BM_SETCHECK, DefaultEmuDeMIDIExclusion);
         SendDlgItemMessage(IDC_FILTER_INSTRUMENTS,          BM_SETCHECK, DefaultFilterInstruments);
         SendDlgItemMessage(IDC_FILTER_BANKS,                BM_SETCHECK, DefaultFilterBanks);
+        SendDlgItemMessage(IDC_SKIP_TO_FIRST_NOTE,          BM_SETCHECK, DefaultSkipToFirstNote);
     }
 
     _VSTiHost.Config.resize(0);
@@ -630,6 +639,8 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             w2.SetCurSel((int) CfgLoopTypeOther);
 
         ::uSetDlgItemText(m_hWnd, IDC_DECAY_TIME, pfc::format_int(CfgDecayTime));
+        ::uSetDlgItemText(m_hWnd, IDC_LOOP_COUNT, pfc::format_int(CfgLoopCount));
+        ::uSetDlgItemText(m_hWnd, IDC_FADE_OUT_TIME, pfc::format_int(CfgFadeOutTime));
     }
 
     // MIDI
@@ -661,6 +672,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM) CfgFilterInstruments);
         SendDlgItemMessage(IDC_FILTER_BANKS,       BM_SETCHECK, (WPARAM) CfgFilterBanks);
+        SendDlgItemMessage(IDC_SKIP_TO_FIRST_NOTE, BM_SETCHECK, (WPARAM) CfgSkipToFirstNote);
 
         SendDlgItemMessage(IDC_TOUHOU_LOOPS,       BM_SETCHECK, (WPARAM) CfgDetectTouhouLoops);
         SendDlgItemMessage(IDC_RPGMAKER_LOOPS,     BM_SETCHECK, (WPARAM) CfgDetectRPGMakerLoops);
@@ -877,6 +889,12 @@ bool PreferencesRootPage::HasChanged()
         if (GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE) != (UINT) CfgDecayTime)
             return true;
 
+        if (GetDlgItemInt(IDC_LOOP_COUNT, NULL, FALSE) != (UINT) CfgLoopCount)
+            return true;
+
+        if (GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE) != (UINT) CfgFadeOutTime)
+            return true;
+
         if (SendDlgItemMessage(IDC_TOUHOU_LOOPS, BM_GETCHECK) != CfgDetectTouhouLoops)
             return true;
 
@@ -922,6 +940,9 @@ bool PreferencesRootPage::HasChanged()
             return true;
 
         if (SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK) != CfgFilterBanks)
+            return true;
+
+        if (SendDlgItemMessage(IDC_SKIP_TO_FIRST_NOTE, BM_GETCHECK) != CfgSkipToFirstNote)
             return true;
     }
     #pragma endregion

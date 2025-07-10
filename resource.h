@@ -60,36 +60,30 @@
 #define IDC_LOOP_OTHER                      1004
 #define IDC_DECAY_TIME                      1005
 
-#define IDC_TOUHOU_LOOPS                    1006
-#define IDC_RPGMAKER_LOOPS                  1007
-#define IDC_LEAPFROG_LOOPS                  1008
-#define IDC_XMI_LOOPS                       1009
-#define IDC_FF7_LOOPS                       1010
+#define IDC_LOOP_COUNT                      1006
+#define IDC_FADE_OUT_TIME                   1007
 
-#define IDC_MT32EMU_WARNING                 1011
+#define IDC_TOUHOU_LOOPS                    1008
+#define IDC_RPGMAKER_LOOPS                  1009
+#define IDC_LEAPFROG_LOOPS                  1010
+#define IDC_XMI_LOOPS                       1011
+#define IDC_FF7_LOOPS                       1012
 
-#define IDC_EMIDI_EXCLUSION                 1012
-#define IDC_FILTER_INSTRUMENTS              1013
-#define IDC_FILTER_BANKS                    1014
+#define IDC_MT32EMU_WARNING                 1013
 
-#define IDC_BASSMIDI_VOLUME_LBL             1036
-#define IDC_BASSMIDI_VOLUME                 1037
+#define IDC_EMIDI_EXCLUSION                 1014
+#define IDC_FILTER_INSTRUMENTS              1015
+#define IDC_FILTER_BANKS                    1016
 
-#define IDC_RESAMPLING_LBL                  1015
-#define IDC_RESAMPLING_MODE                 1016
+#define IDC_SKIP_TO_FIRST_NOTE              1017
 
-#define IDC_CACHED_LBL                      1017
-#define IDC_CACHED                          1018
+#define IDC_MIDI_FLAVOR_TEXT                1018
+#define IDC_MIDI_FLAVOR                     1019
+#define IDC_MIDI_EFFECTS                    1020
+#define IDC_MIDI_USE_MT32EMU_WITH_MT32      1021
+#define IDC_MIDI_USE_VSTI_WITH_XG           1022
+#define IDC_MIDI_DETECT_EXTRA_DRUM          1023
 
-#define IDC_MIDI_FLAVOR_TEXT                1029
-#define IDC_MIDI_FLAVOR                     1030
-#define IDC_MIDI_EFFECTS                    1031
-#define IDC_MIDI_USE_MT32EMU_WITH_MT32      1032
-#define IDC_MIDI_USE_VSTI_WITH_XG           1033
-#define IDC_MIDI_DETECT_EXTRA_DRUM          1034
-
-#define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   1038
-#define IDC_FLUIDSYNTH_INTERPOLATION        1039
 
 /** Dialog: Preferences FM Synthesis **/
 
@@ -220,10 +214,22 @@
 
 #define GUID_PREFS_FM { 0xbe9aebaa, 0x5b66, 0x4374, { 0xa3, 0xad, 0x94, 0x6e, 0xb6, 0xc7, 0xe2, 0x61 } }
 
-#define IDD_PREFERENCES_FM                 2400
-#define IDD_PREFERENCES_FM_NAME            "FM Synthesis"
+#define IDD_PREFERENCES_FM                  2400
+#define IDD_PREFERENCES_FM_NAME             "FM Synthesis"
 
-#define IDD_PREFERENCES_WT                 2500
-#define IDD_PREFERENCES_WT_NAME            "Wavetable"
+#define IDD_PREFERENCES_WT                  2500
+#define IDD_PREFERENCES_WT_NAME             "Wavetable"
 
-#define IDD_CLAP_WINDOW                    2600
+#define IDC_BASSMIDI_VOLUME_LBL             2501
+#define IDC_BASSMIDI_VOLUME                 2502
+
+#define IDC_RESAMPLING_LBL                  2503
+#define IDC_RESAMPLING_MODE                 2504
+
+#define IDC_CACHED_LBL                      2505
+#define IDC_CACHED                          2506
+
+#define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   2507
+#define IDC_FLUIDSYNTH_INTERPOLATION        2508
+
+#define IDD_CLAP_WINDOW                     2600
