@@ -53,6 +53,7 @@
     <ClCompile Include="GUI\Keyboard.cpp" />
     <ClCompile Include="GUI\MusicKeyboard.cpp" />
     <ClCompile Include="GUI\MusicKeyboardUIElement.cpp" />
+    <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -268,6 +269,7 @@
     <ResourceCompile Include="Infrastructure\PreferencesProcessing.rc" />
     <ResourceCompile Include="Infrastructure\Preferences.rc" />
     <ResourceCompile Include="Infrastructure\CLAPWindow.rc" />
+    <ResourceCompile Include="Infrastructure\PreferencesWT.rc" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="3rdParty\bass\c\x64\bass.lib" />

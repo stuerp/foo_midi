@@ -10,11 +10,12 @@ Welcome to [foo_midi](https://github.com/stuerp/foo_midi/releases). This guide w
 1. [Introduction](#introduction)
 2. [Features](#features)
 3. [Playing files](#playing-files)
-4. [Troubleshooting](#troubleshooting)
-5. [FAQs](#faqs)
-6. [Reference Material](#reference-material)
-7. [History](#history)
-8. [Support](#support)
+4. [Configuring](#configuring)
+5. [Troubleshooting](#troubleshooting)
+6. [FAQs](#faqs)
+7. [Reference Material](#reference-material)
+8. [History](#history)
+9. [Support](#support)
 
 ---
 
@@ -252,7 +253,7 @@ Determines which General MIDI configuration is used by the player: Roland or Kin
 [FMMIDI](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
 
 > [!Important]
-> It requires a text file that specifies the programs or instrument definitions. A default **Programs.txt** file is installed with the component in component directory. This file can be overriden by selecting a different one on the **MIDI Player / Paths** preferences page.
+> It requires a text file that specifies the programs or instrument definitions. A default **Programs.txt** file is installed with the component in component directory. This file can be overriden by selecting a different one on the **MIDI Player / [Paths](#paths)** preferences page.
 
 ### BASSMIDI (Built-in)
 
@@ -269,7 +270,7 @@ This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) libra
 It requires an SF2, SF2Pack, SFZ or SF3 soundfont or a DLS-compatible wave set to provide the instrument samples. See [Sound Fonts](#sound-fonts).
 
 > [!Important]
-> You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path on the **MIDI Player / Paths** preferences page before FluidSynth becomes available as a player.
+> You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path on the **MIDI Player / [Paths](#paths)** preferences page before FluidSynth becomes available as a player.
 
 #### Configuration file
 
@@ -282,21 +283,21 @@ You can use a text file to specify FluidSynth settings. The file must have the f
 
 Refer to [FluidSettings](https://www.fluidsynth.org/api/fluidsettings.xml) for the available settings.
 
-Specify the path to the file on the **MIDI Player / Paths** preferences page. An example file is included in the component directory.
+Specify the path to the file on the **MIDI Player / [Paths](#paths)** preferences page. An example file is included in the component directory.
 
 ### Secret Sauce (Optional)
 
 Secret Sauce is a wrapper for the SCCore.dll that comes bundled with Roland’s [Sound Canvas VA](https://www.roland.com/us/products/rc_sound_canvas_va/).
 
 > [!Important]
-> You need to specify the path of the SCCore.dll on the **MIDI Player / Paths** preferences page before Secret Sauce becomes available as a player.
+> You need to specify the path of the SCCore.dll on the **MIDI Player / [Paths](#paths)** preferences page before Secret Sauce becomes available as a player.
 
 ### VSTi (VST Instruments) (Optional)
 
 [Virtual Studio Technology](https://en.wikipedia.org/wiki/Vsti) (VST&reg;) instruments are plug-ins that provide extra functionality to a digital audio workstation (DAW). foo_midi can use both 32 and 64-bit VST instruments that are virtual  synthesizers.
 
 > [!Important]
-> You need to specify location of the VSTi plug-ins on the **MIDI Player / Paths** preferences page. Any compatible plug-in will be added to the player list with a `VSTi` prefix.
+> You need to specify location of the VSTi plug-ins on the **MIDI Player / [Paths](#paths)** preferences page. Any compatible plug-in will be added to the player list with a `VSTi` prefix.
 
 ### CLAP (Optional)
 
@@ -309,7 +310,7 @@ The CLAP player allows you to use [CLAP (CLever Audio Plug-in API)](https://u-he
 - Have only 2 output channels in stereo configuration.
 
 > [!Important]
-> You need to specify location of the CLAP plug-ins on the **MIDI Player / Paths** preferences page. Any compatible plug-in with extension `.dll` or `.clap` will be added to the player list with a `CLAP` prefix. A CLAP plug-in file can contain multiple plug-ins.
+> You need to specify location of the CLAP plug-ins on the **MIDI Player / [Paths](#paths)** preferences page. Any compatible plug-in with extension `.dll` or `.clap` will be added to the player list with a `CLAP` prefix. A CLAP plug-in file can contain multiple plug-ins.
 
 Here are some examples of CLAP plug-ins:
 
@@ -342,7 +343,7 @@ The **Sample rate** combobox allows you to specify the sample rate the player wi
 
 ### Looping
 
-Some MIDI files contain markers to specify which part of the message stream can be played in a loop. These markers are not part of the Standard MIDI Format standard. If the file does not contain markers foo_midi can also play the entire file in a loop.
+Some MIDI files contain track markers to specify which part of the message stream should be played in a loop. These markers are not part of the Standard MIDI Format standard. If the file does not contain markers foo_midi can also play the entire file in a loop.
 
 The following loop markers are supported:
 
@@ -418,14 +419,128 @@ Only available during playback:
 | midi_player_ext               | The name of the extension, if any, the MIDI player is using. LibADLMIDI and LibOPNMIDI use it to report the emulator core they are using. The VSTi player and the CLAP player report the plug-in they have loaded. |
 | midi_active_voices            | The number of active voices used by a wave table player |
 | midi_peak_voices              | The highest number of voices used by a wave table player |
-| midi_extra_percussion_channel^*^ | The number of the MIDI channel being used as an extra percussion channel (1-based) |
-
-^*^ A track that has metadata of type Text, Trackname or Instrumentname that contains the word `drum` (case-insensitive) will cause channel 16 to be set as an extra percussion channel.
+| midi_extra_percussion_channel | The number of the MIDI channel being used as an extra percussion channel (1-based). See [MIDI](#midi) preferences.  |
 
 > [!Tip]
 > You can configure the foobar2000 status bar on the  **Display / Default User Interface** preferences page. Here's an example of how to use the information fields:
 >
 > `%samplerate%Hz, [, "$info(midi_player)"][, "$info(midi_player_ext)"][, $info(midi_active_voices) voices '(peak ' $info(midi_peak_voices)')'][, extra percussion channel $info(midi_extra_percussion_channel)]`
+
+---
+
+## Configuring
+
+The settings of foo_midi are spread over different *pages*.
+
+### MIDI Player
+
+ The main preferences page is called **MIDI Player** and can be found in the **Playback / Decoding** section of the Preferences dialog. These settings in general control the playback of MIDI files. Some of the settings have already been explaing in the [Playing files](#playing-files) section.
+
+For an explanation of the loop settings refer to [Looping](#looping).
+
+#### MIDI
+
+You can force a player to start playback using a particular *flavor* of MIDI. The term groups the common MIDI specifications and particular model specific configurations.
+
+> [!Note]
+> MIDI files may contain SysEx messages that overrule the flavor you specify.
+
+| Name        | Purpose |
+| ----------- | ------- |
+| Default     | The player starts playing with its default configuration. Please the consult the player specific documentation for more information. |
+| GM          | General MIDI 1 specification |
+| GM2         | General MIDI 2 specification |
+| GS&nbsp;SC&#8209;55    | General Sound specification with Roland SC-55 initialization |
+| GS&nbsp;SC&#8209;88    | General Sound specification with Roland SC-88 initialization |
+| GS&nbsp;SC&#8209;88Pro | General Sound specification with Roland SC-88Pro initialization |
+| GS&nbsp;SC&#8209;8820  | General Sound specification with Roland SC-8820 initialization |
+| XG          | Extended General MIDI specification created by Yamaha |
+
+The **Filter effects** setting prevents reverb and chorus messages from being sent to the player. It does not change the reverb and chorus settings of the player.
+
+When you enable the  **Use LibMT32Emu with MT-32** setting the selected player will be ignored and LibMT32Emu will be used whenever an MT-32 MIDI file is played.
+
+Enabling the **Use S-YXG50 VSTi with XG** setting will ignore the selected player and use the S-YXG50 VSTi whenever an XG MIDI file is played.
+
+**Extra percussion channel** will assign channel 16 as an extra percussion channel whenever a track is found in the MIDI file that contains metadata of type Text, Trackname or Instrumentname that contains the word `drum` (case-insensitive).
+
+**Exclude unsupported EMIDI track designation** will ignore tracks in an [Apogee Expanded MIDI (EMIDI)](https://moddingwiki.shikadi.net/wiki/Apogee_Expanded_MIDI) file with Track Designation control change messages (`CC 110`) with unsupported instrument definitions.
+
+Enabling **Disable instrument changes** will remove all Program Change messages from the MIDI stream.
+
+Enabling **Disable bank changes** will remove all Control Change bank change messages from the MIDI stream. (`CC 0` and `CC 32`)
+
+### FM Synthesis
+
+This sub-page of **MIDI Player** contains the settings specific to configuring the FM synthesizer-based players.
+
+#### LibADLMIDI
+
+#### LibOPNMIDI
+
+#### LibEDMIDI
+
+#### Nuked OPL3
+
+### Paths
+
+This sub-page of **MIDI Player** contains the various directory and file paths that some of the players require to work.
+
+| Name | Description |
+| ---- | ----------- |
+| VSTi&nbsp;Plug&#8209;Ins | The location of the VSTi plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
+| CLAP&nbsp;Plug&#8209;Ins | The location of the CLAP plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
+| Sound Font | The location of the Sound Font to be used by BASSMIDI and FluidSynth. |
+| MT&#8209;32&nbsp;ROMs | The location of the MT-32 ROM files to be used by LibMT32Emu |
+| FluidSynth | The location where the FluidSynth libraries can be found |
+| FMMIDI&nbsp;Programs | The location of the file containing the FMMIDI programs. Leave this empty to use the file included in the component directory. |
+
+### Processing
+
+This sub-page of **MIDI Player** contains the settings to configure the MIDI processing.
+
+#### Recomposer
+
+**Expand loops**
+
+**Write bar marker**
+
+**Write SysEx names**
+
+**Extend loops**
+
+**Wolfteam loops**
+
+**Keep muted channels**
+
+**Include control data**
+
+#### HMI / HMP
+
+HMI and HMP file have no way to indicate the tempo at which they should be played. This settings allows you to modify the tempo by entering the number of *beats per minute* (bpm). The default value is 160 bpm.
+
+#### Channels
+
+This setting allows you disable and re-enable any of the 16 MIDI channels per port. Use the *Port&nbsp;number* slider to select the port. Click the button corresponding the channel to disable or re-enable it. These settings become immediately active during playback.
+
+A few shortcut buttons are available to assist in the selection:
+
+| Name | Description |
+| ---- | ----------- |
+| All | Enables all channels on all ports |
+| None | Disables all channels on all ports |
+| 1&#8209;10 ^*^ | Toggles channels 1 through 10 on all ports |
+| 11&#8209;16 ^*^ | Toggles channels 11 through 16 on all ports |
+
+^*^ See MSKB article 84817 [Using the MIDI Mapper](https://www.betaarchive.com/wiki/index.php?title=Microsoft_KB_Archive/84817) for an explanation of the 1&#8209;10 and 11&#8209;16 buttons.
+
+### Wavetable
+
+This sub-page of **MIDI Player** contains the settings specific to configuring the wavetable-based players.
+
+#### BASSMIDI
+
+#### FluidSynth
 
 ---
 

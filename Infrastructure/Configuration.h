@@ -147,7 +147,7 @@ extern cfg_var_modern::cfg_int
     CfgDetectXMILoops,
     CfgDetectFF7Loops,
 
-    CfgEmuDeMIDIExclusion,
+    CfgExcludeEMIDITrackDesignation,
 
     CfgFilterInstruments,
     CfgFilterBanks,

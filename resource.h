@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.07.09) P. Stuer **/
+/** $VER: Resource.h (2025.07.10) P. Stuer **/
 
 #pragma once
 
@@ -223,4 +223,7 @@
 #define IDD_PREFERENCES_FM                 2400
 #define IDD_PREFERENCES_FM_NAME            "FM Synthesis"
 
-#define IDD_CLAP_WINDOW                    2500
+#define IDD_PREFERENCES_WT                 2500
+#define IDD_PREFERENCES_WT_NAME            "Wavetable"
+
+#define IDD_CLAP_WINDOW                    2600

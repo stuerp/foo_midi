@@ -272,6 +272,7 @@
     <ClCompile Include="Infrastructure\MainMenu.cpp" />
     <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
+    <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
     <ClCompile Include="Infrastructure\SoundFonts.cpp" />
     <ClCompile Include="Players\ADLPlayer.cpp" />
     <ClCompile Include="Players\BMPlayer.cpp" />
@@ -604,6 +605,7 @@
     <ResourceCompile Include="Infrastructure\PreferencesPaths.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesProcessing.rc" />
     <ResourceCompile Include="Infrastructure\Preferences.rc" />
+    <ResourceCompile Include="Infrastructure\PreferencesWT.rc" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="3rdParty\bass\c\bass.lib" />

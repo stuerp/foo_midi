@@ -1,0 +1,120 @@
+
+/** $VER: PreferencesFM.WT (2025.07.10) **/
+
+#include "Resource.h"
+
+#include <winres.h>
+#include <commctrl.h>
+
+language LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#define W_A00    332 // Dialog width as set by foobar2000, in dialog units
+#define H_A00    288 // Dialog height as set by foobar2000, in dialog units
+
+#define H_LBL        8 // Label
+
+#define W_BTN       50 // Button
+#define H_BTN       14 // Button
+
+#define H_EBX       12 // Edit box
+#define H_CBX       14 // Combo box
+
+#define W_CHB       10 // Check box
+#define H_CHB       10 // Check box
+
+#define DX           7
+#define DY           7
+
+#define IX           4 // Spacing between two related controls
+#define IY           2
+
+#pragma region BASS MIDI
+
+// Groupbox
+#define X_A10    0
+#define Y_A10    0
+#define W_A10    281
+
+    // Label
+    #define X_A11    X_A10 + 5
+    #define Y_A11    Y_A10 + 11
+    #define W_A11    48
+    #define H_A11    H_LBL
+
+    // EditBox: Volume
+    #define X_A12    X_A11 + W_A11 + IX
+    #define Y_A12    Y_A11
+    #define W_A12    24
+    #define H_A12    H_EBX
+
+    // Label
+    #define X_A13    X_A11
+    #define Y_A13    Y_A12 + H_A12 + IY
+    #define W_A13    W_A11
+    #define H_A13    H_LBL
+
+    // Combobox: Resampling
+    #define X_A14    X_A13 + W_A13 + IX
+    #define Y_A14    Y_A13
+    #define W_A14    W_A10 - 5 - W_A13 - IX - 5
+    #define H_A14    H_CBX
+
+    // Label
+    #define X_A15    X_A13
+    #define Y_A15    Y_A14 + H_A14 + IY
+    #define W_A15    W_A13
+    #define H_A15    H_LBL
+
+    // Label: Cached
+    #define X_A16    X_A15 + W_A15 + IX
+    #define Y_A16    Y_A15
+    #define W_A16    W_A10 - 5 - W_A15 - IX - 5
+    #define H_A16    H_LBL
+
+#define H_A10    11 + H_A12 + IY + H_A14 + IY + H_A16 + 7
+
+#pragma endregion
+
+#pragma region FluidSynth 
+
+// Groupbox
+#define X_A20    X_A10
+#define Y_A20    Y_A10 + H_A10 + IY
+#define W_A20    W_A10
+
+    // Label
+    #define X_A21    X_A20 + 5
+    #define Y_A21    Y_A20 + 11
+    #define W_A21    48
+    #define H_A21    H_LBL
+
+    // Combobox
+    #define X_A22    X_A21 + W_A21 + 3
+    #define Y_A22    Y_A21
+    #define W_A22    W_A20 - 5 - W_A21 - IX - 5
+    #define H_A22    H_CBX
+
+#define H_A20    11 + H_A22 + 7
+
+#pragma endregion
+
+IDD_PREFERENCES_WT dialogex 0, 0, 0, 0
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
+{
+//  Used to measure the dialog size.
+//  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
+
+    groupbox "BASS MIDI", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10
+        rtext             "Gain:",      IDC_BASSMIDI_VOLUME_LBL,X_A11, Y_A11 + 2, W_A11, H_A11
+        edittext                        IDC_BASSMIDI_VOLUME,    X_A12, Y_A12,     W_A12, H_A12, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        rtext       "Resampling:",      IDC_RESAMPLING_LBL,     X_A13, Y_A13 + 2, W_A13, H_A13
+        combobox                        IDC_RESAMPLING_MODE,    X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext           "Cached:",      IDC_CACHED_LBL,         X_A15, Y_A15 + 2, W_A15, H_A15
+        ltext                  "",      IDC_CACHED,             X_A16, Y_A16 + 2, W_A16, H_A16, WS_VISIBLE
+
+    groupbox "FluidSynth", IDC_STATIC, X_A20, Y_A20, W_A20, H_A20
+        rtext       "Interpolation:",   IDC_FLUIDSYNTH_INTERPOLATION_TEXT, X_A21, Y_A21 + 2, W_A21, H_A21
+        combobox                        IDC_FLUIDSYNTH_INTERPOLATION,      X_A22, Y_A22,     W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+}

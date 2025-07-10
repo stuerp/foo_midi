@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2025.07.09) **/
+/** $VER: Preferences.rc (2025.07.10) **/
 
 #include "Resource.h"
 
@@ -75,7 +75,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Groupbox
 #define X_A20    X_A10
 #define Y_A20    Y_A10 + H_A10 + IY
-#define W_A20    157
+#define W_A20    W_A10
 
     // Label: Playback
     #define X_A21    X_A20 + 5
@@ -158,7 +158,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Groupbox
 #define X_A80    X_A20
 #define Y_A80    Y_A20 + H_A20 + 4
-#define W_A80    W_A20
+#define W_A80    W_A10
 
     // Label: Flavor
     #define X_A81    X_A80 + 5
@@ -172,15 +172,9 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_A82    W_A80 - 5 - W_A81 - IX - 5
     #define H_A82    H_CBX
 
-    // Checkbox: Filter effects
-    #define X_A83    X_A81
-    #define Y_A83    Y_A82 + H_A82 + IY
-    #define W_A83    W_A80 - 5 - 5
-    #define H_A83    H_CHB
-
     // Checkbox: Use MT32Emu with MT-32
-    #define X_A84    X_A83
-    #define Y_A84    Y_A83 + H_A83 + IY
+    #define X_A84    X_A81
+    #define Y_A84    Y_A82 + H_A82 + IY
     #define W_A84    W_A80 - 5 - 5
     #define H_A84    H_CHB
 
@@ -190,112 +184,37 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_A85    W_A80 - 5 - 5
     #define H_A85    H_CHB
 
+    // Checkbox: Filter effects
+    #define X_A83    X_A85
+    #define Y_A83    Y_A85 + H_A85 + IY + H_CHB + IY
+    #define W_A83    W_A80 - 5 - 5
+    #define H_A83    H_CHB
+
     // Checkbox: Detect extra percussion channel
-    #define X_A86    X_A85
-    #define Y_A86    Y_A85 + H_A85 + IY
+    #define X_A86    X_A83
+    #define Y_A86    Y_A83 + H_A83 + IY
     #define W_A86    W_A80 - 5 - 5
     #define H_A86    H_CHB
 
-#define H_A80    11 + H_A82 + IY + H_A83 + IY + H_A84 + IY + H_A85 + IY + H_A86 + 7
-
-#pragma endregion
-
-#pragma region Miscellaneous
-
-// Groupbox
-#define X_A30    X_A80 + W_A80 + 4
-#define Y_A30    Y_A80
-#define W_A30    W_A80
-
-    // Checkbox
-    #define X_A31    X_A30 + 5
-    #define Y_A31    Y_A30 + 11
-    #define W_A31    W_A30 - 5 - 5
+    // Checkbox "Exclude unsupported EMIDI track designation"
+    #define X_A31    X_A86
+    #define Y_A31    Y_A86 + H_A86 + IY
+    #define W_A31    W_A80 - 5 - 5
     #define H_A31    10
 
-    // Checkbox
+    // Checkbox "Disable instrument changes"
     #define X_A32    X_A31
     #define Y_A32    Y_A31 + H_A31 + IY
     #define W_A32    W_A31
     #define H_A32    10
 
-    // Checkbox
+    // Checkbox "Disable bank changes"
     #define X_A33    X_A32
     #define Y_A33    Y_A32 + H_A32 + IY
     #define W_A33    W_A32
     #define H_A33    10
 
-#define H_A30    11 + H_A31 + IY + H_A32 + IY + H_A33 + 7
-
-#pragma endregion
-
-#pragma region FluidSynth 
-
-// Groupbox
-#define X_A40    X_A20 + W_A20 + 4
-#define Y_A40    Y_A20
-#define W_A40    W_A20
-
-    // Label
-    #define X_A41    X_A40 + 5
-    #define Y_A41    Y_A40 + 11
-    #define W_A41    48
-    #define H_A41    H_LBL
-
-    // Combobox
-    #define X_A42    X_A41 + W_A41 + 3
-    #define Y_A42    Y_A41
-    #define W_A42    W_A40 - 5 - W_A41 - IX - 5
-    #define H_A42    H_CBX
-
-#define H_A40    11 + H_A42 + 7
-
-#pragma endregion
-
-#pragma region BASS MIDI
-
-// Groupbox
-#define X_A50    X_A40
-#define Y_A50    Y_A40 + H_A40 + IY
-#define W_A50    W_A40
-
-    // Label
-    #define X_A57    X_A50 + 5
-    #define Y_A57    Y_A50 + 11
-    #define W_A57    42
-    #define H_A57    H_LBL
-
-    // EditBox: Volume
-    #define X_A58    X_A57 + W_A57 + IX
-    #define Y_A58    Y_A57
-    #define W_A58    20
-    #define H_A58    H_EBX
-
-    // Label
-    #define X_A53    X_A57
-    #define Y_A53    Y_A58 + H_A58 + IY
-    #define W_A53    42
-    #define H_A53    H_LBL
-
-    // Combobox: Resampling
-    #define X_A54    X_A53 + W_A53 + IX
-    #define Y_A54    Y_A53
-    #define W_A54    W_A50 - 5 - W_A53 - IX - 5
-    #define H_A54    H_CBX
-
-    // Label
-    #define X_A55    X_A53
-    #define Y_A55    Y_A54 + H_A54 + IY
-    #define W_A55    W_A53
-    #define H_A55    H_LBL
-
-    // Label: Cached
-    #define X_A56    X_A55 + W_A55 + IX
-    #define Y_A56    Y_A55
-    #define W_A56    W_A50 - 5 - W_A55 - IX - 5
-    #define H_A56    H_LBL
-
-#define H_A50    11 + H_A58 + IY + H_A54 + IY + H_A56 + 7
+#define H_A80    11 + H_A82 + IY + H_A84 + IY + H_A85 + IY + H_CHB + IY + H_A83 + IY + H_A86 + IY + H_A31 + IY + H_A32 + IY + H_A33 + 7
 
 #pragma endregion
 
@@ -306,7 +225,6 @@ font 8, "MS Shell Dlg", 400, 0, 1
 //  Used to measure the dialog size.
 //  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
 
-    // Left column
     groupbox "Output", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10
         rtext       "Player:",      IDC_STATIC,     X_A11, Y_A11 + 2, W_A11, H_A11
         combobox                    IDC_PLAYER_TYPE,X_A12, Y_A12,     W_A12, H_A12, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -323,37 +241,24 @@ font 8, "MS Shell Dlg", 400, 0, 1
         edittext                    IDC_DECAY_TIME,     X_A2A, Y_A2A,     W_A2A, H_A2A, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
         ltext       "ms",           IDC_STATIC,         X_A2B, Y_A2B + 2, W_A2B, H_A2B
 
-        control     "CC 111 V=0/1 (RPG Maker)",                         IDC_RPGMAKER_LOOPS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
-        control     "CC 110/111 (LeapFrog)",                            IDC_LEAPFROG_LOOPS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
-        control     "CC 116/117 (XMI, EMIDI)",                          IDC_XMI_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
-        control     "CC 2/4 (Touhou)",                                  IDC_TOUHOU_LOOPS,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
-        control     "LoopStart/LoopEnd track markers (FF7 PC, HMI)",    IDC_FF7_LOOPS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A2C, Y_A2C, W_A2C, H_A2C
+        control     "RPG Maker",                                        IDC_RPGMAKER_LOOPS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+        control     "LeapFrog",                                         IDC_LEAPFROG_LOOPS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
+        control     "XMI, EMIDI",                                       IDC_XMI_LOOPS,                  "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
+        control     "Touhou",                                           IDC_TOUHOU_LOOPS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
+        control     "Final Fantasy 7"                                   IDC_FF7_LOOPS,                  "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A2C, Y_A2C, W_A2C, H_A2C
 
     groupbox "MIDI", IDC_STATIC, X_A80, Y_A80, W_A80, H_A80
         rtext       "Flavor:",                                          IDC_MIDI_FLAVOR_TEXT,           X_A81, Y_A81 + 2, W_A81, H_A81
         combobox                                                        IDC_MIDI_FLAVOR,                X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        control     "Filter effects (Reverb and Chorus)",               IDC_MIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
-        control     "Use MT32Emu with MT-32",                           IDC_MIDI_USE_MT32EMU_WITH_MT32, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
-        control     "Use VSTi with XG",                                 IDC_MIDI_USE_VSTI_WITH_XG,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
-        control     "Detect extra percussion channel",                  IDC_MIDI_DETECT_EXTRA_DRUM      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A86, Y_A86, W_A86, H_A86
 
-    groupbox "Miscellaneous", IDC_STATIC, X_A30, Y_A30, W_A30, H_A30
-        control     "EMIDI device track exclusion (Duke3D, etc.)",      IDC_EMIDI_EXCLUSION,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
+        control     "Use LibMT32Emu with MT-32",                        IDC_MIDI_USE_MT32EMU_WITH_MT32, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
+        control     "Use S-YXG50 VSTi with XG",                         IDC_MIDI_USE_VSTI_WITH_XG,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
+
+        control     "Filter effects (Reverb and Chorus)",               IDC_MIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
+        control     "Detect extra percussion channel",                  IDC_MIDI_DETECT_EXTRA_DRUM      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A86, Y_A86, W_A86, H_A86
+        control     "Exclude unsupported EMIDI track designation"       IDC_EMIDI_EXCLUSION,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
         control     "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
         control     "Disable bank changes",                             IDC_FILTER_BANKS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
-
-    // Right column
-    groupbox "FluidSynth", IDC_STATIC, X_A40, Y_A40, W_A40, H_A40
-        rtext       "Interpolation:",       IDC_FLUIDSYNTH_INTERPOLATION_TEXT, X_A41, Y_A41 + 2, W_A41, H_A41
-        combobox                            IDC_FLUIDSYNTH_INTERPOLATION,      X_A42, Y_A42,     W_A42, H_A42, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    groupbox "BASS MIDI", IDC_STATIC, X_A50, Y_A50, W_A50, H_A50
-        rtext           "Volume:",          IDC_BASSMIDI_VOLUME_LBL,X_A57, Y_A57 + 2, W_A57, H_A57
-        edittext                            IDC_BASSMIDI_VOLUME,    X_A58, Y_A58,     W_A58, H_A58, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
-        rtext       "Resampling:",          IDC_RESAMPLING_LBL,     X_A53, Y_A53 + 2, W_A53, H_A53
-        combobox                            IDC_RESAMPLING_MODE,    X_A54, Y_A54,     W_A54, H_A54, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext           "Cached:",          IDC_CACHED_LBL,         X_A55, Y_A55 + 2, W_A55, H_A55
-        ltext                  "",          IDC_CACHED,             X_A56, Y_A56 + 2, W_A56, H_A56, WS_VISIBLE
 
 //  ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, X_A50, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 }

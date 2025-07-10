@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.09) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -72,7 +72,6 @@ public:
     // WTL message map
     BEGIN_MSG_MAP_EX(PreferencesRootPage)
         MSG_WM_INITDIALOG(OnInitDialog)
-        MSG_WM_TIMER(OnTimer)
 
         // Output
         COMMAND_HANDLER_EX(IDC_PLAYER_TYPE, CBN_SELCHANGE, OnPlayerTypeChange)
@@ -95,7 +94,6 @@ public:
         COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,      BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_DETECT_EXTRA_DRUM,     BN_CLICKED, OnButtonClick)
 
-        // Miscellaneous
         COMMAND_HANDLER_EX(IDC_EMIDI_EXCLUSION, BN_CLICKED, OnButtonClick)
 
         COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS, BN_CLICKED, OnButtonClick)
@@ -107,13 +105,6 @@ public:
         COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS, BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_FF7_LOOPS, BN_CLICKED, OnButtonClick)
         #pragma endregion
-
-        // FluidSynth
-        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
-
-        // BASS MIDI
-        COMMAND_HANDLER_EX(IDC_BASSMIDI_VOLUME, EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_RESAMPLING_MODE, CBN_SELCHANGE, OnSelectionChange)
     END_MSG_MAP()
 
     enum
@@ -121,11 +112,8 @@ public:
         IDD = IDD_PREFERENCES_ROOT
     };
 
-    const UINT_PTR ID_REFRESH = 1000;
-
 private:
     BOOL OnInitDialog(CWindow, LPARAM);
-    void OnTimer(UINT_PTR);
 
     void OnPlayerTypeChange(UINT, int, CWindow w);
     void OnEditChange(UINT, int, CWindow);
@@ -215,51 +203,23 @@ private:
 
     static const int _SampleRates[];
 
-    struct InterpolationMethod
-    {
-        std::string Name;
-        int Id;
-    };
-
-    static const InterpolationMethod _InterpolationMethods[];
-
     #pragma endregion
 
-    #pragma region Secret Sauce
-
+    // Secret Sauce
     bool _HasSecretSauce;
 
-    #pragma endregion
-
-    #pragma region FluidSynth
-
-    bool _HasFluidSynth;
-
-    #pragma endregion
-
-    #pragma region BASS MIDI
-
-    pfc::string _CacheStatusText;
-    pfc::string _CacheStatusTextCurrent;
-
-    #pragma endregion
-    
-    #pragma region VSTi
-
+    // VSTi
     VSTi::Host _VSTiHost;
     std::vector<VSTi::PlugIn> _VSTiPlugIns;
 
-    #pragma endregion
-
-    #pragma region CLAP
-
+    // CLAP
     CLAP::Host _CLAPHost;
     std::vector<CLAP::PlugIn> _CLAPPlugIns;
 
-    #pragma endregion
+    // FluidSynth
+    bool _HasFluidSynth;
 
     const preferences_page_callback::ptr _Callback;
-
 
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
 };
@@ -285,14 +245,6 @@ const PreferencesRootPage::known_player_t PreferencesRootPage::_KnownPlayers[] =
 };
 
 const int PreferencesRootPage::_SampleRates[] = { 8'000, 11'025, 16'000, 22'050, 24'000, 32'000, 44'100, 48'000, 49'716, 64'000, 88'200, 96'000 };
-
-const PreferencesRootPage::InterpolationMethod PreferencesRootPage::_InterpolationMethods[] =
-{
-    { "None", FLUID_INTERP_NONE },
-    { "Linear", FLUID_INTERP_LINEAR },
-    { "Cubic", FLUID_INTERP_4THORDER },
-    { "7th Order Sinc", FLUID_INTERP_7THORDER }
-};
 
 #pragma region preferences_page_instance
 
@@ -382,7 +334,7 @@ void PreferencesRootPage::apply()
         CfgDecayTime            = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
     }
 
-    // MIDI Flavor and Effects
+    // MIDI
     {
         CfgMIDIFlavor         = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
 
@@ -390,11 +342,8 @@ void PreferencesRootPage::apply()
         CfgUseMT32EmuWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_GETCHECK);
         CfgUseVSTiWithXG      = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
         CfgDetectExtraDrum    = (bool)    SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK);
-    }
 
-    // Miscellaneous
-    {
-        CfgEmuDeMIDIExclusion   = (t_int32) SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_GETCHECK);
+        CfgExcludeEMIDITrackDesignation = (t_int32) SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_GETCHECK);
 
         CfgFilterInstruments    = (t_int32) SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK);
         CfgFilterBanks          = (t_int32) SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK);
@@ -404,29 +353,6 @@ void PreferencesRootPage::apply()
         CfgDetectLeapFrogLoops  = (t_int32) SendDlgItemMessage(IDC_LEAPFROG_LOOPS, BM_GETCHECK);
         CfgDetectXMILoops       = (t_int32) SendDlgItemMessage(IDC_XMI_LOOPS, BM_GETCHECK);
         CfgDetectFF7Loops       = (t_int32) SendDlgItemMessage(IDC_FF7_LOOPS, BM_GETCHECK);
-
-    }
-
-    // FluidSynth
-    {
-        int SelectedIndex = (int) SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_GETCURSEL);
-
-        if (SelectedIndex != -1)
-            CfgFluidSynthInterpolationMode = _InterpolationMethods[SelectedIndex].Id;
-    }
-
-    // BASS MIDI resampling mode and cache status
-    {
-        wchar_t Text[32];
-
-        GetDlgItemTextW(IDC_BASSMIDI_VOLUME, Text, _countof(Text));
-
-        CfgBASSMIDIVolume = std::clamp(::_wtof(Text), 0., 2.);
-
-        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
-    }
-    {
-        CfgBASSMIDIResamplingMode = (t_int32) SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
     }
 
     OnChanged();
@@ -488,64 +414,21 @@ void PreferencesRootPage::reset()
         GetDlgItem(IDC_MIDI_FLAVOR).EnableWindow(SupportsFlavors);
         GetDlgItem(IDC_MIDI_EFFECTS).EnableWindow(SupportsFlavors);
 
-        SendDlgItemMessage(IDC_MIDI_FLAVOR,                CB_SETCURSEL, DefaultMIDIFlavor);
-        SendDlgItemMessage(IDC_MIDI_EFFECTS,               BM_SETCHECK,  DefaultUseMIDIEffects ? 0 : 1);
-        SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_SETCHECK,  DefaultUseMT32EmuWithMT32);
-        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,      BM_SETCHECK,  DefaultUseVSTiWithXG);
-        SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM,     BM_SETCHECK,  DefaultDetectExtraDrum);
-    }
+        SendDlgItemMessage(IDC_MIDI_FLAVOR,                 CB_SETCURSEL, DefaultMIDIFlavor);
 
-    // Miscellaneous
-    {
-        SendDlgItemMessage(IDC_EMIDI_EXCLUSION,    BM_SETCHECK, DefaultEmuDeMIDIExclusion);
-        SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, DefaultFilterInstruments);
-        SendDlgItemMessage(IDC_FILTER_BANKS,       BM_SETCHECK, DefaultFilterBanks);
+        SendDlgItemMessage(IDC_TOUHOU_LOOPS,                BM_SETCHECK, DefaultDetectTouhouLoops);
+        SendDlgItemMessage(IDC_RPGMAKER_LOOPS,              BM_SETCHECK, DefaultDetectRPGMakerLoops);
+        SendDlgItemMessage(IDC_LEAPFROG_LOOPS,              BM_SETCHECK, DefaultDetectLeapFrogLoops);
+        SendDlgItemMessage(IDC_XMI_LOOPS,                   BM_SETCHECK, DefaultDetectXMILoops);
+        SendDlgItemMessage(IDC_FF7_LOOPS,                   BM_SETCHECK, DefaultDetectFF7Loops);
 
-        SendDlgItemMessage(IDC_TOUHOU_LOOPS,       BM_SETCHECK, DefaultDetectTouhouLoops);
-        SendDlgItemMessage(IDC_RPGMAKER_LOOPS,     BM_SETCHECK, DefaultDetectRPGMakerLoops);
-        SendDlgItemMessage(IDC_LEAPFROG_LOOPS,     BM_SETCHECK, DefaultDetectLeapFrogLoops);
-        SendDlgItemMessage(IDC_XMI_LOOPS,          BM_SETCHECK, DefaultDetectXMILoops);
-        SendDlgItemMessage(IDC_FF7_LOOPS,          BM_SETCHECK, DefaultDetectFF7Loops);
-    }
-
-    // FluidSynth
-    {
-        int SelectedIndex = -1;
-
-        for (int i = 0; i < (int) _countof(_InterpolationMethods); ++i)
-        {
-            if (_InterpolationMethods[i].Id == DefaultFluidSynthInterpolationMethod)
-            {
-                SelectedIndex = i;
-                break;
-            }
-        }
-
-        SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_SETCURSEL, (WPARAM) SelectedIndex);
-
-        const BOOL IsFluidSynth = (_SelectedPlayer.Type == PlayerTypes::FluidSynth);
-
-        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(IsFluidSynth);
-        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(IsFluidSynth);
-    }
-
-    // BASS MIDI resampling mode and cache status
-    {
-        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(DefaultBASSMIDIVolume, 4, 2));
-
-        SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIResamplingMode);
-
-        const BOOL IsBASSMIDI = (_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
-
-        const int ControlIds[] =
-        {
-            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_VOLUME,
-            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
-            IDC_CACHED_LBL, IDC_CACHED
-        };
-
-        for (const int & ControlId : ControlIds)
-            GetDlgItem(ControlId).EnableWindow(IsBASSMIDI);
+        SendDlgItemMessage(IDC_MIDI_EFFECTS,                BM_SETCHECK, DefaultUseMIDIEffects ? 0 : 1);
+        SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32,  BM_SETCHECK, DefaultUseMT32EmuWithMT32);
+        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,       BM_SETCHECK, DefaultUseVSTiWithXG);
+        SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM,      BM_SETCHECK, DefaultDetectExtraDrum);
+        SendDlgItemMessage(IDC_EMIDI_EXCLUSION,             BM_SETCHECK, DefaultEmuDeMIDIExclusion);
+        SendDlgItemMessage(IDC_FILTER_INSTRUMENTS,          BM_SETCHECK, DefaultFilterInstruments);
+        SendDlgItemMessage(IDC_FILTER_BANKS,                BM_SETCHECK, DefaultFilterBanks);
     }
 
     _VSTiHost.Config.resize(0);
@@ -564,8 +447,6 @@ void PreferencesRootPage::reset()
 /// </summary>
 BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 {
-    #pragma region Player Type
-
     _HasFluidSynth = FluidSynth::API::Exists();
     _HasSecretSauce = SecretSauce::Exists();
 
@@ -658,6 +539,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     #pragma endregion
 
+    // Player Type
     {
         auto w = (CComboBox) GetDlgItem(IDC_PLAYER_TYPE);
 
@@ -695,15 +577,12 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         w.SetCurSel(SelectedIndex);
     }
 
-    #pragma endregion
-
-    #pragma region Configure
+    // Configure
     {
         UpdateConfigureButton();
     }
-    #pragma endregion
 
-    #pragma region Sample Rate
+    // Sample Rate
     {
         for (size_t i = _countof(_SampleRates); i--;)
         {
@@ -725,9 +604,8 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 */
         }
     }
-    #pragma endregion
 
-    #pragma region Looping
+    // Looping
     {
         static const wchar_t * LoopTypeDescriptions[] =
         {
@@ -739,36 +617,32 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             L"Play indefinitely"
         };
 
+        auto w1 = (CComboBox) GetDlgItem(IDC_LOOP_PLAYBACK);
+        auto w2 = (CComboBox) GetDlgItem(IDC_LOOP_OTHER);
+
+        for (const auto & Description : LoopTypeDescriptions)
         {
-            auto w1 = (CComboBox) GetDlgItem(IDC_LOOP_PLAYBACK);
-            auto w2 = (CComboBox) GetDlgItem(IDC_LOOP_OTHER);
-
-            for (const auto & Description : LoopTypeDescriptions)
-            {
-                w1.AddString(Description);
-                w2.AddString(Description);
-            }
- 
-             w1.SetCurSel((int) CfgLoopTypePlayback);
-             w2.SetCurSel((int) CfgLoopTypeOther);
-
-            ::uSetDlgItemText(m_hWnd, IDC_DECAY_TIME, pfc::format_int(CfgDecayTime));
+            w1.AddString(Description);
+            w2.AddString(Description);
         }
-    }
-    #pragma endregion
+ 
+            w1.SetCurSel((int) CfgLoopTypePlayback);
+            w2.SetCurSel((int) CfgLoopTypeOther);
 
-    #pragma region MIDI Flavor
+        ::uSetDlgItemText(m_hWnd, IDC_DECAY_TIME, pfc::format_int(CfgDecayTime));
+    }
+
+    // MIDI
     {
         auto w = GetDlgItem(IDC_MIDI_FLAVOR);
 
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "Default");
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "GM");
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "GM2");
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-55");
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-88");
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-88 Pro");
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "GS SC-8820");
-        ::uSendMessageText(w, CB_ADDSTRING, 0, "XG");
+        static const char * Flavors[] =
+        {
+            "Default", "GM", "GM2", "GS SC-55", "GS SC-88", "GS SC-88 Pro", "GS SC-8820", "XG"
+        };
+
+        for (const auto & Flavor : Flavors)
+            ::uSendMessageText(w, CB_ADDSTRING, 0, Flavor);
 
         ::SendMessage(w, CB_SETCURSEL, (WPARAM) CfgMIDIFlavor, 0);
 
@@ -782,12 +656,8 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         GetDlgItem(IDC_MIDI_FLAVOR_TEXT).EnableWindow(Enabled);
         GetDlgItem(IDC_MIDI_FLAVOR)     .EnableWindow(Enabled);
         GetDlgItem(IDC_MIDI_EFFECTS)    .EnableWindow(Enabled);
-    }
-    #pragma endregion
 
-    #pragma region Miscellaneous
-    {
-        SendDlgItemMessage(IDC_EMIDI_EXCLUSION,    BM_SETCHECK, (WPARAM) CfgEmuDeMIDIExclusion);
+        SendDlgItemMessage(IDC_EMIDI_EXCLUSION,    BM_SETCHECK, (WPARAM) CfgExcludeEMIDITrackDesignation);
 
         SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_SETCHECK, (WPARAM) CfgFilterInstruments);
         SendDlgItemMessage(IDC_FILTER_BANKS,       BM_SETCHECK, (WPARAM) CfgFilterBanks);
@@ -799,62 +669,6 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
         SendDlgItemMessage(IDC_FF7_LOOPS,          BM_SETCHECK, (WPARAM) CfgDetectFF7Loops);
     }
     #pragma endregion
-
-    #pragma region FluidSynth
-    {
-        auto w = (CComboBox) GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION);
-
-        int SelectedIndex = -1;
-        int i = 0;
-
-        for (const auto & InterpolationMethod : _InterpolationMethods)
-        {
-            w.AddString(::UTF8ToWide(InterpolationMethod.Name).c_str());
-
-            if (InterpolationMethod.Id == CfgFluidSynthInterpolationMode)
-                SelectedIndex = (int) i;
-
-            ++i;
-        }
-
-        w.SetCurSel(SelectedIndex);
-
-        const BOOL Enable = (_SelectedPlayer.Type == PlayerTypes::FluidSynth);
-
-        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(Enable);
-        GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(Enable);
-    }
-    #pragma endregion
-
-    #pragma region BASS MIDI
-    {
-        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
-    }
-
-    {
-        auto w = (CComboBox) GetDlgItem(IDC_RESAMPLING_MODE);
-
-        w.AddString(L"Linear interpolation");
-        w.AddString(L"8pt Sinc interpolation");
-        w.AddString(L"16pt Sinc interpolation");
-
-        w.SetCurSel((int) CfgBASSMIDIResamplingMode);
-
-        const BOOL Enable = (_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
-
-        const int ControlIds[] =
-        {
-            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_VOLUME,
-            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
-            IDC_CACHED_LBL, IDC_CACHED
-        };
-
-        for (const auto & ControlId : ControlIds)
-            GetDlgItem(ControlId).EnableWindow(Enable);
-    }
-    #pragma endregion
-
-    SetTimer(ID_REFRESH, 20);
 
     _IsBusy = false;
 
@@ -976,7 +790,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
     // Miscellaneous
     {
     }
-
+/*
     // FluidSynth
     {
         const BOOL IsFluidSynth = (_SelectedPlayer.Type == PlayerTypes::FluidSynth);
@@ -999,45 +813,8 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
         for (const int & ControlId : ControlIds)
             GetDlgItem(ControlId).EnableWindow(IsBASSMIDI);
     }
-
+*/
     OnChanged();
-}
-
-/// <summary>
-/// Update the status of the SoundFont cache.
-/// </summary>
-void PreferencesRootPage::OnTimer(UINT_PTR eventId)
-{
-    if (eventId != ID_REFRESH)
-        return;
- 
-//  GetDlgItem(IDC_SAMPLERATE).EnableWindow(CfgPlayerType || !_IsRunning);
-
-    uint64_t SampleDataSize, SampleDataLoaded;
-
-    if (::GetSoundFontStatistics(SampleDataSize, SampleDataLoaded))
-    {
-        _CacheStatusText.reset();
-        _CacheStatusText << pfc::format_file_size_short(SampleDataLoaded) << " / " << pfc::format_file_size_short(SampleDataSize);
-    }
-    else
-        _CacheStatusText = "BASS not loaded.";
-
-    if (_CacheStatusText != _CacheStatusTextCurrent)
-    {
-        // Weird code to work around foobar2000 rendering bug in dark mode: Get the state of the control, enable it, set the text and restore the state.
-        auto Control = GetDlgItem(IDC_CACHED);
-
-        BOOL State = Control.IsWindowEnabled();
-
-        Control.EnableWindow(TRUE);
-
-        _CacheStatusTextCurrent = _CacheStatusText;
-
-        ::uSetWindowText(Control, _CacheStatusText);
-
-        Control.EnableWindow(State);
-    }
 }
 
 /// <summary>
@@ -1138,36 +915,13 @@ bool PreferencesRootPage::HasChanged()
 
     #pragma region Miscellaneous
     {
-        if (SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_GETCHECK) != CfgEmuDeMIDIExclusion)
+        if (SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_GETCHECK) != CfgExcludeEMIDITrackDesignation)
             return true;
 
         if (SendDlgItemMessage(IDC_FILTER_INSTRUMENTS, BM_GETCHECK) != CfgFilterInstruments)
             return true;
 
         if (SendDlgItemMessage(IDC_FILTER_BANKS, BM_GETCHECK) != CfgFilterBanks)
-            return true;
-    }
-    #pragma endregion
-
-    #pragma region FluidSynth
-    {
-        int SelectedIndex = (int) SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_GETCURSEL);
-
-        if ((SelectedIndex != -1) && (_InterpolationMethods[SelectedIndex ].Id != CfgFluidSynthInterpolationMode))
-            return true;
-    }
-    #pragma endregion
-
-    #pragma region BASS MIDI
-    {
-        wchar_t Text[32];
-
-        GetDlgItemTextW(IDC_BASSMIDI_VOLUME, Text, _countof(Text));
-
-        if (std::abs(::_wtof(Text) - CfgBASSMIDIVolume) > 0.001)
-            return true;
-
-        if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgBASSMIDIResamplingMode)
             return true;
     }
     #pragma endregion
