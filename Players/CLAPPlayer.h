@@ -34,7 +34,7 @@ private:
     virtual void Render(audio_sample *, uint32_t) override;
     virtual bool Reset() override;
 
-    virtual uint8_t GetPortCount() const noexcept override { return _countof(_AudioOutputs); };
+    virtual uint8_t GetPortCount() const noexcept override { return _countof(_AudioOuts); };
 
     virtual void SendEvent(uint32_t data) override { SendEvent(data, 0); }
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override { SendSysEx(data, size, portNumber, 0); }
@@ -53,12 +53,9 @@ private:
     CLAP::InputEvents _InEvents;
     CLAP::OutputEvents _OutEvents;
 
-    std::vector<float> _LChannel;
-    std::vector<float> _RChannel;
-
-    float * _OutChannels[2];
+    void * _OutChannels[2];
     clap_audio_buffer_t _AudioOut;
-    clap_audio_buffer_t _AudioOutputs[1];
+    clap_audio_buffer_t _AudioOuts[1];
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member

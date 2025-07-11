@@ -41,7 +41,7 @@ public:
 
     #pragma region CWindowImpl
 
-    DECLARE_WND_CLASS_EX(TEXT("{2941030c-fd32-4268-917d-587d4f06c43c}"), CS_VREDRAW | CS_HREDRAW, (-1));
+    DECLARE_WND_CLASS_EX(TEXT("{6900144F-E833-40B0-A95B-332388BF7665}"), CS_VREDRAW | CS_HREDRAW, (-1));
 
     BEGIN_MSG_MAP_EX(MusicKeyboardWindow)
         MSG_WM_CREATE(OnCreate)
@@ -91,7 +91,7 @@ public:
     /// </summary>
     static GUID g_get_guid()
     {
-        static const GUID _GUID = {0xdc7a4e88,0x9c0e,0x4f82,{0xbd,0x99,0x21,0xeb,0x3b,0x41,0x37,0x68}};
+        static const GUID _GUID = { 0xa79336ae, 0xc687, 0x4d7f, { 0xae, 0x20, 0x60, 0xe9, 0xe3, 0x80, 0x3a, 0xbe } };
 
         return _GUID;
     }
@@ -253,7 +253,7 @@ public:
     virtual ~MusicKeyboardUIElement() { };
 };
 
-extern MusicKeyboardWindow * _This;
+extern MusicKeyboardWindow * _CLAPWindow;
 
 /// <summary>
 /// Handles the playback events we're subscribed to.

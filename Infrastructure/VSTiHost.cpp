@@ -1,5 +1,5 @@
 
-/** $VER: VSTiHost.cpp (2025.07.03) P. Stuer **/
+/** $VER: VSTiHost.cpp (2025.07.11) P. Stuer **/
 
 #include "pch.h"
 
@@ -33,54 +33,61 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 /// </summary>
 void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
 {
-    for (const auto & Entry : fs::directory_iterator(directoryPath))
+    try
     {
-        if (Entry.is_directory())
+        for (const auto & Entry : fs::directory_iterator(directoryPath))
         {
-            GetPlugIns_(Entry.path());
-        }
-        else
-        if (Entry.path().extension() == ".dll")
-        {
-//          console::print(STR_COMPONENT_BASENAME " is examining \"", (const char *) Entry.path().u8string().c_str(), "\"...");
-
-            Player Player;
-
-            if (Player.LoadVST(Entry.path()))
+            if (Entry.is_directory())
             {
-                std::string Name;
+                GetPlugIns_(Entry.path());
+            }
+            else
+            if (Entry.path().extension() == ".dll")
+            {
+    //          console::print(STR_COMPONENT_BASENAME " is examining \"", (const char *) Entry.path().u8string().c_str(), "\"...");
 
+                Player Player;
+
+                if (Player.LoadVST(Entry.path()))
                 {
-                    // Create the plugin name.
-                    if (!Player.VendorName.empty() || !Player.ProductName.empty())
+                    std::string Name;
+
                     {
-                        if (Player.VendorName.empty() || ((Player.ProductName.length() >= Player.VendorName.length()) && (::strncmp(Player.VendorName.c_str(), Player.ProductName.c_str(), Player.VendorName.length()) == 0)))
+                        // Create the plugin name.
+                        if (!Player.VendorName.empty() || !Player.ProductName.empty())
                         {
-                            Name = Player.ProductName;
+                            if (Player.VendorName.empty() || ((Player.ProductName.length() >= Player.VendorName.length()) && (::strncmp(Player.VendorName.c_str(), Player.ProductName.c_str(), Player.VendorName.length()) == 0)))
+                            {
+                                Name = Player.ProductName;
+                            }
+                            else
+                            {
+                                Name = Player.VendorName;
+
+                                if (!Player.ProductName.empty())
+                                    Name += std::string(' ' + Player.ProductName);
+                            }
                         }
                         else
-                        {
-                            Name = Player.VendorName;
-
-                            if (!Player.ProductName.empty())
-                                Name += std::string(' ' + Player.ProductName);
-                        }
+                            Name = (const char *) Entry.path().stem().u8string().c_str();
                     }
-                    else
-                        Name = (const char *) Entry.path().stem().u8string().c_str();
+
+                    PlugIn p =
+                    {
+                        .Name = Name,
+                        .FilePath = Entry.path(),
+                        .Id = Player.Id,
+                        .HasEditor = Player.HasEditor()
+                    };
+
+                    _PlugIns.push_back(p);
                 }
-
-                PlugIn p =
-                {
-                    .Name = Name,
-                    .FilePath = Entry.path(),
-                    .Id = Player.Id,
-                    .HasEditor = Player.HasEditor()
-                };
-
-                _PlugIns.push_back(p);
             }
         }
+    }
+    catch (std::exception e)
+    {
+        console::print(STR_COMPONENT_BASENAME, " fails to get VSTi plug-ins: ", e.what());
     }
 }
 

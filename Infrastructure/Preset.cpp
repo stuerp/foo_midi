@@ -36,7 +36,7 @@ preset_t::preset_t() noexcept
             {
                 auto Player = new VSTi::Player;
 
-                if (Player->LoadVST(_PlugInFilePath.c_str()))
+                if (Player->LoadVST((const char8_t *) _PlugInFilePath.c_str()))
                 {
                     _VSTiConfig = CfgVSTiConfig[Player->Id];
 

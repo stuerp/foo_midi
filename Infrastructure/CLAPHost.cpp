@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.07.09) P. Stuer **/
+/** $VER: CLAPHost.cpp (2025.07.11) P. Stuer **/
 
 #include "pch.h"
 
@@ -58,16 +58,21 @@ Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor(), _PlugIn(), _PlugInGUI()
     // Handles a request to deactivate and reactivate the plug-in.
     request_restart  = [](const clap_host * self)
     {
+        console::print("Plug-in requests restart.");
     };
 
     // Handles a request to activate and start processing the plug-in.
     request_process  =  [](const clap_host * self)
     {
+        console::print("Plug-in requests to be activated.");
     };
 
     // Handles a request to schedule a call to plugin->on_main_thread(plugin) on the main thread.
     request_callback = [](const clap_host * self)
     {
+        auto * This = (Host *) self;
+
+        This->_PlugIn->on_main_thread(This->_PlugIn);
     };
 }
 
@@ -102,7 +107,7 @@ bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
 
     UnLoad();
 
-    _hPlugIn = ::LoadLibraryA((const char *) filePath.u8string().c_str());
+    _hPlugIn = ::LoadLibraryW(::UTF8ToWide((const char *) filePath.u8string().c_str()).c_str());
 
     if (_hPlugIn == NULL)
         return false;
@@ -113,7 +118,7 @@ bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
     {
         const auto * Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
 
-        if (Factory != nullptr)
+        if ((Factory != nullptr) && (Factory->get_plugin_descriptor != nullptr))
         {
             _PlugInDescriptor = Factory->get_plugin_descriptor(Factory, index);
 
@@ -225,33 +230,23 @@ bool Host::HasGUI() const noexcept
 /// </summary>
 void Host::ShowGUI(HWND hWnd) noexcept
 {
-    if (!HasGUI() || (hWnd == NULL))
+    if (!::IsWindow(hWnd))
         return;
 
+    GetGUI();
+
+    if (!HasGUI())
+        return;
+
+// FIXME: GUI support not implemented yet
+/*
     if (!_Window.IsWindow())
     {
-        CLAP::Window::Parameters dp =
-        {
-            ._Bounds = { },
-            ._FilePath = _FilePath,
-            ._Index = _Index,
-            ._GUIBounds = { },
-        };
-
-        GetGUISize(_PlugInGUI, dp._GUIBounds);
-
-        if (_Window.Create(hWnd, (LPARAM) &dp) != NULL)
-        {
-            clap_window_t Window = { .api = "win32", .win32 = _Window };
-
-            if (_PlugInGUI->set_parent(_PlugIn, &Window))
-            {
-                _Window.ShowWindow(SW_SHOW);
-            }
-        }
+        _Window.Run(this);
     }
     else
         _Window.BringWindowToTop();
+*/
 }
 
 /// <summary>
@@ -259,10 +254,15 @@ void Host::ShowGUI(HWND hWnd) noexcept
 /// </summary>
 void Host::HideGUI() noexcept
 {
-    if (!_Window.IsWindow())
+    if (!HasGUI() || !_Window.IsWindow())
         return;
 
+// FIXME: GUI support not implemented yet
+/*
+    _PlugInGUI->set_parent(_PlugIn, nullptr);
+
     _Window.DestroyWindow();
+*/
 }
 
 /// <summary>
@@ -270,7 +270,8 @@ void Host::HideGUI() noexcept
 /// </summary>
 bool Host::IsGUIVisible() const noexcept
 {
-    return _Window.IsWindow() && _Window.IsWindowVisible();
+// FIXME: GUI support not implemented yet
+    return false; // _Window.IsWindow() && _Window.IsWindowVisible();
 }
 
 #pragma region Private
@@ -280,30 +281,37 @@ bool Host::IsGUIVisible() const noexcept
 /// </summary>
 void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
 {
-    for (const auto & Entry : fs::directory_iterator(directoryPath))
+    try
     {
-        if (Entry.is_directory())
+        for (const auto & Entry : fs::directory_iterator(directoryPath))
         {
-            GetPlugIns_(Entry.path());
-        }
-        else
-        if ((Entry.path().extension() == ".clap") || (Entry.path().extension() == ".dll"))
-        {
-            console::print(STR_COMPONENT_BASENAME " is examining \"", (const char *) Entry.path().u8string().c_str(), "\"...");
-
-            GetPlugInEntries(Entry.path(), [this, Entry](const std::string & plugInName, uint32_t index, bool hasGUI)
+            if (Entry.is_directory())
             {
-                PlugIn PlugIn =
-                {
-                    .Name     = plugInName,
-                    .Index    = index,
-                    .FilePath = Entry.path(),
-                    .HasGUI   = hasGUI
-                };
+                GetPlugIns_(Entry.path());
+            }
+            else
+            if ((Entry.path().extension() == ".clap") || (Entry.path().extension() == ".dll"))
+            {
+                console::print(STR_COMPONENT_BASENAME " is examining \"", (const char *) Entry.path().u8string().c_str(), "\"...");
 
-                _PlugIns.push_back(PlugIn);
-            });
+                GetPlugInEntries(Entry.path(), [this, Entry](const std::string & plugInName, uint32_t index, bool hasGUI)
+                {
+                    PlugIn PlugIn =
+                    {
+                        .Name     = plugInName,
+                        .Index    = index,
+                        .FilePath = Entry.path(),
+                        .HasGUI   = hasGUI
+                    };
+
+                    _PlugIns.push_back(PlugIn);
+                });
+            }
         }
+    }
+    catch (std::exception e)
+    {
+        console::print(STR_COMPONENT_BASENAME, " fails to get CLAP plug-ins: ", e.what());
     }
 }
 
@@ -312,7 +320,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
 /// </summary>
 void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept
 {
-    HMODULE hPlugIn = ::LoadLibraryA((const char *) filePath.u8string().c_str());
+    HMODULE hPlugIn = ::LoadLibraryW(::UTF8ToWide((const char *) filePath.u8string().c_str()).c_str());
 
     if (hPlugIn == NULL)
         return;
@@ -456,7 +464,7 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 
         return false;
     }
-
+/*
     constexpr auto InputPort = true;
 
     const auto InputPortCount = AudioPorts->count(plugIn, InputPort);
@@ -467,9 +475,9 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 
         return false;
     }
-
+*/
     constexpr auto OutputPort = false;
-
+/*
     const auto OutputPortCount = AudioPorts->count(plugIn, OutputPort);
 
     if (OutputPortCount != 1)
@@ -478,7 +486,7 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 
         return false;
     }
-
+*/
     const auto PortIndex = 0;
 
     AudioPorts->get(plugIn, PortIndex, OutputPort, &_PortInfo);
@@ -491,6 +499,30 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
     }
 
     return true;
+}
+
+/// <summary>
+/// Returns true if the hosted plug-in prefers 64-bit output.
+/// </summary>
+bool Host::PlugInPrefers64bitAudio() const noexcept
+{
+    // Odin2 has no get_extension() method.
+    if ((_PlugIn == nullptr) || (_PlugIn->get_extension == nullptr))
+        return true;
+
+    const auto AudioPorts = static_cast<const clap_plugin_audio_ports_t *>(_PlugIn->get_extension(_PlugIn, CLAP_EXT_AUDIO_PORTS));
+
+    if (AudioPorts == nullptr)
+        return false;
+
+    constexpr auto OutputPort = false;
+
+    const auto PortIndex = 0;
+    clap_audio_port_info PortInfo = { };
+
+    AudioPorts->get(_PlugIn, PortIndex, OutputPort, &PortInfo);
+
+    return ((PortInfo.flags & CLAP_AUDIO_PORT_PREFERS_64BITS) == CLAP_AUDIO_PORT_PREFERS_64BITS);
 }
 
 /// <summary>
@@ -510,7 +542,7 @@ bool Host::HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept
 }
 
 /// <summary>
-/// Implements the CLAP_EXT_LOG extension.
+/// Implements the host's CLAP_EXT_LOG extension.
 /// </summary>
 const clap_host_log Host::LogHandler
 {
@@ -534,7 +566,7 @@ const clap_host_log Host::LogHandler
 };
 
 /// <summary>
-/// Implements the CLAP_EXT_NOTE_PORTS extension.
+/// Implements the host's CLAP_EXT_NOTE_PORTS extension.
 /// </summary>
 const clap_host_note_ports_t Host::NotePortsHandler =
 {
@@ -551,7 +583,7 @@ const clap_host_note_ports_t Host::NotePortsHandler =
 };
 
 /// <summary>
-/// Implements the CLAP_EXT_STATE extension. The plug-in reports its state has changed and should be saved again. If a parameter value changes, then it is implicit that the state is dirty.
+/// Implements the host's CLAP_EXT_STATE extension. The plug-in reports its state has changed and should be saved again. If a parameter value changes, then it is implicit that the state is dirty.
 /// </summary>
 const clap_host_state Host::StateHandler
 {
@@ -605,11 +637,14 @@ void Host::GetGUI() noexcept
 /// <summary>
 /// Gets the preferred size of the GUI window.
 /// </summary>
-void Host::GetGUISize(const clap_plugin_gui_t * gui, RECT & wr) const noexcept
+void Host::GetGUISize(RECT & wr) const noexcept
 {
+    if (!HasGUI())
+        return;
+
     uint32_t Width = 0, Height = 0;
 
-    if (!gui->get_size(_PlugIn, &Width, &Height))
+    if (!_PlugInGUI->get_size(_PlugIn, &Width, &Height))
     {
         Width  = 320;
         Height = 200;

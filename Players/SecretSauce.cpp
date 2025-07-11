@@ -72,9 +72,7 @@ bool SecretSauce::Exists() noexcept
     FILE * fp = nullptr;
 
     {
-        pfc::string PathName;
-
-        AdvCfgSecretSauceDirectoryPath.get(PathName);
+        pfc::string PathName = CfgSecretSauceDirectoryPath;
 
         if (PathName.is_empty())
             return false;

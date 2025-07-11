@@ -1,11 +1,13 @@
 
-/** $VER: Player.cpp (2025.07.09) **/
+/** $VER: Player.cpp (2025.07.11) **/
 
 #include "pch.h"
 
 #include "Player.h"
-
 #include "Channels.h"
+#include "Encoding.h"
+
+#include <fstream>
 
 /// <summary>
 /// Initializes a new instance.
@@ -24,13 +26,13 @@ player_t::player_t() noexcept
 
 #ifdef HAVE_FOO_VIS_MIDI
     {
-        foo_vis_midi::IAPI::ptr api;
+        IAPI::ptr api;
 
         if (fb2k::std_api_try_get(api))
             _MusicKeyboard = api->GetMusicKeyboard();
 
         if (_MusicKeyboard.is_valid())
-            _MusicKeyboard->Initialize(foo_vis_midi::InterfaceVersion);
+            _MusicKeyboard->Initialize(InterfaceVersion);
     }
 #endif
 }
@@ -896,30 +898,27 @@ static uint32_t GetDWord(const uint8_t * data) noexcept
 /// </summary>
 uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
 {
-    constexpr size_t MZHeaderSize = 0x40;
-    constexpr size_t PEHeaderSize = (size_t) 4 + 20 + 224;
-
-    uint8_t PEHeader[PEHeaderSize];
-
-    pfc::string URI = "file://";
-
-    URI += (const char *) filePath.u8string().c_str();
-
     try
     {
-        file::ptr File;
+        std::ifstream File(filePath, std::ios::binary);
 
-        filesystem::g_open(File, URI.c_str(), filesystem::open_mode_read, fb2k::noAbort);
-
-        File->read_object(PEHeader, MZHeaderSize, fb2k::noAbort);
-
-        if (GetWord(PEHeader) != 0x5A4D)
+        if (!File.is_open())
             return 0;
 
-        uint32_t OffsetPEHeader = GetDWord(PEHeader + 0x3C);
+        uint8_t MZHeader[64];
 
-        File->seek(OffsetPEHeader, fb2k::noAbort);
-        File->read_object(PEHeader, PEHeaderSize, fb2k::noAbort);
+        File.read((char *) MZHeader, sizeof(MZHeader));
+
+        if (GetWord(MZHeader) != 0x5A4D)
+            return 0;
+
+        const uint32_t OffsetPEHeader = GetDWord(MZHeader + 0x3C);
+
+        File.seekg(OffsetPEHeader, std::ios::beg);
+
+        uint8_t PEHeader[(size_t) 4 + 20 + 224];
+
+        File.read((char *) PEHeader, sizeof(PEHeader));
 
         if (GetDWord(PEHeader) != 0x00004550)
             return 0;

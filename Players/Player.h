@@ -109,7 +109,7 @@ private:
     uint16_t _EnabledChannels[128];
 
 #ifdef HAVE_FOO_VIS_MIDI
-    foo_vis_midi::IMusicKeyboard::ptr _MusicKeyboard;
+    IMusicKeyboard::ptr _MusicKeyboard;
 #endif
 };
 

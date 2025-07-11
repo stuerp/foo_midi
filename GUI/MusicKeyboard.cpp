@@ -11,26 +11,26 @@
 
 #pragma hdrstop
 
-extern MusicKeyboardWindow * _This;
+extern MusicKeyboardWindow * _CLAPWindow;
 
 #pragma region IMusicKeyboard
 
 [[nodiscard]] void MusicKeyboard::Initialize(uint32_t interfaceVersion) noexcept
 {
-    if (_This)
-        _This->Initialize(interfaceVersion);
+    if (_CLAPWindow)
+        _CLAPWindow->Initialize(interfaceVersion);
 }
 
 [[nodiscard]] void MusicKeyboard::ProcessMessage(uint32_t message, uint32_t timestamp) noexcept
 {
-    if (_This)
-        _This->ProcessMessage(message, timestamp);
+    if (_CLAPWindow)
+        _CLAPWindow->ProcessMessage(message, timestamp);
 }
 
 [[nodiscard]] void MusicKeyboard::SetPosition(uint32_t position) noexcept
 {
-    if (_This)
-        _This->SetPosition(position);
+    if (_CLAPWindow)
+        _CLAPWindow->SetPosition(position);
 }
 
 #pragma endregion

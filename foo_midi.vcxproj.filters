@@ -45,7 +45,6 @@
     <ClCompile Include="Players\CLAPPlayer.cpp" />
     <ClCompile Include="Infrastructure\CLAPHost.cpp" />
     <ClCompile Include="Infrastructure\CLAPEvents.cpp" />
-    <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
     <ClCompile Include="Infrastructure\MainMenu.cpp" />
     <ClCompile Include="Infrastructure\FS.cpp" />
     <ClCompile Include="GUI\API.cpp" />
@@ -54,6 +53,7 @@
     <ClCompile Include="GUI\MusicKeyboard.cpp" />
     <ClCompile Include="GUI\MusicKeyboardUIElement.cpp" />
     <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
+    <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -201,15 +201,14 @@
     <ClInclude Include="Players\CLAPPlayer.h" />
     <ClInclude Include="Infrastructure\CLAPHost.h" />
     <ClInclude Include="Infrastructure\CLAPEvents.h" />
-    <ClInclude Include="Infrastructure\CLAPWindow.h" />
     <ClInclude Include="3rdParty\foo_vis_midi\API.h" />
     <ClInclude Include="Infrastructure\PreferencesFM.h" />
-    <ClInclude Include="GUI\API.h" />
     <ClInclude Include="GUI\IMIDIReceiver.h" />
     <ClInclude Include="GUI\Key.h" />
     <ClInclude Include="GUI\Keyboard.h" />
     <ClInclude Include="GUI\MusicKeyboard.h" />
     <ClInclude Include="GUI\MusicKeyboardUIElement.h" />
+    <ClInclude Include="Infrastructure\CLAPWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />
@@ -268,8 +267,8 @@
     <ResourceCompile Include="Infrastructure\PreferencesPaths.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesProcessing.rc" />
     <ResourceCompile Include="Infrastructure\Preferences.rc" />
-    <ResourceCompile Include="Infrastructure\CLAPWindow.rc" />
     <ResourceCompile Include="Infrastructure\PreferencesWT.rc" />
+    <ResourceCompile Include="Infrastructure\CLAPWindow.rc" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="3rdParty\bass\c\x64\bass.lib" />

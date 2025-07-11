@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.10) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.11) P. Stuer **/
 
 #include "pch.h"
 
@@ -361,6 +361,10 @@ void PreferencesRootPage::apply()
         CfgDetectLeapFrogLoops  = (t_int32) SendDlgItemMessage(IDC_LEAPFROG_LOOPS, BM_GETCHECK);
         CfgDetectXMILoops       = (t_int32) SendDlgItemMessage(IDC_XMI_LOOPS, BM_GETCHECK);
         CfgDetectFF7Loops       = (t_int32) SendDlgItemMessage(IDC_FF7_LOOPS, BM_GETCHECK);
+
+        pfc::string FilePath = CfgVSTiXGPlugInFilePath;
+
+        GetDlgItem(IDC_MIDI_USE_VSTI_WITH_XG).EnableWindow(!FilePath.isEmpty());
     }
 
     OnChanged();
@@ -484,11 +488,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     {
         console::print(STR_COMPONENT_BASENAME " is enumerating VSTi plug-ins...");
 
-        pfc::string DirectoryPath;
-
-        AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
-
-        _VSTiPlugIns = _VSTiHost.GetPlugIns(DirectoryPath.c_str());
+        _VSTiPlugIns = _VSTiHost.GetPlugIns(std::u8string((const char8_t *) (const char *) CfgVSTiPlugInDirectoryPath.get()));
 
         if (!_VSTiPlugIns.empty())
         {
@@ -520,7 +520,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
     {
         console::print(STR_COMPONENT_BASENAME " is enumerating CLAP plug-ins...");
 
-        fs::path BaseDirectory(CfgCLAPPlugInDirectoryPath.get().c_str());
+        fs::path BaseDirectory(std::u8string((const char8_t *) CfgCLAPPlugInDirectoryPath.get().c_str()));
 
         _CLAPPlugIns = _CLAPHost.GetPlugIns(BaseDirectory);
 
@@ -732,7 +732,7 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
     {
         VSTi::Player Player;
 
-        if (Player.LoadVST((const char *) _SelectedPlayer.FilePath.u8string().c_str()))
+        if (Player.LoadVST(_SelectedPlayer.FilePath))
         {
             if (_VSTiHost.Config.size() != 0)
                 Player.SetChunk(_VSTiHost.Config.data(), _VSTiHost.Config.size());
@@ -965,7 +965,7 @@ void PreferencesRootPage::UpdateDialog() const noexcept
 {
     #pragma region MIDI Flavors
 
-    pfc::string FilePath; AdvCfgVSTiXGPlugin.get(FilePath);
+    pfc::string FilePath = CfgVSTiXGPlugInFilePath;
 
     GetDlgItem(IDC_MIDI_USE_VSTI_WITH_XG).EnableWindow(!FilePath.isEmpty());
 

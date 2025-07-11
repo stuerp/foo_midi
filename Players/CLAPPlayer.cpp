@@ -12,7 +12,7 @@
 
 #pragma region player_t
 
-CLAPPlayer::CLAPPlayer(CLAP::Host * host) noexcept : player_t(), _OutChannels { }, _AudioOut { }, _AudioOutputs { }
+CLAPPlayer::CLAPPlayer(CLAP::Host * host) noexcept : player_t(), _OutChannels { }, _AudioOut { }, _AudioOuts { }
 {
     _Host = host;
 }
@@ -30,19 +30,24 @@ bool CLAPPlayer::Startup()
     if (!_Host->IsPlugInLoaded())
         return false;
 
-    _LChannel.resize(GetBlockSize());
-    _RChannel.resize(GetBlockSize());
+    if (!_Host->PlugInPrefers64bitAudio())
+    {
+        _OutChannels[0] = new float[GetBlockSize()];
+        _OutChannels[1] = new float[GetBlockSize()];
 
-    if (_Host->Use64Bits())
-        return false; // Not supported yet
+        _AudioOut.data32        = (float **) _OutChannels;
+        _AudioOut.channel_count = _countof(_OutChannels);
+    }
+    else
+    {
+        _OutChannels[0] = new double[GetBlockSize()];
+        _OutChannels[1] = new double[GetBlockSize()];
 
-    _OutChannels[0] = _LChannel.data();
-    _OutChannels[1] = _RChannel.data();
+        _AudioOut.data64        = (double **) _OutChannels;
+        _AudioOut.channel_count = _countof(_OutChannels);
+    }
 
-    _AudioOut.data32        = _OutChannels;
-    _AudioOut.channel_count = _countof(_OutChannels);
-
-    _AudioOutputs[0] = _AudioOut;
+    _AudioOuts[0] = _AudioOut;
 
     if (!_Host->ActivatePlugIn((double) _SampleRate, 1, GetBlockSize()))
         return false;
@@ -65,6 +70,18 @@ void CLAPPlayer::Shutdown()
 
     _Host->DeactivatePlugIn();
 
+    if (_OutChannels[1])
+    {
+        delete[] _OutChannels[1];
+        _OutChannels[1] = nullptr;
+    }
+
+    if (_OutChannels[0])
+    {
+        delete[] _OutChannels[0];
+        _OutChannels[0] = nullptr;
+    }
+
     _IsStarted = false;
 }
 
@@ -82,9 +99,9 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
             .frames_count        = dstCount,
             .transport           = nullptr,
             .audio_inputs        = nullptr,
-            .audio_outputs       = _AudioOutputs,
+            .audio_outputs       = _AudioOuts,
             .audio_inputs_count  = 0,
-            .audio_outputs_count = _countof(_AudioOutputs),
+            .audio_outputs_count = _countof(_AudioOuts),
             .in_events           = &_InEvents,
             .out_events          = &_OutEvents,
         };
@@ -92,10 +109,27 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
         if (_Host->Process(Processor))
             return; // throw exception_io_data("CLAP plug-in event processing failed");
 
-        for (size_t j = 0; j < dstCount; ++j)
+        if (_AudioOut.data32 != nullptr)
         {
-            dstFrames[j * 2 + 0] = (audio_sample) _LChannel[j];
-            dstFrames[j * 2 + 1] = (audio_sample) _RChannel[j];
+            const float * _LChannel = (float *) _OutChannels[0];
+            const float * _RChannel = (float *) _OutChannels[1];
+
+            for (size_t j = 0; j < dstCount; ++j)
+            {
+                dstFrames[j * 2 + 0] = (audio_sample) _LChannel[j];
+                dstFrames[j * 2 + 1] = (audio_sample) _RChannel[j];
+            }
+        }
+        else
+        {
+            const double * _LChannel = (double *) _OutChannels[0];
+            const double * _RChannel = (double *) _OutChannels[1];
+
+            for (size_t j = 0; j < dstCount; ++j)
+            {
+                dstFrames[j * 2 + 0] = (audio_sample) _LChannel[j];
+                dstFrames[j * 2 + 1] = (audio_sample) _RChannel[j];
+            }
         }
     }
     catch (...) { }

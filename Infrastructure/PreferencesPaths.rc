@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.rc (2025.07.07) **/
+/** $VER: PreferencesPaths.rc (2025.07.11) **/
 
 #include "Resource.h"
 
@@ -51,12 +51,34 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #pragma endregion
 
+#pragma region VSTi XG Plug-In file path
+
+// Label
+#define X_B81    X_B11
+#define Y_B81    Y_B12 + H_B12 + 4
+#define W_B81    W_B11
+#define H_B81    H_LBL
+
+// EditBox
+#define X_B82    X_B81 + W_B81 + IX
+#define Y_B82    Y_B81
+#define W_B82    200
+#define H_B82    H_EBX
+
+// Button
+#define X_B83    X_B82 + W_B82 + IX
+#define Y_B83    Y_B82
+#define W_B83    16
+#define H_B83    H_BTN
+
+#pragma endregion
+
 #pragma region CLAP Plug-In path
 
 // Label
-#define X_B57    X_B11
-#define Y_B57    Y_B12 + H_B12 + 4
-#define W_B57    W_B11
+#define X_B57    X_B81
+#define Y_B57    Y_B82 + H_B82 + 4
+#define W_B57    W_B81
 #define H_B57    H_LBL
 
 // EditBox
@@ -212,6 +234,10 @@ font 8, "MS Shell Dlg", 400, 0, 1
     rtext       "VSTi Plug-ins:",       IDC_STATIC,                         X_B11, Y_B11 + 2, W_B11, H_B11
     edittext                            IDC_VSTi_PATH,                      X_B12, Y_B12,     W_B12, H_B12, ES_AUTOHSCROLL
     pushbutton  "...",                  IDC_VSTi_PATH_SELECT,               X_B13, Y_B13,     W_B13, H_B13
+
+    rtext       "VSTi XG Plug-in:",     IDC_STATIC,                         X_B81, Y_B81 + 2, W_B81, H_B81
+    edittext                            IDC_VSTi_XG_FILE_PATH               X_B82, Y_B82,     W_B82, H_B82, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_VSTi_XG_FILE_PATH_SELECT,       X_B83, Y_B83,     W_B83, H_B83
 
     rtext       "CLAP Plug-ins:",       IDC_STATIC,                         X_B57, Y_B57 + 2, W_B57, H_B57
     edittext                            IDC_CLAP_PATH, ,                    X_B58, Y_B58,     W_B58, H_B58, ES_AUTOHSCROLL

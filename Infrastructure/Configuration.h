@@ -211,6 +211,9 @@ extern cfg_var_modern::cfg_float
     CfgBASSMIDIVolume;
 
 extern cfg_var_modern::cfg_string
+    CfgVSTiPlugInDirectoryPath,
+    CfgVSTiXGPlugInFilePath,
+    CfgSecretSauceDirectoryPath,
     CfgCLAPPlugInDirectoryPath,
     CfgSoundFontFilePath,
     CfgMT32ROMDirectoryPath,
@@ -231,10 +234,6 @@ extern cfg_var_modern::cfg_int  CfgLoopExpansion;
 
 // HMI
 extern cfg_var_modern::cfg_int  CfgDefaultTempo;
-
-extern advconfig_string_factory AdvCfgVSTiPluginDirectoryPath;
-extern advconfig_string_factory AdvCfgVSTiXGPlugin;
-extern advconfig_string_factory_MT AdvCfgSecretSauceDirectoryPath;
 
 extern advconfig_integer_factory AdvCfgLoopCount;
 extern advconfig_integer_factory AdvCfgFadeTimeInMS;

@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.07.10) P. Stuer **/
+/** $VER: Resource.h (2025.07.11) P. Stuer **/
 
 #pragma once
 
@@ -138,28 +138,31 @@
 #define IDC_VSTi_PATH                       2010
 #define IDC_VSTi_PATH_SELECT                2011
 
-#define IDC_SOUNDFONT_FILE_PATH             2020
-#define IDC_SOUNDFONT_FILE_PATH_SELECT      2021
+#define IDC_VSTi_XG_FILE_PATH               2020
+#define IDC_VSTi_XG_FILE_PATH_SELECT        2021
 
-#define IDC_MT32EMU_FILE_PATH               2030
-#define IDC_MT32EMU_FILE_PATH_SELECT        2031
+#define IDC_SOUNDFONT_FILE_PATH             2030
+#define IDC_SOUNDFONT_FILE_PATH_SELECT      2031
 
-#define IDC_SECRET_SAUCE_PATH               2040
-#define IDC_SECRET_SAUCE_PATH_SELECT        2041
+#define IDC_MT32EMU_FILE_PATH               2040
+#define IDC_MT32EMU_FILE_PATH_SELECT        2041
 
-#define IDC_FLUIDSYNTH_PATH                 2050
-#define IDC_FLUIDSYNTH_PATH_SELECT          2051
+#define IDC_SECRET_SAUCE_PATH               2050
+#define IDC_SECRET_SAUCE_PATH_SELECT        2051
 
-#define IDC_FLUIDSYNTH_CONFIG_PATH          2060
-#define IDC_FLUIDSYNTH_CONFIG_PATH_SELECT   2061
+#define IDC_FLUIDSYNTH_PATH                 2060
+#define IDC_FLUIDSYNTH_PATH_SELECT          2061
 
-#define IDC_PROGRAMS_FILE_PATH              2070
-#define IDC_PROGRAMS_FILE_PATH_SELECT       2071
+#define IDC_FLUIDSYNTH_CONFIG_PATH          2070
+#define IDC_FLUIDSYNTH_CONFIG_PATH_SELECT   2071
 
-#define IDC_CLAP_PATH                       2080
-#define IDC_CLAP_PATH_SELECT                2081
+#define IDC_PROGRAMS_FILE_PATH              2080
+#define IDC_PROGRAMS_FILE_PATH_SELECT       2081
 
-#define IDC_PATHS_MESSAGE                   2090
+#define IDC_CLAP_PATH                       2090
+#define IDC_CLAP_PATH_SELECT                2091
+
+#define IDC_PATHS_MESSAGE                   2999
 
 /** Dialog: Preferences Recomposer **/
 

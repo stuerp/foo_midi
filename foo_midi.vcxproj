@@ -105,7 +105,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./GUI;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>EnableAllWarnings</WarningLevel>
@@ -142,7 +142,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./GUI;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -180,7 +180,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./GUI;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -225,7 +225,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./GUI;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi;./3rdParty/FluidSynth/include;./3rdParty/JSON;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libsflist;./3rdParty/libmidi;./3rdParty/libsf/libsf;./3rdParty/libsf/libriff;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt</AdditionalOptions>
@@ -408,7 +408,6 @@
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
     <ClInclude Include="3rdParty\foo_vis_midi\API.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
-    <ClInclude Include="GUI\API.h" />
     <ClInclude Include="GUI\IMIDIReceiver.h" />
     <ClInclude Include="GUI\Key.h" />
     <ClInclude Include="GUI\Keyboard.h" />

@@ -20,6 +20,7 @@
 
 namespace CLAP
 {
+class Host;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
@@ -51,6 +52,28 @@ public:
     };
 
     void AdjustSize(RECT & wr) const noexcept;
+
+    struct XYZ
+    {
+        Window * This;
+        Host * Host;
+    };
+
+    void Run(Host * host)
+    {
+        XYZ p = { this, host };
+
+        ::CreateThread(nullptr, 0, ThreadProc, &p, 0, nullptr);
+    }    
+
+    static DWORD WINAPI ThreadProc(LPVOID lpParam) noexcept
+    {
+        XYZ * p = (XYZ *)(lpParam);
+
+        return p->This->DialogThreadProc(p->Host);
+    }
+
+    DWORD DialogThreadProc(Host * Host);
 
 private:
     #pragma region CDialogImpl

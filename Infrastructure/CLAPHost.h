@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.h (2025.07.04) P. Stuer **/
+/** $VER: CLAPHost.h (2025.07.11) P. Stuer **/
 
 #pragma once
 
@@ -56,7 +56,10 @@ public:
 
     std::string GetPlugInName() const noexcept { return (_PlugInDescriptor != nullptr) ? _PlugInDescriptor->name : ""; }
 
-    bool Use64Bits() const noexcept { return ((_PortInfo.flags & CLAP_AUDIO_PORT_PREFERS_64BITS) == CLAP_AUDIO_PORT_PREFERS_64BITS); }
+    void GetGUISize(RECT & wr) const noexcept;
+    bool SetWindow(clap_window_t * w) { return _PlugInGUI->set_parent(_PlugIn, w); }
+
+    bool PlugInPrefers64bitAudio() const noexcept;
 
 private:
     void GetPlugIns_(const fs::path & directoryPath) noexcept;
@@ -69,7 +72,6 @@ private:
     void GetVoiceInfo() noexcept;
 
     void GetGUI() noexcept;
-    void GetGUISize(const clap_plugin_gui_t * gui, RECT & wr) const noexcept;
 
 private:
     static const clap_host_log LogHandler;
@@ -88,9 +90,9 @@ private:
 
     clap_audio_port_info _PortInfo;
 
-    Window _Window;
+    CLAP::Window _Window;
 };
 
-// This instance must only be used by the UI (e.g. menu items) and the playback thread.
+// This shared instance must only be used by the UI element and the playback thread.
 extern Host _Host;
 }

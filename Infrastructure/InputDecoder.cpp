@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.09) **/
+/** $VER: InputDecoder.cpp (2025.07.11) **/
 
 #include "pch.h"
 
@@ -264,7 +264,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     _IsFirstBlock = true;
 
-    _PlayerType = (PlayerTypes) (uint32_t) CfgPlayerType;
     _LoopType = (LoopTypes) ((_Flags & input_flag_playback) ? (int) CfgLoopTypePlayback : (int) CfgLoopTypeOther);
 
     // Initialize time parameters.
@@ -316,41 +315,22 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
-    // Set the player based on the preset. It can be overridden by the metadata or the sound fonts.
-    _PlayerType = Preset._PlayerType;
+    SelectPlayer(Preset, subSongIndex, abortHandler);
 
-    // Set the player depending on the metadata and some configuration settings.
+    // Unload the plug-in from the global CLAP host when the player is not a CLAP plug-in. This also closes the plug-in GUI.
+    if ((_Flags & input_flag_playback) && (_PlayerType != PlayerTypes::CLAP))
     {
-        midi::metadata_table_t MetaData;
-
-        _Container.GetMetaData(subSongIndex, MetaData);
-
-        for (const midi::metadata_item_t & Item : MetaData)
-        {
-            if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
+        CLAP::_Host.UnLoad();
+/*
+        fb2k::inMainThread2
+        (
+            [this]()
             {
-                _IsMT32 = (Item.Value == "MT-32");
-                _IsXG = (Item.Value == "XG");
+                CLAP::_Host.HideGUI();
             }
-        }
-
-        if (_IsMT32 && CfgUseMT32EmuWithMT32)
-            _PlayerType = PlayerTypes::MT32Emu;
-        else
-        if (_IsXG && CfgUseVSTiWithXG)
-        {
-            _PlayerType = PlayerTypes::VSTi;
-
-            pfc::string FilePath;
-
-            AdvCfgVSTiXGPlugin.get(FilePath);
-
-            Preset._PlugInFilePath = FilePath;
-        }
+        );
+*/
     }
-
-    // Load the sound fonts.
-    GetSoundFonts(Preset._SoundFontFilePath, abortHandler);
 
     // Create and initialize the MIDI player.
     switch (_PlayerType)
@@ -395,7 +375,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             auto Player = new VSTi::Player;
 
-            if (!Player->LoadVST(Preset._PlugInFilePath.c_str()))
+            if (!Player->LoadVST((const char8_t *) Preset._PlugInFilePath.c_str()))
                 throw pfc::exception(pfc::string("Unable to load VSTi plug-in from \"") + Preset._PlugInFilePath + "\"");
 
             if (Preset._VSTiConfig.size() != 0)
@@ -437,10 +417,16 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (!_Host->IsPlugInLoaded())
                 return;
-/*            
+/*
             if ((_Flags & input_flag_playback) && !core_api::is_quiet_mode_enabled())
             {
-                fb2k::inMainThread2([this]() { _Host->ShowGUI(core_api::get_main_window()); });
+                fb2k::inMainThread2
+                (
+                    [this]()
+                    {
+                        this->_Host->ShowGUI(core_api::get_main_window());
+                    }
+                );
             }
 */
             auto Player = new CLAPPlayer(_Host);
@@ -564,7 +550,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             }
 
             Player->SetAbortHandler(&abortHandler);
-            Player->SetROMDirectory(DirectoryPath.c_str());
+            Player->SetROMDirectory(std::u8string((const char8_t *) DirectoryPath.c_str()));
 /*
             if (!Player->IsConfigValid())
                 throw pfc::exception("The MT32Emu driver needs a valid MT-32 or CM32L ROM set to play.");
@@ -669,19 +655,17 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         {
             auto Player = new SCPlayer();
 
-            pfc::string PathName;
+            fs::path PathName = (const char8_t *) (const char *) CfgSecretSauceDirectoryPath.get();
 
-            AdvCfgSecretSauceDirectoryPath.get(PathName);
-
-            if (PathName.is_empty())
+            if (PathName.empty())
             {
                 console::warning(STR_COMPONENT_BASENAME " is attempting to load Secret Sauce from the plugin install path because the path was not configured.");
 
-                PathName = core_api::get_my_full_path();
-                PathName.truncate(PathName.scan_filename());
+                PathName = (const char8_t *) core_api::get_my_full_path();
+                PathName.remove_filename();
             }
 
-            Player->SetRootPath(PathName.c_str());
+            Player->SetRootPath(PathName);
 
             _Player = Player;
 
@@ -892,6 +876,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             fileInfo.info_set_int(InfoSampleRate, _ActualSampleRate);
         }
 
+        // Set the "midi_player" information field.
         {
             assert(_countof(PlayerTypeNames) == ((size_t) PlayerTypes::Max + 1));
 
@@ -905,6 +890,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             fileInfo.info_set(InfoMIDIPlayer, Value);
         }
 
+        // Set the "midi_player_ext" information field.
         {
             pfc::string Value;
 
@@ -916,7 +902,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
                 {
                     const auto TargetId = (int) CfgADLEmulator;
 
-                    auto Match = std::ranges::find_if(_OPNEmulators, [TargetId](const emulator_t & em)
+                    auto Match = std::ranges::find_if(_ADLEmulators, [TargetId](const emulator_t & em)
                     {
                         return em.Id == TargetId;
                     });
@@ -955,7 +941,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
                 case PlayerTypes::VSTi:
                 case PlayerTypes::CLAP:
                 {
-                    Value = CfgPlugInName.get();
+                    Value = !_IsPlayerTypeOverriden ? CfgPlugInName.get() : pfc::string("Yamaha S-YXG50");
                     break;
                 }
             };
@@ -965,6 +951,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
             fileInfo.info_set(InfoMIDIPlayerExt, Value);
         }
 
+        // Set the "extra_percussion_channel" information field.
         {
             if (_ExtraPercussionChannel != ~0L)
                 fileInfo.info_set(InfoMIDIExtraPercusionChannel, pfc::format_int((t_int64) _ExtraPercussionChannel + 1));
@@ -1167,6 +1154,51 @@ void InputDecoder::InitializeFade() noexcept
         case LoopTypes::PlayIndefinitely:
             break;
     }
+}
+
+/// <summary>
+/// Overrides the selected player depending on the metadata and some configuration settings.
+/// </summary>
+void InputDecoder::SelectPlayer(preset_t & Preset, size_t subSongIndex, abort_callback & abortHandler) noexcept
+{
+    _PlayerType = Preset._PlayerType;
+    _IsPlayerTypeOverriden = false;
+
+    // Should the player be overriden by the metadata?
+    midi::metadata_table_t MetaData;
+
+    _Container.GetMetaData(subSongIndex, MetaData);
+
+    for (const midi::metadata_item_t & Item : MetaData)
+    {
+        if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
+        {
+            _IsMT32 = (Item.Value == "MT-32");
+            _IsXG = (Item.Value == "XG");
+        }
+    }
+
+    if (_IsMT32 && CfgUseMT32EmuWithMT32)
+    {
+        _PlayerType = PlayerTypes::MT32Emu;
+        _IsPlayerTypeOverriden = true;
+    }
+    else
+    if (_IsXG && CfgUseVSTiWithXG)
+    {
+        pfc::string FilePath = CfgVSTiXGPlugInFilePath;
+
+        if (!FilePath.isEmpty())
+        {
+            _PlayerType = PlayerTypes::VSTi;
+            _IsPlayerTypeOverriden = true;
+
+            Preset._PlugInFilePath = FilePath;
+        }
+    }
+
+    // Get the sound fonts if the player supports them.
+    GetSoundFonts(Preset._SoundFontFilePath, abortHandler);
 }
 
 #pragma endregion
@@ -1435,4 +1467,4 @@ const char * InputDecoder::PlayerTypeNames[15] =
     "CLAP",
 };
 
-static input_factory_t<InputDecoder> InputDecoderFactory;
+static input_factory_t<InputDecoder> _Factory;

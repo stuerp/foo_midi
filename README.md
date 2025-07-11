@@ -103,6 +103,7 @@ To create the component first build the x64 configuration and next the x86 confi
   - Improved: Added enable or disable reverb processing by the LibMT32Emu player (default is on).
   - Improved: Skip to First Note, Loop Count and Fade-Out Time can be set on the main Preferences page.
   - Improved: Lots of little fixes, code cleanup and code polishing.
+  - Changed: All advanced preferences have been moved to a Preferences page. The current values will **not** be migrated.
   - Changed: Renamed `midi_plug_in` tag to `midi_player_ext`. The ADL, OPN and Nuked OPL3 player will set it to the current emulator core.
   - Changed Moved BASS MIDI and FluidSynth settings to new Wavetable preference page.
   - Fixed: The LibMT32Emu player reversed the left and the right channels in the output.

@@ -12,7 +12,7 @@
 MusicKeyboardWindow::MusicKeyboardWindow(ui_element_config::ptr config, ui_element_instance_callback_ptr callback) : m_bMsgHandled(FALSE), m_callback(callback),
     _Config(config)
 {
-    _This = this;
+    _CLAPWindow = this;
 
     _Keyboard = std::make_unique<Keyboard>();
 }
@@ -24,7 +24,7 @@ MusicKeyboardWindow::~MusicKeyboardWindow()
 {
     Dispose();
 
-    _This = nullptr;
+    _CLAPWindow = nullptr;
 }
 
 #pragma region CWindowImpl
@@ -361,6 +361,6 @@ void MusicKeyboardWindow::ProcessMessage(uint32_t message, uint32_t timestamp) n
 
 #pragma endregion
 
-MusicKeyboardWindow * _This = nullptr;
+MusicKeyboardWindow * _CLAPWindow = nullptr;
 
-service_factory_single_t<MusicKeyboardUIElement> _MusicKeyboardUIElement;
+//service_factory_single_t<MusicKeyboardUIElement> _Factory; // FIXME: Disabled until visstream can be implemented

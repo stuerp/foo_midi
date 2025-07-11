@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2025.07.08) P. stuer **/
+/** $VER: PreferencesPaths.cpp (2025.07.11) P. stuer **/
 
 #include "pch.h"
 
@@ -38,14 +38,15 @@ class PreferencesPathsPage : public CDialogImpl<PreferencesPathsPage>, public pr
 public:
     PreferencesPathsPage(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
     {
-        AdvCfgVSTiPluginDirectoryPath.get(_VSTiPlugInDirectoryPath);
-        _CLAPPlugInDirectoryPath = CfgCLAPPlugInDirectoryPath;
-        _SoundFontFilePath = CfgSoundFontFilePath;
-        _MT32ROMDirectoryPath = CfgMT32ROMDirectoryPath;
-        AdvCfgSecretSauceDirectoryPath.get(_SecretSauceDirectoryPath);
-        _FluidSynthDirectoryPath = CfgFluidSynthDirectoryPath;
+        _VSTiPlugInDirectoryPath  = CfgVSTiPlugInDirectoryPath;
+        _VSTiXGPlugInFilePath     = CfgVSTiXGPlugInFilePath;
+        _CLAPPlugInDirectoryPath  = CfgCLAPPlugInDirectoryPath;
+        _SoundFontFilePath        = CfgSoundFontFilePath;
+        _MT32ROMDirectoryPath     = CfgMT32ROMDirectoryPath;
+        _SecretSauceDirectoryPath = CfgSecretSauceDirectoryPath;
+        _FluidSynthDirectoryPath  = CfgFluidSynthDirectoryPath;
         _FluidSynthConfigFilePath = CfgFluidSynthConfigFilePath;
-        _ProgramsFilePath = CfgProgramsFilePath;
+        _ProgramsFilePath         = CfgProgramsFilePath;
     }
 
     PreferencesPathsPage(const PreferencesPathsPage&) = delete;
@@ -67,6 +68,8 @@ public:
 
         COMMAND_HANDLER_EX(IDC_VSTi_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_VSTi_PATH_SELECT, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_VSTi_XG_FILE_PATH, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_VSTi_XG_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_CLAP_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_CLAP_PATH_SELECT, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_SOUNDFONT_FILE_PATH, EN_CHANGE, OnEditChange)
@@ -100,34 +103,28 @@ private:
     void OnChanged() const noexcept;
 
 private:
-#pragma region VSTi
+    // VSTi
     pfc::string _VSTiPlugInDirectoryPath;
-#pragma endregion
+    pfc::string _VSTiXGPlugInFilePath;
 
-#pragma region CLAP
+    // CLAP
     pfc::string _CLAPPlugInDirectoryPath;
-#pragma endregion
 
-#pragma region SoundFont
+    // SoundFont
     pfc::string _SoundFontFilePath;
-#pragma endregion
 
-#pragma region libMT32Emu
+    // LibMT32Emu
     pfc::string _MT32ROMDirectoryPath;
-#pragma endregion
 
-#pragma region Secret Sauce
+    // Secret Sauce
     pfc::string _SecretSauceDirectoryPath;
-#pragma endregion
 
-#pragma region FluidSynth
+    // FluidSynth
     pfc::string _FluidSynthDirectoryPath;
     pfc::string _FluidSynthConfigFilePath;
-#pragma endregion
 
-#pragma region FMMIDI
+    // FMMIDI
     pfc::string _ProgramsFilePath;
-#pragma endregion
 
     const preferences_page_callback::ptr _Callback;
 
@@ -153,14 +150,15 @@ t_uint32 PreferencesPathsPage::get_state()
 /// </summary>
 void PreferencesPathsPage::apply()
 {
-    AdvCfgVSTiPluginDirectoryPath.set(_VSTiPlugInDirectoryPath);
-    CfgCLAPPlugInDirectoryPath = _CLAPPlugInDirectoryPath;
-    CfgSoundFontFilePath = _SoundFontFilePath;
-    CfgMT32ROMDirectoryPath = _MT32ROMDirectoryPath;
-    AdvCfgSecretSauceDirectoryPath.set(_SecretSauceDirectoryPath);
-    CfgFluidSynthDirectoryPath = _FluidSynthDirectoryPath;
+    CfgVSTiPlugInDirectoryPath  = _VSTiPlugInDirectoryPath;
+    CfgVSTiXGPlugInFilePath     = _VSTiXGPlugInFilePath;
+    CfgCLAPPlugInDirectoryPath  = _CLAPPlugInDirectoryPath;
+    CfgSoundFontFilePath        = _SoundFontFilePath;
+    CfgMT32ROMDirectoryPath     = _MT32ROMDirectoryPath;
+    CfgSecretSauceDirectoryPath = _SecretSauceDirectoryPath;
+    CfgFluidSynthDirectoryPath  = _FluidSynthDirectoryPath;
     CfgFluidSynthConfigFilePath = _FluidSynthConfigFilePath;
-    CfgProgramsFilePath = _ProgramsFilePath;
+    CfgProgramsFilePath         = _ProgramsFilePath;
 
     OnChanged();
 }
@@ -213,6 +211,10 @@ void PreferencesPathsPage::OnEditChange(UINT code, int id, CWindow) noexcept
     {
         case IDC_VSTi_PATH:
             _VSTiPlugInDirectoryPath = pfc::utf8FromWide(Text);
+            break;
+
+        case IDC_VSTi_XG_FILE_PATH:
+            _VSTiXGPlugInFilePath = pfc::utf8FromWide(Text);
             break;
 
         case IDC_CLAP_PATH:
@@ -268,6 +270,29 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
                 pfc::wstringLite w = pfc::wideFromUTF8(DirectoryPath);
 
                 SetDlgItemText(IDC_VSTi_PATH, w);
+
+                OnChanged();
+            }
+            break;
+        }
+
+        case IDC_VSTi_XG_FILE_PATH_SELECT:
+        {
+            pfc::string DirectoryPath = _VSTiXGPlugInFilePath;
+
+            DirectoryPath.truncate_filename();
+
+            pfc::string FilePath = _VSTiXGPlugInFilePath;
+
+            if (::uGetOpenFileName(m_hWnd, "All files|*.*"
+                ,
+                0, "dll", "Choose the plug-in file...", DirectoryPath, FilePath, FALSE))
+            {
+                _VSTiXGPlugInFilePath = FilePath;
+
+                pfc::wstringLite w = pfc::wideFromUTF8(FilePath);
+
+                SetDlgItemText(IDC_VSTi_XG_FILE_PATH, w);
 
                 OnChanged();
             }
@@ -425,11 +450,10 @@ bool PreferencesPathsPage::HasChanged() const noexcept
 {
     bool HasChanged = false;
 
-    pfc::string DirectoryPath;
+    if (_VSTiPlugInDirectoryPath != CfgVSTiPlugInDirectoryPath)
+        HasChanged = true;
 
-    AdvCfgVSTiPluginDirectoryPath.get(DirectoryPath);
-
-    if (_VSTiPlugInDirectoryPath != DirectoryPath)
+    if (_VSTiXGPlugInFilePath != CfgVSTiXGPlugInFilePath)
         HasChanged = true;
 
     if (_CLAPPlugInDirectoryPath != CfgCLAPPlugInDirectoryPath)
@@ -441,9 +465,7 @@ bool PreferencesPathsPage::HasChanged() const noexcept
     if (_MT32ROMDirectoryPath != CfgMT32ROMDirectoryPath)
         HasChanged = true;
 
-    AdvCfgSecretSauceDirectoryPath.get(DirectoryPath);
-
-    if (_SecretSauceDirectoryPath != DirectoryPath)
+    if (_SecretSauceDirectoryPath != CfgSecretSauceDirectoryPath)
         HasChanged = true;
 
     if (_FluidSynthDirectoryPath != CfgFluidSynthDirectoryPath)
@@ -473,14 +495,15 @@ void PreferencesPathsPage::OnChanged() const noexcept
 /// </summary>
 void PreferencesPathsPage::UpdateDialog() const noexcept
 {
-    ::uSetDlgItemText(m_hWnd, IDC_VSTi_PATH, _VSTiPlugInDirectoryPath);
-    ::uSetDlgItemText(m_hWnd, IDC_CLAP_PATH, _CLAPPlugInDirectoryPath);
-    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH, _SoundFontFilePath);
-    ::uSetDlgItemText(m_hWnd, IDC_MT32EMU_FILE_PATH, _MT32ROMDirectoryPath);
-    ::uSetDlgItemText(m_hWnd, IDC_SECRET_SAUCE_PATH, _SecretSauceDirectoryPath);
-    ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_PATH, _FluidSynthDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_VSTi_PATH,              _VSTiPlugInDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_VSTi_XG_FILE_PATH,      _VSTiXGPlugInFilePath);
+    ::uSetDlgItemText(m_hWnd, IDC_CLAP_PATH,              _CLAPPlugInDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_SOUNDFONT_FILE_PATH,    _SoundFontFilePath);
+    ::uSetDlgItemText(m_hWnd, IDC_MT32EMU_FILE_PATH,      _MT32ROMDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_SECRET_SAUCE_PATH,      _SecretSauceDirectoryPath);
+    ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_PATH,        _FluidSynthDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_CONFIG_PATH, _FluidSynthConfigFilePath);
-    ::uSetDlgItemText(m_hWnd, IDC_PROGRAMS_FILE_PATH, _ProgramsFilePath);
+    ::uSetDlgItemText(m_hWnd, IDC_PROGRAMS_FILE_PATH,     _ProgramsFilePath);
 }
 #pragma endregion
 

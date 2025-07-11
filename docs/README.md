@@ -464,7 +464,7 @@ The **Filter effects** setting prevents reverb and chorus messages from being se
 
 When you enable the  **Use LibMT32Emu with MT-32** setting the selected player will be ignored and LibMT32Emu will be used whenever an MT-32 MIDI file is played.
 
-Enabling the **Use S-YXG50 VSTi with XG** setting will ignore the selected player and use the S-YXG50 VSTi whenever an XG MIDI file is played.
+Enabling the **Use S-YXG50 VSTi with XG** setting will ignore the selected player and use the Yamaha S-YXG50 VSTi whenever an XG MIDI file is played.
 
 **Extra percussion channel** will assign channel 16 as an extra percussion channel whenever a track is found in the MIDI file that contains metadata of type Text, Trackname or Instrumentname that contains the word `drum` (case-insensitive).
 
@@ -592,6 +592,10 @@ Cache status
 - [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
 - [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
 
+### Apogee Expanded MIDI (EMIDI)
+
+- [Apogee Expanded MIDI (EMIDI) API v1.1](https://moddingwiki.shikadi.net/wiki/Apogee_Expanded_MIDI)
+
 ### RMI
 
 - [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
@@ -607,6 +611,8 @@ Cache status
 - [Introducing the Interactive XMF Audio File Format](https://www.gamedeveloper.com/audio/introducing-the-interactive-xmf-audio-file-format)
 - [XmfExtractor](https://github.com/benryves/XmfExtractor)
 
+### BASS MIDI
+
 ### FluidSynth
 
 - [FluidSynth User Manual](https://github.com/FluidSynth/fluidsynth/wiki/UserManual)
@@ -618,6 +624,8 @@ Cache status
 
 - Development
   - [VST 3 Developer Portal](https://steinbergmedia.github.io/vst3_dev_portal/pages/index.html)
+- Plug-Ins
+  - [Yamaha S-YXG50 Portable VSTi v1.0.0](https://veg.by/en/projects/syxg50/)
 
 ### CLAP Hosts
 

@@ -282,6 +282,9 @@ bool MT32Player::LoadROMs(const std::vector<std::string> & machineIDs) noexcept
 
     auto ROMs = IdentifyControlROMs();
 
+    if (ROMs.empty())
+        return false;
+
     for (const auto & MachineID : machineIDs)
     {
         size_t Count = _Service.getROMIDs(nullptr, 0, MachineID.c_str());
@@ -322,20 +325,27 @@ bool MT32Player::LoadMachineROMs(const std::string & machineID)
     bool FoundControlROM = false;
     bool FoundPCMROM = false;
 
-    for (const auto & Entry : fs::directory_iterator(_ROMDirectory))
+    try
     {
-//      console::print(STR_COMPONENT_BASENAME, ": ", machineID.c_str(), " / ", (const char *) Entry.path().u8string().c_str());
+        for (const auto & Entry : fs::directory_iterator(_ROMDirectory))
+        {
+    //      console::print(STR_COMPONENT_BASENAME, ": ", machineID.c_str(), " / ", (const char *) Entry.path().u8string().c_str());
 
-        auto rc = _Service.addMachineROMFile(machineID.c_str(), (const char *) Entry.path().u8string().c_str());
+            auto rc = _Service.addMachineROMFile(machineID.c_str(), (const char *) Entry.path().u8string().c_str());
 
-        if (rc == MT32EMU_RC_MACHINE_NOT_IDENTIFIED)
-            continue;
+            if (rc == MT32EMU_RC_MACHINE_NOT_IDENTIFIED)
+                continue;
 
-        FoundControlROM = FoundControlROM || (rc == MT32EMU_RC_ADDED_CONTROL_ROM);
-        FoundPCMROM = FoundPCMROM || (rc == MT32EMU_RC_ADDED_PCM_ROM);
+            FoundControlROM = FoundControlROM || (rc == MT32EMU_RC_ADDED_CONTROL_ROM);
+            FoundPCMROM = FoundPCMROM || (rc == MT32EMU_RC_ADDED_PCM_ROM);
 
-        if (FoundControlROM && FoundPCMROM)
-            return true;
+            if (FoundControlROM && FoundPCMROM)
+                return true;
+        }
+    }
+    catch (std::exception e)
+    {
+        console::print(STR_COMPONENT_BASENAME, " fails to load the machine ROMs: ", e.what());
     }
 
     return false;
@@ -350,10 +360,17 @@ std::set<std::string> MT32Player::IdentifyControlROMs()
 
     mt32emu_rom_info ROMInfo = { };
 
-    for (const auto & Entry : fs::directory_iterator(_ROMDirectory))
+    try
     {
-        if ((_Service.identifyROMFile(&ROMInfo, (const char *) Entry.path().u8string().c_str(), nullptr) == MT32EMU_RC_OK) && (ROMInfo.control_rom_id != nullptr))
-            ROMs.insert(ROMInfo.control_rom_id);
+        for (const auto & Entry : fs::directory_iterator(_ROMDirectory))
+        {
+            if ((_Service.identifyROMFile(&ROMInfo, (const char *) Entry.path().u8string().c_str(), nullptr) == MT32EMU_RC_OK) && (ROMInfo.control_rom_id != nullptr))
+                ROMs.insert(ROMInfo.control_rom_id);
+        }
+    }
+    catch (std::exception e)
+    {
+        console::print(STR_COMPONENT_BASENAME, " fails to identify the control ROMs: ", e.what());
     }
 
     return ROMs;
