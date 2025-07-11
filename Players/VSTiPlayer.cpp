@@ -1,9 +1,10 @@
 
-/** $VER: VSTiPlayer.cpp (2025.07.04) **/
+/** $VER: VSTiPlayer.cpp (2025.07.11) **/
 
 #include "pch.h"
 
 #include "VSTiPlayer.h"
+#include "Resource.h"
 
 #define NOMINMAX
 
@@ -268,6 +269,38 @@ static bool CreatePipeName(pfc::string_base & pipeName)
 
 bool Player::StartHost()
 {
+    std::string CommandLine;;
+
+    {
+        fs::path HostPath = (const char8_t *) core_api::get_my_full_path();
+
+        HostPath.remove_filename();
+        HostPath /= (_ProcessorArchitecture == 64) ? u8"vsthost64.exe" : u8"vsthost32.exe";
+
+        // MS Defender does not like applications that use the operating system... <sigh>
+        if (!fs::exists(HostPath))
+        {
+            console::print(STR_COMPONENT_BASENAME, " can't start VSTi plug-in. Unable to find required host executable \"", (const char *) HostPath.u8string().c_str(), "\".");
+
+            return false;
+        }
+
+        uint32_t Sum = 0;
+
+        {
+            pfc::stringcvt::string_os_from_utf8 plugin_os((const char *) _FilePath.u8string().c_str());
+
+            const TCHAR * ch = plugin_os.get_ptr();
+
+            while (*ch)
+            {
+                Sum += (TCHAR) (*ch++ * 820109);
+            }
+        }
+
+        CommandLine = std::string("\"") + (const char *) HostPath.u8string().c_str() + "\" \"" + (const char *) _FilePath.u8string().c_str() + "\" " + pfc::format_int(Sum, 0, 16).c_str();
+    }
+
     if (!_IsCOMInitialized)
     {
         if (FAILED(::CoInitialize(NULL)))
@@ -334,37 +367,6 @@ bool Player::StartHost()
         ::CloseHandle(hPipe);
     }
 
-    std::string CommandLine = "\"";
-
-    {
-        CommandLine += core_api::get_my_full_path();
-
-        const size_t SlashPosition = CommandLine.find_last_of('\\');
-
-        if (SlashPosition != std::string::npos)
-            CommandLine.erase(CommandLine.begin() + (const __int64)(SlashPosition + 1), CommandLine.end());
-
-        CommandLine += (_ProcessorArchitecture == 64) ? "vsthost64.exe" : "vsthost32.exe";
-        CommandLine += "\" \"";
-        CommandLine += (const char *) _FilePath.u8string().c_str();
-        CommandLine += "\" ";
-
-        uint32_t Sum = 0;
-
-        {
-            pfc::stringcvt::string_os_from_utf8 plugin_os((const char *) _FilePath.u8string().c_str());
-
-            const TCHAR * ch = plugin_os.get_ptr();
-
-            while (*ch)
-            {
-                Sum += (TCHAR) (*ch++ * 820109);
-            }
-        }
-
-        CommandLine += pfc::format_int(Sum, 0, 16);
-    }
-
     {
         STARTUPINFO si =
         {
@@ -377,6 +379,10 @@ bool Player::StartHost()
             .hStdOutput = _hPipeOutWrite,
             .hStdError = ::GetStdHandle(STD_ERROR_HANDLE),
         };
+
+    #ifdef _DEBUG
+        FB2K_console_print(STR_COMPONENT_BASENAME, " is using \"", CommandLine.c_str(), "\" to start host process.");
+    #endif
 
         PROCESS_INFORMATION pi = { };
 
@@ -398,7 +404,7 @@ bool Player::StartHost()
         _hThread = pi.hThread;
 
     #ifdef _DEBUG
-        FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ")");
+        FB2K_console_print(STR_COMPONENT_BASENAME, " started DLL host hProcess 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), " / hThread 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ".");
     #else
         ::SetPriorityClass(_hProcess, ::GetPriorityClass(::GetCurrentProcess()));
         ::SetThreadPriority(_hThread, ::GetThreadPriority(::GetCurrentThread()));
@@ -453,7 +459,7 @@ void Player::StopHost() noexcept
     _IsTerminating = true;
 
     #ifdef _DEBUG
-        FB2K_console_print("Stopping host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ")");
+        FB2K_console_print(STR_COMPONENT_BASENAME, " stopped DLL host hProcess 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), " / hThread 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ".");
     #endif
 
     if (_hProcess)
@@ -592,12 +598,12 @@ uint32_t Player::ReadBytesOverlapped(void * data, uint32_t size) noexcept
 
     ::SetLastError(NO_ERROR);
 
-    DWORD state;
+    DWORD State;
 
 #ifdef MESSAGE_PUMP
     for (;;)
     {
-        state = ::MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
+        State = ::MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
 
         if (state == WAIT_OBJECT_0 + _countof(handles))
             ProcessPendingMessages();
@@ -605,10 +611,10 @@ uint32_t Player::ReadBytesOverlapped(void * data, uint32_t size) noexcept
             break;
     }
 #else
-    state = ::WaitForMultipleObjects(_countof(handles), &handles[0], FALSE, INFINITE);
+    State = ::WaitForMultipleObjects(_countof(handles), &handles[0], FALSE, INFINITE);
 #endif
 
-    if (state == WAIT_OBJECT_0 && ::GetOverlappedResult(_hPipeOutRead, &ol, &BytesRead, TRUE))
+    if (State == WAIT_OBJECT_0 && ::GetOverlappedResult(_hPipeOutRead, &ol, &BytesRead, TRUE))
         return BytesRead;
 
     ::CancelIoEx(_hPipeOutRead, &ol);

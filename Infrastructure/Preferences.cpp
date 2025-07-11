@@ -492,7 +492,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         if (!_VSTiPlugIns.empty())
         {
-            console::print(STR_COMPONENT_BASENAME " found ", _VSTiPlugIns.size(), " VSTi plug-insinstruments.");
+            console::print(STR_COMPONENT_BASENAME " found ", _VSTiPlugIns.size(), " compatible VSTi plug-ins.");
 
             size_t i = 0;
 

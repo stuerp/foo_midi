@@ -97,6 +97,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 - v2.19.0.0-alpha8, 2025-xx-xx
   - Changed: Moved the LibMT32Emu settings to the Wavetable page.
+  - Fixed: Changing the channel mask setting did not always stick.
 
 - You can read the full history [here](docs/History.md).
 
