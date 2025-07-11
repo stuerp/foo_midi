@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2025.07.10) **/
+/** $VER: Configuration.cpp (2025.07.11) **/
 
 #include "pch.h"
 
@@ -35,8 +35,6 @@ cfg_var_modern::cfg_int     CfgDetectXMILoops               ({ 0x0f580d09, 0xd57
 cfg_var_modern::cfg_int     CfgDetectFF7Loops               ({ 0x2e0dbdc2, 0x7436, 0x4b70, { 0x91, 0xfc, 0xfd, 0x98, 0x37, 0x87, 0x32, 0xb2 } }, DefaultDetectFF7Loops);
 
 cfg_var_modern::cfg_int     CfgExcludeEMIDITrackDesignation ({ 0xc090f9c7, 0x47f9, 0x4f6f, { 0x84, 0x7a, 0x27, 0xcd, 0x75, 0x96, 0xc9, 0xd4 } }, DefaultEmuDeMIDIExclusion);
-
-cfg_var_modern::cfg_int     CfgFluidSynthInterpolationMode  ({ 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } }, DefaultFluidSynthInterpolationMethod);
 
 cfg_var_modern::cfg_int     CfgFilterInstruments            ({ 0x6d30c919, 0xb053, 0x43aa, { 0x9f, 0x1b, 0x1d, 0x40, 0x18, 0x82, 0x80, 0x5e } }, DefaultFilterInstruments);
 cfg_var_modern::cfg_int     CfgFilterBanks                  ({ 0x3145963c, 0x7322, 0x4b48, { 0x99, 0xff, 0x75, 0xea, 0xc5, 0xf4, 0xda, 0xcc } }, DefaultFilterBanks);
@@ -75,6 +73,13 @@ cfg_var_modern::cfg_int     CfgNukePanning                  ({ 0x849c5c09, 0x520
 
 cfg_var_modern::cfg_float   CfgBASSMIDIVolume               ({ 0x143e8051, 0xa42b, 0x4225, { 0xb9, 0xd2, 0x79, 0xf1, 0x43, 0x1e, 0x70, 0x16 } }, DefaultBASSMIDIVolume);
 cfg_var_modern::cfg_int     CfgBASSMIDIResamplingMode       ({ 0xf9ddd2c0, 0xd8fd, 0x442f, { 0x9e, 0x49, 0xd9, 0x01, 0xb5, 0x1d, 0x6d, 0x38 } }, DefaultBASSMIDIResamplingMode);
+cfg_var_modern::cfg_int     CfgBASSMIDIMaxVoices            ({ 0x147c1a86, 0xd832, 0x4da6, { 0x97, 0xce, 0x83, 0xff, 0x98, 0xcc, 0x9c, 0xf3 } }, DefaultBASSMIDIMaxVoices);
+cfg_var_modern::cfg_bool    CfgBASSMIDIProcessEffects       ({ 0xf126c56d, 0x2a56, 0x496e, { 0x84, 0x3e, 0xdb, 0x42, 0x7a, 0x12, 0x48, 0x14 } }, DefaultBASSMIDIProcessEffects);
+
+cfg_var_modern::cfg_int     CfgFluidSynthInterpolationMode  ({ 0xa395c6fd, 0x492a, 0x401b, { 0x8b, 0xdb, 0x9d, 0xf5, 0x3e, 0x2e, 0xf7, 0xcf } }, DefaultFluidSynthInterpolationMethod);
+cfg_var_modern::cfg_int     CfgFluidSynthMaxVoices          ({ 0x2c40fc75, 0xf3d1, 0x4941, { 0x9c, 0xd2, 0xe2, 0xeb, 0x04, 0x57, 0x6f, 0xfd } }, DefaultFluidSynthMaxVoices);
+cfg_var_modern::cfg_bool    CfgFluidSynthProcessEffects     ({ 0xb1329415, 0x5f57, 0x41c0, { 0x9a, 0xe9, 0x9e, 0x63, 0x81, 0xf4, 0xa8, 0xf9 } }, DefaultFluidSynthProcessEffects);
+cfg_var_modern::cfg_bool    CfgFluidSynthDynSampleLoading   ({ 0xb503e62e, 0xfb85, 0x404e, { 0xb9, 0xef, 0x47, 0xa8, 0xd3, 0xa8, 0x04, 0xf8 } }, DefaultFluidSynthDynSampleLoading);
 
 cfg_var_modern::cfg_string  CfgVSTiPlugInDirectoryPath      ({ 0xaaa1bade, 0xafe0, 0x4c16, { 0xbf, 0x90, 0xfa, 0x1c, 0x6f, 0x14, 0x03, 0x1c } }, "");
 cfg_var_modern::cfg_string  CfgVSTiXGPlugInFilePath         ({ 0x433415d3, 0x7b49, 0x4dac, { 0xad, 0xa1, 0xd4, 0x29, 0x5f, 0xba, 0x12, 0x09 } }, "");
@@ -91,35 +96,6 @@ cfg_var_modern::cfg_string  CfgOPNBankFilePath              ({ 0x89338e5b, 0xf91
 cfg_map CfgVSTiConfig({ 0x44e7c715, 0xd256, 0x44c4, { 0x8f, 0xb6, 0xb7, 0x20, 0xfa, 0x9b, 0x31, 0xfc } });
 
 cfg_var_modern::cfg_string  CfgPlugInName                   ({ 0xf6b1bdff, 0x5d92, 0x4bee, { 0xb6, 0x5f, 0xec, 0x0f, 0x45, 0xe8, 0xd9, 0x39 } }, "");
-
-#pragma region Advanced Configuration GUIDs
-
-static const GUID AdvCfgMIDIPlayerBranchGUID = { 0x66524470, 0x7ec7, 0x445e, { 0xa6, 0xfd, 0xc0, 0xfb, 0xae, 0x74, 0xe5, 0xfc } };
-
-    static const GUID AdvCfgBASSMIDIEffectsEnabledGUID = { 0x62bf901b, 0x9c51, 0x45fe, { 0xbe, 0x8a, 0x14, 0xfb, 0x56, 0x20, 0x5e, 0x5e } };
-
-    static const GUID AdvCfgFluidSynthBranchGUID = { 0xf1ad51c5, 0x4b04, 0x4c8b, { 0x84, 0x65, 0x6c, 0x86, 0x1e, 0x81, 0xc6, 0x69 } };
-        static const GUID AdvCfgFluidSynthEnableEffectsEnabledGUID = { 0x996e95ca, 0xce4d, 0x4bd5, { 0xb7, 0xe6, 0x40, 0x61, 0x32, 0x83, 0xc3, 0x27 } };
-        static const GUID AdvCfgFluidSynthVoiceCountGUID = { 0x9114d64d, 0x412c, 0x42d3, { 0xae, 0xd5, 0xa5, 0x52, 0x1e, 0x8f, 0xe2, 0xa6 } };
-        static const GUID AdvCfgFluidSynthLoadSoundFontDynamicallyGUID = { 0x4c455226, 0xb107, 0x4e04, { 0xa9, 0xec, 0xf8, 0x9, 0x8f, 0x81, 0xe2, 0x96 } };
-
-    static const GUID AdvCfgBASSMIDIBranchGUID = { 0xdd5adceb, 0x9b31, 0x47b6, { 0xaf, 0x57, 0x3b, 0x15, 0xd2, 0x2, 0x5d, 0x9f } };
-        static const GUID AdvCfgBASSMIDIVoicesGUID = { 0x9e0a5dab, 0x6786, 0x4120, { 0xb7, 0x37, 0x85, 0xbb, 0x2d, 0xfa, 0xf3, 0x7 } };
-
-#pragma endregion
-
-advconfig_branch_factory AdvCfgMIDIPlayerBranch(STR_COMPONENT_NAME, AdvCfgMIDIPlayerBranchGUID, advconfig_branch::guid_branch_playback, 0);
-
-    advconfig_branch_factory AdvCfgFluidSynthBranch("FluidSynth", AdvCfgFluidSynthBranchGUID, AdvCfgMIDIPlayerBranchGUID, 5.0);
-
-        advconfig_integer_factory AdvCfgFluidSynthVoices         ("Maximum voice count",                 AdvCfgFluidSynthVoiceCountGUID,               AdvCfgFluidSynthBranchGUID, 1.0, 256, 1, 65535);
-        advconfig_checkbox_factory AdvCfgFluidSynthEffectsEnabled("Enable reverb and chorus processing", AdvCfgFluidSynthEnableEffectsEnabledGUID,     AdvCfgFluidSynthBranchGUID, 2.0, true);
-        advconfig_checkbox_factory AdvCfgLoadSoundFontDynamically("Load SoundFont samples dynamically",  AdvCfgFluidSynthLoadSoundFontDynamicallyGUID, AdvCfgFluidSynthBranchGUID, 3.0, true);
-
-    advconfig_branch_factory AdvBASSMIDIBranch("BASSMIDI", AdvCfgBASSMIDIBranchGUID, AdvCfgMIDIPlayerBranchGUID, 6.0);
-
-        advconfig_integer_factory AdvCfgBASSMIDIVoices         ("Maximum voice count",                 AdvCfgBASSMIDIVoicesGUID,         AdvCfgBASSMIDIBranchGUID,  1.0, 256, 1, 100000);
-        advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled("Enable reverb and chorus processing", AdvCfgBASSMIDIEffectsEnabledGUID, AdvCfgBASSMIDIBranchGUID, 2.0, true);
 
 // Names of the meta data fields
 const char TagPreset[]                      = "midi_preset";

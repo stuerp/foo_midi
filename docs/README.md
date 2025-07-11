@@ -79,7 +79,7 @@ foo_midi implements and suports several players. A player is emulates an FM or s
 
 This player uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM3812 (OPL2)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2) and the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
 
-It can be configured on the **MIDI Player / FM Synthesis** preferences page. Here's an explanation of the available settings:
+It can be configured on the **MIDI Player / [FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
 
 #### Bank {#adl-bank}
 
@@ -123,7 +123,7 @@ A bank can be loaded from a file in the [WOPL format](https://github.com/Wohlsta
 
 This player uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) and [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
 
-It can be configured on the **MIDI Player / FM Synthesis** preferences page. Here's an explanation of the available settings:
+It can be configured on the **MIDI Player / [FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
 
 #### Bank {#opn-bank}
 
@@ -178,9 +178,9 @@ This player uses the [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3) library
 This player uses the [LibMT32Emu](https://github.com/munt/munt) library to emulate the [Roland MT-32, CM-32L and LAPC-I synthesiser modules](https://en.wikipedia.org/wiki/Roland_MT-32).
 
 > [!Important]
-> You have to specify the location of the MT-32 or CM-32L PCM and control ROMS on the **MIDI Player / Paths** preferences page before you can use this player.
+> You have to specify the location of the MT-32 or CM-32L PCM and control ROMS on the **MIDI Player / [Paths](#paths)** preferences page before you can use this player.
 
-It can be configured on the **MIDI Player / FM Synthesis** preferences page. Here's an explanation of the available settings:
+It can be configured on the **MIDI Player / [FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
 
 #### Resampling
 
@@ -466,6 +466,9 @@ When you enable the  **Use LibMT32Emu with MT-32** setting the selected player w
 
 Enabling the **Use S-YXG50 VSTi with XG** setting will ignore the selected player and use the Yamaha S-YXG50 VSTi whenever an XG MIDI file is played.
 
+> [!Important]
+> You have to specify the location of the VSTi on the **MIDI Player / [Paths](#paths)** preferences page.
+
 **Extra percussion channel** will assign channel 16 as an extra percussion channel whenever a track is found in the MIDI file that contains metadata of type Text, Trackname or Instrumentname that contains the word `drum` (case-insensitive).
 
 **Exclude unsupported EMIDI track designation** will ignore tracks in an [Apogee Expanded MIDI (EMIDI)](https://moddingwiki.shikadi.net/wiki/Apogee_Expanded_MIDI) file with Track Designation control change messages (`CC 110`) with unsupported instrument definitions.
@@ -493,10 +496,13 @@ This sub-page of **MIDI Player** contains the various directory and file paths t
 | Name | Description |
 | ---- | ----------- |
 | VSTi&nbsp;Plug&#8209;Ins | The location of the VSTi plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
+| VSTi&nbsp;XG&nbsp;Plug&#8209;In | The location of the VSTi plug-in that will always be used to play XG MIDI files. |
 | CLAP&nbsp;Plug&#8209;Ins | The location of the CLAP plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
 | Sound Font | The location of the Sound Font to be used by BASSMIDI and FluidSynth. |
-| MT&#8209;32&nbsp;ROMs | The location of the MT-32 ROM files to be used by LibMT32Emu |
-| FluidSynth | The location where the FluidSynth libraries can be found |
+| MT&#8209;32&nbsp;ROMs | The location of the MT-32 ROM files to be used by LibMT32Emu. |
+| Secret&nbsp;Sauce | The location of the Secret Sauce library. |
+| FluidSynth | The location where the FluidSynth libraries can be found. |
+| FluidSynth&nbsp;Config | The location of the FluidSynth configuration file. |
 | FMMIDI&nbsp;Programs | The location of the file containing the FMMIDI programs. Leave this empty to use the file included in the component directory. |
 
 ### Processing
@@ -548,11 +554,21 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 
 **Resampling**
 
+**Max. Voices**
+
+**Process reverb and chorus**
+
 Cache status
 
 #### FluidSynth
 
 **Interpolation**
+
+**Max. Voices**
+
+**Process reverb and chorus**
+
+**Dynamic sample loading**
 
 ---
 
@@ -574,15 +590,16 @@ Cache status
 
 ## Reference Material
 
-### SoundFonts
-
-- [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
-- [FluidSynth SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont)
-
 ### Electronic Music
 
 - [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
 - [File format samples](https://telparia.com/fileFormatSamples/)
+
+### SoundFonts
+
+- [Musical Artifacts](https://musical-artifacts.com/artifacts?tags=soundfont)
+- [SoundFont Bank Offset](https://fluid-dev.nongnu.narkive.com/Fv2kQsxA/new-bank-offset-feature-and-selecting-sfont-bank-preset)
+- [SoundFont Spec Test](https://github.com/mrbumpy409/SoundFont-Spec-Test)
 
 ### MIDI
 
@@ -595,6 +612,11 @@ Cache status
 ### Apogee Expanded MIDI (EMIDI)
 
 - [Apogee Expanded MIDI (EMIDI) API v1.1](https://moddingwiki.shikadi.net/wiki/Apogee_Expanded_MIDI)
+
+### HMP / HMI
+
+- [ZDoom HMP](https://zdoom.org/wiki/HMP)
+- [WildMIDI](https://github.com/Mindwerks/wildmidi/issues/75)
 
 ### RMI
 
@@ -613,9 +635,14 @@ Cache status
 
 ### BASS MIDI
 
+- [Documentation](https://www.un4seen.com/doc/)
+- [MIDI Implementation Chart](https://www.un4seen.com/doc/#bassmidi/implementation.html)
+- [Proposal to support rmid files with embedded SF2 soundfonts](https://www.un4seen.com/forum/?topic=20475.0)
+
 ### FluidSynth
 
 - [FluidSynth User Manual](https://github.com/FluidSynth/fluidsynth/wiki/UserManual)
+  - [FluidSynth SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont)
 - Development
   - [FluidSynth GitHub](https://github.com/FluidSynth/fluidsynth)
   - [FluidSynth Developer Documentation](https://www.fluidsynth.org/api/index.html)
@@ -627,9 +654,16 @@ Cache status
 - Plug-Ins
   - [Yamaha S-YXG50 Portable VSTi v1.0.0](https://veg.by/en/projects/syxg50/)
 
+### CLAP
+
+- Development
+  - [Getting Started](https://cleveraudio.org/developers-getting-started/)
+
 ### CLAP Hosts
 
 - [BaconPaul's Test microhost](https://github.com/baconpaul/micro-clap-host)
+- [The Anklang Project](https://anklang.testbit.eu/)
+  - [Anklang](https://github.com/tim-janik/anklang)
 - Development
   - []()
 

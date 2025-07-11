@@ -1,5 +1,5 @@
 
-/** $VER: FMMPlayer.h (2025.07.07) - Wrapper for yuno's fmmidi **/
+/** $VER: FMMPlayer.h (2025.07.07) - Wrapper for yuno's FMMIDI **/
 
 #pragma once
 
@@ -19,7 +19,7 @@ namespace midisynth
 }
 
 /// <summary>
-/// Implements the fmmidi player.
+/// Implements the FMMIDI player.
 /// </summary>
 class FMMPlayer : public player_t
 {

@@ -59,14 +59,14 @@ preset_t::preset_t() noexcept
 
     if (_PlayerType == PlayerTypes::FluidSynth)
     {
-        _EffectsEnabled = (bool) AdvCfgFluidSynthEffectsEnabled;
-        _VoiceCount = (uint32_t) AdvCfgFluidSynthVoices;
+        _EffectsEnabled = CfgFluidSynthProcessEffects;
+        _VoiceCount = (uint32_t) CfgFluidSynthMaxVoices;
     }
     else
     if (_PlayerType == PlayerTypes::BASSMIDI)
     {
-        _EffectsEnabled = (bool) AdvCfgBASSMIDIEffectsEnabled;
-        _VoiceCount = (uint32_t) AdvCfgBASSMIDIVoices;
+        _EffectsEnabled = CfgBASSMIDIProcessEffects;
+        _VoiceCount = (uint32_t) CfgBASSMIDIMaxVoices;
     }
     else
         _VoiceCount = 256;
@@ -234,8 +234,8 @@ void preset_t::Deserialize(const char * text)
     std::vector<uint8_t> VSTiConfig;
     pfc::string SoundFontPath;
 
-    bool EffectsEnabled = false;
-    uint32_t VoiceCount = 256;
+    bool ProcessEffects = false;
+    uint32_t MaxVoices = 256;
 
     uint32_t ADLBankNumber = 0;
     uint32_t ADLChipCount = 0;
@@ -290,14 +290,14 @@ void preset_t::Deserialize(const char * text)
         {
             if (PlayerType == PlayerTypes::FluidSynth)
             {
-                EffectsEnabled = (bool) AdvCfgFluidSynthEffectsEnabled;
-                VoiceCount = (uint32_t) (int) AdvCfgFluidSynthVoices;
+                ProcessEffects = (bool) CfgFluidSynthProcessEffects;
+                MaxVoices = (uint32_t) CfgFluidSynthMaxVoices;
             }
             else
             if (PlayerType == PlayerTypes::BASSMIDI)
             {
-                EffectsEnabled = (bool) AdvCfgBASSMIDIEffectsEnabled;
-                VoiceCount = (uint32_t) (int) AdvCfgBASSMIDIVoices;
+                ProcessEffects = (bool) CfgBASSMIDIProcessEffects;
+                MaxVoices = (uint32_t) CfgBASSMIDIMaxVoices;
             }
         }
 
@@ -305,7 +305,7 @@ void preset_t::Deserialize(const char * text)
 
         if (Separator > text)
         {
-            EffectsEnabled = pfc::atodec<bool>(text, 1);
+            ProcessEffects = pfc::atodec<bool>(text, 1);
 
             if (SchemaVersion >= 9)
             {
@@ -313,7 +313,7 @@ void preset_t::Deserialize(const char * text)
 
                 if (Separator > text)
                 {
-                    VoiceCount = pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
+                    MaxVoices = pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
                     if (CurrentSchemaVersion >= 11)
                     {
@@ -460,8 +460,8 @@ void preset_t::Deserialize(const char * text)
 
     _SoundFontFilePath = SoundFontPath;
 
-    _EffectsEnabled = EffectsEnabled;
-    _VoiceCount = VoiceCount;
+    _EffectsEnabled = ProcessEffects;
+    _VoiceCount = MaxVoices;
 
     _ADLBankNumber = ADLBankNumber;
     _ADLEmulatorCore = ADLEmulatorCore;

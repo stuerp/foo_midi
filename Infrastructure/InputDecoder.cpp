@@ -511,7 +511,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             Player->SetInterpolationMode(_FluidSynthInterpolationMethod);
             Player->SetVoiceCount(Preset._VoiceCount);
             Player->EnableEffects(Preset._EffectsEnabled);
-            Player->EnableDynamicLoading(AdvCfgLoadSoundFontDynamically.get());
+            Player->EnableDynamicLoading(CfgFluidSynthDynSampleLoading);
             Player->SetSoundFonts(_SoundFonts);
 
             _Player = Player;

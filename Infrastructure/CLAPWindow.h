@@ -73,7 +73,7 @@ public:
         return p->This->DialogThreadProc(p->Host);
     }
 
-    DWORD DialogThreadProc(Host * Host);
+    DWORD WINAPI DialogThreadProc(Host * Host);
 
 private:
     #pragma region CDialogImpl

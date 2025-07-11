@@ -817,8 +817,8 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 
         const int ControlIds[] =
         {
-            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_VOLUME,
-            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
+            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_GAIN,
+            IDC_RESAMPLING_LBL, IDC_BASSMIDI_RESAMPLING,
             IDC_CACHED_LBL, IDC_CACHED
         };
 

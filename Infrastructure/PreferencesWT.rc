@@ -63,16 +63,34 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     // Label
     #define X_A15    X_A13
     #define Y_A15    Y_A14 + H_A14 + IY
-    #define W_A15    W_A13
-    #define H_A15    H_LBL
+    #define W_A15    W_A11
+    #define H_A15    H_CBX
 
-    // Label: Cached
+    // EditBox: Max. voices
     #define X_A16    X_A15 + W_A15 + IX
     #define Y_A16    Y_A15
-    #define W_A16    W_A10 - 5 - W_A15 - IX - 5
-    #define H_A16    H_LBL
+    #define W_A16    32
+    #define H_A16    H_CBX
 
-#define H_A10    11 + H_A12 + IY + H_A14 + IY + H_A16 + 7
+    // Checkbox "Process reverb and chorus"
+    #define X_A17    X_A15
+    #define Y_A17    Y_A16 + H_A16 + IY
+    #define W_A17    100
+    #define H_A17    H_CBX
+
+    // Label
+    #define X_A18    X_A17
+    #define Y_A18    Y_A17 + H_A17 + IY
+    #define W_A18    W_A13
+    #define H_A18    H_LBL
+
+    // Label: Cached
+    #define X_A19    X_A18 + W_A18 + IX
+    #define Y_A19    Y_A18
+    #define W_A19    W_A10 - 5 - W_A18 - IX - 5
+    #define H_A19    H_LBL
+
+#define H_A10    11 + H_A12 + IY + H_A14 + IY + H_A16 + IY + H_A17 + IY + H_A19 + 7
 
 #pragma endregion
 
@@ -95,7 +113,31 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_A22    W_A20 - 5 - W_A21 - IX - 5
     #define H_A22    H_CBX
 
-#define H_A20    11 + H_A22 + 7
+    // Label
+    #define X_A23    X_A21
+    #define Y_A23    Y_A22 + H_A22 + IY
+    #define W_A23    W_A21
+    #define H_A23    H_CBX
+
+    // EditBox: Max. voices
+    #define X_A24    X_A23 + W_A23 + IX
+    #define Y_A24    Y_A23
+    #define W_A24    32
+    #define H_A24    H_CBX
+
+    // Checkbox "Process reverb and chorus"
+    #define X_A25    X_A21
+    #define Y_A25    Y_A24 + H_A24 + IY
+    #define W_A25    100
+    #define H_A25    H_CBX
+
+    // Checkbox "Dynamic sample loading"
+    #define X_A26    X_A25
+    #define Y_A26    Y_A25 + H_A25 + IY
+    #define W_A26    100
+    #define H_A26    H_CBX
+
+#define H_A20    11 + H_A22 + IY + H_A24 + IY + H_A25 + IY + H_A26 + 7
 
 #pragma endregion
 
@@ -107,14 +149,21 @@ font 8, "MS Shell Dlg", 400, 0, 1
 //  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
 
     groupbox "BASS MIDI", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10
-        rtext             "Gain:",      IDC_BASSMIDI_VOLUME_LBL,X_A11, Y_A11 + 2, W_A11, H_A11
-        edittext                        IDC_BASSMIDI_VOLUME,    X_A12, Y_A12,     W_A12, H_A12, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
-        rtext       "Resampling:",      IDC_RESAMPLING_LBL,     X_A13, Y_A13 + 2, W_A13, H_A13
-        combobox                        IDC_RESAMPLING_MODE,    X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext           "Cached:",      IDC_CACHED_LBL,         X_A15, Y_A15 + 2, W_A15, H_A15
-        ltext                  "",      IDC_CACHED,             X_A16, Y_A16 + 2, W_A16, H_A16, WS_VISIBLE
+        rtext             "Gain:",      IDC_BASSMIDI_VOLUME_LBL,        X_A11, Y_A11 + 2, W_A11, H_A11
+        edittext                        IDC_BASSMIDI_GAIN,            X_A12, Y_A12,     W_A12, H_A12, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        rtext       "Resampling:",      IDC_RESAMPLING_LBL,             X_A13, Y_A13 + 2, W_A13, H_A13
+        combobox                        IDC_BASSMIDI_RESAMPLING,            X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext      "Max. voices:",      IDC_BASSMIDI_MAX_VOICES_LBL,    X_A15, Y_A15 + 2, W_A15, H_A15
+        edittext                        IDC_BASSMIDI_MAX_VOICES,        X_A16, Y_A16,     W_A16, H_A16, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        control "Process reverb and chorus", IDC_BASSMIDI_EFFECTS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A17, Y_A17, W_A17, H_A17
+        rtext           "Cached:",      IDC_CACHED_LBL,                 X_A18, Y_A18 + 2, W_A18, H_A18
+        ltext                  "",      IDC_CACHED,                     X_A19, Y_A19 + 2, W_A19, H_A19, WS_VISIBLE
 
     groupbox "FluidSynth", IDC_STATIC, X_A20, Y_A20, W_A20, H_A20
-        rtext       "Interpolation:",   IDC_FLUIDSYNTH_INTERPOLATION_TEXT, X_A21, Y_A21 + 2, W_A21, H_A21
-        combobox                        IDC_FLUIDSYNTH_INTERPOLATION,      X_A22, Y_A22,     W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Interpolation:",           IDC_FLUIDSYNTH_INTERPOLATION_TEXT,  X_A21, Y_A21 + 2, W_A21, H_A21
+        combobox                                IDC_FLUIDSYNTH_INTERPOLATION,       X_A22, Y_A22,     W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext         "Max. voices:",           IDC_FLUIDSYNTH_MAX_VOICES_LBL,      X_A23, Y_A23 + 2, W_A23, H_A23
+        edittext                                IDC_FLUIDSYNTH_MAX_VOICES,          X_A24, Y_A24,     W_A24, H_A24, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        control "Process reverb and chorus",    IDC_FLUIDSYNTH_EFFECTS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+        control "Dynamic sample loading",       IDC_FLUIDSYNTH_DYN_LOADING          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
 }

@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.07.09) **/
+/** $VER: Configuration.h (2025.07.11) **/
 
 #pragma once
 
@@ -98,7 +98,13 @@ enum
     DefaultFilterBanks = 0,
     DefaultSkipToFirstNote = false,
 
+    DefaultBASSMIDIMaxVoices = 256,
+    DefaultBASSMIDIProcessEffects = true,
+
     DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT,
+    DefaultFluidSynthMaxVoices = 256,
+    DefaultFluidSynthProcessEffects = true,
+    DefaultFluidSynthDynSampleLoading = false,
 
     DefaultBASSMIDIResamplingMode = 1,
 
@@ -159,9 +165,11 @@ extern cfg_var_modern::cfg_int
     CfgFilterInstruments,
     CfgFilterBanks,
 
-    CfgFluidSynthInterpolationMode,
-
     CfgBASSMIDIResamplingMode,
+    CfgBASSMIDIMaxVoices,
+
+    CfgFluidSynthInterpolationMode,
+    CfgFluidSynthMaxVoices,
 
     CfgADLBank,
     CfgADLEmulator,
@@ -205,7 +213,11 @@ extern cfg_var_modern::cfg_bool
     CfgMT32EmuNicePartialMixing,
     CfgMT32EmuReverseStereo,
 
-    CfgSkipToFirstNote;
+    CfgSkipToFirstNote,
+
+    CfgBASSMIDIProcessEffects,
+    CfgFluidSynthProcessEffects,
+    CfgFluidSynthDynSampleLoading;
 
 extern cfg_var_modern::cfg_float
     CfgBASSMIDIVolume;
@@ -234,16 +246,6 @@ extern cfg_var_modern::cfg_int  CfgLoopExpansion;
 
 // HMI
 extern cfg_var_modern::cfg_int  CfgDefaultTempo;
-
-extern advconfig_integer_factory AdvCfgLoopCount;
-extern advconfig_integer_factory AdvCfgFadeTimeInMS;
-
-extern advconfig_integer_factory AdvCfgFluidSynthVoices;
-extern advconfig_checkbox_factory AdvCfgFluidSynthEffectsEnabled;
-extern advconfig_checkbox_factory AdvCfgLoadSoundFontDynamically;
-
-extern advconfig_checkbox_factory AdvCfgBASSMIDIEffectsEnabled;
-extern advconfig_integer_factory AdvCfgBASSMIDIVoices;
 
 extern const char * _FileExtensions[];
 extern const size_t _FileExtensionCount;

@@ -1,5 +1,5 @@
 
-/** $VER: FMMPlayer.cpp (2025.06.25) - Wrapper for yuno's fmmidi **/
+/** $VER: FMMPlayer.cpp (2025.06.25) - Wrapper for yuno's FMMIDI **/
 
 #include "pch.h"
 

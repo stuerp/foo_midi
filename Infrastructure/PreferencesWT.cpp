@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesWT.cpp (2025.07.10) P. Stuer **/
+/** $VER: PreferencesWT.cpp (2025.07.11) P. Stuer **/
 
 #include "pch.h"
 
@@ -68,11 +68,16 @@ public:
         MSG_WM_TIMER(OnTimer)
 
         // BASS MIDI
-        COMMAND_HANDLER_EX(IDC_BASSMIDI_VOLUME, EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_RESAMPLING_MODE, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_BASSMIDI_GAIN, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_BASSMIDI_RESAMPLING, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_BASSMIDI_MAX_VOICES, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_BASSMIDI_EFFECTS, BN_CLICKED, OnButtonClicked)
 
         // FluidSynth
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_MAX_VOICES, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_EFFECTS, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_DYN_LOADING, BN_CLICKED, OnButtonClicked)
 
         REFLECT_NOTIFICATIONS()
     END_MSG_MAP()
@@ -144,13 +149,19 @@ void PreferencesWT::apply()
     {
         wchar_t Text[32];
 
-        GetDlgItemTextW(IDC_BASSMIDI_VOLUME, Text, _countof(Text));
+        GetDlgItemTextW(IDC_BASSMIDI_GAIN, Text, _countof(Text));
 
         CfgBASSMIDIVolume = std::clamp(::_wtof(Text), 0., 2.);
 
-        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
 
-        CfgBASSMIDIResamplingMode = (t_int32) SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL);
+        CfgBASSMIDIResamplingMode = (t_int32) SendDlgItemMessage(IDC_BASSMIDI_RESAMPLING, CB_GETCURSEL);
+
+        GetDlgItemTextW(IDC_BASSMIDI_MAX_VOICES, Text, _countof(Text));
+
+        CfgBASSMIDIMaxVoices = std::clamp(::_wtoi(Text), 1, 65535);
+
+        CfgBASSMIDIProcessEffects = (bool) SendDlgItemMessage(IDC_BASSMIDI_EFFECTS, BM_GETCHECK);
     }
 
     // FluidSynth
@@ -159,6 +170,15 @@ void PreferencesWT::apply()
 
         if (SelectedIndex != -1)
             CfgFluidSynthInterpolationMode = _InterpolationMethods[SelectedIndex].Id;
+
+        wchar_t Text[32];
+
+        GetDlgItemTextW(IDC_FLUIDSYNTH_MAX_VOICES, Text, _countof(Text));
+
+        CfgFluidSynthMaxVoices = std::clamp(::_wtoi(Text), 1, 65535);
+
+        CfgFluidSynthProcessEffects   = (bool) SendDlgItemMessage(IDC_FLUIDSYNTH_EFFECTS, BM_GETCHECK);
+        CfgFluidSynthDynSampleLoading = (bool) SendDlgItemMessage(IDC_FLUIDSYNTH_DYN_LOADING, BM_GETCHECK);
     }
 
     OnChanged();
@@ -171,16 +191,20 @@ void PreferencesWT::reset()
 {
     // BASS MIDI
     {
-        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(DefaultBASSMIDIVolume, 4, 2));
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(DefaultBASSMIDIVolume, 4, 2));
 
-        SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_SETCURSEL, DefaultBASSMIDIResamplingMode);
+        SendDlgItemMessage(IDC_BASSMIDI_RESAMPLING, CB_SETCURSEL, DefaultBASSMIDIResamplingMode);
+
+        ::SetDlgItemTextA(m_hWnd, IDC_BASSMIDI_MAX_VOICES, pfc::format_int(DefaultBASSMIDIMaxVoices));
+
+        SendDlgItemMessage(IDC_BASSMIDI_EFFECTS, BM_SETCHECK, DefaultBASSMIDIProcessEffects);
 
         const BOOL IsBASSMIDI = true; //(_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
         {
-            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_VOLUME,
-            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
+            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_GAIN,
+            IDC_RESAMPLING_LBL, IDC_BASSMIDI_RESAMPLING,
             IDC_CACHED_LBL, IDC_CACHED
         };
 
@@ -203,6 +227,11 @@ void PreferencesWT::reset()
 
         SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_SETCURSEL, (WPARAM) SelectedIndex);
 
+        ::SetDlgItemTextA(m_hWnd, IDC_FLUIDSYNTH_MAX_VOICES, pfc::format_int(DefaultFluidSynthMaxVoices));
+
+        SendDlgItemMessage(IDC_FLUIDSYNTH_EFFECTS, BM_SETCHECK, DefaultFluidSynthProcessEffects);
+        SendDlgItemMessage(IDC_FLUIDSYNTH_DYN_LOADING, BM_SETCHECK, DefaultFluidSynthDynSampleLoading);
+
         const BOOL IsFluidSynth = true;//(_SelectedPlayer.Type == PlayerTypes::FluidSynth);
 
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(IsFluidSynth);
@@ -223,9 +252,9 @@ BOOL PreferencesWT::OnInitDialog(CWindow window, LPARAM) noexcept
 {
     // BASS MIDI
     {
-        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_VOLUME, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
 
-        auto w = (CComboBox) GetDlgItem(IDC_RESAMPLING_MODE);
+        auto w = (CComboBox) GetDlgItem(IDC_BASSMIDI_RESAMPLING);
 
         w.AddString(L"Linear interpolation");
         w.AddString(L"8pt Sinc interpolation");
@@ -233,12 +262,16 @@ BOOL PreferencesWT::OnInitDialog(CWindow window, LPARAM) noexcept
 
         w.SetCurSel((int) CfgBASSMIDIResamplingMode);
 
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_MAX_VOICES, pfc::format_int(CfgBASSMIDIMaxVoices));
+
+        SendDlgItemMessage(IDC_BASSMIDI_EFFECTS, BM_SETCHECK, CfgBASSMIDIProcessEffects);
+
         const BOOL Enable = true;//(_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
         {
-            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_VOLUME,
-            IDC_RESAMPLING_LBL, IDC_RESAMPLING_MODE,
+            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_GAIN,
+            IDC_RESAMPLING_LBL, IDC_BASSMIDI_RESAMPLING,
             IDC_CACHED_LBL, IDC_CACHED
         };
 
@@ -264,6 +297,11 @@ BOOL PreferencesWT::OnInitDialog(CWindow window, LPARAM) noexcept
         }
 
         w.SetCurSel(SelectedIndex);
+
+        ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_MAX_VOICES, pfc::format_int(CfgFluidSynthMaxVoices));
+
+        SendDlgItemMessage(IDC_FLUIDSYNTH_EFFECTS, BM_SETCHECK, CfgFluidSynthProcessEffects);
+        SendDlgItemMessage(IDC_FLUIDSYNTH_DYN_LOADING, BM_SETCHECK, CfgFluidSynthDynSampleLoading);
 
         const BOOL Enable = true;//(_SelectedPlayer.Type == PlayerTypes::FluidSynth);
 
@@ -313,12 +351,20 @@ bool PreferencesWT::HasChanged() noexcept
     {
         wchar_t Text[32];
 
-        GetDlgItemTextW(IDC_BASSMIDI_VOLUME, Text, _countof(Text));
+        GetDlgItemTextW(IDC_BASSMIDI_GAIN, Text, _countof(Text));
 
         if (std::abs(::_wtof(Text) - CfgBASSMIDIVolume) > 0.001)
             return true;
 
-        if (SendDlgItemMessage(IDC_RESAMPLING_MODE, CB_GETCURSEL) != CfgBASSMIDIResamplingMode)
+        if (SendDlgItemMessage(IDC_BASSMIDI_RESAMPLING, CB_GETCURSEL) != CfgBASSMIDIResamplingMode)
+            return true;
+
+        GetDlgItemTextW(IDC_BASSMIDI_MAX_VOICES, Text, _countof(Text));
+
+        if (::_wtoi(Text) != CfgBASSMIDIMaxVoices)
+            return true;
+
+        if (SendDlgItemMessage(IDC_BASSMIDI_EFFECTS, BM_GETCHECK) != CfgBASSMIDIProcessEffects)
             return true;
     }
 
@@ -327,6 +373,19 @@ bool PreferencesWT::HasChanged() noexcept
         int SelectedIndex = (int) SendDlgItemMessage(IDC_FLUIDSYNTH_INTERPOLATION, CB_GETCURSEL);
 
         if ((SelectedIndex != -1) && (_InterpolationMethods[SelectedIndex ].Id != CfgFluidSynthInterpolationMode))
+            return true;
+
+        wchar_t Text[32];
+
+        GetDlgItemTextW(IDC_FLUIDSYNTH_MAX_VOICES, Text, _countof(Text));
+
+        if (::_wtoi(Text) != CfgFluidSynthMaxVoices)
+            return true;
+
+        if (SendDlgItemMessage(IDC_FLUIDSYNTH_EFFECTS, BM_GETCHECK) != CfgFluidSynthProcessEffects)
+            return true;
+
+        if (SendDlgItemMessage(IDC_FLUIDSYNTH_DYN_LOADING, BM_GETCHECK) != CfgFluidSynthDynSampleLoading)
             return true;
     }
 

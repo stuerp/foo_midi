@@ -95,7 +95,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-- v2.19.0.0-alpha7, 2025-xx-xx
+- v2.19.0.0-alpha7, 2025-07-11
   - New: Detecting the extra percussion channel can be turn on or off in the Preferences.
   - Improved: ADL player uses LibADLMIDI 1.6.0 and 64-bit floating-point samples.
   - Improved: OPN player uses LibOPNMIDI 1.6.0 and 64-bit floating-point samples. WOPN bank can be set from a file.
@@ -107,6 +107,7 @@ To create the component first build the x64 configuration and next the x86 confi
   - Changed: Renamed `midi_plug_in` tag to `midi_player_ext`. The ADL, OPN and Nuked OPL3 player will set it to the current emulator core.
   - Changed Moved BASS MIDI and FluidSynth settings to new Wavetable preference page.
   - Fixed: The LibMT32Emu player reversed the left and the right channels in the output.
+  - Fixed: Crash when looking for the MT-32 ROMs.
 
 - You can read the full history [here](docs/History.md).
 

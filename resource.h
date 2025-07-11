@@ -224,15 +224,26 @@
 #define IDD_PREFERENCES_WT_NAME             "Wavetable"
 
 #define IDC_BASSMIDI_VOLUME_LBL             2501
-#define IDC_BASSMIDI_VOLUME                 2502
+#define IDC_BASSMIDI_GAIN                   2502
 
 #define IDC_RESAMPLING_LBL                  2503
-#define IDC_RESAMPLING_MODE                 2504
+#define IDC_BASSMIDI_RESAMPLING             2504
 
-#define IDC_CACHED_LBL                      2505
-#define IDC_CACHED                          2506
+#define IDC_BASSMIDI_MAX_VOICES_LBL         2505
+#define IDC_BASSMIDI_MAX_VOICES             2506
 
-#define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   2507
-#define IDC_FLUIDSYNTH_INTERPOLATION        2508
+#define IDC_BASSMIDI_EFFECTS                2507
+
+#define IDC_CACHED_LBL                      2508
+#define IDC_CACHED                          2509
+
+#define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   2550
+#define IDC_FLUIDSYNTH_INTERPOLATION        2251
+
+#define IDC_FLUIDSYNTH_MAX_VOICES_LBL       2252
+#define IDC_FLUIDSYNTH_MAX_VOICES           2253
+
+#define IDC_FLUIDSYNTH_EFFECTS              2254
+#define IDC_FLUIDSYNTH_DYN_LOADING          2255
 
 #define IDD_CLAP_WINDOW                     2600
