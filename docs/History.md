@@ -1,6 +1,20 @@
 
 # foo_midi History
 
+- v2.19.0.0-alpha7, 2025-07-11
+  - New: Detecting the extra percussion channel can be turned on or off in the Preferences.
+  - Improved: ADL player uses LibADLMIDI 1.6.0 and 64-bit floating-point samples.
+  - Improved: OPN player uses LibOPNMIDI 1.6.0 and 64-bit floating-point samples. WOPN bank can be set from a file.
+  - Improved: Added setting to reverse the stereo channels of the LibMT32Emu player (default is on).
+  - Improved: Added enable or disable reverb processing by the LibMT32Emu player (default is on).
+  - Improved: Skip to First Note, Loop Count and Fade-Out Time can be set on the main Preferences page.
+  - Improved: Lots of little fixes, code cleanup and code polishing.
+  - Changed: All advanced preferences have been moved to a Preferences page. The current values will **not** be migrated.
+  - Changed: Renamed `midi_plug_in` tag to `midi_player_ext`. The ADL, OPN and Nuked OPL3 player will set it to the current emulator core.
+  - Changed Moved BASS MIDI and FluidSynth settings to new Wavetable preference page.
+  - Fixed: The LibMT32Emu player reversed the left and the right channels in the output.
+  - Fixed: Crash when looking for the MT-32 ROMs.
+
 - v2.19.0.0-alpha6, 2025-07-05
   - New: **midi_plug_in** info field that contains the name of the active plug-in when a player supports it.
   - New: FluidSynth can be configured using a configuration file. See [Configuration file](docs/README.md#configuration-file)

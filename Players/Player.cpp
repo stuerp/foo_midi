@@ -143,8 +143,8 @@ bool player_t::Load(const midi::container_t & midiContainer, uint32_t subsongInd
         }
     }
 
-    _CfgChannelsVersion = ~0u;
-    CfgChannels.Get(_EnabledChannels, sizeof(_EnabledChannels), _CfgChannelsVersion);
+    _ChannelsMaskVersion = ~0u;
+    CfgChannels.Get(_ChannelsMask, sizeof(_ChannelsMask), _ChannelsMaskVersion);
 
     return true;
 }
@@ -607,9 +607,9 @@ void player_t::SendEventFiltered(uint32_t data, uint32_t time)
 bool player_t::FilterEvent(uint32_t data) noexcept
 {
     // Send an All Notes Off channel mode message for all disabled channels whenever the selection changes.
-    if (CfgChannels.HasChanged(_CfgChannelsVersion))
+    if (CfgChannels.HasChanged(_ChannelsMaskVersion))
     {
-        CfgChannels.Get(_EnabledChannels, sizeof(_EnabledChannels), _CfgChannelsVersion);
+        CfgChannels.Get(_ChannelsMask, sizeof(_ChannelsMask), _ChannelsMaskVersion);
 
         for (const auto & Port : _Ports)
         {
@@ -617,7 +617,7 @@ bool player_t::FilterEvent(uint32_t data) noexcept
 
             for (uint8_t Channel = 0; Channel < 16; ++Channel, Mask <<= 1)
             {
-                if (_EnabledChannels[Port] & Mask)
+                if (_ChannelsMask[Port] & Mask)
                     continue; // because the channel is enabled.
 
                 SendEvent((uint32_t) ((Port << 24) | (midi::ChannelModeMessages::AllNotesOff << 8) | midi::ControlChange | Channel));
@@ -630,7 +630,7 @@ bool player_t::FilterEvent(uint32_t data) noexcept
     const uint8_t Channel = data & 0x0F;
 
     // Filter Note On events for the disabled channels.
-    return ((StatusCode == midi::NoteOn) && (((uint16_t) _EnabledChannels[Port] & (1U << Channel)) == 0));
+    return ((StatusCode == midi::NoteOn) && (((uint16_t) _ChannelsMask[Port] & (1U << Channel)) == 0));
 }
 
 /// <summary>

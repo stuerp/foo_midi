@@ -1,5 +1,5 @@
 
-/** $VER: Channels.h (2025.06.21) P. Stuer - Thread-safe wrapper for the MIDI channel configuration **/
+/** $VER: Channels.h (2025.07.11) P. Stuer - Thread-safe wrapper for the MIDI channel configuration **/
 
 #pragma once
 
@@ -17,6 +17,7 @@
 extern cfg_var_modern::cfg_blob CfgEnabledChannels;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 class channels_t
 {
 public:
@@ -56,6 +57,11 @@ public:
     bool HasChanged(uint64_t version) const noexcept
     {
         return (version != _Version.load());
+    }
+
+    bool HasChanged(const uint16_t * data, size_t size) const noexcept
+    {
+        return (::memcmp(data, _Data, std::min(size, sizeof(_Data))) != 0);
     }
 
     void Reset() noexcept
@@ -136,6 +142,7 @@ private:
     std::atomic<uint64_t> _Version;
     critical_section_t _CriticalSection;
 };
+
 #pragma warning(default: 4820)
 
 extern channels_t CfgChannels;

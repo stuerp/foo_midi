@@ -79,6 +79,18 @@ public:
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_EFFECTS, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_DYN_LOADING, BN_CLICKED, OnButtonClicked)
 
+        // MT-32 Player
+        COMMAND_HANDLER_EX(IDC_MT32_CONVERSION_QUALITY, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MT32_MAX_PARTIALS, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_MT32_ANALOG_OUTPUT_MODE, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MT32_GM_SET, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MT32_DAC_INPUT_MODE, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MT32_REVERB, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_MT32_NICE_AMP_RAMP, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_MT32_NICE_PANNING, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_MT32_NICE_PARTIAL_MIXING, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_MT32_REVERSE_STEREO, BN_CLICKED, OnButtonClicked)
+
         REFLECT_NOTIFICATIONS()
     END_MSG_MAP()
 
@@ -181,6 +193,66 @@ void PreferencesWT::apply()
         CfgFluidSynthDynSampleLoading = (bool) SendDlgItemMessage(IDC_FLUIDSYNTH_DYN_LOADING, BM_GETCHECK);
     }
 
+    // MT32
+    {
+        // MT32 Conversion Quality
+        {
+            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_CONVERSION_QUALITY, CB_GETCURSEL);
+
+            if (SelectedIndex < 0 || SelectedIndex > 3)
+                SelectedIndex = 0;
+
+            CfgMT32EmuConversionQuality = SelectedIndex;
+        }
+
+        // MT32 Max. Partials
+        {
+            int Value = std::clamp((int) GetDlgItemInt(IDC_MT32_MAX_PARTIALS, NULL, FALSE), 8, 256);
+
+            SetDlgItemInt(IDC_MT32_MAX_PARTIALS, (UINT) Value, FALSE);
+
+            CfgMT32EmuMaxPartials = Value;
+        }
+
+        // MT32 Analog Output Mode
+        {
+            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_ANALOG_OUTPUT_MODE, CB_GETCURSEL);
+
+            if (SelectedIndex < 0 || SelectedIndex > 3)
+                SelectedIndex = 0;
+
+            CfgMT32EmuAnalogOutputMode = SelectedIndex;
+        }
+
+        // MT32 GM Set
+        {
+            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_GM_SET, CB_GETCURSEL);
+
+            if (SelectedIndex < 0 || SelectedIndex >= (int) _MT32EmuSets.size())
+                SelectedIndex = 0;
+
+            CfgMT32EmuGMSet = SelectedIndex;
+        }
+
+        // MT32 DAC Input Mode
+        {
+            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_DAC_INPUT_MODE, CB_GETCURSEL);
+
+            if (SelectedIndex < 0 || SelectedIndex > 3)
+                SelectedIndex = 0;
+
+            CfgMT32EmuDACInputMode = SelectedIndex;
+        }
+
+        CfgMT32EmuReverb            = (bool) SendDlgItemMessage(IDC_MT32_REVERB, BM_GETCHECK);
+
+        // MT32 Nice Amp Ramp / Nice Panning / Nice Partial Mixing / Reverse Stereo
+        CfgMT32EmuNiceAmpRamp       = (bool) SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP, BM_GETCHECK);
+        CfgMT32EmuNicePanning       = (bool) SendDlgItemMessage(IDC_MT32_NICE_PANNING, BM_GETCHECK);
+        CfgMT32EmuNicePartialMixing = (bool) SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_GETCHECK);
+        CfgMT32EmuReverseStereo     = (bool) SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK);
+    }
+
     OnChanged();
 }
 
@@ -236,6 +308,33 @@ void PreferencesWT::reset()
 
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION_TEXT).EnableWindow(IsFluidSynth);
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(IsFluidSynth);
+    }
+
+    // MT32
+    {
+        // MT32 Conversion Quality
+        SendDlgItemMessage(IDC_MT32_CONVERSION_QUALITY, CB_SETCURSEL, DefaultMT32EmuConversionQuality);
+
+        // MT32 Max. Partials
+        SetDlgItemInt(IDC_MT32_MAX_PARTIALS, DefaultMT32EmuMaxPartials, 0);
+
+        // MT32 Analog Output Mode
+        SendDlgItemMessage(IDC_MT32_ANALOG_OUTPUT_MODE, CB_SETCURSEL, DefaultMT32EmuAnalogOutputMode);
+
+        // MT32 GM Set
+        SendDlgItemMessage(IDC_MT32_GM_SET, CB_SETCURSEL, DefaultMT32EmuGMSet);
+
+        // MT32 DAC Input Mode
+        SendDlgItemMessage(IDC_MT32_DAC_INPUT_MODE, CB_SETCURSEL, DefaultMT32EmuDACInputMode);
+
+        // MT32 Reverb
+        SendDlgItemMessage(IDC_MT32_REVERB, BM_SETCHECK, (WPARAM) DefaultMT32EmuReverb);
+
+        // Nice Amp Ramp / Nice Panning / Nice Partial Mixing
+        SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP,       BM_SETCHECK, (WPARAM) DefaultMT32EmuNiceAmpRamp);
+        SendDlgItemMessage(IDC_MT32_NICE_PANNING,        BM_SETCHECK, (WPARAM) DefaultMT32EmuNicePanning);
+        SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_SETCHECK, (WPARAM) DefaultMT32EmuNicePartialMixing);
+        SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) DefaultMT32EmuReverseStereo);
     }
 
     OnChanged();
@@ -309,6 +408,73 @@ BOOL PreferencesWT::OnInitDialog(CWindow window, LPARAM) noexcept
         GetDlgItem(IDC_FLUIDSYNTH_INTERPOLATION).EnableWindow(Enable);
     }
 
+    // MT-32
+    {
+        // MT32Emu Conversion Quality
+        {
+            static const wchar_t * ConversionQualities[] = { L"Fastest", L"Fast", L"Good", L"Best" };
+
+            auto w = (CComboBox) GetDlgItem(IDC_MT32_CONVERSION_QUALITY);
+
+            for (const auto & Iter : ConversionQualities)
+                w.AddString(Iter);
+
+            w.SetCurSel((int) CfgMT32EmuConversionQuality);
+        }
+
+        // MT32Emu Max. Partials
+        {
+            SetDlgItemInt(IDC_MT32_MAX_PARTIALS, (UINT) CfgMT32EmuMaxPartials, 0);
+        }
+
+        // MT32Emu Analog Output Mode
+        {
+            static const wchar_t * AnalogOutputModes[] = { L"Digital Only", L"Coarse", L"Accurate", L"Oversampled" };
+
+            auto w = (CComboBox) GetDlgItem(IDC_MT32_ANALOG_OUTPUT_MODE);
+
+            for (const auto & Iter : AnalogOutputModes)
+                w.AddString(Iter);
+
+            w.SetCurSel((int) CfgMT32EmuAnalogOutputMode);
+        }
+
+        // MT32Emu GM Set
+        {
+            auto w = (CComboBox) GetDlgItem(IDC_MT32_GM_SET);
+
+            for (const auto & Set : _MT32EmuSets)
+                ::uSendMessageText(w, CB_ADDSTRING, 0, Set.c_str());
+
+            w.SetCurSel((int) CfgMT32EmuGMSet);
+        }
+
+        // MT32Emu DAC Input Mode
+        {
+            static const wchar_t * DACInputModes[] = { L"Nice", L"Pure", L"Generation 1", L"Generation 2" };
+
+            auto w = (CComboBox) GetDlgItem(IDC_MT32_DAC_INPUT_MODE);
+
+            for (const auto & Iter : DACInputModes)
+                w.AddString(Iter);
+
+            w.SetCurSel((int) CfgMT32EmuDACInputMode);
+        }
+
+        // MT32Emu Reverb
+        {
+            SendDlgItemMessage(IDC_MT32_REVERB, BM_SETCHECK, (WPARAM) CfgMT32EmuReverb);
+        }
+
+        // MT32Emu Nice Amp Ramp / Nice Panning / Nice Partial Mixing
+        {
+            SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP,       BM_SETCHECK, (WPARAM) CfgMT32EmuNiceAmpRamp);
+            SendDlgItemMessage(IDC_MT32_NICE_PANNING,        BM_SETCHECK, (WPARAM) CfgMT32EmuNicePanning);
+            SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_SETCHECK, (WPARAM) CfgMT32EmuNicePartialMixing);
+            SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) CfgMT32EmuReverseStereo);
+        }
+    }
+
     SetTimer(ID_REFRESH, 20);
 
     _DarkModeHooks.AddDialogWithControls(*this);
@@ -340,6 +506,18 @@ void PreferencesWT::OnSelectionChange(UINT, int, CWindow) noexcept
 /// </summary>
 void PreferencesWT::OnButtonClicked(UINT, int id, CWindow) noexcept
 {
+    switch (id)
+    {
+        case IDC_MT32_REVERB:
+        case IDC_MT32_NICE_AMP_RAMP:
+        case IDC_MT32_NICE_PANNING:
+        case IDC_MT32_NICE_PARTIAL_MIXING:
+        case IDC_MT32_REVERSE_STEREO:
+        {
+            OnChanged();
+            break;
+        }
+    }
 }
 
 /// <summary>
@@ -389,6 +567,65 @@ bool PreferencesWT::HasChanged() noexcept
             return true;
     }
 
+    // MT32
+    {
+        // MT32 Conversion Quality
+        {
+            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_CONVERSION_QUALITY, CB_GETCURSEL);
+
+            if (SelectedIndex != CfgMT32EmuConversionQuality)
+                return true;
+        }
+
+        // MT32 Max. Partials
+        {
+            if (GetDlgItemInt(IDC_MT32_MAX_PARTIALS, NULL, FALSE) != (UINT) CfgMT32EmuMaxPartials)
+                return true;
+        }
+
+        // MT32 Analog Output Mode
+        {
+            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_ANALOG_OUTPUT_MODE, CB_GETCURSEL);
+
+            if (SelectedIndex != CfgMT32EmuAnalogOutputMode)
+                return true;
+        }
+
+        // MT32 GM Set
+        {
+            if (SendDlgItemMessage(IDC_MT32_GM_SET, CB_GETCURSEL) != (UINT) CfgMT32EmuGMSet)
+                return true;
+        }
+
+        // MT32 DAC Input Mode
+        {
+            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_DAC_INPUT_MODE, CB_GETCURSEL);
+
+            if (SelectedIndex != CfgMT32EmuDACInputMode)
+                return true;
+        }
+
+        // MT32 Reverb
+        if (SendDlgItemMessage(IDC_MT32_REVERB, BM_GETCHECK) != CfgMT32EmuReverb)
+            return true;
+
+        // MT32 Nice Amp Ramp
+        if (SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP, BM_GETCHECK) != CfgMT32EmuNiceAmpRamp)
+            return true;
+
+        // MT32 Nice Panning
+        if (SendDlgItemMessage(IDC_MT32_NICE_PANNING, BM_GETCHECK) != CfgMT32EmuNicePanning)
+            return true;
+
+        // MT32 Nice Partial Mixing
+        if (SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_GETCHECK) != CfgMT32EmuNicePartialMixing)
+            return true;
+
+        // MT32 Reverse Stereo
+        if (SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK) != CfgMT32EmuReverseStereo)
+            return true;
+    }
+
     return false;
 }
 
@@ -399,7 +636,6 @@ void PreferencesWT::OnChanged() const noexcept
 {
     _Callback->on_state_changed();
 }
-
 
 /// <summary>
 /// Update the status of the SoundFont cache.

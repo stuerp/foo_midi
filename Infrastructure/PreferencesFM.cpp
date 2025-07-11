@@ -117,18 +117,6 @@ public:
         COMMAND_HANDLER_EX(IDC_OPN_BANK_FILE_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_OPN_BANK_FILE_PATH_SELECT, BN_CLICKED, OnButtonClicked)
 
-        // MT-32 Player
-        COMMAND_HANDLER_EX(IDC_MT32_CONVERSION_QUALITY, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_MT32_MAX_PARTIALS, EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_MT32_ANALOG_OUTPUT_MODE, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_MT32_GM_SET, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_MT32_DAC_INPUT_MODE, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_MT32_REVERB, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_MT32_NICE_AMP_RAMP, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_MT32_NICE_PANNING, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_MT32_NICE_PARTIAL_MIXING, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_MT32_REVERSE_STEREO, BN_CLICKED, OnButtonClicked)
-
         // Nuked OPL3
         COMMAND_HANDLER_EX(IDC_NUKE_PRESET, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_NUKE_PANNING, BN_CLICKED, OnButtonClicked)
@@ -271,66 +259,6 @@ void DialogPage::apply()
         }
     }
 
-    // MT32
-    {
-        // MT32 Conversion Quality
-        {
-            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_CONVERSION_QUALITY, CB_GETCURSEL);
-
-            if (SelectedIndex < 0 || SelectedIndex > 3)
-                SelectedIndex = 0;
-
-            CfgMT32EmuConversionQuality = SelectedIndex;
-        }
-
-        // MT32 Max. Partials
-        {
-            int Value = std::clamp((int) GetDlgItemInt(IDC_MT32_MAX_PARTIALS, NULL, FALSE), 8, 256);
-
-            SetDlgItemInt(IDC_MT32_MAX_PARTIALS, (UINT) Value, FALSE);
-
-            CfgMT32EmuMaxPartials = Value;
-        }
-
-        // MT32 Analog Output Mode
-        {
-            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_ANALOG_OUTPUT_MODE, CB_GETCURSEL);
-
-            if (SelectedIndex < 0 || SelectedIndex > 3)
-                SelectedIndex = 0;
-
-            CfgMT32EmuAnalogOutputMode = SelectedIndex;
-        }
-
-        // MT32 GM Set
-        {
-            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_GM_SET, CB_GETCURSEL);
-
-            if (SelectedIndex < 0 || SelectedIndex >= (int) _MT32EmuSets.size())
-                SelectedIndex = 0;
-
-            CfgMT32EmuGMSet = SelectedIndex;
-        }
-
-        // MT32 DAC Input Mode
-        {
-            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_DAC_INPUT_MODE, CB_GETCURSEL);
-
-            if (SelectedIndex < 0 || SelectedIndex > 3)
-                SelectedIndex = 0;
-
-            CfgMT32EmuDACInputMode = SelectedIndex;
-        }
-
-        CfgMT32EmuReverb            = (bool) SendDlgItemMessage(IDC_MT32_REVERB, BM_GETCHECK);
-
-        // MT32 Nice Amp Ramp / Nice Panning / Nice Partial Mixing / Reverse Stereo
-        CfgMT32EmuNiceAmpRamp       = (bool) SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP, BM_GETCHECK);
-        CfgMT32EmuNicePanning       = (bool) SendDlgItemMessage(IDC_MT32_NICE_PANNING, BM_GETCHECK);
-        CfgMT32EmuNicePartialMixing = (bool) SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_GETCHECK);
-        CfgMT32EmuReverseStereo     = (bool) SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK);
-    }
-
     // Nuked OPL3
     {
         size_t SelectedIndex = (size_t) SendDlgItemMessage(IDC_NUKE_PRESET, CB_GETCURSEL);
@@ -425,33 +353,6 @@ void DialogPage::reset()
         SetDlgItemText(IDC_OPN_BANK_FILE_PATH, L"");
     }
 
-    // MT32
-    {
-        // MT32 Conversion Quality
-        SendDlgItemMessage(IDC_MT32_CONVERSION_QUALITY, CB_SETCURSEL, DefaultMT32EmuConversionQuality);
-
-        // MT32 Max. Partials
-        SetDlgItemInt(IDC_MT32_MAX_PARTIALS, DefaultMT32EmuMaxPartials, 0);
-
-        // MT32 Analog Output Mode
-        SendDlgItemMessage(IDC_MT32_ANALOG_OUTPUT_MODE, CB_SETCURSEL, DefaultMT32EmuAnalogOutputMode);
-
-        // MT32 GM Set
-        SendDlgItemMessage(IDC_MT32_GM_SET, CB_SETCURSEL, DefaultMT32EmuGMSet);
-
-        // MT32 DAC Input Mode
-        SendDlgItemMessage(IDC_MT32_DAC_INPUT_MODE, CB_SETCURSEL, DefaultMT32EmuDACInputMode);
-
-        // MT32 Reverb
-        SendDlgItemMessage(IDC_MT32_REVERB, BM_SETCHECK, (WPARAM) DefaultMT32EmuReverb);
-
-        // Nice Amp Ramp / Nice Panning / Nice Partial Mixing
-        SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP,       BM_SETCHECK, (WPARAM) DefaultMT32EmuNiceAmpRamp);
-        SendDlgItemMessage(IDC_MT32_NICE_PANNING,        BM_SETCHECK, (WPARAM) DefaultMT32EmuNicePanning);
-        SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_SETCHECK, (WPARAM) DefaultMT32EmuNicePartialMixing);
-        SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) DefaultMT32EmuReverseStereo);
-    }
-
     // Nuked OPL3
     {
         SendDlgItemMessage(IDC_NUKE_PRESET, CB_SETCURSEL, (WPARAM) NukedOPL3Player::GetPresetIndex(DefaultNukeSynth, DefaultNukeBank));
@@ -470,185 +371,127 @@ void DialogPage::reset()
 /// </summary>
 BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
 {
-    // ADL Bank
+    // ADL
     {
-        _ADLBanks.clear();
-
+        // ADL Bank
         {
-            const char * const * BankNames = ::adl_getBankNames();
-            const size_t BankCount = (size_t) ::adl_getBanksCount();
+            _ADLBanks.clear();
 
-            if ((BankNames != nullptr) && (BankCount > 0))
             {
-                for (size_t i = 0; i < BankCount; ++i)
-                    _ADLBanks.push_back(bank_t((int) i, ::UTF8ToWide(BankNames[i])));
+                const char * const * BankNames = ::adl_getBankNames();
+                const size_t BankCount = (size_t) ::adl_getBanksCount();
 
-                std::sort(_ADLBanks.begin(), _ADLBanks.end(), [](bank_t a, bank_t b) { return a < b; });
+                if ((BankNames != nullptr) && (BankCount > 0))
+                {
+                    for (size_t i = 0; i < BankCount; ++i)
+                        _ADLBanks.push_back(bank_t((int) i, ::UTF8ToWide(BankNames[i])));
+
+                    std::sort(_ADLBanks.begin(), _ADLBanks.end(), [](bank_t a, bank_t b) { return a < b; });
+                }
+            }
+
+            auto w = (CComboBox) GetDlgItem(IDC_ADL_BANK);
+
+            for (size_t i = 0; i < _ADLBanks.size(); ++i)
+            {
+                w.AddString(_ADLBanks[i].Name.c_str());
+
+                if (_ADLBanks[i].Id == CfgADLBank)
+                    w.SetCurSel((int) i);
             }
         }
 
-        auto w = (CComboBox) GetDlgItem(IDC_ADL_BANK);
-
-        for (size_t i = 0; i < _ADLBanks.size(); ++i)
+        // ADL Core
         {
-            w.AddString(_ADLBanks[i].Name.c_str());
+            auto w = (CComboBox) GetDlgItem(IDC_ADL_CORE);
 
-            if (_ADLBanks[i].Id == CfgADLBank)
-                w.SetCurSel((int) i);
-        }
-    }
+            for (size_t i = 0; i < _ADLEmulators.size(); ++i)
+            {
+                w.AddString(_ADLEmulators[i].Name.c_str());
 
-    // ADL Core
-    {
-        auto w = (CComboBox) GetDlgItem(IDC_ADL_CORE);
-
-        for (size_t i = 0; i < _ADLEmulators.size(); ++i)
-        {
-            w.AddString(_ADLEmulators[i].Name.c_str());
-
-            if (_ADLEmulators[i].Id == CfgADLEmulator)
-                w.SetCurSel((int) i);
-        }
-    }
-
-    // ADL Chip Count
-    {
-        static const wchar_t * ChipCounts[] = { L"1", L"2", L"5", L"10", L"25", L"50", L"100" };
-
-        auto w = (CComboBox) GetDlgItem(IDC_ADL_CHIPS);
-
-        for (const auto & Iter : ChipCounts)
-            w.AddString(Iter);
-
-        SetDlgItemInt(IDC_ADL_CHIPS, (UINT) CfgADLChipCount, 0);
-    }
-
-    // ADL Soft Panning
-    SendDlgItemMessage(IDC_ADL_SOFT_PANNING, BM_SETCHECK, (WPARAM) CfgADLSoftPanning);
-
-    // ADL Bank File
-    SetDlgItemText(IDC_ADL_BANK_FILE_PATH, ::UTF8ToWide(CfgADLBankFilePath.get().c_str()).c_str());
-
-    // OPN Bank
-    {
-        _OPNBanks.clear();
-
-        {
-            _OPNBanks.push_back(bank_t(0, L"XG"));
-            _OPNBanks.push_back(bank_t(1, L"GS (DMXOPN2)"));
-            _OPNBanks.push_back(bank_t(2, L"GEMS FMLib GM"));
-            _OPNBanks.push_back(bank_t(3, L"TomSoft's SegaMusic"));
-            _OPNBanks.push_back(bank_t(4, L"FMMIDI"));
-
-            std::sort(_OPNBanks.begin(), _OPNBanks.end(), [](bank_t a, bank_t b) { return a < b; });
+                if (_ADLEmulators[i].Id == CfgADLEmulator)
+                    w.SetCurSel((int) i);
+            }
         }
 
-        auto w = (CComboBox) GetDlgItem(IDC_OPN_BANK);
-
-        for (size_t i = 0; i < _OPNBanks.size(); ++i)
+        // ADL Chip Count
         {
-            w.AddString(_OPNBanks[i].Name.c_str());
+            static const wchar_t * ChipCounts[] = { L"1", L"2", L"5", L"10", L"25", L"50", L"100" };
 
-            if (_OPNBanks[i].Id == CfgOPNBank)
-                w.SetCurSel((int) i);
+            auto w = (CComboBox) GetDlgItem(IDC_ADL_CHIPS);
+
+            for (const auto & Iter : ChipCounts)
+                w.AddString(Iter);
+
+            SetDlgItemInt(IDC_ADL_CHIPS, (UINT) CfgADLChipCount, 0);
         }
+
+        // ADL Soft Panning
+        SendDlgItemMessage(IDC_ADL_SOFT_PANNING, BM_SETCHECK, (WPARAM) CfgADLSoftPanning);
+
+        // ADL Bank File
+        SetDlgItemText(IDC_ADL_BANK_FILE_PATH, ::UTF8ToWide(CfgADLBankFilePath.get().c_str()).c_str());
     }
 
-    // OPN Core
+    // OPN
     {
-        auto w = (CComboBox) GetDlgItem(IDC_OPN_CORE);
-
-        for (size_t i = 0; i < _OPNEmulators.size(); ++i)
+        // OPN Bank
         {
-            w.AddString(_OPNEmulators[i].Name.c_str());
+            _OPNBanks.clear();
 
-            if (_OPNEmulators[i].Id == CfgOPNEmulator)
-                w.SetCurSel((int) i);
+            {
+                _OPNBanks.push_back(bank_t(0, L"XG"));
+                _OPNBanks.push_back(bank_t(1, L"GS (DMXOPN2)"));
+                _OPNBanks.push_back(bank_t(2, L"GEMS FMLib GM"));
+                _OPNBanks.push_back(bank_t(3, L"TomSoft's SegaMusic"));
+                _OPNBanks.push_back(bank_t(4, L"FMMIDI"));
+
+                std::sort(_OPNBanks.begin(), _OPNBanks.end(), [](bank_t a, bank_t b) { return a < b; });
+            }
+
+            auto w = (CComboBox) GetDlgItem(IDC_OPN_BANK);
+
+            for (size_t i = 0; i < _OPNBanks.size(); ++i)
+            {
+                w.AddString(_OPNBanks[i].Name.c_str());
+
+                if (_OPNBanks[i].Id == CfgOPNBank)
+                    w.SetCurSel((int) i);
+            }
         }
-    }
 
-    // OPN Chip Count
-    {
-        static const wchar_t * ChipCounts[] = { L"1", L"2", L"5", L"10", L"25", L"50", L"100" };
+        // OPN Core
+        {
+            auto w = (CComboBox) GetDlgItem(IDC_OPN_CORE);
 
-        auto w = (CComboBox) GetDlgItem(IDC_OPN_CHIPS);
+            for (size_t i = 0; i < _OPNEmulators.size(); ++i)
+            {
+                w.AddString(_OPNEmulators[i].Name.c_str());
 
-        for (const auto & Iter : ChipCounts)
-            w.AddString(Iter);
+                if (_OPNEmulators[i].Id == CfgOPNEmulator)
+                    w.SetCurSel((int) i);
+            }
+        }
 
-        SetDlgItemInt(IDC_OPN_CHIPS, (UINT) CfgOPNChipCount, 0);
-    }
+        // OPN Chip Count
+        {
+            static const wchar_t * ChipCounts[] = { L"1", L"2", L"5", L"10", L"25", L"50", L"100" };
 
-    // OPN Soft Panning
-    {
-        SendDlgItemMessage(IDC_OPN_SOFT_PANNING, BM_SETCHECK, (WPARAM) CfgOPNSoftPanning);
-    }
+            auto w = (CComboBox) GetDlgItem(IDC_OPN_CHIPS);
 
-    // OPN Bank File
-    SetDlgItemText(IDC_OPN_BANK_FILE_PATH, ::UTF8ToWide(CfgOPNBankFilePath.get().c_str()).c_str());
+            for (const auto & Iter : ChipCounts)
+                w.AddString(Iter);
 
-    // MT32Emu Conversion Quality
-    {
-        static const wchar_t * ConversionQualities[] = { L"Fastest", L"Fast", L"Good", L"Best" };
+            SetDlgItemInt(IDC_OPN_CHIPS, (UINT) CfgOPNChipCount, 0);
+        }
 
-        auto w = (CComboBox) GetDlgItem(IDC_MT32_CONVERSION_QUALITY);
+        // OPN Soft Panning
+        {
+            SendDlgItemMessage(IDC_OPN_SOFT_PANNING, BM_SETCHECK, (WPARAM) CfgOPNSoftPanning);
+        }
 
-        for (const auto & Iter : ConversionQualities)
-            w.AddString(Iter);
-
-        w.SetCurSel((int) CfgMT32EmuConversionQuality);
-    }
-
-    // MT32Emu Max. Partials
-    {
-        SetDlgItemInt(IDC_MT32_MAX_PARTIALS, (UINT) CfgMT32EmuMaxPartials, 0);
-    }
-
-    // MT32Emu Analog Output Mode
-    {
-        static const wchar_t * AnalogOutputModes[] = { L"Digital Only", L"Coarse", L"Accurate", L"Oversampled" };
-
-        auto w = (CComboBox) GetDlgItem(IDC_MT32_ANALOG_OUTPUT_MODE);
-
-        for (const auto & Iter : AnalogOutputModes)
-            w.AddString(Iter);
-
-        w.SetCurSel((int) CfgMT32EmuAnalogOutputMode);
-    }
-
-    // MT32Emu GM Set
-    {
-        auto w = (CComboBox) GetDlgItem(IDC_MT32_GM_SET);
-
-        for (const auto & Set : _MT32EmuSets)
-            ::uSendMessageText(w, CB_ADDSTRING, 0, Set.c_str());
-
-        w.SetCurSel((int) CfgMT32EmuGMSet);
-    }
-
-    // MT32Emu DAC Input Mode
-    {
-        static const wchar_t * DACInputModes[] = { L"Nice", L"Pure", L"Generation 1", L"Generation 2" };
-
-        auto w = (CComboBox) GetDlgItem(IDC_MT32_DAC_INPUT_MODE);
-
-        for (const auto & Iter : DACInputModes)
-            w.AddString(Iter);
-
-        w.SetCurSel((int) CfgMT32EmuDACInputMode);
-    }
-
-    // MT32Emu Reverb
-    {
-        SendDlgItemMessage(IDC_MT32_REVERB, BM_SETCHECK, (WPARAM) CfgMT32EmuReverb);
-    }
-
-    // MT32Emu Nice Amp Ramp / Nice Panning / Nice Partial Mixing
-    {
-        SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP,       BM_SETCHECK, (WPARAM) CfgMT32EmuNiceAmpRamp);
-        SendDlgItemMessage(IDC_MT32_NICE_PANNING,        BM_SETCHECK, (WPARAM) CfgMT32EmuNicePanning);
-        SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_SETCHECK, (WPARAM) CfgMT32EmuNicePartialMixing);
-        SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) CfgMT32EmuReverseStereo);
+        // OPN Bank File
+        SetDlgItemText(IDC_OPN_BANK_FILE_PATH, ::UTF8ToWide(CfgOPNBankFilePath.get().c_str()).c_str());
     }
 
     // Nuked OPL3
@@ -763,12 +606,6 @@ void DialogPage::OnButtonClicked(UINT, int id, CWindow) noexcept
         case IDC_ADL_SOFT_PANNING:
 
         case IDC_OPN_SOFT_PANNING:
-
-        case IDC_MT32_REVERB:
-        case IDC_MT32_NICE_AMP_RAMP:
-        case IDC_MT32_NICE_PANNING:
-        case IDC_MT32_NICE_PARTIAL_MIXING:
-        case IDC_MT32_REVERSE_STEREO:
         {
             OnChanged();
             break;
@@ -865,65 +702,6 @@ bool DialogPage::HasChanged() noexcept
             if (CfgOPNBankFilePath.get_value() != ::WideToUTF8(Text).c_str())
                 return true;
         }
-    }
-
-    // MT32
-    {
-        // MT32 Conversion Quality
-        {
-            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_CONVERSION_QUALITY, CB_GETCURSEL);
-
-            if (SelectedIndex != CfgMT32EmuConversionQuality)
-                return true;
-        }
-
-        // MT32 Max. Partials
-        {
-            if (GetDlgItemInt(IDC_MT32_MAX_PARTIALS, NULL, FALSE) != (UINT) CfgMT32EmuMaxPartials)
-                return true;
-        }
-
-        // MT32 Analog Output Mode
-        {
-            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_ANALOG_OUTPUT_MODE, CB_GETCURSEL);
-
-            if (SelectedIndex != CfgMT32EmuAnalogOutputMode)
-                return true;
-        }
-
-        // MT32 GM Set
-        {
-            if (SendDlgItemMessage(IDC_MT32_GM_SET, CB_GETCURSEL) != (UINT) CfgMT32EmuGMSet)
-                return true;
-        }
-
-        // MT32 DAC Input Mode
-        {
-            int SelectedIndex = (int) SendDlgItemMessage(IDC_MT32_DAC_INPUT_MODE, CB_GETCURSEL);
-
-            if (SelectedIndex != CfgMT32EmuDACInputMode)
-                return true;
-        }
-
-        // MT32 Reverb
-        if (SendDlgItemMessage(IDC_MT32_REVERB, BM_GETCHECK) != CfgMT32EmuReverb)
-            return true;
-
-        // MT32 Nice Amp Ramp
-        if (SendDlgItemMessage(IDC_MT32_NICE_AMP_RAMP, BM_GETCHECK) != CfgMT32EmuNiceAmpRamp)
-            return true;
-
-        // MT32 Nice Panning
-        if (SendDlgItemMessage(IDC_MT32_NICE_PANNING, BM_GETCHECK) != CfgMT32EmuNicePanning)
-            return true;
-
-        // MT32 Nice Partial Mixing
-        if (SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_GETCHECK) != CfgMT32EmuNicePartialMixing)
-            return true;
-
-        // MT32 Reverse Stereo
-        if (SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK) != CfgMT32EmuReverseStereo)
-            return true;
     }
 
     // Nuked OPL3

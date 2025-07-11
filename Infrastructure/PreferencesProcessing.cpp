@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2025.06.21) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2025.07.11) P. Stuer **/
 
 #include "pch.h"
 
@@ -138,7 +138,9 @@ private:
     // HMI / HMP
     int64_t _DefaultTempo;
 
-    uint64_t _CfgChannelsVersion; // Version number of the channel configuration
+    uint16_t _ChannelMask[128];
+    uint64_t _ChannelMaskVersion; // Version number of the channel configuration
+
     uint8_t _PortNumber;
 };
 
@@ -173,6 +175,8 @@ void DialogPageProcessing::apply()
     ApplyConfigVariable(DefaultTempo);
 
     CfgChannels.Apply();
+
+    CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
 
     OnChanged();
 }
@@ -223,7 +227,8 @@ BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
     InitializeConfigVariable(DefaultTempo);
 
     CfgChannels.Initialize();
-    _CfgChannelsVersion = CfgChannels.Version();
+
+    CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
 
     InitializePortControls();
 
@@ -385,8 +390,8 @@ bool DialogPageProcessing::HasChanged() const noexcept
 
     HasConfigVariableChanged(DefaultTempo);
 
-//  if (CfgChannels.HasChanged(_CfgChannelsVersion))
-//      return true;
+    if (CfgChannels.HasChanged(_ChannelMask, sizeof(_ChannelMask)))
+        return true;
 
     return false;
 }
@@ -456,4 +461,4 @@ public:
     }
 };
 
-static preferences_page_factory_t<PageProcessing> PreferencesPageFactory;
+static preferences_page_factory_t<PageProcessing> _Factory;
