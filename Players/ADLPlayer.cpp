@@ -1,10 +1,11 @@
 
-/** $VER: ADLPlayer.cpp (2025.07.08) **/
+/** $VER: ADLPlayer.cpp (2025.07.12) **/
 
 #include "pch.h"
 
 #include "ADLPlayer.h"
 #include "Resource.h"
+#include "Log.h"
 
 #include "Encoding.h"
 
@@ -98,14 +99,15 @@ bool ADLPlayer::Startup()
             Device,
             [](void * context, const char * format ...) noexcept
             {
-                std::string Line; Line.resize(1024);
+                char Line[1024] = { };
 
                 std::va_list args;
 
                 va_start(args, format);
 
-                (void) ::vsnprintf(Line.data(), Line.size(), format, args);
-                console::print(STR_COMPONENT_BASENAME " ADL Player says ", Line.c_str());
+                (void) ::vsnprintf(Line, sizeof(Line) - 1, format, args);
+
+                Log.AtDebug().Format(STR_COMPONENT_BASENAME " ADL Player says %s", Line);
 
                 va_end(args);
             },
@@ -138,7 +140,7 @@ bool ADLPlayer::Startup()
         _Devices[i] = Device;
     }
 
-    console::print(STR_COMPONENT_BASENAME " is using LibADLMIDI " ADLMIDI_VERSION " with emulator ", ::adl_chipEmulatorName(_Devices[0]), ".");
+    Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using LibADLMIDI " ADLMIDI_VERSION " with emulator %s.", ::adl_chipEmulatorName(_Devices[0]));
 
     _IsStarted = true;
 

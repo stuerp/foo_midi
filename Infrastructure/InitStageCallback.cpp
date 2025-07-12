@@ -1,5 +1,5 @@
 
-/** $VER: InitStageCallback.cpp (2025.06.30) **/
+/** $VER: InitStageCallback.cpp (2025.07.12) **/
 
 #include "pch.h"
 
@@ -7,6 +7,7 @@
 #include <sdk/initquit.h>
 
 #include "InputDecoder.h"
+#include "Log.h"
 
 #pragma warning(disable: 26409)
 
@@ -26,9 +27,11 @@ public:
     {
         if (stage == init_stages::after_ui_init)
         {
+            Log.AtDebug().Format(STR_COMPONENT_BASENAME " is initializing the metadb index manager after the user interface has been initialized.");
+
             InputDecoder::InitializeIndexManager();
         }
     }
 };
 
-static service_factory_single_t<InitStageCallback> _InitStageCallbackFactory;
+static service_factory_single_t<InitStageCallback> _Factory;

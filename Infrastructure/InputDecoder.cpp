@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.11) **/
+/** $VER: InputDecoder.cpp (2025.07.12) **/
 
 #include "pch.h"
 
@@ -26,6 +26,8 @@
 
 #include "PreferencesFM.h"
 #include "KaraokeProcessor.h"
+
+#include "Log.h"
 
 /* KEEP? 06/07/25
 volatile int _IsRunning = 0;
@@ -98,7 +100,7 @@ InputDecoder::~InputDecoder() noexcept
 
     if (_Player != nullptr)
     {
-    //  console::print(::FormatText("%08X: " STR_COMPONENT_BASENAME " is deleting player 0x%016llX.", ::GetCurrentThreadId(), _Player).c_str());
+        Log.AtTrace().Format(STR_COMPONENT_BASENAME " is deleting player 0x%016llX.", _Player);
 
         delete _Player;
         _Player = nullptr;
@@ -255,7 +257,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 /// </summary>
 void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
-//  console::print(::FormatText("%08X: " STR_COMPONENT_BASENAME " is initializing the decoder.", ::GetCurrentThreadId()).c_str());
+    Log.AtDebug().Format(STR_COMPONENT_BASENAME " is initializing the decoder.");
 
     _Flags = flags;
 
@@ -292,7 +294,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (PresetText != nullptr)
             {
-                console::print(STR_COMPONENT_BASENAME " is using preset \"", PresetText, "\" from tags.");
+                Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using preset \"%s\" from tags.", PresetText);
 
                 Preset.Deserialize(PresetText);
             }
@@ -306,7 +308,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (MIDISysExDumps != nullptr)
             {
-                console::print(STR_COMPONENT_BASENAME " is using SysEx file \"", MIDISysExDumps , "\".");
+                Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using SysEx file \"%s\".", MIDISysExDumps);
 
                 SysExDumps.Deserialize(MIDISysExDumps, _FilePath);
             }
@@ -335,8 +337,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     // Create and initialize the MIDI player.
     switch (_PlayerType)
     {
+        default:
         case PlayerTypes::Unknown:
-            break;
+        {
+            throw pfc::exception("No player selected");
+        }
 
         // Emu de MIDI (Sega PSG, Konami SCC and OPLL (Yamaha YM2413))
         case PlayerTypes::EmuDeMIDI:
@@ -362,9 +367,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 */
             _Player->SetSampleRate(_SampleRate);
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // VSTi
@@ -396,9 +399,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     throw pfc::exception("Failed to load MIDI stream");
             }
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // CLAP (CLever Audio Plug-in API)
@@ -439,9 +440,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // BASS MIDI
@@ -477,9 +476,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     throw pfc::exception("Failed to load MIDI stream");
             }
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // FluidSynth
@@ -499,7 +496,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (DirectoryPath.isEmpty())
             {
-                console::warning(STR_COMPONENT_BASENAME " will attempt to load the FluidSynth libraries from the plugin install path because the FluidSynth directory path was not configured.");
+                Log.AtWarn().Format(STR_COMPONENT_BASENAME " will attempt to load the FluidSynth libraries from the component directory because the location was not configured.");
 
                 DirectoryPath = core_api::get_my_full_path();
                 DirectoryPath.truncate(DirectoryPath.scan_filename());
@@ -529,9 +526,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     throw pfc::exception("Failed to load MIDI stream");
             }
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // MT32Emu (MT-32)
@@ -543,7 +538,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (DirectoryPath.is_empty())
             {
-                console::warning(STR_COMPONENT_BASENAME " is attempting to load the MT-32 ROMs from the plugin install path because the MT32Emu ROM path was not configured.");
+                Log.AtWarn().Format(STR_COMPONENT_BASENAME " is attempting to load the MT-32 ROMs from the component directory because the location was not configured.");
 
                 DirectoryPath = core_api::get_my_full_path();
                 DirectoryPath.truncate(DirectoryPath.scan_filename());
@@ -562,9 +557,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // DirectX
@@ -593,9 +586,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // LibOPNMIDI
@@ -617,9 +608,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // OPL
@@ -645,9 +634,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // Secret Sauce
@@ -659,7 +646,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (PathName.empty())
             {
-                console::warning(STR_COMPONENT_BASENAME " is attempting to load Secret Sauce from the plugin install path because the path was not configured.");
+                Log.AtWarn().Format(STR_COMPONENT_BASENAME " will attempt to load Secret Sauce from the component directory because the location was not configured.");
 
                 PathName = (const char8_t *) core_api::get_my_full_path();
                 PathName.remove_filename();
@@ -675,9 +662,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // MCI
@@ -693,9 +678,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // Nuked SC-55
@@ -711,9 +694,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
 
         // FMMIDI (yuno) (Yamaha YM2608)
@@ -740,13 +721,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 
-            _IsEndOfContainer = false;
-
-            return;
+            break;
         }
     }
 
-    throw pfc::exception("No MIDI player specified");
+    _IsEndOfContainer = false;
+    _IsSampleRateChangeProcessed = false;
 }
 
 /// <summary>
@@ -786,6 +766,20 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         }
 
         _ActualSampleRate = _Player->GetSampleRate(); // Allows us to store the actual sample rate in the info field.
+
+        // Recalculate some time parameters known only to the decoder if the player has changed the actual sample rate.
+        if (!_IsSampleRateChangeProcessed && (_SampleRate != _ActualSampleRate))
+        {
+            _TotalTime = (uint32_t) ::MulDiv((int) _TotalTime, (int) _ActualSampleRate, (int) _SampleRate);
+
+            if (_FadeRange.HasBegin())
+                _FadeRange.SetBegin((uint32_t) ::MulDiv((int) _FadeRange.Begin(), (int) _ActualSampleRate, (int) _SampleRate));
+
+            if (_FadeRange.HasEnd())
+                _FadeRange.SetEnd((uint32_t) ::MulDiv((int) _FadeRange.End(), (int) _ActualSampleRate, (int) _SampleRate));
+
+            _IsSampleRateChangeProcessed = true;
+        }
 
         audioChunk.set_srate(_ActualSampleRate);
         audioChunk.set_channels(ChannelCount);
@@ -872,6 +866,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
     if (_IsFirstBlock)
     {
+        // Set the "sample_rate" information field.
         {
             fileInfo.info_set_int(InfoSampleRate, _ActualSampleRate);
         }
@@ -1360,7 +1355,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     }
     catch (std::exception e)
     {
-        console::print(STR_COMPANY_NAME " is unable to create tag \"", TagMIDIEmbeddedSoundFont, "\": ", e.what());
+        Log.AtWarn().Format(STR_COMPONENT_BASENAME " is unable to create tag \"%s\": %s", TagMIDIEmbeddedSoundFont, e.what());
     }
 
     {

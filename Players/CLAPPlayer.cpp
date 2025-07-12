@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.cpp (2025.07.09) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.cpp (2025.07.12) P. Stuer - Wrapper for CLAP plugins **/
 
 #include "pch.h"
 
@@ -9,6 +9,7 @@
 #include "Resource.h"
 #include "Encoding.h"
 #include "Exception.h"
+#include "Log.h"
 
 #pragma region player_t
 
@@ -154,9 +155,7 @@ void CLAPPlayer::SendEvent(uint32_t data, uint32_t time)
     auto Data2      = (uint8_t) (data >> 16);
     auto PortNumber = (uint8_t) (data >> 24);
 
-#ifdef _DEBUG
-//  console::print(::FormatText("%8u: %02X %02X %02X", time, Status, Data1, Data2).c_str());
-#endif
+    Log.AtTrace().Format(STR_COMPONENT_BASENAME " is sending MIDI message %8u: %02X %02X %02X.", time, Status, Data1, Data2);
 
     _InEvents.Add(Status, Data1, Data2, PortNumber, time);
 }
@@ -174,7 +173,7 @@ void CLAPPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumbe
         p += 3;
     }
 
-//  console::print(::FormatText("%8u: %s", time, Buffer.c_str()).c_str());
+    Log.AtTrace().Format(STR_COMPONENT_BASENAME " is sending MIDI SysEx message %8u: %s.", time, Buffer.c_str());
 #endif
 
     _InEvents.Add(data, (uint32_t) size, (uint16_t) portNumber, time);

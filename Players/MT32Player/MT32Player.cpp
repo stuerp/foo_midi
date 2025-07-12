@@ -1,68 +1,19 @@
 
-/** $VER: MT32Player.cpp (2025.07.07) **/
+/** $VER: MT32Player.cpp (2025.07.12) **/
 
 #include "pch.h"
 
 #include "MT32Player.h"
-#include "Resource.h"
-
 #include "MT32SetupGM.h"
 #include "MT32SetupGMKQ6.h"
 
 #include "Configuration.h"
-
-#include <mt32emu.h>
+#include "Resource.h"
+#include "Log.h"
 
 #pragma warning(disable: 5045)
 
 #include <pfc/pathUtils.h>
-
-class ReportHandler : public MT32Emu::IReportHandlerV1
-{
-public:
-    virtual ~ReportHandler() { }
-
-    // IReportHandler
-    virtual void printDebug(const char * format, va_list args) override
-    {
-    #ifdef _DEBUG
-        std::string Line; Line.resize(1024);
-
-        (void) ::vsnprintf(Line.data(), Line.size(), format, args);
-        console::print(STR_COMPONENT_BASENAME " ADL Player Debug: ", Line.c_str());
-    #endif
-    };
-
-    virtual void onErrorControlROM() override { };
-    virtual void onErrorPCMROM() override { };
-
-    virtual void showLCDMessage(const char * message) override
-    {
-    #ifdef _DEBUG
-        console::print(STR_COMPONENT_BASENAME " ADL Player LCD: ", message);
-    #endif
-    }
-
-    virtual void onMIDIMessagePlayed() override { };
-    virtual bool onMIDIQueueOverflow() override { return false; };
-    virtual void onMIDISystemRealtime(MT32Emu::Bit8u system_realtime) override { };
-    virtual void onDeviceReset() override { };
-    virtual void onDeviceReconfig() override { };
-    virtual void onNewReverbMode(MT32Emu::Bit8u mode) override { };
-    virtual void onNewReverbTime(MT32Emu::Bit8u time) override { };
-    virtual void onNewReverbLevel(MT32Emu::Bit8u level) override { };
-    virtual void onPolyStateChanged(MT32Emu::Bit8u part_num) override { };
-    virtual void onProgramChanged(MT32Emu::Bit8u partNumber, const char * soundGroupName, const char * patchName) override
-    {
-    #ifdef _DEBUG
-        console::print(STR_COMPONENT_BASENAME " ADL Player Sound Group: \"", soundGroupName, "\" Patch: ", patchName, " Part: ", partNumber);
-    #endif
-    };
-
-    // IReportHandlerV1
-    virtual void onLCDStateUpdated() override { };
-    virtual void onMidiMessageLEDStateUpdated(bool ledState) override { };
-};
 
 MT32Player::MT32Player(bool isMT32, uint32_t gmSet) : player_t(), _IsMT32(isMT32), _GMSet(gmSet)
 {
@@ -80,7 +31,7 @@ bool MT32Player::Startup()
     if (_IsStarted)
         return true;
 
-    _Service.createContext();
+    _Service.createContext(_ReportHandler);
 
     if (!LoadROMs(""))
         return false;
@@ -109,7 +60,7 @@ bool MT32Player::Startup()
 
     Reset();
 
-    console::print(STR_COMPONENT_BASENAME " is using LibMT32Emu ", _Service.getLibraryVersionString(), ".");
+    Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using LibMT32Emu %s.", _Service.getLibraryVersionString());
 
     _IsStarted = true;
 

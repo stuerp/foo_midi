@@ -1,10 +1,11 @@
 
-/** $VER: VSTiPlayer.cpp (2025.07.11) **/
+/** $VER: VSTiPlayer.cpp (2025.07.12) **/
 
 #include "pch.h"
 
 #include "VSTiPlayer.h"
 #include "Resource.h"
+#include "Log.h"
 
 #define NOMINMAX
 
@@ -280,7 +281,7 @@ bool Player::StartHost()
         // MS Defender does not like applications that use the operating system... <sigh>
         if (!fs::exists(HostPath))
         {
-            console::print(STR_COMPONENT_BASENAME, " can't start VSTi plug-in. Unable to find required host executable \"", (const char *) HostPath.u8string().c_str(), "\".");
+            Log.AtError().Format(STR_COMPONENT_BASENAME, " can't start VSTi plug-in. Unable to find required host executable \"%s\".", (const char *) HostPath.u8string().c_str());
 
             return false;
         }

@@ -1,9 +1,10 @@
  
-/** $VER: SoundFonts.cpp (2025.07.05) - Support functions for working with sound font files **/
+/** $VER: SoundFonts.cpp (2025.07.125) - Support functions for working with sound font files **/
 
 #include "pch.h"
 
 #include "InputDecoder.h"
+#include "Log.h"
 
 #pragma hdrstop
 
@@ -129,7 +130,7 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
             std::reverse(_SoundFonts.begin(), _SoundFonts.end());
 
         for (const auto & sf : _SoundFonts)
-            console::print(STR_COMPONENT_BASENAME, " uses sound font \"", sf.FilePath().c_str(), "\" with bank offset ", sf.BankOffset(), ".");
+            Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using sound font \"%s\" with bank offset %d.", sf.FilePath().c_str(), sf.BankOffset());
     }
 }
 

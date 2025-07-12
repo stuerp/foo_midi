@@ -54,6 +54,7 @@
     <ClCompile Include="GUI\MusicKeyboardUIElement.cpp" />
     <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
+    <ClCompile Include="Infrastructure\Log.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -209,6 +210,8 @@
     <ClInclude Include="GUI\MusicKeyboard.h" />
     <ClInclude Include="GUI\MusicKeyboardUIElement.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
+    <ClInclude Include="Infrastructure\Log.h" />
+    <ClInclude Include="Players\MT32Player\MT32ReportHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

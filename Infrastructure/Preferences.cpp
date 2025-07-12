@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.11) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -28,6 +28,7 @@
 #include "Configuration.h"
 #include "Preset.h"
 #include "Encoding.h"
+#include "Log.h"
 
 #include "BMPlayer.h"
 #include "FSPlayer.h"
@@ -486,13 +487,13 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     // Add the VSTi plug-ins to the installed player list.
     {
-        console::print(STR_COMPONENT_BASENAME " is enumerating VSTi plug-ins...");
+        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is enumerating VSTi plug-ins...");
 
         _VSTiPlugIns = _VSTiHost.GetPlugIns(std::u8string((const char8_t *) (const char *) CfgVSTiPlugInDirectoryPath.get()));
 
         if (!_VSTiPlugIns.empty())
         {
-            console::print(STR_COMPONENT_BASENAME " found ", _VSTiPlugIns.size(), " compatible VSTi plug-ins.");
+            Log.AtInfo().Format(STR_COMPONENT_BASENAME " found %d compatible VSTi plug-ins.", _VSTiPlugIns.size());
 
             size_t i = 0;
 
@@ -509,7 +510,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             }
         }
         else
-            console::print(STR_COMPONENT_BASENAME " found no compatible VSTi plug-ins.");
+            Log.AtInfo().Format(STR_COMPONENT_BASENAME " found no compatible VSTi plug-ins.");
     }
 
     #pragma endregion
@@ -518,7 +519,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
     // Add the CLAP plug-ins to the installed player list.
     {
-        console::print(STR_COMPONENT_BASENAME " is enumerating CLAP plug-ins...");
+        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is enumerating CLAP plug-ins...");
 
         fs::path BaseDirectory(std::u8string((const char8_t *) CfgCLAPPlugInDirectoryPath.get().c_str()));
 
@@ -526,7 +527,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 
         if (!_CLAPPlugIns.empty())
         {
-            console::print(STR_COMPONENT_BASENAME " found ", _CLAPPlugIns.size(), " CLAP plug-ins.");
+            Log.AtInfo().Format(STR_COMPONENT_BASENAME " found %d CLAP plug-ins.", _CLAPPlugIns.size());
 
             size_t i = 0;
 
@@ -543,7 +544,7 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
             }
         }
         else
-            console::print(STR_COMPONENT_BASENAME " found no compatible CLAP plug-ins.");
+            Log.AtInfo().Format(STR_COMPONENT_BASENAME " found no compatible CLAP plug-ins.");
     }
 
     #pragma endregion

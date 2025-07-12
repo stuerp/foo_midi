@@ -1,5 +1,5 @@
 
-/** $VER: VSTiHost.cpp (2025.07.11) P. Stuer **/
+/** $VER: VSTiHost.cpp (2025.07.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -7,6 +7,7 @@
 #include "Resource.h"
 #include "VSTiHost.h"
 #include "VSTiPlayer.h"
+#include "Log.h"
 
 namespace VSTi
 {
@@ -44,7 +45,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
             else
             if (Entry.path().extension() == ".dll")
             {
-    //          console::print(STR_COMPONENT_BASENAME " is examining \"", (const char *) Entry.path().u8string().c_str(), "\"...");
+                Log.AtDebug().Format(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
 
                 Player Player;
 
@@ -87,7 +88,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
     }
     catch (std::exception e)
     {
-        console::print(STR_COMPONENT_BASENAME, " fails to get VSTi plug-ins: ", e.what());
+        Log.AtError().Format(STR_COMPONENT_BASENAME " failed to get VSTi plug-ins: %s", e.what());
     }
 }
 

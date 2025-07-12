@@ -1,9 +1,10 @@
 
-/** $VER: CLAPEventList.cpp (2025.07.02) P. Stuer **/
+/** $VER: CLAPEventList.cpp (2025.07.12) P. Stuer **/
 
 #include "pch.h"
 
 #include "CLAPEvents.h"
+#include "Log.h"
 
 namespace CLAP
 {
@@ -97,9 +98,9 @@ OutputEvents::OutputEvents()
 
             case CLAP_EVENT_MIDI:
             {
-//              const auto * me = (clap_event_midi *) event;
+                const auto * me = (clap_event_midi *) event;
 
-//              console::print(::FormatText("%02X %02X %02X %02X", me->data[0], me->data[1], me->data[2], me->data[2]).c_str());
+                Log.AtTrace().Format(STR_COMPONENT_BASENAME " received MIDI message %02X %02X %02X %02X.", me->data[0], me->data[1], me->data[2], me->data[2]);
                 break;
             }
 
@@ -112,16 +113,19 @@ OutputEvents::OutputEvents()
                 for (size_t i = 0; i < sx->size; ++i)
                     ::sprintf_s(Buffer.data(), 4, "%02X ", sx->buffer[i]);
 
-                console::print(Buffer.c_str());
+                Log.AtTrace().Format(STR_COMPONENT_BASENAME " received MIDI SysEx message %s.", Buffer.c_str());
                 break;
             }
 
             case CLAP_EVENT_MIDI2:
+            {
+                Log.AtTrace().Format(STR_COMPONENT_BASENAME " received MIDI 2 message.");
                 break;
+            }
 
             default:
             {
-                console::print(STR_COMPONENT_BASENAME, " received unsupported CLAP event ", event->type, ".");
+                Log.AtWarn().Format(STR_COMPONENT_BASENAME, " received unsupported CLAP event %d.", event->type);
             }
         }
     #endif

@@ -1,5 +1,5 @@
 
-/** $VER: FS.cpp (2025.07.05) P. Stuer **/
+/** $VER: FS.cpp (2025.07.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -9,6 +9,7 @@
 #include "Exception.h"
 
 #include "Configuration.h"
+#include "Log.h"
 
 #include <shlwapi.h>
 
@@ -124,7 +125,7 @@ bool API::Exists() noexcept
     }
     catch (component::runtime_error e)
     {
-        console::print(STR_COMPONENT_BASENAME, " failed to initialize FluidSynth: ", e.what());
+        Log.AtError().Format(STR_COMPONENT_BASENAME " failed to initialize FluidSynth: %s", e.what());
 
         return false;
     }
@@ -174,12 +175,12 @@ bool Host::LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_se
                     {
                         api.GetNumericSettingRange(Settings, Name.c_str(), &Min, &Max);
 
-                        console::print(STR_COMPONENT_BASENAME " found invalid numeric value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file. Valid range is ", pfc::format_float(Min, 0, 2), " to ", pfc::format_float(Max, 0, 2), ".");
+                        Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid numeric value \"%s\" for setting \"%s\" in FluidSynth configuration file. Valid range is %.2f to %2f.", Value.c_str(), Name.c_str(), Min, Max);
                     }
                 }
                 catch (...)
                 {
-                    console::print(STR_COMPONENT_BASENAME " found invalid numeric value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file.");
+                    Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid numeric value \"%s\" for setting \"%s\" in FluidSynth configuration file.", Value.c_str(), Name.c_str());
                 }
                 break;
             }
@@ -194,12 +195,12 @@ bool Host::LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_se
                     {
                         api.GetIntegerSettingRange(Settings, Name.c_str(), &Min, &Max);
 
-                        console::print(STR_COMPONENT_BASENAME " found invalid integer value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file. Valid range is ", Min, " to ", Max, ".");
+                        Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid integer value \"%s\" for setting \"%s\" in FluidSynth configuration file. Valid range is %d to %d.", Value.c_str(), Name.c_str(), Min, Max);
                     }
                 }
                 catch (...)
                 {
-                    console::print(STR_COMPONENT_BASENAME " found invalid integer value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file.");
+                    Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid integer value \"%s\" for setting \"%s\" in FluidSynth configuration file.", Value.c_str(), Name.c_str());
                 }
                 break;
             }
@@ -208,7 +209,7 @@ bool Host::LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_se
             {
                 if (api.SetStringSetting(Settings, Name.c_str(), Value.c_str()) != FLUID_OK)
                 {
-                    console::print(STR_COMPONENT_BASENAME " found invalid string value \"", Value.c_str(), "\" for setting \"", Name.c_str() ,"\" in FluidSynth configuration file.");
+                    Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid string value \"%s\" for setting \"%s\" in FluidSynth configuration file.", Value.c_str(), Name.c_str());
                 }
                 break;
             }
@@ -220,7 +221,7 @@ bool Host::LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_se
 
             case FLUID_NO_TYPE:
             default:
-                console::print(STR_COMPONENT_BASENAME " found unknown setting \"", Name.c_str() ,"\" in FluidSynth configuration file.");
+                Log.AtWarn().Format(STR_COMPONENT_BASENAME " found unknown setting \"%s\" in FluidSynth configuration file.", Name.c_str());
         }
     }
 

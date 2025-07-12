@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.07.09) **/
+/** $VER: BMPlayer.cpp (2025.07.12) **/
 
 #include "pch.h"
 
@@ -8,6 +8,7 @@
 #include "BASSInitializer.h"
 #include "SoundFontCache.h"
 #include "Exception.h"
+#include "Log.h"
 
 #include <sflist.h>
 
@@ -181,13 +182,13 @@ bool BMPlayer::Startup()
     _IsStarted = true;
 
     {
-        DWORD BASSVersion = GetVersion();
+        const DWORD BASSVersion = GetVersion();
 
-        console::print(STR_COMPONENT_BASENAME " is using BASS ", (BASSVersion >> 24) & 0xFF, ".", (BASSVersion >> 16) & 0xFF, ".", (BASSVersion >> 8) & 0xFF, ".", BASSVersion & 0xFF, ".");
+        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using BASS %d.%d.%d.%d.", (BASSVersion >> 24) & 0xFF, (BASSVersion >> 16) & 0xFF, (BASSVersion >> 8) & 0xFF, BASSVersion & 0xFF);
 
-        DWORD BASSMIDIVersion = GetMIDIVersion();
+        const DWORD BASSMIDIVersion = GetMIDIVersion();
 
-        console::print(STR_COMPONENT_BASENAME " is using BASS MIDI ", (BASSMIDIVersion >> 24) & 0xFF, ".", (BASSMIDIVersion >> 16) & 0xFF, ".", (BASSMIDIVersion >> 8) & 0xFF, ".", BASSMIDIVersion & 0xFF, ".");
+        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using BASS MIDI %d.%d.%d.%d.", (BASSMIDIVersion >> 24) & 0xFF, (BASSMIDIVersion >> 16) & 0xFF, (BASSMIDIVersion >> 8) & 0xFF, BASSMIDIVersion & 0xFF);
     }
 
     Configure(_MIDIFlavor, _FilterEffects);

@@ -81,11 +81,11 @@ This player uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) libra
 
 It can be configured on the **MIDI Player / [FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
 
-#### Bank {#adl-bank}
+#### ADL Bank
 
 The library provides many built-in FM patches from various known PC games using AIL (Miles Sound System), DMX, HMI (Human Machine Interfaces) or Creative IBK (Instrument Bank). With this setting you select the bank that will be used during playback.
 
-#### Emulator Core {#adl-emulator-core}
+#### ADL Emulator Core
 
 To render the MIDI file a synthesizer chip is emulated. These are the eumlators that the current version of the library supports:
 
@@ -103,11 +103,11 @@ To render the MIDI file a synthesizer chip is emulated. These are the eumlators 
 | Nuked OPL2 LLE    | Low-Level Emulator, CPU heavy |
 | Nuked OPL3 LLE    | Low-Level Emulator, CPU heavy |
 
-#### Chips {#adl-chips}
+#### ADL Chips
 
 You can specify the number of chips (1 to 100) that are available to the player. Emulation of multiple chips extends polyphony limits when rendering a MIDI file.
 
-#### Soft panning {#adl-soft-panning}
+#### ADL Soft panning
 
 Enables or disables soft panning.
 
@@ -115,7 +115,7 @@ By default the library uses binary panning where a sound is either fully left, f
 
 Soft panning (also called full-panning stereo) allows for gradual placement of sound across the stereo field, enabling smoother and more realistic spatial positioning of instruments.
 
-#### Bank File {#adl-bank-file}
+#### ADL Bank File
 
 A bank can be loaded from a file in the [WOPL format](https://github.com/Wohlstand/OPL3BankEditor/blob/master/Specifications/WOPL-and-OPLI-Specification.pdf). You can create a bank using Wohlstand's [OPL3 Bank Editor](https://github.com/Wohlstand/OPL3BankEditor). The loaded bank will take precendence over the select bank.
 
@@ -125,11 +125,11 @@ This player uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) libra
 
 It can be configured on the **MIDI Player / [FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
 
-#### Bank {#opn-bank}
+#### OPN Bank
 
 The library provides a couple of instrument banks. With this setting you select the bank that will be used during playback.
 
-#### Emulator Core {#opn-emulator-core}
+#### OPN Emulator Core
 
 To render the MIDI file a synthesizer chip is emulated. These are the eumlators that the current version of the library supports:
 
@@ -149,11 +149,11 @@ The following emulator cores have been deprecated in the current version of the 
 - [Genesis Plus GX](https://github.com/ekeeke/Genesis-Plus-GX)
 - [PMDWin](https://c60.la.coocan.jp/) OPNA
 
-#### Chips {#opn-chips}
+#### OPN Chips
 
 You can specify the number of chips (1 to 100) that are available to the player. Emulation of multiple chips extends polyphony limits when rendering a MIDI file.
 
-#### Soft panning {#opn-soft-panning}
+#### OPN Soft panning
 
 Enables or disables soft panning.
 
@@ -161,7 +161,7 @@ By default the library uses binary panning where a sound is either fully left, f
 
 Soft panning (also called full-panning stereo) allows for gradual placement of sound across the stereo field, enabling smoother and more realistic spatial positioning of instruments.
 
-#### Bank File {#opn-bank-file}
+#### OPN Bank File
 
 A bank can be loaded from a file in the [WOPN format](https://github.com/Wohlstand/OPN2BankEditor/blob/master/Specifications/WOPN-and-OPNI-Specification.txt). You can create a bank using Wohlstand's [OPN2 Bank Editor](https://github.com/Wohlstand/OPN2BankEditor). The loaded bank will take precendence over the select bank.
 
@@ -173,12 +173,12 @@ This player uses the [libEDMIDI](https://github.com/Wohlstand/libEDMIDI) library
 
 This player uses the [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3) library by [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) to emulate the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
 
-### LibMT32EMU (MT-32) (Built-in)
+### LibMT32EMU (MT-32) (Built-in, FM Synthesis / Wavetable)
 
 This player uses the [LibMT32Emu](https://github.com/munt/munt) library to emulate the [Roland MT-32, CM-32L and LAPC-I synthesiser modules](https://en.wikipedia.org/wiki/Roland_MT-32).
 
 > [!Important]
-> You have to specify the location of the MT-32 or CM-32L PCM and control ROMS on the **MIDI Player / [Paths](#paths)** preferences page before you can use this player.
+> You have to specify the location of the MT-32 or CM-32L PCM and control ROMS on the **[MIDI Player / Paths](#paths)** preferences page before you can use this player.
 
 It can be configured on the **MIDI Player / [FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
 
@@ -253,9 +253,9 @@ Determines which General MIDI configuration is used by the player: Roland or Kin
 [FMMIDI](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
 
 > [!Important]
-> It requires a text file that specifies the programs or instrument definitions. A default **Programs.txt** file is installed with the component in component directory. This file can be overriden by selecting a different one on the **MIDI Player / [Paths](#paths)** preferences page.
+> It requires a text file that specifies the programs or instrument definitions. A default **Programs.txt** file is installed with the component in component directory. This file can be overriden by selecting a different one on the **[MIDI Player / Paths](#paths)** preferences page.
 
-### BASSMIDI (Built-in)
+### BASSMIDI (Built-in, Wavetable)
 
 This player is a wrapper for the BASSMIDI library by [Un4seen](https://www.un4seen.com/). The required libraries to use it are included with the component.
 
@@ -263,14 +263,14 @@ It requires an SF2, SF2Pack, SFZ or SF3 soundfont to provide the instrument samp
 
 A custom SFList format is also supported to further tweak the sound fonts and instruments used during playback.
 
-### FluidSynth (Optional)
+### FluidSynth (Optional, Wavetable)
 
 This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) library.
 
 It requires an SF2, SF2Pack, SFZ or SF3 soundfont or a DLS-compatible wave set to provide the instrument samples. See [Sound Fonts](#sound-fonts).
 
 > [!Important]
-> You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path on the **MIDI Player / [Paths](#paths)** preferences page before FluidSynth becomes available as a player.
+> You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path on the **[MIDI Player / Paths](#paths)** preferences page before FluidSynth becomes available as a player.
 
 #### Configuration file
 
@@ -283,21 +283,21 @@ You can use a text file to specify FluidSynth settings. The file must have the f
 
 Refer to [FluidSettings](https://www.fluidsynth.org/api/fluidsettings.xml) for the available settings.
 
-Specify the path to the file on the **MIDI Player / [Paths](#paths)** preferences page. An example file is included in the component directory.
+Specify the path to the file on the **[MIDI Player / Paths](#paths)** preferences page. An example file is included in the component directory.
 
 ### Secret Sauce (Optional)
 
 Secret Sauce is a wrapper for the SCCore.dll that comes bundled with Roland’s [Sound Canvas VA](https://www.roland.com/us/products/rc_sound_canvas_va/).
 
 > [!Important]
-> You need to specify the path of the SCCore.dll on the **MIDI Player / [Paths](#paths)** preferences page before Secret Sauce becomes available as a player.
+> You need to specify the path of the SCCore.dll on the **[MIDI Player / Paths](#paths)** preferences page before Secret Sauce becomes available as a player.
 
 ### VSTi (VST Instruments) (Optional)
 
 [Virtual Studio Technology](https://en.wikipedia.org/wiki/Vsti) (VST&reg;) instruments are plug-ins that provide extra functionality to a digital audio workstation (DAW). foo_midi can use both 32 and 64-bit VST instruments that are virtual  synthesizers.
 
 > [!Important]
-> You need to specify location of the VSTi plug-ins on the **MIDI Player / [Paths](#paths)** preferences page. Any compatible plug-in will be added to the player list with a `VSTi` prefix.
+> You need to specify location of the VSTi plug-ins on the **[MIDI Player / Paths](#paths)** preferences page. Any compatible plug-in will be added to the player list with a `VSTi` prefix.
 
 ### CLAP (Optional)
 
@@ -310,7 +310,7 @@ The CLAP player allows you to use [CLAP (CLever Audio Plug-in API)](https://u-he
 - Have only 2 output channels in stereo configuration.
 
 > [!Important]
-> You need to specify location of the CLAP plug-ins on the **MIDI Player / [Paths](#paths)** preferences page. Any compatible plug-in with extension `.dll` or `.clap` will be added to the player list with a `CLAP` prefix. A CLAP plug-in file can contain multiple plug-ins.
+> You need to specify location of the CLAP plug-ins on the **[MIDI Player / Paths](#paths)** preferences page. Any compatible plug-in with extension `.dll` or `.clap` will be added to the player list with a `CLAP` prefix. A CLAP plug-in file can contain multiple plug-in entries.
 
 Here are some examples of CLAP plug-ins:
 
@@ -460,22 +460,33 @@ You can force a player to start playback using a particular *flavor* of MIDI. Th
 | GS&nbsp;SC&#8209;8820  | General Sound specification with Roland SC-8820 initialization |
 | XG          | Extended General MIDI specification created by Yamaha |
 
-The **Filter effects** setting prevents reverb and chorus messages from being sent to the player. It does not change the reverb and chorus settings of the player.
+#### Filter effects
 
-When you enable the  **Use LibMT32Emu with MT-32** setting the selected player will be ignored and LibMT32Emu will be used whenever an MT-32 MIDI file is played.
+This setting prevents reverb and chorus messages from being sent to the player. It does not change the reverb and chorus settings of the player.
 
-Enabling the **Use S-YXG50 VSTi with XG** setting will ignore the selected player and use the Yamaha S-YXG50 VSTi whenever an XG MIDI file is played.
+#### Use LibMT32Emu with MT-32
 
-> [!Important]
-> You have to specify the location of the VSTi on the **MIDI Player / [Paths](#paths)** preferences page.
+When you enable this setting the selected player will be ignored and LibMT32Emu will always be used whenever an MT-32 MIDI file is played.
 
-**Extra percussion channel** will assign channel 16 as an extra percussion channel whenever a track is found in the MIDI file that contains metadata of type Text, Trackname or Instrumentname that contains the word `drum` (case-insensitive).
+#### Use VSTi with XG
 
-**Exclude unsupported EMIDI track designation** will ignore tracks in an [Apogee Expanded MIDI (EMIDI)](https://moddingwiki.shikadi.net/wiki/Apogee_Expanded_MIDI) file with Track Designation control change messages (`CC 110`) with unsupported instrument definitions.
+This setting will ignore the selected player and use the VSTi specified on the **[MIDI Player / Paths](#paths)** page whenever an XG MIDI file is played. Typically the Yamaha S-YXG50 VSTi is configured there.
 
-Enabling **Disable instrument changes** will remove all Program Change messages from the MIDI stream.
+#### Extra percussion channel
 
-Enabling **Disable bank changes** will remove all Control Change bank change messages from the MIDI stream. (`CC 0` and `CC 32`)
+This setting will assign channel 16 as an extra percussion channel whenever a track is found in the MIDI file that contains metadata of type Text, Trackname or Instrumentname that contains the word `drum` (case-insensitive).
+
+#### Exclude unsupported EMIDI track designation
+
+This setting will ignore tracks in an [Apogee Expanded MIDI (EMIDI)](https://moddingwiki.shikadi.net/wiki/Apogee_Expanded_MIDI) file with Track Designation control change messages (`CC 110`) with unsupported instrument definitions.
+
+#### Disable instrument changes
+
+Enabling this setting will remove all Program Change messages from the MIDI stream.
+
+#### Disable bank changes
+
+Enabling this setting will remove all Control Change bank change messages from the MIDI stream. (`CC 0` and `CC 32`)
 
 ### FM Synthesis
 
@@ -496,9 +507,9 @@ This sub-page of **MIDI Player** contains the various directory and file paths t
 | Name | Description |
 | ---- | ----------- |
 | VSTi&nbsp;Plug&#8209;Ins | The location of the VSTi plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
-| VSTi&nbsp;XG&nbsp;Plug&#8209;In | The location of the VSTi plug-in that will always be used to play XG MIDI files. |
+| VSTi&nbsp;XG&nbsp;Plug&#8209;In | The location of the VSTi plug-in that will be used when the [Use VSTi with XG](#use-vsti-with-xg) setting is enabled. |
 | CLAP&nbsp;Plug&#8209;Ins | The location of the CLAP plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
-| Sound Font | The location of the Sound Font to be used by BASSMIDI and FluidSynth. |
+| Sound&nbsp;Font | The location of the Sound Font to be used by BASSMIDI and FluidSynth. |
 | MT&#8209;32&nbsp;ROMs | The location of the MT-32 ROM files to be used by LibMT32Emu. |
 | Secret&nbsp;Sauce | The location of the Secret Sauce library. |
 | FluidSynth | The location where the FluidSynth libraries can be found. |

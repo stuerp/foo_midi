@@ -96,7 +96,9 @@ To create the component first build the x64 configuration and next the x86 confi
 ## Change Log
 
 - v2.19.0.0-alpha8, 2025-xx-xx
+  - New: Log level setting determines which foo_midi messages are written to the foobar2000 console.
   - Changed: Moved the LibMT32Emu settings to the Wavetable page.
+  - Improved: VSTi player issues a warning whenever it's host executable `vshost32.exe` and `vshost64.exe` can't be found.
   - Fixed: Changing the channel mask setting did not always stick.
 
 - You can read the full history [here](docs/History.md).

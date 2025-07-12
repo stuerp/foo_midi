@@ -227,6 +227,7 @@ private:
     uint32_t _BASSMIDIInterpolationMode;
 
     bool _IsEndOfContainer;
+    bool _IsSampleRateChangeProcessed;
     bool _IsFirstBlock;
 
     double _AudioChunkDuration;

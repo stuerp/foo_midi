@@ -1,11 +1,14 @@
 
-/** $VER: FSPlayer.cpp (2025.07.07) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.07.12) P. Stuer **/
 
 #include "pch.h"
 
 #include "FSPlayer.h"
 
 #include "Support.h"
+#include "Log.h"
+
+static void Logger(int level, const char * message, void * data);
 
 FSPlayer::FSPlayer() : player_t(), _Settings()
 {
@@ -113,13 +116,6 @@ struct context_t
     FluidSynth::API * _FluidSynth;
     fluid_settings_t * _Settings;
 };
-
-#ifdef _DEBUG
-static void Log(int level, const char * message, void * data)
-{
-    console::print(STR_COMPONENT_BASENAME " FluidSynth: \"", message , "\".");
-}
-#endif
 
 bool FSPlayer::Startup()
 {
@@ -246,21 +242,19 @@ bool FSPlayer::Startup()
         }
     }
 
-    #ifdef _DEBUG
-    _API.SetLogFunction(FLUID_PANIC, Log, NULL);
-    _API.SetLogFunction(FLUID_ERR, Log, NULL);
-    _API.SetLogFunction(FLUID_WARN, Log, NULL);
-//  _API.SetLogFunction(FLUID_DBG,Log, NULL);
-    #endif
+    _API.SetLogFunction(FLUID_PANIC, Logger, nullptr);
+    _API.SetLogFunction(FLUID_ERR, Logger, nullptr);
+    _API.SetLogFunction(FLUID_WARN, Logger, nullptr);
+    _API.SetLogFunction(FLUID_DBG,Logger, nullptr);
 
     _ErrorMessage = "";
 
     _IsStarted = true;
 
     {
-        DWORD Version = GetVersion();
+        const DWORD Version = GetVersion();
 
-        console::print(STR_COMPONENT_BASENAME " is using FluidSynth ", (Version >> 24) & 0xFF, ".", (Version >> 16) & 0xFF, ".", (Version >> 8) & 0xFF, ".");
+        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using FluidSynth %d.%d.%d.", (Version >> 24) & 0xFF, (Version >> 16) & 0xFF, (Version >> 8) & 0xFF);
     }
 
     Configure(_MIDIFlavor, _FilterEffects);
@@ -523,6 +517,18 @@ fluid_sfloader_t * FSPlayer::GetSoundFontLoader(fluid_settings_t * settings) con
 }
 
 #pragma endregion
+
+static void Logger(int level, const char * message, void * data)
+{
+    switch (level)
+    {
+        case FLUID_PANIC: Log.AtFatal().Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
+        case FLUID_ERR:   Log.AtError().Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
+        case FLUID_WARN:  Log.AtWarn() .Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
+        case FLUID_INFO:  Log.AtInfo() .Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
+        case FLUID_DBG:   Log.AtDebug().Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
+    }
+}
 
 #ifdef LATER
 static void Callback(void * data, const char * name, int type)

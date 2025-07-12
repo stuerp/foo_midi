@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.h (2025.07.07) **/
+/** $VER: MT32Player.h (2025.07.12) **/
 
 #pragma once
 
@@ -11,6 +11,8 @@
 #include <mt32emu.h>
 
 #include <set>
+
+#include "MT32ReportHandler.h"
 
 namespace foobar2000_io
 {
@@ -59,6 +61,7 @@ private:
 private:
     fs::path _ROMDirectory;
 
+    ReportHandler _ReportHandler;
     MT32Emu::Service _Service;
 
     bool _IsMT32;

@@ -524,6 +524,7 @@ void player_t::SetSampleRate(uint32_t sampleRate)
     if (_LoopBeginTime != 0)
         _LoopBeginTime = (uint32_t) ::MulDiv((int) _LoopBeginTime, (int) sampleRate, (int) _SampleRate);
 
+
     _SampleRate = sampleRate;
 
 //  Shutdown(); FIXME
@@ -681,17 +682,17 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
 
     if (time == 0)
     {
-        SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber);
+        SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber);
         SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber);
         SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
-        SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber);
+        SendSysEx(midi::sysex_t::GMSystemOn, _countof(midi::sysex_t::GMSystemOn), portNumber);
     }
     else
     {
-        SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber, time);
+        SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber, time);
         SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber, time);
         SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
-        SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber, time);
+        SendSysEx(midi::sysex_t::GMSystemOn, _countof(midi::sysex_t::GMSystemOn), portNumber, time);
     }
 
     switch (_MIDIFlavor)
@@ -699,9 +700,9 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         case MIDIFlavors::GM:
         {
             if (time != 0)
-                SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber, time);
+                SendSysEx(midi::sysex_t::GMSystemOn, _countof(midi::sysex_t::GMSystemOn), portNumber, time);
             else
-                SendSysEx(midi::sysex_t::GMReset, _countof(midi::sysex_t::GMReset), portNumber);
+                SendSysEx(midi::sysex_t::GMSystemOn, _countof(midi::sysex_t::GMSystemOn), portNumber);
             break;
         }
 
@@ -732,9 +733,9 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         case MIDIFlavors::XG:
         {
             if (time != 0)
-                SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber, time);
+                SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber, time);
             else
-                SendSysEx(midi::sysex_t::XGReset, _countof(midi::sysex_t::XGReset), portNumber);
+                SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber);
             break;
         }
 

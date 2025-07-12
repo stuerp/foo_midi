@@ -1,11 +1,12 @@
 
-/** $VER: MCIPlayer.cpp (2025.07.09) P. Stuer - Implements a player using the Windows MCI API **/
+/** $VER: MCIPlayer.cpp (2025.07.12) P. Stuer - Implements a player using the Windows MCI API **/
 
 #include "pch.h"
 
 #include "MCIPlayer.h"
 
 #include "Resource.h"
+#include "Log.h"
 
 #pragma region Public
 
@@ -151,7 +152,7 @@ void MCIPlayer::LogMessage(MMRESULT result) const
 
     ::midiOutGetErrorTextA(result, Text, _countof(Text));
 
-    console::print(STR_COMPONENT_BASENAME, " MCI Player reports ", Text);
+    Log.AtDebug().Format(STR_COMPONENT_BASENAME " MCI Player says %s", Text);
 }
 
 #pragma endregion
