@@ -1,5 +1,5 @@
 
-/** $VER: Log.cpp (2025.07.12) P. Stuer - Another logger implementation **/
+/** $VER: Log.cpp (2025.07.13) P. Stuer - Another logger implementation **/
 
 #include "pch.h"
 
@@ -17,13 +17,15 @@ public:
 
     virtual ~NullLog() final { };
 
-    virtual ILog & AtFatal() override final { return *this; }
-    virtual ILog & AtError() override final { return *this; }
-    virtual ILog & AtWarn() override final { return *this; }
-    virtual ILog & AtInfo() override final { return *this; }
-    virtual ILog & AtDebug() override final { return *this; }
-    virtual ILog & AtTrace() override final { return *this; }
-    virtual ILog & Format(const char * format, ... ) override final { return *this; }
+    ILog & SetLevel(LogLevel level) noexcept override final { return *this; }
+
+    ILog & AtFatal() noexcept override final { return *this; }
+    ILog & AtError() noexcept override final { return *this; }
+    ILog & AtWarn() noexcept override final { return *this; }
+    ILog & AtInfo() noexcept override final { return *this; }
+    ILog & AtDebug() noexcept override final { return *this; }
+    ILog & AtTrace() noexcept override final { return *this; }
+    ILog & Format(const char * format, ... ) noexcept override final { return *this; }
 };
 
 ILog & Null = *new NullLog();
@@ -32,9 +34,9 @@ class LogImpl : public ILog
 {
 public:
 #ifdef _DEBUG
-    LogImpl() noexcept : _Level(LogLevel::Debug) { }
+    LogImpl() noexcept { SetLevel(LogLevel::Debug); }
 #else
-    LogImpl() noexcept : _Level(LogLevel::Info) { }
+    LogImpl() noexcept { SetLevel(LogLevel::Info); }
 #endif
 
     LogImpl(const LogImpl &) = delete;
@@ -44,37 +46,44 @@ public:
 
     virtual ~LogImpl() noexcept { };
 
-    ILog & AtFatal() override final
+    ILog & SetLevel(LogLevel level) noexcept override final
+    {
+        _Level = level;
+
+        return *this;
+    }
+
+    ILog & AtFatal() noexcept override final
     {
         return (_Level >= LogLevel::Fatal) ? *this : Null;
     }
 
-    ILog & AtError() override final
+    ILog & AtError() noexcept override final
     {
         return (_Level >= LogLevel::Error) ? *this : Null;
     }
 
-    ILog & AtWarn() override final
+    ILog & AtWarn() noexcept override final
     {
         return (_Level >= LogLevel::Warn) ? *this : Null;
     }
 
-    ILog & AtInfo() override final
+    ILog & AtInfo() noexcept override final
     {
         return (_Level >= LogLevel::Info) ? *this : Null;
     }
 
-    ILog & AtDebug() override final
+    ILog & AtDebug() noexcept override final
     {
         return (_Level >= LogLevel::Debug) ? *this : Null;
     }
 
-    ILog & AtTrace() override final
+    ILog & AtTrace() noexcept override final
     {
         return (_Level >= LogLevel::Trace) ? *this : Null;
     }
 
-    ILog & Format(const char * format, ... ) override final
+    ILog & Format(const char * format, ... ) noexcept override final
     {
         char Line[1024] = { };
 

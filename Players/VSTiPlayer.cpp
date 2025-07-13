@@ -451,7 +451,7 @@ bool Player::StartHost()
 
 void Player::StopHost() noexcept
 {
-    if (_IsTerminating)
+    if (_IsTerminating || (_hReadEvent == 0))
         return;
 
     _IsTerminating = true;

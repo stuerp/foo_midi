@@ -18,7 +18,7 @@ unsigned exchange_count = 0;
 //{ WCHAR Text[1024]; ::_swprintf(Text, TEXT("size: %ld, MsgSize: %ld"), size, MsgSize); ::MessageBox(::GetDesktopWindow(), TEXT("Code 3"), TEXT("SCPipe"), MB_OK); }
 #endif
 
-void put_bytes(const void * out, uint32_t size)
+void WriteBytes(const void * out, uint32_t size)
 {
     DWORD BytesWritten;
 
@@ -33,12 +33,12 @@ void put_bytes(const void * out, uint32_t size)
 #endif
 }
 
-void put_code(uint32_t code)
+void WriteCode(uint32_t code)
 {
-    put_bytes(&code, sizeof(code));
+    WriteBytes(&code, sizeof(code));
 }
 
-void get_bytes(void * in, uint32_t size)
+void ReadBytes(void * in, uint32_t size)
 {
     DWORD BytesRead;
 
@@ -65,11 +65,11 @@ void get_bytes(void * in, uint32_t size)
     }
 }
 
-uint32_t get_code()
+uint32_t ReadCode()
 {
     uint32_t code;
 
-    get_bytes(&code, sizeof(code));
+    ReadBytes(&code, sizeof(code));
 
     return code;
 }
@@ -136,11 +136,11 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
     SampleBuffer.resize((size_t) (BUFFER_SIZE * 4));
 
-    put_code(0);
+    WriteCode(0);
 
     for (;;)
     {
-        uint32_t Command = get_code();
+        uint32_t Command = ReadCode();
 
         if (!Command)
             break;
@@ -149,7 +149,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
         {
             case 1: // Set Sample Rate
             {
-                uint32_t Size = get_code();
+                uint32_t Size = ReadCode();
 
                 if (Size != sizeof(SampleRate))
                 {
@@ -157,7 +157,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                     goto exit;
                 }
 
-                SampleRate = get_code();
+                SampleRate = ReadCode();
 
                 Sampler->TG_activate(44100.0, 1024);
                 Sampler->TG_setMaxBlockSize(256);
@@ -165,23 +165,23 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                 Sampler->TG_setSampleRate((float) SampleRate);
                 Sampler->TG_setMaxBlockSize(BUFFER_SIZE);
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
             case 2: // Send MIDI Event
             {
-                uint32_t Code = get_code();
+                uint32_t Code = ReadCode();
 
                 Sampler->TG_ShortMidiIn(Code, 0);
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
             case 3: // Send System Exclusive Event
             {
-                uint32_t Size = get_code();
+                uint32_t Size = ReadCode();
 
                 if ((size_t)(Size + 1) > MsgSize)
                 {
@@ -195,22 +195,22 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                     goto exit;
                 }
 
-                get_bytes(MsgData, Size);
+                ReadBytes(MsgData, Size);
 
                 if (MsgData[Size - 1] != 0xF7)
                     MsgData[Size] = 0xF7;
 
                 Sampler->TG_LongMidiIn(MsgData, 0);
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
             case 4: // Render Samples
             {
-                uint32_t count = get_code();
+                uint32_t count = ReadCode();
 
-                put_code(0);
+                WriteCode(0);
 
                 while (count)
                 {
@@ -235,7 +235,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                         out += 2;
                     }
 
-                    put_bytes(&SampleBuffer[(size_t) (BUFFER_SIZE * 2)], count_to_do * sizeof(float) * 2);
+                    WriteBytes(&SampleBuffer[(size_t) (BUFFER_SIZE * 2)], count_to_do * sizeof(float) * 2);
 
                     count -= count_to_do;
                 }
@@ -244,7 +244,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
             case 5: // Junk Samples
             {
-                uint32_t count = get_code();
+                uint32_t count = ReadCode();
 
                 while (count)
                 {
@@ -256,25 +256,25 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                     count -= count_to_do;
                 }
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
             case 6: // Send event, with timestamp
             {
-                uint32_t Code = get_code();
-                uint32_t Timestamp = get_code();
+                uint32_t Code = ReadCode();
+                uint32_t Timestamp = ReadCode();
 
                 Sampler->TG_ShortMidiIn(Code, Timestamp);
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
             case 7: // Send System Exclusive, with timestamp
             {
-                uint32_t Size = get_code();
-                uint32_t Timestamp = get_code();
+                uint32_t Size = ReadCode();
+                uint32_t Timestamp = ReadCode();
 
                 if ((size_t)(Size + 1) > MsgSize)
                 {
@@ -288,14 +288,14 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                     goto exit;
                 }
 
-                get_bytes(MsgData, Size);
+                ReadBytes(MsgData, Size);
 
                 if (MsgData[Size - 1] != 0xF7)
                     MsgData[Size] = 0xF7;
 
                 Sampler->TG_LongMidiIn(MsgData, Timestamp);
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
@@ -313,7 +313,7 @@ exit:
     if (argv)
         ::LocalFree(argv);
 
-    put_code(code);
+    WriteCode(code);
 
     if (_hNUL)
     {

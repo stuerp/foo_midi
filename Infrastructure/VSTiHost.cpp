@@ -43,7 +43,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
                 GetPlugIns_(Entry.path());
             }
             else
-            if (Entry.path().extension() == ".dll")
+            if ((Entry.path().extension() == ".dll") || (Entry.path().extension() == ".vst2") || (Entry.path().extension() == ".vst3"))
             {
                 Log.AtDebug().Format(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
 

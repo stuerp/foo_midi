@@ -24,6 +24,7 @@
 #include <pfc/string-conv-lite.h>
 
 #include "Resource.h"
+#include "Log.h"
 
 #include "Configuration.h"
 #include "Channels.h"
@@ -54,6 +55,9 @@ ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4
 
 // HMI / HMP
 ConfigVariable(DefaultTempo,        cfg_int, int,    160,  0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
+
+// Component
+ConfigVariable(LogLevel,            cfg_int,  int,      4, 0x12be0a92,0x3794,0x4414,0x82,0x3e,0xd3,0x14,0x29,0x67,0xa4,0xee);
 
 /// <summary>
 /// Implements a preferences page.
@@ -88,6 +92,8 @@ public:
         COMMAND_CODE_HANDLER_EX(BN_CLICKED, OnButtonClick)
 
         MESSAGE_HANDLER_EX(WM_HSCROLL, OnHScroll)
+
+        COMMAND_HANDLER_EX(IDC_LOG_LEVEL, CBN_SELCHANGE, OnSelectionChange)
     END_MSG_MAP()
 
     enum
@@ -100,6 +106,7 @@ private:
     HBRUSH OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept;
 
     void OnEditChange(UINT, int, CWindow) noexcept;
+    void OnSelectionChange(UINT, int, CWindow) noexcept;
     void OnButtonClick(UINT, int id, CWindow) noexcept;
     LRESULT OnHScroll(UINT, WPARAM, LPARAM) noexcept;
 
@@ -145,6 +152,8 @@ private:
     uint64_t _ChannelMaskVersion; // Version number of the channel configuration
 
     uint8_t _PortNumber;
+
+    int64_t _LogLevel;
 };
 
 #pragma region preferences_page_instance
@@ -177,9 +186,15 @@ void ProcessingDialog::apply()
 
     ApplyConfigVariable(DefaultTempo);
 
+    ApplyConfigVariable(LogLevel);
+
     CfgChannels.Apply();
 
     CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
+
+    ApplyConfigVariable(LogLevel);
+
+    Log.SetLevel((LogLevel) CfgLogLevel.get());
 
     OnChanged();
 }
@@ -198,6 +213,8 @@ void ProcessingDialog::reset()
     ResetConfigVariable(IncludeControlData);
 
     ResetConfigVariable(DefaultTempo);
+
+    ResetConfigVariable(LogLevel);
 
     CfgChannels.Reset();
 
@@ -278,6 +295,19 @@ void ProcessingDialog::OnEditChange(UINT code, int id, CWindow) noexcept
     }
 
     OnChanged();
+}
+
+/// <summary>
+/// Handles a selection change in a combo box.
+/// </summary>
+void ProcessingDialog::OnSelectionChange(UINT, int id, CWindow) noexcept
+{
+    if (id == IDC_LOG_LEVEL)
+    {
+        _LogLevel = SendDlgItemMessage(IDC_LOG_LEVEL, CB_GETCURSEL);
+
+        OnChanged();
+    }
 }
 
 /// <summary>
@@ -407,6 +437,8 @@ bool ProcessingDialog::HasChanged() const noexcept
     if (CfgChannels.HasChanged(_ChannelMask, sizeof(_ChannelMask)))
         return true;
 
+    HasConfigVariableChanged(LogLevel);
+
     return false;
 }
 
@@ -435,6 +467,25 @@ void ProcessingDialog::UpdateDialog() noexcept
     ::uSetDlgItemText(m_hWnd, IDC_DEFAULT_TEMPO, pfc::format_int(_DefaultTempo));
 
     UpdateChannelButtons();
+
+    // Log Level
+    {
+        InitializeConfigVariable(LogLevel);
+
+        auto w = (CComboBox) GetDlgItem(IDC_LOG_LEVEL);
+
+        w.Clear();
+
+        int i = -1;
+
+        for (const auto & Text : { L"Never", L"Fatal", L"Error", L"Warn", L"Info", L"Debug", L"Trace", L"Always", })
+        {
+            w.AddString(Text);
+
+            if (++i ==  CfgLogLevel)
+                w.SetCurSel((int) i);
+        }
+    }
 }
 
 void ProcessingDialog::UpdateChannelButtons() noexcept
@@ -444,8 +495,6 @@ void ProcessingDialog::UpdateChannelButtons() noexcept
 }
 
 #pragma endregion
-
-static const GUID PreferencesProcessingPageGUID = { 0x19bb1820, 0x3b64, 0x403c, { 0xab, 0xf0, 0x3d, 0xd0, 0x06, 0x37, 0xf2, 0x7a } };
 
 class ProcessingPage : public preferences_page_impl<ProcessingDialog>
 {
@@ -466,7 +515,7 @@ public:
 
     GUID get_guid() noexcept
     {
-        return PreferencesProcessingPageGUID;
+        return { 0x19bb1820, 0x3b64, 0x403c, { 0xab, 0xf0, 0x3d, 0xd0, 0x06, 0x37, 0xf2, 0x7a } };
     }
 
     GUID get_parent_guid() noexcept

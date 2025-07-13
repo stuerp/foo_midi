@@ -15,7 +15,8 @@ Welcome to [foo_midi](https://github.com/stuerp/foo_midi/releases). This guide w
 6. [FAQs](#faqs)
 7. [Reference Material](#reference-material)
 8. [History](#history)
-9. [Support](#support)
+9. [Acknowledgements and Credits](#acknowledgements-and-credits)
+10. [Support](#support)
 
 ---
 
@@ -334,12 +335,15 @@ By default the [LibADLMIDI (Built-in)](#libadlmidi-built-in-fm-synthesis) player
 
 If you have configured [VSTi](#vsti-vst-instruments-optional) the compatible instruments will added to the list as a player prefixed with `VSTi`. [CLAP](#clap-optional) plug-ins are prefixed with `CLAP`.
 
+> [!Note]
+> Don't forget to press the **Apply** button. The newly selected player will be used when you start a new track.
+
 The **Configure** button will be enabled if the player has an additional dialog to configure settings specific to that player.
 
 The **Sample rate** combobox allows you to specify the sample rate the player will be asked to create samples. Select any of the predefined values or enter a custom value between 8000Hz and 192000Hz.
 
 > [!Important]
-> Some players may ignore this setting because player-specific parameters cause it to render at a higher or lower sample rate. F.e. [FluidSynth](#fluidsynth-optional) may get a different sample rate from a configuration file or [LibMT32EMU](#libmt32emu-mt-32-built-in) will use a different sample rate resulting from a combination its settings. The actual sample rate can be read from the [samplerate](#information-fields) information field.
+> Some players may ignore this setting because player-specific parameters cause it to render at a higher or lower sample rate. F.e. [FluidSynth](#fluidsynth-optional) may get a different sample rate from a configuration file or [LibMT32EMU](#libmt32emu-mt-32-built-in) will use a different sample rate resulting from a combination of its settings. The actual sample rate being used can be read from the [samplerate](#information-fields) information field.
 
 ### Looping
 
@@ -350,10 +354,10 @@ The following loop markers are supported:
 | Name | Description|
 | --- | --- |
 | EMIDI&nbsp;/&nbsp;XMI | Used by [EMIDI / XMI](http://www.shikadi.net/moddingwiki/XMI_Format#MIDI_controller_assignments) files with Control Change 116 and 117 as loop markers. This format also can specify the number of times the sequence should be looped. |
-| Final&nbsp;Fantasy | Used by Final Fantasy files (starting with [Final Fantasy VII](http://www.midishrine.com/index.php?id=85)) with "loopStart" en "loopEnd" meta events as a marker |
-| LeapFrog | Used by [LeapFrog](https://leapfrog.fandom.com/wiki/The_Leap-font_(Music)) files with Control Change 110 and 111 |
+| Final&nbsp;Fantasy | Used by Final Fantasy files (starting with [Final Fantasy VII](http://www.midishrine.com/index.php?id=85)) with "loopStart" en "loopEnd" meta events as a marker. |
+| LeapFrog | Used by [LeapFrog](https://leapfrog.fandom.com/wiki/The_Leap-font_(Music)) files with Control Change 110 and 111. |
 | RPG&nbsp;Maker | Used by [RPG Maker](https://en.wikipedia.org/wiki/RPG_Maker) files. Control Change 111 marks the loop start. The loop end is always the end of the stream. |
-| Touhou | Used by [Touhou Project](https://en.wikipedia.org/wiki/Touhou_Project) files with Control Change 2 and 4 |
+| Touhou | Used by [Touhou Project](https://en.wikipedia.org/wiki/Touhou_Project) files with Control Change 2 and 4. |
 
 The component supports 6 loop modes that can be selected in the foobar2000 Preferences dialog:
 
@@ -376,7 +380,7 @@ The **Fade-Out time** setting specifies the time in milliseconds that the player
 
 ### Soundfonts
 
-*Work in Progress*
+🔧 *Work in Progress*
 
 ### Metadata
 
@@ -494,11 +498,19 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 
 #### LibADLMIDI
 
+🔧 *Work in Progress*
+
 #### LibOPNMIDI
+
+🔧 *Work in Progress*
 
 #### LibEDMIDI
 
+🔧 *Work in Progress*
+
 #### Nuked OPL3
+
+🔧 *Work in Progress*
 
 ### Paths
 
@@ -521,6 +533,8 @@ This sub-page of **MIDI Player** contains the various directory and file paths t
 This sub-page of **MIDI Player** contains the settings to configure the MIDI processing.
 
 #### Recomposer
+
+🔧 *Work in Progress*
 
 **Expand loops**
 
@@ -561,6 +575,8 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 
 #### BASSMIDI
 
+🔧 *Work in Progress*
+
 **Gain**
 
 **Resampling**
@@ -585,7 +601,7 @@ Cache status
 
 ## Troubleshooting
 
-*Work in Progress*
+🔧 *Work in Progress*
 
 ---
 
@@ -602,6 +618,19 @@ Cache status
 ## Reference Material
 
 This chapter contains a lot of reference material I consulted during the development of foo_midi.
+
+### foobar2000
+
+- [foobar2000 Development](https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Development:Overview)
+
+### Windows User Interface
+
+- [Desktop App User Interface](https://learn.microsoft.com/en-us/windows/win32/windows-application-ui-development)
+- [Windows User Experience Interaction Guidelines](https://learn.microsoft.com/en-us/windows/win32/uxguide/guidelines)
+- [Windows Controls](https://learn.microsoft.com/en-us/windows/win32/controls/window-controls)
+- [Control Library](https://learn.microsoft.com/en-us/windows/win32/controls/individual-control-info)
+- [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
+- [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
 
 ### Electronic Music
 
@@ -656,45 +685,69 @@ This chapter contains a lot of reference material I consulted during the develop
 ### FluidSynth
 
 - [FluidSynth User Manual](https://github.com/FluidSynth/fluidsynth/wiki/UserManual)
-  - [FluidSynth SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont)
-- Development
+- [FluidSynth SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont)
+- [FluidSynth Documentation](https://github.com/FluidSynth/fluidsynth/wiki/Documentation)
+- - Development
   - [FluidSynth GitHub](https://github.com/FluidSynth/fluidsynth)
   - [FluidSynth Developer Documentation](https://www.fluidsynth.org/api/index.html)
 
 ### VST
 
+- Plug-Ins
+  - [Yamaha S-YXG50 Portable VSTi v1.0.0](https://veg.by/en/projects/syxg50/) `VST 2`
+  - [OPL3GM_VSTi](https://github.com/datajake1999/OPL3GM_VSTi) `VST 2`
+  - [RdPiano](https://github.com/giulioz/rdpiano) `VST 3`
 - Development
   - [VST 3 Developer Portal](https://steinbergmedia.github.io/vst3_dev_portal/pages/index.html)
-- Plug-Ins
-  - [Yamaha S-YXG50 Portable VSTi v1.0.0](https://veg.by/en/projects/syxg50/)
 
 ### CLAP
 
+- [CLAP Audio Software Database](https://clapdb.tech/)
 - Development
   - [Getting Started](https://cleveraudio.org/developers-getting-started/)
-
-### CLAP Hosts
-
-- [BaconPaul's Test microhost](https://github.com/baconpaul/micro-clap-host)
-- [The Anklang Project](https://anklang.testbit.eu/)
-  - [Anklang](https://github.com/tim-janik/anklang)
-- Development
-  - []()
-
-### CLAP Plug-ins
-
-- [Dexed](https://asb2m10.github.io/dexed/)
-  - [GitHub repository](https://github.com/asb2m10/dexed)
-- [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP), [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator, John Novak
-  - Nuked SC-55, [GitHub repository](https://github.com/nukeykt/Nuked-SC55)
-- [Odin 2](https://thewavewarden.com/pages/odin-2), 24-voice polyphonic powerhouse, [The WaveWarden](https://thewavewarden.com/)
-  - [GitHub repository](https://github.com/TheWaveWarden/odin2)
+- Hosts
+  - [BaconPaul's Test microhost](https://github.com/baconpaul/micro-clap-host)
+  - [The Anklang Project](https://anklang.testbit.eu/)
+    - [Anklang](https://github.com/tim-janik/anklang)
+  - Development
+    - [CLAP Host](https://github.com/free-audio/clap-host)
+- Plug-ins
+  - [Dexed](https://asb2m10.github.io/dexed/), [GitHub repository](https://github.com/asb2m10/dexed)
+  - [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP), [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator, John Novak
+    - Nuked SC-55, [GitHub repository](https://github.com/nukeykt/Nuked-SC55)
+  - [Odin 2](https://thewavewarden.com/pages/odin-2), 24-voice polyphonic powerhouse, [The WaveWarden](https://thewavewarden.com/), [GitHub repository](https://github.com/TheWaveWarden/odin2)
+  - [SW10-Plug](https://github.com/djtuBIG-MaliceX/sw10_plug), Casio SW-10
+  - [JV880-Juce](https://github.com/giulioz/jv880_juce)
+  - [Mini-JV880](https://github.com/giulioz/mini-jv880)
+  - Development
+    - [CLAP Plug-ins](https://github.com/free-audio/clap-plugins)
 
 ---
 
 ## History
 
 The history of foo_midi development is available in a separate [document](History.md).
+
+---
+
+## Acknowledgements and Credits
+
+- Peter Pawlowski for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
+- [kode54](https://gitlab.com/kode54/) for the original [foo_midi](https://gitlab.com/kode54/foo_midi) component.
+- [Un4seen Developments](https://www.un4seen.com/) for the BASS audio library.
+- [Munt](https://github.com/munt/munt/) for a multi-platform software synthesiser emulating pre-GM MIDI devices such as the Roland MT-32, CM-32L, CM-64 and LAPC-I.
+- [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) for [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3).
+- [Vitaly Novichkov](https://github.com/Wohlstand) for [libADLMIDI](https://github.com/Wohlstand/libADLMIDI), [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) and [libEDMIDI](https://github.com/Wohlstand/libEDMIDI).
+- [Mitsutaka Okazaki](https://github.com/Wohlstand/scc) for Emu de MIDI.
+- [arch21](https://hydrogenaud.io/index.php?action=profile;u=123058) for testing and pointing me in the right direction with Secret Sauce and SF3 SoundFonts.
+- Tom Moebert for [FluidSynth](https://www.fluidsynth.org/).
+- [Valley Bell](https://github.com/ValleyBell) for [MidiConverters](https://github.com/ValleyBell/MidiConverters).
+- [Jean-loup Gailly](http://gailly.net/) and [Mark Adler](http://en.wikipedia.org/wiki/Mark_Adler) for [zlib](https://www.zlib.net/).
+- [Spessasus](https://github.com/spessasus) for testing, advice and [SpessaSynth](https://github.com/spessasus/SpessaSynth).
+- [Zoltán Bacskó](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
+- [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool).
+- [yuno (Yoshio Uno)](yuno@users.sourceforge.jp) for [fmmidi](http://milkpot.sakura.ne.jp/fmmidi/).
+- [John Novak](https://github.com/johnnovak) for [Nuked-SC55-CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP).
 
 ---
 

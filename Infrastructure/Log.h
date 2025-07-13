@@ -1,5 +1,5 @@
 
-/** $VER: Log.h (2025.07.12) **/
+/** $VER: Log.h (2025.07.13) **/
 
 #pragma once
 
@@ -29,13 +29,15 @@ public:
 
     virtual ~ILog() noexcept { };
 
-    virtual ILog & AtFatal() = 0;
-    virtual ILog & AtError() = 0;
-    virtual ILog & AtWarn() = 0;
-    virtual ILog & AtInfo() = 0;
-    virtual ILog & AtDebug() = 0;
-    virtual ILog & AtTrace() = 0;
-    virtual ILog & Format(const char * format, ... ) = 0;
+    virtual ILog & SetLevel(LogLevel level) noexcept = 0;
+
+    virtual ILog & AtFatal() noexcept = 0;
+    virtual ILog & AtError() noexcept = 0;
+    virtual ILog & AtWarn() noexcept = 0;
+    virtual ILog & AtInfo() noexcept = 0;
+    virtual ILog & AtDebug() noexcept = 0;
+    virtual ILog & AtTrace() noexcept = 0;
+    virtual ILog & Format(const char * format, ... ) noexcept = 0;
 };
 
 extern ILog & Log;

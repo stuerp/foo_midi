@@ -95,7 +95,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-- v2.19.0.0-alpha8, 2025-xx-xx
+- v2.19.0.0-rc1, 2025-07-13
   - New: Log level setting determines which foo_midi messages are written to the foobar2000 console.
   - Changed: Moved the LibMT32Emu settings to the Wavetable page.
   - Improved: VSTi player issues a warning whenever it's host executable `vshost32.exe` and `vshost64.exe` can't be found.
@@ -120,29 +120,10 @@ To create the component first build the x64 configuration and next the x86 confi
 - [Valley Bell](https://github.com/ValleyBell) for [MidiConverters](https://github.com/ValleyBell/MidiConverters).
 - [Jean-loup Gailly](http://gailly.net/) and [Mark Adler](http://en.wikipedia.org/wiki/Mark_Adler) for [zlib](https://www.zlib.net/).
 - [Spessasus](https://github.com/spessasus) for testing, advice and [SpessaSynth](https://github.com/spessasus/SpessaSynth).
-- [ZoltÃ¡n BacskÃ³](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
+- [Zoltán Bacskó](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
 - [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool).
 - [yuno (Yoshio Uno)](yuno@users.sourceforge.jp) for [fmmidi](http://milkpot.sakura.ne.jp/fmmidi/).
 - [John Novak](https://github.com/johnnovak) for [Nuked-SC55-CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP).
-
-## Reference Material
-
-### foobar2000
-
-- [foobar2000 Development](https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Development:Overview)
-
-### Windows User Interface
-
-- [Desktop App User Interface](https://learn.microsoft.com/en-us/windows/win32/windows-application-ui-development)
-- [Windows User Experience Interaction Guidelines](https://learn.microsoft.com/en-us/windows/win32/uxguide/guidelines)
-- [Windows Controls](https://learn.microsoft.com/en-us/windows/win32/controls/window-controls)
-- [Control Library](https://learn.microsoft.com/en-us/windows/win32/controls/individual-control-info)
-- [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
-- [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
-
-### FluidSynth
-
-- [FluidSynth Documentation](https://github.com/FluidSynth/fluidsynth/wiki/Documentation)
 
 ## Links
 

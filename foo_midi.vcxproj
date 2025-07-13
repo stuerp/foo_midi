@@ -260,11 +260,6 @@
     <Manifest />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="GUI\API.cpp" />
-    <ClCompile Include="GUI\Key.cpp" />
-    <ClCompile Include="GUI\Keyboard.cpp" />
-    <ClCompile Include="GUI\MusicKeyboard.cpp" />
-    <ClCompile Include="GUI\MusicKeyboardUIElement.cpp" />
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Channels.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
@@ -409,16 +404,12 @@
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
     <ClInclude Include="3rdParty\foo_vis_midi\API.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
-    <ClInclude Include="GUI\IMIDIReceiver.h" />
-    <ClInclude Include="GUI\Key.h" />
-    <ClInclude Include="GUI\Keyboard.h" />
-    <ClInclude Include="GUI\MusicKeyboard.h" />
-    <ClInclude Include="GUI\MusicKeyboardUIElement.h" />
     <ClInclude Include="Infrastructure\Channels.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
     <ClInclude Include="Infrastructure\CriticalSection.h" />
     <ClInclude Include="Infrastructure\Log.h" />
     <ClInclude Include="Infrastructure\PreferencesFM.h" />
+    <ClInclude Include="Infrastructure\PreferencesProcessing.h" />
     <ClInclude Include="Players\ADLPlayer.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\BMPlayer.h" />
