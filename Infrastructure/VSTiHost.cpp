@@ -53,11 +53,11 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
                 {
                     std::string Name;
 
+                    // Create the plug-in name.
                     {
-                        // Create the plugin name.
-                        if (!Player.VendorName.empty() || !Player.ProductName.empty())
+                        if (!Player.ProductName.empty())
                         {
-                            if (Player.VendorName.empty() || ((Player.ProductName.length() >= Player.VendorName.length()) && (::strncmp(Player.VendorName.c_str(), Player.ProductName.c_str(), Player.VendorName.length()) == 0)))
+                            if (Player.ProductName.starts_with(Player.VendorName))
                             {
                                 Name = Player.ProductName;
                             }
@@ -69,7 +69,8 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
                                     Name += std::string(' ' + Player.ProductName);
                             }
                         }
-                        else
+
+                        if (Name.empty())
                             Name = (const char *) Entry.path().stem().u8string().c_str();
                     }
 

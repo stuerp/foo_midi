@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2025.07.07) **/
+/** $VER: VSTiPlayer.h (2025.07.13) **/
 
 #pragma once
 
@@ -36,7 +36,7 @@ protected:
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
 
-    virtual uint32_t GetBlockSize() const noexcept override { return 4096; }
+    virtual uint32_t GetBlockSize() const noexcept override { return MaxFrames; }
     virtual uint8_t GetPortCount() const noexcept override { return 1; };
 
     virtual void SendEvent(uint32_t data) override;
@@ -79,10 +79,11 @@ private:
     HANDLE _hProcess;
     HANDLE _hThread;
 
+    const uint32_t MaxFrames = 4096;
     uint32_t _ChannelCount;
 
     std::vector<uint8_t> _Chunk;
-    float * _Samples;
+    float * _SrcFrames;
 
     bool _IsTerminating;
 };

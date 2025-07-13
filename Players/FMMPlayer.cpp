@@ -90,7 +90,7 @@ bool FMMPlayer::Startup()
         case MIDIFlavors::SC55:
         case MIDIFlavors::SC88:
         case MIDIFlavors::SC88Pro:
-        case MIDIFlavors::SC8850:
+        case MIDIFlavors::SC8820:
 
         default: SystemMode = midisynth::system_mode_t::system_mode_gs; break;
     }

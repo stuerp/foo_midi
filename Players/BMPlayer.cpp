@@ -85,7 +85,7 @@ void BMPlayer::EnableEffects(bool enabled)
 /// <summary>
 /// Sets the sound fonts to use for synthesis.
 /// </summary>
-void BMPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)
+void BMPlayer::SetSoundfonts(const std::vector<soundfont_t> & soundFonts)
 {
     if (_SoundFonts == soundFonts)
         return;

@@ -5,7 +5,7 @@
 
 #include "OPNPlayer.h"
 #include "Resource.h"
-#include "Log.h""
+#include "Log.h"
 
 #include "Tomsoft.wopn.h"
 #include "fmmidi.wopn.h"

@@ -79,7 +79,7 @@ foo_midi implements and suports several players. A player is emulates an FM or s
 
 This player uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM3812 (OPL2)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2) and the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
 
-It can be configured on the **MIDI Player / [FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
+It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
 
 #### ADL Bank
 
@@ -123,7 +123,7 @@ A bank can be loaded from a file in the [WOPL format](https://github.com/Wohlsta
 
 This player uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) and [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
 
-It can be configured on the **MIDI Player / [FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
+It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
 
 #### OPN Bank
 
@@ -135,14 +135,14 @@ To render the MIDI file a synthesizer chip is emulated. These are the eumlators 
 
 | Name | Description |
 | ---- | ----------- |
-| MAME YM2612 | Accurate and fast on slow devices |
-| MAME YM2608 | Accurate and fast on slow devices |
-| Nuked OPN2 ([YM3438](https://en.wikipedia.org/wiki/YM3438#Yamaha_YM3438) mode) | Very accurate, requires a powerful CPU |
-| Nuked OPN2 (YM2612 mode) | Very accurate, requires a powerful CPU |
-| Gens/GS II OPN2 | GENS 2.10 emulator. Very outdated and inaccurate, but fastest. |
-| Neko Project II Kai OPNA | Neko Project 2 YM2608 emulator. Semi-accurate, but fast on slow devices. |
-| YMFM OPN2 | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
-| YMFM OPNA | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
+| MAME&nbsp;YM2612 | Accurate and fast on slow devices |
+| MAME&nbsp;YM2608 | Accurate and fast on slow devices |
+| Nuked&nbsp;OPN2&nbsp;([YM3438](https://en.wikipedia.org/wiki/YM3438#Yamaha_YM3438) mode) | Very accurate, requires a powerful CPU |
+| Nuked&nbsp;OPN2&nbsp;(YM2612&nbsp;mode) | Very accurate, requires a powerful CPU |
+| Gens/GS&nbsp;II&nbsp;OPN2 | GENS 2.10 emulator. Very outdated and inaccurate, but fastest. |
+| Neko&nbsp;Project&nbsp;II&nbsp;Kai&nbsp;OPNA | Neko Project 2 YM2608 emulator. Semi-accurate, but fast on slow devices. |
+| YMFM&nbsp;OPN2 | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
+| YMFM&nbsp;OPNA | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
 
 The following emulator cores have been deprecated in the current version of the library and are no longer available:
 
@@ -180,7 +180,7 @@ This player uses the [LibMT32Emu](https://github.com/munt/munt) library to emula
 > [!Important]
 > You have to specify the location of the MT-32 or CM-32L PCM and control ROMS on the **[MIDI Player / Paths](#paths)** preferences page before you can use this player.
 
-It can be configured on the **MIDI Player / [FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
+It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
 
 #### Resampling
 
@@ -259,15 +259,15 @@ Determines which General MIDI configuration is used by the player: Roland or Kin
 
 This player is a wrapper for the BASSMIDI library by [Un4seen](https://www.un4seen.com/). The required libraries to use it are included with the component.
 
-It requires an SF2, SF2Pack, SFZ or SF3 soundfont to provide the instrument samples. See [Sound Fonts](#sound-fonts).
+It requires an SF2, SF2Pack or SFZ soundfont to provide the instrument samples. See [Soundfonts](#soundfonts).
 
-A custom SFList format is also supported to further tweak the sound fonts and instruments used during playback.
+A custom SFList format is also supported to further tweak the soundfonts and instruments used during playback.
 
 ### FluidSynth (Optional, Wavetable)
 
 This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) library.
 
-It requires an SF2, SF2Pack, SFZ or SF3 soundfont or a DLS-compatible wave set to provide the instrument samples. See [Sound Fonts](#sound-fonts).
+It requires an SF2, SF2Pack, SFZ or SF3 soundfont or a DLS-compatible wave set to provide the instrument samples. See [Soundfonts](#soundfonts).
 
 > [!Important]
 > You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path on the **[MIDI Player / Paths](#paths)** preferences page before FluidSynth becomes available as a player.
@@ -332,7 +332,7 @@ If the file format is not supported or there's an error in the file an error mes
 
 By default the [LibADLMIDI (Built-in)](#libadlmidi-built-in-fm-synthesis) player is used. You can change the player on the **Playback / Decoding / MIDI Player** page of the foobar2000 Preferences. The **Player** droplist contains all available players.
 
-If you have configured [VSTi](#vsti-vst-instruments-optional) the compatible instruments will added to the list as a player prefixed with `VSTi`. [CLAP](#clap-optional) plug-ins are ade prefixed with `CLAP`.
+If you have configured [VSTi](#vsti-vst-instruments-optional) the compatible instruments will added to the list as a player prefixed with `VSTi`. [CLAP](#clap-optional) plug-ins are prefixed with `CLAP`.
 
 The **Configure** button will be enabled if the player has an additional dialog to configure settings specific to that player.
 
@@ -359,12 +359,12 @@ The component supports 6 loop modes that can be selected in the foobar2000 Prefe
 
 | Type                            | Description |
 | ------------------------------- | ----------- |
-| Never loop                      | The song will be played once ignoring any loop information. |
-| Never loop. Use decay time      | The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down. |
-| Loop and fade when detected     | The song will be played and any defined loop will be repeated a customizable number of times. At the end of the last loop the song will fade out. |
-| Loop and fade always            | The song will be played and looped a customizable number of times. If no loop is found the complete song be looped. At the end of the last loop the song will fade out. |
-| Play indefinitely when detected | The song will be played and the loop, when detected, will play until stopped. |
-| Play indefinitely               | The song will be played and loop until stopped. |
+| Never&nbsp;loop | The song will be played once ignoring any loop information. |
+| Never&nbsp;loop.&nbsp;Use&nbsp;decay&nbsp;time | The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down. |
+| Loop&nbsp;and&nbsp;fade&nbsp;when&nbsp;detected | The song will be played and any defined loop will be repeated a customizable number of times. At the end of the last loop the song will fade out. |
+| Loop&nbsp;and&nbsp;fade&nbsp;always | The song will be played and looped a customizable number of times. If no loop is found the complete song be looped. At the end of the last loop the song will fade out. |
+| Play&nbsp;indefinitely&nbsp;when&nbsp;detected | The song will be played and the loop, when detected, will play until stopped. |
+| Play&nbsp;indefinitely | The song will be played and loop until stopped. |
 
 The **Playback** droplist specifies how loops are processed during normal playback. The **Other** droplist determines how loops are processed during other foobar2000 operations such as converting a MIDI file to another format.
 
@@ -374,7 +374,7 @@ The **Loop count** setting determines how many times a loop will be played befor
 
 The **Fade-Out time** setting specifies the time in milliseconds that the player will start to fade-out the song before starting to play another track.
 
-### Sound Fonts
+### Soundfonts
 
 *Work in Progress*
 
@@ -452,12 +452,12 @@ You can force a player to start playback using a particular *flavor* of MIDI. Th
 | Name        | Purpose |
 | ----------- | ------- |
 | Default     | The player starts playing with its default configuration. Please the consult the player specific documentation for more information. |
-| GM          | General MIDI 1 specification |
-| GM2         | General MIDI 2 specification |
-| GS&nbsp;SC&#8209;55    | General Sound specification with Roland SC-55 initialization |
-| GS&nbsp;SC&#8209;88    | General Sound specification with Roland SC-88 initialization |
-| GS&nbsp;SC&#8209;88Pro | General Sound specification with Roland SC-88Pro initialization |
-| GS&nbsp;SC&#8209;8820  | General Sound specification with Roland SC-8820 initialization |
+| GM          | General MIDI 1 specification. A GM System On SysEx is sent before playback starts. |
+| GM2         | General MIDI 2 specification. A GM2 System On SysEx is sent before playback starts. |
+| GS&nbsp;SC&#8209;55    | General Sound specification with Roland SC-55 initialization. |
+| GS&nbsp;SC&#8209;88    | General Sound specification with Roland SC-88 initialization. |
+| GS&nbsp;SC&#8209;88Pro | General Sound specification with Roland SC-88Pro initialization. |
+| GS&nbsp;SC&#8209;8820  | General Sound specification with Roland SC-8820 initialization. |
 | XG          | Extended General MIDI specification created by Yamaha |
 
 #### Filter effects
@@ -509,7 +509,7 @@ This sub-page of **MIDI Player** contains the various directory and file paths t
 | VSTi&nbsp;Plug&#8209;Ins | The location of the VSTi plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
 | VSTi&nbsp;XG&nbsp;Plug&#8209;In | The location of the VSTi plug-in that will be used when the [Use VSTi with XG](#use-vsti-with-xg) setting is enabled. |
 | CLAP&nbsp;Plug&#8209;Ins | The location of the CLAP plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
-| Sound&nbsp;Font | The location of the Sound Font to be used by BASSMIDI and FluidSynth. |
+| Sound&nbsp;Font | The location of the soundfont to be used by BASSMIDI and FluidSynth. |
 | MT&#8209;32&nbsp;ROMs | The location of the MT-32 ROM files to be used by LibMT32Emu. |
 | Secret&nbsp;Sauce | The location of the Secret Sauce library. |
 | FluidSynth | The location where the FluidSynth libraries can be found. |

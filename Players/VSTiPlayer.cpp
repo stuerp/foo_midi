@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.cpp (2025.07.12) **/
+/** $VER: VSTiPlayer.cpp (2025.07.13) **/
 
 #include "pch.h"
 
@@ -39,7 +39,7 @@ Player::Player() noexcept : player_t(), VendorVersion(), Id()
     _hThread = NULL;
 
     _ChannelCount = 0;
-    _Samples = nullptr;
+    _SrcFrames = nullptr;
 
     _ProcessorArchitecture = 0;
 
@@ -49,7 +49,7 @@ Player::~Player()
 {
     StopHost();
 
-    SafeDelete(_Samples);
+    SafeDelete(_SrcFrames);
 }
 
 bool Player::LoadVST(const fs::path & filePath)
@@ -166,10 +166,10 @@ void Player::Shutdown()
     StopHost();
 }
 
-void Player::Render(audio_sample * sampleData, uint32_t sampleCount)
+void Player::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
     WriteBytes(9);
-    WriteBytes(sampleCount);
+    WriteBytes(dstCount);
 
     const uint32_t Code = ReadCode();
 
@@ -177,26 +177,26 @@ void Player::Render(audio_sample * sampleData, uint32_t sampleCount)
     {
         StopHost();
 
-        ::memset(sampleData, 0, (size_t) sampleCount * _ChannelCount * sizeof(audio_sample));
+        ::memset(dstFrames, 0, (size_t) dstCount * _ChannelCount * sizeof(audio_sample));
 
         return;
     }
 
-    if (_Samples == nullptr)
+    if (_SrcFrames == nullptr)
         return;
 
-    while (sampleCount != 0)
+    while (dstCount != 0)
     {
-        unsigned long ToDo = (sampleCount > 4096) ? 4096 : sampleCount;
+        uint32_t ToDo = std::min(dstCount, MaxFrames);
 
-        ReadBytes(_Samples, (uint32_t) (ToDo * _ChannelCount * sizeof(float)));
+        ReadBytes(_SrcFrames, (uint32_t) (ToDo * _ChannelCount * sizeof(float)));
 
         // Convert the format of the rendered output.
         for (size_t i = 0; i < ToDo * _ChannelCount; ++i)
-            sampleData[i] = (audio_sample) _Samples[i];
+            dstFrames[i] = (audio_sample) _SrcFrames[i];
 
-        sampleData += ToDo * _ChannelCount;
-        sampleCount -= ToDo;
+        dstFrames += ToDo * _ChannelCount;
+        dstCount -= ToDo;
     }
 }
 
@@ -421,33 +421,30 @@ bool Player::StartHost()
         return false;
     }
 
-    {
-        uint32_t NameLength        = ReadCode();
-        uint32_t VendorNameLength  = ReadCode();
-        uint32_t ProductNameLength = ReadCode();
+    // Get the name, vendor name and product name.
+    uint32_t NameLength        = ReadCode();
+    uint32_t VendorNameLength  = ReadCode();
+    uint32_t ProductNameLength = ReadCode();
 
-        VendorVersion = ReadCode();
-        Id            = ReadCode();
-        _ChannelCount = ReadCode();
+    VendorVersion = ReadCode();
+    Id            = ReadCode();
+    _ChannelCount = ReadCode();
 
-        {
-            // VST always uses float samples.
-            SafeDelete(_Samples);
-            _Samples = new float[4096 * _ChannelCount];
+    Name.resize(NameLength);
+    ReadBytes(Name.data(), NameLength);
 
-            Name.resize(NameLength + 1);
-            ReadBytes(Name.data(), NameLength);
-            Name[NameLength] = 0;
+    VendorName.resize(VendorNameLength);
+    ReadBytes(VendorName.data(), VendorNameLength);
 
-            VendorName.resize(VendorNameLength);
-            ReadBytes(VendorName.data(), VendorNameLength);
-            VendorName[VendorNameLength] = 0;
+    ProductName.resize(ProductNameLength);
+    ReadBytes(ProductName.data(), ProductNameLength);
 
-            ProductName.resize(ProductNameLength + 1);
-            ReadBytes(ProductName.data(), ProductNameLength);
-            ProductName[ProductNameLength] = 0;
-        }
-    }
+    if (Name.empty())
+        Name = (const char *) _FilePath.stem().u8string().c_str();
+
+    // VST always uses float samples.
+    SafeDelete(_SrcFrames);
+    _SrcFrames = new float[MaxFrames * _ChannelCount];
 
     return true;
 }

@@ -14,17 +14,17 @@ static bool WriteSoundFontFile(const std::vector<uint8_t> data, bool isDLS, std:
 /// <summary>
 /// Gets the sound fonts and adjusts the player type, if necessary.
 /// </summary>
-void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, abort_callback & abortHandler)
+void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundFontFilePath, abort_callback & abortHandler)
 {
     // Delete all embedded sound font files from a previous run.
     {
-        for (const auto & sf : _SoundFonts)
+        for (const auto & sf : _Soundfonts)
         {
             if (sf.IsEmbedded())
                 ::DeleteFileA(sf.FilePath().c_str());
         }
 
-        _SoundFonts.clear();
+        _Soundfonts.clear();
     }
 
     /** IMPORTANT: The following sequence of adding sound fonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
@@ -33,7 +33,7 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
 
     // First, add the embedded sound font, if present.
     {
-        const auto & Data = _Container.GetSoundFontData();
+        const auto & Data = _Container.GetSoundfontData();
 
         if (Data.size() > 12)
         {
@@ -43,7 +43,7 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
 
             if (WriteSoundFontFile(Data, IsDLS, FilePath))
             {
-                _SoundFonts.push_back({ FilePath, 1.f, _Container.GetBankOffset(), true, IsDLS });
+                _Soundfonts.push_back({ FilePath, 1.f, _Container.GetBankOffset(), true, IsDLS });
 
                 HasNonDefaultSoundFonts = true;
             }
@@ -92,7 +92,7 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
         {
             bool IsDLS = TempSoundFontFilePath.toLower().endsWith(".dls");
 
-            _SoundFonts.push_back({ TempSoundFontFilePath.c_str(), 1.0f, _Container.GetBankOffset(), false, IsDLS });
+            _Soundfonts.push_back({ TempSoundFontFilePath.c_str(), 1.0f, _Container.GetBankOffset(), false, IsDLS });
 
             HasNonDefaultSoundFonts = true;
         }
@@ -104,11 +104,11 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
         {
             bool IsDLS = defaultSoundFontFilePath.toLower().endsWith(".dls");
 
-            _SoundFonts.push_back({ defaultSoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, IsDLS });
+            _Soundfonts.push_back({ defaultSoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, IsDLS });
         }
     }
 
-    for (const auto & sf : _SoundFonts)
+    for (const auto & sf : _Soundfonts)
     {
         if (sf.IsDLS())
         {
@@ -118,7 +118,7 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
     }
 
     // Force the use of a sound font player if an embedded or named sound font was found.
-    if ((_PlayerType != PlayerTypes::FluidSynth) && HasNonDefaultSoundFonts && !_SoundFonts.empty())
+    if ((_PlayerType != PlayerTypes::FluidSynth) && HasNonDefaultSoundFonts && !_Soundfonts.empty())
     {
         _PlayerType = (FluidSynth::API::Exists() && HasDLS) ? PlayerTypes::FluidSynth : PlayerTypes::BASSMIDI;
     }
@@ -127,9 +127,9 @@ void  InputDecoder::GetSoundFonts(const pfc::string & defaultSoundFontFilePath, 
     if ((_PlayerType == PlayerTypes::BASSMIDI) || (_PlayerType == PlayerTypes::FluidSynth))
     {
         if (_PlayerType == PlayerTypes::FluidSynth)
-            std::reverse(_SoundFonts.begin(), _SoundFonts.end());
+            std::reverse(_Soundfonts.begin(), _Soundfonts.end());
 
-        for (const auto & sf : _SoundFonts)
+        for (const auto & sf : _Soundfonts)
             Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using sound font \"%s\" with bank offset %d.", sf.FilePath().c_str(), sf.BankOffset());
     }
 }

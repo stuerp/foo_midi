@@ -657,7 +657,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
 {
     SendSysEx(data, size, portNumber);
 
-    if (midi::sysex_t::IsReset(data) && (_MIDIFlavor != MIDIFlavors::Default))
+    if (midi::sysex_t::IsSystemOn(data) && (_MIDIFlavor != MIDIFlavors::Default))
         ResetPort(portNumber, 0);
 }
 
@@ -668,7 +668,7 @@ void player_t::SendSysExFiltered(const uint8_t * data, size_t size, uint8_t port
 {
     SendSysEx(data, size, portNumber, time);
 
-    if (midi::sysex_t::IsReset(data) && (_MIDIFlavor != MIDIFlavors::Default))
+    if (midi::sysex_t::IsSystemOn(data) && (_MIDIFlavor != MIDIFlavors::Default))
         ResetPort(portNumber, time);
 }
 
@@ -683,16 +683,16 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
     if (time == 0)
     {
         SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber);
-        SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber);
+        SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber);
         SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
-        SendSysEx(midi::sysex_t::GMSystemOn, _countof(midi::sysex_t::GMSystemOn), portNumber);
+        SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber);
     }
     else
     {
         SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber, time);
-        SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber, time);
+        SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber, time);
         SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
-        SendSysEx(midi::sysex_t::GMSystemOn, _countof(midi::sysex_t::GMSystemOn), portNumber, time);
+        SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber, time);
     }
 
     switch (_MIDIFlavor)
@@ -700,25 +700,25 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         case MIDIFlavors::GM:
         {
             if (time != 0)
-                SendSysEx(midi::sysex_t::GMSystemOn, _countof(midi::sysex_t::GMSystemOn), portNumber, time);
+                SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber, time);
             else
-                SendSysEx(midi::sysex_t::GMSystemOn, _countof(midi::sysex_t::GMSystemOn), portNumber);
+                SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber);
             break;
         }
 
         case MIDIFlavors::GM2:
         {
             if (time != 0)
-                SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber, time);
+                SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber, time);
             else
-                SendSysEx(midi::sysex_t::GM2Reset, _countof(midi::sysex_t::GM2Reset), portNumber);
+                SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber);
             break;
         }
 
         case MIDIFlavors::SC55:
         case MIDIFlavors::SC88:
         case MIDIFlavors::SC88Pro:
-        case MIDIFlavors::SC8850:
+        case MIDIFlavors::SC8820:
 //      case MIDIFlavors::Default: // Removed in v2.19: Default flavor = Don't send anything
         {
             if (time != 0)
@@ -813,6 +813,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
 
 /// <summary>
 /// Sends a GS SET TONE MAP-0 NUMBER message.
+/// It assigns a specific tone map number to Tone Map 0, which is used by default when no other map is specified. This affects how Bank Select and Program Change messages are interpreted.
 /// </summary>
 void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
 {
@@ -836,17 +837,16 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
             Data[8] = 3;
             break;
 
-        case MIDIFlavors::SC8850:
-        case MIDIFlavors::Default:
+        case MIDIFlavors::SC8820:
             Data[8] = 4;
             break;
 
         case MIDIFlavors::GM:
         case MIDIFlavors::GM2:
         case MIDIFlavors::XG:
+        case MIDIFlavors::Default:
         default:
-            Data[8] = 3; // Use SC88Pro Map (3)
-            break; 
+            return;
     }
 
     for (uint8_t i = 0x41; i <= 0x49; ++i)

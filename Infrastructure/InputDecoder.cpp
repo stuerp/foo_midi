@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.12) **/
+/** $VER: InputDecoder.cpp (2025.07.13) **/
 
 #include "pch.h"
 
@@ -40,7 +40,7 @@ volatile uint32_t _CurrentSampleRate;
 /// Creates a new instance.
 /// </summary>
 InputDecoder::InputDecoder() noexcept :
-    _Flags(),
+    _DecoderFlags(),
 
     _FileStats {},
     _FileStats2 {},
@@ -61,8 +61,8 @@ InputDecoder::InputDecoder() noexcept :
 
     _PlayerType(),
 
-    _SampleRate((uint32_t) CfgSampleRate),
-    _ActualSampleRate(_SampleRate),
+    _RequestedSampleRate((uint32_t) CfgSampleRate),
+    _ActualSampleRate(_RequestedSampleRate),
 
     _Time(),
     _TotalTime(),
@@ -74,10 +74,10 @@ InputDecoder::InputDecoder() noexcept :
 
     _ExtraPercussionChannel(~0U),
 
-    _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode),
-
     _BASSMIDIVolume((float) CfgBASSMIDIVolume),
-    _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIResamplingMode)
+    _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIResamplingMode),
+
+    _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode)
 {
     _CleanFlags = (uint32_t) (CfgExcludeEMIDITrackDesignation ? midi::container_t::CleanFlagEMIDI : 0) |
                              (CfgFilterInstruments  ? midi::container_t::CleanFlagInstruments : 0) |
@@ -92,7 +92,7 @@ InputDecoder::InputDecoder() noexcept :
 /// </summary>
 InputDecoder::~InputDecoder() noexcept
 {
-    for (const auto & sf : _SoundFonts)
+    for (const auto & sf : _Soundfonts)
     {
         if (sf.IsEmbedded())
             ::DeleteFileA(sf.FilePath().c_str());
@@ -106,7 +106,7 @@ InputDecoder::~InputDecoder() noexcept
         _Player = nullptr;
     }
 
-    if ((_Flags & input_flag_playback) == 0)
+    if ((_DecoderFlags & input_flag_playback) == 0)
     {
         delete _Host;
         _Host = nullptr;
@@ -259,19 +259,19 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 {
     Log.AtDebug().Format(STR_COMPONENT_BASENAME " is initializing the decoder.");
 
-    _Flags = flags;
+    _DecoderFlags = flags;
 
     if (_IsSysExFile)
         throw pfc::exception("You cannot play SysEx files");
 
     _IsFirstBlock = true;
 
-    _LoopType = (LoopTypes) ((_Flags & input_flag_playback) ? (int) CfgLoopTypePlayback : (int) CfgLoopTypeOther);
+    _LoopType = (LoopTypes) ((_DecoderFlags & input_flag_playback) ? (int) CfgLoopTypePlayback : (int) CfgLoopTypeOther);
 
     // Initialize time parameters.
     {
         _Time = 0;
-        _TotalTime = (uint32_t) ::MulDiv((int) GetDuration(subSongIndex), (int) _SampleRate, 1'000);
+        _TotalTime = (uint32_t) ::MulDiv((int) GetDuration(subSongIndex), (int) _RequestedSampleRate, 1'000);
 
         _LoopRange.Set(_Container.GetLoopBeginTimestamp(subSongIndex, true), _Container.GetLoopEndTimestamp(subSongIndex, true));
 
@@ -319,8 +319,12 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     SelectPlayer(Preset, subSongIndex, abortHandler);
 
+    // Get the soundfonts if the player requires them.
+    if ((_PlayerType == PlayerTypes::BASSMIDI) || (_PlayerType == PlayerTypes::FluidSynth))
+        GetSoundfonts(Preset._SoundfontFilePath, abortHandler);
+
     // Unload the plug-in from the global CLAP host when the player is not a CLAP plug-in. This also closes the plug-in GUI.
-    if ((_Flags & input_flag_playback) && (_PlayerType != PlayerTypes::CLAP))
+    if ((_DecoderFlags & input_flag_playback) && (_PlayerType != PlayerTypes::CLAP))
     {
         CLAP::_Host.UnLoad();
 /*
@@ -350,6 +354,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _Player = Player;
 
+            _Player->SetSampleRate(_RequestedSampleRate);
+            _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
+
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
 /* KEEP? 06/07/25
@@ -365,8 +372,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                     _SampleRate = _CurrentSampleRate;
             }
 */
-            _Player->SetSampleRate(_SampleRate);
-
             break;
         }
 
@@ -384,19 +389,18 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (Preset._VSTiConfig.size() != 0)
                 Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
 
+            _PlugInName = Player->Name;
+
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
             {
                 const std::string ErrorMessage = _Player->GetErrorMessage();
 
-                if (!ErrorMessage.empty())
-                    throw pfc::exception(ErrorMessage.c_str());
-                else
-                    throw pfc::exception("Failed to load MIDI stream");
+                throw pfc::exception(!ErrorMessage.empty() ? ErrorMessage.c_str() : "Failed to load MIDI stream");
             }
 
             break;
@@ -408,7 +412,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (Preset._PlugInFilePath.is_empty())
                 throw pfc::exception("No plug-in specified in preset");
 
-            if (_Flags & input_flag_playback)
+            if (_DecoderFlags & input_flag_playback)
                 _Host = &CLAP::_Host; // Use the global instance for playback.
             else
                 _Host = new CLAP::Host();
@@ -434,7 +438,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
@@ -450,8 +454,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _ActiveVoiceCount = 0;
                 _PeakVoiceCount = 0;
 
-                if (_SoundFonts.empty())
-                    throw pfc::exception("No compatible sound fonts found");
+                if (_Soundfonts.empty())
+                    throw pfc::exception("No compatible soundfonts found");
             }
 
             auto Player = new BMPlayer;
@@ -459,21 +463,18 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             Player->SetInterpolationMode(_BASSMIDIInterpolationMode);
             Player->SetVoiceCount(Preset._VoiceCount);
             Player->EnableEffects(Preset._EffectsEnabled);
-            Player->SetSoundFonts(_SoundFonts);
+            Player->SetSoundfonts(_Soundfonts);
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
             {
                 const std::string ErrorMessage = _Player->GetErrorMessage();
 
-                if (!ErrorMessage.empty())
-                    throw pfc::exception(ErrorMessage.c_str());
-                else
-                    throw pfc::exception("Failed to load MIDI stream");
+                throw pfc::exception(!ErrorMessage.empty() ? ErrorMessage.c_str() : "Failed to load MIDI stream");
             }
 
             break;
@@ -486,8 +487,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 _ActiveVoiceCount = 0;
                 _PeakVoiceCount = 0;
 
-                if (_SoundFonts.empty())
-                    throw pfc::exception("No compatible sound fonts found");
+                if (_Soundfonts.empty())
+                    throw pfc::exception("No compatible soundfonts found");
             }
 
             auto Player = new FSPlayer;
@@ -509,11 +510,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             Player->SetVoiceCount(Preset._VoiceCount);
             Player->EnableEffects(Preset._EffectsEnabled);
             Player->EnableDynamicLoading(CfgFluidSynthDynSampleLoading);
-            Player->SetSoundFonts(_SoundFonts);
+            Player->SetSoundfonts(_Soundfonts);
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
@@ -552,7 +553,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 */
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
+            _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
@@ -580,7 +582,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
@@ -602,7 +604,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
@@ -628,7 +630,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
@@ -656,7 +658,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
@@ -672,7 +674,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
@@ -688,7 +690,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
@@ -715,7 +717,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _Player = Player;
 
-            _Player->SetSampleRate(_SampleRate);
+            _Player->SetSampleRate(_RequestedSampleRate);
             _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _CleanFlags))
@@ -726,7 +728,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     }
 
     _IsEndOfContainer = false;
-    _IsSampleRateChangeProcessed = false;
 }
 
 /// <summary>
@@ -744,6 +745,8 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
     if (_Player)
     {
+        auto OldActualSampleRate = _ActualSampleRate;
+
         _Player->SetAbortHandler(&abortHandler);
 
         const uint32_t FrameCount = 4096;
@@ -767,18 +770,16 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
         _ActualSampleRate = _Player->GetSampleRate(); // Allows us to store the actual sample rate in the info field.
 
-        // Recalculate some time parameters known only to the decoder if the player has changed the actual sample rate.
-        if (!_IsSampleRateChangeProcessed && (_SampleRate != _ActualSampleRate))
+        // Recalculate some sample rate-dependent parameters if the player changed the actual sample rate.
+        if (_ActualSampleRate != OldActualSampleRate)
         {
-            _TotalTime = (uint32_t) ::MulDiv((int) _TotalTime, (int) _ActualSampleRate, (int) _SampleRate);
+            _TotalTime = (uint32_t) ::MulDiv((int) _TotalTime, (int) _ActualSampleRate, (int) _RequestedSampleRate);
 
             if (_FadeRange.HasBegin())
-                _FadeRange.SetBegin((uint32_t) ::MulDiv((int) _FadeRange.Begin(), (int) _ActualSampleRate, (int) _SampleRate));
+                _FadeRange.SetBegin((uint32_t) ::MulDiv((int) _FadeRange.Begin(), (int) _ActualSampleRate, (int) _RequestedSampleRate));
 
             if (_FadeRange.HasEnd())
-                _FadeRange.SetEnd((uint32_t) ::MulDiv((int) _FadeRange.End(), (int) _ActualSampleRate, (int) _SampleRate));
-
-            _IsSampleRateChangeProcessed = true;
+                _FadeRange.SetEnd((uint32_t) ::MulDiv((int) _FadeRange.End(), (int) _ActualSampleRate, (int) _RequestedSampleRate));
         }
 
         audioChunk.set_srate(_ActualSampleRate);
@@ -887,7 +888,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 
         // Set the "midi_player_ext" information field.
         {
-            pfc::string Value;
+            std::string Value;
 
             #pragma warning(disable: 4062) // enumerator x in switch of y is not explicitly handled by a case label
 
@@ -936,14 +937,14 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
                 case PlayerTypes::VSTi:
                 case PlayerTypes::CLAP:
                 {
-                    Value = !_IsPlayerTypeOverriden ? CfgPlugInName.get() : pfc::string("Yamaha S-YXG50");
+                    Value = !_IsPlayerTypeOverriden ? CfgPlugInName.get().c_str() : _PlugInName.c_str();
                     break;
                 }
             };
 
             #pragma warning(default: 4062)
 
-            fileInfo.info_set(InfoMIDIPlayerExt, Value);
+            fileInfo.info_set(InfoMIDIPlayerExt, Value.c_str());
         }
 
         // Set the "extra_percussion_channel" information field.
@@ -1124,8 +1125,8 @@ void InputDecoder::InitializeFade() noexcept
         {
             if (_LoopRange.IsSet())
             {
-                uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * CfgLoopCount)), (int) _SampleRate, 1'000);
-                uint32_t End   = Begin + (uint32_t) ::MulDiv((int) CfgFadeOutTime,                                           (int) _SampleRate, 1'000);
+                uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * CfgLoopCount)), (int) _RequestedSampleRate, 1'000);
+                uint32_t End   = Begin + (uint32_t) ::MulDiv((int) CfgFadeOutTime,                                           (int) _RequestedSampleRate, 1'000);
 
                 _FadeRange.Set(Begin, End);
             }
@@ -1136,8 +1137,8 @@ void InputDecoder::InitializeFade() noexcept
 
         case LoopTypes::LoopAndFadeAlways:
         {
-            uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * CfgLoopCount)), (int) _SampleRate, 1'000);
-            uint32_t End   = Begin + (uint32_t) ::MulDiv((int) CfgFadeOutTime,                                           (int) _SampleRate, 1'000);
+            uint32_t Begin =         (uint32_t) ::MulDiv((int)(_LoopRange.Begin() + (_LoopRange.Size() * CfgLoopCount)), (int) _RequestedSampleRate, 1'000);
+            uint32_t End   = Begin + (uint32_t) ::MulDiv((int) CfgFadeOutTime,                                           (int) _RequestedSampleRate, 1'000);
 
             _FadeRange.Set(Begin, End);
             break;
@@ -1191,9 +1192,6 @@ void InputDecoder::SelectPlayer(preset_t & Preset, size_t subSongIndex, abort_ca
             Preset._PlugInFilePath = FilePath;
         }
     }
-
-    // Get the sound fonts if the player supports them.
-    GetSoundFonts(Preset._SoundFontFilePath, abortHandler);
 }
 
 #pragma endregion
@@ -1318,10 +1316,10 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
         if (LoopEndInMS != ~0U)   fileInfo.info_set_int(TagMIDILoopEndInMs, LoopEndInMS);
     }
 
-    // Add a tag that identifies the embedded sound font, if present.
+    // Add a tag that identifies the embedded soundfont, if present.
     try
     {
-        const auto & Data = _Container.GetSoundFontData();
+        const auto & Data = _Container.GetSoundfontData();
 
         if (Data.size() > 12)
         {
@@ -1350,12 +1348,12 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
                 }
             }
 
-            fileInfo.info_set(TagMIDIEmbeddedSoundFont, TagValue.c_str());
+            fileInfo.info_set(TagMIDIEmbeddedSoundfont, TagValue.c_str());
         }
     }
     catch (std::exception e)
     {
-        Log.AtWarn().Format(STR_COMPONENT_BASENAME " is unable to create tag \"%s\": %s", TagMIDIEmbeddedSoundFont, e.what());
+        Log.AtWarn().Format(STR_COMPONENT_BASENAME " is unable to create tag \"%s\": %s", TagMIDIEmbeddedSoundfont, e.what());
     }
 
     {

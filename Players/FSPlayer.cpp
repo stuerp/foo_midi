@@ -83,7 +83,7 @@ void FSPlayer::EnableDynamicLoading(bool enabled)
 /// <summary>
 /// Sets the sound fonts to use for synthesis.
 /// </summary>
-void FSPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)
+void FSPlayer::SetSoundfonts(const std::vector<soundfont_t> & soundFonts)
 {
     if (_SoundFonts == soundFonts)
         return;

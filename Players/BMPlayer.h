@@ -27,7 +27,7 @@ public:
     BMPlayer();
     virtual ~BMPlayer();
 
-    void SetSoundFonts(const std::vector<soundfont_t> & _soundFonts);
+    void SetSoundfonts(const std::vector<soundfont_t> & _soundFonts);
 
     void SetInterpolationMode(uint32_t interpolationMode);
     void EnableEffects(bool enable = true);

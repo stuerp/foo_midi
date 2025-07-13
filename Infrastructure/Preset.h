@@ -36,7 +36,7 @@ public:
     std::vector<uint8_t> _VSTiConfig;
     uint32_t _CLAPPlugInIndex; // index in the CLAP plug-in the factory
 
-    pfc::string _SoundFontFilePath;
+    pfc::string _SoundfontFilePath;
 
     // ADL
     uint32_t _ADLBankNumber;

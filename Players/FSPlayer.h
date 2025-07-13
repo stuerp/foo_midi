@@ -26,7 +26,7 @@ public:
 
     void Initialize(const WCHAR * basePath);
 
-    void SetSoundFonts(const std::vector<soundfont_t> & _soundFonts);
+    void SetSoundfonts(const std::vector<soundfont_t> & _soundFonts);
 
     void EnableDynamicLoading(bool enabled = true);
     void EnableEffects(bool enabled = true);

@@ -161,28 +161,28 @@ void EdMPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
     for (size_t n = 0; n < size; ++n)
         mi.Interpret(data[n]);
 
-    if (midi::sysex_t::IsGMReset(data, size))
+    if (midi::sysex_t::IsGMSystemOn(data, size))
     {
         ResetDrumChannels();
 
         _SynthMode = ModeGM;
     }
     else
-    if (midi::sysex_t::IsGM2Reset(data, size))
+    if (midi::sysex_t::IsGM2SystemOn(data, size))
     {
         ResetDrumChannels();
 
         _SynthMode = ModeGM2;
     }
     else
-    if (midi::sysex_t::IsGSReset(data, size))
+    if (midi::sysex_t::IsGSSystemOn(data, size))
     {
         ResetDrumChannels();
 
         _SynthMode = ModeGS;
     }
     else
-    if (midi::sysex_t::IsXGReset(data, size))
+    if (midi::sysex_t::IsXGSystemOn(data, size))
     {
         ResetDrumChannels();
 

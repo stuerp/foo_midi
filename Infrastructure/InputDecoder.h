@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.07.10) **/
+/** $VER: InputDecoder.h (2025.07.13) **/
 
 #pragma once
 
@@ -168,13 +168,13 @@ private:
     uint32_t GetDuration(size_t subSongIndex) noexcept;
     void InitializeFade() noexcept;
     void SelectPlayer(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept;
-    void GetSoundFonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
+    void GetSoundfonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
 
 private:
-    unsigned _Flags;
+    unsigned _DecoderFlags;
 
     // File Properties
     pfc::string _FilePath;
@@ -184,7 +184,7 @@ private:
 
     midi::container_t _Container;
 
-    std::vector <soundfont_t> _SoundFonts;
+    std::vector<soundfont_t> _Soundfonts;
 
     bool _IsSysExFile;
 
@@ -206,31 +206,32 @@ private:
 
     PlayerTypes _PlayerType;
     bool _IsPlayerTypeOverriden;
+    std::string _PlugInName;
 
-    uint32_t _SampleRate;       // in Hz
-    uint32_t _ActualSampleRate; // in Hz
+    // Sample rate dependent
+    uint32_t _RequestedSampleRate;  // in Hz
+    uint32_t _ActualSampleRate;     // in Hz
 
-    uint32_t _Time;             // in frames
-    uint32_t _TotalTime;        // in frames
+    uint32_t _Time;                 // in frames
+    uint32_t _TotalTime;            // in frames
 
     LoopTypes _LoopType;
-    range_t _LoopRange;         // in ms
-    range_t _FadeRange;         // in ms
+    range_t _LoopRange;             // in ms
+    range_t _FadeRange;             // in ms
 
+    // Flags
     uint32_t _ExtraPercussionChannel;
-
     uint32_t _CleanFlags;
-
-    uint32_t _FluidSynthInterpolationMethod;
 
     float _BASSMIDIVolume;
     uint32_t _BASSMIDIInterpolationMode;
 
+    uint32_t _FluidSynthInterpolationMethod;
+
     bool _IsEndOfContainer;
-    bool _IsSampleRateChangeProcessed;
     bool _IsFirstBlock;
 
-    double _AudioChunkDuration;
+    double _AudioChunkDuration;     // in ms
 
     uint32_t _ActiveVoiceCount;
     uint32_t _PeakVoiceCount;

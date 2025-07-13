@@ -66,7 +66,7 @@ enum class MIDIFlavors
     SC55,
     SC88,
     SC88Pro,
-    SC8850,
+    SC8820,
 
     XG
 };
@@ -266,7 +266,7 @@ extern const char TagPreset[];
 extern const char TagMIDISysExDumps[];
 extern const char TagMIDILyricsType[];
 extern const char TagMIDIHash[];
-extern const char TagMIDIEmbeddedSoundFont[];
+extern const char TagMIDIEmbeddedSoundfont[];
 
 extern const char InfoSampleRate[];
 extern const char InfoMIDIActiveVoices[];

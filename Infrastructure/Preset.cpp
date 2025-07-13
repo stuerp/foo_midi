@@ -54,7 +54,7 @@ preset_t::preset_t() noexcept
         {
         }
 
-        _SoundFontFilePath = CfgSoundFontFilePath;
+        _SoundfontFilePath = CfgSoundFontFilePath;
     }
 
     if (_PlayerType == PlayerTypes::FluidSynth)
@@ -133,7 +133,7 @@ void preset_t::Serialize(pfc::string & text)
     if (_PlayerType == PlayerTypes::FluidSynth || _PlayerType == PlayerTypes::BASSMIDI)
     {
         text += "|";
-        text += _SoundFontFilePath;
+        text += _SoundfontFilePath;
 
         text += "|";
         text += pfc::format_int(_EffectsEnabled);
@@ -458,7 +458,7 @@ void preset_t::Deserialize(const char * text)
     _PlugInFilePath = VSTiPath;
     _VSTiConfig = VSTiConfig;
 
-    _SoundFontFilePath = SoundFontPath;
+    _SoundfontFilePath = SoundFontPath;
 
     _EffectsEnabled = ProcessEffects;
     _VoiceCount = MaxVoices;
