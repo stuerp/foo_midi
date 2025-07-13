@@ -102,6 +102,7 @@ To create the component first build the x64 configuration and next the x86 confi
   - Fixed: Changing the channel mask setting did not always stick.
   - Fixed: The fade range was not recalculated when the player changed to another sample rate. (Regression)
   - Fixed: VSTi plug-in name was not always set. (Regression)
+  - Fixed: A couple of labels were to truncate in High DPI modes.
 
 - You can read the full history [here](docs/History.md).
 

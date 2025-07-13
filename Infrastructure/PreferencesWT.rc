@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.WT (2025.07.10) **/
+/** $VER: PreferencesFM.WT (2025.07.13) **/
 
 #include "Resource.h"
 
@@ -34,7 +34,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Groupbox
 #define X_A10    0
 #define Y_A10    0
-#define W_A10    281
+#define W_A10    W_A00
 
     // Label
     #define X_A11    X_A10 + 5
@@ -76,7 +76,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define X_A17    X_A15
     #define Y_A17    Y_A16 + H_A16 + IY
     #define W_A17    100
-    #define H_A17    H_CBX
+    #define H_A17    H_LBL
 
     // Label
     #define X_A18    X_A17
@@ -129,13 +129,13 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define X_A25    X_A21
     #define Y_A25    Y_A24 + H_A24 + IY
     #define W_A25    100
-    #define H_A25    H_CBX
+    #define H_A25    H_CHB
 
     // Checkbox "Dynamic sample loading"
     #define X_A26    X_A25
     #define Y_A26    Y_A25 + H_A25 + IY
     #define W_A26    100
-    #define H_A26    H_CBX
+    #define H_A26    H_CHB
 
 #define H_A20    11 + H_A22 + IY + H_A24 + IY + H_A25 + IY + H_A26 + 7
 
@@ -214,25 +214,25 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     // Checkbox Nice Amp Ramp
     #define X_D11    X_D09
     #define Y_D11    Y_D10 + H_D10 + IY
-    #define W_D11    64
+    #define W_D11    77
     #define H_D11    H_CHB
 
     // Checkbox Nice Panning
     #define X_D12    X_D11 + W_D11 + IX
     #define Y_D12    Y_D11
-    #define W_D12    56
+    #define W_D12    77
     #define H_D12    H_CHB
 
     // Checkbox Nice Partial Mixing
     #define X_D13    X_D12 + W_D12 + IX
     #define Y_D13    Y_D12
-    #define W_D13    68
+    #define W_D13    77
     #define H_D13    H_CHB
 
     // Checkbox Reverse Stereo
     #define X_D14    X_D13 + W_D13 + IX
     #define Y_D14    Y_D13
-    #define W_D14    64
+    #define W_D14    77
     #define H_D14    H_CHB
 
 #define H_D00    11 + H_D02 + IY + H_D06 + IY + H_D10 + IY + H_D11 + 7

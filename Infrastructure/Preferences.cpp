@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.12) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -50,17 +50,17 @@ static cfg_dropdown_history CfgSampleRateHistory({ 0x408aa155, 0x4c42, 0x42b5, {
 /// <summary>
 /// Implements the main preferences page.
 /// </summary>
-class PreferencesRootPage : public CDialogImpl<PreferencesRootPage>, public preferences_page_instance
+class RootDialog : public CDialogImpl<RootDialog>, public preferences_page_instance
 {
 public:
-    PreferencesRootPage(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _HasSecretSauce(), _HasFluidSynth(), _Callback(callback) { }
+    RootDialog(preferences_page_callback::ptr callback) noexcept : _IsBusy(false), _HasSecretSauce(), _HasFluidSynth(), _Callback(callback) { }
 
-    PreferencesRootPage(const PreferencesRootPage&) = delete;
-    PreferencesRootPage(const PreferencesRootPage&&) = delete;
-    PreferencesRootPage& operator=(const PreferencesRootPage&) = delete;
-    PreferencesRootPage& operator=(PreferencesRootPage&&) = delete;
+    RootDialog(const RootDialog&) = delete;
+    RootDialog(const RootDialog&&) = delete;
+    RootDialog& operator=(const RootDialog&) = delete;
+    RootDialog& operator=(RootDialog&&) = delete;
 
-    virtual ~PreferencesRootPage() { };
+    virtual ~RootDialog() { };
 
     #pragma region preferences_page_instance
 
@@ -71,8 +71,10 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(PreferencesRootPage)
+    BEGIN_MSG_MAP_EX(RootDialog)
         MSG_WM_INITDIALOG(OnInitDialog)
+
+        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
 
         // Output
         COMMAND_HANDLER_EX(IDC_PLAYER_TYPE, CBN_SELCHANGE, OnPlayerTypeChange)
@@ -98,19 +100,18 @@ public:
         COMMAND_HANDLER_EX(IDC_FF7_LOOPS, BN_CLICKED, OnButtonClick)
 
         // MIDI
-        COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR,                CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR,                 CBN_SELCHANGE, OnSelectionChange)
 
-        COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS,               BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_USE_MT32EMU_WITH_MT32, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,      BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_DETECT_EXTRA_DRUM,     BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS,                BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_MT32EMU_WITH_MT32,  BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,       BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_DETECT_EXTRA_DRUM,      BN_CLICKED, OnButtonClick)
 
-        COMMAND_HANDLER_EX(IDC_EMIDI_EXCLUSION, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_EMIDI_EXCLUSION,             BN_CLICKED, OnButtonClick)
 
-        COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_FILTER_BANKS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_SKIP_TO_FIRST_NOTE, BN_CLICKED, OnButtonClick)
-        #pragma endregion
+        COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS,          BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_FILTER_BANKS,                BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_SKIP_TO_FIRST_NOTE,          BN_CLICKED, OnButtonClick)
     END_MSG_MAP()
 
     enum
@@ -122,6 +123,9 @@ private:
     BOOL OnInitDialog(CWindow, LPARAM);
 
     void OnPlayerTypeChange(UINT, int, CWindow w);
+
+    HBRUSH OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept;
+
     void OnEditChange(UINT, int, CWindow);
     void OnSelectionChange(UINT, int, CWindow);
     void OnButtonClick(UINT, int, CWindow);
@@ -138,22 +142,22 @@ private:
 
     #pragma region Player Type
 
-    static bool PlayerIsAlwaysPresent(PreferencesRootPage *)
+    static bool PlayerIsAlwaysPresent(RootDialog *)
     {
         return true;
     }
 
-    static bool PlayerIsNeverPresent(PreferencesRootPage *)
+    static bool PlayerIsNeverPresent(RootDialog *)
     {
         return false;
     }
 
-    static bool IsFluidSynthPresent(PreferencesRootPage * p)
+    static bool IsFluidSynthPresent(RootDialog * p)
     {
         return p->_HasFluidSynth;
     }
 
-    static bool IsSecretSaucePresent(PreferencesRootPage * p)
+    static bool IsSecretSaucePresent(RootDialog * p)
     {
         return p->_HasSecretSauce;
     }
@@ -162,7 +166,7 @@ private:
     {
         const char * Name;
         PlayerTypes Type;
-        bool (*IsPresent)(PreferencesRootPage *);
+        bool (*IsPresent)(RootDialog *);
     };
 
     static const known_player_t _KnownPlayers[];
@@ -233,7 +237,7 @@ private:
 /// <summary>
 /// Contains all the plug-ins that are build into the component.
 /// </summary>
-const PreferencesRootPage::known_player_t PreferencesRootPage::_KnownPlayers[] =
+const RootDialog::known_player_t RootDialog::_KnownPlayers[] =
 {
     { "LibEDMIDI",      PlayerTypes::EmuDeMIDI,     PlayerIsAlwaysPresent },
     { "FluidSynth",     PlayerTypes::FluidSynth,    IsFluidSynthPresent },
@@ -250,14 +254,14 @@ const PreferencesRootPage::known_player_t PreferencesRootPage::_KnownPlayers[] =
     { "FMMIDI",         PlayerTypes::FMMIDI,        PlayerIsAlwaysPresent },
 };
 
-const int PreferencesRootPage::_SampleRates[] = { 8'000, 11'025, 16'000, 22'050, 24'000, 32'000, 44'100, 48'000, 49'716, 64'000, 88'200, 96'000 };
+const int RootDialog::_SampleRates[] = { 8'000, 11'025, 16'000, 22'050, 24'000, 32'000, 44'100, 48'000, 49'716, 64'000, 88'200, 96'000 };
 
 #pragma region preferences_page_instance
 
 /// <summary>
 /// Gets the state of the Preference dialog.
 /// </summary>
-t_uint32 PreferencesRootPage::get_state()
+t_uint32 RootDialog::get_state()
 {
     t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
 
@@ -273,7 +277,7 @@ t_uint32 PreferencesRootPage::get_state()
 /// <summary>
 /// Applies the dialog state to the configuration variables.
 /// </summary>
-void PreferencesRootPage::apply()
+void RootDialog::apply()
 {
     // Player Type
     {
@@ -374,7 +378,7 @@ void PreferencesRootPage::apply()
 /// <summary>
 /// Resets the dialog state to default.
 /// </summary>
-void PreferencesRootPage::reset()
+void RootDialog::reset()
 {
     _SelectedPlayer = installed_player_t("", PlayerTypes::Default, "", (size_t) -1, (size_t) -1);
 
@@ -459,7 +463,7 @@ void PreferencesRootPage::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
+BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 {
     _HasFluidSynth = FluidSynth::API::Exists();
     _HasSecretSauce = SecretSauce::Exists();
@@ -693,9 +697,21 @@ BOOL PreferencesRootPage::OnInitDialog(CWindow, LPARAM)
 }
 
 /// <summary>
+/// Sets the background color brush.
+/// </summary>
+HBRUSH RootDialog::OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept
+{
+#ifdef _DEBUG
+    return ::CreateSolidBrush(RGB(250, 250, 250));
+#else
+    return FALSE;
+#endif
+}
+
+/// <summary>
 /// Handles a change in an edit box.
 /// </summary>
-void PreferencesRootPage::OnEditChange(UINT, int, CWindow)
+void RootDialog::OnEditChange(UINT, int, CWindow)
 {
     OnChanged();
 }
@@ -703,7 +719,7 @@ void PreferencesRootPage::OnEditChange(UINT, int, CWindow)
 /// <summary>
 /// Handles a selection change in a combo box.
 /// </summary>
-void PreferencesRootPage::OnSelectionChange(UINT, int, CWindow)
+void RootDialog::OnSelectionChange(UINT, int, CWindow)
 {
     OnChanged();
 }
@@ -711,7 +727,7 @@ void PreferencesRootPage::OnSelectionChange(UINT, int, CWindow)
 /// <summary>
 /// Handles a click on a button
 /// </summary>
-void PreferencesRootPage::OnButtonClick(UINT, int, CWindow)
+void RootDialog::OnButtonClick(UINT, int, CWindow)
 {
     OnChanged();
 }
@@ -719,7 +735,7 @@ void PreferencesRootPage::OnButtonClick(UINT, int, CWindow)
 /// <summary>
 /// Handles a click on the Configure button.
 /// </summary>
-void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
+void RootDialog::OnButtonConfig(UINT, int, CWindow)
 {
     const int SelectedIndex = (int) GetDlgItem(IDC_PLAYER_TYPE).SendMessage(CB_GETCURSEL, 0, 0);
 
@@ -755,7 +771,7 @@ void PreferencesRootPage::OnButtonConfig(UINT, int, CWindow)
 /// <summary>
 /// Updates the dialog controls when the player type changes.
 /// </summary>
-void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
+void RootDialog::OnPlayerTypeChange(UINT, int, CWindow w)
 {
     int SelectedIndex = (int) ::SendMessage(w, CB_GETCURSEL, 0, 0);
 
@@ -833,7 +849,7 @@ void PreferencesRootPage::OnPlayerTypeChange(UINT, int, CWindow w)
 /// <summary>
 /// Returns true if the dialog state has changed.
 /// </summary>
-bool PreferencesRootPage::HasChanged()
+bool RootDialog::HasChanged()
 {
     #pragma region Player Type
     {
@@ -954,7 +970,7 @@ bool PreferencesRootPage::HasChanged()
 /// <summary>
 /// Notifies the parent that the dialog state has changed.
 /// </summary>
-void PreferencesRootPage::OnChanged()
+void RootDialog::OnChanged()
 {
     _Callback->on_state_changed();
 }
@@ -962,7 +978,7 @@ void PreferencesRootPage::OnChanged()
 /// <summary>
 /// Updates the dialog according to the values of the settings.
 /// </summary>
-void PreferencesRootPage::UpdateDialog() const noexcept
+void RootDialog::UpdateDialog() const noexcept
 {
     #pragma region MIDI Flavors
 
@@ -976,7 +992,7 @@ void PreferencesRootPage::UpdateDialog() const noexcept
 /// <summary>
 /// Updates the Configure button.
 /// </summary>
-void PreferencesRootPage::UpdateConfigureButton() noexcept
+void RootDialog::UpdateConfigureButton() noexcept
 {
     BOOL Enable = FALSE;
 
@@ -1007,17 +1023,17 @@ void PreferencesRootPage::UpdateConfigureButton() noexcept
 
 #pragma endregion
 
-class PreferencesRootPageImpl : public preferences_page_impl<PreferencesRootPage>
+class RootPage : public preferences_page_impl<RootDialog>
 {
 public:
-    PreferencesRootPageImpl() noexcept { };
+    RootPage() noexcept { };
 
-    PreferencesRootPageImpl(const PreferencesRootPageImpl &) = delete;
-    PreferencesRootPageImpl(const PreferencesRootPageImpl &&) = delete;
-    PreferencesRootPageImpl & operator=(const PreferencesRootPageImpl &) = delete;
-    PreferencesRootPageImpl & operator=(PreferencesRootPageImpl &&) = delete;
+    RootPage(const RootPage &) = delete;
+    RootPage(const RootPage &&) = delete;
+    RootPage & operator=(const RootPage &) = delete;
+    RootPage & operator=(RootPage &&) = delete;
 
-    virtual ~PreferencesRootPageImpl() noexcept { };
+    virtual ~RootPage() noexcept { };
 
     const char * get_name() noexcept
     {
@@ -1035,4 +1051,4 @@ public:
     }
 };
 
-static preferences_page_factory_t<PreferencesRootPageImpl> PreferencesPageFactory;
+static preferences_page_factory_t<RootPage> _Factory;

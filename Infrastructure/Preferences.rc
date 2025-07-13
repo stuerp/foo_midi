@@ -34,6 +34,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Groupbox
 #define X_A10    0
 #define Y_A10    0
+#define W_A10    W_A00
 
     // Label
     #define X_A11    X_A10 + 5
@@ -65,7 +66,6 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_A15    40
     #define H_A15    H_CBX
 
-#define W_A10    5 + W_A11 + IX + W_A12 + IX + W_A13 + IX + W_A14 + IX + W_A15 + 5
 #define H_A10    11 + H_A12 + 7
 
 #pragma endregion
@@ -247,7 +247,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     // Checkbox "Skip to first note"
     #define X_A34    166
     #define Y_A34    Y_A83
-    #define W_A34    64
+    #define W_A34    160
     #define H_A34    10
 
 #define H_A80    11 + H_A82 + IY + H_A84 + IY + H_A85 + IY + H_CHB + IY + H_A83 + IY + H_A86 + IY + H_A31 + IY + H_A32 + IY + H_A33 + 7
@@ -296,11 +296,11 @@ font 8, "MS Shell Dlg", 400, 0, 1
         combobox                                                        IDC_MIDI_FLAVOR,                X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
         control     "Use LibMT32Emu with MT-32",                        IDC_MIDI_USE_MT32EMU_WITH_MT32, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
-        control     "Use S-YXG50 VSTi with XG",                         IDC_MIDI_USE_VSTI_WITH_XG,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
+        control     "Use VSTi with XG",                                 IDC_MIDI_USE_VSTI_WITH_XG,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
 
         control     "Filter effects (Reverb and Chorus)",               IDC_MIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
         control     "Detect extra percussion channel",                  IDC_MIDI_DETECT_EXTRA_DRUM      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A86, Y_A86, W_A86, H_A86
-        control     "Exclude unsupported EMIDI track designation"       IDC_EMIDI_EXCLUSION,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
+        control     "Exclude unsupp. EMIDI track designation"           IDC_EMIDI_EXCLUSION,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
         control     "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
         control     "Disable bank changes",                             IDC_FILTER_BANKS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
 

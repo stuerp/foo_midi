@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2025.07.11) P. stuer **/
+/** $VER: PreferencesPaths.cpp (2025.07.13) P. stuer **/
 
 #include "pch.h"
 
@@ -33,10 +33,10 @@
 /// Implements a preferences page.
 /// </summary>
 #pragma warning(disable: 4820)
-class PreferencesPathsPage : public CDialogImpl<PreferencesPathsPage>, public preferences_page_instance
+class PathsDialog : public CDialogImpl<PathsDialog>, public preferences_page_instance
 {
 public:
-    PreferencesPathsPage(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
+    PathsDialog(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
     {
         _VSTiPlugInDirectoryPath  = CfgVSTiPlugInDirectoryPath;
         _VSTiXGPlugInFilePath     = CfgVSTiXGPlugInFilePath;
@@ -49,12 +49,12 @@ public:
         _ProgramsFilePath         = CfgProgramsFilePath;
     }
 
-    PreferencesPathsPage(const PreferencesPathsPage&) = delete;
-    PreferencesPathsPage(const PreferencesPathsPage&&) = delete;
-    PreferencesPathsPage& operator=(const PreferencesPathsPage&) = delete;
-    PreferencesPathsPage& operator=(PreferencesPathsPage&&) = delete;
+    PathsDialog(const PathsDialog&) = delete;
+    PathsDialog(const PathsDialog&&) = delete;
+    PathsDialog& operator=(const PathsDialog&) = delete;
+    PathsDialog& operator=(PathsDialog&&) = delete;
 
-    virtual ~PreferencesPathsPage() { };
+    virtual ~PathsDialog() { };
 
     #pragma region preferences_page_instance
     t_uint32 get_state() final;
@@ -63,8 +63,10 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(PreferencesPathsPage)
+    BEGIN_MSG_MAP_EX(PathsDialog)
         MSG_WM_INITDIALOG(OnInitDialog)
+
+        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
 
         COMMAND_HANDLER_EX(IDC_VSTi_PATH, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_VSTi_PATH_SELECT, BN_CLICKED, OnButtonClicked)
@@ -93,6 +95,7 @@ public:
 
 private:
     BOOL OnInitDialog(CWindow, LPARAM) noexcept;
+    HBRUSH OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept;
 
     void OnEditChange(UINT, int, CWindow) noexcept;
     void OnButtonClicked(UINT, int, CWindow) noexcept;
@@ -135,7 +138,7 @@ private:
 /// <summary>
 /// Gets the state of the Preference dialog.
 /// </summary>
-t_uint32 PreferencesPathsPage::get_state()
+t_uint32 PathsDialog::get_state()
 {
     t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
 
@@ -148,7 +151,7 @@ t_uint32 PreferencesPathsPage::get_state()
 /// <summary>
 /// Applies the changes to the preferences.
 /// </summary>
-void PreferencesPathsPage::apply()
+void PathsDialog::apply()
 {
     CfgVSTiPlugInDirectoryPath  = _VSTiPlugInDirectoryPath;
     CfgVSTiXGPlugInFilePath     = _VSTiXGPlugInFilePath;
@@ -166,7 +169,7 @@ void PreferencesPathsPage::apply()
 /// <summary>
 /// Resets this page's content to the default values. Does not apply any changes - lets user preview the changes before hitting "apply".
 /// </summary>
-void PreferencesPathsPage::reset()
+void PathsDialog::reset()
 {
     _VSTiPlugInDirectoryPath.reset();
     _CLAPPlugInDirectoryPath.reset();
@@ -186,7 +189,7 @@ void PreferencesPathsPage::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL PreferencesPathsPage::OnInitDialog(CWindow, LPARAM) noexcept
+BOOL PathsDialog::OnInitDialog(CWindow, LPARAM) noexcept
 {
     _DarkModeHooks.AddDialogWithControls(*this);
 
@@ -196,9 +199,21 @@ BOOL PreferencesPathsPage::OnInitDialog(CWindow, LPARAM) noexcept
 }
 
 /// <summary>
+/// Sets the background color brush.
+/// </summary>
+HBRUSH PathsDialog::OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept
+{
+#ifdef _DEBUG
+    return ::CreateSolidBrush(RGB(250, 250, 250));
+#else
+    return FALSE;
+#endif
+}
+
+/// <summary>
 /// Handles the notification when a control loses focus.
 /// </summary>
-void PreferencesPathsPage::OnEditChange(UINT code, int id, CWindow) noexcept
+void PathsDialog::OnEditChange(UINT code, int id, CWindow) noexcept
 {
     if (code != EN_CHANGE)
         return;
@@ -255,7 +270,7 @@ void PreferencesPathsPage::OnEditChange(UINT code, int id, CWindow) noexcept
 /// <summary>
 /// Handles a click on a button.
 /// </summary>
-void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
+void PathsDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
 {
     switch (id)
     {
@@ -446,7 +461,7 @@ void PreferencesPathsPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 /// <summary>
 /// Returns whether our dialog content is different from the current configuration (whether the Apply button should be enabled or not)
 /// </summary>
-bool PreferencesPathsPage::HasChanged() const noexcept
+bool PathsDialog::HasChanged() const noexcept
 {
     bool HasChanged = false;
 
@@ -485,7 +500,7 @@ bool PreferencesPathsPage::HasChanged() const noexcept
 /// <summary>
 /// Tells the host that our state has changed to enable/disable the Apply button appropriately.
 /// </summary>
-void PreferencesPathsPage::OnChanged() const noexcept
+void PathsDialog::OnChanged() const noexcept
 {
     _Callback->on_state_changed();
 }
@@ -493,7 +508,7 @@ void PreferencesPathsPage::OnChanged() const noexcept
 /// <summary>
 /// Updates the appearance of the dialog according to the values of the settings.
 /// </summary>
-void PreferencesPathsPage::UpdateDialog() const noexcept
+void PathsDialog::UpdateDialog() const noexcept
 {
     ::uSetDlgItemText(m_hWnd, IDC_VSTi_PATH,              _VSTiPlugInDirectoryPath);
     ::uSetDlgItemText(m_hWnd, IDC_VSTi_XG_FILE_PATH,      _VSTiXGPlugInFilePath);
@@ -509,17 +524,17 @@ void PreferencesPathsPage::UpdateDialog() const noexcept
 
 static const GUID PreferencesPathsPageGUID = { 0x9d601e5c, 0xd542, 0x435e, { 0x8a, 0x05, 0x4e, 0x88, 0xd1, 0x4d, 0xa3, 0xed } };
 
-class PreferencesPathsPageImpl : public preferences_page_impl<PreferencesPathsPage>
+class PathsPage : public preferences_page_impl<PathsDialog>
 {
 public:
-    PreferencesPathsPageImpl() noexcept { };
+    PathsPage() noexcept { };
 
-    PreferencesPathsPageImpl(const PreferencesPathsPageImpl &) = delete;
-    PreferencesPathsPageImpl(const PreferencesPathsPageImpl &&) = delete;
-    PreferencesPathsPageImpl & operator=(const PreferencesPathsPageImpl &) = delete;
-    PreferencesPathsPageImpl & operator=(PreferencesPathsPageImpl &&) = delete;
+    PathsPage(const PathsPage &) = delete;
+    PathsPage(const PathsPage &&) = delete;
+    PathsPage & operator=(const PathsPage &) = delete;
+    PathsPage & operator=(PathsPage &&) = delete;
 
-    virtual ~PreferencesPathsPageImpl() noexcept { };
+    virtual ~PathsPage() noexcept { };
 
     const char * get_name() noexcept
     {
@@ -537,4 +552,4 @@ public:
     }
 };
 
-static preferences_page_factory_t<PreferencesPathsPageImpl> PreferencesPageFactory;
+static preferences_page_factory_t<PathsPage> _Factory;

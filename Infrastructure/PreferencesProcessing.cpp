@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2025.07.11) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2025.07.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -58,17 +58,17 @@ ConfigVariable(DefaultTempo,        cfg_int, int,    160,  0xf94e1919,0xd2ed,0x4
 /// <summary>
 /// Implements a preferences page.
 /// </summary>
-class DialogPageProcessing : public CDialogImpl<DialogPageProcessing>, public preferences_page_instance
+class ProcessingDialog : public CDialogImpl<ProcessingDialog>, public preferences_page_instance
 {
 public:
-    DialogPageProcessing(preferences_page_callback::ptr callback) noexcept : _Callback(callback) { }
+    ProcessingDialog(preferences_page_callback::ptr callback) noexcept : _Callback(callback) { }
 
-    DialogPageProcessing(const DialogPageProcessing &) = delete;
-    DialogPageProcessing(const DialogPageProcessing &&) = delete;
-    DialogPageProcessing & operator=(const DialogPageProcessing &) = delete;
-    DialogPageProcessing & operator=(DialogPageProcessing &&) = delete;
+    ProcessingDialog(const ProcessingDialog &) = delete;
+    ProcessingDialog(const ProcessingDialog &&) = delete;
+    ProcessingDialog & operator=(const ProcessingDialog &) = delete;
+    ProcessingDialog & operator=(ProcessingDialog &&) = delete;
 
-    virtual ~DialogPageProcessing() { };
+    virtual ~ProcessingDialog() { };
 
     #pragma region preferences_page_instance
 
@@ -79,8 +79,10 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(DialogPageProcessing)
+    BEGIN_MSG_MAP_EX(ProcessingDialog)
         MSG_WM_INITDIALOG(OnInitDialog)
+
+        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
 
         COMMAND_CODE_HANDLER_EX(EN_CHANGE, OnEditChange)
         COMMAND_CODE_HANDLER_EX(BN_CLICKED, OnButtonClick)
@@ -95,6 +97,7 @@ public:
 
 private:
     BOOL OnInitDialog(CWindow, LPARAM) noexcept;
+    HBRUSH OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept;
 
     void OnEditChange(UINT, int, CWindow) noexcept;
     void OnButtonClick(UINT, int id, CWindow) noexcept;
@@ -149,7 +152,7 @@ private:
 /// <summary>
 /// Gets the state of the dialog.
 /// </summary>
-t_uint32 DialogPageProcessing::get_state()
+t_uint32 ProcessingDialog::get_state()
 {
     t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
 
@@ -162,7 +165,7 @@ t_uint32 DialogPageProcessing::get_state()
 /// <summary>
 /// Applies the changes to the preferences.
 /// </summary>
-void DialogPageProcessing::apply()
+void ProcessingDialog::apply()
 {
     ApplyConfigVariable(LoopExpansion);
     ApplyConfigVariable(WriteBarMarkers);
@@ -184,7 +187,7 @@ void DialogPageProcessing::apply()
 /// <summary>
 /// Resets this page's content to the default values. Does not apply any changes - lets user preview the changes before hitting "apply".
 /// </summary>
-void DialogPageProcessing::reset()
+void ProcessingDialog::reset()
 {
     ResetConfigVariable(LoopExpansion);
     ResetConfigVariable(WriteBarMarkers);
@@ -212,7 +215,7 @@ void DialogPageProcessing::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
+BOOL ProcessingDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 {
     _DarkModeHooks.AddDialogWithControls(*this);
 
@@ -238,9 +241,20 @@ BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
 }
 
 /// <summary>
+/// Sets the background color brush.
+/// </summary>
+HBRUSH ProcessingDialog::OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept
+{
+#ifdef _DEBUG
+    return ::CreateSolidBrush(RGB(250, 250, 250));
+#else
+    return FALSE;
+#endif
+}
+/// <summary>
 /// Handles the notification when a control loses focus.
 /// </summary>
-void DialogPageProcessing::OnEditChange(UINT code, int id, CWindow) noexcept
+void ProcessingDialog::OnEditChange(UINT code, int id, CWindow) noexcept
 {
     if (code != EN_CHANGE)
         return;
@@ -269,7 +283,7 @@ void DialogPageProcessing::OnEditChange(UINT code, int id, CWindow) noexcept
 /// <summary>
 /// Handles the notification from the track bar.
 /// </summary>
-LRESULT DialogPageProcessing::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+LRESULT ProcessingDialog::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
     if ((LOWORD(wParam) != TB_ENDTRACK) && (LOWORD(wParam) != TB_THUMBTRACK))
         return 1;
@@ -288,7 +302,7 @@ LRESULT DialogPageProcessing::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam) 
 /// <summary>
 /// Handles a click on a button.
 /// </summary>
-void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
+void ProcessingDialog::OnButtonClick(UINT, int id, CWindow w) noexcept
 {
     switch (id)
     {
@@ -379,7 +393,7 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
 /// <summary>
 /// Returns whether our dialog content is different from the current configuration (whether the Apply button should be enabled or not)
 /// </summary>
-bool DialogPageProcessing::HasChanged() const noexcept
+bool ProcessingDialog::HasChanged() const noexcept
 {
     HasConfigVariableChanged(LoopExpansion);
     HasConfigVariableChanged(WriteBarMarkers);
@@ -399,7 +413,7 @@ bool DialogPageProcessing::HasChanged() const noexcept
 /// <summary>
 /// Tells the host that our state has changed to enable/disable the Apply button appropriately.
 /// </summary>
-void DialogPageProcessing::OnChanged() const noexcept
+void ProcessingDialog::OnChanged() const noexcept
 {
     _Callback->on_state_changed();
 }
@@ -407,7 +421,7 @@ void DialogPageProcessing::OnChanged() const noexcept
 /// <summary>
 /// Updates the appearance of the dialog according to the values of the settings.
 /// </summary>
-void DialogPageProcessing::UpdateDialog() noexcept
+void ProcessingDialog::UpdateDialog() noexcept
 {
     ::uSetDlgItemText(m_hWnd, IDC_LOOP_EXPANSION, pfc::format_int(_LoopExpansion));
 
@@ -423,7 +437,7 @@ void DialogPageProcessing::UpdateDialog() noexcept
     UpdateChannelButtons();
 }
 
-void DialogPageProcessing::UpdateChannelButtons() noexcept
+void ProcessingDialog::UpdateChannelButtons() noexcept
 {
     for (int i = IDC_CHANNEL_01; i <= IDC_CHANNEL_16; ++i)
         SendDlgItemMessageW(i, BM_SETCHECK, (WPARAM) (CfgChannels.IsEnabled(_PortNumber, (uint32_t) i - IDC_CHANNEL_01) ? BST_CHECKED: BST_UNCHECKED));
@@ -433,17 +447,17 @@ void DialogPageProcessing::UpdateChannelButtons() noexcept
 
 static const GUID PreferencesProcessingPageGUID = { 0x19bb1820, 0x3b64, 0x403c, { 0xab, 0xf0, 0x3d, 0xd0, 0x06, 0x37, 0xf2, 0x7a } };
 
-class PageProcessing : public preferences_page_impl<DialogPageProcessing>
+class ProcessingPage : public preferences_page_impl<ProcessingDialog>
 {
 public:
-    PageProcessing() noexcept { };
+    ProcessingPage() noexcept { };
 
-    PageProcessing(const PageProcessing &) = delete;
-    PageProcessing(const PageProcessing &&) = delete;
-    PageProcessing & operator=(const PageProcessing &) = delete;
-    PageProcessing & operator=(PageProcessing &&) = delete;
+    ProcessingPage(const ProcessingPage &) = delete;
+    ProcessingPage(const ProcessingPage &&) = delete;
+    ProcessingPage & operator=(const ProcessingPage &) = delete;
+    ProcessingPage & operator=(ProcessingPage &&) = delete;
 
-    virtual ~PageProcessing() noexcept { };
+    virtual ~ProcessingPage() noexcept { };
 
     const char * get_name() noexcept
     {
@@ -461,4 +475,4 @@ public:
     }
 };
 
-static preferences_page_factory_t<PageProcessing> _Factory;
+static preferences_page_factory_t<ProcessingPage> _Factory;

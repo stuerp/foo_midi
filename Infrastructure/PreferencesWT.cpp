@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesWT.cpp (2025.07.11) P. Stuer **/
+/** $VER: PreferencesWT.cpp (2025.07.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -39,19 +39,19 @@
 /// <summary>
 /// Implements a preferences page.
 /// </summary>
-class PreferencesWT : public CDialogImpl<PreferencesWT>, public preferences_page_instance
+class WTDialog : public CDialogImpl<WTDialog>, public preferences_page_instance
 {
 public:
-    PreferencesWT(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
+    WTDialog(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
     {
     }
 
-    PreferencesWT(const PreferencesWT &) = delete;
-    PreferencesWT(const PreferencesWT &&) = delete;
-    PreferencesWT & operator=(const PreferencesWT &) = delete;
-    PreferencesWT & operator=(PreferencesWT &&) = delete;
+    WTDialog(const WTDialog &) = delete;
+    WTDialog(const WTDialog &&) = delete;
+    WTDialog & operator=(const WTDialog &) = delete;
+    WTDialog & operator=(WTDialog &&) = delete;
 
-    virtual ~PreferencesWT() { };
+    virtual ~WTDialog() { };
 
     #pragma region preferences_page_instance
 
@@ -62,10 +62,11 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(PreferencesWT)
+    BEGIN_MSG_MAP_EX(WTDialog)
         MSG_WM_INITDIALOG(OnInitDialog)
 
         MSG_WM_TIMER(OnTimer)
+        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
 
         // BASS MIDI
         COMMAND_HANDLER_EX(IDC_BASSMIDI_GAIN, EN_CHANGE, OnEditChange)
@@ -104,6 +105,7 @@ public:
 private:
     BOOL OnInitDialog(CWindow, LPARAM) noexcept;
     void OnTimer(UINT_PTR);
+    HBRUSH OnCtlColorDlg(CDCHandle, CWindow) const noexcept;
 
     void OnEditChange(UINT, int, CWindow) noexcept;
     void OnSelectionChange(UINT, int, CWindow) noexcept;
@@ -129,7 +131,7 @@ private:
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
 };
 
-const PreferencesWT::InterpolationMethod PreferencesWT::_InterpolationMethods[] =
+const WTDialog::InterpolationMethod WTDialog::_InterpolationMethods[] =
 {
     { "None", FLUID_INTERP_NONE },
     { "Linear", FLUID_INTERP_LINEAR },
@@ -142,7 +144,7 @@ const PreferencesWT::InterpolationMethod PreferencesWT::_InterpolationMethods[] 
 /// <summary>
 /// Gets the state of the Preference dialog.
 /// </summary>
-t_uint32 PreferencesWT::get_state()
+t_uint32 WTDialog::get_state()
 {
     t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
 
@@ -155,7 +157,7 @@ t_uint32 PreferencesWT::get_state()
 /// <summary>
 /// Applies the changes to the preferences.
 /// </summary>
-void PreferencesWT::apply()
+void WTDialog::apply()
 {
     // BASS MIDI
     {
@@ -259,7 +261,7 @@ void PreferencesWT::apply()
 /// <summary>
 /// Resets this page's content to the default values. Does not apply any changes - lets user preview the changes before hitting "apply".
 /// </summary>
-void PreferencesWT::reset()
+void WTDialog::reset()
 {
     // BASS MIDI
     {
@@ -347,7 +349,7 @@ void PreferencesWT::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL PreferencesWT::OnInitDialog(CWindow window, LPARAM) noexcept
+BOOL WTDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 {
     // BASS MIDI
     {
@@ -483,9 +485,21 @@ BOOL PreferencesWT::OnInitDialog(CWindow window, LPARAM) noexcept
 }
 
 /// <summary>
+/// Sets the background color brush.
+/// </summary>
+HBRUSH WTDialog::OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept
+{
+#ifdef _DEBUG
+    return ::CreateSolidBrush(RGB(250, 250, 250));
+#else
+    return FALSE;
+#endif
+}
+
+/// <summary>
 /// Handles the notification when a control loses focus.
 /// </summary>
-void PreferencesWT::OnEditChange(UINT code, int id, CWindow) noexcept
+void WTDialog::OnEditChange(UINT code, int id, CWindow) noexcept
 {
     if (code != EN_CHANGE)
         return;
@@ -496,7 +510,7 @@ void PreferencesWT::OnEditChange(UINT code, int id, CWindow) noexcept
 /// <summary>
 /// Handles a selection change in a combo box.
 /// </summary>
-void PreferencesWT::OnSelectionChange(UINT, int, CWindow) noexcept
+void WTDialog::OnSelectionChange(UINT, int, CWindow) noexcept
 {
     OnChanged();
 }
@@ -504,7 +518,7 @@ void PreferencesWT::OnSelectionChange(UINT, int, CWindow) noexcept
 /// <summary>
 /// Handles a click on a button.
 /// </summary>
-void PreferencesWT::OnButtonClicked(UINT, int id, CWindow) noexcept
+void WTDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
 {
     switch (id)
     {
@@ -523,7 +537,7 @@ void PreferencesWT::OnButtonClicked(UINT, int id, CWindow) noexcept
 /// <summary>
 /// Returns whether our dialog content is different from the current configuration (whether the Apply button should be enabled or not)
 /// </summary>
-bool PreferencesWT::HasChanged() noexcept
+bool WTDialog::HasChanged() noexcept
 {
     // BASS MIDI
     {
@@ -632,7 +646,7 @@ bool PreferencesWT::HasChanged() noexcept
 /// <summary>
 /// Tells the host that our state has changed to enable/disable the Apply button appropriately.
 /// </summary>
-void PreferencesWT::OnChanged() const noexcept
+void WTDialog::OnChanged() const noexcept
 {
     _Callback->on_state_changed();
 }
@@ -640,7 +654,7 @@ void PreferencesWT::OnChanged() const noexcept
 /// <summary>
 /// Update the status of the SoundFont cache.
 /// </summary>
-void PreferencesWT::OnTimer(UINT_PTR eventId)
+void WTDialog::OnTimer(UINT_PTR eventId)
 {
     if (eventId != ID_REFRESH)
         return;
@@ -676,17 +690,17 @@ void PreferencesWT::OnTimer(UINT_PTR eventId)
 
 #pragma endregion
 
-class PreferencesWTPage : public preferences_page_impl<PreferencesWT>
+class WTPage : public preferences_page_impl<WTDialog>
 {
 public:
-    PreferencesWTPage() noexcept { };
+    WTPage() noexcept { };
 
-    PreferencesWTPage(const PreferencesWTPage &) = delete;
-    PreferencesWTPage(const PreferencesWTPage &&) = delete;
-    PreferencesWTPage & operator=(const PreferencesWTPage &) = delete;
-    PreferencesWTPage & operator=(PreferencesWTPage &&) = delete;
+    WTPage(const WTPage &) = delete;
+    WTPage(const WTPage &&) = delete;
+    WTPage & operator=(const WTPage &) = delete;
+    WTPage & operator=(WTPage &&) = delete;
 
-    virtual ~PreferencesWTPage() noexcept { };
+    virtual ~WTPage() noexcept { };
 
     const char * get_name() noexcept
     {
@@ -704,4 +718,4 @@ public:
     }
 };
 
-static preferences_page_factory_t<PreferencesWTPage> PreferencesPageFactory;
+static preferences_page_factory_t<WTPage> _Factory;

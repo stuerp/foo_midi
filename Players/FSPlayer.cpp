@@ -522,11 +522,11 @@ static void Logger(int level, const char * message, void * data)
 {
     switch (level)
     {
-        case FLUID_PANIC: Log.AtFatal().Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
-        case FLUID_ERR:   Log.AtError().Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
-        case FLUID_WARN:  Log.AtWarn() .Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
-        case FLUID_INFO:  Log.AtInfo() .Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
-        case FLUID_DBG:   Log.AtDebug().Format(STR_COMPONENT_BASENAME " FluidSynth says %s", message); break;
+        case FLUID_PANIC: Log.AtFatal().Format(STR_COMPONENT_BASENAME " FluidSynth: FATAL %s", message); break;
+        case FLUID_ERR:   Log.AtError().Format(STR_COMPONENT_BASENAME " FluidSynth: ERROR %s", message); break;
+        case FLUID_WARN:  Log.AtWarn() .Format(STR_COMPONENT_BASENAME " FluidSynth: WARNING %s", message); break;
+        case FLUID_INFO:  Log.AtInfo() .Format(STR_COMPONENT_BASENAME " FluidSynth: %s", message); break;
+//      case FLUID_DBG:   Log.AtDebug().Format(STR_COMPONENT_BASENAME " FluidSynth: %s", message); break;
     }
 }
 

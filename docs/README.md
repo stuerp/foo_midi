@@ -601,6 +601,8 @@ Cache status
 
 ## Reference Material
 
+This chapter contains a lot of reference material I consulted during the development of foo_midi.
+
 ### Electronic Music
 
 - [Electronic Music Wiki](https://electronicmusic.fandom.com/wiki/Main_Page)
@@ -619,6 +621,7 @@ Cache status
 - [Standards in Music](https://www.recordingblogs.com/wiki/standards-in-music-index), Recording Blogs
 - [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
 - [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
+- [The Unofficial Yamaha Keyboard Resource Site Articles](http://www.jososoft.dk/yamaha/articles.htm)
 
 ### Apogee Expanded MIDI (EMIDI)
 

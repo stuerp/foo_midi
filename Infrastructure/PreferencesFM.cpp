@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.cpp (2025.07.09) P. Stuer **/
+/** $VER: PreferencesFM.cpp (2025.07.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -73,19 +73,19 @@ const std::vector<std::string> _MT32EmuSets =
 /// <summary>
 /// Implements a preferences page.
 /// </summary>
-class DialogPage : public CDialogImpl<DialogPage>, public preferences_page_instance
+class FMDialog : public CDialogImpl<FMDialog>, public preferences_page_instance
 {
 public:
-    DialogPage(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
+    FMDialog(preferences_page_callback::ptr callback) noexcept : _Callback(callback)
     {
     }
 
-    DialogPage(const DialogPage &) = delete;
-    DialogPage(const DialogPage &&) = delete;
-    DialogPage & operator=(const DialogPage &) = delete;
-    DialogPage & operator=(DialogPage &&) = delete;
+    FMDialog(const FMDialog &) = delete;
+    FMDialog(const FMDialog &&) = delete;
+    FMDialog & operator=(const FMDialog &) = delete;
+    FMDialog & operator=(FMDialog &&) = delete;
 
-    virtual ~DialogPage() { };
+    virtual ~FMDialog() { };
 
     #pragma region preferences_page_instance
 
@@ -96,8 +96,10 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(DialogPage)
+    BEGIN_MSG_MAP_EX(FMDialog)
         MSG_WM_INITDIALOG(OnInitDialog)
+
+        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
 
         // ADL Player
         COMMAND_HANDLER_EX(IDC_ADL_BANK, CBN_SELCHANGE, OnSelectionChange)
@@ -131,6 +133,7 @@ public:
 
 private:
     BOOL OnInitDialog(CWindow, LPARAM) noexcept;
+    HBRUSH OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept;
 
     void OnEditChange(UINT, int, CWindow) noexcept;
     void OnSelectionChange(UINT, int, CWindow) noexcept;
@@ -154,7 +157,7 @@ private:
 /// <summary>
 /// Gets the state of the Preference dialog.
 /// </summary>
-t_uint32 DialogPage::get_state()
+t_uint32 FMDialog::get_state()
 {
     t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
 
@@ -167,7 +170,7 @@ t_uint32 DialogPage::get_state()
 /// <summary>
 /// Applies the changes to the preferences.
 /// </summary>
-void DialogPage::apply()
+void FMDialog::apply()
 {
     // ADL
     {
@@ -279,7 +282,7 @@ void DialogPage::apply()
 /// <summary>
 /// Resets this page's content to the default values. Does not apply any changes - lets user preview the changes before hitting "apply".
 /// </summary>
-void DialogPage::reset()
+void FMDialog::reset()
 {
     // ADL
     {
@@ -369,7 +372,7 @@ void DialogPage::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
+BOOL FMDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 {
     // ADL
     {
@@ -530,9 +533,21 @@ BOOL DialogPage::OnInitDialog(CWindow window, LPARAM) noexcept
 }
 
 /// <summary>
+/// Sets the background color brush.
+/// </summary>
+HBRUSH FMDialog::OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept
+{
+#ifdef _DEBUG
+    return ::CreateSolidBrush(RGB(250, 250, 250));
+#else
+    return FALSE;
+#endif
+}
+
+/// <summary>
 /// Handles the notification when a control loses focus.
 /// </summary>
-void DialogPage::OnEditChange(UINT code, int id, CWindow) noexcept
+void FMDialog::OnEditChange(UINT code, int id, CWindow) noexcept
 {
     if (code != EN_CHANGE)
         return;
@@ -543,7 +558,7 @@ void DialogPage::OnEditChange(UINT code, int id, CWindow) noexcept
 /// <summary>
 /// Handles a selection change in a combo box.
 /// </summary>
-void DialogPage::OnSelectionChange(UINT, int, CWindow) noexcept
+void FMDialog::OnSelectionChange(UINT, int, CWindow) noexcept
 {
     OnChanged();
 }
@@ -551,7 +566,7 @@ void DialogPage::OnSelectionChange(UINT, int, CWindow) noexcept
 /// <summary>
 /// Handles a click on a button.
 /// </summary>
-void DialogPage::OnButtonClicked(UINT, int id, CWindow) noexcept
+void FMDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
 {
     switch (id)
     {
@@ -616,7 +631,7 @@ void DialogPage::OnButtonClicked(UINT, int id, CWindow) noexcept
 /// <summary>
 /// Returns whether our dialog content is different from the current configuration (whether the Apply button should be enabled or not)
 /// </summary>
-bool DialogPage::HasChanged() noexcept
+bool FMDialog::HasChanged() noexcept
 {
     // ADL
     {
@@ -726,14 +741,14 @@ bool DialogPage::HasChanged() noexcept
 /// <summary>
 /// Tells the host that our state has changed to enable/disable the Apply button appropriately.
 /// </summary>
-void DialogPage::OnChanged() const noexcept
+void FMDialog::OnChanged() const noexcept
 {
     _Callback->on_state_changed();
 }
 
 #pragma endregion
 
-class Page : public preferences_page_impl<DialogPage>
+class Page : public preferences_page_impl<FMDialog>
 {
 public:
     Page() noexcept { };
@@ -761,4 +776,4 @@ public:
     }
 };
 
-static preferences_page_factory_t<Page> PreferencesPageFactory;
+static preferences_page_factory_t<Page> _Factory;
