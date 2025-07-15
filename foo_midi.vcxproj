@@ -264,12 +264,15 @@
     <ClCompile Include="Infrastructure\Channels.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
     <ClCompile Include="Infrastructure\Exception.cpp" />
+    <ClCompile Include="Infrastructure\InputInfoReader.cpp" />
+    <ClCompile Include="Infrastructure\InputInfoWriter.cpp" />
     <ClCompile Include="Infrastructure\Log.cpp" />
     <ClCompile Include="Infrastructure\MainMenu.cpp" />
     <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
     <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
     <ClCompile Include="Infrastructure\SoundFonts.cpp" />
+    <ClCompile Include="Infrastructure\Support.cpp" />
     <ClCompile Include="Players\ADLPlayer.cpp" />
     <ClCompile Include="Players\BMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Configuration.cpp" />
@@ -410,6 +413,7 @@
     <ClInclude Include="Infrastructure\Log.h" />
     <ClInclude Include="Infrastructure\PreferencesFM.h" />
     <ClInclude Include="Infrastructure\PreferencesProcessing.h" />
+    <ClInclude Include="Infrastructure\Support.h" />
     <ClInclude Include="Players\ADLPlayer.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\BMPlayer.h" />

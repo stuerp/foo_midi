@@ -247,15 +247,15 @@ font 8, "MS Shell Dlg", 400, 0, 1
 //  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
 
     groupbox "BASS MIDI", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10
-        rtext             "Gain:",      IDC_BASSMIDI_VOLUME_LBL,        X_A11, Y_A11 + 2, W_A11, H_A11
-        edittext                        IDC_BASSMIDI_GAIN,            X_A12, Y_A12,     W_A12, H_A12, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
-        rtext       "Resampling:",      IDC_RESAMPLING_LBL,             X_A13, Y_A13 + 2, W_A13, H_A13
-        combobox                        IDC_BASSMIDI_RESAMPLING,            X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext      "Max. voices:",      IDC_BASSMIDI_MAX_VOICES_LBL,    X_A15, Y_A15 + 2, W_A15, H_A15
-        edittext                        IDC_BASSMIDI_MAX_VOICES,        X_A16, Y_A16,     W_A16, H_A16, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
-        control "Process reverb and chorus", IDC_BASSMIDI_EFFECTS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A17, Y_A17, W_A17, H_A17
-        rtext           "Cached:",      IDC_CACHED_LBL,                 X_A18, Y_A18 + 2, W_A18, H_A18
-        ltext                  "",      IDC_CACHED,                     X_A19, Y_A19 + 2, W_A19, H_A19, WS_VISIBLE
+        rtext             "Gain:",              IDC_BASSMIDI_VOLUME_LBL,            X_A11, Y_A11 + 2, W_A11, H_A11
+        edittext                                IDC_BASSMIDI_GAIN,                  X_A12, Y_A12,     W_A12, H_A12, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        rtext       "Resampling:",              IDC_RESAMPLING_LBL,                 X_A13, Y_A13 + 2, W_A13, H_A13
+        combobox                                IDC_BASSMIDI_RESAMPLING,            X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext      "Max. voices:",              IDC_BASSMIDI_MAX_VOICES_LBL,        X_A15, Y_A15 + 2, W_A15, H_A15
+        edittext                                IDC_BASSMIDI_MAX_VOICES,            X_A16, Y_A16,     W_A16, H_A16, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        control "Process reverb and chorus",    IDC_BASSMIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A17, Y_A17, W_A17, H_A17
+        rtext           "Cached:",              IDC_CACHED_LBL,                     X_A18, Y_A18 + 2, W_A18, H_A18
+        ltext                  "",              IDC_CACHED,                         X_A19, Y_A19 + 2, W_A19, H_A19, WS_VISIBLE
 
     groupbox "FluidSynth", IDC_STATIC, X_A20, Y_A20, W_A20, H_A20
         rtext       "Interpolation:",           IDC_FLUIDSYNTH_INTERPOLATION_TEXT,  X_A21, Y_A21 + 2, W_A21, H_A21

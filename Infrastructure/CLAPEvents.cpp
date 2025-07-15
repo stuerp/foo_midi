@@ -100,7 +100,7 @@ OutputEvents::OutputEvents()
             {
                 const auto * me = (clap_event_midi *) event;
 
-                Log.AtTrace().Format(STR_COMPONENT_BASENAME " received MIDI message %02X %02X %02X %02X.", me->data[0], me->data[1], me->data[2], me->data[2]);
+                Log.AtTrace().Write(STR_COMPONENT_BASENAME " received MIDI message %02X %02X %02X %02X.", me->data[0], me->data[1], me->data[2], me->data[2]);
                 break;
             }
 
@@ -113,19 +113,19 @@ OutputEvents::OutputEvents()
                 for (size_t i = 0; i < sx->size; ++i)
                     ::sprintf_s(Buffer.data(), 4, "%02X ", sx->buffer[i]);
 
-                Log.AtTrace().Format(STR_COMPONENT_BASENAME " received MIDI SysEx message %s.", Buffer.c_str());
+                Log.AtTrace().Write(STR_COMPONENT_BASENAME " received MIDI SysEx message %s.", Buffer.c_str());
                 break;
             }
 
             case CLAP_EVENT_MIDI2:
             {
-                Log.AtTrace().Format(STR_COMPONENT_BASENAME " received MIDI 2 message.");
+                Log.AtTrace().Write(STR_COMPONENT_BASENAME " received MIDI 2 message.");
                 break;
             }
 
             default:
             {
-                Log.AtWarn().Format(STR_COMPONENT_BASENAME, " received unsupported CLAP event %d.", event->type);
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME, " received unsupported CLAP event %d.", event->type);
             }
         }
     #endif

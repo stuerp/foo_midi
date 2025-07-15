@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.cpp (2025.07.12) **/
+/** $VER: MT32Player.cpp (2025.07.13) **/
 
 #include "pch.h"
 
@@ -60,7 +60,7 @@ bool MT32Player::Startup()
 
     Reset();
 
-    Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using LibMT32Emu %s.", _Service.getLibraryVersionString());
+    Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using LibMT32Emu %s.", _Service.getLibraryVersionString());
 
     _IsStarted = true;
 
@@ -280,7 +280,7 @@ bool MT32Player::LoadMachineROMs(const std::string & machineID)
     {
         for (const auto & Entry : fs::directory_iterator(_ROMDirectory))
         {
-    //      console::print(STR_COMPONENT_BASENAME, ": ", machineID.c_str(), " / ", (const char *) Entry.path().u8string().c_str());
+            Log.AtTrace().Write(STR_COMPONENT_BASENAME " is identifying %s as %s.", machineID.c_str(), (const char *) Entry.path().u8string().c_str());
 
             auto rc = _Service.addMachineROMFile(machineID.c_str(), (const char *) Entry.path().u8string().c_str());
 
@@ -296,7 +296,7 @@ bool MT32Player::LoadMachineROMs(const std::string & machineID)
     }
     catch (std::exception e)
     {
-        console::print(STR_COMPONENT_BASENAME, " fails to load the machine ROMs: ", e.what());
+        Log.AtError().Write(STR_COMPONENT_BASENAME " fails to load the machine ROMs: %s", e.what());
     }
 
     return false;
@@ -321,7 +321,7 @@ std::set<std::string> MT32Player::IdentifyControlROMs()
     }
     catch (std::exception e)
     {
-        console::print(STR_COMPONENT_BASENAME, " fails to identify the control ROMs: ", e.what());
+        Log.AtError().Write(STR_COMPONENT_BASENAME " fails to identify the control ROMs: %s", e.what());
     }
 
     return ROMs;

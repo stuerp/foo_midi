@@ -102,7 +102,7 @@ bool OPNPlayer::Startup()
 
                 (void) ::vsnprintf(Line, sizeof(Line) - 1, format, args);
 
-                Log.AtDebug().Format(STR_COMPONENT_BASENAME " OPN Player says %s", Line);
+                Log.AtDebug().Write(STR_COMPONENT_BASENAME " OPN Player says %s", Line);
 
                 va_end(args);
             },
@@ -162,7 +162,7 @@ bool OPNPlayer::Startup()
         _Devices[i] = Device;
     }
 
-    Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using LibOPNMIDI " OPNMIDI_VERSION " with emulator %s.", ::opn2_chipEmulatorName(_Devices[0]));
+    Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using LibOPNMIDI " OPNMIDI_VERSION " with emulator %s.", ::opn2_chipEmulatorName(_Devices[0]));
 
     _IsStarted = true;
 

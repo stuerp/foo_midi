@@ -1,10 +1,13 @@
 
-/** $VER: CLAPHost.cpp (2025.07.11) P. Stuer **/
+/** $VER: CLAPHost.cpp (2025.07.13) P. Stuer **/
 
 #include "pch.h"
 
 #include "Configuration.h"
 #include "Resource.h"
+#include "Support.h"
+#include "Log.h"
+
 #include "CLAPHost.h"
 #include "CLAPPlayer.h"
 
@@ -58,13 +61,13 @@ Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor(), _PlugIn(), _PlugInGUI()
     // Handles a request to deactivate and reactivate the plug-in.
     request_restart  = [](const clap_host * self)
     {
-        console::print("Plug-in requests restart.");
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request from plug-in to restart.");
     };
 
     // Handles a request to activate and start processing the plug-in.
     request_process  =  [](const clap_host * self)
     {
-        console::print("Plug-in requests to be activated.");
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to activate plug-in.");
     };
 
     // Handles a request to schedule a call to plugin->on_main_thread(plugin) on the main thread.
@@ -88,7 +91,7 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 
     #define CLAP_SDK_VERSION TOSTRING(CLAP_VERSION_MAJOR) "." TOSTRING(CLAP_VERSION_MINOR) "." TOSTRING(CLAP_VERSION_REVISION)
 
-    console::print(STR_COMPONENT_BASENAME " is built with CLAP ", CLAP_SDK_VERSION ".");
+    Log.AtInfo().Write(STR_COMPONENT_BASENAME " is built with CLAP " CLAP_SDK_VERSION ".");
 
     GetPlugIns_(directoryPath);
 
@@ -290,9 +293,9 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
                 GetPlugIns_(Entry.path());
             }
             else
-            if ((Entry.path().extension() == ".clap") || (Entry.path().extension() == ".dll"))
+            if (IsOneOf(Entry.path().extension().u8string(), { u8".clap", u8".dll" }))
             {
-                console::print(STR_COMPONENT_BASENAME " is examining \"", (const char *) Entry.path().u8string().c_str(), "\"...");
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
 
                 GetPlugInEntries(Entry.path(), [this, Entry](const std::string & plugInName, uint32_t index, bool hasGUI)
                 {
@@ -311,7 +314,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
     }
     catch (std::exception e)
     {
-        console::print(STR_COMPONENT_BASENAME, " fails to get CLAP plug-ins: ", e.what());
+        Log.AtError().Write(STR_COMPONENT_BASENAME, " fails to get CLAP plug-ins: %s", e.what());
     }
 }
 
@@ -345,17 +348,12 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
                     {
                         #define SafeString(x) ((x) != nullptr ? (x) : "")
 
-                        console::print
+                        Log.AtInfo().Write
                         (
-                            "Id: \"", SafeString(Descriptor->id), "\", ",
-                            "Name: \"", SafeString(Descriptor->name), "\", ",
-                            "Version: \"", SafeString(Descriptor->version), "\", ",
-                            "Description: \"", SafeString(Descriptor->description), "\", ",
-                            "Vendor: \"", SafeString(Descriptor->vendor), "\", ",
-                            "URL: \"", SafeString(Descriptor->url), "\", ",
-                            "Manual URL: \"", SafeString(Descriptor->manual_url), "\", ",
-                            "Support URL: \"", SafeString(Descriptor->support_url), "\", ",
-                            "CLAP Version: ", Descriptor->clap_version.major, ".", Descriptor->clap_version.minor, ".", Descriptor->clap_version.revision
+                            "Id: \"%s\", Name: \"%s\", Version: \"%s\", Description: \"%s\", Vendor: \"%s\", URL: \"%s\", Manual URL: \"%s\", Support URL: \"%s\", CLAP Version: %d.%d.%d",
+                            SafeString(Descriptor->id), SafeString(Descriptor->name), SafeString(Descriptor->version), SafeString(Descriptor->description),
+                            SafeString(Descriptor->vendor), SafeString(Descriptor->url), SafeString(Descriptor->manual_url), SafeString(Descriptor->support_url),
+                            Descriptor->clap_version.major, Descriptor->clap_version.minor, Descriptor->clap_version.revision
                         );
 
                         if (::clap_version_is_compatible(Descriptor->clap_version))
@@ -374,11 +372,10 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
                             }
                         }
                         else
-                            console::print(STR_COMPONENT_BASENAME,
-                                " CLAP host version ",
-                                CLAP_VERSION.major, ".", CLAP_VERSION.minor, ".", CLAP_VERSION.revision,
-                                " is not compatible with plug-in version ",
-                                Descriptor->clap_version.major, ".", Descriptor->clap_version.minor, ".", Descriptor->clap_version.revision);
+                            Log.AtInfo().Write(STR_COMPONENT_BASENAME,
+                                " CLAP host CLAP version %d.%d.%d is not compatible with plug-in CLAP version %d.%d.%d.",
+                                CLAP_VERSION.major, CLAP_VERSION.minor, CLAP_VERSION.revision,
+                                Descriptor->clap_version.major, Descriptor->clap_version.minor, Descriptor->clap_version.revision);
                     }
                 }
             }
@@ -404,7 +401,7 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 
     if (NotePorts == nullptr)
     {
-        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins without Note Ports extension.");
+        Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins without Note Ports extension.");
 
         return false;
     }
@@ -415,7 +412,7 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 
     if (InputPortCount != 1)
     {
-        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 1 MIDI input port.");
+        Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 1 MIDI input port.");
 
         return false;
     }
@@ -426,7 +423,7 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 
     if (OutputPortCount != 0)
     {
-        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with MIDI output ports.");
+        Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with MIDI output ports.");
 
         return false;
     }
@@ -439,7 +436,7 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 
     if ((PortInfo.supported_dialects & CLAP_NOTE_DIALECT_MIDI) == 0)
     {
-        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins without MIDI dialect support.");
+        Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins without MIDI dialect support.");
 
         return false;
     }
@@ -460,7 +457,7 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 
     if (AudioPorts == nullptr)
     {
-        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins without Audio Ports extension.");
+        Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins without Audio Ports extension.");
 
         return false;
     }
@@ -471,7 +468,7 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 
     if (InputPortCount != 0)
     {
-        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with audio input ports.");
+        Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with audio input ports.");
 
         return false;
     }
@@ -482,7 +479,7 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 
     if (OutputPortCount != 1)
     {
-        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 1 audio output port.");
+        Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 1 audio output port.");
 
         return false;
     }
@@ -493,7 +490,7 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 
     if (!(_PortInfo.channel_count == 2 && ::strcmp(_PortInfo.port_type, CLAP_PORT_STEREO) == 0))
     {
-        console::error(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 2 output channels in stereo.");
+        Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 2 output channels in stereo.");
 
         return false;
     }
@@ -549,19 +546,19 @@ const clap_host_log Host::LogHandler
     // Logs a message from the plug-in.
     .log =  [](const clap_host_t * self, clap_log_severity severity, const char * message)
     {
-    #ifndef _DEBUG
-        if (severity < CLAP_LOG_WARNING)
-            return;
-    #endif
-
-        const char * Severities[] =
+        switch (severity)
         {
-            "Debug", "Info", "Warning", "Error", "Fatal", "Host Misbehaving", "Plug-in misbehaving",
-        };
+            case CLAP_LOG_DEBUG:    { Log.AtDebug().Write(STR_COMPONENT_BASENAME " CLAP plug-in Debug: %s",   message); break; }
+            case CLAP_LOG_INFO:     { Log.AtInfo() .Write(STR_COMPONENT_BASENAME " CLAP plug-in Info: %s",    message); break; }
+            case CLAP_LOG_WARNING:  { Log.AtWarn() .Write(STR_COMPONENT_BASENAME " CLAP plug-in Warning: %s", message); break; }
+            case CLAP_LOG_ERROR:    { Log.AtError().Write(STR_COMPONENT_BASENAME " CLAP plug-in Error: %s",   message); break; }
+            case CLAP_LOG_FATAL:    { Log.AtFatal().Write(STR_COMPONENT_BASENAME " CLAP plug-in Fatal: %s",   message); break; }
 
-        const char * Severity = ((size_t) severity < _countof(Severities)) ? Severities[severity] : "Unknown";
-
-        console::print(STR_COMPONENT_BASENAME, " received message from CLAP plug-in: ", message, " (", Severity, ")");
+            case CLAP_LOG_PLUGIN_MISBEHAVING:
+            {
+                Log.AtWarn() .Write(STR_COMPONENT_BASENAME " noticed CLAP plug-in is misbehaving: ", message); break;
+            }
+        }
     }
 };
 

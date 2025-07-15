@@ -107,7 +107,7 @@ bool ADLPlayer::Startup()
 
                 (void) ::vsnprintf(Line, sizeof(Line) - 1, format, args);
 
-                Log.AtDebug().Format(STR_COMPONENT_BASENAME " ADL Player says %s", Line);
+                Log.AtDebug().Write(STR_COMPONENT_BASENAME " ADL Player says %s", Line);
 
                 va_end(args);
             },
@@ -140,7 +140,7 @@ bool ADLPlayer::Startup()
         _Devices[i] = Device;
     }
 
-    Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using LibADLMIDI " ADLMIDI_VERSION " with emulator %s.", ::adl_chipEmulatorName(_Devices[0]));
+    Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using LibADLMIDI " ADLMIDI_VERSION " with emulator %s.", ::adl_chipEmulatorName(_Devices[0]));
 
     _IsStarted = true;
 

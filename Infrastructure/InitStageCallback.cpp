@@ -34,7 +34,7 @@ public:
         else
         if (stage == init_stages::after_ui_init)
         {
-            Log.AtDebug().Format(STR_COMPONENT_BASENAME " is initializing the metadb index manager after the user interface has been initialized.");
+            Log.AtDebug().Write(STR_COMPONENT_BASENAME " is initializing the metadb index manager after the user interface has been initialized.");
 
             InputDecoder::InitializeIndexManager();
         }

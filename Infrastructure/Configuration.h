@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.07.11) **/
+/** $VER: Configuration.h (2025.07.15) **/
 
 #pragma once
 
@@ -17,7 +17,7 @@ using namespace cfg_var_modern;
 
 extern const GUID PreferencesPageGUID;
 
-enum class PlayerTypes : int8_t
+enum class PlayerType : int8_t
 {
     Unknown = -1,
 
@@ -44,19 +44,19 @@ enum class PlayerTypes : int8_t
     Default = ADL,
 };
 
-enum class LoopTypes
+enum class LoopType
 {
     NeverLoop = 0,                      // Never loop
-    NeverLoopAddDecayTime = 1,          // Never loop, add configured decay time at the end
+    NeverLoopAddDecayTime = 1,          // Never loop. Add configured decay time at the end
 
-    LoopAndFadeWhenDetected = 2,        // Loop and fade when detected
-    LoopAndFadeAlways = 3,              // Loop and fade always
+    LoopWhenDetectedAndFade = 2,        // Loop when detected and fade at the end
+    RepeatAndFade = 3,                  // Repeat the complete song and fade at the end
 
-    PlayIndefinitelyWhenDetected = 4,   // Play indefinitely when detected
-    PlayIndefinitely = 5,               // Play indefinitely
+    LoopWhenDetectedForever = 4,        // Loop when detected forever
+    RepeatForever = 5,                  // Repeat the complete song forever
 };
 
-enum class MIDIFlavors
+enum class MIDIFlavor
 {
     Default = 0,                        // Defaults to SC88.
 
@@ -87,7 +87,7 @@ enum
     DefaultDetectXMILoops = 1,
     DefaultDetectFF7Loops = 1,
 
-    DefaultMIDIFlavor = MIDIFlavors::Default,
+    DefaultMIDIFlavor = MIDIFlavor::Default,
     DefaultUseMIDIEffects = 1,
     DefaultUseMT32EmuWithMT32 = 1,
     DefaultUseVSTiWithXG = 0,
@@ -152,7 +152,7 @@ extern cfg_var_modern::cfg_int
 
     CfgDecayTime,
     CfgLoopCount,
-    CfgFadeOutTime,
+    CfgFadeTime,
 
     CfgDetectTouhouLoops,
     CfgDetectRPGMakerLoops,

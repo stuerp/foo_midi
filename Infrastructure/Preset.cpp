@@ -24,13 +24,13 @@ preset_t::preset_t() noexcept
     }
 */
     {
-        _PlayerType = (PlayerTypes) (uint32_t) CfgPlayerType;
+        _PlayerType = (PlayerType) (uint32_t) CfgPlayerType;
 
         _PlugInFilePath = CfgPlugInFilePath;
         _CLAPPlugInIndex = (uint32_t) CfgCLAPIndex;
 
         // Get the configuration of the VSTi.
-        if (_PlayerType == PlayerTypes::VSTi)
+        if (_PlayerType == PlayerType::VSTi)
         {
             try
             {
@@ -45,25 +45,25 @@ preset_t::preset_t() noexcept
             }
             catch (...)
             {
-                _PlayerType = PlayerTypes::Default;
+                _PlayerType = PlayerType::Default;
             }
         }
         else
         // Get the configuration of the CLAP plug-in.
-        if (_PlayerType == PlayerTypes::CLAP)
+        if (_PlayerType == PlayerType::CLAP)
         {
         }
 
         _SoundfontFilePath = CfgSoundFontFilePath;
     }
 
-    if (_PlayerType == PlayerTypes::FluidSynth)
+    if (_PlayerType == PlayerType::FluidSynth)
     {
         _EffectsEnabled = CfgFluidSynthProcessEffects;
         _VoiceCount = (uint32_t) CfgFluidSynthMaxVoices;
     }
     else
-    if (_PlayerType == PlayerTypes::BASSMIDI)
+    if (_PlayerType == PlayerType::BASSMIDI)
     {
         _EffectsEnabled = CfgBASSMIDIProcessEffects;
         _VoiceCount = (uint32_t) CfgBASSMIDIMaxVoices;
@@ -101,7 +101,7 @@ preset_t::preset_t() noexcept
     }
 
     {
-        _MIDIFlavor = (MIDIFlavors) (uint32_t) CfgMIDIFlavor;
+        _MIDIFlavor = (MIDIFlavor) (uint32_t) CfgMIDIFlavor;
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
         _UseMT32EmuWithMT32 = (bool) CfgUseMT32EmuWithMT32;
         _UseVSTiWithXG = (bool) CfgUseVSTiWithXG;
@@ -119,83 +119,98 @@ void preset_t::Serialize(pfc::string & text)
     text += "|";
     text += pfc::format_int((t_int64) _PlayerType);
 
-    if (_PlayerType == PlayerTypes::VSTi)
+    #pragma warning(disable: 4062)
+
+    switch (_PlayerType)
     {
-        text += "|";
-        text += _PlugInFilePath;
+        case PlayerType::VSTi:
+        {
+            text += "|";
+            text += _PlugInFilePath;
 
-        text += "|";
+            text += "|";
 
-        for (auto Byte : _VSTiConfig)
-            text += pfc::format_hex(Byte, 2);
+            for (auto Byte : _VSTiConfig)
+                text += pfc::format_hex(Byte, 2);
+            break;
+        }
+
+        case PlayerType::FluidSynth:
+        case PlayerType::BASSMIDI:
+        {
+            text += "|";
+            text += _SoundfontFilePath;
+
+            text += "|";
+            text += pfc::format_int(_EffectsEnabled);
+
+            text += "|";
+            text += pfc::format_int(_VoiceCount);
+            break;
+        }
+        
+        case PlayerType::MT32Emu:
+        {
+            text += "|";
+            text += _MT32EmuSets[_MT32EmuGMSet].c_str();
+            break;
+        }
+
+        case PlayerType::ADL:
+        {
+            const char * const * BankNames = adl_getBankNames();
+
+            text += "|";
+            text += BankNames[_ADLBankNumber];
+
+            text += "|";
+            text += pfc::format_int(_ADLChipCount);
+
+            text += "|";
+            text += pfc::format_int(_ADLSoftPanning);
+
+            text += "|";
+            text += pfc::format_int(_ADLUseChorus);
+
+            text += "|";
+            text += pfc::format_int(_ADLEmulatorCore);
+            break;
+        }
+
+        case PlayerType::OPN:
+        {
+            text += "|";
+            text += pfc::format_int(_OPNBankNumber);
+
+            text += "|";
+            text += pfc::format_int(_ADLChipCount);
+
+            text += "|";
+            text += pfc::format_int(_ADLSoftPanning);
+
+            text += "|";
+            text += pfc::format_int(_OPNEmulatorCore);
+            break;
+        }
+
+        case PlayerType::NukedOPL3:
+        {
+            text += "|";
+            text += NukedOPL3Player::GetPresetName(_NukeSynth, _NukeBank).c_str();
+
+            text += "|";
+            text += pfc::format_int(_NukeUsePanning);
+            break;
+        }
+
+        case PlayerType::SecretSauce:
+        {
+            // No player specific settings
+            break;
+        }
     }
-    else
-    if (_PlayerType == PlayerTypes::FluidSynth || _PlayerType == PlayerTypes::BASSMIDI)
-    {
-        text += "|";
-        text += _SoundfontFilePath;
 
-        text += "|";
-        text += pfc::format_int(_EffectsEnabled);
-
-        text += "|";
-        text += pfc::format_int(_VoiceCount);
-    }
-    else
-    if (_PlayerType == PlayerTypes::MT32Emu)
-    {
-        text += "|";
-        text += _MT32EmuSets[_MT32EmuGMSet].c_str();
-    }
-    else
-    if (_PlayerType == PlayerTypes::ADL)
-    {
-        const char * const * BankNames = adl_getBankNames();
-
-        text += "|";
-        text += BankNames[_ADLBankNumber];
-
-        text += "|";
-        text += pfc::format_int(_ADLChipCount);
-
-        text += "|";
-        text += pfc::format_int(_ADLSoftPanning);
-
-        text += "|";
-        text += pfc::format_int(_ADLUseChorus);
-
-        text += "|";
-        text += pfc::format_int(_ADLEmulatorCore);
-    }
-    else
-    if (_PlayerType == PlayerTypes::OPN)
-    {
-        text += "|";
-        text += pfc::format_int(_OPNBankNumber);
-
-        text += "|";
-        text += pfc::format_int(_ADLChipCount);
-
-        text += "|";
-        text += pfc::format_int(_ADLSoftPanning);
-
-        text += "|";
-        text += pfc::format_int(_OPNEmulatorCore);
-    }
-    else
-    if (_PlayerType == PlayerTypes::NukedOPL3)
-    {
-        text += "|";
-        text += NukedOPL3Player::GetPresetName(_NukeSynth, _NukeBank).c_str();
-
-        text += "|";
-        text += pfc::format_int(_NukeUsePanning);
-    }
-    else
-    if (_PlayerType == PlayerTypes::SecretSauce)
-    {
-        // No player specific settings
-    }
+    #pragma warning(default: 4062)
 
     text += "|";
     text += pfc::format_int((uint32_t) _MIDIFlavor);
@@ -228,7 +243,7 @@ void preset_t::Deserialize(const char * text)
     // Get the player type.
     GetValue(Separator, text);
 
-    auto PlayerType = (PlayerTypes) (uint8_t) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
+    PlayerType playerType = (PlayerType) (uint8_t) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
     pfc::string VSTiPath;
     std::vector<uint8_t> VSTiConfig;
@@ -252,7 +267,7 @@ void preset_t::Deserialize(const char * text)
     uint32_t NukeBank = 0;
     bool NukeUsePanning = false;
 
-    MIDIFlavors Flavor = MIDIFlavors::Default;
+    MIDIFlavor Flavor = MIDIFlavor::Default;
 
     bool UseMIDIEffects = false;
     bool UseMT32EmuWithMT32 = false;
@@ -260,7 +275,7 @@ void preset_t::Deserialize(const char * text)
 
     GetValue(Separator, text);
 
-    if (PlayerType == PlayerTypes::VSTi)
+    if (playerType == PlayerType::VSTi)
     {
         VSTiPath.set_string(text, (t_size) (Separator - text));
 
@@ -276,25 +291,25 @@ void preset_t::Deserialize(const char * text)
         if (CurrentSchemaVersion >= 11)
         {
             GetValue(Separator, text);
-            Flavor = (MIDIFlavors) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
+            Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
             GetValue(Separator, text);
             UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
         }
     }
     else
-    if (PlayerType == PlayerTypes::FluidSynth || PlayerType == PlayerTypes::BASSMIDI)
+    if (playerType == PlayerType::FluidSynth || playerType == PlayerType::BASSMIDI)
     {
         SoundFontPath.set_string(text, (t_size)(Separator - text));
 
         {
-            if (PlayerType == PlayerTypes::FluidSynth)
+            if (playerType == PlayerType::FluidSynth)
             {
                 ProcessEffects = (bool) CfgFluidSynthProcessEffects;
                 MaxVoices = (uint32_t) CfgFluidSynthMaxVoices;
             }
             else
-            if (PlayerType == PlayerTypes::BASSMIDI)
+            if (playerType == PlayerType::BASSMIDI)
             {
                 ProcessEffects = (bool) CfgBASSMIDIProcessEffects;
                 MaxVoices = (uint32_t) CfgBASSMIDIMaxVoices;
@@ -318,7 +333,7 @@ void preset_t::Deserialize(const char * text)
                     if (CurrentSchemaVersion >= 11)
                     {
                         GetValue(Separator, text);
-                        Flavor = (MIDIFlavors) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
+                        Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
                         GetValue(Separator, text);
                         UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
@@ -328,7 +343,7 @@ void preset_t::Deserialize(const char * text)
         }
     }
     else
-    if (PlayerType == PlayerTypes::MT32Emu)
+    if (playerType == PlayerType::MT32Emu)
     {
         size_t i;
 
@@ -347,7 +362,7 @@ void preset_t::Deserialize(const char * text)
             return;
     }
     else
-    if (PlayerType == PlayerTypes::ADL)
+    if (playerType == PlayerType::ADL)
     {
         {
             const char * const * BankNames = adl_getBankNames();
@@ -391,7 +406,7 @@ void preset_t::Deserialize(const char * text)
         }
     }
     else
-    if (PlayerType == PlayerTypes::OPN)
+    if (playerType == PlayerType::OPN)
     {
         if (CurrentSchemaVersion >= 10)
         {
@@ -415,7 +430,7 @@ void preset_t::Deserialize(const char * text)
         }
     }
     else
-    if (PlayerType == PlayerTypes::NukedOPL3)
+    if (playerType == PlayerType::NukedOPL3)
     {
         std::string Text(text, (t_size) (Separator - text));
 
@@ -430,14 +445,14 @@ void preset_t::Deserialize(const char * text)
             NukeUsePanning = true;
     }
     else
-    if (PlayerType == PlayerTypes::SecretSauce)
+    if (playerType == PlayerType::SecretSauce)
     {
         if (CurrentSchemaVersion >= 11)
         {
-            Flavor = (MIDIFlavors) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
+            Flavor = (MIDIFlavor) pfc::atodec<uint32_t>(text, (t_size) (Separator - text));
 
-            if (Flavor > MIDIFlavors::XG)
-                Flavor = MIDIFlavors::Default;
+            if (Flavor > MIDIFlavor::XG)
+                Flavor = MIDIFlavor::Default;
 
             GetValue(Separator, text);
             UseMIDIEffects = pfc::atodec<bool>(text, (t_size) (Separator - text));
@@ -453,7 +468,7 @@ void preset_t::Deserialize(const char * text)
         UseSecretSauceWithXG = pfc::atodec<bool>(text, (t_size) (Separator - text));
     }
 
-    _PlayerType = PlayerType;
+    _PlayerType = playerType;
 
     _PlugInFilePath = VSTiPath;
     _VSTiConfig = VSTiConfig;

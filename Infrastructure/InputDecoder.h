@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.07.13) **/
+/** $VER: InputDecoder.h (2025.07.15) **/
 
 #pragma once
 
@@ -165,9 +165,9 @@ public:
     static void InitializeIndexManager();
 
 private:
-    uint32_t GetDuration(size_t subSongIndex) noexcept;
+    uint32_t GetLength(size_t subSongIndex) noexcept;
     void InitializeFade() noexcept;
-    void SelectPlayer(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept;
+    void OverridePlayerSelection(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept;
     void GetSoundfonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
@@ -204,7 +204,7 @@ private:
     player_t * _Player;
     CLAP::Host * _Host;
 
-    PlayerTypes _PlayerType;
+    PlayerType _PlayerType;
     bool _IsPlayerTypeOverriden;
     std::string _PlugInName;
 
@@ -215,9 +215,13 @@ private:
     uint32_t _Time;                 // in frames
     uint32_t _TotalTime;            // in frames
 
-    LoopTypes _LoopType;
+    LoopType _LoopType;
+    uint32_t _LoopCount;
     range_t _LoopRange;             // in ms
     range_t _FadeRange;             // in ms
+
+    uint32_t _FadeTime;             // in ms
+    uint32_t _DecayTime;            // in ms
 
     // Flags
     uint32_t _ExtraPercussionChannel;

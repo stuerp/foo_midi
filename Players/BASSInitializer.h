@@ -1,5 +1,5 @@
 
-/** $VER: BASSInitializer.h (2025.03.19) **/
+/** $VER: BASSInitializer.h (2025.07.13) **/
 
 #pragma once
 
@@ -8,6 +8,7 @@
 
 #include "SoundFontCache.h"
 #include "Resource.h"
+#include "Log.h"
 
 #include <bassmidi.h>
 
@@ -76,7 +77,7 @@ public:
         pfc::string PathName = pfc::io::path::combine(_BasePath, fileName);
 
         if (::BASS_PluginLoad((const char *) pfc::stringcvt::string_os_from_utf8(PathName).get_ptr(), BASS_UNICODE) == 0)
-            console::print(STR_COMPONENT_BASENAME, " failed to load plugin \"", fileName, "\": Error %d.", ::BASS_ErrorGetCode());
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to load plugin \"%s\": Error %d.", fileName, ::BASS_ErrorGetCode());
     }
 
 private:

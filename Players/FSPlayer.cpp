@@ -254,7 +254,7 @@ bool FSPlayer::Startup()
     {
         const DWORD Version = GetVersion();
 
-        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using FluidSynth %d.%d.%d.", (Version >> 24) & 0xFF, (Version >> 16) & 0xFF, (Version >> 8) & 0xFF);
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using FluidSynth %d.%d.%d.", (Version >> 24) & 0xFF, (Version >> 16) & 0xFF, (Version >> 8) & 0xFF);
     }
 
     Configure(_MIDIFlavor, _FilterEffects);
@@ -522,10 +522,10 @@ static void Logger(int level, const char * message, void * data)
 {
     switch (level)
     {
-        case FLUID_PANIC: Log.AtFatal().Format(STR_COMPONENT_BASENAME " FluidSynth: FATAL %s", message); break;
-        case FLUID_ERR:   Log.AtError().Format(STR_COMPONENT_BASENAME " FluidSynth: ERROR %s", message); break;
-        case FLUID_WARN:  Log.AtWarn() .Format(STR_COMPONENT_BASENAME " FluidSynth: WARNING %s", message); break;
-        case FLUID_INFO:  Log.AtInfo() .Format(STR_COMPONENT_BASENAME " FluidSynth: %s", message); break;
+        case FLUID_PANIC: Log.AtFatal().Write(STR_COMPONENT_BASENAME " FluidSynth: FATAL %s", message); break;
+        case FLUID_ERR:   Log.AtError().Write(STR_COMPONENT_BASENAME " FluidSynth: ERROR %s", message); break;
+        case FLUID_WARN:  Log.AtWarn() .Write(STR_COMPONENT_BASENAME " FluidSynth: WARNING %s", message); break;
+        case FLUID_INFO:  Log.AtInfo() .Write(STR_COMPONENT_BASENAME " FluidSynth: %s", message); break;
 //      case FLUID_DBG:   Log.AtDebug().Format(STR_COMPONENT_BASENAME " FluidSynth: %s", message); break;
     }
 }

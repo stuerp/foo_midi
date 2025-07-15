@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2025.07.13) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2025.07.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -186,10 +186,7 @@ void ProcessingDialog::apply()
 
     ApplyConfigVariable(DefaultTempo);
 
-    ApplyConfigVariable(LogLevel);
-
     CfgChannels.Apply();
-
     CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
 
     ApplyConfigVariable(LogLevel);
@@ -214,11 +211,11 @@ void ProcessingDialog::reset()
 
     ResetConfigVariable(DefaultTempo);
 
-    ResetConfigVariable(LogLevel);
-
     CfgChannels.Reset();
 
     InitializePortControls();
+
+    ResetConfigVariable(LogLevel);
 
     UpdateDialog();
 
@@ -237,6 +234,7 @@ BOOL ProcessingDialog::OnInitDialog(CWindow window, LPARAM) noexcept
     _DarkModeHooks.AddDialogWithControls(*this);
 
     InitializeConfigVariable(LoopExpansion);
+
     InitializeConfigVariable(WriteBarMarkers);
     InitializeConfigVariable(WriteSysExNames);
     InitializeConfigVariable(ExtendLoops);
@@ -426,9 +424,11 @@ void ProcessingDialog::OnButtonClick(UINT, int id, CWindow w) noexcept
 bool ProcessingDialog::HasChanged() const noexcept
 {
     HasConfigVariableChanged(LoopExpansion);
+
     HasConfigVariableChanged(WriteBarMarkers);
     HasConfigVariableChanged(WriteSysExNames);
     HasConfigVariableChanged(ExtendLoops);
+    HasConfigVariableChanged(WolfteamLoopMode);
     HasConfigVariableChanged(KeepMutedChannels);
     HasConfigVariableChanged(IncludeControlData);
 

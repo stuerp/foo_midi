@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.07.07) **/
+/** $VER: BMPlayer.h (2025.07.13) **/
 
 #pragma once
 
@@ -70,8 +70,6 @@ private:
 
         return true;
     }
-
-    static bool IsOneOf(const std::wstring & ext, const std::vector<std::wstring> & extensions);
 
 private:
     static const uint32_t MaxFrames = 512;

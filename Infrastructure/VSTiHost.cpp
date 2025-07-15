@@ -1,13 +1,15 @@
 
-/** $VER: VSTiHost.cpp (2025.07.12) P. Stuer **/
+/** $VER: VSTiHost.cpp (2025.07.13) P. Stuer **/
 
 #include "pch.h"
 
 #include "Configuration.h"
 #include "Resource.h"
+#include "Log.h"
+#include "Support.h"
+
 #include "VSTiHost.h"
 #include "VSTiPlayer.h"
-#include "Log.h"
 
 namespace VSTi
 {
@@ -43,9 +45,9 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
                 GetPlugIns_(Entry.path());
             }
             else
-            if ((Entry.path().extension() == ".dll") || (Entry.path().extension() == ".vst2") || (Entry.path().extension() == ".vst3"))
+            if (IsOneOf(Entry.path().extension().u8string(), { u8".dll", u8".vst2", u8".vst3" }))
             {
-                Log.AtDebug().Format(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
+                Log.AtDebug().Write(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
 
                 Player Player;
 
@@ -89,7 +91,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
     }
     catch (std::exception e)
     {
-        Log.AtError().Format(STR_COMPONENT_BASENAME " failed to get VSTi plug-ins: %s", e.what());
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to get VSTi plug-ins: %s", e.what());
     }
 }
 

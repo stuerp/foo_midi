@@ -243,7 +243,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
     edittext                            IDC_CLAP_PATH, ,                    X_B58, Y_B58,     W_B58, H_B58, ES_AUTOHSCROLL
     pushbutton  "...",                  IDC_CLAP_PATH_SELECT,               X_B59, Y_B59,     W_B59, H_B59
 
-    rtext       "Sound Font:",          IDC_STATIC,                         X_B21, Y_B21 + 2, W_B21, H_B21
+    rtext       "Soundfont:",           IDC_STATIC,                         X_B21, Y_B21 + 2, W_B21, H_B21
     edittext                            IDC_SOUNDFONT_FILE_PATH,            X_B22, Y_B22,     W_B22, H_B22, ES_AUTOHSCROLL
     pushbutton  "...",                  IDC_SOUNDFONT_FILE_PATH_SELECT ,    X_B23, Y_B23,     W_B23, H_B23
 

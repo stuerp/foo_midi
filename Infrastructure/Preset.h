@@ -30,7 +30,7 @@ public:
 public:
     const uint32_t CurrentSchemaVersion = 12;
 
-    PlayerTypes _PlayerType;
+    PlayerType _PlayerType;
 
     pfc::string _PlugInFilePath; // VSTi or CLAP
     std::vector<uint8_t> _VSTiConfig;
@@ -65,7 +65,7 @@ public:
     uint32_t _NukeBank;
     bool _NukeUsePanning;
 
-    MIDIFlavors _MIDIFlavor;
+    MIDIFlavor _MIDIFlavor;
     bool _UseMIDIEffects;
     bool _UseMT32EmuWithMT32;
     bool _UseVSTiWithXG;

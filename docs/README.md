@@ -68,103 +68,47 @@ foo_midi can decode the following file formats:
 | MUS                              | .MUS        | Format created by Paul Radek for his DMX audio library. Used by id Software for Doom and several other games.  See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/MUS_Format) and [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX)). |
 | Extended MIDI                    | .XMI, .XFM  | Format used by the Miles Sound System (MSS) for storing game music. Supports multiple songs in one file. See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/XMI_Format) and [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=XMI). |
 | Loudness Sound System            | .LDS        | File created with the Loudness Sound System by Andras Molnar. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=LDS). |
-| Recomposer                       | .RCP, .R36, .G18, .G36 | Formats used by Recomposer, a popular music editing application on the Japanese [PC-98](https://en.wikipedia.org/wiki/PC-98) platform. |
+| Recomposer                       | .RCP, .R36, .G18, .G36 | Formats used by Recomposer, a popular music editing application on the Japanese [PC-98](https://en.wikipedia.org/wiki/PC-98) platform developed by Come-On Music during the 1990s. It became a cult favorite among Japanese composers—most famously ZUN, the creator of the Touhou Project series. |
 | Mobile Music File                | .MMF        | Synthetic-music Mobile Application Format (SMAF). See [FileFormat.com](https://docs.fileformat.com/audio/mmf/). |
 | System Exclusive data file       | .SYX, .DMP  | File containing System Exclusive (SysEx) messages. |
 
 ### Players
 
-foo_midi implements and suports several players. A player is emulates an FM or sample-based synthesizer. The build-in players do not require you to download and install any additional files to play back music. Additional players become available when you install and configure the required support files.
+foo_midi implements and supports several players. A player emulates an FM or sample-based synthesizer. The built-in players do not require you to download and install any additional files to play back music. Additional players become available when you install and configure the required support files.
 
 ### LibADLMIDI (Built-in, FM Synthesis)
 
-This player uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM3812 (OPL2)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2) and the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
+This player uses the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM3812 (OPL2)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2) and the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip used in Sound Blaster cards.
 
-It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
+Key features are:
 
-#### ADL Bank
+- **OPL3 Emulation**: Supports both 2-operator and 4-operator FM synthesis for rich, expressive tones.
+- **Custom Instrument Banks**: Uses the .wopl format to define FM patches, allowing full control over timbre and instrument behavior.
+- **Embedded & External Banks**: Comes with built-in banks from classic games and tools, plus support for loading custom banks.
+- **Stereo Sound & Panning**: Offers full stereo output with binary panning (left/right).
+- **Advanced MIDI Support**:
+  - Pitch bend, vibrato, sustain, and sostenuto
+  - Portamento and brightness control (CC74)
+  - GS/XG partial compatibility for extended instrument sets
+  - SysEx support for select GS/XG features
+- **Automatic Arpeggios**: Simulates chords when channel limits are reached.
 
-The library provides many built-in FM patches from various known PC games using AIL (Miles Sound System), DMX, HMI (Human Machine Interfaces) or Creative IBK (Instrument Bank). With this setting you select the bank that will be used during playback.
-
-#### ADL Emulator Core
-
-To render the MIDI file a synthesizer chip is emulated. These are the eumlators that the current version of the library supports:
-
-| Name              | Description |
-| ----------------- | ----------- |
-| Nuked OPL3 v1.8   | Slowest but most accurate |
-| Nuked OPL3 v1.7.4 | Slow, slightly less accurate |
-| DOSBox            | Fast, mostly accurate |
-| Opal OPL3         | Only suitable for Reality Adlib Tracker tunes |
-| Java OPL3         | Written by Robson Cozendey |
-| ESFMu             | [ESS ESFM](https://en.wikipedia.org/wiki/Yamaha_OPL#ESS_ESFM), an enhanced 72-operator OPL3-compatible clone, written by [Nuke.YKT](https://github.com/nukeykt) and [Kagamiin~](https://github.com/Kagamiin) |
-| MAME OPL2         | Written by Jarek Burczynski and Tatsuyuki Satoh |
-| YMFM OPL2         | Written by Aaron Giles |
-| YMFM OPL3         | Written by Aaron Giles |
-| Nuked OPL2 LLE    | Low-Level Emulator, CPU heavy |
-| Nuked OPL3 LLE    | Low-Level Emulator, CPU heavy |
-
-#### ADL Chips
-
-You can specify the number of chips (1 to 100) that are available to the player. Emulation of multiple chips extends polyphony limits when rendering a MIDI file.
-
-#### ADL Soft panning
-
-Enables or disables soft panning.
-
-By default the library uses binary panning where a sound is either fully left, fully right, or center. It's a simple on/off stereo placement.
-
-Soft panning (also called full-panning stereo) allows for gradual placement of sound across the stereo field, enabling smoother and more realistic spatial positioning of instruments.
-
-#### ADL Bank File
-
-A bank can be loaded from a file in the [WOPL format](https://github.com/Wohlstand/OPL3BankEditor/blob/master/Specifications/WOPL-and-OPLI-Specification.pdf). You can create a bank using Wohlstand's [OPL3 Bank Editor](https://github.com/Wohlstand/OPL3BankEditor). The loaded bank will take precendence over the select bank.
+It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** preferences page.
 
 ### LibOPNMIDI (Built-in, FM Synthesis)
 
-This player uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) and [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
+This player uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) and [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip&mdash;famously used in the Sega Genesis and NEC PC-98 systems.
 
-It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
+Key features are:
 
-#### OPN Bank
+- **Customizable FM Patch Bank**: Users can create their own timbre banks using the OPN2 Bank Editor, allowing for unique instrument sounds.
+- **WOPN Format Support**: Instrument banks are stored in .wopn files, which define the FM parameters for each instrument.
+- **Partial GS/XG Compatibility**: Banks can include more than 128 melodic and 80 percussion instruments, supporting extended MIDI standards.
+- **Automatic Arpeggios**: Helps relieve channel pressure by simulating chords with rapid note sequences.
+- **Brightness Control (CC74)**: Modulates the FM tone to simulate filter cutoff, mimicking subtractive synthesis behavior.
+- **Stereo Panning**: Full-panning stereo is supported, especially in emulator-based playback.
 
-The library provides a couple of instrument banks. With this setting you select the bank that will be used during playback.
-
-#### OPN Emulator Core
-
-To render the MIDI file a synthesizer chip is emulated. These are the eumlators that the current version of the library supports:
-
-| Name | Description |
-| ---- | ----------- |
-| MAME&nbsp;YM2612 | Accurate and fast on slow devices |
-| MAME&nbsp;YM2608 | Accurate and fast on slow devices |
-| Nuked&nbsp;OPN2&nbsp;([YM3438](https://en.wikipedia.org/wiki/YM3438#Yamaha_YM3438) mode) | Very accurate, requires a powerful CPU |
-| Nuked&nbsp;OPN2&nbsp;(YM2612&nbsp;mode) | Very accurate, requires a powerful CPU |
-| Gens/GS&nbsp;II&nbsp;OPN2 | GENS 2.10 emulator. Very outdated and inaccurate, but fastest. |
-| Neko&nbsp;Project&nbsp;II&nbsp;Kai&nbsp;OPNA | Neko Project 2 YM2608 emulator. Semi-accurate, but fast on slow devices. |
-| YMFM&nbsp;OPN2 | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
-| YMFM&nbsp;OPNA | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
-
-The following emulator cores have been deprecated in the current version of the library and are no longer available:
-
-- [Genesis Plus GX](https://github.com/ekeeke/Genesis-Plus-GX)
-- [PMDWin](https://c60.la.coocan.jp/) OPNA
-
-#### OPN Chips
-
-You can specify the number of chips (1 to 100) that are available to the player. Emulation of multiple chips extends polyphony limits when rendering a MIDI file.
-
-#### OPN Soft panning
-
-Enables or disables soft panning.
-
-By default the library uses binary panning where a sound is either fully left, fully right, or center. It's a simple on/off stereo placement.
-
-Soft panning (also called full-panning stereo) allows for gradual placement of sound across the stereo field, enabling smoother and more realistic spatial positioning of instruments.
-
-#### OPN Bank File
-
-A bank can be loaded from a file in the [WOPN format](https://github.com/Wohlstand/OPN2BankEditor/blob/master/Specifications/WOPN-and-OPNI-Specification.txt). You can create a bank using Wohlstand's [OPN2 Bank Editor](https://github.com/Wohlstand/OPN2BankEditor). The loaded bank will take precendence over the select bank.
+It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** preferences page.
 
 ### LibEDMIDI aka Emu de MIDI (Built-in, FM Synthesis)
 
@@ -174,6 +118,8 @@ This player uses the [libEDMIDI](https://github.com/Wohlstand/libEDMIDI) library
 
 This player uses the [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3) library by [Alexey Khokholov (Nuke.YKT)](http://nukeykt.retrohost.net/) to emulate the [Yamaha YMF262 and CT1747 (OPL3)](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL3) FM synthesis sound chip.
 
+It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** preferences page.
+
 ### LibMT32EMU (MT-32) (Built-in, FM Synthesis / Wavetable)
 
 This player uses the [LibMT32Emu](https://github.com/munt/munt) library to emulate the [Roland MT-32, CM-32L and LAPC-I synthesiser modules](https://en.wikipedia.org/wiki/Roland_MT-32).
@@ -181,88 +127,24 @@ This player uses the [LibMT32Emu](https://github.com/munt/munt) library to emula
 > [!Important]
 > You have to specify the location of the MT-32 or CM-32L PCM and control ROMS on the **[MIDI Player / Paths](#paths)** preferences page before you can use this player.
 
-It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** preferences page. Here's an explanation of the available settings:
+It can be configured on the **[MIDI Player / Wavetable](#wavetable)** preferences page.
 
-#### Resampling
+### FMMIDI (Built-in, FM Synthesis)
 
-Determines the quality of the sample rate conversion: Fastest, Fast, Good or Best.
-
-#### Max. Partials
-
-Allows you to override the maximum number of partials playing simultaneously within the emulation session.
-
-> In the MT-32's Linear Arithmetic (LA) synthesis, each tone is made up of up to four partials. These partials can be PCM samples or synthesized waveforms, and they are mixed together to form a complete sound.
-
-#### Analog Output Mode
-
-The original MT-32 had analog components (like filters and amplifiers) that subtly colored the sound. This setting affects the final coloration and warmth of the sound, especially when aiming for an authentic retro audio experience.
-
-It is especially important if you're trying to replicate the exact sound of classic DOS games or MIDI compositions as they were heard in the late '80s and early '90s.
-
-| Name     | Description |
-| -------- | ----------- |
-| Digital&nbsp;Only | Only the digital path is emulated. The output samples correspond to the digital signal at the DAC entrance. |
-| Coarse       | Coarse emulation of the LPF circuit. High frequencies are boosted, sample rate remains unchanged. |
-| Accurate     | Finer emulation of the LPF circuit. Output signal is upsampled to 48 kHz to allow emulation of audible mirror spectra above 16 kHz, * which is passed through the LPF circuit without significant attenuation. |
-| Oversampled  | Same as Accurate but the output signal is 2x oversampled, i.e. the output sample rate is 96 kHz. This makes subsequent resampling easier. Besides, due to nonlinear passband of the LPF emulated, it takes fewer number of MACs  compared to a regular LPF FIR implementations. |
-
-#### DAC Input Mode
-
-The DAC (Digital-to-Analog Converter) in the original MT-32 had specific limitations and nonlinearities.
-
-The library emulates this behavior, and the DAC Input Mode determines how audio is prepared before it's "sent" to the virtual DAC.
-
-| Name         | Description |
-| ------------ | ----------- |
-| Nice         | Produces samples at double the volume, without tricks. Higher quality than the real devices. |
-| Pure         | Produces samples that exactly match the bits output from the emulated LA32. Much less likely to overdrive than any other mode. Half the volume of any of the other modes. |
-| Generation&nbsp;1 | Re-orders the LA32 output bits as in early generation MT-32s. |
-| Generation&nbsp;2 | Re-orders the LA32 output bits as in later generations MT-32s. |
-
-#### Reverb
-
-Enables or disable reverb generation.
-
-#### Nice Amp Ramp
-
-On real Roland MT-32 hardware, sudden changes in volume or expression can cause abrupt "jumps" in amplitude. This setting makes these changes gradual, resulting in a more natural and musical sound. This is particularly useful when MIDI tracks include quick volume fades or expression shifts.
-
-> [!Note]
-> This is a quality improvement that sacrifices emulation accuracy.
-
-#### Nice Panning
-
-The original MT-32 had some idiosyncrasies in how it handled panning. This feature mimics those subtleties for a more authentic sound. Instead of abrupt left/right shifts when a MIDI track changes pan values, "Nice Panning" makes these transitions more gradual and natural. Instruments sound more like they're moving across a stereo field, rather than jumping from one side to the other.
-
-#### Nice Partial Mixing
-
-The original MT-32 had subtle nonlinearities and quirks in how it mixed partials. This setting mimics those characteristics. It ensures that the partials are mixed in a way that avoids harsh digital artifacts or unnatural volume spikes.
-Especially noticeable in complex tones like orchestral instruments or layered synths, where multiple partials interact.
-
-#### Reverse Stereo
-
-Early MT-32 units (especially those with ROM version 1.07 or earlier) are known to have reversed stereo channels compared to modern expectations.
-
-Enable this setting to reverse the channels.
-
-#### GM Set
-
-Determines which General MIDI configuration is used by the player: Roland or King's Quest 6.
-
-### FMMIDI (yuno) (Built-in, FM Synthesis)
-
-[FMMIDI](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip.
+[FMMIDI](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip and was created by Yuno in 2004.
 
 > [!Important]
 > It requires a text file that specifies the programs or instrument definitions. A default **Programs.txt** file is installed with the component in component directory. This file can be overriden by selecting a different one on the **[MIDI Player / Paths](#paths)** preferences page.
 
 ### BASSMIDI (Built-in, Wavetable)
 
-This player is a wrapper for the BASSMIDI library by [Un4seen](https://www.un4seen.com/). The required libraries to use it are included with the component.
+This player is a wrapper for the BASSMIDI library by [Un4seen](https://www.un4seen.com/). The libraries required to use it are included with the component.
 
 It requires an SF2, SF2Pack or SFZ soundfont to provide the instrument samples. See [Soundfonts](#soundfonts).
 
 A custom SFList format is also supported to further tweak the soundfonts and instruments used during playback.
+
+It can be configured on the **[MIDI Player / Wavetable](#wavetable)** preferences page.
 
 ### FluidSynth (Optional, Wavetable)
 
@@ -273,18 +155,7 @@ It requires an SF2, SF2Pack, SFZ or SF3 soundfont or a DLS-compatible wave set t
 > [!Important]
 > You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path on the **[MIDI Player / Paths](#paths)** preferences page before FluidSynth becomes available as a player.
 
-#### Configuration file
-
-You can use a text file to specify FluidSynth settings. The file must have the following format:
-
-- Empty lines and comment lines starting with a '#' character are ignored.
-- Each line contains one setting in the following format: `name` *spaces* `value`.
-- Settings with invalid values are ignored.
-- Any valid setting will override the foo_midi defaults and the values set in the Preferences.
-
-Refer to [FluidSettings](https://www.fluidsynth.org/api/fluidsettings.xml) for the available settings.
-
-Specify the path to the file on the **[MIDI Player / Paths](#paths)** preferences page. An example file is included in the component directory.
+It can be configured on the **[MIDI Player / Wavetable](#wavetable)** preferences page.
 
 ### Secret Sauce (Optional)
 
@@ -343,7 +214,7 @@ The **Configure** button will be enabled if the player has an additional dialog 
 The **Sample rate** combobox allows you to specify the sample rate the player will be asked to create samples. Select any of the predefined values or enter a custom value between 8000Hz and 192000Hz.
 
 > [!Important]
-> Some players may ignore this setting because player-specific parameters cause it to render at a higher or lower sample rate. F.e. [FluidSynth](#fluidsynth-optional) may get a different sample rate from a configuration file or [LibMT32EMU](#libmt32emu-mt-32-built-in) will use a different sample rate resulting from a combination of its settings. The actual sample rate being used can be read from the [samplerate](#information-fields) information field.
+> Some players may ignore this setting because player-specific parameters cause it to render at a higher or lower sample rate. F.e. [FluidSynth](#fluidsynth-optional-wavetable) may get a different sample rate from a configuration file or [LibMT32EMU](#libmt32emu-mt-32-built-in-fm-synthesis--wavetable) will use a different sample rate resulting from a combination of its settings. The actual sample rate being used can be read from the [samplerate](#information-fields) information field.
 
 ### Looping
 
@@ -365,10 +236,10 @@ The component supports 6 loop modes that can be selected in the foobar2000 Prefe
 | ------------------------------- | ----------- |
 | Never&nbsp;loop | The song will be played once ignoring any loop information. |
 | Never&nbsp;loop.&nbsp;Use&nbsp;decay&nbsp;time | The song will be played once ignoring any loop information with a customizable decay period at the end for the sound to die down. |
-| Loop&nbsp;and&nbsp;fade&nbsp;when&nbsp;detected | The song will be played and any defined loop will be repeated a customizable number of times. At the end of the last loop the song will fade out. |
-| Loop&nbsp;and&nbsp;fade&nbsp;always | The song will be played and looped a customizable number of times. If no loop is found the complete song be looped. At the end of the last loop the song will fade out. |
-| Play&nbsp;indefinitely&nbsp;when&nbsp;detected | The song will be played and the loop, when detected, will play until stopped. |
-| Play&nbsp;indefinitely | The song will be played and loop until stopped. |
+| Loop&nbsp;when&nbsp;detected&nbsp;and&nbsp;fade | The song will be played and any defined loop will be repeated a customizable number of times. At the end of the last loop the song will fade out. |
+| Repeat&nbsp;and&nbsp;fade | The complete song will be played and repeated a customizable number of times. At the end of the last repetition the song will fade out. |
+| Loop&nbsp;indefinitely&nbsp;when&nbsp;detected | The song will be played and the loop, when detected, will play until stopped. |
+| Repeat&nbsp;indefinitely | The complete song will be played and repeated until stopped. |
 
 The **Playback** droplist specifies how loops are processed during normal playback. The **Other** droplist determines how loops are processed during other foobar2000 operations such as converting a MIDI file to another format.
 
@@ -378,9 +249,13 @@ The **Loop count** setting determines how many times a loop will be played befor
 
 The **Fade-Out time** setting specifies the time in milliseconds that the player will start to fade-out the song before starting to play another track.
 
+---
+
 ### Soundfonts
 
 🔧 *Work in Progress*
+
+---
 
 ### Metadata
 
@@ -432,7 +307,7 @@ Only available during playback:
 > [!Tip]
 > You can configure the foobar2000 status bar on the  **Display / Default User Interface** preferences page. Here's an example of how to use the information fields:
 >
-> `%samplerate%Hz, [, "$info(midi_player)"][, "$info(midi_player_ext)"][, $info(midi_active_voices) voices '(peak ' $info(midi_peak_voices)')'][, extra percussion channel $info(midi_extra_percussion_channel)]`
+> `%samplerate%Hz, [, "$info(midi_player)"][, "$info(midi_player_ext)"][, $info(midi_active_voices) voices '(peak ' $info(midi_peak_voices)')'][, Extra percussion channel $info(midi_extra_percussion_channel)]`
 
 ---
 
@@ -446,7 +321,7 @@ The settings of foo_midi are spread over different *pages*.
 
 For an explanation of the loop settings refer to [Looping](#looping).
 
-#### MIDI
+#### MIDI settings
 
 You can force a player to start playback using a particular *flavor* of MIDI. The term groups the common MIDI specifications and particular model specific configurations.
 
@@ -490,7 +365,9 @@ Enabling this setting will remove all Program Change messages from the MIDI stre
 
 #### Disable bank changes
 
-Enabling this setting will remove all Control Change bank change messages from the MIDI stream. (`CC 0` and `CC 32`)
+Enabling this setting will remove all Control Change bank selection messages from the MIDI stream. (`CC 0` and `CC 32`)
+
+---
 
 ### FM Synthesis
 
@@ -498,19 +375,101 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 
 #### LibADLMIDI
 
-🔧 *Work in Progress*
+##### ADL Bank
+
+The library provides many built-in FM patches from various known PC games using AIL (Miles Sound System), DMX, HMI (Human Machine Interfaces) or Creative IBK (Instrument Bank). With this setting you select the bank that will be used during playback.
+
+##### ADL Emulator Core
+
+To render the MIDI file a synthesizer chip is emulated. These are the eumlators that the current version of the library supports:
+
+| Name              | Description |
+| ----------------- | ----------- |
+| Nuked OPL3 v1.8   | Slowest but most accurate |
+| Nuked OPL3 v1.7.4 | Slow, slightly less accurate |
+| DOSBox            | Fast, mostly accurate |
+| Opal OPL3         | Only suitable for Reality Adlib Tracker tunes |
+| Java OPL3         | Written by Robson Cozendey |
+| ESFMu             | [ESS ESFM](https://en.wikipedia.org/wiki/Yamaha_OPL#ESS_ESFM), an enhanced 72-operator OPL3-compatible clone, written by [Nuke.YKT](https://github.com/nukeykt) and [Kagamiin~](https://github.com/Kagamiin) |
+| MAME OPL2         | Written by Jarek Burczynski and Tatsuyuki Satoh |
+| YMFM OPL2         | Written by Aaron Giles |
+| YMFM OPL3         | Written by Aaron Giles |
+| Nuked OPL2 LLE    | Low-Level Emulator, CPU heavy |
+| Nuked OPL3 LLE    | Low-Level Emulator, CPU heavy |
+
+##### ADL Chips
+
+You can specify the number of chips (1 to 100) that are available to the player. Emulation of multiple chips extends polyphony limits when rendering a MIDI file.
+
+##### ADL Soft panning
+
+Enables or disables soft panning.
+
+By default the library uses binary panning where a sound is either fully left, fully right, or center. It's a simple on/off stereo placement.
+
+Soft panning (also called full-panning stereo) allows for gradual placement of sound across the stereo field, enabling smoother and more realistic spatial positioning of instruments.
+
+##### ADL Bank File
+
+A bank can be loaded from a file in the [WOPL format](https://github.com/Wohlstand/OPL3BankEditor/blob/master/Specifications/WOPL-and-OPLI-Specification.pdf). You can create a bank using Wohlstand's [OPL3 Bank Editor](https://github.com/Wohlstand/OPL3BankEditor). The loaded bank will take precendence over the select bank.
 
 #### LibOPNMIDI
 
-🔧 *Work in Progress*
+##### OPN Bank
 
-#### LibEDMIDI
+The library provides a couple of built-in instrument or patch banks. With this setting you select the bank that will be used during playback.
 
-🔧 *Work in Progress*
+##### OPN Emulator Core
+
+To render the MIDI file a synthesizer chip is emulated. These are the eumlators that the current version of the library supports:
+
+| Name | Description |
+| ---- | ----------- |
+| MAME&nbsp;YM2612 | Accurate and fast on slow devices |
+| MAME&nbsp;YM2608 | Accurate and fast on slow devices |
+| Nuked&nbsp;OPN2&nbsp;([YM3438](https://en.wikipedia.org/wiki/YM3438#Yamaha_YM3438) mode) | Very accurate, requires a powerful CPU |
+| Nuked&nbsp;OPN2&nbsp;(YM2612&nbsp;mode) | Very accurate, requires a powerful CPU |
+| GENS/GS&nbsp;II&nbsp;OPN2 | GENS 2.10 emulator. Very outdated and inaccurate, but fastest. |
+| Neko&nbsp;Project&nbsp;II&nbsp;Kai&nbsp;OPNA | Neko Project 2 YM2608 emulator. Semi-accurate, but fast on slow devices. |
+| YMFM&nbsp;OPN2 | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
+| YMFM&nbsp;OPNA | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
+
+The following emulator cores have been deprecated in the current version of the library and are no longer available:
+
+- [Genesis Plus GX](https://github.com/ekeeke/Genesis-Plus-GX)
+- [PMDWin](https://c60.la.coocan.jp/) OPNA
+
+##### OPN Chips
+
+You can specify the number of chips (1 to 100) that are available to the player. Emulation of multiple chips extends polyphony limits when rendering a MIDI file.
+
+##### OPN Soft panning
+
+Enables or disables soft panning.
+
+By default the library uses binary panning where a sound is either fully left, fully right, or center. It's a simple on/off stereo placement.
+
+Soft panning (also called full-panning stereo) allows for gradual placement of sound across the stereo field, enabling smoother and more realistic spatial positioning of instruments.
+
+##### OPN Bank File
+
+A bank can be loaded from a file in the [WOPN format](https://github.com/Wohlstand/OPN2BankEditor/blob/master/Specifications/WOPN-and-OPNI-Specification.txt). You can create a bank using Wohlstand's [OPN2 Bank Editor](https://github.com/Wohlstand/OPN2BankEditor). The loaded bank will take precendence over the select bank.
 
 #### Nuked OPL3
 
-🔧 *Work in Progress*
+##### Preset
+
+Allows you to select one of the built-in presets. A preset is a combination of an emulator code (Doom, Windows or Apogee) and a patch bank.
+
+##### Soft panning
+
+Enables or disables soft panning.
+
+By default the library uses binary panning where a sound is either fully left, fully right, or center. It's a simple on/off stereo placement.
+
+Soft panning (also called full-panning stereo) allows for gradual placement of sound across the stereo field, enabling smoother and more realistic spatial positioning of instruments.
+
+---
 
 ### Paths
 
@@ -521,12 +480,14 @@ This sub-page of **MIDI Player** contains the various directory and file paths t
 | VSTi&nbsp;Plug&#8209;Ins | The location of the VSTi plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
 | VSTi&nbsp;XG&nbsp;Plug&#8209;In | The location of the VSTi plug-in that will be used when the [Use VSTi with XG](#use-vsti-with-xg) setting is enabled. |
 | CLAP&nbsp;Plug&#8209;Ins | The location of the CLAP plug-ins. The root and all subdirectories will be searched for compatible plug-ins. |
-| Sound&nbsp;Font | The location of the soundfont to be used by BASSMIDI and FluidSynth. |
+| Soundfont | The location of the soundfont to be used by BASSMIDI and FluidSynth. |
 | MT&#8209;32&nbsp;ROMs | The location of the MT-32 ROM files to be used by LibMT32Emu. |
 | Secret&nbsp;Sauce | The location of the Secret Sauce library. |
 | FluidSynth | The location where the FluidSynth libraries can be found. |
 | FluidSynth&nbsp;Config | The location of the FluidSynth configuration file. |
 | FMMIDI&nbsp;Programs | The location of the file containing the FMMIDI programs. Leave this empty to use the file included in the component directory. |
+
+---
 
 ### Processing
 
@@ -534,21 +495,21 @@ This sub-page of **MIDI Player** contains the settings to configure the MIDI pro
 
 #### Recomposer
 
-🔧 *Work in Progress*
+##### Expand loops
 
-**Expand loops**
+##### Write bar marker
 
-**Write bar marker**
+##### Write SysEx names
 
-**Write SysEx names**
+##### Extend loops
 
-**Extend loops**
+##### Wolfteam loops
 
-**Wolfteam loops**
+Wolfteam loops refer to musical sequences used in games developed by Wolfteam, a Japanese game studio known for titles on platforms like the Sharp X68000.
 
-**Keep muted channels**
+##### Keep muted channels
 
-**Include control data**
+##### Include control data
 
 #### HMI / HMP
 
@@ -569,33 +530,129 @@ A few shortcut buttons are available to assist in the selection:
 
 ^*^ See MSKB article 84817 [Using the MIDI Mapper](https://www.betaarchive.com/wiki/index.php?title=Microsoft_KB_Archive/84817) for an explanation of the 1&#8209;10 and 11&#8209;16 buttons.
 
+#### Component settings
+
+##### Log Level
+
+Allows you to control the messages foo_midi will write to the foobar2000 console.
+
+> [!Warning]
+> The **Debug** and **Trace** levels may generate a lot of technical output.
+
+---
+
 ### Wavetable
 
 This sub-page of **MIDI Player** contains the settings specific to configuring the wavetable-based players.
 
-#### BASSMIDI
+#### BASSMIDI settings
 
-🔧 *Work in Progress*
+##### Gain
 
-**Gain**
+##### Resampling
 
-**Resampling**
+##### Max. Voices
 
-**Max. Voices**
-
-**Process reverb and chorus**
+##### Process reverb and chorus
 
 Cache status
 
-#### FluidSynth
+---
 
-**Interpolation**
+#### FluidSynth settings
 
-**Max. Voices**
+🔧 *Work in Progress*
 
-**Process reverb and chorus**
+##### Interpolation
 
-**Dynamic sample loading**
+##### Max. Voices (FluidSynth)
+
+##### Process reverb and chorus (FluidSynth)
+
+##### Dynamic sample loading
+
+##### Configuration file
+
+FluidSynth has many more settings to configure. You can use a text file to change thoses settings. The file must have the following format:
+
+- Empty lines and comment lines starting with a '#' character are ignored.
+- Each line contains one setting in the following format: `name` *spaces* `value`.
+- Settings with invalid values are ignored.
+- Any valid setting will override the foo_midi defaults and the values set in the Preferences.
+
+Refer to [FluidSettings](https://www.fluidsynth.org/api/fluidsettings.xml) for the available settings.
+
+Specify the path to the file on the **[MIDI Player / Paths](#paths)** preferences page. An example file is included in the component directory.
+
+---
+
+#### LibMT32Emu (Munt) settings
+
+##### Resampling (LibMT32Emu)
+
+Determines the quality of the sample rate conversion: Fastest, Fast, Good or Best.
+
+##### Max. Partials
+
+Allows you to override the maximum number of partials playing simultaneously within the emulation session.
+
+> In the MT-32's Linear Arithmetic (LA) synthesis, each tone is made up of up to four partials. These partials can be PCM samples or synthesized waveforms, and they are mixed together to form a complete sound.
+
+##### Analog Output Mode
+
+The original MT-32 had analog components (like filters and amplifiers) that subtly colored the sound. This setting affects the final coloration and warmth of the sound, especially when aiming for an authentic retro audio experience.
+
+It is especially important if you're trying to replicate the exact sound of classic DOS games or MIDI compositions as they were heard in the late '80s and early '90s.
+
+| Name     | Description |
+| -------- | ----------- |
+| Digital&nbsp;Only | Only the digital path is emulated. The output samples correspond to the digital signal at the DAC entrance. |
+| Coarse       | Coarse emulation of the LPF circuit. High frequencies are boosted, sample rate remains unchanged. |
+| Accurate     | Finer emulation of the LPF circuit. Output signal is upsampled to 48 kHz to allow emulation of audible mirror spectra above 16 kHz, * which is passed through the LPF circuit without significant attenuation. |
+| Oversampled  | Same as Accurate but the output signal is 2x oversampled, i.e. the output sample rate is 96 kHz. This makes subsequent resampling easier. Besides, due to nonlinear passband of the LPF emulated, it takes fewer number of MACs  compared to a regular LPF FIR implementations. |
+
+##### DAC Input Mode
+
+The DAC (Digital-to-Analog Converter) in the original MT-32 had specific limitations and nonlinearities.
+
+The library emulates this behavior, and the DAC Input Mode determines how audio is prepared before it's "sent" to the virtual DAC.
+
+| Name         | Description |
+| ------------ | ----------- |
+| Nice         | Produces samples at double the volume, without tricks. Higher quality than the real devices. |
+| Pure         | Produces samples that exactly match the bits output from the emulated LA32. Much less likely to overdrive than any other mode. Half the volume of any of the other modes. |
+| Generation&nbsp;1 | Re-orders the LA32 output bits as in early generation MT-32s. |
+| Generation&nbsp;2 | Re-orders the LA32 output bits as in later generations MT-32s. |
+
+##### Reverb
+
+Enables or disable reverb generation.
+
+##### Nice Amp Ramp
+
+On real Roland MT-32 hardware, sudden changes in volume or expression can cause abrupt "jumps" in amplitude. This setting makes these changes gradual, resulting in a more natural and musical sound. This is particularly useful when MIDI tracks include quick volume fades or expression shifts.
+
+> [!Note]
+> This is a quality improvement that sacrifices emulation accuracy.
+
+##### Nice Panning
+
+The original MT-32 had some idiosyncrasies in how it handled panning. This feature mimics those subtleties for a more authentic sound. Instead of abrupt left/right shifts when a MIDI track changes pan values, "Nice Panning" makes these transitions more gradual and natural. Instruments sound more like they're moving across a stereo field, rather than jumping from one side to the other.
+
+##### Nice Partial Mixing
+
+The original MT-32 had subtle nonlinearities and quirks in how it mixed partials. This setting mimics those characteristics. It ensures that the partials are mixed in a way that avoids harsh digital artifacts or unnatural volume spikes.
+Especially noticeable in complex tones like orchestral instruments or layered synths, where multiple partials interact.
+
+##### Reverse Stereo
+
+Early MT-32 units (especially those with ROM version 1.07 or earlier) are known to have reversed stereo channels compared to modern expectations.
+
+Enable this setting to reverse the channels.
+
+##### GM Set
+
+Determines which General MIDI configuration is used by the player: Roland or King's Quest 6.
 
 ---
 

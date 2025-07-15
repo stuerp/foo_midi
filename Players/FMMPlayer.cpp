@@ -81,16 +81,16 @@ bool FMMPlayer::Startup()
 
     switch (_MIDIFlavor)
     {
-        case MIDIFlavors::GM: SystemMode = midisynth::system_mode_t::system_mode_default; break;
-        case MIDIFlavors::GM2: SystemMode = midisynth::system_mode_t::system_mode_gm2; break;
-        case MIDIFlavors::XG: SystemMode = midisynth::system_mode_t::system_mode_xg; break;
+        case MIDIFlavor::GM: SystemMode = midisynth::system_mode_t::system_mode_default; break;
+        case MIDIFlavor::GM2: SystemMode = midisynth::system_mode_t::system_mode_gm2; break;
+        case MIDIFlavor::XG: SystemMode = midisynth::system_mode_t::system_mode_xg; break;
 
-        case MIDIFlavors::Default:
+        case MIDIFlavor::Default:
 
-        case MIDIFlavors::SC55:
-        case MIDIFlavors::SC88:
-        case MIDIFlavors::SC88Pro:
-        case MIDIFlavors::SC8820:
+        case MIDIFlavor::SC55:
+        case MIDIFlavor::SC88:
+        case MIDIFlavor::SC88Pro:
+        case MIDIFlavor::SC8820:
 
         default: SystemMode = midisynth::system_mode_t::system_mode_gs; break;
     }

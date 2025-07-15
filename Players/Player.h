@@ -30,14 +30,14 @@ public:
         Forced = 0x02
     };
 
-    bool Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopTypes loopMode, uint32_t cleanFlags);
+    bool Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t decayTime, uint32_t cleanFlags);
     uint32_t Play(audio_sample * samplesData, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
     uint32_t GetSampleRate() const noexcept { return _SampleRate; };
     void SetSampleRate(uint32_t sampleRate);
 
-    void Configure(MIDIFlavors midiFlavor, bool filterEffects);
+    void Configure(MIDIFlavor midiFlavor, bool filterEffects);
 
     virtual uint32_t GetAudioChannelCount() const noexcept { return 2; } // Gets the number of audio channels the player supports.
     virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept { UNREFERENCED_PARAMETER(abortHandler); }
@@ -72,7 +72,7 @@ protected:
     midi::sysex_table_t _SysExMap;
     std::vector<uint8_t> _Ports;
 
-    MIDIFlavors _MIDIFlavor;
+    MIDIFlavor _MIDIFlavor;
     bool _FilterEffects;
 
     std::string _ErrorMessage;
@@ -91,7 +91,8 @@ private:
     void SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time);
 
 private:
-    LoopTypes _LoopType;        // Type of looping requested by the user.
+    LoopType _LoopType;             // Type of looping requested by the user.
+    uint32_t _DecayTime;            // in ms
 
     std::vector<midi::message_t> _Messages;
 
@@ -105,7 +106,7 @@ private:
 
     uint32_t _TimeRemaining;        // Remaining number of samples that need to be rendered before the audio chunk is complete (in case the block size of the player is smaller than the audio chunk size).
 
-    uint64_t _ChannelsMaskVersion;   // Version number of the channel configuration
+    uint64_t _ChannelsMaskVersion;  // Version number of the channel configuration
     uint16_t _ChannelsMask[128];
 
 #ifdef HAVE_FOO_VIS_MIDI

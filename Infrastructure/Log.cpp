@@ -25,7 +25,7 @@ public:
     ILog & AtInfo() noexcept override final { return *this; }
     ILog & AtDebug() noexcept override final { return *this; }
     ILog & AtTrace() noexcept override final { return *this; }
-    ILog & Format(const char * format, ... ) noexcept override final { return *this; }
+    ILog & Write(const char * format, ... ) noexcept override final { return *this; }
 };
 
 ILog & Null = *new NullLog();
@@ -83,7 +83,7 @@ public:
         return (_Level >= LogLevel::Trace) ? *this : Null;
     }
 
-    ILog & Format(const char * format, ... ) noexcept override final
+    ILog & Write(const char * format, ... ) noexcept override final
     {
         char Line[1024] = { };
 

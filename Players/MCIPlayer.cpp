@@ -152,7 +152,7 @@ void MCIPlayer::LogMessage(MMRESULT result) const
 
     ::midiOutGetErrorTextA(result, Text, _countof(Text));
 
-    Log.AtDebug().Format(STR_COMPONENT_BASENAME " MCI Player says %s", Text);
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " MCI Player says %s", Text);
 }
 
 #pragma endregion

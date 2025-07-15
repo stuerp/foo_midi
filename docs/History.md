@@ -1,6 +1,15 @@
 
 # foo_midi History
 
+- v2.19.0.0-rc1, 2025-07-13
+  - New: Log level setting determines which foo_midi messages are written to the foobar2000 console.
+  - Changed: Moved the LibMT32Emu settings to the Wavetable page.
+  - Improved: VSTi player issues a warning whenever it's host executable `vshost32.exe` and `vshost64.exe` can't be found.
+  - Fixed: Changing the channel mask setting did not always stick.
+  - Fixed: The fade range was not recalculated when the player changed to another sample rate. (Regression)
+  - Fixed: VSTi plug-in name was not always set. (Regression)
+  - Fixed: A couple of labels were to truncate in High DPI modes.
+
 - v2.19.0.0-alpha7, 2025-07-11
   - New: Detecting the extra percussion channel can be turned on or off in the Preferences.
   - Improved: ADL player uses LibADLMIDI 1.6.0 and 64-bit floating-point samples.

@@ -125,7 +125,7 @@ bool API::Exists() noexcept
     }
     catch (component::runtime_error e)
     {
-        Log.AtError().Format(STR_COMPONENT_BASENAME " failed to initialize FluidSynth: %s", e.what());
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to initialize FluidSynth: %s", e.what());
 
         return false;
     }
@@ -175,12 +175,12 @@ bool Host::LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_se
                     {
                         api.GetNumericSettingRange(Settings, Name.c_str(), &Min, &Max);
 
-                        Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid numeric value \"%s\" for setting \"%s\" in FluidSynth configuration file. Valid range is %.2f to %2f.", Value.c_str(), Name.c_str(), Min, Max);
+                        Log.AtWarn().Write(STR_COMPONENT_BASENAME " found invalid numeric value \"%s\" for setting \"%s\" in FluidSynth configuration file. Valid range is %.2f to %2f.", Value.c_str(), Name.c_str(), Min, Max);
                     }
                 }
                 catch (...)
                 {
-                    Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid numeric value \"%s\" for setting \"%s\" in FluidSynth configuration file.", Value.c_str(), Name.c_str());
+                    Log.AtWarn().Write(STR_COMPONENT_BASENAME " found invalid numeric value \"%s\" for setting \"%s\" in FluidSynth configuration file.", Value.c_str(), Name.c_str());
                 }
                 break;
             }
@@ -195,12 +195,12 @@ bool Host::LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_se
                     {
                         api.GetIntegerSettingRange(Settings, Name.c_str(), &Min, &Max);
 
-                        Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid integer value \"%s\" for setting \"%s\" in FluidSynth configuration file. Valid range is %d to %d.", Value.c_str(), Name.c_str(), Min, Max);
+                        Log.AtWarn().Write(STR_COMPONENT_BASENAME " found invalid integer value \"%s\" for setting \"%s\" in FluidSynth configuration file. Valid range is %d to %d.", Value.c_str(), Name.c_str(), Min, Max);
                     }
                 }
                 catch (...)
                 {
-                    Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid integer value \"%s\" for setting \"%s\" in FluidSynth configuration file.", Value.c_str(), Name.c_str());
+                    Log.AtWarn().Write(STR_COMPONENT_BASENAME " found invalid integer value \"%s\" for setting \"%s\" in FluidSynth configuration file.", Value.c_str(), Name.c_str());
                 }
                 break;
             }
@@ -209,7 +209,7 @@ bool Host::LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_se
             {
                 if (api.SetStringSetting(Settings, Name.c_str(), Value.c_str()) != FLUID_OK)
                 {
-                    Log.AtWarn().Format(STR_COMPONENT_BASENAME " found invalid string value \"%s\" for setting \"%s\" in FluidSynth configuration file.", Value.c_str(), Name.c_str());
+                    Log.AtWarn().Write(STR_COMPONENT_BASENAME " found invalid string value \"%s\" for setting \"%s\" in FluidSynth configuration file.", Value.c_str(), Name.c_str());
                 }
                 break;
             }
@@ -221,7 +221,7 @@ bool Host::LoadConfig(FluidSynth::API & api, const fs::path & filePath, fluid_se
 
             case FLUID_NO_TYPE:
             default:
-                Log.AtWarn().Format(STR_COMPONENT_BASENAME " found unknown setting \"%s\" in FluidSynth configuration file.", Name.c_str());
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " found unknown setting \"%s\" in FluidSynth configuration file.", Name.c_str());
         }
     }
 

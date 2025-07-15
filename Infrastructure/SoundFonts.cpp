@@ -1,5 +1,5 @@
  
-/** $VER: SoundFonts.cpp (2025.07.125) - Support functions for working with sound font files **/
+/** $VER: SoundFonts.cpp (2025.07.12) - Support functions for working with sound font files **/
 
 #include "pch.h"
 
@@ -118,19 +118,19 @@ void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundFontFilePath, 
     }
 
     // Force the use of a sound font player if an embedded or named sound font was found.
-    if ((_PlayerType != PlayerTypes::FluidSynth) && HasNonDefaultSoundFonts && !_Soundfonts.empty())
+    if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundFonts && !_Soundfonts.empty())
     {
-        _PlayerType = (FluidSynth::API::Exists() && HasDLS) ? PlayerTypes::FluidSynth : PlayerTypes::BASSMIDI;
+        _PlayerType = (FluidSynth::API::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
     }
 
     // Show which sound fonts we'll be using in the console.
-    if ((_PlayerType == PlayerTypes::BASSMIDI) || (_PlayerType == PlayerTypes::FluidSynth))
+    if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
     {
-        if (_PlayerType == PlayerTypes::FluidSynth)
+        if (_PlayerType == PlayerType::FluidSynth)
             std::reverse(_Soundfonts.begin(), _Soundfonts.end());
 
         for (const auto & sf : _Soundfonts)
-            Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using sound font \"%s\" with bank offset %d.", sf.FilePath().c_str(), sf.BankOffset());
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using sound font \"%s\" with bank offset %d.", sf.FilePath().c_str(), sf.BankOffset());
     }
 }
 

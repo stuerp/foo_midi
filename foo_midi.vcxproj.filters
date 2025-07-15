@@ -50,6 +50,9 @@
     <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
     <ClCompile Include="Infrastructure\Log.cpp" />
+    <ClCompile Include="Infrastructure\Support.cpp" />
+    <ClCompile Include="Infrastructure\InputInfoReader.cpp" />
+    <ClCompile Include="Infrastructure\InputInfoWriter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -203,6 +206,7 @@
     <ClInclude Include="Infrastructure\Log.h" />
     <ClInclude Include="Players\MT32Player\MT32ReportHandler.h" />
     <ClInclude Include="Infrastructure\PreferencesProcessing.h" />
+    <ClInclude Include="Infrastructure\Support.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

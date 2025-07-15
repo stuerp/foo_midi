@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.07.12) **/
+/** $VER: BMPlayer.cpp (2025.07.13) **/
 
 #include "pch.h"
 
@@ -8,6 +8,7 @@
 #include "BASSInitializer.h"
 #include "SoundFontCache.h"
 #include "Exception.h"
+#include "Support.h"
 #include "Log.h"
 
 #include <sflist.h>
@@ -184,11 +185,11 @@ bool BMPlayer::Startup()
     {
         const DWORD BASSVersion = GetVersion();
 
-        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using BASS %d.%d.%d.%d.", (BASSVersion >> 24) & 0xFF, (BASSVersion >> 16) & 0xFF, (BASSVersion >> 8) & 0xFF, BASSVersion & 0xFF);
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using BASS %d.%d.%d.%d.", (BASSVersion >> 24) & 0xFF, (BASSVersion >> 16) & 0xFF, (BASSVersion >> 8) & 0xFF, BASSVersion & 0xFF);
 
         const DWORD BASSMIDIVersion = GetMIDIVersion();
 
-        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is using BASS MIDI %d.%d.%d.%d.", (BASSMIDIVersion >> 24) & 0xFF, (BASSMIDIVersion >> 16) & 0xFF, (BASSMIDIVersion >> 8) & 0xFF, BASSMIDIVersion & 0xFF);
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using BASS MIDI %d.%d.%d.%d.", (BASSMIDIVersion >> 24) & 0xFF, (BASSMIDIVersion >> 16) & 0xFF, (BASSMIDIVersion >> 8) & 0xFF, BASSMIDIVersion & 0xFF);
     }
 
     Configure(_MIDIFlavor, _FilterEffects);
@@ -289,7 +290,7 @@ void BMPlayer::SendEvent(uint32_t data)
         return;
 
     // Ignore the Data Entry message for a NRPN Vibrato Depth. BASSMIDI overreacts to this SC-88Pro specific parameter.
-    if ((_MIDIFlavor == MIDIFlavors::SC88Pro) && (Status == midi::ControlChange))
+    if ((_MIDIFlavor == MIDIFlavor::SC88Pro) && (Status == midi::ControlChange))
     {
         size_t Channel = Event[0] & 0x0Fu;
 
@@ -500,19 +501,5 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
     return false;
 }
 #endif
-
-/// <summary>
-/// Returns true if the string matches on of the list.
-/// </summary>
-bool BMPlayer::IsOneOf(const std::wstring & ext, const std::vector<std::wstring> & extensions)
-{
-    for (const auto & Extension : extensions)
-    {
-        if (::_wcsicmp(ext.c_str(), Extension.c_str()) == 0)
-            return true;
-    }
-
-    return false;
-}
 
 #pragma endregion

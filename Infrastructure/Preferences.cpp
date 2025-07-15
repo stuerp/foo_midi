@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.13) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.15) P. Stuer **/
 
 #include "pch.h"
 
@@ -77,27 +77,28 @@ public:
         MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
 
         // Output
-        COMMAND_HANDLER_EX(IDC_PLAYER_TYPE, CBN_SELCHANGE, OnPlayerTypeChange)
+        COMMAND_HANDLER_EX(IDC_PLAYER_TYPE,                 CBN_SELCHANGE, OnPlayerTypeChange)
 
-        COMMAND_HANDLER_EX(IDC_CONFIGURE, BN_CLICKED, OnButtonConfig)
+        COMMAND_HANDLER_EX(IDC_CONFIGURE,                   BN_CLICKED, OnButtonConfig)
 
         DROPDOWN_HISTORY_HANDLER(IDC_SAMPLERATE, CfgSampleRateHistory)
-        COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_EDITCHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_SAMPLERATE, CBN_SELCHANGE, OnSelectionChange)
+
+        COMMAND_HANDLER_EX(IDC_SAMPLERATE,                  CBN_EDITCHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_SAMPLERATE,                  CBN_SELCHANGE, OnSelectionChange)
 
         // Looping
-        COMMAND_HANDLER_EX(IDC_LOOP_PLAYBACK, CBN_SELCHANGE, OnSelectionChange)
-        COMMAND_HANDLER_EX(IDC_LOOP_OTHER, CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_LOOP_PLAYBACK,               CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_LOOP_OTHER,                  CBN_SELCHANGE, OnSelectionChange)
 
-        COMMAND_HANDLER_EX(IDC_DECAY_TIME, EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_LOOP_COUNT, EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_FADE_OUT_TIME, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_DECAY_TIME,                  EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_LOOP_COUNT,                  EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_FADE_OUT_TIME,               EN_CHANGE, OnEditChange)
 
-        COMMAND_HANDLER_EX(IDC_RPGMAKER_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_LEAPFROG_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_XMI_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS, BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_FF7_LOOPS, BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_RPGMAKER_LOOPS,              BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_LEAPFROG_LOOPS,              BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_XMI_LOOPS,                   BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS,                BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_FF7_LOOPS,                   BN_CLICKED, OnButtonClick)
 
         // MIDI
         COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR,                 CBN_SELCHANGE, OnSelectionChange)
@@ -165,7 +166,7 @@ private:
     struct known_player_t
     {
         const char * Name;
-        PlayerTypes Type;
+        PlayerType Type;
         bool (*IsPresent)(RootDialog *);
     };
 
@@ -176,26 +177,26 @@ private:
         std::string Name;
 
         // Unique key
-        PlayerTypes Type;
+        PlayerType Type;
         fs::path FilePath;  // Path name of the VSTi or CLAP plug-in file
         size_t Index;       // Index with a CLAP plug-in
 
         size_t PlugInIndex; // Index in the VSTi or CLAP plug-in list
 
-        installed_player_t() : Type(PlayerTypes::Unknown), Index((size_t) -1), PlugInIndex((size_t) -1) { }
-        installed_player_t(const std::string & name, PlayerTypes type, fs::path filePath, size_t index, size_t plugInIndex) : Name(name), Type(type), FilePath(filePath), Index(index), PlugInIndex(plugInIndex) { }
+        installed_player_t() : Type(PlayerType::Unknown), Index((size_t) -1), PlugInIndex((size_t) -1) { }
+        installed_player_t(const std::string & name, PlayerType type, fs::path filePath, size_t index, size_t plugInIndex) : Name(name), Type(type), FilePath(filePath), Index(index), PlugInIndex(plugInIndex) { }
 
         bool operator ==(const installed_player_t & other) const noexcept
         {
             if (Type != other.Type)
                 return false;
 
-            if (((Type == PlayerTypes::VSTi) || (Type == PlayerTypes::CLAP)))
+            if (((Type == PlayerType::VSTi) || (Type == PlayerType::CLAP)))
             {
                 if (FilePath != other.FilePath)
                     return false;
 
-                if (Type == PlayerTypes::CLAP)
+                if (Type == PlayerType::CLAP)
                     return Index == other.Index;
             }
 
@@ -204,7 +205,7 @@ private:
 
         bool SupportsMIDIFlavor() const noexcept
         {
-            return ((Type == PlayerTypes::VSTi) || (Type == PlayerTypes::CLAP) || (Type == PlayerTypes::FluidSynth) || (Type == PlayerTypes::BASSMIDI) || (Type == PlayerTypes::SecretSauce));
+            return ((Type == PlayerType::VSTi) || (Type == PlayerType::CLAP) || (Type == PlayerType::FluidSynth) || (Type == PlayerType::BASSMIDI) || (Type == PlayerType::SecretSauce));
         }
     };
 
@@ -239,19 +240,19 @@ private:
 /// </summary>
 const RootDialog::known_player_t RootDialog::_KnownPlayers[] =
 {
-    { "LibEDMIDI",      PlayerTypes::EmuDeMIDI,     PlayerIsAlwaysPresent },
-    { "FluidSynth",     PlayerTypes::FluidSynth,    IsFluidSynthPresent },
-    { "BASSMIDI",       PlayerTypes::BASSMIDI,      PlayerIsAlwaysPresent },
-    { "DirectX",        PlayerTypes::DirectX,       PlayerIsNeverPresent },
-    { "LibMT32Emu",     PlayerTypes::MT32Emu,       PlayerIsAlwaysPresent },
-    { "LibADLMIDI",     PlayerTypes::ADL,           PlayerIsAlwaysPresent },
-    { "LibOPNMIDI",     PlayerTypes::OPN,           PlayerIsAlwaysPresent },
-    { "OPL MIDI",       PlayerTypes::OPL,           PlayerIsNeverPresent },
-    { "Nuked OPL3",     PlayerTypes::NukedOPL3,     PlayerIsAlwaysPresent },
-    { "Nuked SC-55",    PlayerTypes::NukedSC55,     PlayerIsNeverPresent },
-    { "Secret Sauce",   PlayerTypes::SecretSauce,   IsSecretSaucePresent },
-    { "MCI",            PlayerTypes::MCI,           PlayerIsNeverPresent },
-    { "FMMIDI",         PlayerTypes::FMMIDI,        PlayerIsAlwaysPresent },
+    { "LibEDMIDI",      PlayerType::EmuDeMIDI,     PlayerIsAlwaysPresent },
+    { "FluidSynth",     PlayerType::FluidSynth,    IsFluidSynthPresent },
+    { "BASSMIDI",       PlayerType::BASSMIDI,      PlayerIsAlwaysPresent },
+    { "DirectX",        PlayerType::DirectX,       PlayerIsNeverPresent },
+    { "LibMT32Emu",     PlayerType::MT32Emu,       PlayerIsAlwaysPresent },
+    { "LibADLMIDI",     PlayerType::ADL,           PlayerIsAlwaysPresent },
+    { "LibOPNMIDI",     PlayerType::OPN,           PlayerIsAlwaysPresent },
+    { "OPL MIDI",       PlayerType::OPL,           PlayerIsNeverPresent },
+    { "Nuked OPL3",     PlayerType::NukedOPL3,     PlayerIsAlwaysPresent },
+    { "Nuked SC-55",    PlayerType::NukedSC55,     PlayerIsNeverPresent },
+    { "Secret Sauce",   PlayerType::SecretSauce,   IsSecretSaucePresent },
+    { "MCI",            PlayerType::MCI,           PlayerIsNeverPresent },
+    { "FMMIDI",         PlayerType::FMMIDI,        PlayerIsAlwaysPresent },
 };
 
 const int RootDialog::_SampleRates[] = { 8'000, 11'025, 16'000, 22'050, 24'000, 32'000, 44'100, 48'000, 49'716, 64'000, 88'200, 96'000 };
@@ -289,7 +290,7 @@ void RootDialog::apply()
 
             CfgPlayerType = (int) _SelectedPlayer.Type;
 
-            if (_SelectedPlayer.Type == PlayerTypes::CLAP)
+            if (_SelectedPlayer.Type == PlayerType::CLAP)
             {
                 const auto & PlugIn = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
 
@@ -303,7 +304,7 @@ void RootDialog::apply()
             {
                 _CLAPHost.UnLoad();
 
-                if (_SelectedPlayer.Type == PlayerTypes::VSTi)
+                if (_SelectedPlayer.Type == PlayerType::VSTi)
                 {
                     const auto & PlugIn = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
 
@@ -328,12 +329,12 @@ void RootDialog::apply()
 
     // Sample Rate
     {
-        UINT t = std::clamp(GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE), 6000u, 192000u);
+        UINT Value = std::clamp(GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE), 6000u, 192000u);
 
-        SetDlgItemInt(IDC_SAMPLERATE, t, FALSE);
+        SetDlgItemInt(IDC_SAMPLERATE, Value, FALSE);
 
-        CfgSampleRateHistory.add_item(pfc::format_int(t));
-        CfgSampleRate = (t_int32) t;
+        CfgSampleRateHistory.add_item(pfc::format_int(Value));
+        CfgSampleRate = (t_int32) Value;
     }
 
     // Looping
@@ -342,8 +343,16 @@ void RootDialog::apply()
         CfgLoopTypeOther        = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
 
         CfgDecayTime            = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
-        CfgLoopCount            = (t_int32) GetDlgItemInt(IDC_LOOP_COUNT, NULL, FALSE);
-        CfgFadeOutTime          = (t_int32) GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE);
+        CfgFadeTime          = (t_int32) GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE);
+    }
+
+    // Loop Count
+    {
+        UINT Value = std::clamp(GetDlgItemInt(IDC_LOOP_COUNT, NULL, FALSE), 1u, ~0u);
+
+        SetDlgItemInt(IDC_LOOP_COUNT, Value, FALSE);
+
+        CfgLoopCount = (t_int32) GetDlgItemInt(IDC_LOOP_COUNT, NULL, FALSE);
     }
 
     // MIDI
@@ -380,7 +389,7 @@ void RootDialog::apply()
 /// </summary>
 void RootDialog::reset()
 {
-    _SelectedPlayer = installed_player_t("", PlayerTypes::Default, "", (size_t) -1, (size_t) -1);
+    _SelectedPlayer = installed_player_t("", PlayerType::Default, "", (size_t) -1, (size_t) -1);
 
     // Player Type
     {
@@ -485,25 +494,25 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
     #pragma endregion
 
-    _SelectedPlayer = installed_player_t("", (PlayerTypes) CfgPlayerType.get(), CfgPlugInFilePath.get().c_str(), (size_t) CfgCLAPIndex, (size_t) -1);
+    _SelectedPlayer = installed_player_t("", (PlayerType) CfgPlayerType.get(), CfgPlugInFilePath.get().c_str(), (size_t) CfgCLAPIndex, (size_t) -1);
 
     #pragma region VSTi Players
 
     // Add the VSTi plug-ins to the installed player list.
     {
-        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is enumerating VSTi plug-ins...");
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is enumerating VSTi plug-ins...");
 
         _VSTiPlugIns = _VSTiHost.GetPlugIns(std::u8string((const char8_t *) (const char *) CfgVSTiPlugInDirectoryPath.get()));
 
         if (!_VSTiPlugIns.empty())
         {
-            Log.AtInfo().Format(STR_COMPONENT_BASENAME " found %d compatible VSTi plug-ins.", _VSTiPlugIns.size());
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " found %d compatible VSTi plug-ins.", _VSTiPlugIns.size());
 
             size_t i = 0;
 
             for (const auto & PlugIn : _VSTiPlugIns)
             {
-                installed_player_t ip((std::string("VSTi ") + PlugIn.Name), PlayerTypes::VSTi, PlugIn.FilePath, (size_t) -1, i);
+                installed_player_t ip((std::string("VSTi ") + PlugIn.Name), PlayerType::VSTi, PlugIn.FilePath, (size_t) -1, i);
 
                 _InstalledPlayers.push_back(ip);
 
@@ -514,7 +523,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
             }
         }
         else
-            Log.AtInfo().Format(STR_COMPONENT_BASENAME " found no compatible VSTi plug-ins.");
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " found no compatible VSTi plug-ins.");
     }
 
     #pragma endregion
@@ -523,7 +532,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
     // Add the CLAP plug-ins to the installed player list.
     {
-        Log.AtInfo().Format(STR_COMPONENT_BASENAME " is enumerating CLAP plug-ins...");
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is enumerating CLAP plug-ins...");
 
         fs::path BaseDirectory(std::u8string((const char8_t *) CfgCLAPPlugInDirectoryPath.get().c_str()));
 
@@ -531,13 +540,13 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         if (!_CLAPPlugIns.empty())
         {
-            Log.AtInfo().Format(STR_COMPONENT_BASENAME " found %d CLAP plug-ins.", _CLAPPlugIns.size());
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " found %d CLAP plug-ins.", _CLAPPlugIns.size());
 
             size_t i = 0;
 
             for (const auto & PlugIn : _CLAPPlugIns)
             {
-                installed_player_t ip((std::string("CLAP ") + PlugIn.Name), PlayerTypes::CLAP, PlugIn.FilePath, PlugIn.Index, i);
+                installed_player_t ip((std::string("CLAP ") + PlugIn.Name), PlayerType::CLAP, PlugIn.FilePath, PlugIn.Index, i);
 
                 _InstalledPlayers.push_back(ip);
 
@@ -548,7 +557,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
             }
         }
         else
-            Log.AtInfo().Format(STR_COMPONENT_BASENAME " found no compatible CLAP plug-ins.");
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " found no compatible CLAP plug-ins.");
     }
 
     #pragma endregion
@@ -572,7 +581,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         if (SelectedIndex == -1)
         {
-            _SelectedPlayer = installed_player_t("", PlayerTypes::Default, "", (size_t) -1, (size_t) -1);
+            _SelectedPlayer = installed_player_t("", PlayerType::Default, "", (size_t) -1, (size_t) -1);
 
             i = 0;
 
@@ -625,10 +634,10 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
         {
             L"Never loop",
             L"Never loop. Use decay time",
-            L"Loop and fade when detected",
-            L"Loop and fade always",
-            L"Play indefinitely when detected",
-            L"Play indefinitely"
+            L"Loop when detected and fade",
+            L"Repeat and fade",
+            L"Loop when detected forever",
+            L"Repeat forever"
         };
 
         auto w1 = (CComboBox) GetDlgItem(IDC_LOOP_PLAYBACK);
@@ -645,7 +654,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         ::uSetDlgItemText(m_hWnd, IDC_DECAY_TIME, pfc::format_int(CfgDecayTime));
         ::uSetDlgItemText(m_hWnd, IDC_LOOP_COUNT, pfc::format_int(CfgLoopCount));
-        ::uSetDlgItemText(m_hWnd, IDC_FADE_OUT_TIME, pfc::format_int(CfgFadeOutTime));
+        ::uSetDlgItemText(m_hWnd, IDC_FADE_OUT_TIME, pfc::format_int(CfgFadeTime));
     }
 
     // MIDI
@@ -711,7 +720,7 @@ HBRUSH RootDialog::OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept
 /// <summary>
 /// Handles a change in an edit box.
 /// </summary>
-void RootDialog::OnEditChange(UINT, int, CWindow)
+void RootDialog::OnEditChange(UINT, int id, CWindow)
 {
     OnChanged();
 }
@@ -745,7 +754,7 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
     _IsBusy = true;
     OnChanged();
 
-    if (_SelectedPlayer.Type == PlayerTypes::VSTi)
+    if (_SelectedPlayer.Type == PlayerType::VSTi)
     {
         VSTi::Player Player;
 
@@ -780,7 +789,7 @@ void RootDialog::OnPlayerTypeChange(UINT, int, CWindow w)
     {
         _SelectedPlayer = _InstalledPlayers[(size_t) SelectedIndex];
 
-        if (_SelectedPlayer.Type == PlayerTypes::VSTi)
+        if (_SelectedPlayer.Type == PlayerType::VSTi)
             _VSTiHost.Config = CfgVSTiConfig[_VSTiPlugIns[_SelectedPlayer.PlugInIndex].Id];
     }
 
@@ -859,10 +868,10 @@ bool RootDialog::HasChanged()
         {
             _SelectedPlayer = _InstalledPlayers[(size_t) SelectedIndex];
 
-            if (_SelectedPlayer.Type != (PlayerTypes) (int) CfgPlayerType)
+            if (_SelectedPlayer.Type != (PlayerType) (int) CfgPlayerType)
                 return true;
 
-            if (_SelectedPlayer.Type == PlayerTypes::VSTi)
+            if (_SelectedPlayer.Type == PlayerType::VSTi)
             {
                 if (CfgPlugInFilePath.get() != (const char *) _SelectedPlayer.FilePath.u8string().c_str())
                     return true;
@@ -876,7 +885,7 @@ bool RootDialog::HasChanged()
                     return true;
             }
             else
-            if (_SelectedPlayer.Type == PlayerTypes::CLAP)
+            if (_SelectedPlayer.Type == PlayerType::CLAP)
             {
                 if (CfgPlugInFilePath.get() != (const char *) _SelectedPlayer.FilePath.u8string().c_str())
                     return true;
@@ -909,7 +918,7 @@ bool RootDialog::HasChanged()
         if (GetDlgItemInt(IDC_LOOP_COUNT, NULL, FALSE) != (UINT) CfgLoopCount)
             return true;
 
-        if (GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE) != (UINT) CfgFadeOutTime)
+        if (GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE) != (UINT) CfgFadeTime)
             return true;
 
         if (SendDlgItemMessage(IDC_TOUHOU_LOOPS, BM_GETCHECK) != CfgDetectTouhouLoops)
@@ -980,13 +989,10 @@ void RootDialog::OnChanged()
 /// </summary>
 void RootDialog::UpdateDialog() const noexcept
 {
-    #pragma region MIDI Flavors
-
+    // MIDI Flavors
     pfc::string FilePath = CfgVSTiXGPlugInFilePath;
 
     GetDlgItem(IDC_MIDI_USE_VSTI_WITH_XG).EnableWindow(!FilePath.isEmpty());
-
-    #pragma endregion
 }
 
 /// <summary>
@@ -996,7 +1002,7 @@ void RootDialog::UpdateConfigureButton() noexcept
 {
     BOOL Enable = FALSE;
 
-    if ((_SelectedPlayer.Type == PlayerTypes::VSTi) && (_SelectedPlayer.PlugInIndex != (size_t) -1))
+    if ((_SelectedPlayer.Type == PlayerType::VSTi) && (_SelectedPlayer.PlugInIndex != (size_t) -1))
     {
         const auto &  Plugin = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
 

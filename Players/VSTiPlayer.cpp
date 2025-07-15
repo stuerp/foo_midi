@@ -281,7 +281,7 @@ bool Player::StartHost()
         // MS Defender does not like applications that use the operating system... <sigh>
         if (!fs::exists(HostPath))
         {
-            Log.AtError().Format(STR_COMPONENT_BASENAME, " can't start VSTi plug-in. Unable to find required host executable \"%s\".", (const char *) HostPath.u8string().c_str());
+            Log.AtError().Write(STR_COMPONENT_BASENAME, " can't start VSTi plug-in. Unable to find required host executable \"%s\".", (const char *) HostPath.u8string().c_str());
 
             return false;
         }

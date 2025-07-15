@@ -37,7 +37,7 @@ public:
     virtual ILog & AtInfo() noexcept = 0;
     virtual ILog & AtDebug() noexcept = 0;
     virtual ILog & AtTrace() noexcept = 0;
-    virtual ILog & Format(const char * format, ... ) noexcept = 0;
+    virtual ILog & Write(const char * format, ... ) noexcept = 0;
 };
 
 extern ILog & Log;

@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.cpp (2025.07.13) P. Stuer **/
+/** $VER: PreferencesFM.cpp (2025.07.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -62,12 +62,6 @@ const std::vector<emulator_t> _OPNEmulators =
     { OPNMIDI_EMU_NP2,          L"Neko Project II Kai OPNA" },
     { OPNMIDI_EMU_YMFM_OPN2,    L"YMFM OPN2" },
     { OPNMIDI_EMU_YMFM_OPNA,    L"YMFM OPNA" },
-};
-
-const std::vector<std::string> _MT32EmuSets =
-{
-    "Roland",
-    "Sierra / King's Quest 6",
 };
 
 /// <summary>

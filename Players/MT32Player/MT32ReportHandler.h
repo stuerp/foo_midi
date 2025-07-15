@@ -22,7 +22,7 @@ public:
 
         (void) ::vsnprintf(Line, sizeof(Line) - 1, format, args);
 
-        Log.AtDebug().Format(STR_COMPONENT_BASENAME " MT-32 Player says %s.", Line);
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME " MT-32 Player says %s.", Line);
     };
 
     virtual void onErrorControlROM() override { };
@@ -30,7 +30,7 @@ public:
 
     virtual void showLCDMessage(const char * message) override
     {
-        Log.AtInfo().Format(STR_COMPONENT_BASENAME " MT-32 Player says %s.", message);
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " MT-32 Player says %s.", message);
     }
 
     virtual void onMIDIMessagePlayed() override { };
@@ -45,7 +45,7 @@ public:
 
     virtual void onProgramChanged(MT32Emu::Bit8u partNumber, const char * soundGroupName, const char * patchName) override
     {
-        Log.AtTrace().Format(STR_COMPONENT_BASENAME " MT-32 Player says sound group %s, patch %s, part %d", soundGroupName, patchName, partNumber);
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " MT-32 Player says sound group %s, patch %s, part %d", soundGroupName, patchName, partNumber);
     };
 
     // IReportHandlerV1

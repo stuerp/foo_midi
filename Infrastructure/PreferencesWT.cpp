@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesWT.cpp (2025.07.13) P. Stuer **/
+/** $VER: PreferencesWT.cpp (2025.07.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -33,6 +33,12 @@
 #include "Encoding.h"
 
 #pragma hdrstop
+
+const std::vector<std::string> _MT32EmuSets =
+{
+    "Roland",
+    "Sierra / King's Quest 6",
+};
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
@@ -522,6 +528,10 @@ void WTDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
 {
     switch (id)
     {
+        case IDC_BASSMIDI_EFFECTS:
+        case IDC_FLUIDSYNTH_EFFECTS:
+        case IDC_FLUIDSYNTH_DYN_LOADING:
+
         case IDC_MT32_REVERB:
         case IDC_MT32_NICE_AMP_RAMP:
         case IDC_MT32_NICE_PANNING:
