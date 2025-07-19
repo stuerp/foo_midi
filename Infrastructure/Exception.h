@@ -1,15 +1,22 @@
 
-/** $VER: Exception.h (2024.08.28) P. Stuer **/
+/** $VER: Exception.h (2025.07.01) P. Stuer **/
 
 #pragma once
 
-#include <pfc/pfc-lite.h>
+#include "Resource.h"
 
-namespace midi
+namespace component
 {
 
-//! Generic I/O error. Root class for I/O failure exception. See relevant default message for description of each derived exception class.
-PFC_DECLARE_EXCEPTION(exception_t, pfc::exception, "I/O error.");
+class runtime_error : public std::runtime_error
+{
+public:
+    explicit runtime_error(const std::string & message) : std::runtime_error(message) { }
+
+    explicit runtime_error(const char * message) : std::runtime_error(message) { }
+
+    virtual ~runtime_error() noexcept { }
+};
 
 std::string GetErrorMessage(const std::string & errorMessage, DWORD errorCode, ...);
 

@@ -1,7 +1,7 @@
 
-/** $VER: PreferencesProcessing.cpp (2024.09.14) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2025.07.14) P. Stuer **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include <atlbase.h>
 #include <atlapp.h>
@@ -10,6 +10,7 @@
 #include <atlmisc.h>
 
 #include <map>
+#include <algorithm>
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/console.h>
@@ -22,11 +23,11 @@
 
 #include <pfc/string-conv-lite.h>
 
-#include "resource.h"
+#include "Resource.h"
+#include "Log.h"
 
 #include "Configuration.h"
-
-#include <algorithm>
+#include "Channels.h"
 
 #pragma hdrstop
 
@@ -49,31 +50,29 @@ ConfigVariable(WriteBarMarkers,     cfg_bool, bool, false, 0x532741c5,0xe1a3,0x4
 ConfigVariable(WriteSysExNames,     cfg_bool, bool, false, 0xe00a19b1,0xe0dd,0x46dc,0xb0,0x6c,0xdb,0xb7,0x13,0x5c,0x07,0xc8);
 ConfigVariable(ExtendLoops,         cfg_bool, bool, true,  0x0d8983e5,0x748e,0x456d,0xb3,0x20,0x74,0x33,0x81,0xb5,0xd0,0x11);
 ConfigVariable(WolfteamLoopMode,    cfg_bool, bool, false, 0x373c9824,0x32a3,0x4ebe,0x87,0x3f,0xb2,0xda,0x7e,0xb8,0x50,0x29);
-ConfigVariable(KeepDummyChannels,   cfg_bool, bool, false, 0x5ded0321,0xc53c,0x4581,0xb3,0x1e,0x3c,0x7b,0x3d,0xc0,0x90,0xb5);
+ConfigVariable(KeepMutedChannels,   cfg_bool, bool, false, 0x5ded0321,0xc53c,0x4581,0xb3,0x1e,0x3c,0x7b,0x3d,0xc0,0x90,0xb5);
 ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4974,0xaa,0x60,0x3c,0xdf,0xb6,0x07,0x25,0xbc);
 
 // HMI / HMP
 ConfigVariable(DefaultTempo,        cfg_int, int,    160,  0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
 
-// Enabled Channels
-const uint64_t DefEnabledChannels[32] = { ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull };
-cfg_var_modern::cfg_blob CfgEnabledChannels({ 0x813ffb7a,0x59fc,0x4e19,{0x9b,0x8d,0x7a,0x4e,0xeb,0x2d,0x8b,0xca } }, DefEnabledChannels, sizeof(DefEnabledChannels));
-cfg_var_modern::cfg_bool HaveEnabledChannelsChanged({ 0x3fb2fd00, 0xc23d, 0x4793, { 0xaf, 0x33, 0x61, 0x4, 0x29, 0x95, 0x2f, 0xc2 } }, false);
+// Component
+ConfigVariable(LogLevel,            cfg_int,  int,      4, 0x12be0a92,0x3794,0x4414,0x82,0x3e,0xd3,0x14,0x29,0x67,0xa4,0xee);
 
 /// <summary>
 /// Implements a preferences page.
 /// </summary>
-class DialogPageProcessing : public CDialogImpl<DialogPageProcessing>, public preferences_page_instance
+class ProcessingDialog : public CDialogImpl<ProcessingDialog>, public preferences_page_instance
 {
 public:
-    DialogPageProcessing(preferences_page_callback::ptr callback) noexcept : _Callback(callback) { }
+    ProcessingDialog(preferences_page_callback::ptr callback) noexcept : _Callback(callback) { }
 
-    DialogPageProcessing(const DialogPageProcessing &) = delete;
-    DialogPageProcessing(const DialogPageProcessing &&) = delete;
-    DialogPageProcessing & operator=(const DialogPageProcessing &) = delete;
-    DialogPageProcessing & operator=(DialogPageProcessing &&) = delete;
+    ProcessingDialog(const ProcessingDialog &) = delete;
+    ProcessingDialog(const ProcessingDialog &&) = delete;
+    ProcessingDialog & operator=(const ProcessingDialog &) = delete;
+    ProcessingDialog & operator=(ProcessingDialog &&) = delete;
 
-    virtual ~DialogPageProcessing() { };
+    virtual ~ProcessingDialog() { };
 
     #pragma region preferences_page_instance
 
@@ -84,13 +83,17 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(DialogPageProcessing)
+    BEGIN_MSG_MAP_EX(ProcessingDialog)
         MSG_WM_INITDIALOG(OnInitDialog)
+
+        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
 
         COMMAND_CODE_HANDLER_EX(EN_CHANGE, OnEditChange)
         COMMAND_CODE_HANDLER_EX(BN_CLICKED, OnButtonClick)
 
         MESSAGE_HANDLER_EX(WM_HSCROLL, OnHScroll)
+
+        COMMAND_HANDLER_EX(IDC_LOG_LEVEL, CBN_SELCHANGE, OnSelectionChange)
     END_MSG_MAP()
 
     enum
@@ -100,8 +103,10 @@ public:
 
 private:
     BOOL OnInitDialog(CWindow, LPARAM) noexcept;
+    HBRUSH OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept;
 
     void OnEditChange(UINT, int, CWindow) noexcept;
+    void OnSelectionChange(UINT, int, CWindow) noexcept;
     void OnButtonClick(UINT, int id, CWindow) noexcept;
     LRESULT OnHScroll(UINT, WPARAM, LPARAM) noexcept;
 
@@ -137,15 +142,18 @@ private:
     bool _WriteSysExNames;
     bool _ExtendLoops;
     bool _WolfteamLoopMode;
-    bool _KeepDummyChannels;
+    bool _KeepMutedChannels;
     bool _IncludeControlData;
 
     // HMI / HMP
     int64_t _DefaultTempo;
 
-    // Channel Filtering
+    uint16_t _ChannelMask[128];
+    uint64_t _ChannelMaskVersion; // Version number of the channel configuration
+
     uint8_t _PortNumber;
-    uint16_t _EnabledChannels[128];
+
+    int64_t _LogLevel;
 };
 
 #pragma region preferences_page_instance
@@ -153,7 +161,7 @@ private:
 /// <summary>
 /// Gets the state of the dialog.
 /// </summary>
-t_uint32 DialogPageProcessing::get_state()
+t_uint32 ProcessingDialog::get_state()
 {
     t_uint32 State = preferences_state::resettable | preferences_state::dark_mode_supported;
 
@@ -166,20 +174,24 @@ t_uint32 DialogPageProcessing::get_state()
 /// <summary>
 /// Applies the changes to the preferences.
 /// </summary>
-void DialogPageProcessing::apply()
+void ProcessingDialog::apply()
 {
     ApplyConfigVariable(LoopExpansion);
     ApplyConfigVariable(WriteBarMarkers);
     ApplyConfigVariable(WriteSysExNames);
     ApplyConfigVariable(ExtendLoops);
     ApplyConfigVariable(WolfteamLoopMode);
-    ApplyConfigVariable(KeepDummyChannels);
+    ApplyConfigVariable(KeepMutedChannels);
     ApplyConfigVariable(IncludeControlData);
 
     ApplyConfigVariable(DefaultTempo);
 
-    CfgEnabledChannels.set(_EnabledChannels, sizeof(_EnabledChannels));
-    HaveEnabledChannelsChanged = true; // Tell the player to re-read the channel configuration.
+    CfgChannels.Apply();
+    CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
+
+    ApplyConfigVariable(LogLevel);
+
+    Log.SetLevel((LogLevel) CfgLogLevel.get());
 
     OnChanged();
 }
@@ -187,21 +199,23 @@ void DialogPageProcessing::apply()
 /// <summary>
 /// Resets this page's content to the default values. Does not apply any changes - lets user preview the changes before hitting "apply".
 /// </summary>
-void DialogPageProcessing::reset()
+void ProcessingDialog::reset()
 {
     ResetConfigVariable(LoopExpansion);
     ResetConfigVariable(WriteBarMarkers);
     ResetConfigVariable(WriteSysExNames);
     ResetConfigVariable(ExtendLoops);
     ResetConfigVariable(WolfteamLoopMode);
-    ResetConfigVariable(KeepDummyChannels);
+    ResetConfigVariable(KeepMutedChannels);
     ResetConfigVariable(IncludeControlData);
 
     ResetConfigVariable(DefaultTempo);
 
-    ::memset(_EnabledChannels, 0xFF, sizeof(_EnabledChannels));
+    CfgChannels.Reset();
 
     InitializePortControls();
+
+    ResetConfigVariable(LogLevel);
 
     UpdateDialog();
 
@@ -215,21 +229,24 @@ void DialogPageProcessing::reset()
 /// <summary>
 /// Initializes the dialog.
 /// </summary>
-BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
+BOOL ProcessingDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 {
     _DarkModeHooks.AddDialogWithControls(*this);
 
     InitializeConfigVariable(LoopExpansion);
+
     InitializeConfigVariable(WriteBarMarkers);
     InitializeConfigVariable(WriteSysExNames);
     InitializeConfigVariable(ExtendLoops);
     InitializeConfigVariable(WolfteamLoopMode);
-    InitializeConfigVariable(KeepDummyChannels);
+    InitializeConfigVariable(KeepMutedChannels);
     InitializeConfigVariable(IncludeControlData);
 
     InitializeConfigVariable(DefaultTempo);
 
-    ::memcpy(_EnabledChannels, CfgEnabledChannels.get()->data(), sizeof(_EnabledChannels));
+    CfgChannels.Initialize();
+
+    CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
 
     InitializePortControls();
 
@@ -239,9 +256,20 @@ BOOL DialogPageProcessing::OnInitDialog(CWindow window, LPARAM) noexcept
 }
 
 /// <summary>
+/// Sets the background color brush.
+/// </summary>
+HBRUSH ProcessingDialog::OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept
+{
+#ifdef _DEBUG
+    return ::CreateSolidBrush(RGB(250, 250, 250));
+#else
+    return FALSE;
+#endif
+}
+/// <summary>
 /// Handles the notification when a control loses focus.
 /// </summary>
-void DialogPageProcessing::OnEditChange(UINT code, int id, CWindow) noexcept
+void ProcessingDialog::OnEditChange(UINT code, int id, CWindow) noexcept
 {
     if (code != EN_CHANGE)
         return;
@@ -268,9 +296,22 @@ void DialogPageProcessing::OnEditChange(UINT code, int id, CWindow) noexcept
 }
 
 /// <summary>
+/// Handles a selection change in a combo box.
+/// </summary>
+void ProcessingDialog::OnSelectionChange(UINT, int id, CWindow) noexcept
+{
+    if (id == IDC_LOG_LEVEL)
+    {
+        _LogLevel = SendDlgItemMessage(IDC_LOG_LEVEL, CB_GETCURSEL);
+
+        OnChanged();
+    }
+}
+
+/// <summary>
 /// Handles the notification from the track bar.
 /// </summary>
-LRESULT DialogPageProcessing::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+LRESULT ProcessingDialog::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
     if ((LOWORD(wParam) != TB_ENDTRACK) && (LOWORD(wParam) != TB_THUMBTRACK))
         return 1;
@@ -289,7 +330,7 @@ LRESULT DialogPageProcessing::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam) 
 /// <summary>
 /// Handles a click on a button.
 /// </summary>
-void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
+void ProcessingDialog::OnButtonClick(UINT, int id, CWindow w) noexcept
 {
     switch (id)
     {
@@ -309,8 +350,8 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
             _WolfteamLoopMode   = !_WolfteamLoopMode;
             break;
 
-        case IDC_KEEP_DUMMY_CHANNELS:
-            _KeepDummyChannels  = !_KeepDummyChannels;
+        case IDC_KEEP_MUTED_CHANNELS:
+            _KeepMutedChannels  = !_KeepMutedChannels;
             break;
 
         case IDC_INCLUDE_CONTROL_DATA:
@@ -334,18 +375,13 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
         case IDC_CHANNEL_15:
         case IDC_CHANNEL_16:
         {
-            int64_t Mask = 1ll << (id - IDC_CHANNEL_01);
-
-            if (_EnabledChannels[_PortNumber] & Mask)
-                _EnabledChannels[_PortNumber] &= ~Mask;
-            else
-                _EnabledChannels[_PortNumber] |= Mask;
+            CfgChannels.Toggle(_PortNumber, (uint32_t) (id - IDC_CHANNEL_01));
             break;
         }
 
         case IDC_CHANNEL_ALL:
         {
-            ::memset(_EnabledChannels, 0xFF, sizeof(_EnabledChannels));
+            CfgChannels.All();
 
             UpdateChannelButtons();
             break;
@@ -353,7 +389,7 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
 
         case IDC_CHANNEL_NONE:
         {
-            ::memset(_EnabledChannels, 0, sizeof(_EnabledChannels));
+            CfgChannels.None();
 
             UpdateChannelButtons();
             break;
@@ -361,8 +397,7 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
 
         case IDC_CHANNEL_1_10:
         {
-            for (size_t i = 0; i < 128; ++i)
-                _EnabledChannels[i] = 0x03FF;
+            CfgChannels.OnlyLow();
 
             UpdateChannelButtons();
             break;
@@ -370,8 +405,7 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
 
         case IDC_CHANNEL_11_16:
         {
-            for (size_t i = 0; i < 128; ++i)
-                _EnabledChannels[i] = 0xFC00;
+            CfgChannels.OnlyHigh();
 
             UpdateChannelButtons();
             break;
@@ -387,19 +421,23 @@ void DialogPageProcessing::OnButtonClick(UINT, int id, CWindow w) noexcept
 /// <summary>
 /// Returns whether our dialog content is different from the current configuration (whether the Apply button should be enabled or not)
 /// </summary>
-bool DialogPageProcessing::HasChanged() const noexcept
+bool ProcessingDialog::HasChanged() const noexcept
 {
     HasConfigVariableChanged(LoopExpansion);
+
     HasConfigVariableChanged(WriteBarMarkers);
     HasConfigVariableChanged(WriteSysExNames);
     HasConfigVariableChanged(ExtendLoops);
-    HasConfigVariableChanged(KeepDummyChannels);
+    HasConfigVariableChanged(WolfteamLoopMode);
+    HasConfigVariableChanged(KeepMutedChannels);
     HasConfigVariableChanged(IncludeControlData);
 
     HasConfigVariableChanged(DefaultTempo);
 
-    if (::memcmp(_EnabledChannels, CfgEnabledChannels.get()->data(), sizeof(_EnabledChannels)) != 0)
+    if (CfgChannels.HasChanged(_ChannelMask, sizeof(_ChannelMask)))
         return true;
+
+    HasConfigVariableChanged(LogLevel);
 
     return false;
 }
@@ -407,7 +445,7 @@ bool DialogPageProcessing::HasChanged() const noexcept
 /// <summary>
 /// Tells the host that our state has changed to enable/disable the Apply button appropriately.
 /// </summary>
-void DialogPageProcessing::OnChanged() const noexcept
+void ProcessingDialog::OnChanged() const noexcept
 {
     _Callback->on_state_changed();
 }
@@ -415,7 +453,7 @@ void DialogPageProcessing::OnChanged() const noexcept
 /// <summary>
 /// Updates the appearance of the dialog according to the values of the settings.
 /// </summary>
-void DialogPageProcessing::UpdateDialog() noexcept
+void ProcessingDialog::UpdateDialog() noexcept
 {
     ::uSetDlgItemText(m_hWnd, IDC_LOOP_EXPANSION, pfc::format_int(_LoopExpansion));
 
@@ -423,35 +461,52 @@ void DialogPageProcessing::UpdateDialog() noexcept
     SendDlgItemMessageW(IDC_WRITE_SYSEX_NAMES,    BM_SETCHECK, (WPARAM) _WriteSysExNames);
     SendDlgItemMessageW(IDC_EXTEND_LOOPS,         BM_SETCHECK, (WPARAM) _ExtendLoops);
     SendDlgItemMessageW(IDC_WOLFTEAM_LOOPS,       BM_SETCHECK, (WPARAM) _WolfteamLoopMode);
-    SendDlgItemMessageW(IDC_KEEP_DUMMY_CHANNELS,  BM_SETCHECK, (WPARAM) _KeepDummyChannels);
+    SendDlgItemMessageW(IDC_KEEP_MUTED_CHANNELS,  BM_SETCHECK, (WPARAM) _KeepMutedChannels);
     SendDlgItemMessageW(IDC_INCLUDE_CONTROL_DATA, BM_SETCHECK, (WPARAM) _IncludeControlData);
 
     ::uSetDlgItemText(m_hWnd, IDC_DEFAULT_TEMPO, pfc::format_int(_DefaultTempo));
 
     UpdateChannelButtons();
+
+    // Log Level
+    {
+        InitializeConfigVariable(LogLevel);
+
+        auto w = (CComboBox) GetDlgItem(IDC_LOG_LEVEL);
+
+        w.Clear();
+
+        int i = -1;
+
+        for (const auto & Text : { L"Never", L"Fatal", L"Error", L"Warn", L"Info", L"Debug", L"Trace", L"Always", })
+        {
+            w.AddString(Text);
+
+            if (++i ==  CfgLogLevel)
+                w.SetCurSel((int) i);
+        }
+    }
 }
 
-void DialogPageProcessing::UpdateChannelButtons() noexcept
+void ProcessingDialog::UpdateChannelButtons() noexcept
 {
-    uint16_t Mask = 1;
-
-    for (int i = IDC_CHANNEL_01; i <= IDC_CHANNEL_16; ++i, Mask <<= 1)
-        SendDlgItemMessageW(i, BM_SETCHECK, (WPARAM)(((_EnabledChannels[_PortNumber] & Mask) != 0) ? BST_CHECKED: BST_UNCHECKED), 0);
+    for (int i = IDC_CHANNEL_01; i <= IDC_CHANNEL_16; ++i)
+        SendDlgItemMessageW(i, BM_SETCHECK, (WPARAM) (CfgChannels.IsEnabled(_PortNumber, (uint32_t) i - IDC_CHANNEL_01) ? BST_CHECKED: BST_UNCHECKED));
 }
 
 #pragma endregion
 
-class PageProcessing : public preferences_page_impl<DialogPageProcessing>
+class ProcessingPage : public preferences_page_impl<ProcessingDialog>
 {
 public:
-    PageProcessing() noexcept { };
+    ProcessingPage() noexcept { };
 
-    PageProcessing(const PageProcessing &) = delete;
-    PageProcessing(const PageProcessing &&) = delete;
-    PageProcessing & operator=(const PageProcessing &) = delete;
-    PageProcessing & operator=(PageProcessing &&) = delete;
+    ProcessingPage(const ProcessingPage &) = delete;
+    ProcessingPage(const ProcessingPage &&) = delete;
+    ProcessingPage & operator=(const ProcessingPage &) = delete;
+    ProcessingPage & operator=(ProcessingPage &&) = delete;
 
-    virtual ~PageProcessing() noexcept { };
+    virtual ~ProcessingPage() noexcept { };
 
     const char * get_name() noexcept
     {
@@ -460,7 +515,7 @@ public:
 
     GUID get_guid() noexcept
     {
-        return PreferencesProcessingPageGUID;
+        return { 0x19bb1820, 0x3b64, 0x403c, { 0xab, 0xf0, 0x3d, 0xd0, 0x06, 0x37, 0xf2, 0x7a } };
     }
 
     GUID get_parent_guid() noexcept
@@ -469,4 +524,4 @@ public:
     }
 };
 
-static preferences_page_factory_t<PageProcessing> PreferencesPageFactory;
+static preferences_page_factory_t<ProcessingPage> _Factory;

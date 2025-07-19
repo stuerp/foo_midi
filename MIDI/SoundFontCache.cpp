@@ -1,75 +1,51 @@
 
-/** $VER: SoundFontCache.cpp (2024.08.25) - Sound font cache for the BASSMIDI player **/
+/** $VER: SoundfontCache.cpp (2025.06.21) - Soundfont cache for the BASSMIDI player **/
 
-#include "framework.h"
+#include "pch.h"
 
-#include <sdk/foobar2000-lite.h>
+#include "SoundfontCache.h"
+#include "Encoding.h"
+#include "CriticalSection.h"
 
-#include "SoundFontCache.h"
-
-#include <string>
 #include <map>
-#include <time.h>
-
-#undef USE_STD_THREAD
-#ifdef USE_STD_THREAD
 #include <thread>
-#endif
+#include <mutex>
+
+namespace fs = std::filesystem;
+
+#include <time.h>
 
 static bool _IsCacheRunning = false;
 
-static sflist_t * LoadSoundFontList(const std::string & filePath);
+static sflist_t * LoadSoundfontList(const std::string & filePath);
 static void CacheRun();
 
-#ifdef USE_STD_THREAD
-static std::thread * Cache_Thread = NULL;
-#else
-class CacheThread : public pfc::thread
-{
-public:
-    virtual void threadProc()
-    {
-        CacheRun();
-    }
-
-    virtual ~CacheThread()
-    {
-        _IsCacheRunning = false;
-        waitTillDone();
-    }
-};
-
-static CacheThread * _CacheThread = nullptr;
-#endif
+static std::thread * _CacheThread = nullptr;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 struct CacheItem
 {
-    HSOUNDFONT _hSoundFont;
-    sflist_t * _SoundFontList;
-    size_t _ReferenceCount;
-    time_t _TimeReleased;
-
-    CacheItem() : _hSoundFont(), _SoundFontList(), _ReferenceCount(), _TimeReleased()
+    CacheItem() : _hSoundfont(), _SoundfontList(), _ReferenceCount(), _TimeReleased()
     {
     }
+
+    HSOUNDFONT _hSoundfont;
+    sflist_t * _SoundfontList;
+    size_t _ReferenceCount;
+    time_t _TimeReleased;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member
 
+
 static std::map<std::string, CacheItem> _CacheItems;
-static critical_section _CacheLock;
+static critical_section_t _CacheCriticalSection;
 
 /// <summary>
 /// Initializes the cache.
 /// </summary>
 void CacheInit()
 {
-#ifdef USE_STD_THREAD
-    Cache_Thread = new std::thread(cache_run);
-#else
-    _CacheThread = new CacheThread;
-    _CacheThread->start();
-#endif
+    _CacheThread = new std::thread(CacheRun);
 }
 
 /// <summary>
@@ -77,51 +53,43 @@ void CacheInit()
 /// </summary>
 void CacheDispose()
 {
-#ifdef USE_STD_THREAD
-    Cache_Running = false;
-    Cache_Thread->join();
-    delete Cache_Thread;
-    Cache_Thread = NULL;
-#else
+    _IsCacheRunning = false;
+
+    _CacheThread->join();
+
     delete _CacheThread;
-    _CacheThread = NULL;
-#endif
+    _CacheThread = nullptr;
 
-    insync(_CacheLock);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
-        if (it->second._hSoundFont)
-            ::BASS_MIDI_FontFree(it->second._hSoundFont);
+        if (it->second._hSoundfont)
+            ::BASS_MIDI_FontFree(it->second._hSoundfont);
 
-        if (it->second._SoundFontList)
-            ::sflist_free(it->second._SoundFontList);
+        if (it->second._SoundfontList)
+            ::sflist_free(it->second._SoundfontList);
     }
 }
 
 /// <summary>
-/// Adds a SoundFont to the cache.
+/// Adds a Soundfont to the cache.
 /// </summary>
-HSOUNDFONT CacheAddSoundFont(const std::string & filePath)
+HSOUNDFONT CacheAddSoundfont(const std::string & filePath)
 {
-    HSOUNDFONT hSoundFont = 0;
+    HSOUNDFONT hSoundfont = 0;
 
-    insync(_CacheLock);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     CacheItem & Item = _CacheItems[filePath];
 
-    if (Item._hSoundFont == 0)
+    if (Item._hSoundfont == 0)
     {
-        const char * FilePath = (::stricmp_utf8_partial(filePath.c_str(), "file://") == 0) ? filePath.c_str() + 7 : filePath.c_str();
+        hSoundfont = ::BASS_MIDI_FontInit(::UTF8ToWide(filePath).c_str(), 0);
 
-        if (::strstr(FilePath, "://") != nullptr)
-            return 0;
-
-        hSoundFont = ::BASS_MIDI_FontInit(pfc::stringcvt::string_wide_from_utf8(FilePath), 0);
-
-        if (hSoundFont)
+        if (hSoundfont)
         {
-            Item._hSoundFont = hSoundFont;
+            Item._hSoundfont = hSoundfont;
             Item._ReferenceCount = 1;
         }
         else
@@ -129,23 +97,23 @@ HSOUNDFONT CacheAddSoundFont(const std::string & filePath)
     }
     else
     {
-        hSoundFont = Item._hSoundFont;
+        hSoundfont = Item._hSoundfont;
         ++Item._ReferenceCount;
     }
 
-    return hSoundFont;
+    return hSoundfont;
 }
 
 /// <summary>
-/// Removes a SoundFont from the cache.
+/// Removes a Soundfont from the cache.
 /// </summary>
-void CacheRemoveSoundFont(HSOUNDFONT hSoundFont)
+void CacheRemoveSoundfont(HSOUNDFONT hSoundfont)
 {
-    insync(_CacheLock);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
-        if (it->second._hSoundFont == hSoundFont)
+        if (it->second._hSoundfont == hSoundfont)
         {
             if (--it->second._ReferenceCount == 0)
                 ::time(&it->second._TimeReleased);
@@ -155,23 +123,23 @@ void CacheRemoveSoundFont(HSOUNDFONT hSoundFont)
 }
 
 /// <summary>
-/// Adds a SoundFont List to the cache.
+/// Adds a Soundfont List to the cache.
 /// </summary>
-sflist_t * CacheAddSoundFontList(const std::string & filePath)
+sflist_t * CacheAddSoundfontList(const std::string & filePath)
 {
-    sflist_t * SoundFontList = nullptr;
+    sflist_t * SoundFontlist = nullptr;
 
-    insync(_CacheLock);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     CacheItem & Item = _CacheItems[filePath];
 
-    if (Item._SoundFontList == nullptr)
+    if (Item._SoundfontList == nullptr)
     {
-        SoundFontList = LoadSoundFontList(filePath);
+        SoundFontlist = LoadSoundfontList(filePath);
 
-        if (SoundFontList)
+        if (SoundFontlist)
         {
-            Item._SoundFontList = SoundFontList;
+            Item._SoundfontList = SoundFontlist;
             Item._ReferenceCount = 1;
         }
         else
@@ -181,23 +149,23 @@ sflist_t * CacheAddSoundFontList(const std::string & filePath)
     }
     else
     {
-        SoundFontList = Item._SoundFontList;
+        SoundFontlist = Item._SoundfontList;
         ++Item._ReferenceCount;
     }
 
-    return SoundFontList;
+    return SoundFontlist;
 }
 
 /// <summary>
-/// Removes a SoundFont List from the cache.
+/// Removes a Soundfont list from the cache.
 /// </summary>
-void CacheRemoveSoundFontList(sflist_t * soundFontList)
+void CacheRemoveSoundfontList(sflist_t * soundfontList)
 {
-    insync(_CacheLock);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     for (auto it = _CacheItems.begin(); it != _CacheItems.end(); ++it)
     {
-        if (it->second._SoundFontList == soundFontList)
+        if (it->second._SoundfontList == soundfontList)
         {
             if (--it->second._ReferenceCount == 0)
                 ::time(&it->second._TimeReleased);
@@ -206,11 +174,11 @@ void CacheRemoveSoundFontList(sflist_t * soundFontList)
     }
 }
 
-struct SoundFontMarker
+struct soundfont_marker_t
 {
     bool IsUsed;
 
-    SoundFontMarker() : IsUsed(false)
+    soundfont_marker_t() : IsUsed(false)
     {
     }
 };
@@ -220,9 +188,9 @@ struct SoundFontMarker
 /// </summary>
 void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesDataLoaded)
 {
-    std::map<HSOUNDFONT, SoundFontMarker> SoundFontMarkers;
+    std::map<HSOUNDFONT, soundfont_marker_t> SoundfontMarkers;
 
-    insync(_CacheLock);
+    critical_section_lock_t Lock(_CacheCriticalSection);
 
     totalSampleDataSize = 0;
     totalSamplesDataLoaded = 0;
@@ -231,15 +199,15 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
     {
         BASS_MIDI_FONTINFO FontInfo;
 
-        if (it->second._hSoundFont)
+        if (it->second._hSoundfont)
         {
-            SoundFontMarker & sfm = SoundFontMarkers[it->second._hSoundFont];
+            soundfont_marker_t & sfm = SoundfontMarkers[it->second._hSoundfont];
 
             if (!sfm.IsUsed)
             {
                 sfm.IsUsed = true;
 
-                if (::BASS_MIDI_FontGetInfo(it->second._hSoundFont, &FontInfo))
+                if (::BASS_MIDI_FontGetInfo(it->second._hSoundfont, &FontInfo))
                 {
                     totalSampleDataSize += FontInfo.samsize;
                     totalSamplesDataLoaded += FontInfo.samload;
@@ -247,23 +215,23 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
             }
         }
         else
-        if (it->second._SoundFontList)
+        if (it->second._SoundfontList)
         {
-            sflist_t * SoundFontList = it->second._SoundFontList;
+            sflist_t * SoundFontList = it->second._SoundfontList;
 
             for (unsigned int i = 0, j = SoundFontList->Count; i < j; ++i)
             {
-                HSOUNDFONT hSoundFont = SoundFontList->FontEx[i].font;
+                HSOUNDFONT hSoundfont = SoundFontList->FontEx[i].font;
 
-                if (hSoundFont)
+                if (hSoundfont != NULL)
                 {
-                    SoundFontMarker & sfm = SoundFontMarkers[hSoundFont];
+                    soundfont_marker_t & sfm = SoundfontMarkers[hSoundfont];
 
                     if (!sfm.IsUsed)
                     {
                         sfm.IsUsed = true;
 
-                        if (::BASS_MIDI_FontGetInfo(hSoundFont, &FontInfo))
+                        if (::BASS_MIDI_FontGetInfo(hSoundfont, &FontInfo))
                         {
                             totalSampleDataSize += FontInfo.samsize;
                             totalSamplesDataLoaded += FontInfo.samload;
@@ -276,59 +244,40 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
 }
 
 /// <summary>
-/// Loads a SoundFont List (*.sflist)
+/// Loads a Soundfont list (*.sflist)
 /// </summary>
-static sflist_t * LoadSoundFontList(const std::string & filePath)
+static sflist_t * LoadSoundfontList(const std::string & filePath)
 {
-    size_t Offset = (size_t)(::stricmp_utf8_partial(filePath.c_str(), "file://") == 0 ? 7 : 0);
-
-    pfc::string8 DirectoryPath = filePath.c_str() + Offset;
-
-    DirectoryPath.truncate(DirectoryPath.scan_filename());
-
-    pfc::string8 FilePath = "";
-
-    if (Offset == 0)
-        FilePath = "file://";
-
-    FilePath += filePath.c_str();
-
-    char * Data = nullptr;
-
     try
     {
-        abort_callback_dummy AbortHandler;
+        std::uintmax_t Size = fs::file_size(filePath);
 
-        file::ptr f;
+        std::vector<char> Data(Size + 1);
 
-        filesystem::g_open_read(f, FilePath, AbortHandler);
+        FILE * fp = nullptr;
 
-        size_t Size = (size_t)f->get_size_ex(AbortHandler);
+        ::_wfopen_s(&fp, ::UTF8ToWide(filePath).c_str(), L"r");
 
-        Data = (char *) ::malloc(Size + 1);
+        if (fp == nullptr)
+            return nullptr;
 
-        if (Data == nullptr)
-            return 0;
+        ::fread(Data.data(), Data.size(), 1, fp);
 
-        f->read_object(Data, Size, AbortHandler);
+        ::fclose(fp);
 
         {
             Data[Size] = '\0';
 
             char ErrorMessage[sflist_max_error];
+            fs::path FilePath = filePath;
 
-            sflist_t * SoundFontList = ::sflist_load(Data, ::strlen(Data), DirectoryPath, ErrorMessage);
+            sflist_t * SoundfontList = ::sflist_load(Data.data(), ::strlen(Data.data()), ::WideToUTF8(FilePath.parent_path()).c_str(), ErrorMessage);
 
-            ::free(Data);
-
-            return SoundFontList;
+            return SoundfontList;
         }
     }
     catch (...)
     {
-        if (Data)
-            ::free(Data);
-
         return nullptr;
     }
 }
@@ -344,7 +293,7 @@ static void CacheRun()
         ::time(&Now);
 
         {
-            insync(_CacheLock);
+            critical_section_lock_t Lock(_CacheCriticalSection);
 
             for (auto it = _CacheItems.begin(); it != _CacheItems.end();)
             {
@@ -352,11 +301,11 @@ static void CacheRun()
                 {
                     if (::difftime(Now, it->second._TimeReleased) >= 10.0)
                     {
-                        if (it->second._hSoundFont)
-                            ::BASS_MIDI_FontFree(it->second._hSoundFont);
+                        if (it->second._hSoundfont)
+                            ::BASS_MIDI_FontFree(it->second._hSoundfont);
 
-                        if (it->second._SoundFontList)
-                            ::sflist_free(it->second._SoundFontList);
+                        if (it->second._SoundfontList)
+                            ::sflist_free(it->second._SoundfontList);
 
                         it = _CacheItems.erase(it);
                         continue;

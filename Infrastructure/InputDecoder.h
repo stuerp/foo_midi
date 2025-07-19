@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.03.16) **/
+/** $VER: InputDecoder.h (2025.07.15) **/
 
 #pragma once
 
@@ -16,35 +16,33 @@
 
 #include "Configuration.h"
 #include "FileHasher.h"
-#include "MIDIPreset.h"
+#include "Preset.h"
 #include "MIDISysExDumps.h"
-#include "SoundFont.h"
+#include "Soundfont.h"
 
 /** Players **/
 
 #include "ADLPlayer.h"
 #include "BMPlayer.h"
+#include "CLAPPlayer.h"
 #include "EdMPlayer.h"
+#include "FMMPlayer.h"
 #include "FSPlayer.h"
 #include "MCIPlayer.h"
 #include "MT32Player/MT32Player.h"
-#include "NukePlayer.h"
-#include "NukeSC-55Player.h"
+#include "NukedOPL3Player.h"
+#include "NukedSC-55Player.h"
 #include "OPNPlayer/OPNPlayer.h"
 #include "SCPlayer.h"
 #include "VSTiPlayer.h"
 
-#ifdef DXISUPPORT
-#include "DXiProxy.h"
-#include "PlugInInventory.h"
-#pragma comment(lib, "strmiids.lib")
-#endif
+#include "Resource.h"
 
-#include "resource.h"
-
+/* KEEP? 06/07/25
 extern volatile int _IsRunning;
 extern critical_section _Lock;
 extern volatile uint32_t _CurrentSampleRate;
+*/
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
@@ -54,77 +52,14 @@ extern volatile uint32_t _CurrentSampleRate;
 class InputDecoder : public input_stubs
 {
 public:
-    InputDecoder() :
-        _FileStats{},
-        _FileStats2{},
-
-        _IsSysExFile(false),
-        _TrackCount(),
-
-        _IsMT32(),
-        _IsXG(),
-
-        _DetectRPGMakerLoops((bool) CfgDetectRPGMakerLoops),
-        _DetectLeapFrogLoops((bool) CfgDetectLeapFrogLoops),
-        _DetectXMILoops((bool) CfgDetectXMILoops),
-        _DetectTouhouLoops((bool) CfgDetectTouhouLoops),
-        _DetectFF7Loops((bool) CfgDetectFF7Loops),
-
-        _Player(nullptr),
-
-        _PlayerType(),
-        _SampleRate((uint32_t) CfgSampleRate),
-        _ExtraPercussionChannel(~0U),
-
-        _LoopType(LoopType::NeverLoop),
-        _LoopTypePlayback((LoopType) (int) CfgLoopTypePlayback),
-        _LoopTypeOther((LoopType) (int) CfgLoopTypeOther),
-        _LoopCount((uint32_t) AdvCfgLoopCount.get()),
-        _FadeDuration((uint32_t) AdvCfgFadeTimeInMS.get()),
-
-        _LoopRange(),
-
-        _LengthInSamples(0),
-
-        _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode),
-
-        _BASSMIDIVolume((float) CfgBASSMIDIVolume),
-        _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIResamplingMode)
-    {
-        _CleanFlags = (uint32_t) (CfgEmuDeMIDIExclusion ? midi::container_t::CleanFlagEMIDI : 0) |
-                                 (CfgFilterInstruments ? midi::container_t::CleanFlagInstruments : 0) |
-                                 (CfgFilterBanks ? midi::container_t::CleanFlagBanks : 0);
-    #ifdef DXISUPPORT
-        dxiProxy = nullptr;
-    #endif
-        _CurrentSampleRate = _SampleRate;
-    }
+    InputDecoder() noexcept;
 
     InputDecoder(const InputDecoder &) = delete;
     InputDecoder(InputDecoder &&) = delete;
     InputDecoder & operator=(const InputDecoder &) = delete;
     InputDecoder & operator=(InputDecoder &&) = delete;
 
-    ~InputDecoder()
-    {
-        for (const auto & sf : _SoundFonts)
-        {
-            if (sf.IsEmbedded())
-                ::DeleteFileA(sf.FilePath().c_str());
-        }
-
-        delete _Player;
-
-        if (_PlayerType == PlayerType::EmuDeMIDI)
-        {
-            insync(_Lock);
-            _IsRunning -= 1;
-        }
-    #ifdef DXISUPPORT
-        if (dxiProxy)
-            delete dxiProxy;
-    #endif
-    }
+    virtual ~InputDecoder() noexcept;
 
 public:
     #pragma region input_impl
@@ -230,30 +165,17 @@ public:
     static void InitializeIndexManager();
 
 private:
-    void GetSoundFonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
-    uint32_t GetDuration(size_t subSongIndex);
+    uint32_t GetLength(size_t subSongIndex) noexcept;
+    void InitializeFade() noexcept;
+    void OverridePlayerSelection(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept;
+    void GetSoundfonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
 
-#ifdef DXISUPPORT
-    void set_loop()
-    {
-        if (_SelectedPluginIndex == 5 && dxiProxy)
-        {
-            dxiProxy->setLoop(loop_begin != ~0 ? loop_begin : 0, loop_end != ~0 ? loop_end : length_ticks);
-        }
-        /*else
-        {
-            sample_loop_start = theSequence->m_tempoMap.Tick2Sample(loop_begin != -1 ? loop_begin : 0, srate);
-            sample_loop_end = theSequence->m_tempoMap.Tick2Sample((loop_end != -1 ? loop_end : length_ticks) + 1, srate);
-        }*/
-        else
-            _DontLoop = false;
-    }
-#endif
-
 private:
+    unsigned _DecoderFlags;
+
     // File Properties
     pfc::string _FilePath;
 
@@ -262,10 +184,9 @@ private:
 
     midi::container_t _Container;
 
-    std::vector <soundfont_t> _SoundFonts;
+    std::vector<soundfont_t> _Soundfonts;
 
     bool _IsSysExFile;
-    uint32_t _TrackCount;
 
     metadb_index_hash _Hash;
     hasher_md5_result _FileHash;
@@ -281,48 +202,47 @@ private:
 
     // Player Properties
     player_t * _Player;
+    CLAP::Host * _Host;
 
     PlayerType _PlayerType;
-    uint32_t _SampleRate;
-    uint32_t _ExtraPercussionChannel;
+    bool _IsPlayerTypeOverriden;
+    std::string _PlugInName;
+
+    // Sample rate dependent
+    uint32_t _RequestedSampleRate;  // in Hz
+    uint32_t _ActualSampleRate;     // in Hz
+
+    uint32_t _FrameIndex;
+    uint32_t _FrameCount;
 
     LoopType _LoopType;
-    LoopType _LoopTypePlayback;
-    LoopType _LoopTypeOther;
     uint32_t _LoopCount;
 
-    uint32_t _FadeDuration; // in ms
+    range_t _LoopRange;             // in ms
+    range_t _FadeRange;             // in ms
 
-    range_t _LoopRange;
-    range_t _FadeRange;
+    uint32_t _FadeTime;             // in ms
+    uint32_t _DecayTime;            // in ms
 
-    uint32_t _LengthInSamples;
-
-    uint32_t _TimeInSamples;
-    uint32_t _SamplesDone;
-
+    // Flags
+    uint32_t _ExtraPercussionChannel;
     uint32_t _CleanFlags;
-
-    uint32_t _FluidSynthInterpolationMethod;
 
     float _BASSMIDIVolume;
     uint32_t _BASSMIDIInterpolationMode;
 
-    bool _IsEndOfContainer;
-    bool _IsFirstChunk;
+    uint32_t _FluidSynthInterpolationMethod;
 
-    double _AudioChunkDuration;
+    bool _IsEndOfContainer;
+    bool _IsFirstBlock;
+
+    double _AudioChunkDuration;     // in ms
 
     uint32_t _ActiveVoiceCount;
     uint32_t _PeakVoiceCount;
 
-#ifdef DXISUPPORT
-    DXiProxy * dxiProxy;
-
-#if audio_sample_size != 32
-    pfc::array_t<float> sample_buffer;
-#endif
-#endif
+    static constexpr GUID GUIDTagMIDIHash = { 0x4209c12e, 0xc2f4, 0x40ca, { 0xb2, 0xbc, 0xfb, 0x61, 0xc3, 0x26, 0x87, 0xd0 } };
+    static const char * PlayerTypeNames[15];
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member

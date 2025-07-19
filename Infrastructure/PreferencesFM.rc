@@ -1,0 +1,229 @@
+
+/** $VER: PreferencesFM.rc (2025.07.11) **/
+
+#include "Resource.h"
+
+#include <winres.h>
+#include <commctrl.h>
+
+language LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#define W_A00    332 // Dialog width as set by foobar2000, in dialog units
+#define H_A00    288 // Dialog height as set by foobar2000, in dialog units
+
+#define H_LBL        8 // Label
+
+#define W_BTN       50 // Button
+#define H_BTN       14 // Button
+
+#define H_EBX       12 // Edit box
+#define H_CBX       14 // Combo box
+
+#define W_CHB       10 // Check box
+#define H_CHB       10 // Check box
+
+#define DX           7
+#define DY           7
+
+#define IX           4 // Spacing between two related controls
+#define IY           2
+
+// Groupbox LibADLMIDI
+#define X_B00    0
+#define Y_B00    0
+#define W_B00    281
+
+    // Label: Bank
+    #define X_B01    X_B00 +  5
+    #define Y_B01    Y_B00 + 11
+    #define W_B01    48
+    #define H_B01    H_LBL
+
+    // Combobox: Bank
+    #define X_B02    X_B01 + W_B01 + IX
+    #define Y_B02    Y_B01
+    #define W_B02    W_B00 - 5 - W_B01 - IX - 5
+    #define H_B02    H_CBX
+
+    // Label: Emulator Core
+    #define X_B03    X_B01
+    #define Y_B03    Y_B02 + H_B02 + IY
+    #define W_B03    W_B01
+    #define H_B03    H_LBL
+
+    // Combobox: Emulator Cores
+    #define X_B04    X_B03 + W_B03 + IX
+    #define Y_B04    Y_B03
+    #define W_B04    W_B00 - 5 - W_B03 - IX - 5
+    #define H_B04    H_CBX
+
+    // Label: Chips
+    #define X_B05    X_B03
+    #define Y_B05    Y_B04 + H_B04 + IY
+    #define W_B05    W_B03
+    #define H_B05    H_LBL
+
+    // Combobox: Chips
+    #define X_B06    X_B05 + W_B05 + IX
+    #define Y_B06    Y_B05
+    #define W_B06    40
+    #define H_B06    H_CBX
+
+    // Checkbox: Soft panning
+    #define X_B07    X_B06 + W_B06 + IX
+    #define Y_B07    Y_B06
+    #define W_B07    64
+    #define H_B07    H_CHB
+
+    // Label: Bank File
+    #define X_B08    X_B05
+    #define Y_B08    Y_B06 + H_B06 + IY
+    #define W_B08    W_B05
+    #define H_B08    H_LBL
+
+    // EditBox
+    #define X_B09    X_B08 + W_B08 + IX
+    #define Y_B09    Y_B08
+    #define W_B09    200
+    #define H_B09    H_EBX
+
+    // Button
+    #define X_B10    X_B09 + W_B09 + IX
+    #define Y_B10    Y_B09
+    #define W_B10    16
+    #define H_B10    H_BTN
+
+#define H_B00    11 + H_B02 + IY + H_B04 + IY + H_B06 + IY + H_B09 + 7
+
+// Groupbox LibOPNMIDI
+
+#define X_C00    X_B00
+#define Y_C00    Y_B00 + H_B00 + IY
+#define W_C00    W_B00
+
+    // Label: Bank
+    #define X_C01    X_C00 +  5
+    #define Y_C01    Y_C00 + 11
+    #define W_C01    48
+    #define H_C01    H_LBL
+
+    // Combobox: Bank
+    #define X_C02    X_C01 + W_C01 + IX
+    #define Y_C02    Y_C01
+    #define W_C02    W_C00 - 5 - W_C01 - IX - 5
+    #define H_C02    H_CBX
+
+    // Label: Emulator Core
+    #define X_C03    X_C01
+    #define Y_C03    Y_C02 + H_C02 + IY
+    #define W_C03    W_C01
+    #define H_C03    H_LBL
+
+    // Combobox: Emulator Cores
+    #define X_C04    X_C03 + W_C03 + IX
+    #define Y_C04    Y_C03
+    #define W_C04    W_C00 - 5 - W_C03 - IX - 5
+    #define H_C04    H_CBX
+
+    // Label: Chips
+    #define X_C05    X_C03
+    #define Y_C05    Y_C04 + H_C04 + IY
+    #define W_C05    W_C03
+    #define H_C05    H_LBL
+
+    // Combobox: Chips
+    #define X_C06    X_C05 + W_C05 + IX
+    #define Y_C06    Y_C05
+    #define W_C06    40
+    #define H_C06    H_CBX
+
+    // Checkbox: Soft panning
+    #define X_C07    X_C06 + W_C06 + IX 
+    #define Y_C07    Y_C06
+    #define W_C07    64
+    #define H_C07    H_CHB
+
+    // Label: Bank File
+    #define X_C08    X_C05
+    #define Y_C08    Y_C06 + H_C06 + IY
+    #define W_C08    W_C05
+    #define H_C08    H_LBL
+
+    // EditBox
+    #define X_C09    X_C08 + W_C08 + IX
+    #define Y_C09    Y_C08
+    #define W_C09    200
+    #define H_C09    H_EBX
+
+    // Button
+    #define X_C10    X_C09 + W_C09 + IX
+    #define Y_C10    Y_C09
+    #define W_C10    16
+    #define H_C10    H_BTN
+
+#define H_C00    11 + H_C02 + IY + H_C04 + IY + H_C06 + IY + H_C09 + 7
+
+// Groupbox Nuked OPL3
+#define X_E00    X_C00
+#define Y_E00    Y_C00 + H_C00 + IY
+#define W_E00    W_C00
+
+    // Label: Preset
+    #define X_E01    X_E00 + 5
+    #define Y_E01    Y_E00 + 11
+    #define W_E01    24
+    #define H_E01    H_LBL
+
+    // Combobox: Preset
+    #define X_E02    X_E01 + W_E01 + IX
+    #define Y_E02    Y_E01
+    #define W_E02    W_E00 - 5 - W_E01 - IX - 5
+    #define H_E02    H_CBX
+
+    // Checkbox
+    #define X_E03    X_E01
+    #define Y_E03    Y_E02 + H_E02 + IY
+    #define W_E03    W_E00 - 5 - 5
+    #define H_E03    H_CHB
+
+#define H_E00    11 + H_E02 + IY + H_E03 + 7
+
+IDD_PREFERENCES_FM dialogex 0, 0, 0, 0
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
+{
+    groupbox "LibADLMIDI", IDC_STATIC, X_B00, Y_B00, W_B00, H_B00
+        rtext       "Bank:",                IDC_ADL_BANK_TEXT,                  X_B01, Y_B01 + 2, W_B01, H_B01
+        combobox                            IDC_ADL_BANK,                       X_B02, Y_B02,     W_B02, H_B02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Emulator Core:",       IDC_ADL_CORE_TEXT,                  X_B03, Y_B03 + 2, W_B03, H_B03
+        combobox                            IDC_ADL_CORE,                       X_B04, Y_B04,     W_B04, H_B04, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Chips:",               IDC_ADL_CHIPS_TEXT,                 X_B05, Y_B05 + 2, W_B05, H_B05
+        combobox                            IDC_ADL_CHIPS,                      X_B06, Y_B06,     W_B06, H_B06, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+
+        control     "Soft panning",         IDC_ADL_SOFT_PANNING,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B07, Y_B07 + 2, W_B07, H_B07
+
+        rtext       "Bank File:",           IDC_ADL_BANK_FILE_PATH_TEXT,        X_B08, Y_B08 + 2, W_B08, H_B08
+        edittext                            IDC_ADL_BANK_FILE_PATH,             X_B09, Y_B09,     W_B09, H_B09, ES_AUTOHSCROLL
+        pushbutton  "...",                  IDC_ADL_BANK_FILE_PATH_SELECT,      X_B10, Y_B10,     W_B10, H_B10
+
+    groupbox "LibOPNMIDI", IDC_STATIC, X_C00, Y_C00, W_C00, H_C00
+        rtext       "Bank:",                IDC_OPN_BANK_TEXT,                  X_C01, Y_C01 + 2, W_C01, H_C01
+        combobox                            IDC_OPN_BANK,                       X_C02, Y_C02,     W_C02, H_C02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Emulator Core:",       IDC_OPN_CORE_TEXT,                  X_C03, Y_C03 + 2, W_C03, H_C03
+        combobox                            IDC_OPN_CORE,                       X_C04, Y_C04,     W_C04, H_C04, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Chips:",               IDC_OPN_CHIPS_TEXT,                 X_C05, Y_C05 + 2, W_C05, H_C05
+        combobox                            IDC_OPN_CHIPS,                      X_C06, Y_C06,     W_C06, H_C06, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+
+        control     "Soft panning",         IDC_OPN_SOFT_PANNING,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C07, Y_C07 + 2, W_C07, H_C07
+
+        rtext       "Bank File:",           IDC_OPN_BANK_FILE_PATH_TEXT,        X_C08, Y_C08 + 2, W_C08, H_C08
+        edittext                            IDC_OPN_BANK_FILE_PATH,             X_C09, Y_C09,     W_C09, H_C09, ES_AUTOHSCROLL
+        pushbutton  "...",                  IDC_OPN_BANK_FILE_PATH_SELECT,      X_C10, Y_C10,     W_C10, H_C10
+
+    groupbox "Nuked OPL3", IDC_STATIC, X_E00, Y_E00, W_E00, H_E00
+        rtext       "Preset:",              IDC_NUKE_PRESET_TEXT,               X_E01, Y_E01 + 2, W_E01, H_E01
+        combobox                            IDC_NUKE_PRESET,                    X_E02, Y_E02,     W_E02, H_E02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+        control     "Soft panning",         IDC_NUKE_PANNING,                   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_E03, Y_E03 + 2, W_E03, H_E03
+}

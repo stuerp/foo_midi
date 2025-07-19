@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.03.26) **/
+/** $VER: BMPlayer.h (2025.07.13) **/
 
 #pragma once
 
@@ -7,7 +7,7 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "Player.h"
-#include "SoundFont.h"
+#include "Soundfont.h"
 
 #include <bassmidi.h>
 
@@ -27,7 +27,7 @@ public:
     BMPlayer();
     virtual ~BMPlayer();
 
-    void SetSoundFonts(const std::vector<soundfont_t> & _soundFonts);
+    void SetSoundfonts(const std::vector<soundfont_t> & _soundFonts);
 
     void SetInterpolationMode(uint32_t interpolationMode);
     void EnableEffects(bool enable = true);
@@ -53,14 +53,14 @@ private:
     virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
     virtual bool Reset() override;
 
+    virtual uint8_t GetPortCount() const noexcept override { return _countof(_Streams); };
+
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
 
-    virtual bool GetErrorMessage(std::string & errorMessage) override;
-
     #pragma endregion
 
-    bool LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept;
+    bool LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept;
 
     bool IsStarted() const noexcept
     {
@@ -71,24 +71,20 @@ private:
         return true;
     }
 
-    static bool IsOneOf(const std::wstring & ext, const std::vector<std::wstring> & extensions);
-
 private:
-    static const uint32_t MaxSamples = 512;
-    static const uint32_t ChannelCount = 2;
+    static const uint32_t MaxFrames = 512;
+    static const uint32_t MaxChannels = 2;
 
-    float _Buffer[MaxSamples * ChannelCount];
+    float * _SrcFrames;
 
-    std::string _ErrorMessage;
-
-    std::vector<HSOUNDFONT> _SoundFontHandles;
+    std::vector<HSOUNDFONT> _SoundfontHandles;
     sflist_t * _SFList[2];
 
     static const size_t MaxPorts = 16;
 
     HSTREAM _Streams[MaxPorts]; // Each stream corresponds to a port.
 
-    std::vector<soundfont_t> _SoundFonts;
+    std::vector<soundfont_t> _Soundfonts;
 
     float _Volume;
     uint32_t _InterpolationMode;

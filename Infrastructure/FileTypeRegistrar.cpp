@@ -1,7 +1,7 @@
 
 /** $VER: FileTypeRegistrar.h (2022.12.31) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "FileTypeRegistrar.h"
 

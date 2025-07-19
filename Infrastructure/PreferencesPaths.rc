@@ -1,0 +1,271 @@
+
+/** $VER: PreferencesPaths.rc (2025.07.11) **/
+
+#include "Resource.h"
+
+#include <winres.h>
+#include <commctrl.h>
+
+language LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#define W_B00    332 // Dialog width as set by foobar2000, in dialog units
+#define H_B00    288 // Dialog height as set by foobar2000, in dialog units
+
+#define H_LBL      8 // Label
+
+#define W_BTN     50 // Button
+#define H_BTN     14 // Button
+
+#define H_EBX     12 // Edit box
+#define H_CBX     14 // Combo box
+
+#define W_CHB     10 // Check box
+#define H_CHB     10 // Check box
+
+#define DX         7
+#define DY         7
+
+#define IX         4 // Spacing between two related controls
+#define IY         2
+
+#pragma region VSTi Plug-In path
+
+// Label
+#define X_B11    0
+#define Y_B11    0
+#define W_B11    64
+#define H_B11    H_LBL
+
+// EditBox
+#define X_B12    X_B11 + W_B11 + IX
+#define Y_B12    Y_B11
+#define W_B12    200
+#define H_B12    H_EBX
+
+// Button
+#define X_B13    X_B12 + W_B12 + IX
+#define Y_B13    Y_B12
+#define W_B13    16
+#define H_B13    H_BTN
+
+#pragma endregion
+
+#pragma region VSTi XG Plug-In file path
+
+// Label
+#define X_B81    X_B11
+#define Y_B81    Y_B12 + H_B12 + 4
+#define W_B81    W_B11
+#define H_B81    H_LBL
+
+// EditBox
+#define X_B82    X_B81 + W_B81 + IX
+#define Y_B82    Y_B81
+#define W_B82    200
+#define H_B82    H_EBX
+
+// Button
+#define X_B83    X_B82 + W_B82 + IX
+#define Y_B83    Y_B82
+#define W_B83    16
+#define H_B83    H_BTN
+
+#pragma endregion
+
+#pragma region CLAP Plug-In path
+
+// Label
+#define X_B57    X_B81
+#define Y_B57    Y_B82 + H_B82 + 4
+#define W_B57    W_B81
+#define H_B57    H_LBL
+
+// EditBox
+#define X_B58    X_B57 + W_B57 + IX
+#define Y_B58    Y_B57
+#define W_B58    200
+#define H_B58    H_EBX
+
+// Button
+#define X_B59    X_B58 + W_B58 + IX
+#define Y_B59    Y_B58
+#define W_B59    16
+#define H_B59    H_BTN
+
+#pragma endregion
+
+#pragma region Soundfont path
+
+// Label
+#define X_B21    X_B57
+#define Y_B21    Y_B58 + H_B58 + 4
+#define W_B21    W_B57
+#define H_B21    H_LBL
+
+// EditBox
+#define X_B22    X_B21 + W_B21 + IX
+#define Y_B22    Y_B21
+#define W_B22    200
+#define H_B22    H_EBX
+
+// Button
+#define X_B23    X_B22 + W_B22 + IX
+#define Y_B23    Y_B22
+#define W_B23    16
+#define H_B23    H_BTN
+
+#pragma endregion
+
+#pragma region MT32Emu path
+
+// Label
+#define X_B31    X_B21
+#define Y_B31    Y_B22 + H_B22 + 4
+#define W_B31    W_B21
+#define H_B31    H_LBL
+
+// EditBox
+#define X_B32    X_B31 + W_B31 + IX
+#define Y_B32    Y_B31
+#define W_B32    200
+#define H_B32    H_EBX
+
+// Button
+#define X_B33    X_B32 + W_B32 + IX
+#define Y_B33    Y_B32
+#define W_B33    16
+#define H_B33    H_BTN
+
+#pragma endregion
+
+#pragma region SecretSauce path
+
+// Label
+#define X_B41    X_B31
+#define Y_B41    Y_B32 + H_B32 + 4
+#define W_B41    W_B31
+#define H_B41    H_LBL
+
+// EditBox
+#define X_B42    X_B41 + W_B41 + IX
+#define Y_B42    Y_B41
+#define W_B42    200
+#define H_B42    H_EBX
+
+// Button
+#define X_B43    X_B42 + W_B42 + IX
+#define Y_B43    Y_B42
+#define W_B43    16
+#define H_B43    H_BTN
+
+#pragma endregion
+
+#pragma region FluidSynth path
+
+// Label
+#define X_B51    X_B41
+#define Y_B51    Y_B42 + H_B42 + 4
+#define W_B51    W_B41
+#define H_B51    H_LBL
+
+// EditBox
+#define X_B52    X_B51 + W_B51 + IX
+#define Y_B52    Y_B51
+#define W_B52    200
+#define H_B52    H_EBX
+
+// Button
+#define X_B53    X_B52 + W_B52 + IX
+#define Y_B53    Y_B52
+#define W_B53    16
+#define H_B53    H_BTN
+
+#pragma endregion
+
+#pragma region FluidSynth config path
+
+// Label
+#define X_B61    X_B51
+#define Y_B61    Y_B52 + H_B52 + 4
+#define W_B61    W_B51
+#define H_B61    H_LBL
+
+// EditBox
+#define X_B62    X_B61 + W_B61 + IX
+#define Y_B62    Y_B61
+#define W_B62    200
+#define H_B62    H_EBX
+
+// Button
+#define X_B63    X_B62 + W_B62 + IX
+#define Y_B63    Y_B62
+#define W_B63    16
+#define H_B63    H_BTN
+
+#pragma endregion
+
+#pragma region FMMIDI path
+
+// Label
+#define X_B71    X_B61
+#define Y_B71    Y_B62 + H_B62 + 4
+#define W_B71    W_B61
+#define H_B71    H_LBL
+
+// EditBox
+#define X_B72    X_B71 + W_B71 + IX
+#define Y_B72    Y_B71
+#define W_B72    200
+#define H_B72    H_EBX
+
+// Button
+#define X_B73    X_B72 + W_B72 + IX
+#define Y_B73    Y_B72
+#define W_B73    16
+#define H_B73    H_BTN
+
+#pragma endregion
+
+IDD_PREFERENCES_PATHS dialogex 0, 0, 0, 0
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
+{
+    rtext       "VSTi Plug-ins:",       IDC_STATIC,                         X_B11, Y_B11 + 2, W_B11, H_B11
+    edittext                            IDC_VSTi_PATH,                      X_B12, Y_B12,     W_B12, H_B12, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_VSTi_PATH_SELECT,               X_B13, Y_B13,     W_B13, H_B13
+
+    rtext       "VSTi XG Plug-in:",     IDC_STATIC,                         X_B81, Y_B81 + 2, W_B81, H_B81
+    edittext                            IDC_VSTi_XG_FILE_PATH               X_B82, Y_B82,     W_B82, H_B82, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_VSTi_XG_FILE_PATH_SELECT,       X_B83, Y_B83,     W_B83, H_B83
+
+    rtext       "CLAP Plug-ins:",       IDC_STATIC,                         X_B57, Y_B57 + 2, W_B57, H_B57
+    edittext                            IDC_CLAP_PATH, ,                    X_B58, Y_B58,     W_B58, H_B58, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_CLAP_PATH_SELECT,               X_B59, Y_B59,     W_B59, H_B59
+
+    rtext       "Soundfont:",           IDC_STATIC,                         X_B21, Y_B21 + 2, W_B21, H_B21
+    edittext                            IDC_SOUNDFONT_FILE_PATH,            X_B22, Y_B22,     W_B22, H_B22, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_SOUNDFONT_FILE_PATH_SELECT ,    X_B23, Y_B23,     W_B23, H_B23
+
+    rtext       "MT-32 ROMs:",          IDC_STATIC,                         X_B31, Y_B31 + 2, W_B31, H_B31
+    edittext                            IDC_MT32EMU_FILE_PATH,              X_B32, Y_B32,     W_B32, H_B32, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_MT32EMU_FILE_PATH_SELECT,       X_B33, Y_B33,     W_B33, H_B33
+
+    rtext       "Secret Sauce:",        IDC_STATIC,                         X_B41, Y_B41 + 2, W_B41, H_B41
+    edittext                            IDC_SECRET_SAUCE_PATH,              X_B42, Y_B42,     W_B42, H_B42, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_SECRET_SAUCE_PATH_SELECT,       X_B43, Y_B43,     W_B43, H_B43
+
+    rtext       "FluidSynth:",          IDC_STATIC,                         X_B51, Y_B51 + 2, W_B51, H_B51
+    edittext                            IDC_FLUIDSYNTH_PATH, ,              X_B52, Y_B52,     W_B52, H_B52, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_FLUIDSYNTH_PATH_SELECT,         X_B53, Y_B53,     W_B53, H_B53
+
+    rtext       "FluidSynth Config:",   IDC_STATIC,                         X_B61, Y_B61 + 2, W_B61, H_B61
+    edittext                            IDC_FLUIDSYNTH_CONFIG_PATH, ,       X_B62, Y_B62,     W_B62, H_B62, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_FLUIDSYNTH_CONFIG_PATH_SELECT,  X_B63, Y_B63,     W_B63, H_B63
+
+    rtext       "FMMIDI Programs:",     IDC_STATIC,                         X_B71, Y_B71 + 2, W_B71, H_B71
+    edittext                            IDC_PROGRAMS_FILE_PATH, ,           X_B72, Y_B72,     W_B72, H_B72, ES_AUTOHSCROLL
+    pushbutton  "...",                  IDC_PROGRAMS_FILE_PATH_SELECT,      X_B73, Y_B73,     W_B73, H_B73
+
+    ltext "Please close and re-open Preferences to activate the changes.", IDC_PATHS_MESSAGE, 7, H_B00 - 4 - 8, W_B00, 8, NOT WS_VISIBLE
+}

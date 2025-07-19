@@ -1,5 +1,5 @@
 
-/** $VER: BASSInitializer.h (2025.03.19) **/
+/** $VER: BASSInitializer.h (2025.07.13) **/
 
 #pragma once
 
@@ -7,7 +7,8 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "SoundFontCache.h"
-#include "resource.h"
+#include "Resource.h"
+#include "Log.h"
 
 #include <bassmidi.h>
 
@@ -18,13 +19,13 @@
 class BASSInitializer
 {
 public:
-    BASSInitializer() : _IsInitialized(false)
+    BASSInitializer() : _IsStarted(false)
     {
     }
 
     ~BASSInitializer()
     {
-        if (_IsInitialized)
+        if (_IsStarted)
             CacheDispose();
     }
 
@@ -32,14 +33,14 @@ public:
     {
         insync(_Lock);
 
-        return _IsInitialized;
+        return _IsStarted;
     }
 
     bool Initialize()
     {
         insync(_Lock);
 
-        if (!_IsInitialized)
+        if (!_IsStarted)
         {
             _BasePath = pfc::io::path::getParent( core_api::get_my_full_path());
 
@@ -51,12 +52,12 @@ public:
             ::BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 0);
             ::BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, 0);
 
-            _IsInitialized = ::BASS_Init(0, 44100, 0, 0, NULL);
+            _IsStarted = ::BASS_Init(0, 44100, 0, 0, NULL);
 
-            if (!_IsInitialized)
-                _IsInitialized = (::BASS_ErrorGetCode() == BASS_ERROR_ALREADY);
+            if (!_IsStarted)
+                _IsStarted = (::BASS_ErrorGetCode() == BASS_ERROR_ALREADY);
 
-            if (_IsInitialized)
+            if (_IsStarted)
             {
                 ::BASS_SetConfigPtr(BASS_CONFIG_MIDI_DEFFONT, (const void *) 0);
                 ::BASS_SetConfig(BASS_CONFIG_MIDI_VOICES, 256);
@@ -65,7 +66,7 @@ public:
             }
         }
 
-        return _IsInitialized;
+        return _IsStarted;
     }
 
     /// <summary>
@@ -76,7 +77,7 @@ public:
         pfc::string PathName = pfc::io::path::combine(_BasePath, fileName);
 
         if (::BASS_PluginLoad((const char *) pfc::stringcvt::string_os_from_utf8(PathName).get_ptr(), BASS_UNICODE) == 0)
-            console::print(STR_COMPONENT_BASENAME, " failed to load plugin \"", fileName, "\": Error %d.", ::BASS_ErrorGetCode());
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to load plugin \"%s\": Error %d.", fileName, ::BASS_ErrorGetCode());
     }
 
 private:
@@ -84,6 +85,6 @@ private:
 
     pfc::string _BasePath;
 
-    bool _IsInitialized;
+    bool _IsStarted;
 };
 #pragma warning(default: 4820) // x bytes padding added after data member

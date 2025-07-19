@@ -1,13 +1,18 @@
 
-/** $VER: VSTiPlayer.cpp (2025.02.24) **/
+/** $VER: VSTiPlayer.cpp (2025.07.16) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "VSTiPlayer.h"
+#include "Resource.h"
+#include "Log.h"
 
 #define NOMINMAX
 
 // #define LOG_EXCHANGE
+
+namespace VSTi
+{
 
 template <class T> void SafeDelete(T& x) noexcept
 {
@@ -20,7 +25,7 @@ template <class T> void SafeDelete(T& x) noexcept
 
 #pragma region Public
 
-VSTiPlayer::VSTiPlayer() noexcept : player_t()
+Player::Player() noexcept : player_t(), VendorVersion(), Id()
 {
     _IsCOMInitialized = false;
     _IsTerminating = false;
@@ -33,35 +38,26 @@ VSTiPlayer::VSTiPlayer() noexcept : player_t()
     _hProcess = NULL;
     _hThread = NULL;
 
-    _Name = nullptr;
-    _VendorName = nullptr;
-    _ProductName = nullptr;
-
     _ChannelCount = 0;
-    _Samples = nullptr;
+    _SrcFrames = nullptr;
 
     _ProcessorArchitecture = 0;
-    _UniqueId = 0;
-    _VendorVersion = 0;
+
 }
 
-VSTiPlayer::~VSTiPlayer()
+Player::~Player()
 {
     StopHost();
 
-    SafeDelete(_Name);
-    SafeDelete(_VendorName);
-    SafeDelete(_ProductName);
-
-    SafeDelete(_Samples);
+    SafeDelete(_SrcFrames);
 }
 
-bool VSTiPlayer::LoadVST(const char * pathName)
+bool Player::LoadVST(const fs::path & filePath)
 {
-    if ((pathName == nullptr) || (pathName[0] == '\0'))
+    if (filePath.empty())
         return false;
 
-    _FilePath = pathName;
+    _FilePath = filePath;
     _ProcessorArchitecture = GetProcessorArchitecture(_FilePath);
 
     if (_ProcessorArchitecture == 0)
@@ -70,27 +66,7 @@ bool VSTiPlayer::LoadVST(const char * pathName)
     return StartHost();
 }
 
-void VSTiPlayer::GetVendorName(std::string & vendorName) const
-{
-    vendorName = _VendorName;
-}
-
-void VSTiPlayer::GetProductName(std::string & productName) const 
-{
-    productName = _ProductName;
-}
-
-uint32_t VSTiPlayer::GetVendorVersion() const noexcept
-{
-    return _VendorVersion;
-}
-
-uint32_t VSTiPlayer::GetUniqueID() const noexcept
-{
-    return _UniqueId;
-}
-
-void VSTiPlayer::GetChunk(std::vector<uint8_t> & chunk)
+void Player::GetChunk(std::vector<uint8_t> & chunk)
 {
     WriteBytes(1);
 
@@ -110,7 +86,7 @@ void VSTiPlayer::GetChunk(std::vector<uint8_t> & chunk)
         ReadBytes(chunk.data(), Size);
 }
 
-void VSTiPlayer::SetChunk(const void * data, size_t size)
+void Player::SetChunk(const void * data, size_t size)
 {
     if ((_Chunk.size() == 0) || ((_Chunk.size() == size) && (size != 0) && (data != (const void *) _Chunk.data())))
     {
@@ -130,7 +106,7 @@ void VSTiPlayer::SetChunk(const void * data, size_t size)
         StopHost();
 }
 
-bool VSTiPlayer::HasEditor()
+bool Player::HasEditor()
 {
     WriteBytes(3);
 
@@ -147,7 +123,7 @@ bool VSTiPlayer::HasEditor()
     return Code != 0;
 }
 
-void VSTiPlayer::DisplayEditorModal()
+void Player::DisplayEditorModal()
 {
     WriteBytes(4);
 
@@ -156,17 +132,19 @@ void VSTiPlayer::DisplayEditorModal()
     if (Code != 0)
         StopHost();
 }
+
 #pragma endregion
 
 #pragma region Protected
 
-bool VSTiPlayer::Startup()
+bool Player::Startup()
 {
-    if (IsHostRunning())
+    if (_IsStarted)
         return true;
 
-    if (!LoadVST(_FilePath.c_str()))
-        return false;
+    // The host may have been stopped by a backwards seek operation.
+    if (!IsHostRunning())
+        StartHost();
 
     if (_Chunk.size() != 0)
         SetChunk(_Chunk.data(), _Chunk.size());
@@ -180,22 +158,22 @@ bool VSTiPlayer::Startup()
     if (code != 0)
         StopHost();
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
 
     return true;
 }
 
-void VSTiPlayer::Shutdown()
+void Player::Shutdown()
 {
     StopHost();
 }
 
-void VSTiPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void Player::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
     WriteBytes(9);
-    WriteBytes(sampleCount);
+    WriteBytes(dstCount);
 
     const uint32_t Code = ReadCode();
 
@@ -203,41 +181,41 @@ void VSTiPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
     {
         StopHost();
 
-        ::memset(sampleData, 0, (size_t) sampleCount * _ChannelCount * sizeof(audio_sample));
+        ::memset(dstFrames, 0, (size_t) dstCount * _ChannelCount * sizeof(audio_sample));
 
         return;
     }
 
-    if (_Samples == nullptr)
+    if (_SrcFrames == nullptr)
         return;
 
-    while (sampleCount != 0)
+    while (dstCount != 0)
     {
-        unsigned long ToDo = (sampleCount > 4096) ? 4096 : sampleCount;
+        uint32_t ToDo = std::min(dstCount, MaxFrames);
 
-        ReadBytes(_Samples, (uint32_t) (ToDo * _ChannelCount * sizeof(float)));
+        ReadBytes(_SrcFrames, (uint32_t) (ToDo * _ChannelCount * sizeof(float)));
 
         // Convert the format of the rendered output.
         for (size_t i = 0; i < ToDo * _ChannelCount; ++i)
-            sampleData[i] = (audio_sample) _Samples[i];
+            dstFrames[i] = (audio_sample) _SrcFrames[i];
 
-        sampleData += ToDo * _ChannelCount;
-        sampleCount -= ToDo;
+        dstFrames += ToDo * _ChannelCount;
+        dstCount -= ToDo;
     }
 }
 
-void VSTiPlayer::SendEvent(uint32_t b)
+void Player::SendEvent(uint32_t data)
 {
     WriteBytes(7);
-    WriteBytes(b);
+    WriteBytes(data);
 
-    const uint32_t code = ReadCode();
+    const uint32_t Code = ReadCode();
 
-    if (code != 0)
+    if (Code != 0)
         StopHost();
 }
 
-void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
+void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
     const uint32_t SizeAndPort = ((uint32_t) size & 0xFFFFFF) | (portNumber << 24);
 
@@ -251,7 +229,7 @@ void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumbe
         StopHost();
 }
 
-void VSTiPlayer::SendEvent(uint32_t data, uint32_t time)
+void Player::SendEvent(uint32_t data, uint32_t time)
 {
     WriteBytes(10);
     WriteBytes(data);
@@ -263,7 +241,7 @@ void VSTiPlayer::SendEvent(uint32_t data, uint32_t time)
         StopHost();
 }
 
-void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
+void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
 {
     const uint32_t SizeAndPort = ((uint32_t) size & 0xFFFFFF) | (portNumber << 24);
 
@@ -277,25 +255,45 @@ void VSTiPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumbe
     if (code != 0)
         StopHost();
 }
+
 #pragma endregion
 
 #pragma region Private
 
-static bool CreatePipeName(pfc::string_base & pipeName)
+bool Player::StartHost()
 {
-    GUID guid;
+    std::string CommandLine;;
 
-    if (FAILED(::CoCreateGuid(&guid)))
-        return false;
+    {
+        fs::path HostPath = (const char8_t *) core_api::get_my_full_path();
 
-    pipeName = "\\\\.\\pipe\\";
-    pipeName += pfc::print_guid(guid);
+        HostPath.remove_filename();
+        HostPath /= (_ProcessorArchitecture == 64) ? u8"vsthost64.exe" : u8"vsthost32.exe";
 
-    return true;
-}
+        // MS Defender does not like applications that use the operating system... <sigh>
+        if (!fs::exists(HostPath))
+        {
+            Log.AtError().Write(STR_COMPONENT_BASENAME, " can't start VSTi plug-in. Unable to find required host executable \"%s\".", (const char *) HostPath.u8string().c_str());
 
-bool VSTiPlayer::StartHost()
-{
+            return false;
+        }
+
+        uint32_t Sum = 0;
+
+        {
+            pfc::stringcvt::string_os_from_utf8 plugin_os((const char *) _FilePath.u8string().c_str());
+
+            const TCHAR * ch = plugin_os.get_ptr();
+
+            while (*ch)
+            {
+                Sum += (TCHAR) (*ch++ * 820109);
+            }
+        }
+
+        CommandLine = std::string("\"") + (const char *) HostPath.u8string().c_str() + "\" \"" + (const char *) _FilePath.u8string().c_str() + "\" " + pfc::format_int(Sum, 0, 16).c_str();
+    }
+
     if (!_IsCOMInitialized)
     {
         if (FAILED(::CoInitialize(NULL)))
@@ -362,47 +360,24 @@ bool VSTiPlayer::StartHost()
         ::CloseHandle(hPipe);
     }
 
-    std::string CommandLine = "\"";
-
     {
-        CommandLine += core_api::get_my_full_path();
-
-        const size_t SlashPosition = CommandLine.find_last_of('\\');
-
-        if (SlashPosition != std::string::npos)
-            CommandLine.erase(CommandLine.begin() + (const __int64)(SlashPosition + 1), CommandLine.end());
-
-        CommandLine += (_ProcessorArchitecture == 64) ? "vsthost64.exe" : "vsthost32.exe";
-        CommandLine += "\" \"";
-        CommandLine += _FilePath;
-        CommandLine += "\" ";
-
-        uint32_t Sum = 0;
-
+        STARTUPINFO si =
         {
-            pfc::stringcvt::string_os_from_utf8 plugin_os(_FilePath.c_str());
+            .cb =  sizeof(si),
 
-            const TCHAR * ch = plugin_os.get_ptr();
+            .dwFlags = STARTF_USESTDHANDLES, // | STARTF_USESHOWWINDOW;
+        //  .wShowWindow = SW_HIDE,
 
-            while (*ch)
-            {
-                Sum += (TCHAR) (*ch++ * 820109);
-            }
-        }
+            .hStdInput = _hPipeInRead,
+            .hStdOutput = _hPipeOutWrite,
+            .hStdError = ::GetStdHandle(STD_ERROR_HANDLE),
+        };
 
-        CommandLine += pfc::format_int(Sum, 0, 16);
-    }
+    #ifdef _DEBUG
+        FB2K_console_print(STR_COMPONENT_BASENAME, " is using \"", CommandLine.c_str(), "\" to start host process.");
+    #endif
 
-    {
-        STARTUPINFO si = { sizeof(si) };
-
-        si.hStdInput = _hPipeInRead;
-        si.hStdOutput = _hPipeOutWrite;
-        si.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
-    //  si.wShowWindow = SW_HIDE;
-        si.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
-
-        PROCESS_INFORMATION pi;
+        PROCESS_INFORMATION pi = { };
 
         if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
         {
@@ -422,7 +397,7 @@ bool VSTiPlayer::StartHost()
         _hThread = pi.hThread;
 
     #ifdef _DEBUG
-        FB2K_console_print("Starting host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ")");
+        FB2K_console_print(STR_COMPONENT_BASENAME, " started DLL host hProcess 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), " / hThread 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ".");
     #else
         ::SetPriorityClass(_hProcess, ::GetPriorityClass(::GetCurrentProcess()));
         ::SetThreadPriority(_hThread, ::GetThreadPriority(::GetCurrentThread()));
@@ -438,49 +413,43 @@ bool VSTiPlayer::StartHost()
         return false;
     }
 
-    {
-        uint32_t NameLength = ReadCode();
-        uint32_t VendorNameLength = ReadCode();
-        uint32_t ProductNameLength = ReadCode();
+    // Get the name, vendor name and product name.
+    uint32_t NameLength        = ReadCode();
+    uint32_t VendorNameLength  = ReadCode();
+    uint32_t ProductNameLength = ReadCode();
 
-        _VendorVersion = ReadCode();
-        _UniqueId = ReadCode();
-        _ChannelCount = ReadCode();
+    VendorVersion = ReadCode();
+    Id            = ReadCode();
+    _ChannelCount = ReadCode();
 
-        {
-            // VST always uses float samples.
-            SafeDelete(_Samples);
-            _Samples = new float[4096 * _ChannelCount];
+    Name.resize(NameLength);
+    ReadBytes(Name.data(), NameLength);
 
-            SafeDelete(_Name);
-            _Name = new char[NameLength + 1];
-            ReadBytes(_Name, NameLength);
-            _Name[NameLength] = 0;
+    VendorName.resize(VendorNameLength);
+    ReadBytes(VendorName.data(), VendorNameLength);
 
-            SafeDelete(_VendorName);
-            _VendorName = new char[VendorNameLength + 1];
-            ReadBytes(_VendorName, VendorNameLength);
-            _VendorName[VendorNameLength] = 0;
+    ProductName.resize(ProductNameLength);
+    ReadBytes(ProductName.data(), ProductNameLength);
 
-            SafeDelete(_ProductName);
-            _ProductName = new char[ProductNameLength + 1];
-            ReadBytes(_ProductName, ProductNameLength);
-            _ProductName[ProductNameLength] = 0;
-        }
-    }
+    if (Name.empty())
+        Name = (const char *) _FilePath.stem().u8string().c_str();
+
+    // VST always uses float samples.
+    SafeDelete(_SrcFrames);
+    _SrcFrames = new float[MaxFrames * _ChannelCount];
 
     return true;
 }
 
-void VSTiPlayer::StopHost() noexcept
+void Player::StopHost() noexcept
 {
-    if (_IsTerminating)
+    if (_IsTerminating || (_hReadEvent == 0))
         return;
 
     _IsTerminating = true;
 
     #ifdef _DEBUG
-        FB2K_console_print("Stopping host... (hProcess = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), ", hThread = 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ")");
+        FB2K_console_print(STR_COMPONENT_BASENAME, " stopped DLL host hProcess 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), " / hThread 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ".");
     #endif
 
     if (_hProcess)
@@ -535,10 +504,10 @@ void VSTiPlayer::StopHost() noexcept
 
     _IsTerminating = false;
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
-bool VSTiPlayer::IsHostRunning() noexcept
+bool Player::IsHostRunning() noexcept
 {
     if (_hProcess && ::WaitForSingleObject(_hProcess, 0) == WAIT_TIMEOUT)
         return true;
@@ -546,23 +515,7 @@ bool VSTiPlayer::IsHostRunning() noexcept
     return false;
 }
 
-#ifdef LOG_EXCHANGE
-unsigned exchange_count = 0;
-#endif
-
-#ifdef MESSAGE_PUMP
-static void ProcessPendingMessages()
-{
-    MSG msg = {};
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-#endif
-
-uint32_t VSTiPlayer::ReadCode() noexcept
+uint32_t Player::ReadCode() noexcept
 {
     uint32_t Code;
 
@@ -571,7 +524,7 @@ uint32_t VSTiPlayer::ReadCode() noexcept
     return Code;
 }
 
-void VSTiPlayer::ReadBytes(void * data, uint32_t size) noexcept
+void Player::ReadBytes(void * data, uint32_t size) noexcept
 {
     if (size == 0)
         return;
@@ -598,7 +551,7 @@ void VSTiPlayer::ReadBytes(void * data, uint32_t size) noexcept
         ::memset(data, 0xFF, size);
 }
 
-uint32_t VSTiPlayer::ReadBytesOverlapped(void * data, uint32_t size) noexcept
+uint32_t Player::ReadBytesOverlapped(void * data, uint32_t size) noexcept
 {
     ::ResetEvent(_hReadEvent);
 
@@ -619,12 +572,12 @@ uint32_t VSTiPlayer::ReadBytesOverlapped(void * data, uint32_t size) noexcept
 
     ::SetLastError(NO_ERROR);
 
-    DWORD state;
+    DWORD State;
 
 #ifdef MESSAGE_PUMP
     for (;;)
     {
-        state = ::MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
+        State = ::MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
 
         if (state == WAIT_OBJECT_0 + _countof(handles))
             ProcessPendingMessages();
@@ -632,10 +585,10 @@ uint32_t VSTiPlayer::ReadBytesOverlapped(void * data, uint32_t size) noexcept
             break;
     }
 #else
-    state = ::WaitForMultipleObjects(_countof(handles), &handles[0], FALSE, INFINITE);
+    State = ::WaitForMultipleObjects(_countof(handles), &handles[0], FALSE, INFINITE);
 #endif
 
-    if (state == WAIT_OBJECT_0 && ::GetOverlappedResult(_hPipeOutRead, &ol, &BytesRead, TRUE))
+    if (State == WAIT_OBJECT_0 && ::GetOverlappedResult(_hPipeOutRead, &ol, &BytesRead, TRUE))
         return BytesRead;
 
     ::CancelIoEx(_hPipeOutRead, &ol);
@@ -643,12 +596,12 @@ uint32_t VSTiPlayer::ReadBytesOverlapped(void * data, uint32_t size) noexcept
     return 0;
 }
 
-void VSTiPlayer::WriteBytes(uint32_t code) noexcept
+void Player::WriteBytes(uint32_t code) noexcept
 {
     WriteBytesOverlapped(&code, sizeof(code));
 }
 
-void VSTiPlayer::WriteBytesOverlapped(const void * data, uint32_t size) noexcept
+void Player::WriteBytesOverlapped(const void * data, uint32_t size) noexcept
 {
     if ((size == 0) || !IsHostRunning())
         return;
@@ -658,4 +611,36 @@ void VSTiPlayer::WriteBytesOverlapped(const void * data, uint32_t size) noexcept
     if (!::WriteFile(_hPipeInWrite, data, size, &BytesWritten, nullptr) || (BytesWritten < size))
         StopHost();
 }
+
+bool Player::CreatePipeName(pfc::string_base & pipeName)
+{
+    GUID guid;
+
+    if (FAILED(::CoCreateGuid(&guid)))
+        return false;
+
+    pipeName = "\\\\.\\pipe\\";
+    pipeName += pfc::print_guid(guid);
+
+    return true;
+}
+
+#ifdef LOG_EXCHANGE
+unsigned exchange_count = 0;
+#endif
+
+#ifdef MESSAGE_PUMP
+static void ProcessPendingMessages()
+{
+    MSG msg = {};
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+#endif
+
 #pragma endregion
+
+}

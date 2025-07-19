@@ -1,5 +1,5 @@
 
-/** $VER: SoundFont.h (2024.08.25) **/
+/** $VER: Soundfont.h (2024.08.25) **/
 
 #pragma once
 

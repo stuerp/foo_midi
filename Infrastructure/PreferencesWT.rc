@@ -1,0 +1,287 @@
+
+/** $VER: PreferencesFM.WT (2025.07.13) **/
+
+#include "Resource.h"
+
+#include <winres.h>
+#include <commctrl.h>
+
+language LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#define W_A00    332 // Dialog width as set by foobar2000, in dialog units
+#define H_A00    288 // Dialog height as set by foobar2000, in dialog units
+
+#define H_LBL        8 // Label
+
+#define W_BTN       50 // Button
+#define H_BTN       14 // Button
+
+#define H_EBX       12 // Edit box
+#define H_CBX       14 // Combo box
+
+#define W_CHB       10 // Check box
+#define H_CHB       10 // Check box
+
+#define DX           7
+#define DY           7
+
+#define IX           4 // Spacing between two related controls
+#define IY           2
+
+#pragma region BASS MIDI
+
+// Groupbox
+#define X_A10    0
+#define Y_A10    0
+#define W_A10    W_A00
+
+    // Label
+    #define X_A11    X_A10 + 5
+    #define Y_A11    Y_A10 + 11
+    #define W_A11    48
+    #define H_A11    H_LBL
+
+    // EditBox: Volume
+    #define X_A12    X_A11 + W_A11 + IX
+    #define Y_A12    Y_A11
+    #define W_A12    24
+    #define H_A12    H_EBX
+
+    // Label
+    #define X_A13    X_A11
+    #define Y_A13    Y_A12 + H_A12 + IY
+    #define W_A13    W_A11
+    #define H_A13    H_LBL
+
+    // Combobox: Resampling
+    #define X_A14    X_A13 + W_A13 + IX
+    #define Y_A14    Y_A13
+    #define W_A14    W_A10 - 5 - W_A13 - IX - 5
+    #define H_A14    H_CBX
+
+    // Label
+    #define X_A15    X_A13
+    #define Y_A15    Y_A14 + H_A14 + IY
+    #define W_A15    W_A11
+    #define H_A15    H_CBX
+
+    // EditBox: Max. voices
+    #define X_A16    X_A15 + W_A15 + IX
+    #define Y_A16    Y_A15
+    #define W_A16    32
+    #define H_A16    H_CBX
+
+    // Checkbox "Process reverb and chorus"
+    #define X_A17    X_A15
+    #define Y_A17    Y_A16 + H_A16 + IY
+    #define W_A17    100
+    #define H_A17    H_LBL
+
+    // Label
+    #define X_A18    X_A17
+    #define Y_A18    Y_A17 + H_A17 + IY
+    #define W_A18    W_A13
+    #define H_A18    H_LBL
+
+    // Label: Cached
+    #define X_A19    X_A18 + W_A18 + IX
+    #define Y_A19    Y_A18
+    #define W_A19    W_A10 - 5 - W_A18 - IX - 5
+    #define H_A19    H_LBL
+
+#define H_A10    11 + H_A12 + IY + H_A14 + IY + H_A16 + IY + H_A17 + IY + H_A19 + 7
+
+#pragma endregion
+
+#pragma region FluidSynth 
+
+// Groupbox
+#define X_A20    X_A10
+#define Y_A20    Y_A10 + H_A10 + IY
+#define W_A20    W_A10
+
+    // Label
+    #define X_A21    X_A20 + 5
+    #define Y_A21    Y_A20 + 11
+    #define W_A21    48
+    #define H_A21    H_LBL
+
+    // Combobox
+    #define X_A22    X_A21 + W_A21 + 3
+    #define Y_A22    Y_A21
+    #define W_A22    W_A20 - 5 - W_A21 - IX - 5
+    #define H_A22    H_CBX
+
+    // Label
+    #define X_A23    X_A21
+    #define Y_A23    Y_A22 + H_A22 + IY
+    #define W_A23    W_A21
+    #define H_A23    H_CBX
+
+    // EditBox: Max. voices
+    #define X_A24    X_A23 + W_A23 + IX
+    #define Y_A24    Y_A23
+    #define W_A24    32
+    #define H_A24    H_CBX
+
+    // Checkbox "Process reverb and chorus"
+    #define X_A25    X_A21
+    #define Y_A25    Y_A24 + H_A24 + IY
+    #define W_A25    100
+    #define H_A25    H_CHB
+
+    // Checkbox "Dynamic sample loading"
+    #define X_A26    X_A25
+    #define Y_A26    Y_A25 + H_A25 + IY
+    #define W_A26    100
+    #define H_A26    H_CHB
+
+#define H_A20    11 + H_A22 + IY + H_A24 + IY + H_A25 + IY + H_A26 + 7
+
+// Groupbox LibMT32Emu
+
+#define X_D00    X_A20
+#define Y_D00    Y_A20 + H_A20 + IY
+#define W_D00    W_A20
+
+    // Label: Conversion Quality
+    #define X_D01    X_D00 +  5
+    #define Y_D01    Y_D00 + 11
+    #define W_D01    64
+    #define H_D01    H_LBL
+
+    // Combobox: Conversion Quality
+    #define X_D02    X_D01 + W_D01 + IX
+    #define Y_D02    Y_D01
+    #define W_D02    64
+    #define H_D02    H_CBX
+
+    // Label: Max. Partials
+    #define X_D03    X_D02 + W_D02 + IX
+    #define Y_D03    Y_D01
+    #define W_D03    48
+    #define H_D03    H_LBL
+
+    // Combobox: Max. Partials
+    #define X_D04    X_D03 + W_D03 + IX
+    #define Y_D04    Y_D03
+    #define W_D04    32
+    #define H_D04    H_EBX
+
+    // Label: Analog Output Mode
+    #define X_D05    X_D01
+    #define Y_D05    Y_D02 + H_D02 + IY
+    #define W_D05    64
+    #define H_D05    H_LBL
+
+    // Combobox: Analog Output Mode
+    #define X_D06    X_D05 + W_D05 + IX
+    #define Y_D06    Y_D05
+    #define W_D06    64
+    #define H_D06    H_CBX
+
+    // Label: GM Set
+    #define X_D07    X_D06 + W_D06 + IX
+    #define Y_D07    Y_D05
+    #define W_D07    48
+    #define H_D07    H_LBL
+
+    // Combobox: GM Set
+    #define X_D08    X_D07 + W_D07 + IX
+    #define Y_D08    Y_D07
+    #define W_D08    80
+    #define H_D08    H_CBX
+
+    // Label: DAC Input Mode
+    #define X_D09    X_D05
+    #define Y_D09    Y_D06 + H_D06 + IY
+    #define W_D09    64
+    #define H_D09    H_LBL
+
+    // Combobox: DAC Input Mode
+    #define X_D10    X_D09 + W_D09 + IX
+    #define Y_D10    Y_D09
+    #define W_D10    64
+    #define H_D10    H_CBX
+
+    // Checkbox Reverb
+    #define X_D15    X_D10 + W_D10 + IX
+    #define Y_D15    Y_D10
+    #define W_D15    64
+    #define H_D15    H_CHB
+
+    // Checkbox Nice Amp Ramp
+    #define X_D11    X_D09
+    #define Y_D11    Y_D10 + H_D10 + IY
+    #define W_D11    77
+    #define H_D11    H_CHB
+
+    // Checkbox Nice Panning
+    #define X_D12    X_D11 + W_D11 + IX
+    #define Y_D12    Y_D11
+    #define W_D12    77
+    #define H_D12    H_CHB
+
+    // Checkbox Nice Partial Mixing
+    #define X_D13    X_D12 + W_D12 + IX
+    #define Y_D13    Y_D12
+    #define W_D13    77
+    #define H_D13    H_CHB
+
+    // Checkbox Reverse Stereo
+    #define X_D14    X_D13 + W_D13 + IX
+    #define Y_D14    Y_D13
+    #define W_D14    77
+    #define H_D14    H_CHB
+
+#define H_D00    11 + H_D02 + IY + H_D06 + IY + H_D10 + IY + H_D11 + 7
+
+#pragma endregion
+
+IDD_PREFERENCES_WT dialogex 0, 0, 0, 0
+style DS_SHELLFONT | WS_CHILD
+font 8, "MS Shell Dlg", 400, 0, 1
+{
+//  Used to measure the dialog size.
+//  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
+
+    groupbox "BASS MIDI", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10
+        rtext             "Gain:",              IDC_BASSMIDI_VOLUME_LBL,            X_A11, Y_A11 + 2, W_A11, H_A11
+        edittext                                IDC_BASSMIDI_GAIN,                  X_A12, Y_A12,     W_A12, H_A12, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        rtext       "Resampling:",              IDC_RESAMPLING_LBL,                 X_A13, Y_A13 + 2, W_A13, H_A13
+        combobox                                IDC_BASSMIDI_RESAMPLING,            X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext      "Max. voices:",              IDC_BASSMIDI_MAX_VOICES_LBL,        X_A15, Y_A15 + 2, W_A15, H_A15
+        edittext                                IDC_BASSMIDI_MAX_VOICES,            X_A16, Y_A16,     W_A16, H_A16, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        control "Process reverb and chorus",    IDC_BASSMIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A17, Y_A17, W_A17, H_A17
+        rtext           "Cached:",              IDC_CACHED_LBL,                     X_A18, Y_A18 + 2, W_A18, H_A18
+        ltext                  "",              IDC_CACHED,                         X_A19, Y_A19 + 2, W_A19, H_A19, WS_VISIBLE
+
+    groupbox "FluidSynth", IDC_STATIC, X_A20, Y_A20, W_A20, H_A20
+        rtext       "Interpolation:",           IDC_FLUIDSYNTH_INTERPOLATION_TEXT,  X_A21, Y_A21 + 2, W_A21, H_A21
+        combobox                                IDC_FLUIDSYNTH_INTERPOLATION,       X_A22, Y_A22,     W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext         "Max. voices:",           IDC_FLUIDSYNTH_MAX_VOICES_LBL,      X_A23, Y_A23 + 2, W_A23, H_A23
+        edittext                                IDC_FLUIDSYNTH_MAX_VOICES,          X_A24, Y_A24,     W_A24, H_A24, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        control "Process reverb and chorus",    IDC_FLUIDSYNTH_EFFECTS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+        control "Dynamic sample loading",       IDC_FLUIDSYNTH_DYN_LOADING          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
+
+    groupbox "LibMT32Emu (Munt)", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
+        rtext       "Resampling Quality:"   IDC_MT32_CONVERSION_QUALITY_TEXT,   X_D01, Y_D01 + 2, W_D01, H_D01
+        combobox                            IDC_MT32_CONVERSION_QUALITY,        X_D02, Y_D02,     W_D02, H_D02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Max. Partials:",       IDC_MT32_MAX_PARTIALS_TEXT,         X_D03, Y_D03 + 2, W_D03, H_D03
+        edittext                            IDC_MT32_MAX_PARTIALS,              X_D04, Y_D04,     W_D04, H_D04, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+
+        rtext       "Analog Output Mode:"   IDC_MT32_ANALOG_OUTPUT_MODE_TEXT,   X_D05, Y_D05 + 2, W_D05, H_D05
+        combobox                            IDC_MT32_ANALOG_OUTPUT_MODE,        X_D06, Y_D06,     W_D06, H_D06, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "GM Set:",              IDC_MT32_GM_SET_TEXT,               X_D07, Y_D07 + 2, W_D07, H_D07
+        combobox                            IDC_MT32_GM_SET,                    X_D08, Y_D08,     W_D08, H_D08, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+        rtext       "DAC Input Mode:"       IDC_MT32_DAC_INPUT_MODE_TEXT,       X_D09, Y_D09 + 2, W_D09, H_D09
+        combobox                            IDC_MT32_DAC_INPUT_MODE,            X_D10, Y_D10,     W_D10, H_D10, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        control     "Reverb",               IDC_MT32_REVERB,                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D15, Y_D15 + 2, W_D15, H_D15
+
+        control     "Nice Amp Ramp",        IDC_MT32_NICE_AMP_RAMP,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D11, Y_D11 + 2, W_D11, H_D11
+        control     "Nice Panning",         IDC_MT32_NICE_PANNING,              "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D12, Y_D12 + 2, W_D12, H_D12
+        control     "Nice Partial Mixing",  IDC_MT32_NICE_PARTIAL_MIXING,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D13, Y_D13 + 2, W_D13, H_D13
+        control     "Reverse Stereo",       IDC_MT32_REVERSE_STEREO,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D14, Y_D14 + 2, W_D14, H_D14
+}

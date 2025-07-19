@@ -67,9 +67,29 @@ if ($Platform -eq 'x64')
 
     if (Test-Path -Path $DLLPath)
     {
-        Write-Host "Copying SDL libary to `"$PackagePath`"...";
+        Write-Host "Copying SDL library to `"$PackagePath`"...";
 
 #       Copy-Item $DLLPath -Destination "$PackagePath";
+    }
+
+    # juno's fmmidi
+    $FilePath = "3rdParty/midisynth/Programs.txt";
+
+    if (Test-Path -Path $FilePath)
+    {
+        Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
+
+        Copy-Item $FilePath -Destination "$PackagePath";
+    }
+
+    # FluidSynth configuration
+    $FilePath = "3rdParty/FluidSynth/FluidSynth.cfg";
+
+    if (Test-Path -Path $FilePath)
+    {
+        Write-Host "Copying FluidSynth configuration to `"$PackagePath`"...";
+
+        Copy-Item $FilePath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")
@@ -113,9 +133,29 @@ elseif ($Platform -eq 'Win32')
 
     if (Test-Path -Path $DLLPath)
     {
-        Write-Host "Copying SDL libary to `"$PackagePath`"...";
+        Write-Host "Copying SDL library to `"$PackagePath`"...";
 
 #       Copy-Item $DLLPath -Destination "$PackagePath";
+    }
+
+    # juno's fmmidi
+    $FilePath = "3rdParty/midisynth/Programs.txt";
+
+    if (Test-Path -Path $FilePath)
+    {
+        Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
+
+        Copy-Item $FilePath -Destination "$PackagePath";
+    }
+
+    # FluidSynth configuration
+    $FilePath = "3rdParty/FluidSynth/FluidSynth.cfg";
+
+    if (Test-Path -Path $FilePath)
+    {
+        Write-Host "Copying FluidSynth configuration to `"$PackagePath`"...";
+
+        Copy-Item $FilePath -Destination "$PackagePath";
     }
 
     if (Test-Path -Path "../bin")

@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2025.03.16) **/
+/** $VER: VSTiPlayer.h (2025.07.16) **/
 
 #pragma once
 
@@ -7,20 +7,18 @@
 
 typedef void * HANDLE;
 
+namespace VSTi
+{
+
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
-class VSTiPlayer : public player_t
+class Player : public player_t
 {
 public:
-    VSTiPlayer() noexcept;
-    virtual ~VSTiPlayer();
+    Player() noexcept;
+    virtual ~Player();
 
-    bool LoadVST(const char * path);
-
-    void GetVendorName(std::string & out) const;
-    void GetProductName(std::string & out) const;
-    uint32_t GetVendorVersion() const noexcept;
-    uint32_t GetUniqueID() const noexcept;
+    bool LoadVST(const fs::path & filePath);
 
     // Configuration
     void GetChunk(std::vector<uint8_t> & data);
@@ -38,7 +36,8 @@ protected:
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
 
-    virtual uint32_t GetSampleBlockSize() const noexcept override { return 4096; }
+    virtual uint32_t GetBlockSize() const noexcept override { return MaxFrames; }
+    virtual uint8_t GetPortCount() const noexcept override { return 1; };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
@@ -59,11 +58,20 @@ private:
     void WriteBytes(uint32_t code) noexcept;
     void WriteBytesOverlapped(const void * data, uint32_t size) noexcept;
 
+    static bool CreatePipeName(pfc::string_base & pipeName);
+
+public:
+    std::string Name;
+    std::string VendorName;
+    std::string ProductName;
+    uint32_t VendorVersion;
+    uint32_t Id;
+
 private:
     uint32_t _ProcessorArchitecture;
     bool _IsCOMInitialized;
 
-    std::string _FilePath;
+    fs::path _FilePath;
 
     HANDLE _hReadEvent;
     HANDLE _hPipeInRead;
@@ -73,19 +81,15 @@ private:
     HANDLE _hProcess;
     HANDLE _hThread;
 
-    char * _Name;
-    char * _VendorName;
-    char * _ProductName;
-
-    uint32_t _VendorVersion;
-    uint32_t _UniqueId;
-
+    const uint32_t MaxFrames = 4096;
     uint32_t _ChannelCount;
 
     std::vector<uint8_t> _Chunk;
-    float * _Samples;
+    float * _SrcFrames;
 
     bool _IsTerminating;
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member
+
+}

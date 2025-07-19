@@ -1,20 +1,21 @@
 
-/** $VER: BMPlayer.cpp (2025.03.27) **/
+/** $VER: BMPlayer.cpp (2025.07.13) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "BMPlayer.h"
 
 #include "BASSInitializer.h"
-#include "SoundFontCache.h"
+#include "SoundfontCache.h"
+#include "Exception.h"
+#include "Support.h"
+#include "Log.h"
 
 #include <sflist.h>
 
-#include <string>
-
 #include <map>
+
 #include <time.h>
-#include <filesystem>
 
 static BASSInitializer _BASSInitializer;
 
@@ -32,8 +33,10 @@ BMPlayer::BMPlayer() : player_t()
     ::memset(_NRPNLSB, 0xFF, sizeof(_NRPNLSB));
     ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
 
+    _SrcFrames = nullptr;
+
     if (!_BASSInitializer.Initialize())
-        throw std::runtime_error("Unable to initialize BASSMIDI");
+        throw component::runtime_error("Unable to initialize BASSMIDI");
 }
 
 BMPlayer::~BMPlayer()
@@ -81,14 +84,14 @@ void BMPlayer::EnableEffects(bool enabled)
 }
 
 /// <summary>
-/// Sets the sound fonts to use for synthesis.
+/// Sets the soundfonts to use for synthesis.
 /// </summary>
-void BMPlayer::SetSoundFonts(const std::vector<soundfont_t> & soundFonts)
+void BMPlayer::SetSoundfonts(const std::vector<soundfont_t> & soundFonts)
 {
-    if (_SoundFonts == soundFonts)
+    if (_Soundfonts == soundFonts)
         return;
 
-    _SoundFonts = soundFonts;
+    _Soundfonts = soundFonts;
 
     Shutdown();
 }
@@ -135,14 +138,19 @@ bool GetSoundFontStatistics(uint64_t & sampleDataSize, uint64_t & sampleDataLoad
 
 bool BMPlayer::Startup()
 {
-    if (IsStarted())
+    if (_IsStarted)
         return true;
 
-    std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
+    _SrcFrames = new float[MaxFrames * MaxChannels];
 
-    for (const auto & sf : _SoundFonts)
+    if (_SrcFrames == nullptr)
+        return false;
+
+    std::vector<BASS_MIDI_FONTEX> SoundfontConfigurations;
+
+    for (const auto & sf : _Soundfonts)
     {
-        if (!LoadSoundFontConfiguration(sf, SoundFontConfigurations))
+        if (!LoadSoundfontConfiguration(sf, SoundfontConfigurations))
         {
             _ErrorMessage = "Unable to load configuration for soundfont \"" + sf.FilePath() + "\"";
 
@@ -167,12 +175,22 @@ bool BMPlayer::Startup()
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_VOICES, (float) _VoiceCount);
 
-        ::BASS_MIDI_StreamSetFonts(Stream, SoundFontConfigurations.data(), (DWORD) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
+        ::BASS_MIDI_StreamSetFonts(Stream, SoundfontConfigurations.data(), (DWORD) SoundfontConfigurations.size() | BASS_MIDI_FONT_EX);
     }
 
     _ErrorMessage = "";
 
-    _IsInitialized = true;
+    _IsStarted = true;
+
+    {
+        const DWORD BASSVersion = GetVersion();
+
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using BASS %d.%d.%d.%d.", (BASSVersion >> 24) & 0xFF, (BASSVersion >> 16) & 0xFF, (BASSVersion >> 8) & 0xFF, BASSVersion & 0xFF);
+
+        const DWORD BASSMIDIVersion = GetMIDIVersion();
+
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using BASS MIDI %d.%d.%d.%d.", (BASSMIDIVersion >> 24) & 0xFF, (BASSMIDIVersion >> 16) & 0xFF, (BASSMIDIVersion >> 8) & 0xFF, BASSMIDIVersion & 0xFF);
+    }
 
     Configure(_MIDIFlavor, _FilterEffects);
     Reset();
@@ -191,46 +209,52 @@ void BMPlayer::Shutdown()
         }
     }
 
-    for (auto SoundFont : _SoundFontHandles)
-        ::CacheRemoveSoundFont(SoundFont);
+    for (auto Soundfont : _SoundfontHandles)
+        ::CacheRemoveSoundfont(Soundfont);
 
-    _SoundFontHandles.resize(0);
+    _SoundfontHandles.resize(0);
 
     if (_SFList[0])
     {
-        ::CacheRemoveSoundFontList(_SFList[0]);
+        ::CacheRemoveSoundfontList(_SFList[0]);
         _SFList[0] = nullptr;
     }
 
     if (_SFList[1])
     {
-        ::CacheRemoveSoundFontList(_SFList[1]);
+        ::CacheRemoveSoundfontList(_SFList[1]);
         _SFList[1] = nullptr;
     }
 
-    _IsInitialized = false;
+    if (_SrcFrames != nullptr)
+    {
+        delete[] _SrcFrames;
+        _SrcFrames = nullptr;
+    }
+
+    _IsStarted = false;
 }
 
-void BMPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void BMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    while (sampleCount != 0)
+    while (dstCount != 0)
     {
-        const size_t ToDo = std::min(sampleCount, MaxSamples);
-        const size_t SampleCount = ToDo * ChannelCount;
+        const uint32_t srcCount = std::min(dstCount, MaxFrames);
+        const uint32_t NumSamples = srcCount * MaxChannels;
 
-        ::memset(sampleData, 0, SampleCount * sizeof(*sampleData));
+        ::memset(dstFrames, 0, NumSamples * sizeof(dstFrames[0]));
 
         for (auto & Stream : _Streams)
         {
-            ::BASS_ChannelGetData(Stream, _Buffer, BASS_DATA_FLOAT | (DWORD) (SampleCount * sizeof(*_Buffer)));
+            ::BASS_ChannelGetData(Stream, _SrcFrames, BASS_DATA_FLOAT | (DWORD) (NumSamples * sizeof(_SrcFrames[0])));
 
             // Convert the format of the rendered output.
-            for (size_t j = 0; j < SampleCount; ++j)
-                sampleData[j] += _Buffer[j];
+            for (size_t j = 0; j < NumSamples; ++j)
+                dstFrames[j] += _SrcFrames[j];
         }
 
-        sampleData  += SampleCount;
-        sampleCount -= (uint32_t) ToDo;
+        dstFrames += NumSamples;
+        dstCount -= srcCount;
     }
 }
 
@@ -251,13 +275,13 @@ bool BMPlayer::Reset()
 /// <summary>
 /// Sends a message to the library.
 /// </summary>
-void BMPlayer::SendEvent(uint32_t message)
+void BMPlayer::SendEvent(uint32_t data)
 {
     const uint8_t Event[3]
     {
-        static_cast<uint8_t>(message),          // Status
-        static_cast<uint8_t>(message >>  8),    // Param 1
-        static_cast<uint8_t>(message >> 16)     // Param 2
+        (uint8_t) (data),        // Status
+        (uint8_t) (data >>  8),  // Param 1
+        (uint8_t) (data >> 16)   // Param 2
     };
 
     const uint8_t Status = Event[0] & 0xF0u;
@@ -288,7 +312,7 @@ void BMPlayer::SendEvent(uint32_t message)
         }
     }
 
-    uint8_t PortNumber = (message >> 24) & 0x7Fu;
+    uint8_t PortNumber = (data >> 24) & 0x7Fu;
 
     if (PortNumber > (_countof(_Streams) - 1))
         PortNumber = 0;
@@ -315,33 +339,20 @@ void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
         ::BASS_MIDI_StreamEvents(_Streams[portNumber], BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
 }
 
-/// <summary>
-/// Gets the current error message.
-/// </summary>
-bool BMPlayer::GetErrorMessage(std::string & errorMessage)
-{
-    if (_ErrorMessage.length() == 0)
-        return false;
-
-    errorMessage = _ErrorMessage;
-
-    return true;
-}
-
 #pragma endregion
 
 /// <summary>
 /// Loads the configuration from the specified soundfont.
 /// </summary>
-bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
+bool BMPlayer::LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
 {
     std::filesystem::path FilePath(soundFont.FilePath());
 
     if (IsOneOf(FilePath.extension(), { L".sf2", L".sf3", L".sf2pack", L".sfogg" }))
     {
-        HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath());
+        HSOUNDFONT hSoundfont = ::CacheAddSoundfont(soundFont.FilePath());
 
-        if (hSoundFont == 0)
+        if (hSoundfont == 0)
         {
             Shutdown();
 
@@ -350,11 +361,11 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
             return false;
         }
 
-        _SoundFontHandles.push_back(hSoundFont);
+        _SoundfontHandles.push_back(hSoundfont);
 
-        ::BASS_MIDI_FontSetVolume(hSoundFont, soundFont.Volume());
+        ::BASS_MIDI_FontSetVolume(hSoundfont, soundFont.Volume());
 
-        BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, soundFont.BankOffset(), 0 }; // Load the whole sound font.
+        BASS_MIDI_FONTEX fex = { hSoundfont, -1, -1, -1, soundFont.BankOffset(), 0 }; // Load the whole sound font.
 
         soundFontConfigurations.push_back(fex);
 
@@ -368,7 +379,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
         if (*SFList)
             SFList = &_SFList[1];
 
-        *SFList = ::CacheAddSoundFontList(soundFont.FilePath());
+        *SFList = ::CacheAddSoundfontList(soundFont.FilePath());
 
         if (!*SFList)
             return false;
@@ -490,19 +501,5 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
     return false;
 }
 #endif
-
-/// <summary>
-/// Returns true if the string matches on of the list.
-/// </summary>
-bool BMPlayer::IsOneOf(const std::wstring & ext, const std::vector<std::wstring> & extensions)
-{
-    for (const auto & Extension : extensions)
-    {
-        if (::_wcsicmp(ext.c_str(), Extension.c_str()) == 0)
-            return true;
-    }
-
-    return false;
-}
 
 #pragma endregion

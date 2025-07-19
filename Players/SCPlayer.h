@@ -1,25 +1,28 @@
 
-/** $VER: SCPlayer.h (2025.03.16) Secret Sauce **/
+/** $VER: SCPlayer.h (2025.07.07) Secret Sauce **/
 
 #pragma once
 
 #include "Player.h"
 
 #pragma warning(disable: 4820) // 'x' bytes padding added after data member 'y'
+
 class SCPlayer : public player_t
 {
 public:
     SCPlayer() noexcept;
     virtual ~SCPlayer();
 
-    void SetRootPath(const char * path);
+    void SetRootPath(const fs::path & directoryPath);
 
 protected:
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
+    virtual bool Reset() override;
 
-    virtual uint32_t GetSampleBlockSize() const noexcept override { return 0; } // 4096; This doesn't work for some reason.
+    virtual uint32_t GetBlockSize() const noexcept override { return 0; } // 4096; This doesn't work for some reason.
+    virtual uint8_t GetPortCount() const noexcept override { return MaxPorts; };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
@@ -28,7 +31,7 @@ protected:
     virtual void SendSysEx(const uint8_t * data, size_t size , uint32_t portNumber, uint32_t time) override;
 
 private:
-    bool StartHosts(const char * filePath);
+    bool StartHosts(const fs::path & filePath);
     void RenderPort(uint32_t port, float * data, uint32_t size) noexcept;
 
     bool StartHost(uint32_t port);
@@ -49,8 +52,8 @@ private:
     uint32_t _ProcessorArchitecture;
     int _COMInitialisationCount;
 
-    std::string _RootPathName;
-    std::string _FilePath;
+    fs::path _RootPath;
+    fs::path _FilePath;
 
     static const size_t MaxPorts = 3;
 
@@ -62,8 +65,9 @@ private:
     HANDLE _hProcess[MaxPorts];
     HANDLE _hThread[MaxPorts];
 
-    float * _Samples;
-
     bool _IsPortTerminating[MaxPorts];
+
+    float * _Samples;
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

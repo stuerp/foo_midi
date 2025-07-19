@@ -19,17 +19,18 @@ enum
 bool need_idle = false;
 bool idle_started = false;
 
-static char * dll_dir = nullptr;
+static char * _DirectoryPath = nullptr;
 
-static HANDLE null_file = nullptr;
-static HANDLE pipe_in = nullptr;
-static HANDLE pipe_out = nullptr;
+static HANDLE _hFileNUL = nullptr;
+static HANDLE _hPipeIn = nullptr;
+static HANDLE _hPipeOut = nullptr;
 
 #pragma pack(push, 8)
 #pragma warning(disable: 4820) // x bytes padding added after data member
-struct myVstEvent
+
+struct vst_event_t
 {
-    struct myVstEvent * next;
+    struct vst_event_t * next;
 
     unsigned port;
 
@@ -38,35 +39,36 @@ struct myVstEvent
         VstMidiEvent midiEvent;
         VstMidiSysexEvent sysexEvent;
     } ev;
-}* _EventHead = nullptr, * evTail = nullptr;
+}* _EventsHead = nullptr, * _EventsTail = nullptr;
+
 #pragma warning(default: 4820) // x bytes padding added after data member
 #pragma pack(pop)
 
-void freeChain()
+void FreeEvents()
 {
-    myVstEvent * ev = _EventHead;
+    vst_event_t * Event = _EventsHead;
 
-    while (ev)
+    while (Event)
     {
-        myVstEvent * next = ev->next;
+        vst_event_t * Next = Event->next;
 
-        if (ev->port && ev->ev.sysexEvent.type == kVstSysExType)
-            free(ev->ev.sysexEvent.sysexDump);
+        if (Event->port && Event->ev.sysexEvent.type == kVstSysExType)
+            ::free(Event->ev.sysexEvent.sysexDump);
 
-        free(ev);
+        ::free(Event);
 
-        ev = next;
+        Event = Next;
     }
 
-    _EventHead = nullptr;
-    evTail = nullptr;
+    _EventsHead = nullptr;
+    _EventsTail = nullptr;
 }
 
-void put_bytes(const void * out, uint32_t size)
+void WriteBytes(const void * data, uint32_t size)
 {
     DWORD BytesWritten;
 
-    WriteFile(pipe_out, out, size, &BytesWritten, NULL);
+    ::WriteFile(_hPipeOut, data, size, &BytesWritten, NULL);
 
 #ifdef LOG_EXCHANGE
     TCHAR logfile[MAX_PATH];
@@ -77,16 +79,16 @@ void put_bytes(const void * out, uint32_t size)
 #endif
 }
 
-void put_code(uint32_t code)
+void WriteCode(uint32_t code)
 {
-    put_bytes(&code, sizeof(code));
+    WriteBytes(&code, sizeof(code));
 }
 
-void get_bytes(void * in, uint32_t size)
+void ReadBytes(void * in, uint32_t size)
 {
     DWORD BytesRead;
 
-    if (!ReadFile(pipe_in, in, size, &BytesRead, NULL) || (BytesRead < size))
+    if (!::ReadFile(_hPipeIn, in, size, &BytesRead, NULL) || (BytesRead < size))
     {
         memset(in, 0, size);
 
@@ -110,16 +112,16 @@ void get_bytes(void * in, uint32_t size)
     }
 }
 
-uint32_t get_code()
+uint32_t ReadCode()
 {
     uint32_t code;
 
-    get_bytes(&code, sizeof(code));
+    ReadBytes(&code, sizeof(code));
 
     return code;
 }
 
-void getChunk(AEffect * effect, std::vector<uint8_t> & out)
+void ReadChunk(AEffect * effect, std::vector<uint8_t> & out)
 {
     out.resize(0);
 
@@ -344,7 +346,7 @@ static VstIntPtr VSTCALLBACK audioMaster(AEffect * effect, VstInt32 opcode, VstI
             break;
 
         case audioMasterGetDirectory:
-            return (VstIntPtr) dll_dir;
+            return (VstIntPtr) _DirectoryPath;
 
             /* More crap */
         case DECLARE_VST_DEPRECATED(audioMasterNeedIdle):
@@ -355,25 +357,22 @@ static VstIntPtr VSTCALLBACK audioMaster(AEffect * effect, VstInt32 opcode, VstI
     return 0;
 }
 
-LONG __stdcall myExceptFilterProc(LPEXCEPTION_POINTERS param)
+LONG __stdcall FilterUnhandledException(LPEXCEPTION_POINTERS param)
 {
-    if (IsDebuggerPresent())
-    {
-        return UnhandledExceptionFilter(param);
-    }
-    else
-    {
-        // DumpCrashInfo( param );
-        TerminateProcess(GetCurrentProcess(), 0);
-        return 0; // never reached
-    }
+    if (::IsDebuggerPresent())
+        return ::UnhandledExceptionFilter(param);
+
+    // DumpCrashInfo( param );
+    ::TerminateProcess(::GetCurrentProcess(), 0);
+
+    return 0; // never reached
 }
 
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 {
     int argc = 0;
 
-    LPWSTR * argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    LPWSTR * argv = ::CommandLineToArgvW(::GetCommandLineW(), &argc);
 
     if (argv == nullptr || argc != 3)
         return 1;
@@ -399,7 +398,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
         return 3;
 #endif
 
-    unsigned code = 0;
+    uint32_t Code = 0;
+
+    AEffect * Effect[3] = { 0, 0, 0 };
 
     audioMasterData effectData[3] = { { 0 }, { 1 }, { 2 } };
 
@@ -410,13 +411,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
     std::vector<uint8_t> chunk;
     std::vector<float> sample_buffer;
 
-    null_file = ::CreateFileW(_T("NUL"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    _hFileNUL = ::CreateFileW(_T("NUL"), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
-    pipe_in = ::GetStdHandle(STD_INPUT_HANDLE);
-    pipe_out = ::GetStdHandle(STD_OUTPUT_HANDLE);
+    _hPipeIn  = ::GetStdHandle(STD_INPUT_HANDLE);
+    _hPipeOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
 
-    ::SetStdHandle(STD_INPUT_HANDLE, null_file);
-    ::SetStdHandle(STD_OUTPUT_HANDLE, null_file);
+    ::SetStdHandle(STD_INPUT_HANDLE, _hFileNUL);
+    ::SetStdHandle(STD_OUTPUT_HANDLE, _hFileNUL);
 
     {
         INITCOMMONCONTROLSEX icc =
@@ -433,51 +434,58 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
         return 5;
 
 #ifndef _DEBUG
-    SetUnhandledExceptionFilter(myExceptFilterProc);
+    ::SetUnhandledExceptionFilter(FilterUnhandledException);
 #endif
 
-    size_t dll_name_len = ::wcslen(argv[1]);
-    dll_dir = (char *) ::malloc(dll_name_len + 1);
-    ::wcstombs(dll_dir, argv[1], dll_name_len);
-    dll_dir[dll_name_len] = '\0';
-    char * slash = ::strrchr(dll_dir, '\\');
-    *slash = '\0';
-
-    HMODULE hDll = ::LoadLibraryW(argv[1]);
-
-    if (hDll == 0)
     {
-        code = 6;
+        size_t l = ::wcslen(argv[1]);
+
+        _DirectoryPath = (char *) ::malloc(l + 1);
+
+        ::wcstombs(_DirectoryPath, argv[1], l);
+
+        _DirectoryPath[l] = '\0';
+
+        char * Slash = ::strrchr(_DirectoryPath, '\\');
+
+        *Slash = '\0';
+    }
+
+    HMODULE hModule = ::LoadLibraryW(argv[1]);
+
+    if (hModule == 0)
+    {
+        Code = 6;
         goto exit;
     }
 
     #pragma warning(disable: 4191) //unsafe conversion from 'FARPROC' to 'main_func'
-    main_func Main = (main_func) ::GetProcAddress(hDll, "VSTPluginMain");
+
+    // Find the DLL entry point.
+    auto Main = (main_func) ::GetProcAddress(hModule, "VSTPluginMain");
 
     if (Main == nullptr)
     {
-        Main = (main_func) ::GetProcAddress(hDll, "main");
+        Main = (main_func) ::GetProcAddress(hModule, "main");
 
         if (Main == nullptr)
         {
-            Main = (main_func) ::GetProcAddress(hDll, "MAIN");
+            Main = (main_func) ::GetProcAddress(hModule, "MAIN");
 
             if (Main == nullptr)
             {
-                code = 7;
+                Code = 7;
                 goto exit;
             }
         }
     }
-
-    AEffect * Effect[3] = { 0, 0, 0 };
 
     {
         Effect[0] = Main(&audioMaster);
 
         if ((Effect[0] == nullptr) || (Effect[0]->magic != kEffectMagic))
         {
-            code = 8;
+            Code = 8;
             goto exit;
         }
 
@@ -486,12 +494,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
         if ((Effect[0]->dispatcher(Effect[0], effGetPlugCategory, 0, 0, 0, 0) != kPlugCategSynth) || (Effect[0]->dispatcher(Effect[0], effCanDo, 0, 0, (void *) "receiveVstMidiEvent", 0) < 1))
         {
-            code = 9;
+            Code = 9;
             goto exit;
         }
     }
 
-    uint32_t max_num_outputs = (uint32_t) min(Effect[0]->numOutputs, 2);
+    uint32_t MaxOutputs = (uint32_t) min(Effect[0]->numOutputs, 2);
 
     {
         char name_string[256] = { 0 };
@@ -514,22 +522,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
         vendor_version = (uint32_t) Effect[0]->dispatcher(Effect[0], effGetVendorVersion, 0, 0, 0, 0);
         unique_id = (uint32_t) Effect[0]->uniqueID;
 
-        put_code(0);
-        put_code(name_string_length);
-        put_code(vendor_string_length);
-        put_code(product_string_length);
-        put_code(vendor_version);
-        put_code(unique_id);
-        put_code(max_num_outputs);
+        WriteCode(0);
+        WriteCode(name_string_length);
+        WriteCode(vendor_string_length);
+        WriteCode(product_string_length);
+        WriteCode(vendor_version);
+        WriteCode(unique_id);
+        WriteCode(MaxOutputs);
 
         if (name_string_length)
-            put_bytes(name_string, name_string_length);
+            WriteBytes(name_string, name_string_length);
 
         if (vendor_string_length)
-            put_bytes(vendor_string, vendor_string_length);
+            WriteBytes(vendor_string, vendor_string_length);
 
         if (product_string_length)
-            put_bytes(product_string, product_string_length);
+            WriteBytes(product_string, product_string_length);
     }
 
     float ** float_list_in = nullptr;
@@ -539,34 +547,34 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
     for (;;)
     {
-        uint32_t command = get_code();
+        Code = ReadCode();
 
-        if (command == 0)
+        if (Code == 0)
             break;
 
-        switch (command)
+        switch (Code)
         {
             case 1: // Get Chunk
             {
-                getChunk(Effect[0], chunk);
+                ReadChunk(Effect[0], chunk);
 
-                put_code(0);
-                put_code((uint32_t) chunk.size());
-                put_bytes(chunk.data(), (uint32_t) chunk.size());
+                WriteCode(0);
+                WriteCode((uint32_t) chunk.size());
+                WriteBytes(chunk.data(), (uint32_t) chunk.size());
                 break;
             }
 
             case 2: // Set Chunk
             {
-                uint32_t size = get_code();
+                uint32_t size = ReadCode();
                 chunk.resize(size);
-                if (size) get_bytes(chunk.data(), size);
+                if (size) ReadBytes(chunk.data(), size);
 
                 setChunk(Effect[0], chunk);
                 setChunk(Effect[1], chunk);
                 setChunk(Effect[2], chunk);
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
@@ -574,8 +582,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
             {
                 uint32_t has_editor = (Effect[0]->flags & effFlagsHasEditor) ? 1u : 0u;
 
-                put_code(0);
-                put_code(has_editor);
+                WriteCode(0);
+                WriteCode(has_editor);
                 break;
             }
 
@@ -589,28 +597,28 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
                     DialogBoxIndirectParam(0, &t, ::GetDesktopWindow(), (DLGPROC) EditorProc, (LPARAM) (Effect[0]));
 
-                    getChunk(Effect[0], chunk);
+                    ReadChunk(Effect[0], chunk);
                     setChunk(Effect[1], chunk);
                     setChunk(Effect[2], chunk);
                 }
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
             case 5: // Set Sample Rate
             {
-                uint32_t size = get_code();
+                uint32_t size = ReadCode();
 
                 if (size != sizeof(SampleRate))
                 {
-                    code = 10;
+                    Code = 10;
                     goto exit;
                 }
 
-                SampleRate = get_code();
+                SampleRate = ReadCode();
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
@@ -641,13 +649,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
                 State.resize(0);
 
-                freeChain();
+                FreeEvents();
 
                 Effect[0] = Main(&audioMaster);
 
                 if (!Effect[0])
                 {
-                    code = 8;
+                    Code = 8;
                     goto exit;
                 }
 
@@ -655,25 +663,25 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                 Effect[0]->dispatcher(Effect[0], effOpen, 0, 0, 0, 0);
                 setChunk(Effect[0], chunk);
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
             case 7: // Send MIDI Event
             {
-                myVstEvent * ev = (myVstEvent *) calloc(sizeof(myVstEvent), 1);
+                vst_event_t * ev = (vst_event_t *) calloc(sizeof(vst_event_t), 1);
 
                 if (ev != nullptr)
                 {
-                    if (evTail)
-                        evTail->next = ev;
+                    if (_EventsTail)
+                        _EventsTail->next = ev;
 
-                    evTail = ev;
+                    _EventsTail = ev;
 
-                    if (!_EventHead)
-                        _EventHead = ev;
+                    if (!_EventsHead)
+                        _EventsHead = ev;
 
-                    uint32_t b = get_code();
+                    uint32_t b = ReadCode();
 
                     ev->port = (b & 0x7F000000) >> 24;
 
@@ -685,26 +693,26 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
                     memcpy(&ev->ev.midiEvent.midiData, &b, 3);
 
-                    put_code(0);
+                    WriteCode(0);
                 }
                 break;
             }
 
             case 8: // Send System Exclusive Event
             {
-                myVstEvent * ev = (myVstEvent *) calloc(sizeof(myVstEvent), 1);
+                vst_event_t * ev = (vst_event_t *) calloc(sizeof(vst_event_t), 1);
 
                 if (ev != nullptr)
                 {
-                    if (evTail)
-                        evTail->next = ev;
+                    if (_EventsTail)
+                        _EventsTail->next = ev;
 
-                    evTail = ev;
+                    _EventsTail = ev;
 
-                    if (!_EventHead)
-                        _EventHead = ev;
+                    if (!_EventsHead)
+                        _EventsHead = ev;
 
-                    uint32_t size = get_code();
+                    uint32_t size = ReadCode();
                     uint32_t port = size >> 24; size &= 0xFFFFFF;
 
                     ev->port = port;
@@ -717,9 +725,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                     ev->ev.sysexEvent.dumpBytes = (VstInt32) size;
                     ev->ev.sysexEvent.sysexDump = (char *) ::malloc(size);
 
-                    get_bytes(ev->ev.sysexEvent.sysexDump, size);
+                    ReadBytes(ev->ev.sysexEvent.sysexDump, size);
 
-                    put_code(0);
+                    WriteCode(0);
                 }
                 break;
             }
@@ -732,7 +740,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
                     if (Effect[1] == nullptr)
                     {
-                        code = 11;
+                        Code = 11;
                         goto exit;
                     }
 
@@ -748,7 +756,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
                     if (Effect[2] == nullptr)
                     {
-                        code = 11;
+                        Code = 11;
                         goto exit;
                     }
 
@@ -797,9 +805,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                         for (uint32_t i = 0; i < (uint32_t) Effect[0]->numOutputs * 3; ++i)
                             float_list_out[i] = float_out + (BUFFER_SIZE * i);
 
-                        memset(float_null, 0, BUFFER_SIZE * sizeof(float));
+                        ::memset(float_null, 0, BUFFER_SIZE * sizeof(float));
 
-                        size_t NewSize = BUFFER_SIZE * max_num_outputs * sizeof(float);
+                        size_t NewSize = BUFFER_SIZE * MaxOutputs * sizeof(float);
 
                         sample_buffer.resize(NewSize);
                     }
@@ -835,11 +843,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
                 VstEvents * events[3] = { 0 };
 
-                if (_EventHead)
+                if (_EventsHead)
                 {
                     unsigned event_count[3] = { 0 };
 
-                    myVstEvent * ev = _EventHead;
+                    vst_event_t * ev = _EventsHead;
 
                     while (ev)
                     {
@@ -856,7 +864,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                         events[0]->numEvents = (VstInt32) event_count[0];
                         events[0]->reserved = 0;
 
-                        ev = _EventHead;
+                        ev = _EventsHead;
 
                         for (unsigned i = 0; ev;)
                         {
@@ -877,7 +885,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                         events[1]->numEvents = (VstInt32) event_count[1];
                         events[1]->reserved = 0;
 
-                        ev = _EventHead;
+                        ev = _EventsHead;
 
                         for (unsigned i = 0; ev;)
                         {
@@ -898,7 +906,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                         events[2]->numEvents = (VstInt32) event_count[2];
                         events[2]->reserved = 0;
 
-                        ev = _EventHead;
+                        ev = _EventsHead;
 
                         for (unsigned i = 0; ev;)
                         {
@@ -928,9 +936,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                     }
                 }
 
-                uint32_t SampleCount = get_code();
+                uint32_t SampleCount = ReadCode();
 
-                put_code(0);
+                WriteCode(0);
 
                 if (float_list_out)
                 {
@@ -947,7 +955,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
                         float * out = sample_buffer.data();
 
-                        if (max_num_outputs == 2)
+                        if (MaxOutputs == 2)
                         {
                             for (unsigned i = 0; i < SamplesToDo; ++i)
                             {
@@ -978,7 +986,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                             }
                         }
 
-                        put_bytes(sample_buffer.data(), SamplesToDo * max_num_outputs * sizeof(float));
+                        WriteBytes(sample_buffer.data(), SamplesToDo * MaxOutputs * sizeof(float));
 
                         SampleCount -= SamplesToDo;
                     }
@@ -993,22 +1001,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                 if (events[2])
                     free(events[2]);
 
-                freeChain();
+                FreeEvents();
                 break;
             }
 
             case 10: // Send MIDI Event, with timestamp
             {
-                myVstEvent * ev = (myVstEvent *) calloc(sizeof(myVstEvent), 1);
+                vst_event_t * ev = (vst_event_t *) calloc(sizeof(vst_event_t), 1);
 
-                if (evTail) evTail->next = ev;
+                if (_EventsTail) _EventsTail->next = ev;
 
-                evTail = ev;
+                _EventsTail = ev;
 
-                if (!_EventHead) _EventHead = ev;
+                if (!_EventsHead) _EventsHead = ev;
 
-                uint32_t b = get_code();
-                uint32_t timestamp = get_code();
+                uint32_t b = ReadCode();
+                uint32_t timestamp = ReadCode();
 
                 ev->port = (b & 0x7F000000) >> 24;
 
@@ -1019,25 +1027,25 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                 memcpy(&ev->ev.midiEvent.midiData, &b, 3);
                 ev->ev.midiEvent.deltaFrames = (VstInt32) timestamp;
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
             case 11: // Send System Exclusive Event, with timestamp
             {
-                myVstEvent * ev = (myVstEvent *) calloc(sizeof(myVstEvent), 1);
+                vst_event_t * ev = (vst_event_t *) calloc(sizeof(vst_event_t), 1);
 
-                if (evTail) evTail->next = ev;
+                if (_EventsTail) _EventsTail->next = ev;
 
-                evTail = ev;
+                _EventsTail = ev;
 
-                if (!_EventHead) _EventHead = ev;
+                if (!_EventsHead) _EventsHead = ev;
 
-                uint32_t size = get_code();
+                uint32_t size = ReadCode();
                 uint32_t port = size >> 24;
                 size &= 0xFFFFFF;
 
-                uint32_t timestamp = get_code();
+                uint32_t timestamp = ReadCode();
 
                 ev->port = port;
                 if (ev->port > 2) ev->port = 0;
@@ -1047,15 +1055,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                 ev->ev.sysexEvent.sysexDump = (char *) malloc(size);
                 ev->ev.sysexEvent.deltaFrames = (VstInt32) timestamp;
 
-                get_bytes(ev->ev.sysexEvent.sysexDump, size);
+                ReadBytes(ev->ev.sysexEvent.sysexDump, size);
 
-                put_code(0);
+                WriteCode(0);
                 break;
             }
 
             default:
             {
-                code = 12;
+                Code = 12;
                 goto exit;
             }
         }
@@ -1086,28 +1094,28 @@ exit:
         Effect[0]->dispatcher(Effect[0], effClose, 0, 0, 0, 0);
     }
 
-    freeChain();
+    FreeEvents();
 
-    if (hDll)
-        FreeLibrary(hDll);
+    if (hModule)
+        ::FreeLibrary(hModule);
 
-    CoUninitialize();
+    ::CoUninitialize();
 
-    if (dll_dir)
-        free(dll_dir);
+    if (_DirectoryPath)
+        free(_DirectoryPath);
 
     if (argv)
-        LocalFree(argv);
+        ::LocalFree(argv);
 
-    put_code(code);
+    WriteCode(Code);
 
-    if (null_file)
+    if (_hFileNUL)
     {
-        CloseHandle(null_file);
+        ::CloseHandle(_hFileNUL);
 
-        SetStdHandle(STD_INPUT_HANDLE, pipe_in);
-        SetStdHandle(STD_OUTPUT_HANDLE, pipe_out);
+        ::SetStdHandle(STD_INPUT_HANDLE, _hPipeIn);
+        ::SetStdHandle(STD_OUTPUT_HANDLE, _hPipeOut);
     }
 
-    return (int) code;
+    return (int) Code;
 }

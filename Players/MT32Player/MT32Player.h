@@ -1,5 +1,5 @@
 
-/** $VER: MT32Player.h (2024.09.29) **/
+/** $VER: MT32Player.h (2025.07.12) **/
 
 #pragma once
 
@@ -10,6 +10,10 @@
 
 #include <mt32emu.h>
 
+#include <set>
+
+#include "MT32ReportHandler.h"
+
 namespace foobar2000_io
 {
     class abort_callback;
@@ -17,10 +21,11 @@ namespace foobar2000_io
 
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 class MT32Player : public player_t
 {
 public:
-    MT32Player(bool gm = false, unsigned gm_set = 0);
+    MT32Player(bool isMT32, uint32_t gmSet);
     virtual ~MT32Player();
 
     virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept override
@@ -28,36 +33,41 @@ public:
         _AbortCallback = abortHandler;
     }
 
-    void SetBasePath(const char * in);
+    void SetROMDirectory(const fs::path & directoryPath) noexcept;
 
-    bool IsConfigValid();
+//  bool IsConfigValid() noexcept;
 
-    static int GetSampleRate();
+    uint32_t GetSampleRate() noexcept;
 
 protected:
-    #pragma region("MIDIPlayer")
     virtual bool Startup() override;
     virtual void Shutdown() override;
     virtual void Render(audio_sample *, uint32_t) override;
+    virtual bool Reset() override;
+
+    virtual uint8_t GetPortCount() const noexcept override { return 1; };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
-    #pragma endregion
 
 private:
-    void _reset();
+    bool LoadROMs(const std::string & machineID) noexcept;
+    bool LoadROMs(const std::vector<std::string> & machineIDs) noexcept;
+    bool LoadMachineROMs(const std::string & machineID);
 
-    MT32Emu::File * openFile(const char * filename);
+    std::vector<std::string> GetMatchingMachineIDs(const std::string & machineID);
+    std::set<std::string> IdentifyControlROMs();
 
 private:
-    MT32Emu::Synth * _Synth;
-    pfc::string8 _BasePathName;
+    fs::path _ROMDirectory;
+
+    ReportHandler _ReportHandler;
+    MT32Emu::Service _Service;
+
+    bool _IsMT32;
+    uint32_t _GMSet;
+
     foobar2000_io::abort_callback * _AbortCallback;
-
-    MT32Emu::File * controlRomFile, * pcmRomFile;
-    const MT32Emu::ROMImage * controlRom, * pcmRom;
-
-    unsigned int _GMSet;
-    bool _IsGM;
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

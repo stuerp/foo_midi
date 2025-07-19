@@ -1,7 +1,7 @@
 
 /** $VER: SecretSauce.cpp (2024.05.20) P. Stuer **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/hasher_md5.h>
@@ -72,14 +72,12 @@ bool SecretSauce::Exists() noexcept
     FILE * fp = nullptr;
 
     {
-        pfc::string8 PathName;
-
-        AdvCfgSecretSauceDirectoryPath.get(PathName);
+        pfc::string PathName = CfgSecretSauceDirectoryPath;
 
         if (PathName.is_empty())
             return false;
 
-        pfc::string8 FilePath = pfc::io::path::combine(PathName, _DLLFileName);
+        pfc::string FilePath = pfc::io::path::combine(PathName, _DLLFileName);
 
         pfc::stringcvt::string_os_from_utf8 FilePathW(FilePath);
 

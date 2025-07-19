@@ -1,7 +1,7 @@
 
-/** $VER: AlbumArt.cpp (2024.08.17) **/
+/** $VER: AlbumArt.cpp (2025.06.09) **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "InputDecoder.h"
 
@@ -93,17 +93,20 @@ public:
                 CfgWriteSysExNames,
                 CfgExtendLoops,
                 CfgWolfteamLoopMode,
-                CfgKeepDummyChannels,
+                CfgKeepMutedChannels,
                 CfgIncludeControlData,
 
-                (uint16_t) CfgDefaultTempo
+                (uint16_t) CfgDefaultTempo,
+
+                true, // End of Track is required
+                CfgDetectExtraDrum
             );
 
             midi::processor_t::Process(Object, pfc::wideFromUTF8(filePath), Container, Options);
         }
         catch (std::exception & e)
         {
-            pfc::string8 Message = "Failed to read MIDI file: ";
+            pfc::string Message = "Failed to read MIDI file: ";
 
             throw exception_io_data(Message + e.what());
         }

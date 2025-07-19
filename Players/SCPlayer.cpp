@@ -1,7 +1,7 @@
 
-/** $VER: SCPlayer.cpp (2025.03.16) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2025.07.03) Secret Sauce **/
 
-#include "framework.h"
+#include "pch.h"
 
 #include "SCPlayer.h"
 
@@ -13,9 +13,9 @@
 
 #pragma region Public
 
-SCPlayer::SCPlayer() noexcept : player_t()
+SCPlayer::SCPlayer() noexcept : player_t(),  _Samples()
 {
-    _IsInitialized = false;
+    _IsStarted = false;
     _COMInitialisationCount = 0;
 
     for (size_t i = 0; i < _countof(_hProcess); ++i)
@@ -44,15 +44,15 @@ SCPlayer::~SCPlayer()
         _Samples = nullptr;
     }
 
-    _RootPathName.clear();
+    _RootPath.clear();
 }
 
 /// <summary>
 /// Sets the root path name of Secret Sauce.
 /// </summary>
-void SCPlayer::SetRootPath(const char * rootPathName)
+void SCPlayer::SetRootPath(const fs::path & directoryPath)
 {
-    _RootPathName = rootPathName;
+    _RootPath = directoryPath;
 }
 
 #pragma endregion
@@ -64,17 +64,15 @@ void SCPlayer::SetRootPath(const char * rootPathName)
 /// </summary>
 bool SCPlayer::Startup()
 {
-    pfc::string8 path;
-
-    if (_IsInitialized)
+    if (_IsStarted)
         return true;
 
-    if (_RootPathName.empty())
+    if (_RootPath.empty())
         return false;
 
-    path = pfc::io::path::combine(_RootPathName.c_str(), _DLLFileName);
+    fs::path FilePath = _RootPath / _DLLFileName;
 
-    if (!StartHosts(path))
+    if (!StartHosts(FilePath))
         return false;
 
     for (uint32_t i = 0; i < _countof(_hProcess); ++i)
@@ -87,9 +85,9 @@ bool SCPlayer::Startup()
             return false;
     }
 
-    _IsInitialized = true;
+    _IsStarted = true;
 
-    Configure(_MIDIFlavor, _FilterEffects);
+    Reset();
 
     return true;
 }
@@ -102,7 +100,7 @@ void SCPlayer::Shutdown()
     for (uint32_t i = 0; i < _countof(_hProcess); ++i)
         StopHost(i);
 
-    _IsInitialized = false;
+    _IsStarted = false;
 }
 
 /// <summary>
@@ -131,6 +129,17 @@ void SCPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
         sampleData += ToDo * 2;
         sampleCount -= ToDo;
     }
+}
+
+/// <summary>
+/// Resets the player.
+/// </summary>
+bool SCPlayer::Reset()
+{
+    for (uint8_t i = 0; i < MaxPorts; ++i)
+        ResetPort(i, 0);
+
+    return true;
 }
 
 /// <summary>
@@ -214,9 +223,9 @@ void SCPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
 /// <summary>
 /// Starts the host processes.
 /// </summary>
-bool SCPlayer::StartHosts(const char * filePath)
+bool SCPlayer::StartHosts(const fs::path & filePath)
 {
-    if ((filePath == nullptr) || (filePath[0] == '\0'))
+    if (filePath.empty())
         return false;
 
     _FilePath = filePath;
@@ -279,7 +288,7 @@ bool SCPlayer::StartHost(uint32_t portNumber)
         TRUE,
     };
 
-    pfc::string8 InPipeName, OutPipeName;
+    pfc::string InPipeName, OutPipeName;
 
     {
         if (!CreatePipeName(InPipeName) || !CreatePipeName(OutPipeName))
@@ -338,20 +347,24 @@ bool SCPlayer::StartHost(uint32_t portNumber)
 
         CommandLine += (_ProcessorArchitecture == 64) ? "scpipe64.exe" : "scpipe32.exe";
         CommandLine += "\" \"";
-        CommandLine += _FilePath;
+        CommandLine += (const char *) _FilePath.u8string().c_str();
         CommandLine += "\"";
     }
 
     {
-        STARTUPINFO si = { sizeof(si) };
+        STARTUPINFO si =
+        {
+            .cb = sizeof(si),
 
-        si.hStdInput = _hPipeInRead[portNumber];
-        si.hStdOutput = _hPipeOutWrite[portNumber];
-        si.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
-    //  si.wShowWindow = SW_HIDE;
-        si.dwFlags |= STARTF_USESTDHANDLES; // | STARTF_USESHOWWINDOW;
+            .dwFlags = STARTF_USESTDHANDLES, // | STARTF_USESHOWWINDOW;
+        //  .wShowWindow = SW_HIDE,
 
-        PROCESS_INFORMATION pi;
+            .hStdInput = _hPipeInRead[portNumber],
+            .hStdOutput = _hPipeOutWrite[portNumber],
+            .hStdError = ::GetStdHandle(STD_ERROR_HANDLE),
+        };
+
+        PROCESS_INFORMATION pi = { };
 
         if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
         {
