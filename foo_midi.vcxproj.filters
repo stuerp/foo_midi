@@ -28,7 +28,7 @@
     <ClCompile Include="Infrastructure\Preferences.cpp" />
     <ClCompile Include="Infrastructure\PreferencesPaths.cpp" />
     <ClCompile Include="MIDI\KaraokeProcessor.cpp" />
-    <ClCompile Include="MIDI\SoundFontCache.cpp" />
+    <ClCompile Include="MIDI\SoundfontCache.cpp" />
     <ClCompile Include="Players\FSPlayer.cpp" />
     <ClCompile Include="Players\MCIPlayer.cpp" />
     <ClCompile Include="pch.cpp" />
@@ -37,7 +37,7 @@
     <ClCompile Include="Infrastructure\VSTiHost.cpp" />
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Exception.cpp" />
-    <ClCompile Include="Infrastructure\SoundFonts.cpp" />
+    <ClCompile Include="Infrastructure\Soundfonts.cpp" />
     <ClCompile Include="Players\FMMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Channels.cpp" />
     <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
@@ -148,7 +148,7 @@
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="MIDI\KaraokeProcessor.h" />
     <ClInclude Include="Infrastructure\Exception.h" />
-    <ClInclude Include="MIDI\SoundFontCache.h" />
+    <ClInclude Include="MIDI\SoundfontCache.h" />
     <ClInclude Include="Players\FSPlayer.h" />
     <ClInclude Include="Infrastructure\FS.h" />
     <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\audio.h" />
@@ -191,7 +191,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Players\SecretSauce.h" />
     <ClInclude Include="Infrastructure\VSTiHost.h" />
-    <ClInclude Include="Players\SoundFont.h" />
+    <ClInclude Include="Players\Soundfont.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\FMMPlayer.h" />
     <ClInclude Include="Infrastructure\Channels.h" />

@@ -7,7 +7,7 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "Player.h"
-#include "SoundFont.h"
+#include "Soundfont.h"
 #include "Exception.h"
 
 #include "FS.h"

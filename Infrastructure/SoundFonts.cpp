@@ -1,5 +1,5 @@
  
-/** $VER: SoundFonts.cpp (2025.07.12) - Support functions for working with sound font files **/
+/** $VER: Soundfonts.cpp (2025.07.19) - Support functions for working with soundfont files **/
 
 #include "pch.h"
 
@@ -8,30 +8,19 @@
 
 #pragma hdrstop
 
-static bool GetSoundFontFilePath(const pfc::string & filePath, pfc::string & soundFontPath, abort_callback & abortHandler) noexcept;
-static bool WriteSoundFontFile(const std::vector<uint8_t> data, bool isDLS, std::string & filePath) noexcept;
+static bool GetSoundfontFilePath(const pfc::string & filePath, pfc::string & soundFontPath, abort_callback & abortHandler) noexcept;
+static bool WriteSoundfontFile(const std::vector<uint8_t> data, bool isDLS, std::string & filePath) noexcept;
 
 /// <summary>
-/// Gets the sound fonts and adjusts the player type, if necessary.
+/// Gets the soundfonts and adjusts the player type, if necessary.
 /// </summary>
-void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundFontFilePath, abort_callback & abortHandler)
+void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundfontFilePath, abort_callback & abortHandler)
 {
-    // Delete all embedded sound font files from a previous run.
-    {
-        for (const auto & sf : _Soundfonts)
-        {
-            if (sf.IsEmbedded())
-                ::DeleteFileA(sf.FilePath().c_str());
-        }
-
-        _Soundfonts.clear();
-    }
-
-    /** IMPORTANT: The following sequence of adding sound fonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
-    bool HasNonDefaultSoundFonts = false; // True if an embedded or named sound font is found.
+    /** IMPORTANT: The following sequence of adding soundfonts is optimal for BASSMIDI. For FluidSynth, we'll reverse it. **/
+    bool HasNonDefaultSoundfonts = false; // True if an embedded or named soundfont is found.
     bool HasDLS = false;
 
-    // First, add the embedded sound font, if present.
+    // First, add the embedded soundfont, if present.
     {
         const auto & Data = _Container.GetSoundfontData();
 
@@ -41,21 +30,21 @@ void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundFontFilePath, 
 
             std::string FilePath;
 
-            if (WriteSoundFontFile(Data, IsDLS, FilePath))
+            if (WriteSoundfontFile(Data, IsDLS, FilePath))
             {
                 _Soundfonts.push_back({ FilePath, 1.f, _Container.GetBankOffset(), true, IsDLS });
 
-                HasNonDefaultSoundFonts = true;
+                HasNonDefaultSoundfonts = true;
             }
         }
     }
         
-    // Then, add the sound font named like the MIDI file, if present.
+    // Then, add the soundfont named like the MIDI file, if present.
     {
         pfc::string FilePath = _FilePath;
-        pfc::string TempSoundFontFilePath;
+        pfc::string TempSoundfontFilePath;
 
-        bool FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
+        bool FoundSoundFile = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
 
         if (!FoundSoundFile)
         {
@@ -65,46 +54,46 @@ void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundFontFilePath, 
             {
                 FilePath.truncate(FileExtensionIndex);
 
-                FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
+                FoundSoundFile = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
             }
 
             if (!FoundSoundFile)
             {
                 FilePath.truncate(FilePath.scan_filename());
 
-                TempSoundFontFilePath = "";
-                TempSoundFontFilePath.add_byte(FilePath[FilePath.length() - 1]);
+                TempSoundfontFilePath = "";
+                TempSoundfontFilePath.add_byte(FilePath[FilePath.length() - 1]);
                 FilePath.truncate(FilePath.length() - 1);
 
                 size_t FileNameIndex = FilePath.scan_filename();
 
                 if (FileNameIndex != pfc::infinite_size)
                 {
-                    FilePath += TempSoundFontFilePath;
+                    FilePath += TempSoundfontFilePath;
                     FilePath.add_string(&FilePath[FileNameIndex], FilePath.length() - FileNameIndex - 1);
 
-                    FoundSoundFile = GetSoundFontFilePath(FilePath, TempSoundFontFilePath, abortHandler);
+                    FoundSoundFile = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
                 }
             }
         }
 
         if (FoundSoundFile)
         {
-            bool IsDLS = TempSoundFontFilePath.toLower().endsWith(".dls");
+            bool IsDLS = TempSoundfontFilePath.toLower().endsWith(".dls");
 
-            _Soundfonts.push_back({ TempSoundFontFilePath.c_str(), 1.0f, _Container.GetBankOffset(), false, IsDLS });
+            _Soundfonts.push_back({ TempSoundfontFilePath.c_str(), 1.0f, _Container.GetBankOffset(), false, IsDLS });
 
-            HasNonDefaultSoundFonts = true;
+            HasNonDefaultSoundfonts = true;
         }
     }
 
-    // Finally, add the default sound font.
+    // Finally, add the default soundfont.
     {
-        if (!defaultSoundFontFilePath.isEmpty())
+        if (!defaultSoundfontFilePath.isEmpty())
         {
-            bool IsDLS = defaultSoundFontFilePath.toLower().endsWith(".dls");
+            bool IsDLS = defaultSoundfontFilePath.toLower().endsWith(".dls");
 
-            _Soundfonts.push_back({ defaultSoundFontFilePath.c_str(), _BASSMIDIVolume, 0, false, IsDLS });
+            _Soundfonts.push_back({ defaultSoundfontFilePath.c_str(), _BASSMIDIVolume, 0, false, IsDLS });
         }
     }
 
@@ -117,27 +106,27 @@ void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundFontFilePath, 
         }
     }
 
-    // Force the use of a sound font player if an embedded or named sound font was found.
-    if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundFonts && !_Soundfonts.empty())
+    // Force the use of a soundfont player if an embedded or named soundfont was found.
+    if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundfonts && !_Soundfonts.empty())
     {
         _PlayerType = (FluidSynth::API::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
     }
 
-    // Show which sound fonts we'll be using in the console.
+    // Show which soundfonts we'll be using in the console.
     if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
     {
         if (_PlayerType == PlayerType::FluidSynth)
             std::reverse(_Soundfonts.begin(), _Soundfonts.end());
 
         for (const auto & sf : _Soundfonts)
-            Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using sound font \"%s\" with bank offset %d.", sf.FilePath().c_str(), sf.BankOffset());
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using soundfont \"%s\" with bank offset %d.", sf.FilePath().c_str(), sf.BankOffset());
     }
 }
 
 /// <summary>
-/// Gets the path name of a sound font file with the same base name as the specified MIDI file, if any.
+/// Gets the path name of a soundfont file with the same base name as the specified MIDI file, if any.
 /// </summary>
-bool GetSoundFontFilePath(const pfc::string & filePath, pfc::string & soundFontPath, abort_callback & abortHandler) noexcept
+bool GetSoundfontFilePath(const pfc::string & filePath, pfc::string & soundfontPath, abort_callback & abortHandler) noexcept
 {
     static const char * FileExtensions[] =
     {
@@ -150,21 +139,21 @@ bool GetSoundFontFilePath(const pfc::string & filePath, pfc::string & soundFontP
         "dls"
     };
 
-    soundFontPath = filePath;
+    soundfontPath = filePath;
 
-    const char * Period = ::strrchr(soundFontPath.c_str(), '.');
+    const char * Period = ::strrchr(soundfontPath.c_str(), '.');
 
     if (Period == nullptr)
         return false;
 
     for (const char * & FileExtension : FileExtensions)
     {
-        soundFontPath.truncate((Period - soundFontPath.c_str()) + (size_t) 1);
-        soundFontPath += FileExtension;
+        soundfontPath.truncate((Period - soundfontPath.c_str()) + (size_t) 1);
+        soundfontPath += FileExtension;
 
         try
         {
-            if (filesystem::g_exists(soundFontPath, abortHandler))
+            if (filesystem::g_exists(soundfontPath, abortHandler))
                 return true;
         }
         catch(...) {};
@@ -174,9 +163,9 @@ bool GetSoundFontFilePath(const pfc::string & filePath, pfc::string & soundFontP
 }
 
 /// <summary>
-/// Writes a buffer containing sound font data to a temporary file.
+/// Writes a buffer containing soundfont data to a temporary file.
 /// </summary>
-bool WriteSoundFontFile(const std::vector<uint8_t> data, bool isDLS, std::string & filePath) noexcept
+bool WriteSoundfontFile(const std::vector<uint8_t> data, bool isDLS, std::string & filePath) noexcept
 {
     char TempPath[MAX_PATH] = {};
 

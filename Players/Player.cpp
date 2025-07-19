@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2025.07.15) **/
+/** $VER: Player.cpp (2025.07.16) **/
 
 #include "pch.h"
 
@@ -16,11 +16,11 @@ player_t::player_t() noexcept
 {
     _SampleRate = 1'000;
 
-    _Time = 0;
-    _TotalTime = 0;
-    _LoopBeginTime = 0;
+    _FrameIndex = 0;
+    _FrameCount = 0;
+    _FramesRemaining = 0;
 
-    _TimeRemaining = 0;
+    _FrameIndexLoopBegin = 0;
 
     _IsStarted = false;
 
@@ -51,31 +51,31 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
 
         _MessageIndex = 0;
 
-        container.SerializeAsStream(subSongIndex, _Messages, _SysExMap, _Ports, _LoopBeginIndex, _LoopEndIndex, cleanFlags);
+        container.SerializeAsStream(subSongIndex, _Messages, _SysExMap, _Ports, _MessageIndexLoopBegin, _LoopEndIndex, cleanFlags);
 
         if (_Messages.size() == 0)
             return false;
     }
 
-    // Initialize the sample stream.
+    // Initialize the sample stream. We get the values in ms but SetSampleRate() converts them to frames.
     {
-        _Time = 0;
-        _TotalTime = container.GetDuration(subSongIndex, true);
+        _FrameIndex = 0;
+        _FrameCount = container.GetDuration(subSongIndex, true);
 
         if (_LoopType == LoopType::NeverLoopAddDecayTime)
-            _TotalTime += _DecayTime;
+            _FrameCount += _DecayTime;
         else
         if (_LoopType >= LoopType::LoopWhenDetectedAndFade)
         {
-            _LoopBeginTime = container.GetLoopBeginTimestamp(subSongIndex, true);
+            _FrameIndexLoopBegin = container.GetLoopBeginTimestamp(subSongIndex, true);
 
-            if (_LoopBeginTime == ~0UL)
-                _LoopBeginTime = 0;
+            if (_FrameIndexLoopBegin == ~0UL)
+                _FrameIndexLoopBegin = 0;
 
             uint32_t LoopEndTime = container.GetLoopEndTimestamp(subSongIndex, true);
 
             if (LoopEndTime == ~0UL)
-                LoopEndTime =  _TotalTime;
+                LoopEndTime =  _FrameCount;
 
             // FIXME: I don't have a clue what this does.
             {
@@ -111,7 +111,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
 
                     _Messages.resize(i);
 
-                    _TotalTime = std::max(LoopEndTime - 1, _Messages[i - 1].Time);
+                    _FrameCount = std::max(LoopEndTime - 1, _Messages[i - 1].Time);
                 }
 
                 for (size_t i = 0; i < NoteOnSize; ++i)
@@ -122,17 +122,18 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
                         {
                             if (NoteOn[i] & (1 << j))
                             {
-                                _Messages.push_back(midi::message_t(_TotalTime, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                                _Messages.push_back(midi::message_t(_FrameCount, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
                             }
                         }
                     }
                 }
 
-                _TotalTime = LoopEndTime;
+                _FrameCount = LoopEndTime;
             }
         }
     }
 
+    // Convert from ms to frames.
     {
         if (_SampleRate != 1'000)
         {
@@ -162,7 +163,7 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
         return 0;
 
 #ifdef HAVE_FOO_VIS_MIDI
-    uint32_t OldPosition = _Time;
+    uint32_t OldFrameIndex = _FrameIndex;
 #endif
 
 #ifdef _DEBUG
@@ -175,9 +176,9 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
     uint32_t FrameIndex = 0;
     uint32_t BlockToDo = 0;
 
-    while ((FrameIndex < frameCount) && (_TimeRemaining != 0))
+    while ((FrameIndex < frameCount) && (_FramesRemaining != 0))
     {
-        uint32_t Remainder = _TimeRemaining;
+        uint32_t Remainder = _FramesRemaining;
 
         if (Remainder > frameCount - FrameIndex)
             Remainder = frameCount - FrameIndex;
@@ -187,7 +188,7 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
 
         if (Remainder < BlockSize)
         {
-            _TimeRemaining = 0;
+            _FramesRemaining = 0;
             BlockToDo = Remainder;
             break;
         }
@@ -196,26 +197,26 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
             Render(frameData + (FrameIndex * ChannelCount), Remainder);
 
             FrameIndex += Remainder;
-            _Time += Remainder;
+            _FrameIndex += Remainder;
         }
 
-        _TimeRemaining -= Remainder;
+        _FramesRemaining -= Remainder;
     }
 
     while (FrameIndex < frameCount)
     {
-        uint32_t Remainder = _TotalTime - _Time;
+        uint32_t Remainder = _FrameCount - _FrameIndex;
 
         if (Remainder > frameCount - FrameIndex)
             Remainder = frameCount - FrameIndex;
 
-        const uint32_t NewPosition = _Time + Remainder;
+        const uint32_t NewFrameIndex = _FrameIndex + Remainder;
 
         {
             // Determine how many messages to process to reach the new position in the sample stream.
             size_t NewMessageIndex = _MessageIndex;
 
-            while ((NewMessageIndex < _Messages.size()) && (_Messages[NewMessageIndex].Time < NewPosition))
+            while ((NewMessageIndex < _Messages.size()) && (_Messages[NewMessageIndex].Time < NewFrameIndex))
                 NewMessageIndex++;
 
             // Process MIDI events until we've generated enough samples to reach the new position in the sample stream.
@@ -223,55 +224,56 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
             {
                 for (; _MessageIndex < NewMessageIndex; ++_MessageIndex)
                 {
-                    const midi::message_t & mse = _Messages[_MessageIndex];
+                    const midi::message_t & m = _Messages[_MessageIndex];
 
                 #ifdef HAVE_FOO_VIS_MIDI
                     if (_MusicKeyboard.is_valid())
-                        _MusicKeyboard->ProcessMessage(mse.Data, mse.Time);
+                        _MusicKeyboard->ProcessMessage(m.Data, m.Time);
                 #endif
 
-                    int64_t ToDo = (int64_t) mse.Time - (int64_t) _Time - (int64_t) BlockToDo;
+                    int64_t ToDo = (int64_t) m.Time - (int64_t) _FrameIndex - (int64_t) BlockToDo;
 
                     if (ToDo > 0)
                     {
                         if (ToDo > (int64_t) (frameCount - FrameIndex))
                         {
-                            _TimeRemaining = (uint32_t) (ToDo - (int64_t) (frameCount - FrameIndex));
+                            _FramesRemaining = (uint32_t) (ToDo - (int64_t) (frameCount - FrameIndex));
                             ToDo = (int64_t) (frameCount - FrameIndex);
                         }
 
                         if ((ToDo > 0) && (BlockSize == 0))
                         {
-                            Render(frameData + (FrameIndex * 2), (uint32_t) ToDo);
+                            Render(frameData + (FrameIndex * ChannelCount), (uint32_t) ToDo);
 
                             FrameIndex += (uint32_t) ToDo;
-                            _Time += (uint32_t) ToDo;
+                            _FrameIndex += (uint32_t) ToDo;
                         }
 
-                        if (_TimeRemaining != 0)
+                        if (_FramesRemaining != 0)
                         {
-                            _TimeRemaining += BlockToDo;
+                            _FramesRemaining += BlockToDo;
 
                             return FrameIndex;
                         }
                     }
 
                     if (BlockSize == 0)
-                        SendEventFiltered(mse.Data);
+                        SendEventFiltered(m.Data);
                     else
                     {
                         BlockToDo += (uint32_t) ToDo;
 
                         while (BlockToDo >= BlockSize)
                         {
-                            Render(frameData + (FrameIndex * 2), BlockSize);
+                            Render(frameData + (FrameIndex * ChannelCount), BlockSize);
 
                             FrameIndex += BlockSize;
+                            _FrameIndex += BlockSize;
+
                             BlockToDo -= BlockSize;
-                            _Time += BlockSize;
                         }
 
-                        SendEventFiltered(mse.Data, BlockToDo);
+                        SendEventFiltered(m.Data, BlockToDo);
                     }
                 }
             }
@@ -279,7 +281,7 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
 
         if (FrameIndex < frameCount)
         {
-            Remainder = ((_MessageIndex < _Messages.size()) ? _Messages[_MessageIndex].Time : _TotalTime) - _Time;
+            Remainder = ((_MessageIndex < _Messages.size()) ? _Messages[_MessageIndex].Time : _FrameCount) - _FrameIndex;
 
             if (BlockSize != 0)
                 BlockToDo = Remainder;
@@ -298,7 +300,7 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
                     Render(frameData + (FrameIndex * 2), Remainder);
 
                     FrameIndex += Remainder;
-                    _Time += Remainder;
+                    _FrameIndex += Remainder;
                 }
 
                 if (BlockSize != 0)
@@ -307,10 +309,10 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
         }
 
         if (BlockSize == 0)
-            _Time = NewPosition;
+            _FrameIndex = NewFrameIndex;
 
         // Have we reached the end of the song?
-        if (NewPosition >= _TotalTime)
+        if (NewFrameIndex >= _FrameCount)
         {
             // Process any remaining messages.
             for (; _MessageIndex < _Messages.size(); ++_MessageIndex)
@@ -323,10 +325,10 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
 
             if ((_LoopType == LoopType::LoopWhenDetectedAndFade) || (_LoopType == LoopType::LoopWhenDetectedForever))
             {
-                if (_LoopBeginIndex != ~0)
+                if (_MessageIndexLoopBegin != ~0)
                 {
-                    _MessageIndex = _LoopBeginIndex;
-                    _Time = _LoopBeginTime;
+                    _MessageIndex = _MessageIndexLoopBegin;
+                    _FrameIndex = _FrameIndexLoopBegin;
                 }
                 else
                     break;
@@ -335,42 +337,41 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
             if ((_LoopType == LoopType::RepeatAndFade) || (_LoopType == LoopType::RepeatForever))
             {
                 _MessageIndex = 0;
-                _Time = 0;
+                _FrameIndex = 0;
             }
             else
                 break;
         }
     }
 
-    _TimeRemaining = BlockToDo;
+    _FramesRemaining = BlockToDo;
 
 #ifdef HAVE_FOO_VIS_MIDI
     if (_MusicKeyboard.is_valid())
-        _MusicKeyboard->SetPosition(OldPosition);
+        _MusicKeyboard->SetPosition(OldFrameIndex);
 #endif
 
     return FrameIndex;
 }
 
 /// <summary>
-/// Seeks to the specified time (in samples)
+/// Seeks to the specified frame.
 /// </summary>
-void player_t::Seek(uint32_t timeInSamples)
+void player_t::Seek(uint32_t newFrameIndex)
 {
-    if (timeInSamples >= _TotalTime)
+    if (newFrameIndex >= _FrameCount)
     {
         if (_LoopType >= LoopType::LoopWhenDetectedAndFade)
         {
-            while (timeInSamples >= _TotalTime)
-                timeInSamples -= _TotalTime - _LoopBeginTime;
+            while (newFrameIndex >= _FrameCount)
+                newFrameIndex -= _FrameCount - _FrameIndexLoopBegin;
         }
         else
-        {
-            timeInSamples = _TotalTime;
-        }
+            newFrameIndex = _FrameCount;
     }
 
-    if (_Time > timeInSamples)
+    // Seek backwards?
+    if (newFrameIndex < _FrameIndex)
     {
         _MessageIndex = 0;
 
@@ -381,126 +382,136 @@ void player_t::Seek(uint32_t timeInSamples)
     if (!Startup())
         return;
 
-    _Time = timeInSamples;
+    _FrameIndex = newFrameIndex;
 
+    // Render all the missing samples.
     size_t OldMessageIndex = _MessageIndex;
 
+    // Find the message that corresponds with the frame index.
     {
-        // Find the message that corresponds with the seek time.
-        for (; (_MessageIndex < _Messages.size()) && (_Messages[_MessageIndex].Time < _Time); _MessageIndex++)
+        for (; (_MessageIndex < _Messages.size()) && (_Messages[_MessageIndex].Time < _FrameIndex); _MessageIndex++)
             ;
 
         if (_MessageIndex == _Messages.size())
-            _TimeRemaining = _TotalTime - _Time;
+            _FramesRemaining = _FrameCount - _FrameIndex;
         else
-            _TimeRemaining = _Messages[_MessageIndex].Time - _Time;
+            _FramesRemaining = _Messages[_MessageIndex].Time - _FrameIndex;
     }
 
     if (_MessageIndex <= OldMessageIndex)
         return;
 
-    std::vector<midi::message_t> FillerEvents(_MessageIndex - OldMessageIndex);
+    std::vector<midi::message_t> FillerMessages(_MessageIndex - OldMessageIndex);
 
-    FillerEvents.assign(&_Messages[OldMessageIndex], &_Messages[_MessageIndex]);
+    if (_MessageIndex >= _Messages.size())
+        _MessageIndex--;
 
-    for (size_t i = 0; i < FillerEvents.size(); ++i)
+    // Generate filler messages.
     {
-        midi::message_t & mse1 = FillerEvents[i];
+        FillerMessages.assign(&_Messages[OldMessageIndex], &_Messages[_MessageIndex]);
 
-        if ((mse1.Data & 0x800000F0) == 0x90 && (mse1.Data & 0x00FF0000)) // note on
+        for (size_t i = 0; i < FillerMessages.size(); ++i)
         {
-            if ((mse1.Data & 0x0F) == 9) // hax
+            midi::message_t & mse1 = FillerMessages[i];
+
+            if ((mse1.Data & 0x800000F0) == 0x90 && (mse1.Data & 0x00FF0000)) // note on
             {
-                mse1.Data = 0;
-                continue;
-            }
-
-            const uint32_t m1 = (mse1.Data & 0x7F00FF0F) | 0x80; // note off
-            const uint32_t m2 = (mse1.Data & 0x7F00FFFF); // also note off
-
-            for (size_t j = i + 1; j < FillerEvents.size(); ++j)
-            {
-                midi::message_t & mse2 = FillerEvents[j];
-
-                if ((mse2.Data & 0xFF00FFFF) == m1 || mse2.Data == m2)
+                if ((mse1.Data & 0x0F) == 9) // hax
                 {
-                    // kill 'em
                     mse1.Data = 0;
-                    mse2.Data = 0;
-                    break;
+                    continue;
+                }
+
+                const uint32_t m1 = (mse1.Data & 0x7F00FF0F) | 0x80; // note off
+                const uint32_t m2 = (mse1.Data & 0x7F00FFFF); // also note off
+
+                for (size_t j = i + 1; j < FillerMessages.size(); ++j)
+                {
+                    midi::message_t & mse2 = FillerMessages[j];
+
+                    if ((mse2.Data & 0xFF00FFFF) == m1 || mse2.Data == m2)
+                    {
+                        // kill 'em
+                        mse1.Data = 0;
+                        mse2.Data = 0;
+                        break;
+                    }
                 }
             }
         }
     }
 
-    const uint32_t BlockSize = GetBlockSize();
+    // Render the filler messages.
+    uint32_t FrameCount = GetBlockSize();
 
-    if (BlockSize == 0)
+    if (FrameCount == 0)
     {
-        audio_sample * Temp = new audio_sample[16 * 2];
+        FrameCount = 16;
 
-        if (Temp != nullptr)
+        audio_sample * FrameData = new audio_sample[FrameCount * 2];
+
+        if (FrameData != nullptr)
         {
-            Render(Temp, 16); // Flush events
+            Render(FrameData, FrameCount); // Flush events
 
             uint32_t LastTimestamp = 0;
             bool IsTimestampSet = false;
 
-            for (const midi::message_t & Event : FillerEvents)
+            for (const midi::message_t & m : FillerMessages)
             {
-                if (Event.Data != 0)
+                if (m.Data != 0)
                 {
-                    if (IsTimestampSet && (Event.Time != LastTimestamp))
-                        Render(Temp, 16); // Flush events
+                    if (IsTimestampSet && (m.Time != LastTimestamp))
+                        Render(FrameData, FrameCount); // Flush events
 
-                    LastTimestamp = Event.Time;
+                    LastTimestamp = m.Time;
                     IsTimestampSet = true;
 
-                    SendEventFiltered(Event.Data);
+                    SendEventFiltered(m.Data);
                 }
             }
 
-            Render(Temp, 16); // Flush events
+            Render(FrameData, FrameCount); // Flush events
 
-            delete[] Temp;
+            delete[] FrameData;
         }
     }
     else
     {
-        audio_sample * Temp = new audio_sample[BlockSize * 2];
+        audio_sample * FrameData = new audio_sample[FrameCount * 2];
 
-        if (Temp != nullptr)
+        if (FrameData != nullptr)
         {
-            Render(Temp, BlockSize); // Flush events
-
             uint32_t JunkSize = 0;
+
+            Render(FrameData, FrameCount); // Flush events
 
             uint32_t LastTimestamp = 0;
             bool IsTimestampSet = false;
 
-            for (const midi::message_t & Event : FillerEvents)
+            for (const midi::message_t & m : FillerMessages)
             {
-                if (Event.Data != 0)
+                if (m.Data != 0)
                 {
-                    SendEventFiltered(Event.Data, JunkSize);
+                    SendEventFiltered(m.Data, JunkSize);
 
-                    if (IsTimestampSet && (Event.Time != LastTimestamp))
+                    if (IsTimestampSet && (m.Time != LastTimestamp))
                         JunkSize += 16;
 
-                    LastTimestamp = Event.Time;
+                    LastTimestamp = m.Time;
                     IsTimestampSet = true;
 
-                    if (JunkSize >= BlockSize)
+                    if (JunkSize >= FrameCount)
                     {
-                        Render(Temp, BlockSize); // Flush events
-                        JunkSize -= BlockSize;
+                        Render(FrameData, FrameCount); // Flush events
+                        JunkSize -= FrameCount;
                     }
                 }
             }
 
-            Render(Temp, BlockSize); // Flush events
+            Render(FrameData, FrameCount); // Flush events
 
-            delete[] Temp;
+            delete[] FrameData;
         }
     }
 }
@@ -516,14 +527,14 @@ void player_t::SetSampleRate(uint32_t sampleRate)
     for (midi::message_t & it : _Messages)
         it.Time = (uint32_t) ::MulDiv((int) it.Time, (int) sampleRate, (int) _SampleRate);
 
-    if (_Time != 0)
-        _Time = (uint32_t) ::MulDiv((int) _Time, (int) sampleRate, (int) _SampleRate);
+    if (_FrameIndex != 0)
+        _FrameIndex = (uint32_t) ::MulDiv((int) _FrameIndex, (int) sampleRate, (int) _SampleRate);
 
-    if (_TotalTime != 0)
-        _TotalTime = (uint32_t) ::MulDiv((int) _TotalTime, (int) sampleRate, (int) _SampleRate);
+    if (_FrameCount != 0)
+        _FrameCount = (uint32_t) ::MulDiv((int) _FrameCount, (int) sampleRate, (int) _SampleRate);
 
-    if (_LoopBeginTime != 0)
-        _LoopBeginTime = (uint32_t) ::MulDiv((int) _LoopBeginTime, (int) sampleRate, (int) _SampleRate);
+    if (_FrameIndexLoopBegin != 0)
+        _FrameIndexLoopBegin = (uint32_t) ::MulDiv((int) _FrameIndexLoopBegin, (int) sampleRate, (int) _SampleRate);
 
 
     _SampleRate = sampleRate;
@@ -679,69 +690,73 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
     if (!_IsStarted)
         return;
 
-    if (time == 0)
+    if (_MIDIFlavor != MIDIFlavor::None)
     {
-        SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber);
-        SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber);
-        SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
-        SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber);
+        if (time == 0)
+        {
+            SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber);
+            SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber);
+            SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
+            SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber);
+        }
+        else
+        {
+            SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber, time);
+            SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber, time);
+            SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
+            SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber, time);
+        }
+
+        switch (_MIDIFlavor)
+        {
+            case MIDIFlavor::None:
+                break;
+
+            case MIDIFlavor::GM:
+            {
+                if (time != 0)
+                    SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber, time);
+                else
+                    SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber);
+                break;
+            }
+
+            case MIDIFlavor::GM2:
+            {
+                if (time != 0)
+                    SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber, time);
+                else
+                    SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber);
+                break;
+            }
+
+            case MIDIFlavor::SC55:
+            case MIDIFlavor::SC88:
+            case MIDIFlavor::SC88Pro:
+            case MIDIFlavor::SC8820:
+            case MIDIFlavor::Default:
+            {
+                if (time != 0)
+                    SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
+                else
+                    SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
+
+                SendSysExSetToneMapNumber(portNumber, time);
+                break;
+            }
+
+            case MIDIFlavor::XG:
+            {
+                if (time != 0)
+                    SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber, time);
+                else
+                    SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber);
+                break;
+            }
+        }
     }
-    else
-    {
-        SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber, time);
-        SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber, time);
-        SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
-        SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber, time);
-    }
 
-    switch (_MIDIFlavor)
-    {
-        case MIDIFlavor::GM:
-        {
-            if (time != 0)
-                SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber, time);
-            else
-                SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber);
-            break;
-        }
-
-        case MIDIFlavor::GM2:
-        {
-            if (time != 0)
-                SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber, time);
-            else
-                SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber);
-            break;
-        }
-
-        case MIDIFlavor::SC55:
-        case MIDIFlavor::SC88:
-        case MIDIFlavor::SC88Pro:
-        case MIDIFlavor::SC8820:
-//      case MIDIFlavors::Default: // Removed in v2.19: Default flavor = Don't send anything
-        {
-            if (time != 0)
-                SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
-            else
-                SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
-
-            SendSysExSetToneMapNumber(portNumber, time);
-            break;
-        }
-
-        case MIDIFlavor::XG:
-        {
-            if (time != 0)
-                SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber, time);
-            else
-                SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber);
-            break;
-        }
-
-        case MIDIFlavor::Default:
-            break;
-    }
-
+    // Mute all channels and reset all controls.
     {
         for (uint8_t i = 0; i < 16; ++i)
         {
@@ -791,6 +806,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
 
     if (_FilterEffects)
     {
+        // Turn off reverb and chorus.
         if (time != 0)
         {
             for (uint8_t  i = 0; i < 16; ++i)
@@ -828,6 +844,7 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
             Data[8] = 1;
             break;
 
+        case MIDIFlavor::Default:
         case MIDIFlavor::SC88:
             Data[8] = 2;
             break;
@@ -843,7 +860,7 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
         case MIDIFlavor::GM:
         case MIDIFlavor::GM2:
         case MIDIFlavor::XG:
-        case MIDIFlavor::Default:
+        case MIDIFlavor::None:
         default:
             return;
     }
@@ -871,7 +888,7 @@ void player_t::SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time)
 /// </summary>
 void player_t::SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time)
 {
-    midi::sysex_t::SetRolandCheckSum(data, size);
+    data[size - 2] = midi::sysex_t::CalculateRolandCheckSum(data, size);
 
     if (time > 0)
         SendSysEx(data, size, portNumber, time);

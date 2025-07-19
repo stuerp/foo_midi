@@ -662,7 +662,7 @@ void WTDialog::OnChanged() const noexcept
 }
 
 /// <summary>
-/// Update the status of the SoundFont cache.
+/// Update the status of the Soundfont cache.
 /// </summary>
 void WTDialog::OnTimer(UINT_PTR eventId)
 {

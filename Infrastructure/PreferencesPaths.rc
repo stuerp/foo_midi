@@ -95,7 +95,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #pragma endregion
 
-#pragma region SoundFont path
+#pragma region Soundfont path
 
 // Label
 #define X_B21    X_B57

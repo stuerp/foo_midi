@@ -18,7 +18,7 @@
 #include "FileHasher.h"
 #include "Preset.h"
 #include "MIDISysExDumps.h"
-#include "SoundFont.h"
+#include "Soundfont.h"
 
 /** Players **/
 
@@ -212,11 +212,12 @@ private:
     uint32_t _RequestedSampleRate;  // in Hz
     uint32_t _ActualSampleRate;     // in Hz
 
-    uint32_t _Time;                 // in frames
-    uint32_t _TotalTime;            // in frames
+    uint32_t _FrameIndex;
+    uint32_t _FrameCount;
 
     LoopType _LoopType;
     uint32_t _LoopCount;
+
     range_t _LoopRange;             // in ms
     range_t _FadeRange;             // in ms
 

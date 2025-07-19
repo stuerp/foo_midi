@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.cpp (2025.07.13) **/
+/** $VER: VSTiPlayer.cpp (2025.07.16) **/
 
 #include "pch.h"
 
@@ -142,6 +142,10 @@ bool Player::Startup()
     if (_IsStarted)
         return true;
 
+    // The host may have been stopped by a backwards seek operation.
+    if (!IsHostRunning())
+        StartHost();
+
     if (_Chunk.size() != 0)
         SetChunk(_Chunk.data(), _Chunk.size());
 
@@ -251,22 +255,10 @@ void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, u
     if (code != 0)
         StopHost();
 }
+
 #pragma endregion
 
 #pragma region Private
-
-static bool CreatePipeName(pfc::string_base & pipeName)
-{
-    GUID guid;
-
-    if (FAILED(::CoCreateGuid(&guid)))
-        return false;
-
-    pipeName = "\\\\.\\pipe\\";
-    pipeName += pfc::print_guid(guid);
-
-    return true;
-}
 
 bool Player::StartHost()
 {
@@ -523,22 +515,6 @@ bool Player::IsHostRunning() noexcept
     return false;
 }
 
-#ifdef LOG_EXCHANGE
-unsigned exchange_count = 0;
-#endif
-
-#ifdef MESSAGE_PUMP
-static void ProcessPendingMessages()
-{
-    MSG msg = {};
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-#endif
-
 uint32_t Player::ReadCode() noexcept
 {
     uint32_t Code;
@@ -635,6 +611,35 @@ void Player::WriteBytesOverlapped(const void * data, uint32_t size) noexcept
     if (!::WriteFile(_hPipeInWrite, data, size, &BytesWritten, nullptr) || (BytesWritten < size))
         StopHost();
 }
+
+bool Player::CreatePipeName(pfc::string_base & pipeName)
+{
+    GUID guid;
+
+    if (FAILED(::CoCreateGuid(&guid)))
+        return false;
+
+    pipeName = "\\\\.\\pipe\\";
+    pipeName += pfc::print_guid(guid);
+
+    return true;
+}
+
+#ifdef LOG_EXCHANGE
+unsigned exchange_count = 0;
+#endif
+
+#ifdef MESSAGE_PUMP
+static void ProcessPendingMessages()
+{
+    MSG msg = {};
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+#endif
 
 #pragma endregion
 

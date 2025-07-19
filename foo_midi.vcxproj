@@ -271,7 +271,7 @@
     <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
     <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
     <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
-    <ClCompile Include="Infrastructure\SoundFonts.cpp" />
+    <ClCompile Include="Infrastructure\Soundfonts.cpp" />
     <ClCompile Include="Infrastructure\Support.cpp" />
     <ClCompile Include="Players\ADLPlayer.cpp" />
     <ClCompile Include="Players\BMPlayer.cpp" />
@@ -361,7 +361,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Infrastructure\FileHasher.cpp" />
-    <ClCompile Include="MIDI\SoundFontCache.cpp" />
+    <ClCompile Include="MIDI\SoundfontCache.cpp" />
     <ClCompile Include="Players\SecretSauce.cpp" />
     <ClCompile Include="Infrastructure\VSTiHost.cpp" />
     <ClCompile Include="Players\VSTiPlayer.cpp" />
@@ -459,10 +459,10 @@
     <ClInclude Include="Players\OPNPlayer\OPNPlayer.h" />
     <ClInclude Include="Players\OPNPlayer\Tomsoft.wopn.h" />
     <ClInclude Include="Players\OPNPlayer\xg.wopn.h" />
-    <ClInclude Include="MIDI\SoundFontCache.h" />
+    <ClInclude Include="MIDI\SoundfontCache.h" />
     <ClInclude Include="Infrastructure\FileHasher.h" />
     <ClInclude Include="Players\SecretSauce.h" />
-    <ClInclude Include="Players\SoundFont.h" />
+    <ClInclude Include="Players\Soundfont.h" />
     <ClInclude Include="Infrastructure\VSTiHost.h" />
     <ClInclude Include="Players\VSTiPlayer.h" />
     <CustomBuild Include="Experimental\DXiPlayer.h">

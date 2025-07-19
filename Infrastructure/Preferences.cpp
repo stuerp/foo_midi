@@ -663,7 +663,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         static const char * Flavors[] =
         {
-            "Default", "GM", "GM2", "GS SC-55", "GS SC-88", "GS SC-88 Pro", "GS SC-8820", "XG"
+            "Default", "GM", "GM2", "GS SC-55", "GS SC-88", "GS SC-88 Pro", "GS SC-8820", "XG", "None"
         };
 
         for (const auto & Flavor : Flavors)

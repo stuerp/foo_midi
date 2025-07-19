@@ -68,7 +68,9 @@ enum class MIDIFlavor
     SC88Pro,
     SC8820,
 
-    XG
+    XG,
+
+    None = -1
 };
 
 enum

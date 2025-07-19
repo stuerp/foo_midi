@@ -64,8 +64,8 @@ InputDecoder::InputDecoder() noexcept :
     _RequestedSampleRate((uint32_t) CfgSampleRate),
     _ActualSampleRate(_RequestedSampleRate),
 
-    _Time(),
-    _TotalTime(),
+    _FrameIndex(),
+    _FrameCount(),
 
     _LoopType(LoopType::NeverLoop),
     _LoopCount(1),
@@ -270,8 +270,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     // Initialize time parameters.
     {
-        _Time = 0;
-        _TotalTime = (uint32_t) ::MulDiv((int) GetLength(subSongIndex), (int) _RequestedSampleRate, 1'000);
+        _FrameIndex = 0;
+        _FrameCount = (uint32_t) ::MulDiv((int) GetLength(subSongIndex), (int) _RequestedSampleRate, 1'000);
 
         _LoopType = (LoopType) ((_DecoderFlags & input_flag_playback) ? (int) CfgLoopTypePlayback : (int) CfgLoopTypeOther);
 
@@ -775,7 +775,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         // Recalculate some sample rate-dependent parameters if the player changed the actual sample rate.
         if (_ActualSampleRate != OldActualSampleRate)
         {
-            _TotalTime = (uint32_t) ::MulDiv((int) _TotalTime, (int) _ActualSampleRate, (int) _RequestedSampleRate);
+            _FrameCount = (uint32_t) ::MulDiv((int) _FrameCount, (int) _ActualSampleRate, (int) _RequestedSampleRate);
 
             if (_FadeRange.HasBegin())
                 _FadeRange.SetBegin((uint32_t) ::MulDiv((int) _FadeRange.Begin(), (int) _ActualSampleRate, (int) _RequestedSampleRate));
@@ -794,10 +794,10 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
     // Scale the samples if fading was requested.
     if (Success && _FadeRange.IsSet())
     {
-        uint32_t BlockBegin = _Time;
-        uint32_t BlockEnd   = _Time + (uint32_t) audioChunk.get_sample_count();
+        uint32_t BlockBegin = _FrameIndex;
+        uint32_t BlockEnd   = _FrameIndex + (uint32_t) audioChunk.get_sample_count();
 
-        _Time = BlockEnd;
+        _FrameIndex = BlockEnd;
 
         if (BlockEnd >= _FadeRange.Begin())
         {
@@ -838,18 +838,19 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 /// </summary>
 void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
 {
-    _Time = (uint32_t) (timeInSeconds * _ActualSampleRate);
+    _FrameIndex = (uint32_t) (timeInSeconds * _ActualSampleRate);
+
     _IsFirstBlock = true;
     _IsEndOfContainer = false;
 
-    uint32_t OffsetInMs = (uint32_t) (timeInSeconds * 1'000.);
+    uint32_t Time = (uint32_t) (timeInSeconds * 1'000.);
 
-    if (OffsetInMs > _LoopRange.End())
-        OffsetInMs = _LoopRange.Begin() + (OffsetInMs - _LoopRange.Begin()) % ((_LoopRange.Size() != 0) ? _LoopRange.Size() : 1);
+    if (Time > _LoopRange.End())
+        Time = _LoopRange.Begin() + (Time - _LoopRange.Begin()) % ((_LoopRange.Size() != 0) ? _LoopRange.Size() : 1);
 
-    const uint32_t OffsetInSamples = (uint32_t) ::MulDiv((int) OffsetInMs, (int) _ActualSampleRate, 1'000);
+    const uint32_t FrameIndex = (uint32_t) ::MulDiv((int) Time, (int) _ActualSampleRate, 1'000);
 
-    if ((_TotalTime != 0U) && (OffsetInSamples >= (_TotalTime - _ActualSampleRate)))
+    if ((_FrameCount != 0U) && (FrameIndex >= (_FrameCount - _ActualSampleRate)))
     {
         _IsEndOfContainer = true;
 
@@ -857,7 +858,7 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
     }
 
     if (_Player)
-        _Player->Seek(OffsetInSamples);
+        _Player->Seek(FrameIndex);
 }
 
 /// <summary>
@@ -1065,7 +1066,7 @@ void InputDecoder::InitializeFade() noexcept
                 _FadeRange.Set(Begin, End);
             }
             else
-                _FadeRange.Set(_TotalTime, _TotalTime);
+                _FadeRange.Set(_FrameCount, _FrameCount);
             break;
         }
 

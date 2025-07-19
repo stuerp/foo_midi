@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2025.07.09) P. Stuer **/
+/** $VER: Player.h (2025.07.16) P. Stuer **/
 
 #pragma once
 
@@ -97,14 +97,14 @@ private:
     std::vector<midi::message_t> _Messages;
 
     uint32_t _MessageIndex;         // Current MIDI message
-    uint32_t _LoopBeginIndex;       // Start of the loop in the event stream
+    uint32_t _MessageIndexLoopBegin;       // Start of the loop in the event stream
     uint32_t _LoopEndIndex;         // End of the loop in the event stream
 
-    uint32_t _Time;                 // Current time in the sample stream (in ms)
-    uint32_t _TotalTime;            // Total length of the sample stream (in ms)
-    uint32_t _LoopBeginTime;        // Timestamp of the start of the loop in the sample stream (in ms)
+    uint32_t _FrameIndex;           // Current frame in the sample stream
+    uint32_t _FrameCount;           // Number of frames in the sample stream
+    uint32_t _FramesRemaining;      // Number of frames that still need to be rendered before the audio chunk is complete (in case the block size of the player is smaller than the audio chunk size).
 
-    uint32_t _TimeRemaining;        // Remaining number of samples that need to be rendered before the audio chunk is complete (in case the block size of the player is smaller than the audio chunk size).
+    uint32_t _FrameIndexLoopBegin;  // Frame index in the sample stream of the start of the loop
 
     uint64_t _ChannelsMaskVersion;  // Version number of the channel configuration
     uint16_t _ChannelsMask[128];

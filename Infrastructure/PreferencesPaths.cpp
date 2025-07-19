@@ -113,7 +113,7 @@ private:
     // CLAP
     pfc::string _CLAPPlugInDirectoryPath;
 
-    // SoundFont
+    // Soundfont
     pfc::string _SoundFontFilePath;
 
     // LibMT32Emu
@@ -323,11 +323,11 @@ void PathsDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
             pfc::string FilePath = _SoundFontFilePath;
 
             if (::uGetOpenFileName(m_hWnd,
-                    "SoundFont and list files|*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sflist;*.json|"
-                    "SoundFont files|*.sf2;*.sf3;*.sf2pack;*.sfogg|"
-                    "SoundFont list files|*.sflist;*.json"
+                    "Soundfont and list files|*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sflist;*.json|"
+                    "Soundfont files|*.sf2;*.sf3;*.sf2pack;*.sfogg|"
+                    "Soundfont list files|*.sflist;*.json"
                 ,
-                0, "sf2", "Choose a SoundFont bank or list...", DirectoryPath, FilePath, FALSE))
+                0, "sf2", "Choose a Soundfont bank or list...", DirectoryPath, FilePath, FALSE))
             {
                 _SoundFontFilePath = FilePath;
 

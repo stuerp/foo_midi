@@ -134,7 +134,7 @@ It can be configured on the **[MIDI Player / Wavetable](#wavetable)** preference
 [FMMIDI](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html) emulates the [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip and was created by Yuno in 2004.
 
 > [!Important]
-> It requires a text file that specifies the programs or instrument definitions. A default **Programs.txt** file is installed with the component in component directory. This file can be overriden by selecting a different one on the **[MIDI Player / Paths](#paths)** preferences page.
+> FMMIDI requires a text file that specifies the programs or instrument definitions. A default **Programs.txt** file is installed with the component in component directory. This file can be overriden by selecting a different one on the **[MIDI Player / Paths](#paths)** preferences page.
 
 ### BASSMIDI (Built-in, Wavetable)
 
@@ -142,9 +142,8 @@ This player is a wrapper for the BASSMIDI library by [Un4seen](https://www.un4se
 
 It requires an SF2, SF2Pack or SFZ soundfont to provide the instrument samples. See [Soundfonts](#soundfonts).
 
-A custom SFList format is also supported to further tweak the soundfonts and instruments used during playback.
-
 It can be configured on the **[MIDI Player / Wavetable](#wavetable)** preferences page.
+
 
 ### FluidSynth (Optional, Wavetable)
 
@@ -253,7 +252,66 @@ The **Fade-Out time** setting specifies the time in milliseconds that the player
 
 ### Soundfonts
 
-🔧 *Work in Progress*
+A soundfont is a file that contains samples of instruments. Players like [BASSMIDI](#bassmidi-built-in-wavetable) and [FluidSynth](#fluidsynth-optional-wavetable) require it to play MIDI files. When more than one soundfont is specified or available the soundfonts will be layered on top of each other with the first soundfont being used as a base.
+
+The easiest way to specify a soundfont is to set the file location on the [Paths](#paths) preferences page.
+
+However, foo_midi has a number of fallback rules that may override this default location.
+
+First, if the file has an embedded soundfont that file will be extracted and used as the base soundfont. The .RMI file format for instance was designed for that purpose.
+
+Next, if a soundfont with the same basename exists in the directory of the MIDI file, that file take precedence. F.e. if `EXAMPLE.SF2` will be used to play `EXAMPLE.MID` if they exist in the same directory.
+
+Lastly, the global soundfont will be used.
+
+> [!Tip]
+> foo_midi will report the soundfonts it uses and in which order in the foobar2000 console if you set the component log level to at least `Info` level.
+
+#### SFList
+
+The BASSMIDI player also accepts a soundfont list file. It's a JSON file with a .SFLIST or .JSON extension that allows you to layer the soundfonts that BASSMIDI will use.
+
+A `soundFonts` array contains 1 or more soundfont objects. A soundfont object can have the following properties:
+
+- `fileName` specifies the location of the soundfont. If you specify only a file name foo_midi will look for the file in the same directory as the list file.
+- `gain` specifies the overall gain that will be applied to the samples in the soundfont. This property is optional.
+- `channels` is an array that contains the MIDI channels that will use the soundfont. This property is optional.
+- `patchMappings` is an array of mapping objects that allows you to remap samples within a soundfont without modifying the soundfont file. This property is optional.
+
+Here's an example:
+
+``` JSON
+{
+  "soundFonts": [
+    {"fileName": "/Simple/SoundFont File.sf2"},
+    {
+      "fileName": "/Advanced/SoundFont With Mappings.sf2",
+      "gain": 6.0,
+      "channels": [1,3,5],
+      "patchMappings": [
+        {"source": {"bank": 0, "program": 1}, "destination": {"bank": 0, "program": 20}},
+        {"source": {"bank": 20, "program": 5}, "destination": {"bank": 0, "program": 5}}
+      ]
+    },
+    {
+      "fileName":  "/Another Simple/SoundFont File.sf2",
+      "patchMappings": [
+        {"destination": {"bank": 1}}
+      ]
+    },
+    {"fileName":  "/SoundFont List.sflist.json"},
+    {
+      "fileName":  "/Patch.sfz",
+      "patchMappings": [
+        {"destination": {"bank": 0, "program": 2}},
+        {"destination": {"bank": 0, "program": 3}}
+      ]
+    }
+  ]
+}
+```
+
+For a more detailed explanation consult the documentation about [BASS_MIDI_FONTEX](https://www.un4seen.com/doc/#bassmidi/BASS_MIDI_FONTEX.html).
 
 ---
 
@@ -330,7 +388,7 @@ You can force a player to start playback using a particular *flavor* of MIDI. Th
 
 | Name        | Purpose |
 | ----------- | ------- |
-| Default     | The player starts playing with its default configuration. Please the consult the player specific documentation for more information. |
+| Default     | Same as SC88. |
 | GM          | General MIDI 1 specification. A GM System On SysEx is sent before playback starts. |
 | GM2         | General MIDI 2 specification. A GM2 System On SysEx is sent before playback starts. |
 | GS&nbsp;SC&#8209;55    | General Sound specification with Roland SC-55 initialization. |
@@ -338,10 +396,11 @@ You can force a player to start playback using a particular *flavor* of MIDI. Th
 | GS&nbsp;SC&#8209;88Pro | General Sound specification with Roland SC-88Pro initialization. |
 | GS&nbsp;SC&#8209;8820  | General Sound specification with Roland SC-8820 initialization. |
 | XG          | Extended General MIDI specification created by Yamaha |
+| None        | The player starts playing with its default configuration. Please the consult the player specific documentation for more information. |
 
 #### Filter effects
 
-This setting prevents reverb and chorus messages from being sent to the player. It does not change the reverb and chorus settings of the player.
+This setting turns off the reverb and chorus effect and prevents reverb and chorus messages from being sent to the player.
 
 #### Use LibMT32Emu with MT-32
 

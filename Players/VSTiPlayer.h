@@ -1,5 +1,5 @@
 
-/** $VER: VSTiPlayer.h (2025.07.13) **/
+/** $VER: VSTiPlayer.h (2025.07.16) **/
 
 #pragma once
 
@@ -57,6 +57,8 @@ private:
 
     void WriteBytes(uint32_t code) noexcept;
     void WriteBytesOverlapped(const void * data, uint32_t size) noexcept;
+
+    static bool CreatePipeName(pfc::string_base & pipeName);
 
 public:
     std::string Name;

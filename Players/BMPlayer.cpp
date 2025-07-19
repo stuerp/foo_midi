@@ -6,7 +6,7 @@
 #include "BMPlayer.h"
 
 #include "BASSInitializer.h"
-#include "SoundFontCache.h"
+#include "SoundfontCache.h"
 #include "Exception.h"
 #include "Support.h"
 #include "Log.h"
@@ -84,14 +84,14 @@ void BMPlayer::EnableEffects(bool enabled)
 }
 
 /// <summary>
-/// Sets the sound fonts to use for synthesis.
+/// Sets the soundfonts to use for synthesis.
 /// </summary>
 void BMPlayer::SetSoundfonts(const std::vector<soundfont_t> & soundFonts)
 {
-    if (_SoundFonts == soundFonts)
+    if (_Soundfonts == soundFonts)
         return;
 
-    _SoundFonts = soundFonts;
+    _Soundfonts = soundFonts;
 
     Shutdown();
 }
@@ -146,11 +146,11 @@ bool BMPlayer::Startup()
     if (_SrcFrames == nullptr)
         return false;
 
-    std::vector<BASS_MIDI_FONTEX> SoundFontConfigurations;
+    std::vector<BASS_MIDI_FONTEX> SoundfontConfigurations;
 
-    for (const auto & sf : _SoundFonts)
+    for (const auto & sf : _Soundfonts)
     {
-        if (!LoadSoundFontConfiguration(sf, SoundFontConfigurations))
+        if (!LoadSoundfontConfiguration(sf, SoundfontConfigurations))
         {
             _ErrorMessage = "Unable to load configuration for soundfont \"" + sf.FilePath() + "\"";
 
@@ -175,7 +175,7 @@ bool BMPlayer::Startup()
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_VOICES, (float) _VoiceCount);
 
-        ::BASS_MIDI_StreamSetFonts(Stream, SoundFontConfigurations.data(), (DWORD) SoundFontConfigurations.size() | BASS_MIDI_FONT_EX);
+        ::BASS_MIDI_StreamSetFonts(Stream, SoundfontConfigurations.data(), (DWORD) SoundfontConfigurations.size() | BASS_MIDI_FONT_EX);
     }
 
     _ErrorMessage = "";
@@ -209,20 +209,20 @@ void BMPlayer::Shutdown()
         }
     }
 
-    for (auto SoundFont : _SoundFontHandles)
-        ::CacheRemoveSoundFont(SoundFont);
+    for (auto Soundfont : _SoundfontHandles)
+        ::CacheRemoveSoundfont(Soundfont);
 
-    _SoundFontHandles.resize(0);
+    _SoundfontHandles.resize(0);
 
     if (_SFList[0])
     {
-        ::CacheRemoveSoundFontList(_SFList[0]);
+        ::CacheRemoveSoundfontList(_SFList[0]);
         _SFList[0] = nullptr;
     }
 
     if (_SFList[1])
     {
-        ::CacheRemoveSoundFontList(_SFList[1]);
+        ::CacheRemoveSoundfontList(_SFList[1]);
         _SFList[1] = nullptr;
     }
 
@@ -344,15 +344,15 @@ void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
 /// <summary>
 /// Loads the configuration from the specified soundfont.
 /// </summary>
-bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
+bool BMPlayer::LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
 {
     std::filesystem::path FilePath(soundFont.FilePath());
 
     if (IsOneOf(FilePath.extension(), { L".sf2", L".sf3", L".sf2pack", L".sfogg" }))
     {
-        HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath());
+        HSOUNDFONT hSoundfont = ::CacheAddSoundfont(soundFont.FilePath());
 
-        if (hSoundFont == 0)
+        if (hSoundfont == 0)
         {
             Shutdown();
 
@@ -361,11 +361,11 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
             return false;
         }
 
-        _SoundFontHandles.push_back(hSoundFont);
+        _SoundfontHandles.push_back(hSoundfont);
 
-        ::BASS_MIDI_FontSetVolume(hSoundFont, soundFont.Volume());
+        ::BASS_MIDI_FontSetVolume(hSoundfont, soundFont.Volume());
 
-        BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, soundFont.BankOffset(), 0 }; // Load the whole sound font.
+        BASS_MIDI_FONTEX fex = { hSoundfont, -1, -1, -1, soundFont.BankOffset(), 0 }; // Load the whole sound font.
 
         soundFontConfigurations.push_back(fex);
 
@@ -379,7 +379,7 @@ bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::ve
         if (*SFList)
             SFList = &_SFList[1];
 
-        *SFList = ::CacheAddSoundFontList(soundFont.FilePath());
+        *SFList = ::CacheAddSoundfontList(soundFont.FilePath());
 
         if (!*SFList)
             return false;

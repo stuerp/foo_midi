@@ -7,7 +7,7 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "Player.h"
-#include "SoundFont.h"
+#include "Soundfont.h"
 
 #include <bassmidi.h>
 
@@ -60,7 +60,7 @@ private:
 
     #pragma endregion
 
-    bool LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept;
+    bool LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept;
 
     bool IsStarted() const noexcept
     {
@@ -77,14 +77,14 @@ private:
 
     float * _SrcFrames;
 
-    std::vector<HSOUNDFONT> _SoundFontHandles;
+    std::vector<HSOUNDFONT> _SoundfontHandles;
     sflist_t * _SFList[2];
 
     static const size_t MaxPorts = 16;
 
     HSTREAM _Streams[MaxPorts]; // Each stream corresponds to a port.
 
-    std::vector<soundfont_t> _SoundFonts;
+    std::vector<soundfont_t> _Soundfonts;
 
     float _Volume;
     uint32_t _InterpolationMode;

@@ -1,52 +1,67 @@
 
 # foo_midi History
 
+- v3.0.0.0-rc3, 2025-07-17
+
+- Changed: Removed OPN Scale Modulators feature from OPN player initialization. It causes a weird, unwanted effect with some files.
+
+- v3.0.0.0-rc2, 2025-07-15
+
+- Fixed: Do a case-insensitive comparison when looking for external files. (Regression)
+- Fixed: A couple of preference controls that did not update the Apply button.
+- Fixed: Loop count 0 is no longer a valid value.
+- Changed: Loop descriptions should better reflect their functionality.
+
 - v2.19.0.0-rc1, 2025-07-13
-  - New: Log level setting determines which foo_midi messages are written to the foobar2000 console.
-  - Changed: Moved the LibMT32Emu settings to the Wavetable page.
-  - Improved: VSTi player issues a warning whenever it's host executable `vshost32.exe` and `vshost64.exe` can't be found.
-  - Fixed: Changing the channel mask setting did not always stick.
-  - Fixed: The fade range was not recalculated when the player changed to another sample rate. (Regression)
-  - Fixed: VSTi plug-in name was not always set. (Regression)
-  - Fixed: A couple of labels were to truncate in High DPI modes.
+
+- New: Log level setting determines which foo_midi messages are written to the foobar2000 console.
+- Changed: Moved the LibMT32Emu settings to the Wavetable page.
+- Improved: VSTi player issues a warning whenever it's host executable `vshost32.exe` and `vshost64.exe` can't be found.
+- Fixed: Changing the channel mask setting did not always stick.
+- Fixed: The fade range was not recalculated when the player changed to another sample rate. (Regression)
+- Fixed: VSTi plug-in name was not always set. (Regression)
+- Fixed: A couple of labels were to truncate in High DPI modes.
 
 - v2.19.0.0-alpha7, 2025-07-11
-  - New: Detecting the extra percussion channel can be turned on or off in the Preferences.
-  - Improved: ADL player uses LibADLMIDI 1.6.0 and 64-bit floating-point samples.
-  - Improved: OPN player uses LibOPNMIDI 1.6.0 and 64-bit floating-point samples. WOPN bank can be set from a file.
-  - Improved: Added setting to reverse the stereo channels of the LibMT32Emu player (default is on).
-  - Improved: Added enable or disable reverb processing by the LibMT32Emu player (default is on).
-  - Improved: Skip to First Note, Loop Count and Fade-Out Time can be set on the main Preferences page.
-  - Improved: Lots of little fixes, code cleanup and code polishing.
-  - Changed: All advanced preferences have been moved to a Preferences page. The current values will **not** be migrated.
-  - Changed: Renamed `midi_plug_in` tag to `midi_player_ext`. The ADL, OPN and Nuked OPL3 player will set it to the current emulator core.
-  - Changed Moved BASS MIDI and FluidSynth settings to new Wavetable preference page.
-  - Fixed: The LibMT32Emu player reversed the left and the right channels in the output.
-  - Fixed: Crash when looking for the MT-32 ROMs.
+
+- New: Detecting the extra percussion channel can be turned on or off in the Preferences.
+- Improved: ADL player uses LibADLMIDI 1.6.0 and 64-bit floating-point samples.
+- Improved: OPN player uses LibOPNMIDI 1.6.0 and 64-bit floating-point samples. WOPN bank can be set from a file.
+- Improved: Added setting to reverse the stereo channels of the LibMT32Emu player (default is on).
+- Improved: Added enable or disable reverb processing by the LibMT32Emu player (default is on).
+- Improved: Skip to First Note, Loop Count and Fade-Out Time can be set on the main Preferences page.
+- Improved: Lots of little fixes, code cleanup and code polishing.
+- Changed: All advanced preferences have been moved to a Preferences page. The current values will **not** be migrated.
+- Changed: Renamed `midi_plug_in` tag to `midi_player_ext`. The ADL, OPN and Nuked OPL3 player will set it to the current emulator core.
+- Changed Moved BASS MIDI and FluidSynth settings to new Wavetable preference page.
+- Fixed: The LibMT32Emu player reversed the left and the right channels in the output.
+- Fixed: Crash when looking for the MT-32 ROMs.
 
 - v2.19.0.0-alpha6, 2025-07-05
-  - New: **midi_plug_in** info field that contains the name of the active plug-in when a player supports it.
-  - New: FluidSynth can be configured using a configuration file. See [Configuration file](docs/README.md#configuration-file)
-  - Improved: Support for Unicode paths.
-  - Improved: Hardened the CLAP Host.
-  - Improved: Moved MT32Emu settings to FM Synthesis preferences page and added a couple of new settings.
-  - Fixed: Some startup and sample rate related issues.
+
+- New: **midi_plug_in** info field that contains the name of the active plug-in when a player supports it.
+- New: FluidSynth can be configured using a configuration file. See [Configuration file](docs/README.md#configuration-file)
+- Improved: Support for Unicode paths.
+- Improved: Hardened the CLAP Host.
+- Improved: Moved MT32Emu settings to FM Synthesis preferences page and added a couple of new settings.
+- Fixed: Some startup and sample rate related issues.
 
 - v2.19.0.0-alpha5, 2025-07-02
-  - Fixed: CLAP Player is thread safe again. ![Regression](https://img.shields.io/badge/regression-red)
-  - Fixed: Event timing was not always correctly sent to the CLAP plug-in.
-  - Improved: Rewrote MuntPlayer to use LibMT32Emu API version 3.
-    - Supports [Versioned ROMs](https://github.com/dosbox-staging/dosbox-staging/wiki/MIDI#mt-32-roms).
-    - Samples are rendered as floating-point numbers.
-    - Limitation: Most of options are still hardcoded.
+
+- Fixed: CLAP Player is thread safe again. ![Regression](https://img.shields.io/badge/regression-red)
+- Fixed: Event timing was not always correctly sent to the CLAP plug-in.
+- Improved: Rewrote MuntPlayer to use LibMT32Emu API version 3.
+  - Supports [Versioned ROMs](https://github.com/dosbox-staging/dosbox-staging/wiki/MIDI#mt-32-roms).
+  - Samples are rendered as floating-point numbers.
+  - Limitation: Most of options are still hardcoded.
 
 - v2.19.0.0-alpha4, 2025-06-29
-
+ 
 - Improved: CLAP host functionality.
   - Added support for sample rate and MIDI flavor preferences.
   - Added support for CLAP plug-ins with a GUI.
-    - Known limitation: The GUI does not control the player yet and vice versa.
-    - Known problem: The Dexed GUI does not reappear when the GUI is closed and re-opened.
+  - Known limitation: The GUI does not control the player yet and vice versa.
+  - Known problem: The Dexed GUI does not reappear when the GUI is closed and re-opened.
   - Extended CLAP host functionality to support [Dexed](https://asb2m10.github.io/dexed/) and other plug-ins with the same requirements.
 - Changed: MIDI flavor **Default** is now just that. Previous versions used GS as a default. Let me know if this breaks things.
 - Fixed: Player selection in Preferences was broken. ![Regression](https://img.shields.io/badge/regression-red)

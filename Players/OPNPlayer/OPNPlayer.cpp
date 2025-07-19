@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2025.07.12) **/
+/** $VER: OPNPlayer.cpp (2025.07.17) **/
 
 #include "pch.h"
 
@@ -113,7 +113,7 @@ bool OPNPlayer::Startup()
         ::opn2_reset(Device);
 
         ::opn2_setSoftPanEnabled        (Device, _IsSoftPanningEnabled ? 1 : 0); // Use -1 for default value.
-        ::opn2_setScaleModulators       (Device, -1); // -1 = default. Use 1 to turn on modulators scaling by volume.
+//      ::opn2_setScaleModulators       (Device,  0); // Use 1 to turn on modulators scaling by volume. Hands off for now: https://github.com/stuerp/foo_midi/issues/108#issuecomment-3083690908
         ::opn2_setFullRangeBrightness   (Device, -1); // -1 = default. Use 1 to turn on a full-ranged XG CC74 Brightness.
         ::opn2_setAutoArpeggio          (Device, -1); // -1 = default. Use 1 to turn on
 
@@ -187,7 +187,7 @@ void OPNPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
     const uint32_t MaxFrames = 256;
     const uint32_t MaxChannels = 2;
 
-#ifndef OldCode
+#ifndef UseDouble
     audio_sample srcFrames[MaxFrames * MaxChannels];
 
     const OPNMIDI_AudioFormat AudioFormat = { OPNMIDI_SampleType_F64, sizeof(*srcFrames), sizeof(srcFrames[0]) * MaxChannels };
@@ -213,26 +213,23 @@ void OPNPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 #else
     int16_t srcData[MaxFrames * MaxChannels];
 
-    while (frameCount != 0)
+    while (dstCount != 0)
     {
-        uint32_t ToDo = frameCount;
+        uint32_t srcCount = std::min(dstCount, MaxFrames);
 
-        if (ToDo > MaxFrames)
-            ToDo = MaxFrames;
-
-        ::memset(dstData, 0, ToDo * MaxChannels * sizeof(audio_sample));
+        ::memset(dstFrames, 0, srcCount * MaxChannels * sizeof(audio_sample));
 
         for (size_t i = 0; i < _countof(_Devices); ++i)
         {
-            ::opn2_generate(_Devices[i], (int) (ToDo * MaxChannels), srcData);
+            ::opn2_generate(_Devices[i], (int) (srcCount * MaxChannels), srcData);
 
             // Convert the rendered output.
-            for (size_t j = 0; j < (ToDo * MaxChannels); ++j)
-                dstData[j] += (audio_sample) srcData[j] * (1.0f / 32768.0f);
+            for (size_t j = 0; j < (srcCount * MaxChannels); ++j)
+                dstFrames[j] += (audio_sample) srcData[j] * (1.0f / 32768.0f);
         }
 
-        dstData += (ToDo * MaxChannels);
-        frameCount -= ToDo;
+        dstFrames += (srcCount * MaxChannels);
+        dstCount -= srcCount;
     }
 #endif
 }
