@@ -367,6 +367,8 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
                                     if (VerifyNotePorts(PlugIn) && VerifyAudioPorts(PlugIn))
                                         callback(Descriptor->name, i, HasGUI(PlugIn, false));
                                 }
+                                else
+                                    Log.AtError().Write(STR_COMPONENT_BASENAME " failed to initialize plug-in.");
 
                                 PlugIn->destroy(PlugIn);
                             }

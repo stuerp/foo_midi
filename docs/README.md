@@ -269,11 +269,26 @@ Lastly, the global soundfont will be used.
 
 #### SFList
 
-The BASSMIDI player also accepts a soundfont list file. It's a JSON file with a .SFLIST or .JSON extension that allows you to layer the soundfonts that BASSMIDI will use.
+The BASSMIDI and FluidSynth player also accept a Soundfont List file.
+
+##### Simple format
+
+The simple format is just a flat text file where each line contains the location of a soundfont file.
+
+Here's an example:
+
+``` Text
+X:\Simple\SoundFont File.sf2
+X:\Advanced\SoundFont With Mappings.sf2
+```
+
+##### Advanced format
+
+The most flexible format is a JSON file with a .SFLIST or .JSON extension that allows you to layer the soundfonts that the player will use.
 
 A `soundFonts` array contains 1 or more soundfont objects. A soundfont object can have the following properties:
 
-- `fileName` specifies the location of the soundfont. If you specify only a file name foo_midi will look for the file in the same directory as the list file.
+- `fileName` specifies the location of the soundfont. If you specify a only a file name or a relative path foo_midi will look for the file relative to the directory of the list file.
 - `gain` specifies the overall gain that will be applied to the samples in the soundfont. This property is optional.
 - `channels` is an array that contains the MIDI channels that will use the soundfont. This property is optional.
 - `patchMappings` is an array of mapping objects that allows you to remap samples within a soundfont without modifying the soundfont file. This property is optional.
@@ -767,6 +782,10 @@ This chapter contains a lot of reference material I consulted during the develop
 - [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
 - [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
 - [The Unofficial Yamaha Keyboard Resource Site Articles](http://www.jososoft.dk/yamaha/articles.htm)
+
+### SFList JSON
+
+- [SFList JSON](https://gist.github.com/kode54/a7bb01a0db3f2e996145b77f0ca510d5)
 
 ### Apogee Expanded MIDI (EMIDI)
 

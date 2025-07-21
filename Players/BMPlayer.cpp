@@ -140,9 +140,9 @@ bool BMPlayer::Startup()
 
     for (const auto & m : _Messages)
     {
-        int Status = (uint8_t) (m.Data) & 0xF0u;
-        int Param1 = (uint8_t) (m.Data >>  8);
-        int Param2 = (uint8_t) (m.Data >> 16);
+        int Status = (int) (m.Data) & 0xF0u;
+        int Param1 = (int) (m.Data >>  8);
+        int Param2 = (int) (m.Data >> 16);
 
         if ((Status == midi::ControlChange) && (Param1 == midi::BankSelect) && (Param2 != 0) && (Param2 != 127))
         {

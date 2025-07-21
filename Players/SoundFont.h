@@ -51,4 +51,4 @@ public:
     std::vector<BASS_MIDI_FONTEX> FontEx;
 };
 
-std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath, bool isBASSMIDI);
+std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath);

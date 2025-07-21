@@ -1,6 +1,11 @@
 
 # foo_midi History
 
+v3.1.0.0-alpha1, 2025-07-21
+
+- New: Added SFList support to the FluidSynth player. Due to limitations of the current FluidSynth API only the `fileName` property is used.
+- Improved: Some extra information in the console when using SFList files.
+
 v3.0.0.0, 2025-07-19
 
 - New: Resurrected yuno's fmmidi player.

@@ -108,7 +108,7 @@ void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundfontFilePath, 
         {
             Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
 
-            for (const auto & iter : LoadSoundfontList(sf.FilePath, false))
+            for (const auto & iter : LoadSoundfontList(sf.FilePath))
                 _Soundfonts.push_back(iter);
         }
         else

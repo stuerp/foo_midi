@@ -12,14 +12,17 @@
 
 #include <json-builder.h>
 
-static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::path & filePath, bool isBASSMIDI);
+#include <fstream>
+
+static std::vector<soundfont_t> ProcessJSON(const fs::path & filePath, const json_value * json);
+static std::vector<soundfont_t> ProcessText(const fs::path & filePath);
 static void ProcessPatchMappings(const json_value * patchMappings, uint32_t channel, std::vector<BASS_MIDI_FONTEX> & out, BASS_MIDI_FONTEX & fontex);
 static const json_value * FindObject(const json_value * object, const char * name);
 
 /// <summary>
 /// Loads a soundfont list (*.sflist, *.json)
 /// </summary>
-std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath, bool isBASSMIDI)
+std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
 {
     std::uintmax_t Size = fs::file_size(filePath);
 
@@ -61,18 +64,56 @@ std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath, bool isBAS
 
     json_value * JSON = ::json_parse_ex(&Settings, &Data[Offset], Size, ErrorMessage.data());
 
-    auto List = ProcessJSON(JSON, filePath, isBASSMIDI);
+    if (JSON != nullptr)
+    {
+        auto List = ProcessJSON(filePath, JSON);
 
-    ::json_builder_free(JSON);
+        ::json_builder_free(JSON);
 
-    return List;
+        return List;
+    }
+    else
+    {
+        auto List = ProcessText(filePath);
+
+        return List;
+    }
+}
+
+/// <summary>
+/// Processes the file as a flat text file.
+/// </summary>
+static std::vector<soundfont_t> ProcessText(const fs::path & filePath)
+{
+    std::vector<soundfont_t> Items;
+
+    std::ifstream File(filePath);
+
+    if (File)
+    {
+        std::string Line;
+
+        while (std::getline(File, Line))
+        {
+            soundfont_t sf = { };
+
+            sf.FilePath = Line;
+
+            Items.push_back(sf);
+        }
+    }
+
+    return Items;
 }
 
 /// <summary>
 /// Processes the JSON object.
 /// </summary>
-static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::path & filePath, bool isBASSMIDI)
+static std::vector<soundfont_t> ProcessJSON(const fs::path & filePath, const json_value * json)
 {
+    if (json == nullptr)
+        return { };
+
     // Check the structure of the object.
     {
         if (json->type != json_object)
