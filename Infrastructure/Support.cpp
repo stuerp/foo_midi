@@ -1,10 +1,10 @@
  
-/** $VER: Support.cpp (2025.07.13) - Support functions **/
+/** $VER: Support.cpp (2025.07.20) - Support functions **/
 
 #include "pch.h"
 
 /// <summary>
-/// Returns true if the string matches on of the list.
+/// Returns true if the string matches one of the list.
 /// </summary>
 bool IsOneOf(const std::wstring & item, const std::vector<std::wstring> & list) noexcept
 {
@@ -18,13 +18,13 @@ bool IsOneOf(const std::wstring & item, const std::vector<std::wstring> & list) 
 }
 
 /// <summary>
-/// Returns true if the string matches on of the list.
+/// Returns true if the string matches one of the list.
 /// </summary>
-bool IsOneOf(const std::u8string & item, const std::vector<std::u8string> & list) noexcept
+bool IsOneOf(const char * item, const std::vector<const char *> & list) noexcept
 {
     for (const auto & Item : list)
     {
-        if (::_stricmp((const char *) item.c_str(), (const char *) Item.c_str()) == 0)
+        if (::_stricmp(item, Item) == 0)
             return true;
     }
 

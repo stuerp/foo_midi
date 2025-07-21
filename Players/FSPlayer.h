@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.07.07) **/
+/** $VER: FSPlayer.h (2025.07.21) **/
 
 #pragma once
 
@@ -21,7 +21,7 @@
 class FSPlayer : public player_t
 {
 public:
-    FSPlayer();
+    FSPlayer() noexcept;
     virtual ~FSPlayer();
 
     void Initialize(const WCHAR * basePath);
@@ -74,14 +74,14 @@ private:
         return true;
     }
 
+    void LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf);
+
     DWORD MakeDWORD(int a, int b, int c, int d) const noexcept
     {
         return ((DWORD) a << 24) | (b << 16) | (c << 8) | d;
     }
 
 private:
-    std::string _ErrorMessage;
-
     fluid_settings_t * _Settings; // All synths share the same config.
 
     static const size_t MaxPorts = 16;
@@ -90,6 +90,7 @@ private:
     
     std::vector<soundfont_t> _SoundFonts;
 
+    bool _UseBankOffset;
     bool _DoDynamicLoading;
     bool _DoReverbAndChorusProcessing;
     uint32_t _VoiceCount;
@@ -98,4 +99,5 @@ private:
 
     FluidSynth::API _API;
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

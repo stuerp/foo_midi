@@ -37,7 +37,7 @@
     <ClCompile Include="Infrastructure\VSTiHost.cpp" />
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Exception.cpp" />
-    <ClCompile Include="Infrastructure\Soundfonts.cpp" />
+    <ClCompile Include="Infrastructure\InputDecoderSoundfonts.cpp" />
     <ClCompile Include="Players\FMMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Channels.cpp" />
     <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
@@ -53,6 +53,7 @@
     <ClCompile Include="Infrastructure\Support.cpp" />
     <ClCompile Include="Infrastructure\InputInfoReader.cpp" />
     <ClCompile Include="Infrastructure\InputInfoWriter.cpp" />
+    <ClCompile Include="Players\Soundfont.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />

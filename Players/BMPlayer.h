@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.07.13) **/
+/** $VER: BMPlayer.h (2025.07.21) **/
 
 #pragma once
 
@@ -60,7 +60,7 @@ private:
 
     #pragma endregion
 
-    bool LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept;
+    void LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations);
 
     bool IsStarted() const noexcept
     {
@@ -78,7 +78,6 @@ private:
     float * _SrcFrames;
 
     std::vector<HSOUNDFONT> _SoundfontHandles;
-    sflist_t * _SFList[2];
 
     static const size_t MaxPorts = 16;
 
@@ -90,6 +89,7 @@ private:
     uint32_t _InterpolationMode;
     uint32_t _VoiceCount;
 
+    bool _UseBankOffset;
     bool _DoReverbAndChorusProcessing;
     bool _IgnoreCC32; // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.
 

@@ -228,7 +228,7 @@ private:
     uint32_t _ExtraPercussionChannel;
     uint32_t _CleanFlags;
 
-    float _BASSMIDIVolume;
+    float _BASSMIDIGain;
     uint32_t _BASSMIDIInterpolationMode;
 
     uint32_t _FluidSynthInterpolationMethod;

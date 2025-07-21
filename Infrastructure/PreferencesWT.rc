@@ -247,7 +247,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
 //  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
 
     groupbox "BASS MIDI", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10
-        rtext             "Gain:",              IDC_BASSMIDI_VOLUME_LBL,            X_A11, Y_A11 + 2, W_A11, H_A11
+        rtext             "Gain:",              IDC_BASSMIDI_GAIN_LBL,              X_A11, Y_A11 + 2, W_A11, H_A11
         edittext                                IDC_BASSMIDI_GAIN,                  X_A12, Y_A12,     W_A12, H_A12, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
         rtext       "Resampling:",              IDC_RESAMPLING_LBL,                 X_A13, Y_A13 + 2, W_A13, H_A13
         combobox                                IDC_BASSMIDI_RESAMPLING,            X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP

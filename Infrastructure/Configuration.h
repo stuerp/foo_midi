@@ -138,7 +138,7 @@ enum
     DefaultNukePanning = 0,
 };
 
-const float DefaultBASSMIDIVolume = 0.15f;
+const float DefaultBASSMIDIGain = 0.15f;
 
 const uint16_t DefaultEnabledChannels = 0xFFFF;
 
@@ -222,7 +222,7 @@ extern cfg_var_modern::cfg_bool
     CfgFluidSynthDynSampleLoading;
 
 extern cfg_var_modern::cfg_float
-    CfgBASSMIDIVolume;
+    CfgBASSMIDIGain;
 
 extern cfg_var_modern::cfg_string
     CfgVSTiPlugInDirectoryPath,

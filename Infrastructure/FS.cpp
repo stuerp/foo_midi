@@ -1,5 +1,5 @@
 
-/** $VER: FS.cpp (2025.07.12) P. Stuer **/
+/** $VER: FS.cpp (2025.07.21) P. Stuer **/
 
 #include "pch.h"
 
@@ -41,6 +41,8 @@ void API::Initialize(const WCHAR * basePath)
     #pragma warning(disable: 4191) // 'type cast': unsafe conversion from 'FARPROC' to 'xxx'
 
     InitializeFunction(fluid_version, GetVersion);
+
+    InitializeFunction(fluid_audio_driver_register, RegisterDriver);
 
     InitializeFunction(new_fluid_settings, CreateSettings);
 

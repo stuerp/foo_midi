@@ -1,19 +1,21 @@
 
-/** $VER: FSPlayer.cpp (2025.07.12) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.07.21) P. Stuer **/
 
 #include "pch.h"
 
 #include "FSPlayer.h"
 
+#include "Encoding.h"
 #include "Support.h"
 #include "Log.h"
 
 static void Logger(int level, const char * message, void * data);
 
-FSPlayer::FSPlayer() : player_t(), _Settings()
+FSPlayer::FSPlayer() noexcept : player_t(), _Settings()
 {
     ::memset(_Synths, 0, sizeof(_Synths));
 
+    _UseBankOffset = false;
     _DoDynamicLoading = false;
     _DoReverbAndChorusProcessing = true;
     _VoiceCount = 256;
@@ -128,6 +130,15 @@ bool FSPlayer::Startup()
     if (IsStarted())
         return true;
 
+    // We don't need any drivers. foobar2000 is going play our samples.
+    {
+        const char * Drivers[] = { nullptr };
+
+        int Result = _API.RegisterDriver(Drivers);
+
+        assert(Result == FLUID_OK);
+    }
+
     _Settings = _API.CreateSettings();
 
     if (_Settings == nullptr)
@@ -190,7 +201,7 @@ bool FSPlayer::Startup()
 
 //  _API.SetNumericSetting(_Settings, "synth.sample-rate", (double) _SampleRate);
 
-    // Create the syntheiszers.
+    // Create the synthesizers.
     for (size_t i = 0; i < _countof(_Synths); ++i)
     {
         // Create the synthesizer.
@@ -213,39 +224,30 @@ bool FSPlayer::Startup()
                 return false;
             }
 
-            _API.AddSoundFontLoader(_Synths[i], Loader);
-
             _API.SetInterpolationMethod(_Synths[i], -1, (int) _InterpolationMethod);
+            _API.SetChorusType         (_Synths[i], fluid_chorus_mod::FLUID_CHORUS_MOD_SINE);
+            _API.AddSoundFontLoader    (_Synths[i], Loader);
 
-            _API.SetChorusType(_Synths[i], fluid_chorus_mod::FLUID_CHORUS_MOD_SINE);
-
-            for (const auto & sf : _SoundFonts)
+            try
             {
-                if (!_API.IsSoundFont(sf.FilePath().c_str()))
-                    continue;
+                for (const auto & sf : _SoundFonts)
+                    LoadSoundfont(_Synths[i], sf);
+            }
+            catch (std::exception e)
+            {
+                _ErrorMessage = e.what();
 
-                int SoundFontId = _API.LoadSoundFont(_Synths[i], sf.FilePath().c_str(), TRUE);
+                Shutdown();
 
-                if (SoundFontId == FLUID_FAILED)
-                {
-                    Shutdown();
-
-                    _ErrorMessage = "Failed to load SoundFont \"" + sf.FilePath() + "\"";
-
-                    return false;
-                }
-
-                int BankOffset = sf.BankOffset();
-
-                _API.SetSoundFontBankOffset(_Synths[i], SoundFontId, BankOffset);
+                return false;
             }
         }
     }
 
     _API.SetLogFunction(FLUID_PANIC, Logger, nullptr);
-    _API.SetLogFunction(FLUID_ERR, Logger, nullptr);
-    _API.SetLogFunction(FLUID_WARN, Logger, nullptr);
-    _API.SetLogFunction(FLUID_DBG,Logger, nullptr);
+    _API.SetLogFunction(FLUID_ERR,   Logger, nullptr);
+    _API.SetLogFunction(FLUID_WARN,  Logger, nullptr);
+    _API.SetLogFunction(FLUID_DBG,   Logger, nullptr);
 
     _ErrorMessage = "";
 
@@ -322,9 +324,6 @@ void FSPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
     }
 }
 
-/// <summary>
-/// Resets the player.
-/// </summary>
 bool FSPlayer::Reset()
 {
     size_t ResetCount = 0;
@@ -419,7 +418,7 @@ void FSPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 
 #pragma endregion
 
-#pragma region Sound font loader
+#pragma region Soundfont loader
 
 static void * HandleOpen(const char * filePath) noexcept
 {
@@ -518,15 +517,39 @@ fluid_sfloader_t * FSPlayer::GetSoundFontLoader(fluid_settings_t * settings) con
 
 #pragma endregion
 
+/// <summary>
+/// Loads a soundfont into the specified synthesizer.
+/// </summary>
+void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
+{
+    const std::string FilePath = (const char *) sf.FilePath.string().c_str();
+
+    if (!_API.IsSoundFont(FilePath.c_str()))
+        throw std::exception(::FormatText("File \"%s\" has unknown soundfont format.", FilePath.c_str()).c_str());
+
+    const int SoundFontId = _API.LoadSoundFont(synth, FilePath.c_str(), TRUE);
+
+    if (SoundFontId == FLUID_FAILED)
+        throw std::exception(::FormatText("Failed to load soundfont \"%s\"", FilePath.c_str()).c_str());
+
+    const int BankOffset = sf.IsDLS ? 0 : (sf.IsEmbedded ? 1 : (_UseBankOffset ? sf.BankOffset : 0));
+
+    _API.SetSoundFontBankOffset(synth, SoundFontId, BankOffset);
+}
+
 static void Logger(int level, const char * message, void * data)
 {
     switch (level)
     {
         case FLUID_PANIC: Log.AtFatal().Write(STR_COMPONENT_BASENAME " FluidSynth: FATAL %s", message); break;
+        case FLUID_INFO:  Log.AtInfo() .Write(STR_COMPONENT_BASENAME " FluidSynth: %s", message); break;
+
+#ifdef _DEBUG
+        // Fluidsynth 2.4.7 issues errors while loading soundfonts but continues anyway. Disable this in release builds.
         case FLUID_ERR:   Log.AtError().Write(STR_COMPONENT_BASENAME " FluidSynth: ERROR %s", message); break;
         case FLUID_WARN:  Log.AtWarn() .Write(STR_COMPONENT_BASENAME " FluidSynth: WARNING %s", message); break;
-        case FLUID_INFO:  Log.AtInfo() .Write(STR_COMPONENT_BASENAME " FluidSynth: %s", message); break;
-//      case FLUID_DBG:   Log.AtDebug().Format(STR_COMPONENT_BASENAME " FluidSynth: %s", message); break;
+        case FLUID_DBG:   Log.AtTrace().Write(STR_COMPONENT_BASENAME " FluidSynth: TRACE %s", message); break;
+#endif
     }
 }
 

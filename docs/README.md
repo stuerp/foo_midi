@@ -60,7 +60,7 @@ foo_midi can decode the following file formats:
 | Standard&nbsp;MIDI&nbsp;File     | .MID, .MIDI | MIDI file conforming to the [MIDI Association](https://midi.org/standard-midi-files) standard |
 | Standard&nbsp;MIDI&nbsp;File     | .KAR        | MIDI file with embedded song lyrics for karaoke |
 | Extensible&nbsp;Music&nbsp;Format | .XMF, .MXMF | Format created by the [MIDI Association](https://midi.org/extensible-music-format-xmf). See also [Video Game Music Preservation Foundation (VGMPF)](https://www.vgmpf.com/Wiki/index.php?title=XMF). |
-| RIFF-based MIDI File             | .RMI        | Format created by Microsoft and later extended by MIDI.org (an arm of the MIDI Manufacturers Association) to permit the bundling of both MIDI files and Downloadable Sounds (DLS) files. See [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000120.shtml). |
+| RIFF-based MIDI File             | .RMI        | Format created by Microsoft and later extended by MIDI.org (an arm of the MIDI Manufacturers Association) to permit the bundling of both MIDI files and Downloadable Sounds (DLS) files. See [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000120.shtml). foo_midi also implements the more recent [SF2 RMIDI Format Extension Specification](https://github.com/spessasus/sf2-rmidi-specification). |
 | Game Music Format ![Proposed](https://img.shields.io/badge/proposed-blue) | .GMF | Created by Adventure Soft for their Adventure Game Operating System (AGOS) engine. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=GMF). |
 | MIDI Stream                      | .MIDS, .MDS | Format created by Microsoft with the release of Windows 95. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=MDS). |
 | Human Machine Interface MIDI P/R | .HMP        | Format used by Human Machine Interface's Sound Operating System. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMP). |
@@ -632,7 +632,7 @@ Cache status
 
 ##### Configuration file
 
-FluidSynth has many more settings to configure. You can use a text file to change thoses settings. The file must have the following format:
+FluidSynth has many more settings to configure. You can use a text file to change those settings. The file must have the following format:
 
 - Empty lines and comment lines starting with a '#' character are ignored.
 - Each line contains one setting in the following format: `name` *spaces* `value`.
@@ -780,7 +780,7 @@ This chapter contains a lot of reference material I consulted during the develop
 ### RMI
 
 - [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
-- [Official SF2 RMIDI Specification](https://github.com/spessasus/sf2-rmidi-specification)
+- [SF2 RMIDI Format Extension Specification](https://github.com/spessasus/sf2-rmidi-specification)
 
 ### XMF (Extensible Music Format)
 

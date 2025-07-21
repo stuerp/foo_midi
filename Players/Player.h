@@ -77,6 +77,8 @@ protected:
 
     std::string _ErrorMessage;
 
+    std::vector<midi::message_t> _Messages;
+
 private:
     void SendEventFiltered(uint32_t data);
     void SendEventFiltered(uint32_t data, uint32_t time);
@@ -94,10 +96,8 @@ private:
     LoopType _LoopType;             // Type of looping requested by the user.
     uint32_t _DecayTime;            // in ms
 
-    std::vector<midi::message_t> _Messages;
-
     uint32_t _MessageIndex;         // Current MIDI message
-    uint32_t _MessageIndexLoopBegin;       // Start of the loop in the event stream
+    uint32_t _MessageIndexLoopBegin;// Start of the loop in the event stream
     uint32_t _LoopEndIndex;         // End of the loop in the event stream
 
     uint32_t _FrameIndex;           // Current frame in the sample stream

@@ -1,54 +1,54 @@
 
-/** $VER: Soundfont.h (2024.08.25) **/
+/** $VER: Soundfont.h (2025.07.20) P. Stuer - Represents a soundfont. **/
 
 #pragma once
 
 #include <string>
 
+#include <bassmidi.h>
+
 #pragma warning(disable: 4820) // x bytes padding added after data member
+
 class soundfont_t
 {
 public:
-    soundfont_t() noexcept : _Volume(1.f), _BankOffset(), _IsEmbedded(false), _IsDLS(false)
+    soundfont_t() noexcept : Gain(1.f), BankOffset(), IsEmbedded(false), IsDLS(false)
     {
     }
 
-    soundfont_t(const std::string & filePath, float volume, int bankOffset, bool isEmbedded, bool isDLS) noexcept
+    soundfont_t(const std::string & filePath, float gain, int bankOffset, bool isEmbedded, bool isDLS) noexcept
     {
-        _FilePath = filePath;
-        _Volume = volume;
-        _BankOffset = bankOffset;
-        _IsEmbedded = isEmbedded;
-        _IsDLS = isDLS;
+        FilePath = filePath;
+        Gain = gain;
+        BankOffset = bankOffset;
+        IsEmbedded = isEmbedded;
+        IsDLS = isDLS;
     }
 
     bool operator ==(const soundfont_t & other) const noexcept
     {
-        if (_FilePath != other._FilePath)
+        if (FilePath != other.FilePath)
             return false;
 
-        if (_Volume != other._Volume)
+        if (Gain != other.Gain)
             return false;
 
-        if (_BankOffset != other._BankOffset)
+        if (BankOffset != other.BankOffset)
             return false;
 
-        if (_IsEmbedded != other._IsEmbedded)
+        if (IsEmbedded != other.IsEmbedded)
             return false;
 
-        return (_IsDLS == other._IsDLS);
+        return (IsDLS == other.IsDLS);
     }
 
-    const std::string & FilePath() const noexcept { return _FilePath; }
-    float Volume() const noexcept { return _Volume; }
-    int BankOffset() const noexcept { return _BankOffset; }
-    bool IsEmbedded() const noexcept { return _IsEmbedded; }
-    bool IsDLS() const noexcept { return _IsDLS; }
+    fs::path FilePath;
+    float Gain;
+    int BankOffset;
+    bool IsEmbedded;
+    bool IsDLS;
 
-private:
-    std::string _FilePath;
-    float _Volume;
-    int _BankOffset;
-    bool _IsEmbedded;
-    bool _IsDLS;
+    std::vector<BASS_MIDI_FONTEX> FontEx;
 };
+
+std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath, bool isBASSMIDI);

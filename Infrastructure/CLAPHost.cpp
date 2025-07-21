@@ -293,7 +293,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
                 GetPlugIns_(Entry.path());
             }
             else
-            if (IsOneOf(Entry.path().extension().u8string(), { u8".clap", u8".dll" }))
+            if (IsOneOf(Entry.path().extension().string().c_str(), { ".clap", ".dll" }))
             {
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
 

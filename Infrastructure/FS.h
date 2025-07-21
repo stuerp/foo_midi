@@ -1,5 +1,5 @@
 
-/** $VER: FS.h (2025.07.05) **/
+/** $VER: FS.h (2025.07.21) **/
 
 #pragma once
 
@@ -15,6 +15,8 @@ namespace FluidSynth
 #pragma region FluidSynth API
 
 typedef void (WINAPIV * _fluid_version)(int * major, int * minor, int * micro);
+
+typedef int (WINAPIV * _fluid_audio_driver_register)(const char ** drivers);
 
 typedef fluid_settings_t * (WINAPIV * _new_fluid_settings)();
 
@@ -122,6 +124,8 @@ public:
 
 public:
     _fluid_version GetVersion;
+
+    _fluid_audio_driver_register RegisterDriver;
 
     _new_fluid_settings CreateSettings;
 

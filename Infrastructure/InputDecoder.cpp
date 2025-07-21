@@ -78,7 +78,7 @@ InputDecoder::InputDecoder() noexcept :
 
     _ExtraPercussionChannel(~0U),
 
-    _BASSMIDIVolume((float) CfgBASSMIDIVolume),
+    _BASSMIDIGain((float) CfgBASSMIDIGain),
     _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIResamplingMode),
 
     _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode)
@@ -98,8 +98,8 @@ InputDecoder::~InputDecoder() noexcept
 {
     for (const auto & sf : _Soundfonts)
     {
-        if (sf.IsEmbedded())
-            ::DeleteFileA(sf.FilePath().c_str());
+        if (sf.IsEmbedded)
+            ::DeleteFileA((const char *) sf.FilePath.string().c_str());
     }
 
     if (_Player != nullptr)
@@ -462,10 +462,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             auto Player = new BMPlayer;
 
+            Player->SetSoundfonts(_Soundfonts);
+
             Player->SetInterpolationMode(_BASSMIDIInterpolationMode);
             Player->SetVoiceCount(Preset._VoiceCount);
             Player->EnableEffects(Preset._EffectsEnabled);
-            Player->SetSoundfonts(_Soundfonts);
 
             _Player = Player;
 
