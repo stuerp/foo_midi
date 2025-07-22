@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.07.21) **/
+/** $VER: FSPlayer.h (2025.07.22) **/
 
 #pragma once
 
@@ -84,15 +84,15 @@ private:
 private:
     fluid_settings_t * _Settings; // All synths share the same config.
 
-    static const size_t MaxPorts = 16;
+    static const size_t MaxPorts = 1;
 
     fluid_synth_t * _Synths[MaxPorts]; // Each synth corresponds to a port.
     
     std::vector<soundfont_t> _SoundFonts;
 
-    bool _UseBankOffset;
-    bool _DoDynamicLoading;
+    bool _HasBankSelects;
     bool _DoReverbAndChorusProcessing;
+    bool _DoDynamicLoading;
     uint32_t _VoiceCount;
 
     uint32_t _InterpolationMethod;

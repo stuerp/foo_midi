@@ -1,5 +1,5 @@
 
-/** $VER: Soundfont.cpp (2025.07.21) P. Stuer - Soundfont support routines for wavetable players **/
+/** $VER: Soundfont.cpp (2025.07.22) P. Stuer - Soundfont support routines for wavetable players **/
 
 #include "pch.h"
 
@@ -24,6 +24,9 @@ static const json_value * FindObject(const json_value * object, const char * nam
 /// </summary>
 std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
 {
+    if (!fs::exists(filePath))
+        return { };
+
     std::uintmax_t Size = fs::file_size(filePath);
 
     std::vector<char> Data(Size + 1);
@@ -97,7 +100,10 @@ static std::vector<soundfont_t> ProcessText(const fs::path & filePath)
         {
             soundfont_t sf = { };
 
-            sf.FilePath = Line;
+            if (fs::path(Line).is_relative())
+                sf.FilePath = filePath.parent_path() / Line;
+            else
+                sf.FilePath = Line;
 
             Items.push_back(sf);
         }
@@ -278,7 +284,7 @@ static std::vector<soundfont_t> ProcessJSON(const fs::path & filePath, const jso
             auto FileName = ::FindObject(JSONSoundfont, "fileName");
 
             if (fs::path(FileName->u.string.ptr).is_relative())
-                sf.FilePath = filePath.stem() / FileName->u.string.ptr;
+                sf.FilePath = filePath.parent_path() / FileName->u.string.ptr;
             else
                 sf.FilePath = FileName->u.string.ptr;
         }

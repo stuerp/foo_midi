@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2025.07.21) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.07.22) P. Stuer **/
 
 #include "pch.h"
 
@@ -15,7 +15,7 @@ FSPlayer::FSPlayer() noexcept : player_t(), _Settings()
 {
     ::memset(_Synths, 0, sizeof(_Synths));
 
-    _UseBankOffset = false;
+    _HasBankSelects = false;
     _DoDynamicLoading = false;
     _DoReverbAndChorusProcessing = true;
     _VoiceCount = 256;
@@ -124,11 +124,25 @@ bool FSPlayer::Startup()
     if (_IsStarted)
         return true;
 
-    if (!_API.IsInitialized())
-        return false;
-
     if (IsStarted())
         return true;
+
+    // Determine if the MIDI stream contains CC#0 Bank Select messages that any other bank than 0 and 127 (Drums)
+    for (const auto & m : _Messages)
+    {
+        int Status = (int) (m.Data & 0xF0u);
+        int Param1 = (int) (m.Data >>  8);
+        int Param2 = (int) (m.Data >> 16);
+
+        if ((Status == midi::ControlChange) && (Param1 == midi::BankSelect) && (Param2 != 0) && (Param2 != 127))
+        {
+            _HasBankSelects = true;
+            break;
+        }
+    }
+
+    if (!_API.IsInitialized())
+        return false;
 
     // We don't need any drivers. foobar2000 is going play our samples.
     {
@@ -535,8 +549,8 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
     if (SoundFontId == FLUID_FAILED)
         throw std::exception(::FormatText("Failed to load soundfont \"%s\"", FilePath.c_str()).c_str());
 
-    const int BankOffset = sf.IsDLS ?  0 : (sf.IsEmbedded ? 1 : (_UseBankOffset ? sf.BankOffset : 0));
-//  const int BankOffset = sf.IsDLS ? -1 : (sf.IsEmbedded ? 1 : (_UseBankOffset ? sf.BankOffset : 0)); // This works for embedded DLS in XMF but not for RMI.
+    const int BankOffset = sf.IsDLS ?  0 : (sf.IsEmbedded ? 1 : (_HasBankSelects ? sf.BankOffset : 0));
+//  const int BankOffset = sf.IsDLS ? -1 : (sf.IsEmbedded ? 1 : (_HasBankSelects ? sf.BankOffset : 0)); // This works for embedded DLS in XMF but not for RMI.
 
     _API.SetSoundFontBankOffset(synth, SoundFontId, BankOffset);
 }

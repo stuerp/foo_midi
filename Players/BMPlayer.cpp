@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.07.21) **/
+/** $VER: BMPlayer.cpp (2025.07.22) **/
 
 #include "pch.h"
 
@@ -22,6 +22,7 @@ BMPlayer::BMPlayer() : player_t()
 {
     ::memset(_Streams, 0, sizeof(_Streams));
 
+    _HasBankSelects = false;
     _InterpolationMode = 0;
     _DoReverbAndChorusProcessing = true;
     _IgnoreCC32 = false;
@@ -138,23 +139,19 @@ bool BMPlayer::Startup()
     if (_IsStarted)
         return true;
 
+    // Determine if the MIDI stream contains CC#0 Bank Select messages that any other bank than 0 and 127 (Drums)
     for (const auto & m : _Messages)
     {
-        int Status = (int) (m.Data) & 0xF0u;
+        int Status = (int) (m.Data & 0xF0u);
         int Param1 = (int) (m.Data >>  8);
         int Param2 = (int) (m.Data >> 16);
 
         if ((Status == midi::ControlChange) && (Param1 == midi::BankSelect) && (Param2 != 0) && (Param2 != 127))
         {
-            _UseBankOffset = true;
+            _HasBankSelects = true;
             break;
         }
     }
-
-    _SrcFrames = new float[MaxFrames * MaxChannels];
-
-    if (_SrcFrames == nullptr)
-        return false;
 
     std::vector<BASS_MIDI_FONTEX> SoundfontConfigurations;
 
@@ -171,6 +168,11 @@ bool BMPlayer::Startup()
             return false;
         }
     }
+
+    _SrcFrames = new float[MaxFrames * MaxChannels];
+
+    if (_SrcFrames == nullptr)
+        return false;
 
     const DWORD ChannelsPerStream = 32;
     const DWORD Flags = (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_DoReverbAndChorusProcessing ? 0 : BASS_MIDI_NOFX));

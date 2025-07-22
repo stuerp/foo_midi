@@ -102,28 +102,49 @@ void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundfontFilePath, 
     }
 
     // Create the final soundfont list.
+    std::string Message;
+
     for (const auto & sf : Soundfonts)
     {
         if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
         {
-            Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
+            if (fs::exists(sf.FilePath))
+            {
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
 
-            for (const auto & iter : LoadSoundfontList(sf.FilePath))
-                _Soundfonts.push_back(iter);
+                for (const auto & iter : LoadSoundfontList(sf.FilePath))
+                {
+                    if (fs::exists(iter.FilePath))
+                    {
+                        if (sf.IsDLS)
+                            HasDLS = true;
+
+                        _Soundfonts.push_back(iter);
+                    }
+                    else
+                        Message += ::FormatText("Soundfont \"%s\" does not exist.\n", iter.FilePath.string().c_str()).c_str();
+                }
+            }
+            else
+                Message += ::FormatText("Soundfont list \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
         }
         else
         if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
-            _Soundfonts.push_back(sf);
-    }
-
-    for (const auto & sf : _Soundfonts)
-    {
-        if (sf.IsDLS)
         {
-            HasDLS = true;
-            break;
+            if (fs::exists(sf.FilePath))
+            {
+                if (sf.IsDLS)
+                    HasDLS = true;
+
+                _Soundfonts.push_back(sf);
+            }
+            else
+                Message += ::FormatText("Soundfont \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
         }
     }
+
+    if (!Message.empty())
+        popup_message::g_show(Message.c_str(), STR_COMPONENT_BASENAME, popup_message::icon_error);
 
     // Force the use of a soundfont player if an embedded or named soundfont was found.
     if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundfonts && !_Soundfonts.empty())

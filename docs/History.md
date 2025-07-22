@@ -1,6 +1,10 @@
 
 # foo_midi History
 
+v3.1.0.0-alpha2, 2025-07-21
+
+- New: Added support for flat text SFList files.
+
 v3.1.0.0-alpha1, 2025-07-21
 
 - New: Added SFList support to the FluidSynth player. Due to limitations of the current FluidSynth API only the `fileName` property is used.

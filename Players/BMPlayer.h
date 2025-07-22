@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.07.21) **/
+/** $VER: BMPlayer.h (2025.07.22) **/
 
 #pragma once
 
@@ -79,7 +79,7 @@ private:
 
     std::vector<HSOUNDFONT> _SoundfontHandles;
 
-    static const size_t MaxPorts = 16;
+    static const size_t MaxPorts = 1;
 
     HSTREAM _Streams[MaxPorts]; // Each stream corresponds to a port.
 
@@ -89,7 +89,7 @@ private:
     uint32_t _InterpolationMode;
     uint32_t _VoiceCount;
 
-    bool _UseBankOffset;
+    bool _HasBankSelects;
     bool _DoReverbAndChorusProcessing;
     bool _IgnoreCC32; // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.
 

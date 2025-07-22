@@ -95,9 +95,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.0.0-alpha2, 2025-07-21
+v3.1.0.0-alpha3, 2025-xx-xx
 
-- New: Added support for flat text SFList files.
+- 
 
 You can read the full history [here](docs/History.md).
 
