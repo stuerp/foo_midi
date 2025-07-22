@@ -97,7 +97,10 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v3.1.0.0-alpha3, 2025-xx-xx
 
-- 
+- Changed: Relative soundfont paths should now work in JSON and text lists.
+- Changed: Reduced number of BASSMIDI and FluidSynth ports to 1 to improve performance.
+- Improved: FluidSynth handles DLS embedded in XMF files better.
+- Fixed: MIDI flavor **None** did not work completely as intended.
 
 You can read the full history [here](docs/History.md).
 

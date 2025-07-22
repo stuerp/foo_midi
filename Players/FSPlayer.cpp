@@ -549,8 +549,19 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
     if (SoundFontId == FLUID_FAILED)
         throw std::exception(::FormatText("Failed to load soundfont \"%s\"", FilePath.c_str()).c_str());
 
-    const int BankOffset = sf.IsDLS ?  0 : (sf.IsEmbedded ? 1 : (_HasBankSelects ? sf.BankOffset : 0));
-//  const int BankOffset = sf.IsDLS ? -1 : (sf.IsEmbedded ? 1 : (_HasBankSelects ? sf.BankOffset : 0)); // This works for embedded DLS in XMF but not for RMI.
+    int BankOffset = 0;
+
+    if (sf.IsDLS)
+    {
+        BankOffset = (_FileFormat == midi::XMF) ? -1 : 0;
+    }
+    else
+    if (sf.IsEmbedded)
+    {
+        BankOffset = 1;
+    }
+    else
+        BankOffset = (_HasBankSelects ? sf.BankOffset : 0);
 
     _API.SetSoundFontBankOffset(synth, SoundFontId, BankOffset);
 }

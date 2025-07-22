@@ -78,6 +78,7 @@ protected:
     std::string _ErrorMessage;
 
     std::vector<midi::message_t> _Messages;
+    midi::FileFormat _FileFormat;
 
 private:
     void SendEventFiltered(uint32_t data);

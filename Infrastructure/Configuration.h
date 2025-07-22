@@ -70,7 +70,7 @@ enum class MIDIFlavor
 
     XG,
 
-    None = -1
+    None
 };
 
 enum

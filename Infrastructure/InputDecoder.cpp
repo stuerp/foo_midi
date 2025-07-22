@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.15) **/
+/** $VER: InputDecoder.cpp (2025.07.22) **/
 
 #include "pch.h"
 
@@ -159,7 +159,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         {
             try
             {
-                midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container);
+                midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, midi::DefaultOptions);
             }
             catch (std::exception & e)
             {

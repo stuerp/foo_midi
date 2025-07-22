@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2025.07.16) **/
+/** $VER: Player.cpp (2025.07.22) **/
 
 #include "pch.h"
 
@@ -21,6 +21,8 @@ player_t::player_t() noexcept
     _FramesRemaining = 0;
 
     _FrameIndexLoopBegin = 0;
+
+    _FileFormat = midi::FileFormat::Unknown;
 
     _IsStarted = false;
 
@@ -55,6 +57,8 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
 
         if (_Messages.size() == 0)
             return false;
+
+        _FileFormat = container.FileFormat;
     }
 
     // Initialize the sample stream. We get the values in ms but SetSampleRate() converts them to frames.
