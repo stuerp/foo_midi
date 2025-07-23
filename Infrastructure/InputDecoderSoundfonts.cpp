@@ -50,9 +50,9 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         pfc::string FilePath = _FilePath;
         pfc::string TempSoundfontFilePath;
 
-        bool FoundSoundFile = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
+        bool FoundSoundfont = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
 
-        if (!FoundSoundFile)
+        if (!FoundSoundfont)
         {
             size_t FileExtensionIndex = FilePath.find_last('.');
 
@@ -60,10 +60,10 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
             {
                 FilePath.truncate(FileExtensionIndex);
 
-                FoundSoundFile = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
+                FoundSoundfont = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
             }
 
-            if (!FoundSoundFile)
+            if (!FoundSoundfont)
             {
                 FilePath.truncate(FilePath.scan_filename());
 
@@ -78,12 +78,12 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
                     FilePath += TempSoundfontFilePath;
                     FilePath.add_string(&FilePath[FileNameIndex], FilePath.length() - FileNameIndex - 1);
 
-                    FoundSoundFile = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
+                    FoundSoundfont = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
                 }
             }
         }
 
-        if (FoundSoundFile)
+        if (FoundSoundfont)
         {
             const bool IsDLS = TempSoundfontFilePath.toLower().endsWith(".dls");
 
@@ -110,13 +110,15 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     {
         if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
         {
-            if (fs::exists(sf.FilePath))
+//          if (fs::exists(sf.FilePath))
+            if (filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
             {
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
 
                 for (const auto & iter : LoadSoundfontList(sf.FilePath))
                 {
-                    if (fs::exists(iter.FilePath))
+//                  if (fs::exists(iter.FilePath))
+                    if (filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
                     {
                         if (sf.IsDLS)
                             HasDLS = true;
@@ -133,7 +135,8 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         else
         if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
         {
-            if (fs::exists(sf.FilePath))
+//          if (fs::exists(sf.FilePath))
+            if (filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
             {
                 if (sf.IsDLS)
                     HasDLS = true;

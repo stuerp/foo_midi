@@ -1,5 +1,5 @@
 
-/** $VER: SoundfontCache.cpp (2025.07.20) - Soundfont cache for wavetable players **/
+/** $VER: SoundfontCache.cpp (2025.07.23) - Soundfont cache for wavetable players **/
 
 #include "pch.h"
 
@@ -42,6 +42,74 @@ struct marker_t
 
 static std::map<std::string, cache_item_t> _CacheItems;
 static critical_section_t _CacheCriticalSection;
+
+static const BASS_FILEPROCS _BASSMIDICallbacks
+{
+    // Close
+    [](void * user)
+    {
+        try
+        {
+            auto File = (file::ptr *) user;
+
+            delete File;
+        }
+        catch (...)
+        {
+        }
+    },
+
+    // Size,
+    [](void * user) -> QWORD
+    {
+        try
+        {
+            auto File = (file::ptr *) user;
+
+            t_filesize FileSize = (*File)->get_size_ex(fb2k::noAbort);
+
+            return (QWORD) FileSize;
+        }
+        catch (...)
+        {
+            return 0;
+        }
+    },
+
+    // Read
+    [](void * data, DWORD size, void * user) -> DWORD
+    {
+        try
+        {
+            auto File = (file::ptr *) user;
+
+            size = (DWORD) (*File)->read(data, (t_size) size, fb2k::noAbort);
+
+            return size;
+        }
+        catch (...)
+        {
+            return 0;
+        }
+    },
+
+    // Seek
+    [](QWORD offset, void * user) ->BOOL
+    {
+        try
+        {
+            auto File = (file::ptr *) user;
+
+            (*File)->seek_ex((t_sfilesize) offset, file::t_seek_mode::seek_from_beginning, fb2k::noAbort);
+
+            return TRUE;
+        }
+        catch (...)
+        {
+            return FALSE;
+        }
+    }
+};
 
 /// <summary>
 /// Initializes the cache.
@@ -90,9 +158,16 @@ HSOUNDFONT CacheAddSoundfont(const fs::path & filePath)
 
     if (Item._hSoundfont == 0)
     {
-        hSoundfont = ::BASS_MIDI_FontInit(::UTF8ToWide((const char *) filePath.string().c_str()).c_str(), 0);
+        const DWORD Flags = BASS_MIDI_FONT_XGDRUMS;
 
-        if (hSoundfont)
+        auto  * File = new file::ptr;
+
+        filesystem::g_open(*File, (const char *) filePath.string().c_str(), filesystem::open_mode_read, fb2k::noAbort);
+
+        hSoundfont = ::BASS_MIDI_FontInitUser(&_BASSMIDICallbacks, File, Flags);
+//      hSoundfont = ::BASS_MIDI_FontInit(::UTF8ToWide((const char *) filePath.string().c_str()).c_str(), Flags);
+
+        if (hSoundfont != 0)
         {
             Item._hSoundfont = hSoundfont;
             Item._ReferenceCount = 1;

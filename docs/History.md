@@ -1,6 +1,14 @@
 
 # foo_midi History
 
+v3.1.0.0-alpha3, 2025-07-23
+
+- Changed: Relative soundfont paths should now work in JSON and text soundfont lists.
+- Improved: Error handling and reporting when reading soundfont lists.
+- Improved: BASSMIDI and FluidSynth only create as many streams or synthesizers as there are ports in the MIDI stream resulting in a faster startup.
+- Improved: FluidSynth handles DLS embedded in XMF files better.
+- Fixed: MIDI flavor **None** did not work completely as intended.
+
 v3.1.0.0-alpha2, 2025-07-21
 
 - New: Added support for flat text SFList files.

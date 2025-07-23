@@ -366,7 +366,7 @@ void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BA
 
         ::BASS_MIDI_FontSetVolume(hSoundfont, sf.Gain);
 
-        for (auto fex : sf.FontEx)
+        for (BASS_MIDI_FONTEX fex : sf.FontEx)
         {
             fex.font = hSoundfont;
 

@@ -273,13 +273,14 @@ The BASSMIDI and FluidSynth player also accept a Soundfont List file.
 
 ##### Simple format
 
-The simple format is just a flat text file where each line contains the location of a soundfont file.
+The simple format is just a flat text file where each line contains the location of a soundfont file. Empty lines are ignored. If you specify a only a file name or a relative path foo_midi will look for the file relative to the directory of the list file.
 
 Here's an example:
 
 ``` Text
 X:\Simple\SoundFont File.sf2
-X:\Advanced\SoundFont With Mappings.sf2
+
+..\Advanced\SoundFont With Mappings.sf2
 ```
 
 ##### Advanced format
@@ -300,7 +301,7 @@ Here's an example:
   "soundFonts": [
     {"fileName": "/Simple/SoundFont File.sf2"},
     {
-      "fileName": "/Advanced/SoundFont With Mappings.sf2",
+      "fileName": "x:\\Advanced\\SoundFont With Mappings.sf2",
       "gain": 6.0,
       "channels": [1,3,5],
       "patchMappings": [
@@ -309,7 +310,7 @@ Here's an example:
       ]
     },
     {
-      "fileName":  "/Another Simple/SoundFont File.sf2",
+      "fileName":  "../Another Simple/SoundFont File.sf2",
       "patchMappings": [
         {"destination": {"bank": 1}}
       ]
@@ -849,7 +850,11 @@ This chapter contains a lot of reference material I consulted during the develop
 - Plug-ins
   - [Dexed](https://asb2m10.github.io/dexed/), [GitHub repository](https://github.com/asb2m10/dexed)
   - [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP), [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator, John Novak
-    - Nuked SC-55, [GitHub repository](https://github.com/nukeykt/Nuked-SC55)
+    - Nuked SC-55, [Vogons announcement](https://www.vogons.org/viewtopic.php?t=99447), 2024-03-14
+    - Nuked SC-55, Nuke-YKT [GitHub repository](https://github.com/nukeykt/Nuked-SC55)
+    - Nuked SC-55, J.C. Moyer [GitHub repository](https://github.com/jcmoyer/Nuked-SC55)
+    - Nuked SC-55, Falcosoft [GitHub repository](https://github.com/Falcosoft/Nuked-SC55.git)
+    - Nuked SC-55 GUI Float, [GitHub repository](https://github.com/linoshkmalayil/Nuked-SC55-GUI-Float)
   - [Odin 2](https://thewavewarden.com/pages/odin-2), 24-voice polyphonic powerhouse, [The WaveWarden](https://thewavewarden.com/), [GitHub repository](https://github.com/TheWaveWarden/odin2)
   - [SW10-Plug](https://github.com/djtuBIG-MaliceX/sw10_plug), Casio SW-10
   - [JV880-Juce](https://github.com/giulioz/jv880_juce)
