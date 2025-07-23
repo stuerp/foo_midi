@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.07.22) **/
+/** $VER: BMPlayer.h (2025.07.23) **/
 
 #pragma once
 
@@ -53,7 +53,7 @@ private:
     virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
     virtual bool Reset() override;
 
-    virtual uint8_t GetPortCount() const noexcept override { return _countof(_Streams); };
+    virtual uint8_t GetPortCount() const noexcept override { return (uint8_t) _Streams.size(); };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
@@ -61,7 +61,7 @@ private:
     #pragma endregion
 
     void LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations);
-
+/*
     bool IsStarted() const noexcept
     {
         for (const auto & Stream : _Streams)
@@ -70,7 +70,7 @@ private:
 
         return true;
     }
-
+*/
 private:
     static const uint32_t MaxFrames = 512;
     static const uint32_t MaxChannels = 2;
@@ -81,7 +81,7 @@ private:
 
     static const size_t MaxPorts = 1;
 
-    HSTREAM _Streams[MaxPorts]; // Each stream corresponds to a port.
+    std::vector<HSTREAM> _Streams; // Each stream corresponds to a port.
 
     std::vector<soundfont_t> _Soundfonts;
 

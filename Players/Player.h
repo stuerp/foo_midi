@@ -30,7 +30,7 @@ public:
         Forced = 0x02
     };
 
-    bool Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t decayTime, uint32_t cleanFlags);
+    bool Load(const midi::container_t & container, uint32_t subsongIndex, LoopType loopMode, uint32_t decayTime, uint32_t cleanFlags);
     uint32_t Play(audio_sample * samplesData, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
@@ -70,7 +70,7 @@ protected:
     bool _IsStarted;
     uint32_t _SampleRate;
     midi::sysex_table_t _SysExMap;
-    std::vector<uint8_t> _Ports;
+    std::vector<uint8_t> _PortNumbers;
 
     MIDIFlavor _MIDIFlavor;
     bool _FilterEffects;
