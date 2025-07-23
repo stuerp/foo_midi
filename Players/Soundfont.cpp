@@ -98,6 +98,10 @@ static std::vector<soundfont_t> ProcessText(const fs::path & filePath)
 
         while (std::getline(File, Line))
         {
+            // Skip empty lines and lines containing only whitespace.
+            if (std::all_of(Line.begin(), Line.end(), [](unsigned char c) { return std::isspace(c); }))
+                continue;
+
             soundfont_t sf = { };
 
             if (fs::path(Line).is_relative())
