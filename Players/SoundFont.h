@@ -1,5 +1,5 @@
 
-/** $VER: Soundfont.h (2025.07.20) P. Stuer - Represents a soundfont. **/
+/** $VER: Soundfont.h (2025.07.23) P. Stuer - Represents a soundfont. **/
 
 #pragma once
 
@@ -16,7 +16,7 @@ public:
     {
     }
 
-    soundfont_t(const std::string & filePath, float gain, int bankOffset, bool isEmbedded, bool isDLS) noexcept
+    soundfont_t(const fs::path & filePath, float gain, int bankOffset, bool isEmbedded, bool isDLS) noexcept
     {
         FilePath = filePath;
         Gain = gain;

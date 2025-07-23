@@ -168,7 +168,7 @@ private:
     uint32_t GetLength(size_t subSongIndex) noexcept;
     void InitializeFade() noexcept;
     void OverridePlayerSelection(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept;
-    void GetSoundfonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
+    void GetSoundfonts(const fs::path & defaultSoundfontPath, abort_callback & abortHandler);
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);

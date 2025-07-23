@@ -95,9 +95,10 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.0.0-alpha3, 2025-xx-xx
+v3.1.0.0-alpha3, 2025-07-23
 
 - Changed: Relative soundfont paths should now work in JSON and text lists.
+- Improved: Error handling and reporting when reading soundfont lists.
 - Improved: BASSMIDI and FluidSynth only create as many streams or synthesizers as there are ports in the MIDI stream.
 - Improved: FluidSynth handles DLS embedded in XMF files better.
 - Fixed: MIDI flavor **None** did not work completely as intended.

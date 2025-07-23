@@ -323,7 +323,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     // Get the soundfonts if the player requires them.
     if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
-        GetSoundfonts(Preset._SoundfontFilePath, abortHandler);
+        GetSoundfonts(Preset._SoundfontFilePath.c_str(), abortHandler);
 
     // Unload the plug-in from the global CLAP host when the player is not a CLAP plug-in. This also closes the plug-in GUI.
     if ((_DecoderFlags & input_flag_playback) && (_PlayerType != PlayerType::CLAP))

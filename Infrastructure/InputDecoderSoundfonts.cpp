@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.07.21) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.07.23) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -8,15 +8,17 @@
 #include "Support.h"
 #include "Log.h"
 
+#include <fstream>
+
 #pragma hdrstop
 
 static bool GetSoundfontFilePath(const pfc::string & filePath, pfc::string & soundFontPath, abort_callback & abortHandler) noexcept;
-static bool WriteSoundfontFile(const std::vector<uint8_t> data, bool isDLS, std::string & filePath) noexcept;
+static bool WriteSoundfontFile(const std::vector<uint8_t> data, bool isDLS, fs::path & filePath) noexcept;
 
 /// <summary>
 /// Gets the soundfonts and adjusts the player type, if necessary.
 /// </summary>
-void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundfontFilePath, abort_callback & abortHandler)
+void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abort_callback & abortHandler)
 {
     std::vector<soundfont_t> Soundfonts;
 
@@ -32,11 +34,11 @@ void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundfontFilePath, 
         {
             bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
 
-            std::string FilePath;
+            fs::path FilePath;
 
             if (WriteSoundfontFile(Data, IsDLS, FilePath))
             {
-                Soundfonts.push_back({ FilePath, 1.f, _Container.GetBankOffset(), true, IsDLS });
+                Soundfonts.push_back(soundfont_t(FilePath, 1.f, _Container.GetBankOffset(), true, IsDLS));
 
                 HasNonDefaultSoundfonts = true;
             }
@@ -83,9 +85,9 @@ void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundfontFilePath, 
 
         if (FoundSoundFile)
         {
-            bool IsDLS = TempSoundfontFilePath.toLower().endsWith(".dls");
+            const bool IsDLS = TempSoundfontFilePath.toLower().endsWith(".dls");
 
-            Soundfonts.push_back({ TempSoundfontFilePath.c_str(), 1.0f, _Container.GetBankOffset(), false, IsDLS });
+            Soundfonts.push_back(soundfont_t(TempSoundfontFilePath.c_str(), 1.0f, _Container.GetBankOffset(), false, IsDLS));
 
             HasNonDefaultSoundfonts = true;
         }
@@ -93,11 +95,11 @@ void  InputDecoder::GetSoundfonts(const pfc::string & defaultSoundfontFilePath, 
 
     // Finally, add the default soundfont.
     {
-        if (!defaultSoundfontFilePath.isEmpty())
+        if (!defaultSoundfontFilePath.empty())
         {
-            bool IsDLS = defaultSoundfontFilePath.toLower().endsWith(".dls");
+            const bool IsDLS = (::_stricmp(defaultSoundfontFilePath.extension().string().c_str(), ".dls") == 0);
 
-            Soundfonts.push_back({ defaultSoundfontFilePath.c_str(), _BASSMIDIGain, 0, false, IsDLS });
+            Soundfonts.push_back(soundfont_t(defaultSoundfontFilePath, _BASSMIDIGain, 0, false, IsDLS));
         }
     }
 
@@ -206,7 +208,7 @@ bool GetSoundfontFilePath(const pfc::string & filePath, pfc::string & soundfontP
 /// <summary>
 /// Writes a buffer containing soundfont data to a temporary file.
 /// </summary>
-bool WriteSoundfontFile(const std::vector<uint8_t> data, bool isDLS, std::string & filePath) noexcept
+bool WriteSoundfontFile(const std::vector<uint8_t> soundfont, bool isDLS, fs::path & filePath) noexcept
 {
     char TempPath[MAX_PATH] = {};
 
@@ -218,23 +220,25 @@ bool WriteSoundfontFile(const std::vector<uint8_t> data, bool isDLS, std::string
     if (::GetTempFileNameA(TempPath, "SF-", 0, TempFilePath) == 0)
         return false;
 
-    std::string FilePath = TempFilePath;
+    fs::path FilePath = TempFilePath;
 
     // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
-    FilePath.append(isDLS ? ".dls" : ".sf2");
+    FilePath.replace_extension(isDLS ? ".dls" : ".sf2");
 
+    try
     {
-        FILE * fp = nullptr;
+        std::ofstream Stream(FilePath, std::ios::binary);
 
-        if (::fopen_s(&fp, FilePath.c_str(), "wb") == 0)
+        if (Stream)
         {
-            ::fwrite(data.data(), data.size(), 1, fp);
+            Stream.write((const char *) soundfont.data(), (std::streamsize) soundfont.size());
 
-            ::fclose(fp);
+            Stream.close();
 
             filePath = FilePath;
         }
     }
+    catch (...) { }
 
     ::DeleteFileA(TempFilePath);
 
