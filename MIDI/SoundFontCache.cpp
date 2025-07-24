@@ -160,7 +160,7 @@ HSOUNDFONT CacheAddSoundfont(const fs::path & filePath)
     {
         const DWORD Flags = BASS_MIDI_FONT_XGDRUMS;
 
-        auto  * File = new file::ptr;
+        auto * File = new file::ptr;
 
         filesystem::g_open(*File, (const char *) filePath.string().c_str(), filesystem::open_mode_read, fb2k::noAbort);
 

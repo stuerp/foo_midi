@@ -1,5 +1,5 @@
 
-/** $VER: FS.h (2025.07.21) **/
+/** $VER: FS.h (2025.07.24) **/
 
 #pragma once
 
@@ -200,7 +200,7 @@ public:
 private:
     HMODULE _hModule;
 
-    static inline const WCHAR * LibraryName = L"libfluidsynth-3.dll";
+    static inline const char * LibraryName = "libfluidsynth-3.dll";
 };
 
 class Host

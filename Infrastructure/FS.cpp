@@ -1,5 +1,5 @@
 
-/** $VER: FS.cpp (2025.07.21) P. Stuer **/
+/** $VER: FS.cpp (2025.07.24) P. Stuer **/
 
 #include "pch.h"
 
@@ -33,10 +33,10 @@ void API::Initialize(const WCHAR * basePath)
     if (!Success)
         throw component::runtime_error(component::GetErrorMessage("Failed to add FluidSynth directory to the search path", ::GetLastError()));
 
-    _hModule = ::LoadLibraryW(LibraryName);
+    _hModule = ::LoadLibraryA(LibraryName);
 
     if (_hModule == 0)
-        throw component::runtime_error(component::GetErrorMessage("Failed to load FluidSynth library \"%s\"", ::GetLastError(), ::WideToUTF8(LibraryName).c_str()));
+        throw component::runtime_error(component::GetErrorMessage(::FormatText("Failed to load FluidSynth library \"%s\"", LibraryName), ::GetLastError()));
 
     #pragma warning(disable: 4191) // 'type cast': unsafe conversion from 'FARPROC' to 'xxx'
 
@@ -125,7 +125,7 @@ bool API::Exists() noexcept
 
         return true;
     }
-    catch (component::runtime_error e)
+    catch (const component::runtime_error & e)
     {
         Log.AtError().Write(STR_COMPONENT_BASENAME " failed to initialize FluidSynth: %s", e.what());
 

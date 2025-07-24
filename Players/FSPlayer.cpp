@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2025.07.23) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.07.24) P. Stuer **/
 
 #include "pch.h"
 
@@ -83,12 +83,12 @@ void FSPlayer::EnableDynamicLoading(bool enabled)
 /// <summary>
 /// Sets the sound fonts to use for synthesis.
 /// </summary>
-void FSPlayer::SetSoundfonts(const std::vector<soundfont_t> & soundFonts)
+void FSPlayer::SetSoundfonts(const std::vector<soundfont_t> & soundfonts)
 {
-    if (_SoundFonts == soundFonts)
+    if (_Soundfonts == soundfonts)
         return;
 
-    _SoundFonts = soundFonts;
+    _Soundfonts = soundfonts;
 
     Shutdown();
 }
@@ -161,11 +161,11 @@ bool FSPlayer::Startup()
     {
         // Create the synthesizer.
         {
-            fluid_sfloader_t * Loader = GetSoundFontLoader(_Settings);
+            fluid_sfloader_t * Loader = GetSoundfontLoader(_Settings);
 
             if (Loader == nullptr)
             {
-                _ErrorMessage = "Failed to create SoundFont loader";
+                _ErrorMessage = "Failed to create Soundfont loader";
 
                 return false;
             }
@@ -183,14 +183,24 @@ bool FSPlayer::Startup()
             _API.SetInterpolationMethod(Synth, -1, (int) _InterpolationMethod);
             _API.SetChorusType         (Synth, fluid_chorus_mod::FLUID_CHORUS_MOD_SINE);
 
-            try
+            size_t LoadCount = 0;
+
+            for (const auto & sf : _Soundfonts)
             {
-                for (const auto & sf : _SoundFonts)
+                try
+                {
                     LoadSoundfont(Synth, sf);
+                    ++LoadCount;
+                }
+                catch (const std::exception & e)
+                {
+                    Log.AtWarn().Write(STR_COMPONENT_BASENAME " FluidSynth player is unable to load soundfont \"%s\": %s", sf.FilePath.string().c_str(), e.what());
+                }
             }
-            catch (std::exception e)
+
+            if (LoadCount == 0)
             {
-                _ErrorMessage = e.what();
+                _ErrorMessage = STR_COMPONENT_BASENAME " failed to load any soundfont. Check the console for more information.";
 
                 Shutdown();
 
@@ -401,7 +411,7 @@ bool FSPlayer::InitializeSettings() noexcept
     if (GetVersion() >= MakeDWORD(2, 4, 4, 0))
         _API.SetIntegerSetting(_Settings, "synth.dynamic-sample-loading", _DoDynamicLoading ? 1 : 0); // Causes clicking in the cymbals of "ran.rmi".
 
-    // When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
+    // When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the Soundfont.
     _API.SetIntegerSetting(_Settings, "synth.reverb.active", _DoReverbAndChorusProcessing ? 1 : 0);
     // Sets the amount of reverb damping. (0.0 - 1.0, Default: 0.3)
     _API.SetNumericSetting(_Settings, "synth.reverb.damp", 0.3);
@@ -412,7 +422,7 @@ bool FSPlayer::InitializeSettings() noexcept
     // Sets the stereo spread of the reverb signal. (0.0 - 100.0, Default: 0.8)
     _API.SetNumericSetting(_Settings, "synth.reverb.width", 0.8);
 
-    // When set to 1 (TRUE) the chorus effects module is activated. Otherwise, no chorus will be added to the output signal. Note that the amount of signal sent to the chorus module depends on the "chorus send" generator defined in the SoundFont.
+    // When set to 1 (TRUE) the chorus effects module is activated. Otherwise, no chorus will be added to the output signal. Note that the amount of signal sent to the chorus module depends on the "chorus send" generator defined in the Soundfont.
     _API.SetIntegerSetting(_Settings, "synth.chorus.active", _DoReverbAndChorusProcessing ? 1 : 0);
     // Specifies the modulation depth of the chorus. Max. value depends on synth sample-rate. 0.0 - 21.0 is safe for sample-rate values up to 96KHz.
     _API.SetNumericSetting(_Settings, "synth.chorus.depth", 4.25);
@@ -449,13 +459,13 @@ static void * HandleOpen(const char * filePath) noexcept
 {
     try
     {
-        std::string URI = "file://";
+//        std::string URI = "file://";
 
-        URI += filePath;
+//        URI += filePath;
 
         file::ptr * File = new file::ptr;
 
-        filesystem::g_open(*File, URI.c_str(), filesystem::open_mode_read, fb2k::noAbort);
+        filesystem::g_open(*File, filePath, filesystem::open_mode_read, fb2k::noAbort);
 
         return (void *) File;
     }
@@ -527,7 +537,7 @@ static int HandleClose(void * handle) noexcept
     }
 }
 
-fluid_sfloader_t * FSPlayer::GetSoundFontLoader(fluid_settings_t * settings) const noexcept
+fluid_sfloader_t * FSPlayer::GetSoundfontLoader(fluid_settings_t * settings) const noexcept
 {
     fluid_sfloader_t * Loader = _API.CreateSoundFontLoader(settings);
 
@@ -549,15 +559,16 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
 {
     const std::string FilePath = (const char *) sf.FilePath.string().c_str();
 
-    if (!std::filesystem::exists(FilePath))
+    if (!filesystem::g_exists(FilePath.c_str(), fb2k::noAbort))
         throw std::exception(::FormatText("Soundfont \"%s\" not found.", FilePath.c_str()).c_str());
-
+/*
+    // Does not use the registered callbacks and can't read files in archives
     if (!_API.IsSoundFont(FilePath.c_str()))
         throw std::exception(::FormatText("Soundfont \"%s\" has unknown soundfont format.", FilePath.c_str()).c_str());
+*/
+    const int SoundfontId = _API.LoadSoundFont(synth, FilePath.c_str(), TRUE);
 
-    const int SoundFontId = _API.LoadSoundFont(synth, FilePath.c_str(), TRUE);
-
-    if (SoundFontId == FLUID_FAILED)
+    if (SoundfontId == FLUID_FAILED)
         throw std::exception(::FormatText("Failed to load soundfont \"%s\"", FilePath.c_str()).c_str());
 
     int BankOffset = sf.BankOffset;
@@ -571,10 +582,10 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
         }
     }
 
-    // Offsets the bank numbers of a loaded SoundFont by subtracting the offset from any bank number when assigning instruments.
+    // Offsets the bank numbers of a loaded soundfont by subtracting the offset from any bank number when assigning instruments.
     if (BankOffset != 0)
     {
-        int Result = _API.SetSoundFontBankOffset(synth, SoundFontId, BankOffset);
+        int Result = _API.SetSoundFontBankOffset(synth, SoundfontId, BankOffset);
 
         assert(Result == FLUID_OK);
     }
@@ -598,54 +609,3 @@ static void LogMessage(int level, const char * message, void * data)
 #endif
     }
 }
-
-#ifdef LATER
-static void Callback(void * data, const char * name, int type)
-{
-    switch (type)
-    {
-/*
-        case FLUID_NUM_TYPE:
-        {
-            double value;
-            fluid_settings_getnum(d->settings, name, &value);
-            fluid_ostream_printf(d->out, "%.3f\n", value);
-            break;
-        }
-
-        case FLUID_INT_TYPE:
-        {
-            int value, hints;
-            fluid_settings_getint(d->settings, name, &value);
-
-            if(fluid_settings_get_hints(d->settings, name, &hints) == FLUID_OK)
-            {
-                if(!(hints & FLUID_HINT_TOGGLED))
-                {
-                    fluid_ostream_printf(d->out, "%d\n", value);
-                }
-                else
-                {
-                    fluid_ostream_printf(d->out, "%s\n", value ? "True" : "False");
-                }
-            }
-
-            break;
-        }
-*/
-        case FLUID_STR_TYPE:
-        {
-            auto Context = (context_t *) data;
-
-            char * Value = nullptr;
-
-            Context->_FluidSynth->GetStringSetting(Context->_Settings, name, &Value);
-
-            console::printf("%s: %s", name, Value);
-
-            Context->_FluidSynth->Free(Value);
-            break;
-        }
-    }
-};
-#endif

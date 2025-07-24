@@ -65,7 +65,7 @@ private:
 
     bool InitializeSettings() noexcept;
 
-    fluid_sfloader_t * GetSoundFontLoader(fluid_settings_t * settings) const noexcept;
+    fluid_sfloader_t * GetSoundfontLoader(fluid_settings_t * settings) const noexcept;
 /*
     bool IsStarted() const noexcept
     {
@@ -93,7 +93,7 @@ private:
 
     std::vector<fluid_synth_t *> _Synths; // Each synth corresponds to a port.
     
-    std::vector<soundfont_t> _SoundFonts;
+    std::vector<soundfont_t> _Soundfonts;
 
     bool _HasBankSelects;
     bool _DoReverbAndChorusProcessing;

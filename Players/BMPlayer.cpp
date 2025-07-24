@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.07.22) **/
+/** $VER: BMPlayer.cpp (2025.07.24) **/
 
 #include "pch.h"
 
@@ -153,18 +153,28 @@ bool BMPlayer::Startup()
 
     std::vector<BASS_MIDI_FONTEX> SoundfontConfigurations;
 
+    size_t LoadCount = 0;
+
     for (const auto & sf : _Soundfonts)
     {
         try
         {
             LoadSoundfontConfiguration(sf, SoundfontConfigurations);
+            ++LoadCount;
         }
-        catch (std::exception e)
+        catch (const std::exception & e)
         {
-            _ErrorMessage = ::FormatText("Unable to load configuration for soundfont \"%s\": %s", (const char *) sf.FilePath.string().c_str(), e.what());
-
-            return false;
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " BASSMIDI player is unable to load configuration for soundfont \"%s\": %s", (const char *) sf.FilePath.string().c_str(), e.what());
         }
+    }
+
+    if (LoadCount == 0)
+    {
+        _ErrorMessage = STR_COMPONENT_BASENAME " failed to load any soundfont. Check the console for more information.";
+
+        Shutdown();
+
+        return false;
     }
 
     _SrcFrames = new float[MaxFrames * MaxChannels];

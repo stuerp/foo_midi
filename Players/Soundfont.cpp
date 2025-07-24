@@ -29,20 +29,19 @@ std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
 
     std::uintmax_t Size = fs::file_size(filePath);
 
-    std::vector<char> Data(Size + 1);
-
+    std::vector<char> Data((size_t) (Size + 1));
     FILE * fp = nullptr;
 
-    errno_t rc = ::fopen_s(&fp, (const char *) filePath.string().c_str(), "r");
+    errno_t rc = ::fopen_s(&fp, filePath.string().c_str(), "r");
 
     if ((rc != 0) || (fp == nullptr))
-        throw std::exception(::FormatText("Failed to open soundfont list \"%s\": error %d", (const char *) filePath.string().c_str(), rc).c_str());
+        throw std::exception(::FormatText("Failed to open soundfont list \"%s\": error %d", filePath.string().c_str(), rc).c_str());
 
     ::fread(Data.data(), Data.size(), 1, fp);
 
     ::fclose(fp);
 
-    Data[Size] = '\0';
+    Data[(size_t) Size] = '\0';
 
     size_t Offset = 0;
 
@@ -65,7 +64,7 @@ std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
 
     Settings.value_extra = json_builder_extra;
 
-    json_value * JSON = ::json_parse_ex(&Settings, &Data[Offset], Size, ErrorMessage.data());
+    json_value * JSON = ::json_parse_ex(&Settings, &Data[Offset], (size_t) Size, ErrorMessage.data());
 
     if (JSON != nullptr)
     {
@@ -108,6 +107,16 @@ static std::vector<soundfont_t> ProcessText(const fs::path & filePath)
                 sf.FilePath = filePath.parent_path() / Line;
             else
                 sf.FilePath = Line;
+
+            sf.FontEx.push_back
+            ({
+                .font     = NULL,
+                .spreset  = -1,
+                .sbank    = -1,
+                .dpreset  = -1,
+                .dbank    =  0,
+                .dbanklsb =  0
+            });
 
             Items.push_back(sf);
         }

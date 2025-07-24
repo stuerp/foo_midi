@@ -180,7 +180,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
             fileInfo.info_set(TagMIDIEmbeddedSoundfont, TagValue.c_str());
         }
     }
-    catch (std::exception e)
+    catch (const std::exception & e)
     {
         Log.AtWarn().Write(STR_COMPONENT_BASENAME " is unable to create tag \"%s\": %s", TagMIDIEmbeddedSoundfont, e.what());
     }

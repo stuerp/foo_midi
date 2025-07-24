@@ -161,7 +161,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
             {
                 midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, midi::DefaultOptions);
             }
-            catch (std::exception & e)
+            catch (const std::exception & e)
             {
                 const pfc::string Message = "Failed to read SysEx file: ";
 
@@ -199,7 +199,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
             midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, Options);
         }
-        catch (std::exception & e)
+        catch (const std::exception & e)
         {
             const pfc::string Message = "Failed to read MIDI file: ";
 
@@ -765,10 +765,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         {
             const std::string ErrorMessage = _Player->GetErrorMessage();
 
-            if (!ErrorMessage.empty())
-                throw exception_io_data(ErrorMessage.c_str());
-
-            return false;
+            throw exception_io_data(!ErrorMessage.empty() ? ErrorMessage.c_str() : STR_COMPONENT_BASENAME " failed to render audio data.");
         }
 
         _ActualSampleRate = _Player->GetSampleRate(); // Allows us to store the actual sample rate in the info field.

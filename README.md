@@ -97,7 +97,8 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v3.1.0.0-alpha4, 2025-xx-xx
 
-- New: Soundfonts can be read from archives.
+- New: BASSMIDI and FluidSynth players can read soundfonts from archives. MIDI files and their soundfonts can be bundled in an archive.
+- Fixed: Only the first soundfont from a text soundfont list was initialized correctly by the BASSMIDI player.
 
 You can read the full history [here](docs/History.md).
 

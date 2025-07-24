@@ -617,7 +617,7 @@ bool WTDialog::HasChanged() noexcept
 
         // MT32 GM Set
         {
-            if (SendDlgItemMessage(IDC_MT32_GM_SET, CB_GETCURSEL) != (UINT) CfgMT32EmuGMSet)
+            if (SendDlgItemMessage(IDC_MT32_GM_SET, CB_GETCURSEL) != (LRESULT) CfgMT32EmuGMSet)
                 return true;
         }
 

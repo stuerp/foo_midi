@@ -312,7 +312,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
             }
         }
     }
-    catch (std::exception e)
+    catch (const std::exception & e)
     {
         Log.AtError().Write(STR_COMPONENT_BASENAME, " fails to get CLAP plug-ins: %s", e.what());
     }

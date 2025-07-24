@@ -952,9 +952,7 @@ uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
                 return 0;
         }
     }
-    catch (...)
-    {
-    }
+    catch (...) { }
 
     return 0;
 }

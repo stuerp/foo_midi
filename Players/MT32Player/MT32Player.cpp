@@ -294,7 +294,7 @@ bool MT32Player::LoadMachineROMs(const std::string & machineID)
                 return true;
         }
     }
-    catch (std::exception e)
+    catch (const std::exception & e)
     {
         Log.AtError().Write(STR_COMPONENT_BASENAME " fails to load the machine ROMs: %s", e.what());
     }
@@ -319,7 +319,7 @@ std::set<std::string> MT32Player::IdentifyControlROMs()
                 ROMs.insert(ROMInfo.control_rom_id);
         }
     }
-    catch (std::exception e)
+    catch (const std::exception & e)
     {
         Log.AtError().Write(STR_COMPONENT_BASENAME " fails to identify the control ROMs: %s", e.what());
     }

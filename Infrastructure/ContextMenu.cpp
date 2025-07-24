@@ -183,7 +183,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
 
                             Success = midi::processor_t::Process(Object, pfc::wideFromUTF8(TmpFilePath), Container);
                         }
-                        catch (std::exception &)
+                        catch (...)
                         {
                         }
 

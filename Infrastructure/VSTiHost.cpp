@@ -89,7 +89,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
             }
         }
     }
-    catch (std::exception e)
+    catch (const std::exception & e)
     {
         Log.AtError().Write(STR_COMPONENT_BASENAME " failed to get VSTi plug-ins: %s", e.what());
     }
