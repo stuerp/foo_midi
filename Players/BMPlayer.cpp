@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.07.24) **/
+/** $VER: BMPlayer.cpp (2025.07.25) **/
 
 #include "pch.h"
 
@@ -415,8 +415,6 @@ void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BA
                     BankOffset = -1;
             }
         }
-
-//      const int BankOffset = (soundfont.IsEmbedded ? ((soundfont.BankOffset == 0) ? 1 : soundfont.BankOffset) : 0);
 
         const BASS_MIDI_FONTEX fex =
         {

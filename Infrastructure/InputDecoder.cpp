@@ -765,7 +765,10 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
         {
             const std::string ErrorMessage = _Player->GetErrorMessage();
 
-            throw exception_io_data(!ErrorMessage.empty() ? ErrorMessage.c_str() : STR_COMPONENT_BASENAME " failed to render audio data.");
+            if (!ErrorMessage.empty())
+                throw exception_io_data(ErrorMessage.c_str());
+
+            return false;
         }
 
         _ActualSampleRate = _Player->GetSampleRate(); // Allows us to store the actual sample rate in the info field.

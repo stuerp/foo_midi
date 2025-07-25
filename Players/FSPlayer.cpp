@@ -453,90 +453,9 @@ bool FSPlayer::InitializeSettings() noexcept
     return true;
 }
 
-#pragma region Soundfont loader
-
-static void * HandleOpen(const char * filePath) noexcept
-{
-    try
-    {
-//        std::string URI = "file://";
-
-//        URI += filePath;
-
-        file::ptr * File = new file::ptr;
-
-        filesystem::g_open(*File, filePath, filesystem::open_mode_read, fb2k::noAbort);
-
-        return (void *) File;
-    }
-    catch (...)
-    {
-        return nullptr;
-    }
-}
-
-static int HandleRead(void * data, fluid_long_long_t size, void * handle) noexcept
-{
-    try
-    {
-        file::ptr * File = (file::ptr *) handle;
-
-        (*File)->read_object(data, (t_size) size, fb2k::noAbort);
-
-        return FLUID_OK;
-    }
-    catch (...)
-    {
-        return FLUID_FAILED;
-    }
-}
-
-static int HandleSeek(void * handle, fluid_long_long_t offset, int origin) noexcept
-{
-    try
-    {
-        file::ptr * File = (file::ptr *) handle;
-
-        (*File)->seek_ex(offset, (file::t_seek_mode) origin, fb2k::noAbort);
-
-        return FLUID_OK;
-    }
-    catch (...)
-    {
-        return FLUID_FAILED;
-    }
-}
-
-static fluid_long_long_t HandleTell(void * handle) noexcept
-{
-    try
-    {
-        file::ptr * File = (file::ptr *) handle;
-
-        return (fluid_long_long_t) (*File)->get_position(fb2k::noAbort);
-    }
-    catch (...)
-    {
-        return FLUID_FAILED;
-    }
-}
-
-static int HandleClose(void * handle) noexcept
-{
-    try
-    {
-        file::ptr * File = (file::ptr *) handle;
-
-        delete File;
-
-        return FLUID_OK;
-    }
-    catch (...)
-    {
-        return FLUID_FAILED;
-    }
-}
-
+/// <summary>
+/// Creates a soundfont loader.
+/// </summary>
 fluid_sfloader_t * FSPlayer::GetSoundfontLoader(fluid_settings_t * settings) const noexcept
 {
     fluid_sfloader_t * Loader = _API.CreateSoundFontLoader(settings);
@@ -544,13 +463,97 @@ fluid_sfloader_t * FSPlayer::GetSoundfontLoader(fluid_settings_t * settings) con
     if (Loader == nullptr)
         return nullptr;
 
-    if (_API.SetSoundFontLoaderCallbacks(Loader, HandleOpen, HandleRead, HandleSeek, HandleTell, HandleClose) != FLUID_OK)
+    if (_API.SetSoundFontLoaderCallbacks
+    (
+        Loader,
+
+        // Open
+        [](const char * filePath) noexcept -> void *
+        {
+            try
+            {
+                file::ptr * File = new file::ptr;
+
+                filesystem::g_open(*File, filePath, filesystem::open_mode_read, fb2k::noAbort);
+
+                return (void *) File;
+            }
+            catch (...)
+            {
+                return nullptr;
+            }
+        },
+
+        // Read
+        [](void * data, fluid_long_long_t size, void * handle) noexcept -> int
+        {
+            try
+            {
+                file::ptr * File = (file::ptr *) handle;
+
+                (*File)->read_object(data, (t_size) size, fb2k::noAbort);
+
+                return FLUID_OK;
+            }
+            catch (...)
+            {
+                return FLUID_FAILED;
+            }
+        },
+
+        // Seek
+        [](void * handle, fluid_long_long_t offset, int origin) noexcept -> int
+        {
+            try
+            {
+                file::ptr * File = (file::ptr *) handle;
+
+                (*File)->seek_ex(offset, (file::t_seek_mode) origin, fb2k::noAbort);
+
+                return FLUID_OK;
+            }
+            catch (...)
+            {
+                return FLUID_FAILED;
+            }
+        },
+
+        // Tell
+        [](void * handle) noexcept -> fluid_long_long_t
+        {
+            try
+            {
+                file::ptr * File = (file::ptr *) handle;
+
+                return (fluid_long_long_t) (*File)->get_position(fb2k::noAbort);
+            }
+            catch (...)
+            {
+                return FLUID_FAILED;
+            }
+        },
+
+        // Close
+        [](void * handle) noexcept
+        {
+            try
+            {
+                file::ptr * File = (file::ptr *) handle;
+
+                delete File;
+
+                return FLUID_OK;
+            }
+            catch (...)
+            {
+                return FLUID_FAILED;
+            }
+        }
+    ) != FLUID_OK)
         return nullptr;
 
     return Loader;
 }
-
-#pragma endregion
 
 /// <summary>
 /// Loads a soundfont into the specified synthesizer.

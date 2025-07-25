@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.cpp (2025.07.12) **/
+/** $VER: ADLPlayer.cpp (2025.07.25) **/
 
 #include "pch.h"
 
@@ -168,7 +168,15 @@ void ADLPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 #ifndef OldCode
     audio_sample srcFrames[MaxFrames * MaxChannels];
 
-    const ADLMIDI_AudioFormat AudioFormat = { ADLMIDI_SampleType_F64, sizeof(*srcFrames), sizeof(srcFrames[0]) * MaxChannels };
+#ifdef _M_X64
+    const ADLMIDI_AudioFormat AudioFormat = { ADLMIDI_SampleType_F64, sizeof(srcFrames[0]), sizeof(srcFrames[0]) * MaxChannels };
+#else
+#ifdef _M_IX86
+    const ADLMIDI_AudioFormat AudioFormat = { ADLMIDI_SampleType_F32, sizeof(srcFrames[0]), sizeof(srcFrames[0]) * MaxChannels };
+#else
+    #error "Unsupported processor architecture"
+#endif
+#endif
 
     while (dstCount != 0)
     {

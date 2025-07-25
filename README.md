@@ -95,10 +95,11 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.0.0-alpha4, 2025-xx-xx
+v3.1.0.0-alpha4, 2025-07-25
 
-- New: BASSMIDI and FluidSynth players can read soundfonts from archives. MIDI files and their soundfonts can be bundled in an archive.
+- Improved: Support for archives. MIDI files, soundfont files and soundfont list files can be bundled in an archive.
 - Fixed: Only the first soundfont from a text soundfont list was initialized correctly by the BASSMIDI player.
+- Fixed: 32-bit ADL and OPN player reported a wrong sample size to their respective libraries resulting in undefined behavior during playback.
 
 You can read the full history [here](docs/History.md).
 

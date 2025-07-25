@@ -1,5 +1,5 @@
 
-/** $VER: Soundfont.cpp (2025.07.22) P. Stuer - Soundfont support routines for wavetable players **/
+/** $VER: Soundfont.cpp (2025.07.25) P. Stuer - Soundfont support routines for wavetable players **/
 
 #include "pch.h"
 
@@ -14,8 +14,9 @@
 
 #include <fstream>
 
-static std::vector<soundfont_t> ProcessJSON(const fs::path & filePath, const json_value * json);
-static std::vector<soundfont_t> ProcessText(const fs::path & filePath);
+static json_value * ReadJSON(const std::string & data);
+static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::path & parentPath);
+static std::vector<soundfont_t> ProcessText(const std::string & data, const fs::path & parentPath);
 static void ProcessPatchMappings(const json_value * patchMappings, uint32_t channel, std::vector<BASS_MIDI_FONTEX> & out, BASS_MIDI_FONTEX & fontex);
 static const json_value * FindObject(const json_value * object, const char * name);
 
@@ -24,34 +25,61 @@ static const json_value * FindObject(const json_value * object, const char * nam
 /// </summary>
 std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
 {
-    if (!fs::exists(filePath))
+    if (!filesystem::g_exists(filePath.string().c_str(), fb2k::noAbort))
         return { };
 
-    std::uintmax_t Size = fs::file_size(filePath);
+    std::string Data;
 
-    std::vector<char> Data((size_t) (Size + 1));
-    FILE * fp = nullptr;
+    try
+    {
+        file::ptr File;
 
-    errno_t rc = ::fopen_s(&fp, filePath.string().c_str(), "r");
+        filesystem::g_open(File, filePath.string().c_str(), filesystem::open_mode_read, fb2k::noAbort);
 
-    if ((rc != 0) || (fp == nullptr))
-        throw std::exception(::FormatText("Failed to open soundfont list \"%s\": error %d", filePath.string().c_str(), rc).c_str());
+        t_filesize Size = File->get_size_ex(fb2k::noAbort);
 
-    ::fread(Data.data(), Data.size(), 1, fp);
+        Data.resize((size_t) Size);
 
-    ::fclose(fp);
+        File->read(Data.data(), Data.size(), fb2k::noAbort);
+    }
+    catch (pfc::exception & e)
+    {
+        throw std::exception(::FormatText("Failed to open soundfont list \"%s\": %s", filePath.string().c_str(), e.what()).c_str());
+    }
 
-    Data[(size_t) Size] = '\0';
+    json_value * JSON = ReadJSON(Data);
 
+    if (JSON != nullptr)
+    {
+        auto List = ProcessJSON(JSON, filePath.parent_path());
+
+        ::json_builder_free(JSON);
+
+        return List;
+    }
+    else
+    {
+        auto List = ProcessText(Data, filePath.parent_path());
+
+        return List;
+    }
+}
+
+/// <summary>
+/// Processes the data as a JSON object.
+/// </summary>
+static json_value * ReadJSON(const std::string & data)
+{
+    size_t Size = data.size();
     size_t Offset = 0;
 
     // Handle Unicode byte order markers.
     if (Size >= 2)
     {
-        if ((Data[0] == 0xFF && Data[1] == 0xFE) || (Data[0] == 0xFE && Data[1] == 0xFF))
+        if ((data[0] == 0xFF && data[1] == 0xFE) || (data[0] == 0xFE && data[1] == 0xFF))
             throw std::exception("UTF-16 encoding is not supported at this time");
 
-        if (Size >= 3 && (Data[0] == 0xEF) && (Data[1] == 0xBB) && (Data[2] == 0xBF))
+        if (Size >= 3 && (data[0] == 0xEF) && (data[1] == 0xBB) && (data[2] == 0xBF))
         {
             Offset = 3;
             Size  -= 3;
@@ -64,71 +92,15 @@ std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
 
     Settings.value_extra = json_builder_extra;
 
-    json_value * JSON = ::json_parse_ex(&Settings, &Data[Offset], (size_t) Size, ErrorMessage.data());
+    json_value * JSON = ::json_parse_ex(&Settings, data.data() + Offset, (size_t) Size, ErrorMessage.data());
 
-    if (JSON != nullptr)
-    {
-        auto List = ProcessJSON(filePath, JSON);
-
-        ::json_builder_free(JSON);
-
-        return List;
-    }
-    else
-    {
-        auto List = ProcessText(filePath);
-
-        return List;
-    }
-}
-
-/// <summary>
-/// Processes the file as a flat text file.
-/// </summary>
-static std::vector<soundfont_t> ProcessText(const fs::path & filePath)
-{
-    std::vector<soundfont_t> Items;
-
-    std::ifstream File(filePath);
-
-    if (File)
-    {
-        std::string Line;
-
-        while (std::getline(File, Line))
-        {
-            // Skip empty lines and lines containing only whitespace.
-            if (std::all_of(Line.begin(), Line.end(), [](unsigned char c) { return std::isspace(c); }))
-                continue;
-
-            soundfont_t sf = { };
-
-            if (fs::path(Line).is_relative())
-                sf.FilePath = filePath.parent_path() / Line;
-            else
-                sf.FilePath = Line;
-
-            sf.FontEx.push_back
-            ({
-                .font     = NULL,
-                .spreset  = -1,
-                .sbank    = -1,
-                .dpreset  = -1,
-                .dbank    =  0,
-                .dbanklsb =  0
-            });
-
-            Items.push_back(sf);
-        }
-    }
-
-    return Items;
+    return JSON;
 }
 
 /// <summary>
 /// Processes the JSON object.
 /// </summary>
-static std::vector<soundfont_t> ProcessJSON(const fs::path & filePath, const json_value * json)
+static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::path & parentPath)
 {
     if (json == nullptr)
         return { };
@@ -297,9 +269,11 @@ static std::vector<soundfont_t> ProcessJSON(const fs::path & filePath, const jso
             auto FileName = ::FindObject(JSONSoundfont, "fileName");
 
             if (fs::path(FileName->u.string.ptr).is_relative())
-                sf.FilePath = filePath.parent_path() / FileName->u.string.ptr;
+                sf.FilePath = parentPath / FileName->u.string.ptr;
             else
                 sf.FilePath = FileName->u.string.ptr;
+
+            sf.FilePath.make_preferred();
         }
 
         {
@@ -409,4 +383,48 @@ static const json_value * FindObject(const json_value * object, const char * nam
     }
 
     return &json_value_none;
+}
+
+/// <summary>
+/// Processes the file as a flat text file.
+/// </summary>
+static std::vector<soundfont_t> ProcessText(const std::string & data, const fs::path & parentPath)
+{
+    std::vector<soundfont_t> Items;
+
+    std::istringstream Stream(data);
+    std::string Line;
+
+    while (std::getline(Stream, Line))
+    {
+        if (!Line.empty() && Line.back() == '\r')
+            Line.pop_back();
+
+        // Skip empty lines and lines containing only whitespace.
+        if (Line.empty() || std::all_of(Line.begin(), Line.end(), [](unsigned char c) { return std::isspace(c); }))
+            continue;
+
+        soundfont_t sf = { };
+
+        if (fs::path(Line).is_relative())
+            sf.FilePath = parentPath / Line;
+        else
+            sf.FilePath = Line;
+
+        sf.FilePath.make_preferred();
+
+        sf.FontEx.push_back
+        ({
+            .font     = NULL,
+            .spreset  = -1,
+            .sbank    = -1,
+            .dpreset  = -1,
+            .dbank    =  0,
+            .dbanklsb =  0
+        });
+
+        Items.push_back(sf);
+    }
+
+    return Items;
 }

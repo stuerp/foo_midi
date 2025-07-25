@@ -12,7 +12,7 @@
 
 #pragma hdrstop
 
-static bool GetSoundfontFilePath(const pfc::string & filePath, pfc::string & soundFontPath, abort_callback & abortHandler) noexcept;
+static fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortHandler) noexcept;
 static bool WriteSoundfontFile(const std::vector<uint8_t> data, bool isDLS, fs::path & filePath) noexcept;
 
 /// <summary>
@@ -47,47 +47,13 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         
     // Then, add the soundfont named like the MIDI file, if present.
     {
-        pfc::string FilePath = _FilePath;
-        pfc::string TempSoundfontFilePath;
+        auto SoundfontFilePath = GetSoundfontFilePath(_FilePath.c_str(), abortHandler);
 
-        bool FoundSoundfont = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
-
-        if (!FoundSoundfont)
+        if (!SoundfontFilePath.empty())
         {
-            size_t FileExtensionIndex = FilePath.find_last('.');
+            const bool IsDLS = (::_stricmp(SoundfontFilePath.extension().string().c_str(), ".dls") == 0);
 
-            if (FileExtensionIndex > FilePath.scan_filename())
-            {
-                FilePath.truncate(FileExtensionIndex);
-
-                FoundSoundfont = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
-            }
-
-            if (!FoundSoundfont)
-            {
-                FilePath.truncate(FilePath.scan_filename());
-
-                TempSoundfontFilePath = "";
-                TempSoundfontFilePath.add_byte(FilePath[FilePath.length() - 1]);
-                FilePath.truncate(FilePath.length() - 1);
-
-                size_t FileNameIndex = FilePath.scan_filename();
-
-                if (FileNameIndex != pfc::infinite_size)
-                {
-                    FilePath += TempSoundfontFilePath;
-                    FilePath.add_string(&FilePath[FileNameIndex], FilePath.length() - FileNameIndex - 1);
-
-                    FoundSoundfont = GetSoundfontFilePath(FilePath, TempSoundfontFilePath, abortHandler);
-                }
-            }
-        }
-
-        if (FoundSoundfont)
-        {
-            const bool IsDLS = TempSoundfontFilePath.toLower().endsWith(".dls");
-
-            Soundfonts.push_back(soundfont_t(TempSoundfontFilePath.c_str(), 1.0f, _Container.GetBankOffset(), false, IsDLS));
+            Soundfonts.push_back(soundfont_t(SoundfontFilePath, 1.f, _Container.GetBankOffset(), false, IsDLS));
 
             HasNonDefaultSoundfonts = true;
         }
@@ -110,24 +76,27 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     {
         if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
         {
-//          if (fs::exists(sf.FilePath))
             if (filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
             {
+                int Count = 0;
+
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
 
                 for (const auto & iter : LoadSoundfontList(sf.FilePath))
                 {
-//                  if (fs::exists(iter.FilePath))
                     if (filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
                     {
                         if (sf.IsDLS)
                             HasDLS = true;
 
                         _Soundfonts.push_back(iter);
+                        ++Count;
                     }
                     else
                         Message += ::FormatText("Soundfont \"%s\" does not exist.\n", iter.FilePath.string().c_str()).c_str();
                 }
+
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " read %d soundfonts from the list.", Count);
             }
             else
                 Message += ::FormatText("Soundfont list \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
@@ -135,7 +104,6 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         else
         if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
         {
-//          if (fs::exists(sf.FilePath))
             if (filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
             {
                 if (sf.IsDLS)
@@ -172,7 +140,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 /// <summary>
 /// Gets the path name of a soundfont file with the same base name as the specified MIDI file, if any.
 /// </summary>
-bool GetSoundfontFilePath(const pfc::string & filePath, pfc::string & soundfontPath, abort_callback & abortHandler) noexcept
+fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortHandler) noexcept
 {
     static const char * FileExtensions[] =
     {
@@ -185,27 +153,21 @@ bool GetSoundfontFilePath(const pfc::string & filePath, pfc::string & soundfontP
         "dls"
     };
 
-    soundfontPath = filePath;
-
-    const char * Period = ::strrchr(soundfontPath.c_str(), '.');
-
-    if (Period == nullptr)
-        return false;
-
     for (const char * & FileExtension : FileExtensions)
     {
-        soundfontPath.truncate((Period - soundfontPath.c_str()) + (size_t) 1);
-        soundfontPath += FileExtension;
+        auto SoundfontPath = filePath;
+
+        SoundfontPath.replace_extension(FileExtension);
 
         try
         {
-            if (filesystem::g_exists(soundfontPath, abortHandler))
-                return true;
+            if (filesystem::g_exists(SoundfontPath.string().c_str(), abortHandler))
+                return SoundfontPath;
         }
         catch(...) {};
     }
 
-    return false;
+    return {};
 }
 
 /// <summary>
