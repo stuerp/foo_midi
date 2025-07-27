@@ -140,9 +140,9 @@ bool BMPlayer::Startup()
     // Determine if the MIDI stream contains CC#0 Bank Select messages that any other bank than 0 and 127 (Drums)
     for (const auto & m : _Messages)
     {
-        int Status = (int) (m.Data & 0xF0u);
-        int Param1 = (int) (m.Data >>  8);
-        int Param2 = (int) (m.Data >> 16);
+        int Status = (int)  (m.Data        & 0xF0u);
+        int Param1 = (int) ((m.Data >>  8) & 0xFFu);
+        int Param2 = (int) ((m.Data >> 16) & 0xFFu);
 
         if ((Status == midi::ControlChange) && (Param1 == midi::BankSelect) && (Param2 != 0) && (Param2 != 127))
         {
@@ -376,6 +376,8 @@ void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BA
 
         ::BASS_MIDI_FontSetVolume(hSoundfont, sf.Gain);
 
+        DumpSoundfont(sf.FilePath, hSoundfont);
+
         for (BASS_MIDI_FONTEX fex : sf.FontEx)
         {
             fex.font = hSoundfont;
@@ -404,6 +406,8 @@ void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BA
         }
 
         ::BASS_MIDI_FontSetVolume(hSoundfont, sf.Gain);
+
+        DumpSoundfont(sf.FilePath, hSoundfont);
 
         int BankOffset = sf.BankOffset;
 
@@ -434,56 +438,38 @@ void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BA
     throw std::exception("Soundfont format not supported");
 }
 
-#ifdef Old
 /// <summary>
-/// Loads the configuration from the specified soundfont.
+/// Dumps the presets of a soundfont to the console.
 /// </summary>
-bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
+void BMPlayer::DumpSoundfont(const fs::path & filePath, HSOUNDFONT hSoundfont) noexcept
 {
-        if (soundFont.IsEmbedded())
-        {
-            BASS_MIDI_FONTINFO SoundFontInfo;
+    if (Log.GetLevel() != LogLevel::Trace)
+        return;
 
-            if (::BASS_MIDI_FontGetInfo(hSoundFont, &SoundFontInfo))
-            {
-                DWORD * Presets = (DWORD *) ::malloc(SoundFontInfo.presets * sizeof(DWORD));
+    console::printf("Soundfont \"%s\"", filePath.string().c_str());
 
-                if (Presets != nullptr)
-                {
-                    if (::BASS_MIDI_FontGetPresets(hSoundFont, Presets))
-                    {
-                        console::print("Mapping ", SoundFontInfo.presets, " presets from embedded sound font \"", SoundFontInfo.name, "\":");
+    BASS_MIDI_FONTINFO sfi;
 
-                        for (DWORD i = 0; i < SoundFontInfo.presets; ++i)
-                        {
-                            const int    PresetNumber = LOWORD(Presets[i]);
-                            const int    SrcBank      = HIWORD(Presets[i]);
-                            const char * PresetName   = ::BASS_MIDI_FontGetPreset(hSoundFont, PresetNumber, SrcBank);
+    if (!::BASS_MIDI_FontGetInfo(hSoundfont, &sfi))
+        return;
 
-                            int DstBank = SrcBank;
+    console::printf("- Name: \"%s\"", sfi.name);
+    console::printf("- Copyright: \"%s\"", sfi.copyright);
+    console::printf("- Comment: \"%s\"", sfi.comment);
 
-/* FIXME: This is the only way to get Rock_test.rmi working.
-                            if (SrcBank != 128)
-                            {
-                                DstBank += soundFont.BankOffset();
-                            }
-*/
-                            BASS_MIDI_FONTEX fex =
-                            {
-                                hSoundFont, PresetNumber, SrcBank, PresetNumber, (DstBank >> 7) & 0x7F, DstBank & 0x7F
-                            };
+    std::vector<DWORD> Presets(sfi.presets);
 
-                            soundFontConfigurations.push_back(fex);
+    if (!::BASS_MIDI_FontGetPresets(hSoundfont, Presets.data()))
+        return;
 
-                            console::printf("SrcBank %3d DstBank %3d Preset %3d: \"%s\"", SrcBank, DstBank, PresetNumber, PresetName);
-                        }
-                    }
+    for (const auto & Preset : Presets)
+    {
+        const int    BankNumber    = HIWORD(Preset);
+        const int    ProgramNumber = LOWORD(Preset);
+        const char * PresetName    = ::BASS_MIDI_FontGetPreset(hSoundfont, ProgramNumber, BankNumber);
 
-                    ::free(Presets);
-                }
-            }
-        }
+        console::printf("- Bank %5d, Program %3d, \"%s\"", BankNumber, ProgramNumber, PresetName);
+    }
 }
-#endif
 
 #pragma endregion

@@ -1,5 +1,5 @@
 
-/** $VER: FS.cpp (2025.07.24) P. Stuer **/
+/** $VER: FS.cpp (2025.07.26) P. Stuer **/
 
 #include "pch.h"
 
@@ -62,19 +62,25 @@ void API::Initialize(const WCHAR * basePath)
     InitializeFunction(fluid_free, Free);
     InitializeFunction(fluid_settings_foreach, ForEachSetting);
 
-    InitializeFunction(fluid_is_soundfont, IsSoundFont);
+    InitializeFunction(fluid_is_soundfont, IsSoundfont);
 
     InitializeFunction(delete_fluid_settings, DeleteSettings);
 
     InitializeFunction(new_fluid_synth, CreateSynthesizer);
-    InitializeFunction(fluid_synth_add_sfloader, AddSoundFontLoader);
+    InitializeFunction(fluid_synth_add_sfloader, AddSoundfontLoader);
     InitializeFunction(fluid_synth_system_reset, ResetSynthesizer);
     InitializeFunction(delete_fluid_synth, DeleteSynthesizer);
 
-    InitializeFunction(new_fluid_defsfloader, CreateSoundFontLoader);
-    InitializeFunction(fluid_sfloader_set_callbacks, SetSoundFontLoaderCallbacks);
-    InitializeFunction(fluid_synth_sfload, LoadSoundFont);
-    InitializeFunction(fluid_synth_set_bank_offset, SetSoundFontBankOffset);
+    InitializeFunction(new_fluid_defsfloader, CreateSoundfontLoader);
+    InitializeFunction(fluid_sfloader_set_callbacks, SetSoundfontLoaderCallbacks);
+    InitializeFunction(fluid_synth_sfload, LoadSoundfont);
+    InitializeFunction(fluid_synth_set_bank_offset, SetSoundfontBankOffset);
+
+    InitializeFunction(fluid_sfont_get_name, GetSoundfontName);
+    InitializeFunction(fluid_preset_get_name, GetPresetName);
+
+    InitializeFunction(fluid_synth_get_sfont_by_id, GetSoundfont);
+    InitializeFunction(fluid_sfont_get_preset, GetPreset);
 
     InitializeFunction(fluid_synth_set_interp_method, SetInterpolationMethod);
 

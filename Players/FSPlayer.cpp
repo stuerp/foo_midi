@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2025.07.24) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.07.26) P. Stuer **/
 
 #include "pch.h"
 
@@ -128,9 +128,9 @@ bool FSPlayer::Startup()
     // Determine if the MIDI stream contains CC#0 Bank Select messages that any other bank than 0 and 127 (Drums)
     for (const auto & m : _Messages)
     {
-        int Status = (int) (m.Data & 0xF0u);
-        int Param1 = (int) (m.Data >>  8);
-        int Param2 = (int) (m.Data >> 16);
+        int Status = (int)  (m.Data        & 0xF0u);
+        int Param1 = (int) ((m.Data >>  8) & 0xFFu);
+        int Param2 = (int) ((m.Data >> 16) & 0xFFu);
 
         if ((Status == midi::ControlChange) && (Param1 == midi::BankSelect) && (Param2 != 0) && (Param2 != 127))
         {
@@ -179,7 +179,7 @@ bool FSPlayer::Startup()
                 return false;
             }
 
-            _API.AddSoundFontLoader    (Synth, Loader);
+            _API.AddSoundfontLoader    (Synth, Loader);
             _API.SetInterpolationMethod(Synth, -1, (int) _InterpolationMethod);
             _API.SetChorusType         (Synth, fluid_chorus_mod::FLUID_CHORUS_MOD_SINE);
 
@@ -458,12 +458,12 @@ bool FSPlayer::InitializeSettings() noexcept
 /// </summary>
 fluid_sfloader_t * FSPlayer::GetSoundfontLoader(fluid_settings_t * settings) const noexcept
 {
-    fluid_sfloader_t * Loader = _API.CreateSoundFontLoader(settings);
+    fluid_sfloader_t * Loader = _API.CreateSoundfontLoader(settings);
 
     if (Loader == nullptr)
         return nullptr;
 
-    if (_API.SetSoundFontLoaderCallbacks
+    if (_API.SetSoundfontLoaderCallbacks
     (
         Loader,
 
@@ -566,10 +566,10 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
         throw std::exception(::FormatText("Soundfont \"%s\" not found.", FilePath.c_str()).c_str());
 /*
     // Does not use the registered callbacks and can't read files in archives
-    if (!_API.IsSoundFont(FilePath.c_str()))
+    if (!_API.IsSoundfont(FilePath.c_str()))
         throw std::exception(::FormatText("Soundfont \"%s\" has unknown soundfont format.", FilePath.c_str()).c_str());
 */
-    const int SoundfontId = _API.LoadSoundFont(synth, FilePath.c_str(), TRUE);
+    const int SoundfontId = _API.LoadSoundfont(synth, FilePath.c_str(), TRUE);
 
     if (SoundfontId == FLUID_FAILED)
         throw std::exception(::FormatText("Failed to load soundfont \"%s\"", FilePath.c_str()).c_str());
@@ -583,14 +583,56 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
             if (_FileFormat == midi::XMF)
                 BankOffset = -1;
         }
+/*
+        else
+        {
+            // Force the bank offset to 1 for embedded SF2/SF3 soundfonts when 0. This is the only way to get "GRABBAG_falmod.rmi" sound right but breaks everything else.
+            if (_HasBankSelects && (BankOffset == 0))
+                BankOffset = 1;
+        }
+*/
     }
 
     // Offsets the bank numbers of a loaded soundfont by subtracting the offset from any bank number when assigning instruments.
     if (BankOffset != 0)
     {
-        int Result = _API.SetSoundFontBankOffset(synth, SoundfontId, BankOffset);
+        int Result = _API.SetSoundfontBankOffset(synth, SoundfontId, BankOffset);
 
         assert(Result == FLUID_OK);
+    }
+
+    DumpSoundfont(sf.FilePath, synth, SoundfontId);
+}
+
+/// <summary>
+/// Dumps the presets of a soundfont to the console.
+/// </summary>
+void FSPlayer::DumpSoundfont(const fs::path & filePath, fluid_synth_t * synth, int soundfontId) noexcept
+{
+    if (Log.GetLevel() != LogLevel::Trace)
+        return;
+
+    console::printf("Soundfont \"%s\"", filePath.string().c_str());
+
+    auto Soundfont = _API.GetSoundfont(synth, soundfontId);
+
+    const char * SoundfontName = _API.GetSoundfontName(Soundfont);
+
+    console::printf("- Name: \"%s\"", SoundfontName);
+
+    for (int BankNumber = 0; BankNumber < 16384; ++BankNumber)
+    {
+        for (int ProgramNumber = 0; ProgramNumber < 128; ++ProgramNumber)
+    {
+            fluid_preset_t * Preset = _API.GetPreset(Soundfont, BankNumber, ProgramNumber);
+
+            if (Preset != nullptr)
+            {
+                const char * PresetName = _API.GetPresetName(Preset);
+
+                console::printf("- Bank %5d, Program %3d, \"%s\"", BankNumber, ProgramNumber, PresetName);
+            }
+        }
     }
 }
 
@@ -601,14 +643,14 @@ static void LogMessage(int level, const char * message, void * data)
 {
     switch (level)
     {
-        case FLUID_PANIC: Log.AtFatal().Write(STR_COMPONENT_BASENAME " FluidSynth: FATAL %s", message); break;
+        case FLUID_PANIC: Log.AtFatal().Write(STR_COMPONENT_BASENAME " FluidSynth fatal error: %s", message); break;
         case FLUID_INFO:  Log.AtInfo() .Write(STR_COMPONENT_BASENAME " FluidSynth: %s", message); break;
 
 #ifdef _DEBUG
         // Fluidsynth 2.4.7 issues errors while loading soundfonts but continues anyway. Disable these in release builds.
-        case FLUID_ERR:   Log.AtError().Write(STR_COMPONENT_BASENAME " FluidSynth: ERROR %s", message); break;
-        case FLUID_WARN:  Log.AtWarn() .Write(STR_COMPONENT_BASENAME " FluidSynth: WARNING %s", message); break;
-        case FLUID_DBG:   Log.AtTrace().Write(STR_COMPONENT_BASENAME " FluidSynth: TRACE %s", message); break;
+        case FLUID_ERR:   Log.AtError().Write(STR_COMPONENT_BASENAME " FluidSynth error: %s", message); break;
+        case FLUID_WARN:  Log.AtWarn() .Write(STR_COMPONENT_BASENAME " FluidSynth warning: %s", message); break;
+        case FLUID_DBG:   Log.AtTrace().Write(STR_COMPONENT_BASENAME " FluidSynth trace: %s", message); break;
 #endif
     }
 }

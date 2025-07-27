@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.07.23) **/
+/** $VER: BMPlayer.h (2025.07.26) **/
 
 #pragma once
 
@@ -44,6 +44,8 @@ public:
     {
         return ::BASS_MIDI_GetVersion();
     }
+
+    static void DumpSoundfont(const fs::path & filePath, HSOUNDFONT hSoundfont) noexcept;
 
 private:
     #pragma region player_t

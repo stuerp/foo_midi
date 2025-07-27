@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.07.23) **/
+/** $VER: FSPlayer.h (2025.07.26) **/
 
 #pragma once
 
@@ -47,6 +47,8 @@ public:
 
         return ((DWORD) Major << 24) | (Minor << 16) | (Micro << 8);
     }
+
+    void DumpSoundfont(const fs::path & filePath, fluid_synth_t * synth, int soundfontId) noexcept;
 
 private:
     #pragma region player_t

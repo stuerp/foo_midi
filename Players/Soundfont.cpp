@@ -11,6 +11,7 @@
 #include "Log.h"
 
 #include <json-builder.h>
+#include <sflist.h>
 
 #include <fstream>
 
@@ -46,7 +47,15 @@ std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
     {
         throw std::exception(::FormatText("Failed to open soundfont list \"%s\": %s", filePath.string().c_str(), e.what()).c_str());
     }
+/*
+    // Old code for compatibility testing.
+    char ErrorMessage[sflist_max_error];
+    fs::path FilePath = filePath;
 
+    sflist_t * SoundfontList = ::sflist_load(Data.data(), ::strlen(Data.data()), ::WideToUTF8(FilePath.parent_path()).c_str(), ErrorMessage);
+
+    ::sflist_free(SoundfontList);
+*/
     json_value * JSON = ReadJSON(Data);
 
     if (JSON != nullptr)

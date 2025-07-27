@@ -1,5 +1,5 @@
 
-/** $VER: Log.h (2025.07.13) **/
+/** $VER: Log.h (2025.07.26) **/
 
 #pragma once
 
@@ -30,6 +30,7 @@ public:
     virtual ~ILog() noexcept { };
 
     virtual ILog & SetLevel(LogLevel level) noexcept = 0;
+    virtual LogLevel GetLevel() const noexcept = 0;
 
     virtual ILog & AtFatal() noexcept = 0;
     virtual ILog & AtError() noexcept = 0;

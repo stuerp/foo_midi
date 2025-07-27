@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.07.23) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.07.26) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -13,7 +13,7 @@
 #pragma hdrstop
 
 static fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortHandler) noexcept;
-static bool WriteSoundfontFile(const std::vector<uint8_t> data, bool isDLS, fs::path & filePath) noexcept;
+static bool WriteSoundfontFile(const fs::path & filePath, const std::vector<uint8_t> soundfont) noexcept;
 
 /// <summary>
 /// Gets the soundfonts and adjusts the player type, if necessary.
@@ -34,14 +34,17 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         {
             bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
 
-            fs::path FilePath;
+            // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
+            unique_path_t FilePath(IsDLS ? ".dls" : ".sf2");
 
-            if (WriteSoundfontFile(Data, IsDLS, FilePath))
+            if (!FilePath.IsEmpty() && WriteSoundfontFile(FilePath.Path(), Data))
             {
-                Soundfonts.push_back(soundfont_t(FilePath, 1.f, _Container.GetBankOffset(), true, IsDLS));
+                Soundfonts.push_back(soundfont_t(FilePath.Path(), 1.f, _Container.GetBankOffset(), true, IsDLS));
 
                 HasNonDefaultSoundfonts = true;
             }
+            else
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to write embedded soundfont to temporary file.");
         }
     }
         
@@ -173,39 +176,23 @@ fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortH
 /// <summary>
 /// Writes a buffer containing soundfont data to a temporary file.
 /// </summary>
-bool WriteSoundfontFile(const std::vector<uint8_t> soundfont, bool isDLS, fs::path & filePath) noexcept
+bool WriteSoundfontFile(const fs::path & filePath, const std::vector<uint8_t> soundfont) noexcept
 {
-    char TempPath[MAX_PATH] = {};
-
-    if (::GetTempPathA(_countof(TempPath), TempPath) == 0)
-        return false;
-
-    char TempFilePath[MAX_PATH] = {};
-
-    if (::GetTempFileNameA(TempPath, "SF-", 0, TempFilePath) == 0)
-        return false;
-
-    fs::path FilePath = TempFilePath;
-
-    // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
-    FilePath.replace_extension(isDLS ? ".dls" : ".sf2");
-
     try
     {
-        std::ofstream Stream(FilePath, std::ios::binary);
+        std::ofstream Stream(filePath, std::ios::binary);
 
-        if (Stream)
-        {
-            Stream.write((const char *) soundfont.data(), (std::streamsize) soundfont.size());
+        if (!Stream.is_open())
+            return false;
 
-            Stream.close();
+        Stream.write((const char *) soundfont.data(), (std::streamsize) soundfont.size());
 
-            filePath = FilePath;
-        }
+        Stream.close();
+
+        return true;
     }
-    catch (...) { }
-
-    ::DeleteFileA(TempFilePath);
-
-    return true;
+    catch (...)
+    {
+        return false;
+    }
 }
