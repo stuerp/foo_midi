@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.15) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.28) P. Stuer **/
 
 #include "pch.h"
 
@@ -754,25 +754,44 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
     _IsBusy = true;
     OnChanged();
 
-    if (_SelectedPlayer.Type == PlayerType::VSTi)
+    #pragma warning(disable: 4062)
+
+    switch (_SelectedPlayer.Type)
     {
-        VSTi::Player Player;
-
-        if (Player.LoadVST(_SelectedPlayer.FilePath))
+        case PlayerType::VSTi:
         {
-            if (_VSTiHost.Config.size() != 0)
-                Player.SetChunk(_VSTiHost.Config.data(), _VSTiHost.Config.size());
+            VSTi::Player Player;
 
-            Player.DisplayEditorModal();
+            if (Player.LoadVST(_SelectedPlayer.FilePath))
+            {
+                if (_VSTiHost.Config.size() != 0)
+                    Player.SetChunk(_VSTiHost.Config.data(), _VSTiHost.Config.size());
 
-            Player.GetChunk(_VSTiHost.Config);
+                Player.DisplayEditorModal();
+
+                Player.GetChunk(_VSTiHost.Config);
+            }
+
+            break;
+        }
+
+        case PlayerType::CLAP:
+        {
+            CLAP::Host Host;
+
+            if (Host.Load(_SelectedPlayer.FilePath, (uint32_t) _SelectedPlayer.Index))
+            {
+                Host.ShowGUI(m_hWnd, false);
+
+                Host.UnLoad();
+            }
+
+            break;
         }
     }
-/*
-    else
-    if (_SelectedPlayer.Type == PlayerTypes::ADL)
-        ui_control::get()->show_preferences(GUID_PREFS_FM);
-*/
+
+    #pragma warning(default: 4062)
+
     _IsBusy = false;
     OnChanged();
 }
@@ -860,7 +879,7 @@ void RootDialog::OnPlayerTypeChange(UINT, int, CWindow w)
 /// </summary>
 bool RootDialog::HasChanged()
 {
-    #pragma region Player Type
+    // Player Type
     {
         int SelectedIndex = (int) SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
 
@@ -895,16 +914,14 @@ bool RootDialog::HasChanged()
             }
         }
     }
-    #pragma endregion
 
-    #pragma region Sample Rate
+    // Sample Rate
     {
         if (GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT) CfgSampleRate)
             return true;
     }
-    #pragma endregion
 
-    #pragma region Looping
+    // Looping
     {
         if (SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL) != CfgLoopTypePlayback)
             return true;
@@ -936,9 +953,8 @@ bool RootDialog::HasChanged()
         if (SendDlgItemMessage(IDC_FF7_LOOPS, BM_GETCHECK) != CfgDetectFF7Loops)
             return true;
     }
-    #pragma endregion
 
-    #pragma region MIDI
+    // MIDI
     {
         if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIFlavor)
             return true;
@@ -955,9 +971,8 @@ bool RootDialog::HasChanged()
         if (SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK) != CfgDetectExtraDrum)
             return true;
     }
-    #pragma endregion
 
-    #pragma region Miscellaneous
+    // Miscellaneous
     {
         if (SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_GETCHECK) != CfgExcludeEMIDITrackDesignation)
             return true;
@@ -971,7 +986,6 @@ bool RootDialog::HasChanged()
         if (SendDlgItemMessage(IDC_SKIP_TO_FIRST_NOTE, BM_GETCHECK) != CfgSkipToFirstNote)
             return true;
     }
-    #pragma endregion
 
     return false;
 }
@@ -1002,28 +1016,34 @@ void RootDialog::UpdateConfigureButton() noexcept
 {
     BOOL Enable = FALSE;
 
-    if ((_SelectedPlayer.Type == PlayerType::VSTi) && (_SelectedPlayer.PlugInIndex != (size_t) -1))
+    if (_SelectedPlayer.PlugInIndex != (size_t) -1)
     {
-        const auto &  Plugin = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
+        #pragma warning(disable: 4062) // Enumerator 'x' in switch of enum 'y' is not handled
 
-        Enable = Plugin.HasEditor;
+        switch (_SelectedPlayer.Type)
+        {
+            case PlayerType::VSTi:
+            {
+                const auto & Plugin = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
 
-        _VSTiHost.Config = CfgVSTiConfig[Plugin.Id];
+                Enable = Plugin.HasEditor;
+
+                _VSTiHost.Config = CfgVSTiConfig[Plugin.Id];
+                break;
+            }
+
+            case PlayerType::CLAP:
+            {
+                const auto & Plugin = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
+
+                Enable = Plugin.HasEditor;
+                break;
+            }
+        }
+
+        #pragma warning(default: 4062)
     }
-/*
-    else
-    if (_SelectedPlayer.Type == PlayerTypes::ADL)
-        Enable = TRUE;
-*/
-/*
-    else
-    if ((_SelectedPlayer.Type == PlayerTypes::CLAP) && (_SelectedPlayer.PlugInIndex != (size_t) -1))
-    {
-        const auto &  Plugin = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
 
-        Enable = Plugin.HasGUI;
-    }
-*/
     GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
 }
 

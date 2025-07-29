@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.07.13) P. Stuer **/
+/** $VER: CLAPHost.cpp (2025.07.29) P. Stuer **/
 
 #include "pch.h"
 
@@ -65,7 +65,7 @@ Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor(), _PlugIn(), _PlugInGUI()
     };
 
     // Handles a request to activate and start processing the plug-in.
-    request_process  =  [](const clap_host * self)
+    request_process  = [](const clap_host * self)
     {
         Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to activate plug-in.");
     };
@@ -143,7 +143,7 @@ bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
 /// </summary>
 void Host::UnLoad() noexcept
 {
-    if (HasGUI())
+    if (_PlugInGUI)
     {
         HideGUI();
 
@@ -188,7 +188,7 @@ bool Host::ActivatePlugIn(double  sampleRate, uint32_t minFrames, uint32_t maxFr
     if (!_PlugIn->init(_PlugIn))
         return false;
 
-    GetGUI(); // Must be called after init().
+//  GetGUI(false);
 
     if (!_PlugIn->activate(_PlugIn, sampleRate, minFrames, maxFrames))
         return false;
@@ -221,35 +221,25 @@ bool Host::Process(const clap_process_t & processor) noexcept
 }
 
 /// <summary>
-/// Returns true if the host has loaded a plug-in that has a GUI.
-/// </summary>
-bool Host::HasGUI() const noexcept
-{
-    return (_PlugInGUI != nullptr);
-}
-
-/// <summary>
 /// Shows the GUI of the hosted plug-in.
 /// </summary>
-void Host::ShowGUI(HWND hWnd) noexcept
+void Host::ShowGUI(HWND hWnd, bool isFloating) noexcept
 {
     if (!::IsWindow(hWnd))
         return;
 
-    GetGUI();
+    InitializeGUI(isFloating);
 
-    if (!HasGUI())
+    if (_PlugInGUI == nullptr)
         return;
 
-// FIXME: GUI support not implemented yet
-/*
-    if (!_Window.IsWindow())
+    Window::Parameters p =
     {
-        _Window.Run(this);
-    }
-    else
-        _Window.BringWindowToTop();
-*/
+    };
+
+    p._Host = this;
+
+    _Window.DoModal(hWnd, (LPARAM) &p);
 }
 
 /// <summary>
@@ -257,24 +247,31 @@ void Host::ShowGUI(HWND hWnd) noexcept
 /// </summary>
 void Host::HideGUI() noexcept
 {
-    if (!HasGUI() || !_Window.IsWindow())
+    if ((_PlugInGUI == nullptr) || !_Window.IsWindow())
         return;
-
-// FIXME: GUI support not implemented yet
-/*
-    _PlugInGUI->set_parent(_PlugIn, nullptr);
-
-    _Window.DestroyWindow();
-*/
 }
 
 /// <summary>
-/// Returns true if the plug-in GUI is shown.
+/// Activates the GUI.
 /// </summary>
-bool Host::IsGUIVisible() const noexcept
+void Host::ActivateGUI(HWND hWnd) noexcept
 {
-// FIXME: GUI support not implemented yet
-    return false; // _Window.IsWindow() && _Window.IsWindowVisible();
+    clap_window_t w = { .api = "win32", .win32 = hWnd };
+
+    if (_PlugInGUI->set_parent(_PlugIn, &w))
+        _PlugInGUI->show(_PlugIn);
+}
+
+/// <summary>
+/// Deactivates the GUI.
+/// </summary>
+void Host::DectivateGUI() noexcept
+{
+    _PlugInGUI->hide(_PlugIn);
+
+    clap_window_t w = { .api = "win32", .win32 = NULL };
+
+    _PlugInGUI->set_parent(_PlugIn, &w);
 }
 
 #pragma region Private
@@ -301,10 +298,10 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
                 {
                     PlugIn PlugIn =
                     {
-                        .Name     = plugInName,
-                        .Index    = index,
-                        .FilePath = Entry.path(),
-                        .HasGUI   = hasGUI
+                        .Name      = plugInName,
+                        .Index     = index,
+                        .FilePath  = Entry.path(),
+                        .HasEditor = hasGUI
                     };
 
                     _PlugIns.push_back(PlugIn);
@@ -365,7 +362,7 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
                                 if (PlugIn->init(PlugIn))
                                 {
                                     if (VerifyNotePorts(PlugIn) && VerifyAudioPorts(PlugIn))
-                                        callback(Descriptor->name, i, HasGUI(PlugIn, false));
+                                        callback(SafeString(Descriptor->name), i, HasGUI(PlugIn, false));
                                 }
                                 else
                                     Log.AtError().Write(STR_COMPONENT_BASENAME " failed to initialize plug-in.");
@@ -525,22 +522,6 @@ bool Host::PlugInPrefers64bitAudio() const noexcept
 }
 
 /// <summary>
-/// Returns true if the specified plug-in has a GUI.
-/// </summary>
-bool Host::HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept
-{
-    // Odin2 has no get_extension method.
-    if (plugIn->get_extension == nullptr)
-        return false;
-
-    const auto * GUI = (const clap_plugin_gui_t *) plugIn->get_extension(plugIn, CLAP_EXT_GUI);
-
-    const bool Result = (GUI != nullptr) && GUI->is_api_supported(plugIn, "win32", isFloatingGUI);
-
-    return Result;
-}
-
-/// <summary>
 /// Implements the host's CLAP_EXT_LOG extension.
 /// </summary>
 const clap_host_log Host::LogHandler
@@ -613,11 +594,32 @@ void Host::GetVoiceInfo() noexcept
 }
 
 /// <summary>
+/// Returns true if the specified plug-in has a GUI.
+/// </summary>
+bool Host::HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept
+{
+    // Must be called after clap_plugin_t::init().
+    if (plugIn->get_extension == nullptr)
+        return false;
+
+    const auto * GUI = (const clap_plugin_gui_t *) plugIn->get_extension(plugIn, CLAP_EXT_GUI);
+
+    if (GUI == nullptr)
+        return false;
+
+    if (!GUI->is_api_supported(plugIn, "win32", isFloatingGUI))
+        return false;
+
+    return true;
+}
+
+/// <summary>
 /// Gets the plug-in GUI extension.
 /// </summary>
-void Host::GetGUI() noexcept
+void Host::InitializeGUI(bool isFloating) noexcept
 {
-    // Odin2 has no get_extension method.
+    _PlugIn->init(_PlugIn);
+
     if (_PlugIn->get_extension == nullptr)
         return;
 
@@ -626,19 +628,19 @@ void Host::GetGUI() noexcept
     if (_PlugInGUI == nullptr)
         return;
 
-    if (!_PlugInGUI->is_api_supported(_PlugIn, "win32", false))
+    if (!_PlugInGUI->is_api_supported(_PlugIn, "win32", isFloating))
         return;
 
-    if (!_PlugInGUI->create(_PlugIn, "win32", false))
+    if (!_PlugInGUI->create(_PlugIn, "win32", isFloating))
         return;
 }
 
 /// <summary>
 /// Gets the preferred size of the GUI window.
 /// </summary>
-void Host::GetGUISize(RECT & wr) const noexcept
+void Host::GetPreferredGUISize(RECT & wr) const noexcept
 {
-    if (!HasGUI())
+    if (_PlugInGUI == nullptr)
         return;
 
     uint32_t Width = 0, Height = 0;
@@ -654,6 +656,4 @@ void Host::GetGUISize(RECT & wr) const noexcept
 }
 
 #pragma endregion
-
-Host _Host;
 }

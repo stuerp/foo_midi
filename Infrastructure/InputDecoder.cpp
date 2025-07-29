@@ -110,7 +110,7 @@ InputDecoder::~InputDecoder() noexcept
         _Player = nullptr;
     }
 
-    if ((_DecoderFlags & input_flag_playback) == 0)
+    if (_Host != nullptr)
     {
         delete _Host;
         _Host = nullptr;
@@ -325,21 +325,6 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
         GetSoundfonts(Preset._SoundfontFilePath.c_str(), abortHandler);
 
-    // Unload the plug-in from the global CLAP host when the player is not a CLAP plug-in. This also closes the plug-in GUI.
-    if ((_DecoderFlags & input_flag_playback) && (_PlayerType != PlayerType::CLAP))
-    {
-        CLAP::_Host.UnLoad();
-/*
-        fb2k::inMainThread2
-        (
-            [this]()
-            {
-                CLAP::_Host.HideGUI();
-            }
-        );
-*/
-    }
-
     // Create and initialize the MIDI player.
     switch (_PlayerType)
     {
@@ -414,28 +399,14 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (Preset._PlugInFilePath.is_empty())
                 throw pfc::exception("No plug-in specified in preset");
 
-            if (_DecoderFlags & input_flag_playback)
-                _Host = &CLAP::_Host; // Use the global instance for playback.
-            else
-                _Host = new CLAP::Host();
+            _Host = new CLAP::Host();
 
             if (!_Host->Load(Preset._PlugInFilePath.c_str(), Preset._CLAPPlugInIndex))
                 return;
 
             if (!_Host->IsPlugInLoaded())
                 return;
-/*
-            if ((_Flags & input_flag_playback) && !core_api::is_quiet_mode_enabled())
-            {
-                fb2k::inMainThread2
-                (
-                    [this]()
-                    {
-                        this->_Host->ShowGUI(core_api::get_main_window());
-                    }
-                );
-            }
-*/
+
             auto Player = new CLAPPlayer(_Host);
 
             _Player = Player;

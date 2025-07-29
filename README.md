@@ -97,7 +97,8 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v3.1.0.0-alpha5, 2025-xx-xx
 
-- 
+- New: Support for the editor (GUI) of CLAP plug-ins
+- Fixed: Soundfont with the same name as the directory was not loaded anymore. (alpha4 regression)
 
 You can read the full history [here](docs/History.md).
 

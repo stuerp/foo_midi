@@ -254,18 +254,20 @@ The **Fade-Out time** setting specifies the time in milliseconds that the player
 
 A soundfont is a file that contains samples of instruments. Players like [BASSMIDI](#bassmidi-built-in-wavetable) and [FluidSynth](#fluidsynth-optional-wavetable) require it to play MIDI files. When more than one soundfont is specified or available the soundfonts will be layered on top of each other with the first soundfont being used as a base.
 
-The easiest way to specify a soundfont is to set the file location on the [Paths](#paths) preferences page.
+The easiest way to specify a soundfont is to set the file location on the [Paths](#paths) preferences page. Any of the supported formats can be used (`.sflist`, `.sf2pack`, `.sfogg`, `.sf2`, `.sf3` and `.dsl`).
 
-However, foo_midi has a number of fallback rules that may override this default location.
+However, foo_midi can layer soundfonts.
 
-First, if the file has an embedded soundfont that file will be extracted and used as the base soundfont. The .RMI file format for instance was designed for that purpose.
-
-Next, if a soundfont with the same basename exists in the directory of the MIDI file, that file take precedence. F.e. if `EXAMPLE.SF2` will be used to play `EXAMPLE.MID` if they exist in the same directory.
-
-Lastly, the global soundfont will be used.
+- If the file has an embedded soundfont that file will be extracted and added to the soundfont list. The .RMI file format for instance was designed for that purpose.
+- If a soundfont with the same basename exists in the directory of the MIDI file, the soundfont will be added to the list. F.e. if `EXAMPLE.SF2` will be used to play `EXAMPLE.MID` if they exist in the same directory.
+- If a soundfont with the same name as the directory exists, it will be added to the list.
+- Lastly, the global soundfont specified on the preferences page will be added.
 
 > [!Tip]
 > foo_midi will report the soundfonts it uses and in which order in the foobar2000 console if you set the component log level to at least `Info` level.
+
+> [!Note]
+> foo_midi will switch to the FluidSynth player if a DLS soundfont is part of the soundfont list.
 
 #### SFList
 
@@ -779,14 +781,41 @@ This chapter contains a lot of reference material I consulted during the develop
 
 - [Introduction to Computer Music: MIDI](https://cmtext.indiana.edu/MIDI/chapter3_MIDI.php), Jeffrey Hass
 - [MIDI is the language of the gods](http://midi.teragonaudio.com/), Teragon Audio
-- [Standards in Music](https://www.recordingblogs.com/wiki/standards-in-music-index), Recording Blogs
+  - [Running Status](http://midi.teragonaudio.com/tech/midispec/run.htm)
+  - [Device Name](http://midi.teragonaudio.com/tech/midifile/port.htm)
+  - [Obsolete Meta Events](http://midi.teragonaudio.com/tech/midifile/obsolete.htm)
 - [Comparison of MIDI standards](https://en.wikipedia.org/wiki/Comparison_of_MIDI_standards), Wikipedia
 - [Yamaha XG Programming](http://www.studio4all.de/htmle/frameset090.html), Studio 4 All
 - [The Unofficial Yamaha Keyboard Resource Site Articles](http://www.jososoft.dk/yamaha/articles.htm)
+- [Recording Blogs](https://www.recordingblogs.com/wiki/musical-instrument-digital-interface-midi)
+  - [Status Byte](https://www.recordingblogs.com/wiki/status-byte-of-a-midi-message)
+  - [Voice Messages](https://www.recordingblogs.com/wiki/midi-voice-messages)
+  - [System Common Messages](https://www.recordingblogs.com/wiki/midi-system-common-messages)
+  - [System Real-time Messages](https://www.recordingblogs.com/wiki/midi-system-realtime-messages)
+  - [Meta Messages](https://www.recordingblogs.com/wiki/midi-meta-messages)
+  - [Standards in Music](https://www.recordingblogs.com/wiki/standards-in-music-index)
+- [Notes about MIDI Specifications](https://www.lim.di.unimi.it/IEEE/MIDI/INDEX.HTM), Goffredo Haus, IEEE Computer Society Press, Fall 1995
+  - [Channel Mode Messages](https://www.lim.di.unimi.it/IEEE/MIDI/SOT0.HTM)
+  - [Channel Voice Messages](https://www.lim.di.unimi.it/IEEE/MIDI/SOT1.HTM)
+  - [System Common Messages](https://www.lim.di.unimi.it/IEEE/MIDI/SOT2.HTM)
+  - [System Real-time Messages](https://www.lim.di.unimi.it/IEEE/MIDI/SOT3.HTM)
+  - [System Exclusive Messages](https://www.lim.di.unimi.it/IEEE/MIDI/SOT4.HTM)
+  - [Additional Explanations and Applications Notes](https://www.lim.di.unimi.it/IEEE/MIDI/SOT5.HTM)
+  - [Instructions for MIDI Implementation Chart](https://www.lim.di.unimi.it/IEEE/MIDI/SOT6.HTM)
+- [Somascape](http://www.somascape.org/)
+  - [General MIDI (GM) Instrument and Drum Mapping](http://www.somascape.org/midi/basic/gmins.html)
+  - [Guide to the MIDI Software Specification](http://www.somascape.org/midi/tech/spec.html)
+  - [MIDI Files Specification](http://www.somascape.org/midi/tech/mfile.html)
 
 ### SFList JSON
 
 - [SFList JSON](https://gist.github.com/kode54/a7bb01a0db3f2e996145b77f0ca510d5)
+
+### IFF
+
+- ["EA IFF 85" Standard for Interchange Format Files](https://www.martinreddy.net/gfx/2d/IFF.txt)
+- [Track Properties](https://www.mediamonkey.com/sw/webhelp/frame/index.html?abouttrackproperties.htm)
+- [RIFF Info Tags](https://exiftool.org/TagNames/RIFF.html#Info)
 
 ### Apogee Expanded MIDI (EMIDI)
 
@@ -799,8 +828,12 @@ This chapter contains a lot of reference material I consulted during the develop
 
 ### RMI
 
-- [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
-- [SF2 RMIDI Format Extension Specification](https://github.com/spessasus/sf2-rmidi-specification)
+- [RIFF RMI](https://www.loc.gov/preservation/digital/formats/fdd/fdd000120.shtml)
+- Embedded Soundfonts
+  - [About RMIDI](https://github.com/spessasus/SpessaSynth/wiki/About-RMIDI)
+  - [SF2 RMIDI Format Extension Specification](https://github.com/spessasus/sf2-rmidi-specification)
+  - [Proposal to support rmid files with embedded SF2 soundfonts](https://www.un4seen.com/forum/?topic=20475.0)
+  - FluidSynth [Support for SF2 RMIDI files with embedded soundfonts](https://github.com/FluidSynth/fluidsynth/issues/1356)
 
 ### XMF (Extensible Music Format)
 
@@ -816,25 +849,52 @@ This chapter contains a lot of reference material I consulted during the develop
 
 - [Documentation](https://www.un4seen.com/doc/)
 - [MIDI Implementation Chart](https://www.un4seen.com/doc/#bassmidi/implementation.html)
-- [Proposal to support rmid files with embedded SF2 soundfonts](https://www.un4seen.com/forum/?topic=20475.0)
 
 ### FluidSynth
 
 - [FluidSynth User Manual](https://github.com/FluidSynth/fluidsynth/wiki/UserManual)
 - [FluidSynth SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont)
 - [FluidSynth Documentation](https://github.com/FluidSynth/fluidsynth/wiki/Documentation)
-- - Development
-  - [FluidSynth GitHub](https://github.com/FluidSynth/fluidsynth)
+- Development
+  - FluidSynth [GitHub](https://github.com/FluidSynth/fluidsynth)
   - [FluidSynth Developer Documentation](https://www.fluidsynth.org/api/index.html)
+
+### SC-55
+
+- EmuSC, [GitHub](https://github.com/skjelten/emusc)
+- Nuked SC-55, Nuke-YKT [GitHub](https://github.com/nukeykt/Nuked-SC55)
+- Nuked SC-55, J.C. Moyer [GitHub](https://github.com/jcmoyer/Nuked-SC55)
+- Nuked SC-55, Falcosoft [GitHub](https://github.com/Falcosoft/Nuked-SC55.git)
+- Nuked SC-55 GUI Float, [GitHub](https://github.com/linoshkmalayil/Nuked-SC55-GUI-Float)
+
+### FMMIDI (yuno)
+
+- [fmmidi](https://web.archive.org/web/20120823072908/http://milkpot.sakura.ne.jp/fmmidi/index.html)
 
 ### VST
 
+- Hosts
+  - [How To Make Your Own VST Host](https://teragonaudio.com/article/How-to-make-your-own-VST-host.html) `VST 2`
+  - [MrsWatson](https://github.com/teragonaudio/MrsWatson), A command-line VST plugin host `VST 2`
+  - Steinberg [AudioHost](https://github.com/steinbergmedia/vst3_public_sdk/tree/master/samples/vst-hosting/audiohost) `VST 3`
+  - [A Minimal VST 3 Host in C](https://stackoverflow.com/questions/24478173/build-a-minimal-vst3-host-in-c) `VST 3`
+  - [How To Instantiate a VST 3 Plug-in in Code?](https://stackoverflow.com/questions/55640822/how-to-instantiate-a-vst3-plugin-in-code-for-a-vst3-host-app) `VST 3`
+  - [EasyVst](https://github.com/iffyloop/EasyVst) `VST 3`
 - Plug-Ins
-  - [Yamaha S-YXG50 Portable VSTi v1.0.0](https://veg.by/en/projects/syxg50/) `VST 2`
-  - [OPL3GM_VSTi](https://github.com/datajake1999/OPL3GM_VSTi) `VST 2`
-  - [RdPiano](https://github.com/giulioz/rdpiano) `VST 3`
+  - Synthesizers
+    - [Yamaha S-YXG50 Portable VSTi v1.0.0](https://veg.by/en/projects/syxg50/) `VST 2`
+    - [OPL3GM_VSTi](https://github.com/datajake1999/OPL3GM_VSTi) `VST 2`
+    - [Firefly-Synth](https://github.com/sjoerdvankreel/firefly-synth), Sjoer van Kreel, Semi-modular synthesizer and FX plugin for Windows, Linux and Mac, VST3 and CLAP `VST 3`
+    - [Firefly-Synth 2](https://github.com/sjoerdvankreel/firefly-synth-2), Sjoer van Kreel, Yet another VST3 and CLAP plugin, Windows, Linux, and MacOS `VST 3`
+    - [FluidSynth VST](https://github.com/AZSlow3/FluidSynthVST) `VST 3`
+    - [OS-251](https://github.com/utokusa/OS-251), utokusa `VST 3`
+    - [RdPiano](https://github.com/giulioz/rdpiano) `VST 3`
+    - [Virtual JV](https://github.com/giulioz/jv880_juce), JV-880 emulator as VST/AU plugin `VST 3`
 - Development
   - [VST 3 Developer Portal](https://steinbergmedia.github.io/vst3_dev_portal/pages/index.html)
+  - [VST 3 API Documentation](https://steinbergmedia.github.io/vst3_dev_portal/pages/Technical+Documentation/API+Documentation/Index.html)
+  - [VST 3 C API](https://github.com/steinbergmedia/vst3_c_api/tree/master)
+  - [VST 3 SDK](https://github.com/steinbergmedia/vst3sdk)
 
 ### CLAP
 
@@ -848,17 +908,14 @@ This chapter contains a lot of reference material I consulted during the develop
   - Development
     - [CLAP Host](https://github.com/free-audio/clap-host)
 - Plug-ins
-  - [Dexed](https://asb2m10.github.io/dexed/), [GitHub repository](https://github.com/asb2m10/dexed)
+  - [Dexed](https://asb2m10.github.io/dexed/), [GitHub](https://github.com/asb2m10/dexed)
   - [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP), [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator, John Novak
     - Nuked SC-55, [Vogons announcement](https://www.vogons.org/viewtopic.php?t=99447), 2024-03-14
-    - Nuked SC-55, Nuke-YKT [GitHub repository](https://github.com/nukeykt/Nuked-SC55)
-    - Nuked SC-55, J.C. Moyer [GitHub repository](https://github.com/jcmoyer/Nuked-SC55)
-    - Nuked SC-55, Falcosoft [GitHub repository](https://github.com/Falcosoft/Nuked-SC55.git)
-    - Nuked SC-55 GUI Float, [GitHub repository](https://github.com/linoshkmalayil/Nuked-SC55-GUI-Float)
-  - [Odin 2](https://thewavewarden.com/pages/odin-2), 24-voice polyphonic powerhouse, [The WaveWarden](https://thewavewarden.com/), [GitHub repository](https://github.com/TheWaveWarden/odin2)
+  - [Odin 2](https://thewavewarden.com/pages/odin-2), 24-voice polyphonic powerhouse, [The WaveWarden](https://thewavewarden.com/), [GitHub](https://github.com/TheWaveWarden/odin2)
   - [SW10-Plug](https://github.com/djtuBIG-MaliceX/sw10_plug), Casio SW-10
   - [JV880-Juce](https://github.com/giulioz/jv880_juce)
   - [Mini-JV880](https://github.com/giulioz/mini-jv880)
+  - [OctaSince](https://github.com/greatest-ape/OctaSine), Joakim Frostegård
   - Development
     - [CLAP Plug-ins](https://github.com/free-audio/clap-plugins)
 

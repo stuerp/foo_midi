@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.07.26) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.07.28) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -35,7 +35,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
             bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
 
             // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
-            unique_path_t FilePath(IsDLS ? ".dls" : ".sf2");
+            const unique_path_t FilePath(IsDLS ? ".dls" : ".sf2");
 
             if (!FilePath.IsEmpty() && WriteSoundfontFile(FilePath.Path(), Data))
             {
@@ -47,10 +47,26 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
                 Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to write embedded soundfont to temporary file.");
         }
     }
-        
+
     // Then, add the soundfont named like the MIDI file, if present.
     {
-        auto SoundfontFilePath = GetSoundfontFilePath(_FilePath.c_str(), abortHandler);
+        const auto SoundfontFilePath = GetSoundfontFilePath(_FilePath.c_str(), abortHandler);
+
+        if (!SoundfontFilePath.empty())
+        {
+            const bool IsDLS = (::_stricmp(SoundfontFilePath.extension().string().c_str(), ".dls") == 0);
+
+            Soundfonts.push_back(soundfont_t(SoundfontFilePath, 1.f, _Container.GetBankOffset(), false, IsDLS));
+
+            HasNonDefaultSoundfonts = true;
+        }
+    }
+
+    // Then, add the soundfont named like the directory of the MIDI file, if present.
+    {
+        const fs::path FilePath = _FilePath.c_str();
+
+        const auto SoundfontFilePath = GetSoundfontFilePath(FilePath.parent_path() / FilePath.parent_path().stem(), abortHandler);
 
         if (!SoundfontFilePath.empty())
         {

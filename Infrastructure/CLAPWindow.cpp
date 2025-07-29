@@ -20,7 +20,7 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
 
     _Parameters = *(Parameters *) lParam;
 
-    _MinMaxBounds = _Parameters._GUIBounds;
+    _Parameters._Host->GetPreferredGUISize(_MinMaxBounds);
 
     AdjustSize(_MinMaxBounds);
 
@@ -30,6 +30,8 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
     MoveWindow(&_Parameters._Bounds);
 
     SetWindowTextW((std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(_Parameters.Name)).c_str());
+
+    _Parameters._Host->ActivateGUI(m_hWnd);
 
     return TRUE;
 }
@@ -41,7 +43,9 @@ void Window::OnClose() noexcept
 {
     GetWindowRect(&_Parameters._Bounds);
 
-    DestroyWindow();
+    _Parameters._Host->DectivateGUI();
+
+    EndDialog(0);
 }
 
 /// <summary>
@@ -70,7 +74,7 @@ void Window::AdjustSize(RECT & wr) const noexcept
 
     wr.left = wr.top = 0;
 }
-
+/*
 // FIXME: GUI support not implemented yet
 DWORD WINAPI Window::DialogThreadProc(Host * host)
 {
@@ -112,5 +116,5 @@ DWORD WINAPI Window::DialogThreadProc(Host * host)
 
     return 0;
 }
-
+*/
 }

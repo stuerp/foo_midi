@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.h (2025.07.11) P. Stuer **/
+/** $VER: CLAPHost.h (2025.07.29) P. Stuer **/
 
 #pragma once
 
@@ -20,7 +20,7 @@ struct PlugIn
     std::string Name;
     uint32_t Index;
     fs::path FilePath;
-    bool HasGUI;
+    bool HasEditor;
 };
 
 /// <summary>
@@ -49,14 +49,15 @@ public:
 
     bool Process(const clap_process_t & processor) noexcept;
 
-    bool HasGUI() const noexcept;
-    void ShowGUI(HWND hWnd) noexcept;
+    void ShowGUI(HWND hWnd, bool isFloating) noexcept;
     void HideGUI() noexcept;
-    bool IsGUIVisible() const noexcept;
+
+    void ActivateGUI(HWND hWnd) noexcept;
+    void DectivateGUI() noexcept;
 
     std::string GetPlugInName() const noexcept { return (_PlugInDescriptor != nullptr) ? _PlugInDescriptor->name : ""; }
 
-    void GetGUISize(RECT & wr) const noexcept;
+    void GetPreferredGUISize(RECT & wr) const noexcept;
     bool SetWindow(clap_window_t * w) { return _PlugInGUI->set_parent(_PlugIn, w); }
 
     bool PlugInPrefers64bitAudio() const noexcept;
@@ -71,7 +72,7 @@ private:
 
     void GetVoiceInfo() noexcept;
 
-    void GetGUI() noexcept;
+    void InitializeGUI(bool isFloating) noexcept;
 
 private:
     static const clap_host_log LogHandler;

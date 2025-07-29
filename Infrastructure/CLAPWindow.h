@@ -48,7 +48,8 @@ public:
 
         fs::path _FilePath;
         uint32_t _Index;
-        CRect _GUIBounds;
+
+        CLAP::Host * _Host;
     };
 
     void AdjustSize(RECT & wr) const noexcept;
@@ -58,7 +59,7 @@ public:
         Window * This;
         Host * Host;
     };
-
+/*
     void Run(Host * host)
     {
         XYZ p = { this, host };
@@ -74,7 +75,7 @@ public:
     }
 
     DWORD WINAPI DialogThreadProc(Host * Host);
-
+*/
 private:
     #pragma region CDialogImpl
 
@@ -89,14 +90,17 @@ private:
     /// </summary>
     HBRUSH OnCtlColorDlg(HDC, HWND) const noexcept
     {
-        return (HBRUSH) ::GetStockObject(DKGRAY_BRUSH);
+        return (HBRUSH) NULL_BRUSH; // ::GetStockObject(DKGRAY_BRUSH);
     }
 #endif
 
     BEGIN_MSG_MAP_EX(Window)
         MSG_WM_INITDIALOG(OnInitDialog)
-        MSG_WM_CLOSE(OnClose)
+
+        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
         MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
+
+        MSG_WM_CLOSE(OnClose)
     END_MSG_MAP()
 
     #pragma endregion
