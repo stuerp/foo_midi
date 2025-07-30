@@ -172,7 +172,7 @@ Secret Sauce is a wrapper for the SCCore.dll that comes bundled with Roland’s 
 
 ### CLAP (Optional)
 
-The CLAP player allows you to use [CLAP (CLever Audio Plug-in API)](https://u-he.com/community/clap/) plug-ins to render the audio stream. The plug-in must meet a few requirements:
+The CLAP player allows you to use [CLAP (CLever Audio Plug-in API)](https://u-he.com/community/clap/) synthesizer plug-ins to render the audio stream. The plug-in must meet a few requirements:
 
 - Implement the Note Ports and Audio Ports extension.
 - Have only 1 MIDI input port and no MIDI output ports.
@@ -183,13 +183,14 @@ The CLAP player allows you to use [CLAP (CLever Audio Plug-in API)](https://u-he
 > [!Important]
 > You need to specify location of the CLAP plug-ins on the **[MIDI Player / Paths](#paths)** preferences page. Any compatible plug-in with extension `.dll` or `.clap` will be added to the player list with a `CLAP` prefix. A CLAP plug-in file can contain multiple plug-in entries.
 
-Here are some examples of CLAP plug-ins:
+Here are some examples of CLAP synthesizer plug-ins:
 
 | Name | Description | Status |
 | ---- | ----------- | ------ |
-| [Dexed](https://asb2m10.github.io/dexed/) | Plug-in modeled on the [Yamaha DX7](https://en.wikipedia.org/wiki/Yamaha_DX7) | ![Working](https://img.shields.io/badge/working-green) |
-| [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP/) | [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator | ![Working](https://img.shields.io/badge/working-green) |
-| [Odin 2](https://thewavewarden.com/pages/odin-2/) | 24-voice polyphonic powerhouse | ![Working](https://img.shields.io/badge/working-green) |
+| [Dexed](https://asb2m10.github.io/dexed/) | Plug-in modeled on the [Yamaha DX7](https://en.wikipedia.org/wiki/Yamaha_DX7) | ![Supported](https://img.shields.io/badge/supported-green) |
+| [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP/) | [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator | ![Supported](https://img.shields.io/badge/supported-green) |
+| [OctaSine](https://github.com/greatest-ape/OctaSine) | Frequency modulation synthesizer plugin | ![Supported](https://img.shields.io/badge/supported-green) |
+| [Odin 2](https://thewavewarden.com/pages/odin-2/) | 24-voice polyphonic powerhouse | ![Supported](https://img.shields.io/badge/supported-green) |
 
 ---
 

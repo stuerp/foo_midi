@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.28) P. Stuer **/
+/** $VER: Preferences.cpp (2025.07.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -313,7 +313,11 @@ void RootDialog::apply()
             CfgPlugInName     = PlugIn.Name.c_str();
 
             if (_CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex))
+            {
                 _CLAPHost.ActivatePlugIn((double) CfgSampleRate);
+
+                CfgCLAPConfig[_CLAPHost.GetPlugInId()] = _CLAPHost.GetPlugInState();
+            }
         }
         else
         if (_SelectedPlayer.Type == PlayerType::VSTi)
@@ -821,6 +825,9 @@ void RootDialog::OnPlayerTypeChange(UINT, int, CWindow w)
 
         if (_SelectedPlayer.Type == PlayerType::VSTi)
             _VSTiHost.Config = CfgVSTiConfig[_VSTiPlugIns[_SelectedPlayer.PlugInIndex].Id];
+        else
+        if (_SelectedPlayer.Type == PlayerType::CLAP)
+            _CLAPHost.SetPlugInState(CfgCLAPConfig[_CLAPPlugIns[_SelectedPlayer.PlugInIndex].Name]);
     }
 
     // Configure

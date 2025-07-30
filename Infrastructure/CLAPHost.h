@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.h (2025.07.30) P. Stuer **/
+/** $VER: CLAPHost.h (2025.07.30) P. Stuer - Implements a CLAP host (Work in Progress) **/
 
 #pragma once
 
@@ -64,6 +64,11 @@ public:
 
     bool PlugInPrefers64bitAudio() const noexcept { return ((_OutPortInfo.flags & CLAP_AUDIO_PORT_PREFERS_64BITS) == CLAP_AUDIO_PORT_PREFERS_64BITS); }
 
+    const char * GetPlugInId() const noexcept { return _PlugInDescriptor ? _PlugInDescriptor->id : ""; }
+
+    const std::vector<uint8_t> GetPlugInState() const noexcept;
+    void SetPlugInState(const std::vector<uint8_t> & state) noexcept;
+
 private:
     void GetPlugIns_(const fs::path & directoryPath) noexcept;
     void GetPlugInEntries(const fs::path & filePath, const std::function<void (const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept;
@@ -77,14 +82,21 @@ private:
     void InitializeGUI(bool isFloating) noexcept;
 
 private:
-    static const clap_host_audio_ports GetAudioPortsExtension;
-    static const clap_host_audio_ports_config GetAudioPortsConfigExtension;
-    static const clap_host_context_menu GetContextMenuExtension;
-    static const clap_host_log GetLogExtension;
+    static const clap_host_audio_ports_t GetAudioPortsExtension;
+    static const clap_host_audio_ports_config_t GetAudioPortsConfigExtension;
+    static const clap_host_context_menu_t GetContextMenuExtension;
+    static const clap_host_gui_t GetGUIExtension;
+    static const clap_host_latency_t GetLatencyExtension;
+    static const clap_host_log_t GetLogExtension;
+    static const clap_host_note_name_t GetNoteNameExtension;
     static const clap_host_note_ports_t GetNotePortsExtension;
-    static const clap_host_state GetStateExtension;
-    static const clap_host_timer_support GetTimerSupportExtension;
-    static const clap_host_thread_check GetThreadCheckExtension;
+    static const clap_host_params_t GetParamsExtension;
+    static const clap_host_posix_fd_support_t GetPOSIXFDSupportExtension;
+    static const clap_host_state_t GetStateExtension;
+    static const clap_host_timer_support_t GetTimerSupportExtension;
+    static const clap_host_thread_check_t GetThreadCheckExtension;
+    static const clap_host_thread_pool_t GetThreadPoolExtension;
+    static const clap_host_voice_info_t GetVoiceInfoExtension;
 
     std::vector<PlugIn> _PlugIns;
 

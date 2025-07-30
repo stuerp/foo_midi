@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.07.15) **/
+/** $VER: Configuration.h (2025.07.30) **/
 
 #pragma once
 
@@ -237,11 +237,11 @@ extern cfg_var_modern::cfg_string
     CfgADLBankFilePath,
     CfgOPNBankFilePath;
 
-extern cfg_map
-    CfgVSTiConfig;
-
 extern cfg_var_modern::cfg_string
     CfgPlugInName;
+
+extern cfg_vsti_map      CfgVSTiConfig;
+extern cfg_clap_map CfgCLAPConfig;
 
 // RCP
 extern cfg_var_modern::cfg_int  CfgLoopExpansion;
