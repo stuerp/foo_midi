@@ -695,7 +695,7 @@ void Host::SetPlugInState(const std::vector<uint8_t> & state) noexcept
         {
             auto State = (std::vector<uint8_t> *) stream->ctx;
 
-            size = std::min(size, State->size());
+            size = std::min((size_t) size, State->size());
 
             ::memcpy(data, State->data(), size);
 

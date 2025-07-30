@@ -1,5 +1,5 @@
 
-/** $VER: CLAPWindow.h (2025.06.29) P. Stuer **/
+/** $VER: CLAPWindow.h (2025.07.30) P. Stuer **/
 
 #pragma once
 
@@ -84,15 +84,13 @@ private:
 
     void OnGetMinMaxInfo(LPMINMAXINFO mmi) const noexcept;
 
-#ifdef _DEBUG
     /// <summary>
-    /// Returns a brush that the system uses to draw the dialog background. For layout debugging purposes.
+    /// Returns a brush that the system uses to draw the dialog background.
     /// </summary>
     HBRUSH OnCtlColorDlg(HDC, HWND) const noexcept
     {
         return (HBRUSH) NULL_BRUSH; // ::GetStockObject(DKGRAY_BRUSH);
     }
-#endif
 
     BEGIN_MSG_MAP_EX(Window)
         MSG_WM_INITDIALOG(OnInitDialog)
