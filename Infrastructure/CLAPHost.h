@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.h (2025.07.29) P. Stuer **/
+/** $VER: CLAPHost.h (2025.07.30) P. Stuer **/
 
 #pragma once
 
@@ -40,27 +40,29 @@ public:
 
     std::vector<PlugIn> GetPlugIns(const fs::path & directoryPath) noexcept;
 
-    bool Load(const fs::path & filePath, uint32_t index) noexcept;
-    void UnLoad() noexcept;
-    bool IsPlugInLoaded() const noexcept;
+    bool Load(const fs::path & filePath, uint32_t index);
+    void Unload();
 
-    bool ActivatePlugIn(double sampleRate, uint32_t minFrames, uint32_t maxFrames) noexcept;
-    void DeactivatePlugIn() const noexcept;
+    bool ActivatePlugIn(double sampleRate);
+    void DeactivatePlugIn() const;
+
+    bool StartProcessing() noexcept;
+    void StopProcessing() noexcept;
+
+    bool IsProcessing() const noexcept { return _IsProcessing; }
+    bool IsPlugInLoaded() const noexcept { return (_PlugIn != nullptr); }
 
     bool Process(const clap_process_t & processor) noexcept;
 
-    void ShowGUI(HWND hWnd, bool isFloating) noexcept;
-    void HideGUI() noexcept;
-
-    void BindGUI(HWND hWnd) noexcept;
-    void UnbindGUI() noexcept;
+    void OpenEditor(HWND hWnd, bool isFloating) noexcept;
 
     std::string GetPlugInName() const noexcept { return (_PlugInDescriptor != nullptr) ? _PlugInDescriptor->name : ""; }
 
     void GetPreferredGUISize(RECT & wr) const noexcept;
-    bool SetWindow(clap_window_t * w) { return _PlugInGUI->set_parent(_PlugIn, w); }
+    void ShowGUI(HWND hWnd) noexcept;
+    void HideGUI() noexcept;
 
-    bool PlugInPrefers64bitAudio() const noexcept;
+    bool PlugInPrefers64bitAudio() const noexcept { return ((_OutPortInfo.flags & CLAP_AUDIO_PORT_PREFERS_64BITS) == CLAP_AUDIO_PORT_PREFERS_64BITS); }
 
 private:
     void GetPlugIns_(const fs::path & directoryPath) noexcept;
@@ -75,9 +77,14 @@ private:
     void InitializeGUI(bool isFloating) noexcept;
 
 private:
-    static const clap_host_log LogHandler;
-    static const clap_host_note_ports_t NotePortsHandler;
-    static const clap_host_state StateHandler;
+    static const clap_host_audio_ports GetAudioPortsExtension;
+    static const clap_host_audio_ports_config GetAudioPortsConfigExtension;
+    static const clap_host_context_menu GetContextMenuExtension;
+    static const clap_host_log GetLogExtension;
+    static const clap_host_note_ports_t GetNotePortsExtension;
+    static const clap_host_state GetStateExtension;
+    static const clap_host_timer_support GetTimerSupportExtension;
+    static const clap_host_thread_check GetThreadCheckExtension;
 
     std::vector<PlugIn> _PlugIns;
 
@@ -89,11 +96,15 @@ private:
     const clap_plugin_t * _PlugIn;
     const clap_plugin_gui_t * _PlugInGUI;
 
-    clap_audio_port_info _PortInfo;
+    clap_audio_port_info _OutPortInfo;
 
     CLAP::Window _Window;
+
+    bool _IsProcessing;
 };
 
-// This shared instance must only be used by the UI element and the playback thread.
-extern Host _Host;
+ const uint32_t BlockSize = 2 * 256;
+
 }
+
+extern CLAP::Host _CLAPHost;

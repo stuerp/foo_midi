@@ -50,7 +50,7 @@ bool CLAPPlayer::Startup()
 
     _AudioOuts[0] = _AudioOut;
 
-    if (!_Host->ActivatePlugIn((double) _SampleRate, 1, GetBlockSize()))
+    if (!_Host->StartProcessing())
         return false;
 
     _IsStarted = true;
@@ -69,7 +69,7 @@ void CLAPPlayer::Shutdown()
     if (!_Host->IsPlugInLoaded())
         return;
 
-    _Host->DeactivatePlugIn();
+    _Host->StopProcessing();
 
     if (_OutChannels[1])
     {

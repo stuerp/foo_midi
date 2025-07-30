@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.h (2025.07.09) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.h (2025.07.30) P. Stuer - Wrapper for CLAP plugins **/
 
 #pragma once
 
@@ -24,7 +24,7 @@ public:
 
     virtual ~CLAPPlayer();
 
-    virtual uint32_t GetBlockSize() const noexcept override { return 2 * 256; } // 2 channels
+    virtual uint32_t GetBlockSize() const noexcept override { return CLAP::BlockSize; } // 2 channels
 
 private:
     #pragma region player_t

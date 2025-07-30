@@ -203,6 +203,11 @@ private:
             return true;
         }
 
+        bool operator !=(const installed_player_t & other) const noexcept
+        {
+            return !(*this == other);
+        }
+
         bool SupportsMIDIFlavor() const noexcept
         {
             return ((Type == PlayerType::VSTi) || (Type == PlayerType::CLAP) || (Type == PlayerType::FluidSynth) || (Type == PlayerType::BASSMIDI) || (Type == PlayerType::SecretSauce));
@@ -224,7 +229,6 @@ private:
     std::vector<VSTi::PlugIn> _VSTiPlugIns;
 
     // CLAP
-    CLAP::Host _CLAPHost;
     std::vector<CLAP::PlugIn> _CLAPPlugIns;
 
     // FluidSynth
@@ -282,44 +286,51 @@ void RootDialog::apply()
 {
     // Player Type
     {
-        int SelectedIndex = (int) SendDlgItemMessageW(IDC_PLAYER_TYPE, CB_GETCURSEL);
-
-        if (SelectedIndex != -1)
+        if (CfgCLAPIndex != -1)
         {
-            _SelectedPlayer = _InstalledPlayers[(size_t) SelectedIndex];
-
-            CfgPlayerType = (int) _SelectedPlayer.Type;
-
-            if (_SelectedPlayer.Type == PlayerType::CLAP)
+            // Prevent a player change when a CLAP player is processing.
+            if (_CLAPHost.IsProcessing())
             {
-                const auto & PlugIn = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
+                ::MessageBoxW(m_hWnd, L"Preferences can't be applied until the CLAP player has stopped.", TEXT(STR_COMPONENT_BASENAME), MB_ICONERROR | MB_OK);
 
-                CfgPlugInFilePath = (const char *) PlugIn.FilePath.u8string().c_str();
-                CfgCLAPIndex      = (int64_t) PlugIn.Index;
-                CfgPlugInName     = PlugIn.Name.c_str();
+                OnChanged();
 
-                _CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
+                return;
             }
-            else
-            {
-                _CLAPHost.UnLoad();
 
-                if (_SelectedPlayer.Type == PlayerType::VSTi)
-                {
-                    const auto & PlugIn = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
+            _CLAPHost.DeactivatePlugIn();
+            _CLAPHost.Unload();
+        }
 
-                    CfgPlugInFilePath        = (const char *) PlugIn.FilePath.u8string().c_str();
-                    CfgCLAPIndex             = (int64_t) -1;
-                    CfgPlugInName            = PlugIn.Name.c_str();
-                    CfgVSTiConfig[PlugIn.Id] = _VSTiHost.Config;
-                }
-                else
-                {
-                    CfgPlugInFilePath = "";
-                    CfgCLAPIndex      = (int64_t) -1;
-                    CfgPlugInName     = "";
-                }
-            }
+        CfgPlayerType = (int) _SelectedPlayer.Type;
+
+        if (_SelectedPlayer.Type == PlayerType::CLAP)
+        {
+            const auto & PlugIn = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
+
+            CfgPlugInFilePath = (const char *) PlugIn.FilePath.u8string().c_str();
+            CfgCLAPIndex      = (int64_t) PlugIn.Index;
+            CfgPlugInName     = PlugIn.Name.c_str();
+
+            if (_CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex))
+                _CLAPHost.ActivatePlugIn((double) CfgSampleRate);
+        }
+        else
+        if (_SelectedPlayer.Type == PlayerType::VSTi)
+        {
+            const auto & PlugIn = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
+
+            CfgPlugInFilePath        = (const char *) PlugIn.FilePath.u8string().c_str();
+            CfgCLAPIndex             = (int64_t) -1;
+            CfgPlugInName            = PlugIn.Name.c_str();
+
+            CfgVSTiConfig[PlugIn.Id] = _VSTiHost.Config;
+        }
+        else
+        {
+            CfgPlugInFilePath = "";
+            CfgCLAPIndex      = (int64_t) -1;
+            CfgPlugInName     = "";
         }
     }
 
@@ -339,11 +350,11 @@ void RootDialog::apply()
 
     // Looping
     {
-        CfgLoopTypePlayback     = (t_int32) SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
-        CfgLoopTypeOther        = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
+        CfgLoopTypePlayback = (t_int32) SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
+        CfgLoopTypeOther    = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
 
-        CfgDecayTime            = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
-        CfgFadeTime          = (t_int32) GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE);
+        CfgDecayTime        = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
+        CfgFadeTime         = (t_int32) GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE);
     }
 
     // Loop Count
@@ -781,9 +792,9 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
 
             if (Host.Load(_SelectedPlayer.FilePath, (uint32_t) _SelectedPlayer.Index))
             {
-                Host.ShowGUI(m_hWnd, false);
+                Host.OpenEditor(m_hWnd, false);
 
-                Host.UnLoad();
+                Host.Unload();
             }
 
             break;

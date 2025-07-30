@@ -26,6 +26,7 @@
 
 #include "PreferencesFM.h"
 #include "KaraokeProcessor.h"
+#include "CLAPHost.h"
 
 #include "Log.h"
 
@@ -57,8 +58,6 @@ InputDecoder::InputDecoder() noexcept :
     _DetectFF7Loops((bool) CfgDetectFF7Loops),
 
     _Player(nullptr),
-    _Host(nullptr),
-
     _PlayerType(),
 
     _RequestedSampleRate((uint32_t) CfgSampleRate),
@@ -108,14 +107,6 @@ InputDecoder::~InputDecoder() noexcept
 
         delete _Player;
         _Player = nullptr;
-    }
-
-    if (_Host != nullptr)
-    {
-        _Host->UnLoad();
-
-        delete _Host;
-        _Host = nullptr;
     }
 
     if (_PlayerType == PlayerType::EmuDeMIDI)
@@ -398,18 +389,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         // CLAP (CLever Audio Plug-in API)
         case PlayerType::CLAP:
         {
-            if (Preset._PlugInFilePath.is_empty())
-                throw pfc::exception("No plug-in specified in preset");
+            if (!_CLAPHost.IsPlugInLoaded())
+                throw pfc::exception("No CLAP plug-in loaded");
 
-            _Host = new CLAP::Host();
-
-            if (!_Host->Load(Preset._PlugInFilePath.c_str(), Preset._CLAPPlugInIndex))
-                return;
-
-            if (!_Host->IsPlugInLoaded())
-                return;
-
-            auto Player = new CLAPPlayer(_Host);
+            auto Player = new CLAPPlayer(&_CLAPHost);
 
             _Player = Player;
 

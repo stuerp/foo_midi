@@ -202,7 +202,6 @@ private:
 
     // Player Properties
     player_t * _Player;
-    CLAP::Host * _Host;
 
     PlayerType _PlayerType;
     bool _IsPlayerTypeOverriden;
