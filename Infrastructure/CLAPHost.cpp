@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.07.29) P. Stuer **/
+/** $VER: CLAPHost.cpp (2025.07.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -16,15 +16,15 @@ namespace CLAP
 
 Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor(), _PlugIn(), _PlugInGUI()
 {
-    clap_version     = CLAP_VERSION;
-    host_data        = nullptr;
+    clap_version  = CLAP_VERSION;
+    host_data     = nullptr;
 
-    name             = STR_COMPONENT_BASENAME;
-    vendor           = STR_COMPONENT_COMPANY_NAME;
-    url              = STR_COMPONENT_URL;
-    version          = STR_COMPONENT_VERSION;
+    name          = STR_COMPONENT_BASENAME;
+    vendor        = STR_COMPONENT_COMPANY_NAME;
+    url           = STR_COMPONENT_URL;
+    version       = STR_COMPONENT_VERSION;
 
-    get_extension    = [](const clap_host * self, const char * extensionId) -> const void *
+    get_extension = [](const clap_host * self, const char * extensionId) -> const void *
     {
         if (::strcmp(extensionId, CLAP_EXT_LOG) == 0)
             return &LogHandler;
@@ -59,13 +59,13 @@ Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor(), _PlugIn(), _PlugInGUI()
     };
 
     // Handles a request to deactivate and reactivate the plug-in.
-    request_restart  = [](const clap_host * self)
+    request_restart = [](const clap_host * self)
     {
         Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request from plug-in to restart.");
     };
 
     // Handles a request to activate and start processing the plug-in.
-    request_process  = [](const clap_host * self)
+    request_process = [](const clap_host * self)
     {
         Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to activate plug-in.");
     };
@@ -101,7 +101,7 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 }
 
 /// <summary>
-/// Loads a plug-in file and creates the plug-ing with the specified index.
+/// Loads a plug-in file and creates the plug-in with the specified index.
 /// </summary>
 bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
 {
@@ -117,25 +117,34 @@ bool Host::Load(const fs::path & filePath, uint32_t index) noexcept
 
     auto Entry = (const clap_plugin_entry_t *) ::GetProcAddress(_hPlugIn, "clap_entry");
 
-    if ((Entry != nullptr) && (Entry->init != nullptr) && Entry->init((const char *) filePath.u8string().c_str()))
-    {
-        const auto * Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
+    if (Entry == nullptr)
+        return false;
 
-        if ((Factory != nullptr) && (Factory->get_plugin_descriptor != nullptr))
-        {
-            _PlugInDescriptor = Factory->get_plugin_descriptor(Factory, index);
+    if (Entry->init == nullptr)
+        return false;
 
-            if (_PlugInDescriptor != nullptr)
-            {
-                _PlugIn = Factory->create_plugin(Factory, this, _PlugInDescriptor->id);
+    if (!Entry->init((const char *) filePath.u8string().c_str()))
+        return false;
 
-                if (IsPlugInLoaded())
-                    return true;
-            }
-        }
-    }
+    const auto * Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
 
-    return false;
+    if (Factory == nullptr)
+        return false;
+
+    if (Factory->get_plugin_descriptor == nullptr)
+        return false;
+
+    _PlugInDescriptor = Factory->get_plugin_descriptor(Factory, index);
+
+    if (_PlugInDescriptor == nullptr)
+        return false;
+
+    _PlugIn = Factory->create_plugin(Factory, this, _PlugInDescriptor->id);
+
+    if (_PlugIn == nullptr)
+        return false;
+
+    return _PlugIn->init(_PlugIn);
 }
 
 /// <summary>
@@ -151,12 +160,9 @@ void Host::UnLoad() noexcept
         _PlugInGUI = nullptr;
     }
 
-    if (IsPlugInLoaded())
+    if (_PlugIn)
     {
-        // FIXME: Ugly hack for Odin2 plug-in
-        if (::strcmp(_PlugInDescriptor->id, "com.thewavewarden.odin2") != 0)
-            _PlugIn->destroy(_PlugIn);
-
+        _PlugIn->destroy(_PlugIn);
         _PlugIn = nullptr;
     }
 
@@ -182,13 +188,8 @@ bool Host::IsPlugInLoaded() const noexcept
 /// </summary>
 bool Host::ActivatePlugIn(double  sampleRate, uint32_t minFrames, uint32_t maxFrames) noexcept
 {
-    if (!IsPlugInLoaded())
+    if (_PlugIn == nullptr)
         return false;
-
-    if (!_PlugIn->init(_PlugIn))
-        return false;
-
-//  GetGUI(false);
 
     if (!_PlugIn->activate(_PlugIn, sampleRate, minFrames, maxFrames))
         return false;
@@ -203,13 +204,12 @@ bool Host::ActivatePlugIn(double  sampleRate, uint32_t minFrames, uint32_t maxFr
 /// </summary>
 void Host::DeactivatePlugIn() const noexcept
 {
-    if (!IsPlugInLoaded())
+    if (_PlugIn == nullptr)
         return;
 
     _PlugIn->stop_processing(_PlugIn);
 
     _PlugIn->deactivate(_PlugIn);
-
 }
 
 /// <summary>
@@ -252,21 +252,29 @@ void Host::HideGUI() noexcept
 }
 
 /// <summary>
-/// Activates the GUI.
+/// Binds the GUI to the window.
 /// </summary>
-void Host::ActivateGUI(HWND hWnd) noexcept
+void Host::BindGUI(HWND hWnd) noexcept
 {
+    if (_PlugInGUI == nullptr)
+        return;
+
     clap_window_t w = { .api = "win32", .win32 = hWnd };
 
-    if (_PlugInGUI->set_parent(_PlugIn, &w))
-        _PlugInGUI->show(_PlugIn);
+    if (!_PlugInGUI->set_parent(_PlugIn, &w))
+        return;
+
+    _PlugInGUI->show(_PlugIn);
 }
 
 /// <summary>
-/// Deactivates the GUI.
+/// Unbinds the GUI.
 /// </summary>
-void Host::DectivateGUI() noexcept
+void Host::UnbindGUI() noexcept
 {
+    if (_PlugInGUI == nullptr)
+        return;
+
     _PlugInGUI->hide(_PlugIn);
 
     clap_window_t w = { .api = "win32", .win32 = NULL };
@@ -392,7 +400,6 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
 /// </summary>
 bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 {
-    // Odin2 has no get_extension method.
     if (plugIn->get_extension == nullptr)
         return true;
 
@@ -448,11 +455,10 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 /// </summary>
 bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 {
-    // Odin2 has no get_extension method.
     if (plugIn->get_extension == nullptr)
         return true;
 
-    const auto AudioPorts = static_cast<const clap_plugin_audio_ports_t *>(plugIn->get_extension(plugIn, CLAP_EXT_AUDIO_PORTS));
+    const auto AudioPorts = (const clap_plugin_audio_ports_t *) plugIn->get_extension(plugIn, CLAP_EXT_AUDIO_PORTS);
 
     if (AudioPorts == nullptr)
     {
@@ -502,11 +508,10 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 /// </summary>
 bool Host::PlugInPrefers64bitAudio() const noexcept
 {
-    // Odin2 has no get_extension() method.
     if ((_PlugIn == nullptr) || (_PlugIn->get_extension == nullptr))
         return true;
 
-    const auto AudioPorts = static_cast<const clap_plugin_audio_ports_t *>(_PlugIn->get_extension(_PlugIn, CLAP_EXT_AUDIO_PORTS));
+    const auto AudioPorts = (const clap_plugin_audio_ports_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_AUDIO_PORTS);
 
     if (AudioPorts == nullptr)
         return false;
@@ -577,7 +582,7 @@ const clap_host_state Host::StateHandler
 /// </summary>
 void Host::GetVoiceInfo() noexcept
 {
-    if ((_PlugIn == nullptr) || (_PlugIn->get_extension == nullptr)) // Odin2 has no get_extension method.
+    if ((_PlugIn == nullptr) || (_PlugIn->get_extension == nullptr))
         return;
 
     auto _PlugInVoiceInfo = (const clap_plugin_voice_info *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_VOICE_INFO);

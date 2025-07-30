@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.22) **/
+/** $VER: InputDecoder.cpp (2025.07.30) **/
 
 #include "pch.h"
 
@@ -112,13 +112,15 @@ InputDecoder::~InputDecoder() noexcept
 
     if (_Host != nullptr)
     {
+        _Host->UnLoad();
+
         delete _Host;
         _Host = nullptr;
     }
 
     if (_PlayerType == PlayerType::EmuDeMIDI)
     {
-/*
+/* KEEP? 06/07/25
         insync(_Lock);
         _IsRunning -= 1;
 */

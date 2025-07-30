@@ -52,8 +52,8 @@ public:
     void ShowGUI(HWND hWnd, bool isFloating) noexcept;
     void HideGUI() noexcept;
 
-    void ActivateGUI(HWND hWnd) noexcept;
-    void DectivateGUI() noexcept;
+    void BindGUI(HWND hWnd) noexcept;
+    void UnbindGUI() noexcept;
 
     std::string GetPlugInName() const noexcept { return (_PlugInDescriptor != nullptr) ? _PlugInDescriptor->name : ""; }
 

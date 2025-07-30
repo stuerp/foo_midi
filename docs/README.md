@@ -254,20 +254,21 @@ The **Fade-Out time** setting specifies the time in milliseconds that the player
 
 A soundfont is a file that contains samples of instruments. Players like [BASSMIDI](#bassmidi-built-in-wavetable) and [FluidSynth](#fluidsynth-optional-wavetable) require it to play MIDI files. When more than one soundfont is specified or available the soundfonts will be layered on top of each other with the first soundfont being used as a base.
 
-The easiest way to specify a soundfont is to set the file location on the [Paths](#paths) preferences page. Any of the supported formats can be used (`.sflist`, `.sf2pack`, `.sfogg`, `.sf2`, `.sf3` and `.dsl`).
-
-However, foo_midi can layer soundfonts.
-
-- If the file has an embedded soundfont that file will be extracted and added to the soundfont list. The .RMI file format for instance was designed for that purpose.
-- If a soundfont with the same basename exists in the directory of the MIDI file, the soundfont will be added to the list. F.e. if `EXAMPLE.SF2` will be used to play `EXAMPLE.MID` if they exist in the same directory.
-- If a soundfont with the same name as the directory exists, it will be added to the list.
-- Lastly, the global soundfont specified on the preferences page will be added.
-
-> [!Tip]
-> foo_midi will report the soundfonts it uses and in which order in the foobar2000 console if you set the component log level to at least `Info` level.
+Any of the supported formats can be used (Soundfont lists `.sflist`, `.sf2pack`, `.sfogg`, `.sf2`, `.sf3` and `.dls`). Each added soundfont replaces the patches with the same bank and program number in the previously added soundfonts.
 
 > [!Note]
 > foo_midi will switch to the FluidSynth player if a DLS soundfont is part of the soundfont list.
+
+If the file has an embedded soundfont that file will be extracted and added to the soundfont list. The `.RMI` file format was designed for that purpose.
+
+Next if a soundfont with the same basename exists in the directory of the MIDI file, the soundfont will be added to the list. F.e. if `Example.sf2` will be used to play `Example.mid` if they exist in the same directory.
+
+Then if a soundfont with the same name as the directory exists, it will be added to the list. F.e. `C:\Chip Tunes\Chip Tunes.sf2` will be loaded when MIDI file in `C:\Chip Tunes` are played if it exists.
+
+Lastly, the global soundfont specified on the [Paths](#paths) preferences page will be added.
+
+> [!Tip]
+> foo_midi will report the soundfonts it uses and in which order in the foobar2000 console if you set the component log level to at least `Info` level.
 
 #### SFList
 

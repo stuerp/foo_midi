@@ -31,7 +31,7 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
 
     SetWindowTextW((std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(_Parameters.Name)).c_str());
 
-    _Parameters._Host->ActivateGUI(m_hWnd);
+    _Parameters._Host->BindGUI(m_hWnd);
 
     return TRUE;
 }
@@ -43,7 +43,7 @@ void Window::OnClose() noexcept
 {
     GetWindowRect(&_Parameters._Bounds);
 
-    _Parameters._Host->DectivateGUI();
+    _Parameters._Host->UnbindGUI();
 
     EndDialog(0);
 }
