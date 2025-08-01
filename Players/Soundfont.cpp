@@ -268,7 +268,7 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
 
     std::vector<soundfont_t> Items;
 
-    for (uint32_t i = 0; i < Soundfonts->u.array.length; ++i)
+    for (uint32_t i = Soundfonts->u.array.length; i--;)
     {
         auto JSONSoundfont = Soundfonts->u.array.values[i];
 
@@ -434,6 +434,8 @@ static std::vector<soundfont_t> ProcessText(const std::string & data, const fs::
 
         Items.push_back(sf);
     }
+
+    std::reverse(Items.begin(), Items.end());
 
     return Items;
 }

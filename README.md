@@ -95,11 +95,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.0.0-alpha5, 2025-07-30
+v3.1.0.0-alpha6, 2025-xx-xx
 
-- New: Support for the editor (GUI) of CLAP plug-ins. Try f.e. [OctaSine](https://github.com/greatest-ape/OctaSine) or [Odin 2](https://thewavewarden.com/pages/odin-2/).
-- Improved: Overall hardening and polishing of the CLAP host.
-- Fixed: Soundfont with the same name as the directory was not loaded anymore. (alpha4 regression)
+- Fixed: BASSMIDI soundfont stacking was done in reverse by the new list loader code. (3.0.0.0 regression)
 
 You can read the full history [here](docs/History.md).
 

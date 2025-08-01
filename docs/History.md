@@ -1,6 +1,12 @@
 
 # foo_midi History
 
+v3.1.0.0-alpha5, 2025-07-31
+
+- New: Support for the editor (GUI) of CLAP plug-ins. Try f.e. [OctaSine](https://github.com/greatest-ape/OctaSine) or [Odin 2](https://thewavewarden.com/pages/odin-2/).
+- Improved: Overall hardening and polishing of the CLAP host.
+- Fixed: Soundfont with the same name as the directory was not loaded anymore. (alpha4 regression)
+
 v3.1.0.0-alpha4, 2025-07-25
 
 - Improved: Support for archives. MIDI files, soundfont files and soundfont list files can be bundled in an archive.

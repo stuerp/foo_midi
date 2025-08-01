@@ -275,6 +275,9 @@ Lastly, the global soundfont specified on the [Paths](#paths) preferences page w
 
 The BASSMIDI and FluidSynth player also accept a Soundfont List file.
 
+> [!Important]
+> The soundfonts should be specified with the least specialized soundfont first (the base soundfont) followed by more specialized soundfonts that override the presets of the previous ones.
+
 ##### Simple format
 
 The simple format is just a flat text file where each line contains the location of a soundfont file. Empty lines are ignored. If you specify a only a file name or a relative path foo_midi will look for the file relative to the directory of the list file.
@@ -892,11 +895,13 @@ This chapter contains a lot of reference material I consulted during the develop
     - [OS-251](https://github.com/utokusa/OS-251), utokusa `VST 3`
     - [RdPiano](https://github.com/giulioz/rdpiano) `VST 3`
     - [Virtual JV](https://github.com/giulioz/jv880_juce), JV-880 emulator as VST/AU plugin `VST 3`
+    - [VSTSID](https://github.com/igorski/VSTSID), VST plugin version of the WebSID Commodore 64 synthesizer `VST 3`
 - Development
   - [VST 3 Developer Portal](https://steinbergmedia.github.io/vst3_dev_portal/pages/index.html)
   - [VST 3 API Documentation](https://steinbergmedia.github.io/vst3_dev_portal/pages/Technical+Documentation/API+Documentation/Index.html)
   - [VST 3 C API](https://github.com/steinbergmedia/vst3_c_api/tree/master)
   - [VST 3 SDK](https://github.com/steinbergmedia/vst3sdk)
+  - [VST 3 Example Plugin Hello World](https://github.com/steinbergmedia/vst3_example_plugin_hello_world) `VST 3`
 
 ### CLAP
 
@@ -907,8 +912,7 @@ This chapter contains a lot of reference material I consulted during the develop
   - [BaconPaul's Test microhost](https://github.com/baconpaul/micro-clap-host)
   - [The Anklang Project](https://anklang.testbit.eu/)
     - [Anklang](https://github.com/tim-janik/anklang)
-  - Development
-    - [CLAP Host](https://github.com/free-audio/clap-host)
+    - [CLAP Host](https://github.com/free-audio/clap-host), Free-Audio
 - Plug-ins
   - [Dexed](https://asb2m10.github.io/dexed/), [GitHub](https://github.com/asb2m10/dexed)
   - [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP), [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator, John Novak
@@ -919,7 +923,7 @@ This chapter contains a lot of reference material I consulted during the develop
   - [Mini-JV880](https://github.com/giulioz/mini-jv880)
   - [OctaSince](https://github.com/greatest-ape/OctaSine), Joakim Frostegård
   - Development
-    - [CLAP Plug-ins](https://github.com/free-audio/clap-plugins)
+    - [CLAP Plug-ins](https://github.com/free-audio/clap-plugins), Free-Audio
 
 ---
 

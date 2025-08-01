@@ -1,5 +1,5 @@
 
-/** $VER: InitStageCallback.cpp (2025.07.30) **/
+/** $VER: InitStageCallback.cpp (2025.07.31) **/
 
 #include "pch.h"
 
@@ -36,7 +36,7 @@ public:
         else
         if (stage == init_stages::after_ui_init)
         {
-            if (_CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex))
+            if ((CfgPlayerType == (int64_t) PlayerType::CLAP) && _CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex))
                 _CLAPHost.ActivatePlugIn((double) CfgSampleRate);
 
             Log.AtDebug().Write(STR_COMPONENT_BASENAME " is initializing the metadb index manager after the user interface has been initialized.");
