@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.08.01) P. Stuer - Implements a CLAP host **/
+/** $VER: CLAPHost.cpp (2025.08.02) P. Stuer - Implements a CLAP host **/
 
 #include "pch.h"
 
@@ -12,9 +12,13 @@
 #include "CLAPWindow.h"
 #include "CLAPPlayer.h"
 
+#include "CriticalSection.h"
+
 namespace CLAP
 {
-Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor()
+static critical_section_t _CriticalSection;
+
+Host::Host() noexcept
 {
     clap_version  = CLAP_VERSION;
     host_data     = nullptr;
@@ -91,29 +95,33 @@ Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor()
     // Handles a request to schedule a call to plugin->on_main_thread(plugin) on the main thread.
     request_callback = [](const clap_host * self)
     {
-        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to activate plug-in.");
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to schedule a call on the main thread.");
+
+//      auto This = (CLAP::Host *) self;
     };
+
+    _CurrentDSO = nullptr;
 }
 
 /// <summary>
 /// Gets the CLAP plug-ins.
 /// </summary>
-std::vector<PlugInDescriptor> Host::GetPlugIns(const fs::path & directoryPath) noexcept
+std::vector<PlugInEntry> Host::GetPlugInEntries(const fs::path & directoryPath) noexcept
 {
-    _PlugIns.clear();
+    _PlugInEntries.clear();
 
     if (directoryPath.empty())
-        return _PlugIns;
+        return _PlugInEntries;
 
     #define CLAP_SDK_VERSION TOSTRING(CLAP_VERSION_MAJOR) "." TOSTRING(CLAP_VERSION_MINOR) "." TOSTRING(CLAP_VERSION_REVISION)
 
     Log.AtInfo().Write(STR_COMPONENT_BASENAME " is built with CLAP " CLAP_SDK_VERSION ".");
 
-    GetPlugIns_(directoryPath);
+    GetPlugInDescriptors_(directoryPath);
 
-    std::sort(_PlugIns.begin(), _PlugIns.end(), [](PlugInDescriptor a, PlugInDescriptor b) { return a.Name < b.Name; });
+    std::sort(_PlugInEntries.begin(), _PlugInEntries.end(), [](PlugInEntry a, PlugInEntry b) { return a.Name < b.Name; });
 
-    return _PlugIns;
+    return _PlugInEntries;
 }
 
 /// <summary>
@@ -127,60 +135,98 @@ bool Host::Load(const fs::path & filePath, uint32_t index)
     if (filePath.empty() || (index == (uint32_t) -1))
         return false;
 
-    if ((_FilePath == filePath) && (_Index == index) && (_hPlugIn != NULL))
-        return true; // Already loaded
+    critical_section_lock_t Lock(_CriticalSection);
 
-    _FilePath = filePath;
-    _Index    = index;
+    #pragma warning(disable: 4820)
 
-    Unload();
+    auto it = std::find_if(_PlugInModules.begin(), _PlugInModules.end(), [filePath, index](const DSO & m)
+    {
+        return ((m._FilePath == filePath) && (m._Index == index));
+    });
 
-    _hPlugIn = ::LoadLibraryW(::UTF8ToWide(_FilePath.string().c_str()).c_str());
+    #pragma warning(default: 4820)
 
-    if (_hPlugIn == NULL)
+    if (it != _PlugInModules.end())
+    {
+        if (it->_Descriptor != nullptr) // Already loaded
+        {
+            _CurrentDSO = &it[0];
+
+            return true;
+        }
+    }
+    else
+    {
+        _PlugInModules.push_back(DSO());
+
+        it = _PlugInModules.end() - 1;
+    }
+
+    it->_FilePath = filePath;
+    it->_Index    = index;
+
+    it->_hModule = ::LoadLibraryW(::UTF8ToWide(filePath.string().c_str()).c_str());
+
+    if (it->_hModule == NULL)
         return false;
 
-    auto Entry = (const clap_plugin_entry_t *) ::GetProcAddress(_hPlugIn, "clap_entry");
+    it->_Entry = (const clap_plugin_entry_t *) ::GetProcAddress(it->_hModule, "clap_entry");
 
-    if (Entry == nullptr)
+    if (it->_Entry == nullptr)
         return false;
 
-    if (Entry->init == nullptr)
+    if (it->_Entry->init == nullptr)
         return false;
 
-    if (!Entry->init(_FilePath.string().c_str()))
+    if (!it->_Entry->init(filePath.string().c_str()))
         return false;
 
-    _Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
+    it->_Factory = (const clap_plugin_factory_t *) it->_Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
 
-    if (_Factory == nullptr)
+    if (it->_Factory == nullptr)
         return false;
 
-    if (_Factory->get_plugin_descriptor == nullptr)
+    if (it->_Factory->get_plugin_descriptor == nullptr)
         return false;
 
-    _PlugInDescriptor = _Factory->get_plugin_descriptor(_Factory, _Index);
+    it->_Descriptor = it->_Factory->get_plugin_descriptor(it->_Factory, index);
 
-    if (_PlugInDescriptor == nullptr)
+    if (it->_Descriptor == nullptr)
         return false;
+
+    _CurrentDSO = &it[0];
 
     return true;
 }
 
 /// <summary>
-/// Unloads the current plug-in.
+/// Unloads the current DSO.
 /// </summary>
 void Host::Unload()
 {
     if (!core_api::is_main_thread())
         throw std::runtime_error("Host::Unload() must be called from the main thread");
 
-    _PlugInDescriptor = nullptr;
+    critical_section_lock_t Lock(_CriticalSection);
 
-    if (_hPlugIn != NULL)
+    if (_CurrentDSO->_InstanceCount != 0)
+        return;
+
+    _CurrentDSO->_Descriptor = nullptr;
+    _CurrentDSO->_Factory = nullptr;
+
+    if (_CurrentDSO->_Entry != nullptr)
     {
-        ::FreeLibrary(_hPlugIn);
-        _hPlugIn = NULL;
+        if (_CurrentDSO->_Entry->deinit)
+            _CurrentDSO->_Entry->deinit();
+
+        _CurrentDSO->_Entry = nullptr;
+    }
+
+    if (_CurrentDSO->_hModule != NULL)
+    {
+        ::FreeLibrary(_CurrentDSO->_hModule);
+        _CurrentDSO->_hModule = NULL;
     }
 }
 
@@ -192,9 +238,28 @@ std::shared_ptr<PlugIn> Host::CreatePlugIn()
     if (!core_api::is_main_thread())
         throw std::runtime_error("Host::CreatePlugIn() must be called from the main thread");
 
-    auto * Instance = _Factory->create_plugin(_Factory, this, _PlugInDescriptor->id);
+    critical_section_lock_t Lock(_CriticalSection);
 
-    return std::make_shared<PlugIn>(this, Instance);
+    auto * Instance = _CurrentDSO->_Factory->create_plugin(_CurrentDSO->_Factory, this, _CurrentDSO->_Descriptor->id);
+
+    ++_CurrentDSO->_InstanceCount;
+
+    auto p = std::make_shared<PlugIn>(GetPlugInId(), this, Instance);
+
+    return p;
+}
+
+/// <summary>
+/// Destroys a plug-in instance.
+/// </summary>
+void Host::DestroyPlugIn()
+{
+    if (!core_api::is_main_thread())
+        throw std::runtime_error("Host::CreatePlugIn() must be called from the main thread");
+
+    critical_section_lock_t Lock(_CriticalSection);
+
+    --_CurrentDSO->_InstanceCount;
 }
 
 /// <summary>
@@ -211,13 +276,19 @@ void Host::OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating
     if (!plugIn->CreateGUI(isFloating))
         return;
 
+    plugIn->LoadState(CfgCLAPConfig[GetPlugInId()]);
+
     Window::Context p =
     {
         ._Host = this,
         ._PlugIn = plugIn
     };
 
-    _Window.DoModal(hWnd, (LPARAM) &p);
+    Window w;
+
+    w.DoModal(hWnd, (LPARAM) &p);
+
+    CfgCLAPConfig[GetPlugInId()] = plugIn->SaveState();
 
     plugIn->DestroyGUI();
 }
@@ -227,7 +298,7 @@ void Host::OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating
 /// <summary>
 /// Gets the CLAP plug-ins.
 /// </summary>
-void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
+void Host::GetPlugInDescriptors_(const fs::path & directoryPath) noexcept
 {
     try
     {
@@ -235,45 +306,46 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
         {
             if (Entry.is_directory())
             {
-                GetPlugIns_(Entry.path());
+                GetPlugInDescriptors_(Entry.path());
             }
             else
             if (IsOneOf(Entry.path().extension().string().c_str(), { ".clap", ".dll" }))
             {
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
 
-                GetPlugInEntries(Entry.path(), [this, Entry](const std::string & plugInName, uint32_t index, bool hasGUI)
+                GetPlugInEntries(Entry.path(), [this, Entry](const std::string & id, const std::string & plugInName, uint32_t index, bool hasGUI)
                 {
-                    PlugInDescriptor PlugIn =
+                    PlugInEntry PlugIn =
                     {
+                        .Id        = id,
                         .Name      = plugInName,
                         .Index     = index,
                         .FilePath  = Entry.path(),
                         .HasEditor = hasGUI
                     };
 
-                    _PlugIns.push_back(PlugIn);
+                    _PlugInEntries.push_back(PlugIn);
                 });
             }
         }
     }
     catch (const std::exception & e)
     {
-        Log.AtError().Write(STR_COMPONENT_BASENAME, " fails to get CLAP plug-ins: %s", e.what());
+        Log.AtError().Write(STR_COMPONENT_BASENAME, " failed to get CLAP plug-ins: %s", e.what());
     }
 }
 
 /// <summary>
 /// Gets the CLAP plug-ins in plug-in file.
 /// </summary>
-void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept
+void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(const std::string & id, const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept
 {
-    HMODULE hPlugIn = ::LoadLibraryW(::UTF8ToWide((const char *) filePath.u8string().c_str()).c_str());
+    HMODULE hModule = ::LoadLibraryW(::UTF8ToWide((const char *) filePath.u8string().c_str()).c_str());
 
-    if (hPlugIn == NULL)
+    if (hModule == NULL)
         return;
 
-    auto PlugInEntry = (const clap_plugin_entry_t *) ::GetProcAddress(hPlugIn, "clap_entry");
+    auto PlugInEntry = (const clap_plugin_entry_t *) ::GetProcAddress(hModule, "clap_entry");
 
     try
     {
@@ -310,7 +382,7 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
                                 if (PlugIn->init(PlugIn))
                                 {
                                     if (VerifyNotePorts(PlugIn) && VerifyAudioPorts(PlugIn))
-                                        callback(SafeString(Descriptor->name), i, HasGUI(PlugIn, false));
+                                        callback(std::string(Descriptor->id), std::string(Descriptor->name), i, HasGUI(PlugIn, false));
                                 }
                                 else
                                     Log.AtError().Write(STR_COMPONENT_BASENAME " failed to initialize plug-in.");
@@ -332,7 +404,7 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
     }
     catch (...) { };
 
-    ::FreeLibrary(hPlugIn);
+    ::FreeLibrary(hModule);
 }
 
 /// <summary>

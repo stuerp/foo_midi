@@ -15,14 +15,15 @@
 namespace CLAP
 {
 
-PlugIn::PlugIn(Host * host, const clap_plugin_t * plugIn) noexcept : _GUI(), _IsProcessing(false)
+PlugIn::PlugIn(const std::string & id, Host * host, const clap_plugin_t * plugIn) noexcept : _GUI(), _IsProcessing(false)
 {
+    _Id     = id;
     _Host   = host;
     _PlugIn = plugIn;
 }
 
 /// <summary>
-/// Loads a plug-in file and creates the plug-in with the specified index.
+/// Initializes the plug-in.
 /// </summary>
 bool PlugIn::Initialize()
 {
@@ -32,11 +33,13 @@ bool PlugIn::Initialize()
     // [main-thread]
     auto Result = _PlugIn->init(_PlugIn);
 
+    LoadState(CfgCLAPConfig[_Id]);
+
     return Result;
 }
 
 /// <summary>
-/// Unloads the currently hosted plug-in.
+/// Terminates the plug-in.
 /// </summary>
 void PlugIn::Terminate()
 {
@@ -58,6 +61,8 @@ void PlugIn::Terminate()
         _PlugIn->destroy(_PlugIn);
         _PlugIn = nullptr;
     }
+
+    _Host->DestroyPlugIn();
 }
 
 /// <summary>
@@ -133,7 +138,7 @@ void PlugIn::StopProcessing()
 bool PlugIn::Process(const clap_process_t & processor) noexcept
 {
     // [audio-thread & active & processing]
-    return (_PlugIn->process(_PlugIn, &processor) == CLAP_PROCESS_ERROR);
+    return (_PlugIn->process(_PlugIn, &processor) != CLAP_PROCESS_ERROR);
 }
 
 /// <summary>
@@ -201,6 +206,8 @@ void PlugIn::DestroyGUI()
 
     // [main-thread]
     _GUI->destroy(_PlugIn);
+
+    _GUI = nullptr;
 }
 
 /// <summary>

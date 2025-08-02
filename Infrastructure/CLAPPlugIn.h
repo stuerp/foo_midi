@@ -17,7 +17,7 @@ class Host;
 class PlugIn
 {
 public:
-    PlugIn(Host * host, const clap_plugin_t * plugin) noexcept;
+    PlugIn(const std::string & id, Host * host, const clap_plugin_t * plugin) noexcept;
 
     PlugIn(const PlugIn &) = delete;
     PlugIn(const PlugIn &&) = delete;
@@ -56,7 +56,8 @@ private:
     bool GetVoiceInfo() noexcept;
 
 private:
-    const Host * _Host;
+    std::string _Id;
+    Host * _Host;
     const clap_plugin_t * _PlugIn;
     const clap_plugin_gui_t * _GUI;
 

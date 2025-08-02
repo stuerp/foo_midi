@@ -229,7 +229,7 @@ private:
     std::vector<VSTi::PlugIn> _VSTiPlugIns;
 
     // CLAP
-    std::vector<CLAP::PlugInDescriptor> _CLAPPlugIns;
+    std::vector<CLAP::PlugInEntry> _CLAPPlugIns;
 
     // FluidSynth
     bool _HasFluidSynth;
@@ -286,24 +286,6 @@ void RootDialog::apply()
 {
     // Player Type
     {
-        if (CfgCLAPIndex != -1)
-        {
-            // Prevent a player change when a CLAP player is processing.
-/*
-            if (_CLAPHost.IsProcessing())
-            {
-                ::MessageBoxW(m_hWnd, L"Preferences can't be applied until the CLAP player has stopped.", TEXT(STR_COMPONENT_BASENAME), MB_ICONERROR | MB_OK);
-
-                OnChanged();
-
-                return;
-            }
-
-            _CLAPHost.DeactivatePlugIn();
-*/
-            _CLAPHost.Unload();
-        }
-
         CfgPlayerType = (int) _SelectedPlayer.Type;
 
         if (_SelectedPlayer.Type == PlayerType::CLAP)
@@ -314,12 +296,7 @@ void RootDialog::apply()
             CfgCLAPIndex      = (int64_t) PlugIn.Index;
             CfgPlugInName     = PlugIn.Name.c_str();
 
-            if (_CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex))
-            {
-  //            _CLAPHost.ActivatePlugIn((double) CfgSampleRate);
-
-//              CfgCLAPConfig[_CLAPHost.GetPlugInId()] = _CLAPHost.GetPlugInState();
-            }
+            _CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
         }
         else
         if (_SelectedPlayer.Type == PlayerType::VSTi)
@@ -553,7 +530,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         fs::path BaseDirectory(std::u8string((const char8_t *) CfgCLAPPlugInDirectoryPath.get().c_str()));
 
-        _CLAPPlugIns = _CLAPHost.GetPlugIns(BaseDirectory);
+        _CLAPPlugIns = _CLAPHost.GetPlugInEntries(BaseDirectory);
 
         if (!_CLAPPlugIns.empty())
         {
@@ -833,11 +810,6 @@ void RootDialog::OnPlayerTypeChange(UINT, int, CWindow w)
 
         if (_SelectedPlayer.Type == PlayerType::VSTi)
             _VSTiHost.Config = CfgVSTiConfig[_VSTiPlugIns[_SelectedPlayer.PlugInIndex].Id];
-/*
-        else
-        if (_SelectedPlayer.Type == PlayerType::CLAP)
-            _CLAPHost.SetPlugInState(CfgCLAPConfig[_CLAPPlugIns[_SelectedPlayer.PlugInIndex].Name]);
-*/
     }
 
     // Configure

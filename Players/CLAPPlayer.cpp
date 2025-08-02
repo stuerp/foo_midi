@@ -128,7 +128,7 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
             .out_events          = &_OutEvents,
         };
 
-        if (_PlugIn->Process(Processor))
+        if (!_PlugIn->Process(Processor))
             return; // throw exception_io_data("CLAP plug-in event processing failed");
 
         if (_AudioOut.data32 != nullptr)
