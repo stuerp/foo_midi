@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.30) P. Stuer **/
+/** $VER: Preferences.cpp (2025.08.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -179,7 +179,7 @@ private:
         // Unique key
         PlayerType Type;
         fs::path FilePath;  // Path name of the VSTi or CLAP plug-in file
-        size_t Index;       // Index with a CLAP plug-in
+        size_t Index;       // Index within a CLAP plug-in
 
         size_t PlugInIndex; // Index in the VSTi or CLAP plug-in list
 
@@ -798,7 +798,13 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
 
             if (Host.Load(_SelectedPlayer.FilePath, (uint32_t) _SelectedPlayer.Index))
             {
-//              Host.OpenEditor(m_hWnd, false);
+                std::shared_ptr<CLAP::PlugIn> PlugIn = Host.CreatePlugIn();
+
+                PlugIn->Initialize();
+
+                Host.OpenEditor(PlugIn, m_hWnd, false);
+
+                PlugIn->Terminate();
 
                 Host.Unload();
             }

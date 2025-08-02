@@ -111,13 +111,13 @@ InputDecoder::~InputDecoder() noexcept
         _Player = nullptr;
     }
 
+/* KEEP? 06/07/25
     if (_PlayerType == PlayerType::EmuDeMIDI)
     {
-/* KEEP? 06/07/25
         insync(_Lock);
         _IsRunning -= 1;
-*/
     }
+*/
 }
 
 /// <summary>

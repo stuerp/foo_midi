@@ -553,13 +553,6 @@ void player_t::Configure(MIDIFlavor midiFlavor, bool filterEffects)
 {
     _MIDIFlavor = midiFlavor;
     _FilterEffects = filterEffects;
-/*
-    if (_IsStarted)
-    {
-        for (uint8_t PortNumber = 0; PortNumber < 3; ++PortNumber)
-            ResetPort(PortNumber, 0);
-    }
-*/
 }
 
 /// <summary>

@@ -45,7 +45,8 @@ public:
 
     struct Context
     {
-        const CLAP::Host * _Host;
+        CLAP::Host * _Host;
+        std::shared_ptr<CLAP::PlugIn> _PlugIn;
 
         CRect _Bounds;
     };

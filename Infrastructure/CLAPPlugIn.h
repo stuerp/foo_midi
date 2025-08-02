@@ -35,31 +35,30 @@ public:
     bool StartProcessing();
     void StopProcessing();
 
+    bool Prefers64bitAudio() const noexcept { return ((_OutPortInfo.flags & CLAP_AUDIO_PORT_PREFERS_64BITS) == CLAP_AUDIO_PORT_PREFERS_64BITS); }
     bool IsProcessing() const noexcept { return _IsProcessing; }
 
     bool Process(const clap_process_t & processor) noexcept;
 
-    void GetPreferredGUISize(RECT & wr) const noexcept;
-    void ShowGUI(HWND hWnd);
-    void HideGUI();
+    bool HasGUI(bool isFloatingGUI);
+    bool CreateGUI(bool isFloating);
+    void DestroyGUI();
 
-    bool Prefers64bitAudio() const noexcept { return ((_OutPortInfo.flags & CLAP_AUDIO_PORT_PREFERS_64BITS) == CLAP_AUDIO_PORT_PREFERS_64BITS); }
+    void GetPreferredGUISize(RECT & wr) const;
+    bool ShowGUI(HWND hWnd);
+    void HideGUI();
 
     const std::vector<uint8_t> SaveState() const noexcept;
     void LoadState(const std::vector<uint8_t> & state) noexcept;
-
-    bool HasGUI(bool isFloatingGUI) noexcept;
 
 private:
     bool GetAudioPortsInfo() noexcept;
     bool GetVoiceInfo() noexcept;
 
-    void InitializeGUI(bool isFloating) noexcept;
-
 private:
     const Host * _Host;
     const clap_plugin_t * _PlugIn;
-    const clap_plugin_gui_t * _PlugInGUI;
+    const clap_plugin_gui_t * _GUI;
 
     clap_audio_port_info _OutPortInfo { };
     clap_voice_info _VoiceInfo { };

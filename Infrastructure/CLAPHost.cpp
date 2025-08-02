@@ -79,23 +79,19 @@ Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor()
     // Handles a request to deactivate and reactivate the plug-in.
     request_restart = [](const clap_host * self)
     {
-        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request from plug-in to restart.");
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to deactivate and restart the plug-in.");
     };
 
     // Handles a request to activate and start processing the plug-in.
     request_process = [](const clap_host * self)
     {
-        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to activate plug-in.");
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to activate and start processing the plug-in.");
     };
 
     // Handles a request to schedule a call to plugin->on_main_thread(plugin) on the main thread.
     request_callback = [](const clap_host * self)
     {
-/*
-        auto * This = (Host *) self;
-
-        This->_PlugIn->on_main_thread(This->_PlugIn);
-*/
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to activate plug-in.");
     };
 }
 
@@ -196,34 +192,34 @@ std::shared_ptr<PlugIn> Host::CreatePlugIn()
     if (!core_api::is_main_thread())
         throw std::runtime_error("Host::CreatePlugIn() must be called from the main thread");
 
-    auto * _PlugIn = _Factory->create_plugin(_Factory, this, _PlugInDescriptor->id);
+    auto * Instance = _Factory->create_plugin(_Factory, this, _PlugInDescriptor->id);
 
-    return std::make_shared<PlugIn>(this, _PlugIn);
+    return std::make_shared<PlugIn>(this, Instance);
 }
 
 /// <summary>
 /// Opens the editor of the plug-in.
 /// </summary>
-void Host::OpenEditor(HWND hWnd, bool isFloating)
+void Host::OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating)
 {
     if (!core_api::is_main_thread())
         throw std::runtime_error("Host::OpenEditor() must be called from the main thread");
 
     if (!::IsWindow(hWnd))
         return;
-/*
-    InitializeGUI(isFloating);
 
-    if (_PlugInGUI == nullptr)
+    if (!plugIn->CreateGUI(isFloating))
         return;
 
     Window::Context p =
     {
-        ._Host = _Host,
+        ._Host = this,
+        ._PlugIn = plugIn
     };
 
     _Window.DoModal(hWnd, (LPARAM) &p);
-*/
+
+    plugIn->DestroyGUI();
 }
 
 #pragma region Private

@@ -29,6 +29,9 @@ bool CLAPPlayer::Startup()
 
 	fb2k::inMainThreadSynchronous2([this]
     {
+        if (_PlugIn != nullptr)
+            return;
+
         _PlugIn = _CLAPHost.CreatePlugIn();
 
         if (_PlugIn == nullptr)
@@ -74,6 +77,8 @@ void CLAPPlayer::Shutdown()
     if (!_IsStarted)
         return;
 
+    _IsStarted = false; // Prevent re-entry
+
     if (_PlugIn)
         _PlugIn->StopProcessing();
 
@@ -89,14 +94,17 @@ void CLAPPlayer::Shutdown()
         _OutChannels[0] = nullptr;
     }
 
-	fb2k::inMainThreadSynchronous2([this]
+    // Add another reference to the plug-in pointer to prevent it from being destroyed prematurely and schedule a cleanup on the main thread.
+    auto PlugIn = _PlugIn;
+
+    auto Cleanup = [PlugIn]
     {
-        _PlugIn->Deactivate();
+        PlugIn->Deactivate();
 
-        _PlugIn->Terminate();
-    });
+        PlugIn->Terminate();
+    };
 
-    _IsStarted = false;
+    fb2k::inMainThread(Cleanup);
 }
 
 void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
@@ -156,6 +164,8 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 /// </summary>
 bool CLAPPlayer::Reset()
 {
+    assert(_countof(_AudioOuts) == 1);
+
     ResetPort(0, 0);
 
     return true;

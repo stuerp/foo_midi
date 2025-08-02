@@ -15,7 +15,7 @@
 namespace CLAP
 {
 
-PlugIn::PlugIn(Host * host, const clap_plugin_t * plugIn) noexcept : _PlugInGUI(), _IsProcessing(false)
+PlugIn::PlugIn(Host * host, const clap_plugin_t * plugIn) noexcept : _GUI(), _IsProcessing(false)
 {
     _Host   = host;
     _PlugIn = plugIn;
@@ -43,13 +43,13 @@ void PlugIn::Terminate()
     if (!core_api::is_main_thread())
         throw std::runtime_error("PlugIn::destroy() must be called from the main thread");
 
-    if (_PlugInGUI)
+    if (_GUI)
     {
         HideGUI();
 
         // [main-thread]
-        _PlugInGUI->destroy(_PlugIn);
-        _PlugInGUI = nullptr;
+        _GUI->destroy(_PlugIn);
+        _GUI = nullptr;
     }
 
     if (_PlugIn)
@@ -137,24 +137,94 @@ bool PlugIn::Process(const clap_process_t & processor) noexcept
 }
 
 /// <summary>
-/// Shows the GUI to the host window.
+/// Returns true if the specified plug-in has a GUI.
 /// </summary>
-void PlugIn::ShowGUI(HWND hWnd)
+bool PlugIn::HasGUI(bool isFloatingGUI)
 {
-    if (_PlugInGUI == nullptr)
+    if (!core_api::is_main_thread())
+        throw std::runtime_error("PlugIn::HasGUI() must be called from the main thread");
+
+    if (_PlugIn->get_extension == nullptr)
+        return false;
+
+    // Must be called after clap_plugin_t::init().
+    const auto * GUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
+
+    if (GUI == nullptr)
+        return false;
+
+    // [main-thread]
+    if (!GUI->is_api_supported(_PlugIn, CLAP_WINDOW_API_WIN32, isFloatingGUI))
+        return false;
+
+    return true;
+}
+
+/// <summary>
+/// Creates the plug-in GUI.
+/// </summary>
+bool PlugIn::CreateGUI(bool isFloating)
+{
+    if (!core_api::is_main_thread())
+        throw std::runtime_error("PlugIn::CreateGUI() must be called from the main thread");
+
+    if (_PlugIn->get_extension == nullptr)
+        return false;
+
+    // Must be called after clap_plugin_t::init().
+    _GUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
+
+    if (_GUI == nullptr)
+        return false;
+
+    // [main-thread]
+    if (!_GUI->is_api_supported(_PlugIn, CLAP_WINDOW_API_WIN32, isFloating))
+        return false;
+
+    // [main-thread]
+    if (!_GUI->create(_PlugIn, CLAP_WINDOW_API_WIN32, isFloating))
+        return false;
+
+    return true;
+}
+
+/// <summary>
+/// Destroys the plug-in GUI.
+/// </summary>
+void PlugIn::DestroyGUI()
+{
+    if (!core_api::is_main_thread())
+        throw std::runtime_error("PlugIn::CreateGUI() must be called from the main thread");
+
+    if (_GUI == nullptr)
         return;
 
+    // [main-thread]
+    _GUI->destroy(_PlugIn);
+}
+
+/// <summary>
+/// Shows the GUI to the host window.
+/// </summary>
+bool PlugIn::ShowGUI(HWND hWnd)
+{
     if (!core_api::is_main_thread())
         throw std::runtime_error("PlugIn::ShowGUI() must be called from the main thread");
+
+    if (_GUI == nullptr)
+        return false;
 
     clap_window_t w = { .api = CLAP_WINDOW_API_WIN32, .win32 = hWnd };
 
     // [main-thread & !floating]
-    if (!_PlugInGUI->set_parent(_PlugIn, &w))
-        return;
+    if (!_GUI->set_parent(_PlugIn, &w))
+        return false;
 
     // [main-thread]
-    _PlugInGUI->show(_PlugIn);
+    if (!_GUI->show(_PlugIn))
+        return false;
+
+    return true;
 }
 
 /// <summary>
@@ -162,14 +232,38 @@ void PlugIn::ShowGUI(HWND hWnd)
 /// </summary>
 void PlugIn::HideGUI()
 {
-    if (_PlugInGUI == nullptr)
-        return;
-
     if (!core_api::is_main_thread())
         throw std::runtime_error("PlugIn::HideGUI() must be called from the main thread");
 
+    if (_GUI == nullptr)
+        return;
+
     // [main-thread]
-    _PlugInGUI->hide(_PlugIn);
+    _GUI->hide(_PlugIn);
+}
+
+/// <summary>
+/// Gets the preferred size of the GUI.
+/// </summary>
+void PlugIn::GetPreferredGUISize(RECT & wr) const
+{
+    if (!core_api::is_main_thread())
+        throw std::runtime_error("PlugIn::ShowGUI() must be called from the main thread");
+
+    if (_GUI == nullptr)
+        return;
+
+    uint32_t Width = 0, Height = 0;
+
+    // [main-thread]
+    if (!_GUI->get_size(_PlugIn, &Width, &Height))
+    {
+        Width  = 320;
+        Height = 200;
+    }
+
+    wr.right  = (long) Width;
+    wr.bottom = (long) Height;
 }
 
 /// <summary>
@@ -210,65 +304,6 @@ bool PlugIn::GetVoiceInfo() noexcept
     return true;
 }
 
-/// <summary>
-/// Returns true if the specified plug-in has a GUI.
-/// </summary>
-bool PlugIn::HasGUI(bool isFloatingGUI) noexcept
-{
-    // Must be called after clap_plugin_t::init().
-    if (_PlugIn->get_extension == nullptr)
-        return false;
-
-    const auto * GUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
-
-    if (GUI == nullptr)
-        return false;
-
-    if (!GUI->is_api_supported(_PlugIn, CLAP_WINDOW_API_WIN32, isFloatingGUI))
-        return false;
-
-    return true;
-}
-
-/// <summary>
-/// Gets the preferred size of the GUI window.
-/// </summary>
-void PlugIn::GetPreferredGUISize(RECT & wr) const noexcept
-{
-    if (_PlugInGUI == nullptr)
-        return;
-
-    uint32_t Width = 0, Height = 0;
-
-    if (!_PlugInGUI->get_size(_PlugIn, &Width, &Height))
-    {
-        Width  = 320;
-        Height = 200;
-    }
-
-    wr.right  = (long) Width;
-    wr.bottom = (long) Height;
-}
-
-/// <summary>
-/// Gets the plug-in GUI extension.
-/// </summary>
-void PlugIn::InitializeGUI(bool isFloating) noexcept
-{
-    if (_PlugIn->get_extension == nullptr)
-        return;
-
-    _PlugInGUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
-
-    if (_PlugInGUI == nullptr)
-        return;
-
-    if (!_PlugInGUI->is_api_supported(_PlugIn, CLAP_WINDOW_API_WIN32, isFloating))
-        return;
-
-    if (!_PlugInGUI->create(_PlugIn, CLAP_WINDOW_API_WIN32, isFloating))
-        return;
-}
 /// <summary>
 /// Gets the plugin state.
 /// </summary>

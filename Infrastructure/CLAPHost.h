@@ -50,7 +50,7 @@ public:
 
     std::shared_ptr<PlugIn> CreatePlugIn();
 
-    void OpenEditor(HWND hWnd, bool isFloating);
+    void OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating);
 
     bool IsPlugInLoaded() const noexcept { return (_hPlugIn != NULL); }
 
