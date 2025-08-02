@@ -3,8 +3,6 @@
 
 #include "pch.h"
 
-#include "CLAPHost.h"
-
 #pragma hdrstop
 
 namespace

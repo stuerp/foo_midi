@@ -17,8 +17,6 @@
 #include "MIDISysExDumps.h"
 #include "MIDISysExFilter.h"
 
-#include "CLAPHost.h"
-
 unsigned int ContextMenu::get_num_items() noexcept
 {
     return _countof(Names);

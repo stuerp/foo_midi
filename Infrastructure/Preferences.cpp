@@ -229,7 +229,7 @@ private:
     std::vector<VSTi::PlugIn> _VSTiPlugIns;
 
     // CLAP
-    std::vector<CLAP::PlugIn> _CLAPPlugIns;
+    std::vector<CLAP::PlugInDescriptor> _CLAPPlugIns;
 
     // FluidSynth
     bool _HasFluidSynth;
@@ -289,6 +289,7 @@ void RootDialog::apply()
         if (CfgCLAPIndex != -1)
         {
             // Prevent a player change when a CLAP player is processing.
+/*
             if (_CLAPHost.IsProcessing())
             {
                 ::MessageBoxW(m_hWnd, L"Preferences can't be applied until the CLAP player has stopped.", TEXT(STR_COMPONENT_BASENAME), MB_ICONERROR | MB_OK);
@@ -299,6 +300,7 @@ void RootDialog::apply()
             }
 
             _CLAPHost.DeactivatePlugIn();
+*/
             _CLAPHost.Unload();
         }
 
@@ -314,9 +316,9 @@ void RootDialog::apply()
 
             if (_CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex))
             {
-                _CLAPHost.ActivatePlugIn((double) CfgSampleRate);
+  //            _CLAPHost.ActivatePlugIn((double) CfgSampleRate);
 
-                CfgCLAPConfig[_CLAPHost.GetPlugInId()] = _CLAPHost.GetPlugInState();
+//              CfgCLAPConfig[_CLAPHost.GetPlugInId()] = _CLAPHost.GetPlugInState();
             }
         }
         else
@@ -796,7 +798,7 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
 
             if (Host.Load(_SelectedPlayer.FilePath, (uint32_t) _SelectedPlayer.Index))
             {
-                Host.OpenEditor(m_hWnd, false);
+//              Host.OpenEditor(m_hWnd, false);
 
                 Host.Unload();
             }
@@ -825,9 +827,11 @@ void RootDialog::OnPlayerTypeChange(UINT, int, CWindow w)
 
         if (_SelectedPlayer.Type == PlayerType::VSTi)
             _VSTiHost.Config = CfgVSTiConfig[_VSTiPlugIns[_SelectedPlayer.PlugInIndex].Id];
+/*
         else
         if (_SelectedPlayer.Type == PlayerType::CLAP)
             _CLAPHost.SetPlugInState(CfgCLAPConfig[_CLAPPlugIns[_SelectedPlayer.PlugInIndex].Name]);
+*/
     }
 
     // Configure

@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.h (2025.07.30) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.h (2025.08.02) P. Stuer - Wrapper for CLAP plugins **/
 
 #pragma once
 
@@ -20,7 +20,7 @@
 class CLAPPlayer : public player_t
 {
 public:
-    CLAPPlayer(CLAP::Host * host) noexcept;
+    CLAPPlayer() noexcept;
 
     virtual ~CLAPPlayer();
 
@@ -45,7 +45,7 @@ private:
     #pragma endregion
 
 private:
-    CLAP::Host * _Host;
+    std::shared_ptr<CLAP::PlugIn> _PlugIn;
 
     fs::path _FilePath;
     uint32_t _Index;

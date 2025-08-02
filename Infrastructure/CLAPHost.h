@@ -1,22 +1,27 @@
 
-/** $VER: CLAPHost.h (2025.07.30) P. Stuer - Implements a CLAP host (Work in Progress) **/
+/** $VER: CLAPHost.h (2025.08.01) P. Stuer - Implements a CLAP host **/
 
 #pragma once
 
+#include "pch.h"
+
 #include <clap/clap.h>
 
+#include "CLAPPlugIn.h"
 #include "CLAPWindow.h"
 
 namespace CLAP
 {
+class Window;
 
 #pragma warning(disable: 4820) // 'x' bytes padding added after data member 'y'
 
 /// <summary>
 /// Represents a CLAP plug-in.
 /// </summary>
-struct PlugIn
+struct PlugInDescriptor
 {
+    std::string Id;
     std::string Name;
     uint32_t Index;
     fs::path FilePath;
@@ -38,48 +43,27 @@ public:
 
     virtual ~Host() { };
 
-    std::vector<PlugIn> GetPlugIns(const fs::path & directoryPath) noexcept;
+    std::vector<PlugInDescriptor> GetPlugIns(const fs::path & directoryPath) noexcept;
 
     bool Load(const fs::path & filePath, uint32_t index);
     void Unload();
 
-    bool ActivatePlugIn(double sampleRate);
-    void DeactivatePlugIn() const;
+    std::shared_ptr<PlugIn> CreatePlugIn();
 
-    bool StartProcessing() noexcept;
-    void StopProcessing() noexcept;
+    void OpenEditor(HWND hWnd, bool isFloating);
 
-    bool IsProcessing() const noexcept { return _IsProcessing; }
-    bool IsPlugInLoaded() const noexcept { return (_PlugIn != nullptr); }
+    bool IsPlugInLoaded() const noexcept { return (_hPlugIn != NULL); }
 
-    bool Process(const clap_process_t & processor) noexcept;
-
-    void OpenEditor(HWND hWnd, bool isFloating) noexcept;
-
+    std::string GetPlugInId() const noexcept { return _PlugInDescriptor != nullptr ? _PlugInDescriptor->id : ""; }
     std::string GetPlugInName() const noexcept { return (_PlugInDescriptor != nullptr) ? _PlugInDescriptor->name : ""; }
-
-    void GetPreferredGUISize(RECT & wr) const noexcept;
-    void ShowGUI(HWND hWnd) noexcept;
-    void HideGUI() noexcept;
-
-    bool PlugInPrefers64bitAudio() const noexcept { return ((_OutPortInfo.flags & CLAP_AUDIO_PORT_PREFERS_64BITS) == CLAP_AUDIO_PORT_PREFERS_64BITS); }
-
-    const char * GetPlugInId() const noexcept { return _PlugInDescriptor ? _PlugInDescriptor->id : ""; }
-
-    const std::vector<uint8_t> GetPlugInState() const noexcept;
-    void SetPlugInState(const std::vector<uint8_t> & state) noexcept;
 
 private:
     void GetPlugIns_(const fs::path & directoryPath) noexcept;
     void GetPlugInEntries(const fs::path & filePath, const std::function<void (const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept;
 
     static bool VerifyNotePorts(const clap_plugin_t * plugIn) noexcept;
-    bool VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept;
+    static bool VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept;
     static bool HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept;
-
-    void GetVoiceInfo() noexcept;
-
-    void InitializeGUI(bool isFloating) noexcept;
 
 private:
     static const clap_host_audio_ports_t GetAudioPortsExtension;
@@ -98,24 +82,17 @@ private:
     static const clap_host_thread_pool_t GetThreadPoolExtension;
     static const clap_host_voice_info_t GetVoiceInfoExtension;
 
-    std::vector<PlugIn> _PlugIns;
+    std::vector<PlugInDescriptor> _PlugIns;
 
     fs::path _FilePath;
     uint32_t _Index;
 
     HMODULE _hPlugIn;
     const clap_plugin_descriptor_t * _PlugInDescriptor;
-    const clap_plugin_t * _PlugIn;
-    const clap_plugin_gui_t * _PlugInGUI;
-
-    clap_audio_port_info _OutPortInfo;
+    const clap_plugin_factory_t * _Factory;
 
     CLAP::Window _Window;
-
-    bool _IsProcessing;
 };
-
- const uint32_t BlockSize = 2 * 256;
 
 }
 

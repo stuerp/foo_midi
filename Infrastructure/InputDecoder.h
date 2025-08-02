@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.07.22) **/
+/** $VER: InputDecoder.h (2025.08.01) **/
 
 #pragma once
 
@@ -206,6 +206,8 @@ private:
     PlayerType _PlayerType;
     bool _IsPlayerTypeOverriden;
     std::string _PlugInName;
+
+    CLAP::PlugIn * _CLAPPlugIn;
 
     // Sample rate dependent
     uint32_t _RequestedSampleRate;  // in Hz

@@ -1,9 +1,10 @@
 
-/** $VER: Window.cpp (2025.06.30) P. Stuer **/
+/** $VER: Window.cpp (2025.08.01) P. Stuer **/
 
 #include "pch.h"
 
 #include "CLAPWindow.h"
+#include "CLAPPlugIn.h"
 #include "CLAPHost.h"
 #include "Encoding.h"
 
@@ -18,20 +19,22 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
     if (lParam == NULL)
         return FALSE;
 
-    _Parameters = *(Parameters *) lParam;
+    _Context = *(Context *) lParam;
 
-    _Parameters._Host->GetPreferredGUISize(_MinMaxBounds);
+//  _Parameters._Host->GetPreferredGUISize(_MinMaxBounds);
 
     AdjustSize(_MinMaxBounds);
 
-    if (::IsRectEmpty(&_Parameters._Bounds))
-        _Parameters._Bounds = _MinMaxBounds;
+    if (::IsRectEmpty(&_Context._Bounds))
+        _Context._Bounds = _MinMaxBounds;
 
-    MoveWindow(&_Parameters._Bounds);
+    MoveWindow(&_Context._Bounds);
 
-    SetWindowTextW((std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(_Parameters.Name)).c_str());
+    auto Text = std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(_Context._Host->GetPlugInName()).c_str();
 
-    _Parameters._Host->ShowGUI(m_hWnd);
+    SetWindowTextW(Text.c_str());
+
+//  _Parameters._Host->ShowGUI(m_hWnd);
 
     return TRUE;
 }
@@ -41,9 +44,9 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
 /// </summary>
 void Window::OnClose() noexcept
 {
-    GetWindowRect(&_Parameters._Bounds);
+    GetWindowRect(&_Context._Bounds);
 
-    _Parameters._Host->HideGUI();
+//  _Parameters._Host->HideGUI();
 
     EndDialog(0);
 }

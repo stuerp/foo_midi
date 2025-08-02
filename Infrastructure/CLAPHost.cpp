@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.07.30) P. Stuer - Implements a CLAP host (Work in Progress) **/
+/** $VER: CLAPHost.cpp (2025.08.01) P. Stuer - Implements a CLAP host **/
 
 #include "pch.h"
 
@@ -9,12 +9,12 @@
 #include "Log.h"
 
 #include "CLAPHost.h"
+#include "CLAPWindow.h"
 #include "CLAPPlayer.h"
 
 namespace CLAP
 {
-
-Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor(), _PlugIn(), _PlugInGUI()
+Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor()
 {
     clap_version  = CLAP_VERSION;
     host_data     = nullptr;
@@ -91,16 +91,18 @@ Host::Host() noexcept :_hPlugIn(), _PlugInDescriptor(), _PlugIn(), _PlugInGUI()
     // Handles a request to schedule a call to plugin->on_main_thread(plugin) on the main thread.
     request_callback = [](const clap_host * self)
     {
+/*
         auto * This = (Host *) self;
 
         This->_PlugIn->on_main_thread(This->_PlugIn);
+*/
     };
 }
 
 /// <summary>
 /// Gets the CLAP plug-ins.
 /// </summary>
-std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
+std::vector<PlugInDescriptor> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 {
     _PlugIns.clear();
 
@@ -113,7 +115,7 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 
     GetPlugIns_(directoryPath);
 
-    std::sort(_PlugIns.begin(), _PlugIns.end(), [](PlugIn a, PlugIn b) { return a.Name < b.Name; });
+    std::sort(_PlugIns.begin(), _PlugIns.end(), [](PlugInDescriptor a, PlugInDescriptor b) { return a.Name < b.Name; });
 
     return _PlugIns;
 }
@@ -129,17 +131,15 @@ bool Host::Load(const fs::path & filePath, uint32_t index)
     if (filePath.empty() || (index == (uint32_t) -1))
         return false;
 
-    if ((_FilePath == filePath) && (_Index == index) && (_PlugIn != nullptr))
+    if ((_FilePath == filePath) && (_Index == index) && (_hPlugIn != NULL))
         return true; // Already loaded
 
     _FilePath = filePath;
     _Index    = index;
 
-    bool Result = false;
-
     Unload();
 
-    _hPlugIn = ::LoadLibraryW(::UTF8ToWide((const char *) _FilePath.u8string().c_str()).c_str());
+    _hPlugIn = ::LoadLibraryW(::UTF8ToWide(_FilePath.string().c_str()).c_str());
 
     if (_hPlugIn == NULL)
         return false;
@@ -152,53 +152,32 @@ bool Host::Load(const fs::path & filePath, uint32_t index)
     if (Entry->init == nullptr)
         return false;
 
-    if (!Entry->init((const char *) _FilePath.u8string().c_str()))
+    if (!Entry->init(_FilePath.string().c_str()))
         return false;
 
-    const auto * Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
+    _Factory = (const clap_plugin_factory_t *) Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
 
-    if (Factory == nullptr)
+    if (_Factory == nullptr)
         return false;
 
-    if (Factory->get_plugin_descriptor == nullptr)
+    if (_Factory->get_plugin_descriptor == nullptr)
         return false;
 
-    _PlugInDescriptor = Factory->get_plugin_descriptor(Factory, _Index);
+    _PlugInDescriptor = _Factory->get_plugin_descriptor(_Factory, _Index);
 
     if (_PlugInDescriptor == nullptr)
         return false;
-
-    _PlugIn = Factory->create_plugin(Factory, this, _PlugInDescriptor->id);
-
-    if (_PlugIn == nullptr)
-        return false;
-
-    Result = _PlugIn->init(_PlugIn);
 
     return true;
 }
 
 /// <summary>
-/// Unloads the currently hosted plug-in.
+/// Unloads the current plug-in.
 /// </summary>
 void Host::Unload()
 {
     if (!core_api::is_main_thread())
         throw std::runtime_error("Host::Unload() must be called from the main thread");
-
-    if (_PlugInGUI)
-    {
-        HideGUI();
-
-        _PlugInGUI->destroy(_PlugIn);
-        _PlugInGUI = nullptr;
-    }
-
-    if (_PlugIn)
-    {
-        _PlugIn->destroy(_PlugIn);
-        _PlugIn = nullptr;
-    }
 
     _PlugInDescriptor = nullptr;
 
@@ -210,119 +189,41 @@ void Host::Unload()
 }
 
 /// <summary>
-/// Activates the loaded plug-in.
+/// Creates a new instance of the plug-in.
 /// </summary>
-bool Host::ActivatePlugIn(double sampleRate)
+std::shared_ptr<PlugIn> Host::CreatePlugIn()
 {
     if (!core_api::is_main_thread())
-        throw std::runtime_error("Host::ActivatePlugIn() must be called from the main thread");
+        throw std::runtime_error("Host::CreatePlugIn() must be called from the main thread");
 
-    if (_PlugIn == nullptr)
-        return false;
+    auto * _PlugIn = _Factory->create_plugin(_Factory, this, _PlugInDescriptor->id);
 
-    if (!_PlugIn->activate(_PlugIn, sampleRate, 1, CLAP::BlockSize))
-        return false;
-
-    GetVoiceInfo(); // Must be called after activate().
-
-    return true;
+    return std::make_shared<PlugIn>(this, _PlugIn);
 }
 
 /// <summary>
-/// Deactivates the loaded plug-in.
+/// Opens the editor of the plug-in.
 /// </summary>
-void Host::DeactivatePlugIn() const
+void Host::OpenEditor(HWND hWnd, bool isFloating)
 {
     if (!core_api::is_main_thread())
-        throw std::runtime_error("Host::DectivatePlugIn() must be called from the main thread");
+        throw std::runtime_error("Host::OpenEditor() must be called from the main thread");
 
-    if (_PlugIn == nullptr)
-        return;
-
-    _PlugIn->deactivate(_PlugIn);
-}
-
-/// <summary>
-/// Notifies the plug-in we're about to start processing.
-/// </summary>
-bool Host::StartProcessing() noexcept
-{
-    if (_PlugIn == nullptr)
-        return false;
-
-    _IsProcessing = true;
-
-    return _PlugIn->start_processing(_PlugIn);
-}
-
-/// <summary>
-/// Notifies the plug-in we're about to stop processing.
-/// </summary>
-void Host::StopProcessing() noexcept
-{
-    if (_PlugIn == nullptr)
-        return;
-
-    _PlugIn->stop_processing(_PlugIn);
-
-    _IsProcessing = false;
-}
-
-/// <summary>
-/// Processes events.
-/// </summary>
-bool Host::Process(const clap_process_t & processor) noexcept
-{
-    return (_PlugIn->process(_PlugIn, &processor) == CLAP_PROCESS_ERROR);
-}
-
-/// <summary>
-/// Opens the editor of the hosted plug-in.
-/// </summary>
-void Host::OpenEditor(HWND hWnd, bool isFloating) noexcept
-{
     if (!::IsWindow(hWnd))
         return;
-
+/*
     InitializeGUI(isFloating);
 
     if (_PlugInGUI == nullptr)
         return;
 
-    Window::Parameters p =
+    Window::Context p =
     {
+        ._Host = _Host,
     };
 
-    p._Host = this;
-
     _Window.DoModal(hWnd, (LPARAM) &p);
-}
-
-/// <summary>
-/// Shows the GUI to the host window.
-/// </summary>
-void Host::ShowGUI(HWND hWnd) noexcept
-{
-    if (_PlugInGUI == nullptr)
-        return;
-
-    clap_window_t w = { .api = CLAP_WINDOW_API_WIN32, .win32 = hWnd };
-
-    if (!_PlugInGUI->set_parent(_PlugIn, &w))
-        return;
-
-    _PlugInGUI->show(_PlugIn);
-}
-
-/// <summary>
-/// Hides the GUI from the host window.
-/// </summary>
-void Host::HideGUI() noexcept
-{
-    if ((_PlugInGUI == nullptr) || !_Window.IsWindow())
-        return;
-
-    _PlugInGUI->hide(_PlugIn);
+*/
 }
 
 #pragma region Private
@@ -347,7 +248,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
 
                 GetPlugInEntries(Entry.path(), [this, Entry](const std::string & plugInName, uint32_t index, bool hasGUI)
                 {
-                    PlugIn PlugIn =
+                    PlugInDescriptor PlugIn =
                     {
                         .Name      = plugInName,
                         .Index     = index,
@@ -406,7 +307,7 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
 
                         if (::clap_version_is_compatible(Descriptor->clap_version))
                         {
-                            const auto * PlugIn = Factory->create_plugin(Factory, this, Descriptor->id);
+                            auto * PlugIn = Factory->create_plugin(Factory, this, Descriptor->id);
 
                             if (PlugIn != nullptr)
                             {
@@ -439,14 +340,14 @@ void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(
 }
 
 /// <summary>
-/// Verifies the note ports.
+/// Verifies if the note ports of the plug-in meet our conditions.
 /// </summary>
 bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 {
     if (plugIn->get_extension == nullptr)
         return true;
 
-    const auto NotePorts = (const clap_plugin_note_ports_t *)(plugIn->get_extension(plugIn, CLAP_EXT_NOTE_PORTS));
+    const auto NotePorts = (const clap_plugin_note_ports_t *) plugIn->get_extension(plugIn, CLAP_EXT_NOTE_PORTS);
 
     if (NotePorts == nullptr)
     {
@@ -455,8 +356,7 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
         return false;
     }
 
-    constexpr auto InputPort = true;
-
+    const bool InputPort = true;
     const auto InputPortCount = NotePorts->count(plugIn, InputPort);
 
     if (InputPortCount != 1)
@@ -466,8 +366,7 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
         return false;
     }
 /*
-    constexpr auto OutputPort = false;
-
+    const bool OutputPort = false;
     const auto OutputPortCount = NotePorts->count(plugIn, OutputPort);
 
     if (OutputPortCount != 0)
@@ -479,9 +378,14 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 */
     clap_note_port_info PortInfo = {};
 
-    const auto PortIndex = 0;
+    const uint32_t PortIndex = 0;
 
-    NotePorts->get(plugIn, PortIndex, InputPort, &PortInfo);
+    if (!NotePorts->get(plugIn, PortIndex, InputPort, &PortInfo))
+    {
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to get input port information.");
+
+        return false;
+    }
 
     if ((PortInfo.supported_dialects & CLAP_NOTE_DIALECT_MIDI) == 0)
     {
@@ -494,7 +398,7 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
 }
 
 /// <summary>
-/// Verifies the audio ports.
+/// Verifies the audio ports of the plug-in meet our conditions.
 /// </summary>
 bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
 {
@@ -510,8 +414,7 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
         return false;
     }
 /*
-    constexpr auto InputPort = true;
-
+    const bool InputPort = true;
     const auto InputPortCount = AudioPorts->count(plugIn, InputPort);
 
     if (InputPortCount != 0)
@@ -521,7 +424,7 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
         return false;
     }
 */
-    constexpr auto OutputPort = false;
+    const bool OutputPort = false;
 /*
     const auto OutputPortCount = AudioPorts->count(plugIn, OutputPort);
 
@@ -532,11 +435,18 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
         return false;
     }
 */
-    const auto PortIndex = 0;
+    const uint32_t PortIndex = 0;
 
-    AudioPorts->get(plugIn, PortIndex, OutputPort, &_OutPortInfo);
+    clap_audio_port_info OutPortInfo = { };
 
-    if (!(_OutPortInfo.channel_count == 2 && ::strcmp(_OutPortInfo.port_type, CLAP_PORT_STEREO) == 0))
+    if (!AudioPorts->get(plugIn, PortIndex, OutputPort, &OutPortInfo))
+    {
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to get output port information.");
+
+        return false;
+    }
+
+    if (!(OutPortInfo.channel_count == 2 && ::strcmp(OutPortInfo.port_type, CLAP_PORT_STEREO) == 0))
     {
         Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 2 output channels in stereo.");
 
@@ -544,30 +454,6 @@ bool Host::VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept
     }
 
     return true;
-}
-
-/// <summary>
-/// Gets the plug-in voice info extension.
-/// </summary>
-void Host::GetVoiceInfo() noexcept
-{
-    if ((_PlugIn == nullptr) || (_PlugIn->get_extension == nullptr))
-        return;
-
-    const auto _PlugInVoiceInfo = (const clap_plugin_voice_info *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_VOICE_INFO);
-
-    if (_PlugInVoiceInfo == nullptr)
-        return;
-
-    clap_voice_info VoiceInfo = { };
-
-    if (!_PlugInVoiceInfo->get(_PlugIn, &VoiceInfo))
-        return;
-
-    Log.AtInfo().Write(STR_COMPONENT_BASENAME " CLAP player has max. %d voices.", VoiceInfo.voice_capacity);
-
-    if ((VoiceInfo.flags & CLAP_VOICE_INFO_SUPPORTS_OVERLAPPING_NOTES) == 0)
-        Log.AtWarn().Write(STR_COMPONENT_BASENAME " CLAP player does not support overlapping notes.");
 }
 
 /// <summary>
@@ -588,122 +474,6 @@ bool Host::HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept
         return false;
 
     return true;
-}
-
-/// <summary>
-/// Gets the plug-in GUI extension.
-/// </summary>
-void Host::InitializeGUI(bool isFloating) noexcept
-{
-    if (_PlugIn->get_extension == nullptr)
-        return;
-
-    _PlugInGUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
-
-    if (_PlugInGUI == nullptr)
-        return;
-
-    if (!_PlugInGUI->is_api_supported(_PlugIn, CLAP_WINDOW_API_WIN32, isFloating))
-        return;
-
-    if (!_PlugInGUI->create(_PlugIn, CLAP_WINDOW_API_WIN32, isFloating))
-        return;
-}
-
-/// <summary>
-/// Gets the preferred size of the GUI window.
-/// </summary>
-void Host::GetPreferredGUISize(RECT & wr) const noexcept
-{
-    if (_PlugInGUI == nullptr)
-        return;
-
-    uint32_t Width = 0, Height = 0;
-
-    if (!_PlugInGUI->get_size(_PlugIn, &Width, &Height))
-    {
-        Width  = 320;
-        Height = 200;
-    }
-
-    wr.right  = (long) Width;
-    wr.bottom = (long) Height;
-}
-
-/// <summary>
-/// Gets the plugin state.
-/// </summary>
-const std::vector<uint8_t> Host::GetPlugInState() const noexcept
-{
-    if (_PlugIn == nullptr)
-        return { };
-
-    if (_PlugIn->get_extension == nullptr)
-        return { };
-
-    auto StateContext = (const clap_plugin_state_context_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_STATE_CONTEXT);
-
-    if (StateContext == nullptr)
-        return { };
-
-    std::vector<uint8_t> State;
-
-    clap_ostream_t Stream
-    {
-        .ctx = &State,
-
-        // Returns the number of bytes written; -1 on write error
-        .write = [](const clap_ostream * stream, const void * data, uint64_t size) -> int64_t
-        {
-            auto State = (std::vector<uint8_t> *) stream->ctx;
-
-            State->insert(State->end(), (uint8_t *) data, (uint8_t *) data + size);
-
-            return (int64_t) size;
-        }
-    };
-
-    StateContext->save(_PlugIn, &Stream, CLAP_STATE_CONTEXT_FOR_DUPLICATE);
-
-    return State;
-}
-
-/// <summary>
-/// Sets the plugin state.
-/// </summary>
-void Host::SetPlugInState(const std::vector<uint8_t> & state) noexcept
-{
-    if (_PlugIn == nullptr)
-        return;
-
-    if (_PlugIn->get_extension == nullptr)
-        return;
-
-    auto StateContext = (const clap_plugin_state_context_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_STATE_CONTEXT);
-
-    if (StateContext == nullptr)
-        return;
-
-    std::vector<uint8_t> State;
-
-    clap_istream_t Stream
-    {
-        .ctx = &State,
-
-        // Returns the number of bytes read; 0 indicates end of file and -1 a read error.
-        .read = [](const clap_istream * stream, void * data, uint64_t size) -> int64_t
-        {
-            auto State = (std::vector<uint8_t> *) stream->ctx;
-
-            size = std::min((size_t) size, State->size());
-
-            ::memcpy(data, State->data(), size);
-
-            return (int64_t) size;
-        }
-    };
-
-    StateContext->load(_PlugIn, &Stream, CLAP_STATE_CONTEXT_FOR_DUPLICATE);
 }
 
 /// <summary>
@@ -789,7 +559,7 @@ const clap_host_gui_t Host::GetGUIExtension =
     {
         if (!core_api::is_main_thread())
             return false;
-
+/*
         auto This = (CLAP::Host *) self;
 
         RECT rc = { 0, 0, (LONG) width, (LONG) height };
@@ -797,7 +567,7 @@ const clap_host_gui_t Host::GetGUIExtension =
         This->_Window.AdjustSize(rc);
 
         This->_Window.ResizeClient(rc.right - rc.left, rc.bottom - rc.top, TRUE);
-
+*/
         return true;
     },
 

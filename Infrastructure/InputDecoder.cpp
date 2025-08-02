@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.30) **/
+/** $VER: InputDecoder.cpp (2025.08.01) **/
 
 #include "pch.h"
 
@@ -59,6 +59,8 @@ InputDecoder::InputDecoder() noexcept :
 
     _Player(nullptr),
     _PlayerType(),
+
+    _CLAPPlugIn(),
 
     _RequestedSampleRate((uint32_t) CfgSampleRate),
     _ActualSampleRate(_RequestedSampleRate),
@@ -390,9 +392,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         case PlayerType::CLAP:
         {
             if (!_CLAPHost.IsPlugInLoaded())
-                throw pfc::exception("No CLAP plug-in loaded");
+                throw pfc::exception("No CLAP plug-in loaded into host");
 
-            auto Player = new CLAPPlayer(&_CLAPHost);
+            auto Player = new CLAPPlayer();
 
             _Player = Player;
 

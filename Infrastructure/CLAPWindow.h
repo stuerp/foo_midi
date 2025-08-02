@@ -1,5 +1,5 @@
 
-/** $VER: CLAPWindow.h (2025.07.30) P. Stuer **/
+/** $VER: CLAPWindow.h (2025.08.01) P. Stuer **/
 
 #pragma once
 
@@ -16,6 +16,8 @@
 
 #include "Resource.h"
 
+#include "CLAPPlugIn.h"
+
 #pragma hdrstop
 
 namespace CLAP
@@ -30,7 +32,7 @@ class Host;
 class Window : public CDialogImpl<Window>
 {
 public:
-    Window() noexcept : m_bMsgHandled(false), _Parameters(), _MinMaxBounds() { }
+    Window() noexcept : m_bMsgHandled(false), _Context(), _MinMaxBounds() { }
 
     Window(const Window &) = delete;
     Window & operator=(const Window &) = delete;
@@ -41,41 +43,15 @@ public:
 
     enum { IDD = IDD_CLAP_WINDOW };
 
-    struct Parameters
+    struct Context
     {
-        std::string Name;
+        const CLAP::Host * _Host;
+
         CRect _Bounds;
-
-        fs::path _FilePath;
-        uint32_t _Index;
-
-        CLAP::Host * _Host;
     };
 
     void AdjustSize(RECT & wr) const noexcept;
 
-    struct XYZ
-    {
-        Window * This;
-        Host * Host;
-    };
-/*
-    void Run(Host * host)
-    {
-        XYZ p = { this, host };
-
-        ::CreateThread(nullptr, 0, ThreadProc, &p, 0, nullptr);
-    }    
-
-    static DWORD WINAPI ThreadProc(LPVOID lpParam) noexcept
-    {
-        XYZ * p = (XYZ *)(lpParam);
-
-        return p->This->DialogThreadProc(p->Host);
-    }
-
-    DWORD WINAPI DialogThreadProc(Host * Host);
-*/
 private:
     #pragma region CDialogImpl
 
@@ -104,7 +80,7 @@ private:
     #pragma endregion
 
 private:
-    Parameters _Parameters;
+    Context _Context;
     CRect _MinMaxBounds;
 };
 
