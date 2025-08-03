@@ -398,3 +398,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/3rdParty/libedmidi-Mitsutaka Okazaki
