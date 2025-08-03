@@ -261,31 +261,31 @@ void OPNPlayer::SendEvent(uint32_t data)
 
     switch (Status)
     {
-        case midi::StatusCodes::NoteOff:
+        case midi::StatusCode::NoteOff:
             ::opn2_rt_noteOff(_Devices[Port], Channel, Event[1]);
             break;
 
-        case midi::StatusCodes::NoteOn:
+        case midi::StatusCode::NoteOn:
             ::opn2_rt_noteOn(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
-        case midi::StatusCodes::KeyPressure:
+        case midi::StatusCode::KeyPressure:
             ::opn2_rt_noteAfterTouch(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
-        case midi::StatusCodes::ControlChange:
+        case midi::StatusCode::ControlChange:
             ::opn2_rt_controllerChange(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
-        case midi::StatusCodes::ProgramChange:
+        case midi::StatusCode::ProgramChange:
             ::opn2_rt_patchChange(_Devices[Port], Channel, Event[1]);
             break;
 
-        case midi::StatusCodes::ChannelPressure:
+        case midi::StatusCode::ChannelPressure:
             ::opn2_rt_channelAfterTouch(_Devices[Port], Channel, Event[1]);
             break;
 
-        case midi::StatusCodes::PitchBendChange:
+        case midi::StatusCode::PitchBendChange:
             ::opn2_rt_pitchBendML(_Devices[Port], Channel, Event[2], Event[1]);
             break;
     }

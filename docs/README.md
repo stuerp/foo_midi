@@ -144,7 +144,6 @@ It requires an SF2, SF2Pack or SFZ soundfont to provide the instrument samples. 
 
 It can be configured on the **[MIDI Player / Wavetable](#wavetable)** preferences page.
 
-
 ### FluidSynth (Optional, Wavetable)
 
 This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) library.
@@ -271,7 +270,7 @@ Lastly, the global soundfont specified on the [Paths](#paths) preferences page w
 > [!Tip]
 > foo_midi will report the soundfonts it uses and in which order in the foobar2000 console if you set the component log level to at least `Info` level.
 
-#### SFList
+#### Soundfont Lists (SFList)
 
 The BASSMIDI and FluidSynth player also accept a Soundfont List file. It's an UTF-8 text file that lists the location of the soundfonts that should be used. Any of the soundfont formats (including nested soundfont lists) can be specified.
 

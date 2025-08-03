@@ -244,31 +244,31 @@ void ADLPlayer::SendEvent(uint32_t data)
 
     switch (Status)
     {
-        case midi::StatusCodes::NoteOff:
+        case midi::StatusCode::NoteOff:
             ::adl_rt_noteOff(_Devices[Port], Channel, Event[1]);
             break;
 
-        case midi::StatusCodes::NoteOn:
+        case midi::StatusCode::NoteOn:
             ::adl_rt_noteOn(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
-        case midi::StatusCodes::KeyPressure:
+        case midi::StatusCode::KeyPressure:
             ::adl_rt_noteAfterTouch(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
-        case midi::StatusCodes::ControlChange:
+        case midi::StatusCode::ControlChange:
             ::adl_rt_controllerChange(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
-        case midi::StatusCodes::ProgramChange:
+        case midi::StatusCode::ProgramChange:
             ::adl_rt_patchChange(_Devices[Port], Channel, Event[1]);
             break;
 
-        case midi::StatusCodes::ChannelPressure:
+        case midi::StatusCode::ChannelPressure:
             ::adl_rt_channelAfterTouch(_Devices[Port], Channel, Event[1]);
             break;
 
-        case midi::StatusCodes::PitchBendChange:
+        case midi::StatusCode::PitchBendChange:
             ::adl_rt_pitchBendML(_Devices[Port], Channel, Event[2], Event[1]);
             break;
     }

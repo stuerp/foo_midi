@@ -305,17 +305,17 @@ void BMPlayer::SendEvent(uint32_t data)
     {
         size_t Channel = Event[0] & 0x0Fu;
 
-        if ((Event[1] == midi::ControlChangeNumbers::NRPNMSB) && (Event[2] == 0x01)) // Set NRPN MSB Vibrato Depth
+        if ((Event[1] == midi::Controller::NRPNMSB) && (Event[2] == 0x01)) // Set NRPN MSB Vibrato Depth
         {
             _NRPNMSB[Channel] = Event[2];
         }
         else
-        if ((Event[1] == midi::ControlChangeNumbers::NRPNLSB) && (Event[2] == 0x09)) // Set NRPN LSB Vibrato Depth
+        if ((Event[1] == midi::Controller::NRPNLSB) && (Event[2] == 0x09)) // Set NRPN LSB Vibrato Depth
         {
             _NRPNLSB[Channel] = Event[2];
         }
         else
-        if ((Event[1] == midi::ControlChangeNumbers::DataEntry) && (_NRPNMSB[Channel] == 0x01) && (_NRPNLSB[Channel] == 0x09))
+        if ((Event[1] == midi::Controller::DataEntry) && (_NRPNMSB[Channel] == 0x01) && (_NRPNLSB[Channel] == 0x09))
         {
             _NRPNMSB[Channel] = _NRPNLSB[Channel] = 0xFF;
 

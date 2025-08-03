@@ -1,19 +1,22 @@
 
-/** $VER: EdMPlayer.cpp (2025.07.08) **/
+/** $VER: EdMPlayer.cpp (2025.08.03) **/
 
 #include "pch.h"
 
 #include "EdMPlayer.h"
 
+#include <CSccDevice.hpp>
+#include <COpllDevice.hpp>
+
 #include <SysEx.h>
 
 EdMPlayer::EdMPlayer() : player_t()
 {
-    _Initialized = false;
-
     _SynthMode = ModeGM;
 
     _SrcFrames.resize(MaxFrames * MaxChannels);
+
+    _IsStarted = false;
 }
 
 EdMPlayer::~EdMPlayer()
@@ -23,7 +26,7 @@ EdMPlayer::~EdMPlayer()
 
 bool EdMPlayer::Startup()
 {
-    if (_Initialized)
+    if (_IsStarted)
         return true;
 
     for (size_t i = 0; i < _countof(_Modules); ++i)
@@ -36,24 +39,42 @@ bool EdMPlayer::Startup()
         _Modules[i].Reset();
     }
 
-    ResetDrumChannels();
+    InitializeDrumChannels();
 
-    _Initialized = true;
+    _IsStarted = true;
 
     return true;
 }
 
 void EdMPlayer::Shutdown()
 {
-    if (_Initialized)
-        for (size_t i = 0; i < _countof(_Modules); ++i)
-            delete _Modules[i].DetachDevice();
+    if (!_IsStarted)
+        return;
 
-    _Initialized = false;
+    for (size_t i = 0; i < _countof(_Modules); ++i)
+        delete _Modules[i].DetachDevice();
+
+    _IsStarted = false;
 }
 
+/// <summary>
+/// Resets all modules.
+/// </summary>
+bool EdMPlayer::Reset()
+{
+    for (auto & Module : _Modules)
+        Module.Reset();
+
+    return true;
+}
+
+/// <summary>
+/// Renders the samples.
+/// </summary>
 void EdMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
+    int32_t Channel[MaxChannels];
+
     while (dstCount != 0)
     {
         const size_t srcCount = std::min(dstCount, MaxFrames);
@@ -66,8 +87,6 @@ void EdMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 
             for (size_t i = 0; i < srcCount; ++i)
             {
-                int32_t Channel[MaxChannels];
-
                 Module.Render(Channel);
 
                 *Src++ += Channel[0];
@@ -88,66 +107,113 @@ void EdMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 /// </summary>
 void EdMPlayer::SendEvent(uint32_t data)
 {
-    const uint8_t Event[3]
+    const uint8_t Status  = (uint8_t) data & 0xF0u;
+    const uint8_t Channel = (uint8_t) data & 0x0Fu;
+
+    const uint8_t Data1   = (uint8_t) (data >>  8);
+    const uint8_t Data2   = (uint8_t) (data >> 16);
+
+    auto & LModule = _Modules[ (Channel * 2)      % _countof(_Modules)];
+    auto & RModule = _Modules[((Channel * 2) + 1) % _countof(_Modules)];
+
+    switch (Status)
     {
-        (uint8_t) (data),        // Status
-        (uint8_t) (data >>  8),  // Param 1
-        (uint8_t) (data >> 16)   // Param 2
-    };
-
-    const uint8_t Status   = Event[0] & 0xF0u;
-    const uint32_t Channel = Event[0] & 0x0Fu;
-
-    dsa::CMIDIMsgInterpreter mi;
-
-    mi.Interpret(Event[0]);
-
-    if (Event[0] < midi::TimingClock)
-    {
-        mi.Interpret(Event[1]);
-
-        if (Status != midi::ProgramChange && Status != midi::ChannelPressure)
-            mi.Interpret(Event[2]);
-    }
-
-    if (Status == midi::ControlChange)
-    {
-        if (Event[1] == 0)
+        case midi::NoteOff:
         {
-            if (_SynthMode == ModeXG)
-            {
-                if (Event[2] == 127)
-                    _DrumChannels[Channel] = 1;
-                else
-                    _DrumChannels[Channel] = 0;
-            }
-            else
-            if (_SynthMode == ModeGM2)
-            {
-                if (Event[2] == 120)
-                    _DrumChannels[Channel] = 1;
-                else
-                if (Event[2] == 121)
-                    _DrumChannels[Channel] = 0;
-            }
+            LModule.SendNoteOff(Channel, Data1, Data2);
+
+            if (!_IsDrumChannel[Channel])
+                RModule.SendNoteOff(Channel, Data1, Data2);
+            break;
         }
-    }
-    else
-    if (Status == midi::ProgramChange)
-    {
-        SetDrumChannel((int)Channel, _DrumChannels[Channel]);
-    }
 
-    while (mi.GetMsgCount())
-    {
-        const dsa::CMIDIMsg & msg = mi.GetMsg();
+        case midi::NoteOn:
+        {
+            LModule.SendNoteOn(Channel, Data1, Data2);
 
-        _Modules[(msg.m_ch * 2) & 7].SendMIDIMsg(msg);
+            if (!_IsDrumChannel[Channel])
+                RModule.SendNoteOn(Channel, Data1, Data2);
+            break;
+        }
 
-        if (!_DrumChannels[msg.m_ch])
-            _Modules[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
+        case midi::KeyPressure:
+        {
+            break;
+        }
 
-        mi.PopMsg();
+        case midi::ControlChange:
+        {
+            if (Data1 == midi::Controller::BankSelect)
+            {
+                if (_SynthMode == ModeXG)
+                {
+                    _IsDrumChannel[Channel] = (Data2 == 127);
+                }
+                else
+                if (_SynthMode == ModeGM2)
+                {
+                    if (Data2 == 120)
+                        _IsDrumChannel[Channel] = true;
+                    else
+                    if (Data2 == 121)
+                        _IsDrumChannel[Channel] = false;
+                }
+            }
+
+            LModule.SendControlChange(Channel, Data2, Data1);
+
+            if (!_IsDrumChannel[Channel])
+                RModule.SendControlChange(Channel, Data2, Data1);
+            break;
+        }
+
+        case midi::ProgramChange:
+        {
+            SetDrumChannel((int) Channel, _IsDrumChannel[Channel]);
+
+            LModule.SendProgramChange(Channel, Data1);
+
+            if (!_IsDrumChannel[Channel])
+                RModule.SendProgramChange(Channel, Data1);
+            break;
+        }
+
+        case midi::ChannelPressure:
+        {
+            LModule.SendChannelPressure(Channel, Data1);
+
+            if (!_IsDrumChannel[Channel])
+                RModule.SendChannelPressure(Channel, Data1);
+            break;
+        }
+
+        case midi::PitchBendChange:
+        {
+            LModule.SendPitchBend(Channel, Data2, Data1);
+
+            if (!_IsDrumChannel[Channel])
+                RModule.SendPitchBend(Channel, Data2, Data1);
+            break;
+        }
+
+        case midi::SysEx:
+        case midi::MIDITimeCodeQtrFrame:
+        case midi::SongPositionPointer:
+        case midi::SongSelect:
+
+        case midi::TuneRequest:
+        case midi::SysExEnd:
+
+        // Real-time events
+        case midi::TimingClock:
+
+        case midi::Start:
+        case midi::Continue:
+        case midi::Stop:
+
+        case midi::ActiveSensing:
+        case midi::MetaData:
+            break;
     }
 }
 
@@ -156,86 +222,77 @@ void EdMPlayer::SendEvent(uint32_t data)
 /// </summary>
 void EdMPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
 {
-    dsa::CMIDIMsgInterpreter mi;
-
-    for (size_t n = 0; n < size; ++n)
-        mi.Interpret(data[n]);
-
     if (midi::sysex_t::IsGMSystemOn(data, size))
     {
-        ResetDrumChannels();
+        InitializeDrumChannels();
 
         _SynthMode = ModeGM;
     }
     else
     if (midi::sysex_t::IsGM2SystemOn(data, size))
     {
-        ResetDrumChannels();
+        InitializeDrumChannels();
 
         _SynthMode = ModeGM2;
     }
     else
     if (midi::sysex_t::IsGSSystemOn(data, size))
     {
-        ResetDrumChannels();
+        InitializeDrumChannels();
 
         _SynthMode = ModeGS;
     }
     else
     if (midi::sysex_t::IsXGSystemOn(data, size))
     {
-        ResetDrumChannels();
+        InitializeDrumChannels();
 
         _SynthMode = ModeXG;
     }
-    else
-    if ((_SynthMode == ModeGS) && (size == 11) && (data[0] == 0xF0) && (data[1] == 0x41) && (data[3] == 0x42) && (data[4] == 0x12) && (data[5] == 0x40) && ((data[6] & 0xF0) == 0x10) && (data[10] == 0xF7))
+
+    if (_SynthMode == ModeGS)
     {
         if (data[7] == 0x02)
         {
             // GS MIDI channel to part assign
-            _GSPartToChannel[data[6] & 15] = data[8];
+            _PartToChannel[data[6] & 15] = data[8];
         }
         else
         if (data[7] == 0x15)
         {
             // GS part to rhythm allocation
-            uint32_t DrumChannel = _GSPartToChannel[data[6] & 15];
+            uint32_t DrumChannel = _PartToChannel[data[6] & 15];
 
             if (DrumChannel < 16)
-                _DrumChannels[DrumChannel] = data[8];
+                _IsDrumChannel[DrumChannel] = (bool) data[8];
         }
     }
 
-    while (mi.GetMsgCount())
-    {
-        const dsa::CMIDIMsg & msg = mi.GetMsg();
-
-        _Modules[(msg.m_ch * 2) & 7].SendMIDIMsg(msg);
-
-        if (_DrumChannels[msg.m_ch] == 0)
-            _Modules[(msg.m_ch * 2 + 1) & 7].SendMIDIMsg(msg);
-
-        mi.PopMsg();
-    }
+    // Not supported yet by libedmidi.
 }
 
-void EdMPlayer::ResetDrumChannels()
+/// <summary>
+/// Initializes the drum channels.
+/// </summary>
+void EdMPlayer::InitializeDrumChannels() noexcept
 {
-    static const uint8_t PartToChannel[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
+    static const uint8_t DefaultPartToChannel[16] = { 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15 };
 
-    ::memcpy(_GSPartToChannel, PartToChannel, sizeof(_GSPartToChannel));
+    ::memcpy(_PartToChannel, DefaultPartToChannel, sizeof(_PartToChannel));
 
-    ::memset(_DrumChannels, 0, sizeof(_DrumChannels));
+    // Default GM set-up: channel 10 is a drum channel.
+    ::memset(_IsDrumChannel, 0, sizeof(_IsDrumChannel));
+    _IsDrumChannel[9] = true;
 
-    _DrumChannels[9] = 1;
-
-    for (size_t i = 0; i < _countof(_DrumChannels); ++i)
-        SetDrumChannel((int) i, _DrumChannels[i]);
+    for (size_t i = 0; i < _countof(_IsDrumChannel); ++i)
+        SetDrumChannel((int) i, _IsDrumChannel[i]);
 }
 
-void EdMPlayer::SetDrumChannel(int channel, int enable)
+/// <summary>
+/// Sets or unsets a channel as a drum channel.
+/// </summary>
+void EdMPlayer::SetDrumChannel(int channel, bool enable) noexcept
 {
     for (size_t i = 0; i < _countof(_Modules); ++i)
-        _Modules[i].SetDrumChannel(channel, enable);
+        _Modules[i].SetDrumChannel(channel, (int) enable);
 }

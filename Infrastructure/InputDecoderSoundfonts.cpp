@@ -183,7 +183,7 @@ static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & 
 {
     if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
     {
-        // Prevent recursion in nested soundfont lists.
+        // Prevent recursion with nested soundfont lists.
         {
             auto AbsolutePath = fs::absolute(sf.FilePath);
 

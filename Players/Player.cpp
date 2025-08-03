@@ -630,7 +630,7 @@ bool player_t::FilterEvent(uint32_t data) noexcept
                 if (_ChannelsMask[PortNumber] & Mask)
                     continue; // because the channel is enabled.
 
-                SendEvent((uint32_t) ((PortNumber << 24) | (midi::ChannelModeMessages::AllNotesOff << 8) | midi::ControlChange | Channel));
+                SendEvent((uint32_t) ((PortNumber << 24) | (midi::Controller::AllNotesOff << 8) | midi::ControlChange | Channel));
             }
         }
     }

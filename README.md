@@ -97,7 +97,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v3.1.0.0-alpha7, 2025-x8-xx
 
-- 
+- New: LibEDMIDI / Emu de MIDI player now uses [libEDMIDI](https://github.com/Wohlstand/libEDMIDI) by [Wohlstand](https://github.com/Wohlstand).
 
 You can read the full history [here](docs/History.md).
 
