@@ -95,10 +95,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.0.0-alpha6, 2025-08-02
+v3.1.0.0-alpha7, 2025-x8-xx
 
-- Improved: Multi-threading support for CLAP.
-- Fixed: BASSMIDI soundfont stacking was done in reverse by the new list loader code. (3.0.0.0 regression)
+- 
 
 You can read the full history [here](docs/History.md).
 

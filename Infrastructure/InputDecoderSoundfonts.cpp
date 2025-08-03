@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.07.28) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.08.03) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -9,11 +9,13 @@
 #include "Log.h"
 
 #include <fstream>
+#include <unordered_set>
 
 #pragma hdrstop
 
 static fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortHandler) noexcept;
 static bool WriteSoundfontFile(const fs::path & filePath, const std::vector<uint8_t> soundfont) noexcept;
+static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept;
 
 /// <summary>
 /// Gets the soundfonts and adjusts the player type, if necessary.
@@ -62,7 +64,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         }
     }
 
-    // Then, add the soundfont named like the directory of the MIDI file, if present.
+    // Next, add the soundfont named like the directory of the MIDI file, if present.
     {
         const fs::path FilePath = _FilePath.c_str();
 
@@ -89,54 +91,14 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     }
 
     // Create the final soundfont list.
-    std::string Message;
+    std::string Report;
+    std::unordered_set<fs::path> UniqueLists;
 
     for (const auto & sf : Soundfonts)
-    {
-        if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
-        {
-            if (filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
-            {
-                int Count = 0;
+        AddSoundFont(sf, UniqueLists, _Soundfonts, HasDLS, Report);
 
-                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
-
-                for (const auto & iter : LoadSoundfontList(sf.FilePath))
-                {
-                    if (filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
-                    {
-                        if (sf.IsDLS)
-                            HasDLS = true;
-
-                        _Soundfonts.push_back(iter);
-                        ++Count;
-                    }
-                    else
-                        Message += ::FormatText("Soundfont \"%s\" does not exist.\n", iter.FilePath.string().c_str()).c_str();
-                }
-
-                Log.AtInfo().Write(STR_COMPONENT_BASENAME " read %d soundfonts from the list.", Count);
-            }
-            else
-                Message += ::FormatText("Soundfont list \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
-        }
-        else
-        if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
-        {
-            if (filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
-            {
-                if (sf.IsDLS)
-                    HasDLS = true;
-
-                _Soundfonts.push_back(sf);
-            }
-            else
-                Message += ::FormatText("Soundfont \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
-        }
-    }
-
-    if (!Message.empty())
-        popup_message::g_show(Message.c_str(), STR_COMPONENT_BASENAME, popup_message::icon_error);
+    if (!Report.empty())
+        popup_message::g_show(Report.c_str(), STR_COMPONENT_BASENAME, popup_message::icon_error);
 
     // Force the use of a soundfont player if an embedded or named soundfont was found.
     if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundfonts && !_Soundfonts.empty())
@@ -147,7 +109,8 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     // Show which soundfonts we'll be using in the console.
     if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
     {
-        // FluidSynth uses a soundfont stack. The stack is search from the top to the bottom for a matching preset. See https://www.fluidsynth.org/api/group__soundfont__management.html#ga0ba0bc9d4a19c789f9969cd22d22bf66
+        // Both BASSMIDI and FluidSynth use a soundfont stack. The stack is searched from the top to the bottom for a matching preset. See https://www.fluidsynth.org/api/group__soundfont__management.html#ga0ba0bc9d4a19c789f9969cd22d22bf66
+        // Except, BASSMIDI adds soundfonts to the bottom of the stack; FluidSynth to the top of the stack.
         if (_PlayerType == PlayerType::FluidSynth)
             std::reverse(_Soundfonts.begin(), _Soundfonts.end());
 
@@ -210,5 +173,57 @@ bool WriteSoundfontFile(const fs::path & filePath, const std::vector<uint8_t> so
     catch (...)
     {
         return false;
+    }
+}
+
+/// <summary>
+/// Adds only existing soundfonts to the final list. Also handles recursively loading Soundfont list in soundfont lists.
+/// </summary>
+static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept
+{
+    if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
+    {
+        // Prevent recursion in nested soundfont lists.
+        {
+            auto AbsolutePath = fs::absolute(sf.FilePath);
+
+            if (uniqueLists.find(AbsolutePath) != uniqueLists.end())
+                return;
+
+            uniqueLists.insert(AbsolutePath);
+        }
+
+        if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
+        {
+            report += ::FormatText("Soundfont list \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
+
+            return;
+        }
+
+        int Count = 0;
+
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
+
+        for (const auto & iter : LoadSoundfontList(sf.FilePath))
+        {
+            AddSoundFont(iter, uniqueLists, soundfonts, hasDLS, report);
+            ++Count;
+        }
+
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " read %d soundfonts from the list.", Count);
+    }
+    else
+    if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
+    {
+        if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
+        {
+            report += ::FormatText("Soundfont \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
+            return;
+        }
+
+        if (sf.IsDLS)
+            hasDLS = true;
+
+        soundfonts.push_back(sf);
     }
 }

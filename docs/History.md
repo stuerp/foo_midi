@@ -1,6 +1,11 @@
 
 # foo_midi History
 
+v3.1.0.0-alpha6, 2025-08-02
+
+- Improved: Multi-threading support for CLAP.
+- Fixed: BASSMIDI soundfont stacking was done in reverse by the new list loader code. (3.0.0.0 regression)
+
 v3.1.0.0-alpha5, 2025-07-31
 
 - New: Support for the editor (GUI) of CLAP plug-ins. Try f.e. [OctaSine](https://github.com/greatest-ape/OctaSine) or [Odin 2](https://thewavewarden.com/pages/odin-2/).

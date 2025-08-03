@@ -273,14 +273,14 @@ Lastly, the global soundfont specified on the [Paths](#paths) preferences page w
 
 #### SFList
 
-The BASSMIDI and FluidSynth player also accept a Soundfont List file.
+The BASSMIDI and FluidSynth player also accept a Soundfont List file. It's an UTF-8 text file that lists the location of the soundfonts that should be used. Any of the soundfont formats (including nested soundfont lists) can be specified.
 
 > [!Important]
-> The soundfonts should be specified with the least specialized soundfont first (the base soundfont) followed by more specialized soundfonts that override the presets of the previous ones.
+> The soundfonts should be listed with the least specialized soundfont first (the base soundfont) followed by more specialized soundfonts that override the presets of any of the previous ones.
 
 ##### Simple format
 
-The simple format is just a flat text file where each line contains the location of a soundfont file. Empty lines are ignored. If you specify a only a file name or a relative path foo_midi will look for the file relative to the directory of the list file.
+The simple format is just a flat UTF-8 text file where each line contains the location of a soundfont file. Empty lines are ignored. If you specify a only a file name or a relative path foo_midi will look for the file relative to the directory of the list file.
 
 Here's an example:
 
@@ -292,14 +292,14 @@ X:\Simple\SoundFont File.sf2
 
 ##### Advanced format
 
-The most flexible format is a JSON file with a .SFLIST or .JSON extension that allows you to layer the soundfonts that the player will use.
+The most flexible format is an UTF-8 JSON file with a `.sflist` or `.json` extension that allows you to layer the soundfonts that the player will use.
 
-A `soundFonts` array contains 1 or more soundfont objects. A soundfont object can have the following properties:
+The root object is a `soundFonts` array that contains 1 or more soundfont objects. A soundfont object can have the following properties:
 
-- `fileName` specifies the location of the soundfont. If you specify a only a file name or a relative path foo_midi will look for the file relative to the directory of the list file.
-- `gain` specifies the overall gain that will be applied to the samples in the soundfont. This property is optional.
-- `channels` is an array that contains the MIDI channels that will use the soundfont. This property is optional.
-- `patchMappings` is an array of mapping objects that allows you to remap samples within a soundfont without modifying the soundfont file. This property is optional.
+- `fileName` specifies the location of the soundfont. If you specify only a file name or a relative path foo_midi will look for the file relative to the directory of the list file. `BASSMIDI` `FluidSynth`
+- `gain` specifies the overall gain that will be applied to the samples in the soundfont. `optional` `BASSMIDI`
+- `channels` is an array that contains the MIDI channels that will use the soundfont. `optional` `BASSMIDI`
+- `patchMappings` is an array of mapping objects that allows you to remap samples within a soundfont without modifying the soundfont file. `optional` `BASSMIDI`
 
 Here's an example:
 
@@ -334,7 +334,7 @@ Here's an example:
 }
 ```
 
-For a more detailed explanation consult the documentation about [BASS_MIDI_FONTEX](https://www.un4seen.com/doc/#bassmidi/BASS_MIDI_FONTEX.html).
+For a more detailed explanation of the properties please consult the documentation about [BASS_MIDI_FONTEX](https://www.un4seen.com/doc/#bassmidi/BASS_MIDI_FONTEX.html).
 
 ---
 
