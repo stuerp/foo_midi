@@ -34,14 +34,14 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
         if (Data.size() > 12)
         {
-            bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
+            const bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
 
             // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
             const unique_path_t FilePath(IsDLS ? ".dls" : ".sf2");
 
             if (!FilePath.IsEmpty() && WriteSoundfontFile(FilePath.Path(), Data))
             {
-                Soundfonts.push_back(soundfont_t(FilePath.Path(), 1.f, _Container.GetBankOffset(), true, IsDLS));
+                Soundfonts.push_back(soundfont_t(FilePath.Path(), 0.f, _Container.GetBankOffset(), true, IsDLS));
 
                 HasNonDefaultSoundfonts = true;
             }
@@ -58,7 +58,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         {
             const bool IsDLS = (::_stricmp(SoundfontFilePath.extension().string().c_str(), ".dls") == 0);
 
-            Soundfonts.push_back(soundfont_t(SoundfontFilePath, 1.f, _Container.GetBankOffset(), false, IsDLS));
+            Soundfonts.push_back(soundfont_t(SoundfontFilePath, 0.f, _Container.GetBankOffset(), false, IsDLS));
 
             HasNonDefaultSoundfonts = true;
         }
@@ -74,7 +74,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         {
             const bool IsDLS = (::_stricmp(SoundfontFilePath.extension().string().c_str(), ".dls") == 0);
 
-            Soundfonts.push_back(soundfont_t(SoundfontFilePath, 1.f, _Container.GetBankOffset(), false, IsDLS));
+            Soundfonts.push_back(soundfont_t(SoundfontFilePath, 0.f, _Container.GetBankOffset(), false, IsDLS));
 
             HasNonDefaultSoundfonts = true;
         }
@@ -85,8 +85,9 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         if (!defaultSoundfontFilePath.empty())
         {
             const bool IsDLS = (::_stricmp(defaultSoundfontFilePath.extension().string().c_str(), ".dls") == 0);
+            const float Gain = (_PlayerType == PlayerType::BASSMIDI) ? _BASSMIDIGain : 0.f;
 
-            Soundfonts.push_back(soundfont_t(defaultSoundfontFilePath, _BASSMIDIGain, 0, false, IsDLS));
+            Soundfonts.push_back(soundfont_t(defaultSoundfontFilePath, Gain, 0, false, IsDLS));
         }
     }
 
