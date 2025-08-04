@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.08.03) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.08.04) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -137,16 +137,20 @@ fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortH
 
     for (const char * & FileExtension : FileExtensions)
     {
-        auto SoundfontPath = filePath;
-
-        SoundfontPath.replace_extension(FileExtension);
-
         try
         {
+            auto SoundfontPath = filePath;
+
+            // See https://github.com/stuerp/foo_midi/issues/114
+            SoundfontPath.replace_extension(FileExtension);
+
             if (filesystem::g_exists(SoundfontPath.string().c_str(), abortHandler))
                 return SoundfontPath;
         }
-        catch(...) {};
+        catch (std::exception & e)
+        {
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to replace file extension of \"%s\" with \"%s\": %s.", filePath.string().c_str(), FileExtension, e.what());
+        }
     }
 
     return {};
@@ -218,6 +222,7 @@ static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & 
         if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
         {
             report += ::FormatText("Soundfont \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
+
             return;
         }
 
