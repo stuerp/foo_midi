@@ -1,5 +1,5 @@
 
-/** $VER: EdMPlayer.cpp (2025.08.03) **/
+/** $VER: EdMPlayer.cpp (2025.08.04) **/
 
 #include "pch.h"
 
@@ -32,9 +32,9 @@ bool EdMPlayer::Startup()
     for (size_t i = 0; i < _countof(_Modules); ++i)
     {
         if (i & 1)
-            _Modules[i].AttachDevice(new dsa::CSccDevice(_SampleRate, 2));
+            _Modules[i].AttachDevice(new dsa::CSccDevice(_SampleRate, 2));  // SCC device
         else
-            _Modules[i].AttachDevice(new dsa::COpllDevice(_SampleRate, 2));
+            _Modules[i].AttachDevice(new dsa::COpllDevice(_SampleRate, 2)); // OPLL device
 
         _Modules[i].Reset();
     }
@@ -113,35 +113,35 @@ void EdMPlayer::SendEvent(uint32_t data)
     const uint8_t Data1   = (uint8_t) (data >>  8);
     const uint8_t Data2   = (uint8_t) (data >> 16);
 
-    auto & LModule = _Modules[ (Channel * 2)      % _countof(_Modules)];
-    auto & RModule = _Modules[((Channel * 2) + 1) % _countof(_Modules)];
+    auto & OPLLModule = _Modules[ (Channel * 2)      % _countof(_Modules)];
+    auto & SCCModule  = _Modules[((Channel * 2) + 1) % _countof(_Modules)];
 
     switch (Status)
     {
-        case midi::NoteOff:
+        case midi::StatusCode::NoteOff:
         {
-            LModule.SendNoteOff(Channel, Data1, Data2);
+            OPLLModule.SendNoteOff(Channel, Data1, Data2);
 
             if (!_IsDrumChannel[Channel])
-                RModule.SendNoteOff(Channel, Data1, Data2);
+                SCCModule.SendNoteOff(Channel, Data1, Data2);
             break;
         }
 
-        case midi::NoteOn:
+        case midi::StatusCode::NoteOn:
         {
-            LModule.SendNoteOn(Channel, Data1, Data2);
+            OPLLModule.SendNoteOn(Channel, Data1, Data2);
 
             if (!_IsDrumChannel[Channel])
-                RModule.SendNoteOn(Channel, Data1, Data2);
+                SCCModule.SendNoteOn(Channel, Data1, Data2);
             break;
         }
 
-        case midi::KeyPressure:
+        case midi::StatusCode::KeyPressure:
         {
             break;
         }
 
-        case midi::ControlChange:
+        case midi::StatusCode::ControlChange:
         {
             if (Data1 == midi::Controller::BankSelect)
             {
@@ -160,59 +160,59 @@ void EdMPlayer::SendEvent(uint32_t data)
                 }
             }
 
-            LModule.SendControlChange(Channel, Data2, Data1);
+            OPLLModule.SendControlChange(Channel, Data2, Data1);
 
             if (!_IsDrumChannel[Channel])
-                RModule.SendControlChange(Channel, Data2, Data1);
+                SCCModule.SendControlChange(Channel, Data2, Data1);
             break;
         }
 
-        case midi::ProgramChange:
+        case midi::StatusCode::ProgramChange:
         {
             SetDrumChannel((int) Channel, _IsDrumChannel[Channel]);
 
-            LModule.SendProgramChange(Channel, Data1);
+            OPLLModule.SendProgramChange(Channel, Data1);
 
             if (!_IsDrumChannel[Channel])
-                RModule.SendProgramChange(Channel, Data1);
+                SCCModule.SendProgramChange(Channel, Data1);
             break;
         }
 
-        case midi::ChannelPressure:
+        case midi::StatusCode::ChannelPressure:
         {
-            LModule.SendChannelPressure(Channel, Data1);
+            OPLLModule.SendChannelPressure(Channel, Data1);
 
             if (!_IsDrumChannel[Channel])
-                RModule.SendChannelPressure(Channel, Data1);
+                SCCModule.SendChannelPressure(Channel, Data1);
             break;
         }
 
-        case midi::PitchBendChange:
+        case midi::StatusCode::PitchBendChange:
         {
-            LModule.SendPitchBend(Channel, Data2, Data1);
+            OPLLModule.SendPitchBend(Channel, Data2, Data1);
 
             if (!_IsDrumChannel[Channel])
-                RModule.SendPitchBend(Channel, Data2, Data1);
+                SCCModule.SendPitchBend(Channel, Data2, Data1);
             break;
         }
 
-        case midi::SysEx:
-        case midi::MIDITimeCodeQtrFrame:
-        case midi::SongPositionPointer:
-        case midi::SongSelect:
+        case midi::StatusCode::SysEx:
+        case midi::StatusCode::MIDITimeCodeQtrFrame:
+        case midi::StatusCode::SongPositionPointer:
+        case midi::StatusCode::SongSelect:
 
-        case midi::TuneRequest:
-        case midi::SysExEnd:
+        case midi::StatusCode::TuneRequest:
+        case midi::StatusCode::SysExEnd:
 
         // Real-time events
-        case midi::TimingClock:
+        case midi::StatusCode::TimingClock:
 
-        case midi::Start:
-        case midi::Continue:
-        case midi::Stop:
+        case midi::StatusCode::Start:
+        case midi::StatusCode::Continue:
+        case midi::StatusCode::Stop:
 
-        case midi::ActiveSensing:
-        case midi::MetaData:
+        case midi::StatusCode::ActiveSensing:
+        case midi::StatusCode::MetaData:
             break;
     }
 }
@@ -250,21 +250,24 @@ void EdMPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t)
         _SynthMode = ModeXG;
     }
 
-    if (_SynthMode == ModeGS)
+    if ((size == 11) && (data[ 0] == midi::SysEx) &&
+                        (data[ 1] == 0x41 /* Manufacturer Roland */) && (data[3] == 0x42 /* Model GS */) && (data[4] == 0x12 /* Command DT1 */) &&
+                        (data[ 5] == 0x40) && ((data[6] & 0xF0) == 0x10) &&
+                        (data[10] == midi::SysExEnd))
     {
-        if (data[7] == 0x02)
+        if (data[7] == 0x02) // Parameter "Rx. CHANNEL"
         {
-            // GS MIDI channel to part assign
-            _PartToChannel[data[6] & 15] = data[8];
+            // Sets the MIDI channel used to receive incoming messages. Can be used to enable or disable a channel.
+            _PartToChannel[data[6] & 0x0F] = data[8];
         }
         else
-        if (data[7] == 0x15)
+        if (data[7] == 0x15) // Parameter "USE FOR RHYTHM PART"
         {
-            // GS part to rhythm allocation
-            uint32_t DrumChannel = _PartToChannel[data[6] & 15];
+            // Sets the Drum Map of the Part used as the Drum Part.
+            uint8_t DrumChannel = _PartToChannel[data[6] & 0x0F];
 
             if (DrumChannel < 16)
-                _IsDrumChannel[DrumChannel] = (bool) data[8];
+                _IsDrumChannel[DrumChannel] = (bool) (data[8] != 0);
         }
     }
 
@@ -289,7 +292,7 @@ void EdMPlayer::InitializeDrumChannels() noexcept
 }
 
 /// <summary>
-/// Sets or unsets a channel as a drum channel.
+/// Assigns or unassigns a channel as a drum channel.
 /// </summary>
 void EdMPlayer::SetDrumChannel(int channel, bool enable) noexcept
 {
