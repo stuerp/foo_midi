@@ -186,10 +186,13 @@ Here are some examples of CLAP synthesizer plug-ins:
 
 | Name | Description | Status |
 | ---- | ----------- | ------ |
+| [Aeolus](https://github.com/Archie3d/aeolus_plugin) | Pipe organ emulator using additive synthesis | ![Incomplete](https://img.shields.io/badge/incomplete-yellow) |
 | [Dexed](https://asb2m10.github.io/dexed/) | Plug-in modeled on the [Yamaha DX7](https://en.wikipedia.org/wiki/Yamaha_DX7) | ![Supported](https://img.shields.io/badge/supported-green) |
+| [Foam](https://github.com/Madadog/foam-synth) | 8 Operator FM synthesizer plug-in | ![Supported](https://img.shields.io/badge/supported-green) |
 | [Nuked SC-55 CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP/) | [Roland SC-55](https://en.wikipedia.org/wiki/Roland_SC-55) emulator | ![Supported](https://img.shields.io/badge/supported-green) |
 | [OctaSine](https://github.com/greatest-ape/OctaSine) | Frequency modulation synthesizer plugin | ![Supported](https://img.shields.io/badge/supported-green) |
 | [Odin 2](https://thewavewarden.com/pages/odin-2/) | 24-voice polyphonic powerhouse | ![Supported](https://img.shields.io/badge/supported-green) |
+| [Surge XT](https://surge-synthesizer.github.io/) | Hybrid synthesizer | ![Supported](https://img.shields.io/badge/supported-green) |
 
 ---
 
