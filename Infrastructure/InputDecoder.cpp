@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.07.15) **/
+/** $VER: InputDecoder.cpp (2025.08.01) **/
 
 #include "pch.h"
 
@@ -26,6 +26,7 @@
 
 #include "PreferencesFM.h"
 #include "KaraokeProcessor.h"
+#include "CLAPHost.h"
 
 #include "Log.h"
 
@@ -57,9 +58,9 @@ InputDecoder::InputDecoder() noexcept :
     _DetectFF7Loops((bool) CfgDetectFF7Loops),
 
     _Player(nullptr),
-    _Host(nullptr),
-
     _PlayerType(),
+
+    _CLAPPlugIn(),
 
     _RequestedSampleRate((uint32_t) CfgSampleRate),
     _ActualSampleRate(_RequestedSampleRate),
@@ -78,7 +79,7 @@ InputDecoder::InputDecoder() noexcept :
 
     _ExtraPercussionChannel(~0U),
 
-    _BASSMIDIVolume((float) CfgBASSMIDIVolume),
+    _BASSMIDIGain((float) CfgBASSMIDIGain),
     _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIResamplingMode),
 
     _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode)
@@ -98,8 +99,8 @@ InputDecoder::~InputDecoder() noexcept
 {
     for (const auto & sf : _Soundfonts)
     {
-        if (sf.IsEmbedded())
-            ::DeleteFileA(sf.FilePath().c_str());
+        if (sf.IsEmbedded)
+            ::DeleteFileA((const char *) sf.FilePath.string().c_str());
     }
 
     if (_Player != nullptr)
@@ -110,19 +111,13 @@ InputDecoder::~InputDecoder() noexcept
         _Player = nullptr;
     }
 
-    if ((_DecoderFlags & input_flag_playback) == 0)
-    {
-        delete _Host;
-        _Host = nullptr;
-    }
-
+/* KEEP? 06/07/25
     if (_PlayerType == PlayerType::EmuDeMIDI)
     {
-/*
         insync(_Lock);
         _IsRunning -= 1;
-*/
     }
+*/
 }
 
 /// <summary>
@@ -159,9 +154,9 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
         {
             try
             {
-                midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container);
+                midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, midi::DefaultOptions);
             }
-            catch (std::exception & e)
+            catch (const std::exception & e)
             {
                 const pfc::string Message = "Failed to read SysEx file: ";
 
@@ -199,7 +194,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 
             midi::processor_t::Process(Object, pfc::wideFromUTF8(_FilePath), _Container, Options);
         }
-        catch (std::exception & e)
+        catch (const std::exception & e)
         {
             const pfc::string Message = "Failed to read MIDI file: ";
 
@@ -323,22 +318,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     // Get the soundfonts if the player requires them.
     if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
-        GetSoundfonts(Preset._SoundfontFilePath, abortHandler);
-
-    // Unload the plug-in from the global CLAP host when the player is not a CLAP plug-in. This also closes the plug-in GUI.
-    if ((_DecoderFlags & input_flag_playback) && (_PlayerType != PlayerType::CLAP))
-    {
-        CLAP::_Host.UnLoad();
-/*
-        fb2k::inMainThread2
-        (
-            [this]()
-            {
-                CLAP::_Host.HideGUI();
-            }
-        );
-*/
-    }
+        GetSoundfonts(Preset._SoundfontFilePath.c_str(), abortHandler);
 
     // Create and initialize the MIDI player.
     switch (_PlayerType)
@@ -411,32 +391,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         // CLAP (CLever Audio Plug-in API)
         case PlayerType::CLAP:
         {
-            if (Preset._PlugInFilePath.is_empty())
-                throw pfc::exception("No plug-in specified in preset");
+            if (!_CLAPHost.IsPlugInLoaded())
+                throw pfc::exception("No CLAP plug-in loaded into host");
 
-            if (_DecoderFlags & input_flag_playback)
-                _Host = &CLAP::_Host; // Use the global instance for playback.
-            else
-                _Host = new CLAP::Host();
-
-            if (!_Host->Load(Preset._PlugInFilePath.c_str(), Preset._CLAPPlugInIndex))
-                return;
-
-            if (!_Host->IsPlugInLoaded())
-                return;
-/*
-            if ((_Flags & input_flag_playback) && !core_api::is_quiet_mode_enabled())
-            {
-                fb2k::inMainThread2
-                (
-                    [this]()
-                    {
-                        this->_Host->ShowGUI(core_api::get_main_window());
-                    }
-                );
-            }
-*/
-            auto Player = new CLAPPlayer(_Host);
+            auto Player = new CLAPPlayer();
 
             _Player = Player;
 
@@ -462,10 +420,11 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             auto Player = new BMPlayer;
 
+            Player->SetSoundfonts(_Soundfonts);
+
             Player->SetInterpolationMode(_BASSMIDIInterpolationMode);
             Player->SetVoiceCount(Preset._VoiceCount);
             Player->EnableEffects(Preset._EffectsEnabled);
-            Player->SetSoundfonts(_Soundfonts);
 
             _Player = Player;
 

@@ -30,7 +30,7 @@ public:
         Forced = 0x02
     };
 
-    bool Load(const midi::container_t & midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t decayTime, uint32_t cleanFlags);
+    bool Load(const midi::container_t & container, uint32_t subsongIndex, LoopType loopMode, uint32_t decayTime, uint32_t cleanFlags);
     uint32_t Play(audio_sample * samplesData, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
@@ -70,12 +70,15 @@ protected:
     bool _IsStarted;
     uint32_t _SampleRate;
     midi::sysex_table_t _SysExMap;
-    std::vector<uint8_t> _Ports;
+    std::vector<uint8_t> _PortNumbers;
 
     MIDIFlavor _MIDIFlavor;
     bool _FilterEffects;
 
     std::string _ErrorMessage;
+
+    std::vector<midi::message_t> _Messages;
+    midi::FileFormat _FileFormat;
 
 private:
     void SendEventFiltered(uint32_t data);
@@ -94,10 +97,8 @@ private:
     LoopType _LoopType;             // Type of looping requested by the user.
     uint32_t _DecayTime;            // in ms
 
-    std::vector<midi::message_t> _Messages;
-
     uint32_t _MessageIndex;         // Current MIDI message
-    uint32_t _MessageIndexLoopBegin;       // Start of the loop in the event stream
+    uint32_t _MessageIndexLoopBegin;// Start of the loop in the event stream
     uint32_t _LoopEndIndex;         // End of the loop in the event stream
 
     uint32_t _FrameIndex;           // Current frame in the sample stream

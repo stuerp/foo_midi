@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2025.07.16) **/
+/** $VER: Player.cpp (2025.07.22) **/
 
 #include "pch.h"
 
@@ -21,6 +21,8 @@ player_t::player_t() noexcept
     _FramesRemaining = 0;
 
     _FrameIndexLoopBegin = 0;
+
+    _FileFormat = midi::FileFormat::Unknown;
 
     _IsStarted = false;
 
@@ -51,10 +53,12 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
 
         _MessageIndex = 0;
 
-        container.SerializeAsStream(subSongIndex, _Messages, _SysExMap, _Ports, _MessageIndexLoopBegin, _LoopEndIndex, cleanFlags);
+        container.SerializeAsStream(subSongIndex, _Messages, _SysExMap, _PortNumbers, _MessageIndexLoopBegin, _LoopEndIndex, cleanFlags);
 
         if (_Messages.size() == 0)
             return false;
+
+        _FileFormat = container.FileFormat;
     }
 
     // Initialize the sample stream. We get the values in ms but SetSampleRate() converts them to frames.
@@ -549,13 +553,6 @@ void player_t::Configure(MIDIFlavor midiFlavor, bool filterEffects)
 {
     _MIDIFlavor = midiFlavor;
     _FilterEffects = filterEffects;
-/*
-    if (_IsStarted)
-    {
-        for (uint8_t PortNumber = 0; PortNumber < 3; ++PortNumber)
-            ResetPort(PortNumber, 0);
-    }
-*/
 }
 
 /// <summary>
@@ -624,26 +621,26 @@ bool player_t::FilterEvent(uint32_t data) noexcept
     {
         CfgChannels.Get(_ChannelsMask, sizeof(_ChannelsMask), _ChannelsMaskVersion);
 
-        for (const auto & Port : _Ports)
+        for (const auto & PortNumber : _PortNumbers)
         {
             uint16_t Mask = 1;
 
             for (uint8_t Channel = 0; Channel < 16; ++Channel, Mask <<= 1)
             {
-                if (_ChannelsMask[Port] & Mask)
+                if (_ChannelsMask[PortNumber] & Mask)
                     continue; // because the channel is enabled.
 
-                SendEvent((uint32_t) ((Port << 24) | (midi::ChannelModeMessages::AllNotesOff << 8) | midi::ControlChange | Channel));
+                SendEvent((uint32_t) ((PortNumber << 24) | (midi::Controller::AllNotesOff << 8) | midi::ControlChange | Channel));
             }
         }
     }
 
-    const size_t Port = (data >> 24) & 0x7F;
+    const size_t PortNumber = (data >> 24) & 0x7F;
     const uint8_t StatusCode = data & 0xF0;
     const uint8_t Channel = data & 0x0F;
 
     // Filter Note On events for the disabled channels.
-    return ((StatusCode == midi::NoteOn) && (((uint16_t) _ChannelsMask[Port] & (1U << Channel)) == 0));
+    return ((StatusCode == midi::NoteOn) && (((uint16_t) _ChannelsMask[PortNumber] & (1U << Channel)) == 0));
 }
 
 /// <summary>
@@ -948,9 +945,7 @@ uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
                 return 0;
         }
     }
-    catch (...)
-    {
-    }
+    catch (...) { }
 
     return 0;
 }

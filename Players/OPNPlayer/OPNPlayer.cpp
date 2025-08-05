@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2025.07.17) **/
+/** $VER: OPNPlayer.cpp (2025.07.25) **/
 
 #include "pch.h"
 
@@ -187,10 +187,18 @@ void OPNPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
     const uint32_t MaxFrames = 256;
     const uint32_t MaxChannels = 2;
 
-#ifndef UseDouble
+#ifndef OldCode
     audio_sample srcFrames[MaxFrames * MaxChannels];
 
-    const OPNMIDI_AudioFormat AudioFormat = { OPNMIDI_SampleType_F64, sizeof(*srcFrames), sizeof(srcFrames[0]) * MaxChannels };
+#ifdef _M_X64
+    const OPNMIDI_AudioFormat AudioFormat = { OPNMIDI_SampleType_F64, sizeof(srcFrames[0]), sizeof(srcFrames[0]) * MaxChannels };
+#else
+#ifdef _M_IX86
+    const OPNMIDI_AudioFormat AudioFormat = { OPNMIDI_SampleType_F32, sizeof(srcFrames[0]), sizeof(srcFrames[0]) * MaxChannels };
+#else
+    #error "Unsupported processor architecture"
+#endif
+#endif
 
     while (dstCount != 0)
     {
@@ -253,31 +261,31 @@ void OPNPlayer::SendEvent(uint32_t data)
 
     switch (Status)
     {
-        case midi::StatusCodes::NoteOff:
+        case midi::StatusCode::NoteOff:
             ::opn2_rt_noteOff(_Devices[Port], Channel, Event[1]);
             break;
 
-        case midi::StatusCodes::NoteOn:
+        case midi::StatusCode::NoteOn:
             ::opn2_rt_noteOn(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
-        case midi::StatusCodes::KeyPressure:
+        case midi::StatusCode::KeyPressure:
             ::opn2_rt_noteAfterTouch(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
-        case midi::StatusCodes::ControlChange:
+        case midi::StatusCode::ControlChange:
             ::opn2_rt_controllerChange(_Devices[Port], Channel, Event[1], Event[2]);
             break;
 
-        case midi::StatusCodes::ProgramChange:
+        case midi::StatusCode::ProgramChange:
             ::opn2_rt_patchChange(_Devices[Port], Channel, Event[1]);
             break;
 
-        case midi::StatusCodes::ChannelPressure:
+        case midi::StatusCode::ChannelPressure:
             ::opn2_rt_channelAfterTouch(_Devices[Port], Channel, Event[1]);
             break;
 
-        case midi::StatusCodes::PitchBendChange:
+        case midi::StatusCode::PitchBendChange:
             ::opn2_rt_pitchBendML(_Devices[Port], Channel, Event[2], Event[1]);
             break;
     }

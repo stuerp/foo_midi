@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.07.15) P. Stuer **/
+/** $VER: Preferences.cpp (2025.08.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -179,7 +179,7 @@ private:
         // Unique key
         PlayerType Type;
         fs::path FilePath;  // Path name of the VSTi or CLAP plug-in file
-        size_t Index;       // Index with a CLAP plug-in
+        size_t Index;       // Index within a CLAP plug-in
 
         size_t PlugInIndex; // Index in the VSTi or CLAP plug-in list
 
@@ -203,6 +203,11 @@ private:
             return true;
         }
 
+        bool operator !=(const installed_player_t & other) const noexcept
+        {
+            return !(*this == other);
+        }
+
         bool SupportsMIDIFlavor() const noexcept
         {
             return ((Type == PlayerType::VSTi) || (Type == PlayerType::CLAP) || (Type == PlayerType::FluidSynth) || (Type == PlayerType::BASSMIDI) || (Type == PlayerType::SecretSauce));
@@ -224,8 +229,7 @@ private:
     std::vector<VSTi::PlugIn> _VSTiPlugIns;
 
     // CLAP
-    CLAP::Host _CLAPHost;
-    std::vector<CLAP::PlugIn> _CLAPPlugIns;
+    std::vector<CLAP::PlugInEntry> _CLAPPlugIns;
 
     // FluidSynth
     bool _HasFluidSynth;
@@ -282,44 +286,34 @@ void RootDialog::apply()
 {
     // Player Type
     {
-        int SelectedIndex = (int) SendDlgItemMessageW(IDC_PLAYER_TYPE, CB_GETCURSEL);
+        CfgPlayerType = (int) _SelectedPlayer.Type;
 
-        if (SelectedIndex != -1)
+        if (_SelectedPlayer.Type == PlayerType::CLAP)
         {
-            _SelectedPlayer = _InstalledPlayers[(size_t) SelectedIndex];
+            const auto & PlugIn = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
 
-            CfgPlayerType = (int) _SelectedPlayer.Type;
+            CfgPlugInFilePath = (const char *) PlugIn.FilePath.u8string().c_str();
+            CfgCLAPIndex      = (int64_t) PlugIn.Index;
+            CfgPlugInName     = PlugIn.Name.c_str();
 
-            if (_SelectedPlayer.Type == PlayerType::CLAP)
-            {
-                const auto & PlugIn = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
+            _CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
+        }
+        else
+        if (_SelectedPlayer.Type == PlayerType::VSTi)
+        {
+            const auto & PlugIn = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
 
-                CfgPlugInFilePath = (const char *) PlugIn.FilePath.u8string().c_str();
-                CfgCLAPIndex      = (int64_t) PlugIn.Index;
-                CfgPlugInName     = PlugIn.Name.c_str();
+            CfgPlugInFilePath        = (const char *) PlugIn.FilePath.u8string().c_str();
+            CfgCLAPIndex             = (int64_t) -1;
+            CfgPlugInName            = PlugIn.Name.c_str();
 
-                _CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
-            }
-            else
-            {
-                _CLAPHost.UnLoad();
-
-                if (_SelectedPlayer.Type == PlayerType::VSTi)
-                {
-                    const auto & PlugIn = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
-
-                    CfgPlugInFilePath        = (const char *) PlugIn.FilePath.u8string().c_str();
-                    CfgCLAPIndex             = (int64_t) -1;
-                    CfgPlugInName            = PlugIn.Name.c_str();
-                    CfgVSTiConfig[PlugIn.Id] = _VSTiHost.Config;
-                }
-                else
-                {
-                    CfgPlugInFilePath = "";
-                    CfgCLAPIndex      = (int64_t) -1;
-                    CfgPlugInName     = "";
-                }
-            }
+            CfgVSTiConfig[PlugIn.Id] = _VSTiHost.Config;
+        }
+        else
+        {
+            CfgPlugInFilePath = "";
+            CfgCLAPIndex      = (int64_t) -1;
+            CfgPlugInName     = "";
         }
     }
 
@@ -339,11 +333,11 @@ void RootDialog::apply()
 
     // Looping
     {
-        CfgLoopTypePlayback     = (t_int32) SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
-        CfgLoopTypeOther        = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
+        CfgLoopTypePlayback = (t_int32) SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL);
+        CfgLoopTypeOther    = (t_int32) SendDlgItemMessage(IDC_LOOP_OTHER, CB_GETCURSEL);
 
-        CfgDecayTime            = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
-        CfgFadeTime          = (t_int32) GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE);
+        CfgDecayTime        = (t_int32) GetDlgItemInt(IDC_DECAY_TIME, NULL, FALSE);
+        CfgFadeTime         = (t_int32) GetDlgItemInt(IDC_FADE_OUT_TIME, NULL, FALSE);
     }
 
     // Loop Count
@@ -536,7 +530,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         fs::path BaseDirectory(std::u8string((const char8_t *) CfgCLAPPlugInDirectoryPath.get().c_str()));
 
-        _CLAPPlugIns = _CLAPHost.GetPlugIns(BaseDirectory);
+        _CLAPPlugIns = _CLAPHost.GetPlugInEntries(BaseDirectory);
 
         if (!_CLAPPlugIns.empty())
         {
@@ -754,25 +748,50 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
     _IsBusy = true;
     OnChanged();
 
-    if (_SelectedPlayer.Type == PlayerType::VSTi)
+    #pragma warning(disable: 4062)
+
+    switch (_SelectedPlayer.Type)
     {
-        VSTi::Player Player;
-
-        if (Player.LoadVST(_SelectedPlayer.FilePath))
+        case PlayerType::VSTi:
         {
-            if (_VSTiHost.Config.size() != 0)
-                Player.SetChunk(_VSTiHost.Config.data(), _VSTiHost.Config.size());
+            VSTi::Player Player;
 
-            Player.DisplayEditorModal();
+            if (Player.LoadVST(_SelectedPlayer.FilePath))
+            {
+                if (_VSTiHost.Config.size() != 0)
+                    Player.SetChunk(_VSTiHost.Config.data(), _VSTiHost.Config.size());
 
-            Player.GetChunk(_VSTiHost.Config);
+                Player.DisplayEditorModal();
+
+                Player.GetChunk(_VSTiHost.Config);
+            }
+
+            break;
+        }
+
+        case PlayerType::CLAP:
+        {
+            CLAP::Host Host;
+
+            if (Host.Load(_SelectedPlayer.FilePath, (uint32_t) _SelectedPlayer.Index))
+            {
+                std::shared_ptr<CLAP::PlugIn> PlugIn = Host.CreatePlugIn();
+
+                PlugIn->Initialize();
+
+                Host.OpenEditor(PlugIn, m_hWnd, false);
+
+                PlugIn->Terminate();
+
+                Host.Unload();
+            }
+
+            break;
         }
     }
-/*
-    else
-    if (_SelectedPlayer.Type == PlayerTypes::ADL)
-        ui_control::get()->show_preferences(GUID_PREFS_FM);
-*/
+
+    #pragma warning(default: 4062)
+
     _IsBusy = false;
     OnChanged();
 }
@@ -843,7 +862,7 @@ void RootDialog::OnPlayerTypeChange(UINT, int, CWindow w)
 
         const int ControlIds[] =
         {
-            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_GAIN,
+            IDC_BASSMIDI_GAIN_LBL, IDC_BASSMIDI_GAIN,
             IDC_RESAMPLING_LBL, IDC_BASSMIDI_RESAMPLING,
             IDC_CACHED_LBL, IDC_CACHED
         };
@@ -860,7 +879,7 @@ void RootDialog::OnPlayerTypeChange(UINT, int, CWindow w)
 /// </summary>
 bool RootDialog::HasChanged()
 {
-    #pragma region Player Type
+    // Player Type
     {
         int SelectedIndex = (int) SendDlgItemMessage(IDC_PLAYER_TYPE, CB_GETCURSEL);
 
@@ -895,16 +914,14 @@ bool RootDialog::HasChanged()
             }
         }
     }
-    #pragma endregion
 
-    #pragma region Sample Rate
+    // Sample Rate
     {
         if (GetDlgItemInt(IDC_SAMPLERATE, NULL, FALSE) != (UINT) CfgSampleRate)
             return true;
     }
-    #pragma endregion
 
-    #pragma region Looping
+    // Looping
     {
         if (SendDlgItemMessage(IDC_LOOP_PLAYBACK, CB_GETCURSEL) != CfgLoopTypePlayback)
             return true;
@@ -936,9 +953,8 @@ bool RootDialog::HasChanged()
         if (SendDlgItemMessage(IDC_FF7_LOOPS, BM_GETCHECK) != CfgDetectFF7Loops)
             return true;
     }
-    #pragma endregion
 
-    #pragma region MIDI
+    // MIDI
     {
         if (SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL) != CfgMIDIFlavor)
             return true;
@@ -955,9 +971,8 @@ bool RootDialog::HasChanged()
         if (SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK) != CfgDetectExtraDrum)
             return true;
     }
-    #pragma endregion
 
-    #pragma region Miscellaneous
+    // Miscellaneous
     {
         if (SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_GETCHECK) != CfgExcludeEMIDITrackDesignation)
             return true;
@@ -971,7 +986,6 @@ bool RootDialog::HasChanged()
         if (SendDlgItemMessage(IDC_SKIP_TO_FIRST_NOTE, BM_GETCHECK) != CfgSkipToFirstNote)
             return true;
     }
-    #pragma endregion
 
     return false;
 }
@@ -1002,28 +1016,34 @@ void RootDialog::UpdateConfigureButton() noexcept
 {
     BOOL Enable = FALSE;
 
-    if ((_SelectedPlayer.Type == PlayerType::VSTi) && (_SelectedPlayer.PlugInIndex != (size_t) -1))
+    if (_SelectedPlayer.PlugInIndex != (size_t) -1)
     {
-        const auto &  Plugin = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
+        #pragma warning(disable: 4062) // Enumerator 'x' in switch of enum 'y' is not handled
 
-        Enable = Plugin.HasEditor;
+        switch (_SelectedPlayer.Type)
+        {
+            case PlayerType::VSTi:
+            {
+                const auto & Plugin = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
 
-        _VSTiHost.Config = CfgVSTiConfig[Plugin.Id];
+                Enable = Plugin.HasEditor;
+
+                _VSTiHost.Config = CfgVSTiConfig[Plugin.Id];
+                break;
+            }
+
+            case PlayerType::CLAP:
+            {
+                const auto & Plugin = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
+
+                Enable = Plugin.HasEditor;
+                break;
+            }
+        }
+
+        #pragma warning(default: 4062)
     }
-/*
-    else
-    if (_SelectedPlayer.Type == PlayerTypes::ADL)
-        Enable = TRUE;
-*/
-/*
-    else
-    if ((_SelectedPlayer.Type == PlayerTypes::CLAP) && (_SelectedPlayer.PlugInIndex != (size_t) -1))
-    {
-        const auto &  Plugin = _CLAPPlugIns[_SelectedPlayer.PlugInIndex];
 
-        Enable = Plugin.HasGUI;
-    }
-*/
     GetDlgItem(IDC_CONFIGURE).EnableWindow(Enable);
 }
 

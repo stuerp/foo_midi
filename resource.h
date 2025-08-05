@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.07.19) P. Stuer **/
+/** $VER: Resource.h (2025.08.05) P. Stuer **/
 
 #pragma once
 
@@ -26,7 +26,7 @@
 #define STR_COPYRIGHT               TEXT(STR_COMPONENT_COPYRIGHT)
 
 #define NUM_FILE_MAJOR              3
-#define NUM_FILE_MINOR              0
+#define NUM_FILE_MINOR              1
 #define NUM_FILE_PATCH              0
 #define NUM_FILE_PRERELEASE         0
 
@@ -35,7 +35,7 @@
 #define STR_FILE_DESCRIPTION        TEXT(STR_COMPONENT_DESCRIPTION)
 
 #define NUM_PRODUCT_MAJOR           3
-#define NUM_PRODUCT_MINOR           0
+#define NUM_PRODUCT_MINOR           1
 #define NUM_PRODUCT_PATCH           0
 #define NUM_PRODUCT_PRERELEASE      0
 
@@ -226,7 +226,7 @@
 #define IDD_PREFERENCES_WT                  2500
 #define IDD_PREFERENCES_WT_NAME             "Wavetable"
 
-#define IDC_BASSMIDI_VOLUME_LBL             2501
+#define IDC_BASSMIDI_GAIN_LBL               2501
 #define IDC_BASSMIDI_GAIN                   2502
 
 #define IDC_RESAMPLING_LBL                  2503

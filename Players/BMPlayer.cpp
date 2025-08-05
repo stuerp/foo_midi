@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.07.13) **/
+/** $VER: BMPlayer.cpp (2025.07.25) **/
 
 #include "pch.h"
 
@@ -8,10 +8,9 @@
 #include "BASSInitializer.h"
 #include "SoundfontCache.h"
 #include "Exception.h"
+#include "Encoding.h"
 #include "Support.h"
 #include "Log.h"
-
-#include <sflist.h>
 
 #include <map>
 
@@ -21,14 +20,11 @@ static BASSInitializer _BASSInitializer;
 
 BMPlayer::BMPlayer() : player_t()
 {
-    ::memset(_Streams, 0, sizeof(_Streams));
-
+    _HasBankSelects = false;
     _InterpolationMode = 0;
     _DoReverbAndChorusProcessing = true;
     _IgnoreCC32 = false;
     _VoiceCount = 256;
-    _SFList[0] = nullptr;
-    _SFList[1] = nullptr;
 
     ::memset(_NRPNLSB, 0xFF, sizeof(_NRPNLSB));
     ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
@@ -141,22 +137,52 @@ bool BMPlayer::Startup()
     if (_IsStarted)
         return true;
 
+    // Determine if the MIDI stream contains CC#0 Bank Select messages that any other bank than 0 and 127 (Drums)
+    for (const auto & m : _Messages)
+    {
+        int Status = (int)  (m.Data        & 0xF0u);
+        int Param1 = (int) ((m.Data >>  8) & 0xFFu);
+        int Param2 = (int) ((m.Data >> 16) & 0xFFu);
+
+        if ((Status == midi::ControlChange) && (Param1 == midi::BankSelect) && (Param2 != 0) && (Param2 != 127))
+        {
+            _HasBankSelects = true;
+            break;
+        }
+    }
+
+    std::vector<BASS_MIDI_FONTEX> SoundfontConfigurations;
+
+    size_t LoadCount = 0;
+
+    for (const auto & sf : _Soundfonts)
+    {
+        try
+        {
+            LoadSoundfontConfiguration(sf, SoundfontConfigurations);
+            ++LoadCount;
+        }
+        catch (const std::exception & e)
+        {
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " BASSMIDI player is unable to load configuration for soundfont \"%s\": %s", (const char *) sf.FilePath.string().c_str(), e.what());
+        }
+    }
+
+    if (LoadCount == 0)
+    {
+        _ErrorMessage = STR_COMPONENT_BASENAME " failed to load any soundfont. Check the console for more information.";
+
+        Shutdown();
+
+        return false;
+    }
+
     _SrcFrames = new float[MaxFrames * MaxChannels];
 
     if (_SrcFrames == nullptr)
         return false;
 
-    std::vector<BASS_MIDI_FONTEX> SoundfontConfigurations;
-
-    for (const auto & sf : _Soundfonts)
-    {
-        if (!LoadSoundfontConfiguration(sf, SoundfontConfigurations))
-        {
-            _ErrorMessage = "Unable to load configuration for soundfont \"" + sf.FilePath() + "\"";
-
-            return false;
-        }
-    }
+    _Streams.resize(_PortNumbers.size());
 
     const DWORD ChannelsPerStream = 32;
     const DWORD Flags = (DWORD)(BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE | (_DoReverbAndChorusProcessing ? 0 : BASS_MIDI_NOFX));
@@ -209,22 +235,7 @@ void BMPlayer::Shutdown()
         }
     }
 
-    for (auto Soundfont : _SoundfontHandles)
-        ::CacheRemoveSoundfont(Soundfont);
-
-    _SoundfontHandles.resize(0);
-
-    if (_SFList[0])
-    {
-        ::CacheRemoveSoundfontList(_SFList[0]);
-        _SFList[0] = nullptr;
-    }
-
-    if (_SFList[1])
-    {
-        ::CacheRemoveSoundfontList(_SFList[1]);
-        _SFList[1] = nullptr;
-    }
+    _Streams.resize(0);
 
     if (_SrcFrames != nullptr)
     {
@@ -244,7 +255,7 @@ void BMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 
         ::memset(dstFrames, 0, NumSamples * sizeof(dstFrames[0]));
 
-        for (auto & Stream : _Streams)
+        for (const auto & Stream : _Streams)
         {
             ::BASS_ChannelGetData(Stream, _SrcFrames, BASS_DATA_FLOAT | (DWORD) (NumSamples * sizeof(_SrcFrames[0])));
 
@@ -294,17 +305,17 @@ void BMPlayer::SendEvent(uint32_t data)
     {
         size_t Channel = Event[0] & 0x0Fu;
 
-        if ((Event[1] == midi::ControlChangeNumbers::NRPNMSB) && (Event[2] == 0x01)) // Set NRPN MSB Vibrato Depth
+        if ((Event[1] == midi::Controller::NRPNMSB) && (Event[2] == 0x01)) // Set NRPN MSB Vibrato Depth
         {
             _NRPNMSB[Channel] = Event[2];
         }
         else
-        if ((Event[1] == midi::ControlChangeNumbers::NRPNLSB) && (Event[2] == 0x09)) // Set NRPN LSB Vibrato Depth
+        if ((Event[1] == midi::Controller::NRPNLSB) && (Event[2] == 0x09)) // Set NRPN LSB Vibrato Depth
         {
             _NRPNLSB[Channel] = Event[2];
         }
         else
-        if ((Event[1] == midi::ControlChangeNumbers::DataEntry) && (_NRPNMSB[Channel] == 0x01) && (_NRPNLSB[Channel] == 0x09))
+        if ((Event[1] == midi::Controller::DataEntry) && (_NRPNMSB[Channel] == 0x01) && (_NRPNLSB[Channel] == 0x09))
         {
             _NRPNMSB[Channel] = _NRPNLSB[Channel] = 0xFF;
 
@@ -314,7 +325,7 @@ void BMPlayer::SendEvent(uint32_t data)
 
     uint8_t PortNumber = (data >> 24) & 0x7Fu;
 
-    if (PortNumber > (_countof(_Streams) - 1))
+    if (PortNumber > (_Streams.size() - 1))
         PortNumber = 0;
 
     const DWORD EventSize = (DWORD)((Status >= midi::TimingClock && Status <= midi::MetaData) ? 1 : ((Status == midi::ProgramChange || Status == midi::ChannelPressure) ? 2 : 3));
@@ -327,12 +338,12 @@ void BMPlayer::SendEvent(uint32_t data)
 /// </summary>
 void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber)
 {
-    if (portNumber > (_countof(_Streams) - 1))
+    if (portNumber > (_Streams.size() - 1))
         portNumber = 0;
 
     if (portNumber == 0)
     {
-        for (auto & Stream : _Streams)
+        for (const auto & Stream : _Streams)
             ::BASS_MIDI_StreamEvents(Stream, BASS_MIDI_EVENTS_RAW, event, (DWORD) size);
     }
     else
@@ -344,162 +355,121 @@ void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
 /// <summary>
 /// Loads the configuration from the specified soundfont.
 /// </summary>
-bool BMPlayer::LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
+void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations)
 {
-    std::filesystem::path FilePath(soundFont.FilePath());
-
-    if (IsOneOf(FilePath.extension(), { L".sf2", L".sf3", L".sf2pack", L".sfogg" }))
+    if (!sf.FontEx.empty())
     {
-        HSOUNDFONT hSoundfont = ::CacheAddSoundfont(soundFont.FilePath());
+        HSOUNDFONT hSoundfont = ::CacheAddSoundfont(sf.FilePath);
 
-        if (hSoundfont == 0)
+        if (hSoundfont == NULL)
         {
-            Shutdown();
+            int ErrorCode = ::BASS_ErrorGetCode();
 
-            _ErrorMessage = "Unable to load sound font \"" + soundFont.FilePath() + "\"";
+            if (ErrorCode == BASS_ERROR_FILEOPEN)
+                throw std::exception(::FormatText("Failed to open soundfont \"%s\"", sf.FilePath.string().c_str()).c_str());
 
-            return false;
+            if (ErrorCode == BASS_ERROR_FILEFORM)
+                throw std::exception(::FormatText("Soundfont \"%s\" has an unsupported format", sf.FilePath.string().c_str()).c_str());
+
+            throw std::exception(::FormatText("Failed to load \"%s\": error %u", sf.FilePath.string().c_str(), ErrorCode).c_str());
         }
 
-        _SoundfontHandles.push_back(hSoundfont);
+        ::BASS_MIDI_FontSetVolume(hSoundfont, sf.Gain);
 
-        ::BASS_MIDI_FontSetVolume(hSoundfont, soundFont.Volume());
+        DumpSoundfont(sf.FilePath, hSoundfont);
 
-        BASS_MIDI_FONTEX fex = { hSoundfont, -1, -1, -1, soundFont.BankOffset(), 0 }; // Load the whole sound font.
-
-        soundFontConfigurations.push_back(fex);
-
-        return true;
-    }
-
-    if (IsOneOf(FilePath.extension(), { L".sflist", L".json" }))
-    {
-        sflist_t ** SFList = &_SFList[0];
-
-        if (*SFList)
-            SFList = &_SFList[1];
-
-        *SFList = ::CacheAddSoundfontList(soundFont.FilePath());
-
-        if (!*SFList)
-            return false;
-
-        BASS_MIDI_FONTEX * fex = (*SFList)->FontEx;
-
-        for (size_t i = 0, j = (*SFList)->Count; i < j; ++i)
-            soundFontConfigurations.push_back(fex[i]);
-
-        return true;
-    }
-
-    return false;
-}
-
-#ifdef Old
-/// <summary>
-/// Loads the configuration from the specified soundfont.
-/// </summary>
-bool BMPlayer::LoadSoundFontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept
-{
-    std::string FileExtension;
-
-    size_t dot = soundFont.FilePath().find_last_of('.');
-
-    if (dot != std::string::npos)
-        FileExtension.assign(soundFont.FilePath().begin() + (const __int64)(dot + 1), soundFont.FilePath().end());
-
-    if ((::stricmp_utf8(FileExtension.c_str(), "sf2") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf3") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sf2pack") == 0) || (::stricmp_utf8(FileExtension.c_str(), "sfogg") == 0))
-    {
-        HSOUNDFONT hSoundFont = ::CacheAddSoundFont(soundFont.FilePath());
-
-        if (hSoundFont == 0)
+        for (BASS_MIDI_FONTEX fex : sf.FontEx)
         {
-            Shutdown();
-
-            _ErrorMessage = "Unable to load SoundFont \"" + soundFont.FilePath() + "\"";
-
-            return false;
-        }
-
-        _SoundFontHandles.push_back(hSoundFont);
-
-        ::BASS_MIDI_FontSetVolume(hSoundFont, soundFont.Volume());
-
-        if (soundFont.IsEmbedded())
-        {
-            BASS_MIDI_FONTINFO SoundFontInfo;
-
-            if (::BASS_MIDI_FontGetInfo(hSoundFont, &SoundFontInfo))
-            {
-                DWORD * Presets = (DWORD *) ::malloc(SoundFontInfo.presets * sizeof(DWORD));
-
-                if (Presets != nullptr)
-                {
-                    if (::BASS_MIDI_FontGetPresets(hSoundFont, Presets))
-                    {
-                        console::print("Mapping ", SoundFontInfo.presets, " presets from embedded sound font \"", SoundFontInfo.name, "\":");
-
-                        for (DWORD i = 0; i < SoundFontInfo.presets; ++i)
-                        {
-                            const int    PresetNumber = LOWORD(Presets[i]);
-                            const int    SrcBank      = HIWORD(Presets[i]);
-                            const char * PresetName   = ::BASS_MIDI_FontGetPreset(hSoundFont, PresetNumber, SrcBank);
-
-                            int DstBank = SrcBank;
-
-/* FIXME: This is the only way to get Rock_test.rmi working.
-                            if (SrcBank != 128)
-                            {
-                                DstBank += soundFont.BankOffset();
-                            }
-*/
-                            BASS_MIDI_FONTEX fex =
-                            {
-                                hSoundFont, PresetNumber, SrcBank, PresetNumber, (DstBank >> 7) & 0x7F, DstBank & 0x7F
-                            };
-
-                            soundFontConfigurations.push_back(fex);
-
-                            console::printf("SrcBank %3d DstBank %3d Preset %3d: \"%s\"", SrcBank, DstBank, PresetNumber, PresetName);
-                        }
-                    }
-
-                    ::free(Presets);
-                }
-            }
-        }
-        else
-        {
-            BASS_MIDI_FONTEX fex = { hSoundFont, -1, -1, -1, 0, 0 }; // Load the whole sound font.
+            fex.font = hSoundfont;
 
             soundFontConfigurations.push_back(fex);
         }
 
-        return true;
+        return;
     }
 
-    if ((::stricmp_utf8(FileExtension.c_str(), "sflist") == 0) || (::stricmp_utf8(FileExtension.c_str(), "json") == 0))
+    if (IsOneOf(sf.FilePath.extension(), { L".sf2", L".sf3", L".sf2pack", L".sfogg" }))
     {
-        sflist_t ** SFList = &_SFList[0];
+        HSOUNDFONT hSoundfont = ::CacheAddSoundfont(sf.FilePath);
 
-        if (*SFList)
-            SFList = &_SFList[1];
+        if (hSoundfont == NULL)
+        {
+            int ErrorCode = ::BASS_ErrorGetCode();
 
-        *SFList = ::CacheAddSoundFontList(soundFont.FilePath());
+            if (ErrorCode == BASS_ERROR_FILEOPEN)
+                throw std::exception(::FormatText("Failed to open soundfont \"%s\"", sf.FilePath.string().c_str()).c_str());
 
-        if (!*SFList)
-            return false;
+            if (ErrorCode == BASS_ERROR_FILEFORM)
+                throw std::exception(::FormatText("Soundfont \"%s\" has an unsupported format", sf.FilePath.string().c_str()).c_str());
 
-        BASS_MIDI_FONTEX * fex = (*SFList)->FontEx;
+            throw std::exception(::FormatText("Failed to load \"%s\": error %u", sf.FilePath.string().c_str(), ErrorCode).c_str());
+        }
 
-        for (size_t i = 0, j = (*SFList)->Count; i < j; ++i)
-            soundFontConfigurations.push_back(fex[i]);
+        ::BASS_MIDI_FontSetVolume(hSoundfont, sf.Gain);
 
-        return true;
+        DumpSoundfont(sf.FilePath, hSoundfont);
+
+        int BankOffset = sf.BankOffset;
+
+        if (sf.IsEmbedded)
+        {
+            if (sf.IsDLS)
+            {
+                if (_FileFormat == midi::XMF)
+                    BankOffset = -1;
+            }
+        }
+
+        const BASS_MIDI_FONTEX fex =
+        {
+            .font     = hSoundfont,
+            .spreset  = -1,
+            .sbank    = -1,
+            .dpreset  = -1,
+            .dbank    = BankOffset,
+            .dbanklsb = 0
+        }; // Load the whole sound font.
+
+        soundFontConfigurations.push_back(fex);
+
+        return;
     }
 
-    return false;
+    throw std::exception("Soundfont format not supported");
 }
-#endif
+
+/// <summary>
+/// Dumps the presets of a soundfont to the console.
+/// </summary>
+void BMPlayer::DumpSoundfont(const fs::path & filePath, HSOUNDFONT hSoundfont) noexcept
+{
+    if (Log.GetLevel() != LogLevel::Trace)
+        return;
+
+    console::printf("Soundfont \"%s\"", filePath.string().c_str());
+
+    BASS_MIDI_FONTINFO sfi;
+
+    if (!::BASS_MIDI_FontGetInfo(hSoundfont, &sfi))
+        return;
+
+    console::printf("- Name: \"%s\"", sfi.name);
+    console::printf("- Copyright: \"%s\"", sfi.copyright);
+    console::printf("- Comment: \"%s\"", sfi.comment);
+
+    std::vector<DWORD> Presets(sfi.presets);
+
+    if (!::BASS_MIDI_FontGetPresets(hSoundfont, Presets.data()))
+        return;
+
+    for (const auto & Preset : Presets)
+    {
+        const int    BankNumber    = HIWORD(Preset);
+        const int    ProgramNumber = LOWORD(Preset);
+        const char * PresetName    = ::BASS_MIDI_FontGetPreset(hSoundfont, ProgramNumber, BankNumber);
+
+        console::printf("- Bank %5d, Program %3d, \"%s\"", BankNumber, ProgramNumber, PresetName);
+    }
+}
 
 #pragma endregion

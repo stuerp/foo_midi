@@ -1,5 +1,5 @@
 
-/** $VER: CLAPWindow.h (2025.06.29) P. Stuer **/
+/** $VER: CLAPWindow.h (2025.08.01) P. Stuer **/
 
 #pragma once
 
@@ -16,6 +16,8 @@
 
 #include "Resource.h"
 
+#include "CLAPPlugIn.h"
+
 #pragma hdrstop
 
 namespace CLAP
@@ -30,7 +32,7 @@ class Host;
 class Window : public CDialogImpl<Window>
 {
 public:
-    Window() noexcept : m_bMsgHandled(false), _Parameters(), _MinMaxBounds() { }
+    Window() noexcept : m_bMsgHandled(false), _Context(), _MinMaxBounds() { }
 
     Window(const Window &) = delete;
     Window & operator=(const Window &) = delete;
@@ -41,39 +43,15 @@ public:
 
     enum { IDD = IDD_CLAP_WINDOW };
 
-    struct Parameters
+    struct Context
     {
-        std::string Name;
-        CRect _Bounds;
+        CLAP::Host * _Host;
+        std::shared_ptr<CLAP::PlugIn> _PlugIn;
 
-        fs::path _FilePath;
-        uint32_t _Index;
-        CRect _GUIBounds;
+        CRect _Bounds;
     };
 
     void AdjustSize(RECT & wr) const noexcept;
-
-    struct XYZ
-    {
-        Window * This;
-        Host * Host;
-    };
-
-    void Run(Host * host)
-    {
-        XYZ p = { this, host };
-
-        ::CreateThread(nullptr, 0, ThreadProc, &p, 0, nullptr);
-    }    
-
-    static DWORD WINAPI ThreadProc(LPVOID lpParam) noexcept
-    {
-        XYZ * p = (XYZ *)(lpParam);
-
-        return p->This->DialogThreadProc(p->Host);
-    }
-
-    DWORD WINAPI DialogThreadProc(Host * Host);
 
 private:
     #pragma region CDialogImpl
@@ -83,26 +61,27 @@ private:
 
     void OnGetMinMaxInfo(LPMINMAXINFO mmi) const noexcept;
 
-#ifdef _DEBUG
     /// <summary>
-    /// Returns a brush that the system uses to draw the dialog background. For layout debugging purposes.
+    /// Returns a brush that the system uses to draw the dialog background.
     /// </summary>
     HBRUSH OnCtlColorDlg(HDC, HWND) const noexcept
     {
-        return (HBRUSH) ::GetStockObject(DKGRAY_BRUSH);
+        return (HBRUSH) NULL_BRUSH; // ::GetStockObject(DKGRAY_BRUSH);
     }
-#endif
 
     BEGIN_MSG_MAP_EX(Window)
         MSG_WM_INITDIALOG(OnInitDialog)
-        MSG_WM_CLOSE(OnClose)
+
+        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
         MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
+
+        MSG_WM_CLOSE(OnClose)
     END_MSG_MAP()
 
     #pragma endregion
 
 private:
-    Parameters _Parameters;
+    Context _Context;
     CRect _MinMaxBounds;
 };
 

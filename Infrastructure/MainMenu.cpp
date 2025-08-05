@@ -3,8 +3,6 @@
 
 #include "pch.h"
 
-#include "CLAPHost.h"
-
 #pragma hdrstop
 
 namespace
@@ -26,7 +24,7 @@ namespace
         void get_display(pfc::string_base & text, t_uint32 & flags) override
         {
             text = "Show plug-in GUI";
-            flags = CLAP::_Host.HasGUI() ? mainmenu_commands::flag_disabled : 0;
+            flags = mainmenu_commands::flag_disabled;
         }
 
         void execute(service_ptr_t<service_base> callback) override

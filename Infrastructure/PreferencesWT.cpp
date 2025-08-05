@@ -171,9 +171,9 @@ void WTDialog::apply()
 
         GetDlgItemTextW(IDC_BASSMIDI_GAIN, Text, _countof(Text));
 
-        CfgBASSMIDIVolume = std::clamp(::_wtof(Text), 0., 2.);
+        CfgBASSMIDIGain = std::clamp(::_wtof(Text), 0., 2.);
 
-        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(CfgBASSMIDIGain, 4, 2));
 
         CfgBASSMIDIResamplingMode = (t_int32) SendDlgItemMessage(IDC_BASSMIDI_RESAMPLING, CB_GETCURSEL);
 
@@ -271,7 +271,7 @@ void WTDialog::reset()
 {
     // BASS MIDI
     {
-        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(DefaultBASSMIDIVolume, 4, 2));
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(DefaultBASSMIDIGain, 4, 2));
 
         SendDlgItemMessage(IDC_BASSMIDI_RESAMPLING, CB_SETCURSEL, DefaultBASSMIDIResamplingMode);
 
@@ -283,7 +283,7 @@ void WTDialog::reset()
 
         const int ControlIds[] =
         {
-            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_GAIN,
+            IDC_BASSMIDI_GAIN_LBL, IDC_BASSMIDI_GAIN,
             IDC_RESAMPLING_LBL, IDC_BASSMIDI_RESAMPLING,
             IDC_CACHED_LBL, IDC_CACHED
         };
@@ -359,7 +359,7 @@ BOOL WTDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 {
     // BASS MIDI
     {
-        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(CfgBASSMIDIVolume, 4, 2));
+        ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(CfgBASSMIDIGain, 4, 2));
 
         auto w = (CComboBox) GetDlgItem(IDC_BASSMIDI_RESAMPLING);
 
@@ -377,7 +377,7 @@ BOOL WTDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 
         const int ControlIds[] =
         {
-            IDC_BASSMIDI_VOLUME_LBL, IDC_BASSMIDI_GAIN,
+            IDC_BASSMIDI_GAIN_LBL, IDC_BASSMIDI_GAIN,
             IDC_RESAMPLING_LBL, IDC_BASSMIDI_RESAMPLING,
             IDC_CACHED_LBL, IDC_CACHED
         };
@@ -555,7 +555,7 @@ bool WTDialog::HasChanged() noexcept
 
         GetDlgItemTextW(IDC_BASSMIDI_GAIN, Text, _countof(Text));
 
-        if (std::abs(::_wtof(Text) - CfgBASSMIDIVolume) > 0.001)
+        if (std::abs(::_wtof(Text) - CfgBASSMIDIGain) > 0.001)
             return true;
 
         if (SendDlgItemMessage(IDC_BASSMIDI_RESAMPLING, CB_GETCURSEL) != CfgBASSMIDIResamplingMode)
@@ -617,7 +617,7 @@ bool WTDialog::HasChanged() noexcept
 
         // MT32 GM Set
         {
-            if (SendDlgItemMessage(IDC_MT32_GM_SET, CB_GETCURSEL) != (UINT) CfgMT32EmuGMSet)
+            if (SendDlgItemMessage(IDC_MT32_GM_SET, CB_GETCURSEL) != (LRESULT) CfgMT32EmuGMSet)
                 return true;
         }
 

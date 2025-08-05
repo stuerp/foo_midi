@@ -95,46 +95,21 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-- v3.0.0.0, 2025-07-19
+v3.1.0.0, 2025-08-05
 
-- New: Resurrected yuno's fmmidi player.
-- New: User Guide [documentation](docs/README.md) (*Work in Progress*)
-  - The default Programs definition file is located in the component directory but can be changed in the Preferences dialog.
-- New: CLAP host functionality. foo_midi can now use [CLAP ((CLever Audio Plug-in API))](https://u-he.com/community/clap/) MIDI plug-ins to render the audio stream.
-  - Specify the directory containing CLAP plug-ins in the **Paths** preferences page.
-  - Take a look at [Nuked-SC55-CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP) for an example.
-- New: MIDI flavor `None` sends no SysEx messages to the player before playback starts.
-- New: **midi_player_ext** info field that contains the name of the active plug-in when a player supports it or the ADL, OPN and Nuked OPL3 emulator core.
-- New: FluidSynth can be configured using a configuration file. See [Configuration file](docs/README.md#configuration-file)
-- New: Detecting the extra percussion channel can be turned on or off in the Preferences.
-- New: Log level setting determines which foo_midi messages are written to the foobar2000 console.
-- Improved: Stricter interpretation of the RCP mute mode that prevents an RCP track from being included in the MIDI stream.
-- Improved: Updated LibMT32Emu to v2.7.2.
-- Improved: LibADLMIDI configuration
-  - Moved to separate **FM Synthesis** page. All the advanced settings can now be set here.
-  - Added Opal, Java, ESFMu, MAME OPL2, YMFM OPL2, YMFM OPL3, Nuked OPL2 LLE and Nuked OPL3 LLE as selectable emulator cores.
-  - Fixed sorting in bank names combobox.
-- Improved: LibOPNMIDI configuration
-  - Moved to separate **FM Synthesis*- page. All the advanced settings can now be set here.
-- Improved: Rewrote MuntPlayer to use LibMT32Emu API version 3.
-  - Supports [Versioned ROMs](https://github.com/dosbox-staging/dosbox-staging/wiki/MIDI#mt-32-roms).
-  - Samples are rendered as floating-point numbers.
-  - Limitation: Most of options are still hardcoded.
-- Improved: Added a couple of MT32Emu settings.
-- Improved: ADL player uses LibADLMIDI 1.6.0 and 64-bit floating-point samples.
-- Improved: OPN player uses LibOPNMIDI 1.6.0 and 64-bit floating-point samples. WOPN bank can be set from a file.
-- Improved: Added setting to reverse the stereo channels of the LibMT32Emu player (default is on).
-- Improved: Added enable or disable reverb processing by the LibMT32Emu player (default is on).
-- Improved: Skip to First Note, Loop Count and Fade-Out Time can be set on the main Preferences page.
-- Improved: Lots of little fixes, code cleanup and code polishing.
-- Improved: VSTi player issues a warning whenever it's host executable `vshost32.exe` and `vshost64.exe` can't be found. Some releases of MS Defender are known to delete the file.
-- Changed Moved BASS MIDI, FluidSynth and LibMT32Emu settings to new **Wavetable** preference page.
-- Changed: All advanced preferences have been moved to a Preferences page. The current values will **not** be migrated.
-- Changed: Loop mode descriptions should better reflect their functionality.
-- Fixed: Preferences dialog should adapt to High DPI settings now.
-- Fixed: An old threading issue caused by allowing the MIDI channels to be enabled or disabled during playback.
-- Fixed: The LibMT32Emu player reversed the left and the right channels in the output.
-- Fixed: Changing the channel mask setting did not always stick.
+- New: Added SFList support to the FluidSynth player. Due to limitations of the current FluidSynth API only the `fileName` property is used.
+- New: Added support for flat text SFList files.
+- New: Support for the editor (GUI) of CLAP plug-ins. Try f.e. [OctaSine](https://github.com/greatest-ape/OctaSine) or [Odin 2](https://thewavewarden.com/pages/odin-2/).
+- New: LibEDMIDI / Emu de MIDI player now uses [libEDMIDI](https://github.com/Wohlstand/libEDMIDI) by [Wohlstand](https://github.com/Wohlstand).
+- Improved: Some extra information in the console when using SFList files.
+- Improved: Error handling and reporting when reading soundfont lists.
+- Improved: FluidSynth handles DLS embedded in XMF files better.
+- Improved: BASSMIDI and FluidSynth only create as many streams or synthesizers as there are ports in the MIDI stream resulting in a faster startup.
+- Improved: Support for archives. MIDI files, soundfont files and soundfont list files can be bundled in an archive.
+- Improved: Overall hardening and polishing of the CLAP host.
+- Improved: Extra error handling when looking for soundfonts. Some UTF-8 conversions can fail.
+- Fixed: MIDI flavor **None** did not work completely as intended.
+- Fixed: 32-bit ADL and OPN player reported a wrong sample size to their respective libraries resulting in undefined behavior during playback.
 
 You can read the full history [here](docs/History.md).
 

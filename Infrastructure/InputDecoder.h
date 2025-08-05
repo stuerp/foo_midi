@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.07.15) **/
+/** $VER: InputDecoder.h (2025.08.01) **/
 
 #pragma once
 
@@ -168,7 +168,7 @@ private:
     uint32_t GetLength(size_t subSongIndex) noexcept;
     void InitializeFade() noexcept;
     void OverridePlayerSelection(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept;
-    void GetSoundfonts(const pfc::string & defaultSoundFontPath, abort_callback & abortHandler);
+    void GetSoundfonts(const fs::path & defaultSoundfontPath, abort_callback & abortHandler);
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
@@ -202,11 +202,12 @@ private:
 
     // Player Properties
     player_t * _Player;
-    CLAP::Host * _Host;
 
     PlayerType _PlayerType;
     bool _IsPlayerTypeOverriden;
     std::string _PlugInName;
+
+    CLAP::PlugIn * _CLAPPlugIn;
 
     // Sample rate dependent
     uint32_t _RequestedSampleRate;  // in Hz
@@ -228,7 +229,7 @@ private:
     uint32_t _ExtraPercussionChannel;
     uint32_t _CleanFlags;
 
-    float _BASSMIDIVolume;
+    float _BASSMIDIGain;
     uint32_t _BASSMIDIInterpolationMode;
 
     uint32_t _FluidSynthInterpolationMethod;

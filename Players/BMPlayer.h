@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.07.13) **/
+/** $VER: BMPlayer.h (2025.07.26) **/
 
 #pragma once
 
@@ -45,6 +45,8 @@ public:
         return ::BASS_MIDI_GetVersion();
     }
 
+    static void DumpSoundfont(const fs::path & filePath, HSOUNDFONT hSoundfont) noexcept;
+
 private:
     #pragma region player_t
 
@@ -53,15 +55,15 @@ private:
     virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
     virtual bool Reset() override;
 
-    virtual uint8_t GetPortCount() const noexcept override { return _countof(_Streams); };
+    virtual uint8_t GetPortCount() const noexcept override { return (uint8_t) _Streams.size(); };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
 
     #pragma endregion
 
-    bool LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations) noexcept;
-
+    void LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations);
+/*
     bool IsStarted() const noexcept
     {
         for (const auto & Stream : _Streams)
@@ -70,7 +72,7 @@ private:
 
         return true;
     }
-
+*/
 private:
     static const uint32_t MaxFrames = 512;
     static const uint32_t MaxChannels = 2;
@@ -78,11 +80,10 @@ private:
     float * _SrcFrames;
 
     std::vector<HSOUNDFONT> _SoundfontHandles;
-    sflist_t * _SFList[2];
 
-    static const size_t MaxPorts = 16;
+    static const size_t MaxPorts = 1;
 
-    HSTREAM _Streams[MaxPorts]; // Each stream corresponds to a port.
+    std::vector<HSTREAM> _Streams; // Each stream corresponds to a port.
 
     std::vector<soundfont_t> _Soundfonts;
 
@@ -90,6 +91,7 @@ private:
     uint32_t _InterpolationMode;
     uint32_t _VoiceCount;
 
+    bool _HasBankSelects;
     bool _DoReverbAndChorusProcessing;
     bool _IgnoreCC32; // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.
 

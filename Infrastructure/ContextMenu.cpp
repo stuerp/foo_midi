@@ -17,8 +17,6 @@
 #include "MIDISysExDumps.h"
 #include "MIDISysExFilter.h"
 
-#include "CLAPHost.h"
-
 unsigned int ContextMenu::get_num_items() noexcept
 {
     return _countof(Names);
@@ -183,7 +181,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
 
                             Success = midi::processor_t::Process(Object, pfc::wideFromUTF8(TmpFilePath), Container);
                         }
-                        catch (std::exception &)
+                        catch (...)
                         {
                         }
 

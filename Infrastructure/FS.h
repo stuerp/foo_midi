@@ -1,5 +1,5 @@
 
-/** $VER: FS.h (2025.07.05) **/
+/** $VER: FS.h (2025.07.26) **/
 
 #pragma once
 
@@ -15,6 +15,8 @@ namespace FluidSynth
 #pragma region FluidSynth API
 
 typedef void (WINAPIV * _fluid_version)(int * major, int * minor, int * micro);
+
+typedef int (WINAPIV * _fluid_audio_driver_register)(const char ** drivers);
 
 typedef fluid_settings_t * (WINAPIV * _new_fluid_settings)();
 
@@ -51,6 +53,15 @@ typedef int (WINAPIV * _fluid_synth_set_interp_method)(fluid_synth_t * synth, in
 typedef void (WINAPIV * _fluid_synth_add_sfloader)(fluid_synth_t * synth, fluid_sfloader_t * loader);
 typedef int (WINAPIV * _fluid_synth_sfload)(fluid_synth_t * synth, const char * filePath, int reset_presets);
 typedef int (WINAPIV * _fluid_synth_set_bank_offset)(fluid_synth_t * synth, int sfont_id, int offset);
+
+typedef const char * (WINAPIV * _fluid_sfont_get_name)(fluid_sfont_t * sfont);
+typedef const char * (WINAPIV * _fluid_preset_get_name)(fluid_preset_t * preset);
+
+typedef void (WINAPIV * _fluid_sfont_iteration_start)(fluid_sfont_t * sfont);
+typedef fluid_preset_t *(WINAPIV * _fluid_sfont_iteration_next)(fluid_sfont_t * sfont);
+
+typedef fluid_sfont_t * (WINAPIV * _fluid_synth_get_sfont_by_id)(fluid_synth_t * synth, int id);
+typedef fluid_preset_t * (WINAPIV * _fluid_sfont_get_preset)(fluid_sfont_t * sfont, int bankNumber, int programNumber);
 
 typedef int (WINAPIV * _fluid_synth_noteon)(fluid_synth_t * synth, int chan, int key, int vel);
 typedef int (WINAPIV * _fluid_synth_noteoff)(fluid_synth_t * synth, int chan, int key);
@@ -123,6 +134,8 @@ public:
 public:
     _fluid_version GetVersion;
 
+    _fluid_audio_driver_register RegisterDriver;
+
     _new_fluid_settings CreateSettings;
 
     _fluid_settings_setnum SetNumericSetting;
@@ -143,17 +156,23 @@ public:
     _fluid_free Free;
     _delete_fluid_settings DeleteSettings;
 
-    _fluid_is_soundfont IsSoundFont;
+    _fluid_is_soundfont IsSoundfont;
     
     _new_fluid_synth CreateSynthesizer;
-    _fluid_synth_add_sfloader AddSoundFontLoader;
+    _fluid_synth_add_sfloader AddSoundfontLoader;
     _fluid_synth_system_reset ResetSynthesizer;
     _delete_fluid_synth DeleteSynthesizer;
 
-    _new_fluid_defsfloader CreateSoundFontLoader;
-    _fluid_sfloader_set_callbacks SetSoundFontLoaderCallbacks;
-    _fluid_synth_sfload LoadSoundFont;
-    _fluid_synth_set_bank_offset SetSoundFontBankOffset;
+    _new_fluid_defsfloader CreateSoundfontLoader;
+    _fluid_sfloader_set_callbacks SetSoundfontLoaderCallbacks;
+    _fluid_synth_sfload LoadSoundfont;
+    _fluid_synth_set_bank_offset SetSoundfontBankOffset;
+
+    _fluid_sfont_get_name GetSoundfontName;
+    _fluid_preset_get_name GetPresetName;
+
+    _fluid_synth_get_sfont_by_id GetSoundfont;
+    _fluid_sfont_get_preset GetPreset;
 
     _fluid_synth_set_interp_method SetInterpolationMethod;
 
@@ -196,7 +215,7 @@ public:
 private:
     HMODULE _hModule;
 
-    static inline const WCHAR * LibraryName = L"libfluidsynth-3.dll";
+    static inline const char * LibraryName = "libfluidsynth-3.dll";
 };
 
 class Host

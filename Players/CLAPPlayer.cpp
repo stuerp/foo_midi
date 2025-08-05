@@ -1,10 +1,10 @@
 
-/** $VER: CLAPPlayer.cpp (2025.07.12) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.cpp (2025.08.02) P. Stuer - Wrapper for CLAP plugins **/
 
 #include "pch.h"
 
 #include "CLAPPlayer.h"
-#include "CLAPHost.h"
+#include "CLAPPlugIn.h"
 
 #include "Resource.h"
 #include "Encoding.h"
@@ -13,9 +13,8 @@
 
 #pragma region player_t
 
-CLAPPlayer::CLAPPlayer(CLAP::Host * host) noexcept : player_t(), _OutChannels { }, _AudioOut { }, _AudioOuts { }
+CLAPPlayer::CLAPPlayer() noexcept : player_t(), _OutChannels { }, _AudioOut { }, _AudioOuts { }
 {
-    _Host = host;
 }
 
 CLAPPlayer::~CLAPPlayer()
@@ -28,10 +27,22 @@ bool CLAPPlayer::Startup()
     if (_IsStarted)
         return true;
 
-    if (!_Host->IsPlugInLoaded())
-        return false;
+	fb2k::inMainThreadSynchronous2([this]
+    {
+        if (_PlugIn != nullptr)
+            return;
 
-    if (!_Host->PlugInPrefers64bitAudio())
+        _PlugIn = _CLAPHost.CreatePlugIn();
+
+        if (_PlugIn == nullptr)
+            throw pfc::exception("Failed to create CLAP plug-in");
+
+        _PlugIn->Initialize();
+
+        _PlugIn->Activate(_SampleRate);
+    });
+
+    if (!_PlugIn->Prefers64bitAudio())
     {
         _OutChannels[0] = new float[GetBlockSize()];
         _OutChannels[1] = new float[GetBlockSize()];
@@ -50,7 +61,7 @@ bool CLAPPlayer::Startup()
 
     _AudioOuts[0] = _AudioOut;
 
-    if (!_Host->ActivatePlugIn((double) _SampleRate, 1, GetBlockSize()))
+    if (!_PlugIn->StartProcessing())
         return false;
 
     _IsStarted = true;
@@ -66,10 +77,10 @@ void CLAPPlayer::Shutdown()
     if (!_IsStarted)
         return;
 
-    if (!_Host->IsPlugInLoaded())
-        return;
+    _IsStarted = false; // Prevent re-entry
 
-    _Host->DeactivatePlugIn();
+    if (_PlugIn)
+        _PlugIn->StopProcessing();
 
     if (_OutChannels[1])
     {
@@ -83,7 +94,17 @@ void CLAPPlayer::Shutdown()
         _OutChannels[0] = nullptr;
     }
 
-    _IsStarted = false;
+    // Add another reference to the plug-in pointer to prevent it from being destroyed prematurely and schedule a cleanup on the main thread.
+    auto PlugIn = _PlugIn;
+
+    auto Cleanup = [PlugIn]
+    {
+        PlugIn->Deactivate();
+
+        PlugIn->Terminate();
+    };
+
+    fb2k::inMainThread(Cleanup);
 }
 
 void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
@@ -107,7 +128,7 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
             .out_events          = &_OutEvents,
         };
 
-        if (_Host->Process(Processor))
+        if (!_PlugIn->Process(Processor))
             return; // throw exception_io_data("CLAP plug-in event processing failed");
 
         if (_AudioOut.data32 != nullptr)
@@ -143,6 +164,8 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 /// </summary>
 bool CLAPPlayer::Reset()
 {
+    assert(_countof(_AudioOuts) == 1);
+
     ResetPort(0, 0);
 
     return true;

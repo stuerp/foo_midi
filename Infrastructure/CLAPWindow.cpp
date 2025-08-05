@@ -1,11 +1,14 @@
 
-/** $VER: Window.cpp (2025.06.30) P. Stuer **/
+/** $VER: Window.cpp (2025.08.02) P. Stuer **/
 
 #include "pch.h"
 
 #include "CLAPWindow.h"
+#include "CLAPPlugIn.h"
 #include "CLAPHost.h"
 #include "Encoding.h"
+
+#include "Log.h"
 
 namespace CLAP
 {
@@ -18,20 +21,33 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
     if (lParam == NULL)
         return FALSE;
 
-    _Parameters = *(Parameters *) lParam;
+    try
+    {
+        _Context = *(Context *) lParam;
 
-    _MinMaxBounds = _Parameters._GUIBounds;
+        _Context._PlugIn->GetPreferredGUISize(_MinMaxBounds);
 
-    AdjustSize(_MinMaxBounds);
+        AdjustSize(_MinMaxBounds);
 
-    if (::IsRectEmpty(&_Parameters._Bounds))
-        _Parameters._Bounds = _MinMaxBounds;
+        if (::IsRectEmpty(&_Context._Bounds))
+            _Context._Bounds = _MinMaxBounds;
 
-    MoveWindow(&_Parameters._Bounds);
+        MoveWindow(&_Context._Bounds);
 
-    SetWindowTextW((std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(_Parameters.Name)).c_str());
+        auto Text = std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(_Context._Host->GetPlugInName()).c_str();
 
-    return TRUE;
+        SetWindowTextW(Text.c_str());
+
+        _Context._PlugIn->ShowGUI(m_hWnd);
+
+        return TRUE;
+    }
+    catch (std::exception & e)
+    {
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to intialize the host window for the CLAP editor: %s", e.what());
+
+        return FALSE;
+    }
 }
 
 /// <summary>
@@ -39,9 +55,11 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
 /// </summary>
 void Window::OnClose() noexcept
 {
-    GetWindowRect(&_Parameters._Bounds);
+    GetWindowRect(&_Context._Bounds);
 
-    DestroyWindow();
+    _Context._PlugIn->HideGUI();
+
+    EndDialog(0);
 }
 
 /// <summary>
@@ -69,48 +87,6 @@ void Window::AdjustSize(RECT & wr) const noexcept
     wr.bottom -= wr.top;
 
     wr.left = wr.top = 0;
-}
-
-// FIXME: GUI support not implemented yet
-DWORD WINAPI Window::DialogThreadProc(Host * host)
-{
-    CLAP::Window dlg;
-
-    CLAP::Window::Parameters dp =
-    {
-        ._Bounds = { },
-        ._FilePath = "", //_FilePath,
-        ._Index = 0, //_Index,
-        ._GUIBounds = { },
-    };
-
-    host->GetGUISize(dp._GUIBounds);
-
-    HWND hWnd = dlg.Create(GetDesktopWindow(), (LPARAM) &dp);
-
-    if (hWnd != NULL)
-    {
-        clap_window_t Window = { .api = "win32", .win32 = hWnd };
-
-        if (host->SetWindow(&Window))
-        {
-            ShowWindow(SW_SHOW);
-
-            // Message pump
-            MSG msg;
-
-            while (GetMessage(&msg, NULL, 0, 0))
-            {
-//              if (!IsDialogMessage(hWnd, &msg))
-                {
-                    ::TranslateMessage(&msg);
-                    DispatchMessage(&msg);
-                }
-            }
-        }
-    }
-
-    return 0;
 }
 
 }

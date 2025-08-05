@@ -104,7 +104,7 @@ public:
 
             midi::processor_t::Process(Object, pfc::wideFromUTF8(filePath), Container, Options);
         }
-        catch (std::exception & e)
+        catch (const std::exception & e)
         {
             pfc::string Message = "Failed to read MIDI file: ";
 

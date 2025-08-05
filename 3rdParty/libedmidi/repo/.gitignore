@@ -1,0 +1,9 @@
+*.user*
+Debug
+Release
+*.o
+emidi
+Makefile
+build/
+build-*/
+.DS_Store

@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.07.07) **/
+/** $VER: FSPlayer.h (2025.07.26) **/
 
 #pragma once
 
@@ -21,7 +21,7 @@
 class FSPlayer : public player_t
 {
 public:
-    FSPlayer();
+    FSPlayer() noexcept;
     virtual ~FSPlayer();
 
     void Initialize(const WCHAR * basePath);
@@ -48,6 +48,8 @@ public:
         return ((DWORD) Major << 24) | (Minor << 16) | (Micro << 8);
     }
 
+    void DumpSoundfont(const fs::path & filePath, fluid_synth_t * synth, int soundfontId) noexcept;
+
 private:
     #pragma region player_t
 
@@ -56,23 +58,30 @@ private:
     virtual void Render(audio_sample * sampleData, uint32_t samplesCount) override;
     virtual bool Reset() override;
 
-    virtual uint8_t GetPortCount() const noexcept override { return _countof(_Synths); };
+    virtual uint8_t GetPortCount() const noexcept override { return (uint8_t) _Synths.size(); };
 
     virtual void SendEvent(uint32_t data) override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
 
     #pragma endregion
 
-    fluid_sfloader_t * GetSoundFontLoader(fluid_settings_t * settings) const;
+    bool InitializeSettings() noexcept;
 
+    fluid_sfloader_t * GetSoundfontLoader(fluid_settings_t * settings) const noexcept;
+/*
     bool IsStarted() const noexcept
     {
+        if (_Synths.empty())
+            return false;
+
         for (const auto & Synth : _Synths)
             if (Synth == nullptr)
                 return false;
 
         return true;
     }
+*/
+    void LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf);
 
     DWORD MakeDWORD(int a, int b, int c, int d) const noexcept
     {
@@ -80,22 +89,22 @@ private:
     }
 
 private:
-    std::string _ErrorMessage;
-
     fluid_settings_t * _Settings; // All synths share the same config.
 
-    static const size_t MaxPorts = 16;
+    static const size_t MaxPorts = 1;
 
-    fluid_synth_t * _Synths[MaxPorts]; // Each synth corresponds to a port.
+    std::vector<fluid_synth_t *> _Synths; // Each synth corresponds to a port.
     
-    std::vector<soundfont_t> _SoundFonts;
+    std::vector<soundfont_t> _Soundfonts;
 
-    bool _DoDynamicLoading;
+    bool _HasBankSelects;
     bool _DoReverbAndChorusProcessing;
+    bool _DoDynamicLoading;
     uint32_t _VoiceCount;
 
     uint32_t _InterpolationMethod;
 
     FluidSynth::API _API;
 };
+
 #pragma warning(default: 4820) // x bytes padding added after data member

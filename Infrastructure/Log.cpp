@@ -18,6 +18,7 @@ public:
     virtual ~NullLog() final { };
 
     ILog & SetLevel(LogLevel level) noexcept override final { return *this; }
+    LogLevel GetLevel() const noexcept override final { return LogLevel::Never; }
 
     ILog & AtFatal() noexcept override final { return *this; }
     ILog & AtError() noexcept override final { return *this; }
@@ -51,6 +52,11 @@ public:
         _Level = level;
 
         return *this;
+    }
+
+    LogLevel GetLevel() const noexcept override final
+    {
+        return _Level;
     }
 
     ILog & AtFatal() noexcept override final
