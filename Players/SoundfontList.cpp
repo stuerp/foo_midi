@@ -1,9 +1,9 @@
 
-/** $VER: Soundfont.cpp (2025.07.25) P. Stuer - Soundfont support routines for wavetable players **/
+/** $VER: SoundfontList.cpp (2025.08.15) P. Stuer - Soundfont list support routines for wavetable players **/
 
 #include "pch.h"
 
-#include "Soundfont.h"
+#include "SoundfontList.h"
 #include "SoundfontCache.h"
 
 #include "Resource.h"
@@ -11,7 +11,7 @@
 #include "Log.h"
 
 #include <json-builder.h>
-#include <sflist.h>
+//#include <sflist.h>
 
 #include <fstream>
 
@@ -309,7 +309,7 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                 .spreset  = -1,
                 .sbank    = -1,
                 .dpreset  = -1,
-                .dbank    =  0,
+                .dbank    =  0, // Use dbank = 1 to map bank n to bank n + 1.
                 .dbanklsb =  0
             };
 
@@ -319,7 +319,7 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
             // Simplest case, whole bank loading
             if ((JSONChannels->type == json_none) && (JSONPatchMappings->type == json_none))
             {
-                sf.FontEx.push_back(fex);
+                sf.Fonts.push_back(fex);
             }
             else
             {
@@ -329,16 +329,16 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                     {
                         fex.dbanklsb = (int) JSONChannels->u.array.values[k]->u.integer;
 
-                        sf.FontEx.push_back(fex);
+                        sf.Fonts.push_back(fex);
                     }
                 }
                 else
                 if (JSONChannels->type == json_none)
-                    ProcessPatchMappings(JSONPatchMappings, 0, sf.FontEx, fex);
+                    ProcessPatchMappings(JSONPatchMappings, 0, sf.Fonts, fex);
                 else
                 {
                     for (uint32_t k = 0; k < JSONChannels->u.array.length; ++k)
-                        ProcessPatchMappings(JSONPatchMappings, (uint32_t) JSONChannels->u.array.values[k]->u.integer, sf.FontEx, fex);
+                        ProcessPatchMappings(JSONPatchMappings, (uint32_t) JSONChannels->u.array.values[k]->u.integer, sf.Fonts, fex);
                 }
             }
         }
@@ -395,7 +395,7 @@ static const json_value * FindObject(const json_value * object, const char * nam
 }
 
 /// <summary>
-/// Processes the file as a flat text file.
+/// Processes the data as a flat text.
 /// </summary>
 static std::vector<soundfont_t> ProcessText(const std::string & data, const fs::path & parentPath)
 {
@@ -422,7 +422,7 @@ static std::vector<soundfont_t> ProcessText(const std::string & data, const fs::
 
         sf.FilePath.make_preferred();
 
-        sf.FontEx.push_back
+        sf.Fonts.push_back
         ({
             .font     = NULL,
             .spreset  = -1,

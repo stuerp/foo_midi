@@ -1,5 +1,5 @@
 
-/** $VER: Soundfont.h (2025.07.23) P. Stuer - Represents a soundfont. **/
+/** $VER: SoundfontList.h (2025.08.15) P. Stuer - Represents a soundfont. **/
 
 #pragma once
 
@@ -12,7 +12,7 @@
 class soundfont_t
 {
 public:
-    soundfont_t() noexcept : Gain(1.f), BankOffset(), IsEmbedded(false), IsDLS(false)
+    soundfont_t() noexcept : Gain(), BankOffset(), IsEmbedded(false), IsDLS(false)
     {
     }
 
@@ -42,13 +42,14 @@ public:
         return (IsDLS == other.IsDLS);
     }
 
+public:
     fs::path FilePath;
     float Gain;
     int BankOffset;
     bool IsEmbedded;
     bool IsDLS;
 
-    std::vector<BASS_MIDI_FONTEX> FontEx;
+    std::vector<BASS_MIDI_FONTEX> Fonts;
 };
 
 std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath);

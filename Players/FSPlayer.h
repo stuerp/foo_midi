@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.h (2025.07.26) **/
+/** $VER: FSPlayer.h (2025.08.15) **/
 
 #pragma once
 
@@ -7,7 +7,7 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "Player.h"
-#include "Soundfont.h"
+#include "SoundfontList.h"
 #include "Exception.h"
 
 #include "FS.h"

@@ -95,21 +95,10 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.0.0, 2025-08-05
+v3.1.1.0, 2025-08-15
 
-- New: Added SFList support to the FluidSynth player. Due to limitations of the current FluidSynth API only the `fileName` property is used.
-- New: Added support for flat text SFList files.
-- New: Support for the editor (GUI) of CLAP plug-ins. Try f.e. [OctaSine](https://github.com/greatest-ape/OctaSine) or [Odin 2](https://thewavewarden.com/pages/odin-2/).
-- New: LibEDMIDI / Emu de MIDI player now uses [libEDMIDI](https://github.com/Wohlstand/libEDMIDI) by [Wohlstand](https://github.com/Wohlstand).
-- Improved: Some extra information in the console when using SFList files.
-- Improved: Error handling and reporting when reading soundfont lists.
-- Improved: FluidSynth handles DLS embedded in XMF files better.
-- Improved: BASSMIDI and FluidSynth only create as many streams or synthesizers as there are ports in the MIDI stream resulting in a faster startup.
-- Improved: Support for archives. MIDI files, soundfont files and soundfont list files can be bundled in an archive.
-- Improved: Overall hardening and polishing of the CLAP host.
-- Improved: Extra error handling when looking for soundfonts. Some UTF-8 conversions can fail.
-- Fixed: MIDI flavor **None** did not work completely as intended.
-- Fixed: 32-bit ADL and OPN player reported a wrong sample size to their respective libraries resulting in undefined behavior during playback.
+- Fixed: Under some conditions the BASSMIDI volume of a soundfont was set to 0.
+- Fixed: Some Unicode conversions failed when looking for extra soundfonts. See [STL issue 5093](https://github.com/microsoft/STL/issues/5093). Thanks to [MagikalUnicorn](https://github.com/MagikalUnicorn) for pointing it out.
 
 You can read the full history [here](docs/History.md).
 
