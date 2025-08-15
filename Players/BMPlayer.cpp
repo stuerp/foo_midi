@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.07.25) **/
+/** $VER: BMPlayer.cpp (2025.08.15) **/
 
 #include "pch.h"
 
@@ -151,7 +151,7 @@ bool BMPlayer::Startup()
         }
     }
 
-    std::vector<BASS_MIDI_FONTEX> SoundfontConfigurations;
+    std::vector<BASS_MIDI_FONTEX> Fonts;
 
     size_t LoadCount = 0;
 
@@ -159,7 +159,7 @@ bool BMPlayer::Startup()
     {
         try
         {
-            LoadSoundfontConfiguration(sf, SoundfontConfigurations);
+            LoadSoundfonts(sf, Fonts);
             ++LoadCount;
         }
         catch (const std::exception & e)
@@ -193,7 +193,7 @@ bool BMPlayer::Startup()
 
         if (Stream == 0)
         {
-            _ErrorMessage = "Unable to create BASS MIDI streams";
+            _ErrorMessage = "Unable to create BASS MIDI stream";
 
             return false;
         }
@@ -201,7 +201,7 @@ bool BMPlayer::Startup()
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_VOICES, (float) _VoiceCount);
 
-        ::BASS_MIDI_StreamSetFonts(Stream, SoundfontConfigurations.data(), (DWORD) SoundfontConfigurations.size() | BASS_MIDI_FONT_EX);
+        ::BASS_MIDI_StreamSetFonts(Stream, Fonts.data(), (DWORD) Fonts.size() | BASS_MIDI_FONT_EX);
     }
 
     _ErrorMessage = "";
@@ -355,9 +355,9 @@ void BMPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber
 /// <summary>
 /// Loads the configuration from the specified soundfont.
 /// </summary>
-void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations)
+void BMPlayer::LoadSoundfonts(const soundfont_t & sf, std::vector<BASS_MIDI_FONTEX> & fonts)
 {
-    if (!sf.FontEx.empty())
+    if (!sf.Fonts.empty())
     {
         HSOUNDFONT hSoundfont = ::CacheAddSoundfont(sf.FilePath);
 
@@ -374,15 +374,15 @@ void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BA
             throw std::exception(::FormatText("Failed to load \"%s\": error %u", sf.FilePath.string().c_str(), ErrorCode).c_str());
         }
 
-        ::BASS_MIDI_FontSetVolume(hSoundfont, sf.Gain);
+        ::BASS_MIDI_FontSetVolume(hSoundfont, 1.f + sf.Gain);
 
         DumpSoundfont(sf.FilePath, hSoundfont);
 
-        for (BASS_MIDI_FONTEX fex : sf.FontEx)
+        for (BASS_MIDI_FONTEX fex : sf.Fonts)
         {
             fex.font = hSoundfont;
 
-            soundFontConfigurations.push_back(fex);
+            fonts.push_back(fex);
         }
 
         return;
@@ -405,7 +405,7 @@ void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BA
             throw std::exception(::FormatText("Failed to load \"%s\": error %u", sf.FilePath.string().c_str(), ErrorCode).c_str());
         }
 
-        ::BASS_MIDI_FontSetVolume(hSoundfont, sf.Gain);
+        ::BASS_MIDI_FontSetVolume(hSoundfont, 1.f + sf.Gain);
 
         DumpSoundfont(sf.FilePath, hSoundfont);
 
@@ -430,7 +430,7 @@ void BMPlayer::LoadSoundfontConfiguration(const soundfont_t & sf, std::vector<BA
             .dbanklsb = 0
         }; // Load the whole sound font.
 
-        soundFontConfigurations.push_back(fex);
+        fonts.push_back(fex);
 
         return;
     }
@@ -448,7 +448,7 @@ void BMPlayer::DumpSoundfont(const fs::path & filePath, HSOUNDFONT hSoundfont) n
 
     console::printf("Soundfont \"%s\"", filePath.string().c_str());
 
-    BASS_MIDI_FONTINFO sfi;
+    BASS_MIDI_FONTINFO sfi = { };
 
     if (!::BASS_MIDI_FontGetInfo(hSoundfont, &sfi))
         return;

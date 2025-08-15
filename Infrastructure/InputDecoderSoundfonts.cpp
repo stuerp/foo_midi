@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.08.04) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.08.15) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -51,6 +51,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     }
 
     // Then, add the soundfont named like the MIDI file, if present.
+    try
     {
         const auto SoundfontFilePath = GetSoundfontFilePath(_FilePath.c_str(), abortHandler);
 
@@ -63,8 +64,13 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
             HasNonDefaultSoundfonts = true;
         }
     }
+    catch (std::exception & e)
+    {
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to look for soundfont named like MIDI file: %s.", e.what());
+    }
 
     // Next, add the soundfont named like the directory of the MIDI file, if present.
+    try
     {
         const fs::path FilePath = _FilePath.c_str();
 
@@ -78,6 +84,10 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
             HasNonDefaultSoundfonts = true;
         }
+    }
+    catch (std::exception & e)
+    {
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to look for soundfont named like directory containing the MIDI file: %s.", e.what());
     }
 
     // Finally, add the default soundfont.
@@ -138,20 +148,12 @@ fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortH
 
     for (const char * & FileExtension : FileExtensions)
     {
-        try
-        {
-            auto SoundfontPath = filePath;
+        auto SoundfontPath = filePath;
 
-            // See https://github.com/stuerp/foo_midi/issues/114
-            SoundfontPath.replace_extension(FileExtension);
+        SoundfontPath.replace_extension(FileExtension);
 
-            if (filesystem::g_exists(SoundfontPath.string().c_str(), abortHandler))
-                return SoundfontPath;
-        }
-        catch (std::exception & e)
-        {
-            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to replace file extension of \"%s\" with \"%s\": %s.", filePath.string().c_str(), FileExtension, e.what());
-        }
+        if (filesystem::g_exists(SoundfontPath.string().c_str(), abortHandler))
+            return SoundfontPath;
     }
 
     return {};

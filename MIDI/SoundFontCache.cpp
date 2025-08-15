@@ -33,11 +33,11 @@ struct cache_item_t
 
 struct marker_t
 {
-    bool IsUsed;
-
     marker_t() : IsUsed(false)
     {
     }
+
+    bool IsUsed;
 };
 
 static std::map<std::string, cache_item_t> _CacheItems;
@@ -226,7 +226,7 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
 
         sfm.IsUsed = true;
 
-        BASS_MIDI_FONTINFO FontInfo;
+        BASS_MIDI_FONTINFO FontInfo = { };
 
         if (::BASS_MIDI_FontGetInfo(it.second._hSoundfont, &FontInfo))
         {

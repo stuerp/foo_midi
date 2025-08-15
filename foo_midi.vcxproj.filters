@@ -53,7 +53,7 @@
     <ClCompile Include="Infrastructure\Support.cpp" />
     <ClCompile Include="Infrastructure\InputInfoReader.cpp" />
     <ClCompile Include="Infrastructure\InputInfoWriter.cpp" />
-    <ClCompile Include="Players\Soundfont.cpp" />
+    <ClCompile Include="Players\SoundfontList.cpp" />
     <ClCompile Include="Infrastructure\CLAPHost.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -193,7 +193,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Players\SecretSauce.h" />
     <ClInclude Include="Infrastructure\VSTiHost.h" />
-    <ClInclude Include="Players\Soundfont.h" />
+    <ClInclude Include="Players\SoundfontList.h" />
     <ClInclude Include="Players\BASSInitializer.h" />
     <ClInclude Include="Players\FMMPlayer.h" />
     <ClInclude Include="Infrastructure\Channels.h" />

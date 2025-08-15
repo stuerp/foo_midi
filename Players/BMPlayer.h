@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.07.26) **/
+/** $VER: BMPlayer.h (2025.08.15) **/
 
 #pragma once
 
@@ -7,7 +7,7 @@
 #pragma warning(disable: 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include "Player.h"
-#include "Soundfont.h"
+#include "SoundfontList.h"
 
 #include <bassmidi.h>
 
@@ -62,7 +62,7 @@ private:
 
     #pragma endregion
 
-    void LoadSoundfontConfiguration(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations);
+    void LoadSoundfonts(const soundfont_t & soundFont, std::vector<BASS_MIDI_FONTEX> & soundFontConfigurations);
 /*
     bool IsStarted() const noexcept
     {
