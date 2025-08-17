@@ -95,10 +95,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.1.0, 2025-08-15
+v3.1.2.0, 2025-08-17
 
-- Fixed: Under some conditions the BASSMIDI volume of a soundfont was set to 0.
-- Fixed: Some Unicode conversions failed when looking for extra soundfonts. See [STL issue 5093](https://github.com/microsoft/STL/issues/5093). Thanks to [MagikalUnicorn](https://github.com/MagikalUnicorn) for pointing it out.
+- New: The VSTi that is used when the [Use VSTi with XG](docs/README.md) is enabled loads its saved configuration before playback starts.
 
 You can read the full history [here](docs/History.md).
 

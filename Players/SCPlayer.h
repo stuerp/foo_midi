@@ -38,7 +38,7 @@ private:
     void StopHost(uint32_t port) noexcept;
     bool IsHostRunning(uint32_t port) noexcept;
 
-    static bool CreatePipeName(pfc::string_base & pipeName);
+    static bool CreatePipeName(pfc::string_base & pipeName) noexcept;
 
     uint32_t ReadCode(uint32_t port) noexcept;
 

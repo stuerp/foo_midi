@@ -26,7 +26,7 @@ public:
 
     // Editor
     bool HasEditor();
-    void DisplayEditorModal();
+    void OpenEditor();
 
     // Setup
     virtual uint32_t GetAudioChannelCount() const noexcept override { return _ChannelCount; }

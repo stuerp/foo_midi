@@ -7,21 +7,10 @@
 #include "Resource.h"
 #include "Log.h"
 
-#define NOMINMAX
-
 // #define LOG_EXCHANGE
 
 namespace VSTi
 {
-
-template <class T> void SafeDelete(T& x) noexcept
-{
-    if (x)
-    {
-        delete[] x;
-        x = nullptr;
-    }
-}
 
 #pragma region Public
 
@@ -115,15 +104,16 @@ bool Player::HasEditor()
     if (Code != 0)
     {
         StopHost();
+
         return false;
     }
 
     Code = ReadCode();
 
-    return Code != 0;
+    return (Code != 0);
 }
 
-void Player::DisplayEditorModal()
+void Player::OpenEditor()
 {
     WriteBytes(4);
 
@@ -262,7 +252,7 @@ void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, u
 
 bool Player::StartHost()
 {
-    std::string CommandLine;;
+    std::string CommandLine;
 
     {
         fs::path HostPath = (const char8_t *) core_api::get_my_full_path();
@@ -306,13 +296,6 @@ bool Player::StartHost()
         _hReadEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
     }
 
-    SECURITY_ATTRIBUTES sa =
-    {
-        sizeof(sa),
-        nullptr,
-        TRUE,
-    };
-
     pfc::string InPipeName, OutPipeName;
 
     {
@@ -325,6 +308,13 @@ bool Player::StartHost()
     }
 
     pfc::stringcvt::string_os_from_utf8 InPipeNameOS(InPipeName), OutPipeNameOS(OutPipeName);
+
+    SECURITY_ATTRIBUTES sa =
+    {
+        sizeof(sa),
+        nullptr,
+        TRUE,
+    };
 
     {
         HANDLE hPipe = ::CreateNamedPipe(InPipeNameOS, PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE, 1, 65536, 65536, 0, &sa);
@@ -363,14 +353,14 @@ bool Player::StartHost()
     {
         STARTUPINFO si =
         {
-            .cb =  sizeof(si),
+            .cb          = sizeof(si),
 
-            .dwFlags = STARTF_USESTDHANDLES, // | STARTF_USESHOWWINDOW;
+            .dwFlags     = STARTF_USESTDHANDLES, // | STARTF_USESHOWWINDOW;
         //  .wShowWindow = SW_HIDE,
 
-            .hStdInput = _hPipeInRead,
-            .hStdOutput = _hPipeOutWrite,
-            .hStdError = ::GetStdHandle(STD_ERROR_HANDLE),
+            .hStdInput   = _hPipeInRead,
+            .hStdOutput  = _hPipeOutWrite,
+            .hStdError   = ::GetStdHandle(STD_ERROR_HANDLE),
         };
 
     #ifdef _DEBUG
@@ -410,6 +400,7 @@ bool Player::StartHost()
     if (Code != 0)
     {
         StopHost();
+
         return false;
     }
 
@@ -558,7 +549,7 @@ uint32_t Player::ReadBytesOverlapped(void * data, uint32_t size) noexcept
     ::SetLastError(NO_ERROR);
 
     DWORD BytesRead;
-    OVERLAPPED ol = { 0 };
+    OVERLAPPED ol = { };
 
     ol.hEvent = _hReadEvent;
 
@@ -568,9 +559,9 @@ uint32_t Player::ReadBytesOverlapped(void * data, uint32_t size) noexcept
     if (::GetLastError() != ERROR_IO_PENDING)
         return 0;
 
-    const HANDLE handles[1] = { _hReadEvent };
-
     ::SetLastError(NO_ERROR);
+
+    const HANDLE Handles[1] = { _hReadEvent };
 
     DWORD State;
 
@@ -585,10 +576,10 @@ uint32_t Player::ReadBytesOverlapped(void * data, uint32_t size) noexcept
             break;
     }
 #else
-    State = ::WaitForMultipleObjects(_countof(handles), &handles[0], FALSE, INFINITE);
+    State = ::WaitForMultipleObjects(_countof(Handles), Handles, FALSE, INFINITE);
 #endif
 
-    if (State == WAIT_OBJECT_0 && ::GetOverlappedResult(_hPipeOutRead, &ol, &BytesRead, TRUE))
+    if ((State == WAIT_OBJECT_0) && ::GetOverlappedResult(_hPipeOutRead, &ol, &BytesRead, TRUE))
         return BytesRead;
 
     ::CancelIoEx(_hPipeOutRead, &ol);

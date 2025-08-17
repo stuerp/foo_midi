@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.08.01) **/
+/** $VER: InputDecoder.cpp (2025.08.17) **/
 
 #include "pch.h"
 
@@ -1049,9 +1049,9 @@ void InputDecoder::InitializeFade() noexcept
 /// <summary>
 /// Overrides the selected player depending on the metadata and some configuration settings.
 /// </summary>
-void InputDecoder::OverridePlayerSelection(preset_t & Preset, size_t subSongIndex, abort_callback & abortHandler) noexcept
+void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept
 {
-    _PlayerType = Preset._PlayerType;
+    _PlayerType = preset._PlayerType;
     _IsPlayerTypeOverriden = false;
 
     // Should the player be overriden by the metadata?
@@ -1078,12 +1078,26 @@ void InputDecoder::OverridePlayerSelection(preset_t & Preset, size_t subSongInde
     {
         pfc::string FilePath = CfgVSTiXGPlugInFilePath;
 
-        if (!FilePath.isEmpty())
-        {
-            _PlayerType = PlayerType::VSTi;
-            _IsPlayerTypeOverriden = true;
+        if (FilePath.isEmpty())
+            return;
 
-            Preset._PlugInFilePath = FilePath;
+        try
+        {
+            auto Player = new VSTi::Player;
+
+            if (Player->LoadVST((const char8_t *) FilePath.c_str()))
+            {
+                _PlayerType = PlayerType::VSTi;
+                _IsPlayerTypeOverriden = true;
+
+                preset._PlugInFilePath = FilePath;
+                preset._VSTiConfig = CfgVSTiConfig[Player->Id];
+
+                delete Player;
+            }
+        }
+        catch (...)
+        {
         }
     }
 }
