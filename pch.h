@@ -1,5 +1,5 @@
 
-/** $VER: pch.h (2025.07.09) P. Stuer **/
+/** $VER: pch.h (2025.08.16) P. Stuer **/
 
 #pragma once
 
@@ -42,3 +42,12 @@ namespace fs = std::filesystem;
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define THIS_HINSTANCE ((HINSTANCE) &__ImageBase)
 #endif
+
+template <class T> void SafeDelete(T& x) noexcept
+{
+    if (x)
+    {
+        delete[] x;
+        x = nullptr;
+    }
+}

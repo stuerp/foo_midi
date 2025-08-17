@@ -761,7 +761,7 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
                 if (_VSTiHost.Config.size() != 0)
                     Player.SetChunk(_VSTiHost.Config.data(), _VSTiHost.Config.size());
 
-                Player.DisplayEditorModal();
+                Player.OpenEditor();
 
                 Player.GetChunk(_VSTiHost.Config);
             }

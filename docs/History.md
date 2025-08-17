@@ -1,6 +1,11 @@
 
 # foo_midi History
 
+v3.1.1.0, 2025-08-15
+
+- Fixed: Under some conditions the BASSMIDI volume of a soundfont was set to 0.
+- Fixed: Some Unicode conversions failed when looking for extra soundfonts. See [STL issue 5093](https://github.com/microsoft/STL/issues/5093). Thanks to [MagikalUnicorn](https://github.com/MagikalUnicorn) for pointing it out.
+
 v3.1.0.0, 2025-08-05
 
 - New: Added SFList support to the FluidSynth player. Due to limitations of the current FluidSynth API only the `fileName` property is used.

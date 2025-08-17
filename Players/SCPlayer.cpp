@@ -490,7 +490,7 @@ static void ProcessPendingMessages()
 /// <summary>
 /// Creates a unique pipe name.
 /// </summary>
-bool SCPlayer::CreatePipeName(pfc::string_base & pipeName)
+bool SCPlayer::CreatePipeName(pfc::string_base & pipeName) noexcept
 {
     GUID guid;
 
