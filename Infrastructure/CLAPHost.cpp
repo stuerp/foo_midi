@@ -313,6 +313,7 @@ void Host::GetPlugInDescriptors_(const fs::path & directoryPath) noexcept
             {
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
 
+                #pragma warning(disable: 4820) // 'x' bytes padding
                 GetPlugInEntries(Entry.path(), [this, Entry](const std::string & id, const std::string & plugInName, uint32_t index, bool hasGUI)
                 {
                     PlugInEntry PlugIn =
@@ -326,6 +327,7 @@ void Host::GetPlugInDescriptors_(const fs::path & directoryPath) noexcept
 
                     _PlugInEntries.push_back(PlugIn);
                 });
+                #pragma warning(default: 4820)
             }
         }
     }

@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\Encoding.cpp" />
+    <ClCompile Include="src\libriff.cpp" />
+    <ClCompile Include="src\pch.cpp" />
+    <ClCompile Include="src\RIFFReader.cpp" />
+    <ClCompile Include="src\RIFFWriter.cpp" />
+    <ClCompile Include="src\Stream.cpp" />
+    <ClCompile Include="src\Win32Exception.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Encoding.h" />
+    <ClInclude Include="src\Exception.h" />
+    <ClInclude Include="src\FOURCC.h" />
+    <ClInclude Include="src\libriff.h" />
+    <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\RIFF.h" />
+    <ClInclude Include="src\RIFFReader.h" />
+    <ClInclude Include="src\RIFFWriter.h" />
+    <ClInclude Include="src\Stream.h" />
+    <ClInclude Include="src\Win32Exception.h" />
+  </ItemGroup>
+</Project>

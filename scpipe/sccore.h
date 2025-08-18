@@ -1,44 +1,41 @@
-#ifndef _SCCore_h_
-#define _SCCore_h_
-
-// Static single instance - duplicate library to temp path for unique instance
+#pragma once
 
 class SCCore
 {
 public:
-    int (*TG_initialize)(int i); // i = 0, returns negative on failure
-
-//  void (* TG_terminate)(); // Unused - terminates process
-
-    void (*TG_activate)(float sampleRate, int blockSize);
-
-//  void (* TG_deactivate)(); // Unused
-
-    void (*TG_setSampleRate)(float sampleRate);
-
-    void (*TG_setMaxBlockSize)(unsigned int blockSize);
-
-    void (*TG_flushMidi)(); // Called after applying presets
-
-    void (*TG_setInterruptThreadIdAtThisTime)();
-
-//  void (*TG_PMidiIn)(MpPacket *, int count); // Unknown
-
-    void (*TG_ShortMidiIn)(unsigned int eventCode, unsigned int deltaFrames);
+    void (*TG_Process)(float * left, float * right, unsigned int count);
 
     void (*TG_LongMidiIn)(const unsigned char * sysEx, unsigned int deltaFrames);
 
-//  void (*TG_isFatalError)(int errCode); // Unused
+    void (*TG_PMidiIn)(int msg, int count);
 
-//  void (*TG_getErrorStrings)(int errCode); // Unused
+    void (*TG_ShortMidiIn)(unsigned int eventCode, unsigned int deltaFrames);
 
-    unsigned int (*TG_XPgetCurTotalRunningVoices)(); // Unused
+    void (*TG_XPgetCurSystemConfig)(void * config);
 
-//  void (*TG_XPsetSystemConfig)();
+    int (*TG_XPgetCurTotalRunningVoices)();
 
-//  void (*TG_XPgetCurSystemConfig)();
+    void (*TG_XPsetSystemConfig)(void * config);
 
-    void (*TG_Process)(float * left, float * right, unsigned int count);
+    void (*TG_activate)(float sampleRate, int blockSize);
+
+    void (* TG_deactivate)();
+
+    void (*TG_flushMidi)(); // Called after applying presets
+
+    char * (*TG_getErrorStrings)(int errorCode);
+
+    int (*TG_initialize)(int mode); // i = 0, returns negative on failure
+
+    void (* TG_terminate)();
+
+    void (*TG_isFatalError)(int errorCode);
+
+    int (*TG_setMaxBlockSize)(unsigned int blockSize);
+
+    int (*TG_setSampleRate)(float sampleRate);
+
+    void (*TG_setInterruptThreadIdAtThisTime)();
 
     SCCore();
     ~SCCore();
@@ -52,5 +49,3 @@ private:
 private:
     void * _hModule;
 };
-
-#endif

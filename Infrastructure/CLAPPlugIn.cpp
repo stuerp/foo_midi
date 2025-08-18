@@ -378,7 +378,7 @@ void PlugIn::LoadState(const std::vector<uint8_t> & state) noexcept
 
             size = std::min((size_t) size, State->size());
 
-            ::memcpy(data, State->data(), size);
+            ::memcpy(data, State->data(), (size_t) size);
 
             return (int64_t) size;
         }
