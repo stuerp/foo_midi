@@ -299,7 +299,7 @@ The most flexible format is an UTF-8 JSON file with a `.sflist` or `.json` exten
 The root object is a `soundFonts` array that contains 1 or more soundfont objects. A soundfont object can have the following properties:
 
 - `fileName` specifies the location of the soundfont. If you specify only a file name or a relative path foo_midi will look for the file relative to the directory of the list file. `BASSMIDI` `FluidSynth`
-- `gain` specifies the overall gain that will be applied to the samples in the soundfont. `optional` `BASSMIDI`
+- `gain` specifies the volume gain that will be applied to the samples in the soundfont. The gain value is added to the volume of the soundfont. Positive values increase the volume. Negative values decrease the volume. The default is 0. `optional` `BASSMIDI`
 - `channels` is an array that contains the MIDI channels that will use the soundfont. `optional` `BASSMIDI`
 - `patchMappings` is an array of mapping objects that allows you to remap samples within a soundfont without modifying the soundfont file. `optional` `BASSMIDI`
 
