@@ -55,12 +55,12 @@ if ($Platform -eq 'x64')
     {
         Write-Host "Copying BASS libaries to `"$PackagePath`"...";
 
-        Copy-Item $DLLPath -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/bass_mpc.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/bassflac.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/bassmidi.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/bassopus.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/basswv.dll" -Destination "$PackagePath";
+        Copy-Item $DLLPath -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/bass_mpc.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/bassflac.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/bassmidi.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/bassopus.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/basswv.dll" -Destination "$PackagePath" -Force;
     }
 
     if (Test-Path -Path "../bin")
@@ -92,12 +92,12 @@ elseif ($Platform -eq 'Win32')
     {
         Write-Host "Copying BASS libaries to `"$PackagePath`"...";
 
-        Copy-Item "3rdParty/bass/bass.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/bass_mpc.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/bassflac.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/bassmidi.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/bassopus.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/basswv.dll" -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/bass.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/bass_mpc.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/bassflac.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/bassmidi.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/bassopus.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/basswv.dll" -Destination "$PackagePath" -Force;
     }
 
     if (Test-Path -Path "../bin")
@@ -156,7 +156,7 @@ if (Test-Path -Path $FilePath)
 {
     Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
 
-    Copy-Item $FilePath -Destination "$PackagePath";
+    Copy-Item $FilePath -Destination "$PackagePath" -Force;
 }
 
 # FluidSynth configuration
@@ -166,7 +166,7 @@ if (Test-Path -Path $FilePath)
 {
     Write-Host "Copying FluidSynth configuration to `"$PackagePath`"...";
 
-    Copy-Item $FilePath -Destination "$PackagePath";
+    Copy-Item $FilePath -Destination "$PackagePath" -Force;
 }
 
 Compress-Archive -Force -Path ../out/$TargetName/* -DestinationPath ../out/$TargetName.fb2k-component;

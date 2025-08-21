@@ -1,5 +1,5 @@
 
-/** $VER: RIFFWriter.h (2025.04.30) P. Stuer **/
+/** $VER: RIFFWriter.h (2025.08.20) P. Stuer **/
 
 #pragma once
 
@@ -31,7 +31,7 @@ public:
     {
     }
 
-    enum option_t
+    enum Options
     {
         None = 0,
 
@@ -39,7 +39,7 @@ public:
         PolyphoneCompatible = 0x0002,   // Writes a SoundFont file that can be read by Polyphone but that adheres not strictly to the SoundFont 2.04 specification.
     };
 
-    bool Open(stream_t * stream, option_t options);
+    bool Open(stream_t * stream, Options options);
 
     virtual void Close() noexcept;
 
@@ -98,7 +98,7 @@ public:
 
 protected:
     stream_t * _Stream;
-    option_t _Options;
+    Options _Options;
 
     struct marker_t
     {
@@ -148,7 +148,7 @@ template <typename T> uint32_t writer_t::WriteChunk(uint32_t chunkId, T&& writeC
     _Markers[Index].Size = ChunkSize;
 
     // Hack: Polyphone requires the chunk size to be even.
-    if (_Options & option_t::PolyphoneCompatible)
+    if (_Options & Options::PolyphoneCompatible)
         _Markers[Index].Size += (ChunkSize & 1);
 
     if (ChunkSize & 1)

@@ -8,7 +8,7 @@
 namespace riff
 {
 
-bool writer_t::Open(stream_t * stream, option_t options)
+bool writer_t::Open(stream_t * stream, Options options)
 {
     _Stream = stream;
     _Options = options;

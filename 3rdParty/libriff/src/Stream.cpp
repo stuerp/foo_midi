@@ -114,7 +114,7 @@ void file_stream_t::Offset(uint64_t size)
 /// </summary>
 bool memory_stream_t::Open(const fs::path & filePath, uint64_t offset, uint64_t size, bool forWriting)
 {
-    _hFile = ::CreateFileW(UTF8ToWide(filePath.string().c_str()).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0);
+    _hFile = ::CreateFileW(filePath.wstring().c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0);
 
     if (_hFile == INVALID_HANDLE_VALUE)
         throw win32_exception(FormatText("Failed to open file \"%s\" for reading", filePath.c_str()));
