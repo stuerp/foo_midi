@@ -1,6 +1,10 @@
 
 # foo_midi History
 
+v3.1.2.0, 2025-08-17
+
+- New: The VSTi that is used when the [Use VSTi with XG](docs/README.md) is enabled loads its saved configuration before playback starts.
+
 v3.1.1.0, 2025-08-15
 
 - Fixed: Under some conditions the BASSMIDI volume of a soundfont was set to 0.

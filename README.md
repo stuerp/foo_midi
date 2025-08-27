@@ -95,9 +95,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.2.0, 2025-08-17
+v3.1.x.x, 2025-xx-xx
 
-- New: The VSTi that is used when the [Use VSTi with XG](docs/README.md) is enabled loads its saved configuration before playback starts.
+- FIXED: Reduced device count of LibADLMIDI from 3 to 1 to prevent a rare edge case from freezing the sample render loop.
 
 You can read the full history [here](docs/History.md).
 

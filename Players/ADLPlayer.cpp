@@ -135,7 +135,7 @@ bool ADLPlayer::Startup()
         ::adl_setNumChips           (Device, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0)); // Set number of concurrent emulated chips to excite channels limit of one chip.
         ::adl_setDeviceIdentifier   (Device, (unsigned int) i); // Set 4-bit device identifier. Used by the SysEx processor.
 
-        ::adl_setNumFourOpsChn      (Device, (int) _4OpChannelCount); // Set total count of 4-operator channels between all emulated chips.
+//      ::adl_setNumFourOpsChn      (Device, (int) _4OpChannelCount); // Set total count of 4-operator channels between all emulated chips.
 
         _Devices[i] = Device;
     }
@@ -162,6 +162,8 @@ void ADLPlayer::Shutdown()
 
 void ADLPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
+    console::printf("%9d: %6d frames", (uint32_t) ::GetTickCount64(), dstCount);
+
     const uint32_t MaxFrames = 256;
     const uint32_t MaxChannels = 2;
 
@@ -201,14 +203,14 @@ void ADLPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 
     const ADLMIDI_AudioFormat AudioFormat = { ADLMIDI_SampleType_S16, sizeof(Data[0]), sizeof(Data[0]) * MaxChannels };
 
-    while (frameCount != 0)
+    while (dstCount != 0)
     {
-        size_t ToDo = frameCount;
+        size_t ToDo = dstCount;
 
         if (ToDo > MaxFrames)
             ToDo = MaxFrames;
 
-        ::memset(sampleData, 0, ToDo * MaxChannels * sizeof(audio_sample));
+        ::memset(dstFrames, 0, ToDo * MaxChannels * sizeof(audio_sample));
 
         for (size_t i = 0; i < _countof(_Devices); ++i)
         {
@@ -216,11 +218,11 @@ void ADLPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 
             // Convert the format of the rendered output.
             for (size_t j = 0; j < (ToDo * MaxChannels); ++j)
-                sampleData[j] += (audio_sample) Data[j] * (audio_sample) (1.0 / 32768.0);
+                dstFrames[j] += (audio_sample) Data[j] * (audio_sample) (1.0 / 32768.0);
         }
 
-        sampleData += (ToDo * MaxChannels);
-        frameCount -= (uint32_t) ToDo;
+        dstFrames += (ToDo * MaxChannels);
+        dstCount -= (uint32_t) ToDo;
     }
 #endif
 }

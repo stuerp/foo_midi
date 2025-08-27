@@ -37,7 +37,7 @@ protected:
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) override;
 
 private:
-    struct ADL_MIDIPlayer * _Devices[3];
+    struct ADL_MIDIPlayer * _Devices[1];
 
     uint32_t _EmulatorCore;
     uint32_t _BankNumber;
