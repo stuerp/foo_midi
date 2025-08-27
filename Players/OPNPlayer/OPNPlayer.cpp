@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2025.07.25) **/
+/** $VER: OPNPlayer.cpp (2025.08.27) **/
 
 #include "pch.h"
 
@@ -293,14 +293,14 @@ void OPNPlayer::SendEvent(uint32_t data)
 
 void OPNPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
-    if (portNumber >= 3)
+    if (portNumber > _countof(_Devices) - 1)
         portNumber = 0;
-
-    ::opn2_rt_systemExclusive(_Devices[portNumber], data, size);
 
     if (portNumber == 0)
     {
-        ::opn2_rt_systemExclusive(_Devices[1], data, size);
-        ::opn2_rt_systemExclusive(_Devices[2], data, size);
+        for (auto & Device : _Devices)
+            ::opn2_rt_systemExclusive(Device, data, size);
     }
+    else
+        ::opn2_rt_systemExclusive(_Devices[portNumber], data, size);
 }

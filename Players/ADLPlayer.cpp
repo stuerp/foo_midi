@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.cpp (2025.07.25) **/
+/** $VER: ADLPlayer.cpp (2025.08.27) **/
 
 #include "pch.h"
 
@@ -135,7 +135,7 @@ bool ADLPlayer::Startup()
         ::adl_setNumChips           (Device, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0)); // Set number of concurrent emulated chips to excite channels limit of one chip.
         ::adl_setDeviceIdentifier   (Device, (unsigned int) i); // Set 4-bit device identifier. Used by the SysEx processor.
 
-//      ::adl_setNumFourOpsChn      (Device, (int) _4OpChannelCount); // Set total count of 4-operator channels between all emulated chips.
+//      ::adl_setNumFourOpsChn      (Device, (int) _4OpChannelCount); // Set total count of 4-operator channels between all emulated chips. Leave at default per advice from [Wohlstand](https://github.com/Wohlstand/libADLMIDI/issues/293).
 
         _Devices[i] = Device;
     }
@@ -162,8 +162,6 @@ void ADLPlayer::Shutdown()
 
 void ADLPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    console::printf("%9d: %6d frames", (uint32_t) ::GetTickCount64(), dstCount);
-
     const uint32_t MaxFrames = 256;
     const uint32_t MaxChannels = 2;
 
@@ -276,9 +274,16 @@ void ADLPlayer::SendEvent(uint32_t data)
     }
 }
 
-void ADLPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t)
+void ADLPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
-    ::adl_rt_systemExclusive(_Devices[0], event, size);
-    ::adl_rt_systemExclusive(_Devices[1], event, size);
-    ::adl_rt_systemExclusive(_Devices[2], event, size);
+    if (portNumber > _countof(_Devices) - 1)
+        portNumber = 0;
+
+    if (portNumber == 0)
+    {
+        for (auto & Device : _Devices)
+            ::adl_rt_systemExclusive(Device, data, size);
+    }
+    else
+        ::adl_rt_systemExclusive(_Devices[portNumber], data, size);
 }

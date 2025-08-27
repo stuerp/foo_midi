@@ -97,7 +97,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v3.1.x.x, 2025-xx-xx
 
-- FIXED: Reduced device count of LibADLMIDI from 3 to 1 to prevent a rare edge case from freezing the sample render loop.
+- FIXED: Reduced device count of LibADLMIDI/LibOPNMIDI from 3 to 1 to prevent a rare edge case from freezing the sample render loop.
 
 You can read the full history [here](docs/History.md).
 

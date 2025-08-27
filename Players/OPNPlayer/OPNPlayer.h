@@ -1,5 +1,5 @@
 
-/** $VER: OPN Player (2025.07.07) **/
+/** $VER: OPN Player (2025.08.27) **/
 
 #pragma once
 
@@ -43,7 +43,7 @@ protected:
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
 
 private:
-    struct OPN2_MIDIPlayer * _Devices[3];
+    struct OPN2_MIDIPlayer * _Devices[1]; // LibOPNMIDI supports only 1 device per thread. [Issue 293](https://github.com/Wohlstand/libADLMIDI/issues/293).
 
     uint32_t _EmulatorCore;
     uint32_t _BankNumber;
