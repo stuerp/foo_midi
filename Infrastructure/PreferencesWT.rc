@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.WT (2025.07.13) **/
+/** $VER: PreferencesFM.WT (2025.08.27) **/
 
 #include "Resource.h"
 
@@ -70,25 +70,31 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define X_A16    X_A15 + W_A15 + IX
     #define Y_A16    Y_A15
     #define W_A16    32
-    #define H_A16    H_CBX
+    #define H_A16    H_EBX
 
     // Checkbox "Process reverb and chorus"
     #define X_A17    X_A15
     #define Y_A17    Y_A16 + H_A16 + IY
     #define W_A17    100
-    #define H_A17    H_LBL
+    #define H_A17    H_CHB
+
+    // Checkbox "Use DLS"
+    #define X_A18    X_A17 + W_A17 + IX
+    #define Y_A18    Y_A17
+    #define W_A18    100
+    #define H_A18    H_CHB
 
     // Label
-    #define X_A18    X_A17
-    #define Y_A18    Y_A17 + H_A17 + IY
-    #define W_A18    W_A13
-    #define H_A18    H_LBL
+    #define X_A19    X_A17
+    #define Y_A19    Y_A17 + H_A17 + IY
+    #define W_A19    W_A13
+    #define H_A19    H_LBL
 
     // Label: Cached
-    #define X_A19    X_A18 + W_A18 + IX
-    #define Y_A19    Y_A18
-    #define W_A19    W_A10 - 5 - W_A18 - IX - 5
-    #define H_A19    H_LBL
+    #define X_A20    X_A19 + W_A19 + IX
+    #define Y_A20    Y_A19
+    #define W_A20    W_A10 - 5 - W_A19 - IX - 5
+    #define H_A20    H_LBL
 
 #define H_A10    11 + H_A12 + IY + H_A14 + IY + H_A16 + IY + H_A17 + IY + H_A19 + 7
 
@@ -97,53 +103,59 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma region FluidSynth 
 
 // Groupbox
-#define X_A20    X_A10
-#define Y_A20    Y_A10 + H_A10 + IY
-#define W_A20    W_A10
+#define X_B20    X_A10
+#define Y_B20    Y_A10 + H_A10 + IY
+#define W_B20    W_A10
 
     // Label
-    #define X_A21    X_A20 + 5
-    #define Y_A21    Y_A20 + 11
-    #define W_A21    48
-    #define H_A21    H_LBL
+    #define X_B21    X_B20 + 5
+    #define Y_B21    Y_B20 + 11
+    #define W_B21    48
+    #define H_B21    H_LBL
 
     // Combobox
-    #define X_A22    X_A21 + W_A21 + 3
-    #define Y_A22    Y_A21
-    #define W_A22    W_A20 - 5 - W_A21 - IX - 5
-    #define H_A22    H_CBX
+    #define X_B22    X_B21 + W_B21 + 3
+    #define Y_B22    Y_B21
+    #define W_B22    W_B20 - 5 - W_B21 - IX - 5
+    #define H_B22    H_CBX
 
     // Label
-    #define X_A23    X_A21
-    #define Y_A23    Y_A22 + H_A22 + IY
-    #define W_A23    W_A21
-    #define H_A23    H_CBX
+    #define X_B23    X_B21
+    #define Y_B23    Y_B22 + H_B22 + IY
+    #define W_B23    W_B21
+    #define H_B23    H_CBX
 
     // EditBox: Max. voices
-    #define X_A24    X_A23 + W_A23 + IX
-    #define Y_A24    Y_A23
-    #define W_A24    32
-    #define H_A24    H_CBX
+    #define X_B24    X_B23 + W_B23 + IX
+    #define Y_B24    Y_B23
+    #define W_B24    32
+    #define H_B24    H_EBX
 
     // Checkbox "Process reverb and chorus"
-    #define X_A25    X_A21
-    #define Y_A25    Y_A24 + H_A24 + IY
-    #define W_A25    100
-    #define H_A25    H_CHB
+    #define X_B25    X_B21
+    #define Y_B25    Y_B24 + H_B24 + IY
+    #define W_B25    100
+    #define H_B25    H_CHB
+
+    // Checkbox "Use DLS (Custom)"
+    #define X_B26    X_B25 + W_B25 + IX
+    #define Y_B26    Y_B25
+    #define W_B26    100
+    #define H_B26    H_CHB
 
     // Checkbox "Dynamic sample loading"
-    #define X_A26    X_A25
-    #define Y_A26    Y_A25 + H_A25 + IY
-    #define W_A26    100
-    #define H_A26    H_CHB
+    #define X_B27    X_B25
+    #define Y_B27    Y_B25 + H_B25 + IY
+    #define W_B27    100
+    #define H_B27    H_CHB
 
-#define H_A20    11 + H_A22 + IY + H_A24 + IY + H_A25 + IY + H_A26 + 7
+#define H_B20    11 + H_B22 + IY + H_B24 + IY + H_B25 + IY + H_B26 + 7
 
 // Groupbox LibMT32Emu
 
-#define X_D00    X_A20
-#define Y_D00    Y_A20 + H_A20 + IY
-#define W_D00    W_A20
+#define X_D00    X_B20
+#define Y_D00    Y_B20 + H_B20 + IY
+#define W_D00    W_B20
 
     // Label: Conversion Quality
     #define X_D01    X_D00 +  5
@@ -167,7 +179,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define X_D04    X_D03 + W_D03 + IX
     #define Y_D04    Y_D03
     #define W_D04    32
-    #define H_D04    H_EBX
+    #define H_D04    H_CBX
 
     // Label: Analog Output Mode
     #define X_D05    X_D01
@@ -254,16 +266,18 @@ font 8, "MS Shell Dlg", 400, 0, 1
         rtext      "Max. voices:",              IDC_BASSMIDI_MAX_VOICES_LBL,        X_A15, Y_A15 + 2, W_A15, H_A15
         edittext                                IDC_BASSMIDI_MAX_VOICES,            X_A16, Y_A16,     W_A16, H_A16, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
         control "Process reverb and chorus",    IDC_BASSMIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A17, Y_A17, W_A17, H_A17
-        rtext           "Cached:",              IDC_CACHED_LBL,                     X_A18, Y_A18 + 2, W_A18, H_A18
-        ltext                  "",              IDC_CACHED,                         X_A19, Y_A19 + 2, W_A19, H_A19, WS_VISIBLE
+        control "Use DLS",                      IDC_BASSMIDI_USE_DLS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A18, Y_A18, W_A18, H_A18
+        rtext           "Cached:",              IDC_CACHED_LBL,                     X_A19, Y_A19 + 2, W_A19, H_A19
+        ltext                  "",              IDC_CACHED,                         X_A20, Y_A20 + 2, W_A20, H_A20, WS_VISIBLE
 
-    groupbox "FluidSynth", IDC_STATIC, X_A20, Y_A20, W_A20, H_A20
-        rtext       "Interpolation:",           IDC_FLUIDSYNTH_INTERPOLATION_TEXT,  X_A21, Y_A21 + 2, W_A21, H_A21
-        combobox                                IDC_FLUIDSYNTH_INTERPOLATION,       X_A22, Y_A22,     W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext         "Max. voices:",           IDC_FLUIDSYNTH_MAX_VOICES_LBL,      X_A23, Y_A23 + 2, W_A23, H_A23
-        edittext                                IDC_FLUIDSYNTH_MAX_VOICES,          X_A24, Y_A24,     W_A24, H_A24, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
-        control "Process reverb and chorus",    IDC_FLUIDSYNTH_EFFECTS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
-        control "Dynamic sample loading",       IDC_FLUIDSYNTH_DYN_LOADING          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
+    groupbox "FluidSynth", IDC_STATIC, X_B20, Y_B20, W_B20, H_B20
+        rtext       "Interpolation:",           IDC_FLUIDSYNTH_INTERPOLATION_TEXT,  X_B21, Y_B21 + 2, W_B21, H_B21
+        combobox                                IDC_FLUIDSYNTH_INTERPOLATION,       X_B22, Y_B22,     W_B22, H_B22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext         "Max. voices:",           IDC_FLUIDSYNTH_MAX_VOICES_LBL,      X_B23, Y_B23 + 2, W_B23, H_B23
+        edittext                                IDC_FLUIDSYNTH_MAX_VOICES,          X_B24, Y_B24,     W_B24, H_B24, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        control "Process reverb and chorus",    IDC_FLUIDSYNTH_EFFECTS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B25, Y_B25, W_B25, H_B25
+        control "Use DLS (Custom)",             IDC_FLUIDSYNTH_USE_DLS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B26, Y_B26, W_B26, H_B26
+        control "Dynamic sample loading",       IDC_FLUIDSYNTH_DYN_LOADING          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B27, Y_B27, W_B27, H_B27
 
     groupbox "LibMT32Emu (Munt)", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
         rtext       "Resampling Quality:"   IDC_MT32_CONVERSION_QUALITY_TEXT,   X_D01, Y_D01 + 2, W_D01, H_D01

@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.07.30) **/
+/** $VER: Configuration.h (2025.08.27) **/
 
 #pragma once
 
@@ -102,11 +102,13 @@ enum
 
     DefaultBASSMIDIMaxVoices = 256,
     DefaultBASSMIDIProcessEffects = true,
+    DefaultBASSMIDIUseDLS = true,
 
     DefaultFluidSynthInterpolationMethod = FLUID_INTERP_DEFAULT,
     DefaultFluidSynthMaxVoices = 256,
     DefaultFluidSynthProcessEffects = true,
     DefaultFluidSynthDynSampleLoading = false,
+    DefaultFluidSynthUseDLS = false,
 
     DefaultBASSMIDIResamplingMode = 1,
 
@@ -218,8 +220,11 @@ extern cfg_var_modern::cfg_bool
     CfgSkipToFirstNote,
 
     CfgBASSMIDIProcessEffects,
+    CfgBASSMIDIUseDLS,
+
     CfgFluidSynthProcessEffects,
-    CfgFluidSynthDynSampleLoading;
+    CfgFluidSynthDynSampleLoading,
+    CfgFluidSynthUseDLS;
 
 extern cfg_var_modern::cfg_float
     CfgBASSMIDIGain;

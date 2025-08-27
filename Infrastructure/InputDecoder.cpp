@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.08.17) **/
+/** $VER: InputDecoder.cpp (2025.08.27) **/
 
 #include "pch.h"
 
@@ -27,6 +27,7 @@
 #include "PreferencesFM.h"
 #include "KaraokeProcessor.h"
 #include "CLAPHost.h"
+#include "Exception.h"
 
 #include "Log.h"
 
@@ -99,8 +100,11 @@ InputDecoder::~InputDecoder() noexcept
 {
     for (const auto & sf : _Soundfonts)
     {
-        if (sf.IsEmbedded)
+        if (sf.IsTemporary)
+        {
+            // This may fail if the sound font cache still has a lock on the file. The cache will clean it up when it's done with it.
             ::DeleteFileA((const char *) sf.FilePath.string().c_str());
+        }
     }
 
     if (_Player != nullptr)

@@ -1,9 +1,11 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.08.15) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.08.27) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
 #include "InputDecoder.h"
+
+#include <libsf.h>
 
 #include "Support.h"
 #include "Log.h"
@@ -36,17 +38,66 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         {
             const bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
 
-            // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
-            const unique_path_t FilePath(IsDLS ? ".dls" : ".sf2");
-
-            if (!FilePath.IsEmpty() && WriteSoundfontFile(FilePath.Path(), Data))
+            if (IsDLS && (((_PlayerType == PlayerType::BASSMIDI) && CfgBASSMIDIUseDLS) || ((_PlayerType == PlayerType::FluidSynth) && CfgFluidSynthUseDLS)))
             {
-                Soundfonts.push_back(soundfont_t(FilePath.Path(), 0.f, _Container.GetBankOffset(), true, IsDLS));
+                sf::bank_t Bank;
 
-                HasNonDefaultSoundfonts = true;
+                // Read the data as a DLS collection and convert it to an SF2 bank.
+                {
+                    riff::memory_stream_t ms;
+
+                    if (ms.Open(Data.data(), Data.size()))
+                    {
+                        sf::dls::collection_t Collection;
+
+                        sf::dls::reader_t dr;
+
+                        if (dr.Open(&ms, riff::reader_t::option_t::None))
+                        {
+                            dr.Process({ true }, Collection);
+
+                            Bank.ConvertFrom(Collection);
+                        }
+                    }
+                }
+
+                {
+                    // Write the SF2 bank to a temporary file.
+                    const unique_path_t FilePath(".sf2");
+
+                    riff::file_stream_t fs;
+
+                    if (fs.Open(FilePath.Path(), true))
+                    {
+                        sf::writer_t sw;
+
+                        if (sw.Open(&fs, riff::writer_t::Options::PolyphoneCompatible))
+                        {
+                            sw.Process({  }, Bank);
+
+                            Soundfonts.push_back(soundfont_t(FilePath.Path(), 0.f, _Container.GetBankOffset(), true, false));
+
+                            HasNonDefaultSoundfonts = true;
+                        }
+
+                        fs.Close();
+                    }
+                }
             }
             else
-                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to write embedded soundfont to temporary file.");
+            {
+                // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
+                const unique_path_t FilePath(IsDLS ? ".dls" : ".sf2");
+
+                if (!FilePath.IsEmpty() && WriteSoundfontFile(FilePath.Path(), Data))
+                {
+                    Soundfonts.push_back(soundfont_t(FilePath.Path(), 0.f, _Container.GetBankOffset(), true, IsDLS));
+
+                    HasNonDefaultSoundfonts = true;
+                }
+                else
+                    Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to write embedded soundfont to temporary file.");
+            }
         }
     }
 
@@ -114,7 +165,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     // Force the use of a soundfont player if an embedded or named soundfont was found.
     if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundfonts && !_Soundfonts.empty())
     {
-        _PlayerType = (FluidSynth::API::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
+//      _PlayerType = (FluidSynth::API::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
     }
 
     // Show which soundfonts we'll be using in the console.

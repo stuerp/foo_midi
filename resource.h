@@ -236,9 +236,10 @@
 #define IDC_BASSMIDI_MAX_VOICES             2506
 
 #define IDC_BASSMIDI_EFFECTS                2507
+#define IDC_BASSMIDI_USE_DLS                2508
 
-#define IDC_CACHED_LBL                      2508
-#define IDC_CACHED                          2509
+#define IDC_CACHED_LBL                      2509
+#define IDC_CACHED                          2510
 
 #define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   2550
 #define IDC_FLUIDSYNTH_INTERPOLATION        2251
@@ -247,6 +248,7 @@
 #define IDC_FLUIDSYNTH_MAX_VOICES           2253
 
 #define IDC_FLUIDSYNTH_EFFECTS              2254
-#define IDC_FLUIDSYNTH_DYN_LOADING          2255
+#define IDC_FLUIDSYNTH_USE_DLS              2555
+#define IDC_FLUIDSYNTH_DYN_LOADING          2256
 
 #define IDD_CLAP_WINDOW                     2600

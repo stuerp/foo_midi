@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesWT.cpp (2025.07.14) P. Stuer **/
+/** $VER: PreferencesWT.cpp (2025.08.27) P. Stuer **/
 
 #include "pch.h"
 
@@ -79,11 +79,13 @@ public:
         COMMAND_HANDLER_EX(IDC_BASSMIDI_RESAMPLING, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_BASSMIDI_MAX_VOICES, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_BASSMIDI_EFFECTS, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_BASSMIDI_USE_DLS, BN_CLICKED, OnButtonClicked)
 
         // FluidSynth
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_INTERPOLATION, CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_MAX_VOICES, EN_CHANGE, OnEditChange)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_EFFECTS, BN_CLICKED, OnButtonClicked)
+        COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_USE_DLS, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_FLUIDSYNTH_DYN_LOADING, BN_CLICKED, OnButtonClicked)
 
         // MT-32 Player
@@ -182,6 +184,7 @@ void WTDialog::apply()
         CfgBASSMIDIMaxVoices = std::clamp(::_wtoi(Text), 1, 65535);
 
         CfgBASSMIDIProcessEffects = (bool) SendDlgItemMessage(IDC_BASSMIDI_EFFECTS, BM_GETCHECK);
+        CfgBASSMIDIUseDLS = (bool) SendDlgItemMessage(IDC_BASSMIDI_USE_DLS, BM_GETCHECK);
     }
 
     // FluidSynth
@@ -198,6 +201,7 @@ void WTDialog::apply()
         CfgFluidSynthMaxVoices = std::clamp(::_wtoi(Text), 1, 65535);
 
         CfgFluidSynthProcessEffects   = (bool) SendDlgItemMessage(IDC_FLUIDSYNTH_EFFECTS, BM_GETCHECK);
+        CfgFluidSynthUseDLS = (bool) SendDlgItemMessage(IDC_FLUIDSYNTH_USE_DLS, BM_GETCHECK);
         CfgFluidSynthDynSampleLoading = (bool) SendDlgItemMessage(IDC_FLUIDSYNTH_DYN_LOADING, BM_GETCHECK);
     }
 
@@ -279,6 +283,8 @@ void WTDialog::reset()
 
         SendDlgItemMessage(IDC_BASSMIDI_EFFECTS, BM_SETCHECK, DefaultBASSMIDIProcessEffects);
 
+        SendDlgItemMessage(IDC_BASSMIDI_USE_DLS, BM_SETCHECK, DefaultBASSMIDIUseDLS);
+
         const BOOL IsBASSMIDI = true; //(_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
@@ -310,6 +316,7 @@ void WTDialog::reset()
         ::SetDlgItemTextA(m_hWnd, IDC_FLUIDSYNTH_MAX_VOICES, pfc::format_int(DefaultFluidSynthMaxVoices));
 
         SendDlgItemMessage(IDC_FLUIDSYNTH_EFFECTS, BM_SETCHECK, DefaultFluidSynthProcessEffects);
+        SendDlgItemMessage(IDC_FLUIDSYNTH_USE_DLS, BM_SETCHECK, DefaultFluidSynthUseDLS);
         SendDlgItemMessage(IDC_FLUIDSYNTH_DYN_LOADING, BM_SETCHECK, DefaultFluidSynthDynSampleLoading);
 
         const BOOL IsFluidSynth = true;//(_SelectedPlayer.Type == PlayerTypes::FluidSynth);
@@ -373,6 +380,8 @@ BOOL WTDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 
         SendDlgItemMessage(IDC_BASSMIDI_EFFECTS, BM_SETCHECK, CfgBASSMIDIProcessEffects);
 
+        SendDlgItemMessage(IDC_BASSMIDI_USE_DLS, BM_SETCHECK, CfgBASSMIDIUseDLS);
+
         const BOOL Enable = true;//(_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
@@ -408,6 +417,7 @@ BOOL WTDialog::OnInitDialog(CWindow window, LPARAM) noexcept
         ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_MAX_VOICES, pfc::format_int(CfgFluidSynthMaxVoices));
 
         SendDlgItemMessage(IDC_FLUIDSYNTH_EFFECTS, BM_SETCHECK, CfgFluidSynthProcessEffects);
+        SendDlgItemMessage(IDC_FLUIDSYNTH_USE_DLS, BM_SETCHECK, CfgFluidSynthUseDLS);
         SendDlgItemMessage(IDC_FLUIDSYNTH_DYN_LOADING, BM_SETCHECK, CfgFluidSynthDynSampleLoading);
 
         const BOOL Enable = true;//(_SelectedPlayer.Type == PlayerTypes::FluidSynth);
@@ -529,7 +539,9 @@ void WTDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
     switch (id)
     {
         case IDC_BASSMIDI_EFFECTS:
+        case IDC_BASSMIDI_USE_DLS:
         case IDC_FLUIDSYNTH_EFFECTS:
+        case IDC_FLUIDSYNTH_USE_DLS:
         case IDC_FLUIDSYNTH_DYN_LOADING:
 
         case IDC_MT32_REVERB:
@@ -568,6 +580,9 @@ bool WTDialog::HasChanged() noexcept
 
         if (SendDlgItemMessage(IDC_BASSMIDI_EFFECTS, BM_GETCHECK) != CfgBASSMIDIProcessEffects)
             return true;
+
+        if (SendDlgItemMessage(IDC_BASSMIDI_USE_DLS, BM_GETCHECK) != CfgBASSMIDIUseDLS)
+            return true;
     }
 
     // FluidSynth
@@ -585,6 +600,9 @@ bool WTDialog::HasChanged() noexcept
             return true;
 
         if (SendDlgItemMessage(IDC_FLUIDSYNTH_EFFECTS, BM_GETCHECK) != CfgFluidSynthProcessEffects)
+            return true;
+
+        if (SendDlgItemMessage(IDC_FLUIDSYNTH_USE_DLS, BM_GETCHECK) != CfgFluidSynthUseDLS)
             return true;
 
         if (SendDlgItemMessage(IDC_FLUIDSYNTH_DYN_LOADING, BM_GETCHECK) != CfgFluidSynthDynSampleLoading)

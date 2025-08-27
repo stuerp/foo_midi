@@ -576,7 +576,7 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
 
     int BankOffset = sf.BankOffset;
 
-    if (sf.IsEmbedded)
+    if (sf.IsTemporary)
     {
         if (sf.IsDLS)
         {

@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.08.15) **/
+/** $VER: BMPlayer.cpp (2025.08.27) **/
 
 #include "pch.h"
 
@@ -151,15 +151,13 @@ bool BMPlayer::Startup()
         }
     }
 
-    std::vector<BASS_MIDI_FONTEX> Fonts;
-
     size_t LoadCount = 0;
 
     for (const auto & sf : _Soundfonts)
     {
         try
         {
-            LoadSoundfonts(sf, Fonts);
+            LoadSoundfonts(sf, _Fonts);
             ++LoadCount;
         }
         catch (const std::exception & e)
@@ -201,7 +199,7 @@ bool BMPlayer::Startup()
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_SRC, (float) _InterpolationMode);
         ::BASS_ChannelSetAttribute(Stream, BASS_ATTRIB_MIDI_VOICES, (float) _VoiceCount);
 
-        ::BASS_MIDI_StreamSetFonts(Stream, Fonts.data(), (DWORD) Fonts.size() | BASS_MIDI_FONT_EX);
+        ::BASS_MIDI_StreamSetFonts(Stream, _Fonts.data(), (DWORD) _Fonts.size() | BASS_MIDI_FONT_EX);
     }
 
     _ErrorMessage = "";
@@ -242,6 +240,11 @@ void BMPlayer::Shutdown()
         delete[] _SrcFrames;
         _SrcFrames = nullptr;
     }
+
+    for (auto & fex : _Fonts)
+        ::CacheRemoveSoundfont(fex.font);
+
+    _Fonts.resize(0);
 
     _IsStarted = false;
 }
@@ -359,7 +362,7 @@ void BMPlayer::LoadSoundfonts(const soundfont_t & sf, std::vector<BASS_MIDI_FONT
 {
     if (!sf.Fonts.empty())
     {
-        HSOUNDFONT hSoundfont = ::CacheAddSoundfont(sf.FilePath);
+        HSOUNDFONT hSoundfont = ::CacheAddSoundfont(sf.FilePath, sf.IsTemporary);
 
         if (hSoundfont == NULL)
         {
@@ -390,7 +393,7 @@ void BMPlayer::LoadSoundfonts(const soundfont_t & sf, std::vector<BASS_MIDI_FONT
 
     if (IsOneOf(sf.FilePath.extension(), { L".sf2", L".sf3", L".sf2pack", L".sfogg" }))
     {
-        HSOUNDFONT hSoundfont = ::CacheAddSoundfont(sf.FilePath);
+        HSOUNDFONT hSoundfont = ::CacheAddSoundfont(sf.FilePath, sf.IsTemporary);
 
         if (hSoundfont == NULL)
         {
@@ -410,15 +413,6 @@ void BMPlayer::LoadSoundfonts(const soundfont_t & sf, std::vector<BASS_MIDI_FONT
         DumpSoundfont(sf.FilePath, hSoundfont);
 
         int BankOffset = sf.BankOffset;
-
-        if (sf.IsEmbedded)
-        {
-            if (sf.IsDLS)
-            {
-                if (_FileFormat == midi::XMF)
-                    BankOffset = -1;
-            }
-        }
 
         const BASS_MIDI_FONTEX fex =
         {

@@ -12,7 +12,7 @@
 class soundfont_t
 {
 public:
-    soundfont_t() noexcept : Gain(), BankOffset(), IsEmbedded(false), IsDLS(false)
+    soundfont_t() noexcept : Gain(), BankOffset(), IsTemporary(false), IsDLS(false)
     {
     }
 
@@ -21,7 +21,7 @@ public:
         FilePath = filePath;
         Gain = gain;
         BankOffset = bankOffset;
-        IsEmbedded = isEmbedded;
+        IsTemporary = isEmbedded;
         IsDLS = isDLS;
     }
 
@@ -36,7 +36,7 @@ public:
         if (BankOffset != other.BankOffset)
             return false;
 
-        if (IsEmbedded != other.IsEmbedded)
+        if (IsTemporary != other.IsTemporary)
             return false;
 
         return (IsDLS == other.IsDLS);
@@ -46,7 +46,7 @@ public:
     fs::path FilePath;
     float Gain;
     int BankOffset;
-    bool IsEmbedded;
+    bool IsTemporary;
     bool IsDLS;
 
     std::vector<BASS_MIDI_FONTEX> Fonts;

@@ -95,9 +95,13 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.x.x, 2025-xx-xx
+v3.2.0.0, 2025-xx-xx
 
-- FIXED: Reduced device count of LibADLMIDI/LibOPNMIDI from 3 to 1 to prevent a rare edge case from freezing the sample render loop.
+- New: The BASSMIDI player can now use DLS sound fonts. They are automatically converted to SF2 format before use.
+- New: "Use DLS" option for the BASSMIDI player.
+- New: "Use DLS (Custom) option for the FluidSynth player. This overrides the built-in DLS support.
+- Fixed: Reduced device count of LibADLMIDI/LibOPNMIDI from 3 to 1 to prevent a rare edge case from freezing the sample render loop.
+- Fixed: The sound font cache prevented temporary files from being deleted.
 
 You can read the full history [here](docs/History.md).
 
