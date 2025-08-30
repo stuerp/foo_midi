@@ -95,7 +95,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.0.0, 2025-xx-xx
+v3.2.0.0, 2025-08-30-alpha1
 
 - New: The BASSMIDI player can now use DLS sound fonts. They are automatically converted to SF2 format before use.
 - New: "Use DLS" option for the BASSMIDI player.
