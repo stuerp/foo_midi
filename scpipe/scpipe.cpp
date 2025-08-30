@@ -88,8 +88,6 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
     Write(0);
 
-MessageBoxW(HWND_DESKTOP, L"Hello", L"Hello", MB_OK);
-
     for (;;)
     {
         uint32_t Command = Read();
