@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.08.27) **/
+/** $VER: Configuration.h (2025.08.31) **/
 
 #pragma once
 
@@ -92,6 +92,7 @@ enum
     DefaultMIDIFlavor = MIDIFlavor::Default,
     DefaultUseMIDIEffects = 1,
     DefaultUseMT32EmuWithMT32 = 1,
+    DefaultUseSCWithGS = false,
     DefaultUseVSTiWithXG = 0,
     DefaultDetectExtraDrum = 1,
 
@@ -199,6 +200,8 @@ extern cfg_var_modern::cfg_int
     CfgUseVSTiWithXG;
 
 extern cfg_var_modern::cfg_bool
+    CfgUseSCWithGS,
+
     CfgWriteBarMarkers,
     CfgWriteSysExNames,
     CfgExtendLoops,

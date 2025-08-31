@@ -97,6 +97,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v3.2.0.0-alpha2, 2025-09-xx
 
+- New: Option "Use SecretSauce with GS" to always use the SecretSauce player with a GS MIDI file.
 - Improved: The SecretSauce player keeps trying to play files that cause the host to stop early f.e. because of an unsupported SysEx.
 
 You can read the full history [here](docs/History.md).

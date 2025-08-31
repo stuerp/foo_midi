@@ -431,6 +431,10 @@ This setting turns off the reverb and chorus effect and prevents reverb and chor
 
 When you enable this setting the selected player will be ignored and LibMT32Emu will always be used whenever an MT-32 MIDI file is played.
 
+#### Use SecretSauce with GS
+
+When you enable this setting the selected player will be ignored and SecretSauce will always be used whenever a GS MIDI file is played.
+
 #### Use VSTi with XG
 
 This setting will ignore the selected player and use the VSTi specified on the **[MIDI Player / Paths](#paths)** page whenever an XG MIDI file is played. Typically the Yamaha S-YXG50 VSTi is configured there.

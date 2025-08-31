@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.08.01) **/
+/** $VER: InputDecoder.h (2025.08.31) **/
 
 #pragma once
 
@@ -192,6 +192,7 @@ private:
     hasher_md5_result _FileHash;
 
     bool _IsMT32;
+    bool _IsGS;
     bool _IsXG;
 
     bool _DetectRPGMakerLoops;

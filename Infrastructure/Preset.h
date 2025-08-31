@@ -1,5 +1,5 @@
 
-/** $VER: Preset.h (2025.07.09) **/
+/** $VER: Preset.h (2025.08.31) **/
 
 #pragma once
 
@@ -68,6 +68,7 @@ public:
     MIDIFlavor _MIDIFlavor;
     bool _UseMIDIEffects;
     bool _UseMT32EmuWithMT32;
+    bool _UseSCWithGS;
     bool _UseVSTiWithXG;
     bool _DetectExtraDrum;
 };

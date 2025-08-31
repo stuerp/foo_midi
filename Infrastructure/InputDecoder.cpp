@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.08.27) **/
+/** $VER: InputDecoder.cpp (2025.08.31) **/
 
 #include "pch.h"
 
@@ -50,6 +50,7 @@ InputDecoder::InputDecoder() noexcept :
     _IsSysExFile(false),
 
     _IsMT32(),
+    _IsGS(),
     _IsXG(),
 
     _DetectRPGMakerLoops((bool) CfgDetectRPGMakerLoops),
@@ -1068,6 +1069,7 @@ void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongInde
         if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
         {
             _IsMT32 = (Item.Value == "MT-32");
+            _IsGS = (Item.Value == "GS");
             _IsXG = (Item.Value == "XG");
         }
     }
@@ -1075,6 +1077,12 @@ void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongInde
     if (_IsMT32 && CfgUseMT32EmuWithMT32)
     {
         _PlayerType = PlayerType::MT32Emu;
+        _IsPlayerTypeOverriden = true;
+    }
+    else
+    if (_IsGS && CfgUseSCWithGS && !CfgSecretSauceDirectoryPath.get().isEmpty())
+    {
+        _PlayerType = PlayerType::SecretSauce;
         _IsPlayerTypeOverriden = true;
     }
     else
