@@ -1,6 +1,6 @@
 #pragma once
 
-class SCCore
+class core_t
 {
 public:
     void (*TG_Process)(float * left, float * right, unsigned int count);
@@ -37,8 +37,8 @@ public:
 
     void (*TG_setInterruptThreadIdAtThisTime)();
 
-    SCCore();
-    ~SCCore();
+    core_t();
+    ~core_t();
 
     bool Load(const wchar_t * path) noexcept;
     void Unload() noexcept;

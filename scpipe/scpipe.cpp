@@ -2,13 +2,13 @@
 
 #pragma warning(disable: 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 
-// #define LOG_EXCHANGE
-
 const size_t BlockSize = 4096;
 
-static HANDLE _hNUL = nullptr;
-static HANDLE _hPipeIn = nullptr;
-static HANDLE _hPipeOut = nullptr;
+static HANDLE _hNUL = NULL;
+static HANDLE _hPipeIn = NULL;
+static HANDLE _hPipeOut = NULL;
+
+//#define LOG_EXCHANGE
 
 #ifdef LOG_EXCHANGE
 unsigned exchange_count = 0;
@@ -34,7 +34,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
     uint32_t Result = 0;
 
-    SCCore * Sampler = nullptr;
+    core_t * Core = nullptr;
     uint32_t SampleRate = 44100;
     std::vector<float> SrcFrames;
 
@@ -61,15 +61,15 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
     ::SetUnhandledExceptionFilter(FilterUnhandledExceptions);
 #endif
 
-    Sampler = new SCCore;
+    Core = new core_t;
 
-    if (!Sampler->Load(argv[1]))
+    if (!Core->Load(argv[1]))
     {
         Result = 1;
         goto exit;
     }
 
-    if (Sampler->TG_initialize(0) < 0)
+    if (Core->TG_initialize(0) < 0)
     {
         Result = 2;
         goto exit;
@@ -109,11 +109,11 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
                 SampleRate = Read();
 
-                Sampler->TG_activate(44100.0, 1024);
-                Sampler->TG_setMaxBlockSize(256);
-                Sampler->TG_setSampleRate((float) SampleRate);
+                Core->TG_activate(44100.0, 1024);
+                Core->TG_setMaxBlockSize(256);
+                Core->TG_setSampleRate((float) SampleRate);
 //              Sampler->TG_setSampleRate((float) SampleRate);
-                Sampler->TG_setMaxBlockSize(BlockSize);
+                Core->TG_setMaxBlockSize(BlockSize);
 
                 Write(0);
                 break;
@@ -123,7 +123,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
             {
                 uint32_t Code = Read();
 
-                Sampler->TG_ShortMidiIn(Code, 0);
+                Core->TG_ShortMidiIn(Code, 0);
 
                 Write(0);
                 break;
@@ -159,7 +159,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                 if (MsgData[Size - 1] != 0xF7)
                     MsgData[Size] = 0xF7;
 
-                Sampler->TG_LongMidiIn(MsgData, 0);
+                Core->TG_LongMidiIn(MsgData, 0);
 
                 Write(0);
                 break;
@@ -175,21 +175,18 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                 {
                     uint32_t SrcCount = min(DstCount, BlockSize);
 
-                    ::memset(&SrcFrames[0],          0, SrcCount * sizeof(float));
+                    ::memset(&SrcFrames[0],         0, SrcCount * sizeof(float));
                     ::memset(&SrcFrames[BlockSize], 0, SrcCount * sizeof(float));
 
-                    Sampler->TG_setInterruptThreadIdAtThisTime();
-                    Sampler->TG_Process(&SrcFrames[0], &SrcFrames[BlockSize], SrcCount);
+                    Core->TG_setInterruptThreadIdAtThisTime();
+                    Core->TG_Process(&SrcFrames[0], &SrcFrames[BlockSize], SrcCount);
 
                     float * DstFrames = &SrcFrames[(size_t) (BlockSize * 2)];
 
-                    for (unsigned i = 0; i < SrcCount; ++i)
+                    for (uint32_t i = 0; i < SrcCount; ++i)
                     {
-                        float Sample = SrcFrames[i];
-                        DstFrames[0] = Sample;
-
-                        Sample = SrcFrames[(size_t) BlockSize + i];
-                        DstFrames[1] = Sample;
+                        DstFrames[0] = SrcFrames[i];
+                        DstFrames[1] = SrcFrames[(size_t) BlockSize + i];
 
                         DstFrames += 2;
                     }
@@ -209,8 +206,8 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                 {
                     uint32_t SrcCount = min(DstCount, BlockSize);
 
-                    Sampler->TG_setInterruptThreadIdAtThisTime();
-                    Sampler->TG_Process(&SrcFrames[0], &SrcFrames[BlockSize], SrcCount);
+                    Core->TG_setInterruptThreadIdAtThisTime();
+                    Core->TG_Process(&SrcFrames[0], &SrcFrames[BlockSize], SrcCount);
 
                     DstCount -= SrcCount;
                 }
@@ -224,7 +221,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                 uint32_t Code = Read();
                 uint32_t Timestamp = Read();
 
-                Sampler->TG_ShortMidiIn(Code, Timestamp);
+                Core->TG_ShortMidiIn(Code, Timestamp);
 
                 Write(0);
                 break;
@@ -261,7 +258,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                 if (MsgData[Size - 1] != 0xF7)
                     MsgData[Size] = 0xF7;
 
-                Sampler->TG_LongMidiIn(MsgData, Timestamp);
+                Core->TG_LongMidiIn(MsgData, Timestamp);
 
                 Write(0);
                 break;
@@ -274,7 +271,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
     }
 
 exit:
-    delete Sampler;
+    delete Core;
 
     ::CoUninitialize();
 
@@ -324,11 +321,12 @@ static void ReadBytes(void * in, uint32_t size)
     if (!::ReadFile(_hPipeIn, in, size, &BytesRead, NULL) || BytesRead < size)
     {
         ::memset(in, 0, size);
+
     #ifdef LOG_EXCHANGE
         TCHAR logfile[MAX_PATH];
         _stprintf_s(logfile, _T("bytes_%08u.err"), exchange_count++);
         FILE * f = _tfopen(logfile, _T("wb"));
-        _ftprintf(f, _T("Wanted %u bytes, got %u"), size, dwRead);
+        _ftprintf(f, _T("Wanted %u bytes, got %u"), size, (uint32_t) BytesRead);
         fclose(f);
     #endif
     }

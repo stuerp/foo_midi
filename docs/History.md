@@ -1,6 +1,14 @@
 
 # foo_midi History
 
+v3.2.0.0-alpha1, 2025-08-30
+
+- New: The BASSMIDI player can now use DLS sound fonts. They are automatically converted to SF2 format before use.
+- New: "Use DLS" option for the BASSMIDI player.
+- New: "Use DLS (Custom) option for the FluidSynth player. This overrides the built-in DLS support.
+- Fixed: Reduced device count of LibADLMIDI/LibOPNMIDI from 3 to 1 to prevent a rare edge case from freezing the sample render loop.
+- Fixed: The sound font cache prevented temporary files from being deleted.
+
 v3.1.2.0, 2025-08-17
 
 - New: The VSTi that is used when the [Use VSTi with XG](docs/README.md) is enabled loads its saved configuration before playback starts.

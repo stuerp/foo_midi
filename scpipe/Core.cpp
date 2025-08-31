@@ -1,18 +1,18 @@
 #include "stdafx.h"
 
-SCCore::SCCore()
+core_t::core_t()
 {
     _hModule = 0;
 
     Dispose();
 }
 
-SCCore::~SCCore()
+core_t::~core_t()
 {
     Unload();
 }
 
-bool SCCore::Load(const wchar_t * pathName) noexcept
+bool core_t::Load(const wchar_t * pathName) noexcept
 {
     _hModule = (void *) ::LoadLibraryW(pathName);
 
@@ -45,12 +45,12 @@ bool SCCore::Load(const wchar_t * pathName) noexcept
     return false;
 }
 
-void SCCore::Unload() noexcept
+void core_t::Unload() noexcept
 {
     Dispose();
 }
 
-void SCCore::Dispose() noexcept
+void core_t::Dispose() noexcept
 {
     TG_initialize = nullptr;
     TG_terminate = nullptr;

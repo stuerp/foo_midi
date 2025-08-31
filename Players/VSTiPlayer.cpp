@@ -1,13 +1,11 @@
 
-/** $VER: VSTiPlayer.cpp (2025.07.16) **/
+/** $VER: VSTiPlayer.cpp (2025.08.31) **/
 
 #include "pch.h"
 
 #include "VSTiPlayer.h"
 #include "Resource.h"
 #include "Log.h"
-
-// #define LOG_EXCHANGE
 
 namespace VSTi
 {
@@ -363,9 +361,7 @@ bool Player::StartHost()
             .hStdError   = ::GetStdHandle(STD_ERROR_HANDLE),
         };
 
-    #ifdef _DEBUG
-        FB2K_console_print(STR_COMPONENT_BASENAME, " is using \"", CommandLine.c_str(), "\" to start host process.");
-    #endif
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME " is using \"%s\" to start host process.", CommandLine.c_str());
 
         PROCESS_INFORMATION pi = { };
 
@@ -386,9 +382,9 @@ bool Player::StartHost()
         _hProcess = pi.hProcess;
         _hThread = pi.hThread;
 
-    #ifdef _DEBUG
-        FB2K_console_print(STR_COMPONENT_BASENAME, " started DLL host hProcess 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), " / hThread 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ".");
-    #else
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME " started DLL host: hProcess 0x%08X, hThread 0x%08X.", _hProcess, _hThread);
+
+    #ifndef _DEBUG
         ::SetPriorityClass(_hProcess, ::GetPriorityClass(::GetCurrentProcess()));
         ::SetThreadPriority(_hThread, ::GetThreadPriority(::GetCurrentThread()));
     #endif
@@ -439,16 +435,14 @@ void Player::StopHost() noexcept
 
     _IsTerminating = true;
 
-    #ifdef _DEBUG
-        FB2K_console_print(STR_COMPONENT_BASENAME, " stopped DLL host hProcess 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hProcess, 8), " / hThread 0x", pfc::format_hex_lowercase((t_uint64)(size_t)_hThread, 8), ".");
-    #endif
-
     if (_hProcess)
     {
         WriteBytes(0);
 
         ::WaitForSingleObject(_hProcess, 5000);
         ::TerminateProcess(_hProcess, 0);
+
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME " stopped DLL host: hProcess 0x%08X, hThread 0x%08X.", _hProcess, _hThread);
 
         ::CloseHandle(_hThread);
         _hThread = NULL;
@@ -616,14 +610,11 @@ bool Player::CreatePipeName(pfc::string_base & pipeName)
     return true;
 }
 
-#ifdef LOG_EXCHANGE
-unsigned exchange_count = 0;
-#endif
-
 #ifdef MESSAGE_PUMP
 static void ProcessPendingMessages()
 {
     MSG msg = {};
+
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         TranslateMessage(&msg);

@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.h (2025.07.07) Secret Sauce **/
+/** $VER: SCPlayer.h (2025.08.31) Secret Sauce **/
 
 #pragma once
 
@@ -32,7 +32,7 @@ protected:
 
 private:
     bool StartHosts(const fs::path & filePath);
-    void RenderPort(uint32_t port, float * data, uint32_t size) noexcept;
+    bool RenderPort(uint32_t port, float * data, uint32_t size) noexcept;
 
     bool StartHost(uint32_t port);
     void StopHost(uint32_t port) noexcept;
@@ -46,7 +46,7 @@ private:
     uint32_t ReadBytesOverlapped(uint32_t port, void * data, uint32_t size) noexcept;
 
     void WriteBytes(uint32_t port, uint32_t code) noexcept;
-    void WriteBytesOverlapped(uint32_t port, const void * data, uint32_t size) noexcept;
+    void WriteBytes(uint32_t port, const void * data, uint32_t size) noexcept;
 
 private:
     uint32_t _ProcessorArchitecture;
@@ -58,10 +58,13 @@ private:
     static const size_t MaxPorts = 3;
 
     HANDLE _hReadEvent[MaxPorts];
-    HANDLE _hPipeInRead[MaxPorts];
-    HANDLE _hPipeInWrite[MaxPorts];
-    HANDLE _hPipeOutRead[MaxPorts];
-    HANDLE _hPipeOutWrite[MaxPorts];
+
+    HANDLE _hDstPipeIn[MaxPorts];   // Input handle for the host process
+    HANDLE _hDstPipeOut[MaxPorts];  // Output handle for the host process
+
+    HANDLE _hSrcPipeOut[MaxPorts];  // Output handle for the player
+    HANDLE _hSrcPipeIn[MaxPorts];   // Input handle for the player
+
     HANDLE _hProcess[MaxPorts];
     HANDLE _hThread[MaxPorts];
 
