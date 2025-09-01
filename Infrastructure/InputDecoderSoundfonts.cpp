@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.08.27) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.09.01) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -16,8 +16,12 @@
 #pragma hdrstop
 
 static fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortHandler) noexcept;
-static bool WriteSoundfontFile(const fs::path & filePath, const std::vector<uint8_t> soundfont) noexcept;
 static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept;
+
+static void ReadDLS(sf::dls::collection_t & collection, const std::vector<uint8_t> & data);
+static void ReadDLS(sf::dls::collection_t & collection, const fs::path & filePath);
+static bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcept;
+static bool WriteSF2(const std::vector<uint8_t> & data, const fs::path & filePath) noexcept;
 
 /// <summary>
 /// Gets the soundfonts and adjusts the player type, if necessary.
@@ -26,9 +30,9 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 {
     std::vector<soundfont_t> Soundfonts;
 
+    const bool ConvertDLS = (((_PlayerType == PlayerType::BASSMIDI) && CfgBASSMIDIUseDLS) || ((_PlayerType == PlayerType::FluidSynth) && CfgFluidSynthUseDLS));
+
     /** IMPORTANT: The following sequence of adding soundfonts is optimal for BASSMIDI. For FluidSynth, we'll reverse the order later. **/
-    bool HasNonDefaultSoundfonts = false; // True if an embedded or named soundfont is found.
-    bool HasDLS = false;
 
     // First, add the embedded soundfont, if present.
     {
@@ -38,63 +42,33 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         {
             const bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
 
-            if (IsDLS && (((_PlayerType == PlayerType::BASSMIDI) && CfgBASSMIDIUseDLS) || ((_PlayerType == PlayerType::FluidSynth) && CfgFluidSynthUseDLS)))
+            if (IsDLS && ConvertDLS)
             {
-                sf::bank_t Bank;
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting embedded DLS collection to an SF2 bank.");
 
                 // Read the data as a DLS collection and convert it to an SF2 bank.
-                {
-                    riff::memory_stream_t ms;
+                sf::dls::collection_t Collection;
 
-                    if (ms.Open(Data.data(), Data.size()))
-                    {
-                        sf::dls::collection_t Collection;
+                ReadDLS(Collection, Data);
 
-                        sf::dls::reader_t dr;
+                sf::bank_t Bank;
 
-                        if (dr.Open(&ms, riff::reader_t::option_t::None))
-                        {
-                            dr.Process({ true }, Collection);
+                Bank.ConvertFrom(Collection);
 
-                            Bank.ConvertFrom(Collection);
-                        }
-                    }
-                }
+                const unique_path_t TempFilePath(".sf2");
 
-                {
-                    // Write the SF2 bank to a temporary file.
-                    const unique_path_t FilePath(".sf2");
-
-                    riff::file_stream_t fs;
-
-                    if (fs.Open(FilePath.Path(), true))
-                    {
-                        sf::writer_t sw;
-
-                        if (sw.Open(&fs, riff::writer_t::Options::PolyphoneCompatible))
-                        {
-                            sw.Process({  }, Bank);
-
-                            Soundfonts.push_back(soundfont_t(FilePath.Path(), 0.f, _Container.GetBankOffset(), true, false));
-
-                            HasNonDefaultSoundfonts = true;
-                        }
-
-                        fs.Close();
-                    }
-                }
+                if (!TempFilePath.IsEmpty() && WriteSF2(Bank, TempFilePath.Path()))
+                    Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, _Container.GetBankOffset(), true, false));
+                else
+                    Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to write embedded soundfont to temporary file.");
             }
             else
             {
                 // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
-                const unique_path_t FilePath(IsDLS ? ".dls" : ".sf2");
+                const unique_path_t TempFilePath(IsDLS ? ".dls" : ".sf2");
 
-                if (!FilePath.IsEmpty() && WriteSoundfontFile(FilePath.Path(), Data))
-                {
-                    Soundfonts.push_back(soundfont_t(FilePath.Path(), 0.f, _Container.GetBankOffset(), true, IsDLS));
-
-                    HasNonDefaultSoundfonts = true;
-                }
+                if (!TempFilePath.IsEmpty() && WriteSF2(Data, TempFilePath.Path()))
+                    Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, _Container.GetBankOffset(), true, IsDLS));
                 else
                     Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to write embedded soundfont to temporary file.");
             }
@@ -110,9 +84,27 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         {
             const bool IsDLS = (::_stricmp(SoundfontFilePath.extension().string().c_str(), ".dls") == 0);
 
-            Soundfonts.push_back(soundfont_t(SoundfontFilePath, 0.f, _Container.GetBankOffset(), false, IsDLS));
+            if (IsDLS && ConvertDLS)
+            {
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to an SF2 bank.", SoundfontFilePath.string().c_str());
 
-            HasNonDefaultSoundfonts = true;
+                // Read the data as a DLS collection and convert it to an SF2 bank.
+                sf::dls::collection_t Collection;
+
+                ReadDLS(Collection, SoundfontFilePath);
+
+                sf::bank_t Bank;
+
+                Bank.ConvertFrom(Collection);
+
+                const unique_path_t TempFilePath(".sf2");
+
+                WriteSF2(Bank, TempFilePath.Path());
+
+                Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, 0, false, false));
+            }
+            else
+                Soundfonts.push_back(soundfont_t(SoundfontFilePath, 0.f, 0, false, IsDLS));
         }
     }
     catch (std::exception & e)
@@ -131,9 +123,27 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
         {
             const bool IsDLS = (::_stricmp(SoundfontFilePath.extension().string().c_str(), ".dls") == 0);
 
-            Soundfonts.push_back(soundfont_t(SoundfontFilePath, 0.f, _Container.GetBankOffset(), false, IsDLS));
+            if (IsDLS && ConvertDLS)
+            {
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to an SF2 bank.", SoundfontFilePath.string().c_str());
 
-            HasNonDefaultSoundfonts = true;
+                // Read the data as a DLS collection and convert it to an SF2 bank.
+                sf::dls::collection_t Collection;
+
+                ReadDLS(Collection, SoundfontFilePath);
+
+                sf::bank_t Bank;
+
+                Bank.ConvertFrom(Collection);
+
+                const unique_path_t TempFilePath(".sf2");
+
+                WriteSF2(Bank, TempFilePath.Path());
+
+                Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, 0, false, false));
+            }
+            else
+                Soundfonts.push_back(soundfont_t(SoundfontFilePath, 0.f, 0, false, IsDLS));
         }
     }
     catch (std::exception & e)
@@ -145,30 +155,48 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     {
         if (!defaultSoundfontFilePath.empty())
         {
-            const bool IsDLS = (::_stricmp(defaultSoundfontFilePath.extension().string().c_str(), ".dls") == 0);
             const float Gain = (_PlayerType == PlayerType::BASSMIDI) ? _BASSMIDIGain : 0.f;
 
-            Soundfonts.push_back(soundfont_t(defaultSoundfontFilePath, Gain, 0, false, IsDLS));
+            const bool IsDLS = (::_stricmp(defaultSoundfontFilePath.extension().string().c_str(), ".dls") == 0);
+
+            if (IsDLS && ConvertDLS)
+            {
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to an SF2 bank.", defaultSoundfontFilePath.string().c_str());
+
+                // Read the data as a DLS collection and convert it to an SF2 bank.
+                sf::dls::collection_t Collection;
+
+                ReadDLS(Collection, defaultSoundfontFilePath);
+
+                sf::bank_t Bank;
+
+                Bank.ConvertFrom(Collection);
+
+                const unique_path_t TempFilePath(".sf2");
+
+                WriteSF2(Bank, TempFilePath.Path());
+
+                Soundfonts.push_back(soundfont_t(TempFilePath.Path(), Gain, 0, false, false));
+            }
+            else
+                Soundfonts.push_back(soundfont_t(defaultSoundfontFilePath, Gain, 0, false, IsDLS));
         }
     }
 
     // Create the final soundfont list.
-    std::string Report;
-    std::unordered_set<fs::path> UniqueLists;
-
-    for (const auto & sf : Soundfonts)
-        AddSoundFont(sf, UniqueLists, _Soundfonts, HasDLS, Report);
-
-    if (!Report.empty())
-        popup_message::g_show(Report.c_str(), STR_COMPONENT_BASENAME, popup_message::icon_error);
-
-    // Force the use of a soundfont player if an embedded or named soundfont was found.
-    if ((_PlayerType != PlayerType::FluidSynth) && HasNonDefaultSoundfonts && !_Soundfonts.empty())
     {
-//      _PlayerType = (FluidSynth::API::Exists() && HasDLS) ? PlayerType::FluidSynth : PlayerType::BASSMIDI;
+        std::unordered_set<fs::path> UniqueLists;
+        std::string Report;
+        bool HasDLS = false;
+
+        for (const auto & sf : Soundfonts)
+            AddSoundFont(sf, UniqueLists, _Soundfonts, HasDLS, Report);
+
+        if (!Report.empty())
+            popup_message::g_show(Report.c_str(), STR_COMPONENT_BASENAME, popup_message::icon_error);
     }
 
-    // Show which soundfonts we'll be using in the console.
+    // Show which sound fonts we'll be using in the console.
     if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
     {
         // Both BASSMIDI and FluidSynth use a soundfont stack. The stack is searched from the top to the bottom for a matching preset. See https://www.fluidsynth.org/api/group__soundfont__management.html#ga0ba0bc9d4a19c789f9969cd22d22bf66
@@ -208,30 +236,6 @@ fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortH
     }
 
     return {};
-}
-
-/// <summary>
-/// Writes a buffer containing soundfont data to a temporary file.
-/// </summary>
-bool WriteSoundfontFile(const fs::path & filePath, const std::vector<uint8_t> soundfont) noexcept
-{
-    try
-    {
-        std::ofstream Stream(filePath, std::ios::binary);
-
-        if (!Stream.is_open())
-            return false;
-
-        Stream.write((const char *) soundfont.data(), (std::streamsize) soundfont.size());
-
-        Stream.close();
-
-        return true;
-    }
-    catch (...)
-    {
-        return false;
-    }
 }
 
 /// <summary>
@@ -284,5 +288,92 @@ static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & 
             hasDLS = true;
 
         soundfonts.push_back(sf);
+    }
+}
+
+/// <summary>
+/// Reads a DLS collection from memory.
+/// </summary>
+static void ReadDLS(sf::dls::collection_t & collection, const std::vector<uint8_t> & data)
+{
+    riff::memory_stream_t ms;
+
+    if (ms.Open(data.data(), data.size()))
+    {
+        sf::dls::reader_t dr;
+
+        if (dr.Open(&ms, riff::reader_t::option_t::None))
+        {
+            dr.Process(collection, sf::dls::reader_options_t(true));
+        }
+    }
+}
+
+/// <summary>
+/// Reads a DLS collection from a file.
+/// </summary>
+static void ReadDLS(sf::dls::collection_t & collection, const fs::path & filePath)
+{
+    riff::file_stream_t fs;
+
+    if (fs.Open(filePath, false))
+    {
+        sf::dls::reader_t dr;
+
+        if (dr.Open(&fs, riff::reader_t::option_t::None))
+        {
+            dr.Process(collection, sf::dls::reader_options_t(true));
+        }
+    }
+}
+
+/// <summary>
+/// Writes a SF2 bank to a file.
+/// </summary>
+static bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcept
+{
+    try
+    {
+        riff::file_stream_t fs;
+
+        if (fs.Open(filePath, true))
+        {
+            sf::writer_t sw;
+
+            if (sw.Open(&fs, riff::writer_t::Options::PolyphoneCompatible))
+            {
+                sw.Process(bank);
+            }
+        }
+
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+/// <summary>
+/// Writes a buffer containing SF2 data to a file.
+/// </summary>
+static bool WriteSF2(const std::vector<uint8_t> & data, const fs::path & filePath) noexcept
+{
+    try
+    {
+        std::ofstream Stream(filePath, std::ios::binary);
+
+        if (!Stream.is_open())
+            return false;
+
+        Stream.write((const char *) data.data(), (std::streamsize) data.size());
+
+        Stream.close();
+
+        return true;
+    }
+    catch (...)
+    {
+        return false;
     }
 }

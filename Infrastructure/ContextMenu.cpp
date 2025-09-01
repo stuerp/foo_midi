@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenu.cpp (2025.07.02) **/
+/** $VER: ContextMenu.cpp (2025.08.31) **/
 
 #include "pch.h"
 
@@ -9,6 +9,8 @@
 #include <pfc/string-conv-lite.h>
 #include <filesystem.h>
 
+#include <libsf.h>
+
 #include "Configuration.h"
 
 #include "Preset.h"
@@ -16,6 +18,10 @@
 
 #include "MIDISysExDumps.h"
 #include "MIDISysExFilter.h"
+
+#pragma comment(lib, "comdlg32")
+
+static void ConvertDLSToSF2(const std::vector<uint8_t> & dlsData, const std::string & filePath) noexcept;
 
 unsigned int ContextMenu::get_num_items() noexcept
 {
@@ -32,15 +38,6 @@ void ContextMenu::get_item_name(unsigned int index, pfc::string_base & name) noe
 
 bool ContextMenu::get_item_description(unsigned index, pfc::string_base & description) noexcept
 {
-    static const char * Descriptions[] =
-    {
-        "Converts the selected files into General MIDI files in the same path as the source.",
-        "Applies the current synthesizer preset to this track for future playback.",
-        "Removes a saved synthesizer preset from this track.",
-        "Assigns the selected SysEx dumps to the selected MIDI files.",
-        "Clears all assigned SysEx dumps from the selected MIDI files.",
-    };
-
     assert(_countof(Descriptions) == _countof(Names));
 
     if (index >= _countof(Descriptions))
@@ -53,15 +50,6 @@ bool ContextMenu::get_item_description(unsigned index, pfc::string_base & descri
 
 GUID ContextMenu::get_item_guid(unsigned int index) noexcept
 {
-    static const GUID GUIDs[] =
-    {
-        { 0x70985c72, 0xe77e, 0x4bbb, { 0xbf, 0x11, 0x3c, 0x90, 0x2b, 0x27, 0x39, 0x9d } },
-        { 0xeb3f3ab4, 0x60b3, 0x4579, { 0x9f, 0xf8, 0x38, 0xda, 0xc0, 0x91, 0x2c, 0x82 } },
-        { 0x5bcb6efe, 0x2eb5, 0x4331, { 0xb9, 0xc1, 0x92, 0x4b, 0x77, 0xba, 0xcc, 0x10 } },
-        { 0xd0e4a166, 0x010c, 0x41f0, { 0xad, 0x5a, 0x51, 0x84, 0x44, 0xa3, 0x92, 0x9c } },
-        { 0x2aa8c082, 0x5d84, 0x4982, { 0xb4, 0x5d, 0xde, 0x51, 0xcb, 0x75, 0xff, 0xf2 } },
-    };
-
     assert(_countof(GUIDs) == _countof(Names));
 
     if (index >= _countof(GUIDs))
@@ -75,14 +63,17 @@ bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_ba
     if (itemIndex >= _countof(Names))
         ::uBugCheck();
 
-    size_t MatchCount = 0, SysExMatchCount = 0;
-    size_t ItemCount = itemList.get_count();
+    const size_t ItemCount = itemList.get_count();
+
+    size_t MatchCount = 0;
+    size_t SysExMatchCount = 0;
+    size_t RMICount = 0;
 
     for (size_t i = 0; i < ItemCount; ++i)
     {
         const playable_location & Location = itemList.get_item(i)->get_location();
 
-        auto Extension = pfc::string_extension(Location.get_path());
+        const auto Extension = pfc::string_extension(Location.get_path());
 
         size_t FileExtensionIndex;
 
@@ -91,6 +82,9 @@ bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_ba
             if (pfc::stricmp_ascii(Extension, _FileExtensions[FileExtensionIndex]) == 0)
             {
                 ++MatchCount;
+
+                if ((itemIndex == 5) && (pfc::stricmp_ascii(Extension, "RMI") == 0))
+                    ++RMICount;
                 break;
             }
         }
@@ -111,22 +105,18 @@ bool ContextMenu::context_get_display(unsigned int itemIndex, const pfc::list_ba
         }
     }
 
-    if (itemIndex == 5)
-    {
-        out = Names[itemIndex];
-/*
-        auto & Instance = CLAP::Host::GetInstance();
-
-        flags = !Instance.HasGUI() ? FLAG_DISABLED_GRAYED : 0;
-*/
-        return true;
-    }
-
     if ((itemIndex == 3) && ((MatchCount + SysExMatchCount) == ItemCount))
     {
         out = Names[itemIndex];
 
         return true;
+    }
+
+    if (itemIndex == 5)
+    {
+        out = Names[itemIndex];
+
+        return (RMICount != 0);
     }
 
     if ((itemIndex != 3) && (MatchCount == ItemCount))
@@ -201,8 +191,8 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
             break;
         }
 
-        // "Save synthesizer preset"
-        // "Remove synthesizer preset"
+        // Save player preset
+        // Remove player preset
         case 1:
         case 2:
         {
@@ -226,9 +216,8 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
             break;
         }
 
-
-        // "Assign SysEx dumps"
-        // "Clear SysEx dumps"
+        // Assign SysEx dumps.
+        // Clear SysEx dumps.
         case 3:
         case 4:
         {
@@ -255,18 +244,191 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
             }
             break;
         }
+
+        // Extract embedded sound font
+        case 5:
+        {
+            std::vector<uint8_t> Object;
+
+            for (size_t i = 0, ItemCount = itemList.get_count(); i < ItemCount; ++i)
+            {
+                const playable_location & Location = itemList.get_item(i)->get_location();
+
+                try
+                {
+                    service_ptr_t<file> File;
+
+                    filesystem::g_open(File, Location.get_path(), filesystem::open_mode_read, fb2k::noAbort);
+
+                    t_filesize FileSize = File->get_size_ex(fb2k::noAbort);
+
+                    Object.resize((size_t) FileSize);
+
+                    File->read_object(Object.data(), (t_size) FileSize, fb2k::noAbort);
+
+                    try
+                    {
+                        midi::container_t Container;
+
+                        if (midi::processor_t::Process(Object, pfc::wideFromUTF8(Location.get_path()), Container, midi::DefaultOptions))
+                        {
+                            const auto & Data = Container.GetSoundfontData();
+
+                            if (Data.size() > 12)
+                            {
+                                const bool IsDLS = (::memcmp(Data.data() + 8, "DLS ", 4) == 0);
+
+                                std::string FileTypes;
+
+                                if (IsDLS)
+                                {
+                                    FileTypes = "DLS collection (.dls)";
+                                    FileTypes.push_back('\0');
+                                    FileTypes += "*.dls";
+                                    FileTypes.push_back('\0');
+                                }
+
+                                FileTypes += "SoundFont bank (.sf2)";
+                                FileTypes.push_back('\0');
+                                FileTypes += "*.sf2";
+                                FileTypes.push_back('\0');
+
+                                FileTypes.push_back('\0');
+
+                                fs::path FilePath = Location.get_path(); // This may throw an exception due to UTF-8 to Wide conversion.
+
+                                std::string FileName = FilePath.stem().string().c_str();
+
+                                FileName.resize(MAX_PATH);
+
+                                OPENFILENAMEA ofn =
+                                {
+                                    .lStructSize     = sizeof(ofn),
+                                    .lpstrFilter     = FileTypes.c_str(),
+                                    .lpstrFile       = (LPSTR) FileName.c_str(),
+                                    .nMaxFile        = (DWORD) FileName.size(),
+                                    .lpstrInitialDir = foobar2000_io::afterProtocol(Location.get_path()),
+                                    .lpstrTitle      = "Select sound font name",
+                                    .Flags           = OFN_PATHMUSTEXIST | OFN_ENABLESIZING | OFN_OVERWRITEPROMPT,
+                                    .lpstrDefExt     = IsDLS ? ".dls" : ".sf2",
+                                };
+
+                                if (::GetSaveFileNameA(&ofn))
+                                {
+                                    if (IsDLS && (ofn.nFilterIndex == 2))
+                                    {
+                                        ConvertDLSToSF2(Data, FileName);
+                                    }
+                                    else
+                                    {
+                                        filesystem::g_open(File, FileName.c_str(), filesystem::open_mode_write_new, fb2k::noAbort);
+
+                                        File->write_object(Data.data(), Data.size(), fb2k::noAbort);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (const std::exception & e)
+                    {
+                        pfc::string Message = pfc::string("Failed to process MIDI file \"") + Location.get_path() + "\": ";
+
+                        throw exception_io_data(Message + e.what());
+                    }
+                }
+                catch (const std::exception & e)
+                {
+                    pfc::string Message = pfc::string("Failed to read MIDI file \"") + Location.get_path() + "\": ";
+
+                    throw exception_io_data(Message + e.what());
+                }
+            }
+
+            break;
+        }
     }
 }
 
-const char * ContextMenu::Names[5] =
+/// <summary>
+/// Converts the DLS collection into an SF bank and saves it.
+/// </summary>
+void ConvertDLSToSF2(const std::vector<uint8_t> & dlsData, const std::string & filePath) noexcept
+{
+    sf::bank_t Bank;
+
+    // Read the data as a DLS collection and convert it to an SF2 bank.
+    {
+        riff::memory_stream_t ms;
+
+        if (ms.Open(dlsData.data(), dlsData.size()))
+        {
+            sf::dls::collection_t Collection;
+
+            sf::dls::reader_t dr;
+
+            if (dr.Open(&ms, riff::reader_t::option_t::None))
+            {
+                dr.Process(Collection, sf::dls::reader_options_t(true));
+
+                Bank.ConvertFrom(Collection);
+            }
+        }
+    }
+
+    {
+        riff::file_stream_t fs;
+
+        if (fs.Open(filePath, true))
+        {
+            sf::writer_t sw;
+
+            if (sw.Open(&fs, riff::writer_t::Options::PolyphoneCompatible))
+            {
+                sw.Process(Bank);
+            }
+
+            fs.Close();
+        }
+    }
+}
+
+const char * ContextMenu::Names[6] =
 {
     "Save as Standard MIDI File (SMF)",
 
-    "Save synthesizer preset",
-    "Remove synthesizer preset",
+    "Save player preset",
+    "Remove player preset",
 
     "Assign SysEx dumps",
     "Clear SysEx dumps",
+
+    "Extract embedded sound font"
+};
+
+const char * ContextMenu::Descriptions[6] =
+{
+    "Saves the selected files as Standard MIDI files in the same path as the source.",
+
+    "Adds the current player preset to this track.",
+    "Removes a saved player preset from this track.",
+
+    "Assigns the selected SysEx dumps to the selected MIDI files.",
+    "Clears all assigned SysEx dumps from the selected MIDI files.",
+
+    "Extracts the sound font embedded in the selected files and save it to disk."
+};
+
+const GUID ContextMenu::GUIDs[] =
+{
+    { 0x70985c72, 0xe77e, 0x4bbb, { 0xbf, 0x11, 0x3c, 0x90, 0x2b, 0x27, 0x39, 0x9d } },
+
+    { 0xeb3f3ab4, 0x60b3, 0x4579, { 0x9f, 0xf8, 0x38, 0xda, 0xc0, 0x91, 0x2c, 0x82 } },
+    { 0x5bcb6efe, 0x2eb5, 0x4331, { 0xb9, 0xc1, 0x92, 0x4b, 0x77, 0xba, 0xcc, 0x10 } },
+
+    { 0xd0e4a166, 0x010c, 0x41f0, { 0xad, 0x5a, 0x51, 0x84, 0x44, 0xa3, 0x92, 0x9c } },
+    { 0x2aa8c082, 0x5d84, 0x4982, { 0xb4, 0x5d, 0xde, 0x51, 0xcb, 0x75, 0xff, 0xf2 } },
+
+    { 0xe3e4b9fd, 0xdc92, 0x4c9f, { 0xac, 0x90, 0xf6, 0xf8, 0x48, 0xcc, 0x03, 0x3b } }
 };
 
 static contextmenu_item_factory_t<ContextMenu> _ContextMenuFactory;
