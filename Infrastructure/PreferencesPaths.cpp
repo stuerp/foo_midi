@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.cpp (2025.07.13) P. stuer **/
+/** $VER: PreferencesPaths.cpp (2025.09.02) P. stuer **/
 
 #include "pch.h"
 
@@ -323,9 +323,10 @@ void PathsDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
             pfc::string FilePath = _SoundFontFilePath;
 
             if (::uGetOpenFileName(m_hWnd,
-                    "Soundfont and list files|*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sflist;*.json|"
-                    "Soundfont files|*.sf2;*.sf3;*.sf2pack;*.sfogg|"
-                    "Soundfont list files|*.sflist;*.json"
+                    "Soundfont and list files|*.dls;*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sflist;*.json|"
+                    "SoundFont files|*.sf2;*.sf3;*.sf2pack;*.sfogg|"
+                    "Soundfont list files|*.sflist;*.json|"
+                    "Downloadable Sounds (DLS)|*.dls"
                 ,
                 0, "sf2", "Choose a Soundfont bank or list...", DirectoryPath, FilePath, FALSE))
             {

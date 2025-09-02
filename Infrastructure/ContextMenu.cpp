@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenu.cpp (2025.08.31) **/
+/** $VER: ContextMenu.cpp (2025.09.01) **/
 
 #include "pch.h"
 
@@ -354,41 +354,24 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
 /// </summary>
 void ConvertDLSToSF2(const std::vector<uint8_t> & dlsData, const std::string & filePath) noexcept
 {
-    sf::bank_t Bank;
+    Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting embedded DLS collection to SF2 bank \"%s\".", filePath.c_str());
 
-    // Read the data as a DLS collection and convert it to an SF2 bank.
+    sf::dls::collection_t Collection;
+
+    if (!ReadDLS(Collection, dlsData))
+        return;
+
+    try
     {
-        riff::memory_stream_t ms;
+        sf::bank_t Bank;
 
-        if (ms.Open(dlsData.data(), dlsData.size()))
-        {
-            sf::dls::collection_t Collection;
+        Bank.ConvertFrom(Collection);
 
-            sf::dls::reader_t dr;
-
-            if (dr.Open(&ms, riff::reader_t::option_t::None))
-            {
-                dr.Process(Collection, sf::dls::reader_options_t(true));
-
-                Bank.ConvertFrom(Collection);
-            }
-        }
+        WriteSF2(Bank, filePath);
     }
-
+    catch (const std::exception & e)
     {
-        riff::file_stream_t fs;
-
-        if (fs.Open(filePath, true))
-        {
-            sf::writer_t sw;
-
-            if (sw.Open(&fs, riff::writer_t::Options::PolyphoneCompatible))
-            {
-                sw.Process(Bank);
-            }
-
-            fs.Close();
-        }
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to convert DLS collection: %s.", e.what());
     }
 }
 

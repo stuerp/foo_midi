@@ -18,11 +18,6 @@
 static fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortHandler) noexcept;
 static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept;
 
-static void ReadDLS(sf::dls::collection_t & collection, const std::vector<uint8_t> & data);
-static void ReadDLS(sf::dls::collection_t & collection, const fs::path & filePath);
-static bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcept;
-static bool WriteSF2(const std::vector<uint8_t> & data, const fs::path & filePath) noexcept;
-
 /// <summary>
 /// Gets the soundfonts and adjusts the player type, if necessary.
 /// </summary>
@@ -44,9 +39,10 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
             if (IsDLS && ConvertDLS)
             {
-                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting embedded DLS collection to an SF2 bank.");
+                const unique_path_t TempFilePath(".sf2");
 
-                // Read the data as a DLS collection and convert it to an SF2 bank.
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting embedded DLS collection to SF2 bank \"%s\".", TempFilePath.Path().string().c_str());
+
                 sf::dls::collection_t Collection;
 
                 ReadDLS(Collection, Data);
@@ -54,8 +50,6 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
                 sf::bank_t Bank;
 
                 Bank.ConvertFrom(Collection);
-
-                const unique_path_t TempFilePath(".sf2");
 
                 if (!TempFilePath.IsEmpty() && WriteSF2(Bank, TempFilePath.Path()))
                     Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, _Container.GetBankOffset(), true, false));
@@ -86,9 +80,10 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
             if (IsDLS && ConvertDLS)
             {
-                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to an SF2 bank.", SoundfontFilePath.string().c_str());
+                const unique_path_t TempFilePath(".sf2");
 
-                // Read the data as a DLS collection and convert it to an SF2 bank.
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to SF2 bank \"%s\".", SoundfontFilePath.string().c_str(), TempFilePath.Path().string().c_str());
+
                 sf::dls::collection_t Collection;
 
                 ReadDLS(Collection, SoundfontFilePath);
@@ -96,8 +91,6 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
                 sf::bank_t Bank;
 
                 Bank.ConvertFrom(Collection);
-
-                const unique_path_t TempFilePath(".sf2");
 
                 WriteSF2(Bank, TempFilePath.Path());
 
@@ -125,9 +118,10 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
             if (IsDLS && ConvertDLS)
             {
-                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to an SF2 bank.", SoundfontFilePath.string().c_str());
+                const unique_path_t TempFilePath(".sf2");
 
-                // Read the data as a DLS collection and convert it to an SF2 bank.
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to SF2 bank \"%s\".", SoundfontFilePath.string().c_str(), TempFilePath.Path().string().c_str());
+
                 sf::dls::collection_t Collection;
 
                 ReadDLS(Collection, SoundfontFilePath);
@@ -135,8 +129,6 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
                 sf::bank_t Bank;
 
                 Bank.ConvertFrom(Collection);
-
-                const unique_path_t TempFilePath(".sf2");
 
                 WriteSF2(Bank, TempFilePath.Path());
 
@@ -161,9 +153,10 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
             if (IsDLS && ConvertDLS)
             {
-                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to an SF2 bank.", defaultSoundfontFilePath.string().c_str());
+                const unique_path_t TempFilePath(".sf2");
 
-                // Read the data as a DLS collection and convert it to an SF2 bank.
+                Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to SF2 bank \"%s\".", defaultSoundfontFilePath.string().c_str(), TempFilePath.Path().string().c_str());
+
                 sf::dls::collection_t Collection;
 
                 ReadDLS(Collection, defaultSoundfontFilePath);
@@ -171,8 +164,6 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
                 sf::bank_t Bank;
 
                 Bank.ConvertFrom(Collection);
-
-                const unique_path_t TempFilePath(".sf2");
 
                 WriteSF2(Bank, TempFilePath.Path());
 
@@ -294,43 +285,65 @@ static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & 
 /// <summary>
 /// Reads a DLS collection from memory.
 /// </summary>
-static void ReadDLS(sf::dls::collection_t & collection, const std::vector<uint8_t> & data)
+bool ReadDLS(sf::dls::collection_t & collection, const std::vector<uint8_t> & dlsData) noexcept
 {
-    riff::memory_stream_t ms;
-
-    if (ms.Open(data.data(), data.size()))
+    try
     {
-        sf::dls::reader_t dr;
+        riff::memory_stream_t ms;
 
-        if (dr.Open(&ms, riff::reader_t::option_t::None))
+        if (ms.Open(dlsData.data(), dlsData.size()))
         {
-            dr.Process(collection, sf::dls::reader_options_t(true));
+            sf::dls::reader_t dr;
+
+            if (dr.Open(&ms, riff::reader_t::option_t::None))
+            {
+                dr.Process(collection, sf::dls::reader_options_t(true));
+            }
         }
+
+        return true;
+    }
+    catch (const std::exception & e)
+    {
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to read DLS collection: %s.", e.what());
+
+        return false;
     }
 }
 
 /// <summary>
 /// Reads a DLS collection from a file.
 /// </summary>
-static void ReadDLS(sf::dls::collection_t & collection, const fs::path & filePath)
+bool ReadDLS(sf::dls::collection_t & collection, const fs::path & filePath) noexcept
 {
-    riff::file_stream_t fs;
-
-    if (fs.Open(filePath, false))
+    try
     {
-        sf::dls::reader_t dr;
+        riff::file_stream_t fs;
 
-        if (dr.Open(&fs, riff::reader_t::option_t::None))
+        if (fs.Open(filePath, false))
         {
-            dr.Process(collection, sf::dls::reader_options_t(true));
+            sf::dls::reader_t dr;
+
+            if (dr.Open(&fs, riff::reader_t::option_t::None))
+            {
+                dr.Process(collection, sf::dls::reader_options_t(true));
+            }
         }
+
+        return true;
+    }
+    catch (const std::exception & e)
+    {
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to read DLS collection: %s.", e.what());
+
+        return false;
     }
 }
 
 /// <summary>
 /// Writes a SF2 bank to a file.
 /// </summary>
-static bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcept
+bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcept
 {
     try
     {
@@ -348,8 +361,10 @@ static bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcep
 
         return true;
     }
-    catch (...)
+    catch (const std::exception & e)
     {
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to write SF2 bank: %s.", e.what());
+
         return false;
     }
 }
@@ -357,7 +372,7 @@ static bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcep
 /// <summary>
 /// Writes a buffer containing SF2 data to a file.
 /// </summary>
-static bool WriteSF2(const std::vector<uint8_t> & data, const fs::path & filePath) noexcept
+bool WriteSF2(const std::vector<uint8_t> & sf2Data, const fs::path & filePath) noexcept
 {
     try
     {
@@ -366,7 +381,7 @@ static bool WriteSF2(const std::vector<uint8_t> & data, const fs::path & filePat
         if (!Stream.is_open())
             return false;
 
-        Stream.write((const char *) data.data(), (std::streamsize) data.size());
+        Stream.write((const char *) sf2Data.data(), (std::streamsize) sf2Data.size());
 
         Stream.close();
 
