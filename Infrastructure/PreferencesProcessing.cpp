@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2025.07.14) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2025.09.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -474,7 +474,7 @@ void ProcessingDialog::UpdateDialog() noexcept
 
         auto w = (CComboBox) GetDlgItem(IDC_LOG_LEVEL);
 
-        w.Clear();
+        w.ResetContent();
 
         int i = -1;
 
