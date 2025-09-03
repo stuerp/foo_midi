@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2025.07.26) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.09.03) P. Stuer **/
 
 #include "pch.h"
 
@@ -601,7 +601,7 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
         assert(Result == FLUID_OK);
     }
 
-    DumpSoundfont(sf.FilePath, synth, SoundfontId);
+//  DumpSoundfont(sf.FilePath, synth, SoundfontId);
 }
 
 /// <summary>

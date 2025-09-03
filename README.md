@@ -95,10 +95,15 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.0.0-alpha3, 2025-09-xx
+v3.2.0.0-alpha3, 2025-09-03
 
 - Improved: DLS to SF2 conversion
   - Added Downloadable Sounds filter to the soundfont file dialog.
+  - Added work-around for DLS files with incorrect sample chunks (WSMP).
+  - Added support for A-Law encoded DLS samples.
+  - Added exclusiveClass generator conversion.
+  - Fixed incorrect modulator generation for Chorus effect.
+  - Fixed improper handling of instrument INFO chunks.
 - Fixed: The Log Level drop list was not cleared after a reset.
 
 You can read the full history [here](docs/History.md).

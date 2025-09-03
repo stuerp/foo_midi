@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.08.27) **/
+/** $VER: BMPlayer.cpp (2025.09.03) **/
 
 #include "pch.h"
 
@@ -379,7 +379,7 @@ void BMPlayer::LoadSoundfonts(const soundfont_t & sf, std::vector<BASS_MIDI_FONT
 
         ::BASS_MIDI_FontSetVolume(hSoundfont, 1.f + sf.Gain);
 
-        DumpSoundfont(sf.FilePath, hSoundfont);
+//      DumpSoundfont(sf.FilePath, hSoundfont);
 
         for (BASS_MIDI_FONTEX fex : sf.Fonts)
         {
@@ -410,7 +410,7 @@ void BMPlayer::LoadSoundfonts(const soundfont_t & sf, std::vector<BASS_MIDI_FONT
 
         ::BASS_MIDI_FontSetVolume(hSoundfont, 1.f + sf.Gain);
 
-        DumpSoundfont(sf.FilePath, hSoundfont);
+//      DumpSoundfont(sf.FilePath, hSoundfont);
 
         int BankOffset = sf.BankOffset;
 

@@ -218,7 +218,7 @@ fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortH
 
     for (const char * & FileExtension : FileExtensions)
     {
-        auto SoundfontPath = filePath;
+        fs::path SoundfontPath = filePath;
 
         SoundfontPath.replace_extension(FileExtension);
 
