@@ -26,14 +26,13 @@
 #pragma warning(default: 4242)
 #include <cmath>
 #include <cassert>
-#include <filesystem>
 #include <format>
 #include <functional>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-namespace fs = std::filesystem;
+#include <libmsc.h>
 
 #ifndef Assert
 #if defined(DEBUG) || defined(_DEBUG)

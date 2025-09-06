@@ -91,7 +91,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
     // Read a WRD file in the same path and convert it to lyrics.
     {
-        std::filesystem::path FilePath(pfc::wideFromUTF8(_FilePath.c_str()).c_str());
+        fs::path FilePath(pfc::wideFromUTF8(_FilePath.c_str()).c_str());
 
         FilePath.replace_extension(L".wrd");
 
@@ -148,7 +148,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     // Add a tag that identifies the embedded soundfont, if present.
     try
     {
-        const auto & Data = _Container.GetSoundfontData();
+        const auto & Data = _Container.SoundFont;
 
         if (Data.size() > 12)
         {
@@ -162,7 +162,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
                 {
                     sf::bank_t sf;
 
-                    riff::memory_stream_t ms;
+                    msc::memory_stream_t ms;
 
                     if (ms.Open(Data.data(), Data.size()))
                     {
@@ -172,7 +172,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
                         {
                             sr.Process(sf, { false }); // Don't load the sample data.
 
-                            TagValue = ::FormatText("SF %d.%d", sf.Major, sf.Minor);
+                            TagValue = msc::FormatText("SF %d.%d", sf.Major, sf.Minor);
                         }
 
                         ms.Close();
@@ -252,12 +252,12 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
 
     if (!pfc::is_lower_ascii(value) && !pfc::is_valid_utf8(value, maxLength))
     {
-        if (IsShiftJIS(value, maxLength))
+        if (msc::IsShiftJIS(value, maxLength))
         {
             Value = pfc::stringcvt::string_utf8_from_codepage(932, value);
         }
         else
-        if (IsEUCJP(value, maxLength))
+        if (msc::IsEUCJP(value, maxLength))
         {
             Value = pfc::stringcvt::string_utf8_from_codepage(20932, value);
 

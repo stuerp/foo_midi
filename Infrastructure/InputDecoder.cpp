@@ -20,8 +20,6 @@
 
 #include <ranges>
 
-#include <Encoding.h>
-
 #include <libsf.h>
 
 #include "PreferencesFM.h"
@@ -870,7 +868,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
                         return em.Id == TargetId;
                     });
 
-                    Value = (Match != _ADLEmulators.end()) ? ::WideToUTF8(Match->Name).c_str() : "";
+                    Value = (Match != _ADLEmulators.end()) ? msc::WideToUTF8(Match->Name).c_str() : "";
                     break;
                 }
 
@@ -883,7 +881,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
                         return em.Id == TargetId;
                     });
 
-                    Value = (Match != _OPNEmulators.end()) ? ::WideToUTF8(Match->Name).c_str() : "";
+                    Value = (Match != _OPNEmulators.end()) ? msc::WideToUTF8(Match->Name).c_str() : "";
                     break;
                 }
 

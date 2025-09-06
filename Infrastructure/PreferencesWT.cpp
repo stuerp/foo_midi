@@ -404,7 +404,7 @@ BOOL WTDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 
         for (const auto & InterpolationMethod : _InterpolationMethods)
         {
-            w.AddString(::UTF8ToWide(InterpolationMethod.Name).c_str());
+            w.AddString(msc::UTF8ToWide(InterpolationMethod.Name).c_str());
 
             if (InterpolationMethod.Id == CfgFluidSynthInterpolationMode)
                 SelectedIndex = (int) i;

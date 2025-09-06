@@ -272,7 +272,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
 
                         if (midi::processor_t::Process(Object, pfc::wideFromUTF8(Location.get_path()), Container, midi::DefaultOptions))
                         {
-                            const auto & Data = Container.GetSoundfontData();
+                            const auto & Data = Container.SoundFont;
 
                             if (Data.size() > 12)
                             {

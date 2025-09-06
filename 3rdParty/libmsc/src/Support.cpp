@@ -1,16 +1,9 @@
 
-/** $VER: Win32Exception.cpp (2025.03.20) P. Stuer **/
+/** $VER: Support.cpp (2025.09.06) P. Stuer **/
 
 #include "pch.h"
 
-#include "Win32Exception.h"
-
-#include "Encoding.h"
-
-#include <string.h>
-#include <stdarg.h>
-
-namespace riff
+namespace msc
 {
 
 const char * strrstr(const char * __restrict s1, const char *__restrict s2);
@@ -72,6 +65,34 @@ const char * strrstr(const char * __restrict s1, const char *__restrict s2)
             return s;
 
     return nullptr;
+}
+
+/// <summary>
+/// Returns true if the string matches one of the list.
+/// </summary>
+bool IsOneOf(const std::wstring & item, const std::vector<std::wstring> & list) noexcept
+{
+    for (const auto & Item : list)
+    {
+        if (::_wcsicmp(item.c_str(), Item.c_str()) == 0)
+            return true;
+    }
+
+    return false;
+}
+
+/// <summary>
+/// Returns true if the string matches one of the list.
+/// </summary>
+bool IsOneOf(const char * item, const std::vector<const char *> & list) noexcept
+{
+    for (const auto & Item : list)
+    {
+        if (::_stricmp(item, Item) == 0)
+            return true;
+    }
+
+    return false;
 }
 
 };

@@ -1,13 +1,11 @@
 
-/** $VER: Encoding.cpp (2024.09.15) P. Stuer **/
+/** $VER: Encoding.cpp (2025.09.06) P. Stuer - Encoding conversion routines **/
 
 #include "pch.h"
 
-#include "Encoding.h"
-
 #include <map>
 
-namespace riff
+namespace msc
 {
 
 static const std::map<const std::string, uint32_t> EncodingToCodePage
@@ -30,7 +28,7 @@ static const std::map<const std::string, uint32_t> EncodingToCodePage
 /// <summary>
 /// Converts an UTF-16 string of UTF-8.
 /// </summary>
-std::string WideToUTF8(const wchar_t * wide, size_t size = 0)
+std::string WideToUTF8(const wchar_t * wide, size_t size = 0) noexcept
 {
     if (size == 0)
         size = ::wcslen(wide);
@@ -49,7 +47,7 @@ std::string WideToUTF8(const wchar_t * wide, size_t size = 0)
 /// <summary>
 /// Converts a string encoded with the specified code page to an UTF-16 string.
 /// </summary>
-std::wstring CodePageToWide(uint32_t codePage, const char * text, size_t size)
+std::wstring CodePageToWide(uint32_t codePage, const char * text, size_t size) noexcept
 {
     int Size = ::MultiByteToWideChar(codePage, 0, text, (int) size, nullptr, 0);
 
@@ -65,15 +63,15 @@ std::wstring CodePageToWide(uint32_t codePage, const char * text, size_t size)
 /// <summary>
 /// Converts a string encoded with the specified code page to an UTF-8 string.
 /// </summary>
-std::string CodePageToUTF8(uint32_t codePage, const char * text, size_t size)
+std::string CodePageToUTF8(uint32_t codePage, const char * text, size_t size) noexcept
 {
     return WideToUTF8(CodePageToWide(codePage, text, size));
 }
 
 /// <summary>
-/// 
+/// Formats a string using a format specification and a list of arguments.
 /// </summary>
-std::string FormatText(const char * format, ...)
+std::string FormatText(const char * format, ...) noexcept
 {
    va_list vl;
 
@@ -91,9 +89,9 @@ std::string FormatText(const char * format, ...)
 }
 
 /// <summary>
-/// 
+/// Formats a string using a format specification and a list of arguments.
 /// </summary>
-std::wstring FormatText(const wchar_t * format, ...)
+std::wstring FormatText(const wchar_t * format, ...) noexcept
 {
    va_list vl;
 
@@ -113,7 +111,7 @@ std::wstring FormatText(const wchar_t * format, ...)
 /// <summary>
 /// Returns true if the specified text is EUC-JP encoded. (http://www.rikai.com/library/kanjitables/kanji_codes.euc.shtml)
 /// </summary>
-bool IsEUCJP(const char * text, size_t size)
+bool IsEUCJP(const char * text, size_t size) noexcept
 {
     while (size != 0)
     {
@@ -139,7 +137,7 @@ bool IsEUCJP(const char * text, size_t size)
 /// <summary>
 /// Returns true if the specified text is Shift-JIS encoded. (http://www.rikai.com/library/kanjitables/kanji_codes.sjis.shtml)
 /// </summary>
-bool IsShiftJIS(const char * text, size_t size)
+bool IsShiftJIS(const char * text, size_t size) noexcept
 {
     while (size != 0)
     {
@@ -165,7 +163,7 @@ bool IsShiftJIS(const char * text, size_t size)
 /// <summary>
 /// Returns true if the specified text is UTF-8 encoded.
 /// </summary>
-bool IsUTF8(const char * text, size_t size)
+bool IsUTF8(const char * text, size_t size) noexcept
 {
     size_t n = 0;
 
@@ -210,7 +208,7 @@ bool IsUTF8(const char * text, size_t size)
 /// <summary>
 /// Returns true if the specified text is ASCII encoded.
 /// </summary>
-bool IsASCII(const char * text)
+bool IsASCII(const char * text) noexcept
 {
     while (*text)
     {
@@ -226,7 +224,7 @@ bool IsASCII(const char * text)
 /// <summary>
 /// Returns true if the specified text is ASCII encoded.
 /// </summary>
-bool IsASCII(const char * text, size_t size)
+bool IsASCII(const char * text, size_t size) noexcept
 {
     while (size != 0)
     {
@@ -243,7 +241,7 @@ bool IsASCII(const char * text, size_t size)
 /// <summary>
 /// Converts a string in a unknown encoding to UTF-16.
 /// </summary>
-std::wstring TextToWide(const char * text, size_t size)
+std::wstring TextToWide(const char * text, size_t size) noexcept
 {
     if (size == 0)
         size = ::strlen(text);
@@ -266,7 +264,7 @@ std::wstring TextToWide(const char * text, size_t size)
 /// <summary>
 /// Converts a string in a unknown encoding to UTF-8.
 /// </summary>
-std::string TextToUTF8(const char * text, size_t size)
+std::string TextToUTF8(const char * text, size_t size) noexcept
 {
     if (size == 0)
         size = ::strlen(text);

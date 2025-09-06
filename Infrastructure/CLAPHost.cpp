@@ -165,7 +165,7 @@ bool Host::Load(const fs::path & filePath, uint32_t index)
     it->_FilePath = filePath;
     it->_Index    = index;
 
-    it->_hModule = ::LoadLibraryW(::UTF8ToWide(filePath.string().c_str()).c_str());
+    it->_hModule = ::LoadLibraryW(msc::UTF8ToWide(filePath.string().c_str()).c_str());
 
     if (it->_hModule == NULL)
         return false;
@@ -309,7 +309,7 @@ void Host::GetPlugInDescriptors_(const fs::path & directoryPath) noexcept
                 GetPlugInDescriptors_(Entry.path());
             }
             else
-            if (IsOneOf(Entry.path().extension().string().c_str(), { ".clap", ".dll" }))
+            if (msc::IsOneOf(Entry.path().extension().string().c_str(), { ".clap", ".dll" }))
             {
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
 
@@ -342,7 +342,7 @@ void Host::GetPlugInDescriptors_(const fs::path & directoryPath) noexcept
 /// </summary>
 void Host::GetPlugInEntries(const fs::path & filePath, const std::function<void(const std::string & id, const std::string & name, uint32_t index, bool hasGUI)> & callback) noexcept
 {
-    HMODULE hModule = ::LoadLibraryW(::UTF8ToWide((const char *) filePath.u8string().c_str()).c_str());
+    HMODULE hModule = ::LoadLibraryW(msc::UTF8ToWide((const char *) filePath.u8string().c_str()).c_str());
 
     if (hModule == NULL)
         return;

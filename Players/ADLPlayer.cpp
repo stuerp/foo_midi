@@ -1,13 +1,11 @@
 
-/** $VER: ADLPlayer.cpp (2025.08.27) **/
+/** $VER: ADLPlayer.cpp (2025.09.04) **/
 
 #include "pch.h"
 
 #include "ADLPlayer.h"
 #include "Resource.h"
 #include "Log.h"
-
-#include "Encoding.h"
 
 ADLPlayer::ADLPlayer() : player_t()
 {
@@ -25,7 +23,7 @@ ADLPlayer::~ADLPlayer()
 void ADLPlayer::SetChipCount(uint32_t chipCount)
 {
     if (chipCount < 1 || chipCount > 100)
-        throw std::out_of_range(::FormatText("Invalid chip count %u. Should be between 1 and 100", chipCount));
+        throw std::out_of_range(msc::FormatText("Invalid chip count %u. Should be between 1 and 100", chipCount));
 
     _ChipCount = chipCount;
 }
@@ -52,7 +50,7 @@ void ADLPlayer::SetEmulatorCore(uint32_t emulatorCore) noexcept
 void ADLPlayer::SetBankNumber(uint32_t bankNumber)
 {
     if (bankNumber >= (uint32_t) ::adl_getBanksCount())
-        throw std::out_of_range(::FormatText("Invalid bank number %u. Must be less than %u", bankNumber, ::adl_getBanksCount()));
+        throw std::out_of_range(msc::FormatText("Invalid bank number %u. Must be less than %u", bankNumber, ::adl_getBanksCount()));
 
     _BankNumber = bankNumber;
 }
@@ -117,12 +115,12 @@ bool ADLPlayer::Startup()
 
         ::adl_reset(Device);
 
-        ::adl_setSoftPanEnabled     (Device, _IsSoftPanningEnabled);
-        ::adl_setHVibrato           (Device, -1); // -1 for default. Use 1 to turn on deep vibrato.
-        ::adl_setHTremolo           (Device, -1); // -1 for default. Use 1 to turn on deep tremolo.
-        ::adl_setScaleModulators    (Device, -1); // -1 for default. Use 1 to turn on modulators scaling by volume.
-        ::adl_setFullRangeBrightness(Device, -1); // -1 for default. Use 1 to turn on a full-ranged XG CC74 brightness.
-        ::adl_setAutoArpeggio       (Device, -1); // -1 for default. Use 1 to turn on auto-arpeggio.
+        ::adl_setSoftPanEnabled     (Device, _IsSoftPanningEnabled ? 1 : 0);    // Use 1 to turn on soft panning
+        ::adl_setHVibrato           (Device, -1);                               // -1 for default. Use 1 to turn on deep vibrato.
+        ::adl_setHTremolo           (Device, -1);                               // -1 for default. Use 1 to turn on deep tremolo.
+//      ::adl_setScaleModulators    (Device,  0);                               // Use 1 to turn on modulators scaling by volume. Hands off for now: https://github.com/stuerp/foo_midi/issues/108#issuecomment-3083690908
+        ::adl_setFullRangeBrightness(Device,  1);                               // Use 1 to turn on a full-ranged XG CC74 brightness.
+        ::adl_setAutoArpeggio       (Device,  0);                               // Use 1 to turn on auto-arpeggio.
 
         ::adl_setChannelAllocMode   (Device, ADLMIDI_ChanAlloc_AUTO);
         ::adl_setVolumeRangeModel   (Device, ADLMIDI_VolumeModel_AUTO);

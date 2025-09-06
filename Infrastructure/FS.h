@@ -1,5 +1,5 @@
 
-/** $VER: FS.h (2025.07.26) **/
+/** $VER: FS.h (2025.07.26) P. Stuer - FluidSynth bindings **/
 
 #pragma once
 

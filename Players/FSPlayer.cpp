@@ -563,16 +563,16 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
     const std::string FilePath = (const char *) sf.FilePath.string().c_str();
 
     if (!filesystem::g_exists(FilePath.c_str(), fb2k::noAbort))
-        throw std::exception(::FormatText("Soundfont \"%s\" not found.", FilePath.c_str()).c_str());
+        throw std::exception(msc::FormatText("Soundfont \"%s\" not found.", FilePath.c_str()).c_str());
 /*
     // Does not use the registered callbacks and can't read files in archives
     if (!_API.IsSoundfont(FilePath.c_str()))
-        throw std::exception(::FormatText("Soundfont \"%s\" has unknown soundfont format.", FilePath.c_str()).c_str());
+        throw std::exception(msc::FormatText("Soundfont \"%s\" has unknown soundfont format.", FilePath.c_str()).c_str());
 */
     const int SoundfontId = _API.LoadSoundfont(synth, FilePath.c_str(), TRUE);
 
     if (SoundfontId == FLUID_FAILED)
-        throw std::exception(::FormatText("Failed to load soundfont \"%s\"", FilePath.c_str()).c_str());
+        throw std::exception(msc::FormatText("Failed to load soundfont \"%s\"", FilePath.c_str()).c_str());
 
     int BankOffset = sf.BankOffset;
 

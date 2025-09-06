@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2025.08.27) **/
+/** $VER: OPNPlayer.cpp (2025.09.04) **/
 
 #include "pch.h"
 
@@ -39,7 +39,7 @@ void OPNPlayer::SetEmulatorCore(uint32_t emulatorCore)
 void OPNPlayer::SetBankNumber(uint32_t bankNumber)
 {
     if (bankNumber > 4)
-        throw std::out_of_range(::FormatText("Invalid bank number %u. Must be less than 5", bankNumber));
+        throw std::out_of_range(msc::FormatText("Invalid bank number %u. Must be less than 5", bankNumber));
 
     _BankNumber = bankNumber;
 }
@@ -112,10 +112,10 @@ bool OPNPlayer::Startup()
 
         ::opn2_reset(Device);
 
-        ::opn2_setSoftPanEnabled        (Device, _IsSoftPanningEnabled ? 1 : 0); // Use -1 for default value.
-//      ::opn2_setScaleModulators       (Device,  0); // Use 1 to turn on modulators scaling by volume. Hands off for now: https://github.com/stuerp/foo_midi/issues/108#issuecomment-3083690908
-        ::opn2_setFullRangeBrightness   (Device, -1); // -1 = default. Use 1 to turn on a full-ranged XG CC74 Brightness.
-        ::opn2_setAutoArpeggio          (Device, -1); // -1 = default. Use 1 to turn on
+        ::opn2_setSoftPanEnabled        (Device, _IsSoftPanningEnabled ? 1 : 0);    // Use 1 to turn on soft panning.
+//      ::opn2_setScaleModulators       (Device,  0);                               // Use 1 to turn on modulators scaling by volume. Hands off for now: https://github.com/stuerp/foo_midi/issues/108#issuecomment-3083690908
+        ::opn2_setFullRangeBrightness   (Device,  1);                               // Use 1 to turn on a full-ranged XG CC74 brightness.
+        ::opn2_setAutoArpeggio          (Device,  0);                               // Use 1 to turn on auto-arpeggio.
 
         ::opn2_setVolumeRangeModel      (Device, OPNMIDI_VolumeModel_AUTO);
         ::opn2_setChannelAllocMode      (Device, OPNMIDI_ChanAlloc_AUTO);

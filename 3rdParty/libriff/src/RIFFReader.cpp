@@ -1,14 +1,15 @@
 
-/** $VER: RIFFReader.cpp (2025.04.30) P. Stuer **/
+/** $VER: RIFFReader.cpp (2025.09.06) P. Stuer **/
 
 #include "pch.h"
 
 #include "RIFFReader.h"
+#include "Exception.h"
 
 namespace riff
 {
 
-bool reader_t::Open(stream_t * stream, option_t options)
+bool reader_t::Open(msc::stream_t * stream, option_t options)
 {
     _Stream = stream;
     _Options = options;

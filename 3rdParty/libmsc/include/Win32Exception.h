@@ -1,18 +1,21 @@
 
-/** $VER: Win32Exception.h (2025.03.20) P. Stuer **/
+/** $VER: Win32Exception.h (2025.09.01) P. Stuer **/
 
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN
+
+#include <sdkddkver.h>
 #include <Windows.h>
 #include <strsafe.h>
 
 #include <stdexcept>
 #include <string>
 
-namespace riff
-{
+#include "Support.h"
 
-std::string GetErrorMessage(const std::string & errorMessage, DWORD errorCode, ...);
+namespace msc
+{
 
 class win32_exception : public std::runtime_error
 {

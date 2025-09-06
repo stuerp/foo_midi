@@ -34,7 +34,7 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
 
         MoveWindow(&_Context._Bounds);
 
-        auto Text = std::wstring(L"CLAP Plug-in ") + ::UTF8ToWide(_Context._Host->GetPlugInName()).c_str();
+        auto Text = std::wstring(L"CLAP Plug-in ") + msc::UTF8ToWide(_Context._Host->GetPlugInName()).c_str();
 
         SetWindowTextW(Text.c_str());
 

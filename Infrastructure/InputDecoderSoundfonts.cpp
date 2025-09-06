@@ -1,22 +1,19 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.09.01) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.09.06) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
 #include "InputDecoder.h"
 
 #include <libsf.h>
-
-#include "Support.h"
-#include "Log.h"
-
-#include <fstream>
 #include <unordered_set>
+
+#include "Log.h"
 
 #pragma hdrstop
 
 static fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortHandler) noexcept;
-static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept;
+static void AddSoundFont(const soundfont_t & sf, std::unordered_set<std::string> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept;
 
 /// <summary>
 /// Gets the soundfonts and adjusts the player type, if necessary.
@@ -31,7 +28,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
     // First, add the embedded soundfont, if present.
     {
-        const auto & Data = _Container.GetSoundfontData();
+        const auto & Data = _Container.SoundFont;
 
         if (Data.size() > 12)
         {
@@ -39,7 +36,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
             if (IsDLS && ConvertDLS)
             {
-                const unique_path_t TempFilePath(".sf2");
+                const msc::unique_path_t TempFilePath(".sf2");
 
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting embedded DLS collection to SF2 bank \"%s\".", TempFilePath.Path().string().c_str());
 
@@ -52,17 +49,17 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
                 Bank.ConvertFrom(Collection);
 
                 if (!TempFilePath.IsEmpty() && WriteSF2(Bank, TempFilePath.Path()))
-                    Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, _Container.GetBankOffset(), true, false));
+                    Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, _Container.BankOffset, true, false));
                 else
                     Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to write embedded soundfont to temporary file.");
             }
             else
             {
                 // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
-                const unique_path_t TempFilePath(IsDLS ? ".dls" : ".sf2");
+                const msc::unique_path_t TempFilePath(IsDLS ? ".dls" : ".sf2");
 
                 if (!TempFilePath.IsEmpty() && WriteSF2(Data, TempFilePath.Path()))
-                    Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, _Container.GetBankOffset(), true, IsDLS));
+                    Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, _Container.BankOffset, true, IsDLS));
                 else
                     Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to write embedded soundfont to temporary file.");
             }
@@ -80,7 +77,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
             if (IsDLS && ConvertDLS)
             {
-                const unique_path_t TempFilePath(".sf2");
+                const msc::unique_path_t TempFilePath(".sf2");
 
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to SF2 bank \"%s\".", SoundfontFilePath.string().c_str(), TempFilePath.Path().string().c_str());
 
@@ -118,7 +115,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
             if (IsDLS && ConvertDLS)
             {
-                const unique_path_t TempFilePath(".sf2");
+                const msc::unique_path_t TempFilePath(".sf2");
 
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to SF2 bank \"%s\".", SoundfontFilePath.string().c_str(), TempFilePath.Path().string().c_str());
 
@@ -153,7 +150,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
             if (IsDLS && ConvertDLS)
             {
-                const unique_path_t TempFilePath(".sf2");
+                const msc::unique_path_t TempFilePath(".sf2");
 
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to SF2 bank \"%s\".", defaultSoundfontFilePath.string().c_str(), TempFilePath.Path().string().c_str());
 
@@ -176,7 +173,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
     // Create the final soundfont list.
     {
-        std::unordered_set<fs::path> UniqueLists;
+        std::unordered_set<std::string> UniqueLists;
         std::string Report;
         bool HasDLS = false;
 
@@ -232,23 +229,23 @@ fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortH
 /// <summary>
 /// Adds only existing soundfonts to the final list. Also handles recursively loading Soundfont list in soundfont lists.
 /// </summary>
-static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept
+static void AddSoundFont(const soundfont_t & sf, std::unordered_set<std::string> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept
 {
-    if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
+    if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
     {
         // Prevent recursion with nested soundfont lists.
         {
             auto AbsolutePath = fs::absolute(sf.FilePath);
 
-            if (uniqueLists.find(AbsolutePath) != uniqueLists.end())
+            if (uniqueLists.find(AbsolutePath.string().c_str()) != uniqueLists.end())
                 return;
 
-            uniqueLists.insert(AbsolutePath);
+            uniqueLists.insert(AbsolutePath.string().c_str());
         }
 
         if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
         {
-            report += ::FormatText("Soundfont list \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
+            report += msc::FormatText("Soundfont list \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
 
             return;
         }
@@ -266,11 +263,11 @@ static void AddSoundFont(const soundfont_t & sf, std::unordered_set<fs::path> & 
         Log.AtInfo().Write(STR_COMPONENT_BASENAME " read %d soundfonts from the list.", Count);
     }
     else
-    if (IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
+    if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
     {
         if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
         {
-            report += ::FormatText("Soundfont \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
+            report += msc::FormatText("Soundfont \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
 
             return;
         }
@@ -289,7 +286,7 @@ bool ReadDLS(sf::dls::collection_t & collection, const std::vector<uint8_t> & dl
 {
     try
     {
-        riff::memory_stream_t ms;
+        msc::memory_stream_t ms;
 
         if (ms.Open(dlsData.data(), dlsData.size()))
         {
@@ -318,7 +315,7 @@ bool ReadDLS(sf::dls::collection_t & collection, const fs::path & filePath) noex
 {
     try
     {
-        riff::file_stream_t fs;
+        msc::file_stream_t fs;
 
         if (fs.Open(filePath, false))
         {
@@ -347,7 +344,7 @@ bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcept
 {
     try
     {
-        riff::file_stream_t fs;
+        msc::file_stream_t fs;
 
         if (fs.Open(filePath, true))
         {

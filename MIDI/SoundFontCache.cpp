@@ -166,7 +166,7 @@ HSOUNDFONT CacheAddSoundfont(const fs::path & filePath, bool isTemporary)
 
         auto * File = new file::ptr;
 
-        filesystem::g_open(*File, (const char *) filePath.string().c_str(), filesystem::open_mode_read, fb2k::noAbort);
+        filesystem::g_open(*File, filePath.string().c_str(), filesystem::open_mode_read, fb2k::noAbort);
 
         hSoundfont = ::BASS_MIDI_FontInitUser(&_BASSMIDICallbacks, File, Flags);
 //      hSoundfont = ::BASS_MIDI_FontInit(::UTF8ToWide((const char *) filePath.string().c_str()).c_str(), Flags);
@@ -269,7 +269,7 @@ static void CacheRun()
                         if (Item.IsTemporary)
                         {
                             if (!::DeleteFileA((const char *) Item.FilePath.string().c_str()))
-                                Log.AtError().Write(component::GetErrorMessage(::FormatText("Failed to delete temporary file \"%s\"", Item.FilePath.string().c_str()).c_str(), ::GetLastError()).c_str());
+                                Log.AtError().Write(msc::GetErrorMessage(msc::FormatText("Failed to delete temporary file \"%s\"", Item.FilePath.string().c_str()).c_str(), ::GetLastError()).c_str());
                         }
 
                         it = _CacheItems.erase(it);

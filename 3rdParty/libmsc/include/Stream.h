@@ -1,21 +1,16 @@
 
-/** $VER: Stream.h (2025.08.17) P. Stuer **/
+/** $VER: Stream.h (2025.09.06) P. Stuer **/
 
 #pragma once
 
 #include <SDKDDKVer.h>
 #include <windows.h>
 
-#include <filesystem>
-#include <string>
-
-namespace fs = std::filesystem;
-
 #include "Exception.h"
 
 #pragma warning(disable: 4820)
 
-namespace riff
+namespace msc
 {
 
 /// <summary>

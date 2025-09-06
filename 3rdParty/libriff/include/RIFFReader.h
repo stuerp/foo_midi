@@ -3,14 +3,11 @@
 
 #pragma once
 
-#include <SDKDDKVer.h>
-#include <windows.h>
+#include <libmsc.h>
 
 #include "RIFF.h"
 #include "FOURCC.h"
 
-#include "Stream.h"
-#include "Encoding.h"
 #include "Exception.h"
 
 namespace riff
@@ -38,7 +35,7 @@ public:
         OnlyMandatory = 1
     };
 
-    bool Open(stream_t * stream, option_t options);
+    bool Open(msc::stream_t * stream, option_t options);
 
     virtual void Close() noexcept;
 
@@ -94,7 +91,7 @@ protected:
     }
 
 protected:
-    stream_t * _Stream;
+    msc::stream_t * _Stream;
     option_t _Options;
     chunk_header_t _Header;
 };
@@ -118,7 +115,7 @@ template <typename T> bool reader_t::ReadChunks(uint32_t chunkSize, T&& readChun
 
         {
             if (chunkSize < sizeof(ch))
-                throw exception(FormatText("Failed to read chunk header: need %u bytes, have %u bytes", sizeof(ch), chunkSize));
+                throw exception(msc::FormatText("Failed to read chunk header: need %u bytes, have %u bytes", sizeof(ch), chunkSize));
 
             Read(&ch, sizeof(ch));
             chunkSize -= sizeof(ch);
@@ -126,7 +123,7 @@ template <typename T> bool reader_t::ReadChunks(uint32_t chunkSize, T&& readChun
 
         {
             if (chunkSize < ch.Size)
-                throw exception(FormatText("Failed to read chunk data: need %u bytes, have %u bytes", ch.Size, chunkSize));
+                throw exception(msc::FormatText("Failed to read chunk data: need %u bytes, have %u bytes", ch.Size, chunkSize));
 
             readChunk(ch);
             chunkSize -= ch.Size;

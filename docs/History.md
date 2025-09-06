@@ -1,6 +1,17 @@
 
 # foo_midi History
 
+v3.2.0.0-alpha3, 2025-09-03
+
+- Improved: DLS to SF2 conversion
+  - Added Downloadable Sounds filter to the soundfont file dialog.
+  - Added work-around for DLS files with incorrect sample chunks (WSMP).
+  - Added support for A-Law encoded DLS samples.
+  - Added exclusiveClass generator conversion.
+  - Fixed incorrect modulator generation for Chorus effect.
+  - Fixed improper handling of instrument INFO chunks.
+- Fixed: The Log Level drop list was not cleared after a reset.
+
 v3.2.0.0-alpha2, 2025-09-01
 
 - New: Option "Use SecretSauce with GS" to always use the SecretSauce player with a GS MIDI file.

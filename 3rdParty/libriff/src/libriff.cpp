@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#include "LibRIFF.h"
+#include <libriff.h>
 
 #ifdef _DEBUG
 uint32_t __TRACE_LEVEL = 0;

@@ -567,7 +567,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         for (const auto & Player : _InstalledPlayers)
         {
-            w.AddString(::UTF8ToWide(Player.Name).c_str());
+            w.AddString(msc::UTF8ToWide(Player.Name).c_str());
 
             if (Player == _SelectedPlayer)
                 SelectedIndex = i;

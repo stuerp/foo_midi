@@ -1,16 +1,12 @@
 
-/** $VER: RIFFWriter.h (2025.08.20) P. Stuer **/
+/** $VER: RIFFWriter.h (2025.09.06) P. Stuer **/
 
 #pragma once
 
-#include <SDKDDKVer.h>
-#include <windows.h>
+#include <libmsc.h>
 
 #include "RIFF.h"
 #include "FOURCC.h"
-
-#include "Stream.h"
-#include "Exception.h"
 
 namespace riff
 {
@@ -39,7 +35,7 @@ public:
         PolyphoneCompatible = 0x0002,   // Writes a SoundFont file that can be read by Polyphone but that adheres not strictly to the SoundFont 2.04 specification.
     };
 
-    bool Open(stream_t * stream, Options options);
+    bool Open(msc::stream_t * stream, Options options);
 
     virtual void Close() noexcept;
 
@@ -97,7 +93,7 @@ public:
     }
 
 protected:
-    stream_t * _Stream;
+    msc::stream_t * _Stream;
     Options _Options;
 
     struct marker_t

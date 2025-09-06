@@ -206,7 +206,7 @@ void FMDialog::apply()
 
             GetDlgItemText(IDC_ADL_BANK_FILE_PATH, Text, (int) _countof(Text));
 
-            CfgADLBankFilePath = ::WideToUTF8(Text).c_str();
+            CfgADLBankFilePath = msc::WideToUTF8(Text).c_str();
         }
     }
 
@@ -252,7 +252,7 @@ void FMDialog::apply()
 
             GetDlgItemText(IDC_OPN_BANK_FILE_PATH, Text, (int) _countof(Text));
 
-            CfgOPNBankFilePath = ::WideToUTF8(Text).c_str();
+            CfgOPNBankFilePath = msc::WideToUTF8(Text).c_str();
         }
     }
 
@@ -381,7 +381,7 @@ BOOL FMDialog::OnInitDialog(CWindow window, LPARAM) noexcept
                 if ((BankNames != nullptr) && (BankCount > 0))
                 {
                     for (size_t i = 0; i < BankCount; ++i)
-                        _ADLBanks.push_back(bank_t((int) i, ::UTF8ToWide(BankNames[i])));
+                        _ADLBanks.push_back(bank_t((int) i, msc::UTF8ToWide(BankNames[i])));
 
                     std::sort(_ADLBanks.begin(), _ADLBanks.end(), [](bank_t a, bank_t b) { return a < b; });
                 }
@@ -427,7 +427,7 @@ BOOL FMDialog::OnInitDialog(CWindow window, LPARAM) noexcept
         SendDlgItemMessage(IDC_ADL_SOFT_PANNING, BM_SETCHECK, (WPARAM) CfgADLSoftPanning);
 
         // ADL Bank File
-        SetDlgItemText(IDC_ADL_BANK_FILE_PATH, ::UTF8ToWide(CfgADLBankFilePath.get().c_str()).c_str());
+        SetDlgItemText(IDC_ADL_BANK_FILE_PATH, msc::UTF8ToWide(CfgADLBankFilePath.get().c_str()).c_str());
     }
 
     // OPN
@@ -488,7 +488,7 @@ BOOL FMDialog::OnInitDialog(CWindow window, LPARAM) noexcept
         }
 
         // OPN Bank File
-        SetDlgItemText(IDC_OPN_BANK_FILE_PATH, ::UTF8ToWide(CfgOPNBankFilePath.get().c_str()).c_str());
+        SetDlgItemText(IDC_OPN_BANK_FILE_PATH, msc::UTF8ToWide(CfgOPNBankFilePath.get().c_str()).c_str());
     }
 
     // Nuked OPL3
@@ -570,7 +570,7 @@ void FMDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
 
             GetDlgItemText(IDC_ADL_BANK_FILE_PATH, Text, (int) _countof(Text));
 
-            pfc::string FilePath = ::WideToUTF8(Text).c_str();
+            pfc::string FilePath = msc::WideToUTF8(Text).c_str();
 
             pfc::string DirectoryPath = FilePath;
 
@@ -581,7 +581,7 @@ void FMDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
                     "All files|*.*",
                 0, "wopl", "Choose a bank...", DirectoryPath, FilePath, FALSE))
             {
-                SetDlgItemText(IDC_ADL_BANK_FILE_PATH, ::UTF8ToWide(FilePath.c_str()).c_str());
+                SetDlgItemText(IDC_ADL_BANK_FILE_PATH, msc::UTF8ToWide(FilePath.c_str()).c_str());
 
                 OnChanged();
             }
@@ -594,7 +594,7 @@ void FMDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
 
             GetDlgItemText(IDC_OPN_BANK_FILE_PATH, Text, (int) _countof(Text));
 
-            pfc::string FilePath = ::WideToUTF8(Text).c_str();
+            pfc::string FilePath = msc::WideToUTF8(Text).c_str();
 
             pfc::string DirectoryPath = FilePath;
 
@@ -605,7 +605,7 @@ void FMDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
                     "All files|*.*",
                 0, "wopn", "Choose a bank...", DirectoryPath, FilePath, FALSE))
             {
-                SetDlgItemText(IDC_OPN_BANK_FILE_PATH, ::UTF8ToWide(FilePath.c_str()).c_str());
+                SetDlgItemText(IDC_OPN_BANK_FILE_PATH, msc::UTF8ToWide(FilePath.c_str()).c_str());
 
                 OnChanged();
             }
@@ -665,7 +665,7 @@ bool FMDialog::HasChanged() noexcept
 
             GetDlgItemText(IDC_ADL_BANK_FILE_PATH, Text, (int) _countof(Text));
 
-            if (CfgADLBankFilePath.get_value() != ::WideToUTF8(Text).c_str())
+            if (CfgADLBankFilePath.get_value() != msc::WideToUTF8(Text).c_str())
                 return true;
         }
     }
@@ -708,7 +708,7 @@ bool FMDialog::HasChanged() noexcept
 
             GetDlgItemText(IDC_OPN_BANK_FILE_PATH, Text, (int) _countof(Text));
 
-            if (CfgOPNBankFilePath.get_value() != ::WideToUTF8(Text).c_str())
+            if (CfgOPNBankFilePath.get_value() != msc::WideToUTF8(Text).c_str())
                 return true;
         }
     }

@@ -3,11 +3,7 @@
 
 #include "pch.h"
 
-#include "Stream.h"
-#include "Encoding.h"
-#include "Win32Exception.h"
-
-namespace riff
+namespace msc
 {
 
 /// <summary>
