@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2025.07.14) **/
+/** $VER: Preferences.rc (2025.08.31) **/
 
 #include "Resource.h"
 
@@ -205,13 +205,19 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     // Checkbox: Use MT32Emu with MT-32
     #define X_A84    X_A81
     #define Y_A84    Y_A82 + H_A82 + IY
-    #define W_A84    W_A80 - 5 - 5
+    #define W_A84    159
     #define H_A84    H_CHB
+
+    // Checkbox: Use SecretSauce with GS
+    #define X_A87    X_A84 + W_A84 + IX
+    #define Y_A87    Y_A84
+    #define W_A87    W_A84
+    #define H_A87    H_CHB
 
     // Checkbox: Use VSTi with XG
     #define X_A85    X_A84
     #define Y_A85    Y_A84 + H_A84 + IY
-    #define W_A85    W_A80 - 5 - 5
+    #define W_A85    W_A84
     #define H_A85    H_CHB
 
     // Checkbox: Filter effects
@@ -220,35 +226,35 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_A83    160
     #define H_A83    H_CHB
 
+    // Checkbox "Skip to first note"
+    #define X_A34    X_A83 + W_A83 + IX
+    #define Y_A34    Y_A83
+    #define W_A34    W_A83
+    #define H_A34    H_CHB
+
     // Checkbox: Detect extra percussion channel
     #define X_A86    X_A83
     #define Y_A86    Y_A83 + H_A83 + IY
-    #define W_A86    160
+    #define W_A86    W_A83
     #define H_A86    H_CHB
 
     // Checkbox "Exclude unsupported EMIDI track designation"
     #define X_A31    X_A86
     #define Y_A31    Y_A86 + H_A86 + IY
-    #define W_A31    160
-    #define H_A31    10
+    #define W_A31    W_A83
+    #define H_A31    H_CHB
 
     // Checkbox "Disable instrument changes"
     #define X_A32    X_A31
     #define Y_A32    Y_A31 + H_A31 + IY
-    #define W_A32    160
-    #define H_A32    10
+    #define W_A32    W_A83
+    #define H_A32    H_CHB
 
     // Checkbox "Disable bank changes"
     #define X_A33    X_A32
     #define Y_A33    Y_A32 + H_A32 + IY
-    #define W_A33    160
-    #define H_A33    10
-
-    // Checkbox "Skip to first note"
-    #define X_A34    166
-    #define Y_A34    Y_A83
-    #define W_A34    160
-    #define H_A34    10
+    #define W_A33    W_A83
+    #define H_A33    H_CHB
 
 #define H_A80    11 + H_A82 + IY + H_A84 + IY + H_A85 + IY + H_CHB + IY + H_A83 + IY + H_A86 + IY + H_A31 + IY + H_A32 + IY + H_A33 + 7
 
@@ -296,6 +302,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
         combobox                                                        IDC_MIDI_FLAVOR,                X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
         control     "Use LibMT32Emu with MT-32",                        IDC_MIDI_USE_MT32EMU_WITH_MT32, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
+        control     "Use SecretSauce with GS",                          IDC_MIDI_USE_SC_WITH_GS,        "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A87, Y_A87, W_A87, H_A87
         control     "Use VSTi with XG",                                 IDC_MIDI_USE_VSTI_WITH_XG,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
 
         control     "Filter effects (Reverb and Chorus)",               IDC_MIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83

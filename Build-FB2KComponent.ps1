@@ -55,41 +55,12 @@ if ($Platform -eq 'x64')
     {
         Write-Host "Copying BASS libaries to `"$PackagePath`"...";
 
-        Copy-Item $DLLPath -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/bass_mpc.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/bassflac.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/bassmidi.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/bassopus.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/x64/basswv.dll" -Destination "$PackagePath";
-    }
-
-    $DLLPath = "3rdParty/sdl2/lib/x64/sdl2.dll";
-
-    if (Test-Path -Path $DLLPath)
-    {
-        Write-Host "Copying SDL library to `"$PackagePath`"...";
-
-#       Copy-Item $DLLPath -Destination "$PackagePath";
-    }
-
-    # juno's fmmidi
-    $FilePath = "3rdParty/midisynth/Programs.txt";
-
-    if (Test-Path -Path $FilePath)
-    {
-        Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
-
-        Copy-Item $FilePath -Destination "$PackagePath";
-    }
-
-    # FluidSynth configuration
-    $FilePath = "3rdParty/FluidSynth/FluidSynth.cfg";
-
-    if (Test-Path -Path $FilePath)
-    {
-        Write-Host "Copying FluidSynth configuration to `"$PackagePath`"...";
-
-        Copy-Item $FilePath -Destination "$PackagePath";
+        Copy-Item $DLLPath -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/bass_mpc.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/bassflac.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/bassmidi.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/bassopus.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/x64/basswv.dll" -Destination "$PackagePath" -Force;
     }
 
     if (Test-Path -Path "../bin")
@@ -121,41 +92,12 @@ elseif ($Platform -eq 'Win32')
     {
         Write-Host "Copying BASS libaries to `"$PackagePath`"...";
 
-        Copy-Item "3rdParty/bass/bass.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/bass_mpc.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/bassflac.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/bassmidi.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/bassopus.dll" -Destination "$PackagePath";
-        Copy-Item "3rdParty/bass/basswv.dll" -Destination "$PackagePath";
-    }
-
-    $DLLPath = "3rdParty/sdl2/lib/x86/sdl2.dll";
-
-    if (Test-Path -Path $DLLPath)
-    {
-        Write-Host "Copying SDL library to `"$PackagePath`"...";
-
-#       Copy-Item $DLLPath -Destination "$PackagePath";
-    }
-
-    # juno's fmmidi
-    $FilePath = "3rdParty/midisynth/Programs.txt";
-
-    if (Test-Path -Path $FilePath)
-    {
-        Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
-
-        Copy-Item $FilePath -Destination "$PackagePath";
-    }
-
-    # FluidSynth configuration
-    $FilePath = "3rdParty/FluidSynth/FluidSynth.cfg";
-
-    if (Test-Path -Path $FilePath)
-    {
-        Write-Host "Copying FluidSynth configuration to `"$PackagePath`"...";
-
-        Copy-Item $FilePath -Destination "$PackagePath";
+        Copy-Item "3rdParty/bass/bass.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/bass_mpc.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/bassflac.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/bassmidi.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/bassopus.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty/bass/basswv.dll" -Destination "$PackagePath" -Force;
     }
 
     if (Test-Path -Path "../bin")
@@ -175,28 +117,56 @@ else
 
 $PackagePath = "../out/$TargetName";
 
-if (Test-Path -Path "$OutputPath/vsthost32.exe")
+$FilePath = "$OutputPath/../../x86/Release/vsthost32.exe";
+
+if (Test-Path -Path $FilePath)
 {
-    Write-Host "Copying vsthost32.exe to `"$PackagePath/vsthost32.exe`"...";
-    Copy-Item "$OutputPath/vsthost32.exe" -Destination "$PackagePath/vsthost32.exe";
+    Write-Host "Copying vsthost32.exe to `"$PackagePath`"...";
+    Copy-Item $FilePath -Destination "$PackagePath/vsthost32.exe";
 }
 
-if (Test-Path -Path "$OutputPath/../x64/Release/vsthost64.exe")
+$FilePath = "$OutputPath/../../x64/Release/vsthost64.exe";
+
+if (Test-Path -Path $FilePath)
 {
-    Write-Host "Copying vsthost64.exe to `"$PackagePath/vsthost64.exe`"...";
-    Copy-Item "$OutputPath/../x64/Release/vsthost64.exe" -Destination "$PackagePath/vsthost64.exe";
+    Write-Host "Copying vsthost64.exe to `"$PackagePath`"...";
+    Copy-Item $FilePath -Destination "$PackagePath/vsthost64.exe";
 }
 
-if (Test-Path -Path "$OutputPath/scpipe32.exe")
+$FilePath = "$OutputPath/../../x86/Release/scpipe32.exe";
+
+if (Test-Path -Path $FilePath)
 {
-    Write-Host "Copying scpipe32.exe to `"$PackagePath/scpipe32.exe`"...";
-    Copy-Item "$OutputPath/scpipe32.exe" -Destination "$PackagePath/scpipe32.exe";
+    Write-Host "Copying scpipe32.exe to `"$PackagePath`"...";
+    Copy-Item $FilePath -Destination "$PackagePath/scpipe32.exe";
 }
 
-if (Test-Path -Path "$OutputPath/../x64/Release/scpipe64.exe")
+$FilePath = "$OutputPath/../../x64/Release/scpipe64.exe";
+
+if (Test-Path -Path $FilePath)
 {
-    Write-Host "Copying scpipe64.exe to `"$PackagePath/scpipe64.exe`"...";
-    Copy-Item "$OutputPath/../x64/Release/scpipe64.exe" -Destination "$PackagePath/scpipe64.exe";
+    Write-Host "Copying scpipe64.exe to `"$PackagePath`"...";
+    Copy-Item $FilePath -Destination "$PackagePath/scpipe64.exe";
+}
+
+# juno's fmmidi
+$FilePath = "3rdParty/fmmidi/Programs.txt";
+
+if (Test-Path -Path $FilePath)
+{
+    Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
+
+    Copy-Item $FilePath -Destination "$PackagePath" -Force;
+}
+
+# FluidSynth configuration
+$FilePath = "3rdParty/FluidSynth/FluidSynth.cfg";
+
+if (Test-Path -Path $FilePath)
+{
+    Write-Host "Copying FluidSynth configuration to `"$PackagePath`"...";
+
+    Copy-Item $FilePath -Destination "$PackagePath" -Force;
 }
 
 Compress-Archive -Force -Path ../out/$TargetName/* -DestinationPath ../out/$TargetName.fb2k-component;

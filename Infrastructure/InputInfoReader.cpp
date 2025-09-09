@@ -1,5 +1,5 @@
  
-/** $VER: InputInfoReader.cpp (2025.07.15) **/
+/** $VER: InputInfoReader.cpp (2025.09.07) **/
 
 #include "pch.h"
 
@@ -91,7 +91,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 
     // Read a WRD file in the same path and convert it to lyrics.
     {
-        std::filesystem::path FilePath(pfc::wideFromUTF8(_FilePath.c_str()).c_str());
+        fs::path FilePath(pfc::wideFromUTF8(_FilePath.c_str()).c_str());
 
         FilePath.replace_extension(L".wrd");
 
@@ -148,7 +148,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
     // Add a tag that identifies the embedded soundfont, if present.
     try
     {
-        const auto & Data = _Container.GetSoundfontData();
+        const auto & Data = _Container.SoundFont;
 
         if (Data.size() > 12)
         {
@@ -158,22 +158,29 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
             {
                 TagValue.clear();
 
-                sf::bank_t sf;
-
-                riff::memory_stream_t ms;
-
-                if (ms.Open(Data.data(), Data.size()))
+                try
                 {
-                    sf::reader_t sr;
+                    sf::bank_t sf;
 
-                    if (sr.Open(&ms, riff::reader_t::option_t::None))
+                    msc::memory_stream_t ms;
+
+                    if (ms.Open(Data.data(), Data.size()))
                     {
-                        sr.Process({ false }, sf); // Don't load the sample data.
+                        sf::reader_t sr;
 
-                        TagValue = ::FormatText("SF %d.%d", sf.Major, sf.Minor);
+                        if (sr.Open(&ms, riff::reader_t::option_t::None))
+                        {
+                            sr.Process(sf, { false }); // Don't load the sample data.
+
+                            TagValue = msc::FormatText("SF %d.%d", sf.Major, sf.Minor);
+                        }
+
+                        ms.Close();
                     }
-
-                    ms.Close();
+                }
+                catch (const std::exception & e)
+                {
+                    Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to read DLS version from embedded soundfont: %s", e.what());
                 }
             }
 
@@ -245,12 +252,12 @@ void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * 
 
     if (!pfc::is_lower_ascii(value) && !pfc::is_valid_utf8(value, maxLength))
     {
-        if (IsShiftJIS(value, maxLength))
+        if (msc::IsShiftJIS(value, maxLength))
         {
             Value = pfc::stringcvt::string_utf8_from_codepage(932, value);
         }
         else
-        if (IsEUCJP(value, maxLength))
+        if (msc::IsEUCJP(value, maxLength))
         {
             Value = pfc::stringcvt::string_utf8_from_codepage(20932, value);
 

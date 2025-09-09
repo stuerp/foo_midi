@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.08.02) P. Stuer **/
+/** $VER: Preferences.cpp (2025.08.31) P. Stuer **/
 
 #include "pch.h"
 
@@ -105,6 +105,7 @@ public:
 
         COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS,                BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_USE_MT32EMU_WITH_MT32,  BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_SC_WITH_GS,         BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,       BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_MIDI_DETECT_EXTRA_DRUM,      BN_CLICKED, OnButtonClick)
 
@@ -355,6 +356,7 @@ void RootDialog::apply()
 
         CfgUseMIDIEffects     = (t_int32) SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) ? 0 : 1;
         CfgUseMT32EmuWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_GETCHECK);
+        CfgUseSCWithGS        = (bool) SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS, BM_GETCHECK);
         CfgUseVSTiWithXG      = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
         CfgDetectExtraDrum    = (bool)    SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK);
 
@@ -565,7 +567,7 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         for (const auto & Player : _InstalledPlayers)
         {
-            w.AddString(::UTF8ToWide(Player.Name).c_str());
+            w.AddString(msc::UTF8ToWide(Player.Name).c_str());
 
             if (Player == _SelectedPlayer)
                 SelectedIndex = i;
@@ -667,8 +669,11 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         SendDlgItemMessage(IDC_MIDI_EFFECTS,               BM_SETCHECK, (WPARAM) (CfgUseMIDIEffects ? 0 : 1));
         SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_SETCHECK, (WPARAM) CfgUseMT32EmuWithMT32);
+        SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS,        BM_SETCHECK, (WPARAM) CfgUseSCWithGS);
         SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,      BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
         SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM,     BM_SETCHECK, (WPARAM) CfgDetectExtraDrum);
+
+        GetDlgItem(IDC_MIDI_USE_SC_WITH_GS).EnableWindow(!CfgSecretSauceDirectoryPath.get().isEmpty());
 
         const bool Enabled = _SelectedPlayer.SupportsMIDIFlavor();
 
@@ -963,6 +968,9 @@ bool RootDialog::HasChanged()
             return true;
 
         if (SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_GETCHECK) != CfgUseMT32EmuWithMT32)
+            return true;
+
+        if (SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS, BM_GETCHECK) != CfgUseSCWithGS)
             return true;
 
         if (SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK) != CfgUseVSTiWithXG)

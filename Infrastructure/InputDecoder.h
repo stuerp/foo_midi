@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.08.01) **/
+/** $VER: InputDecoder.h (2025.09.01) **/
 
 #pragma once
 
@@ -38,11 +38,11 @@
 
 #include "Resource.h"
 
-/* KEEP? 06/07/25
-extern volatile int _IsRunning;
-extern critical_section _Lock;
-extern volatile uint32_t _CurrentSampleRate;
-*/
+bool ReadDLS(sf::dls::collection_t & collection, const std::vector<uint8_t> & data) noexcept;
+bool ReadDLS(sf::dls::collection_t & collection, const fs::path & filePath) noexcept;
+
+bool WriteSF2(const std::vector<uint8_t> & data, const fs::path & filePath) noexcept;
+bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcept;
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
@@ -192,6 +192,7 @@ private:
     hasher_md5_result _FileHash;
 
     bool _IsMT32;
+    bool _IsGS;
     bool _IsXG;
 
     bool _DetectRPGMakerLoops;

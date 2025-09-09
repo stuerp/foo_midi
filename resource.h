@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.08.17) P. Stuer **/
+/** $VER: Resource.h (2025.09.06) P. Stuer **/
 
 #pragma once
 
@@ -26,21 +26,21 @@
 #define STR_COPYRIGHT               TEXT(STR_COMPONENT_COPYRIGHT)
 
 #define NUM_FILE_MAJOR              3
-#define NUM_FILE_MINOR              1
-#define NUM_FILE_PATCH              2
+#define NUM_FILE_MINOR              2
+#define NUM_FILE_PATCH              0
 #define NUM_FILE_PRERELEASE         0
 
 #define STR_FILE_NAME               TEXT(STR_COMPONENT_FILENAME)
-#define STR_FILE_VERSION            TOSTRING(NUM_FILE_MAJOR) TEXT(".") TOSTRING(NUM_FILE_MINOR) TEXT(".") TOSTRING(NUM_FILE_PATCH) TEXT(".") TOSTRING(NUM_FILE_PRERELEASE)
+#define STR_FILE_VERSION            TOSTRING(NUM_FILE_MAJOR) TEXT(".") TOSTRING(NUM_FILE_MINOR) TEXT(".") TOSTRING(NUM_FILE_PATCH) TEXT(".") TOSTRING(NUM_FILE_PRERELEASE) TOSTRING("-alpha4")
 #define STR_FILE_DESCRIPTION        TEXT(STR_COMPONENT_DESCRIPTION)
 
 #define NUM_PRODUCT_MAJOR           3
-#define NUM_PRODUCT_MINOR           1
-#define NUM_PRODUCT_PATCH           2
+#define NUM_PRODUCT_MINOR           2
+#define NUM_PRODUCT_PATCH           0
 #define NUM_PRODUCT_PRERELEASE      0
 
 #define STR_PRODUCT_NAME            STR_COMPANY_NAME TEXT(" ") STR_INTERNAL_NAME
-#define STR_PRODUCT_VERSION         TOSTRING(NUM_PRODUCT_MAJOR) TEXT(".") TOSTRING(NUM_PRODUCT_MINOR) TEXT(".") TOSTRING(NUM_PRODUCT_PATCH) TEXT(".") TOSTRING(NUM_PRODUCT_PRERELEASE)
+#define STR_PRODUCT_VERSION         TOSTRING(NUM_PRODUCT_MAJOR) TEXT(".") TOSTRING(NUM_PRODUCT_MINOR) TEXT(".") TOSTRING(NUM_PRODUCT_PATCH) TEXT(".") TOSTRING(NUM_PRODUCT_PRERELEASE) TOSTRING("-alpha4")
 
 #define STR_ABOUT_NAME              STR_INTERNAL_NAME
 #define STR_ABOUT_WEB               TEXT(STR_COMPONENT_URL)
@@ -81,9 +81,9 @@
 #define IDC_MIDI_FLAVOR                     1019
 #define IDC_MIDI_EFFECTS                    1020
 #define IDC_MIDI_USE_MT32EMU_WITH_MT32      1021
-#define IDC_MIDI_USE_VSTI_WITH_XG           1022
-#define IDC_MIDI_DETECT_EXTRA_DRUM          1023
-
+#define IDC_MIDI_USE_SC_WITH_GS             1022
+#define IDC_MIDI_USE_VSTI_WITH_XG           1023
+#define IDC_MIDI_DETECT_EXTRA_DRUM          1024
 
 /** Dialog: Preferences FM Synthesis **/
 
@@ -236,9 +236,10 @@
 #define IDC_BASSMIDI_MAX_VOICES             2506
 
 #define IDC_BASSMIDI_EFFECTS                2507
+#define IDC_BASSMIDI_USE_DLS                2508
 
-#define IDC_CACHED_LBL                      2508
-#define IDC_CACHED                          2509
+#define IDC_CACHED_LBL                      2509
+#define IDC_CACHED                          2510
 
 #define IDC_FLUIDSYNTH_INTERPOLATION_TEXT   2550
 #define IDC_FLUIDSYNTH_INTERPOLATION        2251
@@ -247,6 +248,7 @@
 #define IDC_FLUIDSYNTH_MAX_VOICES           2253
 
 #define IDC_FLUIDSYNTH_EFFECTS              2254
-#define IDC_FLUIDSYNTH_DYN_LOADING          2255
+#define IDC_FLUIDSYNTH_USE_DLS              2555
+#define IDC_FLUIDSYNTH_DYN_LOADING          2256
 
 #define IDD_CLAP_WINDOW                     2600

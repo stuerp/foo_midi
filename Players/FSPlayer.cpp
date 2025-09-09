@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2025.07.26) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.09.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -68,7 +68,7 @@ void FSPlayer::EnableEffects(bool enabled)
 }
 
 /// <summary>
-/// Enables or disables dynamic loading of the sound fonts.
+/// Enables or disables dynamic loading of the soundfonts.
 /// </summary>
 void FSPlayer::EnableDynamicLoading(bool enabled)
 {
@@ -81,7 +81,7 @@ void FSPlayer::EnableDynamicLoading(bool enabled)
 }
 
 /// <summary>
-/// Sets the sound fonts to use for synthesis.
+/// Sets the soundfonts to use for synthesis.
 /// </summary>
 void FSPlayer::SetSoundfonts(const std::vector<soundfont_t> & soundfonts)
 {
@@ -563,20 +563,20 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
     const std::string FilePath = (const char *) sf.FilePath.string().c_str();
 
     if (!filesystem::g_exists(FilePath.c_str(), fb2k::noAbort))
-        throw std::exception(::FormatText("Soundfont \"%s\" not found.", FilePath.c_str()).c_str());
+        throw std::exception(msc::FormatText("Soundfont \"%s\" not found.", FilePath.c_str()).c_str());
 /*
     // Does not use the registered callbacks and can't read files in archives
     if (!_API.IsSoundfont(FilePath.c_str()))
-        throw std::exception(::FormatText("Soundfont \"%s\" has unknown soundfont format.", FilePath.c_str()).c_str());
+        throw std::exception(msc::FormatText("Soundfont \"%s\" has unknown soundfont format.", FilePath.c_str()).c_str());
 */
     const int SoundfontId = _API.LoadSoundfont(synth, FilePath.c_str(), TRUE);
 
     if (SoundfontId == FLUID_FAILED)
-        throw std::exception(::FormatText("Failed to load soundfont \"%s\"", FilePath.c_str()).c_str());
+        throw std::exception(msc::FormatText("Failed to load soundfont \"%s\"", FilePath.c_str()).c_str());
 
     int BankOffset = sf.BankOffset;
 
-    if (sf.IsEmbedded)
+    if (sf.IsTemporary)
     {
         if (sf.IsDLS)
         {
@@ -601,7 +601,7 @@ void FSPlayer::LoadSoundfont(fluid_synth_t * synth, const soundfont_t & sf)
         assert(Result == FLUID_OK);
     }
 
-    DumpSoundfont(sf.FilePath, synth, SoundfontId);
+//  DumpSoundfont(sf.FilePath, synth, SoundfontId);
 }
 
 /// <summary>

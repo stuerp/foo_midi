@@ -1,6 +1,39 @@
 
 # foo_midi History
 
+v3.2.0.0-alpha3, 2025-09-03
+
+- Improved: DLS to SF2 conversion
+  - Added Downloadable Sounds filter to the soundfont file dialog.
+  - Added work-around for DLS files with incorrect sample chunks (WSMP).
+  - Added support for A-Law encoded DLS samples.
+  - Added exclusiveClass generator conversion.
+  - Fixed incorrect modulator generation for Chorus effect.
+  - Fixed improper handling of instrument INFO chunks.
+- Fixed: The Log Level drop list was not cleared after a reset.
+
+v3.2.0.0-alpha2, 2025-09-01
+
+- New: Option "Use SecretSauce with GS" to always use the SecretSauce player with a GS MIDI file.
+- New: Context menu item to extract an embedded sound font and save it as a DLS collection or SF2 bank.
+- Improved: DLS to SF2 conversion
+  - BASSMIDI can now use DLS collections as a default sound font or a sound font associated with a MIDI file.
+  - Added support for 8-bit DLS samples.
+  - Fixed loop offset generators when the DLS sample has no loop.
+- Improved: The SecretSauce player keeps trying to play files that cause the host to stop early f.e. because of an unsupported SysEx.
+
+v3.2.0.0-alpha1, 2025-08-30
+
+- New: The BASSMIDI player can now use DLS sound fonts. They are automatically converted to SF2 format before use.
+- New: "Use DLS" option for the BASSMIDI player.
+- New: "Use DLS (Custom) option for the FluidSynth player. This overrides the built-in DLS support.
+- Fixed: Reduced device count of LibADLMIDI/LibOPNMIDI from 3 to 1 to prevent a rare edge case from freezing the sample render loop.
+- Fixed: The sound font cache prevented temporary files from being deleted.
+
+v3.1.2.0, 2025-08-17
+
+- New: The VSTi that is used when the [Use VSTi with XG](docs/README.md) is enabled loads its saved configuration before playback starts.
+
 v3.1.1.0, 2025-08-15
 
 - Fixed: Under some conditions the BASSMIDI volume of a soundfont was set to 0.

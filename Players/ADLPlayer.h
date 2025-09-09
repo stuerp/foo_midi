@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.h (2025.07.06) **/
+/** $VER: ADLPlayer.h (2025.08.27) **/
 
 #pragma once
 
@@ -37,7 +37,7 @@ protected:
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) override;
 
 private:
-    struct ADL_MIDIPlayer * _Devices[3];
+    struct ADL_MIDIPlayer * _Devices[1]; // LibADLMIDI supports only 1 device per thread. [Issue 293](https://github.com/Wohlstand/libADLMIDI/issues/293).
 
     uint32_t _EmulatorCore;
     uint32_t _BankNumber;

@@ -79,7 +79,7 @@ private:
 
     float * _SrcFrames;
 
-    std::vector<HSOUNDFONT> _SoundfontHandles;
+    std::vector<BASS_MIDI_FONTEX> _Fonts;
 
     static const size_t MaxPorts = 1;
 

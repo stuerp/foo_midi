@@ -1,5 +1,5 @@
 
-/** $VER: SoundFontCache.h (2025.07.20) - Soundfont cache for the BASSMIDI player **/
+/** $VER: SoundFontCache.h (2025.08.27) - Soundfont cache for the BASSMIDI player **/
 
 #pragma once
 
@@ -12,7 +12,7 @@
 extern void CacheInit();
 extern void CacheDispose();
 
-extern HSOUNDFONT CacheAddSoundfont(const fs::path & filePath);
+extern HSOUNDFONT CacheAddSoundfont(const fs::path & filePath, bool isEmbedded);
 extern void CacheRemoveSoundfont(HSOUNDFONT hSoundFont);
 
 extern void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesDataLoaded);

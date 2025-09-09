@@ -45,7 +45,7 @@ std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
     }
     catch (pfc::exception & e)
     {
-        throw std::exception(::FormatText("Failed to open soundfont list \"%s\": %s", filePath.string().c_str(), e.what()).c_str());
+        throw std::exception(msc::FormatText("Failed to open soundfont list \"%s\": %s", filePath.string().c_str(), e.what()).c_str());
     }
 /*
     // Old code for compatibility testing.
@@ -143,17 +143,17 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                 auto FileName = FindObject(Values, "fileName");
 
                 if (FileName->type == json_none)
-                    throw std::exception(::FormatText("Soundfont object %d has no fileName property", i + 1).c_str());
+                    throw std::exception(msc::FormatText("Soundfont object %d has no fileName property", i + 1).c_str());
 
                 if (FileName->type != json_string)
-                    throw std::exception(::FormatText("fileName property of soundFont object %d is not a string", i + 1).c_str());
+                    throw std::exception(msc::FormatText("fileName property of soundFont object %d is not a string", i + 1).c_str());
             }
 
             {
                 auto Gain = FindObject(Values, "gain");
 
                 if ((Gain->type != json_none) && (Gain->type != json_integer) && (Gain->type != json_double))
-                    throw std::exception(::FormatText("gain property of soundFont object %d is not a number", i + 1).c_str());
+                    throw std::exception(msc::FormatText("gain property of soundFont object %d is not a number", i + 1).c_str());
             }
 
             {
@@ -162,17 +162,17 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                 if (Channels->type != json_none)
                 {
                     if (Channels->type != json_array)
-                        throw std::exception(::FormatText("channels property of soundFont object %d is not an array", i + 1).c_str());
+                        throw std::exception(msc::FormatText("channels property of soundFont object %d is not an array", i + 1).c_str());
 
                     for (uint32_t j = 0; j < Channels->u.array.length; ++j)
                     {
                         json_value * channel = Channels->u.array.values[j];
 
                         if (channel->type != json_integer)
-                            throw std::exception(::FormatText("Channel %d of channels property of soundFont object %d is not an integer", j + 1, i + 1).c_str());
+                            throw std::exception(msc::FormatText("Channel %d of channels property of soundFont object %d is not an integer", j + 1, i + 1).c_str());
 
                         if (channel->u.integer < 1 || channel->u.integer > 48)
-                            throw std::exception(::FormatText("Channel %d of channels property of soundFont object %d is out of range. Value 1 thru 48 are valid", j + 1, i + 1).c_str());
+                            throw std::exception(msc::FormatText("Channel %d of channels property of soundFont object %d is out of range. Value 1 thru 48 are valid", j + 1, i + 1).c_str());
                     }
                 }
             }
@@ -183,7 +183,7 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                 if (PatchMappings->type != json_none)
                 {
                     if (PatchMappings->type != json_array)
-                        throw std::exception(::FormatText("patchMappings property of soundFont %d is not an array", i + 1).c_str());
+                        throw std::exception(msc::FormatText("patchMappings property of soundFont %d is not an array", i + 1).c_str());
 
                     for (uint32_t j = 0; j < PatchMappings->u.array.length; ++j)
                     {
@@ -193,7 +193,7 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                         json_value * Mapping = PatchMappings->u.array.values[j];
 
                         if (Mapping->type != json_object)
-                            throw std::exception(::FormatText("patchMapping %d of soundFont %d is not an object", j + 1, i + 1).c_str());
+                            throw std::exception(msc::FormatText("patchMapping %d of soundFont %d is not an object", j + 1, i + 1).c_str());
 
                         for (uint32_t k = 0; k < Mapping->u.object.length; ++k)
                         {
@@ -201,7 +201,7 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                             auto Value = Mapping->u.object.values[k].value;
 
                             if (Value->type != json_object)
-                                throw std::exception(::FormatText("patchMapping %d of soundFont %d must only contain a source and destination object", j + 1, i + 1).c_str());
+                                throw std::exception(msc::FormatText("patchMapping %d of soundFont %d must only contain a source and destination object", j + 1, i + 1).c_str());
 
                             if (::strcmp(Name, "source") == 0)
                                 ++SrcCount;
@@ -218,10 +218,10 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                                 auto Value2 = Value->u.object.values[l].value;
 
                                 if ((::strcmp(Name2, "bank") != 0) && (::strcmp(Name2, "program") != 0))
-                                    throw std::exception(::FormatText("invalid property %s", Name2).c_str());
+                                    throw std::exception(msc::FormatText("invalid property %s", Name2).c_str());
 
                                 if (Value2->type != json_integer)
-                                    throw std::exception(::FormatText("invalid property value type").c_str());
+                                    throw std::exception(msc::FormatText("invalid property value type").c_str());
 
                                 int Min =   0;
                                 int Max = 128;
@@ -236,30 +236,30 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                                 }
 
                                 if (Value2->u.integer < Min || Value2->u.integer > Max)
-                                    throw std::exception(::FormatText("invalid value for property %s", Name2).c_str());
+                                    throw std::exception(msc::FormatText("invalid value for property %s", Name2).c_str());
                             }
 
                             if (BankCount == 0)
-                                throw std::exception(::FormatText("bank property not found").c_str());
+                                throw std::exception(msc::FormatText("bank property not found").c_str());
 
                             if (BankCount > 1)
-                                throw std::exception(::FormatText("More than one bank property").c_str());
+                                throw std::exception(msc::FormatText("More than one bank property").c_str());
 
                             if (ProgramCount == 0)
-                                throw std::exception(::FormatText("program property not found").c_str());
+                                throw std::exception(msc::FormatText("program property not found").c_str());
 
                             if (ProgramCount > 1)
-                                throw std::exception(::FormatText("More than one program property").c_str());
+                                throw std::exception(msc::FormatText("More than one program property").c_str());
                         }
 
                         if (SrcCount > 1)
-                            throw std::exception(::FormatText("More than one source property in patchMapping %d of soundFont %d", j + 1, i + 1).c_str());
+                            throw std::exception(msc::FormatText("More than one source property in patchMapping %d of soundFont %d", j + 1, i + 1).c_str());
 
                         if (DstCount == 0)
-                            throw std::exception(::FormatText("destination property not found in patchMapping %d of soundFont %d", j + 1, i + 1).c_str());
+                            throw std::exception(msc::FormatText("destination property not found in patchMapping %d of soundFont %d", j + 1, i + 1).c_str());
 
                         if (DstCount > 1)
-                            throw std::exception(::FormatText("More than one destination property in patchMapping %d of soundFont %d", j + 1, i + 1).c_str());
+                            throw std::exception(msc::FormatText("More than one destination property in patchMapping %d of soundFont %d", j + 1, i + 1).c_str());
                     }
                 }
             }

@@ -45,7 +45,7 @@ void Host::GetPlugIns_(const fs::path & directoryPath) noexcept
                 GetPlugIns_(Entry.path());
             }
             else
-            if (IsOneOf(Entry.path().extension().string().c_str(), { ".dll", ".vst2", ".vst3" }))
+            if (msc::IsOneOf(Entry.path().extension().string().c_str(), { ".dll", ".vst2", ".vst3" }))
             {
                 Log.AtDebug().Write(STR_COMPONENT_BASENAME " is examining \"%s\"...", (const char *) Entry.path().u8string().c_str());
 

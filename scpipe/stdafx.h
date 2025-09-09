@@ -26,7 +26,7 @@
 
 #include <vector>
 
-#include "SCCore.h"
+#include "Core.h"
 
 #ifndef min
 #define min(a, b) (((a) < (b)) ? (a) : (b))

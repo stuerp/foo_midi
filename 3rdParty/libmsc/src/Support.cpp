@@ -1,15 +1,9 @@
 
-/** $VER: Exception.cpp (2025.01.07) P. Stuer **/
+/** $VER: Support.cpp (2025.09.06) P. Stuer **/
 
 #include "pch.h"
 
-#include "Exception.h"
-#include "Encoding.h"
-
-#include <string.h>
-#include <stdarg.h>
-
-namespace component
+namespace msc
 {
 
 const char * strrstr(const char * __restrict s1, const char *__restrict s2);
@@ -45,13 +39,13 @@ std::string GetErrorMessage(const std::string & errorMessage, DWORD errorCode, .
         if (p != nullptr)
             *p = '\0';
 
-        return ::FormatText("%s: %s (0x%08X)", errorMessage.c_str(), Text.c_str(), errorCode);
+        return FormatText("%s: %s (0x%08X)", errorMessage.c_str(), Text.c_str(), errorCode);
     }
     else
     {
         Result = ::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, ::GetLastError(), 0, Text.data(), (DWORD) Text.size(), nullptr);
 
-        return ::FormatText("%s: Unknown error (0x%08X): %s", errorMessage.c_str(), errorCode, Text.c_str());
+        return FormatText("%s: Unknown error (0x%08X): %s", errorMessage.c_str(), errorCode, Text.c_str());
     }
 }
 
@@ -73,4 +67,32 @@ const char * strrstr(const char * __restrict s1, const char *__restrict s2)
     return nullptr;
 }
 
+/// <summary>
+/// Returns true if the string matches one of the list.
+/// </summary>
+bool IsOneOf(const std::wstring & item, const std::vector<std::wstring> & list) noexcept
+{
+    for (const auto & Item : list)
+    {
+        if (::_wcsicmp(item.c_str(), Item.c_str()) == 0)
+            return true;
+    }
+
+    return false;
 }
+
+/// <summary>
+/// Returns true if the string matches one of the list.
+/// </summary>
+bool IsOneOf(const char * item, const std::vector<const char *> & list) noexcept
+{
+    for (const auto & Item : list)
+    {
+        if (::_stricmp(item, Item) == 0)
+            return true;
+    }
+
+    return false;
+}
+
+};

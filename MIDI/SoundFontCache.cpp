@@ -1,11 +1,13 @@
 
-/** $VER: SoundfontCache.cpp (2025.07.23) - Soundfont cache for wavetable players **/
+/** $VER: SoundfontCache.cpp (2025.08.27) - Soundfont cache for wavetable players **/
 
 #include "pch.h"
 
 #include "SoundfontCache.h"
 #include "Encoding.h"
+#include "Exception.h"
 #include "CriticalSection.h"
+#include "Log.h"
 
 #include <map>
 #include <thread>
@@ -22,10 +24,12 @@ static std::thread * _CacheThread = nullptr;
 
 struct cache_item_t
 {
-    cache_item_t() : _hSoundfont(), _ReferenceCount(), _TimeReleased()
+    cache_item_t() : IsTemporary(false), _hSoundfont(), _ReferenceCount(), _TimeReleased()
     {
     }
 
+    fs::path FilePath;
+    bool IsTemporary;
     HSOUNDFONT _hSoundfont;
     size_t _ReferenceCount;
     time_t _TimeReleased;
@@ -143,7 +147,7 @@ void CacheDispose()
 /// <summary>
 /// Adds a Soundfont to the cache.
 /// </summary>
-HSOUNDFONT CacheAddSoundfont(const fs::path & filePath)
+HSOUNDFONT CacheAddSoundfont(const fs::path & filePath, bool isTemporary)
 {
     HSOUNDFONT hSoundfont = 0;
 
@@ -162,13 +166,15 @@ HSOUNDFONT CacheAddSoundfont(const fs::path & filePath)
 
         auto * File = new file::ptr;
 
-        filesystem::g_open(*File, (const char *) filePath.string().c_str(), filesystem::open_mode_read, fb2k::noAbort);
+        filesystem::g_open(*File, filePath.string().c_str(), filesystem::open_mode_read, fb2k::noAbort);
 
         hSoundfont = ::BASS_MIDI_FontInitUser(&_BASSMIDICallbacks, File, Flags);
 //      hSoundfont = ::BASS_MIDI_FontInit(::UTF8ToWide((const char *) filePath.string().c_str()).c_str(), Flags);
 
         if (hSoundfont != 0)
         {
+            Item.FilePath = filePath;
+            Item.IsTemporary = isTemporary;
             Item._hSoundfont = hSoundfont;
             Item._ReferenceCount = 1;
         }
@@ -191,7 +197,7 @@ void CacheRemoveSoundfont(HSOUNDFONT hSoundfont)
 {
     critical_section_lock_t Lock(_CacheCriticalSection);
 
-    for (auto it : _CacheItems)
+    for (auto & it : _CacheItems)
     {
         if (it.second._hSoundfont == hSoundfont)
         {
@@ -238,6 +244,8 @@ void CacheGetStatistics(uint64_t & totalSampleDataSize, uint64_t & totalSamplesD
 
 static void CacheRun()
 {
+    _IsCacheRunning = true;
+
     while (_IsCacheRunning)
     {
         time_t Now;
@@ -249,12 +257,20 @@ static void CacheRun()
 
             for (auto it = _CacheItems.begin(); it != _CacheItems.end();)
             {
-                if (it->second._ReferenceCount == 0)
+                const auto & Item = it->second;
+
+                if (Item._ReferenceCount == 0)
                 {
-                    if (::difftime(Now, it->second._TimeReleased) >= 10.0)
+                    if (::difftime(Now, Item._TimeReleased) >= 10.0)
                     {
-                        if (it->second._hSoundfont)
-                            ::BASS_MIDI_FontFree(it->second._hSoundfont);
+                        if (Item._hSoundfont)
+                            ::BASS_MIDI_FontFree(Item._hSoundfont);
+
+                        if (Item.IsTemporary)
+                        {
+                            if (!::DeleteFileA((const char *) Item.FilePath.string().c_str()))
+                                Log.AtError().Write(msc::GetErrorMessage(msc::FormatText("Failed to delete temporary file \"%s\"", Item.FilePath.string().c_str()).c_str(), ::GetLastError()).c_str());
+                        }
 
                         it = _CacheItems.erase(it);
                         continue;

@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.08.17) **/
+/** $VER: InputDecoder.cpp (2025.09.07) **/
 
 #include "pch.h"
 
@@ -20,13 +20,12 @@
 
 #include <ranges>
 
-#include <Encoding.h>
-
 #include <libsf.h>
 
 #include "PreferencesFM.h"
 #include "KaraokeProcessor.h"
 #include "CLAPHost.h"
+#include "Exception.h"
 
 #include "Log.h"
 
@@ -49,6 +48,7 @@ InputDecoder::InputDecoder() noexcept :
     _IsSysExFile(false),
 
     _IsMT32(),
+    _IsGS(),
     _IsXG(),
 
     _DetectRPGMakerLoops((bool) CfgDetectRPGMakerLoops),
@@ -99,8 +99,11 @@ InputDecoder::~InputDecoder() noexcept
 {
     for (const auto & sf : _Soundfonts)
     {
-        if (sf.IsEmbedded)
+        if (sf.IsTemporary)
+        {
+            // This may fail if the soundfont cache still has a lock on the file. The cache will clean it up when it's done with it.
             ::DeleteFileA((const char *) sf.FilePath.string().c_str());
+        }
     }
 
     if (_Player != nullptr)
@@ -865,7 +868,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
                         return em.Id == TargetId;
                     });
 
-                    Value = (Match != _ADLEmulators.end()) ? ::WideToUTF8(Match->Name).c_str() : "";
+                    Value = (Match != _ADLEmulators.end()) ? msc::WideToUTF8(Match->Name).c_str() : "";
                     break;
                 }
 
@@ -878,7 +881,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
                         return em.Id == TargetId;
                     });
 
-                    Value = (Match != _OPNEmulators.end()) ? ::WideToUTF8(Match->Name).c_str() : "";
+                    Value = (Match != _OPNEmulators.end()) ? msc::WideToUTF8(Match->Name).c_str() : "";
                     break;
                 }
 
@@ -1064,6 +1067,7 @@ void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongInde
         if (pfc::stricmp_ascii(Item.Name.c_str(), "type") == 0)
         {
             _IsMT32 = (Item.Value == "MT-32");
+            _IsGS = (Item.Value == "GS");
             _IsXG = (Item.Value == "XG");
         }
     }
@@ -1071,6 +1075,12 @@ void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongInde
     if (_IsMT32 && CfgUseMT32EmuWithMT32)
     {
         _PlayerType = PlayerType::MT32Emu;
+        _IsPlayerTypeOverriden = true;
+    }
+    else
+    if (_IsGS && CfgUseSCWithGS && !CfgSecretSauceDirectoryPath.get().isEmpty())
+    {
+        _PlayerType = PlayerType::SecretSauce;
         _IsPlayerTypeOverriden = true;
     }
     else

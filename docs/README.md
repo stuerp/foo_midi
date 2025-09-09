@@ -55,22 +55,22 @@ You can download the component from the foobar2000 [Components](https://www.foob
 
 foo_midi can decode the following file formats:
 
-| Name                             | Extensions  | Description |
-| -------------------------------- | ----------- | ----------- |
-| Standard&nbsp;MIDI&nbsp;File     | .MID, .MIDI | MIDI file conforming to the [MIDI Association](https://midi.org/standard-midi-files) standard |
-| Standard&nbsp;MIDI&nbsp;File     | .KAR        | MIDI file with embedded song lyrics for karaoke |
+| Name                              | Extensions  | Description |
+| --------------------------------- | ----------- | ----------- |
+| Standard&nbsp;MIDI&nbsp;File      | .MID, .MIDI | MIDI file conforming to the [MIDI Association](https://midi.org/standard-midi-files) standard |
+| Standard&nbsp;MIDI&nbsp;File      | .KAR        | MIDI file with embedded song lyrics for karaoke |
 | Extensible&nbsp;Music&nbsp;Format | .XMF, .MXMF | Format created by the [MIDI Association](https://midi.org/extensible-music-format-xmf). See also [Video Game Music Preservation Foundation (VGMPF)](https://www.vgmpf.com/Wiki/index.php?title=XMF). |
-| RIFF-based MIDI File             | .RMI        | Format created by Microsoft and later extended by MIDI.org (an arm of the MIDI Manufacturers Association) to permit the bundling of both MIDI files and Downloadable Sounds (DLS) files. See [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000120.shtml). foo_midi also implements the more recent [SF2 RMIDI Format Extension Specification](https://github.com/spessasus/sf2-rmidi-specification). |
+| RIFF-based MIDI File              | .RMI        | Format created by Microsoft and later extended by MIDI.org (an arm of the MIDI Manufacturers Association) to permit the bundling of both MIDI files and Downloadable Sounds (DLS) files. See [Library of Congress](https://www.loc.gov/preservation/digital/formats/fdd/fdd000120.shtml). foo_midi also implements the more recent [SF2 RMIDI Format Extension Specification](https://github.com/spessasus/sf2-rmidi-specification). |
 | Game Music Format ![Proposed](https://img.shields.io/badge/proposed-blue) | .GMF | Created by Adventure Soft for their Adventure Game Operating System (AGOS) engine. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=GMF). |
-| MIDI Stream                      | .MIDS, .MDS | Format created by Microsoft with the release of Windows 95. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=MDS). |
-| Human Machine Interface MIDI P/R | .HMP        | Format used by Human Machine Interface's Sound Operating System. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMP). |
-| Human Machine Interface          | .HMI, .HMQ  | Format used by Human Machine Interface's Sound Operating System. It is a revision of the HMP format. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMI). |
-| MUS                              | .MUS        | Format created by Paul Radek for his DMX audio library. Used by id Software for Doom and several other games.  See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/MUS_Format) and [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX)). |
-| Extended MIDI                    | .XMI, .XFM  | Format used by the Miles Sound System (MSS) for storing game music. Supports multiple songs in one file. See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/XMI_Format) and [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=XMI). |
-| Loudness Sound System            | .LDS        | File created with the Loudness Sound System by Andras Molnar. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=LDS). |
-| Recomposer                       | .RCP, .R36, .G18, .G36 | Formats used by Recomposer, a popular music editing application on the Japanese [PC-98](https://en.wikipedia.org/wiki/PC-98) platform developed by Come-On Music during the 1990s. It became a cult favorite among Japanese composers—most famously ZUN, the creator of the Touhou Project series. |
-| Mobile Music File                | .MMF        | Synthetic-music Mobile Application Format (SMAF). See [FileFormat.com](https://docs.fileformat.com/audio/mmf/). |
-| System Exclusive data file       | .SYX, .DMP  | File containing System Exclusive (SysEx) messages. |
+| MIDI Stream                       | .MIDS, .MDS | Format created by Microsoft with the release of Windows 95. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=MDS). |
+| Human Machine Interface MIDI P/R  | .HMP        | Format used by Human Machine Interface's Sound Operating System. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMP). |
+| Human Machine Interface           | .HMI, .HMQ  | Format used by Human Machine Interface's Sound Operating System. It is a revision of the HMP format. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=HMI). |
+| MUS                               | .MUS        | Format created by Paul Radek for his DMX audio library. Used by id Software for Doom and several other games.  See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/MUS_Format) and [MUS (DMX)](http://www.vgmpf.com/Wiki/index.php?title=MUS_(DMX)). |
+| Extended MIDI                     | .XMI, .XFM  | Format used by the Miles Sound System (MSS) for storing game music. Supports multiple songs in one file. See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/XMI_Format) and [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=XMI). |
+| Loudness Sound System             | .LDS        | File created with the Loudness Sound System by Andras Molnar. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=LDS). |
+| Recomposer                        | .RCP, .R36, .G18, .G36 | Formats used by Recomposer, a popular music editing application on the Japanese [PC-98](https://en.wikipedia.org/wiki/PC-98) platform developed by Come-On Music during the 1990s. It became a cult favorite among Japanese composers—most famously ZUN, the creator of the Touhou Project series. |
+| Mobile Music File                 | .MMF        | Synthetic-music Mobile Application Format (SMAF). See [FileFormat.com](https://docs.fileformat.com/audio/mmf/). |
+| System Exclusive data file        | .SYX, .DMP  | File containing System Exclusive (SysEx) messages. |
 
 ### Players
 
@@ -299,7 +299,7 @@ The most flexible format is an UTF-8 JSON file with a `.sflist` or `.json` exten
 The root object is a `soundFonts` array that contains 1 or more soundfont objects. A soundfont object can have the following properties:
 
 - `fileName` specifies the location of the soundfont. If you specify only a file name or a relative path foo_midi will look for the file relative to the directory of the list file. `BASSMIDI` `FluidSynth`
-- `gain` specifies the overall gain that will be applied to the samples in the soundfont. `optional` `BASSMIDI`
+- `gain` specifies the volume gain that will be applied to the samples in the soundfont. The gain value is added to the volume of the soundfont. Positive values increase the volume. Negative values decrease the volume. The default is 0. `optional` `BASSMIDI`
 - `channels` is an array that contains the MIDI channels that will use the soundfont. `optional` `BASSMIDI`
 - `patchMappings` is an array of mapping objects that allows you to remap samples within a soundfont without modifying the soundfont file. `optional` `BASSMIDI`
 
@@ -430,6 +430,10 @@ This setting turns off the reverb and chorus effect and prevents reverb and chor
 #### Use LibMT32Emu with MT-32
 
 When you enable this setting the selected player will be ignored and LibMT32Emu will always be used whenever an MT-32 MIDI file is played.
+
+#### Use SecretSauce with GS
+
+When you enable this setting the selected player will be ignored and SecretSauce will always be used whenever a GS MIDI file is played.
 
 #### Use VSTi with XG
 
@@ -631,6 +635,8 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 
 #### BASSMIDI settings
 
+🔧 *Work in Progress*
+
 ##### Gain
 
 ##### Resampling
@@ -638,6 +644,10 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 ##### Max. Voices
 
 ##### Process reverb and chorus
+
+##### Use DLS
+
+Enabling this option allows the BASSMIDI player to play MIDI files with an embedded DLS sound font or even use a DLS sound font as its main sound font. The DLS sound font is converted to SF2 format on demand.
 
 Cache status
 
@@ -652,6 +662,10 @@ Cache status
 ##### Max. Voices (FluidSynth)
 
 ##### Process reverb and chorus (FluidSynth)
+
+##### Use DLS (Custom)
+
+Enabling this option overrides the built-in DLS Support of FluidSynth and uses the same conversion code as the BASSMIDI player.
 
 ##### Dynamic sample loading
 

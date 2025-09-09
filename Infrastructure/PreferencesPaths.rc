@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesPaths.rc (2025.07.11) **/
+/** $VER: PreferencesPaths.rc (2025.08.31) **/
 
 #include "Resource.h"
 
@@ -40,14 +40,15 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 // EditBox
 #define X_B12    X_B11 + W_B11 + IX
 #define Y_B12    Y_B11
-#define W_B12    200
 #define H_B12    H_EBX
 
 // Button
-#define X_B13    X_B12 + W_B12 + IX
+#define X_B13    W_B00 - 16
 #define Y_B13    Y_B12
 #define W_B13    16
 #define H_B13    H_BTN
+
+#define W_B12    W_B00 - W_B11 - IX - W_B13 - 2
 
 #pragma endregion
 
@@ -55,18 +56,18 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Label
 #define X_B81    X_B11
-#define Y_B81    Y_B12 + H_B12 + 4
+#define Y_B81    Y_B12 + H_B12 + IX
 #define W_B81    W_B11
 #define H_B81    H_LBL
 
 // EditBox
 #define X_B82    X_B81 + W_B81 + IX
 #define Y_B82    Y_B81
-#define W_B82    200
+#define W_B82    W_B12
 #define H_B82    H_EBX
 
 // Button
-#define X_B83    X_B82 + W_B82 + IX
+#define X_B83    X_B13
 #define Y_B83    Y_B82
 #define W_B83    16
 #define H_B83    H_BTN
@@ -77,18 +78,18 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Label
 #define X_B57    X_B81
-#define Y_B57    Y_B82 + H_B82 + 4
+#define Y_B57    Y_B82 + H_B82 + IX
 #define W_B57    W_B81
 #define H_B57    H_LBL
 
 // EditBox
 #define X_B58    X_B57 + W_B57 + IX
 #define Y_B58    Y_B57
-#define W_B58    200
+#define W_B58    W_B82
 #define H_B58    H_EBX
 
 // Button
-#define X_B59    X_B58 + W_B58 + IX
+#define X_B59    X_B83
 #define Y_B59    Y_B58
 #define W_B59    16
 #define H_B59    H_BTN
@@ -99,18 +100,18 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Label
 #define X_B21    X_B57
-#define Y_B21    Y_B58 + H_B58 + 4
+#define Y_B21    Y_B58 + H_B58 + IX
 #define W_B21    W_B57
 #define H_B21    H_LBL
 
 // EditBox
 #define X_B22    X_B21 + W_B21 + IX
 #define Y_B22    Y_B21
-#define W_B22    200
+#define W_B22    W_B58
 #define H_B22    H_EBX
 
 // Button
-#define X_B23    X_B22 + W_B22 + IX
+#define X_B23    X_B59
 #define Y_B23    Y_B22
 #define W_B23    16
 #define H_B23    H_BTN
@@ -121,18 +122,18 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Label
 #define X_B31    X_B21
-#define Y_B31    Y_B22 + H_B22 + 4
+#define Y_B31    Y_B22 + H_B22 + IX
 #define W_B31    W_B21
 #define H_B31    H_LBL
 
 // EditBox
 #define X_B32    X_B31 + W_B31 + IX
 #define Y_B32    Y_B31
-#define W_B32    200
+#define W_B32    W_B22
 #define H_B32    H_EBX
 
 // Button
-#define X_B33    X_B32 + W_B32 + IX
+#define X_B33    X_B23
 #define Y_B33    Y_B32
 #define W_B33    16
 #define H_B33    H_BTN
@@ -143,18 +144,18 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Label
 #define X_B41    X_B31
-#define Y_B41    Y_B32 + H_B32 + 4
+#define Y_B41    Y_B32 + H_B32 + IX
 #define W_B41    W_B31
 #define H_B41    H_LBL
 
 // EditBox
 #define X_B42    X_B41 + W_B41 + IX
 #define Y_B42    Y_B41
-#define W_B42    200
+#define W_B42    W_B32
 #define H_B42    H_EBX
 
 // Button
-#define X_B43    X_B42 + W_B42 + IX
+#define X_B43    X_B33
 #define Y_B43    Y_B42
 #define W_B43    16
 #define H_B43    H_BTN
@@ -165,18 +166,18 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Label
 #define X_B51    X_B41
-#define Y_B51    Y_B42 + H_B42 + 4
+#define Y_B51    Y_B42 + H_B42 + IX
 #define W_B51    W_B41
 #define H_B51    H_LBL
 
 // EditBox
 #define X_B52    X_B51 + W_B51 + IX
 #define Y_B52    Y_B51
-#define W_B52    200
+#define W_B52    W_B42
 #define H_B52    H_EBX
 
 // Button
-#define X_B53    X_B52 + W_B52 + IX
+#define X_B53    X_B43
 #define Y_B53    Y_B52
 #define W_B53    16
 #define H_B53    H_BTN
@@ -187,18 +188,18 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Label
 #define X_B61    X_B51
-#define Y_B61    Y_B52 + H_B52 + 4
+#define Y_B61    Y_B52 + H_B52 + IX
 #define W_B61    W_B51
 #define H_B61    H_LBL
 
 // EditBox
 #define X_B62    X_B61 + W_B61 + IX
 #define Y_B62    Y_B61
-#define W_B62    200
+#define W_B62    W_B52
 #define H_B62    H_EBX
 
 // Button
-#define X_B63    X_B62 + W_B62 + IX
+#define X_B63    X_B53
 #define Y_B63    Y_B62
 #define W_B63    16
 #define H_B63    H_BTN
@@ -209,18 +210,18 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Label
 #define X_B71    X_B61
-#define Y_B71    Y_B62 + H_B62 + 4
+#define Y_B71    Y_B62 + H_B62 + IX
 #define W_B71    W_B61
 #define H_B71    H_LBL
 
 // EditBox
 #define X_B72    X_B71 + W_B71 + IX
 #define Y_B72    Y_B71
-#define W_B72    200
+#define W_B72    W_B62
 #define H_B72    H_EBX
 
 // Button
-#define X_B73    X_B72 + W_B72 + IX
+#define X_B73    X_B63
 #define Y_B73    Y_B72
 #define W_B73    16
 #define H_B73    H_BTN

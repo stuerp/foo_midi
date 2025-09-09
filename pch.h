@@ -1,5 +1,5 @@
 
-/** $VER: pch.h (2025.08.16) P. Stuer **/
+/** $VER: pch.h (2025.09.06) P. Stuer **/
 
 #pragma once
 
@@ -22,10 +22,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cassert>
-#include <filesystem>
 #include <string>
 
-namespace fs = std::filesystem;
+#include <libmsc.h>
 
 #ifndef Assert
 #if defined(DEBUG) || defined(_DEBUG)

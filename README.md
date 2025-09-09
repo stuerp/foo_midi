@@ -95,9 +95,10 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.1.2.0, 2025-08-17
+v3.2.0.0-alpha4, 2025-09-xx
 
-- New: The VSTi that is used when the [Use VSTi with XG](docs/README.md) is enabled loads its saved configuration before playback starts.
+- Fixed: Turned off Auto Arpeggio for LibADLMIDI and LibOPNMIDI on advise of the author.
+- Fixed: Handling of XMF files with duplicate copies of the same MIDI content.
 
 You can read the full history [here](docs/History.md).
 

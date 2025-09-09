@@ -1,14 +1,12 @@
 
-/** $VER: FS.cpp (2025.07.26) P. Stuer **/
+/** $VER: FS.cpp (2025.07.26) P. Stuer - FluidSynth bindings **/
 
 #include "pch.h"
 
 #include "FS.h"
 
-#include "Encoding.h"
-#include "Exception.h"
-
 #include "Configuration.h"
+#include "Exception.h"
 #include "Log.h"
 
 #include <shlwapi.h>
@@ -26,17 +24,17 @@ void API::Initialize(const WCHAR * basePath)
         return;
 
     if (!::PathIsDirectoryW(basePath))
-        throw component::runtime_error(component::GetErrorMessage("Invalid FluidSynth directory", ::GetLastError()));
+        throw component::runtime_error(msc::GetErrorMessage("Invalid FluidSynth directory", ::GetLastError()));
 
     BOOL Success = ::SetDllDirectoryW(basePath);
 
     if (!Success)
-        throw component::runtime_error(component::GetErrorMessage("Failed to add FluidSynth directory to the search path", ::GetLastError()));
+        throw component::runtime_error(msc::GetErrorMessage("Failed to add FluidSynth directory to the search path", ::GetLastError()));
 
     _hModule = ::LoadLibraryA(LibraryName);
 
     if (_hModule == 0)
-        throw component::runtime_error(component::GetErrorMessage(::FormatText("Failed to load FluidSynth library \"%s\"", LibraryName), ::GetLastError()));
+        throw component::runtime_error(msc::GetErrorMessage(msc::FormatText("Failed to load FluidSynth library \"%s\"", LibraryName), ::GetLastError()));
 
     #pragma warning(disable: 4191) // 'type cast': unsafe conversion from 'FARPROC' to 'xxx'
 
