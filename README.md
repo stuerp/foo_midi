@@ -95,10 +95,19 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.0.0-alpha4, 2025-09-xx
+v3.2.0.0, 2025-09-09
 
+- New: The BASSMIDI player can now use DLS sound fonts. They are automatically converted to SF2 format before use.
+- New: "Use DLS" option for the BASSMIDI player.
+- New: "Use DLS (Custom) option for the FluidSynth player. This overrides the built-in DLS support.
+- New: Context menu item to extract an embedded sound font and save it as a DLS collection or SF2 bank.
+- New: Option "Use SecretSauce with GS" to always use the SecretSauce player with a GS MIDI file.
+- Improved: The SecretSauce player keeps trying to play files that cause the host to stop early f.e. because of an unsupported SysEx.
+- Fixed: Reduced device count of LibADLMIDI/LibOPNMIDI from 3 to 1 to prevent a rare edge case from freezing the sample render loop.
 - Fixed: Turned off Auto Arpeggio for LibADLMIDI and LibOPNMIDI on advise of the author.
+- Fixed: The sound font cache prevented temporary files from being deleted.
 - Fixed: Handling of XMF files with duplicate copies of the same MIDI content.
+- Fixed: The Log Level drop list was not cleared after a reset.
 
 You can read the full history [here](docs/History.md).
 

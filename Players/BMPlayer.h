@@ -83,7 +83,7 @@ private:
 
     static const size_t MaxPorts = 1;
 
-    std::vector<HSTREAM> _Streams; // Each stream corresponds to a port.
+    std::vector<HSTREAM> _Streams;      // Each stream corresponds to a port.
 
     std::vector<soundfont_t> _Soundfonts;
 
@@ -93,10 +93,10 @@ private:
 
     bool _HasBankSelects;
     bool _DoReverbAndChorusProcessing;
-    bool _IgnoreCC32; // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.
+    bool _IgnoreCC32;                   // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.
 
-    uint8_t _NRPNLSB[16]; // The last NRPN LSB seen for a channel.
-    uint8_t _NRPNMSB[16]; // The last NRPN MSB seen for a channel.
+    uint8_t _NRPNLSB[16];               // The last NRPN LSB seen for a channel.
+    uint8_t _NRPNMSB[16];               // The last NRPN MSB seen for a channel.
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member
