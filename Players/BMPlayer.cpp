@@ -291,7 +291,7 @@ bool BMPlayer::Reset()
 /// </summary>
 void BMPlayer::SendEvent(uint32_t data)
 {
-    const uint8_t Event[3]
+    uint8_t Event[3]
     {
         (uint8_t) (data),        // Status
         (uint8_t) (data >>  8),  // Param 1
@@ -300,8 +300,13 @@ void BMPlayer::SendEvent(uint32_t data)
 
     const uint8_t Status = Event[0] & 0xF0u;
 
-    if (_IgnoreCC32 && (Status == midi::ControlChange) && (Event[1] == midi::BankSelectLSB))
-        return;
+    if ((Status == midi::ControlChange) && (Event[1] == midi::BankSelectLSB))
+    {
+        if (_IgnoreCC32)
+            return;
+
+        Event[1] = midi::BankSelect;
+    }
 
     // Ignore the Data Entry message for a NRPN Vibrato Depth. BASSMIDI overreacts to this SC-88Pro specific parameter.
     if ((_MIDIFlavor == MIDIFlavor::SC88Pro) && (Status == midi::ControlChange))
