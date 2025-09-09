@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenu.cpp (2025.09.01) **/
+/** $VER: ContextMenu.cpp (2025.09.07) **/
 
 #include "pch.h"
 
@@ -245,7 +245,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
             break;
         }
 
-        // Extract embedded sound font
+        // Extract embedded soundfont.
         case 5:
         {
             std::vector<uint8_t> Object;
@@ -308,7 +308,7 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
                                     .lpstrFile       = (LPSTR) FileName.c_str(),
                                     .nMaxFile        = (DWORD) FileName.size(),
                                     .lpstrInitialDir = foobar2000_io::afterProtocol(Location.get_path()),
-                                    .lpstrTitle      = "Select sound font name",
+                                    .lpstrTitle      = "Select soundfont name",
                                     .Flags           = OFN_PATHMUSTEXIST | OFN_ENABLESIZING | OFN_OVERWRITEPROMPT,
                                     .lpstrDefExt     = IsDLS ? ".dls" : ".sf2",
                                 };
@@ -385,7 +385,7 @@ const char * ContextMenu::Names[6] =
     "Assign SysEx dumps",
     "Clear SysEx dumps",
 
-    "Extract embedded sound font"
+    "Extract embedded soundfont"
 };
 
 const char * ContextMenu::Descriptions[6] =
@@ -398,7 +398,7 @@ const char * ContextMenu::Descriptions[6] =
     "Assigns the selected SysEx dumps to the selected MIDI files.",
     "Clears all assigned SysEx dumps from the selected MIDI files.",
 
-    "Extracts the sound font embedded in the selected files and save it to disk."
+    "Extracts the soundfont embedded in the selected files and save it to disk."
 };
 
 const GUID ContextMenu::GUIDs[] =

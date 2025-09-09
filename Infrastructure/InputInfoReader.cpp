@@ -1,5 +1,5 @@
  
-/** $VER: InputInfoReader.cpp (2025.09.02) **/
+/** $VER: InputInfoReader.cpp (2025.09.07) **/
 
 #include "pch.h"
 
@@ -180,7 +180,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
                 }
                 catch (const std::exception & e)
                 {
-                    Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to read DLS version from embedded sound font: %s", e.what());
+                    Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to read DLS version from embedded soundfont: %s", e.what());
                 }
             }
 

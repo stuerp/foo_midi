@@ -16,12 +16,12 @@ public:
     {
     }
 
-    soundfont_t(const fs::path & filePath, float gain, int bankOffset, bool isEmbedded, bool isDLS) noexcept
+    soundfont_t(const fs::path & filePath, float gain, int bankOffset, bool isTemporary, bool isDLS) noexcept
     {
         FilePath = filePath;
         Gain = gain;
         BankOffset = bankOffset;
-        IsTemporary = isEmbedded;
+        IsTemporary = isTemporary;
         IsDLS = isDLS;
     }
 

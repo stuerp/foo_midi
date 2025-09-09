@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.08.31) **/
+/** $VER: InputDecoder.cpp (2025.09.07) **/
 
 #include "pch.h"
 
@@ -101,7 +101,7 @@ InputDecoder::~InputDecoder() noexcept
     {
         if (sf.IsTemporary)
         {
-            // This may fail if the sound font cache still has a lock on the file. The cache will clean it up when it's done with it.
+            // This may fail if the soundfont cache still has a lock on the file. The cache will clean it up when it's done with it.
             ::DeleteFileA((const char *) sf.FilePath.string().c_str());
         }
     }

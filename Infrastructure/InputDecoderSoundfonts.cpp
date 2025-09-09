@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.09.06) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.09.07) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -27,6 +27,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     /** IMPORTANT: The following sequence of adding soundfonts is optimal for BASSMIDI. For FluidSynth, we'll reverse the order later. **/
 
     // First, add the embedded soundfont, if present.
+    try
     {
         const auto & Data = _Container.SoundFont;
 
@@ -55,7 +56,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
             }
             else
             {
-                // BASSMIDI requires SF2 and SF3 sound fonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
+                // BASSMIDI requires SF2 and SF3 soundfonts with an .sf2 or .sf3 extension. FluidSynth also supports DLS.
                 const msc::unique_path_t TempFilePath(IsDLS ? ".dls" : ".sf2");
 
                 if (!TempFilePath.IsEmpty() && WriteSF2(Data, TempFilePath.Path()))
@@ -64,6 +65,10 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
                     Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to write embedded soundfont to temporary file.");
             }
         }
+    }
+    catch (std::exception & e)
+    {
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to add embedded soundfont: %s.", e.what());
     }
 
     // Then, add the soundfont named like the MIDI file, if present.
@@ -91,7 +96,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
                 WriteSF2(Bank, TempFilePath.Path());
 
-                Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, 0, false, false));
+                Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, 0, true, false));
             }
             else
                 Soundfonts.push_back(soundfont_t(SoundfontFilePath, 0.f, 0, false, IsDLS));
@@ -99,7 +104,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     }
     catch (std::exception & e)
     {
-        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to look for soundfont named like MIDI file: %s.", e.what());
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to add soundfont named like MIDI file: %s.", e.what());
     }
 
     // Next, add the soundfont named like the directory of the MIDI file, if present.
@@ -129,7 +134,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
                 WriteSF2(Bank, TempFilePath.Path());
 
-                Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, 0, false, false));
+                Soundfonts.push_back(soundfont_t(TempFilePath.Path(), 0.f, 0, true, false));
             }
             else
                 Soundfonts.push_back(soundfont_t(SoundfontFilePath, 0.f, 0, false, IsDLS));
@@ -137,10 +142,11 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     }
     catch (std::exception & e)
     {
-        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to look for soundfont named like directory containing the MIDI file: %s.", e.what());
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to add soundfont named like directory containing the MIDI file: %s.", e.what());
     }
 
-    // Finally, add the default soundfont.
+    // Finally, add the base soundfont.
+    try
     {
         if (!defaultSoundfontFilePath.empty())
         {
@@ -170,6 +176,10 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
                 Soundfonts.push_back(soundfont_t(defaultSoundfontFilePath, Gain, 0, false, IsDLS));
         }
     }
+    catch (std::exception & e)
+    {
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to add base soundfont: %s.", e.what());
+    }
 
     // Create the final soundfont list.
     {
@@ -184,7 +194,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
             popup_message::g_show(Report.c_str(), STR_COMPONENT_BASENAME, popup_message::icon_error);
     }
 
-    // Show which sound fonts we'll be using in the console.
+    // Show which soundfonts we'll be using in the console.
     if ((_PlayerType == PlayerType::BASSMIDI) || (_PlayerType == PlayerType::FluidSynth))
     {
         // Both BASSMIDI and FluidSynth use a soundfont stack. The stack is searched from the top to the bottom for a matching preset. See https://www.fluidsynth.org/api/group__soundfont__management.html#ga0ba0bc9d4a19c789f9969cd22d22bf66

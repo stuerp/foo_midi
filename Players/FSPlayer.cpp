@@ -1,5 +1,5 @@
 
-/** $VER: FSPlayer.cpp (2025.09.03) P. Stuer **/
+/** $VER: FSPlayer.cpp (2025.09.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -68,7 +68,7 @@ void FSPlayer::EnableEffects(bool enabled)
 }
 
 /// <summary>
-/// Enables or disables dynamic loading of the sound fonts.
+/// Enables or disables dynamic loading of the soundfonts.
 /// </summary>
 void FSPlayer::EnableDynamicLoading(bool enabled)
 {
@@ -81,7 +81,7 @@ void FSPlayer::EnableDynamicLoading(bool enabled)
 }
 
 /// <summary>
-/// Sets the sound fonts to use for synthesis.
+/// Sets the soundfonts to use for synthesis.
 /// </summary>
 void FSPlayer::SetSoundfonts(const std::vector<soundfont_t> & soundfonts)
 {
