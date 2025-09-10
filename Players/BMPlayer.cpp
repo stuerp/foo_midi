@@ -300,34 +300,39 @@ void BMPlayer::SendEvent(uint32_t data)
 
     const uint8_t Status = Event[0] & 0xF0u;
 
-    if ((Status == midi::ControlChange) && (Event[1] == midi::BankSelectLSB))
+    // Special handling of a couple of Control Change messages.
+    if (Status == midi::ControlChange)
     {
-        if (_IgnoreCC32)
-            return;
-
-        Event[1] = midi::BankSelect;
-    }
-
-    // Ignore the Data Entry message for a NRPN Vibrato Depth. BASSMIDI overreacts to this SC-88Pro specific parameter.
-    if ((_MIDIFlavor == MIDIFlavor::SC88Pro) && (Status == midi::ControlChange))
-    {
-        size_t Channel = Event[0] & 0x0Fu;
-
-        if ((Event[1] == midi::Controller::NRPNMSB) && (Event[2] == 0x01)) // Set NRPN MSB Vibrato Depth
+        // Assume CC#32 (Bank LSB) messages are part of an XG sequence. Since SF2 banks only support Bank MSB, interpret the Bank LSB message as MSB and hope the soundfont has presets for it.
+        if (Event[1] == midi::BankSelectLSB)
         {
-            _NRPNMSB[Channel] = Event[2];
+            if (_IgnoreCC32)
+                return;
+
+            Event[1] = midi::BankSelect;
         }
         else
-        if ((Event[1] == midi::Controller::NRPNLSB) && (Event[2] == 0x09)) // Set NRPN LSB Vibrato Depth
+        // Ignore the Data Entry message for a NRPN Vibrato Depth. BASSMIDI overreacts to this SC-88Pro specific parameter.
+        if (_MIDIFlavor == MIDIFlavor::SC88Pro)
         {
-            _NRPNLSB[Channel] = Event[2];
-        }
-        else
-        if ((Event[1] == midi::Controller::DataEntry) && (_NRPNMSB[Channel] == 0x01) && (_NRPNLSB[Channel] == 0x09))
-        {
-            _NRPNMSB[Channel] = _NRPNLSB[Channel] = 0xFF;
+            size_t Channel = Event[0] & 0x0Fu;
 
-            return; // Ignore the Data Entry message.
+            if ((Event[1] == midi::Controller::NRPNMSB) && (Event[2] == 0x01)) // Set NRPN MSB Vibrato Depth
+            {
+                _NRPNMSB[Channel] = Event[2];
+            }
+            else
+            if ((Event[1] == midi::Controller::NRPNLSB) && (Event[2] == 0x09)) // Set NRPN LSB Vibrato Depth
+            {
+                _NRPNLSB[Channel] = Event[2];
+            }
+            else
+            if ((Event[1] == midi::Controller::DataEntry) && (_NRPNMSB[Channel] == 0x01) && (_NRPNLSB[Channel] == 0x09))
+            {
+                _NRPNMSB[Channel] = _NRPNLSB[Channel] = 0xFF;
+
+                return; // Ignore the Data Entry message.
+            }
         }
     }
 
