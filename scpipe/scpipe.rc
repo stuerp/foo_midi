@@ -6,8 +6,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,2
- PRODUCTVERSION 1,0,0,2
+ FILEVERSION 1,1,0,0
+ PRODUCTVERSION 1,1,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -24,12 +24,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "LoSno.co"
             VALUE "FileDescription", "SCCore pipe bridge"
-            VALUE "FileVersion", "1.0.0.2"
+            VALUE "FileVersion", "1.1.0.0"
             VALUE "InternalName", "SCCore pipe bridge"
-            VALUE "LegalCopyright", "Copyright (C) 2022 Christopher Snowhill"
+            VALUE "LegalCopyright", "Copyright (C) 2022-2025 Christopher Snowhill, P. Stuer"
             VALUE "OriginalFilename", "scpipe.exe"
             VALUE "ProductName", "SCCore pipe bridge"
-            VALUE "ProductVersion", "1.0.0.2"
+            VALUE "ProductVersion", "1.1.0.0"
         END
     END
     BLOCK "VarFileInfo"

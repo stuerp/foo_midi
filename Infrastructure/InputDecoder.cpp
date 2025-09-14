@@ -429,6 +429,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             Player->SetVoiceCount(Preset._VoiceCount);
             Player->EnableEffects(Preset._EffectsEnabled);
 
+            Player->XGMode(_IsXG);
+
             _Player = Player;
 
             _Player->SetSampleRate(_RequestedSampleRate);

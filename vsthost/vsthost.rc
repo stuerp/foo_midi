@@ -24,7 +24,7 @@ BEGIN
             VALUE "FileDescription", "foo_midi VST host bridge"
             VALUE "FileVersion", "1.0.0.14"
             VALUE "InternalName", "VST host bridge"
-            VALUE "LegalCopyright", "Copyright (C) 2022 Christopher Snowhill"
+            VALUE "LegalCopyright", "Copyright (C) 2022-2025 Christopher Snowhill, P. Stuer"
             VALUE "OriginalFilename", "vsthost.exe"
             VALUE "ProductName", "VST host bridge"
             VALUE "ProductVersion", "1.0.0.14"

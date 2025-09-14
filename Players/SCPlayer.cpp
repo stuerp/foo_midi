@@ -261,6 +261,8 @@ bool SCPlayer::RenderPort(uint32_t portNumber, float * data, uint32_t size) noex
 
     if (ReadCode(portNumber) != 0)
     {
+        StopHost(portNumber);
+
         ::memset(data, 0, size * sizeof(float) * 2);
 
         return false;
