@@ -1,19 +1,17 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.09.07) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.09.11) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
 #include "InputDecoder.h"
 
 #include <libsf.h>
-#include <unordered_set>
 
 #include "Log.h"
 
 #pragma hdrstop
 
 static fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortHandler) noexcept;
-static void AddSoundFont(const soundfont_t & sf, std::unordered_set<std::string> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept;
 
 /// <summary>
 /// Gets the soundfonts and adjusts the player type, if necessary.
@@ -185,10 +183,9 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
     {
         std::unordered_set<std::string> UniqueLists;
         std::string Report;
-        bool HasDLS = false;
 
         for (const auto & sf : Soundfonts)
-            AddSoundFont(sf, UniqueLists, _Soundfonts, HasDLS, Report);
+            AddSoundFont(sf, UniqueLists, _Soundfonts, Report);
 
         if (!Report.empty())
             popup_message::g_show(Report.c_str(), STR_COMPONENT_BASENAME, popup_message::icon_error);
@@ -204,6 +201,79 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 
         for (const auto & sf : _Soundfonts)
             Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using soundfont \"%s\" (Preferred bank offset %d).", sf.FilePath.string().c_str(), sf.BankOffset);
+    }
+}
+
+/// <summary>
+/// Adds only existing soundfonts to the final list. Also handles recursively loading Soundfont list in soundfont lists.
+/// </summary>
+void InputDecoder::AddSoundFont(const soundfont_t & sf, std::unordered_set<std::string> & uniqueLists, std::vector<soundfont_t> & soundfonts, std::string & report) noexcept
+{
+    if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
+    {
+        // Prevent recursion with nested soundfont lists.
+        {
+            auto AbsolutePath = fs::absolute(sf.FilePath);
+
+            if (uniqueLists.find(AbsolutePath.string().c_str()) != uniqueLists.end())
+                return;
+
+            uniqueLists.insert(AbsolutePath.string().c_str());
+        }
+
+        if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
+        {
+            report += msc::FormatText("Soundfont list \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
+
+            return;
+        }
+
+        int Count = 0;
+
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
+
+        for (const auto & iter : LoadSoundfontList(sf.FilePath))
+        {
+            AddSoundFont(iter, uniqueLists, soundfonts, report);
+            ++Count;
+        }
+
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " read %d soundfonts from the list.", Count);
+    }
+    else
+    if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
+    {
+        if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
+        {
+            report += msc::FormatText("Soundfont \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
+
+            return;
+        }
+
+        const bool IsDLS = (::_stricmp(sf.FilePath.extension().string().c_str(), ".dls") == 0);
+
+        const bool ConvertDLS = (((_PlayerType == PlayerType::BASSMIDI) && CfgBASSMIDIUseDLS) || ((_PlayerType == PlayerType::FluidSynth) && CfgFluidSynthUseDLS));
+
+        if (IsDLS && ConvertDLS)
+        {
+            const msc::unique_path_t TempFilePath(".sf2");
+
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " is converting DLS collection \"%s\" to SF2 bank \"%s\".", sf.FilePath.string().c_str(), TempFilePath.Path().string().c_str());
+
+            sf::dls::collection_t Collection;
+
+            ReadDLS(Collection, sf.FilePath);
+
+            sf::bank_t Bank;
+
+            Bank.ConvertFrom(Collection);
+
+            WriteSF2(Bank, TempFilePath.Path());
+
+            soundfonts.push_back(soundfont_t(TempFilePath.Path(), sf.Gain, 0, false, false));
+        }
+        else
+            soundfonts.push_back(sf);
     }
 }
 
@@ -234,59 +304,6 @@ fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortH
     }
 
     return {};
-}
-
-/// <summary>
-/// Adds only existing soundfonts to the final list. Also handles recursively loading Soundfont list in soundfont lists.
-/// </summary>
-static void AddSoundFont(const soundfont_t & sf, std::unordered_set<std::string> & uniqueLists, std::vector<soundfont_t> & soundfonts, bool & hasDLS, std::string & report) noexcept
-{
-    if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
-    {
-        // Prevent recursion with nested soundfont lists.
-        {
-            auto AbsolutePath = fs::absolute(sf.FilePath);
-
-            if (uniqueLists.find(AbsolutePath.string().c_str()) != uniqueLists.end())
-                return;
-
-            uniqueLists.insert(AbsolutePath.string().c_str());
-        }
-
-        if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
-        {
-            report += msc::FormatText("Soundfont list \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
-
-            return;
-        }
-
-        int Count = 0;
-
-        Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
-
-        for (const auto & iter : LoadSoundfontList(sf.FilePath))
-        {
-            AddSoundFont(iter, uniqueLists, soundfonts, hasDLS, report);
-            ++Count;
-        }
-
-        Log.AtInfo().Write(STR_COMPONENT_BASENAME " read %d soundfonts from the list.", Count);
-    }
-    else
-    if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
-    {
-        if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
-        {
-            report += msc::FormatText("Soundfont \"%s\" does not exist.", sf.FilePath.string().c_str()).c_str();
-
-            return;
-        }
-
-        if (sf.IsDLS)
-            hasDLS = true;
-
-        soundfonts.push_back(sf);
-    }
 }
 
 /// <summary>

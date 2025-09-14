@@ -99,7 +99,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
         {
             case 1: // Set Sample Rate
             {
-                uint32_t Size = Read();
+                const uint32_t Size = Read();
 
                 if (Size != sizeof(SampleRate))
                 {
@@ -112,7 +112,6 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
                 Core->TG_activate(44100.0, 1024);
                 Core->TG_setMaxBlockSize(256);
                 Core->TG_setSampleRate((float) SampleRate);
-//              Sampler->TG_setSampleRate((float) SampleRate);
                 Core->TG_setMaxBlockSize(BlockSize);
 
                 Write(0);
@@ -121,7 +120,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
             case 2: // Send MIDI Event
             {
-                uint32_t Code = Read();
+                const uint32_t Code = Read();
 
                 Core->TG_ShortMidiIn(Code, 0);
 
@@ -131,12 +130,12 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
             case 3: // Send System Exclusive Event
             {
-                uint32_t Size = Read();
+                const uint32_t Size = Read();
 
                 if ((size_t) (Size + 1) > MsgSize)
                 {
                     auto NewSize = (size_t) (Size + 1024) & ~1023;
-                    auto NewData = (uint8_t *) ::realloc(MsgData, MsgSize);
+                    auto NewData = (uint8_t *) ::realloc(MsgData, NewSize);
 
                     if (NewData == nullptr)
                     {
@@ -218,8 +217,8 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
             case 6: // Send event, with timestamp
             {
-                uint32_t Code = Read();
-                uint32_t Timestamp = Read();
+                const uint32_t Code = Read();
+                const uint32_t Timestamp = Read();
 
                 Core->TG_ShortMidiIn(Code, Timestamp);
 
@@ -229,13 +228,13 @@ int WINAPI _tWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
             case 7: // Send System Exclusive, with timestamp
             {
-                uint32_t Size = Read();
-                uint32_t Timestamp = Read();
+                const uint32_t Size = Read();
+                const uint32_t Timestamp = Read();
 
-                if ((size_t)(Size + 1) > MsgSize)
+                if ((size_t) (Size + 1) > MsgSize)
                 {
-                    auto NewSize = (size_t)(Size + 1024) & ~1023;
-                    auto NewData = (uint8_t *) ::realloc(MsgData, MsgSize);
+                    auto NewSize = (size_t) (Size + 1024) & ~1023;
+                    auto NewData = (uint8_t *) ::realloc(MsgData, NewSize);
 
                     if (NewData == nullptr)
                     {

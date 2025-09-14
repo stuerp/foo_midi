@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.h (2025.08.15) **/
+/** $VER: BMPlayer.h (2025.09.14) **/
 
 #pragma once
 
@@ -43,6 +43,11 @@ public:
     DWORD GetMIDIVersion() const noexcept
     {
         return ::BASS_MIDI_GetVersion();
+    }
+
+    void XGMode(bool enable) noexcept
+    {
+        _XGMode = enable;
     }
 
     static void DumpSoundfont(const fs::path & filePath, HSOUNDFONT hSoundfont) noexcept;
@@ -93,7 +98,7 @@ private:
 
     bool _HasBankSelects;
     bool _DoReverbAndChorusProcessing;
-    bool _IgnoreCC32;                   // Ignore Control Change 32 (Bank Select) messages in the MIDI stream.
+    bool _XGMode;                       // True when we're playing an XG sequence.
 
     uint8_t _NRPNLSB[16];               // The last NRPN LSB seen for a channel.
     uint8_t _NRPNMSB[16];               // The last NRPN MSB seen for a channel.

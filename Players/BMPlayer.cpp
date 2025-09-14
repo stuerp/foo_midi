@@ -1,5 +1,5 @@
 
-/** $VER: BMPlayer.cpp (2025.09.07) **/
+/** $VER: BMPlayer.cpp (2025.09.14) **/
 
 #include "pch.h"
 
@@ -23,8 +23,8 @@ BMPlayer::BMPlayer() : player_t()
     _HasBankSelects = false;
     _InterpolationMode = 0;
     _DoReverbAndChorusProcessing = true;
-    _IgnoreCC32 = false;
     _VoiceCount = 256;
+    _XGMode = false;
 
     ::memset(_NRPNLSB, 0xFF, sizeof(_NRPNLSB));
     ::memset(_NRPNMSB, 0xFF, sizeof(_NRPNMSB));
@@ -303,12 +303,9 @@ void BMPlayer::SendEvent(uint32_t data)
     // Special handling of a couple of Control Change messages.
     if (Status == midi::ControlChange)
     {
-        // Assume CC#32 (Bank LSB) messages are part of an XG sequence. Since SF2 banks only support Bank MSB, interpret the Bank LSB message as MSB and hope the soundfont has presets for it.
-        if (Event[1] == midi::BankSelectLSB)
+        // In XG mode, since SF2 banks only support Bank MSB, interpret the Bank LSB message as MSB and hope the soundfont has presets for it.
+        if (_XGMode && (Event[1] == midi::BankSelectLSB) && (Event[2] != 0))
         {
-            if (_IgnoreCC32)
-                return;
-
             Event[1] = midi::BankSelect;
         }
         else

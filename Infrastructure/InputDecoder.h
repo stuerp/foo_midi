@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.09.01) **/
+/** $VER: InputDecoder.h (2025.09.11) **/
 
 #pragma once
 
@@ -13,6 +13,8 @@
 #include <shared/audio_math.h>
 
 #include <pfc/synchro.h>
+
+#include <unordered_set>
 
 #include "Configuration.h"
 #include "FileHasher.h"
@@ -169,6 +171,7 @@ private:
     void InitializeFade() noexcept;
     void OverridePlayerSelection(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept;
     void GetSoundfonts(const fs::path & defaultSoundfontPath, abort_callback & abortHandler);
+    void AddSoundFont(const soundfont_t & sf, std::unordered_set<std::string> & uniqueLists, std::vector<soundfont_t> & soundfonts, std::string & report) noexcept;
 
     void ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler);
     void AddTag(file_info & fileInfo, const char * name, const char * value, t_size max);
