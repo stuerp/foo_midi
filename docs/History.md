@@ -1,6 +1,12 @@
 
 # foo_midi History
 
+v3.2.1.0, 2025-09-14
+
+- Fixed: DLS collections in soundfont lists were not automatically converted to SF2 banks.
+- Fixed: BASSMIDI did not play percussion when playing an XG MIDI file and did not process GS CC32 messages. Regression caused by implementing support for Control Change 32 (Bank LSB select).
+- Fixed: SecretSauce pipe handler could experience buffer corruption. (v3.1.2.0 Regression)
+
 v3.2.0.0, 2025-09-09
 
 - New: The BASSMIDI player can now use DLS sound fonts. They are automatically converted to SF2 format before use.

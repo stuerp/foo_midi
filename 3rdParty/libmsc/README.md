@@ -19,13 +19,15 @@ To build the code you need:
 
 ## Change Log
 
+v0.1.0.1, 2025-09-16
+
+- Removed ghc::filesystem due to compatibility issues with the foobar2000 SDK.
+
 v0.1.0.0, 2025-09-01, *"A beginning is a very delicate time."*
 
-* Initial release.
+- Initial release.
 
 ## Acknowledgements / Credits
-
-* [Steffen SchÃƒÂ¼mann](mailto:s.schuemann@pobox.com) for ghc::filesystem.[](// https://github.com/gulrak/filesystem )
 
 ## Reference Material
 
