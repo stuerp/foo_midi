@@ -140,7 +140,7 @@ It can be configured on the **[MIDI Player / Wavetable](#wavetable)** preference
 
 This player is a wrapper for the BASSMIDI library by [Un4seen](https://www.un4seen.com/). The libraries required to use it are included with the component.
 
-It requires an SF2, SF2Pack or SFZ soundfont to provide the instrument samples. See [Soundfonts](#soundfonts).
+It requires an SF2, SF2Pack or SFZ soundfont to provide the instrument samples. DLS collections can be used when you enable on-the-fly conversion. See [Soundfonts](#soundfonts).
 
 It can be configured on the **[MIDI Player / Wavetable](#wavetable)** preferences page.
 
@@ -148,7 +148,7 @@ It can be configured on the **[MIDI Player / Wavetable](#wavetable)** preference
 
 This player is a wrapper for the [FluidSynth](https://www.fluidsynth.org/) library.
 
-It requires an SF2, SF2Pack, SFZ or SF3 soundfont or a DLS-compatible wave set to provide the instrument samples. See [Soundfonts](#soundfonts).
+It requires an SF2, SF2Pack, SFZ or SF3 soundfont or a DLS collection to provide the instrument samples. See [Soundfonts](#soundfonts).
 
 > [!Important]
 > You need to download the libraries from [GitHub](https://github.com/FluidSynth/fluidsynth/releases/) and configure their path on the **[MIDI Player / Paths](#paths)** preferences page before FluidSynth becomes available as a player.
@@ -255,12 +255,9 @@ The **Fade-Out time** setting specifies the time in milliseconds that the player
 
 ### Soundfonts
 
-A soundfont is a file that contains samples of instruments. Players like [BASSMIDI](#bassmidi-built-in-wavetable) and [FluidSynth](#fluidsynth-optional-wavetable) require it to play MIDI files. When more than one soundfont is specified or available the soundfonts will be layered on top of each other with the first soundfont being used as a base.
+A soundfont is a file that contains samples of instruments. Players like [BASSMIDI](#bassmidi-built-in-wavetable) and [FluidSynth](#fluidsynth-optional-wavetable) require it to play MIDI files. When more than one soundfont is specified or available the soundfonts will be layered on top of each other with the first soundfont being used as a baseline.
 
 Any of the supported formats can be used (Soundfont lists `.sflist`, `.sf2pack`, `.sfogg`, `.sf2`, `.sf3` and `.dls`). Each added soundfont replaces the patches with the same bank and program number in the previously added soundfonts.
-
-> [!Note]
-> foo_midi will switch to the FluidSynth player if a DLS soundfont is part of the soundfont list.
 
 If the file has an embedded soundfont that file will be extracted and added to the soundfont list. The `.RMI` file format was designed for that purpose.
 
@@ -368,7 +365,7 @@ Available in rest and during playback:
 | midi_loop_end_ms        | The end of a loop in milliseconds|
 | midi_lyrics_type        | The type of lyrics found in the file. Currently only `Soft Karaoke` is recognized. |
 | midi_hash               | Unique fingerprint of the file used by the foobar2000 media library. |
-| midi_embedded_soundfont | The type of the soundfont embedded in the file (if any). Can be `SF` a SoundFont 1.0-2.x-3.x bank or `DLS` for a Downloadable Sound collection. |
+| midi_embedded_soundfont | The type of the soundfont embedded in the file (if any). Can be `SF` a SoundFont 1.0-2.x-3.x bank or `DLS` for a Downloadable Sounds collection. |
 
 > [!Tip]
 > You can format `midi_loop_start_ms` and `midi_loop_endt_ms` to hh:mm notation and use it as a custom column in playlist View like this:
@@ -635,39 +632,56 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 
 #### BASSMIDI settings
 
-🔧 *Work in Progress*
-
 ##### Gain
+
+The gain value is added to the volume of the soundfont. Positive values increase the volume. Negative values decrease the volume. The default is 0.
 
 ##### Resampling
 
+Allows you to select the interpolation algorithm that BASSMIDI will use when resampling. The samples in a soundfont will usually need to be played at rates that are different to their original rates. The linear interpolation option uses less CPU, but the sinc interpolation gives better sound quality (less aliasing), with the quality and CPU usage increasing with the number of points.
+
 ##### Max. Voices
+
+Allows you to specify the maximum number of simultanious voices or samples that BASSMIDI will use. The number of active voices currently active can be reading the value of the `midi_active_voices` information field. The more voices, the more CPU will be used.
 
 ##### Process reverb and chorus
 
+Allows you to disable the reverb and chorus effect to reduce CPU usage.
+
 ##### Use DLS
 
-Enabling this option allows the BASSMIDI player to play MIDI files with an embedded DLS sound font or even use a DLS sound font as its main sound font. The DLS sound font is converted to SF2 format on demand.
+Enabling this option allows the BASSMIDI player to play MIDI files with a DLS collection anywhere an SF2 soundfont is allowed. The DLS collection is converted to an SF2 bank on demand.
 
-Cache status
+##### Cache status
+
+During playback this will display the amount of memory that the soundfont cache uses.
 
 ---
 
 #### FluidSynth settings
 
-🔧 *Work in Progress*
-
 ##### Interpolation
+
+Allows you to specify the synthesis interpolation method that FluidSynth uses.
+
+> [!Note]
+> Please read the remarks in the [FluidSynth](https://www.fluidsynth.org/api/group__synthesis__params.html#ga4a2efef77b267500dd9c19c0dc9e4633) documentation when selecting 7th Order Sinc interpolation.
 
 ##### Max. Voices (FluidSynth)
 
+Allows you to specify the maximum number of simultanious voices or samples that FluidSynth will use. The number of active voices currently active can be reading the value of the `midi_active_voices` information field. The more voices, the more CPU will be used.
+
 ##### Process reverb and chorus (FluidSynth)
+
+Allows you to disable the reverb and chorus effect to reduce CPU usage.
 
 ##### Use DLS (Custom)
 
-Enabling this option overrides the built-in DLS Support of FluidSynth and uses the same conversion code as the BASSMIDI player.
+Enabling this option overrides the built-in DLS support of FluidSynth and uses the same conversion code as the BASSMIDI player.
 
 ##### Dynamic sample loading
+
+Enabling this option will make FluidSynth load and unload samples from memory whenever presets are being selected or unselected for a MIDI channel. Don't enable this option for normal playback as it may cause timing issues.
 
 ##### Configuration file
 
@@ -709,6 +723,10 @@ It is especially important if you're trying to replicate the exact sound of clas
 | Accurate     | Finer emulation of the LPF circuit. Output signal is upsampled to 48 kHz to allow emulation of audible mirror spectra above 16 kHz, * which is passed through the LPF circuit without significant attenuation. |
 | Oversampled  | Same as Accurate but the output signal is 2x oversampled, i.e. the output sample rate is 96 kHz. This makes subsequent resampling easier. Besides, due to nonlinear passband of the LPF emulated, it takes fewer number of MACs  compared to a regular LPF FIR implementations. |
 
+##### GM Set
+
+Determines which General MIDI configuration is used by the player: Roland or King's Quest 6.
+
 ##### DAC Input Mode
 
 The DAC (Digital-to-Analog Converter) in the original MT-32 had specific limitations and nonlinearities.
@@ -748,10 +766,6 @@ Early MT-32 units (especially those with ROM version 1.07 or earlier) are known 
 
 Enable this setting to reverse the channels.
 
-##### GM Set
-
-Determines which General MIDI configuration is used by the player: Roland or King's Quest 6.
-
 ---
 
 ## Troubleshooting
@@ -761,6 +775,8 @@ Determines which General MIDI configuration is used by the player: Roland or Kin
 ---
 
 ## FAQs
+
+🔧 *Work in Progress*
 
 **Q:** Common question 1  
 **A:** Clear, concise answer.
@@ -965,7 +981,7 @@ The history of foo_midi development is available in a separate [document](Histor
 - [Spessasus](https://github.com/spessasus) for testing, advice and [SpessaSynth](https://github.com/spessasus/SpessaSynth).
 - [Zoltán Bacskó](https://github.com/Falcosoft) for testing, advice and [MIDI Player](https://www.vogons.org/viewtopic.php?f=5&t=48207).
 - [Murachue](https://murachue.sytes.net/web/) for [MMFTool](https://murachue.sytes.net/web/softlist.cgi?mode=desc&title=mmftool).
-- [yuno (Yoshio Uno)](yuno@users.sourceforge.jp) for [fmmidi](http://milkpot.sakura.ne.jp/fmmidi/).
+- [Yoshio Uno (yuno)](yuno@users.sourceforge.jp) for [fmmidi](http://milkpot.sakura.ne.jp/fmmidi/).
 - [John Novak](https://github.com/johnnovak) for [Nuked-SC55-CLAP](https://github.com/johnnovak/Nuked-SC55-CLAP).
 
 ---

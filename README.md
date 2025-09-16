@@ -95,11 +95,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.1.0, 2025-09-14
+v3.2.1.1, 2025-09-16
 
-- Fixed: DLS collections in soundfont lists were not automatically converted to SF2 banks.
-- Fixed: BASSMIDI did not play percussion when playing an XG MIDI file and did not process GS CC32 messages. Regression caused by implementing support for Control Change 32 (Bank LSB select).
-- Fixed: SecretSauce pipe handler could experience buffer corruption. (v3.1.2.0 Regression)
+- Fixed: Removed use of ghc::filesystem (a drop-in replacement for std::filesystem) because of incompatibilities with the foobar2000 SDK.
 
 You can read the full history [here](docs/History.md).
 

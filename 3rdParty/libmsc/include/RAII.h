@@ -1,5 +1,5 @@
 
-/** $VER: RAII.h (2025.09.01) P. Stuer - Various RAII wrappers for common OS resources **/
+/** $VER: RAII.h (2025.09.16) P. Stuer - Various RAII wrappers for common OS resources **/
 
 #pragma once
 
@@ -8,11 +8,11 @@
 #include <sdkddkver.h>
 #include <windows.h>
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 #include "Win32Exception.h"
-
-#include "ghc\filesystem.hpp"
-
-namespace fs = ghc::filesystem;
 
 namespace msc
 {

@@ -299,8 +299,12 @@ fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortH
 
         SoundfontPath.replace_extension(FileExtension);
 
-        if (filesystem::g_exists(SoundfontPath.string().c_str(), abortHandler))
-            return SoundfontPath;
+        try
+        {
+            if (filesystem::g_exists(SoundfontPath.string().c_str(), abortHandler))
+                return SoundfontPath;
+        }
+        catch (...) { }
     }
 
     return {};
