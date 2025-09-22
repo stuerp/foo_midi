@@ -31,7 +31,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rdParty\ghc\filesystem.hpp" />
+    <ClInclude Include="include\CriticalSection.h" />
     <ClInclude Include="include\Encoding.h" />
+    <ClInclude Include="include\Enum.h" />
     <ClInclude Include="include\Exception.h" />
     <ClInclude Include="include\ghc\filesystem.hpp" />
     <ClInclude Include="include\libmsc.h" />
@@ -50,6 +52,7 @@
     <None Include=".gitignore" />
     <None Include="LICENSE" />
     <None Include="README.md" />
+    <None Include="src\cpp.hint" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

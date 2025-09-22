@@ -1,5 +1,5 @@
 
-/** $VER: libmsc.h (2025.09.16) P. Stuer - My Support Classes, The "Most Original Name" Winner **/
+/** $VER: libmsc.h (2025.09.17) P. Stuer - My Support Classes, The "Most Original Name" Winner **/
 
 #pragma once
 
@@ -17,6 +17,7 @@ namespace fs = std::filesystem;
 
 #include "CriticalSection.h"
 #include "Encoding.h"
+#include "Enum.h"
 #include "Exception.h"
 #include "RAII.h"
 #include "Stream.h"

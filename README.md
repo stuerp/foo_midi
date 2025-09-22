@@ -49,8 +49,8 @@ The following libraries are included in the code:
   - [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
   - [BASSMPC](https://www.un4seen.com/) 2.4.1.2
 - [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.7
-- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.0, Yamaha YMF262 and CT1747 (OPL3)
-- [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.0, Yamaha YM2612 (OPN2) and Yamaha YM2608 (OPNA)
+- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.1, Yamaha YMF262 and CT1747 (OPL3)
+- [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.1, Yamaha YM2612 (OPN2), Yamaha YM2608 (OPNA), Yamaha YM3438 (OPN2C) and YMF276 (OPN2L).
 - [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
 - [LibMT32Emu](https://github.com/munt/munt) 2.7.2, Roland MT-32, CM-32L and LAPC-I synthesiser modules
 - [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3), Yamaha YMF262 and CT1747 (OPL3)
@@ -95,9 +95,13 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.1.1, 2025-09-16
+v3.2.2.0, 2025-xx-xx
 
-- Fixed: Removed use of ghc::filesystem (a drop-in replacement for std::filesystem) because of incompatibilities with the foobar2000 SDK.
+- New: Upgraded ADL Player with LibADLMIDI 1.6.1.
+- New: Upgraded OPN Player with LibOPNMIDI 1.6.1.
+  -  Added new low-level Nuked OPN2 YM2608, YM2612, YM3438 and YMF276 modes.
+   - Upgraded all built-in WOPN banks to the [latest]((https://github.com/Wohlstand/libOPNMIDI/tree/master/fm_banks) version.
+   - Added new Ninoke WOPN bank.
 
 You can read the full history [here](docs/History.md).
 

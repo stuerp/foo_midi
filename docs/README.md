@@ -99,6 +99,8 @@ It can be configured on the **[MIDI Player / FM Synthesis](#fm-synthesis)** pref
 
 This player uses the [libOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) library by [Vitaly Novichkov](https://github.com/Wohlstand) to emulate the [Yamaha YM2612 (OPN2)](https://en.wikipedia.org/wiki/Yamaha_YM2612) and [Yamaha YM2608 (OPNA)](https://en.wikipedia.org/wiki/Yamaha_YM2608) FM synthesis sound chip&mdash;famously used in the Sega Genesis and NEC PC-98 systems.
 
+In addition the [Yamaha YM3848 (OPN2C)](https://en.wikipedia.org/wiki/Yamaha_YM2612#Yamaha_YM3438) and the [Yamaha YMF276 (OPN2L)](https://en.wikipedia.org/wiki/Yamaha_YM2612#Yamaha_YMF276) used in later models of Fujitsu's FM Towns series are supported.
+
 Key features are:
 
 - **Customizable FM Patch Bank**: Users can create their own timbre banks using the OPN2 Bank Editor, allowing for unique instrument sounds.
@@ -510,14 +512,18 @@ To render the MIDI file a synthesizer chip is emulated. These are the eumlators 
 
 | Name | Description |
 | ---- | ----------- |
-| MAME&nbsp;YM2612 | Accurate and fast on slow devices |
-| MAME&nbsp;YM2608 | Accurate and fast on slow devices |
-| Nuked&nbsp;OPN2&nbsp;([YM3438](https://en.wikipedia.org/wiki/YM3438#Yamaha_YM3438) mode) | Very accurate, requires a powerful CPU |
-| Nuked&nbsp;OPN2&nbsp;(YM2612&nbsp;mode) | Very accurate, requires a powerful CPU |
-| GENS/GS&nbsp;II&nbsp;OPN2 | GENS 2.10 emulator. Very outdated and inaccurate, but fastest. |
-| Neko&nbsp;Project&nbsp;II&nbsp;Kai&nbsp;OPNA | Neko Project 2 YM2608 emulator. Semi-accurate, but fast on slow devices. |
-| YMFM&nbsp;OPN2 | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
-| YMFM&nbsp;OPNA | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
+| MAME OPNA (YM2608) | Accurate and fast on slow devices |
+| MAME OPN2 (YM2612) | Accurate and fast on slow devices |
+| Nuked OPN2 (YM2612) | Very accurate, requires a powerful CPU |
+| Nuked OPN2C (YM3438) | Very accurate, requires a powerful CPU |
+| GENS/GS II OPN2 (YM2612) | GENS 2.10 emulator. Very outdated and inaccurate, but fastest. |
+| Neko Project II Kai OPNA (YM2608) | Neko Project 2 YM2608 emulator. Semi-accurate, but fast on slow devices. |
+| YMFM OPNA (YM2608) | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
+| YMFM OPN2 (YM2612) | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
+| Nuked OPNA (YM2608), Low-level | Very low-level variant of Nuked OPN2 (YM2608) |
+| Nuked OPN2 (YM2612), Low-level | Very low-level variant of Nuked OPN2 (YM2612) |
+| Nuked OPN2C (YM3438), Low-level | Very low-level variant of Nuked OPN2 (YM3438) |
+| Nuked OPN2L (YMF276), Low-level | Very low-level variant of Nuked OPN2 (YMF276) |
 
 The following emulator cores have been deprecated in the current version of the library and are no longer available:
 
@@ -619,7 +625,7 @@ A few shortcut buttons are available to assist in the selection:
 
 ##### Log Level
 
-Allows you to control the messages foo_midi will write to the foobar2000 console.
+Allows you to control the messages the component will write to the foobar2000 console.
 
 > [!Warning]
 > The **Debug** and **Trace** levels may generate a lot of technical output.

@@ -27,6 +27,14 @@ add_executable(opnmidiplay ${OPNMIDI_PLAY_SRC})
 target_link_libraries(opnmidiplay OPNMIDI_IF ${SDL2_NEEDED_LIBRARIES})
 target_compile_definitions(opnmidiplay PRIVATE "-DDEFAULT_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 
+if(WIN32)
+    set_property(TARGET opnmidiplay PROPERTY WIN32_EXECUTABLE OFF)
+    if(MSVC)
+        target_compile_definitions(opnmidiplay PRIVATE -DWIN32_CONSOLE)
+    endif()
+endif()
+
+
 if(libOPNMIDI_SHARED)
     add_dependencies(opnmidiplay OPNMIDI_shared)
     set_target_properties(opnmidiplay PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")

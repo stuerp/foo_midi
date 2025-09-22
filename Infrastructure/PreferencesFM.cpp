@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.cpp (2025.07.14) P. Stuer **/
+/** $VER: PreferencesFM.cpp (2025.09.22) P. Stuer **/
 
 #include "pch.h"
 
@@ -39,29 +39,33 @@
 
 const std::vector<emulator_t> _ADLEmulators =
 {
-    { ADLMIDI_EMU_NUKED,          L"Nuked OPL3 v1.8" },
-    { ADLMIDI_EMU_NUKED_174,      L"Nuked OPL3 v1.7.4" },
-    { ADLMIDI_EMU_DOSBOX,         L"DOSBox" },
-    { ADLMIDI_EMU_OPAL,           L"Opal" },
-    { ADLMIDI_EMU_JAVA,           L"Java" },
-    { ADLMIDI_EMU_ESFMu,          L"ESFMu" },
-    { ADLMIDI_EMU_MAME_OPL2,      L"MAME OPL2" },
-    { ADLMIDI_EMU_YMFM_OPL2,      L"YMFM OPL2" },
-    { ADLMIDI_EMU_YMFM_OPL3,      L"YMFM OPL3" },
-    { ADLMIDI_EMU_NUKED_OPL2_LLE, L"Nuked OPL2 LLE" },
-    { ADLMIDI_EMU_NUKED_OPL3_LLE, L"Nuked OPL3 LLE" },
+    { ADLMIDI_EMU_NUKED,            L"Nuked OPL3 v1.8" },
+    { ADLMIDI_EMU_NUKED_174,        L"Nuked OPL3 v1.7.4" },
+    { ADLMIDI_EMU_DOSBOX,           L"DOSBox" },
+    { ADLMIDI_EMU_OPAL,             L"Opal" },
+    { ADLMIDI_EMU_JAVA,             L"Java" },
+    { ADLMIDI_EMU_ESFMu,            L"ESFMu" },
+    { ADLMIDI_EMU_MAME_OPL2,        L"MAME OPL2" },
+    { ADLMIDI_EMU_YMFM_OPL2,        L"YMFM OPL2" },
+    { ADLMIDI_EMU_YMFM_OPL3,        L"YMFM OPL3" },
+    { ADLMIDI_EMU_NUKED_OPL2_LLE,   L"Nuked OPL2 Low-level" },
+    { ADLMIDI_EMU_NUKED_OPL3_LLE,   L"Nuked OPL3 Low-level" },
 };
 
 const std::vector<emulator_t> _OPNEmulators =
 {
-    { OPNMIDI_EMU_MAME,         L"MAME YM2612" },
-    { OPNMIDI_EMU_MAME_2608,    L"MAME YM2608" },
-    { OPNMIDI_EMU_NUKED_YM3438, L"Nuked OPN2 (YM3438 mode)" },
-    { OPNMIDI_EMU_NUKED_YM2612, L"Nuked OPN2 (YM2612 mode)" },
-    { OPNMIDI_EMU_GENS,         L"GENS/GS II OPN2" },
-    { OPNMIDI_EMU_NP2,          L"Neko Project II Kai OPNA" },
-    { OPNMIDI_EMU_YMFM_OPN2,    L"YMFM OPN2" },
-    { OPNMIDI_EMU_YMFM_OPNA,    L"YMFM OPNA" },
+    { OPNMIDI_EMU_MAME_2608,        L"MAME OPNA (YM2608)" },
+    { OPNMIDI_EMU_MAME,             L"MAME OPN2 (YM2612)" },
+    { OPNMIDI_EMU_NUKED_YM2612,     L"Nuked OPN2 (YM2612)" },
+    { OPNMIDI_EMU_NUKED_YM3438,     L"Nuked OPN2C (YM3438)" },
+    { OPNMIDI_EMU_GENS,             L"GENS/GS II OPN2 (YM2612)" },
+    { OPNMIDI_EMU_NP2,              L"Neko Project II Kai OPNA (YM2608)" },
+    { OPNMIDI_EMU_YMFM_OPNA,        L"YMFM OPNA (YM2608)" },
+    { OPNMIDI_EMU_YMFM_OPN2,        L"YMFM OPN2 (YM2612)" },
+    { OPNMIDI_EMU_NUKED_YM2608_LLE, L"Nuked OPNA (YM2608), Low-level" },
+    { OPNMIDI_EMU_NUKED_YM2612_LLE, L"Nuked OPN2 (YM2612), Low-level" },
+    { OPNMIDI_EMU_NUKED_YM3438_LLE, L"Nuked OPN2C (YM3438), Low-level" },
+    { OPNMIDI_EMU_NUKED_YMF276_LLE, L"Nuked OPN2L (YMF276), Low-level" },
 };
 
 /// <summary>
@@ -442,6 +446,7 @@ BOOL FMDialog::OnInitDialog(CWindow window, LPARAM) noexcept
                 _OPNBanks.push_back(bank_t(2, L"GEMS FMLib GM"));
                 _OPNBanks.push_back(bank_t(3, L"TomSoft's SegaMusic"));
                 _OPNBanks.push_back(bank_t(4, L"FMMIDI"));
+                _OPNBanks.push_back(bank_t(5, L"Nineko"));
 
                 std::sort(_OPNBanks.begin(), _OPNBanks.end(), [](bank_t a, bank_t b) { return a < b; });
             }

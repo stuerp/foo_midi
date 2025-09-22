@@ -23,7 +23,6 @@
     <ClInclude Include="repo\src\chips\gens_opn2.h" />
     <ClInclude Include="repo\src\chips\gens\Ym2612_p.hpp" />
     <ClInclude Include="repo\src\chips\gens\Ym2612.hpp" />
-    <ClInclude Include="repo\src\chips\gx_opn2.h" />
     <ClInclude Include="repo\src\chips\gx\gx_ym2612.h" />
     <ClInclude Include="repo\src\chips\mame_opn2.h" />
     <ClInclude Include="repo\src\chips\mame_opna.h" />
@@ -49,16 +48,26 @@
     <ClInclude Include="repo\src\chips\np2\fmgen_opna.h" />
     <ClInclude Include="repo\src\chips\np2\fmgen_psg.h" />
     <ClInclude Include="repo\src\chips\np2\fmgen_types.h" />
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopn2.h" />
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_2608.h" />
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_2612.h" />
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_impl.h" />
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_impl_c.h" />
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_rom.h" />
+    <ClInclude Include="repo\src\chips\nuked_lle\nopn2.h" />
+    <ClInclude Include="repo\src\chips\nuked_lle\nopn2f.h" />
+    <ClInclude Include="repo\src\chips\nuked_lle\nopna.h" />
     <ClInclude Include="repo\src\chips\nuked_opn2.h" />
     <ClInclude Include="repo\src\chips\nuked\ym3438.h" />
     <ClInclude Include="repo\src\chips\opn_chip_base.h" />
     <ClInclude Include="repo\src\chips\opn_chip_family.h" />
-    <ClInclude Include="repo\src\chips\pmdwin_opna.h" />
     <ClInclude Include="repo\src\chips\pmdwin\op.h" />
     <ClInclude Include="repo\src\chips\pmdwin\opna.h" />
     <ClInclude Include="repo\src\chips\pmdwin\psg.h" />
     <ClInclude Include="repo\src\chips\pmdwin\rhythmdata.h" />
-    <ClInclude Include="repo\src\chips\vgm_file_dumper.h" />
+    <ClInclude Include="repo\src\chips\ym2608_lle.h" />
+    <ClInclude Include="repo\src\chips\ym2612_lle.h" />
+    <ClInclude Include="repo\src\chips\ymf276_lle.h" />
     <ClInclude Include="repo\src\chips\ymfm\ymfm.h" />
     <ClInclude Include="repo\src\chips\ymfm\ymfm_adpcm.h" />
     <ClInclude Include="repo\src\chips\ymfm\ymfm_fm.h" />
@@ -90,7 +99,6 @@
   <ItemGroup>
     <ClCompile Include="repo\src\chips\gens_opn2.cpp" />
     <ClCompile Include="repo\src\chips\gens\Ym2612.cpp" />
-    <ClCompile Include="repo\src\chips\gx_opn2.cpp" />
     <ClCompile Include="repo\src\chips\gx\gx_ym2612.c" />
     <ClCompile Include="repo\src\chips\mame_opn2.cpp" />
     <ClCompile Include="repo\src\chips\mame_opna.cpp" />
@@ -105,13 +113,20 @@
     <ClCompile Include="repo\src\chips\np2\fmgen_fmtimer.cpp" />
     <ClCompile Include="repo\src\chips\np2\fmgen_opna.cpp" />
     <ClCompile Include="repo\src\chips\np2\fmgen_psg.cpp" />
+    <ClCompile Include="repo\src\chips\nuked_lle\fmopn2.c" />
+    <ClCompile Include="repo\src\chips\nuked_lle\fmopna_2608.c" />
+    <ClCompile Include="repo\src\chips\nuked_lle\fmopna_2612.c" />
+    <ClCompile Include="repo\src\chips\nuked_lle\nopn2.c" />
+    <ClCompile Include="repo\src\chips\nuked_lle\nopn2f.c" />
+    <ClCompile Include="repo\src\chips\nuked_lle\nopna.c" />
     <ClCompile Include="repo\src\chips\nuked_opn2.cpp" />
     <ClCompile Include="repo\src\chips\nuked\ym3438.c" />
-    <ClCompile Include="repo\src\chips\pmdwin_opna.cpp" />
     <ClCompile Include="repo\src\chips\pmdwin\opna.c" />
     <ClCompile Include="repo\src\chips\pmdwin\psg.c" />
     <ClCompile Include="repo\src\chips\pmdwin\rhythmdata.c" />
-    <ClCompile Include="repo\src\chips\vgm_file_dumper.cpp" />
+    <ClCompile Include="repo\src\chips\ym2608_lle.cpp" />
+    <ClCompile Include="repo\src\chips\ym2612_lle.cpp" />
+    <ClCompile Include="repo\src\chips\ymf276_lle.cpp" />
     <ClCompile Include="repo\src\chips\ymfm\ymfm_adpcm.cpp" />
     <ClCompile Include="repo\src\chips\ymfm\ymfm_misc.cpp" />
     <ClCompile Include="repo\src\chips\ymfm\ymfm_opn.cpp" />
@@ -211,9 +226,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;USE_NUKED_OPN2_LLE_EMULATOR;USE_NUKED_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>repo/include;repo/src;.</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>repo/include;repo/src;repo/src/chips/mame;repo/src/chips/mamefm;.</AdditionalIncludeDirectories>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
@@ -228,8 +243,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>repo/include;repo/src;.</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;USE_NUKED_OPN2_LLE_EMULATOR;USE_NUKED_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>repo/include;repo/src;repo/src/chips/mame;repo/src/chips/mamefm;.</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -250,8 +265,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <AdditionalIncludeDirectories>repo/include;repo/src;.</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>repo/include;repo/src;repo/src/chips/mame;repo/src/chips/mamefm;.</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;USE_NUKED_OPN2_LLE_EMULATOR;USE_NUKED_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
@@ -268,8 +283,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>repo/include;repo/src;.</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;USE_NUKED_OPN2_LLE_EMULATOR;USE_NUKED_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>repo/include;repo/src;repo/src/chips/mame;repo/src/chips/mamefm;.</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>

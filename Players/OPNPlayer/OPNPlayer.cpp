@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2025.09.04) **/
+/** $VER: OPNPlayer.cpp (2025.09.22) **/
 
 #include "pch.h"
 
@@ -7,10 +7,11 @@
 #include "Resource.h"
 #include "Log.h"
 
-#include "Tomsoft.wopn.h"
 #include "fmmidi.wopn.h"
 #include "gems-fmlib-gmize.wopn.h"
 #include "gs-by-papiezak-and-sneakernets.wopn.h"
+#include "Nineko.wopn.h"
+#include "Tomsoft.wopn.h"
 #include "xg.wopn.h"
 
 #include "Encoding.h"
@@ -38,8 +39,8 @@ void OPNPlayer::SetEmulatorCore(uint32_t emulatorCore)
 /// </summary>
 void OPNPlayer::SetBankNumber(uint32_t bankNumber)
 {
-    if (bankNumber > 4)
-        throw std::out_of_range(msc::FormatText("Invalid bank number %u. Must be less than 5", bankNumber));
+    if (bankNumber > 5)
+        throw std::out_of_range(msc::FormatText("Invalid bank number %u. Must be less than 6", bankNumber));
 
     _BankNumber = bankNumber;
 }
@@ -151,6 +152,11 @@ bool OPNPlayer::Startup()
             case 4:
                 BankData = bnk_fmmidi;
                 BankSize = sizeof(bnk_fmmidi);
+                break;
+
+            case 5:
+                BankData = bnk_Nineko;
+                BankSize = sizeof(bnk_Nineko);
                 break;
         }
 

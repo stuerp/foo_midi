@@ -80,9 +80,6 @@
     <ClInclude Include="repo\src\chips\opal_opl3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="repo\src\chips\opal\old\opal-orig.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="repo\src\chips\opal\opal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -294,5 +291,7 @@
     <None Include="repo\src\adlmidi_bankmap.tcc" />
     <None Include="repo\src\chips\opl_chip_base.tcc" />
     <None Include="repo\src\structures\pl_list.tcc" />
+    <None Include="repo\src\chips\esfmu\LICENSE" />
+    <None Include="repo\src\chips\esfmu\README.md" />
   </ItemGroup>
 </Project>

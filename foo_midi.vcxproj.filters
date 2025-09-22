@@ -207,6 +207,7 @@
     <ClInclude Include="Players\MT32Player\MT32ReportHandler.h" />
     <ClInclude Include="Infrastructure\PreferencesProcessing.h" />
     <ClInclude Include="Infrastructure\CLAPHost.h" />
+    <ClInclude Include="Players\OPNPlayer\Nineko.wopn.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

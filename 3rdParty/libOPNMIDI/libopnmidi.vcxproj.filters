@@ -27,9 +27,6 @@
     <ClInclude Include="repo\src\chips\gens\Ym2612.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="repo\src\chips\gx_opn2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="repo\src\chips\gx\gx_ym2612.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -117,9 +114,6 @@
     <ClInclude Include="repo\src\chips\opn_chip_family.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="repo\src\chips\pmdwin_opna.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="repo\src\chips\pmdwin\op.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -130,9 +124,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="repo\src\chips\pmdwin\rhythmdata.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="repo\src\chips\vgm_file_dumper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="repo\src\cvt_mus2mid.hpp">
@@ -216,15 +207,48 @@
     <ClInclude Include="repo\src\chips\ymfm_opna.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="repo\src\chips\ym2608_lle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\ym2612_lle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\ymf276_lle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_lle\nopn2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_lle\nopn2f.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_lle\nopna.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopn2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_2612.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_2608.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_impl_c.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_lle\fmopna_rom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="repo\src\chips\gens_opn2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\chips\gens\Ym2612.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="repo\src\chips\gx_opn2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\chips\gx\gx_ym2612.c">
@@ -275,9 +299,6 @@
     <ClCompile Include="repo\src\chips\nuked\ym3438.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="repo\src\chips\pmdwin_opna.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="repo\src\chips\pmdwin\opna.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -285,9 +306,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\chips\pmdwin\rhythmdata.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="repo\src\chips\vgm_file_dumper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\opnmidi_load.cpp">
@@ -330,6 +348,33 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\chips\ymfm_opna.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\ym2608_lle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\ym2612_lle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\ymf276_lle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_lle\nopn2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_lle\nopn2f.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_lle\nopna.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_lle\fmopn2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_lle\fmopna_2612.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_lle\fmopna_2608.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
