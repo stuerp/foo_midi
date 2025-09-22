@@ -1,5 +1,5 @@
 
-/** $VER: Support.h (2025.09.06) P. Stuer **/
+/** $VER: Support.h (2025.09.17) P. Stuer **/
 
 #pragma once
 
@@ -19,7 +19,7 @@ namespace msc
 template <class T>
 inline static T Clamp(T value, T minValue, T maxValue)
 {
-    return Min(Max(value, minValue), maxValue);
+    return std::min(std::max(value, minValue), maxValue);
 }
 
 /// <summary>

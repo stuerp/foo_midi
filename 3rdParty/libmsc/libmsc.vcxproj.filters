@@ -20,6 +20,8 @@
     <ClInclude Include="include\Strings.h" />
     <ClInclude Include="include\Stream.h" />
     <ClInclude Include="include\Exception.h" />
+    <ClInclude Include="include\CriticalSection.h" />
+    <ClInclude Include="include\Enum.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -27,5 +29,6 @@
     <None Include=".gitignore" />
     <None Include="README.md" />
     <None Include="LICENSE" />
+    <None Include="src\cpp.hint" />
   </ItemGroup>
 </Project>

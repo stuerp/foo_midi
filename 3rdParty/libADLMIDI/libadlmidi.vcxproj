@@ -90,7 +90,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;ADLMIDI_DISABLE_MIDI_SEQUENCER;BWMIDI_DISABLE_XMI_SUPPORT;BWMIDI_DISABLE_MUS_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>repo/include;repo/src</AdditionalIncludeDirectories>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
@@ -106,7 +106,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;ADLMIDI_DISABLE_MIDI_SEQUENCER;BWMIDI_DISABLE_XMI_SUPPORT;BWMIDI_DISABLE_MUS_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>repo/include;repo/src</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -129,7 +129,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;ADLMIDI_DISABLE_MIDI_SEQUENCER;BWMIDI_DISABLE_XMI_SUPPORT;BWMIDI_DISABLE_MUS_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>repo/include;repo/src</AdditionalIncludeDirectories>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
@@ -146,7 +146,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;ADLMIDI_DISABLE_MIDI_SEQUENCER;BWMIDI_DISABLE_XMI_SUPPORT;BWMIDI_DISABLE_MUS_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
@@ -191,7 +191,6 @@
     <ClInclude Include="repo\src\chips\nuked\nukedopl3_174.h" />
     <ClInclude Include="repo\src\chips\nuked\nukedopl3.h" />
     <ClInclude Include="repo\src\chips\opal_opl3.h" />
-    <ClInclude Include="repo\src\chips\opal\old\opal-orig.hpp" />
     <ClInclude Include="repo\src\chips\opal\opal.h" />
     <ClInclude Include="repo\src\chips\opl_chip_base.h" />
     <ClInclude Include="repo\src\chips\opl_serial_misc.h" />
@@ -264,6 +263,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="repo\src\adlmidi_bankmap.tcc" />
+    <None Include="repo\src\chips\esfmu\LICENSE" />
+    <None Include="repo\src\chips\esfmu\README.md" />
     <None Include="repo\src\chips\opl_chip_base.tcc" />
     <None Include="repo\src\structures\pl_list.tcc" />
   </ItemGroup>

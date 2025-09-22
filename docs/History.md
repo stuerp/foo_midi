@@ -1,6 +1,10 @@
 
 # foo_midi History
 
+v3.2.1.1, 2025-09-16
+
+- Fixed: Removed use of ghc::filesystem (a drop-in replacement for std::filesystem) because of incompatibilities with the foobar2000 SDK.
+
 v3.2.1.0, 2025-09-14
 
 - Fixed: DLS collections in soundfont lists were not automatically converted to SF2 banks.

@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.2...3.10)
-project(libOPNMIDI VERSION 1.6.0 LANGUAGES C CXX)
+project(libOPNMIDI VERSION 1.6.1 LANGUAGES C CXX)
 
 include(GNUInstallDirs)
 include(CheckCXXCompilerFlag)
@@ -24,8 +24,23 @@ else()
     endif()
 endif()
 
+function(CheckCPP14Build OUTVAR)
+    set(CMAKE_CXX_STANDARD 14)
+    try_compile(${OUTVAR}
+        ${CMAKE_CURRENT_BINARY_DIR}/cmake-checks
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/checks/cpp14.cpp
+        CMAKE_FLAGS -DCMAKE_CXX_FLAGS=${FLAG_CPP14}
+    )
+endfunction()
+
 if(COMPILER_SUPPORTS_CXX14)
-    message("== Your C++ compiler supports C++14, YMFM emulator will be ENABLED")
+    CheckCPP14Build(COMPILER_BUILDS_CXX14)
+    if(COMPILER_BUILDS_CXX14)
+        message("== Your C++ compiler supports C++14, YMFM emulator will be ENABLED")
+    else()
+        message("== Your C++ compiler can't build C++14, YMFM emulator will be DISABLED")
+        set(COMPILER_SUPPORTS_CXX14 FALSE)
+    endif()
 else()
     message("== Your C++ compiler does NOT supports C++14, YMFM emulator will be DISABLED")
 endif()
@@ -51,6 +66,12 @@ elseif(NOT MSVC AND NOT MSDOS AND NOT OPENBSD_LOCALBASE)
             CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2 -fdata-sections -ffunction-sections")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -fdata-sections -ffunction-sections")
+    string(REGEX REPLACE "-O3" ""
+           CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+    string(REGEX REPLACE "-O3" ""
+           CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O2 -fdata-sections -ffunction-sections")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O2 -fdata-sections -ffunction-sections")
     if(ANDROID)
         set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -funwind-tables")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -funwind-tables")
@@ -67,6 +88,8 @@ if(NOT MSVC AND NOT MSDOS)
 # Global optimization flags
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-omit-frame-pointer")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-omit-frame-pointer")
+    set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fno-omit-frame-pointer")
 # Turn on all warnings
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -180,6 +203,8 @@ option(USE_NUKED_EMULATOR   "Use Nuked OPN2 emulator (most accurate, heavy)" ${D
 option(USE_NP2_EMULATOR     "Use Neko Project II emulator" ON)
 option(USE_MAME_2608_EMULATOR "Use MAME YM2608 emulator" ON)
 # option(USE_PMDWIN_EMULATOR  "Use PMDWin emulator (experimental)" OFF)
+option(USE_NUKED_OPN2_LLE_EMULATOR  "Use Nuked OPN2-LLE emulator [!EXTRA HEAVY!]" OFF)
+option(USE_NUKED_OPNA_LLE_EMULATOR  "Use Nuked OPNA-LLE emulator [!EXTRA HEAVY!]" OFF)
 option(USE_VGM_FILE_DUMPER  "Use VGM File Dumper (required to build the MIDI2VGM tool)" ON)
 if(COMPILER_SUPPORTS_CXX14)
     option(USE_YMFM_EMULATOR    "Use YMFM emulator (requires C++14 support)" ON)
@@ -326,6 +351,49 @@ endif()
 #else()
 #    add_definitions(-DOPNMIDI_DISABLE_PMDWIN_EMULATOR)
 #endif()
+
+if(USE_NUKED_OPN2_LLE_EMULATOR)
+    list(APPEND libOPNMIDI_SOURCES
+        # YM2612
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/ym2612_lle.cpp
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/ym2612_lle.h
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/nopn2.c
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/nopn2.h
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/fmopna_2612.c
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/fmopna_2612.h
+
+        # YMF276 + YM3438
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/ymf276_lle.cpp
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/ymf276_lle.h
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/nopn2f.c
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/nopn2f.h
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/fmopn2.c
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/fmopn2.h
+    )
+    set(HAS_EMULATOR TRUE)
+    add_definitions(-DOPNMIDI_ENABLE_OPN2_LLE_EMULATOR)
+endif()
+
+if(USE_NUKED_OPNA_LLE_EMULATOR)
+    list(APPEND libOPNMIDI_SOURCES
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/ym2608_lle.cpp
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/ym2608_lle.h
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/nopna.c
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/nopna.h
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/fmopna_2608.c
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/fmopna_2608.h
+    )
+    set(HAS_EMULATOR TRUE)
+    add_definitions(-DOPNMIDI_ENABLE_OPNA_LLE_EMULATOR)
+endif()
+
+if(USE_NUKED_OPN2_LLE_EMULATOR OR USE_NUKED_OPNA_LLE_EMULATOR)
+    list(APPEND libOPNMIDI_SOURCES
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/fmopna_impl.h
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/fmopna_impl_c.h
+        ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_lle/fmopna_rom.h
+    )
+endif()
 
 if(USE_VGM_FILE_DUMPER)
     list(APPEND libOPNMIDI_SOURCES
@@ -575,7 +643,20 @@ message("USE_NP2_EMULATOR         = ${USE_NP2_EMULATOR}")
 message("USE_MAME_2608_EMULATOR   = ${USE_MAME_2608_EMULATOR}")
 #message("USE_PMDWIN_EMULATOR      = ${USE_PMDWIN_EMULATOR}")
 message("USE_VGM_FILE_DUMPER      = ${USE_VGM_FILE_DUMPER}")
-message("USE_YMFM_EMULATOR        = ${USE_YMFM_EMULATOR}")
+if(COMPILER_SUPPORTS_CXX14)
+    message("USE_YMFM_EMULATOR        = ${USE_YMFM_EMULATOR}")
+else()
+    message("USE_YMFM_EMULATOR        = OFF <lack of C++14>")
+endif()
+if(USE_NUKED_OPN2_LLE_EMULATOR OR USE_NUKED_OPNA_LLE_EMULATOR)
+    message(WARNING "You enabled EXTRA-HEAVY LLE emulators, they do REALLY require \
+VERY POWERFUL processor to work (For example, on Intel Core i7-11700KF (8 cores, 3.60 GHz) \
+they can work in real-time only when they built with Release optimisations, Debug builds \
+are choppy even single chip run). You can't use them on weak devices, don't even think to \
+run them on mobile. I warned. If you want, feel free to optimize them and contribute your \
+updates to @NukeYkt who created them. The only way you can use them on weaker hardware \
+is record WAVs where real-time performance doesn't matter.")
+endif()
 
 message("===== Utils and extras =====")
 message("WITH_MIDIPLAY            = ${WITH_MIDIPLAY}")

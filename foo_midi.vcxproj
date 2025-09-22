@@ -140,9 +140,13 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
+      <Command>
+pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>set TERM=dumb</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
@@ -177,9 +181,13 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
+      <Command>
+pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>set TERM=dumb</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Midl>
@@ -221,11 +229,15 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
+      <Command>
+pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>set TERM=dumb</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -264,12 +276,16 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
+      <Command>
+pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
     <Manifest />
+    <PreBuildEvent>
+      <Command>set TERM=dumb</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
@@ -456,6 +472,7 @@
     <ClInclude Include="Players\MCIPlayer.h" />
     <ClInclude Include="Players\MT32Player\MT32ReportHandler.h" />
     <ClInclude Include="Players\NukedSC-55Player.h" />
+    <ClInclude Include="Players\OPNPlayer\Nineko.wopn.h" />
     <ClInclude Include="Players\Player.h" />
     <ClInclude Include="Infrastructure\Preset.h" />
     <ClInclude Include="Infrastructure\PresetFilter.h" />

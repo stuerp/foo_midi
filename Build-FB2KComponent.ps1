@@ -6,7 +6,7 @@
 .EXAMPLE
     C:\PS> .\Build-FB2KComponent.ps1
 .OUTPUTS
-    foo_midi.fb2k-component
+    *.fb2k-component
 #>
 
 [CmdletBinding()]
@@ -29,146 +29,167 @@ Set-PSDebug -Strict; # Equivalent of VBA "Option Explicit".
 
 $ErrorActionPreference = 'Stop';
 
-# Note: The working directory is the solution directory.
+Write-Host "Building package `"$TargetName`" for platform `"$Platform`" from `"$PSScriptRoot`"...";
 
-Write-Host "Building package `"$TargetName`"...";
+$PackagePath = "..\out\$TargetName";
 
+# Create the package directory (for both x86 and x64): "..\out\TargetName" and "..\out\TargetName\x64".
+Write-Host "Creating directory `"$PackagePath`"...";
+
+$null = New-Item -Path '..\out\' -Name "$TargetName\x64" -ItemType 'directory' -Force;
+
+# Copy the shared x86\x64 files to the package directory.
+Write-Host "Copying shared component files to the package directory...";
+
+$PackagePath = "..\out\$TargetName";
+
+$SharedFiles = @(
+    "$OutputPath..\..\x86\Release\vsthost32.exe",
+    "$OutputPath..\..\x64\Release\vsthost64.exe",
+    "$OutputPath..\..\x86\Release\scpipe32.exe",
+    "$OutputPath..\..\x64\Release\scpipe64.exe",
+    "3rdParty\fmmidi\Programs.txt",                 # juno's fmmidi
+    "3rdParty\FluidSynth\FluidSynth.cfg"            # FluidSynth configuration
+);
+
+$SharedFiles | ForEach-Object {
+
+    if (Test-Path -Path $_)
+    {
+        Write-Host "Copying `"$_`" to `"$PackagePath`"...";
+        $null = Copy-Item $_ -Destination $PackagePath -Force;
+    }
+};
+
+# Copy the platform-specific files to the package directory.
 if ($Platform -eq 'x64')
 {
-    $PackagePath = "../out/$TargetName/x64";
+    $PackagePath += '\x64';
 
-    if (!(Test-Path -Path $PackagePath))
+    # Copy the platform-specific component DLL to the package directory.
+    if (Test-Path -Path "$OutputPath\$TargetFileName")
     {
-        Write-Host "Creating directory `"$PackagePath`"...";
-        $null = New-Item -Path '../out/' -Name "$TargetName/x64" -ItemType 'directory';
+        Write-Host "Copying component `"$TargetFileName`" to `"$PackagePath`"...";
+
+        $null = Copy-Item "$OutputPath\$TargetFileName" -Destination "$PackagePath" -Force;
     }
 
-    if (Test-Path -Path "$OutputPath/$TargetFileName")
-    {
-        Write-Host "Copying $TargetFileName to `"$PackagePath`"...";
-        Copy-Item "$OutputPath/$TargetFileName" -Destination "$PackagePath";
-    }
-
-    $DLLPath = "3rdParty/bass/x64/bass.dll";
+    # Copy the platform-specific support files to the package directory (if any).
+    $DLLPath = "3rdParty\bass\x64\bass.dll";
 
     if (Test-Path -Path $DLLPath)
     {
-        Write-Host "Copying BASS libaries to `"$PackagePath`"...";
+        Write-Host "Copying platform-specific BASS libraries to `"$PackagePath`"...";
 
-        Copy-Item $DLLPath -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/x64/bass_mpc.dll" -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/x64/bassflac.dll" -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/x64/bassmidi.dll" -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/x64/bassopus.dll" -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/x64/basswv.dll" -Destination "$PackagePath" -Force;
+        $null = Copy-Item "3rdParty\bass\x64\bass.dll" -Destination "$PackagePath" -Force;
+        $null = Copy-Item "3rdParty\bass\x64\bass_mpc.dll" -Destination "$PackagePath" -Force;
+        $null = Copy-Item "3rdParty\bass\x64\bassflac.dll" -Destination "$PackagePath" -Force;
+        $null = Copy-Item "3rdParty\bass\x64\bassmidi.dll" -Destination "$PackagePath" -Force;
+        $null = Copy-Item "3rdParty\bass\x64\bassopus.dll" -Destination "$PackagePath" -Force;
+        $null = Copy-Item "3rdParty\bass\x64\basswv.dll" -Destination "$PackagePath" -Force;
     }
-
-    if (Test-Path -Path "../bin")
+    else
     {
-        Write-Host "Installing component in foobar2000 32-bit...";
-        Copy-Item "$PackagePath/../*" "../bin/x86/profile/user-components/$TargetName" -Force;
-
-        Write-Host "Installing component in foobar2000 64-bit...";
-        Copy-Item "$PackagePath/*" "../bin/profile/user-components-x64/$TargetName" -Force;
+        Write-Host "Failed to find platform-specific BASS libraries: `"$DLLPath`" not found.";
+        exit;
     }
+
+    # Install the component in the foobar2000 x64 components directory: "..\bin\profile\user-components-x64\TargetName"
+    Write-Host "Installing $Platform component in foobar2000 64-bit profile...";
+
+    $foobar2000Path = '..\bin';
+
+    if (Test-Path -Path "$foobar2000Path\foobar2000.exe")
+    {
+        $ComponentPath = "$foobar2000Path\profile\user-components-x64";
+
+        Write-Host "Creating directory `"$ComponentPath\$TargetName`"...";
+
+        $null = New-Item -Path "$ComponentPath" -Name "$TargetName" -ItemType 'directory' -Force;
+
+        Write-Host "Copying $Platform component to foobar2000 64-bit profile...";
+
+        $null = Copy-Item "$PackagePath\*.*" -Destination "$ComponentPath\$TargetName" -Force;
+    }
+    else
+    {
+        Write-Host "Failed to install `"$Platform`" component: foobar2000 64-bit directory not found.";
+        exit;
+    }
+
+    # Install the shared component files in the foobar2000 x64 components directory: "..\bin\profile\user-components-x64\TargetName"
+    Write-Host "Copying shared component files to foobar2000 64-bit profile...";
+
+    $SharedFiles | ForEach-Object {
+
+        if (Test-Path -Path $_)
+        {
+            Write-Host "Copying `"$_`" to `"$ComponentPath\$TargetName`"...";
+
+            $null = Copy-Item $_ -Destination $ComponentPath\$TargetName -Force;
+        }
+    };
 }
 elseif ($Platform -eq 'Win32')
 {
-    $PackagePath = "../out/$TargetName";
-
-    if (!(Test-Path -Path $PackagePath))
+    # Copy the platform-specific component DLL to the package directory.
+    if (Test-Path -Path "$OutputPath\$TargetFileName")
     {
-        Write-Host "Creating directory `"$PackagePath`"...";
-        $null = New-Item -Path '../out/' -Name "$TargetName/x64" -ItemType 'directory';
+        Write-Host "Copying component `"$TargetFileName`" to `"$PackagePath`"...";
+
+        $null = Copy-Item "$OutputPath\$TargetFileName" -Destination "$PackagePath" -Force;
     }
 
-    if (Test-Path -Path "$OutputPath/$TargetFileName")
+    # Copy the platform-specific support files to the package directory (if any).
+    $DLLPath = "3rdParty\bass\bass.dll";
+
+    if (Test-Path -Path $DLLPath)
     {
-        Write-Host "Copying $TargetFileName to `"$PackagePath`"...";
-        Copy-Item "$OutputPath/$TargetFileName" -Destination "$PackagePath";
+        Write-Host "Copying platform-specific BASS libraries to `"$PackagePath`"...";
+
+        Copy-Item "3rdParty\bass\bass.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty\bass\bass_mpc.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty\bass\bassflac.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty\bass\bassmidi.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty\bass\bassopus.dll" -Destination "$PackagePath" -Force;
+        Copy-Item "3rdParty\bass\basswv.dll" -Destination "$PackagePath" -Force;
+    }
+    else
+    {
+        Write-Host "Failed to find platform-specific BASS libraries: `"$DLLPath`" not found.";
+        exit;
     }
 
-    if (Test-Path -Path "3rdParty/bass/bass.dll")
-    {
-        Write-Host "Copying BASS libaries to `"$PackagePath`"...";
+    # Install the component in the foobar2000 x64 components directory: "..\bin-x86\profile\user-components\TargetName"
+    $foobar2000Path = '..\bin.x86';
 
-        Copy-Item "3rdParty/bass/bass.dll" -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/bass_mpc.dll" -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/bassflac.dll" -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/bassmidi.dll" -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/bassopus.dll" -Destination "$PackagePath" -Force;
-        Copy-Item "3rdParty/bass/basswv.dll" -Destination "$PackagePath" -Force;
+    if (Test-Path -Path "$foobar2000Path\foobar2000.exe")
+    {
+        $ComponentPath = "$foobar2000Path\profile\user-components";
+
+        Write-Host "Creating directory `"$ComponentPath\$TargetName`"...";
+
+        $null = New-Item -Path "$ComponentPath" -Name "$TargetName" -ItemType 'directory' -Force;
+
+        Write-Host "Installing $Platform component in foobar2000 32-bit profile...";
+
+        $null = Copy-Item "$PackagePath\*.*" -Destination "$ComponentPath\$TargetName" -Force;
     }
-
-    if (Test-Path -Path "../bin")
+    else
     {
-        Write-Host "Installing component in foobar2000 32-bit...";
-        Copy-Item "$PackagePath/*" "../bin/x86/profile/user-components/$TargetName" -Force;
-
-        Write-Host "Installing component in foobar2000 64-bit...";
-        Copy-Item "$PackagePath/x64/*" "../bin/profile/user-components-x64/$TargetName" -Force;
+        Write-Host "Failed to install `"$Platform`" component: foobar2000 32-bit directory not found.";
+        exit;
     }
 }
 else
 {
-    Write-Host "Unknown platform: $Platform";
+    Write-Host "Failed to create package for unknown platform `"$Platform`".";
     exit;
 }
 
-$PackagePath = "../out/$TargetName";
+# Create the package archive.
+Write-Host "Creating archive `"$TargetName.fb2k-component`"...";
 
-$FilePath = "$OutputPath/../../x86/Release/vsthost32.exe";
-
-if (Test-Path -Path $FilePath)
-{
-    Write-Host "Copying vsthost32.exe to `"$PackagePath`"...";
-    Copy-Item $FilePath -Destination "$PackagePath/vsthost32.exe";
-}
-
-$FilePath = "$OutputPath/../../x64/Release/vsthost64.exe";
-
-if (Test-Path -Path $FilePath)
-{
-    Write-Host "Copying vsthost64.exe to `"$PackagePath`"...";
-    Copy-Item $FilePath -Destination "$PackagePath/vsthost64.exe";
-}
-
-$FilePath = "$OutputPath/../../x86/Release/scpipe32.exe";
-
-if (Test-Path -Path $FilePath)
-{
-    Write-Host "Copying scpipe32.exe to `"$PackagePath`"...";
-    Copy-Item $FilePath -Destination "$PackagePath/scpipe32.exe";
-}
-
-$FilePath = "$OutputPath/../../x64/Release/scpipe64.exe";
-
-if (Test-Path -Path $FilePath)
-{
-    Write-Host "Copying scpipe64.exe to `"$PackagePath`"...";
-    Copy-Item $FilePath -Destination "$PackagePath/scpipe64.exe";
-}
-
-# juno's fmmidi
-$FilePath = "3rdParty/fmmidi/Programs.txt";
-
-if (Test-Path -Path $FilePath)
-{
-    Write-Host "Copying fmmidi programs to `"$PackagePath`"...";
-
-    Copy-Item $FilePath -Destination "$PackagePath" -Force;
-}
-
-# FluidSynth configuration
-$FilePath = "3rdParty/FluidSynth/FluidSynth.cfg";
-
-if (Test-Path -Path $FilePath)
-{
-    Write-Host "Copying FluidSynth configuration to `"$PackagePath`"...";
-
-    Copy-Item $FilePath -Destination "$PackagePath" -Force;
-}
-
-Compress-Archive -Force -Path ../out/$TargetName/* -DestinationPath ../out/$TargetName.fb2k-component;
+Compress-Archive -Force -Path ..\out\$TargetName\* -DestinationPath ..\out\$TargetName.fb2k-component;
 
 Write-Host "Done.";

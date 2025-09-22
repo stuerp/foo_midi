@@ -174,13 +174,14 @@ public:
             callbackType = CALLBACK_EVENT;
         }
 
-        PCMWAVEFORMAT wFormat =
+        WAVEFORMATEX  wFormat =
         {
             formatType, s_audioChannels,
             sampleRate,
             (DWORD)(sampleRate * sizeSample * s_audioChannels),
             (WORD)(s_audioChannels * sizeSample),
-            (WORD)(8 * sizeSample)
+            (WORD)(8 * sizeSample),
+            0
         };
 
         // Open waveout device
@@ -754,6 +755,7 @@ void MidiSynth::loadGain()
 
 void MidiSynth::LoadSynthSetup()
 {
+    bool needPanic = m_setupInit;
     int inEmulatorId = m_setup.emulatorId;
 
     if(inEmulatorId >= OPNMIDI_VGM_DUMPER)
@@ -761,12 +763,24 @@ void MidiSynth::LoadSynthSetup()
 
     if(!m_setupInit || m_setupCurrent.emulatorId != inEmulatorId)
     {
+        if(needPanic)
+        {
+            opn2_panic(synth);
+            needPanic = false;
+        }
+
         opn2_switchEmulator(synth, inEmulatorId);
         m_setupCurrent.emulatorId = inEmulatorId;
     }
 
     if(!m_setupInit || m_setupCurrent.numChips != m_setup.numChips)
     {
+        if(needPanic)
+        {
+            opn2_panic(synth);
+            needPanic = false;
+        }
+
         opn2_setNumChips(synth, m_setup.numChips);
         m_setupCurrent.numChips = m_setup.numChips;
     }
@@ -776,7 +790,6 @@ void MidiSynth::LoadSynthSetup()
         opn2_setSoftPanEnabled(synth, m_setup.flagSoftPanning);
         m_setupCurrent.flagSoftPanning = m_setup.flagSoftPanning;
     }
-
 
     if(!m_setupInit || m_setupCurrent.flagScaleModulators != m_setup.flagScaleModulators)
     {
@@ -802,17 +815,14 @@ void MidiSynth::LoadSynthSetup()
         m_setupCurrent.chanAlloc = m_setup.chanAlloc;
     }
 
-    if(!m_setupInit || m_setupCurrent.numChips != m_setup.numChips)
-    {
-        opn2_setNumChips(synth, m_setup.numChips);
-        m_setupCurrent.numChips = m_setup.numChips;
-    }
-
     if(!m_setupInit ||
        m_setupCurrent.useExternalBank != m_setup.useExternalBank ||
        wcscmp(m_setupCurrent.bankPath, m_setup.bankPath) != 0
     )
     {
+        if(needPanic)
+            opn2_panic(synth);
+
         if(m_setup.useExternalBank)
         {
             char pathUtf8[MAX_PATH * 4];

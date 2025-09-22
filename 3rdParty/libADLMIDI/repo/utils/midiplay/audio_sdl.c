@@ -25,7 +25,7 @@
 #include <adlmidi.h>
 #include "audio.h"
 #define SDL_MAIN_HANDLED
-#include <SDL2/include/SDL.h>
+#include <SDL2/SDL.h>
 
 int audio_init(struct AudioOutputSpec *in_spec, struct AudioOutputSpec *out_obtained, AudioOutputCallback callback)
 {
