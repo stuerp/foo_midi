@@ -95,7 +95,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.2.0, 2025-xx-xx
+v3.2.2.0, 2025-09-22
 
 - New: Upgraded ADL Player with LibADLMIDI 1.6.1.
 - New: Upgraded OPN Player with LibOPNMIDI 1.6.1.

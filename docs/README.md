@@ -520,10 +520,10 @@ To render the MIDI file a synthesizer chip is emulated. These are the eumlators 
 | Neko Project II Kai OPNA (YM2608) | Neko Project 2 YM2608 emulator. Semi-accurate, but fast on slow devices. |
 | YMFM OPNA (YM2608) | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
 | YMFM OPN2 (YM2612) | [YMFM emulators](https://github.com/aaronsgiles/ymfm) written by Aaron Giles |
-| Nuked OPNA (YM2608), Low-level | Very low-level variant of Nuked OPN2 (YM2608) |
-| Nuked OPN2 (YM2612), Low-level | Very low-level variant of Nuked OPN2 (YM2612) |
-| Nuked OPN2C (YM3438), Low-level | Very low-level variant of Nuked OPN2 (YM3438) |
-| Nuked OPN2L (YMF276), Low-level | Very low-level variant of Nuked OPN2 (YMF276) |
+| Nuked OPNA (YM2608), Low-level | Extra heavy but very accurate variant of Nuked OPN2 (YM2608) |
+| Nuked OPN2 (YM2612), Low-level | Extra heavy but very accurate variant of Nuked OPN2 (YM2612) |
+| Nuked OPN2C (YM3438), Low-level | Extra heavy but very accurate variant of Nuked OPN2 (YM3438) |
+| Nuked OPN2L (YMF276), Low-level | Extra heavy but very accurate variant of Nuked OPN2 (YMF276) |
 
 The following emulator cores have been deprecated in the current version of the library and are no longer available:
 
