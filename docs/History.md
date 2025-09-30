@@ -1,6 +1,14 @@
 
 # foo_midi History
 
+v3.2.2.0, 2025-09-22
+
+- New: Upgraded ADL Player with LibADLMIDI 1.6.1.
+- New: Upgraded OPN Player with LibOPNMIDI 1.6.1.
+  -  Added new low-level Nuked OPN2 YM2608, YM2612, YM3438 and YMF276 modes.
+   - Upgraded all built-in WOPN banks to the [latest]((https://github.com/Wohlstand/libOPNMIDI/tree/master/fm_banks) version.
+   - Added new Ninoke WOPN bank.
+
 v3.2.1.1, 2025-09-16
 
 - Fixed: Removed use of ghc::filesystem (a drop-in replacement for std::filesystem) because of incompatibilities with the foobar2000 SDK.

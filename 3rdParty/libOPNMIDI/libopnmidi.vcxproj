@@ -226,7 +226,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;USE_NUKED_OPN2_LLE_EMULATOR;USE_NUKED_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;OPNMIDI_ENABLE_OPN2_LLE_EMULATOR;OPNMIDI_ENABLE_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>repo/include;repo/src;repo/src/chips/mame;repo/src/chips/mamefm;.</AdditionalIncludeDirectories>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
@@ -243,7 +243,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;USE_NUKED_OPN2_LLE_EMULATOR;USE_NUKED_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;OPNMIDI_ENABLE_OPN2_LLE_EMULATOR;OPNMIDI_ENABLE_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>repo/include;repo/src;repo/src/chips/mame;repo/src/chips/mamefm;.</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -266,7 +266,7 @@
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <AdditionalIncludeDirectories>repo/include;repo/src;repo/src/chips/mame;repo/src/chips/mamefm;.</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;USE_NUKED_OPN2_LLE_EMULATOR;USE_NUKED_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;OPNMIDI_ENABLE_OPN2_LLE_EMULATOR;OPNMIDI_ENABLE_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
@@ -283,7 +283,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;USE_NUKED_OPN2_LLE_EMULATOR;USE_NUKED_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPNMIDI_DISABLE_MIDI_SEQUENCER;OPNMIDI_ENABLE_OPN2_LLE_EMULATOR;OPNMIDI_ENABLE_OPNA_LLE_EMULATOR;BWMIDI_DISABLE_MUS_SUPPORT;BWMIDI_DISABLE_XMI_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>repo/include;repo/src;repo/src/chips/mame;repo/src/chips/mamefm;.</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>

@@ -95,13 +95,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.2.0, 2025-09-22
+v3.2.2.1, 2025-09-30
 
-- New: Upgraded ADL Player with LibADLMIDI 1.6.1.
-- New: Upgraded OPN Player with LibOPNMIDI 1.6.1.
-  -  Added new low-level Nuked OPN2 YM2608, YM2612, YM3438 and YMF276 modes.
-   - Upgraded all built-in WOPN banks to the [latest]((https://github.com/Wohlstand/libOPNMIDI/tree/master/fm_banks) version.
-   - Added new Ninoke WOPN bank.
+- Fixed: LibOPNMIDI did not include the new low-level emulators due to a build configuration error.
 
 You can read the full history [here](docs/History.md).
 
