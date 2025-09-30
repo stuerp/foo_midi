@@ -1,5 +1,5 @@
 
-/** $VER: ADLPlayer.cpp (2025.09.04) **/
+/** $VER: ADLPlayer.cpp (2025.09.30) **/
 
 #include "pch.h"
 
@@ -125,7 +125,8 @@ bool ADLPlayer::Startup()
         ::adl_setChannelAllocMode   (Device, ADLMIDI_ChanAlloc_AUTO);
         ::adl_setVolumeRangeModel   (Device, ADLMIDI_VolumeModel_AUTO);
 
-        ::adl_switchEmulator(Device, (int) _EmulatorCore);
+        if (::adl_switchEmulator(Device, (int) _EmulatorCore) != 0)
+            return false;
 
         if (_BankFilePath.empty() || (::adl_openBankFile(Device, _BankFilePath.c_str()) == -1))
             ::adl_setBank(Device, (int) _BankNumber);

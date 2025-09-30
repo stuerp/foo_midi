@@ -1,9 +1,10 @@
 
-/** $VER: OPNPlayer.cpp (2025.09.22) **/
+/** $VER: OPNPlayer.cpp (2025.09.30) **/
 
 #include "pch.h"
 
 #include "OPNPlayer.h"
+#include "Exception.h"
 #include "Resource.h"
 #include "Log.h"
 
@@ -121,7 +122,8 @@ bool OPNPlayer::Startup()
         ::opn2_setVolumeRangeModel      (Device, OPNMIDI_VolumeModel_AUTO);
         ::opn2_setChannelAllocMode      (Device, OPNMIDI_ChanAlloc_AUTO);
 
-        ::opn2_switchEmulator(Device, (int) _EmulatorCore);
+        if (::opn2_switchEmulator(Device, (int) _EmulatorCore) != 0)
+            return false;
 
         const void * BankData;
         size_t BankSize;
