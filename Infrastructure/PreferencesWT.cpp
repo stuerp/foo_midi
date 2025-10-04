@@ -100,6 +100,9 @@ public:
         COMMAND_HANDLER_EX(IDC_MT32_NICE_PARTIAL_MIXING, BN_CLICKED, OnButtonClicked)
         COMMAND_HANDLER_EX(IDC_MT32_REVERSE_STEREO, BN_CLICKED, OnButtonClicked)
 
+        // Secret Sauce
+        COMMAND_HANDLER_EX(IDC_SECRETSAUCE_GAIN, EN_CHANGE, OnEditChange)
+
         REFLECT_NOTIFICATIONS()
     END_MSG_MAP()
 
@@ -265,6 +268,17 @@ void WTDialog::apply()
         CfgMT32EmuReverseStereo     = (bool) SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK);
     }
 
+    // Secret Sauce
+    {
+        wchar_t Text[32];
+
+        GetDlgItemTextW(IDC_SECRETSAUCE_GAIN, Text, _countof(Text));
+
+        CfgSecretSauceGain = std::clamp(::_wtof(Text), -1., 2.);
+
+        ::uSetDlgItemText(m_hWnd, IDC_SECRETSAUCE_GAIN, pfc::format_float(CfgSecretSauceGain, 4, 2));
+    }
+
     OnChanged();
 }
 
@@ -352,6 +366,21 @@ void WTDialog::reset()
         SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) DefaultMT32EmuReverseStereo);
     }
 
+    // Secret Sauce
+    {
+        ::uSetDlgItemText(m_hWnd, IDC_SECRETSAUCE_GAIN, pfc::format_float(DefaultSecretSauceGain, 4, 2));
+
+        const int ControlIds[] =
+        {
+            IDC_SECRETSAUCE_GAIN_LBL, IDC_SECRETSAUCE_GAIN,
+        };
+
+        const BOOL IsSecretSauce = true; //(_SelectedPlayer.Type == PlayerTypes::SecretSauce);
+
+        for (const int & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(IsSecretSauce);
+    }
+
     OnChanged();
 }
 
@@ -382,7 +411,7 @@ BOOL WTDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 
         SendDlgItemMessage(IDC_BASSMIDI_USE_DLS, BM_SETCHECK, CfgBASSMIDIUseDLS);
 
-        const BOOL Enable = true;//(_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
+        const BOOL IsBASSMIDI = true;//(_SelectedPlayer.Type == PlayerTypes::BASSMIDI);
 
         const int ControlIds[] =
         {
@@ -392,7 +421,7 @@ BOOL WTDialog::OnInitDialog(CWindow window, LPARAM) noexcept
         };
 
         for (const auto & ControlId : ControlIds)
-            GetDlgItem(ControlId).EnableWindow(Enable);
+            GetDlgItem(ControlId).EnableWindow(IsBASSMIDI);
     }
 
     // FluidSynth
@@ -491,6 +520,21 @@ BOOL WTDialog::OnInitDialog(CWindow window, LPARAM) noexcept
             SendDlgItemMessage(IDC_MT32_NICE_PARTIAL_MIXING, BM_SETCHECK, (WPARAM) CfgMT32EmuNicePartialMixing);
             SendDlgItemMessage(IDC_MT32_REVERSE_STEREO,      BM_SETCHECK, (WPARAM) CfgMT32EmuReverseStereo);
         }
+    }
+
+    // Secret Sauce
+    {
+        ::uSetDlgItemText(m_hWnd, IDC_SECRETSAUCE_GAIN, pfc::format_float(CfgSecretSauceGain, 4, 2));
+
+        const BOOL IsSecretSauce = true;//(_SelectedPlayer.Type == PlayerTypes::SecretSauce);
+
+        const int ControlIds[] =
+        {
+            IDC_SECRETSAUCE_GAIN_LBL, IDC_SECRETSAUCE_GAIN,
+        };
+
+        for (const auto & ControlId : ControlIds)
+            GetDlgItem(ControlId).EnableWindow(IsSecretSauce);
     }
 
     SetTimer(ID_REFRESH, 20);
@@ -665,6 +709,17 @@ bool WTDialog::HasChanged() noexcept
 
         // MT32 Reverse Stereo
         if (SendDlgItemMessage(IDC_MT32_REVERSE_STEREO, BM_GETCHECK) != CfgMT32EmuReverseStereo)
+            return true;
+    }
+
+    // Secret Sauce
+    {
+        wchar_t Text[32];
+
+        // Gain
+        GetDlgItemTextW(IDC_SECRETSAUCE_GAIN, Text, _countof(Text));
+
+        if (std::abs(::_wtof(Text) - CfgSecretSauceGain) > 0.001)
             return true;
     }
 

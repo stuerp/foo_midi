@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.09.07) **/
+/** $VER: InputDecoder.cpp (2025.10.04) **/
 
 #include "pch.h"
 
@@ -82,7 +82,9 @@ InputDecoder::InputDecoder() noexcept :
     _BASSMIDIGain((float) CfgBASSMIDIGain),
     _BASSMIDIInterpolationMode((uint32_t) CfgBASSMIDIResamplingMode),
 
-    _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode)
+    _FluidSynthInterpolationMethod((uint32_t) CfgFluidSynthInterpolationMode),
+
+    _SecretSauceGain((float) CfgSecretSauceGain)
 {
     _CleanFlags = (uint32_t) (CfgExcludeEMIDITrackDesignation ? midi::container_t::CleanFlagEMIDI : 0) |
                              (CfgFilterInstruments  ? midi::container_t::CleanFlagInstruments : 0) |

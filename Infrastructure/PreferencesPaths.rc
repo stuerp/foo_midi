@@ -140,7 +140,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #pragma endregion
 
-#pragma region SecretSauce path
+#pragma region Secret Sauce path
 
 // Label
 #define X_B41    X_B31

@@ -252,3 +252,7 @@
 #define IDC_FLUIDSYNTH_DYN_LOADING          2256
 
 #define IDD_CLAP_WINDOW                     2600
+
+#define IDC_SECRETSAUCE_GAIN_LBL            2701
+#define IDC_SECRETSAUCE_GAIN                2702
+

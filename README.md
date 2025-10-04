@@ -97,6 +97,8 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v3.2.3.0, 2025-10-xx
 
+- New: *Gain* setting for Secret Sauce. It works the same a BASS MIDI. Positive values increase the volume, negative values decrese the volume. The valid range is -1.0 (Silence) to 2.0. Default is 0.0 (No gain).
+  - Beware that clipping may occur if you set the value too high.
 - Fixed: The preferences dialog accepts negative BASS MIDI gain values. The valid range is -1.0 (Silence) to 2.0. This already worked for JSON soundfont lists.
 - Improved: Soundfonts in a JSON soundfont list that not specify their own gain value will also use the gain value from the preferences. Soundfonts in a text soundfont list ignore this value since they have no way to override it.
 
