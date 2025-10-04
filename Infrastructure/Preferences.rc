@@ -208,7 +208,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_A84    159
     #define H_A84    H_CHB
 
-    // Checkbox: Use SecretSauce with GS
+    // Checkbox: Use Secret Sauce with GS
     #define X_A87    X_A84 + W_A84 + IX
     #define Y_A87    Y_A84
     #define W_A87    W_A84
@@ -302,7 +302,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
         combobox                                                        IDC_MIDI_FLAVOR,                X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
         control     "Use LibMT32Emu with MT-32",                        IDC_MIDI_USE_MT32EMU_WITH_MT32, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
-        control     "Use SecretSauce with GS",                          IDC_MIDI_USE_SC_WITH_GS,        "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A87, Y_A87, W_A87, H_A87
+        control     "Use Secret Sauce with GS",                         IDC_MIDI_USE_SC_WITH_GS,        "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A87, Y_A87, W_A87, H_A87
         control     "Use VSTi with XG",                                 IDC_MIDI_USE_VSTI_WITH_XG,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
 
         control     "Filter effects (Reverb and Chorus)",               IDC_MIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83

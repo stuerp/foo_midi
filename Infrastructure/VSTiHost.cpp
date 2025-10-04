@@ -1,5 +1,5 @@
 
-/** $VER: VSTiHost.cpp (2025.07.13) P. Stuer **/
+/** $VER: VSTiHost.cpp (2025.10.04) P. Stuer **/
 
 #include "pch.h"
 
@@ -24,7 +24,33 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
     if (directoryPath.empty())
         return _PlugIns;
 
-    GetPlugIns_(directoryPath);
+    std::vector<fs::path> DirectoryPaths;
+
+    // Hack: The setting can be a concatination of multiple paths separated by a pipe (|) character.
+    {
+        const std::string Source = directoryPath.string().c_str();
+        const char Separator = '|';
+
+        size_t Offset = 0;
+
+        while (Offset < Source.size())
+        {
+            size_t Position = Source.find(Separator, Offset);
+
+            if (Position == std::string_view::npos)
+            {
+                DirectoryPaths.emplace_back(Source.substr(Offset));
+                break;
+            }
+
+            DirectoryPaths.emplace_back(Source.substr(Offset, Position - Offset));
+
+            Offset = Position + 1;
+        }
+    }
+
+    for (const auto & DirectoryPath : DirectoryPaths)
+        GetPlugIns_(DirectoryPath);
 
     std::sort(_PlugIns.begin(), _PlugIns.end(), [](PlugIn a, PlugIn b) { return a.Name < b.Name; });
 

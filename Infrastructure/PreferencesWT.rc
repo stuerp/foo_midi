@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.WT (2025.08.27) **/
+/** $VER: PreferencesFM.WT (2025.10.04) **/
 
 #include "Resource.h"
 
@@ -42,7 +42,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_A11    48
     #define H_A11    H_LBL
 
-    // EditBox: Volume
+    // EditBox: Gain
     #define X_A12    X_A11 + W_A11 + IX
     #define Y_A12    Y_A11
     #define W_A12    24
@@ -153,101 +153,121 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Groupbox LibMT32Emu
 
-#define X_D00    X_B20
-#define Y_D00    Y_B20 + H_B20 + IY
-#define W_D00    W_B20
+#define X_C00    X_B20
+#define Y_C00    Y_B20 + H_B20 + IY
+#define W_C00    W_B20
 
     // Label: Conversion Quality
-    #define X_D01    X_D00 +  5
-    #define Y_D01    Y_D00 + 11
-    #define W_D01    64
-    #define H_D01    H_LBL
+    #define X_C01    X_C00 +  5
+    #define Y_C01    Y_C00 + 11
+    #define W_C01    64
+    #define H_C01    H_LBL
 
     // Combobox: Conversion Quality
-    #define X_D02    X_D01 + W_D01 + IX
-    #define Y_D02    Y_D01
-    #define W_D02    64
-    #define H_D02    H_CBX
+    #define X_C02    X_C01 + W_C01 + IX
+    #define Y_C02    Y_C01
+    #define W_C02    64
+    #define H_C02    H_CBX
 
     // Label: Max. Partials
-    #define X_D03    X_D02 + W_D02 + IX
-    #define Y_D03    Y_D01
-    #define W_D03    48
-    #define H_D03    H_LBL
+    #define X_C03    X_C02 + W_C02 + IX
+    #define Y_C03    Y_C01
+    #define W_C03    48
+    #define H_C03    H_LBL
 
     // Combobox: Max. Partials
-    #define X_D04    X_D03 + W_D03 + IX
-    #define Y_D04    Y_D03
-    #define W_D04    32
-    #define H_D04    H_CBX
+    #define X_C04    X_C03 + W_C03 + IX
+    #define Y_C04    Y_C03
+    #define W_C04    32
+    #define H_C04    H_CBX
 
     // Label: Analog Output Mode
-    #define X_D05    X_D01
-    #define Y_D05    Y_D02 + H_D02 + IY
-    #define W_D05    64
-    #define H_D05    H_LBL
+    #define X_C05    X_C01
+    #define Y_C05    Y_C02 + H_C02 + IY
+    #define W_C05    64
+    #define H_C05    H_LBL
 
     // Combobox: Analog Output Mode
-    #define X_D06    X_D05 + W_D05 + IX
-    #define Y_D06    Y_D05
-    #define W_D06    64
-    #define H_D06    H_CBX
+    #define X_C06    X_C05 + W_C05 + IX
+    #define Y_C06    Y_C05
+    #define W_C06    64
+    #define H_C06    H_CBX
 
     // Label: GM Set
-    #define X_D07    X_D06 + W_D06 + IX
-    #define Y_D07    Y_D05
-    #define W_D07    48
-    #define H_D07    H_LBL
+    #define X_C07    X_C06 + W_C06 + IX
+    #define Y_C07    Y_C05
+    #define W_C07    48
+    #define H_C07    H_LBL
 
     // Combobox: GM Set
-    #define X_D08    X_D07 + W_D07 + IX
-    #define Y_D08    Y_D07
-    #define W_D08    80
-    #define H_D08    H_CBX
+    #define X_C08    X_C07 + W_C07 + IX
+    #define Y_C08    Y_C07
+    #define W_C08    80
+    #define H_C08    H_CBX
 
     // Label: DAC Input Mode
-    #define X_D09    X_D05
-    #define Y_D09    Y_D06 + H_D06 + IY
-    #define W_D09    64
-    #define H_D09    H_LBL
+    #define X_C09    X_C05
+    #define Y_C09    Y_C06 + H_C06 + IY
+    #define W_C09    64
+    #define H_C09    H_LBL
 
     // Combobox: DAC Input Mode
-    #define X_D10    X_D09 + W_D09 + IX
-    #define Y_D10    Y_D09
-    #define W_D10    64
-    #define H_D10    H_CBX
+    #define X_C10    X_C09 + W_C09 + IX
+    #define Y_C10    Y_C09
+    #define W_C10    64
+    #define H_C10    H_CBX
 
     // Checkbox Reverb
-    #define X_D15    X_D10 + W_D10 + IX
-    #define Y_D15    Y_D10
-    #define W_D15    64
-    #define H_D15    H_CHB
+    #define X_C15    X_C10 + W_C10 + IX
+    #define Y_C15    Y_C10
+    #define W_C15    64
+    #define H_C15    H_CHB
 
     // Checkbox Nice Amp Ramp
-    #define X_D11    X_D09
-    #define Y_D11    Y_D10 + H_D10 + IY
-    #define W_D11    77
-    #define H_D11    H_CHB
+    #define X_C11    X_C09
+    #define Y_C11    Y_C10 + H_C10 + IY
+    #define W_C11    77
+    #define H_C11    H_CHB
 
     // Checkbox Nice Panning
-    #define X_D12    X_D11 + W_D11 + IX
-    #define Y_D12    Y_D11
-    #define W_D12    77
-    #define H_D12    H_CHB
+    #define X_C12    X_C11 + W_C11 + IX
+    #define Y_C12    Y_C11
+    #define W_C12    77
+    #define H_C12    H_CHB
 
     // Checkbox Nice Partial Mixing
-    #define X_D13    X_D12 + W_D12 + IX
-    #define Y_D13    Y_D12
-    #define W_D13    77
-    #define H_D13    H_CHB
+    #define X_C13    X_C12 + W_C12 + IX
+    #define Y_C13    Y_C12
+    #define W_C13    77
+    #define H_C13    H_CHB
 
     // Checkbox Reverse Stereo
-    #define X_D14    X_D13 + W_D13 + IX
-    #define Y_D14    Y_D13
-    #define W_D14    77
-    #define H_D14    H_CHB
+    #define X_C14    X_C13 + W_C13 + IX
+    #define Y_C14    Y_C13
+    #define W_C14    77
+    #define H_C14    H_CHB
 
-#define H_D00    11 + H_D02 + IY + H_D06 + IY + H_D10 + IY + H_D11 + 7
+#define H_C00    11 + H_C02 + IY + H_C06 + IY + H_C10 + IY + H_C11 + 7
+
+// Groupbox Secret Sauce
+
+#define X_D00    X_C00
+#define Y_D00    Y_C00 + H_C00 + IY
+#define W_D00    W_C00
+
+    // Label: Gain
+    #define X_D01    X_D00 +  5
+    #define Y_D01    Y_D00 + 11
+    #define W_D01    24
+    #define H_D01    H_LBL
+
+    // Editbox: Gain
+    #define X_D02    X_D01 + W_D01 + IX
+    #define Y_D02    Y_D01
+    #define W_D02    24
+    #define H_D02    H_EBX
+
+#define H_D00    11 + H_D02 + 7
 
 #pragma endregion
 
@@ -279,23 +299,27 @@ font 8, "MS Shell Dlg", 400, 0, 1
         control "Use DLS (Custom)",             IDC_FLUIDSYNTH_USE_DLS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B26, Y_B26, W_B26, H_B26
         control "Dynamic sample loading",       IDC_FLUIDSYNTH_DYN_LOADING          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_B27, Y_B27, W_B27, H_B27
 
-    groupbox "LibMT32Emu (Munt)", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
-        rtext       "Resampling Quality:"   IDC_MT32_CONVERSION_QUALITY_TEXT,   X_D01, Y_D01 + 2, W_D01, H_D01
-        combobox                            IDC_MT32_CONVERSION_QUALITY,        X_D02, Y_D02,     W_D02, H_D02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "Max. Partials:",       IDC_MT32_MAX_PARTIALS_TEXT,         X_D03, Y_D03 + 2, W_D03, H_D03
-        edittext                            IDC_MT32_MAX_PARTIALS,              X_D04, Y_D04,     W_D04, H_D04, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+    groupbox "LibMT32Emu (Munt)", IDC_STATIC, X_C00, Y_C00, W_C00, H_C00
+        rtext       "Resampling Quality:"       IDC_MT32_CONVERSION_QUALITY_TEXT,   X_C01, Y_C01 + 2, W_C01, H_C01
+        combobox                                IDC_MT32_CONVERSION_QUALITY,        X_C02, Y_C02,     W_C02, H_C02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Max. Partials:",           IDC_MT32_MAX_PARTIALS_TEXT,         X_C03, Y_C03 + 2, W_C03, H_C03
+        edittext                                IDC_MT32_MAX_PARTIALS,              X_C04, Y_C04,     W_C04, H_C04, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
 
-        rtext       "Analog Output Mode:"   IDC_MT32_ANALOG_OUTPUT_MODE_TEXT,   X_D05, Y_D05 + 2, W_D05, H_D05
-        combobox                            IDC_MT32_ANALOG_OUTPUT_MODE,        X_D06, Y_D06,     W_D06, H_D06, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "GM Set:",              IDC_MT32_GM_SET_TEXT,               X_D07, Y_D07 + 2, W_D07, H_D07
-        combobox                            IDC_MT32_GM_SET,                    X_D08, Y_D08,     W_D08, H_D08, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Analog Output Mode:"       IDC_MT32_ANALOG_OUTPUT_MODE_TEXT,   X_C05, Y_C05 + 2, W_C05, H_C05
+        combobox                                IDC_MT32_ANALOG_OUTPUT_MODE,        X_C06, Y_C06,     W_C06, H_C06, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "GM Set:",                  IDC_MT32_GM_SET_TEXT,               X_C07, Y_C07 + 2, W_C07, H_C07
+        combobox                                IDC_MT32_GM_SET,                    X_C08, Y_C08,     W_C08, H_C08, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-        rtext       "DAC Input Mode:"       IDC_MT32_DAC_INPUT_MODE_TEXT,       X_D09, Y_D09 + 2, W_D09, H_D09
-        combobox                            IDC_MT32_DAC_INPUT_MODE,            X_D10, Y_D10,     W_D10, H_D10, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        control     "Reverb",               IDC_MT32_REVERB,                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D15, Y_D15 + 2, W_D15, H_D15
+        rtext       "DAC Input Mode:"           IDC_MT32_DAC_INPUT_MODE_TEXT,       X_C09, Y_C09 + 2, W_C09, H_C09
+        combobox                                IDC_MT32_DAC_INPUT_MODE,            X_C10, Y_C10,     W_C10, H_C10, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        control     "Reverb",                   IDC_MT32_REVERB,                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C15, Y_C15 + 2, W_C15, H_C15
 
-        control     "Nice Amp Ramp",        IDC_MT32_NICE_AMP_RAMP,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D11, Y_D11 + 2, W_D11, H_D11
-        control     "Nice Panning",         IDC_MT32_NICE_PANNING,              "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D12, Y_D12 + 2, W_D12, H_D12
-        control     "Nice Partial Mixing",  IDC_MT32_NICE_PARTIAL_MIXING,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D13, Y_D13 + 2, W_D13, H_D13
-        control     "Reverse Stereo",       IDC_MT32_REVERSE_STEREO,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_D14, Y_D14 + 2, W_D14, H_D14
+        control     "Nice Amp Ramp",            IDC_MT32_NICE_AMP_RAMP,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C11, Y_C11 + 2, W_C11, H_C11
+        control     "Nice Panning",             IDC_MT32_NICE_PANNING,              "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C12, Y_C12 + 2, W_C12, H_C12
+        control     "Nice Partial Mixing",      IDC_MT32_NICE_PARTIAL_MIXING,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C13, Y_C13 + 2, W_C13, H_C13
+        control     "Reverse Stereo",           IDC_MT32_REVERSE_STEREO,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C14, Y_C14 + 2, W_C14, H_C14
+
+    groupbox "Secret Sauce", IDC_STATIC, X_D00, Y_D00, W_D00, H_D00
+        rtext             "Gain:",              IDC_SECRETSAUCE_GAIN_LBL,           X_D01, Y_D01 + 2, W_D01, H_D01
+        edittext                                IDC_SECRETSAUCE_GAIN,               X_D02, Y_D02,     W_D02, H_D02, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
 }

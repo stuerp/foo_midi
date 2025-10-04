@@ -1,5 +1,5 @@
 
-/** $VER: SoundfontList.cpp (2025.08.15) P. Stuer - Soundfont list support routines for wavetable players **/
+/** $VER: SoundfontList.cpp (2025.10.04) P. Stuer - Soundfont list support routines for wavetable players **/
 
 #include "pch.h"
 
@@ -11,12 +11,12 @@
 #include "Log.h"
 
 #include <json-builder.h>
-//#include <sflist.h>
+//#include <sflist.h> // Old code for compatibility testing.
 
 #include <fstream>
 
 static json_value * ReadJSON(const std::string & data);
-static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::path & parentPath);
+static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::path & parentPath, float defaultGain);
 static std::vector<soundfont_t> ProcessText(const std::string & data, const fs::path & parentPath);
 static void ProcessPatchMappings(const json_value * patchMappings, uint32_t channel, std::vector<BASS_MIDI_FONTEX> & out, BASS_MIDI_FONTEX & fontex);
 static const json_value * FindObject(const json_value * object, const char * name);
@@ -24,7 +24,7 @@ static const json_value * FindObject(const json_value * object, const char * nam
 /// <summary>
 /// Loads a soundfont list (*.sflist, *.json)
 /// </summary>
-std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
+std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath, float defaultGain)
 {
     if (!filesystem::g_exists(filePath.string().c_str(), fb2k::noAbort))
         return { };
@@ -60,7 +60,7 @@ std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath)
 
     if (JSON != nullptr)
     {
-        auto List = ProcessJSON(JSON, filePath.parent_path());
+        auto List = ProcessJSON(JSON, filePath.parent_path(), defaultGain);
 
         ::json_builder_free(JSON);
 
@@ -109,7 +109,7 @@ static json_value * ReadJSON(const std::string & data)
 /// <summary>
 /// Processes the JSON object.
 /// </summary>
-static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::path & parentPath)
+static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::path & parentPath, float defaultGain)
 {
     if (json == nullptr)
         return { };
@@ -298,8 +298,10 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
                 if (Gain->type == json_double)
                     Value = Gain->u.dbl;
 
-                sf.Gain = (float) Value;
+                sf.Gain = (float) std::clamp(Value, -1., std::numeric_limits<double>::max()); // Allow max. positive value for backwards compatibility.
             }
+            else
+                sf.Gain = defaultGain;
         }
 
         {

@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.cpp (2025.08.31) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2025.10.04) Secret Sauce **/
 
 #include "pch.h"
 
@@ -15,7 +15,7 @@
 
 #pragma region Public
 
-SCPlayer::SCPlayer() noexcept : player_t(),  _Samples()
+SCPlayer::SCPlayer() noexcept : player_t(), _Samples()
 {
     _IsStarted = false;
     _COMInitialisationCount = 0;
@@ -108,33 +108,35 @@ void SCPlayer::Shutdown()
 /// <summary>
 /// Renders a block of samples.
 /// </summary>
-void SCPlayer::Render(audio_sample * sampleData, uint32_t sampleCount)
+void SCPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
-    ::memset(sampleData, 0, sampleCount * 2 * sizeof(audio_sample));
+    ::memset(dstFrames, 0, dstCount * 2 * sizeof(audio_sample));
 
-    while (sampleCount != 0)
+    while (dstCount != 0)
     {
-        unsigned long ToDo = (sampleCount > 4096) ? 4096 : sampleCount;
+        uint32_t ToDo = (dstCount > 4096) ? 4096 : dstCount;
 
-        for (size_t i = 0; i < _countof(_hProcess); ++i)
+        for (uint32_t i = 0; i < _countof(_hProcess); ++i)
         {
-            if (!RenderPort((uint32_t) i, _Samples, (uint32_t) ToDo))
+            if (!RenderPort(i, _Samples, ToDo))
             {
                 Shutdown();
 
                 return;
             }
 
+            float Gain = (float) CfgSecretSauceGain;
+
             // Convert the format of the rendered output.
             for (size_t j = 0; j < ToDo; ++j)
             {
-                sampleData[j * 2 + 0] += _Samples[j * 2 + 0];
-                sampleData[j * 2 + 1] += _Samples[j * 2 + 1];
+                dstFrames[j * 2 + 0] += _Samples[j * 2 + 0] * (1.f + Gain);
+                dstFrames[j * 2 + 1] += _Samples[j * 2 + 1] * (1.f + Gain);
             }
         }
 
-        sampleData += ToDo * 2;
-        sampleCount -= ToDo;
+        dstFrames += ToDo * 2;
+        dstCount -= ToDo;
     }
 }
 

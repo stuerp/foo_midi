@@ -1,6 +1,10 @@
 
 # foo_midi History
 
+v3.2.2.1, 2025-09-30
+
+- Fixed: LibOPNMIDI did not include the new low-level emulators due to a build configuration error.
+
 v3.2.2.0, 2025-09-22
 
 - New: Upgraded ADL Player with LibADLMIDI 1.6.1.

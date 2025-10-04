@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.08.31) **/
+/** $VER: Configuration.h (2025.10.04) **/
 
 #pragma once
 
@@ -143,6 +143,8 @@ enum
 
 const float DefaultBASSMIDIGain = 0.15f;
 
+const float DefaultSecretSauceGain = 0.0f;
+
 const uint16_t DefaultEnabledChannels = 0xFFFF;
 
 extern cfg_var_modern::cfg_int      CfgPlayerType;
@@ -230,7 +232,8 @@ extern cfg_var_modern::cfg_bool
     CfgFluidSynthUseDLS;
 
 extern cfg_var_modern::cfg_float
-    CfgBASSMIDIGain;
+    CfgBASSMIDIGain,
+    CfgSecretSauceGain;
 
 extern cfg_var_modern::cfg_string
     CfgVSTiPlugInDirectoryPath,

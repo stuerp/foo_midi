@@ -430,9 +430,9 @@ This setting turns off the reverb and chorus effect and prevents reverb and chor
 
 When you enable this setting the selected player will be ignored and LibMT32Emu will always be used whenever an MT-32 MIDI file is played.
 
-#### Use SecretSauce with GS
+#### Use Secret Sauce with GS
 
-When you enable this setting the selected player will be ignored and SecretSauce will always be used whenever a GS MIDI file is played.
+When you enable this setting the selected player will be ignored and Secret Sauce will always be used whenever a GS MIDI file is played.
 
 #### Use VSTi with XG
 
@@ -578,6 +578,10 @@ This sub-page of **MIDI Player** contains the various directory and file paths t
 | FluidSynth&nbsp;Config | The location of the FluidSynth configuration file. |
 | FMMIDI&nbsp;Programs | The location of the file containing the FMMIDI programs. Leave this empty to use the file included in the component directory. |
 
+> [!Warning]
+> The VSTi&nbsp;Plug&#8209;Ins path setting can contain multiple paths separated by a pipe (|) character (e.g. "c:\VSTi\x86|d:\VSTi\x64").
+> Make sure there are no unwanted spaces at the beginning or end of the path names.
+
 ---
 
 ### Processing
@@ -640,7 +644,10 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 
 ##### Gain
 
-The gain value is added to the volume of the soundfont. Positive values increase the volume. Negative values decrease the volume. The default is 0.
+The gain value can be used to tweak the volume of the soundfont. Positive values increase the volume. Negative values decrease the volume. The valid range is -1.0 (Silence) to 2.0. The default is 0 (No gain).
+
+> [!Note]
+> This value is used by the base soundfont and soundfonts in a JSON soundfont list that not specify their own gain value. Soundfonts in a text soundfont list ignore this value since they have no way to override it.
 
 ##### Resampling
 
@@ -771,6 +778,15 @@ Especially noticeable in complex tones like orchestral instruments or layered sy
 Early MT-32 units (especially those with ROM version 1.07 or earlier) are known to have reversed stereo channels compared to modern expectations.
 
 Enable this setting to reverse the channels.
+
+#### Secret Sauce settings
+
+##### Gain
+
+The gain value can be used to tweak the amplitude of the generated samples. Positive values increase the volume. Negative values decrease the volume. The valid range is -1.0 (Silence) to 2.0. The default is 0.0 (No gain).
+
+> [!Warning]
+> The gain is added in post processing. Clipping will occur if you set this value too high.
 
 ---
 

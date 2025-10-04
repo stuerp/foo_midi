@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.09.11) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2025.10.04) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -232,7 +232,9 @@ void InputDecoder::AddSoundFont(const soundfont_t & sf, std::unordered_set<std::
 
         Log.AtInfo().Write(STR_COMPONENT_BASENAME " is reading soundfont list \"%s\".", sf.FilePath.string().c_str());
 
-        for (const auto & iter : LoadSoundfontList(sf.FilePath))
+        const float DefaultGain = (_PlayerType == PlayerType::BASSMIDI) ? _BASSMIDIGain : 0.f;
+
+        for (const auto & iter : LoadSoundfontList(sf.FilePath, DefaultGain))
         {
             AddSoundFont(iter, uniqueLists, soundfonts, report);
             ++Count;

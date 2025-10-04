@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.h (2025.08.31) Secret Sauce **/
+/** $VER: SCPlayer.h (2025.10.04) Secret Sauce **/
 
 #pragma once
 

@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.09.11) **/
+/** $VER: InputDecoder.h (2025.10.04) **/
 
 #pragma once
 
@@ -237,6 +237,8 @@ private:
     uint32_t _BASSMIDIInterpolationMode;
 
     uint32_t _FluidSynthInterpolationMethod;
+
+    float _SecretSauceGain;
 
     bool _IsEndOfContainer;
     bool _IsFirstBlock;
