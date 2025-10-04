@@ -578,6 +578,10 @@ This sub-page of **MIDI Player** contains the various directory and file paths t
 | FluidSynth&nbsp;Config | The location of the FluidSynth configuration file. |
 | FMMIDI&nbsp;Programs | The location of the file containing the FMMIDI programs. Leave this empty to use the file included in the component directory. |
 
+> [!Warning]
+> The VSTi&nbsp;Plug&#8209;Ins path setting can contain multiple paths separated by a pipe (|) character (e.g. "c:\VSTi\x86|d:\VSTi\x64").
+> Make sure there are no unwanted spaces at the beginning or end of the path names.
+
 ---
 
 ### Processing
@@ -781,8 +785,8 @@ Enable this setting to reverse the channels.
 
 The gain value can be used to tweak the amplitude of the generated samples. Positive values increase the volume. Negative values decrease the volume. The valid range is -1.0 (Silence) to 2.0. The default is 0.0 (No gain).
 
-> [!Note]
-> The gain is added in post processing. Clipping may occur if you set this value too high.
+> [!Warning]
+> The gain is added in post processing. Clipping will occur if you set this value too high.
 
 ---
 
