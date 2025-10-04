@@ -1,5 +1,5 @@
 
-/** $VER: SoundfontList.h (2025.08.15) P. Stuer - Represents a soundfont. **/
+/** $VER: SoundfontList.h (2025.10.04) P. Stuer - Represents a soundfont. **/
 
 #pragma once
 
@@ -52,4 +52,4 @@ public:
     std::vector<BASS_MIDI_FONTEX> Fonts;
 };
 
-std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath);
+std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath, float defaultGain);

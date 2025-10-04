@@ -640,7 +640,10 @@ This sub-page of **MIDI Player** contains the settings specific to configuring t
 
 ##### Gain
 
-The gain value is added to the volume of the soundfont. Positive values increase the volume. Negative values decrease the volume. The default is 0.
+The gain value is added to the volume of the soundfont. Positive values increase the volume. Negative values decrease the volume. The valid range is -1.0 (Silence) to 2.0. The default is 0.
+
+> [!Note]
+> This value is used by the base soundfont and soundfonts in a JSON soundfont list that not specify their own gain value. Soundfonts in a text soundfont list ignore this value since they have no way to override it.
 
 ##### Resampling
 

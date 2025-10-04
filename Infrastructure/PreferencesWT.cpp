@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesWT.cpp (2025.08.27) P. Stuer **/
+/** $VER: PreferencesWT.cpp (2025.10.04) P. Stuer **/
 
 #include "pch.h"
 
@@ -173,7 +173,7 @@ void WTDialog::apply()
 
         GetDlgItemTextW(IDC_BASSMIDI_GAIN, Text, _countof(Text));
 
-        CfgBASSMIDIGain = std::clamp(::_wtof(Text), 0., 2.);
+        CfgBASSMIDIGain = std::clamp(::_wtof(Text), -1., 2.);
 
         ::uSetDlgItemText(m_hWnd, IDC_BASSMIDI_GAIN, pfc::format_float(CfgBASSMIDIGain, 4, 2));
 

@@ -67,7 +67,7 @@ Create the following directory structure:
     3rdParty
         WTL10_10320
     bin
-        x86
+    bin.x86
     foo_midi
     out
     sdk
@@ -95,9 +95,10 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.2.1, 2025-09-30
+v3.2.3.0, 2025-10-xx
 
-- Fixed: LibOPNMIDI did not include the new low-level emulators due to a build configuration error.
+- Fixed: The preferences dialog accepts negative BASS MIDI gain values. The valid range is -1.0 (Silence) to 2.0. This already worked for JSON soundfont lists.
+- Improved: Soundfonts in a JSON soundfont list that not specify their own gain value will also use the gain value from the preferences. Soundfonts in a text soundfont list ignore this value since they have no way to override it.
 
 You can read the full history [here](docs/History.md).
 
