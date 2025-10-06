@@ -57,6 +57,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
+    <EnableASAN>true</EnableASAN>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -290,6 +291,9 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
   <ItemGroup>
     <ClCompile Include="Infrastructure\AlbumArt.cpp" />
     <ClCompile Include="Infrastructure\Channels.cpp" />
+    <ClCompile Include="Infrastructure\CLAPEvents.cpp">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="Infrastructure\CLAPHost.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
     <ClCompile Include="Infrastructure\InputInfoReader.cpp" />
@@ -304,7 +308,6 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
     <ClCompile Include="Players\BMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Configuration.cpp" />
     <ClCompile Include="Infrastructure\ContextMenu.cpp" />
-    <ClCompile Include="Infrastructure\CLAPEvents.cpp" />
     <ClCompile Include="Infrastructure\CLAPPlugIn.cpp" />
     <ClCompile Include="Players\CLAPPlayer.cpp" />
     <ClCompile Include="Players\EdMPlayer.cpp" />
@@ -436,6 +439,7 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
     <ClInclude Include="3rdParty\foo_vis_midi\API.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
     <ClInclude Include="Infrastructure\Channels.h" />
+    <ClInclude Include="Infrastructure\CLAPEvents.h" />
     <ClInclude Include="Infrastructure\CLAPHost.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
     <ClInclude Include="Infrastructure\CriticalSection.h" />
@@ -448,7 +452,6 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
     <ClInclude Include="Infrastructure\ConfigurationMap.h" />
     <ClInclude Include="Infrastructure\Configuration.h" />
     <ClInclude Include="Infrastructure\ContextMenu.h" />
-    <ClInclude Include="Infrastructure\CLAPEvents.h" />
     <ClInclude Include="Infrastructure\CLAPPlugIn.h" />
     <ClInclude Include="Players\CLAPPlayer.h" />
     <ClInclude Include="Players\EdMPlayer.h" />

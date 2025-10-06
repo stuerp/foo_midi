@@ -915,7 +915,7 @@ uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
         if (!File.is_open())
             return 0;
 
-        uint8_t MZHeader[64];
+        uint8_t MZHeader[64] = { };
 
         File.read((char *) MZHeader, sizeof(MZHeader));
 
@@ -926,7 +926,7 @@ uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
 
         File.seekg(OffsetPEHeader, std::ios::beg);
 
-        uint8_t PEHeader[(size_t) 4 + 20 + 224];
+        uint8_t PEHeader[(size_t) 4 + 20 + 224] = { };
 
         File.read((char *) PEHeader, sizeof(PEHeader));
 

@@ -43,7 +43,6 @@
     <ClCompile Include="Players\NukedSC-55Player.cpp" />
     <ClCompile Include="Players\CLAPPlayer.cpp" />
     <ClCompile Include="Infrastructure\CLAPPlugIn.cpp" />
-    <ClCompile Include="Infrastructure\CLAPEvents.cpp" />
     <ClCompile Include="Infrastructure\MainMenu.cpp" />
     <ClCompile Include="Infrastructure\FS.cpp" />
     <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
@@ -53,6 +52,7 @@
     <ClCompile Include="Infrastructure\InputInfoWriter.cpp" />
     <ClCompile Include="Players\SoundfontList.cpp" />
     <ClCompile Include="Infrastructure\CLAPHost.cpp" />
+    <ClCompile Include="Infrastructure\CLAPEvents.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Experimental\hypersonic2.h" />
@@ -199,7 +199,6 @@
     <ClInclude Include="Players\NukedSC-55Player.h" />
     <ClInclude Include="Players\CLAPPlayer.h" />
     <ClInclude Include="Infrastructure\CLAPPlugIn.h" />
-    <ClInclude Include="Infrastructure\CLAPEvents.h" />
     <ClInclude Include="3rdParty\foo_vis_midi\API.h" />
     <ClInclude Include="Infrastructure\PreferencesFM.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
@@ -208,6 +207,7 @@
     <ClInclude Include="Infrastructure\PreferencesProcessing.h" />
     <ClInclude Include="Infrastructure\CLAPHost.h" />
     <ClInclude Include="Players\OPNPlayer\Nineko.wopn.h" />
+    <ClInclude Include="Infrastructure\CLAPEvents.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Experimental\DXiPlayer.h" />

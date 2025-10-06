@@ -48,7 +48,7 @@ The following libraries are included in the code:
   - [BASSWV](https://www.un4seen.com/) 2.4.7.4
   - [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
   - [BASSMPC](https://www.un4seen.com/) 2.4.1.2
-- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.7
+- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.5.0
 - [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.1, Yamaha YMF262 and CT1747 (OPL3)
 - [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.1, Yamaha YM2612 (OPN2), Yamaha YM2608 (OPNA), Yamaha YM3438 (OPN2C) and YMF276 (OPN2L).
 - [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
@@ -97,7 +97,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v3.2.3.0, 2025-10-04
 
-- New: *Gain* setting for Secret Sauce. It works the same with BASS MIDI. Positive values increase the volume, negative values decrese the volume. The valid range is -1.0 (Silence) to 2.0. Default is 0.0 (No gain). Beware that clipping will occur if you set the value too high.
+- New: *Gain* setting for Secret Sauce. It works the same with BASS MIDI. Positive values increase the volume, negative values decrease the volume. The valid range is -1.0 (Silence) to 2.0. Default is 0.0 (No gain). Beware that clipping will occur if you set the value too high.
 - New: The VSTi&nbsp;Plug&#8209;Ins setting can contain multiple paths separated by a pipe (|) character (e.g. "c:\VSTi\x86|d:\VSTi\x64"). Make sure there are no unwanted spaces at the beginning or end of the path names.
 - Fixed: The preferences dialog accepts negative BASS MIDI gain values. The valid range is -1.0 (Silence) to 2.0. This already worked for JSON soundfont lists.
 - Improved: Soundfonts in a JSON soundfont list that not specify their own gain value will also use the gain value from the preferences. Soundfonts in a text soundfont list ignore this value since they have no way to override it.

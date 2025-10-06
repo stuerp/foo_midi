@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.cpp (2025.08.02) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.cpp (2025.10.06) P. Stuer - Wrapper for CLAP plugins **/
 
 #include "pch.h"
 
@@ -95,7 +95,7 @@ void CLAPPlayer::Shutdown()
     }
 
     // Add another reference to the plug-in pointer to prevent it from being destroyed prematurely and schedule a cleanup on the main thread.
-    auto PlugIn = _PlugIn;
+    std::shared_ptr<CLAP::PlugIn> PlugIn(_PlugIn);
 
     auto Cleanup = [PlugIn]
     {
@@ -155,6 +155,10 @@ void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
         }
     }
     catch (...) { }
+
+    // Clunky in C++ but otherwise the Address Saninitzer goes nuts.
+    for (auto Event : _InEvents.Events)
+        std::free((void *) Event);
 
     _InEvents.Events.clear();
 }
