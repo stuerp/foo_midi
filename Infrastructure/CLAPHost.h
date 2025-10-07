@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.h (2025.08.02) P. Stuer - Implements a CLAP host **/
+/** $VER: CLAPHost.h (2025.10.07) P. Stuer - Implements a CLAP host **/
 
 #pragma once
 
@@ -72,10 +72,10 @@ public:
 
     void OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating);
 
-    bool IsPlugInLoaded() const noexcept { return (_CurrentDSO->_hModule != NULL); }
+    bool IsPlugInLoaded() const noexcept { return (_CurrentDSO != nullptr) && (_CurrentDSO->_hModule != NULL); }
 
-    std::string GetPlugInId() const noexcept { return _CurrentDSO->_Descriptor != nullptr ? _CurrentDSO->_Descriptor->id : ""; }
-    std::string GetPlugInName() const noexcept { return (_CurrentDSO->_Descriptor != nullptr) ? _CurrentDSO->_Descriptor->name : ""; }
+    std::string GetPlugInId() const noexcept { return ((_CurrentDSO != nullptr) && (_CurrentDSO->_Descriptor != nullptr)) ? _CurrentDSO->_Descriptor->id : ""; }
+    std::string GetPlugInName() const noexcept { return ((_CurrentDSO != nullptr) && (_CurrentDSO->_Descriptor != nullptr)) ? _CurrentDSO->_Descriptor->name : ""; }
 
 private:
     void GetPlugInDescriptors_(const fs::path & directoryPath) noexcept;
