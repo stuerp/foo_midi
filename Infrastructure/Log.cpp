@@ -1,5 +1,5 @@
 
-/** $VER: Log.cpp (2025.07.13) P. Stuer - Another logger implementation **/
+/** $VER: Log.cpp (2025.10.08) P. Stuer - Another logger implementation **/
 
 #include "pch.h"
 
@@ -29,6 +29,7 @@ public:
     ILog & Write(const char * format, ... ) noexcept override final { return *this; }
 };
 
+static NullLog _Null;
 ILog & Null = *new NullLog();
 
 class LogImpl : public ILog
@@ -107,6 +108,5 @@ private:
     LogLevel _Level;
 };
 
-ILog & Log = *new LogImpl();
-
-//::GetCurrentThreadId()
+static LogImpl _LogImpl;
+ILog & Log = _LogImpl;
