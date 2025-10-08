@@ -5,50 +5,50 @@
 
 #include "Log.h"
 
-class NullLog : public ILog
+class null_log_t : public ilog_t
 {
 public:
-    NullLog() noexcept { };
+    null_log_t() noexcept { };
 
-    NullLog(const NullLog &) = delete;
-    NullLog(const NullLog &&) = delete;
-    NullLog & operator=(const NullLog &) = delete;
-    NullLog & operator=(NullLog &&) = delete;
+    null_log_t(const null_log_t &) = delete;
+    null_log_t(const null_log_t &&) = delete;
+    null_log_t & operator=(const null_log_t &) = delete;
+    null_log_t & operator=(null_log_t &&) = delete;
 
-    virtual ~NullLog() final { };
+    virtual ~null_log_t() final { };
 
-    ILog & SetLevel(LogLevel level) noexcept override final { return *this; }
+    ilog_t & SetLevel(LogLevel level) noexcept override final { return *this; }
     LogLevel GetLevel() const noexcept override final { return LogLevel::Never; }
 
-    ILog & AtFatal() noexcept override final { return *this; }
-    ILog & AtError() noexcept override final { return *this; }
-    ILog & AtWarn() noexcept override final { return *this; }
-    ILog & AtInfo() noexcept override final { return *this; }
-    ILog & AtDebug() noexcept override final { return *this; }
-    ILog & AtTrace() noexcept override final { return *this; }
-    ILog & Write(const char * format, ... ) noexcept override final { return *this; }
+    ilog_t & AtFatal() noexcept override final { return *this; }
+    ilog_t & AtError() noexcept override final { return *this; }
+    ilog_t & AtWarn() noexcept override final { return *this; }
+    ilog_t & AtInfo() noexcept override final { return *this; }
+    ilog_t & AtDebug() noexcept override final { return *this; }
+    ilog_t & AtTrace() noexcept override final { return *this; }
+    ilog_t & Write(const char * format, ... ) noexcept override final { return *this; }
 };
 
-static NullLog _Null;
-ILog & Null = *new NullLog();
+static null_log_t _Null;
+ilog_t & Null = _Null;
 
-class LogImpl : public ILog
+class log_impl_t : public ilog_t
 {
 public:
 #ifdef _DEBUG
-    LogImpl() noexcept { SetLevel(LogLevel::Debug); }
+    log_impl_t() noexcept { SetLevel(LogLevel::Debug); }
 #else
     LogImpl() noexcept { SetLevel(LogLevel::Info); }
 #endif
 
-    LogImpl(const LogImpl &) = delete;
-    LogImpl(const LogImpl &&) = delete;
-    LogImpl & operator=(const LogImpl &) = delete;
-    LogImpl & operator=(LogImpl &&) = delete;
+    log_impl_t(const log_impl_t &) = delete;
+    log_impl_t(const log_impl_t &&) = delete;
+    log_impl_t & operator=(const log_impl_t &) = delete;
+    log_impl_t & operator=(log_impl_t &&) = delete;
 
-    virtual ~LogImpl() noexcept { };
+    virtual ~log_impl_t() noexcept { };
 
-    ILog & SetLevel(LogLevel level) noexcept override final
+    ilog_t & SetLevel(LogLevel level) noexcept override final
     {
         _Level = level;
 
@@ -60,37 +60,37 @@ public:
         return _Level;
     }
 
-    ILog & AtFatal() noexcept override final
+    ilog_t & AtFatal() noexcept override final
     {
         return (_Level >= LogLevel::Fatal) ? *this : Null;
     }
 
-    ILog & AtError() noexcept override final
+    ilog_t & AtError() noexcept override final
     {
         return (_Level >= LogLevel::Error) ? *this : Null;
     }
 
-    ILog & AtWarn() noexcept override final
+    ilog_t & AtWarn() noexcept override final
     {
         return (_Level >= LogLevel::Warn) ? *this : Null;
     }
 
-    ILog & AtInfo() noexcept override final
+    ilog_t & AtInfo() noexcept override final
     {
         return (_Level >= LogLevel::Info) ? *this : Null;
     }
 
-    ILog & AtDebug() noexcept override final
+    ilog_t & AtDebug() noexcept override final
     {
         return (_Level >= LogLevel::Debug) ? *this : Null;
     }
 
-    ILog & AtTrace() noexcept override final
+    ilog_t & AtTrace() noexcept override final
     {
         return (_Level >= LogLevel::Trace) ? *this : Null;
     }
 
-    ILog & Write(const char * format, ... ) noexcept override final
+    ilog_t & Write(const char * format, ... ) noexcept override final
     {
         char Line[1024] = { };
 
@@ -108,5 +108,5 @@ private:
     LogLevel _Level;
 };
 
-static LogImpl _LogImpl;
-ILog & Log = _LogImpl;
+static log_impl_t _LogImpl;
+ilog_t & Log = _LogImpl;
