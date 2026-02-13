@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2025.09.02) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2026.02.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -131,6 +131,12 @@ private:
         SetDlgItemInt(IDC_PORT, _PortNumber);
     }
 
+    void ApplyChannelMask() noexcept
+    {
+        CfgChannels.Apply();
+        CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
+    }
+
 private:
     const preferences_page_callback::ptr _Callback;
 
@@ -186,8 +192,7 @@ void ProcessingDialog::apply()
 
     ApplyConfigVariable(DefaultTempo);
 
-    CfgChannels.Apply();
-    CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
+    ApplyChannelMask();
 
     ApplyConfigVariable(LogLevel);
 
@@ -335,23 +340,23 @@ void ProcessingDialog::OnButtonClick(UINT, int id, CWindow w) noexcept
     switch (id)
     {
         case IDC_WRITE_BAR_MARKERS:
-            _WriteBarMarkers    = !_WriteBarMarkers;
+            _WriteBarMarkers = !_WriteBarMarkers;
             break;
 
         case IDC_WRITE_SYSEX_NAMES:
-            _WriteSysExNames    = !_WriteSysExNames;
+            _WriteSysExNames = !_WriteSysExNames;
             break;
 
         case IDC_EXTEND_LOOPS:
-            _ExtendLoops        = !_ExtendLoops;
+            _ExtendLoops = !_ExtendLoops;
             break;
 
         case IDC_WOLFTEAM_LOOPS:
-            _WolfteamLoopMode   = !_WolfteamLoopMode;
+            _WolfteamLoopMode = !_WolfteamLoopMode;
             break;
 
         case IDC_KEEP_MUTED_CHANNELS:
-            _KeepMutedChannels  = !_KeepMutedChannels;
+            _KeepMutedChannels = !_KeepMutedChannels;
             break;
 
         case IDC_INCLUDE_CONTROL_DATA:
@@ -376,39 +381,50 @@ void ProcessingDialog::OnButtonClick(UINT, int id, CWindow w) noexcept
         case IDC_CHANNEL_16:
         {
             CfgChannels.Toggle(_PortNumber, (uint32_t) (id - IDC_CHANNEL_01));
-            break;
+
+            ApplyChannelMask();
+
+            return;
         }
 
         case IDC_CHANNEL_ALL:
         {
             CfgChannels.All();
 
+            ApplyChannelMask();
             UpdateChannelButtons();
-            break;
+
+            return;
         }
 
         case IDC_CHANNEL_NONE:
         {
             CfgChannels.None();
 
+            ApplyChannelMask();
             UpdateChannelButtons();
-            break;
+
+            return;
         }
 
         case IDC_CHANNEL_1_10:
         {
             CfgChannels.OnlyLow();
 
+            ApplyChannelMask();
             UpdateChannelButtons();
-            break;
+
+            return;
         }
 
         case IDC_CHANNEL_11_16:
         {
             CfgChannels.OnlyHigh();
 
+            ApplyChannelMask();
             UpdateChannelButtons();
-            break;
+
+            return;
         }
 
         default:

@@ -95,12 +95,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.3.0, 2025-10-04
+vNext, 2026-xx-xx
 
-- New: *Gain* setting for Secret Sauce. It works the same with BASS MIDI. Positive values increase the volume, negative values decrease the volume. The valid range is -1.0 (Silence) to 2.0. Default is 0.0 (No gain). Beware that clipping will occur if you set the value too high.
-- New: The VSTi&nbsp;Plug&#8209;Ins setting can contain multiple paths separated by a pipe (|) character (e.g. "c:\VSTi\x86|d:\VSTi\x64"). Make sure there are no unwanted spaces at the beginning or end of the path names.
-- Fixed: The preferences dialog accepts negative BASS MIDI gain values. The valid range is -1.0 (Silence) to 2.0. This already worked for JSON soundfont lists.
-- Improved: Soundfonts in a JSON soundfont list that not specify their own gain value will also use the gain value from the preferences. Soundfonts in a text soundfont list ignore this value since they have no way to override it.
+- Changed: Channels can be turned off and on again without using the Apply button of the configuration dialog. There is latency due to foobar2000 audio buffering.
 
 You can read the full history [here](docs/History.md).
 
