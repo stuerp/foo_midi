@@ -36,7 +36,7 @@ You can find the user guide [here](docs/README.md).
 
 To build the code you need:
 
-- [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
+- [Microsoft Visual Studio 2026 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
 - [foobar2000 SDK](https://www.foobar2000.org/SDK) 2025-03-07
 - [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
@@ -72,9 +72,9 @@ Create the following directory structure:
     out
     sdk
 
-- `3rdParty/WTL10_10320` contains [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL).
+- `3rdParty\WTL10_10320` contains [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL).
 - `bin` contains a portable version of foobar2000 64-bit for debugging purposes.
-- `bin/x86` contains a portable version of foobar2000 32-bit for debugging purposes.
+- `bin.x86` contains a portable version of foobar2000 32-bit for debugging purposes.
 - `foo_midi` contains the [Git](https://github.com/stuerp/foo_midi) repository.
 - `out` receives a deployable version of the component.
 - `sdk` contains the [foobar2000 SDK](https://www.foobar2000.org/SDK).
@@ -98,6 +98,7 @@ To create the component first build the x64 configuration and next the x86 confi
 vNext, 2026-xx-xx
 
 - Changed: Channels can be turned off and on again without using the Apply button of the configuration dialog. There is latency due to foobar2000 audio buffering.
+- Changed: Builds with Visual Studio 2026.
 
 You can read the full history [here](docs/History.md).
 

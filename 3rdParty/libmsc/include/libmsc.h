@@ -1,5 +1,5 @@
 
-/** $VER: libmsc.h (2025.09.17) P. Stuer - My Support Classes, The "Most Original Name" Winner **/
+/** $VER: libmsc.h (2026.04.10) P. Stuer - My Support Classes, The "Most Original Name" Winner **/
 
 #pragma once
 
@@ -9,6 +9,9 @@
 #endif
 
 #include <SDKDDKVer.h>
+
+#define NOMINMAX
+
 #include <windows.h>
 
 #include <filesystem>

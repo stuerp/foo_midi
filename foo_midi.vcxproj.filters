@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Experimental\DXiPlayer.cpp" />
-    <ClCompile Include="Experimental\SFPlayer.cpp" />
-    <ClCompile Include="3rdParty\Twelve Tone Systems\SMF.cpp" />
-    <ClCompile Include="Experimental\DXiProxy.cpp" />
     <ClCompile Include="Players\ADLPlayer.cpp" />
     <ClCompile Include="Players\BMPlayer.cpp" />
     <ClCompile Include="Infrastructure\Configuration.cpp" />
@@ -55,9 +51,6 @@
     <ClCompile Include="Infrastructure\CLAPEvents.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Experimental\hypersonic2.h" />
-    <ClInclude Include="Experimental\SFPlayer.h" />
-    <ClInclude Include="Experimental\DXiProxy.h" />
     <ClInclude Include="3rdParty\Nuke\interface.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_doom\i_oplmusic.h">
       <Filter>synthlib_doom</Filter>
@@ -113,8 +106,6 @@
     <ClInclude Include="3rdParty\Nuke\fmopl3lib\opl3class.h">
       <Filter>fmopl3</Filter>
     </ClInclude>
-    <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
-    <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
     <ClInclude Include="Players\ADLPlayer.h" />
     <ClInclude Include="Players\BMPlayer.h" />
     <ClInclude Include="Infrastructure\ConfigurationMap.h" />
@@ -208,10 +199,6 @@
     <ClInclude Include="Infrastructure\CLAPHost.h" />
     <ClInclude Include="Players\OPNPlayer\Nineko.wopn.h" />
     <ClInclude Include="Infrastructure\CLAPEvents.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="Experimental\DXiPlayer.h" />
-    <CustomBuild Include="Experimental\PlugInInventory.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="sflist">

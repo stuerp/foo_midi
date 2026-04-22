@@ -37,28 +37,28 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
     <EnableASAN>
     </EnableASAN>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -99,11 +99,11 @@
     <OutDir>$(SolutionDir)out\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)out\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)out\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
@@ -113,13 +113,13 @@
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetEnvironment>Win32</TargetEnvironment>
-      <TypeLibraryName>.\../Debug/foo_midi.tlb</TypeLibraryName>
+      <TypeLibraryName>.\..\Debug\foo_midi.tlb</TypeLibraryName>
       <HeaderFileName>
       </HeaderFileName>
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./GUI;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi/repo/src;./3rdParty/libedmidi/repo/include;./3rdParty/FluidSynth/include;./3rdParty/libjson;./3rdParty/libsflist;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libmidi/include;./3rdParty/libmidi/src;./3rdParty/libsf/include;./3rdParty/libriff/include;./3rdParty/libmsc/include;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)3rdParty\WTL10_10320\Include;$(SolutionDir)sdk\foobar2000\sdk;$(SolutionDir)sdk\foobar2000\shared;$(SolutionDir)sdk\foobar2000;$(SolutionDir)sdk;$(ProjectDir);$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>EnableAllWarnings</WarningLevel>
@@ -136,14 +136,13 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)sdk\foobar2000\shared\shared-$(Platform).lib;$(ProjectDir)3rdParty\bass\c\bass.lib;$(ProjectDir)3rdParty\bass\c\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>
-pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
     <PreBuildEvent>
@@ -155,12 +154,12 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <TypeLibraryName>.\../Debug/foo_midi.tlb</TypeLibraryName>
+      <TypeLibraryName>.\..\Debug\foo_midi.tlb</TypeLibraryName>
       <HeaderFileName>
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./GUI;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi/repo/src;./3rdParty/libedmidi/repo/include;./3rdParty/FluidSynth/include;./3rdParty/libjson;./3rdParty/libsflist;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libmidi/include;./3rdParty/libmidi/src;./3rdParty/libsf/include;./3rdParty/libriff/include;./3rdParty/libmsc/include;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdParty\WTL10_10320\Include;$(SolutionDir)sdk;$(SolutionDir)sdk\foobar2000;$(SolutionDir)sdk\foobar2000\sdk;$(SolutionDir)sdk\foobar2000\shared;$(ProjectDir);$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt /utf-8</AdditionalOptions>
@@ -177,15 +176,14 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)sdk\foobar2000\shared\shared-$(PlatformTarget).lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bass.lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>
-pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
     <PreBuildEvent>
@@ -198,12 +196,12 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetEnvironment>Win32</TargetEnvironment>
-      <TypeLibraryName>.\../Release staticlink/foo_midi.tlb</TypeLibraryName>
+      <TypeLibraryName>.\..\Release staticlink/foo_midi.tlb</TypeLibraryName>
       <HeaderFileName>
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./GUI;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi/repo/src;./3rdParty/libedmidi/repo/include;./3rdParty/FluidSynth/include;./3rdParty/libjson;./3rdParty/libsflist;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libmidi/include;./3rdParty/libmidi/src;./3rdParty/libsf/include;./3rdParty/libriff/include;./3rdParty/libmsc/include;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)3rdParty\WTL10_10320\Include;$(SolutionDir)sdk\foobar2000\sdk;$(SolutionDir)sdk\foobar2000\shared;$(SolutionDir)sdk\foobar2000;$(SolutionDir)sdk;.;$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt /utf-8</AdditionalOptions>
@@ -224,7 +222,7 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(Platform).lib;./3rdParty/bass/c/bass.lib;./3rdParty/bass/c/bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)sdk\foobar2000\shared\shared-$(Platform).lib;$(ProjectDir)3rdParty\bass\c\bass.lib;$(ProjectDir)3rdParty\bass\c\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -232,10 +230,7 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>
-pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
     <PreBuildEvent>
@@ -247,12 +242,12 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <TypeLibraryName>.\../Release staticlink/foo_midi.tlb</TypeLibraryName>
+      <TypeLibraryName>.\..\Release staticlink/foo_midi.tlb</TypeLibraryName>
       <HeaderFileName>
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../3rdParty/WTL10_10320/Include;../sdk/foobar2000/sdk;../sdk/foobar2000/shared;../sdk/foobar2000;../sdk;.;./GUI;./Infrastructure;./MIDI;./Players;./Players/OPNPlayer;./3rdParty;./3rdParty/BASS/c;./3rdParty/libedmidi/repo/src;./3rdParty/libedmidi/repo/include;./3rdParty/FluidSynth/include;./3rdParty/libjson;./3rdParty/libsflist;./3rdParty/fmmidi;./3rdParty/libmt32emu;./3rdParty/libmt32emu/repo/mt32emu/src;./3rdParty/nuked-opl3/repo;./3rdParty/libmidi/include;./3rdParty/libmidi/src;./3rdParty/libsf/include;./3rdParty/libriff/include;./3rdParty/libmsc/include;./3rdParty/clap/include;./3rdParty/foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)3rdParty\WTL10_10320\Include;$(SolutionDir)sdk\foobar2000\sdk;$(SolutionDir)sdk\foobar2000\shared;$(SolutionDir)sdk\foobar2000;$(SolutionDir)sdk;.;$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt /utf-8</AdditionalOptions>
@@ -265,13 +260,14 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../sdk/foobar2000/shared/shared-$(PlatformTarget).lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bass.lib;./3rdParty/bass/c/$(LibrariesArchitecture)/bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)sdk\foobar2000\shared\shared-$(PlatformTarget).lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bass.lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -279,10 +275,7 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>
-pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
+      <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
       <Message>Creating component archive...</Message>
     </PostBuildEvent>
     <Manifest />
@@ -291,35 +284,6 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Infrastructure\AlbumArt.cpp" />
-    <ClCompile Include="Infrastructure\Channels.cpp" />
-    <ClCompile Include="Infrastructure\CLAPEvents.cpp">
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="Infrastructure\CLAPHost.cpp" />
-    <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
-    <ClCompile Include="Infrastructure\InputInfoReader.cpp" />
-    <ClCompile Include="Infrastructure\InputInfoWriter.cpp" />
-    <ClCompile Include="Infrastructure\Log.cpp" />
-    <ClCompile Include="Infrastructure\MainMenu.cpp" />
-    <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
-    <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
-    <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
-    <ClCompile Include="Infrastructure\InputDecoderSoundfonts.cpp" />
-    <ClCompile Include="Players\ADLPlayer.cpp" />
-    <ClCompile Include="Players\BMPlayer.cpp" />
-    <ClCompile Include="Infrastructure\Configuration.cpp" />
-    <ClCompile Include="Infrastructure\ContextMenu.cpp" />
-    <ClCompile Include="Infrastructure\CLAPPlugIn.cpp" />
-    <ClCompile Include="Players\CLAPPlayer.cpp" />
-    <ClCompile Include="Players\EdMPlayer.cpp" />
-    <ClCompile Include="Experimental\DXiProxy.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Infrastructure\FileTypeRegistrar.cpp" />
     <ClCompile Include="foo_midi.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -327,81 +291,54 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Players\FMMPlayer.cpp" />
+    <ClCompile Include="Infrastructure\CLAPEvents.cpp">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="Infrastructure\AlbumArt.cpp" />
+    <ClCompile Include="Infrastructure\Channels.cpp" />
+    <ClCompile Include="Infrastructure\CLAPHost.cpp" />
+    <ClCompile Include="Infrastructure\CLAPPlugIn.cpp" />
+    <ClCompile Include="Infrastructure\CLAPWindow.cpp" />
+    <ClCompile Include="Infrastructure\Configuration.cpp" />
+    <ClCompile Include="Infrastructure\ContextMenu.cpp" />
+    <ClCompile Include="Infrastructure\FileHasher.cpp" />
+    <ClCompile Include="Infrastructure\FileTypeRegistrar.cpp" />
     <ClCompile Include="Infrastructure\FS.cpp" />
-    <ClCompile Include="Players\FSPlayer.cpp" />
     <ClCompile Include="Infrastructure\InitStageCallback.cpp" />
     <ClCompile Include="Infrastructure\InputDecoder.cpp" />
-    <ClCompile Include="MIDI\KaraokeProcessor.cpp" />
-    <ClCompile Include="Players\MCIPlayer.cpp" />
-    <ClCompile Include="Players\NukedSC-55Player.cpp" />
-    <ClCompile Include="Players\Player.cpp" />
+    <ClCompile Include="Infrastructure\InputDecoderSoundfonts.cpp" />
+    <ClCompile Include="Infrastructure\InputInfoReader.cpp" />
+    <ClCompile Include="Infrastructure\InputInfoWriter.cpp" />
+    <ClCompile Include="Infrastructure\Log.cpp" />
+    <ClCompile Include="Infrastructure\MainMenu.cpp" />
+    <ClCompile Include="Infrastructure\Preferences.cpp" />
+    <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
+    <ClCompile Include="Infrastructure\PreferencesPaths.cpp" />
+    <ClCompile Include="Infrastructure\PreferencesProcessing.cpp" />
+    <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
     <ClCompile Include="Infrastructure\Preset.cpp" />
     <ClCompile Include="Infrastructure\PresetFilter.cpp" />
+    <ClCompile Include="Infrastructure\VSTiHost.cpp" />
+    <ClCompile Include="MIDI\KaraokeProcessor.cpp" />
     <ClCompile Include="MIDI\MIDISysExDumps.cpp" />
     <ClCompile Include="MIDI\MIDISysExFilter.cpp" />
-    <ClCompile Include="Players\NukedOPL3Player.cpp" />
-    <ClCompile Include="Experimental\DXiPlayer.cpp">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MinSpace</Optimization>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MinSpace</Optimization>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Players\MT32Player\MT32Player.cpp" />
-    <ClCompile Include="Players\OPNPlayer\OPNPlayer.cpp" />
-    <ClCompile Include="Infrastructure\Preferences.cpp" />
-    <ClCompile Include="Infrastructure\PreferencesPaths.cpp" />
-    <ClCompile Include="Players\SCPlayer.cpp" />
-    <ClCompile Include="Experimental\SFPlayer.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="3rdParty\Twelve Tone Systems\SMF.cpp">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MinSpace</Optimization>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MinSpace</Optimization>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Infrastructure\FileHasher.cpp" />
     <ClCompile Include="MIDI\SoundfontCache.cpp" />
+    <ClCompile Include="Players\ADLPlayer.cpp" />
+    <ClCompile Include="Players\BMPlayer.cpp" />
+    <ClCompile Include="Players\CLAPPlayer.cpp" />
+    <ClCompile Include="Players\EdMPlayer.cpp" />
+    <ClCompile Include="Players\FMMPlayer.cpp" />
+    <ClCompile Include="Players\FSPlayer.cpp" />
+    <ClCompile Include="Players\MCIPlayer.cpp" />
+    <ClCompile Include="Players\MT32Player\MT32Player.cpp" />
+    <ClCompile Include="Players\NukedOPL3Player.cpp" />
+    <ClCompile Include="Players\NukedSC-55Player.cpp" />
+    <ClCompile Include="Players\OPNPlayer\OPNPlayer.cpp" />
+    <ClCompile Include="Players\Player.cpp" />
+    <ClCompile Include="Players\SCPlayer.cpp" />
     <ClCompile Include="Players\SecretSauce.cpp" />
-    <ClCompile Include="Infrastructure\VSTiHost.cpp" />
     <ClCompile Include="Players\SoundfontList.cpp" />
     <ClCompile Include="Players\VSTiPlayer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="3rdParty\DXiClasses\MfxSeq.h" />
-    <ClInclude Include="3rdParty\DXiClasses\xRPNContext.h" />
     <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth.h" />
     <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\audio.h" />
     <ClInclude Include="3rdParty\FluidSynth\x64\include\fluidsynth\event.h" />
@@ -440,120 +377,95 @@ pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(Targ
     <ClInclude Include="3rdParty\FluidSynth\x86\include\fluidsynth\voice.h" />
     <ClInclude Include="3rdParty\foo_vis_midi\API.h" />
     <ClInclude Include="3rdParty\libNuke\interface.h" />
-    <ClInclude Include="Infrastructure\Channels.h" />
-    <ClInclude Include="Infrastructure\CLAPEvents.h" />
-    <ClInclude Include="Infrastructure\CLAPHost.h" />
-    <ClInclude Include="Infrastructure\CLAPWindow.h" />
-    <ClInclude Include="Infrastructure\CriticalSection.h" />
-    <ClInclude Include="Infrastructure\Log.h" />
-    <ClInclude Include="Infrastructure\PreferencesFM.h" />
-    <ClInclude Include="Infrastructure\PreferencesProcessing.h" />
-    <ClInclude Include="Players\ADLPlayer.h" />
-    <ClInclude Include="Players\BASSInitializer.h" />
-    <ClInclude Include="Players\BMPlayer.h" />
-    <ClInclude Include="Infrastructure\ConfigurationMap.h" />
-    <ClInclude Include="Infrastructure\Configuration.h" />
-    <ClInclude Include="Infrastructure\ContextMenu.h" />
-    <ClInclude Include="Infrastructure\CLAPPlugIn.h" />
-    <ClInclude Include="Players\CLAPPlayer.h" />
-    <ClInclude Include="Players\EdMPlayer.h" />
-    <ClInclude Include="Infrastructure\Exception.h" />
-    <ClInclude Include="Experimental\DXiProxy.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="3rdParty\Nuke\fmopl3lib\opl3class.h" />
     <ClInclude Include="3rdParty\Nuke\interface.h" />
-    <ClInclude Include="Infrastructure\FileTypeRegistrar.h" />
-    <ClInclude Include="Infrastructure\FS.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="Players\FMMPlayer.h" />
-    <ClInclude Include="Players\FSPlayer.h" />
-    <ClInclude Include="History.h" />
-    <ClInclude Include="Infrastructure\InputDecoder.h" />
-    <ClInclude Include="MIDI\KaraokeProcessor.h" />
-    <ClInclude Include="Players\MCIPlayer.h" />
-    <ClInclude Include="Players\MT32Player\MT32ReportHandler.h" />
-    <ClInclude Include="Players\NukedSC-55Player.h" />
-    <ClInclude Include="Players\OPNPlayer\Nineko.wopn.h" />
-    <ClInclude Include="Players\Player.h" />
-    <ClInclude Include="Infrastructure\Preset.h" />
-    <ClInclude Include="Infrastructure\PresetFilter.h" />
-    <ClInclude Include="MIDI\MIDISysExDumps.h" />
-    <ClInclude Include="MIDI\MIDISysExFilter.h" />
-    <ClInclude Include="Players\NukedOPL3Player.h" />
-    <ClInclude Include="Players\MT32Player\MT32SetupGMKQ6.h" />
-    <ClInclude Include="Players\MT32Player\MT32Player.h" />
-    <ClInclude Include="Players\MT32Player\MT32SetupGM.h" />
-    <ClInclude Include="Players\OPNPlayer\fmmidi.wopn.h" />
-    <ClInclude Include="Players\OPNPlayer\gems-fmlib-gmize.wopn.h" />
-    <ClInclude Include="Players\OPNPlayer\gs-by-papiezak-and-sneakernets.wopn.h" />
-    <ClInclude Include="Players\OPNPlayer\OPNPlayer.h" />
-    <ClInclude Include="Players\OPNPlayer\Tomsoft.wopn.h" />
-    <ClInclude Include="Players\OPNPlayer\xg.wopn.h" />
-    <ClInclude Include="MIDI\SoundfontCache.h" />
-    <ClInclude Include="Infrastructure\FileHasher.h" />
-    <ClInclude Include="Players\SecretSauce.h" />
-    <ClInclude Include="Players\SoundfontList.h" />
-    <ClInclude Include="Infrastructure\VSTiHost.h" />
-    <ClInclude Include="Players\VSTiPlayer.h" />
-    <CustomBuild Include="Experimental\DXiPlayer.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CustomBuild>
-    <ClInclude Include="Experimental\hypersonic2.h" />
-    <CustomBuild Include="Experimental\PlugInInventory.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CustomBuild>
-    <ClInclude Include="Patrons.h" />
     <ClInclude Include="3rdParty\Nuke\resampler.h" />
-    <ClInclude Include="Resource.h" />
-    <ClInclude Include="Players\SCPlayer.h" />
-    <ClInclude Include="Experimental\SFPlayer.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="3rdParty\Nuke\synthlib_apogee\_al_midi.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_apogee\al_midi.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_blood.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_duke3d.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_lee.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_nam.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_apogee\inst\apogee_sw.h" />
-    <ClInclude Include="3rdParty\Nuke\synthlib_apogee\_al_midi.h" />
-    <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmxopl.h" />
+    <ClInclude Include="3rdParty\Nuke\synthlib_doom\i_oplmusic.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_dmx.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_doom1.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_doom2.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_raptor.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmx_strife.h" />
-    <ClInclude Include="3rdParty\Nuke\synthlib_doom\i_oplmusic.h" />
+    <ClInclude Include="3rdParty\Nuke\synthlib_doom\inst\dmxopl.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_opl3w\gmtimbre.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_opl3w\opl3midi.h" />
     <ClInclude Include="3rdParty\Nuke\synthlib_opl3w\opl3type.h" />
+    <ClInclude Include="History.h" />
+    <ClInclude Include="Infrastructure\Channels.h" />
+    <ClInclude Include="Infrastructure\CLAPEvents.h" />
+    <ClInclude Include="Infrastructure\CLAPHost.h" />
+    <ClInclude Include="Infrastructure\CLAPPlugIn.h" />
+    <ClInclude Include="Infrastructure\CLAPWindow.h" />
+    <ClInclude Include="Infrastructure\Configuration.h" />
+    <ClInclude Include="Infrastructure\ConfigurationMap.h" />
+    <ClInclude Include="Infrastructure\ContextMenu.h" />
+    <ClInclude Include="Infrastructure\CriticalSection.h" />
+    <ClInclude Include="Infrastructure\Exception.h" />
+    <ClInclude Include="Infrastructure\FileHasher.h" />
+    <ClInclude Include="Infrastructure\FileTypeRegistrar.h" />
+    <ClInclude Include="Infrastructure\FS.h" />
+    <ClInclude Include="Infrastructure\InputDecoder.h" />
+    <ClInclude Include="Infrastructure\Log.h" />
+    <ClInclude Include="Infrastructure\PreferencesFM.h" />
+    <ClInclude Include="Infrastructure\PreferencesProcessing.h" />
+    <ClInclude Include="Infrastructure\Preset.h" />
+    <ClInclude Include="Infrastructure\PresetFilter.h" />
+    <ClInclude Include="Infrastructure\VSTiHost.h" />
+    <ClInclude Include="MIDI\KaraokeProcessor.h" />
+    <ClInclude Include="MIDI\MIDISysExDumps.h" />
+    <ClInclude Include="MIDI\MIDISysExFilter.h" />
+    <ClInclude Include="MIDI\SoundfontCache.h" />
+    <ClInclude Include="Patrons.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Players\ADLPlayer.h" />
+    <ClInclude Include="Players\BASSInitializer.h" />
+    <ClInclude Include="Players\BMPlayer.h" />
+    <ClInclude Include="Players\CLAPPlayer.h" />
+    <ClInclude Include="Players\EdMPlayer.h" />
+    <ClInclude Include="Players\FMMPlayer.h" />
+    <ClInclude Include="Players\FSPlayer.h" />
+    <ClInclude Include="Players\MCIPlayer.h" />
+    <ClInclude Include="Players\MT32Player\MT32Player.h" />
+    <ClInclude Include="Players\MT32Player\MT32ReportHandler.h" />
+    <ClInclude Include="Players\MT32Player\MT32SetupGM.h" />
+    <ClInclude Include="Players\MT32Player\MT32SetupGMKQ6.h" />
+    <ClInclude Include="Players\NukedOPL3Player.h" />
+    <ClInclude Include="Players\NukedSC-55Player.h" />
+    <ClInclude Include="Players\OPNPlayer\fmmidi.wopn.h" />
+    <ClInclude Include="Players\OPNPlayer\gems-fmlib-gmize.wopn.h" />
+    <ClInclude Include="Players\OPNPlayer\gs-by-papiezak-and-sneakernets.wopn.h" />
+    <ClInclude Include="Players\OPNPlayer\Nineko.wopn.h" />
+    <ClInclude Include="Players\OPNPlayer\OPNPlayer.h" />
+    <ClInclude Include="Players\OPNPlayer\Tomsoft.wopn.h" />
+    <ClInclude Include="Players\OPNPlayer\xg.wopn.h" />
+    <ClInclude Include="Players\Player.h" />
+    <ClInclude Include="Players\SCPlayer.h" />
+    <ClInclude Include="Players\SecretSauce.h" />
+    <ClInclude Include="Players\SoundfontList.h" />
+    <ClInclude Include="Players\VSTiPlayer.h" />
+    <ClInclude Include="Resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
+    <ProjectReference Include="$(SolutionDir)sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
       <Project>{71ad2674-065b-48f5-b8b0-e1f9d3892081}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\sdk\foobar2000\helpers\foobar2000_sdk_helpers.vcxproj">
+    <ProjectReference Include="$(SolutionDir)sdk\foobar2000\helpers\foobar2000_sdk_helpers.vcxproj">
       <Project>{ee47764e-a202-4f85-a767-abdab4aff35f}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\sdk\foobar2000\SDK\foobar2000_SDK.vcxproj">
+    <ProjectReference Include="$(SolutionDir)sdk\foobar2000\SDK\foobar2000_SDK.vcxproj">
       <Project>{e8091321-d79d-4575-86ef-064ea1a4a20d}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\sdk\libPPUI\libPPUI.vcxproj">
+    <ProjectReference Include="$(SolutionDir)sdk\libPPUI\libPPUI.vcxproj">
       <Project>{7729eb82-4069-4414-964b-ad399091a03f}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\sdk\pfc\pfc.vcxproj">
+    <ProjectReference Include="$(SolutionDir)sdk\pfc\pfc.vcxproj">
       <Project>{ebfffb4e-261d-44d3-b89c-957b31a0bf9c}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\libADLMIDI\libadlmidi.vcxproj">

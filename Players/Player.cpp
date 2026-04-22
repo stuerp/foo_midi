@@ -5,7 +5,11 @@
 
 #include "Player.h"
 #include "Channels.h"
-#include "Encoding.h"
+//#include "Encoding.h"
+
+#include "API.h"
+
+#include <Configuration.h>
 
 #include <fstream>
 
