@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.10.04) P. Stuer **/
+/** $VER: Resource.h (2026.03.05) P. Stuer **/
 
 #pragma once
 
@@ -7,19 +7,21 @@
 #define TOSTRING(x) TOSTRING_IMPL(x)
 
 #define NUM_FILE_MAJOR              3
-#define NUM_FILE_MINOR              2
-#define NUM_FILE_PATCH              3
+#define NUM_FILE_MINOR              3
+#define NUM_FILE_PATCH              0
 #define NUM_FILE_PRERELEASE         0
 
 #define NUM_PRODUCT_MAJOR           3
-#define NUM_PRODUCT_MINOR           2
-#define NUM_PRODUCT_PATCH           3
+#define NUM_PRODUCT_MINOR           3
+#define NUM_PRODUCT_PATCH           0
 #define NUM_PRODUCT_PRERELEASE      0
+
+#define STR_RELEASE_TAG             "-alpha1"
 
 /** Component specific **/
 
 #define STR_COMPONENT_NAME          "MIDI Player"
-#define STR_COMPONENT_VERSION       TOSTRING(NUM_FILE_MAJOR) "." TOSTRING(NUM_FILE_MINOR) "." TOSTRING(NUM_FILE_PATCH) "." TOSTRING(NUM_FILE_PRERELEASE)
+#define STR_COMPONENT_VERSION       TOSTRING(NUM_FILE_MAJOR) "." TOSTRING(NUM_FILE_MINOR) "." TOSTRING(NUM_FILE_PATCH) "." TOSTRING(NUM_FILE_PRERELEASE) STR_RELEASE_TAG
 #define STR_COMPONENT_BASENAME      "foo_midi"
 #define STR_COMPONENT_FILENAME      STR_COMPONENT_BASENAME ".dll"
 #define STR_COMPONENT_COMPANY_NAME  "LoSno.co"

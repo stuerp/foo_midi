@@ -1,5 +1,5 @@
 
-/** $VER: Log.cpp (2025.10.08) P. Stuer - Another logger implementation **/
+/** $VER: Log.cpp (2026.05.03) P. Stuer - Another logger implementation **/
 
 #include "pch.h"
 
@@ -38,7 +38,7 @@ public:
 #ifdef _DEBUG
     log_impl_t() noexcept { SetLevel(LogLevel::Debug); }
 #else
-    LogImpl() noexcept { SetLevel(LogLevel::Info); }
+    log_impl_t() noexcept { SetLevel(LogLevel::Info); }
 #endif
 
     log_impl_t(const log_impl_t &) = delete;
