@@ -1,6 +1,12 @@
 
 # foo_midi History
 
+v3.3.0.0-alpha1, 2026-05-03
+
+- Added: Support for MMD98 (MIDI Music Driver) files.
+- Changed: Channels can be turned off and on again without using the Apply button of the configuration dialog. There is latency due to foobar2000 audio buffering.
+- Changed: Builds with Visual Studio 2026.
+
 v3.2.3.0, 2025-10-04
 
 - New: *Gain* setting for Secret Sauce. It works the same with BASS MIDI. Positive values increase the volume, negative values decrease the volume. The valid range is -1.0 (Silence) to 2.0. Default is 0.0 (No gain). Beware that clipping will occur if you set the value too high.

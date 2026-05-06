@@ -95,11 +95,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.3.0.0-alpha1, 2026-03-05
+v3.3.0.0-alpha2, 2026-05-xx
 
-- Added: Support for MMD98 (MIDI Music Driver) files.
-- Changed: Channels can be turned off and on again without using the Apply button of the configuration dialog. There is latency due to foobar2000 audio buffering.
-- Changed: Builds with Visual Studio 2026.
+- Changed: SysEx REQ1 events are no longer sent to Secret Sauce. The plug-in does not handle malformed SysEx events correctly and the result of the request is not used anyway. [GitHub Issue 155](https://github.com/stuerp/foo_midi/issues/155)
 
 You can read the full history [here](docs/History.md).
 
