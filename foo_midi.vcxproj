@@ -477,14 +477,8 @@
     <ProjectReference Include="3rdParty\libjson\libjson.vcxproj">
       <Project>{155cc5fc-96b6-4ffa-bfce-9db2fb987e47}</Project>
     </ProjectReference>
-    <ProjectReference Include="3rdParty\libmidi\libmidi.vcxproj">
-      <Project>{4573e081-973b-47f0-a67d-551761ba1678}</Project>
-    </ProjectReference>
     <ProjectReference Include="3rdParty\libmidi\zlib.vcxproj">
       <Project>{785d22da-58d2-4545-87c7-8f49ee31cda4}</Project>
-    </ProjectReference>
-    <ProjectReference Include="3rdParty\libmsc\libmsc.vcxproj">
-      <Project>{30271063-52c9-4151-b200-444990da01e0}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\libmt32emu\libmt32emu.vcxproj">
       <Project>{2cbb0461-475d-446e-bf3e-c417793c1a29}</Project>
