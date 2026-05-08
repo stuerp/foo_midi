@@ -21,7 +21,7 @@ To build the code you need:
 
 ## Change Log
 
-v0.1.1.0, 2026-xx-xx
+vNext, 2026-xx-xx
 
 - Added: Support for MMD98 (MIDI Music Driver) files.
 - Improved: Stricter interpretation of the RCP mute mode that prevents an RCP track from being included in the MIDI stream.

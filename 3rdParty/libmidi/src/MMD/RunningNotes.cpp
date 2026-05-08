@@ -39,7 +39,7 @@ void running_notes_t::Add(uint8_t channel, uint8_t note, uint8_t velocity, uint3
 /// </summary>
 bool running_notes_t::EmitNote(stream_t & stream, uint8_t note, uint8_t duration) noexcept
 {
-    Update(stream, stream.DeltaTime);
+    Update(stream);
 
     for (size_t i = 0; i < _Count; ++i)
     {
@@ -58,25 +58,25 @@ bool running_notes_t::EmitNote(stream_t & stream, uint8_t note, uint8_t duration
 /// <summary>
 /// Writes Note Off events for all running notes.
 /// </summary>
-void running_notes_t::Flush(stream_t & stream, uint32_t & deltaTime) noexcept
+void running_notes_t::Flush(stream_t & stream) noexcept
 {
     // Set deltaTime to the longest note duration.
     for (size_t i = 0; i < _Count; ++i)
     {
-        if (_Items[i].Duration > deltaTime)
-            deltaTime = _Items[i].Duration;
+        if (_Items[i].Duration > stream.DeltaTime)
+            stream.DeltaTime = _Items[i].Duration;
     }
 
-    Update(stream, deltaTime);
+    Update(stream);
 }
 
 /// <summary>
-/// Checks if any note expires within the N ticks specified by the "deltaTime" parameter and
+/// Checks if any note expires within the N ticks specified by the "DeltaTime" parameter of the stream and
 /// insert Note Off events when they do. In that case, the value of "deltaTime" will be reduced.
 /// Call this function from the delta time handler and before extending notes.
 /// Returns the number of expired notes.
 /// </summary>
-size_t running_notes_t::Update(stream_t & stream, uint32_t & deltaTime) noexcept
+size_t running_notes_t::Update(stream_t & stream) noexcept
 {
     size_t ExpiredNotes = 0;
 

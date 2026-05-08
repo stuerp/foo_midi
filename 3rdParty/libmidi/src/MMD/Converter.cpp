@@ -205,7 +205,7 @@ bool converter_t::GetLoops(const uint8_t * data, uint32_t size, track_t & track)
     uint8_t Command[4] = { };
     loop_t Loops[16] = { };
 
-    uint8_t LoopIndex = 0;
+    uint8_t LoopCount = 0;
 
     while (Offset < size && !EndOfTrack)
     {
@@ -243,23 +243,23 @@ bool converter_t::GetLoops(const uint8_t * data, uint32_t size, track_t & track)
 
             case 0xF8: // Loop End
             {
-                if (LoopIndex > 0)
+                if (LoopCount > 0)
                 {
-                    Loops[--LoopIndex].Count++;
+                    Loops[--LoopCount].Count++;
 
                     if ((Command[1] == 0) || (Command[1] >= 0x7F))
                     {
-                        track.LoopOffset = Loops[LoopIndex].Offset;
-                        track.LoopLength = Loops[LoopIndex].Length;
+                        track.LoopOffset = Loops[LoopCount].Offset;
+                        track.LoopLength = Loops[LoopCount].Length;
 
                         EndOfTrack = true;
                     }
                     else
-                    if (Loops[LoopIndex].Count < Command[1])
+                    if (Loops[LoopCount].Count < Command[1])
                     {
-                        ::memcpy(Command, Loops[LoopIndex].Command, sizeof(Command));
+                        ::memcpy(Command, Loops[LoopCount].Command, sizeof(Command));
 
-                        Offset = Loops[LoopIndex++].Offset;
+                        Offset = Loops[LoopCount++].Offset;
                     }
                 }
                 break;
@@ -267,18 +267,18 @@ bool converter_t::GetLoops(const uint8_t * data, uint32_t size, track_t & track)
 
             case 0xF9: // Loop Begin
             {
-                if (LoopIndex < _countof(Loops))
+                if (LoopCount < _countof(Loops))
                 {
-                    ::memcpy(Loops[LoopIndex].Command, Command, sizeof(Command));
+                    ::memcpy(Loops[LoopCount].Command, Command, sizeof(Command));
 
-                    Loops[LoopIndex].Offset = (uint32_t) Offset;
-                    Loops[LoopIndex].Length = track.Length;
-                    Loops[LoopIndex].Count = 0;
+                    Loops[LoopCount].Offset = (uint32_t) Offset;
+                    Loops[LoopCount].Length = track.Length;
+                    Loops[LoopCount].Count = 0;
 
-                    if ((LoopIndex > 0) && (Loops[LoopIndex].Offset == Loops[LoopIndex - 1].Offset))
-                        LoopIndex--; // Ignore this loop command.
+                    if ((LoopCount > 0) && (Loops[LoopCount].Offset == Loops[LoopCount - 1].Offset))
+                        LoopCount--; // Ignore this loop command.
 
-                    LoopIndex++;
+                    LoopCount++;
                 }
                 break;
             }
@@ -346,7 +346,7 @@ bool converter_t::ConvertTrack(const uint8_t * data, uint32_t size, track_t & tr
     stream.BeginTrack(ChannelNumber);
 
     size_t Offset = track.Offset;
-    size_t LoopIndex = 0;
+    size_t LoopCount = 0;
 
     uint8_t Command[4] = { };
     loop_t Loops[16] = { };
@@ -750,35 +750,35 @@ bool converter_t::ConvertTrack(const uint8_t * data, uint32_t size, track_t & tr
 
                 case 0xF8: // Loop End
                 {
-                    if (LoopIndex == 0)
+                    if (LoopCount == 0)
                         break; // Loop End without Loop Begin
 
-                    LoopIndex--;
+                    LoopCount--;
 
-                    Loops[LoopIndex].Count++;
+                    Loops[LoopCount].Count++;
 
                     bool TakeLoop = false;
 
                     if ((Command[1] == 0) || (Command[1] >= 0x7F))
                     {
                         // Infinite loop
-                        if ((Loops[LoopIndex].Count < 0x80) && (PortNumber != 0xFF))
-                            stream.WriteEvent(midi::StatusCode::ControlChange, 0x6F, (uint8_t) Loops[LoopIndex].Count); // Set an RPG Maker Loop marker.
+                        if ((Loops[LoopCount].Count < 0x80) && (PortNumber != 0xFF))
+                            stream.WriteEvent(midi::StatusCode::ControlChange, 0x6F, (uint8_t) Loops[LoopCount].Count); // Set an RPG Maker Loop marker.
 
-                        if (Loops[LoopIndex].Count < track.MaxLoopExpansions)
+                        if (Loops[LoopCount].Count < track.MaxLoopExpansions)
                             TakeLoop = true;
                     }
                     else
                     {
-                        if (Loops[LoopIndex].Count < Command[1])
+                        if (Loops[LoopCount].Count < Command[1])
                             TakeLoop = true;
                     }
 
                     if (TakeLoop)
                     {
-                        ::memcpy(Command, Loops[LoopIndex].Command, sizeof(Command));
+                        ::memcpy(Command, Loops[LoopCount].Command, sizeof(Command));
 
-                        Offset = Loops[LoopIndex++].Offset;
+                        Offset = Loops[LoopCount++].Offset;
                     }
 
                     break;
@@ -786,21 +786,21 @@ bool converter_t::ConvertTrack(const uint8_t * data, uint32_t size, track_t & tr
 
                 case 0xF9: // Loop Begin
                 {
-                    if (LoopIndex >= _countof(Loops))
+                    if (LoopCount >= _countof(Loops))
                         break; // Too many nested loops
 
                     if ((Offset == track.LoopOffset) && (PortNumber != 0xFF))
                         stream.WriteEvent(midi::StatusCode::ControlChange, 0x6F, 0); // Set an RPG Maker Loop marker.
 
-                    ::memcpy(Loops[LoopIndex].Command, Command, sizeof(Command));
+                    ::memcpy(Loops[LoopCount].Command, Command, sizeof(Command));
 
-                    Loops[LoopIndex].Offset = (uint32_t) Offset;
-                    Loops[LoopIndex].Count = 0;
+                    Loops[LoopCount].Offset = (uint32_t) Offset;
+                    Loops[LoopCount].Count = 0;
 
-                    if ((LoopIndex > 0) && (Loops[LoopIndex].Offset == Loops[LoopIndex - 1].Offset))
-                        LoopIndex--; // Ignore bad loop command
+                    if ((LoopCount > 0) && (Loops[LoopCount].Offset == Loops[LoopCount - 1].Offset))
+                        LoopCount--; // Ignore bad loop command
 
-                    LoopIndex++;
+                    LoopCount++;
                     break;
                 }
 

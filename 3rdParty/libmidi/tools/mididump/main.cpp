@@ -100,7 +100,14 @@ static void ProcessFile(const fs::path & filePath)
     FILE * fp = nullptr;
 
     if ((::freopen_s(&fp, FilePath.string().c_str(), "w", stdout) != 0) || (fp == nullptr))
+    {
+        if ((::freopen_s(&fp, "CON", "w", stdout) != 0) || (fp == nullptr))
+            return;
+
+        ::puts("Failed to open log file.");
+
         return;
+    }
 
     ::printf("\xEF\xBB\xBF"); // UTF-8 BOM
 
@@ -114,6 +121,5 @@ static void ProcessFile(const fs::path & filePath)
 
     ::fclose(fp);
 
-    if ((::freopen_s(&fp, "CON", "w", stdout) != 0) || (fp == nullptr))
-        return;
+    (void) ::freopen_s(&fp, "CON", "w", stdout);
 }

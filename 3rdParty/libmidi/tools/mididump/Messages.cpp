@@ -1,5 +1,5 @@
 
-/** $VER: Messages.cpp (2025.07.18) P. Stuer **/
+/** $VER: Messages.cpp (2026.05.08) P. Stuer **/
 
 #include "pch.h"
 
@@ -339,8 +339,8 @@ std::string DescribeControlChange(uint8_t d1, uint8_t d2) noexcept
         case 0x64: ::snprintf(Line.data(), Line.size(), "Select RPN parameter (LSB) %d", Value); break;                                             // (GM2)
         case 0x65: ::snprintf(Line.data(), Line.size(), "Select RPN parameter (MSB) %d", Value); break;                                             // (GM2)
 
-        case 0x6E: ::snprintf(Line.data(), Line.size(), "LeapFrog Start of Loop marker (%d %d)", (int) d1, Value); break;
-        case 0x6F: ::snprintf(Line.data(), Line.size(), "LeapFrog End of Loop marker (%d %d)", (int) d1, Value); break;
+        case 0x6E: ::snprintf(Line.data(), Line.size(), "Loop marker (%d %d)", (int) d1, Value); break;
+        case 0x6F: ::snprintf(Line.data(), Line.size(), "Loop marker (%d %d)", (int) d1, Value); break;
 
         // Channel Mode Messages
         case 0x78: ::snprintf(Line.data(), Line.size(), "All Sound Off"); break;           // Mutes all sounding notes. It does so regardless of release time or sustain. (See MIDI CC 123)

@@ -244,7 +244,7 @@ void stream_t::Grow(uint32_t bytesNeeded) noexcept
 /// </summary>
 void stream_t::GetDeltaTime(uint32_t & deltaTime) noexcept
 {
-    _RunningNotes.Update(*this, deltaTime);
+    _RunningNotes.Update(*this);
 
     if (deltaTime != 0)
     {

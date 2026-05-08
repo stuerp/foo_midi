@@ -31,8 +31,8 @@ public:
 
     bool EmitNote(stream_t & stream, uint8_t note, uint8_t duration) noexcept;
 
-    void Flush(stream_t & stream, uint32_t & deltaTime) noexcept;
-    size_t Update(stream_t & stream, uint32_t & deltaTime) noexcept;
+    void Flush(stream_t & stream) noexcept;
+    size_t Update(stream_t & stream) noexcept;
 
 public:
     static const size_t MaxItems = 32;

@@ -92,20 +92,20 @@
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)out\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)out\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)out\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)out\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\int\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -119,7 +119,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdParty\WTL10_10320\Include;$(SolutionDir)sdk\foobar2000\sdk;$(SolutionDir)sdk\foobar2000\shared;$(SolutionDir)sdk\foobar2000;$(SolutionDir)sdk;$(ProjectDir);$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\3rdParty\WTL10_10320\Include;$(SolutionDir)..\sdk\foobar2000\sdk;$(SolutionDir)..\sdk\foobar2000\shared;$(SolutionDir)..\sdk\foobar2000;$(SolutionDir)..\sdk;$(ProjectDir);$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>EnableAllWarnings</WarningLevel>
@@ -130,13 +130,14 @@
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)sdk\foobar2000\shared\shared-$(Platform).lib;$(ProjectDir)3rdParty\bass\c\bass.lib;$(ProjectDir)3rdParty\bass\c\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(ProjectDir)3rdParty\bass\c\bass.lib;$(ProjectDir)3rdParty\bass\c\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -159,7 +160,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdParty\WTL10_10320\Include;$(SolutionDir)sdk;$(SolutionDir)sdk\foobar2000;$(SolutionDir)sdk\foobar2000\sdk;$(SolutionDir)sdk\foobar2000\shared;$(ProjectDir);$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\3rdParty\WTL10_10320\Include;$(SolutionDir)..\sdk\foobar2000\sdk;$(SolutionDir)..\sdk\foobar2000\shared;$(SolutionDir)..\sdk\foobar2000;$(SolutionDir)..\sdk;$(ProjectDir);$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <AdditionalOptions>/d2notypeopt /utf-8</AdditionalOptions>
@@ -176,7 +177,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)sdk\foobar2000\shared\shared-$(PlatformTarget).lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bass.lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(PlatformTarget).lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bass.lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib</AdditionalDependencies>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -201,7 +202,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdParty\WTL10_10320\Include;$(SolutionDir)sdk\foobar2000\sdk;$(SolutionDir)sdk\foobar2000\shared;$(SolutionDir)sdk\foobar2000;$(SolutionDir)sdk;.;$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\3rdParty\WTL10_10320\Include;$(SolutionDir)..\sdk\foobar2000\sdk;$(SolutionDir)..\sdk\foobar2000\shared;$(SolutionDir)..\sdk\foobar2000;$(SolutionDir)..\sdk;$(ProjectDir);$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt /utf-8</AdditionalOptions>
@@ -216,13 +217,14 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)sdk\foobar2000\shared\shared-$(Platform).lib;$(ProjectDir)3rdParty\bass\c\bass.lib;$(ProjectDir)3rdParty\bass\c\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(ProjectDir)3rdParty\bass\c\bass.lib;$(ProjectDir)3rdParty\bass\c\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -247,7 +249,7 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdParty\WTL10_10320\Include;$(SolutionDir)sdk\foobar2000\sdk;$(SolutionDir)sdk\foobar2000\shared;$(SolutionDir)sdk\foobar2000;$(SolutionDir)sdk;.;$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\3rdParty\WTL10_10320\Include;$(SolutionDir)..\sdk\foobar2000\sdk;$(SolutionDir)..\sdk\foobar2000\shared;$(SolutionDir)..\sdk\foobar2000;$(SolutionDir)..\sdk;$(ProjectDir);$(ProjectDir)GUI;$(ProjectDir)Infrastructure;$(ProjectDir)MIDI;$(ProjectDir)Players;$(ProjectDir)Players\OPNPlayer;$(ProjectDir)3rdParty;$(ProjectDir)3rdParty\BASS\c;$(ProjectDir)3rdParty\libedmidi\repo\src;$(ProjectDir)3rdParty\libedmidi\repo\include;$(ProjectDir)3rdParty\FluidSynth\include;$(ProjectDir)3rdParty\libjson;$(ProjectDir)3rdParty\libsflist;$(ProjectDir)3rdParty\fmmidi;$(ProjectDir)3rdParty\libmt32emu;$(ProjectDir)3rdParty\libmt32emu\repo\mt32emu\src;$(ProjectDir)3rdParty\nuked-opl3\repo;$(ProjectDir)3rdParty\libmidi\include;$(ProjectDir)3rdParty\libmidi\src;$(ProjectDir)3rdParty\libsf\include;$(ProjectDir)3rdParty\libriff\include;$(ProjectDir)3rdParty\libmsc\include;$(ProjectDir)3rdParty\clap\include;$(ProjectDir)3rdParty\foo_vis_midi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;MT32EMU_API_TYPE=3;HAVE_FOO_VIS_MIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/d2notypeopt /utf-8</AdditionalOptions>
@@ -261,13 +263,14 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)sdk\foobar2000\shared\shared-$(PlatformTarget).lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bass.lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(PlatformTarget).lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bass.lib;$(ProjectDir)3rdParty\bass\c\$(LibrariesArchitecture)\bassmidi.lib;winmm.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dxgi.lib;d3d10_1.lib</AdditionalDependencies>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -453,19 +456,19 @@
     <ClInclude Include="Resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
+    <ProjectReference Include="..\sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
       <Project>{71ad2674-065b-48f5-b8b0-e1f9d3892081}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)sdk\foobar2000\helpers\foobar2000_sdk_helpers.vcxproj">
+    <ProjectReference Include="..\sdk\foobar2000\helpers\foobar2000_sdk_helpers.vcxproj">
       <Project>{ee47764e-a202-4f85-a767-abdab4aff35f}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)sdk\foobar2000\SDK\foobar2000_SDK.vcxproj">
+    <ProjectReference Include="..\sdk\foobar2000\SDK\foobar2000_SDK.vcxproj">
       <Project>{e8091321-d79d-4575-86ef-064ea1a4a20d}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)sdk\libPPUI\libPPUI.vcxproj">
+    <ProjectReference Include="..\sdk\libPPUI\libPPUI.vcxproj">
       <Project>{7729eb82-4069-4414-964b-ad399091a03f}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)sdk\pfc\pfc.vcxproj">
+    <ProjectReference Include="..\sdk\pfc\pfc.vcxproj">
       <Project>{ebfffb4e-261d-44d3-b89c-957b31a0bf9c}</Project>
     </ProjectReference>
     <ProjectReference Include="3rdParty\libADLMIDI\libadlmidi.vcxproj">
@@ -500,6 +503,9 @@
     </ProjectReference>
     <ProjectReference Include="3rdParty\nuked-opl3\nuked-opl3.vcxproj">
       <Project>{388eb9a8-764e-4a90-be37-fb28cae70d03}</Project>
+    </ProjectReference>
+    <ProjectReference Include="3rdParty\zlib\zlib.vcxproj">
+      <Project>{785d22da-58d2-4545-87c7-8f49ee31cda4}</Project>
     </ProjectReference>
     <ProjectReference Include="scpipe\scpipe32.vcxproj">
       <Project>{6e35bb35-acba-40eb-8f63-bd153046677c}</Project>

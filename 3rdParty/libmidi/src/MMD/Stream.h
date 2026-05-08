@@ -33,7 +33,7 @@ public:
 
     void EndTrack() noexcept
     {
-        _RunningNotes.Flush(*this, DeltaTime);
+        _RunningNotes.Flush(*this);
     }
 
     void Add(uint8_t channel, uint8_t note, uint8_t velocity, uint32_t duration) noexcept
