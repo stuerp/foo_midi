@@ -95,9 +95,11 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.3.0.0-alpha2, 2026-05-xx
+v3.3.0.0-alpha2, 2026-05-08
 
+- Added: Option "Use Secret Sauce with SC88 or later". This option will override the selected player when the MIDI file contains a SYSTEM MODE SET sysex [GitHub Issue 145](https://github.com/stuerp/foo_midi/issues/145)
 - Changed: SysEx REQ1 events are no longer sent to Secret Sauce. The plug-in does not handle malformed SysEx events correctly and the result of the request is not used anyway. [GitHub Issue 155](https://github.com/stuerp/foo_midi/issues/155)
+- Improved: MMD converter is thread safe now.
 
 You can read the full history [here](docs/History.md).
 

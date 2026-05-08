@@ -186,7 +186,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
                 (uint16_t) CfgLoopExpansion,
                 CfgWriteBarMarkers,
                 CfgWriteSysExNames,
-                CfgExtendLoops,
+                CfgExpandLoops,
                 CfgWolfteamLoopMode,
                 CfgKeepMutedChannels,
                 CfgIncludeControlData,
@@ -1076,13 +1076,33 @@ void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongInde
         }
     }
 
+    // Does any of the tracks contain a System Mode Set SysEx?
+    bool IsSC88OrLater = false;
+
+    for (const auto & Track : _Container)
+    {
+        for (const auto & Event : Track)
+        {
+            if (Event.IsSysEx())
+            {
+                static const uint8_t SystemModeSet[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x00, 0x00, 0x7F }; // Available in Roland GS devices starting with the SC-88.
+
+                if ((Event.Data.size() == 11) && (::memcmp(Event.Data.data(), SystemModeSet, _countof(SystemModeSet)) == 0))
+                {
+                    IsSC88OrLater = true;
+                    break;
+                }
+            }
+        }
+    }
+
     if (_IsMT32 && CfgUseMT32EmuWithMT32)
     {
         _PlayerType = PlayerType::MT32Emu;
         _IsPlayerTypeOverriden = true;
     }
     else
-    if (_IsGS && CfgUseSCWithGS && !CfgSecretSauceDirectoryPath.get().isEmpty())
+    if (((_IsGS && CfgUseSCWithGS) || (IsSC88OrLater && CfgUseSCWithSC88orLater)) && !CfgSecretSauceDirectoryPath.get().isEmpty())
     {
         _PlayerType = PlayerType::SecretSauce;
         _IsPlayerTypeOverriden = true;

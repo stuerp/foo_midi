@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2025.08.31) P. Stuer **/
+/** $VER: Preferences.cpp (2026.05.08) P. Stuer **/
 
 #include "pch.h"
 
@@ -90,30 +90,31 @@ public:
         COMMAND_HANDLER_EX(IDC_LOOP_PLAYBACK,               CBN_SELCHANGE, OnSelectionChange)
         COMMAND_HANDLER_EX(IDC_LOOP_OTHER,                  CBN_SELCHANGE, OnSelectionChange)
 
-        COMMAND_HANDLER_EX(IDC_DECAY_TIME,                  EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_LOOP_COUNT,                  EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_FADE_OUT_TIME,               EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_DECAY_TIME,                      EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_LOOP_COUNT,                      EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_FADE_OUT_TIME,                   EN_CHANGE, OnEditChange)
 
-        COMMAND_HANDLER_EX(IDC_RPGMAKER_LOOPS,              BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_LEAPFROG_LOOPS,              BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_XMI_LOOPS,                   BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS,                BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_FF7_LOOPS,                   BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_RPGMAKER_LOOPS,                  BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_LEAPFROG_LOOPS,                  BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_XMI_LOOPS,                       BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_TOUHOU_LOOPS,                    BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_FF7_LOOPS,                       BN_CLICKED, OnButtonClick)
 
         // MIDI
-        COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR,                 CBN_SELCHANGE, OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_MIDI_FLAVOR,                     CBN_SELCHANGE, OnSelectionChange)
 
-        COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS,                BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_USE_MT32EMU_WITH_MT32,  BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_USE_SC_WITH_GS,         BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,       BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_MIDI_DETECT_EXTRA_DRUM,      BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_EFFECTS,                    BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_MT32EMU_WITH_MT32,      BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_SC_WITH_GS,             BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_SC_WITH_SC88_OR_LATER,  BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_USE_VSTI_WITH_XG,           BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_MIDI_DETECT_EXTRA_DRUM,          BN_CLICKED, OnButtonClick)
 
-        COMMAND_HANDLER_EX(IDC_EMIDI_EXCLUSION,             BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_EMIDI_EXCLUSION,                 BN_CLICKED, OnButtonClick)
 
-        COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS,          BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_FILTER_BANKS,                BN_CLICKED, OnButtonClick)
-        COMMAND_HANDLER_EX(IDC_SKIP_TO_FIRST_NOTE,          BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS,              BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_FILTER_BANKS,                    BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_SKIP_TO_FIRST_NOTE,              BN_CLICKED, OnButtonClick)
     END_MSG_MAP()
 
     enum
@@ -352,13 +353,14 @@ void RootDialog::apply()
 
     // MIDI
     {
-        CfgMIDIFlavor         = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
+        CfgMIDIFlavor           = (t_int32) SendDlgItemMessage(IDC_MIDI_FLAVOR, CB_GETCURSEL);
 
-        CfgUseMIDIEffects     = (t_int32) SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) ? 0 : 1;
-        CfgUseMT32EmuWithMT32 = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_GETCHECK);
-        CfgUseSCWithGS        = (bool) SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS, BM_GETCHECK);
-        CfgUseVSTiWithXG      = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
-        CfgDetectExtraDrum    = (bool)    SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK);
+        CfgUseMIDIEffects       = (t_int32) SendDlgItemMessage(IDC_MIDI_EFFECTS, BM_GETCHECK) ? 0 : 1;
+        CfgUseMT32EmuWithMT32   = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_GETCHECK);
+        CfgUseSCWithGS          = (bool) SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS, BM_GETCHECK);
+        CfgUseSCWithSC88orLater = (bool) SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_SC88_OR_LATER, BM_GETCHECK);
+        CfgUseVSTiWithXG        = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
+        CfgDetectExtraDrum      = (bool)    SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK);
 
         CfgExcludeEMIDITrackDesignation = (t_int32) SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_GETCHECK);
 
@@ -667,13 +669,17 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
         ::SendMessage(w, CB_SETCURSEL, (WPARAM) CfgMIDIFlavor, 0);
 
-        SendDlgItemMessage(IDC_MIDI_EFFECTS,               BM_SETCHECK, (WPARAM) (CfgUseMIDIEffects ? 0 : 1));
-        SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32, BM_SETCHECK, (WPARAM) CfgUseMT32EmuWithMT32);
-        SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS,        BM_SETCHECK, (WPARAM) CfgUseSCWithGS);
-        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,      BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
-        SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM,     BM_SETCHECK, (WPARAM) CfgDetectExtraDrum);
+        SendDlgItemMessage(IDC_MIDI_EFFECTS,                   BM_SETCHECK, (WPARAM) (CfgUseMIDIEffects ? 0 : 1));
+        SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32,     BM_SETCHECK, (WPARAM) CfgUseMT32EmuWithMT32);
+        SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS,            BM_SETCHECK, (WPARAM) CfgUseSCWithGS);
+        SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_SC88_OR_LATER, BM_SETCHECK, (WPARAM) CfgUseSCWithSC88orLater);
+        SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,          BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
+        SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM,         BM_SETCHECK, (WPARAM) CfgDetectExtraDrum);
 
-        GetDlgItem(IDC_MIDI_USE_SC_WITH_GS).EnableWindow(!CfgSecretSauceDirectoryPath.get().isEmpty());
+        const bool HasSecretSauce = !CfgSecretSauceDirectoryPath.get().isEmpty();
+
+        GetDlgItem(IDC_MIDI_USE_SC_WITH_GS).EnableWindow(HasSecretSauce);
+        GetDlgItem(IDC_MIDI_USE_SC_WITH_SC88_OR_LATER).EnableWindow(HasSecretSauce);
 
         const bool Enabled = _SelectedPlayer.SupportsMIDIFlavor();
 
@@ -971,6 +977,9 @@ bool RootDialog::HasChanged()
             return true;
 
         if (SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS, BM_GETCHECK) != CfgUseSCWithGS)
+            return true;
+
+        if (SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_SC88_OR_LATER, BM_GETCHECK) != CfgUseSCWithSC88orLater)
             return true;
 
         if (SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK) != CfgUseVSTiWithXG)

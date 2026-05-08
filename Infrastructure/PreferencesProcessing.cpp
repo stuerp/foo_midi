@@ -48,7 +48,7 @@ const type2 Def##name = value;
 ConfigVariable(LoopExpansion,       cfg_int,  int,      0, 0x90c3d952,0xd07f,0x4d76,0x84,0x40,0x03,0x4a,0xb6,0x4e,0xfd,0x35);
 ConfigVariable(WriteBarMarkers,     cfg_bool, bool, false, 0x532741c5,0xe1a3,0x4334,0xa5,0xb6,0xa5,0x99,0x6d,0x08,0xdc,0x9c);
 ConfigVariable(WriteSysExNames,     cfg_bool, bool, false, 0xe00a19b1,0xe0dd,0x46dc,0xb0,0x6c,0xdb,0xb7,0x13,0x5c,0x07,0xc8);
-ConfigVariable(ExtendLoops,         cfg_bool, bool, true,  0x0d8983e5,0x748e,0x456d,0xb3,0x20,0x74,0x33,0x81,0xb5,0xd0,0x11);
+ConfigVariable(ExpandLoops,         cfg_bool, bool, true,  0x0d8983e5,0x748e,0x456d,0xb3,0x20,0x74,0x33,0x81,0xb5,0xd0,0x11);
 ConfigVariable(WolfteamLoopMode,    cfg_bool, bool, false, 0x373c9824,0x32a3,0x4ebe,0x87,0x3f,0xb2,0xda,0x7e,0xb8,0x50,0x29);
 ConfigVariable(KeepMutedChannels,   cfg_bool, bool, false, 0x5ded0321,0xc53c,0x4581,0xb3,0x1e,0x3c,0x7b,0x3d,0xc0,0x90,0xb5);
 ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4974,0xaa,0x60,0x3c,0xdf,0xb6,0x07,0x25,0xbc);
@@ -185,7 +185,7 @@ void ProcessingDialog::apply()
     ApplyConfigVariable(LoopExpansion);
     ApplyConfigVariable(WriteBarMarkers);
     ApplyConfigVariable(WriteSysExNames);
-    ApplyConfigVariable(ExtendLoops);
+    ApplyConfigVariable(ExpandLoops);
     ApplyConfigVariable(WolfteamLoopMode);
     ApplyConfigVariable(KeepMutedChannels);
     ApplyConfigVariable(IncludeControlData);
@@ -209,7 +209,7 @@ void ProcessingDialog::reset()
     ResetConfigVariable(LoopExpansion);
     ResetConfigVariable(WriteBarMarkers);
     ResetConfigVariable(WriteSysExNames);
-    ResetConfigVariable(ExtendLoops);
+    ResetConfigVariable(ExpandLoops);
     ResetConfigVariable(WolfteamLoopMode);
     ResetConfigVariable(KeepMutedChannels);
     ResetConfigVariable(IncludeControlData);
@@ -242,7 +242,7 @@ BOOL ProcessingDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 
     InitializeConfigVariable(WriteBarMarkers);
     InitializeConfigVariable(WriteSysExNames);
-    InitializeConfigVariable(ExtendLoops);
+    InitializeConfigVariable(ExpandLoops);
     InitializeConfigVariable(WolfteamLoopMode);
     InitializeConfigVariable(KeepMutedChannels);
     InitializeConfigVariable(IncludeControlData);
@@ -443,7 +443,7 @@ bool ProcessingDialog::HasChanged() const noexcept
 
     HasConfigVariableChanged(WriteBarMarkers);
     HasConfigVariableChanged(WriteSysExNames);
-    HasConfigVariableChanged(ExtendLoops);
+    HasConfigVariableChanged(ExpandLoops);
     HasConfigVariableChanged(WolfteamLoopMode);
     HasConfigVariableChanged(KeepMutedChannels);
     HasConfigVariableChanged(IncludeControlData);

@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2025.08.31) **/
+/** $VER: Preferences.rc (2026.05.08) **/
 
 #include "Resource.h"
 
@@ -220,6 +220,12 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_A85    W_A84
     #define H_A85    H_CHB
 
+    // Checkbox: Use Secret Sauce with SC88 or later
+    #define X_A88    X_A85 + W_A85 + IX
+    #define Y_A88    Y_A85
+    #define W_A88    W_A85
+    #define H_A88    H_CHB
+
     // Checkbox: Filter effects
     #define X_A83    X_A85
     #define Y_A83    Y_A85 + H_A85 + IY + H_CHB + IY
@@ -268,50 +274,51 @@ font 8, "MS Shell Dlg", 400, 0, 1
 //  pushbutton "", IDC_STATIC, 0, 0, W_A00, H_A00
 
     groupbox "Output", IDC_STATIC, X_A10, Y_A10, W_A10, H_A10
-        rtext       "Player:",      IDC_STATIC,     X_A11, Y_A11 + 2, W_A11, H_A11
-        combobox                    IDC_PLAYER_TYPE,X_A12, Y_A12,     W_A12, H_A12, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        pushbutton  "Configure",    IDC_CONFIGURE,  X_A13, Y_A13,     W_A13, H_A13, WS_TABSTOP
-        rtext       "Sample rate:", IDC_STATIC,     X_A14, Y_A14 + 2, W_A14, H_A14
-        combobox                    IDC_SAMPLERATE, X_A15, Y_A15,     W_A15, H_A15, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+        rtext       "Player:",                                          IDC_STATIC,                         X_A11, Y_A11 + 2, W_A11, H_A11
+        combobox                                                        IDC_PLAYER_TYPE,                    X_A12, Y_A12,     W_A12, H_A12, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        pushbutton  "Configure",                                        IDC_CONFIGURE,                      X_A13, Y_A13,     W_A13, H_A13, WS_TABSTOP
+        rtext       "Sample rate:",                                     IDC_STATIC,                         X_A14, Y_A14 + 2, W_A14, H_A14
+        combobox                                                        IDC_SAMPLERATE,                     X_A15, Y_A15,     W_A15, H_A15, CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
     groupbox "Looping", IDC_STATIC, X_A20, Y_A20, W_A20, H_A20
-        rtext       "Playback:",        IDC_STATIC,         X_A21, Y_A21 + 2, W_A21, H_A21
-        combobox                        IDC_LOOP_PLAYBACK,  X_A22, Y_A22,     W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-        rtext       "Other:",           IDC_STATIC,         X_A23, Y_A23 + 2, W_A23, H_A23
-        combobox                        IDC_LOOP_OTHER,     X_A24, Y_A24,     W_A24, H_A24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Playback:",                                        IDC_STATIC,                         X_A21, Y_A21 + 2, W_A21, H_A21
+        combobox                                                        IDC_LOOP_PLAYBACK,                  X_A22, Y_A22,     W_A22, H_A22, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Other:",                                           IDC_STATIC,                         X_A23, Y_A23 + 2, W_A23, H_A23
+        combobox                                                        IDC_LOOP_OTHER,                     X_A24, Y_A24,     W_A24, H_A24, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-        rtext       "Decay time:",      IDC_STATIC,         X_A29, Y_A29 + 2, W_A29, H_A29
-        edittext                        IDC_DECAY_TIME,     X_A2A, Y_A2A,     W_A2A, H_A2A, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
-        ltext       "ms",               IDC_STATIC,         X_A2B, Y_A2B + 2, W_A2B, H_A2B
+        rtext       "Decay time:",                                      IDC_STATIC,                         X_A29, Y_A29 + 2, W_A29, H_A29
+        edittext                                                        IDC_DECAY_TIME,                     X_A2A, Y_A2A,     W_A2A, H_A2A, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        ltext       "ms",                                               IDC_STATIC,                         X_A2B, Y_A2B + 2, W_A2B, H_A2B
 
-        rtext       "Loop count:",      IDC_STATIC,         X_A40, Y_A40 + 2, W_A40, H_A40
-        edittext                        IDC_LOOP_COUNT,     X_A41, Y_A41,     W_A41, H_A41, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        rtext       "Loop count:",                                      IDC_STATIC,                         X_A40, Y_A40 + 2, W_A40, H_A40
+        edittext                                                        IDC_LOOP_COUNT,                     X_A41, Y_A41,     W_A41, H_A41, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
 
-        rtext       "Fade-out time:",   IDC_STATIC,         X_A42, Y_A42 + 2, W_A42, H_A42
-        edittext                        IDC_FADE_OUT_TIME,  X_A43, Y_A43,     W_A43, H_A43, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
-        ltext       "ms",               IDC_STATIC,         X_A44, Y_A44 + 2, W_A44, H_A44
+        rtext       "Fade-out time:",                                   IDC_STATIC,                         X_A42, Y_A42 + 2, W_A42, H_A42
+        edittext                                                        IDC_FADE_OUT_TIME,                  X_A43, Y_A43,     W_A43, H_A43, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+        ltext       "ms",                                               IDC_STATIC,                         X_A44, Y_A44 + 2, W_A44, H_A44
 
-        control     "RPG Maker",                                        IDC_RPGMAKER_LOOPS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
-        control     "LeapFrog",                                         IDC_LEAPFROG_LOOPS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
-        control     "XMI, EMIDI",                                       IDC_XMI_LOOPS,                  "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
-        control     "Touhou",                                           IDC_TOUHOU_LOOPS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
-        control     "Final Fantasy 7"                                   IDC_FF7_LOOPS,                  "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A2C, Y_A2C, W_A2C, H_A2C
+        control     "RPG Maker",                                        IDC_RPGMAKER_LOOPS,                 "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+        control     "LeapFrog",                                         IDC_LEAPFROG_LOOPS,                 "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
+        control     "XMI, EMIDI",                                       IDC_XMI_LOOPS,                      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A27, Y_A27, W_A27, H_A27
+        control     "Touhou",                                           IDC_TOUHOU_LOOPS,                   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A28, Y_A28, W_A28, H_A28
+        control     "Final Fantasy 7"                                   IDC_FF7_LOOPS,                      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A2C, Y_A2C, W_A2C, H_A2C
 
     groupbox "MIDI", IDC_STATIC, X_A80, Y_A80, W_A80, H_A80
-        rtext       "Flavor:",                                          IDC_MIDI_FLAVOR_TEXT,           X_A81, Y_A81 + 2, W_A81, H_A81
-        combobox                                                        IDC_MIDI_FLAVOR,                X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+        rtext       "Flavor:",                                          IDC_MIDI_FLAVOR_TEXT,               X_A81, Y_A81 + 2, W_A81, H_A81
+        combobox                                                        IDC_MIDI_FLAVOR,                    X_A82, Y_A82,     W_A82, H_A82, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-        control     "Use LibMT32Emu with MT-32",                        IDC_MIDI_USE_MT32EMU_WITH_MT32, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
-        control     "Use Secret Sauce with GS",                         IDC_MIDI_USE_SC_WITH_GS,        "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A87, Y_A87, W_A87, H_A87
-        control     "Use VSTi with XG",                                 IDC_MIDI_USE_VSTI_WITH_XG,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
+        control     "Use LibMT32Emu with MT-32",                        IDC_MIDI_USE_MT32EMU_WITH_MT32,     "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
+        control     "Use Secret Sauce with GS",                         IDC_MIDI_USE_SC_WITH_GS,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A87, Y_A87, W_A87, H_A87
+        control     "Use VSTi with XG",                                 IDC_MIDI_USE_VSTI_WITH_XG,          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
+        control     "Use Secret Sauce with SC88 or later",              IDC_MIDI_USE_SC_WITH_SC88_OR_LATER, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A88, Y_A88, W_A88, H_A88
 
-        control     "Filter effects (Reverb and Chorus)",               IDC_MIDI_EFFECTS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
-        control     "Detect extra percussion channel",                  IDC_MIDI_DETECT_EXTRA_DRUM      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A86, Y_A86, W_A86, H_A86
-        control     "Exclude unsupp. EMIDI track designation"           IDC_EMIDI_EXCLUSION,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
-        control     "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
-        control     "Disable bank changes",                             IDC_FILTER_BANKS,               "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
+        control     "Filter effects (Reverb and Chorus)",               IDC_MIDI_EFFECTS,                   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
+        control     "Detect extra percussion channel",                  IDC_MIDI_DETECT_EXTRA_DRUM          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A86, Y_A86, W_A86, H_A86
+        control     "Exclude unsupp. EMIDI track designation"           IDC_EMIDI_EXCLUSION,                "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A31, Y_A31, W_A31, H_A31
+        control     "Disable instrument changes",                       IDC_FILTER_INSTRUMENTS,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A32, Y_A32, W_A32, H_A32
+        control     "Disable bank changes",                             IDC_FILTER_BANKS,                   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
 
-        control     "Skip to first note",                               IDC_SKIP_TO_FIRST_NOTE,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A34, Y_A34, W_A34, H_A34
+        control     "Skip to first note",                               IDC_SKIP_TO_FIRST_NOTE,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A34, Y_A34, W_A34, H_A34
 
 //  ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, X_A50, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 }

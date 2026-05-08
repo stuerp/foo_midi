@@ -1,5 +1,5 @@
 
-/** $VER: MIDIContainer.h (2026.05.01) **/
+/** $VER: MIDIContainer.h (2026.05.08) **/
 
 #pragma once
 
@@ -30,7 +30,7 @@ struct event_t
         Extended            // 0xF0
     };
 
-    uint32_t Time;              // Absolute time
+    uint32_t Time;              // Absolute time in ticks from the beginning of the track.
     event_type_t Type;
     uint32_t ChannelNumber;
     std::vector<uint8_t> Data;
@@ -69,6 +69,8 @@ struct event_t
     bool IsMarker() const noexcept      { return (Type == event_t::Extended) && (Data.size() >= 9) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::Marker); }
     bool IsPort() const noexcept        { return (Type == event_t::Extended) && (Data.size() >= 2) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::MIDIPort); }
     bool IsEndOfTrack() const noexcept  { return (Type == event_t::Extended) && (Data.size() >= 2) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::EndOfTrack); }
+
+    bool IsSysEx() const noexcept       { return (Type == event_t::Extended) && (Data.size() >= 2) && (Data[0] == StatusCode::SysEx); }
 };
 
 /// <summary>

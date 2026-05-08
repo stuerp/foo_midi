@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2026.03.05) P. Stuer **/
+/** $VER: Resource.h (2026.05.08) P. Stuer **/
 
 #pragma once
 
@@ -16,7 +16,7 @@
 #define NUM_PRODUCT_PATCH           0
 #define NUM_PRODUCT_PRERELEASE      0
 
-#define STR_RELEASE_TAG             "-alpha1"
+#define STR_RELEASE_TAG             "-alpha2"
 
 /** Component specific **/
 
@@ -25,7 +25,7 @@
 #define STR_COMPONENT_BASENAME      "foo_midi"
 #define STR_COMPONENT_FILENAME      STR_COMPONENT_BASENAME ".dll"
 #define STR_COMPONENT_COMPANY_NAME  "LoSno.co"
-#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2004-2025 " STR_COMPONENT_COMPANY_NAME ". All rights reserved."
+#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2004-2026 " STR_COMPONENT_COMPANY_NAME ". All rights reserved."
 #define STR_COMPONENT_COMMENTS      "Written by Christopher Snowhill, P. Stuer"
 #define STR_COMPONENT_DESCRIPTION   "Adds playback of MIDI files to foobar2000"
 #define STR_COMPONENT_URL           "https://github.com/stuerp/" STR_COMPONENT_BASENAME
@@ -84,8 +84,9 @@
 #define IDC_MIDI_EFFECTS                    1020
 #define IDC_MIDI_USE_MT32EMU_WITH_MT32      1021
 #define IDC_MIDI_USE_SC_WITH_GS             1022
-#define IDC_MIDI_USE_VSTI_WITH_XG           1023
-#define IDC_MIDI_DETECT_EXTRA_DRUM          1024
+#define IDC_MIDI_USE_SC_WITH_SC88_OR_LATER  1023
+#define IDC_MIDI_USE_VSTI_WITH_XG           1024
+#define IDC_MIDI_DETECT_EXTRA_DRUM          1025
 
 /** Dialog: Preferences FM Synthesis **/
 

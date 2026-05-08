@@ -1,5 +1,5 @@
 
-/** $VER: MIDIProcessorSMF.cpp (2026.04.10) Standard MIDI File **/
+/** $VER: MIDIProcessorSMF.cpp (2026.05.08) Standard MIDI File **/
 
 #include "pch.h"
 
@@ -125,7 +125,7 @@ bool processor_t::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, s
 {
     track_t Track;
 
-    uint32_t RunningTime = 0;
+    uint32_t CurrentTime = 0;       // In ticks
     uint8_t RunningStatus = 0xFF;
 
     uint32_t SysExSize = 0;
@@ -150,7 +150,7 @@ bool processor_t::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, s
         if (DeltaTime < 0)
             DeltaTime = -DeltaTime; // "Encountered negative delta: " << delta << "; flipping sign."
 
-        RunningTime += DeltaTime;
+        CurrentTime += DeltaTime;
 
         uint8_t StatusCode = *data++;
         uint32_t BytesRead = 0;
@@ -226,7 +226,7 @@ bool processor_t::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, s
                 DetectedPercussionText = false;
             }
 
-            Track.AddEvent(event_t(RunningTime, (event_t::event_type_t) ((StatusCode >> 4) - 8), ChannelNumber, Temp.data(), BytesRead));
+            Track.AddEvent(event_t(CurrentTime, (event_t::event_type_t) ((StatusCode >> 4) - 8), ChannelNumber, Temp.data(), BytesRead));
         }
         else
         {
@@ -257,7 +257,7 @@ bool processor_t::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, s
                     data += Size;
 
                     SysExSize = (uint32_t) (Size + 1);
-                    SysExTime = RunningTime;
+                    SysExTime = CurrentTime;
                 }
             }
             else
@@ -335,7 +335,7 @@ bool processor_t::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, s
                     data += Size;
 
                     if ((MetaDataType != MetaDataType::MIDIPort) || ((MetaDataType == MetaDataType::MIDIPort) && Track.IsPortSet()))
-                        Track.AddEvent(event_t(RunningTime, event_t::Extended, 0, Temp.data(), (size_t) (Size + 2)));
+                        Track.AddEvent(event_t(CurrentTime, event_t::Extended, 0, Temp.data(), (size_t) (Size + 2)));
                     else
                         Track.AddEventToStart(event_t(0, event_t::Extended, 0, Temp.data(), (size_t) (Size + 2)));
                 }
@@ -353,7 +353,7 @@ bool processor_t::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, s
             {
                 Temp[0] = StatusCode;
 
-                Track.AddEvent(event_t(RunningTime, event_t::Extended, 0, Temp.data(), 1));
+                Track.AddEvent(event_t(CurrentTime, event_t::Extended, 0, Temp.data(), 1));
             }
             else
                 throw midi::exception("Invalid status code");
@@ -364,7 +364,7 @@ bool processor_t::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, s
     {
         const uint8_t EventData[] = { StatusCode::MetaData, MetaDataType::EndOfTrack };
 
-        Track.AddEvent(event_t(RunningTime, event_t::Extended, 0, EventData, _countof(EventData)));
+        Track.AddEvent(event_t(CurrentTime, event_t::Extended, 0, EventData, _countof(EventData)));
     }
 
     container.AddTrack(Track);

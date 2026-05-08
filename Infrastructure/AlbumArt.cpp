@@ -91,7 +91,7 @@ public:
                 (uint16_t) CfgLoopExpansion,
                 CfgWriteBarMarkers,
                 CfgWriteSysExNames,
-                CfgExtendLoops,
+                CfgExpandLoops,
                 CfgWolfteamLoopMode,
                 CfgKeepMutedChannels,
                 CfgIncludeControlData,

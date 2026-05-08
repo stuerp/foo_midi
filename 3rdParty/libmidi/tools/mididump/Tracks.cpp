@@ -3,13 +3,43 @@
 
 #include "pch.h"
 
-#include "MIDIProcessor.h"
+#include "MIDI.h"
+#include "MIDIContainer.h"
 
 #include "Messages.h"
 #include "SysEx.h"
-#include "Tables.h"
 
 using namespace midi;
+
+static uint32_t ProcessEvent(const midi::event_t & event, uint32_t eventTimeInMS, uint32_t time, size_t index) noexcept;
+
+/// <summary>
+/// Processes all tracks.
+/// </summary>
+void ProcessTracks(const midi::container_t & container)
+{
+    const uint32_t SubsongIndex = 0;
+
+    uint32_t TrackIndex = 0;
+
+    for (const auto & Track : container)
+    {
+        uint32_t ChannelCount = container.GetChannelCount(SubsongIndex);
+        uint32_t Duration = container.GetDuration(SubsongIndex, false);
+        uint32_t DurationInMS = container.GetDuration(SubsongIndex, true);
+
+        ::printf("\nTrack %2d: %d channels, %8d ticks, %8.2fs\n", TrackIndex + 1, ChannelCount, Duration, (float) DurationInMS / 1000.0f);
+        ::puts("Index    | Ticks        | Time    | Time     | Ch | Data");
+
+        uint32_t Time = std::numeric_limits<uint32_t>::max();
+        size_t i = 0;
+
+        for (const auto & Event : Track)
+            Time = ProcessEvent(Event, container.TimestampToMS(Event.Time, SubsongIndex), Time, i++);
+
+        ++TrackIndex;
+    }
+}
 
 /// <summary>
 /// Processes a metadata message.
@@ -180,13 +210,13 @@ static void ProcessSysEx(const midi::event_t & me) noexcept
 
     SysEx.Identify();
 
-    ::printf(" \"%s\", \"%s\"", SysEx.Manufacturer.c_str(), SysEx.Description.c_str());
+    ::printf(" \"%s\", \"%s\", \"%s\", \"%s\"", SysEx.Manufacturer.c_str(), SysEx.Model.c_str(), SysEx.Command.c_str(), SysEx.Description.c_str());
 }
 
 /// <summary>
 /// Processes MIDI events.
 /// </summary>
-static uint32_t ProcessEvent(const midi::event_t & event, uint32_t eventTimeInMS, uint32_t time, size_t index) noexcept
+static uint32_t ProcessEvent(const midi::event_t & event, uint32_t eventTimeInMS, uint32_t currentTime, size_t index) noexcept
 {
     // Output the header.
     {
@@ -194,7 +224,7 @@ static uint32_t ProcessEvent(const midi::event_t & event, uint32_t eventTimeInMS
         char Display2[16];
         char Display3[16];
 
-        if (event.Time!= time)
+        if (event.Time!= currentTime)
         {
             ::_snprintf_s(Display1, _countof(Display1), "%8u ticks",  event.Time);
             ::_snprintf_s(Display2, _countof(Display2), "%8.2fs", (double) eventTimeInMS / 1000.);
@@ -311,32 +341,4 @@ static uint32_t ProcessEvent(const midi::event_t & event, uint32_t eventTimeInMS
     ::putchar('\n');
 
     return event.Time;
-}
-
-/// <summary>
-/// Processes all tracks.
-/// </summary>
-void ProcessTracks(const midi::container_t & container)
-{
-    const uint32_t SubsongIndex = 0;
-
-    uint32_t TrackIndex = 0;
-
-    for (const auto & Track : container)
-    {
-        uint32_t ChannelCount = container.GetChannelCount(SubsongIndex);
-        uint32_t Duration = container.GetDuration(SubsongIndex, false);
-        uint32_t DurationInMS = container.GetDuration(SubsongIndex, true);
-
-        ::printf("\nTrack %2d: %d channels, %8d ticks, %8.2fs\n", TrackIndex + 1, ChannelCount, Duration, (float) DurationInMS / 1000.0f);
-        ::puts("Index    | Ticks        | Time    | Time     | Ch | Data");
-
-        uint32_t Time = std::numeric_limits<uint32_t>::max();
-        size_t i = 0;
-
-        for (const auto & Event : Track)
-            Time = ProcessEvent(Event, container.TimestampToMS(Event.Time, SubsongIndex), Time, i++);
-
-        ++TrackIndex;
-    }
 }

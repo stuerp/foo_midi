@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2025.10.04) **/
+/** $VER: Configuration.h (2026.05.08) **/
 
 #pragma once
 
@@ -203,10 +203,11 @@ extern cfg_var_modern::cfg_int
 
 extern cfg_var_modern::cfg_bool
     CfgUseSCWithGS,
+    CfgUseSCWithSC88orLater,
 
     CfgWriteBarMarkers,
     CfgWriteSysExNames,
-    CfgExtendLoops,
+    CfgExpandLoops,
     CfgWolfteamLoopMode,
     CfgKeepMutedChannels,
     CfgIncludeControlData,

@@ -16,7 +16,7 @@ static uint8_t CCLSB = 255; // Control Change Least Significant Byte
 
 static uint8_t DELSB = 0;
 
-static uint32_t ProcessEvent(const midi::message_t & message, uint32_t messageTimeInMS, uint32_t timestamp, size_t index, const midi::sysex_table_t & sysExMap);
+static uint32_t ProcessMessage(uint32_t currentTime, uint32_t messageNumber, const midi::message_t & message, uint32_t messageTimeInMS, const midi::sysex_table_t & sysExMap) noexcept;
 
 /// <summary>
 /// Processes the stream.
@@ -25,10 +25,10 @@ void ProcessStream(const midi::container_t & container, const std::vector<midi::
 {
     const uint32_t SubsongIndex = 0;
 
-    ::printf("%u messages, %u unique SysEx messages, %u ports\n", (uint32_t) stream.size(), (uint32_t) sysExMap.Size(), (uint32_t) portNumbers.size());
+    ::printf("%u events, %u unique SysEx messages, %u ports\n", (uint32_t) stream.size(), (uint32_t) sysExMap.Size(), (uint32_t) portNumbers.size());
 
-    uint32_t Time = std::numeric_limits<uint32_t>::max();
-    size_t i = 0;
+    uint32_t CurrentTime = std::numeric_limits<uint32_t>::max(); // In ms
+    uint32_t MessageNumber = 0;
 
     for (const auto & m : stream)
     {
@@ -36,35 +36,32 @@ void ProcessStream(const midi::container_t & container, const std::vector<midi::
         if (skipNormalEvents && !m.IsSysEx())
             continue;
 
-        Time = ProcessEvent(m, container.TimestampToMS(m.Time, SubsongIndex), Time, i++, sysExMap);
+        CurrentTime = ProcessMessage(CurrentTime, MessageNumber++, m, container.TimestampToMS(m.Time, SubsongIndex), sysExMap);
     }
 }
 
 /// <summary>
 /// Processes MIDI stream events.
 /// </summary>
-static uint32_t ProcessEvent(const midi::message_t & message, uint32_t messageTimeInMS, uint32_t time, size_t index, const midi::sysex_table_t & sysExMap)
+static uint32_t ProcessMessage(uint32_t currentTime, uint32_t messageNumber, const midi::message_t & message, uint32_t messageTimeInMS, const midi::sysex_table_t & sysExMap) noexcept
 {
-    // Output the header.
+    // Output the message header.
     {
         char Display1[16];
         char Display2[16];
-        char Display3[16];
 
-        if (message.Time != time)
+        if (message.Time != currentTime)
         {
-            ::_snprintf_s(Display1, _countof(Display1), "%8u ticks",  message.Time);
+            ::_snprintf_s(Display1, _countof(Display1), "%8.2fs",  (double) message.Time / 1000.f);
 
-            ::_snprintf_s(Display2, _countof(Display2), "%8.2f s", (double) messageTimeInMS / 1000.);
+            const uint32_t t = message.Time / 1000;
 
-            const uint32_t t = messageTimeInMS / 1000;
-
-            ::_snprintf_s(Display3, _countof(Display3), "%02d:%02d:%02d", t / 3600, (t % 3600) / 60, t % 60);
+            ::_snprintf_s(Display2, _countof(Display2), "%02d:%02d:%02d", t / 3600, (t % 3600) / 60, t % 60);
         }
         else
-            Display1[0] = Display2[0] = Display3[0] = '\0';
+            Display1[0] = Display2[0] = '\0';
 
-        ::printf("%8d %-14s %-10s %-8s ", (int) index, Display1, Display2, Display3);
+        ::printf("%8u %-10s %-8s ", messageNumber, Display1, Display2);
     }
 
     // MIDI Event
@@ -229,10 +226,11 @@ static uint32_t ProcessEvent(const midi::message_t & message, uint32_t messageTi
         const uint32_t Index = message.Data & 0xFFFFFFu;
 
         const uint8_t * MessageData;
-        size_t MessageSize;
-        uint8_t Port;
 
-        sysExMap.GetItem(Index, MessageData, MessageSize, Port);
+        size_t MessageSize;
+        uint8_t PortNumber;
+
+        sysExMap.GetItem(Index, MessageData, MessageSize, PortNumber);
 
         // Show the message in the output.
         {
@@ -242,7 +240,7 @@ static uint32_t ProcessEvent(const midi::message_t & message, uint32_t messageTi
                 ::printf(" %02X", MessageData[j]);
         }
 
-        ::printf(" Port %d", Port);
+        ::printf(" Port %d", PortNumber);
 
         // Identify the SysEx message.
         if (MessageSize > 2)
