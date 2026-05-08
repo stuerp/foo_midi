@@ -1,5 +1,5 @@
 
-/** $VER: MMD.h (2026.05.07) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: MMD.h (2026.05.08) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #pragma once
 
@@ -35,7 +35,6 @@ public:
 
 private:
     static void AdjustTracks(std::vector<track_t> & tracks, uint32_t minLoopTicks) noexcept;
-    static uint8_t GetDeltaTime(stream_t & stream, uint32_t & deltaTime);
 
     bool GetLoops(const uint8_t * data, uint32_t size, track_t & track) noexcept;
     bool ConvertTrack(const uint8_t * data, uint32_t size, track_t & track, stream_t & ms, uint8_t trackNumber) noexcept;

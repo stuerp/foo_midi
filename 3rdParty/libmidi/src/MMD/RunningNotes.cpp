@@ -1,5 +1,5 @@
 
-/** $VER: RunningNotes.cpp (2026.05.07) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: RunningNotes.cpp (2026.05.08) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #include "pch.h"
 
@@ -16,10 +16,9 @@ namespace mmd
 {
 
 /// <summary>
-/// Adds a note event to the "running notes" list, so that Note Off events can be inserted automatically by Check() while processing delays.
-/// "length" specifies the number of ticks after which the note is turned off.
-/// "velocity" specifies the velocity for the Note Off event. A value of 0x80 results in Note On with velocity 0.
-/// Returns a pointer to the inserted struct or NULL if (NoteCnt >= NoteMax).
+/// Adds a note event to the "running notes" list, so that Note Off events can be inserted automatically by Update() while processing delays.
+/// "velocity" specifies the velocity for the Note Off event. A value of 0x80 results in Note On with velocity 0 (which is also interpreted as a Note Off).
+/// "duration" specifies the number of ticks after which the note is turned off.
 /// </summary>
 void running_notes_t::Add(uint8_t channel, uint8_t note, uint8_t velocity, uint32_t duration) noexcept
 {
@@ -110,21 +109,24 @@ size_t running_notes_t::Update(stream_t & stream) noexcept
             if (rn.Duration != 0)
                 continue;
 
-            stream.WriteVariableLengthQuantity(NewDeltaTime);
-
-            stream.Grow(3u);
-
-            if (rn.Velocity < 0x80)
             {
-                stream.Data[stream.Offset++] = (uint8_t) (midi::StatusCode::NoteOff | rn.Channel);
-                stream.Data[stream.Offset++] = rn.Note;
-                stream.Data[stream.Offset++] = rn.Velocity;
-            }
-            else
-            {
-                stream.Data[stream.Offset++] = (uint8_t) (midi::StatusCode::NoteOn | rn.Channel);
-                stream.Data[stream.Offset++] = rn.Note;
-                stream.Data[stream.Offset++] = 0u;
+                stream.WriteVariableLengthQuantity(NewDeltaTime);
+                NewDeltaTime = 0; // Any other expired note will get a delta time of 0.
+
+                stream.Grow(3u);
+
+                if (rn.Velocity != 0x80)
+                {
+                    stream.Data[stream.Offset++] = (uint8_t) (midi::StatusCode::NoteOff | rn.Channel);
+                    stream.Data[stream.Offset++] = rn.Note;
+                    stream.Data[stream.Offset++] = rn.Velocity;
+                }
+                else
+                {
+                    stream.Data[stream.Offset++] = (uint8_t) (midi::StatusCode::NoteOn | rn.Channel);
+                    stream.Data[stream.Offset++] = rn.Note;
+                    stream.Data[stream.Offset++] = 0u;
+                }
             }
 
             ExpiredNotes++;
@@ -135,8 +137,6 @@ size_t running_notes_t::Update(stream_t & stream) noexcept
 
             ::memmove(&rn, &_Items[i + 1], (_Count - i) * sizeof(_Items[0]));
             i--;
-
-            NewDeltaTime = 0; // Any other expired note will get a delta time of 0.
         }
     }
 

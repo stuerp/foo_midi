@@ -181,7 +181,7 @@
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <SDLCheck>true</SDLCheck>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)src\RCP;$(ProjectDir)src\MMD;$(ProjectDir)src\SMAF;$(SolutionDir)3rdParty\zlib;$(SolutionDir)3rdParty\libmsc\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)src\RCP;$(ProjectDir)src\MMD;$(ProjectDir)src\SMAF;$(ProjectDir)3rdParty\zlib;$(ProjectDir)3rdParty\libmsc\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ConformanceMode>true</ConformanceMode>
@@ -202,7 +202,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)src\RCP;$(ProjectDir)src\MMD;$(ProjectDir)src\SMAF;$(SolutionDir)3rdParty\zlib;$(SolutionDir)3rdParty\libmsc\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)src\RCP;$(ProjectDir)src\MMD;$(ProjectDir)src\SMAF;$(ProjectDir)3rdParty\zlib;$(ProjectDir)3rdParty\libmsc\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ConformanceMode>true</ConformanceMode>
@@ -228,7 +228,7 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)src\RCP;$(ProjectDir)src\MMD;$(ProjectDir)src\SMAF;$(SolutionDir)3rdParty\zlib;$(SolutionDir)3rdParty\libmsc\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)src\RCP;$(ProjectDir)src\MMD;$(ProjectDir)src\SMAF;$(ProjectDir)3rdParty\zlib;$(ProjectDir)3rdParty\libmsc\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -254,7 +254,7 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)src\RCP;$(ProjectDir)src\MMD;$(ProjectDir)src\SMAF;$(SolutionDir)3rdParty\zlib;$(SolutionDir)3rdParty\libmsc\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;$(ProjectDir)src\RCP;$(ProjectDir)src\MMD;$(ProjectDir)src\SMAF;$(ProjectDir)3rdParty\zlib;$(ProjectDir)3rdParty\libmsc\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>

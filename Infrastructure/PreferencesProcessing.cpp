@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2026.02.13) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2026.08.05) P. Stuer **/
 
 #include "pch.h"
 
@@ -146,7 +146,7 @@ private:
     int64_t  _LoopExpansion;
     bool _WriteBarMarkers;
     bool _WriteSysExNames;
-    bool _ExtendLoops;
+    bool _ExpandLoops;
     bool _WolfteamLoopMode;
     bool _KeepMutedChannels;
     bool _IncludeControlData;
@@ -347,8 +347,8 @@ void ProcessingDialog::OnButtonClick(UINT, int id, CWindow w) noexcept
             _WriteSysExNames = !_WriteSysExNames;
             break;
 
-        case IDC_EXTEND_LOOPS:
-            _ExtendLoops = !_ExtendLoops;
+        case IDC_EXPAND_LOOPS:
+            _ExpandLoops = !_ExpandLoops;
             break;
 
         case IDC_WOLFTEAM_LOOPS:
@@ -475,7 +475,7 @@ void ProcessingDialog::UpdateDialog() noexcept
 
     SendDlgItemMessageW(IDC_WRITE_BAR_MARKERS,    BM_SETCHECK, (WPARAM) _WriteBarMarkers);
     SendDlgItemMessageW(IDC_WRITE_SYSEX_NAMES,    BM_SETCHECK, (WPARAM) _WriteSysExNames);
-    SendDlgItemMessageW(IDC_EXTEND_LOOPS,         BM_SETCHECK, (WPARAM) _ExtendLoops);
+    SendDlgItemMessageW(IDC_EXPAND_LOOPS,         BM_SETCHECK, (WPARAM) _ExpandLoops);
     SendDlgItemMessageW(IDC_WOLFTEAM_LOOPS,       BM_SETCHECK, (WPARAM) _WolfteamLoopMode);
     SendDlgItemMessageW(IDC_KEEP_MUTED_CHANNELS,  BM_SETCHECK, (WPARAM) _KeepMutedChannels);
     SendDlgItemMessageW(IDC_INCLUDE_CONTROL_DATA, BM_SETCHECK, (WPARAM) _IncludeControlData);

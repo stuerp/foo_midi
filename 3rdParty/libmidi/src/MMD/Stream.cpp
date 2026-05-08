@@ -1,5 +1,5 @@
 
-/** $VER: Stream.cpp (2026.05.07) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: Stream.cpp (2026.05.08) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #include "pch.h"
 
@@ -44,9 +44,9 @@ void stream_t::WriteTrackBegin() noexcept
     WriteBE32(&Data[Offset + 0x04], 0x00000000);    // Write dummy length
     Offset += 0x08;
 
-    RunningStatus = 0x00;
+    _RunningStatus = 0x00;
 
-    TrackOffset   = (uint32_t) Offset;
+    _TrackOffset   = (uint32_t) Offset;
     DeltaTime     = 0;
 }
 
@@ -55,9 +55,9 @@ void stream_t::WriteTrackBegin() noexcept
 /// </summary>
 void stream_t::WriteTrackEnd() noexcept
 {
-    const uint32_t n = (uint32_t) (Offset - TrackOffset);
+    const uint32_t n = (uint32_t) (Offset - _TrackOffset);
 
-    WriteBE32(&Data[TrackOffset - 0x04], n);
+    WriteBE32(&Data[_TrackOffset - 0x04], n);
 }
 
 /// <summary>
@@ -65,7 +65,7 @@ void stream_t::WriteTrackEnd() noexcept
 /// </summary>
 void stream_t::WriteEvent(uint8_t statusCode, uint8_t param1, uint8_t param2) noexcept
 {
-    RunningStatus = 0x00;
+    _RunningStatus = 0x00;
 
     WriteEvent_(statusCode, param1, param2);
 }
@@ -79,7 +79,7 @@ void stream_t::WriteEvent(uint8_t statusCode, const void * data, uint32_t size) 
 
     Grow(0x01 + 0x04 + size); // Worst case
 
-    RunningStatus = 0x00;
+    _RunningStatus = 0x00;
 
     Data[Offset++] = statusCode;
 
@@ -98,7 +98,7 @@ void stream_t::WriteMetaEvent(uint8_t metaType, const void * data, uint32_t size
 
     Grow(0x02 + 0x05 + size); // worst case
 
-    RunningStatus = 0x00;
+    _RunningStatus = 0x00;
 
     Data[Offset++] = midi::StatusCode::MetaData;
     Data[Offset++] = metaType;
@@ -128,9 +128,9 @@ void stream_t::WriteEvent_(uint8_t statusCode, uint8_t param1, uint8_t param2) n
         case midi::StatusCode::ControlChange:
         case midi::StatusCode::PitchBendChange:
         {
-            if (RunningStatus != Status)
+            if (_RunningStatus != Status)
             {
-                RunningStatus = Status;
+                _RunningStatus = Status;
 
                 Data[Offset++] = Status;
             }
@@ -143,9 +143,9 @@ void stream_t::WriteEvent_(uint8_t statusCode, uint8_t param1, uint8_t param2) n
         case midi::StatusCode::ProgramChange:
         case midi::StatusCode::ChannelPressure:
         {
-            if (RunningStatus != Status)
+            if (_RunningStatus != Status)
             {
-                RunningStatus = Status;
+                _RunningStatus = Status;
 
                 Data[Offset++] = Status;
             }
@@ -156,7 +156,7 @@ void stream_t::WriteEvent_(uint8_t statusCode, uint8_t param1, uint8_t param2) n
 
         case 0xF0: // Meta Event
         {
-            RunningStatus = 0x00;
+            _RunningStatus = 0x00;
 
             Data[Offset++] = statusCode;
             Data[Offset++] = param1;
@@ -174,7 +174,14 @@ void stream_t::WriteEvent_(uint8_t statusCode, uint8_t param1, uint8_t param2) n
 /// </summary>
 void stream_t::WriteDeltaTime(uint32_t & deltaTime) noexcept
 {
-    GetDeltaTime(deltaTime);
+    _RunningNotes.Update(*this);
+
+    if (deltaTime != 0)
+    {
+        for (size_t i = 0; i < _RunningNotes._Count; ++i)
+            _RunningNotes._Items[i].Duration -= deltaTime;
+    }
+
     WriteVariableLengthQuantity(deltaTime);
     deltaTime = 0;
 }
@@ -225,32 +232,18 @@ void stream_t::Grow(uint32_t bytesNeeded) noexcept
 {
     const size_t NewOffset = Offset + bytesNeeded;
 
-    if (NewOffset <= Size)
+    if (NewOffset <= _Size)
         return;
 
     const size_t REALLOC_STEP = 0x8000u;
 
-    while (NewOffset > Size)
-        Size += REALLOC_STEP;
+    while (NewOffset > _Size)
+        _Size += REALLOC_STEP;
 
-    auto p = (uint8_t *) realloc(Data, Size);
+    auto p = (uint8_t *) realloc(Data, _Size);
 
     if (p != nullptr)
         Data = p;
-}
-
-/// <summary>
-/// 
-/// </summary>
-void stream_t::GetDeltaTime(uint32_t & deltaTime) noexcept
-{
-    _RunningNotes.Update(*this);
-
-    if (deltaTime != 0)
-    {
-        for (size_t i = 0; i < _RunningNotes._Count; ++i)
-            _RunningNotes._Items[i].Duration -= deltaTime;
-    }
 }
 
 }

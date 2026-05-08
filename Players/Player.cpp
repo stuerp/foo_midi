@@ -765,7 +765,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
                 SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24)), time); // CC 120 Channel Mute / Sound Off
                 SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24)), time); // CC 121 Reset All Controllers
 
-                if (_MIDIFlavor != MIDIFlavor::XG || i != 9)
+                if (_MIDIFlavor != MIDIFlavor::XG)
                 {
                     SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24)), time); // CC 32 Bank select LSB
                     SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24)), time); // CC  0 Bank select MSB
@@ -777,7 +777,7 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
                 SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24))); // CC 120 Channel Mute / Sound Off
                 SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24))); // CC 121 Reset All Controllers
 
-                if (_MIDIFlavor != MIDIFlavor::XG || i != 9)
+                if (_MIDIFlavor != MIDIFlavor::XG)
                 {
                     SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24))); // CC 32 Bank select LSB
                     SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24))); // CC  0 Bank select MSB

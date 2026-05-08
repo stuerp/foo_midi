@@ -1,5 +1,5 @@
 
-/** $VER: RunningNotes.h (2026.05.07) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: RunningNotes.h (2026.05.08) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #pragma once
 

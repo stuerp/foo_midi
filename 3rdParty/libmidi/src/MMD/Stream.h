@@ -1,5 +1,5 @@
 
-/** $VER: Stream.h (2026.05.07) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: Stream.h (2026.05.08) P. Stuer - Based on Valley Bell's mmd2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #pragma once
 
@@ -20,9 +20,9 @@ inline void WriteBE16(uint8_t * buffer, uint16_t value);
 class stream_t
 {
 public:
-    stream_t() : Data(), Size(), Offset(), ChannelNumber(), RunningStatus(), TrackOffset(), DeltaTime() {}
+    stream_t() : ChannelNumber(), DeltaTime(), Data(), Offset(), _Size(), _RunningStatus(), _TrackOffset() {}
 
-    stream_t(size_t initialSize) : Data((uint8_t *) ::malloc(initialSize)), Size(initialSize), Offset() {}
+    stream_t(size_t initialSize) : Data((uint8_t *) ::malloc(initialSize)), Offset(), _Size(initialSize) {}
 
     void BeginTrack(uint8_t channelNumber) noexcept
     {
@@ -60,19 +60,21 @@ public:
     void Grow(uint32_t bytesNeeded) noexcept;
 
 private:
-    void GetDeltaTime(uint32_t & deltaTime) noexcept;
     void WriteDeltaTime(uint32_t & deltaTime) noexcept;
     void WriteEvent_(uint8_t event, uint8_t param1, uint8_t param2) noexcept;
 
 public:
+    uint8_t ChannelNumber;
+    uint32_t DeltaTime;
+
     uint8_t * Data;
-    size_t Size;
     size_t Offset;
 
-    uint8_t ChannelNumber;
-    uint8_t RunningStatus;
-    uint32_t TrackOffset;
-    uint32_t DeltaTime;
+private:
+    size_t _Size;
+
+    uint8_t _RunningStatus;
+    uint32_t _TrackOffset;
 
     running_notes_t _RunningNotes;
 };

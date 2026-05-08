@@ -175,7 +175,7 @@
 
 #define IDC_WRITE_BAR_MARKERS               2120
 #define IDC_WRITE_SYSEX_NAMES               2130
-#define IDC_EXTEND_LOOPS                    2140
+#define IDC_EXPAND_LOOPS                    2140
 #define IDC_WOLFTEAM_LOOPS                  2150
 #define IDC_KEEP_MUTED_CHANNELS             2160
 #define IDC_INCLUDE_CONTROL_DATA            2170

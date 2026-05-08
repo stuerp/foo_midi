@@ -480,6 +480,9 @@
     <ProjectReference Include="3rdParty\libjson\libjson.vcxproj">
       <Project>{155cc5fc-96b6-4ffa-bfce-9db2fb987e47}</Project>
     </ProjectReference>
+    <ProjectReference Include="3rdParty\libmidi\3rdParty\zlib\zlib.vcxproj">
+      <Project>{785d22da-58d2-4545-87c7-8f49ee31cda4}</Project>
+    </ProjectReference>
     <ProjectReference Include="3rdParty\libmidi\libmidi.vcxproj">
       <Project>{4573e081-973b-47f0-a67d-551761ba1678}</Project>
     </ProjectReference>
@@ -503,9 +506,6 @@
     </ProjectReference>
     <ProjectReference Include="3rdParty\nuked-opl3\nuked-opl3.vcxproj">
       <Project>{388eb9a8-764e-4a90-be37-fb28cae70d03}</Project>
-    </ProjectReference>
-    <ProjectReference Include="3rdParty\zlib\zlib.vcxproj">
-      <Project>{785d22da-58d2-4545-87c7-8f49ee31cda4}</Project>
     </ProjectReference>
     <ProjectReference Include="scpipe\scpipe32.vcxproj">
       <Project>{6e35bb35-acba-40eb-8f63-bd153046677c}</Project>
