@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\MIDIProcessorTST.cpp" />
+    <ClCompile Include="src\pch.cpp" />
+    <ClCompile Include="src\MIDIContainer.cpp" />
+    <ClCompile Include="src\MIDIProcessorGMF.cpp" />
+    <ClCompile Include="src\MIDIProcessor.cpp" />
+    <ClCompile Include="src\MIDIProcessorHMI.cpp" />
+    <ClCompile Include="src\MIDIProcessorHMP.cpp" />
+    <ClCompile Include="src\MIDIProcessorLDS.cpp" />
+    <ClCompile Include="src\MIDIProcessorMDS.cpp" />
+    <ClCompile Include="src\MIDIProcessorMMF.cpp" />
+    <ClCompile Include="src\MIDIProcessorMUS.cpp" />
+    <ClCompile Include="src\MIDIProcessorRCP.cpp" />
+    <ClCompile Include="src\MIDIProcessorRMI.cpp" />
+    <ClCompile Include="src\MIDIProcessorSMF.cpp" />
+    <ClCompile Include="src\MIDIProcessorXMF.cpp" />
+    <ClCompile Include="src\MIDIProcessorXMI.cpp" />
+    <ClCompile Include="src\RCP\CM6File.cpp" />
+    <ClCompile Include="src\RCP\GSDFile.cpp" />
+    <ClCompile Include="src\RCP\MIDIStream.cpp" />
+    <ClCompile Include="src\RCP\RCP.cpp" />
+    <ClCompile Include="src\RCP\RunningNotes.cpp" />
+    <ClCompile Include="src\RCP\Support.cpp" />
+    <ClCompile Include="src\SMAF\MMF.cpp" />
+    <ClCompile Include="src\SysEx.cpp" />
+    <ClCompile Include="src\Tables.cpp" />
+    <ClCompile Include="src\libmidi.cpp" />
+    <ClCompile Include="src\MIDIProcessorMMD.cpp" />
+    <ClCompile Include="src\MMD\Stream.cpp" />
+    <ClCompile Include="src\MMD\RunningNotes.cpp" />
+    <ClCompile Include="src\MMD\Converter.cpp" />
+    <ClCompile Include="src\RCP\Converter.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Exception.h" />
+    <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\IFF.h" />
+    <ClInclude Include="src\MIDI.h" />
+    <ClInclude Include="src\MIDIContainer.h" />
+    <ClInclude Include="src\Range.h" />
+    <ClInclude Include="src\MIDIProcessor.h" />
+    <ClInclude Include="src\RCP\MIDIStream.h" />
+    <ClInclude Include="src\RCP\RCP.h" />
+    <ClInclude Include="src\RCP\RunningNotes.h" />
+    <ClInclude Include="src\RCP\Support.h" />
+    <ClInclude Include="src\SMAF\MMF.h" />
+    <ClInclude Include="src\SysEx.h" />
+    <ClInclude Include="src\Tables.h" />
+    <ClInclude Include="include\libmidi.h" />
+    <ClInclude Include="src\MMD\RunningNotes.h" />
+    <ClInclude Include="src\MMD\MMD.h" />
+    <ClInclude Include="src\MMD\Stream.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="LICENSE" />
+    <None Include="src\cpp.hint" />
+  </ItemGroup>
+</Project>
