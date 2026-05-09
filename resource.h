@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2026.05.08) P. Stuer **/
+/** $VER: Resource.h (2026.05.09) P. Stuer **/
 
 #pragma once
 
@@ -16,7 +16,7 @@
 #define NUM_PRODUCT_PATCH           0
 #define NUM_PRODUCT_PRERELEASE      0
 
-#define STR_RELEASE_TAG             "-alpha2"
+#define STR_RELEASE_TAG             "Next"
 
 /** Component specific **/
 
@@ -215,6 +215,11 @@
 #define IDC_PORT_LBL                        2330
 #define IDC_PORT                            2331
 #define IDC_PORT_SLIDER                     2332
+
+#define IDC_SEMITONES                       2341
+#define IDC_SEMITONES_SLIDER                2342
+#define IDC_MICROTONES                      2343
+#define IDC_MICROTONES_SLIDER               2344
 
 #define IDC_LOG_LEVEL_LBL                   2430
 #define IDC_LOG_LEVEL                       2431

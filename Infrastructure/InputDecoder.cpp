@@ -10,22 +10,9 @@
 #include <sdk/system_time_keeper.h>
 
 #include <pfc/string-conv-lite.h>
-#include <helpers/atl-misc.h>
-
-#include <math.h>
-#include <string.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
-#include <ranges>
-
-#include <libsf.h>
 
 #include "PreferencesFM.h"
-#include "KaraokeProcessor.h"
 #include "CLAPHost.h"
-#include "Exception.h"
 
 #include "Log.h"
 

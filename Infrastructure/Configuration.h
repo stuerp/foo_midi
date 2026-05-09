@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.h (2026.05.08) **/
+/** $VER: Configuration.h (2026.05.09) **/
 
 #pragma once
 
@@ -252,7 +252,7 @@ extern cfg_var_modern::cfg_string
 extern cfg_var_modern::cfg_string
     CfgPlugInName;
 
-extern cfg_vsti_map      CfgVSTiConfig;
+extern cfg_vsti_map CfgVSTiConfig;
 extern cfg_clap_map CfgCLAPConfig;
 
 // RCP
@@ -260,6 +260,10 @@ extern cfg_var_modern::cfg_int  CfgLoopExpansion;
 
 // HMI
 extern cfg_var_modern::cfg_int  CfgDefaultTempo;
+
+// Transposition
+extern cfg_var_modern::cfg_int  CfgSemitones;
+extern cfg_var_modern::cfg_int  CfgMicrotones;
 
 extern const char * _FileExtensions[];
 extern const size_t _FileExtensionCount;

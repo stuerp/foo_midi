@@ -310,7 +310,7 @@ font 8, "MS Shell Dlg", 400, 0, 1
         control     "Use LibMT32Emu with MT-32",                        IDC_MIDI_USE_MT32EMU_WITH_MT32,     "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A84, Y_A84, W_A84, H_A84
         control     "Use Secret Sauce with GS",                         IDC_MIDI_USE_SC_WITH_GS,            "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A87, Y_A87, W_A87, H_A87
         control     "Use VSTi with XG",                                 IDC_MIDI_USE_VSTI_WITH_XG,          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A85, Y_A85, W_A85, H_A85
-        control     "Use Secret Sauce with SC88 or later",              IDC_MIDI_USE_SC_WITH_SC88_OR_LATER, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A88, Y_A88, W_A88, H_A88
+        control     "Use Secret Sauce with SC-88 or later",             IDC_MIDI_USE_SC_WITH_SC88_OR_LATER, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A88, Y_A88, W_A88, H_A88
 
         control     "Filter effects (Reverb and Chorus)",               IDC_MIDI_EFFECTS,                   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A83, Y_A83, W_A83, H_A83
         control     "Detect extra percussion channel",                  IDC_MIDI_DETECT_EXTRA_DRUM          "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A86, Y_A86, W_A86, H_A86

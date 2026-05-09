@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2026.08.05) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2026.05.09) P. Stuer **/
 
 #include "pch.h"
 
@@ -54,7 +54,11 @@ ConfigVariable(KeepMutedChannels,   cfg_bool, bool, false, 0x5ded0321,0xc53c,0x4
 ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4974,0xaa,0x60,0x3c,0xdf,0xb6,0x07,0x25,0xbc);
 
 // HMI / HMP
-ConfigVariable(DefaultTempo,        cfg_int, int,    160,  0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
+ConfigVariable(DefaultTempo,        cfg_int, int,     160, 0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
+
+// Transposition
+ConfigVariable(Semitones,           cfg_int, int,       0, 0xa78b3ffb,0xf93a,0x4bce,0xbb,0xa5,0x7f,0x19,0x31,0xa,0x36,0xd4);
+ConfigVariable(Microtones,          cfg_int, int,       0, 0xe9ef4a78,0xbe21,0x4fd0,0x8e,0x85,0x3b,0x9b,0x8f,0xc5,0x55,0x57);
 
 // Component
 ConfigVariable(LogLevel,            cfg_int,  int,      4, 0x12be0a92,0x3794,0x4414,0x82,0x3e,0xd3,0x14,0x29,0x67,0xa4,0xee);
@@ -131,6 +135,33 @@ private:
         SetDlgItemInt(IDC_PORT, _PortNumber);
     }
 
+    void InitializeTranspositionControls() noexcept
+    {
+        _Semitones = 0;
+
+        auto w = (CTrackBarCtrl) GetDlgItem(IDC_SEMITONES_SLIDER);
+
+        w.SetBuddy(GetDlgItem(IDC_SEMITONES), TRUE);
+        w.SetRange(-24, 24);
+        w.SetPageSize(12);
+        w.SetPos((int) _Semitones);
+        w.SetTicFreq(8);
+
+        SetDlgItemInt(IDC_SEMITONES, (UINT) _Semitones);
+
+        _Microtones = 0;
+
+        w = (CTrackBarCtrl) GetDlgItem(IDC_MICROTONES_SLIDER);
+
+        w.SetBuddy(GetDlgItem(IDC_MICROTONES), TRUE);
+        w.SetRange(-8192, 8191);
+        w.SetPageSize(1);
+        w.SetPos((int) _Microtones);
+        w.SetTicFreq(8);
+
+        SetDlgItemInt(IDC_MICROTONES, (UINT) _Microtones);
+    }
+
     void ApplyChannelMask() noexcept
     {
         CfgChannels.Apply();
@@ -158,6 +189,10 @@ private:
     uint64_t _ChannelMaskVersion; // Version number of the channel configuration
 
     uint8_t _PortNumber;
+
+    // Transposition
+    int64_t _Semitones;
+    int64_t _Microtones;
 
     int64_t _LogLevel;
 };
@@ -194,6 +229,9 @@ void ProcessingDialog::apply()
 
     ApplyChannelMask();
 
+    ApplyConfigVariable(Semitones);
+    ApplyConfigVariable(Microtones);
+
     ApplyConfigVariable(LogLevel);
 
     Log.SetLevel((LogLevel) CfgLogLevel.get());
@@ -219,6 +257,11 @@ void ProcessingDialog::reset()
     CfgChannels.Reset();
 
     InitializePortControls();
+
+    ResetConfigVariable(Semitones);
+    ResetConfigVariable(Microtones);
+
+    InitializeTranspositionControls();
 
     ResetConfigVariable(LogLevel);
 
@@ -254,6 +297,11 @@ BOOL ProcessingDialog::OnInitDialog(CWindow window, LPARAM) noexcept
     CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
 
     InitializePortControls();
+
+    InitializeConfigVariable(Semitones);
+    InitializeConfigVariable(Microtones);
+
+    InitializeTranspositionControls();
 
     UpdateDialog();
 
@@ -321,13 +369,42 @@ LRESULT ProcessingDialog::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam) noex
     if ((LOWORD(wParam) != TB_ENDTRACK) && (LOWORD(wParam) != TB_THUMBTRACK))
         return 1;
 
-    auto w = (CTrackBarCtrl) GetDlgItem(IDC_PORT_SLIDER);
+    const int ID = ::GetDlgCtrlID((HWND) lParam);
+    auto w = (CTrackBarCtrl) GetDlgItem(ID);
 
-    _PortNumber = (uint8_t) w.GetPos();
+    switch (ID)
+    {
+        case IDC_PORT_SLIDER:
+        {
+            _PortNumber = (uint8_t) w.GetPos();
+            SetDlgItemInt(IDC_PORT, _PortNumber);
 
-    SetDlgItemInt(IDC_PORT, _PortNumber);
+            UpdateChannelButtons();
+            break;
+        }
 
-    UpdateChannelButtons();
+        case IDC_SEMITONES_SLIDER:
+        {
+            _Semitones = (int16_t) w.GetPos();
+            SetDlgItemInt(IDC_SEMITONES, (UINT)_Semitones);
+
+            OnChanged();
+            break;
+        }
+
+        case IDC_MICROTONES_SLIDER:
+        {
+            _Microtones = (int16_t) w.GetPos();
+            SetDlgItemInt(IDC_MICROTONES, (UINT) _Microtones);
+
+            OnChanged();
+            break;
+        }
+
+        default:
+            return 1;
+    }
+
 
     return 0;
 }
@@ -453,6 +530,9 @@ bool ProcessingDialog::HasChanged() const noexcept
     if (CfgChannels.HasChanged(_ChannelMask, sizeof(_ChannelMask)))
         return true;
 
+    HasConfigVariableChanged(Semitones);
+    HasConfigVariableChanged(Microtones);
+
     HasConfigVariableChanged(LogLevel);
 
     return false;
@@ -483,6 +563,9 @@ void ProcessingDialog::UpdateDialog() noexcept
     ::uSetDlgItemText(m_hWnd, IDC_DEFAULT_TEMPO, pfc::format_int(_DefaultTempo));
 
     UpdateChannelButtons();
+
+    SendDlgItemMessageW(IDC_SEMITONES_SLIDER, TBM_SETPOS, TRUE, _Semitones);
+    SendDlgItemMessageW(IDC_MICROTONES_SLIDER, TBM_SETPOS, TRUE, _Microtones);
 
     // Log Level
     {

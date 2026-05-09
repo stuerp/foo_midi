@@ -1,5 +1,5 @@
 
-/** $VER: SysEx.cpp (2026.04.10) P. Stuer **/
+/** $VER: SysEx.cpp (2026.05.08) P. Stuer **/
 
 #include "pch.h"
 
@@ -566,11 +566,11 @@ void sysex_t::IdentifyRoland() noexcept
         {
             switch (Address)
             {
-                case 0x00007F: // SYSTEM MODE SET
+                case 0x00007F: // SYSTEM MODE SET (SC-88 or later)
                     Description = msc::FormatText("System Parameter %06Xh \"System Mode Set %02Xh\" (%s)", Address, _Iter[3], (_Iter[3] == 0) ? "Mode 1" : "Unknown Mode"); break;
 
                 default:
-                    if (msc::InRange(Address, 0x000100u, 0x00011Fu)) // CHANNEL MSG RX PORT
+                    if (msc::InRange(Address, 0x000100u, 0x00011Fu)) // CHANNEL MSG RX PORT (SC-88 or later)
                         Description = msc::FormatText("System Parameter %06Xh \"Channel Message Receive Port %02Xh\"", Address, _Iter[3]);
                     else
                         Description = msc::FormatText("System Parameter %06Xh \"Unknown\"", Address);
@@ -626,24 +626,27 @@ void sysex_t::IdentifyRoland() noexcept
             break;
         }
 
-        // Patch Common Parameters A. Parameters common to all Parts in each module (Block A 00-0F)
+        // Patch Parameters A. Parameters common to all Parts in each module (Block A 00-0F)
         case 0x40:
-        // Patch Common Parameters B. Parameters common to all Parts in each module (Block B 10-1F)
+
+        // Patch Parameters B. Parameters common to all Parts in each module (Block B 10-1F)
         case 0x50:
         {
-            Address = (Address & 0x00FFFF) | 0x400000; // Threat Patch Common Parameters B the same as Patch Common Parameters A.
+            Address = (Address & 0x00FFFF) | 0x400000; // Threat Patch Parameters B the same as Patch Parameters A.
 
             switch (Address)
             {
-                case 0x400000: Description = msc::FormatText("Master Tune %02Xh (%d cents)",               _Iter[3], (int) _Iter[3]); break;
+                // Patch Common Parameters
+                case 0x400000: Description = msc::FormatText("Master Tune %02Xh (%d cents)",               _Iter[3], (int) _Iter[3]); break;                    // MASTER TUNE
 
-                case 0x400004: Description = msc::FormatText("Master Volume %02Xh (%d)",                   _Iter[3], (int) _Iter[3]); break;
-                case 0x400006: Description = msc::FormatText("Master Key Shift %02Xh (%d semitones)",      _Iter[3], (int) _Iter[3]); break;
-                case 0x400005: Description = msc::FormatText("Master Pan %02Xh (%d)",                      _Iter[3], (int) _Iter[3]); break;
+                case 0x400004: Description = msc::FormatText("Master Volume %02Xh (%d)",                   _Iter[3], (int) _Iter[3]); break;                    // MASTER VOLUME
+                case 0x400005: Description = msc::FormatText("Master Key Shift %02Xh (%d semitones)",      _Iter[3], (int) _Iter[3]); break;                    // MASTER KEY SHIFT
+                case 0x400006: Description = msc::FormatText("Master Pan %02Xh (%d)",                      _Iter[3], (int) _Iter[3]); break;                    // MASTER PAN
 
-                case 0x40007F: Description = msc::FormatText("Mode Set %02Xh (%s)",                        _Iter[3], "GS Reset"); break;
+                case 0x40007F: Description = msc::FormatText("Mode Set %02Xh (%s)",                        _Iter[3], "GS Reset"); break;                        // MODE SET
 
-                case 0x400100:
+                // System Effects & Common
+                case 0x400100:                                                                                                                                  // PATCH NAME
                 {
                     Description = "Patch Name ";
 
@@ -656,46 +659,52 @@ void sysex_t::IdentifyRoland() noexcept
                     break;
                 }
 
-                case 0x400110: Description = "Reserved"; break;
+                // SC-55 or later (PARTIAL RESERVE, SC-55 / VOICE RESERVE, SC-55mkII and SC-7 name)
+                // Reserves a minimum number of voices for a specific MIDI part/channel. This prevents important parts (like drums on channel 10, bass, or lead) from being stolen by other parts when the synth reaches its maximum polyphony.
+                case 0x400110: case 0x400111: case 0x400112: case 0x400113: case 0x400114: case 0x400115: case 0x400116: case 0x400117:
+                case 0x400118: case 0x400119: case 0x40011A: case 0x40011B: case 0x40011C: case 0x40011D: case 0x40011E: case 0x40011F:
+                    Description = msc::FormatText("Voice Reserve Part %d", _Iter[2] - 0x10 + 1); break;
 
-                case 0x400130: Description = msc::FormatText("Reverb Macro %02Xh (%s)",                    _Iter[3], IdentifyGSReverbMacro(_Iter[3])); break;
-                case 0x400131: Description = msc::FormatText("Reverb Character %02Xh (%s)",                _Iter[3], IdentifyGSReverbMacro(_Iter[3])); break;
-                case 0x400132: Description = msc::FormatText("Reverb Pre-LPF %02Xh (%d)",                  _Iter[3], (int) _Iter[3]); break;
-                case 0x400133: Description = msc::FormatText("Reverb Level %02Xh (%d)",                    _Iter[3], (int) _Iter[3]); break;
-                case 0x400134: Description = msc::FormatText("Reverb Time %02Xh (%d)",                     _Iter[3], (int) _Iter[3]); break;
-                case 0x400135: Description = msc::FormatText("Reverb Delay Feedback %02Xh (%d)",           _Iter[3], (int) _Iter[3]); break;
-                case 0x400136: Description = msc::FormatText("Reverb Send Level to Chorus %02Xh (%d)",     _Iter[3], (int) _Iter[3]); break;
-                case 0x400137: Description = msc::FormatText("Reverb Predelay Time %02Xh (%d ms)",         _Iter[3], (int) _Iter[3]); break;
+                case 0x400130: Description = msc::FormatText("Reverb Macro %02Xh (%s)",                    _Iter[3], IdentifyGSReverbMacro(_Iter[3])); break;   // REVERB MACRO
+                case 0x400131: Description = msc::FormatText("Reverb Character %02Xh (%s)",                _Iter[3], IdentifyGSReverbMacro(_Iter[3])); break;   // REVERB CHARACTER
+                case 0x400132: Description = msc::FormatText("Reverb Pre-LPF %02Xh (%d)",                  _Iter[3], (int) _Iter[3]); break;                    // REVERB PRE-LPF
+                case 0x400133: Description = msc::FormatText("Reverb Level %02Xh (%d)",                    _Iter[3], (int) _Iter[3]); break;                    // REVERB LEVEL
+                case 0x400134: Description = msc::FormatText("Reverb Time %02Xh (%d)",                     _Iter[3], (int) _Iter[3]); break;                    // REVERB TIME
+                case 0x400135: Description = msc::FormatText("Reverb Delay Feedback %02Xh (%d)",           _Iter[3], (int) _Iter[3]); break;                    // REVERB DELAY FEEDBACK
+                case 0x400136: Description = msc::FormatText("Reverb Send Level to Chorus %02Xh (%d)",     _Iter[3], (int) _Iter[3]); break;                    // REVERB SEND LEVEL TO CHORUS
+                case 0x400137: Description = msc::FormatText("Reverb Predelay Time %02Xh (%d ms)",         _Iter[3], (int) _Iter[3]); break;                    // REVERB PREDELAY TIME
 
-                case 0x400138: Description = msc::FormatText("Chorus Macro %02Xh (%s)",                    _Iter[3], IdentifyGSChorusMacro(_Iter[3])); break;
-                case 0x400139: Description = msc::FormatText("Chorus Pre-LPF %02Xh (%d)",                  _Iter[3], (int) _Iter[3]); break;
-                case 0x40013A: Description = msc::FormatText("Chorus Level %02Xh (%d)",                    _Iter[3], (int) _Iter[3]); break;
-                case 0x40013B: Description = msc::FormatText("Chorus Feedback %02Xh (%d)",                 _Iter[3], (int) _Iter[3]); break;
-                case 0x40013C: Description = msc::FormatText("Chorus Delay %02Xh (%d)",                    _Iter[3], (int) _Iter[3]); break;
-                case 0x40013D: Description = msc::FormatText("Chorus Rate %02Xh (%d))",                    _Iter[3], (int) _Iter[3]); break;
-                case 0x40013E: Description = msc::FormatText("Chorus Depth %02Xh (%d)",                    _Iter[3], (int) _Iter[3]); break;
-                case 0x40013F: Description = msc::FormatText("Chorus Send Level to Reverb %02Xh (%d)",     _Iter[3], (int) _Iter[3]); break;
-                case 0x400140: Description = msc::FormatText("Chorus Send Level to Delay %02Xh (%d)",      _Iter[3], (int) _Iter[3]); break;
+                case 0x400138: Description = msc::FormatText("Chorus Macro %02Xh (%s)",                    _Iter[3], IdentifyGSChorusMacro(_Iter[3])); break;   // CHORUS MACRO
+                case 0x400139: Description = msc::FormatText("Chorus Pre-LPF %02Xh (%d)",                  _Iter[3], (int) _Iter[3]); break;                    // CHORUS PRE-LPF
+                case 0x40013A: Description = msc::FormatText("Chorus Level %02Xh (%d)",                    _Iter[3], (int) _Iter[3]); break;                    // CHORUS LEVEL
+                case 0x40013B: Description = msc::FormatText("Chorus Feedback %02Xh (%d)",                 _Iter[3], (int) _Iter[3]); break;                    // CHORUS FEEDBACK
+                case 0x40013C: Description = msc::FormatText("Chorus Delay %02Xh (%d)",                    _Iter[3], (int) _Iter[3]); break;                    // CHORUS DELAY
+                case 0x40013D: Description = msc::FormatText("Chorus Rate %02Xh (%d))",                    _Iter[3], (int) _Iter[3]); break;                    // CHORUS RATE
+                case 0x40013E: Description = msc::FormatText("Chorus Depth %02Xh (%d)",                    _Iter[3], (int) _Iter[3]); break;                    // CHORUS DEPTH
+                case 0x40013F: Description = msc::FormatText("Chorus Send Level to Reverb %02Xh (%d)",     _Iter[3], (int) _Iter[3]); break;                    // CHORUS SEND LEVEL TO REVERB
+                case 0x400140: Description = msc::FormatText("Chorus Send Level to Delay %02Xh (%d)",      _Iter[3], (int) _Iter[3]); break;                    // CHORUS SEND LEVEL TO DELAY
 
-                case 0x400150: Description = msc::FormatText("Delay Macro %02Xh (%s)",                     _Iter[3], IdentifyGSDelayMacro(_Iter[3])); break;
-                case 0x400151: Description = msc::FormatText("Delay Pre-LPF %02Xh (%d)",                   _Iter[3], (int) _Iter[3]); break;
-                case 0x400152: Description = msc::FormatText("Delay Time Center %02Xh (%.1fms)",           _Iter[3], (float) _Iter[3] / 0x73); break;
-                case 0x400153: Description = msc::FormatText("Delay Time Ratio Left %02Xh (%d%%)",         _Iter[3], (int) _Iter[3] * 4); break;
-                case 0x400154: Description = msc::FormatText("Delay Time Ration Right %02Xh (%d%%)",       _Iter[3], (int) _Iter[3] * 4); break;
-                case 0x400155: Description = msc::FormatText("Delay Level Center %02Xh (%d)",              _Iter[3], (int) _Iter[3]); break;
-                case 0x400156: Description = msc::FormatText("Delay Level Left %02Xh (%d)",                _Iter[3], (int) _Iter[3]); break;
-                case 0x400157: Description = msc::FormatText("Delay Level Right %02Xh (%d)",               _Iter[3], (int) _Iter[3]); break;
-                case 0x400158: Description = msc::FormatText("Delay Level %02Xh (%d)",                     _Iter[3], (int) _Iter[3]); break;
-                case 0x400159: Description = msc::FormatText("Delay Feedback %02Xh (%d)",                  _Iter[3], (int) _Iter[3]); break;
-                case 0x40015A: Description = msc::FormatText("Delay Send Level to Reverb %02Xh (%d)",      _Iter[3], (int) _Iter[3]); break;
+                case 0x400150: Description = msc::FormatText("Delay Macro %02Xh (%s)",                     _Iter[3], IdentifyGSDelayMacro(_Iter[3])); break;    // DELAY MACRO (SC-88 or later)
+                case 0x400151: Description = msc::FormatText("Delay Pre-LPF %02Xh (%d)",                   _Iter[3], (int) _Iter[3]); break;                    // DELAY PRE-LPF
+                case 0x400152: Description = msc::FormatText("Delay Time Center %02Xh (%.1fms)",           _Iter[3], (float) _Iter[3] / 0x73); break;           // DELAY TIME CENTER
+                case 0x400153: Description = msc::FormatText("Delay Time Ratio Left %02Xh (%d%%)",         _Iter[3], (int) _Iter[3] * 4); break;                // DELAY TIME RATIO LEFT
+                case 0x400154: Description = msc::FormatText("Delay Time Ration Right %02Xh (%d%%)",       _Iter[3], (int) _Iter[3] * 4); break;                // DELAY TIME RATIO RIGHT
+                case 0x400155: Description = msc::FormatText("Delay Level Center %02Xh (%d)",              _Iter[3], (int) _Iter[3]); break;                    // DELAY LEVEL CENTER
+                case 0x400156: Description = msc::FormatText("Delay Level Left %02Xh (%d)",                _Iter[3], (int) _Iter[3]); break;                    // DELAY LEVEL LEFT
+                case 0x400157: Description = msc::FormatText("Delay Level Right %02Xh (%d)",               _Iter[3], (int) _Iter[3]); break;                    // DELAY LEVEL RIGHT
+                case 0x400158: Description = msc::FormatText("Delay Level %02Xh (%d)",                     _Iter[3], (int) _Iter[3]); break;                    // DELAY LEVEL
+                case 0x400159: Description = msc::FormatText("Delay Feedback %02Xh (%d)",                  _Iter[3], (int) _Iter[3]); break;                    // DELAY FEEDBACK
+                case 0x40015A: Description = msc::FormatText("Delay Send Level to Reverb %02Xh (%d)",      _Iter[3], (int) _Iter[3]); break;                    // DELAY SEND LEVEL TO REVERB (SC-88 or later)
 
                 case 0x400200: Description = msc::FormatText("Eq Low Frequency %02Xh (%dHz)",              _Iter[3], (_Iter[3] == 0 ? 200 : 400)); break;
                 case 0x400201: Description = msc::FormatText("Eq Low Gain %02Xh (%ddB)",                   _Iter[3], Map((int) _Iter[3], 0x34, 0x4C, -12, 12)); break; // -12dB .. +12dB
                 case 0x400202: Description = msc::FormatText("Eq High Frequency %02Xh (%dkHz)",            _Iter[3], (_Iter[3] == 0 ? 3 : 6)); break;
                 case 0x400203: Description = msc::FormatText("Eq High Gain %02Xh (%ddB)",                  _Iter[3], Map((int) _Iter[3], 0x34, 0x4C, -12, 12)); break; // -12dB .. +12dB
 
-                case 0x400300: Description = msc::FormatText("EFX Type %02Xh (%ddB)",                      _Iter[3], (int) _Iter[3]); break;
+                // Insertion Effects (SC-8820 or later)
+                case 0x400300: Description = msc::FormatText("EFX Type %02Xh (%ddB)", _Iter[3], (int)_Iter[3]); break;                                          // EFX TYPE. 0 = Off, 1 = Distortion, 2 = Wah, 3 = Pitch Shift, 4 = Auto Pan, 5 = Compressor, 6 = Noise Gate, 7 = Talk Box, 8 = Slicer, 9 = Phaser, A = Tremolo, B-F = Reserved.
 
+                // Insertion Effects (SC-8850 or later)
                 case 0x400303: case 0x400304: case 0x400305: case 0x400306: case 0x400307: case 0x400308: case 0x400309: case 0x40030A: case 0x40030B: case 0x40030C:
                 case 0x40030D: case 0x40030E: case 0x40030F: case 0x400310: case 0x400311: case 0x400312: case 0x400313: case 0x400314: case 0x400315: case 0x400316:
                                Description = msc::FormatText("EFX Parameter %d %02Xh (%d)", (int) _Iter[2] - 2, _Iter[3], (int) _Iter[3]); break;
@@ -738,7 +747,7 @@ void sysex_t::IdentifyRoland() noexcept
 
                         case 0x401013: Description = msc::FormatText("Set Part %d to %s Mode",                             GSBlockToPart(_Iter[1]), (_Iter[3] == 0x01 ? "Poly" : "Mono")); break;
                         case 0x401014: Description = msc::FormatText("Assign Part %d Mode %s",                             GSBlockToPart(_Iter[1]), (_Iter[3] == 0x00 ? "Single" : (_Iter[3] == 0x01 ? "Limited-Multi" : "Full-Multi"))); break;
-                        case 0x401015: Description = msc::FormatText("Use Part %d for Rhythm (%s)",                        GSBlockToPart(_Iter[1]), IdentifyGSRhythmPart(_Iter[3])); break;
+                        case 0x401015: Description = msc::FormatText("Use Part %d for Rhythm (%s)",                        GSBlockToPart(_Iter[1]), IdentifyGSRhythmPart(_Iter[3])); break; // USE FOR RHYTHM PART
 
                         case 0x401016: Description = msc::FormatText("Pitch Key Shift %02Xh (%d semitones)",               _Iter[3],           Map((int) _Iter[3], 0x28, 0x58, -24, 24)); break;
                         case 0x401017: Description = msc::FormatText("Pitch Offset Fine %02Xh %02Xh (%.1fHz)",             _Iter[3], _Iter[4], Map((_Iter[4] << 7) | _Iter[3], 0x08, 0xF8, -12.f, 12.f)); break;
@@ -787,6 +796,7 @@ void sysex_t::IdentifyRoland() noexcept
                         case 0x40104A: Description = msc::FormatText("Scale Tuning A# %02Xh (%d cents)",                   _Iter[3], Map((int) _Iter[3], 0x00, 0x7F, -64, 63)); break; // 12 bytes
                         case 0x40104B: Description = msc::FormatText("Scale Tuning B %02Xh (%d cents)",                    _Iter[3], Map((int) _Iter[3], 0x00, 0x7F, -64, 63)); break; // 12 bytes
 
+                        // Controller / Mod Matrix
                         case 0x402000: Description = msc::FormatText("Mod Pitch Control %02Xh (%d semitones)",             _Iter[3], Map((int) _Iter[3], 0x28, 0x58, -24, 24)); break;
                         case 0x402001: Description = msc::FormatText("Mod TVF Cutoff Control %02Xh (%d cents)",            _Iter[3], Map((int) _Iter[3], 0x00, 0x7F, -9600, 9600)); break;
                         case 0x402002: Description = msc::FormatText("Mod Amplitude Control %02Xh (%.1f%%)",               _Iter[3], Map((int) _Iter[3], 0x00, 0x7F, -100.f, 100.f)); break;

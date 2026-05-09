@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.rc (2026.05.08) **/
+/** $VER: PreferencesProcessing.rc (2026.05.09) **/
 
 #include "Resource.h"
 
@@ -286,27 +286,81 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #pragma endregion
 
-#pragma region Component
+#pragma region Transposition
 
 // Groupbox
 #define X_F00   X_E00
 #define Y_F00   Y_E00 + H_E00 + IY
 #define W_F00   W_E00
 
-    // Label: Log level
-    #define X_F01    X_F00 +  5
+#pragma region Semitones
+
+    // Label
+    #define X_F01    X_F00 + 5
     #define Y_F01    Y_F00 + 11
-    #define W_F01    34
+    #define W_F01    45
     #define H_F01    H_LBL
 
-    // Combobox: Log level
+    // Label (Buddy)
     #define X_F02    X_F01 + W_F01 + IX
     #define Y_F02    Y_F01
-    #define W_F02    48
-    #define H_F02    H_CBX
+    #define W_F02    24
+    #define H_F02    H_LBL
 
-#define H_F00   11 + H_F02 + 7
+    // Slider
+    #define X_F03    X_F02 + W_F02 + IX
+    #define Y_F03    Y_F02
+    #define W_F03    160
+    #define H_F03    15
 
+#pragma endregion
+
+#pragma region Microtones
+
+    // Label
+    #define X_F11    X_F01
+    #define Y_F11    Y_F03 + H_F03 + IY
+    #define W_F11    45
+    #define H_F11    H_LBL
+
+    // Label (Buddy)
+    #define X_F12    X_F11 + W_F11 + IX
+    #define Y_F12    Y_F11
+    #define W_F12    24
+    #define H_F12    H_LBL
+
+    // Slider
+    #define X_F13    X_F12 + W_F12 + IX
+    #define Y_F13    Y_F12
+    #define W_F13    160
+    #define H_F13    15
+
+#pragma endregion
+
+#define H_F00   11 + H_F03 + IY + H_F13 + 7
+
+#pragma endregion
+
+#pragma region Component
+
+// Groupbox
+#define X_G00   X_F00
+#define Y_G00   Y_F00 + H_F00 + IY
+#define W_G00   W_F00
+
+    // Label: Log level
+    #define X_G01    X_G00 +  5
+    #define Y_G01    Y_G00 + 11
+    #define W_G01    34
+    #define H_G01    H_LBL
+
+    // Combobox: Log level
+    #define X_G02    X_G01 + W_G01 + IX
+    #define Y_G02    Y_G01
+    #define W_G02    48
+    #define H_G02    H_CBX
+
+#define H_G00   11 + H_G02 + 7
 #pragma endregion
 
 IDD_PREFERENCES_PROCESSING dialogex 0, 0, 0, 0
@@ -357,7 +411,16 @@ font 8, "MS Shell Dlg", 400, 0, 1
         rtext       "",                         IDC_PORT,                   X_E41, Y_E41 + 3, W_E41, H_E41
         control     "",                         IDC_PORT_SLIDER,            TRACKBAR_CLASS, TBS_HORZ | TBS_AUTOTICKS | TBS_TOP | TBS_TRANSPARENTBKGND | WS_TABSTOP, X_E42, Y_E42, W_E42, H_E42
 
-    groupbox "Component", IDC_STATIC, X_F00, Y_F00, W_F00, H_F00
-        rtext       "Log level:"                IDC_LOG_LEVEL_LBL,          X_F01, Y_F01 + 2, W_F01, H_F01
-        combobox                                IDC_LOG_LEVEL,              X_F02, Y_F02,     W_F02, H_F02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    groupbox "Transposition", IDC_STATIC, X_F00, Y_F00, W_F00, H_F00
+        ltext       "Semitones:",               IDC_STATIC,                 X_F01, Y_F01 + 8, W_F01, H_F01
+        rtext       "",                         IDC_SEMITONES,              X_F02, Y_F02 + 8, W_F02, H_F02
+        control     "",                         IDC_SEMITONES_SLIDER,       TRACKBAR_CLASS, TBS_HORZ | TBS_AUTOTICKS | TBS_TOP | TBS_TRANSPARENTBKGND | WS_TABSTOP, X_F03, Y_F03, W_F03, H_F03
+
+        ltext       "Microtones:",              IDC_STATIC,                 X_F11, Y_F11 + 8, W_F11, H_F11
+        rtext       "",                         IDC_MICROTONES,             X_F12, Y_F12 + 8, W_F12, H_F12
+        control     "",                         IDC_MICROTONES_SLIDER,      TRACKBAR_CLASS, TBS_HORZ | TBS_AUTOTICKS | TBS_TOP | TBS_TRANSPARENTBKGND | WS_TABSTOP, X_F13, Y_F13, W_F13, H_F13
+
+    groupbox "Component", IDC_STATIC, X_G00, Y_G00, W_G00, H_G00
+        rtext       "Log level:"                IDC_LOG_LEVEL_LBL,          X_G01, Y_G01 + 2, W_G01, H_G01
+        combobox                                IDC_LOG_LEVEL,              X_G02, Y_G02,     W_G02, H_G02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 }

@@ -52,16 +52,16 @@ static uint32_t ProcessMessage(uint32_t currentTime, uint32_t messageNumber, con
 
         if (message.Time != currentTime)
         {
-            ::_snprintf_s(Display1, _countof(Display1), "%8.2fs",  (double) message.Time / 1000.f);
+            ::_snprintf_s(Display1, _countof(Display1), "%8.3fs",  (double) message.Time / 1000.f);
 
             const uint32_t t = message.Time / 1000;
 
-            ::_snprintf_s(Display2, _countof(Display2), "%02d:%02d:%02d", t / 3600, (t % 3600) / 60, t % 60);
+            ::_snprintf_s(Display2, _countof(Display2), "%02d:%02d:%02d.%03d", t / 3600, (t % 3600) / 60, t % 60, message.Time % 1000);
         }
         else
             Display1[0] = Display2[0] = '\0';
 
-        ::printf("%8u %-10s %-8s ", messageNumber, Display1, Display2);
+        ::printf("%8u %-11s %-12s ", messageNumber, Display1, Display2);
     }
 
     // MIDI Event

@@ -413,7 +413,7 @@ You can force a player to start playback using a particular *flavor* of MIDI. Th
 
 | Name        | Purpose |
 | ----------- | ------- |
-| Default     | Same as SC88. |
+| Default     | Same as SC&#8209;88. |
 | GM          | General MIDI 1 specification. A GM System On SysEx is sent before playback starts. |
 | GM2         | General MIDI 2 specification. A GM2 System On SysEx is sent before playback starts. |
 | GS&nbsp;SC&#8209;55    | General Sound specification with Roland SC-55 initialization. |
@@ -434,6 +434,10 @@ When you enable this setting the selected player will be ignored and LibMT32Emu 
 #### Use Secret Sauce with GS
 
 When you enable this setting the selected player will be ignored and Secret Sauce will always be used whenever a GS MIDI file is played.
+
+#### Use Secret Sauce with SC-88 or later
+
+When you enable this setting the selected player will be ignored and Secret Sauce will always be used whenever a GS MIDI file is played that contains a SYSTEM MODE SET SysEx message.
 
 #### Use VSTi with XG
 
@@ -613,7 +617,7 @@ HMI and HMP file have no way to indicate the tempo at which they should be playe
 
 #### Channels
 
-This setting allows you disable and re-enable any of the 16 MIDI channels per port. Use the *Port&nbsp;number* slider to select the port. Click the button corresponding the channel to disable or re-enable it. These settings become immediately active during playback.
+This setting allows you disable and re-enable any of the 16 MIDI channels per port. Use the *Port&nbsp;number* slider to select the port. Click the button corresponding the channel to disable or re-enable it. These settings become immediately active during playback without having to press the `Apply` button.
 
 A few shortcut buttons are available to assist in the selection:
 

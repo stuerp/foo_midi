@@ -94,6 +94,8 @@ private:
     void SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint32_t time);
 
 private:
+    int32_t _PitchBendValue;
+
     LoopType _LoopType;             // Type of looping requested by the user.
     uint32_t _DecayTime;            // in ms
 

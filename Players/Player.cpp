@@ -9,6 +9,7 @@
 #include "API.h"
 
 #include <Configuration.h>
+#include <libmidi.h>
 
 #include <fstream>
 
@@ -64,6 +65,91 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
         _FileFormat = container.FileFormat;
     }
 
+    int64_t Semitones = CfgSemitones;
+    int64_t Microtones = CfgMicrotones;
+
+    // Insert Pitch Bend Change messages if necessary.
+    if ((Semitones != 0) || (Microtones != 0))
+    {
+        bool NeedPitchBend[16] = { true };
+
+        for (size_t i = 0; i < _Messages.size(); ++i)
+        {
+            auto & Message = _Messages[i];
+
+            if (!Message.IsSysEx())
+            {
+                const auto StatusCode = (uint8_t) (Message.Data);
+                const auto Data1      = (uint8_t) (Message.Data >>  8);
+                const auto Data2      = (uint8_t) (Message.Data >> 16);
+                const auto PortNumber = (uint8_t) (Message.Data >> 24);
+
+                const auto EventType     = StatusCode & 0xF0;
+                const auto ChannelNumber = StatusCode & 0x0F;
+
+                // Skip the percussion channel.
+                if (ChannelNumber == 0x09)
+                    continue;
+
+                if (Semitones != 0)
+                {
+                    if ((EventType == midi::StatusCode::NoteOn) || (EventType == midi::StatusCode::NoteOff))
+                    {
+                        const int NewValue = std::clamp((int) Data1 + (int) Semitones, 0, 127);
+
+                        Message.Data = midi::PackMessage(StatusCode, (uint8_t) NewValue, Data2, PortNumber);
+                    }
+                }
+
+                if (Microtones != 0)
+                {
+                    // The Reset All Controllers message resets the pitch bend to the default value.
+                    if ((EventType == midi::StatusCode::ControlChange) && (Data1 == 0x79) && (Data2 == 0x00))   // Reset All Controllers
+                        NeedPitchBend[ChannelNumber] = true;
+                    else
+                    // Modify existing Pitch Bend Change messages.
+                    if (EventType == midi::StatusCode::PitchBendChange)
+                    {
+                        const int NewValue = std::clamp(midi::BytesToPitchBend(Data1, Data2) + (int) Microtones, -8192, 8191);
+                        const auto [LSB, MSB] = midi::PitchBendToBytes(NewValue);
+
+                        Message.Data = midi::PackMessage(midi::StatusCode::PitchBendChange, LSB, MSB, PortNumber);
+
+                        NeedPitchBend[ChannelNumber] = false;
+                    }
+                    else
+                    // Insert a Pitch Bend Change message if necessary.
+                    if ((EventType == midi::StatusCode::NoteOn) && NeedPitchBend[ChannelNumber])
+                    {
+                        const auto [LSB, MSB] = midi::PitchBendToBytes(_PitchBendValue);
+                        const uint32_t Data = midi::PackMessage(midi::StatusCode::PitchBendChange, LSB, MSB, PortNumber);
+
+                        _Messages.insert(_Messages.begin() + (int64_t) i++, midi::message_t(Message.Time, Data)); // Insert a Pitch Bend Change message and skip it.
+
+                        NeedPitchBend[ChannelNumber] = false;
+                    }
+                }
+            }
+            else
+            {
+                const uint32_t Index = Message.Data & 0x00FFFFFFu;
+
+                const uint8_t * Data;
+                size_t Size;
+                uint8_t PortNumber;
+
+                if (!_SysExMap.GetItem(Index, Data, Size, PortNumber))
+                    continue;
+
+                if (midi::sysex_t::IsGMSystemOn(Data, Size) || midi::sysex_t::IsGM2SystemOn(Data, Size) || midi::sysex_t::IsGSSystemOn(Data, Size) || midi::sysex_t::IsXGSystemOn(Data, Size))
+                {
+                    for (size_t j = 0; j < _countof(NeedPitchBend); ++j)
+                        NeedPitchBend[j] = true;
+                }
+            }
+        }
+    }
+
     // Initialize the sample stream. We get the values in ms but SetSampleRate() converts them to frames.
     {
         _FrameIndex = 0;
@@ -110,7 +196,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
 
                             const unsigned long bit = (unsigned long) (1 << Port);
 
-                            size_t Index = (size_t) Channel * 128 + Note;
+                            size_t Index = (size_t) ((Channel * 128) + Note);
 
                             NoteOn[Index] = (uint8_t) ((NoteOn[Index] & ~bit) | (bit * IsNoteOn));
                         }
@@ -129,7 +215,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
                         {
                             if (NoteOn[i] & (1 << j))
                             {
-                                _Messages.push_back(midi::message_t(_FrameCount, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                                _Messages.push_back(midi::message_t(_FrameCount, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + midi::StatusCode::NoteOn)));
                             }
                         }
                     }
@@ -152,6 +238,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
         }
     }
 
+    // Initialize the MIDI channel mask.
     _ChannelsMaskVersion = ~0u;
     CfgChannels.Get(_ChannelsMask, sizeof(_ChannelsMask), _ChannelsMaskVersion);
 

@@ -39,6 +39,7 @@ v0.1.0.0, 2025-03-19
 
 - [The Wonderfully Terrible World of C and C++ Encoding APIs (with Some Rust)](https://thephd.dev/the-c-c++-rust-string-text-encoding-api-landscape)
 - [cuneicode, and the Future of Text in C](https://thephd.dev/cuneicode-and-the-future-of-text-in-c)
+- [SoundPalette](https://github.com/hikari-no-yume/SoundPalette)
 
 ## Test Material
 
