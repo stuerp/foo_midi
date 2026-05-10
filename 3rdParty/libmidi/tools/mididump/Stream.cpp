@@ -1,5 +1,5 @@
 
-/** $VER: Stream.cpp (2026.04.10) P. Stuer **/
+/** $VER: Stream.cpp (2026.05.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -11,10 +11,17 @@
 
 using namespace midi;
 
-static uint8_t CCMSB = 255; // Control Change Most Significant Byte
-static uint8_t CCLSB = 255; // Control Change Least Significant Byte
+static uint8_t DrumKit = 0;
+static bool IsGS = false;
 
-static uint8_t DELSB = 0;
+static uint8_t DataEntry_MSB = 255;
+static uint8_t DataEntry_LSB = 255;
+
+static uint8_t RPN_MSB = 255;   // RPN Most Significant Byte
+static uint8_t RPN_LSB = 255;   // RPN Least Significant Byte
+
+static uint8_t NRPN_MSB = 255;  // RPN Most Significant Byte
+static uint8_t NRPN_LSB = 255;  // RPN Least Significant Byte
 
 static uint32_t ProcessMessage(uint32_t currentTime, uint32_t messageNumber, const midi::message_t & message, uint32_t messageTimeInMS, const midi::sysex_table_t & sysExMap) noexcept;
 
@@ -23,6 +30,10 @@ static uint32_t ProcessMessage(uint32_t currentTime, uint32_t messageNumber, con
 /// </summary>
 void ProcessStream(const midi::container_t & container, const std::vector<midi::message_t> & stream, const midi::sysex_table_t & sysExMap, const std::vector<uint8_t> & portNumbers, bool skipNormalEvents)
 {
+/*
+    midi::sysex_t Test({ midi::StatusCode::SysEx, 0x41, 0x10, 0x00, 0x48, 0x12, 0x10, 0x00, 0x20, 0x3F, 0x03, 0xFF, midi::StatusCode::SysExEnd });
+    Test.Identify();
+*/
     const uint32_t SubsongIndex = 0;
 
     ::printf("%u events, %u unique SysEx messages, %u ports\n", (uint32_t) stream.size(), (uint32_t) sysExMap.Size(), (uint32_t) portNumbers.size());
@@ -67,105 +78,102 @@ static uint32_t ProcessMessage(uint32_t currentTime, uint32_t messageNumber, con
     // MIDI Event
     if (!message.IsSysEx())
     {
-        uint8_t Event[3]
+        const auto StatusCode    = (uint8_t)   message.Data;
+        const auto Data1         = (uint8_t)  (message.Data >>  8);
+        const auto Data2         = (uint8_t)  (message.Data >> 16);
+        const auto PortNumber    = (uint8_t) ((message.Data >> 24) & 0x7F);
+
+        const auto MessageType   = (uint8_t)  (StatusCode & 0xF0);
+        const auto ChannelNumber = (uint8_t) ((StatusCode & 0x0F) + 1);
+
+        const auto MessageSize   = (uint32_t) (msc::InRange(MessageType, (uint8_t) midi::TimingClock, (uint8_t) midi::MetaData) ? 1 :
+                                              ((MessageType == midi::ProgramChange || MessageType == midi::ChannelPressure) ? 2 : 3));
+
+        ::printf("%02X", StatusCode);
+
+        if (MessageSize > 1)
         {
-            (uint8_t) (message.Data),
-            (uint8_t) (message.Data >> 8),
-            (uint8_t) (message.Data >> 16)
-        };
+            ::printf(" %02X", (int) Data1);
 
-        const uint8_t StatusCode = (const uint8_t) (Event[0] & 0xF0u);
-
-        const uint32_t EventSize = (uint32_t) ((StatusCode >= midi::TimingClock   && StatusCode <= midi::MetaData) ? 1 :
-                                              ((StatusCode == midi::ProgramChange || StatusCode == midi::ChannelPressure) ? 2 : 3));
-
-        uint8_t PortNumber = (message.Data >> 24) & 0x7F;
-
-        ::printf("%02X", Event[0]);
-
-        if (EventSize > 1)
-        {
-            ::printf(" %02X", (int) Event[1]);
-
-            if (EventSize > 2)
-                ::printf(" %02X", (int) Event[2]);
+            if (MessageSize > 2)
+                ::printf(" %02X", (int) Data2);
             else
                 ::printf("   ");
         }
         else
             ::printf("      ");
 
-        int Channel = (Event[0] & 0x0F) + 1;
+        ::printf(" Port %d, Channel %2d, ", PortNumber, ChannelNumber);
 
-        ::printf(" Port %d, Channel %2d, ", PortNumber, Channel);
-
-        switch (StatusCode)
+        switch (MessageType)
         {
             case midi::NoteOff:
-                ::printf("Note Off                        %3d, Velocity %3d\n", Event[1], Event[2]);
+                ::printf("Note Off                        %3d, Velocity %3d\n", Data1, Data2);
                 break;
 
             case midi::NoteOn:
-                ::printf("Note On                         %3d, Velocity %3d\n", Event[1], Event[2]);
+                ::printf("Note On                         %3d, Velocity %3d%s\n", Data1, Data2, (ChannelNumber == 10) ? msc::FormatText(", \"%s\"", DescribeDrum(DrumKit, Data1, IsGS).c_str()).c_str() : "");
                 break;
 
             case midi::KeyPressure:
-                ::printf("Key Pressure (Aftertouch)       %3d\n", Event[1]);
+                ::printf("Key Pressure (Aftertouch)       %3d\n", Data1);
                 break;
 
             case midi::ControlChange:
             {
-                ::printf("Control Change                  %3d %3d \"%s\"\n", Event[1], Event[2], DescribeControlChange(Event[1], Event[2]).c_str());
+                ::printf("Control Change              %3d %3d, %s\n", Data1, Data2, DescribeControlChange(Data1, Data2).c_str());
 
-                if (Event[1] == 98)     // Non-Registered Parameter LSB
-                    CCLSB = Event[2];
-                else
-                if (Event[1] == 99)     // Non-Registered Parameter MSB
-                    CCMSB = Event[2];
-                else
-                if (Event[1] == 100)    // Registered Parameter LSB
-                    CCLSB = Event[2];
-                else
-                if (Event[1] == 101)    // Registered Parameter MSB
-                    CCMSB = Event[2];
-                else
-                if (Event[1] == 38)     // LSB for CC 0 - 31.
-                    DELSB = Event[2];
-
-                if ((CCLSB != 255) && (CCMSB != 255))
+                switch (Data1)
                 {
-                    int RPN = (CCMSB << 7) | CCLSB; // Registered Parameter Number
+                    case midi::Controller::DataEntry:
+                        DataEntry_MSB = Data2;
+                        break;
 
-                    if ((Event[1] == 6) || (Event[1] == 96) || (Event[1] == 97))
-                    {
-                        int Value = (Event[2] << 7) | DELSB;
+                    case midi::Controller::DataEntryLSB:    // LSB for CC 0 - 31.
+                        DataEntry_LSB = Data2;
+                        break;
 
-                        if (Event[1] == 6)      // Data Entry
-                            ::printf("Set RPN 0x%04X to %3d\n", RPN, Value);
-                        else
-                        if (Event[1] == 96)
-                            ::printf("Increment RPN 0x%04X by %3d\n", RPN, Value);
-                        else
-                        if (Event[1] == 97)
-                            ::printf("Decrement RPN 0x%04X by %3d\n", RPN, Value);
+                    case midi::Controller::NRPNLSB:         // Non-Registered Parameter LSB (NRPN)
+                        NRPN_LSB = Data2;
+                        break;
 
-                        CCMSB = CCLSB = 255;
-                        DELSB = 0;
-                    }
+                    case midi::Controller::NRPNMSB:         // Non-Registered Parameter MSB (NRPN)
+                        NRPN_MSB = Data2;
+                        break;
+
+                    case midi::Controller::RPNLSB:          // Registered Parameter LSB (RPN)
+                        RPN_LSB = Data2;
+                        break;
+
+                    case midi::Controller::RPNMSB:          // Registered Parameter MSB (RPN)
+                        RPN_MSB = Data2;
+                        break;
                 }
                 break;
             }
 
             case midi::ProgramChange:
-                ::printf("Program Change                  %3d     \"%s\"\n", Event[1], Instruments[Event[1]]);;
+            {
+                std::string ProgramName;
+
+                if (ChannelNumber != 10)
+                    ProgramName = Instruments[Data1];
+                else
+                {
+                    ProgramName = DescribeDrumSet(Data1, IsGS);
+                    DrumKit = Data1;
+                }
+
+                ::printf("Program Change                  %3d, \"%s\"\n", Data1, ProgramName.c_str());
                 break;
+            }
 
             case midi::ChannelPressure:
-                ::printf("Channel Pressure (Aftertouch)   %3d\n", Event[1]);
+                ::printf("Channel Pressure (Aftertouch)   %3d\n", Data1);
                 break;
 
             case midi::PitchBendChange:
-                ::printf("Pitch Bend Change             %5d\n", 8192 - ((int) (Event[2] & 0x7F) << 7) | (Event[1] & 0x7F));
+                ::printf("Pitch Bend Change             %5d\n", midi::BytesToPitchBend(Data1, Data2));
                 break;
 
             case midi::SysEx:
@@ -217,7 +225,7 @@ static uint32_t ProcessMessage(uint32_t currentTime, uint32_t messageNumber, con
                 break;
 
             default:
-                ::printf("<Unknown Status Code: 0x%02X>\n", StatusCode);
+                ::printf("<Unknown message type: 0x%02X>\n", MessageType);
         }
     }
     // SysEx Index
@@ -234,13 +242,11 @@ static uint32_t ProcessMessage(uint32_t currentTime, uint32_t messageNumber, con
 
         // Show the message in the output.
         {
-            ::printf("SysEx");
+            ::printf("         Port %d, SysEx", PortNumber);
 
             for (size_t j = 0; j < MessageSize; ++j)
                 ::printf(" %02X", MessageData[j]);
         }
-
-        ::printf(" Port %d", PortNumber);
 
         // Identify the SysEx message.
         if (MessageSize > 2)
@@ -251,6 +257,9 @@ static uint32_t ProcessMessage(uint32_t currentTime, uint32_t messageNumber, con
 
             ::printf(", \"%s\", \"%s\", \"%s\", \"%s\"", SysEx.Manufacturer.c_str(), SysEx.Model.c_str(), SysEx.Command.c_str(), SysEx.Description.c_str());
         }
+
+        if (!IsGS && sysex_t::IsGSSystemOn(MessageData, MessageSize))
+            IsGS = true;
 
         ::putchar('\n');
     }

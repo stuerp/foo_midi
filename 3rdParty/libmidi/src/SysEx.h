@@ -37,6 +37,9 @@ public:
     std::string Command;
     std::string Description;
 
+    uint32_t ManufacturerId;
+    uint32_t ModelId;
+
     bool IsChecksumValid;
 
     static bool IsSystemOn(const uint8_t * data) noexcept
@@ -139,8 +142,7 @@ public:
     static const uint8_t DLSStaticVoiceAllocationOn[6];
 
 private:
-    uint32_t IdentifyManufacturer() noexcept;
-
+    void IdentifyManufacturer() noexcept;
     void IdentifyRoland() noexcept;
     void IdentifyYamaha() noexcept;
 

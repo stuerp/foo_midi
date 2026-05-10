@@ -1,5 +1,5 @@
 
-/** $VER: MIDI.h (2025.08.03) **/
+/** $VER: MIDI.h (2026.05.09) **/
 
 #pragma once
 
@@ -40,18 +40,81 @@ enum Controller : uint8_t
 {
     BankSelect              = 0x00, // CC   0, Switch bank for patch selection
     Modulation              = 0x01, // CC   1, Controls a vibrato effect (pitch, loudness, brighness). What is modulated depends on the program.
+    BreathController        = 0x02, // CC   2, Originally intended for use with a breath MIDI controller in which blowing harder produced higher MIDI control values. It can be used for modulation as well.
+    //                        0x03  // CC   3, Undefined
+    FootController          = 0x04, // CC   4, Often used with aftertouch messages. It can send a continuous stream of values based on how the pedal is used.
     PortamentoTime          = 0x05, // CC   5 (GM2)
-
     DataEntry               = 0x06, // CC   6, Sets the Value for NRPN or RPN parameters.
     ChannelVolume           = 0x07, // CC   7
+    Balance                 = 0x08, // CC   8, Controls the left and right balance, generally for stereo patches. 0 = hard left, 64 = center, 127 = hard right.
+    //                        0x09  // CC   9, Undefined
     Pan                     = 0x0A, // CC  10
     Expression              = 0x0B, // CC  11
+    EffectControl1          = 0x0C, // CC  12, Usually used to control a parameter of an effect within the synth/workstation.
+    EffectControl2          = 0x0D, // CC  13, Usually used to control a parameter of an effect within the synth/workstation.
+    //                        0x0E  // CC  14, Undefined
+    //                        0x0F  // CC  15, Undefined
+
+    GeneralPurpose1         = 0x10, // CC  16
+    GeneralPurpose2         = 0x11, // CC  17
+    GeneralPurpose3         = 0x12, // CC  18
+    GeneralPurpose4         = 0x13, // CC  19
 
     // LSB for CC 0 to 31
     BankSelectLSB           = 0x20, // CC  32
 
+    DataEntryLSB            = 0x26, // CC  38, Sets the Value for NRPN or RPN parameters.
+    ChannelVolumeLSB        = 0x27, // CC  39
+
+    PanLSB                  = 0x2A, // CC  42
+    ExpressionLSB           = 0x2B, // CC  43
+
+    DamperPedal             = 0x40, // CC  64, On/Off switch that controls sustain. (See also Sostenuto CC 66) 0 to 63 = Off, 64 to 127 = On
+    Portamento              = 0x41, // CC  65, On/Off switch 0 to 63 = Off, 64 to 127 = On (GM2)
+    Sostenuto               = 0x42, // CC  66, On/Off switch. Like the Sustain controller (CC 64), However it only holds notes that were “On” when the pedal was pressed. People use it to “hold” chords” and play melodies over the held chord. 0 to 63 = Off, 64 to 127 = On (GM2)
+    SoftPedal               = 0x43, // CC  67, Lowers the volume of notes played. 0 to 63 = Off, 64 to 127 = On (GM2)
+    LegatoFootswitch        = 0x44, // CC  68, Turns Legato effect between 2 subsequent notes On or Off. 0 to 63 = Off, 64 to 127 = On
+    Hold2                   = 0x45, // CC  69, Another way to “hold notes” (see MIDI CC 64 and MIDI CC 66). However notes fade out according to their release parameter rather than when the pedal is released. 0 to 63 = Off, 64 to 127 = On (GM2)
+
+    SoundController1        = 0x46, // CC  70, Default = Sound Variation
+    SoundController2        = 0x47, // CC  71, Default = Timbre / Harmonic Intensity (GM2)
+    SoundController3        = 0x48, // CC  72, Default = Release Time (GM2)
+    SoundController4        = 0x49, // CC  73, Default = Attack Time (GM2)
+    SoundController5        = 0x4A, // CC  74, Default = Brightness (GM2)
+    SoundController6        = 0x4B, // CC  75, Generic
+    SoundController7        = 0x4C, // CC  78, Generic
+    SoundController8        = 0x4D, // CC  77, Generic
+    SoundController9        = 0x4E, // CC  78, Generic
+    SoundController10       = 0x4F, // CC  79, Generic
+
+    GeneralPurpose5         = 0x50, // CC  80
+    GeneralPurpose6         = 0x51, // CC  81
+    GeneralPurpose7         = 0x52, // CC  82
+    GeneralPurpose8         = 0x53, // CC  83
+
+    PortamentoControl       = 0x54, // CC  84, Controls portamento rate to slide between 2 notes played subsequently.
+
+    //                        0x55  // CC  85, Undefined
+    //                        0x56  // CC  86, Undefined
+    //                        0x57  // CC  87, Undefined
+    //                        0x58  // CC  88, Undefined
+    //                        0x59  // CC  89, Undefined
+    //                        0x5A  // CC  90, Undefined
+
+    EffectDepth1            = 0x5B, // CC  91, Effect 1 Depth (GM2)
+    EffectDepth2            = 0x5C, // CC  92, Effect 2 Depth (GM2)
+    EffectDepth3            = 0x5D, // CC  93, Effect 3 Depth (GM2)
+    EffectDepth4            = 0x5E, // CC  94, Effect 4 Depth (GM2)
+    EffectDepth5            = 0x5F, // CC  95, Effect 5 Depth (GM2)
+
+    DataIncrement           = 0x60, // CC  96, Increment the value of the selected RPN or NRPN parameter.
+    DataDecrement           = 0x61, // CC  97, Increment the value of the selected RPN or NRPN parameter.
+
     NRPNLSB                 = 0x62, // CC  98, Select NRPN parameter (LSB)
     NRPNMSB                 = 0x63, // CC  99, Select NRPN parameter (MSB)
+
+    RPNLSB                  = 0x64, // CC 100, Select RPN parameter (LSB)
+    RPNMSB                  = 0x65, // CC 101, Select RPN parameter (MSB)
 
     // Channel Mode messages
     AllSoundsOff            = 0x78, // CC 120, Silences all notes current sounding on the specified MIDI channel. Upon receiving the message, all notes should be turned off, and the output set to zero as quickly as possible.
@@ -92,5 +155,37 @@ enum MetaDataType : uint8_t
 
     SequencerSpecific       = 0x7F  // An unprocessed sequencer specific message containing raw data.
 };
+
+/// <summary>
+/// Creates a MIDI message by packing the status code, data bytes and port number into a single 32-bit integer.
+/// </summary>
+inline uint32_t PackMessage(uint8_t statusCode, uint8_t data1, uint8_t data2, uint8_t portNumber) noexcept
+{
+    return (uint32_t) ((portNumber << 24) | (data2 << 16) | (data1 << 8) | statusCode);
+}
+
+/// <summary>
+/// Converts  a pitch bend value (-8192 to +8191) to two MIDI data bytes (LSB, MSB).
+/// </summary>
+inline std::pair<uint8_t, uint8_t> PitchBendToBytes(int32_t value) noexcept
+{
+    // Clamp to valid 14-bit range.
+    value = msc::Clamp(value, -8192, 8191);
+
+    const auto Value = (uint16_t) (value + 8192);
+
+    const auto LSB = (uint8_t)  (Value       & 0x7F); // Lower 7 bits
+    const auto MSB = (uint8_t) ((Value >> 7) & 0x7F); // Upper 7 bits
+
+    return { LSB, MSB };
+}
+
+// Convert two MIDI data bytes back to pitch bend value (-8192 to +8191)
+inline int32_t BytesToPitchBend(uint8_t lsb, uint8_t msb) noexcept
+{
+    int32_t Value = ((uint16_t) msb << 7) | lsb;
+
+    return Value - 8192;
+}
 
 }

@@ -1,5 +1,5 @@
 
-/** $VER: SysEx.cpp (2026.05.08) P. Stuer **/
+/** $VER: SysEx.cpp (2026.05.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -13,28 +13,28 @@ namespace midi
 
 const uint8_t sysex_t::GM1SystemOn[6] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x7E, 0x7F, 0x09, 0x01,
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::GM1SystemOff[6] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x7E, 0x7F, 0x09, 0x02,
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::GM2SystemOn[6] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x7E, 0x7F, 0x09, 0x03,
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::D50Reset[10] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x41, // Manufacturer ID (Roland)
     0x10, // Device ID
     0x14, // Model ID (D50)
@@ -42,24 +42,24 @@ const uint8_t sysex_t::D50Reset[10] =
     0x7F, // Address MSB
     0x00,
     0x00,
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::MT32Reset[10] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x41, // Manufacturer ID (Roland)
     0x10, // Device ID
     0x16, // Model ID (MT32)
     0x12, // Command ID (Data Set 1, DT1)
     0x7F, // Address MSB
     0x01, // Address LSB
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::GSReset[11] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x41, // Manufacturer ID (Roland)
     0x10, // Device ID
     0x42, // Model ID (GS)
@@ -69,12 +69,12 @@ const uint8_t sysex_t::GSReset[11] =
     0x7F, // Address LSB
     0x00, // Data (GS Reset)
     0x41, // Checksum
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::GSToneMapNumber[11]  =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x41, // Manufacturer ID (Roland)
     0x10, // Device ID
     0x42, // Model ID (GS)
@@ -84,12 +84,12 @@ const uint8_t sysex_t::GSToneMapNumber[11]  =
     0x00,
     0x03, // Channel?
     0x00, // Checksum
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::XGSystemOn[9] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x43, // Manufacturer ID (Yamaha)
     0x10, // Device ID
     0x4C, // Model ID
@@ -97,12 +97,12 @@ const uint8_t sysex_t::XGSystemOn[9] =
     0x00,
     0x7E,
     0x00,
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::XGReset[9] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x43, // Manufacturer ID (Yamaha)
     0x10, // Device ID
     0x4C, // Model ID
@@ -110,58 +110,70 @@ const uint8_t sysex_t::XGReset[9] =
     0x00,
     0x7F,
     0x00,
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::DLSOn[6] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x7E, // Universal Non-Real Time
     0x7F, // Device ID (7F = Broadcast)
     0x0A, // DLS message
     0x01, // DLS On
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::DLSOff[6] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x7E, // Universal Non-Real Time
     0x7F, // Device ID (7F = Broadcast)
     0x0A, // DLS message
     0x02, // DLS Off
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::DLSStaticVoiceAllocationOff[6] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x7E, // Universal Non-Real Time
     0x7F, // Device ID (7F = Broadcast)
     0x0A, // DLS message
     0x03, // DLS Static Voice Allocation Off
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 const uint8_t sysex_t::DLSStaticVoiceAllocationOn[6] =
 {
-    0xF0, // Start of SysEx
+    StatusCode::SysEx,
     0x7E, // Universal Non-Real Time
     0x7F, // Device ID (7F = Broadcast)
     0x0A, // DLS message
     0x04, // DLS Static Voice Allocation On
-    0xF7  // End of SysEx
+    StatusCode::SysExEnd
 };
 
 void sysex_t::Identify() noexcept
 {
-    assert(_Data[0] == 0xF0);
+    Manufacturer = "<Unknown>";
+    Model = "<Unknown>";
+    Command = "<Unknown>";
+    Description = "<Unknown>";
+
+    ManufacturerId = 0;
+    ModelId = 0;
+
+    if (_Data.size() < 2)
+        return;
+
+    if (_Data[0] != StatusCode::SysEx)
+        return;
 
     _Iter = _Data.begin() + 1;
 
     IsChecksumValid = true;
 
-    const uint32_t ManufacturerId = IdentifyManufacturer();
+    IdentifyManufacturer();
 
     _Iter++; // Skip device id.
 
@@ -355,8 +367,6 @@ void sysex_t::Identify() noexcept
 
         default:
         {
-            Description  = "Unknown";
-//          ::DebugBreak();
             break;
         }
     }
@@ -365,7 +375,7 @@ void sysex_t::Identify() noexcept
 /// <summary>
 /// Identifies the manufacturer.
 /// </summary>
-uint32_t sysex_t::IdentifyManufacturer() noexcept
+void sysex_t::IdentifyManufacturer() noexcept
 {
     uint32_t Id = *_Iter++; // 1-byte Id
 
@@ -376,10 +386,8 @@ uint32_t sysex_t::IdentifyManufacturer() noexcept
 
     if (it != Manufacturers.end())
         Manufacturer = it->second;
-    else
-        Manufacturer = "Unknown";
 
-    return Id;
+    ManufacturerId = Id;
 }
 
 /// <summary>
@@ -389,17 +397,13 @@ void sysex_t::IdentifyRoland() noexcept
 {
     Manufacturer = "Roland";
 
-    // Model ID
-    Model = "Unknown";
-
-    if (*_Iter == 0xF7)
-    {
-        Description = "Invalid SysEx";
-
+    // Model Id
+    if ((_Iter == _Data.end()) || (*_Iter == StatusCode::SysExEnd))
         return;
-    }
 
-    switch (*_Iter++)
+    ModelId = *_Iter++;
+
+    switch (ModelId)
     {
         case 0x0B: Model = "MC505/JX305/D2"; break;
         case 0x10: Model = "S-10"; break;
@@ -444,7 +448,7 @@ void sysex_t::IdentifyRoland() noexcept
 
         case 0x56: Model = "SC-7"; break;
         case 0x57: Model = "JD-990"; break;
-        case 0x5C: Model = "Unknown"; break;
+        case 0x5C: break;
 
         case 0x6A: Model = "JV-1010"; break;
         case 0x6B: Model = "Fantom XR"; break;
@@ -455,20 +459,30 @@ void sysex_t::IdentifyRoland() noexcept
 
         case 0x00:
         {
+            if ((_Iter == _Data.end()) || (*_Iter == StatusCode::SysExEnd))
+                return;
+
+            ModelId = *_Iter++;
+
             // 00 xx
-            switch (*_Iter++)
+            switch (ModelId)
             {
                 case 0x07: Model = "GR-30"; break;
                 case 0x0B: Model = "D-2"; break;
                 case 0x3F: Model = "TD-6"; break;
-                case 0x48: Model = "SD-20"; break;          // SD-20, SD-90
+                case 0x48: Model = "SD-90"; break;          // SD-90, SD-20
                 case 0x51: Model = "V-Link"; break;         // HandSonic HPD-20
                 case 0x6B: Model = "Fantom-Xx"; break;      // Fantom-X6, Fantom-X7, Fantom-X8
 
                 // 00 00 xx
                 case 0x00:
                 {
-                    switch (*_Iter++)
+                    if ((_Iter == _Data.end()) || (*_Iter == StatusCode::SysExEnd))
+                        return;
+
+                    ModelId = *_Iter++;
+
+                    switch (ModelId)
                     {
                         case 0x02: Model = "DR-880"; break; // 2005, Dr. Rythm
                         case 0x0B: Model = "MC-707"; break; // Groovebox, used for track and pattern data.
@@ -492,7 +506,12 @@ void sysex_t::IdentifyRoland() noexcept
                         // 00 00 00 xx
                         case 0x00:
                         {
-                            switch (*_Iter++)
+                            if ((_Iter == _Data.end()) || (*_Iter == StatusCode::SysExEnd))
+                                return;
+
+                            ModelId = *_Iter++;
+
+                            switch (ModelId)
                             {
                                 case 0x44: Model = "SE-02"; break;
                                 case 0x45: Model = "TR-8S"; break;
@@ -504,40 +523,41 @@ void sysex_t::IdentifyRoland() noexcept
                                 // 00 00 00 00 xx
                                 case 0x00:
                                 {
-                                    switch (*_Iter++)
+                                    if ((_Iter == _Data.end()) || (*_Iter == StatusCode::SysExEnd))
+                                        return;
+
+                                    ModelId = *_Iter++;
+
+                                    switch (ModelId)
                                     {
                                         case 0xCF: Model = "Verselab MV-1"; break;
 
-                                        default: Model = "Unknown"; break;
+                                        default: break;
                                     }
                                 }
 
-                                default: Model = "Unknown"; break;
+                                default: break;
                             }
                             break;
                         }
 
-                        default: Model = "Unknown"; break;
+                        default: break;
                     }
                     break;
                 }
 
-                default: Model = "Unknown"; break;
+                default: break;
             }
             break;
         }
     
-        default: Model = "Unknown"; break;
+        default: break;
     }
 
-    if (*_Iter == 0xF7)
-    {
-        Description = "Invalid SysEx";
-
+    if ((_Iter == _Data.end()) || (*_Iter == StatusCode::SysExEnd))
         return;
-    }
 
-    // Command ID
+    // Command Id
     switch (*_Iter++)
     {
         case 0x10: Command = "REQ"; break;
@@ -545,19 +565,15 @@ void sysex_t::IdentifyRoland() noexcept
         case 0x12: Command = "DT1"; break; // Data Set 1
         case 0x13: Command = "ACK"; break;
         case 0x14: Command = "NAK"; break;
-        default:   Command = "???"; break;
+        default: break;
     }
 
-    if (*_Iter == 0xF7)
-    {
-        Description = "Invalid SysEx";
-
+    if ((_Iter == _Data.end()) || (*_Iter == StatusCode::SysExEnd))
         return;
-    }
 
     uint32_t Address = (uint32_t) (_Iter[0] << 16) | (_Iter[1] << 8) | _Iter[2];
 
-    Description = "Unknown";
+    Description = "<Unknown>";
 
     switch (_Iter[0])
     {
@@ -566,14 +582,27 @@ void sysex_t::IdentifyRoland() noexcept
         {
             switch (Address)
             {
+                case 0x000000:
+                {
+                    if ((ModelId == 0x0048) && (_Data.size() == 13) && (_Data[9] == 0x00) && (_Data[10] == 0x00) && (_Data[11] == 0x00) && (_Data[12] == StatusCode::SysExEnd))
+                        Description = "Native Mode";
+                    break;
+                }
+
                 case 0x00007F: // SYSTEM MODE SET (SC-88 or later)
-                    Description = msc::FormatText("System Parameter %06Xh \"System Mode Set %02Xh\" (%s)", Address, _Iter[3], (_Iter[3] == 0) ? "Mode 1" : "Unknown Mode"); break;
+                {
+                    Description = msc::FormatText("System Parameter %06Xh \"System Mode Set %02Xh\" (%s)", Address, _Iter[3], (_Iter[3] == 0) ? "Mode 1" : "Unknown Mode");
+                    break;
+                }
 
                 default:
+                {
                     if (msc::InRange(Address, 0x000100u, 0x00011Fu)) // CHANNEL MSG RX PORT (SC-88 or later)
                         Description = msc::FormatText("System Parameter %06Xh \"Channel Message Receive Port %02Xh\"", Address, _Iter[3]);
                     else
                         Description = msc::FormatText("System Parameter %06Xh \"Unknown\"", Address);
+                    break;
+                }
             }
             break;
         }
@@ -602,13 +631,34 @@ void sysex_t::IdentifyRoland() noexcept
         // Display data.
         case 0x10:
         {
-            if (msc::InRange(Address, 0x100000u, 0x10001Fu))
-                Description = msc::FormatText("Display data %06Xh. Letter '%c'", Address, (char) _Iter[3]);
+            if (ModelId != 0x0048)
+            {
+                if (msc::InRange(Address, 0x100000u, 0x10001Fu))
+                    Description = msc::FormatText("Display data %06Xh. Letter '%c'", Address, (char) _Iter[3]);
+                else
+                if (msc::InRange(Address, 0x100100u, 0x10013Fu))
+                    Description = msc::FormatText("Display data %06Xh. Dot data %02Xh", Address, _Iter[3]);
+                else
+                    Description = msc::FormatText("Display data %06Xh. Unknown address", Address);
+            }
             else
-            if (msc::InRange(Address, 0x100100u, 0x10013Fu))
-                Description = msc::FormatText("Display data %06Xh. Dot data %02Xh", Address, _Iter[3]);
-            else
-                Description = msc::FormatText("Display data %06Xh. Unknown address", Address);
+            {
+                // Roland SD-90, Switch the sound set in GM mode
+                if ((_Data.size() == 13) && (_Data[6] == 0x10) && (_Data[7] == 0x00) && (_Data[9] == 0x3F))
+                {
+                    const char * SoundSet = "<Unknown>";
+
+                    switch (_Data[10])
+                    {
+                        case 0x00: SoundSet = "Classical"; break;
+                        case 0x01: SoundSet = "Contemporary"; break;
+                        case 0x02: SoundSet = "Solo"; break;
+                        case 0x03: SoundSet = "Enhanced"; break;
+                    }
+
+                    Description = msc::FormatText("Switch sound set of part %d to \"%s\"", _Data[8] - 0x1F, SoundSet);
+                }
+            }
             break;
         }
 
@@ -1061,9 +1111,6 @@ void sysex_t::IdentifyYamaha() noexcept
     { "\xF0\x43" "\x00" "\x06\x7F\x04",                                     6, L"SMW-5 Detach Wave" },      // MMF/SMAF MMFTool
     { "\xF0\x43" "\x00" "\x06\x7F\x7F\xF7",                                 7, L"SMW-5 Reset" },            // MMF/SMAF MMFTool
 */
-    Model = "Unknown";
-    Description = "Unknown";
-
     switch (*_Iter++)
     {
         case 0x1A:
@@ -1182,7 +1229,7 @@ void sysex_t::IdentifyYamaha() noexcept
                         break;
                     }
 
-                    case 0x00007E: if (((_Iter[3] << 8) | _Iter[4]) == 0x00F7) Description = "System On"; break;
+                    case 0x00007E: if (((_Iter[3] << 8) | _Iter[4]) == 0x00F7) Description = "XG System On"; break;
                     case 0x00007F: if (((_Iter[3] << 8) | _Iter[4]) == 0x00F7) Description = "All Parameters Reset"; break;
 
                     case 0x020100: Description = "Reverb Type"; break;

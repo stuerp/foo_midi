@@ -849,26 +849,26 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         {
             if (time != 0)
             {
-                SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24)), time); // CC 120 Channel Mute / Sound Off
-                SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24)), time); // CC 121 Reset All Controllers
+                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::AllSoundsOff,        0x00, portNumber), time);
+                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::ResetAllControllers, 0x00, portNumber), time);
 
                 if (_MIDIFlavor != MIDIFlavor::XG)
                 {
-                    SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24)), time); // CC 32 Bank select LSB
-                    SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24)), time); // CC  0 Bank select MSB
-                    SendEvent((uint32_t) ((0x00C0 + i) + (portNumber << 24)), time); // Program Change 0
+                    SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::BankSelectLSB, 0x00, portNumber), time);
+                    SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::BankSelect,    0x00, portNumber), time);
+                    SendEvent(midi::PackMessage(midi::StatusCode::ProgramChange + i, 0x00, 0x00, portNumber), time);
                 }
             }
             else
             {
-                SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24))); // CC 120 Channel Mute / Sound Off
-                SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24))); // CC 121 Reset All Controllers
+                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::AllSoundsOff,        0x00, portNumber));
+                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::ResetAllControllers, 0x00, portNumber));
 
                 if (_MIDIFlavor != MIDIFlavor::XG)
                 {
-                    SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24))); // CC 32 Bank select LSB
-                    SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24))); // CC  0 Bank select MSB
-                    SendEvent((uint32_t) ((0x00C0 + i) + (portNumber << 24))); // Program Change 0
+                    SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::BankSelectLSB, 0x00, portNumber));
+                    SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::BankSelect,    0x00, portNumber));
+                    SendEvent(midi::PackMessage(midi::StatusCode::ProgramChange + i, 0x00, 0x00, portNumber));
                 }
             }
         }
@@ -879,15 +879,15 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
     {
         if (time != 0)
         {
-            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24)), time); // CC 32 Bank select LSB
-            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24)), time); // CC  0 Bank select MSB. Selects Drum Kit in XG mode.
-            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24)), time); // Program Change 0
+            SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + 9, midi::Controller::BankSelectLSB, 0x00, portNumber), time);
+            SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + 9, midi::Controller::BankSelect,    0x7F, portNumber), time);
+            SendEvent(midi::PackMessage(midi::StatusCode::ProgramChange + 9, 0x00, 0x00, portNumber), time);
         }
         else
         {
-            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24))); // CC 32 Bank select LSB
-            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24))); // CC  0 Bank select MSB. Selects Drum Kit in XG mode.
-            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24))); // Program Change 0
+            SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + 9, midi::Controller::BankSelectLSB, 0x00, portNumber));
+            SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + 9, midi::Controller::BankSelect,    0x7F, portNumber));
+            SendEvent(midi::PackMessage(midi::StatusCode::ProgramChange + 9, 0x00, 0x00, portNumber));
         }
     }
 
@@ -898,16 +898,16 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         {
             for (uint8_t  i = 0; i < 16; ++i)
             {
-                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24)), time); // CC 91 Effect 1 (Reverb) Set Level to 0
-                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24)), time); // CC 93 Effect 3 (Chorus) Set Level to 0
+                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::EffectDepth1, 0x00, portNumber), time); // Reverb
+                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::EffectDepth3, 0x00, portNumber), time); // Chorus
             }
         }
         else
         {
             for (uint8_t i = 0; i < 16; ++i)
             {
-                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24))); // CC 91 Effect 1 (Reverb) Set Level to 0
-                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24))); // CC 93 Effect 3 (Chorus) Set Level to 0
+                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::EffectDepth1, 0x00, portNumber)); // Reverb
+                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::EffectDepth3, 0x00, portNumber)); // Chorus
             }
         }
     }
