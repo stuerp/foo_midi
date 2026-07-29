@@ -1,15 +1,29 @@
 
-/** $VER: SysEx.cpp (2026.05.10) P. Stuer **/
+/** $VER: SysEx.cpp (2026.05.20) P. Stuer **/
 
 #include "pch.h"
 
 #include "SysEx.h"
 #include "Tables.h"
+#include "MIDI.h"
 
 #include <Encoding.h>
 
 namespace midi
 {
+
+// Roland MT-32 Owner's Manual: Reset all MT-32 parameters.
+const uint8_t sysex_t::MT32Reset[8] =
+{
+    StatusCode::SysEx,
+    0x41, // Manufacturer ID (Roland)
+    0x10, // Device ID
+    0x16, // Model ID (MT32)
+    0x12, // Command ID (Data Set 1, DT1)
+    0x7F, // Address MSB
+    0x01, // Address LSB
+    StatusCode::SysExEnd
+};
 
 const uint8_t sysex_t::GM1SystemOn[6] =
 {
@@ -29,31 +43,6 @@ const uint8_t sysex_t::GM2SystemOn[6] =
 {
     StatusCode::SysEx,
     0x7E, 0x7F, 0x09, 0x03,
-    StatusCode::SysExEnd
-};
-
-const uint8_t sysex_t::D50Reset[10] =
-{
-    StatusCode::SysEx,
-    0x41, // Manufacturer ID (Roland)
-    0x10, // Device ID
-    0x14, // Model ID (D50)
-    0x12, // Command ID (Data Set 1, DT1)
-    0x7F, // Address MSB
-    0x00,
-    0x00,
-    StatusCode::SysExEnd
-};
-
-const uint8_t sysex_t::MT32Reset[10] =
-{
-    StatusCode::SysEx,
-    0x41, // Manufacturer ID (Roland)
-    0x10, // Device ID
-    0x16, // Model ID (MT32)
-    0x12, // Command ID (Data Set 1, DT1)
-    0x7F, // Address MSB
-    0x01, // Address LSB
     StatusCode::SysExEnd
 };
 
@@ -377,17 +366,28 @@ void sysex_t::Identify() noexcept
 /// </summary>
 void sysex_t::IdentifyManufacturer() noexcept
 {
-    uint32_t Id = *_Iter++; // 1-byte Id
+    if (*_Iter != 0x00)
+    {
+        const uint8_t Id = *_Iter++; // 1-byte Id
 
-    if (Id == 0x00)
-        Id = ((uint32_t) *_Iter++ << 8) | *_Iter++; // 3-byte Id
+        auto it = Manufacturers1.find(Id);
 
-    auto it = Manufacturers.find(Id);
+        if (it != Manufacturers1.end())
+            Manufacturer = it->second;
 
-    if (it != Manufacturers.end())
-        Manufacturer = it->second;
+        ManufacturerId = Id;
+    }
+    else
+    {
+        const uint32_t Id = ((uint32_t) *_Iter++ << 8) | *_Iter++; // 3-byte Id
 
-    ManufacturerId = Id;
+        auto it = Manufacturers3.find(Id);
+
+        if (it != Manufacturers3.end())
+            Manufacturer = it->second;
+
+        ManufacturerId = Id;
+    }
 }
 
 /// <summary>

@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2025.07.22) **/
+/** $VER: Player.cpp (2026.05.10) **/
 
 #include "pch.h"
 
@@ -68,7 +68,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
     int64_t Semitones = CfgSemitones;
     int64_t Microtones = CfgMicrotones;
 
-    // Insert Pitch Bend Change messages if necessary.
+    // Transpose the Note On/Off messages and insert Pitch Bend Change messages if necessary.
     if ((Semitones != 0) || (Microtones != 0))
     {
         bool NeedPitchBend[16] = { true };
@@ -103,8 +103,8 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
 
                 if (Microtones != 0)
                 {
-                    // The Reset All Controllers message resets the pitch bend to the default value.
-                    if ((EventType == midi::StatusCode::ControlChange) && (Data1 == 0x79) && (Data2 == 0x00))   // Reset All Controllers
+                    // The Reset All Controllers message resets the Pitch Bend to the default value.
+                    if ((EventType == midi::StatusCode::ControlChange) && (Data1 == midi::Controller::ResetAllControllers) && (Data2 == 0x00))   // Reset All Controllers
                         NeedPitchBend[ChannelNumber] = true;
                     else
                     // Modify existing Pitch Bend Change messages.
@@ -121,7 +121,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
                     // Insert a Pitch Bend Change message if necessary.
                     if ((EventType == midi::StatusCode::NoteOn) && NeedPitchBend[ChannelNumber])
                     {
-                        const auto [LSB, MSB] = midi::PitchBendToBytes(_PitchBendValue);
+                        const auto [LSB, MSB] = midi::PitchBendToBytes((int32_t) Microtones);
                         const uint32_t Data = midi::PackMessage(midi::StatusCode::PitchBendChange, LSB, MSB, PortNumber);
 
                         _Messages.insert(_Messages.begin() + (int64_t) i++, midi::message_t(Message.Time, Data)); // Insert a Pitch Bend Change message and skip it.
@@ -849,26 +849,26 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         {
             if (time != 0)
             {
-                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::AllSoundsOff,        0x00, portNumber), time);
-                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::ResetAllControllers, 0x00, portNumber), time);
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::AllSoundsOff,        0x00, portNumber), time);
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::ResetAllControllers, 0x00, portNumber), time);
 
                 if (_MIDIFlavor != MIDIFlavor::XG)
                 {
-                    SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::BankSelectLSB, 0x00, portNumber), time);
-                    SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::BankSelect,    0x00, portNumber), time);
-                    SendEvent(midi::PackMessage(midi::StatusCode::ProgramChange + i, 0x00, 0x00, portNumber), time);
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::BankSelectLSB, 0x00, portNumber), time);
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::BankSelect,    0x00, portNumber), time);
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ProgramChange + i), 0x00, 0x00, portNumber), time);
                 }
             }
             else
             {
-                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::AllSoundsOff,        0x00, portNumber));
-                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::ResetAllControllers, 0x00, portNumber));
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::AllSoundsOff,        0x00, portNumber));
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::ResetAllControllers, 0x00, portNumber));
 
                 if (_MIDIFlavor != MIDIFlavor::XG)
                 {
-                    SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::BankSelectLSB, 0x00, portNumber));
-                    SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::BankSelect,    0x00, portNumber));
-                    SendEvent(midi::PackMessage(midi::StatusCode::ProgramChange + i, 0x00, 0x00, portNumber));
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::BankSelectLSB, 0x00, portNumber));
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::BankSelect,    0x00, portNumber));
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ProgramChange + i), 0x00, 0x00, portNumber));
                 }
             }
         }
@@ -898,16 +898,16 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         {
             for (uint8_t  i = 0; i < 16; ++i)
             {
-                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::EffectDepth1, 0x00, portNumber), time); // Reverb
-                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::EffectDepth3, 0x00, portNumber), time); // Chorus
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::EffectDepth1, 0x00, portNumber), time); // Reverb
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::EffectDepth3, 0x00, portNumber), time); // Chorus
             }
         }
         else
         {
             for (uint8_t i = 0; i < 16; ++i)
             {
-                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::EffectDepth1, 0x00, portNumber)); // Reverb
-                SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + i, midi::Controller::EffectDepth3, 0x00, portNumber)); // Chorus
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::EffectDepth1, 0x00, portNumber)); // Reverb
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::EffectDepth3, 0x00, portNumber)); // Chorus
             }
         }
     }

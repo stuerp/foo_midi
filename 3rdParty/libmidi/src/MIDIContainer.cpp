@@ -1,10 +1,12 @@
 
-/** $VER: MIDIContainer.cpp (2026.05.08) **/
+/** $VER: MIDIContainer.cpp (2026.05.20) **/
 
 #include "pch.h"
 
 #include "MIDIContainer.h"
 #include "SysEx.h"
+
+#include "Exception.h"
 
 namespace midi
 {
@@ -99,8 +101,9 @@ void tempo_map_t::Add(uint32_t tempo, uint32_t time)
 uint32_t tempo_map_t::TimestampToMS(uint32_t timestamp, uint32_t timeDivision) const
 {
     uint32_t TimestampInMS = 0;
+
+    uint32_t Tempo = 500'000; // Default: 500,000 μs per quarter note / 120 beats per minute
     uint32_t Time = 0;
-    uint32_t Tempo = 500000; // Default: 500000 μs per beat / 120 beats per minute
     const uint32_t RoundingFactor = timeDivision * 500;
 
     const uint32_t TicksPerMS = RoundingFactor * 2;
@@ -362,13 +365,16 @@ void container_t::AddTrack(const track_t & track)
 
 void container_t::AddEventToTrack(size_t trackNumber, const event_t & event)
 {
+    if (trackNumber >= _Tracks.size())
+        throw midi::exception("Invalid track number");
+
     track_t & Track = _Tracks[trackNumber];
 
     Track.AddEvent(event);
 
     if (event.IsSetTempo())
     {
-        uint32_t Tempo = (uint32_t)((event.Data[2] << 16) | (event.Data[3] << 8) | event.Data[4]);
+        const uint32_t Tempo = (uint32_t)((event.Data[2] << 16) | (event.Data[3] << 8) | event.Data[4]);
 
         if (_Format != 2)
         {
@@ -1683,7 +1689,7 @@ uint32_t container_t::TimestampToMS(uint32_t timestamp, size_t subSongIndex) con
 {
     uint32_t TimestampInMS = 0;
     uint32_t Time = 0;
-    uint32_t Tempo = 500'000; // Default: 500,000 μs per beat / 120 beats per minute
+    uint32_t Tempo = 500'000; // Default: 500,000 μs per quarter note / 120 beats per minute
 
     const uint32_t RoundingFactor = _TimeDivision * 500;
     const uint32_t TicksPerMS = RoundingFactor * 2;

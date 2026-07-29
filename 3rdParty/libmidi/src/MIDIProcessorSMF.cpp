@@ -1,5 +1,5 @@
 
-/** $VER: MIDIProcessorSMF.cpp (2026.05.08) Standard MIDI File **/
+/** $VER: MIDIProcessorSMF.cpp (2026.05.19) Standard MIDI File **/
 
 #include "pch.h"
 
@@ -29,12 +29,12 @@ bool processor_t::IsSMF(std::vector<uint8_t> const & data) noexcept
     if (data[4] != 0 || data[5] != 0 || data[6] != 0 || data[7] != 6)
         return false;
 
-    int Format = (data[8] << 8) | data[9];
+    const uint32_t Format = (uint32_t) ((data[8] << 8) | data[9]);
 
     if (Format > 2)
         return false;
 
-    int TrackCount = (data[10] << 8) | data[11];
+    const uint32_t TrackCount = (uint32_t) ((data[10] << 8) | data[11]);
 
     if ((TrackCount == 0) || ((Format == 0) && (TrackCount != 1)))
         return false;
@@ -64,22 +64,22 @@ bool processor_t::ProcessSMF(std::vector<uint8_t> const & data, container_t & co
     if (data[4] != 0 || data[5] != 0 || data[6] != 0 || data[7] != 6)
         throw midi::exception("Invalid SMF header chunk size");
 
-    const int Format = (data[8] << 8) | data[9];
+    const uint32_t Format = (uint32_t) ((data[8] << 8) | data[9]);
 
     if (Format > 2)
-        throw midi::exception(msc::FormatText("Unrecognized MIDI format: %d", Format));
+        throw midi::exception(msc::FormatText("Unrecognized MIDI format: %u", Format));
 
     const size_t TrackCount = (size_t) ((data[10] << 8) | data[11]);
 
     if ((TrackCount == 0) || ((Format == 0) && (TrackCount != 1)))
         throw midi::exception("Invalid track count");
 
-    const int TimeDivision = (data[12] << 8) | data[13];
+    const uint32_t TimeDivision = (uint32_t) ((data[12] << 8) | data[13]);
 
-    if ((TimeDivision == 0))
+    if (TimeDivision == 0)
         throw midi::exception("Invalid time division");
 
-    container.Initialize((uint32_t) Format, (uint32_t) TimeDivision);
+    container.Initialize(Format, TimeDivision);
 
     const auto Tail = data.end();
 

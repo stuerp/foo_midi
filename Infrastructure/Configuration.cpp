@@ -1,5 +1,5 @@
 
-/** $VER: Configuration.cpp (2026.05.08) **/
+/** $VER: Configuration.cpp (2026.05.20) **/
 
 #include "pch.h"
 
@@ -161,6 +161,8 @@ const char * _FileExtensions[] =
     "MMF",          // Mobile Music File / Synthetic-music Mobile Application Format (SMAF) (https://docs.fileformat.com/audio/mmf/)
 
     "MMD",          // MMD98 2.2g (MIDI Music Driver) (http://www5.airnet.ne.jp/kajapon/tool.html)
+
+    "MIDI2",        // MIDI 2.0 MIDI CLIP
 
 #ifdef _DEBUG
     "TST",

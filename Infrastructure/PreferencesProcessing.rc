@@ -337,7 +337,7 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #pragma endregion
 
-#define H_F00   11 + H_F03 + IY + H_F13 + 7
+#define H_F00   11 + H_F03 + 7
 
 #pragma endregion
 
@@ -415,11 +415,11 @@ font 8, "MS Shell Dlg", 400, 0, 1
         ltext       "Semitones:",               IDC_STATIC,                 X_F01, Y_F01 + 8, W_F01, H_F01
         rtext       "",                         IDC_SEMITONES,              X_F02, Y_F02 + 8, W_F02, H_F02
         control     "",                         IDC_SEMITONES_SLIDER,       TRACKBAR_CLASS, TBS_HORZ | TBS_AUTOTICKS | TBS_TOP | TBS_TRANSPARENTBKGND | WS_TABSTOP, X_F03, Y_F03, W_F03, H_F03
-
+/*
         ltext       "Microtones:",              IDC_STATIC,                 X_F11, Y_F11 + 8, W_F11, H_F11
         rtext       "",                         IDC_MICROTONES,             X_F12, Y_F12 + 8, W_F12, H_F12
         control     "",                         IDC_MICROTONES_SLIDER,      TRACKBAR_CLASS, TBS_HORZ | TBS_AUTOTICKS | TBS_TOP | TBS_TRANSPARENTBKGND | WS_TABSTOP, X_F13, Y_F13, W_F13, H_F13
-
+*/
     groupbox "Component", IDC_STATIC, X_G00, Y_G00, W_G00, H_G00
         rtext       "Log level:"                IDC_LOG_LEVEL_LBL,          X_G01, Y_G01 + 2, W_G01, H_G01
         combobox                                IDC_LOG_LEVEL,              X_G02, Y_G02,     W_G02, H_G02, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP

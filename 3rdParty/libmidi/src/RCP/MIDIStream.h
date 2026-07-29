@@ -19,12 +19,12 @@ class midi_stream_t
 public:
     typedef uint8_t (* duration_handler_t)(midi_stream_t * fileInfo, uint32_t & duration);
 
-    midi_stream_t() : _Data(), _Size(), _Offs(), _TicksPerBeat(), _Tempo(500000)
+    midi_stream_t() : _Data(), _Size(), _Offs(), _TicksPerBeat(), _Tempo(500'000)
     {
         SetDurationHandler(nullptr);
     }
 
-    midi_stream_t(uint32_t size) : _Size(size), _Offs(), _TicksPerBeat(), _Tempo(500000)
+    midi_stream_t(uint32_t size) : _Size(size), _Offs(), _TicksPerBeat(), _Tempo(500'000)
     {
         _Data = (uint8_t *) ::malloc(_Size);
     }

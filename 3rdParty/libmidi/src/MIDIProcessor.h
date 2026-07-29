@@ -1,5 +1,5 @@
 
-/** $VER: MIDIProcessor.h (2026.05.03) **/
+/** $VER: MIDIProcessor.h (2026.05.17) **/
 
 #pragma once
 
@@ -43,44 +43,46 @@ public:
     static int InflateRaw(const std::vector<uint8_t> & src, std::vector<uint8_t> & dst) noexcept;
 
 private:
-    static bool IsSMF(std::vector<uint8_t> const & data) noexcept;
-    static bool IsRMI(std::vector<uint8_t> const & data) noexcept;
-    static bool IsHMP(std::vector<uint8_t> const & data) noexcept;
-    static bool IsHMI(std::vector<uint8_t> const & data) noexcept;
-    static bool IsXMI(std::vector<uint8_t> const & data) noexcept;
-    static bool IsMUS(std::vector<uint8_t> const & data) noexcept;
-    static bool IsMDS(std::vector<uint8_t> const & data) noexcept;
-    static bool IsLDS(std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept;
-    static bool IsGMF(std::vector<uint8_t> const & data) noexcept;
-    static bool IsRCP(std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept;
-    static bool IsXMF(std::vector<uint8_t> const & data) noexcept;
-    static bool IsMMF(std::vector<uint8_t> const & data) noexcept;
-    static bool IsMMD(std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept;
+    static bool IsSMF  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsRMI  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsHMP  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsHMI  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsXMI  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsMUS  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsMDS  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsLDS  (std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept;
+    static bool IsGMF  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsRCP  (std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept;
+    static bool IsXMF  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsMMF  (std::vector<uint8_t> const & data) noexcept;
+    static bool IsMMD  (std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept;
+    static bool IsMIDI2(std::vector<uint8_t> const & data) noexcept;
 #ifdef _DEBUG
-    static bool IsTST(std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept;
+    static bool IsTST  (std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept;
 #endif
-    static bool IsSYX(std::vector<uint8_t> const & data) noexcept;
+    static bool IsSYX  (std::vector<uint8_t> const & data) noexcept;
 
-    static bool ProcessSMF(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessRMI(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessHMP(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessHMI(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessXMI(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessMUS(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessMDS(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessLDS(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessGMF(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessRCP(std::vector<uint8_t> const & data, const std::wstring & filePath, container_t & container);
-    static bool ProcessXMF(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessMMF(std::vector<uint8_t> const & data, container_t & container);
-    static bool ProcessMMD(std::vector<uint8_t> const & data, const std::wstring & filePath, container_t & container);
+    static bool ProcessSMF  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessRMI  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessHMP  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessHMI  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessXMI  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessMUS  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessMDS  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessLDS  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessGMF  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessRCP  (std::vector<uint8_t> const & data, const std::wstring & filePath, container_t & container);
+    static bool ProcessXMF  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessMMF  (std::vector<uint8_t> const & data, container_t & container);
+    static bool ProcessMMD  (std::vector<uint8_t> const & data, const std::wstring & filePath, container_t & container);
+    static bool ProcessMIDI2(std::vector<uint8_t> const & data, container_t & container);
 #ifdef _DEBUG
     static bool ProcessTST(std::vector<uint8_t> const & data, container_t & container);
 #endif
     static bool ProcessSYX(std::vector<uint8_t> const & data, container_t & container);
 
     static bool ProcessSMFTrack(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end, container_t & container);
-    static int DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end) noexcept;
+    static int32_t DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end) noexcept;
 
     static uint32_t DecodeVariableLengthQuantityHMP(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end) noexcept;
 

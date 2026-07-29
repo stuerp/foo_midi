@@ -1,12 +1,12 @@
 
-/** $VER: Tables.cpp (2025.07.16) **/
+/** $VER: Tables.cpp (2026.05.20) **/
 
 #include "pch.h"
 
 #include "Tables.h"
 
-// https://midi.org/sysexidtable + https://www.amei.or.jp/report/System_ID_e.html
-const std::unordered_map<uint32_t, const char *> Manufacturers =
+// https://midi.org/sysexidtable + https://www.amei.or.jp/report/System_ID_e.html - Last Update: 2026.05.20
+const std::unordered_map<uint8_t, const char *> Manufacturers1 =
 {
     { 0x01, "Sequential Circuits / Dave Smith Instruments" },
     { 0x02, "IDP" },
@@ -24,7 +24,7 @@ const std::unordered_map<uint32_t, const char *> Manufacturers =
     { 0x0E, "Matthews Research" },
     { 0x0F, "Ensoniq" },
 
-    // 0x010-0x1F American
+    // 0x10-0x1F American
     { 0x10, "Oberheim" },
     { 0x11, "PAIA / Apple Computer" },
     { 0x12, "Simmons" },
@@ -112,7 +112,11 @@ const std::unordered_map<uint32_t, const char *> Manufacturers =
     { 0x7D, "Private Use" },
     { 0x7E, "Universal (Non-Real Time)" },
     { 0x7F, "Universal (Real Time)" },
+};
 
+// https://midi.org/sysexidtable + https://www.amei.or.jp/report/System_ID_e.html - Last Update: 2026.05.20
+const std::unordered_map<uint32_t, const char *> Manufacturers3 =
+{
     // 0x0001 - 0x1F7F American
     { 0x000001, "Time/Warner Interactive" },
     { 0x000002, "Advanced Gravis Comp." },
@@ -235,6 +239,10 @@ const std::unordered_map<uint32_t, const char *> Manufacturers =
     { 0x00007D, "Brooktree" },
     { 0x00007E, "Otari" }, // MIDIbox
     { 0x00007F, "Key Electronics" },
+    { 0x000080, "Crystalake Multimedia" },
+    { 0x000081, "Crystal Semiconductor" },
+    { 0x000082, "Rockwell Semiconductor" },
+
     { 0x000100, "Shure Brothers" },
     { 0x000101, "Crystalake Multimedia" },
     { 0x000102, "Crystal Semiconductor" },
@@ -362,6 +370,7 @@ const std::unordered_map<uint32_t, const char *> Manufacturers =
     { 0x00017D, "Media Overkill" },
     { 0x00017E, "Confusion Studios" },
     { 0x00017F, "moForte" },
+
     { 0x000200, "Miselu" },
     { 0x000201, "Amelia’s Compass" },
     { 0x000202, "Zivix" },
@@ -469,6 +478,21 @@ const std::unordered_map<uint32_t, const char *> Manufacturers =
     { 0x000269, "Essential technology" },
     { 0x00026A, "Lookc Music" },
     { 0x00026B, "Homey Music" },
+
+    { 0x00026C, "Lorre Hill" },
+    { 0x00026D, "Playtime Engineering" },
+    { 0x00026E, "pipeorgan.tech" },
+    { 0x00026F, "Seer Systems" },
+    { 0x000270, "AM Components" },
+    { 0x000271, "Music Technologies Group" },
+    { 0x000272, "GLX Audio" },
+    { 0x000273, "Free Software Foundation" },
+    { 0x000274, "JDS Labs" },
+    { 0x000275, "Koda" },
+    { 0x000276, "THD-Labs" },
+    { 0x000277, "BandM8" },
+    { 0x000278, "DDV Studios" },
+    { 0x000279, "Gray Instruments" },
 
     // 0x2000 - 0x3F7F European
     { 0x002000, "Dream" },
@@ -751,6 +775,31 @@ const std::unordered_map<uint32_t, const char *> Manufacturers =
     { 0x002213, "Tangible Waves" },
     { 0x002214, "Huebner Informationselektronik" },
     { 0x002215, "Addictive Instruments" },
+    { 0x002216, "Lightreft KK" },
+    { 0x002217, "Morphor" },
+    { 0x002218, "Filisia Interfaces" },
+    { 0x002219, "Neuzeit Instruments" },
+    { 0x00221A, "KOMA Elektronik" },
+    { 0x00221B, "Freshwater Instruments" },
+    { 0x00221C, "Full Fat" },
+    { 0x00221D, "Gooroo Controllers" },
+    { 0x00221E, "JK" },
+    { 0x00221F, "Shenzhen Dale Sensor Tech" },
+    { 0x002220, "Antescofo" },
+    { 0x002221, "Nanjing Qinheng Microelectronics" },
+    { 0x002222, "PopuMusic Global" },
+    { 0x002223, "SynthHead" },
+    { 0x002224, "Joël Krähemann" },
+    { 0x002225, "Thomas Neumann Licht und Ton" },
+    { 0x002226, "Apaeron" },
+    { 0x002227, "Logic des Audio" },
+    { 0x002228, "Viktor Wallner Software Engineering" },
+    { 0x002229, "Soundventure" },
+    { 0x00222A, "ChamSys Limited" },
+    { 0x00222B, "GlassworksAudio" },
+    { 0x00222C, "Dubreq" },
+    { 0x00222D, "Beyerdynamic" },
+    { 0x00222E, "Digit Music" },
 
     // 0x4000 - 0x5F7F Japanese
     { 0x004000, "Crimson Technology" },
@@ -760,6 +809,17 @@ const std::unordered_map<uint32_t, const char *> Manufacturers =
     { 0x004005, "AlphaTheta" },
     { 0x004006, "Pioneer" },
     { 0x004007, "Slik" },
+    { 0x004008, "TFab Works" },
+
+    { 0x004800, "sigboost" },
+    { 0x004801, "Lost Technology" },
+    { 0x004802, "Fan Wind God" },
+    { 0x004803, "Tsukuba Scientific" },
+    { 0x004804, "Sonicware" },
+    { 0x004805, "Poppy Seed Studio" },
+    { 0x004806, "Black Corporation" },
+    { 0x004807, "G-Tone Giken" },
+    { 0x004808, "Nitroplasma" },
 
     // 0x6000 - 0x7F7F Other
 };

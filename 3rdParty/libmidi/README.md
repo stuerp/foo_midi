@@ -24,6 +24,7 @@ To build the code you need:
 vNext, 2026-xx-xx
 
 - Added: Support for MMD98 (MIDI Music Driver) files.
+- Added: Support for MIDI 2.0 (MIDI Clip) files.
 - Improved: Stricter interpretation of the RCP mute mode that prevents an RCP track from being included in the MIDI stream.
 
 v0.1.0.0, 2025-03-19
@@ -40,6 +41,7 @@ v0.1.0.0, 2025-03-19
 - [The Wonderfully Terrible World of C and C++ Encoding APIs (with Some Rust)](https://thephd.dev/the-c-c++-rust-string-text-encoding-api-landscape)
 - [cuneicode, and the Future of Text in C](https://thephd.dev/cuneicode-and-the-future-of-text-in-c)
 - [SoundPalette](https://github.com/hikari-no-yume/SoundPalette)
+- [NI-MIDI2](https://github.com/midi2-dev/ni-midi2)
 
 ## Test Material
 

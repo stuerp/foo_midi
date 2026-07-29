@@ -465,7 +465,7 @@ bool converter_t::ConvertTrack(const uint8_t * data, uint32_t size, track_t & tr
                         0x13, 0x10, 0xFF, 0xFF, 0x1B, 0x18, 0x19, 0x1A,
                     };
 
-                    const uint8_t Data[] =
+                    const uint8_t Data[6] =
                     {
                         0x43u, // Yamaha
                         0x10u | stream.ChannelNumber,
@@ -516,7 +516,7 @@ bool converter_t::ConvertTrack(const uint8_t * data, uint32_t size, track_t & tr
                     if (PortNumber == 0xFF)
                         break;
 
-                    const uint8_t Data[] =
+                    const uint8_t Data[7] =
                     {
                         0x43, // Yamaha
                         0x75,
@@ -537,7 +537,7 @@ bool converter_t::ConvertTrack(const uint8_t * data, uint32_t size, track_t & tr
                     if (PortNumber == 0xFF)
                         break;
 
-                    const uint8_t Data[] =
+                    const uint8_t Data[6] =
                     {
                         0x43, // Yamaha
                         (uint8_t) (0x10 | stream.ChannelNumber),
@@ -547,7 +547,7 @@ bool converter_t::ConvertTrack(const uint8_t * data, uint32_t size, track_t & tr
                         0xF7
                     };
 
-                    stream.WriteEvent(0xF0, Data, 6);
+                    stream.WriteEvent(midi::StatusCode::SysEx, Data, 6);
                     break;
                 }
 
@@ -591,7 +591,7 @@ bool converter_t::ConvertTrack(const uint8_t * data, uint32_t size, track_t & tr
                     if (PortNumber == 0xFF)
                         break;
 
-                    const uint8_t Data[64] =
+                    const uint8_t Data[6] =
                     {
                         0x41, // Roland
                         0x32,
@@ -674,7 +674,7 @@ bool converter_t::ConvertTrack(const uint8_t * data, uint32_t size, track_t & tr
                     }
                     else
                     {
-                        PortNumber  = (uint8_t) (Byte >> 4); // port ID
+                        PortNumber    = (uint8_t) (Byte >> 4); // port ID
                         ChannelNumber = (uint8_t) (Byte & 0x0F); // channel ID
 
                         stream.WriteMetaEvent(midi::MetaDataType::MIDIPort, &ChannelNumber, 1);
@@ -910,7 +910,7 @@ static uint32_t MMDTempo2MIDITempo(uint16_t bpm, uint8_t scale) noexcept
 {
     const uint32_t Denominator = (uint32_t) (bpm * scale);
 
-    return (60000000u * 64u) / Denominator;
+    return (60'000'000u * 64u) / Denominator;
 }
 
 /// <summary>

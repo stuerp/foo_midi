@@ -1,5 +1,5 @@
 
-/** $VER: main.cpp (2026.05.08) P. Stuer **/
+/** $VER: main.cpp (2026.05.17) P. Stuer **/
 
 #include "pch.h"
 
@@ -8,13 +8,13 @@ void ExamineFile(const fs::path & filePath, const std::map<std::string, std::str
 static void ProcessDirectory(const fs::path & directoryPath);
 static void ProcessFile(const fs::path & filePath);
 
-const std::vector<fs::path> Filters = { ".mmd", ".mid", ".g36", ".rmi", ".mxmf", ".xmf", ".mmf", ".tst" };
+const std::unordered_set<fs::path> Filters = { ".midi2", ".mmd", ".mid", ".g36", ".rmi", ".mxmf", ".xmf", ".mmf", ".tst" };
 
 std::map<std::string, std::string> Arguments;
 
 int main(int argc, const char ** argv)
 {
-    ::printf("\xEF\xBB\xBF"); // UTF-8 BOM
+    ::SetConsoleOutputCP(CP_UTF8);
 
     if (argc < 2)
     {
@@ -31,17 +31,17 @@ int main(int argc, const char ** argv)
                 Arguments["AsStream"] = "";
         }
 
-        Arguments["midifile"] = argv[i];
+        Arguments["FileName"] = argv[i];
     }
 
-    if (!::fs::exists(Arguments["midifile"]))
+    if (!::fs::exists(Arguments["FileName"]))
     {
-        ::printf("Failed to access \"%s\": path does not exist.\n", Arguments["midifile"].c_str());
+        ::printf("Failed to access \"%s\": path does not exist.\n", Arguments["FileName"].c_str());
 
         return -1;
     }
 
-    fs::path Path = fs::canonical(Arguments["midifile"]);
+    fs::path Path = fs::canonical(Arguments["FileName"]);
 
     if (fs::is_directory(Path))
         ProcessDirectory(Path);
@@ -49,20 +49,6 @@ int main(int argc, const char ** argv)
         ProcessFile(Path);
 
     return 0;
-}
-
-/// <summary>
-/// Returns true if the string matches one of the list.
-/// </summary>
-static bool IsOneOf(const fs::path & item, const std::vector<fs::path> & list) noexcept
-{
-    for (const auto & Item : list)
-    {
-        if (::_stricmp(item.string().c_str(), Item.string().c_str()) == 0)
-            return true;
-    }
-
-    return false;
 }
 
 /// <summary>
@@ -79,7 +65,7 @@ static void ProcessDirectory(const fs::path & directoryPath)
             ProcessDirectory(Entry.path());
         }
         else
-        if (IsOneOf(Entry.path().extension(), Filters))
+        if (Filters.contains(Entry.path().extension()))
         {
             ProcessFile(Entry.path());
         }

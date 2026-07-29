@@ -1,9 +1,11 @@
 
-/** $VER: MIDIProcessor.cpp (2026.05.01) **/
+/** $VER: MIDIProcessor.cpp (2026.05.17) **/
 
 #include "pch.h"
 
 #include "MIDIProcessor.h"
+#include "MIDIContainer.h"
+#include "MIDI.h"
 
 #include <filesystem>
 
@@ -78,6 +80,10 @@ bool processor_t::Process(std::vector<uint8_t> const & data, const wchar_t * fil
    if (IsMMD(data, FileExtension))
         return ProcessMMD(data, filePath, container);
 
+    // .MIDI2
+   if (IsMIDI2(data))
+        return ProcessMIDI2(data, container);
+
 #ifdef _DEBUG
     // .TST
     if (IsTST(data, FileExtension))
@@ -140,9 +146,9 @@ bool processor_t::ProcessSYX(std::vector<uint8_t> const & data, container_t & co
 /// <summary>
 /// Decodes a variable-length quantity.
 /// </summary>
-int processor_t::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail) noexcept
+int32_t processor_t::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail) noexcept
 {
-    int Quantity = 0;
+    int32_t Quantity = 0;
 
     uint8_t Byte;
 

@@ -122,7 +122,7 @@ bool processor_t::ProcessXMI(std::vector<uint8_t> const & data, container_t & co
                         if ((Temp[1] == MetaDataType::SetTempo) && (Size == 3))
                         {
                             uint32_t Tempo = (uint32_t) (Temp[2] * 0x10000 + Temp[3] * 0x100 + Temp[4]);
-                            uint32_t PpQN = (Tempo * 3) / 25000;
+                            uint32_t PpQN = (Tempo * 3) / 25'000;
 
                             Tempo = Tempo * 60 / PpQN;
 
@@ -346,6 +346,6 @@ uint32_t processor_t::DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::cons
     return Quantity;
 }
 
-const uint8_t processor_t::DefaultTempoXMI[5] = { StatusCode::MetaData, MetaDataType::SetTempo, 0x07, 0xA1, 0x20 };
+const uint8_t processor_t::DefaultTempoXMI[5] = { StatusCode::MetaData, MetaDataType::SetTempo, 0x07, 0xA1, 0x20 }; // 500,000 µs per quarter note
 
 }

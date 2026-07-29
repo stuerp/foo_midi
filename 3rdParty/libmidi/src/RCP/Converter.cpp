@@ -362,7 +362,7 @@ void converter_t::ConvertSequence(const buffer_t & rcpData, buffer_t & midData)
 
             // Add a delay of ~400 ms.
             {
-                uint32_t Delay = MulDivRound(400, MIDIStream.GetTicksPerQuarter() * 1000, MIDIStream.GetTempo()); // (N ms / 1000 ms) / (tempoInTicks / 1 000 000)
+                uint32_t Delay = MulDivRound(400, MIDIStream.GetTicksPerQuarter() * 1000, MIDIStream.GetTempo()); // (N ms / 1,000 ms) / (tempoInTicks / 1,000,000)
 
                 uint32_t Timestamp = MIDIStream.GetDuration() + Delay;
 

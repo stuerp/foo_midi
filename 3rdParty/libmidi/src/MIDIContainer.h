@@ -1,5 +1,5 @@
 
-/** $VER: MIDIContainer.h (2026.05.08) **/
+/** $VER: MIDIContainer.h (2026.05.19) **/
 
 #pragma once
 
@@ -22,10 +22,10 @@ struct event_t
     {
         NoteOff = 0,        // 0x80
         NoteOn,             // 0x90
-        KeyPressure,        // 0xA0
+        KeyPressure,        // 0xA0, Polyphonic Key Pressure (Aftertouch)
         ControlChange,      // 0xB0
         ProgramChange,      // 0xC0
-        ChannelPressure,    // 0xD0
+        ChannelPressure,    // 0xD0 Aftertouch
         PitchBendChange,    // 0xE0
         Extended            // 0xF0
     };
@@ -65,12 +65,12 @@ struct event_t
         Data.assign(data, data + size);
     }
 
-    bool IsSetTempo() const noexcept    { return (Type == event_t::Extended) && (Data.size() >= 5) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::SetTempo); }
-    bool IsMarker() const noexcept      { return (Type == event_t::Extended) && (Data.size() >= 9) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::Marker); }
-    bool IsPort() const noexcept        { return (Type == event_t::Extended) && (Data.size() >= 2) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::MIDIPort); }
-    bool IsEndOfTrack() const noexcept  { return (Type == event_t::Extended) && (Data.size() >= 2) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::EndOfTrack); }
+    constexpr bool IsSetTempo() const noexcept    { return (Type == event_t::Extended) && (Data.size() >= 5) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::SetTempo); }
+    constexpr bool IsMarker() const noexcept      { return (Type == event_t::Extended) && (Data.size() >= 9) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::Marker); }
+    constexpr bool IsPort() const noexcept        { return (Type == event_t::Extended) && (Data.size() >= 2) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::MIDIPort); }
+    constexpr bool IsEndOfTrack() const noexcept  { return (Type == event_t::Extended) && (Data.size() >= 2) && (Data[0] == StatusCode::MetaData) && (Data[1] == MetaDataType::EndOfTrack); }
 
-    bool IsSysEx() const noexcept       { return (Type == event_t::Extended) && (Data.size() >= 2) && (Data[0] == StatusCode::SysEx); }
+    constexpr bool IsSysEx() const noexcept       { return (Type == event_t::Extended) && (Data.size() >= 2) && (Data[0] == StatusCode::SysEx); }
 };
 
 /// <summary>
@@ -112,7 +112,7 @@ public:
         return _Events[index];
     }
 
-    bool IsPortSet() const noexcept { return _IsPortSet; }
+    constexpr bool IsPortSet() const noexcept { return _IsPortSet; }
 
 public:
     using events_t = std::vector<event_t>;
@@ -319,6 +319,7 @@ enum FileFormat
     MMF,
     MMD,
     SYX,
+    UMP,
 
 #ifdef _DEBUG
     TST,
@@ -369,6 +370,8 @@ public:
     void SplitByInstrumentChanges(SplitCallback callback = nullptr);
 
     bool IsEmpty() const noexcept { return _Tracks.empty(); }
+
+    void SetTimeDivision(uint32_t timeDivision) noexcept { _TimeDivision = timeDivision; }
 
     size_t GetSubSongCount() const;
     size_t GetSubSong(size_t index) const;

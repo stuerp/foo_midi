@@ -122,13 +122,12 @@ public:
         return (uint8_t) ((128 - Checksum) & 127);
     }
 
+    static const uint8_t MT32Reset[8];
+
     static const uint8_t GM1SystemOn[6];
     static const uint8_t GM1SystemOff[6];
 
     static const uint8_t GM2SystemOn[6];
-
-    static const uint8_t D50Reset[10];
-    static const uint8_t MT32Reset[10];
 
     static const uint8_t GSReset[11];
     static const uint8_t GSToneMapNumber[11];

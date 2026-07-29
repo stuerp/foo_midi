@@ -41,7 +41,7 @@ bool processor_t::ProcessMUS(std::vector<uint8_t> const & data, container_t & co
     {
         track_t Track;
 
-        const uint8_t DefaultTempoMUS[5] = { StatusCode::MetaData, MetaDataType::SetTempo, 0x09, 0xA3, 0x1A };
+        const uint8_t DefaultTempoMUS[5] = { StatusCode::MetaData, MetaDataType::SetTempo, 0x09, 0xA3, 0x1A }; // 631,578 µs / quarter note
 
         Track.AddEvent(event_t(0, event_t::Extended, 0, DefaultTempoMUS, _countof(DefaultTempoMUS)));
         Track.AddEvent(event_t(0, event_t::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));

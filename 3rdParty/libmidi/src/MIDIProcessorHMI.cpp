@@ -54,17 +54,21 @@ bool processor_t::ProcessHMI(std::vector<uint8_t> const & data, container_t & co
     {
         track_t Track;
 
+/* Old code
         uint8_t Data[] = { StatusCode::MetaData, MetaDataType::SetTempo, 0, 0, 0 };
 
         {
-            uint32_t us = (uint32_t) (60 * 1000 * 1000) / _Options._DefaultTempo; // Convert from bpm to µs / quarter note.
+            uint32_t us = (uint32_t) (60'000'000u / _Options._DefaultTempo); // Convert from BPM to µs / quarter note.
 
             Data[4] = us & 0x7F; us >>= 7;
 
             if (us != 0) { Data[3] = 0x80 | (us & 0x7F); us >>= 7; }
             if (us != 0) { Data[2] = us & 0x7F; }
         }
+*/
+        const uint32_t Tempo = (uint32_t) (60'000'000u / _Options._DefaultTempo); // Convert from BPM to µs / quarter note.
 
+        const uint8_t Data[5] = { StatusCode::MetaData, MetaDataType::SetTempo, (uint8_t) (Tempo >> 16), (uint8_t) (Tempo >> 8), (uint8_t) Tempo };
 
         Track.AddEvent(event_t(0, event_t::Extended, 0, Data, _countof(Data)));
         Track.AddEvent(event_t(0, event_t::Extended, 0, MIDIEventEndOfTrack, _countof(MIDIEventEndOfTrack)));

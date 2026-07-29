@@ -15,11 +15,6 @@
 #include <windows.h>
 #include <wincodec.h>
 
-//#include <stdio.h>
-//#include <stdint.h>
-//#include <stdlib.h>
-//#include <strsafe.h>
-//#include <string.h>
 #include <inttypes.h>
 #include <io.h>
 
@@ -31,6 +26,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <functional>
@@ -42,7 +38,7 @@
 #include <vector>
 #include <unordered_set>
 
-#include <libmsc.h>
+namespace fs = std::filesystem;
 
 #ifndef Assert
 #if defined(DEBUG) || defined(_DEBUG)
@@ -58,10 +54,4 @@
 #ifndef THIS_HINSTANCE
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define THIS_HINSTANCE ((HINSTANCE) &__ImageBase)
-#endif
-
-#ifdef _DEBUG
-#define _RCP_VERBOSE
-#else
-#undef _RCP_VERBOSE
 #endif

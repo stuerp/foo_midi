@@ -20,6 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libmidi.cpp" />
+    <ClCompile Include="src\MIDI2.cpp" />
+    <ClInclude Include="src\MIDI2.h" />
+    <ClCompile Include="src\MIDIProcessorMIDI2.cpp" />
     <ClCompile Include="src\MIDIProcessorMMD.cpp" />
     <ClCompile Include="src\MIDIProcessorTST.cpp" />
     <ClCompile Include="src\MMD\Converter.cpp">

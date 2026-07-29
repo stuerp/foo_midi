@@ -32,6 +32,8 @@
     <ClCompile Include="src\MMD\RunningNotes.cpp" />
     <ClCompile Include="src\MMD\Converter.cpp" />
     <ClCompile Include="src\RCP\Converter.cpp" />
+    <ClCompile Include="src\MIDIProcessorMIDI2.cpp" />
+    <ClCompile Include="src\MIDI2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Exception.h" />
@@ -52,6 +54,7 @@
     <ClInclude Include="src\MMD\RunningNotes.h" />
     <ClInclude Include="src\MMD\MMD.h" />
     <ClInclude Include="src\MMD\Stream.h" />
+    <ClInclude Include="src\MIDI2.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

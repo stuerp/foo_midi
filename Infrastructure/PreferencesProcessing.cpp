@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2026.05.09) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2026.05.31) P. Stuer **/
 
 #include "pch.h"
 
@@ -153,11 +153,14 @@ private:
 
         w = (CTrackBarCtrl) GetDlgItem(IDC_MICROTONES_SLIDER);
 
-        w.SetBuddy(GetDlgItem(IDC_MICROTONES), TRUE);
-        w.SetRange(-8192, 8191);
-        w.SetPageSize(1);
-        w.SetPos((int) _Microtones);
-        w.SetTicFreq(8);
+        if (w.IsWindow())
+        {
+            w.SetBuddy(GetDlgItem(IDC_MICROTONES), TRUE);
+            w.SetRange(-8192, 8191);
+            w.SetPageSize(1);
+            w.SetPos((int) _Microtones);
+            w.SetTicFreq(8);
+        }
 
         SetDlgItemInt(IDC_MICROTONES, (UINT) _Microtones);
     }
@@ -402,9 +405,8 @@ LRESULT ProcessingDialog::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam) noex
         }
 
         default:
-            return 1;
+            return 1; // Notification not processed
     }
-
 
     return 0;
 }
