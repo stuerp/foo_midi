@@ -172,7 +172,7 @@ var
 begin
 	if not OpenDialog1.Execute then Exit;
 	f := PChar(OpenDialog1.FileName);
-	mods[modc] := BASS_MusicLoad(False, f, 0, 0, BASS_MUSIC_RAMP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
+	mods[modc] := BASS_MusicLoad(0, f, 0, 0, BASS_MUSIC_RAMP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
 	if mods[modc] <> 0 then
 	begin
 		ListBox1.Items.Add(OpenDialog1.FileName);
@@ -226,7 +226,7 @@ var
 begin
 	if not OpenDialog3.Execute then Exit;
 	f := PChar(OpenDialog3.FileName);
-	sams[samc] := BASS_SampleLoad(FALSE, f, 0, 0, 3, BASS_SAMPLE_OVER_POS {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+	sams[samc] := BASS_SampleLoad(0, f, 0, 0, 3, BASS_SAMPLE_OVER_POS {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
 	if sams[samc] <> 0 then
 	begin
 		ListBox2.Items.Add(OpenDialog3.FileName);
@@ -277,7 +277,7 @@ var
 begin
 	if not OpenDialog2.Execute then Exit;
 	f := PChar(OpenDialog2.FileName);
-	strs[strc] := BASS_StreamCreateFile(False, f, 0, 0, 0 {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+	strs[strc] := BASS_StreamCreateFile(0, f, 0, 0, 0 {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
 	if strs[strc] <> 0 then
 	begin
 		ListBox3.Items.Add(OpenDialog2.FileName);

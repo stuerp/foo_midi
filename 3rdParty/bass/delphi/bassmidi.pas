@@ -1,6 +1,6 @@
 {
-  BASSMIDI 2.4 Delphi unit
-  Copyright (c) 2006-2024 Un4seen Developments Ltd.
+  BASSMIDI 2.4 Delphi/Pascal unit
+  Copyright (c) 2006-2026 Un4seen Developments Ltd.
 
   See the BASSMIDI.CHM file for more detailed documentation
 }
@@ -68,6 +68,7 @@ const
   BASS_MIDI_FONT_NOLIMITS    = BASS_MIDI_FONT_NOSBLIMITS;
   BASS_MIDI_FONT_MINFX       = $1000000;
   BASS_MIDI_FONT_SBLIMITS    = $2000000;
+  BASS_MIDI_FONT_STEREO      = $4000000;
 
   // BASS_MIDI_StreamSet/GetFonts flag
   BASS_MIDI_FONT_EX          = $1000000; // BASS_MIDI_FONTEX
@@ -169,6 +170,7 @@ const
   MIDI_EVENT_VIBRATO_DELAY   = 82;
   MIDI_EVENT_MASTER_FINETUNE = 83;
   MIDI_EVENT_MASTER_COARSETUNE = 84;
+  MIDI_EVENT_PAN_LSB         = 85;
   MIDI_EVENT_MIXLEVEL        = $10000;
   MIDI_EVENT_TRANSPOSE       = $10001;
   MIDI_EVENT_SYSTEMEX        = $10002;
@@ -186,6 +188,7 @@ const
   MIDI_SYSTEM_GM2            = 2;
   MIDI_SYSTEM_XG             = 3;
   MIDI_SYSTEM_GS             = 4;
+  MIDI_SYSTEM_GS_88          = 5;
 
   // BASS_MIDI_StreamEvents modes
   BASS_MIDI_EVENTS_STRUCT    = 0; // BASS_MIDI_EVENT structures
@@ -222,6 +225,10 @@ const
   BASS_ATTRIB_MIDI_QUEUE_TICK = $1200b;
   BASS_ATTRIB_MIDI_QUEUE_BYTE = $1200c;
   BASS_ATTRIB_MIDI_QUEUE_ASYNC = $1200d;
+  BASS_ATTRIB_MIDI_QUEUED_TICK = $1200e;
+  BASS_ATTRIB_MIDI_QUEUED_BYTE = $1200f;
+  BASS_ATTRIB_MIDI_QUEUED_ASYNC = $12010;
+  BASS_ATTRIB_MIDI_EXCKEYS   = $12011;
   BASS_ATTRIB_MIDI_TRACK_VOL = $12100; // + track #
 
   // Additional tag type
@@ -349,7 +356,7 @@ const
 function BASS_MIDI_GetVersion: DWORD; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
 
 function BASS_MIDI_StreamCreate(channels,flags,freq:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
-function BASS_MIDI_StreamCreateFile(mem:BOOL; f:Pointer; offset,length:QWORD; flags,freq:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
+function BASS_MIDI_StreamCreateFile(filetype:DWORD; f:Pointer; offset,length:QWORD; flags,freq:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
 function BASS_MIDI_StreamCreateURL(url:PChar; offset:DWORD; flags:DWORD; proc:DOWNLOADPROC; user:Pointer; freq:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
 function BASS_MIDI_StreamCreateFileUser(system,flags:DWORD; var procs:BASS_FILEPROCS; user:Pointer; freq:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
 function BASS_MIDI_StreamCreateEvents(events:PBASS_MIDI_EVENT; ppqn,flags,freq:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
@@ -357,8 +364,10 @@ function BASS_MIDI_StreamGetMark(handle:HSTREAM; type_,index:DWORD; var mark:BAS
 function BASS_MIDI_StreamGetMarks(handle:HSTREAM; track:Integer; type_:DWORD; marks:PBASS_MIDI_MARK): DWORD; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
 function BASS_MIDI_StreamSetFonts(handle:HSTREAM; fonts:PBASS_MIDI_FONT; count:DWORD): BOOL; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; overload; external bassmididll;
 function BASS_MIDI_StreamSetFonts(handle:HSTREAM; fonts:PBASS_MIDI_FONTEX; count:DWORD): BOOL; overload;
+function BASS_MIDI_StreamSetFonts(handle:HSTREAM; fonts:PBASS_MIDI_FONTEX2; count:DWORD): BOOL; overload;
 function BASS_MIDI_StreamGetFonts(handle:HSTREAM; fonts:PBASS_MIDI_FONT; count:DWORD): DWORD; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; overload; external bassmididll;
 function BASS_MIDI_StreamGetFonts(handle:HSTREAM; fonts:PBASS_MIDI_FONTEX; count:DWORD): DWORD; overload;
+function BASS_MIDI_StreamGetFonts(handle:HSTREAM; fonts:PBASS_MIDI_FONTEX2; count:DWORD): DWORD; overload;
 function BASS_MIDI_StreamLoadSamples(handle:HSTREAM): BOOL; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
 function BASS_MIDI_StreamEvent(handle:HSTREAM; chan,event,param:DWORD): BOOL; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;
 function BASS_MIDI_StreamEvents(handle:HSTREAM; mode:DWORD; events:Pointer; length:DWORD): DWORD; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassmididll;

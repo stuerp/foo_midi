@@ -43,13 +43,13 @@ To build the code you need:
 
 The following libraries are included in the code:
 
-- [BASS](https://www.un4seen.com/) 2.4.17
-  - [BASSFLAC](https://www.un4seen.com/) 2.4.5.5
-  - [BASSMIDI](https://www.un4seen.com/) 2.4.15.3
+- [BASS](https://www.un4seen.com/) 2.4.18.3
+  - [BASSFLAC](https://www.un4seen.com/) 2.4.6.1
+  - [BASSMIDI](https://www.un4seen.com/) 2.4.16.0
   - [BASSWV](https://www.un4seen.com/) 2.4.7.4
-  - [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
+  - [BASSOPUS](https://www.un4seen.com/) 2.4.3.3
   - [BASSMPC](https://www.un4seen.com/) 2.4.1.2
-- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.5.0
+- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.6.0
 - [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.1, Yamaha YMF262 and CT1747 (OPL3)
 - [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.1, Yamaha YM2612 (OPN2), Yamaha YM2608 (OPNA), Yamaha YM3438 (OPN2C) and YMF276 (OPN2L).
 - [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
@@ -96,10 +96,11 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.3.0.0-alpha3, 2026-05-31
+v3.3.0.0-alpha3, 2026-xx-xx
 
 - Added: Semitones slider to transpose a MIDI sequence for playback. [GitHub Issue 123](https://github.com/stuerp/foo_midi/issues/123)
 - Added: Preliminary support for MIDI 2.0 files (.MIDI2) (M2-104-UM 1.1.1 Draft 2023-07-19)
+- Added: FluidSynth 2.6.0 interpolation methods to the preferences.
 
 You can read the full history [here](docs/History.md).
 

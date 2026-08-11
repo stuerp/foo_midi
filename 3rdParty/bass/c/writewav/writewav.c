@@ -137,18 +137,20 @@ int main(int argc, char **argv)
 		chan = BASS_StreamCreateURL(argv[1], 0, BASS_STREAM_DECODE | BASS_STREAM_BLOCK, 0, 0);
 	} else {
 		// try streaming the file
-		chan = BASS_StreamCreateFile(FALSE, argv[1], 0, 0, BASS_STREAM_DECODE);
+		chan = BASS_StreamCreateFile(0, argv[1], 0, 0, BASS_STREAM_DECODE);
 		if (!chan && BASS_ErrorGetCode() == BASS_ERROR_FILEFORM) {
 			// try MOD music formats
-			chan = BASS_MusicLoad(FALSE, argv[1], 0, 0, BASS_MUSIC_DECODE | BASS_MUSIC_RAMPS | BASS_MUSIC_PRESCAN, 0);
+			chan = BASS_MusicLoad(0, argv[1], 0, 0, BASS_MUSIC_DECODE | BASS_MUSIC_RAMPS | BASS_MUSIC_PRESCAN, 0);
 		}
 	}
 	if (!chan) Error("Can't handle the file");
 
 	BASS_ChannelGetInfo(chan, &info);
 	printf("ctype: %x\n", info.ctype);
+
 	if (info.origres && info.origres != 8 && info.origres != 16)
-		printf("format: %u Hz, %d chan, %d bit (%d bit output)\n", info.freq, info.chans, LOWORD(info.origres), info.flags & BASS_SAMPLE_8BITS ? 8 : 16);
+		printf("format: %u Hz, %d chan, %d bit%s (%d bit output)\n",
+			info.freq, info.chans, LOWORD(info.origres), info.origres & BASS_ORIGRES_FLOAT ? " float" : "", info.flags & BASS_SAMPLE_8BITS ? 8 : 16);
 	else
 		printf("format: %u Hz, %d chan, %d bit\n", info.freq, info.chans, info.flags & BASS_SAMPLE_8BITS ? 8 : 16);
 	bpf = info.chans * (info.flags & BASS_SAMPLE_8BITS ? 1 : 2); // bytes per sample frame
@@ -190,12 +192,14 @@ int main(int argc, char **argv)
 	fwrite("data\0\0\0\0", 8, 1, fp);
 
 	while (!_kbhit()) {
-		short buf[10000];
+		char buf[50000];
 		int c = BASS_ChannelGetData(chan, buf, sizeof(buf));
 		if (c == -1) break;
 #if __BIG_ENDIAN__
-		if (!(info.flags & BASS_SAMPLE_8BITS)) // swap 16-bit byte order
-			for (p = 0; p < c / 2; p++) buf[p] = le_16(buf[p]);
+		if (!(info.flags & BASS_SAMPLE_8BITS)) { // swap 16-bit byte order
+			short *sbuf = (short*)buf;
+			for (p = 0; p < c / 2; p++) sbuf[p] = le_16(sbuf[p]);
+		}
 #endif
 		fwrite(buf, 1, c, fp);
 		pos = BASS_ChannelGetPosition(chan, BASS_POS_BYTE);

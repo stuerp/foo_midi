@@ -109,12 +109,12 @@ var
 begin
 
   // Load a music from "file" with 3D enabled, and make it loop & use ramping
-  newchan := BASS_MusicLoad(FALSE, PChar(name), 0, 0, BASS_MUSIC_RAMP or BASS_MUSIC_LOOP or
+  newchan := BASS_MusicLoad(0, PChar(name), 0, 0, BASS_MUSIC_RAMP or BASS_MUSIC_LOOP or
     BASS_SAMPLE_3D {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
   if (newchan = 0) then
   begin
     // Load a sample from "file" with 3D enabled, and make it loop
-    newchan := BASS_SampleLoad(FALSE, PChar(name), 0, 0, 1, BASS_SAMPLE_LOOP or BASS_SAMPLE_3D or
+    newchan := BASS_SampleLoad(0, PChar(name), 0, 0, 1, BASS_SAMPLE_LOOP or BASS_SAMPLE_3D or
       BASS_SAMPLE_MONO {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
   end;
   if (newchan = 0) then

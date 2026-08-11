@@ -28,7 +28,7 @@ DWORD GetSpeakerFlags(DWORD speaker)
 	return BASS_SPEAKER_N(speaker + 1) | (mono == 1 ? BASS_SPEAKER_LEFT : mono == 2 ? BASS_SPEAKER_RIGHT : 0);
 }
 
-BOOL CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
+INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 {
 	static OPENFILENAME ofn;
 
@@ -49,8 +49,8 @@ BOOL CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						ofn.lpstrFile = file;
 						if (GetOpenFileName(&ofn)) {
 							BASS_ChannelFree(chan[speaker]); // free the old channel
-							if (!(chan[speaker] = BASS_StreamCreateFile(FALSE, file, 0, 0, BASS_SPEAKER_N(speaker + 1) | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))
-								&& !(chan[speaker] = BASS_MusicLoad(FALSE, file, 0, 0, BASS_SPEAKER_N(speaker + 1) | BASS_MUSIC_RAMPS | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT, 1))) {
+							if (!(chan[speaker] = BASS_StreamCreateFile(0, file, 0, 0, BASS_SPEAKER_N(speaker + 1) | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))
+								&& !(chan[speaker] = BASS_MusicLoad(0, file, 0, 0, BASS_SPEAKER_N(speaker + 1) | BASS_MUSIC_RAMPS | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT, 1))) {
 								MESS(10 + speaker, WM_SETTEXT, 0, "Open file...");
 								Error("Can't play the file");
 								return 1;

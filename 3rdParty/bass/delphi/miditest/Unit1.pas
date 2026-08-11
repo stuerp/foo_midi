@@ -120,7 +120,7 @@ begin
         BASS_StreamFree(fStream); // free old stream
         lbLyrics.Caption  := '';  // clear lyrics display
 
-        fStream := BASS_MIDI_StreamCreateFile(false, PChar(FileName), 0, 0, BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
+        fStream := BASS_MIDI_StreamCreateFile(0, PChar(FileName), 0, 0, BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
 
         if (fStream = 0) then begin
           // it ain't a MIDI

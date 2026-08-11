@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesWT.cpp (2025.10.04) P. Stuer **/
+/** $VER: PreferencesWT.cpp (2026.08.11) P. Stuer **/
 
 #include "pch.h"
 
@@ -147,7 +147,10 @@ const WTDialog::InterpolationMethod WTDialog::_InterpolationMethods[] =
     { "None", FLUID_INTERP_NONE },
     { "Linear", FLUID_INTERP_LINEAR },
     { "Cubic", FLUID_INTERP_4THORDER },
-    { "7th Order Sinc", FLUID_INTERP_7THORDER }
+
+    { "Highest Level", FLUID_INTERP_HIGHEST },
+    { "High Level", FLUID_INTERP_HIGH },
+    { "Mid Level", FLUID_INTERP_MID },
 };
 
 #pragma region preferences_page_instance

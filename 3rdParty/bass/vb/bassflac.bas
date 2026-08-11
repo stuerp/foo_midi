@@ -1,6 +1,6 @@
 Attribute VB_Name = "BASSFLAC"
 ' BASSFLAC 2.4 Visual Basic module
-' Copyright (c) 2004-2017 Un4seen Developments Ltd.
+' Copyright (c) 2004-2025 Un4seen Developments Ltd.
 '
 ' See the BASSFLAC.CHM file for more detailed documentation
 
@@ -50,8 +50,8 @@ Type TAG_FLAC_CUE
 End Type
 
 ' TAG_FLAC_CUE_TRACK flags
-Global Const TAG_FLAC_CUE_TRACK_DATA    1 ' data track
-Global Const TAG_FLAC_CUE_TRACK_PRE     2 ' pre-emphasis
+Global Const TAG_FLAC_CUE_TRACK_DATA = 1 ' data track
+Global Const TAG_FLAC_CUE_TRACK_PRE = 2 ' pre-emphasis
 
 Type TAG_FLAC_METADATA
     id As String * 4
@@ -59,12 +59,12 @@ Type TAG_FLAC_METADATA
 	data As Long
 End Type
 
-Declare Function BASS_FLAC_StreamCreateFile64 Lib "bassflac.dll" Alias "BASS_FLAC_StreamCreateFile" (ByVal mem As Long, ByVal file As Any, ByVal offset As Long, ByVal offsethigh As Long, ByVal length As Long, ByVal lengthhigh As Long, ByVal flags As Long) As Long
+Declare Function BASS_FLAC_StreamCreateFile64 Lib "bassflac.dll" Alias "BASS_FLAC_StreamCreateFile" (ByVal filetype As Long, ByVal file As Any, ByVal offset As Long, ByVal offsethigh As Long, ByVal length As Long, ByVal lengthhigh As Long, ByVal flags As Long) As Long
 Declare Function BASS_FLAC_StreamCreateURL Lib "bassflac.dll" (ByVal url As String, ByVal offset As Long, ByVal flags As Long, ByVal proc As Long, ByVal user As Long) As Long
 Declare Function BASS_FLAC_StreamCreateFileUser Lib "bassflac.dll" (ByVal system As Long, ByVal flags As Long, ByVal procs As Long, ByVal user As Long) As Long
 
 ' 32-bit wrappers for 64-bit BASS functions
-Function BASS_FLAC_StreamCreateFile(ByVal mem As Long, ByVal file As Long, ByVal offset As Long, ByVal length As Long, ByVal flags As Long) As Long
-BASS_FLAC_StreamCreateFile = BASS_FLAC_StreamCreateFile64(mem, file, offset, 0, length, 0, flags Or BASS_UNICODE)
+Function BASS_FLAC_StreamCreateFile(ByVal filetype As Long, ByVal file As Long, ByVal offset As Long, ByVal length As Long, ByVal flags As Long) As Long
+BASS_FLAC_StreamCreateFile = BASS_FLAC_StreamCreateFile64(filetype, file, offset, 0, length, 0, flags Or BASS_UNICODE)
 End Function
 

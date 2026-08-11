@@ -52,7 +52,7 @@ begin
     Error('Can''t initialize device');
 
   // try streaming the file
-  chn := BASS_StreamCreateFile(FALSE, PChar(ParamStr(1)), 0, 0, BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+  chn := BASS_StreamCreateFile(0, PChar(ParamStr(1)), 0, 0, BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
   if (chn = 0) then
     chn := BASS_StreamCreateURL(PAnsiChar(AnsiString(ParamStr(1))), 0, BASS_SAMPLE_LOOP, nil, nil);
   if (chn <> 0) then
@@ -73,7 +73,7 @@ begin
   else
   begin
     // load the MOD (with looping and sensitive ramping)
-    chn := BASS_MusicLoad(FALSE, PChar(ParamStr(1)), 0, 0, BASS_MUSIC_LOOP or BASS_MUSIC_RAMPS or BASS_MUSIC_PRESCAN {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
+    chn := BASS_MusicLoad(0, PChar(ParamStr(1)), 0, 0, BASS_MUSIC_LOOP or BASS_MUSIC_RAMPS or BASS_MUSIC_PRESCAN {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
     if (chn = 0) then
       // not a MOD either
       Error('Can''t play the file');

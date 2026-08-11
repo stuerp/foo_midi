@@ -194,9 +194,9 @@ begin
   BASS_MusicFree(chan);
   BASS_StreamFree(chan);
 
-  chan := BASS_StreamCreateFile(False, PChar(OpenDialog1.FileName), 0, 0, floatable or BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+  chan := BASS_StreamCreateFile(0, PChar(OpenDialog1.FileName), 0, 0, floatable or BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
   if (chan = 0) then
-    chan := BASS_MusicLoad(False, PChar(OpenDialog1.FileName), 0, 0, BASS_MUSIC_LOOP or BASS_MUSIC_RAMPS or floatable {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
+    chan := BASS_MusicLoad(0, PChar(OpenDialog1.FileName), 0, 0, BASS_MUSIC_LOOP or BASS_MUSIC_RAMPS or floatable {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
   if (chan = 0) then
   begin
     // whatever it is, it ain't playable

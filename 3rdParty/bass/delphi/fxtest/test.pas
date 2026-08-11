@@ -52,9 +52,9 @@ begin
     // free both MOD and stream, it must be one of them! :)
     BASS_MusicFree(chan);
     BASS_StreamFree(chan);
-    chan := BASS_StreamCreateFile(FALSE, PChar(OpenDialog1.FileName), 0, 0, BASS_SAMPLE_FX or BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+    chan := BASS_StreamCreateFile(0, PChar(OpenDialog1.FileName), 0, 0, BASS_SAMPLE_FX or BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
     if (chan = 0) then
-      chan := BASS_MusicLoad(FALSE, PChar(OpenDialog1.FileName), 0, 0, BASS_MUSIC_LOOP or BASS_MUSIC_RAMP or BASS_SAMPLE_FX {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF},1);
+      chan := BASS_MusicLoad(0, PChar(OpenDialog1.FileName), 0, 0, BASS_MUSIC_LOOP or BASS_MUSIC_RAMP or BASS_SAMPLE_FX {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF},1);
     if (chan = 0) then
     begin
       // not a WAV/MP3 or MOD
@@ -88,7 +88,6 @@ begin
     pR.fReverbTime := 1200;
     pR.fHighFreqRTRatio := 0.1;
     BASS_FXSetParameters(fx[4], @pR);
-    // play both MOD and stream, it must be one of them! :)
     BASS_ChannelPlay(chan, False);
   end;
 end;

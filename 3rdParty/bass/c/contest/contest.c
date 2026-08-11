@@ -97,17 +97,17 @@ int main(int argc, char **argv)
 		chan = BASS_StreamCreateURL(argv[filep], 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT, 0, 0);
 	} else {
 		// try streaming the file
-		chan = BASS_StreamCreateFile(FALSE, argv[filep], 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT);
+		chan = BASS_StreamCreateFile(0, argv[filep], 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT);
 		if (!chan && BASS_ErrorGetCode() == BASS_ERROR_FILEFORM) {
 			// try MOD music formats
-			chan = BASS_MusicLoad(FALSE, argv[filep], 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT | BASS_MUSIC_RAMPS | BASS_MUSIC_PRESCAN, 1);
+			chan = BASS_MusicLoad(0, argv[filep], 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT | BASS_MUSIC_RAMPS | BASS_MUSIC_PRESCAN, 1);
 		}
 	}
 	if (!chan) Error("Can't play the file");
 
 	BASS_ChannelGetInfo(chan, &info);
 	printf("ctype: %x\n", info.ctype);
-	if (HIWORD(info.ctype) != 2) {
+	if (HIWORD(info.ctype) != 2) { // 2 = HMUSIC
 		if (info.origres)
 			printf("format: %u Hz, %d chan, %d bit\n", info.freq, info.chans, LOWORD(info.origres));
 		else
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 	}
 	pos = BASS_ChannelGetLength(chan, BASS_POS_BYTE);
 	if (pos != -1) {
-		double secs = BASS_ChannelBytes2Seconds(chan, pos);
+		secs = BASS_ChannelBytes2Seconds(chan, pos);
 		if (HIWORD(info.ctype) == 2)
 			printf("length: %u:%02u (%llu samples), %u orders\n", (int)secs / 60, (int)secs % 60, (long long)(secs * info.freq), (DWORD)BASS_ChannelGetLength(chan, BASS_POS_MUSIC_ORDER));
 		else

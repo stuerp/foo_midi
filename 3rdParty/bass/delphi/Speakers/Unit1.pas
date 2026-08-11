@@ -91,7 +91,7 @@ begin
     Exit;
 
   BASS_StreamFree(chan[speaker]); // free old stream before opening new
-  chan[speaker] := BASS_StreamCreateFile(False, PChar(OpenDialog1.FileName), 0, 0, flags[speaker] or BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+  chan[speaker] := BASS_StreamCreateFile(0, PChar(OpenDialog1.FileName), 0, 0, flags[speaker] or BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
   if (chan[speaker] = 0) then
   begin
     TButton(Sender).Caption := 'click here to open a file...';

@@ -1,6 +1,6 @@
 /*
 	BASSOPUS 2.4 C/C++ header file
-	Copyright (c) 2012-2024 Un4seen Developments Ltd.
+	Copyright (c) 2012-2025 Un4seen Developments Ltd.
 
 	See the BASSOPUS.CHM file for more detailed documentation
 */
@@ -14,17 +14,14 @@
 #error conflicting BASS and BASSOPUS versions
 #endif
 
-#ifdef __OBJC__
-typedef int BOOL32;
-#define BOOL BOOL32 // override objc's BOOL
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #ifndef BASSOPUSDEF
 #define BASSOPUSDEF(f) WINAPI f
+#else
+#define NOBASSOPUSOVERLOADS
 #endif
 
 // BASS_CHANNELINFO type
@@ -49,7 +46,7 @@ typedef struct {
 #define BASS_STREAMPROC_OPUS_LOSS	0x40000000
 
 HSTREAM BASSOPUSDEF(BASS_OPUS_StreamCreate)(const BASS_OPUS_HEAD *head, DWORD flags, STREAMPROC *proc, void *user);
-HSTREAM BASSOPUSDEF(BASS_OPUS_StreamCreateFile)(BOOL mem, const void *file, QWORD offset, QWORD length, DWORD flags);
+HSTREAM BASSOPUSDEF(BASS_OPUS_StreamCreateFile)(DWORD filetype, const void *file, QWORD offset, QWORD length, DWORD flags);
 HSTREAM BASSOPUSDEF(BASS_OPUS_StreamCreateURL)(const char *url, DWORD offset, DWORD flags, DOWNLOADPROC *proc, void *user);
 HSTREAM BASSOPUSDEF(BASS_OPUS_StreamCreateFileUser)(DWORD system, DWORD flags, const BASS_FILEPROCS *procs, void *user);
 DWORD BASSOPUSDEF(BASS_OPUS_StreamPutData)(HSTREAM handle, const void *buffer, DWORD length);
@@ -57,10 +54,10 @@ DWORD BASSOPUSDEF(BASS_OPUS_StreamPutData)(HSTREAM handle, const void *buffer, D
 #ifdef __cplusplus
 }
 
-#if defined(_WIN32) && !defined(NOBASSOVERLOADS)
-static inline HSTREAM BASS_OPUS_StreamCreateFile(BOOL mem, const WCHAR *file, QWORD offset, QWORD length, DWORD flags)
+#if defined(_WIN32) && !defined(NOBASSOPUSOVERLOADS)
+static inline HSTREAM BASS_OPUS_StreamCreateFile(DWORD filetype, const WCHAR *file, QWORD offset, QWORD length, DWORD flags)
 {
-	return BASS_OPUS_StreamCreateFile(mem, (const void*)file, offset, length, flags | BASS_UNICODE);
+	return BASS_OPUS_StreamCreateFile(filetype, (const void*)file, offset, length, flags | BASS_UNICODE);
 }
 
 static inline HSTREAM BASS_OPUS_StreamCreateURL(const WCHAR *url, DWORD offset, DWORD flags, DOWNLOADPROC *proc, void *user)
@@ -68,10 +65,6 @@ static inline HSTREAM BASS_OPUS_StreamCreateURL(const WCHAR *url, DWORD offset, 
 	return BASS_OPUS_StreamCreateURL((const char*)url, offset, flags | BASS_UNICODE, proc, user);
 }
 #endif
-#endif
-
-#ifdef __OBJC__
-#undef BOOL
 #endif
 
 #endif

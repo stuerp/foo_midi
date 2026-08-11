@@ -117,10 +117,10 @@ begin
     SetForegroundWindow(Form1.Handle);
 
     //creating stream
-    chan := BASS_StreamCreateFile(FALSE,pchar(filename),0,0,0 {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+    chan := BASS_StreamCreateFile(0,pchar(filename),0,0,0 {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
     if chan = 0 then
     begin
-      chan := BASS_MusicLoad(False, pchar(filename), 0, 0, BASS_MUSIC_RAMPS or BASS_MUSIC_POSRESET or BASS_MUSIC_PRESCAN {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
+      chan := BASS_MusicLoad(0, pchar(filename), 0, 0, BASS_MUSIC_RAMPS or BASS_MUSIC_POSRESET or BASS_MUSIC_PRESCAN {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF}, 1);
       if (chan = 0) then
       begin
         ErrorPop('Can''t play file');
@@ -137,8 +137,8 @@ begin
     BASS_ChannelPlay(chan,FALSE); // start playing
 
     //getting peak levels in seperate thread, stream handle as parameter
-		chan2 := BASS_StreamCreateFile(FALSE,pchar(filename),0,0,BASS_STREAM_DECODE {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
-		if (chan2 = 0) then chan2 := BASS_MusicLoad(FALSE,pchar(filename),0,0,BASS_MUSIC_DECODE {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF},1);
+		chan2 := BASS_StreamCreateFile(0,pchar(filename),0,0,BASS_STREAM_DECODE {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+		if (chan2 = 0) then chan2 := BASS_MusicLoad(0,pchar(filename),0,0,BASS_MUSIC_DECODE {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF},1);
     TScanThread.Create(chan2); // start scanning peaks in a new thread
     result := true;
   end;

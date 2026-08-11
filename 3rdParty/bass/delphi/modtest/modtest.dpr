@@ -8,6 +8,8 @@
 
 program modtest;
 
+{$R 'modtest.res' 'modtest.rc'}
+
 uses
   Windows, Messages, CommCtrl, CommDlg, Bass in '..\Bass.pas';
 
@@ -21,8 +23,6 @@ var
   music		: DWORD;				// the HMUSIC channel
   ofn		: OPENFILENAME;
   FileName	: array[0..MAX_PATH - 1] of Char;
-
-{$R 'modtest.res' 'modtest.rc'}
 
 //------------------ Auxiliary functions -------------------
 
@@ -177,7 +177,7 @@ begin
         begin
           St := FileName;
           BASS_MusicFree(music);					// free the current music
-          music := BASS_MusicLoad(False, PChar(St), 0, 0, GetFlags, 1);	// load the new music
+          music := BASS_MusicLoad(0, PChar(St), 0, 0, GetFlags, 1);	// load the new music
           if music <> 0 then						// success
           begin
             Len := BASS_ChannelGetLength(music, BASS_POS_MUSIC_ORDER);	// get the order length

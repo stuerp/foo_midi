@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2026.05.31) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2026.08.11) P. Stuer **/
 
 #include "pch.h"
 
@@ -566,8 +566,8 @@ void ProcessingDialog::UpdateDialog() noexcept
 
     UpdateChannelButtons();
 
-    SendDlgItemMessageW(IDC_SEMITONES_SLIDER, TBM_SETPOS, TRUE, _Semitones);
-    SendDlgItemMessageW(IDC_MICROTONES_SLIDER, TBM_SETPOS, TRUE, _Microtones);
+    SendDlgItemMessageW(IDC_SEMITONES_SLIDER, TBM_SETPOS, TRUE, (LPARAM) _Semitones);
+    SendDlgItemMessageW(IDC_MICROTONES_SLIDER, TBM_SETPOS, TRUE, (LPARAM) _Microtones);
 
     // Log Level
     {

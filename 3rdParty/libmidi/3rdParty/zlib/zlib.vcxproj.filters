@@ -12,7 +12,6 @@
   <ItemGroup>
     <ClInclude Include="crc32.h" />
     <ClInclude Include="inffast.h" />
-    <ClInclude Include="inffixed.h" />
     <ClInclude Include="inflate.h" />
     <ClInclude Include="inftrees.h" />
     <ClInclude Include="zlib.h" />
