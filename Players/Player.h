@@ -34,6 +34,8 @@ public:
     uint32_t Play(audio_sample * samplesData, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
+    void EnableVisualization(bool enabled) noexcept;
+
     uint32_t GetSampleRate() const noexcept { return _SampleRate; };
     void SetSampleRate(uint32_t sampleRate);
 
@@ -112,6 +114,7 @@ private:
 
 #ifdef HAVE_FOO_VIS_MIDI
     IMusicKeyboard::ptr _MusicKeyboard;
+    IMusicKeyboard_v2::ptr _MusicKeyboardV2;
 #endif
 };
 

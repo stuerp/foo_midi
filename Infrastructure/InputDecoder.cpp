@@ -682,6 +682,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
+    _Player->EnableVisualization((_DecoderFlags & input_flag_playback) != 0);
+
     _IsEndOfContainer = false;
 }
 
