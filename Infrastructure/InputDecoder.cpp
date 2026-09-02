@@ -635,10 +635,33 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             break;
         }
 
-        // MCI
+        // MIDI Out
         case PlayerType::MCI:
         {
             auto Player = new MCIPlayer;
+
+            // The identifier of a device changes when devices are added or removed. Look it up by name first.
+            {
+                uint32_t DeviceId = (uint32_t) CfgMIDIOutDeviceId;
+
+                const std::string DeviceName = CfgMIDIOutDeviceName.get().c_str();
+
+                if (!DeviceName.empty())
+                {
+                    const uint32_t DeviceCount = MCIPlayer::GetDeviceCount();
+
+                    for (uint32_t i = 0; i < DeviceCount; ++i)
+                    {
+                        if (MCIPlayer::GetDeviceName(i) == DeviceName)
+                        {
+                            DeviceId = i;
+                            break;
+                        }
+                    }
+                }
+
+                Player->SetDeviceId(DeviceId);
+            }
 
             _Player = Player;
 
@@ -1129,7 +1152,7 @@ const char * InputDecoder::PlayerTypeNames[15] =
     "OPL",          // Not implemented
     "Nuked OPL3",
     "Secret Sauce",
-    "MCI",          // Not implemented
+    "MIDI Out",
     "Nuked SC-55",
     "FMMIDI",
     "CLAP",
