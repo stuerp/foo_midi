@@ -47,3 +47,17 @@ public:
 };
 
 static service_factory_single_t<InitStageCallback> _Factory;
+
+/// <summary>
+/// Releases what the players keep open across tracks when foobar2000 quits.
+/// </summary>
+class QuitCallback : public initquit
+{
+public:
+    void on_quit() override
+    {
+        MCIPlayer::CloseAllConnections();
+    }
+};
+
+static initquit_factory_t<QuitCallback> _QuitFactory;

@@ -6,9 +6,8 @@
 #include "Player.h"
 
 #include <atomic>
-#include <mutex>
+#include <memory>
 #include <thread>
-#include <vector>
 
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
@@ -20,7 +19,13 @@
 /// <remarks>
 /// Events are sent with midiOutShortMsg() and the decoder is paced to real time, rather than handing a
 /// scheduled stream to the driver with midiStreamOut(). Streaming would let the driver do the timing,
-/// but not every driver implements it: version 2.6.0 of the VST MIDI Synth driver crashes the host.
+/// but not every driver implements it.
+///
+/// All instances share one connection per device. foobar2000 decodes the next track before the current
+/// one has finished, so two players exist at every track boundary. A hardware port refuses the second
+/// open outright, and version 2.6.0 of the VST MIDI Synth driver corrupts its heap when one thread opens
+/// the port while another is sending to it. The connection is opened once, only one player sends to it
+/// at a time, and it is closed a few seconds after the last player has let go of it.
 /// </remarks>
 class MCIPlayer : public player_t
 {
@@ -44,6 +49,13 @@ public:
     /// </summary>
     static std::string GetDeviceName(uint32_t deviceId) noexcept;
 
+    /// <summary>
+    /// Closes every device connection. Called when foobar2000 quits.
+    /// </summary>
+    static void CloseAllConnections() noexcept;
+
+    virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept override { _AbortHandler = abortHandler; }
+
 protected:
     #pragma region player_t
 
@@ -63,39 +75,27 @@ protected:
     #pragma endregion
 
 private:
-    uint32_t GetPlayingTime() const noexcept;
-    void Send(uint32_t message) noexcept;
-    void WaitForPlayingTime() noexcept;
+    class Connection;
 
-    void SilenceDevice() noexcept;
+    uint32_t GetPlayingTime() const noexcept;
+    void WaitForPlayingTime() noexcept;
 
     void StartWatchdog();
     void StopWatchdog() noexcept;
 
-    void LogMessage(MMRESULT result, const char * functionName) const noexcept;
-
 private:
-    static const uint32_t OpenAttempts = 12;            // Retries while a driver is still releasing a previous client.
-    static const uint32_t OpenRetryIntervalInMS = 250;
-
     static const uint32_t MaxDriftInMS = 500;           // Resynchronises instead of racing to catch up after a pause.
-    static const uint32_t MaxWaitInMS = 10'000;         // Never blocks the decoder thread for longer than this.
+    static const uint32_t MaxWaitInMS = 10'000;         // Never blocks the decoder thread for longer than this while pacing.
+    static const uint32_t OwnershipTimeoutInMS = 180'000; // How long a player waits for the previous track to let go of the device.
 
     static const uint32_t WatchdogTimeoutInMS = 750;    // Silences the device when the decoder stops feeding us (paused, stalled).
 
     UINT _DeviceId;
-    HMIDIOUT _hDevice;
-
-    // The watchdog thread sends to the device too. Not every driver tolerates being called from two
-    // threads at once: version 2.6.0 of the VST MIDI Synth driver faults when that happens.
-    mutable std::mutex _DeviceMutex;
-
-    bool _IsTimerResolutionSet;
+    std::shared_ptr<Connection> _Connection;
+    foobar2000_io::abort_callback * _AbortHandler;
 
     uint64_t _FrameIndex;                               // Number of frames rendered since playback started.
     uint32_t _StartTime;                                // Result of ::timeGetTime() when playback started.
-
-    std::vector<uint8_t> _SysEx;                        // Holds a system exclusive message while the device sends it.
 
     std::thread _Watchdog;
     std::atomic<bool> _IsWatchdogRunning;
