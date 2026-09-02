@@ -1,11 +1,12 @@
 
-/** $VER: MCIPlayer.h (2026.09.02) P. Stuer - Implements a player that streams to a Windows MIDI output port **/
+/** $VER: MCIPlayer.h (2026.09.02) P. Stuer - Implements a player that sends to a Windows MIDI output port **/
 
 #pragma once
 
 #include "Player.h"
 
 #include <atomic>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -16,6 +17,11 @@
 /// user-mode synthesizer driver such as VST MIDI Synth). The player renders silence because the audio
 /// is produced by the device instead of by foobar2000.
 /// </summary>
+/// <remarks>
+/// Events are sent with midiOutShortMsg() and the decoder is paced to real time, rather than handing a
+/// scheduled stream to the driver with midiStreamOut(). Streaming would let the driver do the timing,
+/// but not every driver implements it: version 2.6.0 of the VST MIDI Synth driver crashes the host.
+/// </remarks>
 class MCIPlayer : public player_t
 {
 public:
@@ -24,7 +30,7 @@ public:
     virtual ~MCIPlayer();
 
     /// <summary>
-    /// Sets the identifier of the MIDI output device to stream to, as used by midiOutGetDevCaps().
+    /// Sets the identifier of the MIDI output device to send to, as used by midiOutGetDevCaps().
     /// </summary>
     void SetDeviceId(uint32_t deviceId) noexcept { _DeviceId = (UINT) deviceId; }
 
@@ -57,27 +63,9 @@ protected:
     #pragma endregion
 
 private:
-    struct buffer_t
-    {
-        std::vector<uint8_t> Data;
-        MIDIHDR Header;
-        bool IsPrepared;
-
-        buffer_t() noexcept : Header(), IsPrepared(false) { }
-    };
-
-    void AppendShortMessage(uint32_t deltaTime, uint32_t message);
-    void AppendLongMessage(uint32_t deltaTime, const uint8_t * data, size_t size);
-
-    uint32_t GetCurrentTick() const noexcept;
-    uint32_t GetDeltaTime() noexcept;
-
-    bool Flush() noexcept;
-    buffer_t * GetFreeBuffer() noexcept;
-    void ReleaseBuffers(bool force) noexcept;
-
-    uint32_t GetStreamPositionInMS() const noexcept;
-    void ThrottleToDevice() noexcept;
+    uint32_t GetPlayingTime() const noexcept;
+    void Send(uint32_t message) noexcept;
+    void WaitForPlayingTime() noexcept;
 
     void SilenceDevice() noexcept;
 
@@ -87,26 +75,27 @@ private:
     void LogMessage(MMRESULT result, const char * functionName) const noexcept;
 
 private:
-    // 1 tick equals 1 ms: MIDIPROP_TEMPO (us per quarter note) divided by MIDIPROP_TIMEDIV (ticks per quarter note).
-    static const uint32_t TicksPerQuarterNote = 1'000;
-    static const uint32_t MicroSecondsPerQuarterNote = 1'000'000;
+    static const uint32_t OpenAttempts = 12;            // Retries while a driver is still releasing a previous client.
+    static const uint32_t OpenRetryIntervalInMS = 250;
 
-    static const size_t BufferCount = 8;                // Number of stream buffers that can be in flight at the same time.
-    static const size_t MaxBufferSize = 16 * 1'024;     // in bytes
+    static const uint32_t MaxDriftInMS = 500;           // Resynchronises instead of racing to catch up after a pause.
+    static const uint32_t MaxWaitInMS = 10'000;         // Never blocks the decoder thread for longer than this.
 
-    static const uint32_t FlushIntervalInMS = 50;       // Queue at least this much playing time before sending a buffer to the device.
-    static const uint32_t TargetLeadInMS = 250;         // How far the queued stream may run ahead of what the device is playing.
     static const uint32_t WatchdogTimeoutInMS = 750;    // Silences the device when the decoder stops feeding us (paused, stalled).
 
     UINT _DeviceId;
-    HMIDISTRM _hStream;
+    HMIDIOUT _hDevice;
 
-    std::vector<uint8_t> _Pending;                      // Events that have not been sent to the device yet.
-    uint32_t _PendingTick;                              // Tick of the first event in _Pending.
-    buffer_t _Buffers[BufferCount];
+    // The watchdog thread sends to the device too. Not every driver tolerates being called from two
+    // threads at once: version 2.6.0 of the VST MIDI Synth driver faults when that happens.
+    mutable std::mutex _DeviceMutex;
 
-    uint64_t _FrameIndex;                               // Number of frames rendered since startup.
-    uint32_t _LastEventTick;                            // Tick of the most recently queued event.
+    bool _IsTimerResolutionSet;
+
+    uint64_t _FrameIndex;                               // Number of frames rendered since playback started.
+    uint32_t _StartTime;                                // Result of ::timeGetTime() when playback started.
+
+    std::vector<uint8_t> _SysEx;                        // Holds a system exclusive message while the device sends it.
 
     std::thread _Watchdog;
     std::atomic<bool> _IsWatchdogRunning;
