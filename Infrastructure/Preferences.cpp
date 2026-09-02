@@ -34,6 +34,7 @@
 #include "FSPlayer.h"
 #include "CLAPPlayer.h"
 #include "VSTiPlayer.h"
+#include "MCIPlayer.h"
 
 #include "VSTiHost.h"
 #include "SecretSauce.h"
@@ -201,6 +202,10 @@ private:
                     return Index == other.Index;
             }
 
+            // Every MIDI output device gets its own entry. Index holds the device identifier.
+            if (Type == PlayerType::MCI)
+                return Index == other.Index;
+
             return true;
         }
 
@@ -211,7 +216,7 @@ private:
 
         bool SupportsMIDIFlavor() const noexcept
         {
-            return ((Type == PlayerType::VSTi) || (Type == PlayerType::CLAP) || (Type == PlayerType::FluidSynth) || (Type == PlayerType::BASSMIDI) || (Type == PlayerType::SecretSauce));
+            return ((Type == PlayerType::VSTi) || (Type == PlayerType::CLAP) || (Type == PlayerType::FluidSynth) || (Type == PlayerType::BASSMIDI) || (Type == PlayerType::SecretSauce) || (Type == PlayerType::MCI));
         }
     };
 
@@ -256,7 +261,6 @@ const RootDialog::known_player_t RootDialog::_KnownPlayers[] =
     { "Nuked OPL3",     PlayerType::NukedOPL3,     PlayerIsAlwaysPresent },
     { "Nuked SC-55",    PlayerType::NukedSC55,     PlayerIsNeverPresent },
     { "Secret Sauce",   PlayerType::SecretSauce,   IsSecretSaucePresent },
-    { "MCI",            PlayerType::MCI,           PlayerIsNeverPresent },
     { "FMMIDI",         PlayerType::FMMIDI,        PlayerIsAlwaysPresent },
 };
 
@@ -309,6 +313,16 @@ void RootDialog::apply()
             CfgPlugInName            = PlugIn.Name.c_str();
 
             CfgVSTiConfig[PlugIn.Id] = _VSTiHost.Config;
+        }
+        else
+        if (_SelectedPlayer.Type == PlayerType::MCI)
+        {
+            CfgPlugInFilePath    = "";
+            CfgCLAPIndex         = (int64_t) -1;
+            CfgPlugInName        = "";
+
+            CfgMIDIOutDeviceId   = (t_int32) _SelectedPlayer.Index;
+            CfgMIDIOutDeviceName = MCIPlayer::GetDeviceName((uint32_t) _SelectedPlayer.Index).c_str();
         }
         else
         {
@@ -554,6 +568,42 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
         }
         else
             Log.AtInfo().Write(STR_COMPONENT_BASENAME " found no compatible CLAP plug-ins.");
+    }
+
+    #pragma endregion
+
+    #pragma region MIDI Out Players
+
+    // Add the MIDI output devices to the installed player list.
+    {
+        const uint32_t DeviceCount = MCIPlayer::GetDeviceCount();
+
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " found %d MIDI output devices.", (int) DeviceCount);
+
+        const std::string SelectedDeviceName = CfgMIDIOutDeviceName.get().c_str();
+
+        bool IsSelectedDeviceFound = false;
+
+        for (uint32_t DeviceId = 0; DeviceId < DeviceCount; ++DeviceId)
+        {
+            const std::string DeviceName = MCIPlayer::GetDeviceName(DeviceId);
+
+            if (DeviceName.empty())
+                continue;
+
+            installed_player_t ip((std::string("MIDI Out ") + DeviceName), PlayerType::MCI, "", (size_t) DeviceId, (size_t) -1);
+
+            _InstalledPlayers.push_back(ip);
+
+            // The identifier of a device changes when devices are added or removed. Match it on its name instead.
+            if (!IsSelectedDeviceFound && (DeviceName == SelectedDeviceName))
+            {
+                IsSelectedDeviceFound = true;
+
+                if (_SelectedPlayer.Type == PlayerType::MCI)
+                    _SelectedPlayer.Index = (size_t) DeviceId;
+            }
+        }
     }
 
     #pragma endregion
