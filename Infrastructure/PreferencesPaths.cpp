@@ -323,8 +323,8 @@ void PathsDialog::OnButtonClicked(UINT, int id, CWindow) noexcept
             pfc::string FilePath = _SoundFontFilePath;
 
             if (::uGetOpenFileName(m_hWnd,
-                    "Soundfont and list files|*.dls;*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sflist;*.json|"
-                    "SoundFont files|*.sf2;*.sf3;*.sf2pack;*.sfogg|"
+                    "Soundfont and list files|*.dls;*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sfz;*.sflist;*.json|"
+                    "SoundFont files|*.sf2;*.sf3;*.sf2pack;*.sfogg;*.sfz|"
                     "Soundfont list files|*.sflist;*.json|"
                     "Downloadable Sounds (DLS)|*.dls"
                 ,
