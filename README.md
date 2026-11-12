@@ -97,11 +97,25 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.3.0.0-alpha4, 2026-xx-xx
+v3.3.0.0, 2026-11-12
 
+- New: Upgraded to libADLMIDI 1.6.2.1.
+  - Nuked CQM emulator can be selected from the Preferences page.
+- New: Upgraded to libOPNMIDI 1.6.2.
+- New: Integrated [jecassis](https://github.com/jecassis) IMusicKeyboard2 interface to support the foo_vis_midi fork by jecassis.
 - New: Upgraded to libmt32emu 2.8.6.
 - New: Upgraded to zlib 1.4.
 - New: Compiled with foobar2000 SDK 2026-09-17.
+- Added: Support for MMD98 (MIDI Music Driver) files. [GitHub Issue 154](https://github.com/stuerp/foo_midi/issues/154)
+- Added: Option "Use Secret Sauce with SC-88 or later". This option will override the selected player when the MIDI file contains a SYSTEM MODE SET sysex. [GitHub Issue 145](https://github.com/stuerp/foo_midi/issues/145)
+- Added: Semitones slider to transpose a MIDI sequence for playback. [GitHub Issue 123](https://github.com/stuerp/foo_midi/issues/123)
+- Added: Preliminary support for MIDI 2.0 files (.MIDI2) (M2-104-UM 1.1.1 Draft 2023-07-19).
+- Added: FluidSynth 2.6.0 interpolation methods to the preferences.
+- Changed: Channels can be turned off and on again without using the Apply button of the configuration dialog. There is latency due to foobar2000 audio buffering.
+- Changed: Builds with Visual Studio 2026.
+- Changed: SysEx REQ1 events are no longer sent to Secret Sauce. The plug-in does not handle malformed SysEx events correctly and the result of the request is not used anyway. [GitHub Issue 155](https://github.com/stuerp/foo_midi/issues/155)
+- Improved: MMD converter is thread safe now.
+- Fixed: OPN Player ignored the selected WOPN bank file.
 
 You can read the full history [here](docs/History.md).
 

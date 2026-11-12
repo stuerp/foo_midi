@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2026.09.12) P. Stuer **/
+/** $VER: Resource.h (2026.11.12) P. Stuer **/
 
 #pragma once
 
@@ -16,7 +16,7 @@
 #define NUM_PRODUCT_PATCH           0
 #define NUM_PRODUCT_PRERELEASE      0
 
-#define STR_RELEASE_TAG             "-alpha4"
+#define STR_RELEASE_TAG             ""
 
 /** Component specific **/
 
