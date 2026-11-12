@@ -1,6 +1,6 @@
 {
-  BASSFLAC 2.4 Delphi unit
-  Copyright (c) 2004-2017 Un4seen Developments Ltd.
+  BASSFLAC 2.4 Delphi/Pascal unit
+  Copyright (c) 2004-2025 Un4seen Developments Ltd.
 
   See the BASSFLAC.CHM file for more detailed documentation
 }
@@ -62,7 +62,7 @@ const
   {$ENDIF}
 {$ENDIF}
 
-function BASS_FLAC_StreamCreateFile(mem:BOOL; f:Pointer; offset,length:QWORD; flags:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassflacdll;
+function BASS_FLAC_StreamCreateFile(filetype:DWORD; f:Pointer; offset,length:QWORD; flags:DWORD): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassflacdll;
 function BASS_FLAC_StreamCreateURL(url:PChar; offset:DWORD; flags:DWORD; proc:DOWNLOADPROC; user:Pointer): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassflacdll;
 function BASS_FLAC_StreamCreateFileUser(system,flags:DWORD; var procs:BASS_FILEPROCS; user:Pointer): HSTREAM; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF}; external bassflacdll;
 

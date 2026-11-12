@@ -1,11 +1,15 @@
 
-/** $VER: Player.cpp (2025.07.22) **/
+/** $VER: Player.cpp (2026.09.12) **/
 
 #include "pch.h"
 
 #include "Player.h"
 #include "Channels.h"
-#include "Encoding.h"
+
+#include "API.h"
+
+#include <Configuration.h>
+#include <libmidi.h>
 
 #include <fstream>
 
@@ -25,18 +29,6 @@ player_t::player_t() noexcept
     _FileFormat = midi::FileFormat::Unknown;
 
     _IsStarted = false;
-
-#ifdef HAVE_FOO_VIS_MIDI
-    {
-        IAPI::ptr api;
-
-        if (fb2k::std_api_try_get(api))
-            _MusicKeyboard = api->GetMusicKeyboard();
-
-        if (_MusicKeyboard.is_valid())
-            _MusicKeyboard->Initialize(InterfaceVersion);
-    }
-#endif
 }
 
 /// <summary>
@@ -59,6 +51,91 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
             return false;
 
         _FileFormat = container.FileFormat;
+    }
+
+    int64_t Semitones = CfgSemitones;
+    int64_t Microtones = CfgMicrotones;
+
+    // Transpose the Note On/Off messages and insert Pitch Bend Change messages if necessary.
+    if ((Semitones != 0) || (Microtones != 0))
+    {
+        bool NeedPitchBend[16] = { true };
+
+        for (size_t i = 0; i < _Messages.size(); ++i)
+        {
+            auto & Message = _Messages[i];
+
+            if (!Message.IsSysEx())
+            {
+                const auto StatusCode = (uint8_t) (Message.Data);
+                const auto Data1      = (uint8_t) (Message.Data >>  8);
+                const auto Data2      = (uint8_t) (Message.Data >> 16);
+                const auto PortNumber = (uint8_t) (Message.Data >> 24);
+
+                const auto EventType     = StatusCode & 0xF0;
+                const auto ChannelNumber = StatusCode & 0x0F;
+
+                // Skip the percussion channel.
+                if (ChannelNumber == 0x09)
+                    continue;
+
+                if (Semitones != 0)
+                {
+                    if ((EventType == midi::StatusCode::NoteOn) || (EventType == midi::StatusCode::NoteOff))
+                    {
+                        const int NewValue = std::clamp((int) Data1 + (int) Semitones, 0, 127);
+
+                        Message.Data = midi::PackMessage(StatusCode, (uint8_t) NewValue, Data2, PortNumber);
+                    }
+                }
+
+                if (Microtones != 0)
+                {
+                    // The Reset All Controllers message resets the Pitch Bend to the default value.
+                    if ((EventType == midi::StatusCode::ControlChange) && (Data1 == midi::Controller::ResetAllControllers) && (Data2 == 0x00))   // Reset All Controllers
+                        NeedPitchBend[ChannelNumber] = true;
+                    else
+                    // Modify existing Pitch Bend Change messages.
+                    if (EventType == midi::StatusCode::PitchBendChange)
+                    {
+                        const int NewValue = std::clamp(midi::BytesToPitchBend(Data1, Data2) + (int) Microtones, -8192, 8191);
+                        const auto [LSB, MSB] = midi::PitchBendToBytes(NewValue);
+
+                        Message.Data = midi::PackMessage(midi::StatusCode::PitchBendChange, LSB, MSB, PortNumber);
+
+                        NeedPitchBend[ChannelNumber] = false;
+                    }
+                    else
+                    // Insert a Pitch Bend Change message if necessary.
+                    if ((EventType == midi::StatusCode::NoteOn) && NeedPitchBend[ChannelNumber])
+                    {
+                        const auto [LSB, MSB] = midi::PitchBendToBytes((int32_t) Microtones);
+                        const uint32_t Data = midi::PackMessage(midi::StatusCode::PitchBendChange, LSB, MSB, PortNumber);
+
+                        _Messages.insert(_Messages.begin() + (int64_t) i++, midi::message_t(Message.Time, Data)); // Insert a Pitch Bend Change message and skip it.
+
+                        NeedPitchBend[ChannelNumber] = false;
+                    }
+                }
+            }
+            else
+            {
+                const uint32_t Index = Message.Data & 0x00FFFFFFu;
+
+                const uint8_t * Data;
+                size_t Size;
+                uint8_t PortNumber;
+
+                if (!_SysExMap.GetItem(Index, Data, Size, PortNumber))
+                    continue;
+
+                if (midi::sysex_t::IsGMSystemOn(Data, Size) || midi::sysex_t::IsGM2SystemOn(Data, Size) || midi::sysex_t::IsGSSystemOn(Data, Size) || midi::sysex_t::IsXGSystemOn(Data, Size))
+                {
+                    for (size_t j = 0; j < _countof(NeedPitchBend); ++j)
+                        NeedPitchBend[j] = true;
+                }
+            }
+        }
     }
 
     // Initialize the sample stream. We get the values in ms but SetSampleRate() converts them to frames.
@@ -107,7 +184,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
 
                             const unsigned long bit = (unsigned long) (1 << Port);
 
-                            size_t Index = (size_t) Channel * 128 + Note;
+                            size_t Index = (size_t) ((Channel * 128) + Note);
 
                             NoteOn[Index] = (uint8_t) ((NoteOn[Index] & ~bit) | (bit * IsNoteOn));
                         }
@@ -126,7 +203,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
                         {
                             if (NoteOn[i] & (1 << j))
                             {
-                                _Messages.push_back(midi::message_t(_FrameCount, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + 0x90)));
+                                _Messages.push_back(midi::message_t(_FrameCount, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + midi::StatusCode::NoteOn)));
                             }
                         }
                     }
@@ -149,6 +226,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
         }
     }
 
+    // Initialize the MIDI channel mask.
     _ChannelsMaskVersion = ~0u;
     CfgChannels.Get(_ChannelsMask, sizeof(_ChannelsMask), _ChannelsMaskVersion);
 
@@ -351,6 +429,9 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
     _FramesRemaining = BlockToDo;
 
 #ifdef HAVE_FOO_VIS_MIDI
+    if (_MusicKeyboard2.is_valid())
+        _MusicKeyboard2->SetTimelinePosition(OldFrameIndex, _SampleRate);
+    else
     if (_MusicKeyboard.is_valid())
         _MusicKeyboard->SetPosition(OldFrameIndex);
 #endif
@@ -689,19 +770,19 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
 
     if (_MIDIFlavor != MIDIFlavor::None)
     {
-        if (time == 0)
-        {
-            SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber);
-            SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber);
-            SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
-            SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber);
-        }
-        else
+        if (time != 0)
         {
             SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber, time);
             SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber, time);
             SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber, time);
             SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber, time);
+        }
+        else
+        {
+            SendSysEx(midi::sysex_t::XGSystemOn, _countof(midi::sysex_t::XGSystemOn), portNumber);
+            SendSysEx(midi::sysex_t::GM2SystemOn, _countof(midi::sysex_t::GM2SystemOn), portNumber);
+            SendSysEx(midi::sysex_t::GSReset, _countof(midi::sysex_t::GSReset), portNumber);
+            SendSysEx(midi::sysex_t::GM1SystemOn, _countof(midi::sysex_t::GM1SystemOn), portNumber);
         }
 
         switch (_MIDIFlavor)
@@ -759,26 +840,26 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         {
             if (time != 0)
             {
-                SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24)), time); // CC 120 Channel Mute / Sound Off
-                SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24)), time); // CC 121 Reset All Controllers
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::AllSoundsOff,        0x00, portNumber), time);
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::ResetAllControllers, 0x00, portNumber), time);
 
-                if (_MIDIFlavor != MIDIFlavor::XG || i != 9)
+                if (_MIDIFlavor != MIDIFlavor::XG)
                 {
-                    SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24)), time); // CC 32 Bank select LSB
-                    SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24)), time); // CC  0 Bank select MSB
-                    SendEvent((uint32_t) ((0x00C0 + i) + (portNumber << 24)), time); // Program Change 0
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::BankSelectLSB, 0x00, portNumber), time);
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::BankSelect,    0x00, portNumber), time);
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ProgramChange + i), 0x00, 0x00, portNumber), time);
                 }
             }
             else
             {
-                SendEvent((uint32_t) ((0x78B0 + i) + (portNumber << 24))); // CC 120 Channel Mute / Sound Off
-                SendEvent((uint32_t) ((0x79B0 + i) + (portNumber << 24))); // CC 121 Reset All Controllers
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::AllSoundsOff,        0x00, portNumber));
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::ResetAllControllers, 0x00, portNumber));
 
-                if (_MIDIFlavor != MIDIFlavor::XG || i != 9)
+                if (_MIDIFlavor != MIDIFlavor::XG)
                 {
-                    SendEvent((uint32_t) ((0x20B0 + i) + (portNumber << 24))); // CC 32 Bank select LSB
-                    SendEvent((uint32_t) ((0x00B0 + i) + (portNumber << 24))); // CC  0 Bank select MSB
-                    SendEvent((uint32_t) ((0x00C0 + i) + (portNumber << 24))); // Program Change 0
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::BankSelectLSB, 0x00, portNumber));
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::BankSelect,    0x00, portNumber));
+                    SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ProgramChange + i), 0x00, 0x00, portNumber));
                 }
             }
         }
@@ -789,15 +870,15 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
     {
         if (time != 0)
         {
-            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24)), time); // CC 32 Bank select LSB
-            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24)), time); // CC  0 Bank select MSB. Selects Drum Kit in XG mode.
-            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24)), time); // Program Change 0
+            SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + 9, midi::Controller::BankSelectLSB, 0x00, portNumber), time);
+            SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + 9, midi::Controller::BankSelect,    0x7F, portNumber), time);
+            SendEvent(midi::PackMessage(midi::StatusCode::ProgramChange + 9, 0x00, 0x00, portNumber), time);
         }
         else
         {
-            SendEvent((uint32_t) (0x0020B9 + (portNumber << 24))); // CC 32 Bank select LSB
-            SendEvent((uint32_t) (0x7F00B9 + (portNumber << 24))); // CC  0 Bank select MSB. Selects Drum Kit in XG mode.
-            SendEvent((uint32_t) (0x0000C9 + (portNumber << 24))); // Program Change 0
+            SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + 9, midi::Controller::BankSelectLSB, 0x00, portNumber));
+            SendEvent(midi::PackMessage(midi::StatusCode::ControlChange + 9, midi::Controller::BankSelect,    0x7F, portNumber));
+            SendEvent(midi::PackMessage(midi::StatusCode::ProgramChange + 9, 0x00, 0x00, portNumber));
         }
     }
 
@@ -808,16 +889,16 @@ void player_t::ResetPort(uint8_t portNumber, uint32_t time)
         {
             for (uint8_t  i = 0; i < 16; ++i)
             {
-                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24)), time); // CC 91 Effect 1 (Reverb) Set Level to 0
-                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24)), time); // CC 93 Effect 3 (Chorus) Set Level to 0
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::EffectDepth1, 0x00, portNumber), time); // Reverb
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::EffectDepth3, 0x00, portNumber), time); // Chorus
             }
         }
         else
         {
             for (uint8_t i = 0; i < 16; ++i)
             {
-                SendEvent((uint32_t) (0x5BB0 + i + (portNumber << 24))); // CC 91 Effect 1 (Reverb) Set Level to 0
-                SendEvent((uint32_t) (0x5DB0 + i + (portNumber << 24))); // CC 93 Effect 3 (Chorus) Set Level to 0
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::EffectDepth1, 0x00, portNumber)); // Reverb
+                SendEvent(midi::PackMessage((uint8_t) (midi::StatusCode::ControlChange + i), midi::Controller::EffectDepth3, 0x00, portNumber)); // Chorus
             }
         }
     }
@@ -893,6 +974,30 @@ void player_t::SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint
         SendSysEx(data, size, portNumber);
 }
 
+/// <summary>
+/// Acquires the keyboard visualizer only for playback.
+/// </summary>
+void player_t::EnableVisualization(bool enabled) noexcept
+{
+#ifdef HAVE_FOO_VIS_MIDI
+    if (!enabled)
+        return;
+
+    IAPI::ptr api;
+
+    if (fb2k::std_api_try_get(api))
+        _MusicKeyboard = api->GetMusicKeyboard();
+
+    if (_MusicKeyboard.is_valid())
+    {
+        _MusicKeyboard->Initialize(InterfaceVersion);
+        _MusicKeyboard->service_query_t(_MusicKeyboard2);
+    }
+#else
+    UNREFERENCED_PARAMETER(enabled);
+#endif
+}
+
 static uint16_t GetWord(const uint8_t * data) noexcept
 {
     return (uint16_t) (data[0] | (((uint16_t) data[1]) << 8));
@@ -915,7 +1020,7 @@ uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
         if (!File.is_open())
             return 0;
 
-        uint8_t MZHeader[64];
+        uint8_t MZHeader[64] = { };
 
         File.read((char *) MZHeader, sizeof(MZHeader));
 
@@ -926,7 +1031,7 @@ uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
 
         File.seekg(OffsetPEHeader, std::ios::beg);
 
-        uint8_t PEHeader[(size_t) 4 + 20 + 224];
+        uint8_t PEHeader[(size_t) 4 + 20 + 224] = { };
 
         File.read((char *) PEHeader, sizeof(PEHeader));
 

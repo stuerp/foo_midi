@@ -1,6 +1,6 @@
 /*
  * Copyright (с) 2004 Mitsutaka Okazaki
- * Copyright (с) 2021-2025 Vitaly Novichkov <admin@wohlnet.ru>
+ * Copyright (с) 2021-2026 Vitaly Novichkov <admin@wohlnet.ru>
  *
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
@@ -322,7 +322,7 @@ EDMIDI_EXPORT const char *edmidi_metaMusicTitle(struct EDMIDIPlayer *device)
         return "";
     MidiPlayer *play = GET_MIDI_PLAYER(device);
     assert(play);
-    return play->getMusicTitle().c_str();
+    return play->getMusicTitle();
 }
 
 EDMIDI_EXPORT const char *edmidi_metaMusicCopyright(struct EDMIDIPlayer *device)
@@ -331,7 +331,7 @@ EDMIDI_EXPORT const char *edmidi_metaMusicCopyright(struct EDMIDIPlayer *device)
         return "";
     MidiPlayer *play = GET_MIDI_PLAYER(device);
     assert(play);
-    return play->getMusicCopyright().c_str();
+    return play->getMusicCopyright();
 }
 
 EDMIDI_EXPORT size_t edmidi_metaTrackTitleCount(struct EDMIDIPlayer *device)
@@ -464,4 +464,13 @@ EDMIDI_EXPORT void adl_setLoopHooksOnly(EDMIDIPlayer *device, int loopHooksOnly)
     MidiPlayer *play = GET_MIDI_PLAYER(device);
     assert(play);
     play->setLoopHooksOnly(loopHooksOnly);
+}
+
+EDMIDI_EXPORT void edmidi_setModeEMIDI(EDMIDIPlayer *device, int emidiEn)
+{
+    if(!device)
+        return;
+    MidiPlayer *play = GET_MIDI_PLAYER(device);
+    assert(play);
+    play->SetModeEMIDI(emidiEn != 0);
 }

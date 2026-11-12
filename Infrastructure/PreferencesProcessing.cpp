@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2025.09.02) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2026.08.11) P. Stuer **/
 
 #include "pch.h"
 
@@ -48,13 +48,17 @@ const type2 Def##name = value;
 ConfigVariable(LoopExpansion,       cfg_int,  int,      0, 0x90c3d952,0xd07f,0x4d76,0x84,0x40,0x03,0x4a,0xb6,0x4e,0xfd,0x35);
 ConfigVariable(WriteBarMarkers,     cfg_bool, bool, false, 0x532741c5,0xe1a3,0x4334,0xa5,0xb6,0xa5,0x99,0x6d,0x08,0xdc,0x9c);
 ConfigVariable(WriteSysExNames,     cfg_bool, bool, false, 0xe00a19b1,0xe0dd,0x46dc,0xb0,0x6c,0xdb,0xb7,0x13,0x5c,0x07,0xc8);
-ConfigVariable(ExtendLoops,         cfg_bool, bool, true,  0x0d8983e5,0x748e,0x456d,0xb3,0x20,0x74,0x33,0x81,0xb5,0xd0,0x11);
+ConfigVariable(ExpandLoops,         cfg_bool, bool, true,  0x0d8983e5,0x748e,0x456d,0xb3,0x20,0x74,0x33,0x81,0xb5,0xd0,0x11);
 ConfigVariable(WolfteamLoopMode,    cfg_bool, bool, false, 0x373c9824,0x32a3,0x4ebe,0x87,0x3f,0xb2,0xda,0x7e,0xb8,0x50,0x29);
 ConfigVariable(KeepMutedChannels,   cfg_bool, bool, false, 0x5ded0321,0xc53c,0x4581,0xb3,0x1e,0x3c,0x7b,0x3d,0xc0,0x90,0xb5);
 ConfigVariable(IncludeControlData,  cfg_bool, bool, true,  0x55930500,0xb061,0x4974,0xaa,0x60,0x3c,0xdf,0xb6,0x07,0x25,0xbc);
 
 // HMI / HMP
-ConfigVariable(DefaultTempo,        cfg_int, int,    160,  0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
+ConfigVariable(DefaultTempo,        cfg_int, int,     160, 0xf94e1919,0xd2ed,0x4a3c,0xb5,0x9a,0x9e,0x3a,0x03,0xbf,0x49,0xc4);
+
+// Transposition
+ConfigVariable(Semitones,           cfg_int, int,       0, 0xa78b3ffb,0xf93a,0x4bce,0xbb,0xa5,0x7f,0x19,0x31,0xa,0x36,0xd4);
+ConfigVariable(Microtones,          cfg_int, int,       0, 0xe9ef4a78,0xbe21,0x4fd0,0x8e,0x85,0x3b,0x9b,0x8f,0xc5,0x55,0x57);
 
 // Component
 ConfigVariable(LogLevel,            cfg_int,  int,      4, 0x12be0a92,0x3794,0x4414,0x82,0x3e,0xd3,0x14,0x29,0x67,0xa4,0xee);
@@ -131,6 +135,42 @@ private:
         SetDlgItemInt(IDC_PORT, _PortNumber);
     }
 
+    void InitializeTranspositionControls() noexcept
+    {
+        _Semitones = 0;
+
+        auto w = (CTrackBarCtrl) GetDlgItem(IDC_SEMITONES_SLIDER);
+
+        w.SetBuddy(GetDlgItem(IDC_SEMITONES), TRUE);
+        w.SetRange(-24, 24);
+        w.SetPageSize(12);
+        w.SetPos((int) _Semitones);
+        w.SetTicFreq(8);
+
+        SetDlgItemInt(IDC_SEMITONES, (UINT) _Semitones);
+
+        _Microtones = 0;
+
+        w = (CTrackBarCtrl) GetDlgItem(IDC_MICROTONES_SLIDER);
+
+        if (w.IsWindow())
+        {
+            w.SetBuddy(GetDlgItem(IDC_MICROTONES), TRUE);
+            w.SetRange(-8192, 8191);
+            w.SetPageSize(1);
+            w.SetPos((int) _Microtones);
+            w.SetTicFreq(8);
+        }
+
+        SetDlgItemInt(IDC_MICROTONES, (UINT) _Microtones);
+    }
+
+    void ApplyChannelMask() noexcept
+    {
+        CfgChannels.Apply();
+        CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
+    }
+
 private:
     const preferences_page_callback::ptr _Callback;
 
@@ -140,7 +180,7 @@ private:
     int64_t  _LoopExpansion;
     bool _WriteBarMarkers;
     bool _WriteSysExNames;
-    bool _ExtendLoops;
+    bool _ExpandLoops;
     bool _WolfteamLoopMode;
     bool _KeepMutedChannels;
     bool _IncludeControlData;
@@ -152,6 +192,10 @@ private:
     uint64_t _ChannelMaskVersion; // Version number of the channel configuration
 
     uint8_t _PortNumber;
+
+    // Transposition
+    int64_t _Semitones;
+    int64_t _Microtones;
 
     int64_t _LogLevel;
 };
@@ -179,15 +223,17 @@ void ProcessingDialog::apply()
     ApplyConfigVariable(LoopExpansion);
     ApplyConfigVariable(WriteBarMarkers);
     ApplyConfigVariable(WriteSysExNames);
-    ApplyConfigVariable(ExtendLoops);
+    ApplyConfigVariable(ExpandLoops);
     ApplyConfigVariable(WolfteamLoopMode);
     ApplyConfigVariable(KeepMutedChannels);
     ApplyConfigVariable(IncludeControlData);
 
     ApplyConfigVariable(DefaultTempo);
 
-    CfgChannels.Apply();
-    CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
+    ApplyChannelMask();
+
+    ApplyConfigVariable(Semitones);
+    ApplyConfigVariable(Microtones);
 
     ApplyConfigVariable(LogLevel);
 
@@ -204,7 +250,7 @@ void ProcessingDialog::reset()
     ResetConfigVariable(LoopExpansion);
     ResetConfigVariable(WriteBarMarkers);
     ResetConfigVariable(WriteSysExNames);
-    ResetConfigVariable(ExtendLoops);
+    ResetConfigVariable(ExpandLoops);
     ResetConfigVariable(WolfteamLoopMode);
     ResetConfigVariable(KeepMutedChannels);
     ResetConfigVariable(IncludeControlData);
@@ -214,6 +260,11 @@ void ProcessingDialog::reset()
     CfgChannels.Reset();
 
     InitializePortControls();
+
+    ResetConfigVariable(Semitones);
+    ResetConfigVariable(Microtones);
+
+    InitializeTranspositionControls();
 
     ResetConfigVariable(LogLevel);
 
@@ -237,7 +288,7 @@ BOOL ProcessingDialog::OnInitDialog(CWindow window, LPARAM) noexcept
 
     InitializeConfigVariable(WriteBarMarkers);
     InitializeConfigVariable(WriteSysExNames);
-    InitializeConfigVariable(ExtendLoops);
+    InitializeConfigVariable(ExpandLoops);
     InitializeConfigVariable(WolfteamLoopMode);
     InitializeConfigVariable(KeepMutedChannels);
     InitializeConfigVariable(IncludeControlData);
@@ -249,6 +300,11 @@ BOOL ProcessingDialog::OnInitDialog(CWindow window, LPARAM) noexcept
     CfgChannels.Get(_ChannelMask, sizeof(_ChannelMask), _ChannelMaskVersion);
 
     InitializePortControls();
+
+    InitializeConfigVariable(Semitones);
+    InitializeConfigVariable(Microtones);
+
+    InitializeTranspositionControls();
 
     UpdateDialog();
 
@@ -316,13 +372,41 @@ LRESULT ProcessingDialog::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam) noex
     if ((LOWORD(wParam) != TB_ENDTRACK) && (LOWORD(wParam) != TB_THUMBTRACK))
         return 1;
 
-    auto w = (CTrackBarCtrl) GetDlgItem(IDC_PORT_SLIDER);
+    const int ID = ::GetDlgCtrlID((HWND) lParam);
+    auto w = (CTrackBarCtrl) GetDlgItem(ID);
 
-    _PortNumber = (uint8_t) w.GetPos();
+    switch (ID)
+    {
+        case IDC_PORT_SLIDER:
+        {
+            _PortNumber = (uint8_t) w.GetPos();
+            SetDlgItemInt(IDC_PORT, _PortNumber);
 
-    SetDlgItemInt(IDC_PORT, _PortNumber);
+            UpdateChannelButtons();
+            break;
+        }
 
-    UpdateChannelButtons();
+        case IDC_SEMITONES_SLIDER:
+        {
+            _Semitones = (int16_t) w.GetPos();
+            SetDlgItemInt(IDC_SEMITONES, (UINT)_Semitones);
+
+            OnChanged();
+            break;
+        }
+
+        case IDC_MICROTONES_SLIDER:
+        {
+            _Microtones = (int16_t) w.GetPos();
+            SetDlgItemInt(IDC_MICROTONES, (UINT) _Microtones);
+
+            OnChanged();
+            break;
+        }
+
+        default:
+            return 1; // Notification not processed
+    }
 
     return 0;
 }
@@ -335,23 +419,23 @@ void ProcessingDialog::OnButtonClick(UINT, int id, CWindow w) noexcept
     switch (id)
     {
         case IDC_WRITE_BAR_MARKERS:
-            _WriteBarMarkers    = !_WriteBarMarkers;
+            _WriteBarMarkers = !_WriteBarMarkers;
             break;
 
         case IDC_WRITE_SYSEX_NAMES:
-            _WriteSysExNames    = !_WriteSysExNames;
+            _WriteSysExNames = !_WriteSysExNames;
             break;
 
-        case IDC_EXTEND_LOOPS:
-            _ExtendLoops        = !_ExtendLoops;
+        case IDC_EXPAND_LOOPS:
+            _ExpandLoops = !_ExpandLoops;
             break;
 
         case IDC_WOLFTEAM_LOOPS:
-            _WolfteamLoopMode   = !_WolfteamLoopMode;
+            _WolfteamLoopMode = !_WolfteamLoopMode;
             break;
 
         case IDC_KEEP_MUTED_CHANNELS:
-            _KeepMutedChannels  = !_KeepMutedChannels;
+            _KeepMutedChannels = !_KeepMutedChannels;
             break;
 
         case IDC_INCLUDE_CONTROL_DATA:
@@ -376,39 +460,50 @@ void ProcessingDialog::OnButtonClick(UINT, int id, CWindow w) noexcept
         case IDC_CHANNEL_16:
         {
             CfgChannels.Toggle(_PortNumber, (uint32_t) (id - IDC_CHANNEL_01));
-            break;
+
+            ApplyChannelMask();
+
+            return;
         }
 
         case IDC_CHANNEL_ALL:
         {
             CfgChannels.All();
 
+            ApplyChannelMask();
             UpdateChannelButtons();
-            break;
+
+            return;
         }
 
         case IDC_CHANNEL_NONE:
         {
             CfgChannels.None();
 
+            ApplyChannelMask();
             UpdateChannelButtons();
-            break;
+
+            return;
         }
 
         case IDC_CHANNEL_1_10:
         {
             CfgChannels.OnlyLow();
 
+            ApplyChannelMask();
             UpdateChannelButtons();
-            break;
+
+            return;
         }
 
         case IDC_CHANNEL_11_16:
         {
             CfgChannels.OnlyHigh();
 
+            ApplyChannelMask();
             UpdateChannelButtons();
-            break;
+
+            return;
         }
 
         default:
@@ -427,7 +522,7 @@ bool ProcessingDialog::HasChanged() const noexcept
 
     HasConfigVariableChanged(WriteBarMarkers);
     HasConfigVariableChanged(WriteSysExNames);
-    HasConfigVariableChanged(ExtendLoops);
+    HasConfigVariableChanged(ExpandLoops);
     HasConfigVariableChanged(WolfteamLoopMode);
     HasConfigVariableChanged(KeepMutedChannels);
     HasConfigVariableChanged(IncludeControlData);
@@ -436,6 +531,9 @@ bool ProcessingDialog::HasChanged() const noexcept
 
     if (CfgChannels.HasChanged(_ChannelMask, sizeof(_ChannelMask)))
         return true;
+
+    HasConfigVariableChanged(Semitones);
+    HasConfigVariableChanged(Microtones);
 
     HasConfigVariableChanged(LogLevel);
 
@@ -459,7 +557,7 @@ void ProcessingDialog::UpdateDialog() noexcept
 
     SendDlgItemMessageW(IDC_WRITE_BAR_MARKERS,    BM_SETCHECK, (WPARAM) _WriteBarMarkers);
     SendDlgItemMessageW(IDC_WRITE_SYSEX_NAMES,    BM_SETCHECK, (WPARAM) _WriteSysExNames);
-    SendDlgItemMessageW(IDC_EXTEND_LOOPS,         BM_SETCHECK, (WPARAM) _ExtendLoops);
+    SendDlgItemMessageW(IDC_EXPAND_LOOPS,         BM_SETCHECK, (WPARAM) _ExpandLoops);
     SendDlgItemMessageW(IDC_WOLFTEAM_LOOPS,       BM_SETCHECK, (WPARAM) _WolfteamLoopMode);
     SendDlgItemMessageW(IDC_KEEP_MUTED_CHANNELS,  BM_SETCHECK, (WPARAM) _KeepMutedChannels);
     SendDlgItemMessageW(IDC_INCLUDE_CONTROL_DATA, BM_SETCHECK, (WPARAM) _IncludeControlData);
@@ -467,6 +565,9 @@ void ProcessingDialog::UpdateDialog() noexcept
     ::uSetDlgItemText(m_hWnd, IDC_DEFAULT_TEMPO, pfc::format_int(_DefaultTempo));
 
     UpdateChannelButtons();
+
+    SendDlgItemMessageW(IDC_SEMITONES_SLIDER, TBM_SETPOS, TRUE, (LPARAM) _Semitones);
+    SendDlgItemMessageW(IDC_MICROTONES_SLIDER, TBM_SETPOS, TRUE, (LPARAM) _Microtones);
 
     // Log Level
     {

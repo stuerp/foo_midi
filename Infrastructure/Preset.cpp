@@ -1,5 +1,5 @@
 
-/** $VER: Preset.cpp (2025.08.31) **/
+/** $VER: Preset.cpp (2026.05.08) **/
 
 #include "pch.h"
 
@@ -105,6 +105,7 @@ preset_t::preset_t() noexcept
         _UseMIDIEffects = (bool) CfgUseMIDIEffects;
         _UseMT32EmuWithMT32 = (bool) CfgUseMT32EmuWithMT32;
         _UseSCWithGS = (bool) CfgUseSCWithGS;
+        _UseSCWithSC88OrLater = (bool) CfgUseSCWithSC88orLater;
         _UseVSTiWithXG = (bool) CfgUseVSTiWithXG;
         _DetectExtraDrum = (bool) CfgDetectExtraDrum;
     }
@@ -227,6 +228,9 @@ void preset_t::Serialize(pfc::string & text)
 
     text += "|";
     text += pfc::format_int(_UseSCWithGS);
+
+    text += "|";
+    text += pfc::format_int(_UseSCWithSC88OrLater);
 }
 
 void preset_t::Deserialize(const char * text)

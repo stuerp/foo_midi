@@ -71,7 +71,7 @@ var
  chaninfo: BASS_CHANNELINFO;
 begin
 
-  chan := BASS_StreamCreateFile(FALSE, PChar(SourceFileName), 0, 0, BASS_STREAM_DECODE {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+  chan := BASS_StreamCreateFile(0, PChar(SourceFileName), 0, 0, BASS_STREAM_DECODE {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
 
     CancelOp := False;
     LabelOp.Caption      := 'Opening file ...';

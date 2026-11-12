@@ -1,0 +1,87 @@
+name: Build dev snapshots
+
+on:
+  push:
+    branches: [ "master", "ci" ]
+  pull_request:
+    branches: [ "master", "ci" ]
+
+jobs:
+  build-snapshots:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Prepare build environment
+      if: runner.os == 'Windows'
+      run: |
+        export MINGW64_PATH="/c/msys64/mingw64/bin:/c/msys64/usr/bin"
+        echo $MINGW64_PATH >> $GITHUB_PATH
+        echo BUILD_PATH="PATH=$MINGW64_PATH:\$PATH" >> $GITHUB_ENV
+        echo CMAKE_CONFIG_FLAGS="-D CMAKE_PREFIX_PATH=C:/msys64/mingw64" >> $GITHUB_ENV
+
+    - name: Install Ubuntu dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install doctest-dev libpulse-dev portaudio19-dev libjack-jackd2-dev qt6-multimedia-dev
+
+    - name: Install macOS homebrew dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew update
+        brew install doctest portaudio jack qtmultimedia
+
+    - name: Install Windows MSYS64 dependencies
+      if: runner.os == 'Windows'
+      run: >
+        pacman -Sy --noconfirm
+        mingw-w64-x86_64-gcc
+        mingw-w64-x86_64-doctest
+        mingw-w64-x86_64-glib2
+        mingw-w64-x86_64-portaudio
+        mingw-w64-x86_64-jack2
+        mingw-w64-x86_64-qt6-multimedia
+
+    - name: Configuration
+      run: >
+        ${{ env.BUILD_PATH }}
+        cmake -S . -B build -G Ninja
+        -D CMAKE_BUILD_TYPE=Release
+        -D BUILD_SNAPSHOTS=ON
+        -D libmt32emu_PACKAGE_TYPE=Runtime
+        -D libmt32emu_TESTS_DETAILED:BOOL=ON
+        -D mt32emu-qt_USE_JACK_DYNAMIC_LOADING=ON
+        -D mt32emu-qt_USE_PULSEAUDIO_DYNAMIC_LOADING=OFF
+        ${{ env.CMAKE_CONFIG_FLAGS }}
+
+    - name: Build
+      run: ${{ env.BUILD_PATH }} cmake --build build
+
+    - name: Test
+      working-directory: build
+      run: ${{ env.BUILD_PATH }} ctest -V
+
+    - name: Package munt monolith
+      working-directory: build
+      run: >
+        cpack -G ${{ case(
+          runner.os == 'Linux', 'DEB',
+          runner.os == 'macOS', 'TXZ',
+          'ZIP'
+        ) }}
+
+    - uses: actions/upload-artifact@v7
+      name: Upload munt
+      with:
+        path: build/munt-*.${{ case(runner.os == 'Linux', 'deb', runner.os == 'macOS', 'tar.xz', 'zip') }}
+        archive: false

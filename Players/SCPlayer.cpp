@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.cpp (2025.10.04) Secret Sauce **/
+/** $VER: SCPlayer.cpp (2026.05.06) Secret Sauce **/
 
 #include "pch.h"
 
@@ -7,7 +7,7 @@
 
 #include <sdk/foobar2000-lite.h>
 
-#include <vector>
+#include <cstdlib>
 
 #include "SecretSauce.h"
 #include "Resource.h"
@@ -33,7 +33,7 @@ SCPlayer::SCPlayer() noexcept : player_t(), _Samples()
         _IsPortTerminating[i] = false;
     }
 
-    _Samples = new(std::nothrow) float[4096 * 2];
+    _Samples = new(std::nothrow) float[MaxFrames * 2];
 }
 
 SCPlayer::~SCPlayer()
@@ -110,11 +110,21 @@ void SCPlayer::Shutdown()
 /// </summary>
 void SCPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
+    if (dstFrames == nullptr || dstCount == 0)
+        return;
+
     ::memset(dstFrames, 0, dstCount * 2 * sizeof(audio_sample));
+
+    if (_hProcess[0] == NULL || _hProcess[1] == NULL || _hProcess[2] == NULL)
+    {
+        Shutdown();
+
+        return;
+    }
 
     while (dstCount != 0)
     {
-        uint32_t ToDo = (dstCount > 4096) ? 4096 : dstCount;
+        const uint32_t ToDo = std::min(dstCount, MaxFrames);
 
         for (uint32_t i = 0; i < _countof(_hProcess); ++i)
         {
@@ -125,13 +135,13 @@ void SCPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
                 return;
             }
 
-            float Gain = (float) CfgSecretSauceGain;
+            const float Gain = 1.f + (float) CfgSecretSauceGain;
 
             // Convert the format of the rendered output.
-            for (size_t j = 0; j < ToDo; ++j)
+            for (uint32_t j = 0; j < ToDo; ++j)
             {
-                dstFrames[j * 2 + 0] += _Samples[j * 2 + 0] * (1.f + Gain);
-                dstFrames[j * 2 + 1] += _Samples[j * 2 + 1] * (1.f + Gain);
+                dstFrames[j * 2 + 0] += _Samples[j * 2 + 0] * Gain;
+                dstFrames[j * 2 + 1] += _Samples[j * 2 + 1] * Gain;
             }
         }
 
@@ -191,6 +201,10 @@ void SCPlayer::SendEvent(uint32_t data, uint32_t time)
 /// </summary>
 void SCPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 {
+    // Don't send any SysEx RQ1 messages to Secret Sauce. The emulator (as does the real SC8820 hardware) does not react well if the message is malformed e.g. a wrong size or address.
+    if ((size >= 5) && (data[4] == 0x11))
+        return; 
+
     WriteBytes(portNumber, 3);
     WriteBytes(portNumber, (uint32_t) size);
     WriteBytes(portNumber, data, (uint32_t) size);
@@ -208,20 +222,20 @@ void SCPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
 /// <summary>
 /// Sends the specified SysEx event with a timestamp.
 /// </summary>
-void SCPlayer::SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber, uint32_t time)
+void SCPlayer::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
 {
     WriteBytes(portNumber, 7);
     WriteBytes(portNumber, (uint32_t) size);
     WriteBytes(portNumber, (uint32_t) time);
-    WriteBytes(portNumber, event, (uint32_t) size);
+    WriteBytes(portNumber, data, (uint32_t) size);
 
     if (ReadCode(portNumber) != 0)
         StopHost(portNumber);
 
     if (portNumber == 0)
     {
-        SendSysEx(event, size, 1, time);
-        SendSysEx(event, size, 2, time);
+        SendSysEx(data, size, 1, time);
+        SendSysEx(data, size, 2, time);
     }
 }
 
@@ -595,11 +609,11 @@ uint32_t SCPlayer::ReadBytesOverlapped(uint32_t portNumber, void * data, uint32_
 }
 
 /// <summary>
-/// Writes a number of bytes to a port.
+/// Writes a number of packed bytes to a port.
 /// </summary>
-void SCPlayer::WriteBytes(uint32_t portNumber, uint32_t code) noexcept
+void SCPlayer::WriteBytes(uint32_t portNumber, uint32_t packedBytes) noexcept
 {
-    WriteBytes(portNumber, &code, sizeof(code));
+    WriteBytes(portNumber, &packedBytes, sizeof(packedBytes));
 }
 
 /// <summary>

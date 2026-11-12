@@ -65,13 +65,7 @@
     <ClInclude Include="repo\src\chips\mame\opl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="repo\src\chips\nuked_opl3_v174.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="repo\src\chips\nuked_opl3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="repo\src\chips\nuked\nukedopl3_174.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="repo\src\chips\nuked\nukedopl3.h">
@@ -173,6 +167,33 @@
     <ClInclude Include="repo\include\adlmidi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="repo\src\models\opl_models.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_opl3_fast.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_opl2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_cqm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\dosbox_opl2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_fast\nukedopl3_fast.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_fast\wf_rom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked_cqm\cqm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\src\chips\nuked\nukedopl2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="repo\src\adlmidi_load.cpp">
@@ -191,9 +212,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\adlmidi.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="repo\src\chips\dos_hw_opl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\chips\dosbox_opl3.cpp">
@@ -220,13 +238,7 @@
     <ClCompile Include="repo\src\chips\mame\mame_fmopl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="repo\src\chips\nuked_opl3_v174.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="repo\src\chips\nuked_opl3.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="repo\src\chips\nuked\nukedopl3_174.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\chips\nuked\nukedopl3.c">
@@ -284,6 +296,51 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\wopl\wopl_file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked\nukedopl2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_ail.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_apogee.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_dmx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_generic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_hmi_sos.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_msadlib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_oconnell.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_win9x.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_opl3_fast.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_opl2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_cqm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\dosbox_opl2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_fast\nukedopl3_fast.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\chips\nuked_cqm\cqm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

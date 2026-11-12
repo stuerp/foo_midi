@@ -1,7 +1,7 @@
 /*
  * Copyright (с) 2004 Mitsutaka Okazaki
  * Copyright (с) 2010-2018 Chris Moeller <kode54@gmail.com>
- * Copyright (с) 2021-2025 Vitaly Novichkov <admin@wohlnet.ru>
+ * Copyright (с) 2021-2026 Vitaly Novichkov <admin@wohlnet.ru>
  *
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
@@ -580,6 +580,15 @@ extern EDMIDI_DECLSPEC void edmidi_setLoopCount(struct EDMIDIPlayer *device, int
  * @param loopHooksOnly 0 - disabled, 1 - enabled
  */
 extern EDMIDI_DECLSPEC void edmidi_setLoopHooksOnly(struct EDMIDIPlayer *device, int loopHooksOnly);
+
+/**
+ * @brief Enable or disable the handling of events according Apogee Sound System's EMIDI standard for MIDI files
+ * @param device Instance of the library
+ * @param emidiEn 0 - disabled, 1 - enabled
+ *
+ * Note: The mode must be set before loading the MIDI file, otherwise this option will take no effect
+ */
+extern EDMIDI_DECLSPEC void edmidi_setModeEMIDI(struct EDMIDIPlayer *device, int emidiEn);
 
 #ifdef __cplusplus
 }

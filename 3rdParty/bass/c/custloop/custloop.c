@@ -98,8 +98,8 @@ BOOL PlayFile()
 	ofn.lpstrFilter = "Playable files\0*.mp3;*.mp2;*.mp1;*.ogg;*.wav;*.aif;*.mo3;*.it;*.xm;*.s3m;*.mtm;*.mod;*.umx\0All files\0*.*\0\0";
 	if (!GetOpenFileName(&ofn)) return FALSE;
 
-	if (!(chan = BASS_StreamCreateFile(FALSE, file, 0, 0, BASS_SAMPLE_LOOP))
-		&& !(chan = BASS_MusicLoad(FALSE, file, 0, 0, BASS_MUSIC_RAMPS | BASS_MUSIC_POSRESET | BASS_MUSIC_PRESCAN | BASS_SAMPLE_LOOP, 1))) {
+	if (!(chan = BASS_StreamCreateFile(0, file, 0, 0, BASS_SAMPLE_LOOP))
+		&& !(chan = BASS_MusicLoad(0, file, 0, 0, BASS_MUSIC_RAMPS | BASS_MUSIC_POSRESET | BASS_MUSIC_PRESCAN | BASS_SAMPLE_LOOP, 1))) {
 		Error("Can't play file");
 		return FALSE;
 	}
@@ -131,8 +131,8 @@ BOOL PlayFile()
 	}
 	BASS_ChannelPlay(chan, FALSE); // start playing
 	{ // create another channel to scan
-		DWORD chan2 = BASS_StreamCreateFile(FALSE, file, 0, 0, BASS_STREAM_DECODE);
-		if (!chan2) chan2 = BASS_MusicLoad(FALSE, file, 0, 0, BASS_MUSIC_DECODE, 1);
+		DWORD chan2 = BASS_StreamCreateFile(0, file, 0, 0, BASS_STREAM_DECODE);
+		if (!chan2) chan2 = BASS_MusicLoad(0, file, 0, 0, BASS_MUSIC_DECODE, 1);
 		scanthread = CreateThread(NULL, 0, ScanPeaks, (void*)chan2, 0, NULL); // start scanning in a new thread
 	}
 	return TRUE;

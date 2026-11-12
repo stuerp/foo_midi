@@ -16,7 +16,7 @@ endif()
 try_compile(HAS_TERMIO ${CMAKE_BINARY_DIR}/compile_tests "${CMAKE_CURRENT_SOURCE_DIR}/cmake/check-termio.c")
 try_compile(HAS_TERMIOS ${CMAKE_BINARY_DIR}/compile_tests "${CMAKE_CURRENT_SOURCE_DIR}/cmake/check-termios.c")
 
-include(../midiplay/utf8main.cmake)
+include(../common/utf8main.cmake)
 
 set(adlmidi2_src)
 list(APPEND adlmidi2_src
@@ -28,6 +28,14 @@ list(APPEND adlmidi2_src
     9x15.hpp
     ${UTF8MAIN_SRCS}
 )
+
+if(ADLMIDI_DOS)
+    list(APPEND adlmidi2_src
+        ../midiplay/playback/dos_tman.h
+        ../midiplay/playback/dos_tman_c.h
+        ../midiplay/playback/dos_tman.cpp
+    )
+endif()
 
 if(ADLMIDI2_HAS_PUZZLE_GAME)
     list(APPEND adlmidi2_src puzzlegame.cc puzzlegame.hpp)
@@ -60,6 +68,7 @@ if(ADLMIDI2_VIDEO_OUT_SUPPORT)
 endif()
 
 if(ADLMIDI_DOS)
+    set_target_properties(adlmidi2 PROPERTIES SUFFIX ".exe") # Don't make an .exe-less copy!
     target_compile_definitions(adlmidi2 PUBLIC HARDWARE_OPL3)
     message("Turn on hardware OPL3 support on ADLMIDI2 tool")
 endif()

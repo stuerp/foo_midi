@@ -118,15 +118,15 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						ofn.lpstrFile = file;
 						if (GetOpenFileName(&ofn)) {
 							DWORD newchan;
-							if ((newchan = BASS_MusicLoad(FALSE, file, 0, 0, BASS_MUSIC_RAMP | BASS_SAMPLE_LOOP | BASS_SAMPLE_3D, 1))
-								|| (newchan = BASS_SampleLoad(FALSE, file, 0, 0, 1, BASS_SAMPLE_LOOP | BASS_SAMPLE_3D | BASS_SAMPLE_MONO))) {
+							if ((newchan = BASS_MusicLoad(0, file, 0, 0, BASS_MUSIC_RAMP | BASS_SAMPLE_LOOP | BASS_SAMPLE_3D, 1))
+								|| (newchan = BASS_SampleLoad(0, file, 0, 0, 1, BASS_SAMPLE_LOOP | BASS_SAMPLE_3D | BASS_SAMPLE_MONO))) {
 								Channel *c;
 								chanc++;
 								chans = (Channel*)realloc((void*)chans, chanc * sizeof(Channel));
 								c = chans + chanc - 1;
 								memset(c, 0, sizeof(Channel));
 								c->channel = newchan;
-								BASS_SampleGetChannel(newchan, FALSE); // initialize sample channel (ignored if MOD music)
+								BASS_SampleGetChannel(newchan, 0); // initialize sample channel (ignored if MOD music)
 								LM(LB_ADDSTRING, 0, strrchr(file, '\\') + 1);
 							} else
 								Error("Can't load the file");

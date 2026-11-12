@@ -1,5 +1,5 @@
 
-/** $VER: SCPlayer.h (2025.10.04) Secret Sauce **/
+/** $VER: SCPlayer.h (2026.05.06) Secret Sauce **/
 
 #pragma once
 
@@ -71,6 +71,8 @@ private:
     bool _IsPortTerminating[MaxPorts];
 
     float * _Samples;
+
+    static const uint32_t MaxFrames = 4096;
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member

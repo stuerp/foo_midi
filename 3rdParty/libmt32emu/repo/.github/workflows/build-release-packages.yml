@@ -1,0 +1,183 @@
+name: Build Linux release packages
+
+on:
+  workflow_dispatch
+
+jobs:
+  build-ubuntu-packages:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install dependencies for libmt32emu
+      run: |
+        sudo apt-get update
+        sudo apt-get install doctest-dev
+
+    - name: Configure libmt32emu
+      run: >
+        cmake -S mt32emu -B build -G Ninja
+        -D CMAKE_BUILD_TYPE=Release
+        -D libmt32emu_PACKAGE_TYPE=Runtime
+        -D libmt32emu_WITH_VERSION_TAGGING=ON
+        -D libmt32emu_WITH_SYMBOL_VERSIONING=ON
+
+    - name: Build libmt32emu
+      run: cmake --build build
+
+    - name: Test libmt32emu
+      working-directory: build
+      run: ctest -V
+
+    - name: Package libmt32emu
+      working-directory: build
+      run: cpack -G DEB
+
+    - uses: actions/upload-artifact@v7
+      name: Upload libmt32emu
+      with:
+        path: build/libmt32emu-*.deb
+        archive: false
+
+    - name: Configure libmt32emu-dev
+      run: cmake -D libmt32emu_PACKAGE_TYPE=Devel build
+
+    - name: Package libmt32emu-dev
+      working-directory: build
+      run: cpack -G DEB
+
+    - uses: actions/upload-artifact@v7
+      name: Upload libmt32emu-dev
+      with:
+        path: build/libmt32emu-dev-*.deb
+        archive: false
+
+    - name: Install dependencies for mt32emu-smf2wav
+      working-directory: build
+      run: |
+        sudo dpkg -i libmt32emu-*.deb
+        sudo dpkg -i libmt32emu-dev-*.deb
+        sudo apt-get install libglib2.0-dev
+
+    - name: Clean build directory
+      run: rm -rf build
+
+    - name: Configure mt32emu-smf2wav
+      run: >
+        cmake -S mt32emu_smf2wav -B build -G Ninja
+        -D CMAKE_BUILD_TYPE=Release
+
+    - name: Build mt32emu-smf2wav
+      run: cmake --build build
+
+    - name: Package mt32emu-smf2wav
+      working-directory: build
+      run: cpack -G DEB
+
+    - uses: actions/upload-artifact@v7
+      name: Upload mt32emu-smf2wav
+      with:
+        path: build/mt32emu-smf2wav-*.deb
+        archive: false
+
+    - name: Clean build directory
+      run: rm -rf build
+
+    - name: Install dependencies for mt32emu-qt
+      run: sudo apt-get install libpulse-dev portaudio19-dev libjack-jackd2-dev qt6-multimedia-dev
+
+    - name: Configure mt32emu-qt
+      run: >
+        cmake -S mt32emu_qt -B build -G Ninja
+        -D CMAKE_BUILD_TYPE=Release
+        -D mt32emu-qt_USE_JACK_DYNAMIC_LOADING=ON
+        -D mt32emu-qt_USE_PULSEAUDIO_DYNAMIC_LOADING=OFF
+
+    - name: Build mt32emu-qt
+      run: cmake --build build
+
+    - name: Package mt32emu-qt
+      working-directory: build
+      run: cpack -G DEB
+
+    - uses: actions/upload-artifact@v7
+      name: Upload mt32emu-qt
+      with:
+        path: build/mt32emu-qt-*.deb
+        archive: false
+
+  build-rpms:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Assemble
+      run: |
+        cat <<'EOF' >> build.sh
+        #!/bin/bash
+        set -e
+        dnf update -y
+        dnf install -y gcc-c++ cmake ninja-build rpm-build doctest-devel \
+          qt5-qtmultimedia-devel pulseaudio-libs-devel portaudio-devel jack-audio-connection-kit-devel
+        cd /home/munt
+        cmake -S mt32emu -B build/mt32emu -G Ninja \
+          -D CMAKE_BUILD_TYPE=Release \
+          -D libmt32emu_PACKAGE_TYPE=Runtime \
+          -D libmt32emu_WITH_VERSION_TAGGING=ON \
+          -D libmt32emu_WITH_SYMBOL_VERSIONING=ON
+        cmake --build build/mt32emu
+        cd build/mt32emu
+        ctest -V
+        cpack -G RPM
+        cmake -D libmt32emu_PACKAGE_TYPE=Devel .
+        cpack -G RPM
+        rpm -i libmt32emu-*.rpm
+        cd /home/munt
+        cmake -S mt32emu_smf2wav -B build/mt32emu_smf2wav -G Ninja \
+          -D CMAKE_BUILD_TYPE=Release
+        cmake --build build/mt32emu_smf2wav
+        cd build/mt32emu_smf2wav
+        cpack -G RPM
+        cd /home/munt
+        cmake -S mt32emu_qt -B build/mt32emu_qt -G Ninja \
+          -D CMAKE_BUILD_TYPE=Release \
+          -D mt32emu-qt_USE_JACK_DYNAMIC_LOADING=ON \
+          -D mt32emu-qt_USE_PULSEAUDIO_DYNAMIC_LOADING=OFF
+        cmake --build build/mt32emu_qt
+        cd build/mt32emu_qt
+        cpack -G RPM
+        EOF
+        chmod a+x build.sh
+        podman run --hostname alma8-toolbox.muntemu.org \
+          --mount type=bind,source=.,destination=/home/munt \
+          --rm \
+          ghcr.io/almalinux/8-toolbox /home/munt/build.sh
+
+    - uses: actions/upload-artifact@v7
+      name: Upload libmt32emu-devel
+      with:
+        path: build/mt32emu/libmt32emu-devel-*.rpm
+        archive: false
+
+    - name: Wipe libmt32emu-devel
+      run: rm build/mt32emu/libmt32emu-devel-*.rpm
+
+    - uses: actions/upload-artifact@v7
+      name: Upload libmt32emu
+      with:
+        path: build/mt32emu/libmt32emu-*.rpm
+        archive: false
+
+    - uses: actions/upload-artifact@v7
+      name: Upload mt32emu-smf2wav
+      with:
+        path: build/mt32emu_smf2wav/mt32emu-smf2wav-*.rpm
+        archive: false
+
+    - uses: actions/upload-artifact@v7
+      name: Upload mt32emu-qt
+      with:
+        path: build/mt32emu_qt/mt32emu-qt-*.rpm
+        archive: false

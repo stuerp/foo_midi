@@ -49,8 +49,8 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						if (GetOpenFileName(&ofn)) {
 							BASS_ChannelFree(chan[devn]); // free the old channel
 							BASS_SetDevice(outdev[devn]); // set the device to create new channel on
-							if (!(chan[devn] = BASS_StreamCreateFile(FALSE, file, 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))
-								&& !(chan[devn] = BASS_MusicLoad(FALSE, file, 0, 0, BASS_MUSIC_RAMPS | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT, 1))) {
+							if (!(chan[devn] = BASS_StreamCreateFile(0, file, 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))
+								&& !(chan[devn] = BASS_MusicLoad(0, file, 0, 0, BASS_MUSIC_RAMPS | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT, 1))) {
 								MESS(10 + devn, WM_SETTEXT, 0, "Open file...");
 								Error("Can't play the file");
 								break;

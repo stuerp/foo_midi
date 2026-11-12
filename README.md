@@ -7,7 +7,8 @@ It is based on [foo_midi](https://gitlab.com/kode54/foo_midi) by [kode54](https:
 
 ## Features
 
-- Decodes General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36, .XMF/.MXMF, .MMF).
+- Decodes and plays General MIDI files (.MID, .MIDI, .RMI, .KAR) and several MIDI based formats. (.MIDS, .MDS, .HMI, .HMP, .MUS, .XMI, .XFM, .LDS, .RCP, .R36, .G18, .G36, .XMF/.MXMF, .MMF, .MMD).
+- Preliminary support for MIDI 2.0 files (.MIDI2) (M2-104-UM 1.1.1 Draft 2023-07-19)
 - Supports several synthesizers, several of which do not require any additional files to play back music. The bundled synthesizers which do not require additional files may sound rather basic, though.
 - Supports FluidSynth SoundFont (.sf2) based synthesizer, including support for the newer compressed format. (.sf3). SoundFonts may be loaded in a simple, or even complex setup, using either basic .sflist text files encoded in UTF-8 format, but for now, it only supports a bare list of files.
 - Supports 32 and 64-bit VST instruments.
@@ -36,25 +37,26 @@ You can find the user guide [here](docs/README.md).
 
 To build the code you need:
 
-- [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-- [foobar2000 SDK](https://www.foobar2000.org/SDK) 2025-03-07
+- [Microsoft Visual Studio 2026 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
+- [foobar2000 SDK](https://www.foobar2000.org/SDK) 2026-09-17
 - [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
 The following libraries are included in the code:
 
-- [BASS](https://www.un4seen.com/) 2.4.17
-  - [BASSFLAC](https://www.un4seen.com/) 2.4.5.5
-  - [BASSMIDI](https://www.un4seen.com/) 2.4.15.3
+- [BASS](https://www.un4seen.com/) 2.4.18.3
+  - [BASSFLAC](https://www.un4seen.com/) 2.4.6.1
+  - [BASSMIDI](https://www.un4seen.com/) 2.4.16.0
   - [BASSWV](https://www.un4seen.com/) 2.4.7.4
-  - [BASSOPUS](https://www.un4seen.com/) 2.4.3.0
+  - [BASSOPUS](https://www.un4seen.com/) 2.4.3.3
   - [BASSMPC](https://www.un4seen.com/) 2.4.1.2
-- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.4.7
-- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.1, Yamaha YMF262 and CT1747 (OPL3)
-- [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.1, Yamaha YM2612 (OPN2), Yamaha YM2608 (OPNA), Yamaha YM3438 (OPN2C) and YMF276 (OPN2L).
+- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.6.2
+- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.2.1, Yamaha YMF262 and CT1747 (OPL3)
+- [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.2, Yamaha YM2612 (OPN2), Yamaha YM2608 (OPNA), Yamaha YM3438 (OPN2C) and YMF276 (OPN2L).
 - [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
-- [LibMT32Emu](https://github.com/munt/munt) 2.7.2, Roland MT-32, CM-32L and LAPC-I synthesiser modules
+- [LibMT32Emu](https://github.com/munt/munt) 2.8.6, Roland MT-32, CM-32L and LAPC-I synthesiser modules
 - [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3), Yamaha YMF262 and CT1747 (OPL3)
-- [zlib](https://www.zlib.net/) 1.3.1
+- [zlib](https://www.zlib.net/) 1.4
+- [CLAP](https://github.com/free-audio/clap) 1.2.10
 
 To create the deployment package you need:
 
@@ -72,9 +74,9 @@ Create the following directory structure:
     out
     sdk
 
-- `3rdParty/WTL10_10320` contains [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL).
+- `3rdParty\WTL10_10320` contains [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL).
 - `bin` contains a portable version of foobar2000 64-bit for debugging purposes.
-- `bin/x86` contains a portable version of foobar2000 32-bit for debugging purposes.
+- `bin.x86` contains a portable version of foobar2000 32-bit for debugging purposes.
 - `foo_midi` contains the [Git](https://github.com/stuerp/foo_midi) repository.
 - `out` receives a deployable version of the component.
 - `sdk` contains the [foobar2000 SDK](https://www.foobar2000.org/SDK).
@@ -95,12 +97,25 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.2.3.0, 2025-10-04
+v3.3.0.0, 2026-11-12
 
-- New: *Gain* setting for Secret Sauce. It works the same with BASS MIDI. Positive values increase the volume, negative values decrese the volume. The valid range is -1.0 (Silence) to 2.0. Default is 0.0 (No gain). Beware that clipping will occur if you set the value too high.
-- New: The VSTi&nbsp;Plug&#8209;Ins setting can contain multiple paths separated by a pipe (|) character (e.g. "c:\VSTi\x86|d:\VSTi\x64"). Make sure there are no unwanted spaces at the beginning or end of the path names.
-- Fixed: The preferences dialog accepts negative BASS MIDI gain values. The valid range is -1.0 (Silence) to 2.0. This already worked for JSON soundfont lists.
-- Improved: Soundfonts in a JSON soundfont list that not specify their own gain value will also use the gain value from the preferences. Soundfonts in a text soundfont list ignore this value since they have no way to override it.
+- New: Upgraded to libADLMIDI 1.6.2.1.
+  - Nuked CQM emulator can be selected from the Preferences page.
+- New: Upgraded to libOPNMIDI 1.6.2.
+- New: Integrated [jecassis](https://github.com/jecassis) IMusicKeyboard2 interface to support the foo_vis_midi fork by jecassis.
+- New: Upgraded to libmt32emu 2.8.6.
+- New: Upgraded to zlib 1.4.
+- New: Compiled with foobar2000 SDK 2026-09-17.
+- Added: Support for MMD98 (MIDI Music Driver) files. [GitHub Issue 154](https://github.com/stuerp/foo_midi/issues/154)
+- Added: Option "Use Secret Sauce with SC-88 or later". This option will override the selected player when the MIDI file contains a SYSTEM MODE SET sysex. [GitHub Issue 145](https://github.com/stuerp/foo_midi/issues/145)
+- Added: Semitones slider to transpose a MIDI sequence for playback. [GitHub Issue 123](https://github.com/stuerp/foo_midi/issues/123)
+- Added: Preliminary support for MIDI 2.0 files (.MIDI2) (M2-104-UM 1.1.1 Draft 2023-07-19).
+- Added: FluidSynth 2.6.0 interpolation methods to the preferences.
+- Changed: Channels can be turned off and on again without using the Apply button of the configuration dialog. There is latency due to foobar2000 audio buffering.
+- Changed: Builds with Visual Studio 2026.
+- Changed: SysEx REQ1 events are no longer sent to Secret Sauce. The plug-in does not handle malformed SysEx events correctly and the result of the request is not used anyway. [GitHub Issue 155](https://github.com/stuerp/foo_midi/issues/155)
+- Improved: MMD converter is thread safe now.
+- Fixed: OPN Player ignored the selected WOPN bank file.
 
 You can read the full history [here](docs/History.md).
 

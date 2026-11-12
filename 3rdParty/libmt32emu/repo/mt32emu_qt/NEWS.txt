@@ -1,3 +1,59 @@
+2026-11-02:
+
+	1.12.3 released.
+
+	* Updated mt32emu library to version 2.8.4.
+
+2026-06-06:
+
+	1.12.2 released.
+
+	* Updated mt32emu library to version 2.8.3.
+
+2026-05-24:
+
+	1.12.1 released.
+
+	* Updated mt32emu library to version 2.8.2.
+
+2026-05-16:
+
+	1.12.0 released.
+
+	* Updated mt32emu library to version 2.8.0.
+	* Fixed UI that may show obsolete state of a stopped synth.
+	  After stopping the pinned synth, the SynthStateMonitor occasionally left displaying the last
+	  state change generated immediately before stopping, e.g. the partial states. This happened
+	  due to asynchronous nature of state updates, so now, we explicitly check the synth state
+	  before applying such updates. (#107)
+	* Fixed occasional crashes when JACK audio device started.
+	  On some platforms, when a relatively small JACK buffer size is configured, the JACK server
+	  manages to invoke the first audio rendering callback early enough, so that the previous
+	  implementation of JACKClient sometimes hasn't had initialised yet. The new implementation
+	  activates the JACK client in a separate step, when the initialisation is complete. (#106)
+	* Added an option to the main menu that allows to disable autoconnecting the synth audio
+	  outputs to a pair of JACK physical audio ports if found. (#121)
+	* Added a couple of spin boxes into the synth properties dialog to allow for finer control over
+	  the synth output gain factors. (#104)
+	* macOS: Fixed the floating display getting hidden as soon as the application goes to the
+	  background. (#130)
+	* Re-arranged the synth state panel and added a partial usage indicator alongside the
+	  existing MIDI MESSAGE LED. (#112)
+	* Fixed incompatibility with the new QtAudio implementation (starting from Qt 6.4). (#133)
+	* Added a possibility to pin the Master Volume, so that it can only be set manually and not
+	  via a SysEx message. Additionally, a new "Stereo Output Amp" control located below the Master
+	  Volume compliments it to alter both easily. (#135)
+	* Added more hints to make the UI better self-documenting. (#105)
+	* Added Save State button to the Synth pane. It enables storing the current internal synth
+	  state into a SysEx bank file that can be loaded later as usual (e.g. via the MIDI player).
+	  Related to (#144).
+
+2022-08-03:
+
+	1.11.1 released.
+
+	* Fixed compilation on macOS with SDK versions prior to 12.0. (#96)
+
 2022-07-23:
 
 	1.11.0 released.

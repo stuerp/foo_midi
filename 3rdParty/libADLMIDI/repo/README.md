@@ -3,7 +3,7 @@ libADLMIDI is a free Software MIDI synthesizer library with OPL3 emulation
 
 Original ADLMIDI code: Copyright (c) 2010-2014 Joel Yliluoma <bisqwit@iki.fi>
 
-ADLMIDI Library API:   Copyright (c) 2015-2025 Vitaly Novichkov <admin@wohlnet.ru>
+ADLMIDI Library API:   Copyright (c) 2015-2026 Vitaly Novichkov <admin@wohlnet.ru>
 
 Library is based on the ADLMIDI, a MIDI player for Linux and Windows with OPL3 emulation:
 
@@ -65,13 +65,21 @@ sudo make install
 * To compile for DOS via DJGPP on Linux, use `cmake/djgpp/djgpp-cmake.sh` script which a wrapper over CMake to pass DJGPP's stuff required for build
 
 # License
-The library is licensed under in it's parts LGPL 2.1+, GPL v2+, GPL v3+, and MIT.
-* Nuked OPL3 emulators are licensed under LGPL v2.1+.
-* DosBox OPL3 emulator is licensed under GPL v2+.
+The library is licensed under in it's parts LGPL 2.1+, LGPL 2+, GPL v2+, GPL v3+, MIT, BSD 3-Clause, and the Boost Software License 1.0. Some parts are in the public domain, and the embedded FM banks carry their own terms.
+* Nuked OPL3, Nuked-OPL3-fast, Nuked CQM and ESFMu emulators are licensed under LGPL v2.1+.
+* Nuked OPL2 Lite, YMF262-LLE and YM3812-LLE emulators are licensed under GPL v2+.
+* DosBox OPL2 and OPL3 emulators are licensed under GPL v2+.
+* MAME OPL2 emulator is licensed under GPL v2+.
+* JavaOPL3 emulator is licensed under LGPL v2.1+.
+* YMFM emulator is licensed under BSD 3-Clause.
+* Opal emulator is in the public domain.
 * Chip interfaces are licensed under LGPL v2.1+.
-* File Reader class and MIDI Sequencer is licensed under MIT.
+* File Reader class and MIDI Sequencer is licensed under MIT, except the XMIDI converter which is LGPL v2+.
 * WOPL reader and writer module is licensed under MIT.
+* The OPL2/OPL3 models library is licensed under MIT.
+* The pl_list container (src/structures) is licensed under the Boost Software License 1.0.
 * Other parts of library are licensed under GPLv3+.
+* The embedded FM banks carry their own notices where available, see `fm_banks_new/LICENSE-*.txt` and `fm_banks_new/greyzone/README.txt`.
 
 ## Available CMake options
 
@@ -184,6 +192,35 @@ To build that example you will need to have installed SDL2 library.
 * Add support of MIDI Format 2 files
 
 # Changelog
+## 1.6.2.1 2025-08-30
+ * Fixed misses of register writes problem at the LLE-OPL3 emulator (#318).
+ * Fixed build when default embedded banks database regeneration is enabled (#316).
+
+## 1.6.2   2025-08-24
+ * Fixed the random stuck problem in the DOS version of the ADLMIDI player.
+ * Added support for HMI and HMP files!
+ * Added support for in-track (local) loops.
+ * Optimized work with chip instruments.
+ * The panic will be always triggered on attempt to switch the bank.
+ * Improved sounding accuracy at DMX banks.
+ * Added MS Adlib driver's for Win3x volume model.
+ * Added IMF Creator's volume model.
+ * Added Jammie O'Connel's FM Synth volume model.
+ * Added support for DMX OP2's Fixed Note feature for melodic instruments.
+ * Fixed the unexpected playback distortion while playing IMF/CMF/KLM files using DosBox OPL3 emulator.
+ * Fixed unexpected non-GM instruments from embedded bank appears when loading custom GM-only bank.
+ * Added `adl_rt_rawOPL3()` public API to send raw OPL3 register writes to a specific chip, reusing the same internal routing used by IMF/KLM playback. Allows callers to render raw-OPL formats alongside MIDI playback on the same chip.
+ * Added `adl_reserveChipChannels()` / `adl_getReservedChipChannels()` public API for per-chip bitmask reservation of chip channels, so the MIDI voice allocator will skip them and leave them free for raw OPL writes.
+ * The Nuked OPL3 v1.8 got been slightly updated to sync with the mainstream to have all recent envelope generator fixes.
+ * The old Nuked OPL3 v1.7 emulator is replaced with an optimised alternative fork by tgies.
+ * Added Nuked CQM emulator (Emulator of the Creative's OPL3 clone chip known as Creative Quadratic Modulation).
+ * Fixed the silence problem at the MIDI channel after playing too many notes without Note OFF event.
+ * Fixed the work of the DOS-built MIDI player under Windows 9x without the dead freeze.
+ * Added `adl_setDeviceFilterMask()` public API to assign the device filter mask for the HMI/HMP/EMIDI tracks disabling/enabling.
+ * Added handling of music files designed for the EMIDI standard from the Apogee Sound System. This feature must be enabled manually to avoid heuristics and possible conflicts.
+ * Added `adl_setModeEMIDI()` public API to enable handling EMIDI specification events without conflicts to other formats.
+ * Added an ability to run the DosBox emulator in OPL2 mode.
+
 ## 1.6.1   2025-09-22
  * WinMM: Fixed random crash on waveOutOpen initialisation because of incorrect initialisation structure usage.
  * Fixed crash when playing too many notes at the same channel.

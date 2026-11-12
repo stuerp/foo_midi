@@ -1,6 +1,6 @@
 /*
 	BASS effects example
-	Copyright (c) 2001-2021 Un4seen Developments Ltd.
+	Copyright (c) 2001-2025 Un4seen Developments Ltd.
 */
 
 #include <windows.h>
@@ -92,8 +92,8 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						ofn.lpstrFile = file;
 						if (GetOpenFileName(&ofn)) {
 							BASS_ChannelFree(chan); // free the old channel
-							if (!(chan = BASS_StreamCreateFile(FALSE, file, 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))
-								&& !(chan = BASS_MusicLoad(FALSE, file, 0, 0, BASS_MUSIC_RAMPS | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT, 1))) {
+							if (!(chan = BASS_StreamCreateFile(0, file, 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))
+								&& !(chan = BASS_MusicLoad(0, file, 0, 0, BASS_MUSIC_RAMPS | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT, 1))) {
 								MESS(10, WM_SETTEXT, 0, "Open file...");
 								Error("Can't play the file");
 								break;
@@ -109,11 +109,10 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 				case 30:
 					{
 						// remove current effects
-						DWORD ch = fxchan ? fxchan : chan;
-						BASS_ChannelRemoveFX(ch, fx[0]);
-						BASS_ChannelRemoveFX(ch, fx[1]);
-						BASS_ChannelRemoveFX(ch, fx[2]);
-						BASS_ChannelRemoveFX(ch, fx[3]);
+						BASS_FXFree(fx[0]);
+						BASS_FXFree(fx[1]);
+						BASS_FXFree(fx[2]);
+						BASS_FXFree(fx[3]);
 						if (MESS(30, BM_GETCHECK, 0, 0)) {
 							fxchan = BASS_StreamCreate(0, 0, 0, STREAMPROC_DEVICE, 0); // get device output stream
 							fxchansync = BASS_ChannelSetSync(fxchan, BASS_SYNC_FREE, 0, DeviceFreeSync, 0); // sync when device output stream is freed (format change)

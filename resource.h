@@ -1,5 +1,5 @@
 
-/** $VER: Resource.h (2025.10.04) P. Stuer **/
+/** $VER: Resource.h (2026.11.12) P. Stuer **/
 
 #pragma once
 
@@ -7,23 +7,25 @@
 #define TOSTRING(x) TOSTRING_IMPL(x)
 
 #define NUM_FILE_MAJOR              3
-#define NUM_FILE_MINOR              2
-#define NUM_FILE_PATCH              3
+#define NUM_FILE_MINOR              3
+#define NUM_FILE_PATCH              0
 #define NUM_FILE_PRERELEASE         0
 
 #define NUM_PRODUCT_MAJOR           3
-#define NUM_PRODUCT_MINOR           2
-#define NUM_PRODUCT_PATCH           3
+#define NUM_PRODUCT_MINOR           3
+#define NUM_PRODUCT_PATCH           0
 #define NUM_PRODUCT_PRERELEASE      0
+
+#define STR_RELEASE_TAG             ""
 
 /** Component specific **/
 
 #define STR_COMPONENT_NAME          "MIDI Player"
-#define STR_COMPONENT_VERSION       TOSTRING(NUM_FILE_MAJOR) "." TOSTRING(NUM_FILE_MINOR) "." TOSTRING(NUM_FILE_PATCH) "." TOSTRING(NUM_FILE_PRERELEASE)
+#define STR_COMPONENT_VERSION       TOSTRING(NUM_FILE_MAJOR) "." TOSTRING(NUM_FILE_MINOR) "." TOSTRING(NUM_FILE_PATCH) "." TOSTRING(NUM_FILE_PRERELEASE) STR_RELEASE_TAG
 #define STR_COMPONENT_BASENAME      "foo_midi"
 #define STR_COMPONENT_FILENAME      STR_COMPONENT_BASENAME ".dll"
 #define STR_COMPONENT_COMPANY_NAME  "LoSno.co"
-#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2004-2025 " STR_COMPONENT_COMPANY_NAME ". All rights reserved."
+#define STR_COMPONENT_COPYRIGHT     "Copyright (c) 2004-2026 " STR_COMPONENT_COMPANY_NAME ". All rights reserved."
 #define STR_COMPONENT_COMMENTS      "Written by Christopher Snowhill, P. Stuer"
 #define STR_COMPONENT_DESCRIPTION   "Adds playback of MIDI files to foobar2000"
 #define STR_COMPONENT_URL           "https://github.com/stuerp/" STR_COMPONENT_BASENAME
@@ -82,8 +84,9 @@
 #define IDC_MIDI_EFFECTS                    1020
 #define IDC_MIDI_USE_MT32EMU_WITH_MT32      1021
 #define IDC_MIDI_USE_SC_WITH_GS             1022
-#define IDC_MIDI_USE_VSTI_WITH_XG           1023
-#define IDC_MIDI_DETECT_EXTRA_DRUM          1024
+#define IDC_MIDI_USE_SC_WITH_SC88_OR_LATER  1023
+#define IDC_MIDI_USE_VSTI_WITH_XG           1024
+#define IDC_MIDI_DETECT_EXTRA_DRUM          1025
 
 /** Dialog: Preferences FM Synthesis **/
 
@@ -173,7 +176,7 @@
 
 #define IDC_WRITE_BAR_MARKERS               2120
 #define IDC_WRITE_SYSEX_NAMES               2130
-#define IDC_EXTEND_LOOPS                    2140
+#define IDC_EXPAND_LOOPS                    2140
 #define IDC_WOLFTEAM_LOOPS                  2150
 #define IDC_KEEP_MUTED_CHANNELS             2160
 #define IDC_INCLUDE_CONTROL_DATA            2170
@@ -212,6 +215,11 @@
 #define IDC_PORT_LBL                        2330
 #define IDC_PORT                            2331
 #define IDC_PORT_SLIDER                     2332
+
+#define IDC_SEMITONES                       2341
+#define IDC_SEMITONES_SLIDER                2342
+#define IDC_MICROTONES                      2343
+#define IDC_MICROTONES_SLIDER               2344
 
 #define IDC_LOG_LEVEL_LBL                   2430
 #define IDC_LOG_LEVEL                       2431

@@ -52,7 +52,7 @@ void CALLBACK LyricSync(HSYNC handle, DWORD channel, DWORD data, void *user)
 	if (lines > 3) { // remove old lines so that new lines fit in display...
 		int a;
 		for (a = 0, p = lyrics; a < lines - 3; a++) p = strchr(p, '\n') + 1;
-		strcpy(lyrics, p);
+		memmove(lyrics, p, strlen(p) + 1);
 	}
 	MESS(30, WM_SETTEXT, 0, lyrics);
 }
@@ -98,7 +98,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						if (GetOpenFileName(&ofn)) {
 							BASS_StreamFree(chan); // free old stream before opening new
 							MESS(30, WM_SETTEXT, 0, ""); // clear lyrics display
-							if (!(chan = BASS_MIDI_StreamCreateFile(FALSE, file, 0, 0, BASS_SAMPLE_LOOP | (MESS(20, BM_GETCHECK, 0, 0) ? 0 : BASS_MIDI_NOFX), 1))) {
+							if (!(chan = BASS_MIDI_StreamCreateFile(0, file, 0, 0, BASS_SAMPLE_LOOP | (MESS(20, BM_GETCHECK, 0, 0) ? 0 : BASS_MIDI_NOFX), 1))) {
 								// it ain't a MIDI
 								MESS(10, WM_SETTEXT, 0, "Open MIDI file...");
 								MESS(11, WM_SETTEXT, 0, "");
@@ -162,7 +162,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 								sf.preset = -1; // use all presets
 								sf.bank = 0; // use default bank(s)
 								BASS_MIDI_StreamSetFonts(0, &sf, 1); // set default soundfont
-								BASS_MIDI_StreamSetFonts(chan, &sf, 1); // set for current stream too
+								if (chan) BASS_MIDI_StreamSetFonts(chan, &sf, 1); // set for current stream too
 								BASS_MIDI_FontFree(font); // free old soundfont
 								font = newfont;
 							}

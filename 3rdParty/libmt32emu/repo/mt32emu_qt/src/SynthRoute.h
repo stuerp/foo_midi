@@ -78,7 +78,7 @@ public:
 	void audioStreamFailed();
 
 	void enableRealtimeMode();
-	void setMasterVolume(int masterVolume);
+	void setMasterVolume(int masterVolume, bool overridden);
 	void setOutputGain(float outputGain);
 	void setReverbOutputGain(float reverbOutputGain);
 	void setReverbEnabled(bool reverbEnabled);
@@ -107,6 +107,7 @@ public:
 	bool stopRecordingMidi();
 	bool isRecordingMidi() const;
 	void saveRecordedMidi(const QString &fileName, MasterClockNanos midiTick);
+	MT32Emu::Bit32u dumpSysexBank(MT32Emu::Bit8u *&sysexBank);
 
 	void addMidiSession(MidiSession *midiSession);
 	void removeMidiSession(MidiSession *midiSession);

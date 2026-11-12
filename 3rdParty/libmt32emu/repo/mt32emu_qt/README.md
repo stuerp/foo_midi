@@ -88,17 +88,17 @@ Building
 Cmake is required for building. The minimum set of dependencies is:
 
 1) Cmake - cross platform make utility
-   @ <http://www.cmake.org/>
+   @ <https://cmake.org/>
 
 2) Qt framework
-   @ <http://www.qt.io/>
+   @ <https://www.qt.io/>
 
 3) mt32emu library
 
 Additional dependencies maybe needed (depending on the platform):
 
 1) PortAudio - cross-platform audio I/O library
-   @ <http://www.portaudio.com/>
+   @ <https://www.portaudio.com/>
 
 2) DirectX SDK - for building PortAudio with DirectSound and WDMKS support
    @ <https://www.microsoft.com/en-us/download/details.aspx?id=6812>
@@ -126,7 +126,8 @@ The build script recognises the following configuration options to control the b
 
   * `mt32emu-qt_WITH_QT_VERSION` - specifies the exact Qt framework major version (supported range is 4..6) to be linked with;
     useful when multiple versions are available in the system
-  * `mt32emu-qt_USE_PULSEAUDIO_DYNAMIC_LOADING` - whether to load PulseAudio library dynamically (if available)
+  * `mt32emu-qt_USE_JACK_DYNAMIC_LOADING` - whether to load JACK library dynamically (if available)
+  * `mt32emu-qt_USE_PULSEAUDIO_DYNAMIC_LOADING` - whether to load PulseAudio library dynamically (if available for the platform)
   * `mt32emu-qt_WITH_DEBUG_WINCONSOLE` - enables a console for showing debug output on Windows systems
   * `mt32emu-qt_WITH_ALSA_MIDI_SEQUENCER` - specifies whether to use the ALSA MIDI sequencer or raw ALSA MIDI ports
     (when targeting Linux platform only)
@@ -151,7 +152,7 @@ can be found at [the CMake homepage](http://www.cmake.org/).
 License
 =======
 
-Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
+Copyright (C) 2011-2026 Jerome Fisher, Sergey V. Mikayev
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

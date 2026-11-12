@@ -122,8 +122,8 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						ofn.lpstrFile = file;
 						if (GetOpenFileName(&ofn)) {
 							BASS_ChannelFree(chan); // free the old channel
-							if (!(chan = BASS_StreamCreateFile(FALSE, file, 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))
-								&& !(chan = BASS_MusicLoad(FALSE, file, 0, 0, BASS_MUSIC_RAMPS | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT, 1))) {
+							if (!(chan = BASS_StreamCreateFile(0, file, 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))
+								&& !(chan = BASS_MusicLoad(0, file, 0, 0, BASS_MUSIC_RAMPS | BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT, 1))) {
 								MESS(10, WM_SETTEXT, 0, "Open file...");
 								Error("Can't play the file");
 							} else {

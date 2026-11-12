@@ -1,5 +1,5 @@
 
-/** $VER: OPNPlayer.cpp (2025.09.30) **/
+/** $VER: OPNPlayer.cpp (2026.11.12) **/
 
 #include "pch.h"
 
@@ -162,7 +162,9 @@ bool OPNPlayer::Startup()
                 break;
         }
 
-        ::opn2_openBankData(Device, BankData, (long) BankSize);
+
+        if (_BankFilePath.empty() || (::opn2_openBankFile(Device, _BankFilePath.c_str()) != 0))
+            ::opn2_openBankData(Device, BankData, (long) BankSize);
 
         ::opn2_setNumChips(Device, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0)); // Set number of concurrent emulated chips to excite channels limit of one chip.
         ::opn2_setDeviceIdentifier(Device, (unsigned int) i); // Set 4-bit device identifier. Used by the SysEx processor.

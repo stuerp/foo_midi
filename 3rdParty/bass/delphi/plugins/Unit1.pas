@@ -158,7 +158,7 @@ begin
   begin
     Timer1.Enabled := false;
     Bass_StreamFree(Chan);
-    Chan := Bass_StreamCreateFile(false, PChar(open1.FileName), 0, 0, BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+    Chan := Bass_StreamCreateFile(0, PChar(open1.FileName), 0, 0, BASS_SAMPLE_LOOP {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
     if CHan <> 0 then
     begin
       BASS_ChannelGetInfo(chan, info);

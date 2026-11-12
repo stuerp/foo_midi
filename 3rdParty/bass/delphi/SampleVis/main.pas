@@ -105,7 +105,7 @@ begin
   OpenDialog.Title  := 'Open Files';
   OpenDialog.Filter := 'mp3|*.mp3';
   if not OpenDialog.Execute then exit;
-    Channel := BASS_StreamCreateFile(FALSE, PChar(OpenDialog.FileName), 0, 0, 0 {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
+    Channel := BASS_StreamCreateFile(0, PChar(OpenDialog.FileName), 0, 0, 0 {$IFDEF UNICODE} or BASS_UNICODE {$ENDIF});
     BASS_ChannelPlay(Channel, False);
 end;
 

@@ -1,6 +1,6 @@
 /*
 	BASS recording example
-	Copyright (c) 2002-2022 Un4seen Developments Ltd.
+	Copyright (c) 2002-2025 Un4seen Developments Ltd.
 */
 
 #include <windows.h>
@@ -96,6 +96,7 @@ void StartRecording()
 	}
 	BASS_ChannelSetAttribute(rchan, BASS_ATTRIB_VOLDSP, volume);
 	BASS_ChannelStart(rchan); // resume recording
+
 	MESS(10, WM_SETTEXT, 0, "Stop");
 	EnableWindow(DLGITEM(17), FALSE);
 }
@@ -110,7 +111,7 @@ void StopRecording()
 	// enable "save" button
 	EnableWindow(DLGITEM(12), TRUE);
 	// create a stream from the recording
-	if (pchan = BASS_StreamCreateFile(TRUE, recbuf, 0, reclen, 0))
+	if (pchan = BASS_StreamCreateFile(BASS_FILE_MEM, recbuf, 0, reclen, 0))
 		EnableWindow(DLGITEM(11), TRUE); // enable "play" button
 	MESS(10, WM_SETTEXT, 0, "Record");
 	EnableWindow(DLGITEM(17), TRUE);
@@ -273,7 +274,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 				float level = SendMessage((HWND)l, TBM_GETPOS, 0, 0) / 100.f;
 				switch (GetDlgCtrlID((HWND)l)) {
 					case 14:
-						if (!BASS_RecordSetInput(input, 0, level)) // set input source level
+						if (!BASS_RecordSetInput(input, 0, level)) // try to set input level
 							BASS_RecordSetInput(-1, 0, level); // try master level instead
 						break;
 
@@ -312,7 +313,21 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			MESS(17, CB_ADDSTRING, 0, "44100 Hz stereo 16-bit");
 			MESS(17, CB_ADDSTRING, 0, "22050 Hz mono 16-bit");
 			MESS(17, CB_ADDSTRING, 0, "22050 Hz stereo 16-bit");
-			MESS(17, CB_SETCURSEL, 3, 0);
+			{ // preselect native format
+				BASS_RECORDINFO info;
+				BASS_RecordGetInfo(&info);
+				if (!info.freq) { // native format unknown
+					info.freq = 44100;
+					chans = 2;
+				} else
+					chans = info.formats >> 24;
+				if (info.freq <= 22050)
+					MESS(17, CB_SETCURSEL, chans > 1 ? 5 : 4, 0);
+				else if (info.freq <= 44100)
+					MESS(17, CB_SETCURSEL, chans > 1 ? 3 : 2, 0);
+				else
+					MESS(17, CB_SETCURSEL, chans > 1 ? 1 : 0, 0);
+			}
 			SetTimer(h, 0, 100, 0); // timer to update the level and position displays
 			return 1;
 

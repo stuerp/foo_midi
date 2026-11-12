@@ -1,5 +1,5 @@
 
-/** $VER: CLAPEventList.cpp (2025.07.12) P. Stuer **/
+/** $VER: CLAPEventList.cpp (2025.10.06) P. Stuer **/
 
 #include "pch.h"
 
@@ -17,7 +17,7 @@ InputEvents::InputEvents()
     this->ctx = this;
 
     // Returns the number of events in the list
-    this->size = [](const clap_input_events * self) -> uint32_t
+    this->size = [](const clap_input_events_t * self) -> uint32_t
     {
         const auto * This = static_cast<const InputEvents *>(self->ctx);
 
@@ -25,11 +25,11 @@ InputEvents::InputEvents()
     };
 
     // Gets an event from the list.
-    this->get = [](const clap_input_events * self, uint32_t index) -> const clap_event_header *
+    this->get = [](const clap_input_events_t * self, uint32_t index) -> const clap_event_header *
     {
         const auto * This = static_cast<const InputEvents *>(self->ctx);
 
-        return (index < This->Events.size()) ? This->Events[index].get() : nullptr;
+        return (index < This->Events.size()) ? This->Events[index] : nullptr;
     };
 }
 
@@ -38,9 +38,13 @@ InputEvents::InputEvents()
 /// </summary>
 void InputEvents::Add(uint8_t status, uint8_t data1, uint8_t data2, uint16_t portNumber, uint32_t time)
 {
-    auto evt = std::make_unique<clap_event_midi_t>();
+    // Clunky in C++ but otherwise the Address Saninitzer goes nuts.
+    auto evt = (clap_event_midi_t *) std::malloc(sizeof(clap_event_midi_t));
 
-    evt->header.size     = sizeof(evt);
+    if (evt == nullptr)
+        return;
+
+    evt->header.size     = sizeof(clap_event_midi_t);
     evt->header.time     = time;
     evt->header.space_id = CLAP_CORE_EVENT_SPACE_ID;
     evt->header.type     = CLAP_EVENT_MIDI;
@@ -51,7 +55,7 @@ void InputEvents::Add(uint8_t status, uint8_t data1, uint8_t data2, uint16_t por
     evt->data[1] = data1;
     evt->data[2] = data2;
 
-    Events.push_back(std::unique_ptr<clap_event_header>((clap_event_header *) evt.release()));
+    Events.push_back((clap_event_header_t *) evt);
 }
 
 /// <summary>
@@ -59,9 +63,13 @@ void InputEvents::Add(uint8_t status, uint8_t data1, uint8_t data2, uint16_t por
 /// </summary>
 void InputEvents::Add(const uint8_t * data, uint32_t size_, uint16_t portNumber, uint32_t time)
 {
-    auto evt = std::make_unique<clap_event_midi_sysex>();
+    // Clunky in C++ but otherwise the Address Saninitzer goes nuts.
+    auto evt = (clap_event_midi_sysex_t *) std::malloc(sizeof(clap_event_midi_sysex_t));
 
-    evt->header.size     = sizeof(evt);
+    if (evt == nullptr)
+        return;
+
+    evt->header.size     = sizeof(clap_event_midi_sysex_t);
     evt->header.time     = time;
     evt->header.space_id = CLAP_CORE_EVENT_SPACE_ID;
     evt->header.type     = CLAP_EVENT_MIDI_SYSEX;
@@ -71,7 +79,7 @@ void InputEvents::Add(const uint8_t * data, uint32_t size_, uint16_t portNumber,
     evt->buffer = data;
     evt->size   = size_;
 
-    Events.push_back(std::unique_ptr<clap_event_header>((clap_event_header *) evt.release()));
+    Events.push_back((clap_event_header_t *) evt);
 }
 
 OutputEvents::OutputEvents()
@@ -79,7 +87,7 @@ OutputEvents::OutputEvents()
     this->ctx = this;
 
     // Receives events from the plug-in. Return false if the event could not be pushed.
-    this->try_push = [](const struct clap_output_events * list, const clap_event_header_t * event) -> bool
+    this->try_push = [](const clap_output_events_t * list, const clap_event_header_t * event) -> bool
     {
     #ifdef DEBUG
         switch (event->type)
@@ -98,7 +106,7 @@ OutputEvents::OutputEvents()
 
             case CLAP_EVENT_MIDI:
             {
-                const auto * me = (clap_event_midi *) event;
+                const auto * me = (clap_event_midi_t *) event;
 
                 Log.AtTrace().Write(STR_COMPONENT_BASENAME " received MIDI message %02X %02X %02X %02X.", me->data[0], me->data[1], me->data[2], me->data[2]);
                 break;
@@ -106,9 +114,9 @@ OutputEvents::OutputEvents()
 
             case CLAP_EVENT_MIDI_SYSEX:
             {
-                const auto * sx = (clap_event_midi_sysex *) event;
+                const auto * sx = (clap_event_midi_sysex_t *) event;
 
-                std::string Buffer; Buffer.resize((sx->size * 3) + 1); // 3 characters + terminator
+                std::string Buffer; Buffer.resize(((size_t) sx->size * 3) + 1); // 3 characters + terminator
 
                 for (size_t i = 0; i < sx->size; ++i)
                     ::sprintf_s(Buffer.data(), 4, "%02X ", sx->buffer[i]);

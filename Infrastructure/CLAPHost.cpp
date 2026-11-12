@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.08.02) P. Stuer - Implements a CLAP host **/
+/** $VER: CLAPHost.cpp (2025.10.07) P. Stuer - Implements a CLAP host **/
 
 #include "pch.h"
 
@@ -209,6 +209,9 @@ void Host::Unload()
 
     critical_section_lock_t Lock(_CriticalSection);
 
+    if (_CurrentDSO == nullptr)
+        return;
+
     if (_CurrentDSO->_InstanceCount != 0)
         return;
 
@@ -240,6 +243,9 @@ std::shared_ptr<PlugIn> Host::CreatePlugIn()
 
     critical_section_lock_t Lock(_CriticalSection);
 
+    if (_CurrentDSO == nullptr)
+        return nullptr;
+
     auto * Instance = _CurrentDSO->_Factory->create_plugin(_CurrentDSO->_Factory, this, _CurrentDSO->_Descriptor->id);
 
     ++_CurrentDSO->_InstanceCount;
@@ -258,6 +264,9 @@ void Host::DestroyPlugIn()
         throw std::runtime_error("Host::CreatePlugIn() must be called from the main thread");
 
     critical_section_lock_t Lock(_CriticalSection);
+
+    if (_CurrentDSO != nullptr)
+        return;
 
     --_CurrentDSO->_InstanceCount;
 }

@@ -128,7 +128,7 @@ bool ADLPlayer::Startup()
         if (::adl_switchEmulator(Device, (int) _EmulatorCore) != 0)
             return false;
 
-        if (_BankFilePath.empty() || (::adl_openBankFile(Device, _BankFilePath.c_str()) == -1))
+        if (_BankFilePath.empty() || (::adl_openBankFile(Device, _BankFilePath.c_str()) != 0))
             ::adl_setBank(Device, (int) _BankNumber);
 
         ::adl_setNumChips           (Device, ChipsPerPort + ChipsRound * (i == 0) + ChipsMin * (i != 0)); // Set number of concurrent emulated chips to excite channels limit of one chip.

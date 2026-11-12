@@ -1,7 +1,7 @@
 /*****************************************************************************
  * libadlmidi.c: Software MIDI synthesizer using OPL3 Synth emulation
  *****************************************************************************
- * Copyright © 2015-2025 Vitaly Novichkov
+ * Copyright © 2015-2026 Vitaly Novichkov
  * $Id$
  *
  * This program is free software: you can redistribute it and/or modify
@@ -139,6 +139,9 @@ static const char * const volume_models_descriptions[] =
     N_("Win9x Generic FM driver"),
     N_("HMI Sound Operating System"),
     N_("HMI Sound Operating System (Old)"),
+    N_("MS AdLib (Win3x driver)"),
+    N_("IMF Creator"),
+    N_("Jammie O'Connel's FM Synth"),
     NULL
 };
 
@@ -164,6 +167,7 @@ static const int emulator_type_values[] =
 #endif
 
 #ifndef ADLMIDI_DISABLE_DOSBOX_EMULATOR
+    (int)ADLMIDI_EMU_DOSBOX_OPL2,
     (int)ADLMIDI_EMU_DOSBOX,
 #endif
 
@@ -195,16 +199,22 @@ static const int emulator_type_values[] =
 #ifdef ADLMIDI_ENABLE_OPL3_LLE_EMULATOR
     (int)ADLMIDI_EMU_NUKED_OPL3_LLE,
 #endif
+
+#ifndef ADLMIDI_DISABLE_NUKED_EMULATOR
+    (int)ADLMIDI_EMU_NUKED_OPL2_LITE,
+    (int)ADLMIDI_EMU_NUKED_CQM
+#endif
 };
 static const char * const emulator_type_descriptions[] =
 {
 #ifndef ADLMIDI_DISABLE_NUKED_EMULATOR
     N_("Nuked OPL3 1.8"),
-    N_("Nuked OPL3 1.7.4 (Optimized)"),
+    N_("Nuked OPL3 Fast"),
 #endif
 
 #ifndef ADLMIDI_DISABLE_DOSBOX_EMULATOR
-    N_("DOSBox"),
+    N_("DOSBox OPL2"),
+    N_("DOSBox OPL3"),
 #endif
 
 #ifndef ADLMIDI_DISABLE_OPAL_EMULATOR
@@ -234,6 +244,11 @@ static const char * const emulator_type_descriptions[] =
 
 #ifdef ADLMIDI_ENABLE_OPL3_LLE_EMULATOR
     N_("Nuked OPL3-LLE [!EXTRA HEAVY!]"),
+#endif
+
+#ifndef ADLMIDI_DISABLE_NUKED_EMULATOR
+    N_("Nuked OPL2 Lite"),
+    N_("Nuked CQM"),
 #endif
 
     NULL
@@ -602,4 +617,3 @@ drop:
     return p_out;
 #endif
 }
-

@@ -1,7 +1,9 @@
 
-/** $VER: Stream.cpp (2025.08.17) P. Stuer **/
+/** $VER: Stream.cpp (2026.10.06) P. Stuer **/
 
 #include "pch.h"
+
+#include "Win32Exception.h"
 
 namespace msc
 {

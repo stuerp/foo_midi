@@ -1,5 +1,5 @@
 
-/** $VER: Player.h (2025.07.16) P. Stuer **/
+/** $VER: Player.h (2026.09.12) P. Stuer **/
 
 #pragma once
 
@@ -33,6 +33,8 @@ public:
     bool Load(const midi::container_t & container, uint32_t subsongIndex, LoopType loopMode, uint32_t decayTime, uint32_t cleanFlags);
     uint32_t Play(audio_sample * samplesData, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
+
+    void EnableVisualization(bool enabled) noexcept;
 
     uint32_t GetSampleRate() const noexcept { return _SampleRate; };
     void SetSampleRate(uint32_t sampleRate);
@@ -112,6 +114,7 @@ private:
 
 #ifdef HAVE_FOO_VIS_MIDI
     IMusicKeyboard::ptr _MusicKeyboard;
+    IMusicKeyboard2::ptr _MusicKeyboard2;
 #endif
 };
 

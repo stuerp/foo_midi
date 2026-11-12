@@ -1,5 +1,5 @@
 
-/** $VER: foo_midi.cpp (2025.07.07) **/
+/** $VER: foo_midi.cpp (2026.11.11) **/
 
 #include "pch.h"
 
@@ -15,7 +15,9 @@
 #include <FluidSynth/include/fluidsynth.h>
 #include <libadlmidi/repo/include/adlmidi.h>
 #include <libopnmidi/repo/include/opnmidi.h>
+#include <libEDMIDI/repo/include/emu_de_midi.h>
 #include <libmt32emu/config.h>
+#include <libmidi/3rdParty/zlib/zlib.h>
 
 #pragma hdrstop
 
@@ -43,6 +45,8 @@ namespace
             "LibADLMIDI " ADLMIDI_VERSION "\n"
             "LibOPNMIDI " OPNMIDI_VERSION "\n"
             "LibMT32Emu " MT32EMU_VERSION "\n"
+            "LibEDMIDI" EDMIDI_VERSION "\n"
+            "ZLib " ZLIB_VERSION "\n"
     );
 
     VALIDATE_COMPONENT_FILENAME(STR_COMPONENT_FILENAME);

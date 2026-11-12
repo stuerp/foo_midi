@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.10.04) **/
+/** $VER: InputDecoder.cpp (2026.09.12) **/
 
 #include "pch.h"
 
@@ -10,31 +10,11 @@
 #include <sdk/system_time_keeper.h>
 
 #include <pfc/string-conv-lite.h>
-#include <helpers/atl-misc.h>
-
-#include <math.h>
-#include <string.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
-#include <ranges>
-
-#include <libsf.h>
 
 #include "PreferencesFM.h"
-#include "KaraokeProcessor.h"
 #include "CLAPHost.h"
-#include "Exception.h"
 
 #include "Log.h"
-
-/* KEEP? 06/07/25
-volatile int _IsRunning = 0;
-
-critical_section _Lock;
-volatile uint32_t _CurrentSampleRate;
-*/
 
 /// <summary>
 /// Creates a new instance.
@@ -87,8 +67,8 @@ InputDecoder::InputDecoder() noexcept :
     _SecretSauceGain((float) CfgSecretSauceGain)
 {
     _CleanFlags = (uint32_t) (CfgExcludeEMIDITrackDesignation ? midi::container_t::CleanFlagEMIDI : 0) |
-                             (CfgFilterInstruments  ? midi::container_t::CleanFlagInstruments : 0) |
-                             (CfgFilterBanks        ? midi::container_t::CleanFlagBanks : 0);
+                             (CfgFilterInstruments            ? midi::container_t::CleanFlagInstruments : 0) |
+                             (CfgFilterBanks                  ? midi::container_t::CleanFlagBanks : 0);
 /* KEEP? 06/07/25
     _CurrentSampleRate = _SampleRate;
 */
@@ -186,7 +166,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
                 (uint16_t) CfgLoopExpansion,
                 CfgWriteBarMarkers,
                 CfgWriteSysExNames,
-                CfgExtendLoops,
+                CfgExpandLoops,
                 CfgWolfteamLoopMode,
                 CfgKeepMutedChannels,
                 CfgIncludeControlData,
@@ -695,6 +675,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
         }
     }
 
+    _Player->EnableVisualization((_DecoderFlags & input_flag_playback) != 0);
+
     _IsEndOfContainer = false;
 }
 
@@ -1076,13 +1058,33 @@ void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongInde
         }
     }
 
+    // Does any of the tracks contain a System Mode Set SysEx?
+    bool IsSC88OrLater = false;
+
+    for (const auto & Track : _Container)
+    {
+        for (const auto & Event : Track)
+        {
+            if (Event.IsSysEx())
+            {
+                static const uint8_t SystemModeSet[] = { 0xF0, 0x41, 0x10, 0x42, 0x12, 0x00, 0x00, 0x7F }; // Available in Roland GS devices starting with the SC-88.
+
+                if ((Event.Data.size() == 11) && (::memcmp(Event.Data.data(), SystemModeSet, _countof(SystemModeSet)) == 0))
+                {
+                    IsSC88OrLater = true;
+                    break;
+                }
+            }
+        }
+    }
+
     if (_IsMT32 && CfgUseMT32EmuWithMT32)
     {
         _PlayerType = PlayerType::MT32Emu;
         _IsPlayerTypeOverriden = true;
     }
     else
-    if (_IsGS && CfgUseSCWithGS && !CfgSecretSauceDirectoryPath.get().isEmpty())
+    if (((_IsGS && CfgUseSCWithGS) || (IsSC88OrLater && CfgUseSCWithSC88orLater)) && !CfgSecretSauceDirectoryPath.get().isEmpty())
     {
         _PlayerType = PlayerType::SecretSauce;
         _IsPlayerTypeOverriden = true;

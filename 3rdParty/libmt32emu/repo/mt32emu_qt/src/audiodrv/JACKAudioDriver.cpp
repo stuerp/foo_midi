@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2026 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include "JACKAudioDriver.h"
 
 #include "../Master.h"
-#include "../QSynth.h"
+#include "../SynthRoute.h"
 #include "../JACKClient.h"
 #include "../QRingBuffer.h"
 
@@ -141,11 +141,13 @@ JACKAudioStream::~JACKAudioStream() {
 
 bool JACKAudioStream::start(MidiSession *midiSession) {
 	JACKClientState state = jackClient->open(midiSession, this);
-	if (JACKClientState_OPEN != state) {
+	if (JACKClientState_OPENING != state) {
+		if (JACKClientState_UNAVAILABLE == state) {
+			QMessageBox::warning(NULL, "Error", "The JACK library not found");
+		}
 		qDebug() << "JACKAudioDriver: Failed to open JACK client connection";
 		return false;
 	}
-	jackClient->connectToPhysicalPorts();
 
 	const quint32 jackBufferSizeFrames = jackClient->getBufferSize();
 	qDebug() << "JACKAudioDriver: JACK reported initial audio buffer size (frames / s):"
@@ -175,6 +177,15 @@ bool JACKAudioStream::start(MidiSession *midiSession) {
 		midiLatencyFrames = 0;
 		qDebug() << "JACKAudioDriver: Configured synchronous MIDI processing";
 		if (jackClient->isRealtimeProcessing()) synthRoute.enableRealtimeMode();
+	}
+
+	state = jackClient->start();
+	if (JACKClientState_OPEN != state) {
+		qDebug() << "JACKAudioDriver: Failed to start audio processing";
+		return false;
+	}
+	if (Master::getInstance()->getSettings()->value("Master/autoconnectJACKAudio", true).toBool()) {
+		jackClient->connectToPhysicalPorts();
 	}
 
 	return true;

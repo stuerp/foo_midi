@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <locale>
 #include <map>
 #include <string>
 #include <vector>

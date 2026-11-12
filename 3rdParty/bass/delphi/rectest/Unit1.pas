@@ -325,7 +325,7 @@ begin
   WaveStream.Write(i, 4);
   WaveStream.Position := 0;
   // create a stream from the recorded data
-  chan := BASS_StreamCreateFile(True, WaveStream.Memory, 0, WaveStream.Size, 0);
+  chan := BASS_StreamCreateFile(BASS_FILE_MEM, WaveStream.Memory, 0, WaveStream.Size, 0);
   if chan <> 0 then
   begin
     // enable "Play" & "Save" buttons

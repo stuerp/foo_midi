@@ -1,6 +1,6 @@
 /*
 	BASS live spectrum analyser example
-	Copyright (c) 2002-2021 Un4seen Developments Ltd.
+	Copyright (c) 2002-2025 Un4seen Developments Ltd.
 */
 
 #include <windows.h>
@@ -114,12 +114,6 @@ void CALLBACK UpdateSpectrum(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_P
 	ReleaseDC(win, dc);
 }
 
-// Recording callback - not doing anything with the data
-BOOL CALLBACK RecordProc(HRECORD handle, const void *buffer, DWORD length, void *user)
-{
-	return TRUE; // continue recording
-}
-
 LRESULT CALLBACK SpectrumWindowProc(HWND h, UINT m, WPARAM w, LPARAM l)
 {
 	switch (m) {
@@ -146,7 +140,7 @@ LRESULT CALLBACK SpectrumWindowProc(HWND h, UINT m, WPARAM w, LPARAM l)
 				return -1;
 			}
 			// start recording (44100hz mono 16-bit)
-			if (!(chan = BASS_RecordStart(44100, 1, 0, RecordProc, 0))) {
+			if (!(chan = BASS_RecordStart(44100, 1, 0, RECORDPROC_TRUE, 0))) {
 				Error("Can't start recording");
 				return -1;
 			}

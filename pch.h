@@ -1,9 +1,9 @@
 
-/** $VER: pch.h (2025.09.06) P. Stuer **/
+/** $VER: pch.h (2026.05.09) P. Stuer **/
 
 #pragma once
 
-#include <CppCoreCheck/Warnings.h>
+#include <CppCoreCheck\Warnings.h>
 
 #pragma warning(disable: 4100 4625 4626 4710 4711 4738 5045 ALL_CPPCORECHECK_WARNINGS)
 
@@ -11,8 +11,11 @@
 
 #define NOMINMAX
 
-#include <helpers/foobar2000+atl.h>
-#include <helpers/helpers.h>
+#define TOSTRING_IMPL(x) #x
+#define TOSTRING(x) TOSTRING_IMPL(x)
+
+#include <helpers\foobar2000+atl.h>
+#include <helpers\helpers.h>
 
 #include <wincodec.h>
 
@@ -22,6 +25,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cassert>
+#include <cstring>
 #include <string>
 
 #include <libmsc.h>
@@ -33,9 +37,6 @@
 #define Assert(b)
 #endif
 #endif
-
-#define TOSTRING_IMPL(x) #x
-#define TOSTRING(x) TOSTRING_IMPL(x)
 
 #ifndef THIS_HINSTANCE
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;

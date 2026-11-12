@@ -1,6 +1,6 @@
 /*
 	BASS plugins example
-	Copyright (c) 2005-2022 Un4seen Developments Ltd.
+	Copyright (c) 2005-2025 Un4seen Developments Ltd.
 */
 
 #include <windows.h>
@@ -8,6 +8,7 @@
 #include <malloc.h>
 #include <math.h>
 #include <commctrl.h>
+#include <mmreg.h>
 #include "bass.h"
 
 HWND win;
@@ -15,7 +16,7 @@ HWND win;
 DWORD chan;	// channel handle
 
 OPENFILENAME ofn;
-char filter[2000];
+char filter[4000];
 
 // display error messages
 void Error(const char *es)
@@ -32,25 +33,29 @@ const char *GetCTypeString(DWORD ctype, HPLUGIN plugin)
 		const BASS_PLUGININFO *pinfo = BASS_PluginGetInfo(plugin); // get plugin info
 		int a;
 		for (a = 0; a < pinfo->formatc; a++) {
-			if (pinfo->formats[a].ctype == ctype) // found a "ctype" match...
+			if (pinfo->formats[a].ctype == ctype) // found a "ctype" match
 				return pinfo->formats[a].name; // return its name
 		}
 	}
-	// check built-in stream formats...
-	if (ctype == BASS_CTYPE_STREAM_OGG) return "Ogg Vorbis";
+	// check built-in stream formats
+	if (ctype == BASS_CTYPE_STREAM_VORBIS) return "Ogg Vorbis";
 	if (ctype == BASS_CTYPE_STREAM_MP1) return "MPEG layer 1";
 	if (ctype == BASS_CTYPE_STREAM_MP2) return "MPEG layer 2";
 	if (ctype == BASS_CTYPE_STREAM_MP3) return "MPEG layer 3";
 	if (ctype == BASS_CTYPE_STREAM_AIFF) return "Audio IFF";
 	if (ctype == BASS_CTYPE_STREAM_WAV_PCM) return "PCM WAVE";
 	if (ctype == BASS_CTYPE_STREAM_WAV_FLOAT) return "Floating-point WAVE";
-	if (ctype == BASS_CTYPE_STREAM_MF) { // a Media Foundation codec, check the format...
+	if (ctype & BASS_CTYPE_STREAM_WAV) return "WAVE"; // other WAVE codec (could use acmFormatTagDetails to get its name)
+	if (ctype == BASS_CTYPE_STREAM_MF) { // Media Foundation codec
 		const WAVEFORMATEX *wf = (const WAVEFORMATEX*)BASS_ChannelGetTags(chan, BASS_TAG_WAVEFORMAT);
-		if (wf->wFormatTag == 0x1610) return "Advanced Audio Coding";
-		if (wf->wFormatTag >= 0x0160 && wf->wFormatTag <= 0x0163) return "Windows Media Audio";
+		DWORD format = wf->wFormatTag;
+		if (format == WAVE_FORMAT_EXTENSIBLE) format = ((const WAVEFORMATEXTENSIBLE*)wf)->SubFormat.Data1;
+		if (format == 0x1610) return "Advanced Audio Coding";
+		if (format >= 0x0160 && format <= 0x0163) return "Windows Media Audio";
+		if (format == 0xe06d802c) return "Dolby Digital";
+		if (format == 0x6c61 || format == 0x616c6163) return "Apple Lossless Audio Codec";
+		if (format == 0xf1ac || format == 0x664c6143) return "Free Lossless Audio Codec";
 	}
-	if (ctype & BASS_CTYPE_STREAM_WAV) // other WAVE codec, could use acmFormatTagDetails to get its name, but for now...
-		return "WAVE";
 	return "?";
 }
 
@@ -72,7 +77,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						ofn.nMaxFile = MAX_PATH;
 						if (GetOpenFileName(&ofn)) {
 							BASS_StreamFree(chan); // free the old stream
-							if (!(chan = BASS_StreamCreateFile(FALSE, file, 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))) {
+							if (!(chan = BASS_StreamCreateFile(0, file, 0, 0, BASS_SAMPLE_LOOP | BASS_SAMPLE_FLOAT))) {
 								MESS(10, WM_SETTEXT, 0, "Open file...");
 								MESS(11, WM_SETTEXT, 0, "");
 								MESS(13, WM_SETTEXT, 0, "");

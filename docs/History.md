@@ -1,6 +1,35 @@
 
 # foo_midi History
 
+v3.3.0.0-alpha3, 2026-09-12
+
+- New: Upgraded to libADLMIDI 1.6.2.1.
+  - Nuked CQM emulator can be selected from the Preferences page.
+- New: Upgraded to libOPNMIDI 1.6.2.
+- New: Integrated [jecassis](https://github.com/jecassis) IMusicKeyboard2 interface to support the foo_vis_midi fork by jecassis.
+- Added: Semitones slider to transpose a MIDI sequence for playback. [GitHub Issue 123](https://github.com/stuerp/foo_midi/issues/123)
+- Added: Preliminary support for MIDI 2.0 files (.MIDI2) (M2-104-UM 1.1.1 Draft 2023-07-19)
+- Added: FluidSynth 2.6.0 interpolation methods to the preferences.
+
+v3.3.0.0-alpha2, 2026-05-08
+
+- Added: Option "Use Secret Sauce with SC-88 or later". This option will override the selected player when the MIDI file contains a SYSTEM MODE SET sysex [GitHub Issue 145](https://github.com/stuerp/foo_midi/issues/145)
+- Changed: SysEx REQ1 events are no longer sent to Secret Sauce. The plug-in does not handle malformed SysEx events correctly and the result of the request is not used anyway. [GitHub Issue 155](https://github.com/stuerp/foo_midi/issues/155)
+- Improved: MMD converter is thread safe now.
+
+v3.3.0.0-alpha1, 2026-05-03
+
+- Added: Support for MMD98 (MIDI Music Driver) files. [GitHub Issue 154](https://github.com/stuerp/foo_midi/issues/154)
+- Changed: Channels can be turned off and on again without using the Apply button of the configuration dialog. There is latency due to foobar2000 audio buffering.
+- Changed: Builds with Visual Studio 2026.
+
+v3.2.3.0, 2025-10-04
+
+- New: *Gain* setting for Secret Sauce. It works the same with BASS MIDI. Positive values increase the volume, negative values decrease the volume. The valid range is -1.0 (Silence) to 2.0. Default is 0.0 (No gain). Beware that clipping will occur if you set the value too high.
+- New: The VSTi&nbsp;Plug&#8209;Ins setting can contain multiple paths separated by a pipe (|) character (e.g. "c:\VSTi\x86|d:\VSTi\x64"). Make sure there are no unwanted spaces at the beginning or end of the path names.
+- Fixed: The preferences dialog accepts negative BASS MIDI gain values. The valid range is -1.0 (Silence) to 2.0. This already worked for JSON soundfont lists.
+- Improved: Soundfonts in a JSON soundfont list that not specify their own gain value will also use the gain value from the preferences. Soundfonts in a text soundfont list ignore this value since they have no way to override it.
+
 v3.2.2.1, 2025-09-30
 
 - Fixed: LibOPNMIDI did not include the new low-level emulators due to a build configuration error.
@@ -9,9 +38,9 @@ v3.2.2.0, 2025-09-22
 
 - New: Upgraded ADL Player with LibADLMIDI 1.6.1.
 - New: Upgraded OPN Player with LibOPNMIDI 1.6.1.
-  -  Added new low-level Nuked OPN2 YM2608, YM2612, YM3438 and YMF276 modes.
-   - Upgraded all built-in WOPN banks to the [latest]((https://github.com/Wohlstand/libOPNMIDI/tree/master/fm_banks) version.
-   - Added new Ninoke WOPN bank.
+  - Added new low-level Nuked OPN2 YM2608, YM2612, YM3438 and YMF276 modes.
+  - Upgraded all built-in WOPN banks to the [latest]((https://github.com/Wohlstand/libOPNMIDI/tree/master/fm_banks) version.
+  - Added new Ninoke WOPN bank.
 
 v3.2.1.1, 2025-09-16
 

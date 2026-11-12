@@ -81,7 +81,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						ofn.lpstrFile = file;
 						if (GetOpenFileName(&ofn)) {
 							BASS_MusicFree(music); // free the current MOD music
-							music = BASS_MusicLoad(FALSE, file, 0, 0, GetFlags() | BASS_SAMPLE_FLOAT, 1); // load the new MOD music
+							music = BASS_MusicLoad(0, file, 0, 0, GetFlags() | BASS_SAMPLE_FLOAT, 1); // load the new MOD music
 							if (music) { // success
 								DWORD length = BASS_ChannelGetLength(music, BASS_POS_MUSIC_ORDER); // get the order length
 								MESS(10, WM_SETTEXT, 0, strrchr(file, '\\') + 1);

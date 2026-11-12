@@ -1,31 +1,28 @@
 
-/** $VER: PreferencesPaths.cpp (2025.09.02) P. stuer **/
+/** $VER: PreferencesPaths.cpp (2026.07.29) P. stuer **/
 
 #include "pch.h"
 
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlcrack.h>
-#include <atlctrls.h>
-#include <atlmisc.h>
-
-#include <map>
 
 #include <sdk/foobar2000-lite.h>
-#include <sdk/console.h>
 #include <sdk/preferences_page.h>
 #include <sdk/coreDarkMode.h>
-#include <sdk/hasher_md5.h>
 
 #include <helpers/atl-misc.h>
-#include <helpers/dropdown_helper.h>
 
 #include <pfc/string-conv-lite.h>
+
+#include <shlwapi.h>
+#include <shlguid.h>
+
+#pragma comment(lib, "shlwapi.lib")
 
 #include "Resource.h"
 
 #include "Configuration.h"
-#include "Preset.h"
 
 #pragma hdrstop
 
@@ -105,6 +102,8 @@ private:
     bool HasChanged() const noexcept;
     void OnChanged() const noexcept;
 
+    static void InstallAutoComplete(HWND hEdit) noexcept;
+
 private:
     // VSTi
     pfc::string _VSTiPlugInDirectoryPath;
@@ -183,6 +182,7 @@ void PathsDialog::reset()
 
     OnChanged();
 }
+
 #pragma endregion
 
 #pragma region CDialogImpl
@@ -192,6 +192,16 @@ void PathsDialog::reset()
 BOOL PathsDialog::OnInitDialog(CWindow, LPARAM) noexcept
 {
     _DarkModeHooks.AddDialogWithControls(*this);
+
+    InstallAutoComplete(::GetDlgItem(m_hWnd, IDC_VSTi_PATH));
+    InstallAutoComplete(::GetDlgItem(m_hWnd, IDC_VSTi_XG_FILE_PATH));
+    InstallAutoComplete(::GetDlgItem(m_hWnd, IDC_CLAP_PATH));
+    InstallAutoComplete(::GetDlgItem(m_hWnd, IDC_SOUNDFONT_FILE_PATH));
+    InstallAutoComplete(::GetDlgItem(m_hWnd, IDC_MT32EMU_FILE_PATH));
+    InstallAutoComplete(::GetDlgItem(m_hWnd, IDC_SECRET_SAUCE_PATH));
+    InstallAutoComplete(::GetDlgItem(m_hWnd, IDC_FLUIDSYNTH_PATH));
+    InstallAutoComplete(::GetDlgItem(m_hWnd, IDC_FLUIDSYNTH_CONFIG_PATH));
+    InstallAutoComplete(::GetDlgItem(m_hWnd, IDC_PROGRAMS_FILE_PATH));
 
     UpdateDialog();
 
@@ -521,7 +531,32 @@ void PathsDialog::UpdateDialog() const noexcept
     ::uSetDlgItemText(m_hWnd, IDC_FLUIDSYNTH_CONFIG_PATH, _FluidSynthConfigFilePath);
     ::uSetDlgItemText(m_hWnd, IDC_PROGRAMS_FILE_PATH,     _ProgramsFilePath);
 }
+
 #pragma endregion
+
+/// <summary>
+/// Installs an auto complete handler in an edit control.
+/// </summary>
+void PathsDialog::InstallAutoComplete(HWND hEdit) noexcept
+{
+    IAutoComplete * ac = nullptr;
+
+    if (SUCCEEDED(::CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ac))))
+    {
+        ::SHAutoComplete(hEdit, SHACF_FILESYSTEM | SHACF_USETAB);
+
+        IAutoComplete2 * ac2 = nullptr;
+
+        if (SUCCEEDED(ac->QueryInterface(IID_PPV_ARGS(&ac2))))
+        {
+            ac2->SetOptions(ACO_AUTOSUGGEST | ACO_AUTOAPPEND | ACO_USETAB | ACO_UPDOWNKEYDROPSLIST);
+
+            ac2->Release();
+        }
+
+        ac->Release();
+    }
+}
 
 static const GUID PreferencesPathsPageGUID = { 0x9d601e5c, 0xd542, 0x435e, { 0x8a, 0x05, 0x4e, 0x88, 0xd1, 0x4d, 0xa3, 0xed } };
 

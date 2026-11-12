@@ -1,6 +1,6 @@
 Attribute VB_Name = "BASSMIDI"
 ' BASSMIDI 2.4 Visual Basic module
-' Copyright (c) 2006-2024 Un4seen Developments Ltd.
+' Copyright (c) 2006-2026 Un4seen Developments Ltd.
 '
 ' See the BASSMIDI.CHM file for more detailed documentation
 
@@ -56,6 +56,7 @@ Global Const BASS_MIDI_FONT_NOSBLIMITS = &H800000
 Global Const BASS_MIDI_FONT_NOLIMITS = BASS_MIDI_FONT_NOSBLIMITS
 Global Const BASS_MIDI_FONT_MINFX = &H1000000
 Global Const BASS_MIDI_FONT_SBLIMITS = &H2000000
+Global Const BASS_MIDI_FONT_STEREO = &H4000000
 
 Type BASS_MIDI_FONT
     font As Long            ' soundfont
@@ -199,6 +200,7 @@ Global Const MIDI_EVENT_VIBRATO_DEPTH = 81
 Global Const MIDI_EVENT_VIBRATO_DELAY = 82
 Global Const MIDI_EVENT_MASTER_FINETUNE = 83
 Global Const MIDI_EVENT_MASTER_COARSETUNE = 84
+Global Const MIDI_EVENT_PAN_LSB = 85
 Global Const MIDI_EVENT_MIXLEVEL = &H10000
 Global Const MIDI_EVENT_TRANSPOSE = &H10001
 Global Const MIDI_EVENT_SYSTEMEX = &H10002
@@ -216,6 +218,7 @@ Global Const MIDI_SYSTEM_GM1 = 1
 Global Const MIDI_SYSTEM_GM2 = 2
 Global Const MIDI_SYSTEM_XG = 3
 Global Const MIDI_SYSTEM_GS = 4
+Global Const MIDI_SYSTEM_GS_88 = 5
 
 Type BASS_MIDI_EVENT
 	event_ As Long          ' MIDI_EVENT_xxx
@@ -260,6 +263,10 @@ Global Const BASS_ATTRIB_MIDI_VOL = &H1200A
 Global Const BASS_ATTRIB_MIDI_QUEUE_TICK = &H1200B
 Global Const BASS_ATTRIB_MIDI_QUEUE_BYTE = &H1200C
 Global Const BASS_ATTRIB_MIDI_QUEUE_ASYNC = &H1200D
+Global Const BASS_ATTRIB_MIDI_QUEUED_TICK = &H1200e
+Global Const BASS_ATTRIB_MIDI_QUEUED_BYTE = &H1200f
+Global Const BASS_ATTRIB_MIDI_QUEUED_ASYNC = &H12010
+Global Const BASS_ATTRIB_MIDI_EXCKEYS = &H12011
 Global Const BASS_ATTRIB_MIDI_TRACK_VOL = &H12100 ' + track #
 
 ' Additional BASS_ChannelGetTags type
@@ -289,7 +296,7 @@ End Type
 Declare Function BASS_MIDI_GetVersion Lib "bassmidi.dll" () As Long
 
 Declare Function BASS_MIDI_StreamCreate Lib "bassmidi.dll" (ByVal channels As Long, ByVal flags As Long, ByVal freq As Long) As Long
-Declare Function BASS_MIDI_StreamCreateFile64 Lib "bassmidi.dll" Alias "BASS_MIDI_StreamCreateFile" (ByVal mem As Long, ByVal file As Any, ByVal offset As Long, ByVal offsethi As Long, ByVal length As Long, ByVal lengthhi As Long, ByVal flags As Long, ByVal freq As Long) As Long
+Declare Function BASS_MIDI_StreamCreateFile64 Lib "bassmidi.dll" Alias "BASS_MIDI_StreamCreateFile" (ByVal filetype As Long, ByVal file As Any, ByVal offset As Long, ByVal offsethi As Long, ByVal length As Long, ByVal lengthhi As Long, ByVal flags As Long, ByVal freq As Long) As Long
 Declare Function BASS_MIDI_StreamCreateURL Lib "bassmidi.dll" (ByVal url As String, ByVal offset As Long, ByVal flags As Long, ByVal proc As Long, ByVal user As Long, ByVal freq As Long) As Long
 Declare Function BASS_MIDI_StreamCreateFileUser Lib "bassmidi.dll" (ByVal system As Long, ByVal flags As Long, ByVal procs As Long, ByVal user As Long, ByVal freq As Long) As Long
 Declare Function BASS_MIDI_StreamCreateEvents Lib "bassmidi.dll" (ByRef events As BASS_MIDI_EVENT, ByVal ppqn As Long, ByVal flags As Long, ByVal freq As Long) As Long
@@ -332,8 +339,8 @@ Declare Function BASS_MIDI_InStart Lib "bassmidi.dll" (ByVal device As Long) As 
 Declare Function BASS_MIDI_InStop Lib "bassmidi.dll" (ByVal device As Long) As Long
 
 ' 32-bit wrappers for 64-bit BASS functions
-Function BASS_MIDI_StreamCreateFile(ByVal mem As Long, ByVal file As Long, ByVal offset As Long, ByVal length As Long, ByVal flags As Long, ByVal freq As Long) As Long
-BASS_MIDI_StreamCreateFile = BASS_MIDI_StreamCreateFile64(mem, file, offset, 0, length, 0, flags Or BASS_UNICODE, freq)
+Function BASS_MIDI_StreamCreateFile(ByVal filetype As Long, ByVal file As Long, ByVal offset As Long, ByVal length As Long, ByVal flags As Long, ByVal freq As Long) As Long
+BASS_MIDI_StreamCreateFile = BASS_MIDI_StreamCreateFile64(filetype, file, offset, 0, length, 0, flags Or BASS_UNICODE, freq)
 End Function
 
 ' callback functions

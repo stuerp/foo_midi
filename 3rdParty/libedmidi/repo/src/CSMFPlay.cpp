@@ -24,7 +24,7 @@ typedef int32_t ssize_t;
 #endif
 
 #include <cstdio>
-#include <limits.h>
+#include <limits.h> /* IWYU pragma: keep */
 #include <assert.h>
 #include <stdint.h>
 #include <algorithm>
@@ -33,6 +33,14 @@ typedef int32_t ssize_t;
 #include "CSccDevice.hpp"
 
 #include "sequencer/midi_sequencer.hpp"
+
+#define DEFAULT_MASK_GM \
+    BW_MidiSequencer::Device_GeneralMidi |\
+    BW_MidiSequencer::Device_GravisUltrasound |\
+    BW_MidiSequencer::Device_SoundMasterII | \
+    BW_MidiSequencer::Device_AWE32 |\
+    BW_MidiSequencer::Device_WaveBlaster |\
+    BW_MidiSequencer::Device_SoundScape
 
 #if defined (_MSC_VER)
 #   if defined (_DEBUG)
@@ -94,14 +102,24 @@ CSMFPlay::~CSMFPlay()
 
 bool CSMFPlay::Load(const void *buf, int size)
 {
+    m_sequencer->setDeviceMask(DEFAULT_MASK_GM);
     bool ret = m_sequencer->loadMIDI(buf, size);
+    m_trackTitles.clear();
+    const MidiSequencer::MusTrackTitlesList &tracks = m_sequencer->getTrackTitles();
+    for(const MidiSequencer::DataBlock *i = tracks.begin(); i != tracks.end(); ++i)
+        m_trackTitles.push_back(std::string(reinterpret_cast<const char*>(m_sequencer->getData(*i)), i->size));
     Reset();
     return ret;
 }
 
 bool CSMFPlay::Open(const char *filename)
 {
+    m_sequencer->setDeviceMask(DEFAULT_MASK_GM);
     bool ret = m_sequencer->loadMIDI(filename);
+    m_trackTitles.clear();
+    const MidiSequencer::MusTrackTitlesList &tracks = m_sequencer->getTrackTitles();
+    for(const MidiSequencer::DataBlock *i = tracks.begin(); i != tracks.end(); ++i)
+        m_trackTitles.push_back(std::string(reinterpret_cast<const char*>(m_sequencer->getData(*i)), i->size));
     Reset();
     return ret;
 }
@@ -180,6 +198,11 @@ bool CSMFPlay::SeqEof()
     return m_sequencer->positionAtEnd();
 }
 
+void CSMFPlay::SetModeEMIDI(bool enabled)
+{
+    m_sequencer->setModeEMIDI(enabled);
+}
+
 void CSMFPlay::setSongNum(int track)
 {
     m_sequencer->setSongNum(track);
@@ -220,31 +243,31 @@ void CSMFPlay::setTriggerHandler(EDMIDI_TriggerHandler handler, void *userData)
     m_sequencer->setTriggerHandler(handler, userData);
 }
 
-const std::string &CSMFPlay::getMusicTitle()
+const char *CSMFPlay::getMusicTitle()
 {
     return m_sequencer->getMusicTitle();
 }
 
-const std::string &CSMFPlay::getMusicCopyright()
+const char *CSMFPlay::getMusicCopyright()
 {
     return m_sequencer->getMusicCopyright();
 }
 
 const std::vector<std::string> &CSMFPlay::getTrackTitles()
 {
-    return m_sequencer->getTrackTitles();
+    return m_trackTitles;
 }
 
 size_t CSMFPlay::getMarkersCount()
 {
-    return m_sequencer->getMarkers().size();
+    return m_sequencer->getMarkers().size;
 }
 
 EdMidi_MarkerEntry CSMFPlay::getMarker(size_t index)
 {
     struct EdMidi_MarkerEntry marker;
-    const std::vector<MidiSequencer::MIDI_MarkerEntry> &markers = m_sequencer->getMarkers();
-    if(index >= markers.size())
+    const MidiSequencer::MusMarkersList &markers = m_sequencer->getMarkers();
+    if(index >= markers.size)
     {
         marker.label = "INVALID";
         marker.pos_time = 0.0;
@@ -253,7 +276,7 @@ EdMidi_MarkerEntry CSMFPlay::getMarker(size_t index)
     }
 
     const MidiSequencer::MIDI_MarkerEntry &mk = markers[index];
-    marker.label = mk.label.c_str();
+    marker.label = reinterpret_cast<const char*>(m_sequencer->getData(mk.label));
     marker.pos_time = mk.pos_time;
     marker.pos_ticks = (unsigned long)mk.pos_ticks;
 

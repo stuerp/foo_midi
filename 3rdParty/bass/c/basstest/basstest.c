@@ -46,7 +46,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 				sprintf(text, "%.2f", BASS_GetCPU());
 				MESS(40, WM_SETTEXT, 0, text);
 				// update volume slider in case it's been changed outside of the app
-				MESS(43, TBM_SETPOS, 1, BASS_GetVolume() * 100);
+				MESS(43, TBM_SETPOS, 1, BASS_GetVolume() * 100 + 0.5f);
 			}
 			break;
 
@@ -62,7 +62,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						ofn.lpstrFilter = "Streamable files (wav/aif/mp3/mp2/mp1/ogg)\0*.wav;*.aif;*.mp3;*.mp2;*.mp1;*.ogg\0All files\0*.*\0\0";
 						ofn.lpstrFile = file;
 						if (GetOpenFileName(&ofn)) {
-							HSTREAM str = BASS_StreamCreateFile(FALSE, file, 0, 0, BASS_SAMPLE_FLOAT);
+							HSTREAM str = BASS_StreamCreateFile(0, file, 0, 0, BASS_SAMPLE_FLOAT);
 							if (str) {
 								strc++;
 								strs = (HSTREAM*)realloc((void*)strs, strc * sizeof(*strs));
@@ -117,7 +117,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						ofn.lpstrFilter = "MOD music files (mo3/xm/mod/s3m/it/mtm/umx)\0*.mo3;*.xm;*.mod;*.s3m;*.it;*.mtm;*.umx\0All files\0*.*\0\0";
 						ofn.lpstrFile = file;
 						if (GetOpenFileName(&ofn)) {
-							HMUSIC mod = BASS_MusicLoad(FALSE, file, 0, 0, BASS_MUSIC_RAMPS | BASS_SAMPLE_FLOAT, 1);
+							HMUSIC mod = BASS_MusicLoad(0, file, 0, 0, BASS_MUSIC_RAMPS | BASS_SAMPLE_FLOAT, 1);
 							if (mod) {
 								modc++;
 								mods = (HMUSIC*)realloc((void*)mods, modc * sizeof(*mods));
@@ -173,7 +173,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						ofn.lpstrFile = file;
 						if (GetOpenFileName(&ofn)) {
 							// give the sample a max of 3 simultaneous playbacks using position as override decider
-							HSAMPLE sam = BASS_SampleLoad(FALSE, file, 0, 0, 3, BASS_SAMPLE_OVER_POS);
+							HSAMPLE sam = BASS_SampleLoad(0, file, 0, 0, 3, BASS_SAMPLE_OVER_POS);
 							if (sam) {
 								samc++;
 								sams = (HSAMPLE*)realloc((void*)sams, samc * sizeof(*sams));
@@ -202,7 +202,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 						int s = GETSAM();
 						if (s != LB_ERR) {
 							// play the sample (at default rate, volume=50%, random pan position)
-							HCHANNEL ch = BASS_SampleGetChannel(sams[s], FALSE);
+							HCHANNEL ch = BASS_SampleGetChannel(sams[s], 0);
 							BASS_ChannelSetAttribute(ch, BASS_ATTRIB_VOL, 0.5f);
 							BASS_ChannelSetAttribute(ch, BASS_ATTRIB_PAN, ((rand() % 201) - 100) / 100.f);
 							if (!BASS_ChannelPlay(ch, FALSE))
@@ -265,7 +265,7 @@ INT_PTR CALLBACK DialogProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			MESS(34, TBM_SETRANGE, 1, MAKELONG(0, 100));
 			MESS(34, TBM_SETPOS, 1, 100);
 			MESS(43, TBM_SETRANGE, 1, MAKELONG(0, 100));
-			MESS(43, TBM_SETPOS, 1, BASS_GetVolume() * 100);
+			MESS(43, TBM_SETPOS, 1, BASS_GetVolume() * 100 + 0.5f);
 			SetTimer(h, 1, 500, NULL);
 			memset(&ofn, 0, sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);

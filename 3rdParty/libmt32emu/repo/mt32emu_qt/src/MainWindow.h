@@ -4,15 +4,14 @@
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 
-#include "SynthWidget.h"
-
 namespace Ui {
 	class MainWindow;
 }
 
 class Master;
 class MidiDriver;
-class AudioFileWriter;
+class AudioDevice;
+class SynthRoute;
 class MidiPlayerDialog;
 class MidiConverterDialog;
 class FloatingDisplay;
@@ -39,7 +38,6 @@ private:
 	Ui::MainWindow *ui;
 	Master *master;
 	MidiDriver *testMidiDriver;
-	AudioFileWriter *audioFileWriter;
 	MidiPlayerDialog *midiPlayerDialog;
 	MidiConverterDialog *midiConverterDialog;
 	FloatingDisplay *floatingDisplay;
@@ -73,6 +71,7 @@ private slots:
 	void on_actionShow_LCD_balloons_toggled(bool checked);
 	void on_actionShow_connection_balloons_toggled(bool checked);
 	void on_actionShow_native_file_dialog_toggled(bool checked);
+	void on_actionConnect_JACK_audio_automatically_toggled(bool checked);
 	void on_menuFloating_Display_aboutToShow();
 	void handleFloatingDisplayVisibilityChanged(QAction *triggeredAction);
 	void on_actionFloating_display_Bypass_window_manager_toggled(bool checked);

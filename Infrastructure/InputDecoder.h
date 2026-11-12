@@ -58,6 +58,7 @@ public:
 
     InputDecoder(const InputDecoder &) = delete;
     InputDecoder(InputDecoder &&) = delete;
+
     InputDecoder & operator=(const InputDecoder &) = delete;
     InputDecoder & operator=(InputDecoder &&) = delete;
 

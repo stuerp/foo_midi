@@ -8,7 +8,7 @@
 #pragma warning(disable: 4625 4626 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include <sdk/foobar2000-lite.h>
-#include <sdk/cfg_var.h>
+#include <sdk/cfg_var_legacy.h>
 
 #include <map>
 
@@ -17,17 +17,18 @@ using namespace cfg_var_modern;
 /// <summary>
 /// Implements a configuration variable for maps that uses integer keys.
 /// </summary>
-class cfg_vsti_map : public cfg_var, public std::map<uint32_t, std::vector<uint8_t>>
+class cfg_vsti_map : public cfg_var_legacy::cfg_var, public std::map<uint32_t, std::vector<uint8_t>>
 {
 public:
-    cfg_vsti_map(const GUID & guid) noexcept : cfg_var(guid), std::map<uint32_t, std::vector<uint8_t>>() { }
+    cfg_vsti_map(const GUID & guid) noexcept : cfg_var_legacy::cfg_var(guid), std::map<uint32_t, std::vector<uint8_t>>() { }
 
     cfg_vsti_map(const cfg_vsti_map &) = delete;
     cfg_vsti_map(const cfg_vsti_map &&) = delete;
+
     cfg_vsti_map& operator=(const cfg_vsti_map &) = delete;
     cfg_vsti_map& operator=(cfg_vsti_map &&) = delete;
 
-    virtual ~cfg_vsti_map() { };
+    virtual ~cfg_vsti_map() = default;
 
     #pragma region cfg_var_writer
 
@@ -95,17 +96,18 @@ public:
 /// <summary>
 /// Implements a configuration variable for maps that uses string keys.
 /// </summary>
-class cfg_clap_map : public cfg_var, public std::map<std::string, std::vector<uint8_t>>
+class cfg_clap_map : public cfg_var_legacy::cfg_var, public std::map<std::string, std::vector<uint8_t>>
 {
 public:
-    cfg_clap_map(const GUID & guid) noexcept : cfg_var(guid), std::map<std::string, std::vector<uint8_t>>() { }
+    cfg_clap_map(const GUID & guid) noexcept : cfg_var_legacy::cfg_var(guid), std::map<std::string, std::vector<uint8_t>>() { }
 
     cfg_clap_map(const cfg_clap_map &) = delete;
     cfg_clap_map(const cfg_clap_map &&) = delete;
+
     cfg_clap_map & operator=(const cfg_clap_map &) = delete;
     cfg_clap_map & operator=(cfg_clap_map &&) = delete;
 
-    virtual ~cfg_clap_map() { };
+    virtual ~cfg_clap_map() = default;
 
     #pragma region cfg_var_writer
 

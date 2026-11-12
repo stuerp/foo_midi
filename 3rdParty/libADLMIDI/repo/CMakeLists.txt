@@ -1,5 +1,5 @@
-cmake_minimum_required (VERSION 3.2...3.10)
-project (libADLMIDI VERSION 1.6.1 LANGUAGES C CXX)
+cmake_minimum_required (VERSION 3.2...4.0)
+project (libADLMIDI VERSION 1.6.2.1 LANGUAGES C CXX)
 
 include(GNUInstallDirs)
 include(CheckCCompilerFlag)
@@ -87,6 +87,7 @@ endif()
 # Strip garbage
 if(APPLE)
     set(LINK_FLAGS_RELEASE  "${LINK_FLAGS_RELEASE} -dead_strip")
+    set(LINK_FLAGS_MINSIZEREL  "${LINK_FLAGS_MINSIZEREL} -dead_strip")
 elseif(NOT MSVC AND NOT MSDOS AND NOT OPENBSD_LOCALBASE)
     string(REGEX REPLACE "-O3" ""
             CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
@@ -94,6 +95,8 @@ elseif(NOT MSVC AND NOT MSDOS AND NOT OPENBSD_LOCALBASE)
             CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2 -fdata-sections -ffunction-sections")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -fdata-sections -ffunction-sections")
+    set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -fdata-sections -ffunction-sections")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -fdata-sections -ffunction-sections")
     string(REGEX REPLACE "-O3" ""
             CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
     string(REGEX REPLACE "-O3" ""
@@ -108,6 +111,9 @@ elseif(NOT MSVC AND NOT MSDOS AND NOT OPENBSD_LOCALBASE)
         set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s -Wl,--gc-sections -Wl,-s")
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s -Wl,--gc-sections -Wl,-s")
         set(LINK_FLAGS_RELEASE  "${LINK_FLAGS_RELEASE} -Wl,--gc-sections -Wl,-s")
+        set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -s -Wl,--gc-sections -Wl,-s")
+        set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -s -Wl,--gc-sections -Wl,-s")
+        set(LINK_FLAGS_MINSIZEREL  "${LINK_FLAGS_MINSIZEREL} -Wl,--gc-sections -Wl,-s")
     endif()
 endif()
 
@@ -117,6 +123,8 @@ if(NOT MSVC AND NOT MSDOS)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-omit-frame-pointer")
     set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -fno-omit-frame-pointer")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fno-omit-frame-pointer")
+    set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -fno-omit-frame-pointer")
 # Turn on all warnings
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -178,7 +186,7 @@ function(set_nopie _target)
 endfunction()
 
 function(set_legacy_standard destTarget)
-    if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+    if((CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX) AND CMAKE_VERSION VERSION_GREATER 3.2)
         # Turn on warnings and legacy C/C++ standards to support more compilers
         target_compile_options(${destTarget} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:-Wall -pedantic -std=gnu90 -Wno-long-long>
@@ -200,7 +208,7 @@ function(set_visibility_hidden destTarget)
 endfunction()
 #===========================================================================================
 
-if(VITA OR NINTENDO_3DS OR NINTENDO_WII OR NINTENDO_WIIU)
+if(VITA OR PSP OR PS2 OR NINTENDO_3DS OR NINTENDO_WII OR NINTENDO_WIIU)
     set(DEFAULT_HEAVY_EMULATORS OFF)
 else()
     set(DEFAULT_HEAVY_EMULATORS ON)
@@ -208,6 +216,8 @@ endif()
 
 if(NOT EMSCRIPTEN
    AND NOT VITA
+   AND NOT PSP
+   AND NOT PS2
    AND NOT NINTENDO_3DS
    AND NOT NINTENDO_WII
    AND NOT NINTENDO_WIIU
@@ -232,7 +242,6 @@ endif()
 option(WITH_MIDI_SEQUENCER  "Build with embedded MIDI sequencer. Disable this if you want use library in real-time MIDI drivers or plugins." ON)
 option(WITH_EMBEDDED_BANKS  "Use embedded banks" ON)
 option(WITH_HQ_RESAMPLER    "Build with support for high quality resampling" OFF)
-option(WITH_MUS_SUPPORT     "Build with support for DMX MUS files" ON)
 option(WITH_XMI_SUPPORT     "Build with support for AIL XMI files" ON)
 option(USE_DOSBOX_EMULATOR  "Use DosBox 0.74 OPL3 emulator (semi-accurate, suggested for slow or mobile platforms)" ON)
 option(USE_NUKED_EMULATOR   "Use Nuked OPL3 emulator (most accurate, powerful)" ${DEFAULT_HEAVY_EMULATORS})
@@ -249,6 +258,7 @@ option(USE_HW_SERIAL        "Use the hardware OPL3 chip via Serial on modern sys
 
 option(WITH_GENADLDATA      "Build and run full rebuild of embedded banks cache" OFF)
 option(WITH_GENADLDATA_COMMENTS "Enable comments in a generated embedded instruments cache file" OFF)
+option(WITH_GENADLDATA_RUN "Automatically run the gen_adldata during the build process. Disable this if you want to debug gen_adldata itself." ON)
 set(GENADLDATA_CUSTOM_BANKLIST "" CACHE PATH "Use the custom INI file to build the database")
 
 option(WITH_MIDIPLAY        "Build also demo MIDI player" OFF)
@@ -259,7 +269,15 @@ option(VLC_PLUGIN_NOINSTALL "Don't install VLC plugin into VLC directory" OFF)
 option(WITH_OLD_UTILS       "Build also old utilities" OFF)
 option(WITH_MUS2MID         "Build a MUS to MIDI converter" OFF)
 option(WITH_XMI2MID         "Build a XMI to MIDI converter" OFF)
+option(WITH_MIDIDUMP        "Build a MIDI dumper tool" OFF)
 option(EXAMPLE_SDL2_AUDIO   "Build also a simple SDL2 demo MIDI player" OFF)
+
+option(BUILD_NO_GREY_BANKS  "Build without embedding of grey-zone banks even they ara available" OFF)
+mark_as_advanced(BUILD_NO_GREY_BANKS)
+
+option(DEBUG_SONG_DUMP      "Enable debug dumps of all events from the loaded song into .dump.txt text file" OFF)
+option(DEBUG_TRACE_HMI_LOAD "Enable detailed debug print for the HMI loading" OFF)
+option(DEBUG_TRACE_TIME_CALCULATION "Enable detailed debug print for the timeline building" OFF)
 
 if(WIN32)
     option(WITH_WINMMDRV    "Build a WinMM MIDI driver" OFF)
@@ -269,6 +287,8 @@ option(ENABLE_ADDRESS_SANITIZER "Enable the Address Sanitizer GCC feature" OFF)
 
 if(NOT WIN32
    AND NOT VITA
+   AND NOT PSP
+   AND NOT PS2
    AND NOT NINTENDO_3DS
    AND NOT NINTENDO_WII
    AND NOT NINTENDO_WIIU
@@ -282,7 +302,11 @@ endif()
 
 if(WITH_EMBEDDED_BANKS)
     if(NOT WITH_GENADLDATA OR "${GENADLDATA_CUSTOM_BANKLIST}" STREQUAL "")
-        set(ADLDATA_DATABASE "${libADLMIDI_SOURCE_DIR}/src/inst_db.cpp")
+        if(EXISTS "${libADLMIDI_SOURCE_DIR}/banks.ini" AND NOT BUILD_NO_GREY_BANKS)
+            set(ADLDATA_DATABASE "${libADLMIDI_SOURCE_DIR}/src/inst_db.cpp")
+        else()
+            set(ADLDATA_DATABASE "${libADLMIDI_SOURCE_DIR}/src/inst_db_no_grey.cpp")
+        endif()
     else()
         make_directory("${CMAKE_BINARY_DIR}/instdb")
         set(ADLDATA_DATABASE "${CMAKE_BINARY_DIR}/instdb/inst_db.cpp")
@@ -295,13 +319,27 @@ function(handle_options targetLib)
         target_compile_definitions(${targetLib} PUBLIC ENABLE_END_SILENCE_SKIPPING)
     endif()
 
-    if(NOT WITH_MUS_SUPPORT OR NOT WITH_MIDI_SEQUENCER)
-        target_compile_definitions(${targetLib} PUBLIC BWMIDI_DISABLE_MUS_SUPPORT)
-    endif()
-
     if(NOT WITH_XMI_SUPPORT OR NOT WITH_MIDI_SEQUENCER)
         target_compile_definitions(${targetLib} PUBLIC BWMIDI_DISABLE_XMI_SUPPORT)
     endif()
+
+    if(DEBUG_SONG_DUMP)
+        target_compile_definitions(${targetLib} PRIVATE BWMIDI_ENABLE_DEBUG_SONG_DUMP)
+    endif()
+
+    if(DEBUG_TRACE_HMI_LOAD AND NOT ADLMIDI_DOS)
+        target_compile_definitions(${targetLib} PRIVATE BWMIDI_DEBUG_HMI_PARSE)
+    endif()
+
+    if(DEBUG_TRACE_TIME_CALCULATION)
+        target_compile_definitions(${targetLib} PRIVATE BWMIDI_DEBUG_TIME_CALCULATION)
+    endif()
+
+    # Common files
+    target_sources(${targetLib} PRIVATE
+        ${libADLMIDI_SOURCE_DIR}/src/chips/common/ptr.hpp
+        ${libADLMIDI_SOURCE_DIR}/src/chips/common/mutex.hpp
+    )
 
     if(ADLMIDI_DOS)
         set(HAS_EMULATOR TRUE)
@@ -315,7 +353,11 @@ function(handle_options targetLib)
         if(USE_DOSBOX_EMULATOR)
             set(HAS_EMULATOR TRUE)
             target_sources(${targetLib} PRIVATE
+                ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl2.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl2.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl3.h
                 ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl3.cpp
+                ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox/dbopl.h
                 ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox/dbopl.cpp
             )
         else()
@@ -329,10 +371,19 @@ function(handle_options targetLib)
                 ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3.h
                 ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3.c
                 ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3.h
-                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3_v174.cpp  # v 1.7.4
-                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3_v174.h
-                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3_174.c
-                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3_174.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3_fast.cpp  # v 1.8 Optimised by @tgies
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3_fast.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_fast/nukedopl3_fast.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_fast/nukedopl3_fast.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_fast/wf_rom.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl2.cpp       # OPL2 Lite
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl2.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl2.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl2.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_cqm.cpp        # CQM
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_cqm.h
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_cqm/cqm.c
+                ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_cqm/cqm.h
             )
         else()
             target_compile_definitions(${targetLib} PUBLIC ADLMIDI_DISABLE_NUKED_EMULATOR)
@@ -368,6 +419,11 @@ function(handle_options targetLib)
                 ${libADLMIDI_SOURCE_DIR}/src/chips/esfmu/esfm_registers.c
                 ${libADLMIDI_SOURCE_DIR}/src/chips/esfmu/esfm.h
             )
+
+            if((CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX) AND CMAKE_C_COMPILER_VERSION STREQUAL "7.5.0" AND CMAKE_BUILD_TYPE_LOWER STREQUAL "minsizerel")
+                # Workaround to build on GCC 7.5.0
+                set_source_files_properties("${libADLMIDI_SOURCE_DIR}/src/chips/esfmu/esfm.c" COMPILE_FLAGS "-fomit-frame-pointer")
+            endif()
         else()
             target_compile_definitions(${targetLib} PUBLIC ADLMIDI_DISABLE_ESFMU_EMULATOR)
         endif()
@@ -454,7 +510,7 @@ function(handle_options targetLib)
 
     if(WITH_EMBEDDED_BANKS)
         target_sources(${targetLib} PRIVATE ${ADLDATA_DATABASE})
-        if(WITH_GENADLDATA)
+        if(WITH_GENADLDATA AND WITH_GENADLDATA_RUN)
             set_property(SOURCE "${ADLDATA_DATABASE}" PROPERTY INCLUDE_DIRECTORIES "${libADLMIDI_SOURCE_DIR}/src")
             if(NOT "${GENADLDATA_CUSTOM_BANKLIST}" STREQUAL "")
                 set_property(SOURCE "${ADLDATA_DATABASE}" PROPERTY GENERATED TRUE)
@@ -468,7 +524,7 @@ function(handle_options targetLib)
         target_compile_definitions(${targetLib} PUBLIC ADLMIDI_DISABLE_MIDI_SEQUENCER)
     endif()
 
-    if(WITH_EMBEDDED_BANKS AND WITH_GENADLDATA AND NOT ADLMIDI_DOS)
+    if(WITH_EMBEDDED_BANKS AND WITH_GENADLDATA AND NOT ADLMIDI_DOS AND WITH_GENADLDATA_RUN)
         if("${GENADLDATA_CUSTOM_BANKLIST}" STREQUAL "")
             add_dependencies(${targetLib} gen-adldata-run)
         endif()
@@ -489,6 +545,8 @@ function(handle_options targetLib)
     endif()
 endfunction()
 
+include(src/models/opl_models.cmake)
+
 set(libADLMIDI_SOURCES
     ${libADLMIDI_SOURCE_DIR}/src/adlmidi.cpp
     ${libADLMIDI_SOURCE_DIR}/src/adlmidi_load.cpp
@@ -496,13 +554,20 @@ set(libADLMIDI_SOURCES
     ${libADLMIDI_SOURCE_DIR}/src/adlmidi_opl3.cpp
     ${libADLMIDI_SOURCE_DIR}/src/adlmidi_private.cpp
     ${libADLMIDI_SOURCE_DIR}/src/wopl/wopl_file.c
+    ${OPL_MODELS_SOURCES}
 )
+
+if(ADLMIDI_DOS)
+    list(APPEND libADLMIDI_SOURCES ${libADLMIDI_SOURCE_DIR}/src/adlmidi_dos.c)
+endif()
 
 # Make headers being properly visible at IDEs
 file(GLOB libADLMIDI_HEADERS
-    ${libADLMIDI_SOURCE_DIR}/include/*.h
     ${libADLMIDI_SOURCE_DIR}/src/*.h
     ${libADLMIDI_SOURCE_DIR}/src/*.hpp
+    ${libADLMIDI_SOURCE_DIR}/src/midiseq/*.h
+    ${libADLMIDI_SOURCE_DIR}/src/midiseq/*.hpp
+    ${libADLMIDI_SOURCE_DIR}/src/midiseq/impl/*.hpp
     ${libADLMIDI_SOURCE_DIR}/src/wopl/*.h
     ${libADLMIDI_SOURCE_DIR}/src/structures/*.hpp
     ${libADLMIDI_SOURCE_DIR}/src/chips/*.h
@@ -513,6 +578,14 @@ file(GLOB libADLMIDI_HEADERS
     ${libADLMIDI_SOURCE_DIR}/src/chips/opal/*.h
 )
 list(APPEND libADLMIDI_SOURCES ${libADLMIDI_HEADERS})
+
+if(ADLMIDI_DOS)
+    set(ADLMIDI_PUBLIC_HEADERS include/adlmidi.h include/adlmidi_dos.h)
+else()
+    set(ADLMIDI_PUBLIC_HEADERS include/adlmidi.h)
+endif()
+
+list(APPEND libADLMIDI_SOURCES ${ADLMIDI_PUBLIC_HEADERS})
 
 # === Static library ====
 if(libADLMIDI_STATIC OR WITH_VLC_PLUGIN)
@@ -589,11 +662,30 @@ function(libADLMIDI_find_SDL2)
     endif()
 endfunction()
 
+function(libADLMIDI_find_SDL3)
+    if(NOT TARGET ADLMIDI_SDL3)
+        find_package(SDL3 QUIET)
+        if(SDL3_FOUND)
+            add_library(ADLMIDI_SDL3 INTERFACE)
+            if(TARGET SDL3::SDL3)
+                target_link_libraries(ADLMIDI_SDL3 INTERFACE SDL3::SDL3)
+                target_include_directories(ADLMIDI_SDL3 INTERFACE ${SDL3_INCLUDE_DIRS})
+            else()
+                string(STRIP ${SDL3_LIBRARIES} SDL3_LIBRARIES)
+                target_include_directories(ADLMIDI_SDL3 INTERFACE ${SDL3_INCLUDE_DIRS})
+                target_link_libraries(ADLMIDI_SDL3 INTERFACE ${SDL3_LIBRARIES})
+            endif()
+        endif()
+    endif()
+endfunction()
+
 if(WITH_OLD_UTILS)
     # Old utility to dump AdLib bank files
     add_subdirectory(utils/dumpbank)
     # Old utility to dump AIL bank files
     add_subdirectory(utils/dumpmiles)
+    # A special utility to dump the WOPL bank content
+    add_subdirectory(utils/dumpwopl)
 endif()
 
 if(WITH_EMBEDDED_BANKS AND WITH_GENADLDATA AND NOT ADLMIDI_DOS)
@@ -614,6 +706,10 @@ endif()
 
 if(WITH_XMI2MID)
     add_subdirectory(utils/xmi2mid)
+endif()
+
+if(WITH_MIDIDUMP)
+    add_subdirectory(utils/mididump)
 endif()
 
 if(EXAMPLE_SDL2_AUDIO AND NOT ADLMIDI_DOS)
@@ -655,7 +751,7 @@ if(libADLMIDI_SHARED)
 endif()
 
 install(FILES
-        include/adlmidi.h
+        ${ADLMIDI_PUBLIC_HEADERS}
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 include(CMakePackageConfigHelpers)
@@ -691,7 +787,7 @@ endif()
 # === Version check ====
 set(VERSION_CHECK_SOURCE "
     #include \"adlmidi.h\"
-    #if !(ADLMIDI_VERSION_MAJOR == ${PROJECT_VERSION_MAJOR} && ADLMIDI_VERSION_MINOR == ${PROJECT_VERSION_MINOR} && ADLMIDI_VERSION_PATCHLEVEL == ${PROJECT_VERSION_PATCH})
+    #if !(ADLMIDI_VERSION_MAJOR == ${PROJECT_VERSION_MAJOR} && ADLMIDI_VERSION_MINOR == ${PROJECT_VERSION_MINOR} && ADLMIDI_VERSION_PATCHLEVEL == ${PROJECT_VERSION_PATCH} && ADLMIDI_VERSION_TWEAK == ${PROJECT_VERSION_TWEAK})
     #error Project and source code version do not match!
     #endif")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/version_check.c" "${VERSION_CHECK_SOURCE}")
@@ -708,7 +804,6 @@ message("WITH_UNIT_TESTS          = ${WITH_UNIT_TESTS}")
 message("WITH_MIDI_SEQUENCER      = ${WITH_MIDI_SEQUENCER}")
 message("WITH_EMBEDDED_BANKS      = ${WITH_EMBEDDED_BANKS}")
 message("WITH_HQ_RESAMPLER        = ${WITH_HQ_RESAMPLER}")
-message("WITH_MUS_SUPPORT         = ${WITH_MUS_SUPPORT}")
 message("WITH_XMI_SUPPORT         = ${WITH_XMI_SUPPORT}")
 message("USE_DOSBOX_EMULATOR      = ${USE_DOSBOX_EMULATOR}")
 message("USE_NUKED_EMULATOR       = ${USE_NUKED_EMULATOR}")

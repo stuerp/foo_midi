@@ -69,6 +69,7 @@ foo_midi can decode the following file formats:
 | Extended MIDI                     | .XMI, .XFM  | Format used by the Miles Sound System (MSS) for storing game music. Supports multiple songs in one file. See [Modding Wiki](https://moddingwiki.shikadi.net/wiki/XMI_Format) and [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=XMI). |
 | Loudness Sound System             | .LDS        | File created with the Loudness Sound System by Andras Molnar. See [Video Game Music Preservation Foundation (VGMPF)](http://www.vgmpf.com/Wiki/index.php?title=LDS). |
 | Recomposer                        | .RCP, .R36, .G18, .G36 | Formats used by Recomposer, a popular music editing application on the Japanese [PC-98](https://en.wikipedia.org/wiki/PC-98) platform developed by Come-On Music during the 1990s. It became a cult favorite among Japanese composers—most famously ZUN, the creator of the Touhou Project series. |
+| MMD98                             | .MMD        | MMD98 (MIDI Music Driver) is a MIDI driver designed for the NEC PC-9800 series computers, developed by M. Kajihara (KAJA), who also created PMD (Professional Music Driver). It was historically used to drive sound from PC-98 games, including Touhou Project games like Story of Eastern Wonderland (SoEW). |
 | Mobile Music File                 | .MMF        | Synthetic-music Mobile Application Format (SMAF). See [FileFormat.com](https://docs.fileformat.com/audio/mmf/). |
 | System Exclusive data file        | .SYX, .DMP  | File containing System Exclusive (SysEx) messages. |
 
@@ -412,7 +413,7 @@ You can force a player to start playback using a particular *flavor* of MIDI. Th
 
 | Name        | Purpose |
 | ----------- | ------- |
-| Default     | Same as SC88. |
+| Default     | Same as SC&#8209;88. |
 | GM          | General MIDI 1 specification. A GM System On SysEx is sent before playback starts. |
 | GM2         | General MIDI 2 specification. A GM2 System On SysEx is sent before playback starts. |
 | GS&nbsp;SC&#8209;55    | General Sound specification with Roland SC-55 initialization. |
@@ -433,6 +434,10 @@ When you enable this setting the selected player will be ignored and LibMT32Emu 
 #### Use Secret Sauce with GS
 
 When you enable this setting the selected player will be ignored and Secret Sauce will always be used whenever a GS MIDI file is played.
+
+#### Use Secret Sauce with SC-88 or later
+
+When you enable this setting the selected player will be ignored and Secret Sauce will always be used whenever a GS MIDI file is played that contains a SYSTEM MODE SET SysEx message.
 
 #### Use VSTi with XG
 
@@ -473,7 +478,7 @@ To render the MIDI file a synthesizer chip is emulated. These are the eumlators 
 | Name              | Description |
 | ----------------- | ----------- |
 | Nuked OPL3 v1.8   | Slowest but most accurate |
-| Nuked OPL3 v1.7.4 | Slow, slightly less accurate |
+| Nuked OPL3 Fast   | Optimized alternative |
 | DOSBox            | Fast, mostly accurate |
 | Opal OPL3         | Only suitable for Reality Adlib Tracker tunes |
 | Java OPL3         | Written by Robson Cozendey |
@@ -483,6 +488,7 @@ To render the MIDI file a synthesizer chip is emulated. These are the eumlators 
 | YMFM OPL3         | Written by Aaron Giles |
 | Nuked OPL2 LLE    | Low-Level Emulator, CPU heavy |
 | Nuked OPL3 LLE    | Low-Level Emulator, CPU heavy |
+| Nuked CQM         | Emulates Creative's OPL3 clone chip known as Creative Quadratic Modulation |
 
 ##### ADL Chips
 
@@ -612,7 +618,7 @@ HMI and HMP file have no way to indicate the tempo at which they should be playe
 
 #### Channels
 
-This setting allows you disable and re-enable any of the 16 MIDI channels per port. Use the *Port&nbsp;number* slider to select the port. Click the button corresponding the channel to disable or re-enable it. These settings become immediately active during playback.
+This setting allows you disable and re-enable any of the 16 MIDI channels per port. Use the *Port&nbsp;number* slider to select the port. Click the button corresponding the channel to disable or re-enable it. These settings become immediately active during playback without having to press the `Apply` button.
 
 A few shortcut buttons are available to assist in the selection:
 

@@ -23,7 +23,10 @@ set(mt32emu-qt_WITH_QT_VERSION AUTO CACHE STRING "Use the Qt library major versi
 set_property(CACHE mt32emu-qt_WITH_QT_VERSION PROPERTY STRINGS AUTO 4 5 6)
 
 option(mt32emu-qt_WITH_ALSA_MIDI_SEQUENCER "Use ALSA MIDI sequencer" ${LINUX_FOUND})
-option(mt32emu-qt_USE_PULSEAUDIO_DYNAMIC_LOADING "Load PulseAudio library dynamically" TRUE)
+option(mt32emu-qt_USE_JACK_DYNAMIC_LOADING "Load JACK library dynamically" FALSE)
+if(UNIX AND NOT(CYGWIN OR APPLE))
+  option(mt32emu-qt_USE_PULSEAUDIO_DYNAMIC_LOADING "Load PulseAudio library dynamically" TRUE)
+endif()
 option(mt32emu-qt_WITH_DEBUG_WINCONSOLE "Use console for showing debug output on Windows" FALSE)
 
 if(MSVC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
@@ -189,7 +192,7 @@ elseif(Qt4_FOUND)
 endif()
 
 if(NOT(munt_SOURCE_DIR AND TARGET MT32Emu::mt32emu))
-  find_package(MT32Emu 2.7 CONFIG REQUIRED)
+  find_package(MT32Emu 2.8 CONFIG REQUIRED)
 endif()
 list(APPEND EXT_LIBS MT32Emu::mt32emu)
 
@@ -216,11 +219,12 @@ find_package(PulseAudio MODULE)
 if(PulseAudio_FOUND)
   add_definitions(-DWITH_PULSE_AUDIO_DRIVER)
   if(mt32emu-qt_USE_PULSEAUDIO_DYNAMIC_LOADING)
-    add_definitions(-DUSE_PULSEAUDIO_DYNAMIC_LOADING)
-    check_library_exists(dl dlopen "" SEPARATE_DL_FOUND)
-    if(SEPARATE_DL_FOUND)
-      list(APPEND EXT_LIBS dl)
+    if(CYGWIN OR APPLE)
+      message(FATAL_ERROR "Dynamic linking unsupported for PulseAudio on this platform")
     endif()
+    add_definitions(-DUSE_PULSEAUDIO_DYNAMIC_LOADING)
+    include_directories(${PULSEAUDIO_INCLUDE_DIR})
+    set(DL_REQUIRED TRUE)
   else()
     list(APPEND EXT_LIBS PulseAudio::simple)
   endif()
@@ -236,13 +240,31 @@ endif()
 find_package(JACK MODULE)
 if(JACK_FOUND)
   add_definitions(-DWITH_JACK_MIDI_DRIVER -DWITH_JACK_AUDIO_DRIVER)
-  list(APPEND EXT_LIBS Jack::jack)
-  include_directories(${JACK_INCLUDE_DIRS})
+  if(mt32emu-qt_USE_JACK_DYNAMIC_LOADING)
+    add_definitions(-DUSE_JACK_DYNAMIC_LOADING)
+    include_directories(${JACK_INCLUDE_DIR})
+    if(NOT(WIN32 OR CYGWIN))
+      set(DL_REQUIRED TRUE)
+    endif()
+  else()
+    list(APPEND EXT_LIBS Jack::jack)
+  endif()
   list(APPEND mt32emu_qt_SOURCES
     src/JACKClient.cpp
     src/mididrv/JACKMidiDriver.cpp
     src/audiodrv/JACKAudioDriver.cpp
   )
+endif()
+
+if(DL_REQUIRED)
+  check_include_files(dlfcn.h DL_INCLUDE_FOUND)
+  if(NOT DL_INCLUDE_FOUND)
+    message(FATAL_ERROR "Dynamic linking unavailable")
+  endif()
+  check_library_exists(dl dlopen "" DL_LIB_FOUND)
+  if(DL_LIB_FOUND)
+    list(APPEND EXT_LIBS dl)
+  endif()
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
@@ -363,6 +385,8 @@ elseif(APPLE)
   set_target_properties(mt32emu-qt
     PROPERTIES
       MACOSX_BUNDLE_BUNDLE_VERSION ${mt32emu_qt_VERSION}
+      MACOSX_BUNDLE_GUI_IDENTIFIER "org.muntemu"
+      MACOSX_BUNDLE_INFO_STRING "MT32Emu"
       MACOSX_BUNDLE_SHORT_VERSION_STRING ${mt32emu_qt_VERSION}
   )
 endif()
