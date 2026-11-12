@@ -1,6 +1,4 @@
-add_executable(mus2mid mus2mid.cpp)
-# TODO: Use own library
-target_include_directories(mus2mid PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_executable(mus2mid mus2mid.cpp cvt_mus2mid.hpp)
 
 install(TARGETS mus2mid
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
@@ -10,4 +8,8 @@ if(WIN32)
     if(MSVC)
         target_compile_definitions(mus2mid PRIVATE -DWIN32_CONSOLE)
     endif()
+endif()
+
+if(ADLMIDI_DOS)
+    set_target_properties(mus2mid PROPERTIES SUFFIX ".exe")
 endif()

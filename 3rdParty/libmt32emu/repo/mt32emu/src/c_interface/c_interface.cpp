@@ -1,5 +1,5 @@
 /* Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher
- * Copyright (C) 2011-2022 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
+ * Copyright (C) 2011-2026 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -43,7 +43,7 @@ static mt32emu_service_version MT32EMU_C_CALL getSynthVersionID(mt32emu_service_
 	return MT32EMU_SERVICE_VERSION_CURRENT;
 }
 
-static const mt32emu_service_i_v6 SERVICE_VTABLE = {
+static const mt32emu_service_i_v7 SERVICE_VTABLE = {
 	getSynthVersionID,
 	mt32emu_get_supported_report_handler_version,
 	mt32emu_get_supported_midi_receiver_version,
@@ -136,13 +136,17 @@ static const mt32emu_service_i_v6 SERVICE_VTABLE = {
 	mt32emu_set_part_volume_override,
 	mt32emu_get_part_volume_override,
 	mt32emu_get_sound_group_name,
-	mt32emu_get_sound_name
+	mt32emu_get_sound_name,
+	mt32emu_set_master_volume_override,
+	mt32emu_get_master_volume_override,
+	mt32emu_dump_sysex_bank,
+	mt32emu_apply_sysex_bank
 };
 
 } // namespace MT32Emu
 
 struct mt32emu_data {
-	ReportHandler2 *reportHandler;
+	ReportHandler3 *reportHandler;
 	Synth *synth;
 	const ROMImage *controlROMImage;
 	const ROMImage *pcmROMImage;
@@ -156,7 +160,7 @@ struct mt32emu_data {
 
 namespace MT32Emu {
 
-class DelegatingReportHandlerAdapter : public ReportHandler2 {
+class DelegatingReportHandlerAdapter : public ReportHandler3 {
 public:
 	DelegatingReportHandlerAdapter(mt32emu_report_handler_i useReportHandler, void *useInstanceData) :
 		delegate(useReportHandler), instanceData(useInstanceData) {}
@@ -293,6 +297,22 @@ private:
 			ReportHandler2::onMidiMessageLEDStateUpdated(ledState);
 		} else {
 			delegate.v1->onMidiMessageLEDStateUpdated(instanceData, ledState ? MT32EMU_BOOL_TRUE : MT32EMU_BOOL_FALSE);
+		}
+	}
+
+	void onNoteOnIgnored(Bit32u partialsNeeded, Bit32u partialsFree) {
+		if (isVersionLess(MT32EMU_REPORT_HANDLER_VERSION_2) || delegate.v2->onNoteOnIgnored == NULL) {
+			ReportHandler3::onNoteOnIgnored(partialsNeeded, partialsFree);
+		} else {
+			delegate.v2->onNoteOnIgnored(instanceData, partialsNeeded, partialsFree);
+		}
+	}
+
+	void onPlayingPolySilenced(Bit32u partialsNeeded, Bit32u partialsFree) {
+		if (isVersionLess(MT32EMU_REPORT_HANDLER_VERSION_2) || delegate.v2->onPlayingPolySilenced == NULL) {
+			ReportHandler3::onPlayingPolySilenced(partialsNeeded, partialsFree);
+		} else {
+			delegate.v2->onPlayingPolySilenced(instanceData, partialsNeeded, partialsFree);
 		}
 	}
 };
@@ -466,7 +486,7 @@ extern "C" {
 
 mt32emu_service_i MT32EMU_C_CALL mt32emu_get_service_i() {
 	mt32emu_service_i i;
-	i.v6 = &SERVICE_VTABLE;
+	i.v7 = &SERVICE_VTABLE;
 	return i;
 }
 
@@ -546,7 +566,7 @@ mt32emu_context MT32EMU_C_CALL mt32emu_create_context(mt32emu_report_handler_i r
 	data->synth = new Synth;
 	if (report_handler.v0 != NULL) {
 		data->reportHandler = new DelegatingReportHandlerAdapter(report_handler, instance_data);
-		data->synth->setReportHandler2(data->reportHandler);
+		data->synth->setReportHandler3(data->reportHandler);
 	} else {
 		data->reportHandler = NULL;
 	}
@@ -779,8 +799,8 @@ void MT32EMU_C_CALL mt32emu_play_msg_now(mt32emu_const_context context, mt32emu_
 	context->synth->playMsgNow(msg);
 }
 
-void MT32EMU_C_CALL mt32emu_play_msg_on_part(mt32emu_const_context context, mt32emu_bit8u part, mt32emu_bit8u code, mt32emu_bit8u note, mt32emu_bit8u velocity) {
-	context->synth->playMsgOnPart(part, code, note, velocity);
+void MT32EMU_C_CALL mt32emu_play_msg_on_part(mt32emu_const_context context, mt32emu_bit8u part_number, mt32emu_bit8u command, mt32emu_bit8u data1, mt32emu_bit8u data2) {
+	context->synth->playMsgOnPart(part_number, command, data1, data2);
 }
 
 void MT32EMU_C_CALL mt32emu_play_sysex_now(mt32emu_const_context context, const mt32emu_bit8u *sysex, mt32emu_bit32u len) {
@@ -789,6 +809,15 @@ void MT32EMU_C_CALL mt32emu_play_sysex_now(mt32emu_const_context context, const 
 
 void MT32EMU_C_CALL mt32emu_write_sysex(mt32emu_const_context context, mt32emu_bit8u channel, const mt32emu_bit8u *sysex, mt32emu_bit32u len) {
 	context->synth->writeSysex(channel, sysex, len);
+}
+
+
+mt32emu_bit32u MT32EMU_C_CALL mt32emu_dump_sysex_bank(mt32emu_const_context context, mt32emu_bit8u *sysex_bank, mt32emu_bit32u size) {
+	return context->synth->dumpSysexBank(sysex_bank, size);
+}
+
+mt32emu_bit32u MT32EMU_C_CALL mt32emu_apply_sysex_bank(mt32emu_const_context context, const mt32emu_bit8u *sysex_bank, mt32emu_bit32u size) {
+	return context->synth->applySysexBank(sysex_bank, size);
 }
 
 void MT32EMU_C_CALL mt32emu_set_reverb_enabled(mt32emu_const_context context, const mt32emu_boolean reverb_enabled) {
@@ -853,6 +882,14 @@ void MT32EMU_C_CALL mt32emu_set_reverb_output_gain(mt32emu_const_context context
 
 float MT32EMU_C_CALL mt32emu_get_reverb_output_gain(mt32emu_const_context context) {
 	return context->synth->getReverbOutputGain();
+}
+
+void MT32EMU_C_CALL mt32emu_set_master_volume_override(mt32emu_const_context context, mt32emu_bit8u volume_override) {
+	context->synth->setMasterVolumeOverride(volume_override);
+}
+
+mt32emu_bit8u MT32EMU_C_CALL mt32emu_get_master_volume_override(mt32emu_const_context context) {
+	return context->synth->getMasterVolumeOverride();
 }
 
 void MT32EMU_C_CALL mt32emu_set_part_volume_override(mt32emu_const_context context, mt32emu_bit8u part_number, mt32emu_bit8u volume_override) {
@@ -980,3 +1017,17 @@ mt32emu_boolean MT32EMU_C_CALL mt32emu_is_default_display_old_mt32_compatible(mt
 }
 
 } // extern "C"
+
+#ifdef MT32EMU_WITH_TESTING
+
+#include "../test/TestAccessors.h"
+
+const MachineConfiguration *Test::findMachineConfiguration(const char *machineID) {
+	return MT32Emu::findMachineConfiguration(machineID);
+}
+
+ReportHandler3 *Test::getReportHandlerDelegate(const mt32emu_data *context) {
+	return context->reportHandler;
+}
+
+#endif // #ifdef MT32EMU_WITH_TESTING

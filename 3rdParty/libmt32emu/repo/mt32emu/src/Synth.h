@@ -1,5 +1,5 @@
 /* Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher
- * Copyright (C) 2011-2022 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
+ * Copyright (C) 2011-2026 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -128,10 +128,21 @@ public:
 	virtual void onMidiMessageLEDStateUpdated(bool /* ledState */) {}
 };
 
+// Extends ReportHandler for delivering signals about insufficient partials conditions to the client.
+class MT32EMU_EXPORT_V(2.8) ReportHandler3 : public ReportHandler2 {
+public:
+	virtual ~ReportHandler3() {}
+
+	// Invoked in case the NoteOn MIDI message currently being processed cannot be played due to insufficient free partials.
+	virtual void onNoteOnIgnored(Bit32u /* partialsNeeded */, Bit32u /* partialsFree */) {}
+	// Invoked in case the partial allocator starts premature silencing a currently playing poly to free partials necessary
+	// for processing the preceding NoteOn MIDI message.
+	virtual void onPlayingPolySilenced(Bit32u /* partialsNeeded */, Bit32u /* partialsFree */) {}
+};
+
 class Synth {
 friend class DefaultMidiStreamParser;
 friend class Display;
-friend class MemoryRegion;
 friend class Part;
 friend class Partial;
 friend class PartialManager;
@@ -228,7 +239,7 @@ private:
 
 	bool initPCMList(Bit16u mapAddress, Bit16u count);
 	bool initTimbres(Bit16u mapAddress, Bit16u offset, Bit16u timbreCount, Bit16u startTimbre, bool compressed);
-	bool initCompressedTimbre(Bit16u drumNum, const Bit8u *mem, Bit32u memLen);
+	bool initCompressedTimbre(TimbresMemoryRegion &tempRegion, Bit16u absTimbreNum, const Bit8u *src, Bit32u srcLen);
 	void initReverbModels(bool mt32CompatibleMode);
 	void initSoundGroups(char newSoundGroupNames[][9]);
 
@@ -255,6 +266,10 @@ private:
 
 	void resetMasterTunePitchDelta();
 	Bit32s getMasterTunePitchDelta() const;
+
+	ReportHandler3 *getReportHandler3();
+
+	void playUnpackedShortMessage(Bit8u partNum, Bit8u command, Bit8u data1, Bit8u data2);
 
 public:
 	static inline Bit16s clipSampleEx(Bit32s sampleEx) {
@@ -313,6 +328,9 @@ public:
 	// Sets an implementation of ReportHandler2 interface for reporting various errors, information and debug messages.
 	// If the argument is NULL, the default implementation is installed as a fallback.
 	MT32EMU_EXPORT_V(2.6) void setReportHandler2(ReportHandler2 *reportHandler2);
+	// Sets an implementation of ReportHandler3 interface for reporting various errors, information and debug messages.
+	// If the argument is NULL, the default implementation is installed as a fallback.
+	MT32EMU_EXPORT_V(2.8) void setReportHandler3(ReportHandler3 *reportHandler3);
 
 	// Used to initialise the MT-32. Must be called before any other function.
 	// Returns true if initialization was successful, otherwise returns false.
@@ -361,27 +379,31 @@ public:
 	// Calls from multiple threads must be synchronised, although, no synchronisation is required with the rendering thread.
 	// The methods return false if the MIDI event queue is full and the message cannot be enqueued.
 
-	// Enqueues a single short MIDI message to play at specified time. The message must contain a status byte.
+	// Enqueues a single short MIDI message to play at specified time. The message must contain a status byte and one or two data
+	// bytes (as appropriate for the MIDI command).
 	MT32EMU_EXPORT bool playMsg(Bit32u msg, Bit32u timestamp);
 	// Enqueues a single well formed System Exclusive MIDI message to play at specified time.
 	MT32EMU_EXPORT bool playSysex(const Bit8u *sysex, Bit32u len, Bit32u timestamp);
 
-	// Enqueues a single short MIDI message to be processed ASAP. The message must contain a status byte.
+	// Enqueues a single short MIDI message to be processed ASAP. The message must contain a status byte and one or two data
+	// bytes (as appropriate for the MIDI command).
 	MT32EMU_EXPORT bool playMsg(Bit32u msg);
 	// Enqueues a single well formed System Exclusive MIDI message to be processed ASAP.
 	MT32EMU_EXPORT bool playSysex(const Bit8u *sysex, Bit32u len);
 
 	// WARNING:
-	// The methods below don't ensure minimum 1-sample delay between sequential MIDI events,
-	// and a sequence of NoteOn and immediately succeeding NoteOff messages is always silent.
-	// A thread that invokes these methods must be explicitly synchronised with the thread performing sample rendering.
+	// The methods below may have no effect while the synth is aborting a poly. They also don't ensure minimum 1-sample delay between
+	// sequential MIDI events, and a sequence of NoteOn and immediately succeeding NoteOff messages is always silent.
+	// A thread that invokes these methods must be explicitly synchronised with the thread performing sample rendering or be the same.
 
-	// Sends a short MIDI message to the synth for immediate playback. The message must contain a status byte.
+	// Sends a short MIDI message to the synth for immediate playback. The message must contain a status byte and one or two data
+	// bytes (as appropriate for the MIDI command), otherwise it is ignored.
 	// See the WARNING above.
 	MT32EMU_EXPORT void playMsgNow(Bit32u msg);
-	// Sends unpacked short MIDI message to the synth for immediate playback. The message must contain a status byte.
+	// Sends unpacked short MIDI message to the synth for immediate playback. All the message parameters must be within the supported
+	// range, otherwise the message is ignored.
 	// See the WARNING above.
-	MT32EMU_EXPORT void playMsgOnPart(Bit8u part, Bit8u code, Bit8u note, Bit8u velocity);
+	MT32EMU_EXPORT void playMsgOnPart(Bit8u partNum, Bit8u command, Bit8u data1, Bit8u data2);
 
 	// Sends a single well formed System Exclusive MIDI message for immediate processing. The length is in bytes.
 	// See the WARNING above.
@@ -395,6 +417,18 @@ public:
 	// Sends inner body of a System Exclusive MIDI message for direct processing. The length is in bytes.
 	// See the WARNING above.
 	MT32EMU_EXPORT void writeSysex(Bit8u channel, const Bit8u *sysex, Bit32u len);
+
+	// Stores internal state of the emulated synth into the provided array. The messages within the SysEx bank are ordered so that
+	// they can be replayed back in the same sequence without data loss, provided that the given array has sufficient size.
+	// The SysEx messages written in the array can be re-played using applySysexBank() function or even sent to a real device.
+	// Returns the full length of the SysEx bank in bytes that is needed to fit all the available data.
+	// This function can be used to retrieve the required size of the SysEx bank by supplying NULL sysexBank or zero size arguments,
+	// in which case it does nothing else.
+	MT32EMU_EXPORT_V(2.8) Bit32u dumpSysexBank(Bit8u *sysexBank, Bit32u size) const;
+	// Applies the content of the given SysEx bank to the emulated synth from the provided array. All complete SysEx messages
+	// contained within the sysexBank are played in sequence, any other data is ignored.
+	// Returns the number of played SysEx messages.
+	MT32EMU_EXPORT_V(2.8) Bit32u applySysexBank(const Bit8u *sysexBank, Bit32u size);
 
 	// Allows to disable wet reverb output altogether.
 	MT32EMU_EXPORT void setReverbEnabled(bool reverbEnabled);
@@ -446,6 +480,16 @@ public:
 	MT32EMU_EXPORT void setReverbOutputGain(float gain);
 	// Returns current output gain factor for reverb wet output channels.
 	MT32EMU_EXPORT float getReverbOutputGain() const;
+
+	// Sets or removes an override for the Master Volume. When the Master Volume is overridden, a SysEx write to the system area
+	// will have no effect on the Master Volume setting, yet a system memory read will return the overridden Master Volume.
+	// To enable the override mode, argument volumeOverride should be in range 0..100. Setting a value outside this range
+	// disables the override mode allowing the Master Volume to change further on (without changing the current volume).
+	// This setting persists synth reopening.
+	MT32EMU_EXPORT_V(2.8) void setMasterVolumeOverride(Bit8u volumeOverride);
+	// Returns the overridden master volume previously set, if any; a value outside the range 0..100 means no override
+	// is currently in effect.
+	MT32EMU_EXPORT_V(2.8) Bit8u getMasterVolumeOverride() const;
 
 	// Sets (or removes) an override for the current volume (output level) on a specific part.
 	// When the part volume is overridden, the MIDI controller Volume (7) on the MIDI channel this part is assigned to
@@ -588,6 +632,7 @@ public:
 	MT32EMU_EXPORT_V(2.7) bool getSoundName(char *soundName, Bit8u timbreGroup, Bit8u timbreNumber) const;
 
 	// Stores internal state of emulated synth into an array provided (as it would be acquired from hardware).
+	// Note, addr parameter is expressed in the linear space and *not* the SysEx address space.
 	MT32EMU_EXPORT void readMemory(Bit32u addr, Bit32u len, Bit8u *data);
 
 	// Retrieves the current state of the emulated MT-32 display facilities.

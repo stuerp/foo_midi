@@ -243,6 +243,9 @@
     <ClInclude Include="repo\src\chips\nuked_lle\fmopna_rom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="repo\src\models\opn_models.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="repo\src\chips\gens_opn2.cpp">
@@ -375,6 +378,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\chips\nuked_lle\fmopna_2608.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_apogee.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_dmx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_freq_opn2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_freq_opna.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_generic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\models\model_w9x.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

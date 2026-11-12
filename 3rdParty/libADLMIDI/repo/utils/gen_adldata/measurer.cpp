@@ -1,3 +1,26 @@
+/*
+ * libADLMIDI is a free Software MIDI synthesizer library with OPL3 emulation
+ *
+ * Original ADLMIDI code: Copyright (c) 2010-2014 Joel Yliluoma <bisqwit@iki.fi>
+ * ADLMIDI Library API:   Copyright (c) 2015-2026 Vitaly Novichkov <admin@wohlnet.ru>
+ *
+ * Library is based on the ADLMIDI, a MIDI player for Linux and Windows with OPL3 emulation:
+ * http://iki.fi/bisqwit/source/adlmidi.html
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "measurer.h"
 #include "file_formats/common.h"
 #include <cmath>
@@ -12,8 +35,8 @@
 
 // Nuked OPL3 emulator, Most accurate, but requires the powerful CPU
 #ifndef ADLMIDI_DISABLE_NUKED_EMULATOR
-#   include "../../src/chips/nuked_opl3.h"
-#   include "../../src/chips/nuked_opl3_v174.h"
+#   include "../../src/chips/nuked_opl3.h" // IWYU pragma: keep
+#   include "../../src/chips/nuked_opl3_fast.h" // IWYU pragma: keep
 #endif
 
 // DosBox 0.74 OPL3 emulator, Well-accurate and fast
@@ -553,7 +576,7 @@ void MeasureThreaded::LoadCache(const char *fileName)
     if(!in)
     {
         std::printf("Failed to load CacheX: file is not exists.\n"
-               "Complete data will be generated from scratch.\n");
+                    "Complete data will be generated from scratch.\n");
         std::fflush(stdout);
         return;
     }
@@ -636,9 +659,16 @@ void MeasureThreaded::LoadCache(const char *fileName)
     std::fclose(in);
 }
 
-void MeasureThreaded::SaveCache(const char *fileName)
+bool MeasureThreaded::SaveCache(const char *fileName)
 {
     FILE *out = std::fopen(fileName, "wb");
+    if(!out)
+    {
+        std::fprintf(stderr, "CacheX: Failed to load open %s for write!\n", fileName);
+        std::fflush(stderr);
+        return false;
+    }
+
     std::fprintf(out, "ADLMIDI-DURATION-CACHE-FILE-V2.0");
 
     uint_fast32_t itemsCount = static_cast<uint_fast32_t>(m_durationInfo.size());
@@ -674,11 +704,16 @@ void MeasureThreaded::SaveCache(const char *fileName)
                 static_cast<uint8_t>((kv >> 16) & 0xFF),
                 static_cast<uint8_t>((kv >> 24) & 0xFF)
             };
+
             std::fwrite(data, 1, 4, out);
         }
+
         std::fwrite(data_k, 1, 5, out);
     }
+
     std::fclose(out);
+
+    return true;
 }
 
 #ifdef ADL_GENDATA_PRINT_PROGRESS
@@ -715,6 +750,7 @@ void MeasureThreaded::printFinal()
 void MeasureThreaded::run(BanksDump &bd, BanksDump::InstrumentEntry &e)
 {
     m_semaphore.wait();
+
     if(m_threads.size() > 0)
     {
         for(std::vector<destData *>::iterator it = m_threads.begin(); it != m_threads.end();)
@@ -734,6 +770,7 @@ void MeasureThreaded::run(BanksDump &bd, BanksDump::InstrumentEntry &e)
     dd->bd_ins = &e;
     dd->myself = this;
     dd->start();
+
     m_threads.push_back(dd);
 #ifdef ADL_GENDATA_PRINT_PROGRESS
     printProgress();
@@ -771,7 +808,9 @@ void MeasureThreaded::destData::callback(void *myself)
                        static_cast<int_fast32_t>(s->bd_ins->percussionKeyNumber),
                        static_cast<int_fast32_t>(s->bd_ins->instFlags),
                        static_cast<int_fast32_t>(s->bd_ins->secondVoiceDetune)};
+
     s->myself->m_durationInfo_mx.lock();
+
     DurationInfoCacheX::iterator cachedEntry = s->myself->m_durationInfo.find(ok);
     bool atEnd = cachedEntry == s->myself->m_durationInfo.end();
     s->myself->m_durationInfo_mx.unlock();
@@ -781,11 +820,14 @@ void MeasureThreaded::destData::callback(void *myself)
         const DurationInfo &di = cachedEntry->second;
         s->bd_ins->delay_on_ms = di.ms_sound_kon;
         s->bd_ins->delay_off_ms = di.ms_sound_koff;
+
         if(di.nosound)
             s->bd_ins->instFlags |= BanksDump::InstrumentEntry::WOPL_Ins_IsBlank;
+
         s->myself->m_cache_matches++;
         goto endWork;
     }
+
     info = MeasureDurations(*s->bd, *s->bd_ins, &chip);
     s->myself->m_durationInfo_mx.lock();
     s->myself->m_durationInfo.insert({ok, info});

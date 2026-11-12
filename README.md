@@ -38,7 +38,7 @@ You can find the user guide [here](docs/README.md).
 To build the code you need:
 
 - [Microsoft Visual Studio 2026 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
-- [foobar2000 SDK](https://www.foobar2000.org/SDK) 2025-03-07
+- [foobar2000 SDK](https://www.foobar2000.org/SDK) 2026-09-17
 - [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
 
 The following libraries are included in the code:
@@ -49,13 +49,14 @@ The following libraries are included in the code:
   - [BASSWV](https://www.un4seen.com/) 2.4.7.4
   - [BASSOPUS](https://www.un4seen.com/) 2.4.3.3
   - [BASSMPC](https://www.un4seen.com/) 2.4.1.2
-- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.6.0
-- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.1, Yamaha YMF262 and CT1747 (OPL3)
-- [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.1, Yamaha YM2612 (OPN2), Yamaha YM2608 (OPNA), Yamaha YM3438 (OPN2C) and YMF276 (OPN2L).
+- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.6.2
+- [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.2.1, Yamaha YMF262 and CT1747 (OPL3)
+- [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.2, Yamaha YM2612 (OPN2), Yamaha YM2608 (OPNA), Yamaha YM3438 (OPN2C) and YMF276 (OPN2L).
 - [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
-- [LibMT32Emu](https://github.com/munt/munt) 2.7.2, Roland MT-32, CM-32L and LAPC-I synthesiser modules
+- [LibMT32Emu](https://github.com/munt/munt) 2.8.6, Roland MT-32, CM-32L and LAPC-I synthesiser modules
 - [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3), Yamaha YMF262 and CT1747 (OPL3)
-- [zlib](https://www.zlib.net/) 1.3.1
+- [zlib](https://www.zlib.net/) 1.4
+- [CLAP](https://github.com/free-audio/clap) 1.2.10
 
 To create the deployment package you need:
 
@@ -96,11 +97,11 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.3.0.0-alpha3, 2026-xx-xx
+v3.3.0.0-alpha4, 2026-xx-xx
 
-- Added: Semitones slider to transpose a MIDI sequence for playback. [GitHub Issue 123](https://github.com/stuerp/foo_midi/issues/123)
-- Added: Preliminary support for MIDI 2.0 files (.MIDI2) (M2-104-UM 1.1.1 Draft 2023-07-19)
-- Added: FluidSynth 2.6.0 interpolation methods to the preferences.
+- New: Upgraded to libmt32emu 2.8.6.
+- New: Upgraded to zlib 1.4.
+- New: Compiled with foobar2000 SDK 2026-09-17.
 
 You can read the full history [here](docs/History.md).
 

@@ -1,3 +1,78 @@
+2026-11-08:
+
+	2.8.6 released.
+
+	* Fixed several inaccuracies in the audio renderer and improved performance. The floating
+	  point renderer has an option to use lookup tables to speedup computations of the math functions
+	  once again, yet with a higher accuracy provided. This is controlled via Cmake configuration
+	  property libmt32emu_MATH_TYPE_FOR_FLOAT_RENDERER, which by default enables the optimisation
+	  for the maximum performance having sufficient CPU resources.
+	  Note, in most cases the audio output is no longer bit-identical to one produced by previous
+	  versions, albeit there must be no audible differences. (#148)
+
+2026-11-03:
+
+	2.8.5 released.
+
+	* Fixed a portability issue in unit tests. (#150)
+
+2026-11-02:
+
+	2.8.4 released.
+
+	* Fixed a heap buffer overflow in the MIDI stream parser that occurred when the client
+	  submitted a fragmented SysEx message with the first fragment exceeding the maximum
+	  supported size. (#149)
+
+2026-06-06:
+
+	2.8.3 released.
+
+	* Reworked sanity checks for short MIDI messages. It's a continuation of (#134). Apparently,
+	  Windows applications routinely submit garbage in the unused data bytes of packed 32-bit
+	  short messages. Therefore, we now check the used (in the MIDI sense) bytes only.
+	  Additionally, unsupported messages are now better handled and no longer produce misleading
+	  debug output when enabled. (#147)
+
+
+2026-05-24:
+
+	2.8.2 released.
+
+	* Prevented Rhythm Timbre bank from overwriting by unofficial SysEx messages addressing
+	  memory range 0x090000-0x097FFF. (#146)
+
+2026-05-23:
+
+	2.8.1 released.
+
+	* Fixed function Synth::readMemory that didn't retrieve data correctly from the Timbre
+	  Memory bank. (#145)
+
+2026-05-16:
+
+	2.8.0 released.
+
+	* Added basic unit tests. Details on the build requirements and configuration options can be
+	  found in README.md file. (#108)
+	* Performance improvements based on (#131).
+	* Provided callbacks to retrieve notifications about events when the synth engine runs
+	  out of available partials. (#111)
+	* Improved emulation accuracy of partial allocator implemented in old-gen devices. (#109)
+	* Invalid short MIDI messages are no longer tolerated but ignored. (#134)
+	* The Master Volume setting can now be overridden, so that changing it via SysEx messages
+	  is not possible. (#137)
+	* Added a function to store internal synth state into a SysEx bank and another one to load
+	  a number of SysEx messages from a SysEx bank. (#144)
+
+2025-12-26:
+
+	2.7.3 released.
+
+	* When a SysEx message touches the timbre number of the Patch Temp memory area for a part,
+	  all currently playing notes on that part now start to decay instantly. This is similar to
+	  the way a Program Change event is handled, and it's how the real h/w does this. (#132)
+
 2025-04-03:
 
 	2.7.2 released.

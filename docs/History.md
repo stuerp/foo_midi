@@ -1,6 +1,16 @@
 
 # foo_midi History
 
+v3.3.0.0-alpha3, 2026-09-12
+
+- New: Upgraded to libADLMIDI 1.6.2.1.
+  - Nuked CQM emulator can be selected from the Preferences page.
+- New: Upgraded to libOPNMIDI 1.6.2.
+- New: Integrated [jecassis](https://github.com/jecassis) IMusicKeyboard2 interface to support the foo_vis_midi fork by jecassis.
+- Added: Semitones slider to transpose a MIDI sequence for playback. [GitHub Issue 123](https://github.com/stuerp/foo_midi/issues/123)
+- Added: Preliminary support for MIDI 2.0 files (.MIDI2) (M2-104-UM 1.1.1 Draft 2023-07-19)
+- Added: FluidSynth 2.6.0 interpolation methods to the preferences.
+
 v3.3.0.0-alpha2, 2026-05-08
 
 - Added: Option "Use Secret Sauce with SC-88 or later". This option will override the selected player when the MIDI file contains a SYSTEM MODE SET sysex [GitHub Issue 145](https://github.com/stuerp/foo_midi/issues/145)

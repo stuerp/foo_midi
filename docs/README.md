@@ -478,7 +478,7 @@ To render the MIDI file a synthesizer chip is emulated. These are the eumlators 
 | Name              | Description |
 | ----------------- | ----------- |
 | Nuked OPL3 v1.8   | Slowest but most accurate |
-| Nuked OPL3 v1.7.4 | Slow, slightly less accurate |
+| Nuked OPL3 Fast   | Optimized alternative |
 | DOSBox            | Fast, mostly accurate |
 | Opal OPL3         | Only suitable for Reality Adlib Tracker tunes |
 | Java OPL3         | Written by Robson Cozendey |
@@ -488,6 +488,7 @@ To render the MIDI file a synthesizer chip is emulated. These are the eumlators 
 | YMFM OPL3         | Written by Aaron Giles |
 | Nuked OPL2 LLE    | Low-Level Emulator, CPU heavy |
 | Nuked OPL3 LLE    | Low-Level Emulator, CPU heavy |
+| Nuked CQM         | Emulates Creative's OPL3 clone chip known as Creative Quadratic Modulation |
 
 ##### ADL Chips
 

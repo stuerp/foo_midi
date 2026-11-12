@@ -89,7 +89,7 @@ and use to get a basic plugin experience:
 - [note-ports](include/clap/ext/note-ports.h), define the note ports
 - [audio-ports](include/clap/ext/audio-ports.h), define the audio ports
   - [surround](include/clap/ext/surround.h), inspect surround channel mapping
-  - [ambisonic](include/clap/ext/draft/ambisonic.h), inspect ambisonic channel mapping
+  - [ambisonic](include/clap/ext/ambisonic.h), inspect ambisonic channel mapping
   - [configurable-audio-ports](include/clap/ext/configurable-audio-ports.h), request the plugin to apply a given configuration
   - [audio-ports-config](include/clap/ext/audio-ports-config.h), simple list of pre-defined audio ports configurations, meant to be exposed to the user
   - [audio-ports-activation](include/clap/ext/audio-ports-activation.h), activate and deactivate a given audio port
@@ -144,8 +144,9 @@ and use to get a basic plugin experience:
 - [clap-juce-extension](https://github.com/free-audio/clap-juce-extension), juce add-on
 - [MIP2](https://github.com/skei/MIP2), host and plugins
 - [Avendish](https://github.com/celtera/avendish), a reflection-based API for media plug-ins in C++ which supports Clap
-- [NIH-plug](https://github.com/robbert-vdh/nih-plug), an API-agnostic, Rust-based plugin framework aiming to reduce boilerplate without getting in your way
+- [nice-plug](https://codeberg.org/RustAudio/nice-plug), a liberally licensed, community-driven Rust audio plugin framework aiming to reduce boilerplate without getting in your way
 - [iPlug2](https://iplug2.github.io), a liberally licensed C++ audio plug-in framework that supports Clap
+- [signalsmith-clap-cpp](https://github.com/geraintluff/signalsmith-clap-cpp), C++ example plugins, with cross-platform webview UIs (using the draft [webview extension](include/clap/ext/draft/webview.h), and a [helper](https://github.com/geraintluff/webview-gui?tab=readme-ov-file#clap-helper) for native platforms) and WebAssembly (WCLAP) build instructions.
 
 ## Programming Language Bindings
 

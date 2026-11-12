@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev
+/* Copyright (C) 2011-2026 Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,9 +36,9 @@
 
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "SynthWidget.h"
 #include "Master.h"
 
-#include "AudioFileWriter.h"
 #include "mididrv/TestDriver.h"
 #include "MidiPlayerDialog.h"
 #include "MidiConverterDialog.h"
@@ -61,7 +61,6 @@ MainWindow::MainWindow(Master *master) :
 	ui(new Ui::MainWindow),
 	master(master),
 	testMidiDriver(NULL),
-	audioFileWriter(NULL),
 	midiPlayerDialog(NULL),
 	midiConverterDialog(NULL),
 	floatingDisplay(NULL),
@@ -98,6 +97,7 @@ MainWindow::MainWindow(Master *master) :
 #ifdef WITH_JACK_MIDI_DRIVER
 	ui->actionNew_JACK_MIDI_port->setVisible(true);
 	ui->actionNew_exclusive_JACK_MIDI_port->setVisible(true);
+	ui->actionConnect_JACK_audio_automatically->setVisible(true);
 #endif
 
 	QActionGroup *floatingDisplayGroup = new QActionGroup(this);
@@ -176,10 +176,6 @@ void MainWindow::on_actionExit_triggered() {
 		delete testMidiDriver;
 		testMidiDriver = NULL;
 	}
-	if (audioFileWriter != NULL) {
-		delete audioFileWriter;
-		audioFileWriter = NULL;
-	}
 	if (midiPlayerDialog != NULL) {
 		delete midiPlayerDialog;
 		midiPlayerDialog = NULL;
@@ -207,7 +203,7 @@ void MainWindow::on_actionAbout_triggered() {
 		"Build Arch: " BUILD_SYSTEM " " + QString::number(QSysInfo::WordSize) + "-bit\n"
 		"Build Date: " BUILD_DATE "\n"
 		"\n"
-		"Copyright (C) 2011-2022 Jerome Fisher, Sergey V. Mikayev\n"
+		"Copyright (C) 2011-2026 Jerome Fisher, Sergey V. Mikayev\n"
 		"\n"
 		"Licensed under GPL v3 or any later version."
 	);
@@ -352,6 +348,7 @@ void MainWindow::on_menuOptions_aboutToShow() {
 	ui->actionShow_connection_balloons->setChecked(settings->value("Master/showConnectionBalloons", true).toBool());
 	QFileDialog::Options qFileDialogOptions = QFileDialog::Options(settings->value("Master/qFileDialogOptions", 0).toInt());
 	ui->actionShow_native_file_dialog->setChecked(!qFileDialogOptions.testFlag(QFileDialog::DontUseNativeDialog));
+	ui->actionConnect_JACK_audio_automatically->setChecked(settings->value("Master/autoconnectJACKAudio", true).toBool());
 }
 
 void MainWindow::on_actionStart_iconized_toggled(bool checked) {
@@ -378,6 +375,10 @@ void MainWindow::on_actionShow_native_file_dialog_toggled(bool checked) {
 		qFileDialogOptions ^= QFileDialog::DontUseNativeDialog;
 	}
 	settings->setValue("Master/qFileDialogOptions", int(qFileDialogOptions));
+}
+
+void MainWindow::on_actionConnect_JACK_audio_automatically_toggled(bool checked) {
+	master->getSettings()->setValue("Master/autoconnectJACKAudio", checked);
 }
 
 void MainWindow::on_menuFloating_Display_aboutToShow() {
@@ -527,12 +528,20 @@ void MainWindow::dropEvent(QDropEvent *e) {
 
 #ifdef WITH_JACK_MIDI_DRIVER
 void MainWindow::on_actionNew_JACK_MIDI_port_triggered() {
-	if (master->createJACKMidiPort(false)) return;
-	QMessageBox::warning(this, "Error", "Failed to create JACK MIDI port");
+	Master::JACKMidiPortCreationResult result = master->createJACKMidiPort(false);
+	if (Master::JACKMidiPortCreationResult_NOT_FOUND == result) {
+		QMessageBox::warning(this, "Error", "The JACK library not found");
+	} else if (Master::JACKMidiPortCreationResult_ERROR == result) {
+		QMessageBox::warning(this, "Error", "Failed to create JACK MIDI port");
+	}
 }
 
 void MainWindow::on_actionNew_exclusive_JACK_MIDI_port_triggered() {
-	if (master->createJACKMidiPort(true)) return;
-	QMessageBox::warning(this, "Error", "Failed to create JACK MIDI port");
+	Master::JACKMidiPortCreationResult result = master->createJACKMidiPort(true);
+	if (Master::JACKMidiPortCreationResult_NOT_FOUND == result) {
+		QMessageBox::warning(this, "Error", "The JACK library not found");
+	} else if (Master::JACKMidiPortCreationResult_ERROR == result) {
+		QMessageBox::warning(this, "Error", "Failed to create JACK MIDI port");
+	}
 }
 #endif

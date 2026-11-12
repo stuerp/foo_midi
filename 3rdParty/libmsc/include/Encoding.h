@@ -1,7 +1,11 @@
 
-/** $VER: Encoding.h (2025.09.01) P. Stuer **/
+/** $VER: Encoding.h (2026.08.19) P. Stuer **/
 
 #pragma once
+
+#include <format>
+#include <string>
+#include <string_view>
 
 namespace msc
 {

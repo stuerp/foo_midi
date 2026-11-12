@@ -1,5 +1,5 @@
 
-/** $VER: Encoding.cpp (2025.09.06) P. Stuer - Encoding conversion routines **/
+/** $VER: Encoding.cpp (2026.08.19) P. Stuer - Encoding conversion routines **/
 
 #include "pch.h"
 
@@ -77,11 +77,9 @@ std::string FormatText(const char * format, ...) noexcept
 
    va_start(vl, format);
 
-    std::string Text;
+    char Text[256];
 
-    Text.resize(256);
-
-    ::vsprintf_s(Text.data(), Text.size(), format, vl);
+    (void) ::vsprintf_s(Text, _countof(Text), format, vl);
 
     va_end(vl);
 
@@ -97,11 +95,9 @@ std::wstring FormatText(const wchar_t * format, ...) noexcept
 
    va_start(vl, format);
 
-    std::wstring Text;
+    wchar_t Text[256];
 
-    Text.resize(256);
-
-    ::vswprintf_s(Text.data(), Text.size(), format, vl);
+    (void) ::vswprintf_s(Text, _countof(Text), format, vl);
 
     va_end(vl);
 
@@ -208,7 +204,7 @@ bool IsUTF8(const char * text, size_t size) noexcept
 /// <summary>
 /// Returns true if the specified text is ASCII encoded.
 /// </summary>
-bool IsASCII(const char * text) noexcept
+static bool IsASCII(const char * text) noexcept
 {
     while (*text)
     {
@@ -299,7 +295,7 @@ bool GetCodePageFromEncoding(const std::string & encoding, uint32_t & codePage) 
 
     Key.resize(encoding.size());
 
-    std::transform(encoding.begin(), encoding.end(), Key.begin(), ::tolower);
+    std::transform(encoding.begin(), encoding.end(), Key.begin(), [](char c){ return (char) std::tolower(c); });
 
     auto Item = EncodingToCodePage.find(Key);
 

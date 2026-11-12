@@ -34,6 +34,7 @@ class CSMFPlay
     MidiSequencer *m_sequencer;
     BW_MidiRtInterface *m_sequencerInterface;
     void initSequencerInterface();
+    std::vector<std::string> m_trackTitles;
 
     double Tick(double s, double granularity);
 
@@ -68,6 +69,8 @@ public:
     bool GetLoop();
     bool SeqEof();
 
+    void SetModeEMIDI(bool enabled);
+
     void setSongNum(int track);
     int getSongsCount();
 
@@ -80,8 +83,8 @@ public:
 
     void setTriggerHandler(EDMIDI_TriggerHandler handler, void *userData);
 
-    const std::string &getMusicTitle();
-    const std::string &getMusicCopyright();
+    const char *getMusicTitle();
+    const char *getMusicCopyright();
     const std::vector<std::string> &getTrackTitles();
     size_t getMarkersCount();
     EdMidi_MarkerEntry getMarker(size_t index);

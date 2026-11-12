@@ -20,8 +20,24 @@ set(GEN_ADLDATA_SRC)
 list(APPEND GEN_ADLDATA_SRC
     gen_adldata.cc
     progs_cache.cpp
+    progs_cache.h
     measurer.cpp
+    measurer.h
+    midi_inst_list.h
     ini/ini_processing.cpp
+    ini/ini_processing.h
+    file_formats/common.h
+    file_formats/load_ail.h
+    file_formats/load_bisqwit.h
+    file_formats/load_bnk.h
+    file_formats/load_bnk2.h
+    file_formats/load_ea.h
+    file_formats/load_ibk.h
+    file_formats/load_jv.h
+    file_formats/load_op2.h
+    file_formats/load_tmb.h
+    file_formats/load_wopl.h
+    file_formats/load_woplx.h
 )
 
 option(WITH_GENADLDATA_DEEPDEBUG "Enable deep debug mode of gen_adldata with dumping every voice into WAV file" OFF)
@@ -44,7 +60,9 @@ if(USE_DOSBOX_EMULATOR)
     set(HAS_EMULATOR TRUE)
     list(APPEND GEN_ADLDATA_SRC
         ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl3.cpp
+        ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl3.h
         ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox/dbopl.cpp
+        ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox/dbopl.h
     )
 else()
     add_definitions(-DADLMIDI_DISABLE_DOSBOX_EMULATOR)
@@ -54,9 +72,13 @@ if(USE_NUKED_EMULATOR)
     set(HAS_EMULATOR TRUE)
     list(APPEND GEN_ADLDATA_SRC
         ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3.cpp       # v 1.8
+        ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3.h
         ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3.c
-        ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3_v174.cpp  # v 1.7.4
-        ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3_174.c
+        ${libADLMIDI_SOURCE_DIR}/src/chips/nuked/nukedopl3.h
+        ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3_fast.cpp  # v 1.8 Optimised
+        ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_opl3_fast.h
+        ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_fast/nukedopl3_fast.c
+        ${libADLMIDI_SOURCE_DIR}/src/chips/nuked_fast/nukedopl3_fast.h
     )
 else()
     add_definitions(-DADLMIDI_DISABLE_NUKED_EMULATOR)
@@ -100,18 +122,25 @@ if(WITH_GENADLDATA_COMMENTS)
 endif()
 
 if("${GENADLDATA_CUSTOM_BANKLIST}" STREQUAL "")
-    set(ADLDATA_INI_FILE "${libADLMIDI_SOURCE_DIR}/banks.ini")
-    set(ADLDATA_CACHE_FILE "${libADLMIDI_SOURCE_DIR}/fm_banks/adldata-cache.dat")
+    if(EXISTS "${libADLMIDI_SOURCE_DIR}/banks.ini" AND NOT BUILD_NO_GREY_BANKS)
+        set(ADLDATA_INI_FILE "${libADLMIDI_SOURCE_DIR}/banks.ini")
+        set(ADLDATA_CACHE_FILE "${libADLMIDI_SOURCE_DIR}/fm_banks/adldata-cache.dat")
+    else()
+        set(ADLDATA_INI_FILE "${libADLMIDI_SOURCE_DIR}/banks-no-grey.ini")
+        set(ADLDATA_CACHE_FILE "${libADLMIDI_SOURCE_DIR}/fm_banks_new/adldata-no-grey-cache.dat")
+    endif()
 else()
     set(ADLDATA_INI_FILE "${GENADLDATA_CUSTOM_BANKLIST}")
     set(ADLDATA_CACHE_FILE "${CMAKE_BINARY_DIR}/instdb/adldata-cache.dat")
 endif()
 
-add_custom_target(gen-adldata-run #OUTPUT ${ADLDATA_DATABASE}
-    COMMAND gen_adldata "${ADLDATA_INI_FILE}" "${ADLDATA_DATABASE}" "${ADLDATA_CACHE_FILE}"
-    WORKING_DIRECTORY ${libADLMIDI_SOURCE_DIR}
-    DEPENDS gen_adldata
-    COMMENT "Running Embedded FM banks database generation"
-    VERBATIM
-    BYPRODUCTS "${ADLDATA_DATABASE}"
-)
+if(WITH_GENADLDATA_RUN)
+    add_custom_target(gen-adldata-run #OUTPUT ${ADLDATA_DATABASE}
+        COMMAND gen_adldata "${ADLDATA_INI_FILE}" "${ADLDATA_DATABASE}" "${ADLDATA_CACHE_FILE}"
+        WORKING_DIRECTORY ${libADLMIDI_SOURCE_DIR}
+        DEPENDS gen_adldata
+        COMMENT "Running Embedded FM banks database generation"
+        VERBATIM
+        BYPRODUCTS "${ADLDATA_DATABASE}"
+    )
+endif()

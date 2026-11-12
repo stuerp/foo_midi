@@ -5,23 +5,26 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../common
                      ${CMAKE_SOURCE_DIR}/include
                      ${CMAKE_SOURCE_DIR}/src)
 
-add_executable (ActiveNotesList
+include(${libOPNMIDI_SOURCE_DIR}/src/models/opn_models.cmake)
+
+add_executable(ActiveNotesList
                 active_notes.cpp
                 ${libOPNMIDI_SOURCE_DIR}/src/opnmidi_midiplay.cpp
                 ${libOPNMIDI_SOURCE_DIR}/src/opnmidi_opn2.cpp
                 ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked_opn2.cpp
                 ${libOPNMIDI_SOURCE_DIR}/src/chips/nuked/ym3438.c
+                ${OPN_MODELS_SOURCES}
                 $<TARGET_OBJECTS:Catch-objects>)
 
 set_target_properties(ActiveNotesList PROPERTIES COMPILE_DEFINITIONS "GSL_THROW_ON_CONTRACT_VIOLATION")
 target_compile_definitions(ActiveNotesList PRIVATE
-  OPNMIDI_DISABLE_MIDI_SEQUENCER
-  OPNMIDI_DISABLE_GENS_EMULATOR
-  OPNMIDI_DISABLE_MAME_EMULATOR
-  OPNMIDI_DISABLE_GX_EMULATOR
-  OPNMIDI_DISABLE_NP2_EMULATOR
-  OPNMIDI_DISABLE_MAME_2608_EMULATOR
-  OPNMIDI_DISABLE_PMDWIN_EMULATOR
-  OPNMIDI_DISABLE_YMFM_EMULATOR
+    OPNMIDI_DISABLE_MIDI_SEQUENCER
+    OPNMIDI_DISABLE_GENS_EMULATOR
+    OPNMIDI_DISABLE_MAME_EMULATOR
+    OPNMIDI_DISABLE_GX_EMULATOR
+    OPNMIDI_DISABLE_NP2_EMULATOR
+    OPNMIDI_DISABLE_MAME_2608_EMULATOR
+    OPNMIDI_DISABLE_PMDWIN_EMULATOR
+    OPNMIDI_DISABLE_YMFM_EMULATOR
 )
 add_test(NAME ActiveNotesList COMMAND ActiveNotesList)

@@ -90,6 +90,71 @@ static inline void secondsToHMSM(double seconds_full, char *hmsm_buffer, size_t 
         sprintf(hmsm_buffer, "%02u:%02u,%03u", minutes, seconds, milliseconds);
 }
 
+struct Args
+{
+    const char *song;
+    int songNum;
+    SDL_bool loopEnabled;
+    SDL_bool emidiMode;
+};
+
+static void argShift(int *m_argc, char ***m_argv)
+{
+    --(*m_argc);
+    ++(*m_argv);
+}
+
+static SDL_bool parseArgs(struct Args *args, int argc, char **argv)
+{
+    char *cur;
+
+    SDL_memset(args, 0, sizeof(struct Args));
+
+    args->loopEnabled = SDL_TRUE;
+    args->songNum = -1;
+
+    argShift(&argc, &argv);
+
+    while(argc > 0)
+    {
+        cur = *argv;
+
+        if(!SDL_strcmp(cur, "-no-loop"))
+            args->loopEnabled = SDL_FALSE;
+        else if(!SDL_strcmp(cur, "-emidi"))
+            args->emidiMode = SDL_TRUE;
+        else if(!SDL_strcmp(cur, "-song"))
+        {
+            argShift(&argc, &argv);
+            if(argc <= 0)
+                return SDL_FALSE;
+            args->songNum = SDL_strtol(cur, NULL, 10);
+        }
+        else
+            args->song = cur;
+
+        argShift(&argc, &argv);
+    }
+
+    return SDL_TRUE;
+}
+
+static void initLineBuff(char *linebuff, size_t max_size)
+{
+    SDL_memset(linebuff, ' ', max_size);
+    if(max_size > 2)
+    {
+        linebuff[max_size - 1] = '\0';
+        linebuff[max_size - 2] = '\r';
+    }
+}
+
+static void clearLineR(char *linebuff, size_t max_size)
+{
+    initLineBuff(linebuff, max_size);
+    fprintf(stdout, "%s", linebuff);
+    flushout(stdout);
+}
 
 int main(int argc, char **argv)
 {
@@ -97,18 +162,19 @@ int main(int argc, char **argv)
     static SDL_AudioSpec            spec, obtained; /* the specs of our piece of music */
     static struct EDMIDIPlayer      *midi_player = NULL; /* Instance of Emu De Midi player */
     static const char               *music_path = NULL; /* Path to music file */
-    SDL_bool loopEnabled = SDL_TRUE;
+    struct Args args;
     char totalHMS[25];
     char loopStartHMS[25];
     char loopEndHMS[25];
     char posHMS[25];
+    char linebuff[81];
     double loopStart, loopEnd, total;
     uint64_t milliseconds_prev = ~0u;
     int printsCounter = 0;
     int printsCounterPeriod = 1;
+    int prnLen;
     double time_pos;
     uint64_t milliseconds;
-    int songNumLoad = -1;
 
     SDL_memset(posHMS, 0, 25);
     SDL_memset(totalHMS, 0, 25);
@@ -135,21 +201,18 @@ int main(int argc, char **argv)
                     "==========================================\n\n");
     flushout(stdout);
 
-    if (argc < 2)
+    if(!parseArgs(&args, argc, argv))
     {
         fprintf(stderr, "\n"
                         "\n"
                         "No given files to play!\n"
                         "\n"
-                        "Syntax: %s <path-to-MIDI-file>\n"
+                        "Syntax: %s [-no-loop] [-emidi] [-song <N>] <path-to-MIDI-file>\n"
                         "\n", argv[0]);
         return 2;
     }
 
-    music_path = argv[1];
-
-    if(argc >= 3)
-        songNumLoad = strtol(argv[2], NULL, 10);
+    music_path = args.song;
 
     fprintf(stdout, " - Library version %s\n", edmidi_linkedLibraryVersion());
 
@@ -233,11 +296,13 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if(songNumLoad >= 0)
-        edmidi_selectSongNum(midi_player, songNumLoad);
+    if(args.songNum >= 0)
+        edmidi_selectSongNum(midi_player, args.songNum);
 
     //Set internal debug messages hook to print all libADLMIDI's internal debug messages
     edmidi_setDebugMessageHook(midi_player, debugPrint, NULL);
+
+    edmidi_setModeEMIDI(midi_player, args.emidiMode);
 
     /* Open the MIDI (or MUS, IMF or CMF) file to play */
     if (edmidi_openFile(midi_player, music_path) < 0)
@@ -250,7 +315,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    edmidi_setLoopEnabled(midi_player, loopEnabled);
+    edmidi_setLoopEnabled(midi_player, args.loopEnabled);
 
     total               = edmidi_totalTimeLength(midi_player);
     loopStart           = edmidi_loopStartTime(midi_player);
@@ -265,20 +330,20 @@ int main(int argc, char **argv)
 
     fprintf(stdout, " - Track count: %lu\n", (unsigned long)(edmidi_trackCount(midi_player)));
 
-    fprintf(stdout, " - Loop is turned %s\n", loopEnabled ? "ON" : "OFF");
+    fprintf(stdout, " - Loop is turned %s\n", args.loopEnabled ? "ON" : "OFF");
     if(loopStart >= 0.0 && loopEnd >= 0.0)
         fprintf(stdout, " - Has loop points: %s ... %s\n", loopStartHMS, loopEndHMS);
 
     int songsCount = edmidi_getSongsCount(midi_player);
-    if(songNumLoad >= 0)
-        fprintf(stdout, " - Attempt to load song number: %d / %d\n", songNumLoad, songsCount);
+    if(args.songNum >= 0)
+        fprintf(stdout, " - Attempt to load song number: %d / %d\n", args.songNum, songsCount);
     else if(songsCount > 0)
         fprintf(stdout, " - File contains %d song(s)\n", songsCount);
 
     fprintf(stdout, "\n==========================================\n");
     flushout(stdout);
 
-    fprintf(stdout, "                                               \r");
+    clearLineR(linebuff, sizeof(linebuff));
 
     s_is_playing = SDL_TRUE;
     /* Start playing */
@@ -298,17 +363,23 @@ int main(int argc, char **argv)
             {
                 printsCounter = -1;
                 secondsToHMSM(time_pos, posHMS, 25);
-                fprintf(stdout, "                                               \r");
-                fprintf(stdout, "Time position: %s / %s\r", posHMS, totalHMS);
+                prnLen = SDL_snprintf(linebuff, 79, "Time position: %s / %s", posHMS, totalHMS);
+                if(prnLen > 0)
+                    SDL_memset(linebuff + prnLen, ' ', 79 - prnLen);
+                linebuff[79] = '\r';
+                fprintf(stdout, "%s", linebuff);
                 flushout(stdout);
                 milliseconds_prev = milliseconds;
             }
+
             printsCounter++;
         }
-        SDL_Delay(100);
+
+        SDL_Delay(1);
     }
 
-    fprintf(stdout, "                                               \n\n");
+    clearLineR(linebuff, sizeof(linebuff));
+    fprintf(stdout, "\n\n");
     flushout(stdout);
 
     /* shut everything down */

@@ -1,0 +1,185 @@
+name: Build fat mt32emu-qt binary
+
+on:
+  workflow_dispatch:
+    inputs:
+      buildType:
+        required: true
+        type: choice
+        options:
+          - Snapshot
+          - Release
+
+env:
+  BUILD_SNAPSHOTS: ${{ case(inputs.buildType == 'Snapshot', 'ON', 'OFF') }}
+
+jobs:
+  build-mt32emu-qt-windows:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Get Qt static binary
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ vars.QT_ARTIFACT_WIN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        repository: munt/munt
+        run-id: ${{ vars.QT_RUN_WIN }}
+
+    - name: Unpack Qt
+      shell: bash
+      run: |
+        tar xf ${{ vars.QT_ARTIFACT_WIN }}
+        echo '#include <mt32emu/mt32emu.h>
+        #include <QtWidgets>
+        #undef NOMINMAX
+        #define NOMINMAX
+        #include <windows.h>' > pch.h
+
+    - name: Get munt icon
+      run: |
+        C:\msys64\usr\bin\wget -q https://github.com/sergm/munt_devel/raw/refs/heads/master/mt32emu_win32_installer/mt32emu-qt.ico.xz
+        xz -d mt32emu-qt.ico.xz
+
+    - name: Get portaudio sources
+      run: git clone --depth=1 --revision=${{ vars.PORTAUDIO_REVISION }} https://github.com/PortAudio/portaudio
+
+    - name: Get Jack sources
+      run: |
+        git clone --depth=1 --revision=${{ vars.JACK_REVISION }} https://github.com/jackaudio/jack2.git
+        type NUL > jack2\libjack64.lib
+
+    - name: Assemble
+      run: >
+        "${{ vars.MSVC_ENV_INIT_SCRIPT }}"
+        && cmake -S portaudio -B portaudio/build -G Ninja
+        -D CMAKE_BUILD_TYPE=Release
+        -D CMAKE_POLICY_VERSION_MINIMUM=3.5
+        -D PA_BUILD_SHARED=OFF
+        -D PA_LIBNAME_ADD_SUFFIX:BOOL=OFF
+        && cmake --build portaudio/build
+        && cmake -S . -B build -G Ninja
+        -D BUILD_SNAPSHOTS=%BUILD_SNAPSHOTS%
+        -D BUILD_TESTING=OFF
+        -D CMAKE_BUILD_TYPE=Release
+        -D CMAKE_EXE_LINKER_FLAGS_RELEASE:STRING="/INCREMENTAL:NO /FORCE:MULTIPLE"
+        -D CMAKE_MSVC_RUNTIME_LIBRARY:STRING="MultiThreaded$<$<CONFIG:Debug>:Debug>"
+        -D CMAKE_PREFIX_PATH=${{ github.workspace }}/stage
+        -D JACK_INCLUDE_DIR:PATH=jack2/common
+        -D JACK_LIBRARY:FILEPATH=jack2/libjack64.lib
+        -D PORTAUDIO_INCLUDE_DIR=portaudio/include
+        -D PORTAUDIO_LIBRARY=portaudio/build/portaudio.lib
+        -D libmt32emu_PACKAGE_TYPE=Runtime
+        -D mt32emu-qt_PRECOMPILED_HEADER:FILEPATH=${{ github.workspace }}/pch.h
+        -D mt32emu-qt_USE_JACK_DYNAMIC_LOADING:BOOL=ON
+        -D munt_WITH_MT32EMU_SMF2WAV:BOOL=OFF
+        -D munt_WITH_MT32EMU_WIN32DRV:BOOL=OFF
+        && cmake --build build
+        && cmake --install build --prefix snapshot --component Runtime
+
+    - name: Package
+      run: |
+        cd snapshot
+        move bin\mt32emu-qt.exe .
+        move ..\mt32emu-qt.ico .
+        move share\doc\munt docs
+        move docs\mt32emu-qt\README.md .
+        rmdir /s/q bin share
+
+    - uses: actions/upload-artifact@v7
+      name: Upload
+      with:
+        path: snapshot
+        name: mt32emu_qt_win11_x64
+        archive: true
+
+  build-mt32emu-qt-macos:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Get Qt static binary
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ vars.QT_ARTIFACT_MACOS }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        repository: munt/munt
+        run-id: ${{ vars.QT_RUN_MACOS }}
+
+    - name: Unpack Qt
+      run: |
+        tar xf ${{ vars.QT_ARTIFACT_MACOS }}
+
+    - name: Get portaudio sources
+      run: git clone --depth=1 --revision=${{ vars.PORTAUDIO_REVISION }} https://github.com/PortAudio/portaudio
+
+    - name: Configure portaudio
+      run: >
+        cmake -S portaudio -B portaudio/build -G Ninja
+        -D CMAKE_BUILD_TYPE=Release
+        -D CMAKE_POLICY_VERSION_MINIMUM=3.5
+        -D CMAKE_OSX_DEPLOYMENT_TARGET:STRING=${{ vars.OSX_DEPLOYMENT_TARGET }}
+        -D PA_BUILD_SHARED=OFF
+
+    - name: Build portaudio
+      run: cmake --build portaudio/build
+
+    - name: Build Resources
+      run: |
+        mkdir MT32Emu.iconset
+        cd MT32Emu.iconset
+        ln ../mt32emu_qt/res/icons/256x256/munt.png .
+        sips -z 16 16     munt.png --out icon_16x16.png
+        sips -z 32 32     munt.png --out icon_16x16@2x.png
+        sips -z 32 32     munt.png --out icon_32x32.png
+        sips -z 64 64     munt.png --out icon_32x32@2x.png
+        sips -z 128 128   munt.png --out icon_128x128.png
+        sips -z 256 256   munt.png --out icon_128x128@2x.png
+        sips -z 256 256   munt.png --out icon_256x256.png
+        sips -z 512 512   munt.png --out icon_256x256@2x.png
+        sips -z 512 512   munt.png --out icon_512x512.png
+        sips -z 1024 1024 munt.png --out icon_512x512@2x.png
+        cd ..
+        iconutil -c icns MT32Emu.iconset
+
+    - name: Configure mt32emu-qt
+      run: >
+        cmake -S . -B build -G Ninja
+        -D BUILD_SNAPSHOTS=$BUILD_SNAPSHOTS
+        -D BUILD_TESTING=OFF
+        -D CMAKE_BUILD_TYPE=Release
+        -D CMAKE_OSX_DEPLOYMENT_TARGET:STRING=${{ vars.OSX_DEPLOYMENT_TARGET }}
+        -D CMAKE_PREFIX_PATH=${{ github.workspace }}/stage
+        -D MACOSX_BUNDLE_ICON_FILE:STRING=MT32Emu.icns
+        -D PORTAUDIO_INCLUDE_DIR=portaudio/include
+        -D PORTAUDIO_LIBRARY=portaudio/build/libportaudio.a
+        -D libmt32emu_PACKAGE_TYPE=Runtime
+        -D munt_WITH_MT32EMU_SMF2WAV:BOOL=OFF
+
+    - name: Build mt32emu-qt
+      run: cmake --build build
+
+    - name: Package mt32emu-qt
+      run: |
+        cmake --install build --prefix snapshot --component Runtime --strip
+        cd snapshot
+        mv bin/mt32emu-qt.app .
+        mv share/doc .
+        rm -rf bin share
+        strip mt32emu-qt.app/Contents/MacOS/mt32emu-qt
+        mkdir mt32emu-qt.app/Contents/Resources
+        mv ../MT32Emu.icns mt32emu-qt.app/Contents/Resources
+        tar czf ../mt32emu_qt_macos_arm64.tgz *
+
+    - uses: actions/upload-artifact@v7
+      name: Upload mt32emu-qt
+      with:
+        path: mt32emu_qt_macos_arm64.tgz
+        archive: false

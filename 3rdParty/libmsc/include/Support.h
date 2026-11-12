@@ -1,14 +1,14 @@
 
-/** $VER: Support.h (2025.09.17) P. Stuer **/
+/** $VER: Support.h (2026.08.30) P. Stuer **/
 
 #pragma once
 
 #define WIN32_LEAN_AND_MEAN
 
-#include <sdkddkver.h>
-#include <Windows.h>
+#include <SDKDDKVer.h>
+#include <windows.h>
 
-#include <math.h>
+#include <cmath>
 
 namespace msc
 {
@@ -17,7 +17,7 @@ namespace msc
 /// Returns the input value clamped between min and max.
 /// </summary>
 template <class T>
-inline static T Clamp(T value, T minValue, T maxValue)
+inline static constexpr T Clamp(T value, T minValue, T maxValue)
 {
     return std::min(std::max(value, minValue), maxValue);
 }
@@ -26,25 +26,52 @@ inline static T Clamp(T value, T minValue, T maxValue)
 /// Returns true of the input value is in the interval between min and max.
 /// </summary>
 template <class T>
-inline static T InRange(T value, T minValue, T maxValue)
+inline static constexpr T InRange(T value, T minValue, T maxValue)
 {
     return (minValue <= value) && (value <= maxValue);
 }
 
 /// <summary>
-/// Wraps around a value.
+/// Constrains the specified value to the range [0 .. max - 1], wrapping around values that are larger than the maximum value.
 /// </summary>
 template<class T>
-inline static T Wrap(T value, T max)
+inline static constexpr T Wrap(T value, T max)
 {
-    return (max + (value % max)) % max;
+    value %= max;
+
+    if (value < 0)
+        value += max;
+
+    return value;
+}
+
+template<>
+inline float Wrap(float value, float max)
+{
+    value = std::fmod(value, max);
+
+    if (value < 0.f)
+        value += max;
+
+    return value;
+}
+
+template<>
+inline double Wrap(double value, double max)
+{
+    value = std::fmod(value, max);
+
+    if (value < 0.)
+        value += max;
+
+    return value;
 }
 
 /// <summary>
 /// Maps a value from one range (srcMin, srcMax) to another (dstMin, dstMax).
 /// </summary>
 template<class T, class U>
-inline static U Map(T value, T srcMin, T srcMax, U dstMin, U dstMax)
+inline static constexpr U Map(T value, T srcMin, T srcMax, U dstMin, U dstMax)
 {
     return dstMin + (U) (((double) (value - srcMin) * (double) (dstMax - dstMin)) / (double) (srcMax - srcMin));
 }

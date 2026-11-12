@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2026.05.10) **/
+/** $VER: Player.cpp (2026.09.12) **/
 
 #include "pch.h"
 
@@ -29,18 +29,6 @@ player_t::player_t() noexcept
     _FileFormat = midi::FileFormat::Unknown;
 
     _IsStarted = false;
-
-#ifdef HAVE_FOO_VIS_MIDI
-    {
-        IAPI::ptr api;
-
-        if (fb2k::std_api_try_get(api))
-            _MusicKeyboard = api->GetMusicKeyboard();
-
-        if (_MusicKeyboard.is_valid())
-            _MusicKeyboard->Initialize(InterfaceVersion);
-    }
-#endif
 }
 
 /// <summary>
@@ -441,6 +429,9 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
     _FramesRemaining = BlockToDo;
 
 #ifdef HAVE_FOO_VIS_MIDI
+    if (_MusicKeyboard2.is_valid())
+        _MusicKeyboard2->SetTimelinePosition(OldFrameIndex, _SampleRate);
+    else
     if (_MusicKeyboard.is_valid())
         _MusicKeyboard->SetPosition(OldFrameIndex);
 #endif
@@ -981,6 +972,30 @@ void player_t::SendSysExGS(uint8_t * data, size_t size, uint8_t portNumber, uint
         SendSysEx(data, size, portNumber, time);
     else
         SendSysEx(data, size, portNumber);
+}
+
+/// <summary>
+/// Acquires the keyboard visualizer only for playback.
+/// </summary>
+void player_t::EnableVisualization(bool enabled) noexcept
+{
+#ifdef HAVE_FOO_VIS_MIDI
+    if (!enabled)
+        return;
+
+    IAPI::ptr api;
+
+    if (fb2k::std_api_try_get(api))
+        _MusicKeyboard = api->GetMusicKeyboard();
+
+    if (_MusicKeyboard.is_valid())
+    {
+        _MusicKeyboard->Initialize(InterfaceVersion);
+        _MusicKeyboard->service_query_t(_MusicKeyboard2);
+    }
+#else
+    UNREFERENCED_PARAMETER(enabled);
+#endif
 }
 
 static uint16_t GetWord(const uint8_t * data) noexcept

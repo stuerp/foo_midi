@@ -2,7 +2,7 @@
  * libADLMIDI is a free Software MIDI synthesizer library with OPL3 emulation
  *
  * Original ADLMIDI code: Copyright (c) 2010-2014 Joel Yliluoma <bisqwit@iki.fi>
- * ADLMIDI Library API:   Copyright (c) 2015-2025 Vitaly Novichkov <admin@wohlnet.ru>
+ * ADLMIDI Library API:   Copyright (c) 2015-2026 Vitaly Novichkov <admin@wohlnet.ru>
  *
  * Library is based on the ADLMIDI, a MIDI player for Linux and Windows with OPL3 emulation:
  * http://iki.fi/bisqwit/source/adlmidi.html
@@ -27,15 +27,19 @@
 #define BW_MidiSequencer AdlMidiSequencer
 #define BWMIDI_ENABLE_OPL_MUSIC_SUPPORT
 // Inlucde MIDI sequencer class implementation
-#include "midi_sequencer_impl.hpp"
+#include "midiseq/midi_sequencer_impl.hpp"
 
 #include "adlmidi_midiplay.hpp"
-#include "adlmidi_opl3.hpp"
+// #include "adlmidi_opl3.hpp"
 #include "adlmidi_private.hpp"
 
 /****************************************************
  *           Real-Time MIDI calls proxies           *
  ****************************************************/
+
+#ifdef ENABLE_HW_OPL_DOS
+void adl_seq_dpmi_lock_begin() {}
+#endif
 
 static void rtNoteOn(void *userdata, uint8_t channel, uint8_t note, uint8_t velocity)
 {
@@ -90,7 +94,7 @@ static void rtSysEx(void *userdata, const uint8_t *msg, size_t size)
 static void rtRawOPL(void *userdata, uint8_t reg, uint8_t value)
 {
     MIDIplay *context = reinterpret_cast<MIDIplay *>(userdata);
-    return context->realTime_rawOPL(reg, value);
+    return context->realTime_rawOPL2(reg, value);
 }
 
 static void rtDeviceSwitch(void *userdata, size_t track, const char *data, size_t length)
@@ -162,5 +166,9 @@ double MIDIplay::Tick(double s, double granularity)
 
     return ret;
 }
+
+#ifdef ENABLE_HW_OPL_DOS
+void adl_seq_dpmi_lock_end() {}
+#endif
 
 #endif /* ADLMIDI_DISABLE_MIDI_SEQUENCER */

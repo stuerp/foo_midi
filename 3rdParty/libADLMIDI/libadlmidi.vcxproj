@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM64EC">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64EC</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64EC">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64EC</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
@@ -46,7 +54,20 @@
     <EnableASAN>
     </EnableASAN>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+    <EnableASAN />
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -66,7 +87,13 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -75,10 +102,16 @@
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
     <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
     <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
@@ -145,7 +178,46 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">
+    <ClCompile>
+      <PreprocessorDefinitions>ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;ADLMIDI_DISABLE_MIDI_SEQUENCER;BWMIDI_DISABLE_XMI_SUPPORT;BWMIDI_DISABLE_MUS_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>repo/include;repo/src</AdditionalIncludeDirectories>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;ADLMIDI_DISABLE_MIDI_SEQUENCER;BWMIDI_DISABLE_XMI_SUPPORT;BWMIDI_DISABLE_MUS_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <StringPooling>true</StringPooling>
+      <AdditionalIncludeDirectories>repo/include;repo/src</AdditionalIncludeDirectories>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalOptions>/d2notypeopt</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">
     <ClCompile>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>ADLMIDI_ENABLE_OPL2_LLE_EMULATOR;ADLMIDI_ENABLE_OPL3_LLE_EMULATOR;ADLMIDI_DISABLE_MIDI_SEQUENCER;BWMIDI_DISABLE_XMI_SUPPORT;BWMIDI_DISABLE_MUS_SUPPORT;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -179,6 +251,7 @@
     <ClInclude Include="repo\src\adlmidi_ptr.hpp" />
     <ClInclude Include="repo\src\chips\common\mutex.hpp" />
     <ClInclude Include="repo\src\chips\common\ptr.hpp" />
+    <ClInclude Include="repo\src\chips\dosbox_opl2.h" />
     <ClInclude Include="repo\src\chips\dos_hw_opl.h" />
     <ClInclude Include="repo\src\chips\dosbox_opl3.h" />
     <ClInclude Include="repo\src\chips\dosbox\dbopl.h" />
@@ -188,10 +261,15 @@
     <ClInclude Include="repo\src\chips\java\JavaOPL3.hpp" />
     <ClInclude Include="repo\src\chips\mame_opl2.h" />
     <ClInclude Include="repo\src\chips\mame\opl.h" />
-    <ClInclude Include="repo\src\chips\nuked_opl3_v174.h" />
+    <ClInclude Include="repo\src\chips\nuked\nukedopl2.h" />
+    <ClInclude Include="repo\src\chips\nuked_cqm.h" />
+    <ClInclude Include="repo\src\chips\nuked_cqm\cqm.h" />
+    <ClInclude Include="repo\src\chips\nuked_fast\nukedopl3_fast.h" />
+    <ClInclude Include="repo\src\chips\nuked_fast\wf_rom.h" />
+    <ClInclude Include="repo\src\chips\nuked_opl2.h" />
     <ClInclude Include="repo\src\chips\nuked_opl3.h" />
-    <ClInclude Include="repo\src\chips\nuked\nukedopl3_174.h" />
     <ClInclude Include="repo\src\chips\nuked\nukedopl3.h" />
+    <ClInclude Include="repo\src\chips\nuked_opl3_fast.h" />
     <ClInclude Include="repo\src\chips\opal_opl3.h" />
     <ClInclude Include="repo\src\chips\opal\opal.h" />
     <ClInclude Include="repo\src\chips\opl_chip_base.h" />
@@ -220,6 +298,7 @@
     <ClInclude Include="repo\src\midi_sequencer_impl.hpp" />
     <ClInclude Include="repo\src\midi_sequencer.h" />
     <ClInclude Include="repo\src\midi_sequencer.hpp" />
+    <ClInclude Include="repo\src\models\opl_models.h" />
     <ClInclude Include="repo\src\oplinst.h" />
     <ClInclude Include="repo\src\structures\pl_list.hpp" />
     <ClInclude Include="repo\src\wopl\wopl_file.h" />
@@ -231,7 +310,7 @@
     <ClCompile Include="repo\src\adlmidi_private.cpp" />
     <ClCompile Include="repo\src\adlmidi_sequencer.cpp" />
     <ClCompile Include="repo\src\adlmidi.cpp" />
-    <ClCompile Include="repo\src\chips\dos_hw_opl.cpp" />
+    <ClCompile Include="repo\src\chips\dosbox_opl2.cpp" />
     <ClCompile Include="repo\src\chips\dosbox_opl3.cpp" />
     <ClCompile Include="repo\src\chips\dosbox\dbopl.cpp" />
     <ClCompile Include="repo\src\chips\esfmu_opl3.cpp" />
@@ -240,10 +319,14 @@
     <ClCompile Include="repo\src\chips\java_opl3.cpp" />
     <ClCompile Include="repo\src\chips\mame_opl2.cpp" />
     <ClCompile Include="repo\src\chips\mame\mame_fmopl.cpp" />
-    <ClCompile Include="repo\src\chips\nuked_opl3_v174.cpp" />
+    <ClCompile Include="repo\src\chips\nuked\nukedopl2.c" />
+    <ClCompile Include="repo\src\chips\nuked_cqm.cpp" />
+    <ClCompile Include="repo\src\chips\nuked_cqm\cqm.c" />
+    <ClCompile Include="repo\src\chips\nuked_fast\nukedopl3_fast.c" />
+    <ClCompile Include="repo\src\chips\nuked_opl2.cpp" />
     <ClCompile Include="repo\src\chips\nuked_opl3.cpp" />
-    <ClCompile Include="repo\src\chips\nuked\nukedopl3_174.c" />
     <ClCompile Include="repo\src\chips\nuked\nukedopl3.c" />
+    <ClCompile Include="repo\src\chips\nuked_opl3_fast.cpp" />
     <ClCompile Include="repo\src\chips\opal_opl3.cpp" />
     <ClCompile Include="repo\src\chips\opal\opal.c" />
     <ClCompile Include="repo\src\chips\opl_serial_port.cpp" />
@@ -261,6 +344,14 @@
     <ClCompile Include="repo\src\chips\ymfm\ymfm_pcm.cpp" />
     <ClCompile Include="repo\src\chips\ymfm\ymfm_ssg.cpp" />
     <ClCompile Include="repo\src\inst_db.cpp" />
+    <ClCompile Include="repo\src\models\model_ail.c" />
+    <ClCompile Include="repo\src\models\model_apogee.c" />
+    <ClCompile Include="repo\src\models\model_dmx.c" />
+    <ClCompile Include="repo\src\models\model_generic.c" />
+    <ClCompile Include="repo\src\models\model_hmi_sos.c" />
+    <ClCompile Include="repo\src\models\model_msadlib.c" />
+    <ClCompile Include="repo\src\models\model_oconnell.c" />
+    <ClCompile Include="repo\src\models\model_win9x.c" />
     <ClCompile Include="repo\src\wopl\wopl_file.c" />
   </ItemGroup>
   <ItemGroup>

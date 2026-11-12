@@ -191,6 +191,9 @@
     <ClInclude Include="repo\mt32emu\src\VersionTagging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="repo\mt32emu\src\SysexBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="repo\mt32emu\src\config.h.in" />

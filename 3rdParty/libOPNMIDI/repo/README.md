@@ -1,7 +1,7 @@
 # libOPNMIDI
 libOPNMIDI is a free Software MIDI synthesizer library with OPN2 (YM2612) and OPNA (YM2608) emulation.
 
-OPNMIDI Library: Copyright (c) 2017-2025 Vitaly Novichkov <admin@wohlnet.ru>
+OPNMIDI Library: Copyright (c) 2017-2026 Vitaly Novichkov <admin@wohlnet.ru>
 
 Library is based on core of the [libADLMIDI](https://github.com/Wohlstand/libADLMIDI), a MIDI playing library with OPL3 emulation.
 
@@ -164,6 +164,15 @@ To remove MIDI Sequencer, define `OPNMIDI_DISABLE_MIDI_SEQUENCER` macro and remo
 * [OPNMIDI Player for Android](https://github.com/Wohlstand/OPNMIDI-Player-Java/) - a little MIDI-player for Android which uses libOPNMIDI to play MIDI files and provides flexible GUI with ability to change bank, flags, number of emulated chips, etc.
 
 # Changelog
+## 1.6.2   2025-08-24
+ * Added support for HMI and HMP files!
+ * Added support for in-track (local) loops.
+ * Optimized work with chip instruments.
+ * Fixed the silence problem at the MIDI channel after playing too many notes without Note OFF event.
+ * Added `opn2_setDeviceFilterMask()` public API to assign the device filter mask for the HMI/HMP/EMIDI tracks disabling/enabling.
+ * Added handling of music files designed for the EMIDI standard from the Apogee Sound System. This feature must be enabled manually to avoid heuristics and possible conflicts.
+ * Added `opn2_setModeEMIDI()` public API to enable handling EMIDI specification events without conflicts to other formats.
+
 ## 1.6.1   2025-09-22
  * Added four extra heavy but very accurate Nuked LLE emulators (on weak machines suitable for WAV writing only).
  * WinMM: Fixed random crash on waveOutOpen initialisation because of incorrect initialisation structure usage.

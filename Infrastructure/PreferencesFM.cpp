@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesFM.cpp (2025.09.22) P. Stuer **/
+/** $VER: PreferencesFM.cpp (2026.09.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -40,7 +40,7 @@
 const std::vector<emulator_t> _ADLEmulators =
 {
     { ADLMIDI_EMU_NUKED,            L"Nuked OPL3 v1.8" },
-    { ADLMIDI_EMU_NUKED_174,        L"Nuked OPL3 v1.7.4" },
+    { ADLMIDI_EMU_NUKED_FAST,       L"Nuked OPL3 Fast" },
     { ADLMIDI_EMU_DOSBOX,           L"DOSBox" },
     { ADLMIDI_EMU_OPAL,             L"Opal" },
     { ADLMIDI_EMU_JAVA,             L"Java" },
@@ -50,6 +50,7 @@ const std::vector<emulator_t> _ADLEmulators =
     { ADLMIDI_EMU_YMFM_OPL3,        L"YMFM OPL3" },
     { ADLMIDI_EMU_NUKED_OPL2_LLE,   L"Nuked OPL2 Low-level" },
     { ADLMIDI_EMU_NUKED_OPL3_LLE,   L"Nuked OPL3 Low-level" },
+    { ADLMIDI_EMU_NUKED_CQM,        L"Nuked CQM" },
 };
 
 const std::vector<emulator_t> _OPNEmulators =

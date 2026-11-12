@@ -1,3 +1,26 @@
+/*
+ * libADLMIDI is a free Software MIDI synthesizer library with OPL3 emulation
+ *
+ * Original ADLMIDI code: Copyright (c) 2010-2014 Joel Yliluoma <bisqwit@iki.fi>
+ * ADLMIDI Library API:   Copyright (c) 2015-2026 Vitaly Novichkov <admin@wohlnet.ru>
+ *
+ * Library is based on the ADLMIDI, a MIDI player for Linux and Windows with OPL3 emulation:
+ * http://iki.fi/bisqwit/source/adlmidi.html
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef LOAD_OP2_H
 #define LOAD_OP2_H
 
@@ -142,6 +165,10 @@ bool BankFormats::LoadDoom(BanksDump &db, const char *fn, unsigned bank, const s
 
         if((flags & FL_DOUBLE_VOICE) != 0)
             inst.instFlags |= BanksDump::InstrumentEntry::WOPL_Ins_4op | BanksDump::InstrumentEntry::WOPL_Ins_Pseudo4op;
+
+        if((flags & FL_FIXED_PITCH) != 0)
+            inst.instFlags |= BanksDump::InstrumentEntry::WOPL_Ins_FixedNote;
+
         inst.percussionKeyNumber = notenum;
         inst.secondVoiceDetune = static_cast<char>(static_cast<int>(ins.finetune) - 128);
 

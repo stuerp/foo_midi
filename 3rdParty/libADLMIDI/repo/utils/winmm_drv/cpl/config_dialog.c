@@ -38,6 +38,9 @@ static const char *const volume_models_descriptions[] =
     "Win9x Generic FM driver",
     "HMI Sound Operating System",
     "HMI Sound Operating System (Old)",
+    "MS AdLib (Win3x driver)",
+    "IMF Creator",
+    "Jammie O'Connel's FM Synth",
     NULL
 };
 
@@ -57,6 +60,7 @@ static const enum ADL_Emulator emulator_type_id[] =
     ADLMIDI_EMU_NUKED_174,
 #endif
 #ifndef ADLMIDI_DISABLE_DOSBOX_EMULATOR
+    ADLMIDI_EMU_DOSBOX_OPL2,
     ADLMIDI_EMU_DOSBOX,
 #endif
 #ifndef ADLMIDI_DISABLE_OPAL_EMULATOR
@@ -81,18 +85,35 @@ static const enum ADL_Emulator emulator_type_id[] =
 #ifdef ADLMIDI_ENABLE_OPL3_LLE_EMULATOR
     ADLMIDI_EMU_NUKED_OPL3_LLE,
 #endif
+#ifndef ADLMIDI_DISABLE_NUKED_EMULATOR
+    ADLMIDI_EMU_NUKED_OPL2_LITE,
+    ADLMIDI_EMU_NUKED_CQM,
+#endif
     ADLMIDI_EMU_end
 };
 
 static const char * const emulator_type_descriptions[] =
 {
+#ifndef ADLMIDI_DISABLE_NUKED_EMULATOR
     "Nuked OPL3 1.8",
-    "Nuked OPL3 1.7.4 (Optimized)",
-    "DOSBox",
+    "Nuked OPL3 Fast",
+#endif
+#ifndef ADLMIDI_DISABLE_DOSBOX_EMULATOR
+    "DOSBox OPL2",
+    "DOSBox OPL3",
+#endif
+#ifndef ADLMIDI_DISABLE_OPAL_EMULATOR
     "Opal",
+#endif
+#ifndef ADLMIDI_DISABLE_JAVA_EMULATOR
     "Java OPL3",
+#endif
+#ifndef ADLMIDI_DISABLE_ESFMU_EMULATOR
     "ESFMu",
+#endif
+#ifndef ADLMIDI_DISABLE_MAME_OPL2_EMULATOR
     "MAME OPL2",
+#endif
 #ifndef ADLMIDI_DISABLE_YMFM_EMULATOR
     "YMFM OPL2",
     "YMFM OPL3",
@@ -102,6 +123,10 @@ static const char * const emulator_type_descriptions[] =
 #endif
 #ifdef ADLMIDI_ENABLE_OPL3_LLE_EMULATOR
     "Nuked OPL3-LLE [!EXTRA HEAVY!]",
+#endif
+#ifndef ADLMIDI_DISABLE_NUKED_EMULATOR
+    "Nuked OPL2 Lite",
+    "Nuked CQM",
 #endif
     NULL
 };

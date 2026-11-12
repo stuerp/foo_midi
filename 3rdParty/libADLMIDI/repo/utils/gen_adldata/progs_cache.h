@@ -1,17 +1,35 @@
+/*
+ * libADLMIDI is a free Software MIDI synthesizer library with OPL3 emulation
+ *
+ * Original ADLMIDI code: Copyright (c) 2010-2014 Joel Yliluoma <bisqwit@iki.fi>
+ * ADLMIDI Library API:   Copyright (c) 2015-2026 Vitaly Novichkov <admin@wohlnet.ru>
+ *
+ * Library is based on the ADLMIDI, a MIDI player for Linux and Windows with OPL3 emulation:
+ * http://iki.fi/bisqwit/source/adlmidi.html
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 #ifndef PROGS_H
 #define PROGS_H
 
-#include <map>
-#include <set>
 #include <utility>
-#include <memory>
 #include <cstring>
-#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <limits>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -117,7 +135,11 @@ struct BanksDump
             WOPL_VM_Apogee_Fixed,
             WOPL_VM_AIL,
             WOPL_VM_Win9x_GeneralFM,
-            WOPL_VM_HMI
+            WOPL_VM_HMI,
+            WOPL_VM_HMI_OLD,
+            WOPL_VM_MSAdLib,
+            WOPL_VM_IMFCreator,
+            WOPL_VM_OConnel
         } WOPL_VolumeModel;
 
         /**
@@ -132,11 +154,12 @@ struct BanksDump
             SETUP_Apogee  = 0x0003,
             SETUP_AIL     = 0x0307,
             SETUP_AIL_MT32= 0x0707,
-            SETUP_IBK     = 0x0301,
-            SETUP_IBK_MT32= 0x0700,
+            SETUP_IBK     = 0x030D,
+            SETUP_IBK_MT32= 0x070D,
             SETUP_IMF     = 0x0200,
             SETUP_CMF     = 0x0201,
-            SETUP_HMI     = 0x0309
+            SETUP_HMI     = 0x0309,
+            SETUP_HMI_OLD = 0x030A
         };
 
         uint_fast16_t       bankSetup = SETUP_Generic; // 0xAABB, AA - OPL flags, BB - Volume model
@@ -221,12 +244,14 @@ struct BanksDump
             WOPL_Ins_Pseudo4op  = 0x02,
             /* Is a blank instrument entry */
             WOPL_Ins_IsBlank    = 0x04,
+            /* Should melodic note play a fixed tone? */
+            WOPL_Ins_FixedNote  = 0x40,
 
             /* RythmMode flags mask */
-            WOPL_RhythmModeMask  = 0x38,
+            WOPL_RhythmModeMask = 0x38,
 
             /* Mask of the flags range */
-            WOPL_Ins_ALL_MASK   = 0x07
+            WOPL_Ins_ALL_MASK   = 0x47
         } WOPL_InstrumentFlags;
 
         typedef enum WOPL_RhythmMode
@@ -349,6 +374,7 @@ bool LoadJunglevision(BanksDump &db, const char *fn, unsigned bank, const std::s
 bool LoadDoom(BanksDump &db, const char *fn, unsigned bank, const std::string &bankTitle, const char *prefix);
 bool LoadTMB(BanksDump &db, const char *fn, unsigned bank, const std::string &bankTitle, const char *prefix);
 bool LoadWopl(BanksDump &db, const char *fn, unsigned bank, const std::string bankTitle, const char *prefix);
+bool LoadWoplX(BanksDump &db, const char *fn, unsigned bank, const std::string bankTitle, const char *prefix);
 
 }
 

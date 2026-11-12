@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2025.10.04) **/
+/** $VER: InputDecoder.cpp (2026.09.12) **/
 
 #include "pch.h"
 
@@ -15,13 +15,6 @@
 #include "CLAPHost.h"
 
 #include "Log.h"
-
-/* KEEP? 06/07/25
-volatile int _IsRunning = 0;
-
-critical_section _Lock;
-volatile uint32_t _CurrentSampleRate;
-*/
 
 /// <summary>
 /// Creates a new instance.
@@ -74,8 +67,8 @@ InputDecoder::InputDecoder() noexcept :
     _SecretSauceGain((float) CfgSecretSauceGain)
 {
     _CleanFlags = (uint32_t) (CfgExcludeEMIDITrackDesignation ? midi::container_t::CleanFlagEMIDI : 0) |
-                             (CfgFilterInstruments  ? midi::container_t::CleanFlagInstruments : 0) |
-                             (CfgFilterBanks        ? midi::container_t::CleanFlagBanks : 0);
+                             (CfgFilterInstruments            ? midi::container_t::CleanFlagInstruments : 0) |
+                             (CfgFilterBanks                  ? midi::container_t::CleanFlagBanks : 0);
 /* KEEP? 06/07/25
     _CurrentSampleRate = _SampleRate;
 */
@@ -681,6 +674,8 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             break;
         }
     }
+
+    _Player->EnableVisualization((_DecoderFlags & input_flag_playback) != 0);
 
     _IsEndOfContainer = false;
 }

@@ -1,5 +1,5 @@
 /* Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher
- * Copyright (C) 2011-2022 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
+ * Copyright (C) 2011-2026 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -24,6 +24,8 @@
 
 namespace MT32Emu {
 
+struct Tables;
+
 /**
  * LA32 performs wave generation in the log-space that allows replacing multiplications by cheap additions
  * It's assumed that only low-bit multiplications occur in a few places which are unavoidable like these:
@@ -45,13 +47,6 @@ struct LogSample {
 	} sign;
 };
 
-class LA32Utilites {
-public:
-	static Bit16u interpolateExp(const Bit16u fract);
-	static Bit16s unlog(const LogSample &logSample);
-	static void addLogSamples(LogSample &logSample1, const LogSample &logSample2);
-};
-
 /**
  * LA32WaveGenerator is aimed to represent the exact model of LA32 wave generator.
  * The output square wave is created by adding high / low linear segments in-between
@@ -70,23 +65,14 @@ class LA32WaveGenerator {
 	// True means the resulting square wave is to be multiplied by the synchronous cosine
 	bool sawtoothWaveform;
 
-	// Logarithmic amp of the wave generator
-	Bit32u amp;
-
-	// Logarithmic frequency of the resulting wave
-	Bit16u pitch;
-
 	// Values in range [1..31]
-	// Value 1 correspong to the minimum resonance
+	// Value 1 corresponds to the minimum resonance
 	Bit8u resonance;
 
 	// Processed value in range [0..255]
 	// Values in range [0..128] have no effect and the resulting wave remains symmetrical
 	// Value 255 corresponds to the maximum possible asymmetric of the resulting wave
 	Bit8u pulseWidth;
-
-	// Composed of the base cutoff in range [78..178] left-shifted by 18 bits and the TVF modifier
-	Bit32u cutoffVal;
 
 	// Logarithmic PCM sample start address
 	const Bit16s *pcmWaveAddress;
@@ -103,6 +89,13 @@ class LA32WaveGenerator {
 	//***************************************************************************
 	// Internal variables below
 	//***************************************************************************
+
+	// Logarithmic amp of the wave generator, scaled down by factor 2^-10
+	Bit32u amp;
+
+	// The increments applied to wavePosition per sample, depend on pitch
+	Bit32u sampleStep;
+	Bit32u pcmSampleStep;
 
 	// Relative position within either the synth wave or the PCM sampled wave
 	// 0 - start of the positive rising sine segment of the square wave or start of the PCM sample
@@ -128,6 +121,16 @@ class LA32WaveGenerator {
 
 	// The decay speed of resonance sine wave, depends on the resonance value
 	Bit32u resAmpDecayFactor;
+
+	// The relative lengths of the sine, high and low linear segments in terms of SINE_SEGMENT_RELATIVE_LENGTH, depend on cutoff
+	Bit32u highLinearLength;
+	Bit32u lowLinearLength;
+	Bit32u resonanceWaveLengthFactor;
+
+	// The square wave decay level, applied when cutoff is below MIDDLE_CUTOFF_VALUE, depends on cutoff
+	Bit32u squareWaveAmpSubtraction;
+	// The resonance wave decay level, applied when cutoff is below RESONANCE_DECAY_THRESHOLD_CUTOFF_VALUE, depends on cutoff
+	Bit32u resonanceWaveAmpSubtraction;
 
 	// Fractional part of the pcmPosition
 	Bit32u pcmInterpolationFactor;
@@ -162,11 +165,10 @@ class LA32WaveGenerator {
 	// Internal methods below
 	//***************************************************************************
 
-	Bit32u getSampleStep();
-	Bit32u getResonanceWaveLengthFactor(Bit32u effectiveCutoffValue);
+	static Bit32u getResonanceWaveLengthFactor(Bit32u effectiveCutoffValue);
 	Bit32u getHighLinearLength(Bit32u effectiveCutoffValue);
 
-	void computePositions(Bit32u highLinearLength, Bit32u lowLinearLength, Bit32u resonanceWaveLengthFactor);
+	void computePositions();
 	void advancePosition();
 
 	void generateNextSquareWaveLogSample();
@@ -183,8 +185,16 @@ public:
 	// Initialise the WG engine for generation of PCM partial samples and set up the invariant parameters
 	void initPCM(const Bit16s * const pcmWaveAddress, const Bit32u pcmWaveLength, const bool pcmWaveLooped, const bool pcmWaveInterpolated);
 
-	// Update parameters with respect to TVP, TVA and TVF, and generate next sample
-	void generateNextSample(const Bit32u amp, const Bit16u pitch, const Bit32u cutoff);
+	// Setters below update WG parameters with respect to TVP, TVA and TVF; should only be called when the values change
+	// Logarithmic amp of the wave generator
+	void setAmp(const Bit32u amp);
+	// Logarithmic frequency of the resulting wave
+	void setPitch(const Bit16u pitch);
+	// Composed of the base cutoff in range [78..178] left-shifted by 18 bits and the TVF modifier
+	void setCutoff(const Bit32u cutoff);
+
+	// Generate the next sample using the current WG parameters
+	void generateNextSample();
 
 	// WG output in the log-space consists of two components which are to be added (or ring modulated) in the linear-space afterwards
 	LogSample getOutputLogSample(const bool first) const;
@@ -236,6 +246,8 @@ class LA32IntPartialPair : public LA32PartialPair {
 	static Bit16s unlogAndMixWGOutput(const LA32WaveGenerator &wg);
 
 public:
+	static void initTables(const Tables &tables);
+
 	// ringModulated should be set to false for the structures with mixing or stereo output
 	// ringModulated should be set to true for the structures with ring modulation
 	// mixed is used for the structures with ring modulation and indicates whether the master partial output is mixed to the ring modulator output
@@ -247,8 +259,13 @@ public:
 	// Initialise the WG engine for generation of PCM partial samples and set up the invariant parameters
 	void initPCM(const PairType master, const Bit16s * const pcmWaveAddress, const Bit32u pcmWaveLength, const bool pcmWaveLooped);
 
-	// Update parameters with respect to TVP, TVA and TVF, and generate next sample
-	void generateNextSample(const PairType master, const Bit32u amp, const Bit16u pitch, const Bit32u cutoff);
+	// Update parameters with respect to TVP, TVA and TVF; should only be called when the values change
+	void setAmp(const PairType master, const Bit32u amp);
+	void setPitch(const PairType master, const Bit16u pitch);
+	void setCutoff(const PairType master, const Bit32u cutoff);
+
+	// Generate the next sample using the current WG parameters
+	void generateNextSample(const PairType master);
 
 	// Perform mixing / ring modulation of WG output and return the result
 	// Although, LA32 applies panning itself, we assume it is applied in the mixer, not within a pair
