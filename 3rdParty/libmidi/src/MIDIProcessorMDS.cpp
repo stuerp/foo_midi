@@ -9,7 +9,7 @@
 namespace midi
 {
 
-bool processor_t::IsMDS(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsMDS(bytes_t const & data) noexcept
 {
     if (data.size() < 8)
         return false;
@@ -28,7 +28,7 @@ bool processor_t::IsMDS(std::vector<uint8_t> const & data) noexcept
     return true;
 }
 
-bool processor_t::ProcessMDS(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessMDS(bytes_t const & data, container_t & container)
 {
     container.FileFormat = FileFormat::MDS;
 

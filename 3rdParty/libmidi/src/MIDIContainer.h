@@ -30,14 +30,12 @@ struct event_t
         Extended            // 0xF0
     };
 
-    uint32_t Time;              // Absolute time in ticks from the beginning of the track.
-    event_type_t Type;
-    uint32_t ChannelNumber;
-    std::vector<uint8_t> Data;
+    uint32_t Time = 0;              // Absolute time in ticks from the beginning of the track.
+    event_type_t Type = event_type_t::NoteOff;
+    uint32_t ChannelNumber = 0;
+    bytes_t Data;
 
-    event_t() noexcept : Time(), Type(event_type_t::NoteOff), ChannelNumber()
-    {
-    }
+    event_t() = default;
 
     event_t(const event_t & other) noexcept
     {
@@ -79,7 +77,7 @@ struct event_t
 class track_t
 {
 public:
-    track_t() noexcept : _IsPortSet(false) { }
+    track_t() = default;
 
     track_t(const track_t & track) noexcept : _IsPortSet(false)
     {
@@ -134,7 +132,7 @@ public:
 
 private:
     std::vector<event_t> _Events;
-    bool _IsPortSet;                        // True if the track contains at least 1 MIDI Port event.
+    bool _IsPortSet = false;        // True if the track contains at least 1 MIDI Port event.
 };
 
 /// <summary>
@@ -142,12 +140,10 @@ private:
 /// </summary>
 struct tempo_item_t
 {
-    uint32_t Time;
-    uint32_t Tempo;
+    uint32_t Time = 0;
+    uint32_t Tempo = 0;
 
-    tempo_item_t() noexcept : Time(0), Tempo(0)
-    {
-    }
+    tempo_item_t() = default;
 
     tempo_item_t(uint32_t timestamp, uint32_t tempo);
 };
@@ -161,7 +157,10 @@ public:
     void Add(uint32_t tempo, uint32_t timestamp);
     uint32_t TimestampToMS(uint32_t timestamp, uint32_t division) const;
 
-    size_t Size() const noexcept { return _Items.size(); }
+    size_t Size() const noexcept
+    {
+        return _Items.size();
+    }
 
     const tempo_item_t & operator[](std::size_t p_index) const
     {
@@ -182,11 +181,12 @@ private:
 /// </summary>
 struct sysex_item_t
 {
-    size_t Offset;
-    size_t Size;
-    uint8_t PortNumber;
+    size_t Offset = 0;
+    size_t Size = 0;
+    uint8_t PortNumber = 0;
 
-    sysex_item_t() noexcept : Offset(0), Size(0), PortNumber(0) { }
+    sysex_item_t() = default;
+
     sysex_item_t(const sysex_item_t & other);
     sysex_item_t(uint8_t portNumber, std::size_t offset, std::size_t size);
 };
@@ -212,13 +212,29 @@ private:
 /// </summary>
 struct metadata_item_t
 {
-    uint32_t Timestamp;
+    uint32_t Timestamp = 0;
     std::string Name;
     std::string Value;
 
-    metadata_item_t() noexcept : Timestamp(0) { }
+    metadata_item_t() = default;
 
-    metadata_item_t(const metadata_item_t & item) noexcept { operator=(item); };
+    metadata_item_t(uint32_t timestamp, const char * name, const char * value) noexcept
+    {
+        Timestamp = timestamp;
+        Name = name;
+        Value = value;
+    }
+
+    metadata_item_t(const metadata_item_t & item) noexcept
+    {
+        operator=(item);
+    };
+
+    metadata_item_t(metadata_item_t && item)
+    {
+        operator=(item);
+    }
+
     metadata_item_t & operator=(const metadata_item_t & other) noexcept
     {
         Timestamp = other.Timestamp;
@@ -228,7 +244,6 @@ struct metadata_item_t
         return *this;
     }
 
-    metadata_item_t(metadata_item_t && item) { operator=(item); }
     metadata_item_t & operator=(metadata_item_t && other)
     {
         Timestamp = other.Timestamp;
@@ -236,15 +251,6 @@ struct metadata_item_t
         Value = std::move(Value);
 
         return *this;
-    }
-
-    virtual ~metadata_item_t() { }
-
-    metadata_item_t(uint32_t timestamp, const char * name, const char * value) noexcept
-    {
-        Timestamp = timestamp;
-        Name = name;
-        Value = value;
     }
 };
 
@@ -254,15 +260,18 @@ struct metadata_item_t
 class metadata_table_t
 {
 public:
-    metadata_table_t() noexcept { }
+    metadata_table_t() = default;
 
     void AddItem(const metadata_item_t & item);
     void Append(const metadata_table_t & data);
     bool GetItem(const char * name, metadata_item_t & item) const noexcept;
-    bool GetBitmap(std::vector<uint8_t> & bitmap) const;
-    void AssignBitmap(std::vector<uint8_t>::const_iterator const & begin, std::vector<uint8_t>::const_iterator const & end);
+    bool GetBitmap(bytes_t & bitmap) const;
+    void AssignBitmap(iterator_t const & begin, iterator_t const & end);
 
-    std::size_t GetCount() const noexcept { return _Items.size(); }
+    std::size_t GetCount() const noexcept
+    {
+        return _Items.size();
+    }
 
     const metadata_item_t & operator[](size_t index) const;
 
@@ -358,8 +367,8 @@ public:
 
     void ApplyHack(uint32_t hack);
 
-    void SerializeAsStream(size_t subSongIndex, std::vector<message_t> & stream, sysex_table_t & sysExTable, std::vector<uint8_t> & portNumbers, uint32_t & loopBegin, uint32_t & loopEnd, uint32_t cleanFlags) const;
-    void SerializeAsSMF(std::vector<uint8_t> & data) const;
+    void SerializeAsStream(size_t subSongIndex, std::vector<message_t> & stream, sysex_table_t & sysExTable, bytes_t & portNumbers, uint32_t & loopBegin, uint32_t & loopEnd, uint32_t cleanFlags) const;
+    void SerializeAsSMF(bytes_t & data) const;
 
     void PromoteToType1();
 
@@ -388,19 +397,26 @@ public:
 
     std::vector<track_t> & GetTracks() { return _Tracks; }
 
-    const std::vector<uint8_t> & GetArtwork() const noexcept { return _Artwork; }
+    const bytes_t & GetArtwork() const noexcept { return _Artwork; }
     void SetArtwork(const std::vector<uint8_t> & artwork) noexcept { _Artwork = artwork; }
 
     void GetMetaData(size_t subSongIndex, metadata_table_t & data);
 
-    void SetExtraPercussionChannel(uint32_t channelNumber) noexcept { _ExtraPercussionChannel = channelNumber; }
-    uint32_t GetExtraPercussionChannel() const noexcept { return _ExtraPercussionChannel; }
+    void SetExtraPercussionChannel(uint32_t channelNumber) noexcept
+    {
+        _ExtraPercussionChannel = channelNumber;
+    }
+
+    uint32_t GetExtraPercussionChannel() const noexcept
+    {
+        return _ExtraPercussionChannel;
+    }
 
     void DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops, bool detectLeapFrogLoops);
 
     uint32_t TimestampToMS(uint32_t timestamp, size_t subsongIndex) const;
 
-    static void EncodeVariableLengthQuantity(std::vector<uint8_t> & data, uint32_t delta);
+    static void EncodeVariableLengthQuantity(bytes_t & data, uint32_t delta);
 
 public:
     using miditracks_t = std::vector<track_t>;
@@ -489,7 +505,7 @@ private:
     std::vector<tempo_map_t> _TempoMaps;
     std::vector<track_t> _Tracks;
 
-    std::vector<uint8_t> _PortNumbers;
+    bytes_t _PortNumbers;
 
     std::vector<std::vector<std::string>> _DeviceNames;
 

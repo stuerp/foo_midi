@@ -30,7 +30,7 @@ static std::string GetEncodingDescription(uint8_t encoding) noexcept;
 /// <summary>
 /// Returns true if the byte vector contains MMF data.
 /// </summary>
-bool processor_t::IsMMF(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsMMF(bytes_t const & data) noexcept
 {
     if (data.size() < 8)
         return false;
@@ -49,7 +49,7 @@ bool processor_t::IsMMF(std::vector<uint8_t> const & data) noexcept
 /// <summary>
 /// Processes a byte vector with MMF data.
 /// </summary>
-bool processor_t::ProcessMMF(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessMMF(bytes_t const & data, container_t & container)
 {
     container.FileFormat = FileFormat::MMF;
 
@@ -516,7 +516,7 @@ static void ProcessHPSTrack(const std::span<const uint8_t> & data, state_t & sta
 
                 if (GetHPSExclusiveFMMessage(&it[2], &chp, opp))
                 {
-                    std::vector<uint8_t> Temp(48);
+                    bytes_t Temp(48);
 
                     size_t Size = SetMA3ExclusiveMessage(Temp.data(), &chp, opp);
 
@@ -527,7 +527,7 @@ static void ProcessHPSTrack(const std::span<const uint8_t> & data, state_t & sta
                     // Conversion failed. Just copy the SysEx.
                     const size_t Size = (size_t) it[2] + 2u;
 
-                    std::vector<uint8_t> Temp(Size);
+                    bytes_t Temp(Size);
 
                     std::copy(it + 1, it + 1 + (ptrdiff_t) (Size), Temp.begin());
 
@@ -538,7 +538,7 @@ static void ProcessHPSTrack(const std::span<const uint8_t> & data, state_t & sta
             {
                 const size_t Size = (size_t) it[2] + 2u;
 
-                std::vector<uint8_t> Temp(Size);
+                bytes_t Temp(Size);
 
                 std::copy(it + 1, it + 1 + (ptrdiff_t) (Size), Temp.begin());
 

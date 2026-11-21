@@ -27,8 +27,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\HMIProcessor.cpp" />
     <ClCompile Include="src\libmidi.cpp" />
     <ClCompile Include="src\MIDI2.cpp" />
+    <ClInclude Include="src\HMIProcessor.h" />
+    <ClInclude Include="src\HMPProcessor.h" />
     <ClInclude Include="src\MIDI2.h" />
     <ClCompile Include="src\MIDIProcessorMIDI2.cpp" />
     <ClCompile Include="src\MIDIProcessorMMD.cpp" />
@@ -62,8 +65,7 @@
     <ClCompile Include="src\MIDIContainer.cpp" />
     <ClCompile Include="src\MIDIProcessorGMF.cpp" />
     <ClCompile Include="src\MIDIProcessor.cpp" />
-    <ClCompile Include="src\MIDIProcessorHMI.cpp" />
-    <ClCompile Include="src\MIDIProcessorHMP.cpp" />
+    <ClCompile Include="src\HMPProcessor.cpp" />
     <ClCompile Include="src\MIDIProcessorLDS.cpp" />
     <ClCompile Include="src\MIDIProcessorMDS.cpp" />
     <ClCompile Include="src\MIDIProcessorMMF.cpp" />

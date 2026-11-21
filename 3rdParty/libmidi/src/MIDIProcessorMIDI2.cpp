@@ -14,7 +14,7 @@ namespace midi
 {
 using namespace midi2;
 
-bool processor_t::IsMIDI2(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsMIDI2(bytes_t const & data) noexcept
 {
     // UMP packets are built from 32-bit words so the file size should be a multiple of 4.
     if ((data.size() < 8) || ((data.size() % 4) != 0))
@@ -26,7 +26,7 @@ bool processor_t::IsMIDI2(std::vector<uint8_t> const & data) noexcept
     return true;
 }
 
-bool processor_t::ProcessMIDI2(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessMIDI2(bytes_t const & data, container_t & container)
 {
     if ((data.size() < 8) || ((data.size() % 4) != 0))
         throw midi::exception("Insufficient MIDI 2.0 data");
@@ -45,7 +45,7 @@ bool processor_t::ProcessMIDI2(std::vector<uint8_t> const & data, container_t & 
 
     track_t Track;
 
-    std::vector<uint8_t> SysEx;
+    bytes_t SysEx;
     uint32_t SysExTick = 0;
 
     SysEx.reserve(16);

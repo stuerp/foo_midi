@@ -18,7 +18,7 @@ namespace midi
 /// <summary>
 /// Returns true if the data contains an SMF file.
 /// </summary>
-bool processor_t::IsSMF(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsSMF(bytes_t const & data) noexcept
 {
     if (data.size() < 18)
         return false;
@@ -51,7 +51,7 @@ bool processor_t::IsSMF(std::vector<uint8_t> const & data) noexcept
 /// <summary>
 /// Processes the data as an SMF file and returns an intialized container.
 /// </summary>
-bool processor_t::ProcessSMF(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessSMF(bytes_t const & data, container_t & container)
 {
     container.FileFormat = FileFormat::SMF;
 
@@ -121,7 +121,7 @@ bool processor_t::ProcessSMF(std::vector<uint8_t> const & data, container_t & co
 /// <summary>
 /// Processes an SMF track.
 /// </summary>
-bool processor_t::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail, container_t & container)
+bool processor_t::ProcessSMFTrack(iterator_t & data, iterator_t tail, container_t & container)
 {
     track_t Track;
 
@@ -131,7 +131,7 @@ bool processor_t::ProcessSMFTrack(std::vector<uint8_t>::const_iterator & data, s
     uint32_t SysExSize = 0;
     uint32_t SysExTime = 0;
 
-    std::vector<uint8_t> Temp(3);
+    bytes_t Temp(3);
 
     bool FoundEndOfTrack = false;
     bool DetectedPercussionText = false;

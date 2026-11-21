@@ -13,7 +13,7 @@ namespace midi
 /// <summary>
 /// Returns true if data points to an RCP sequence.
 /// </summary>
-bool processor_t::IsRCP(std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept
+bool processor_t::IsRCP(bytes_t const & data, const std::wstring & fileExtension) noexcept
 {
     if (fileExtension.empty())
         return false;
@@ -52,7 +52,7 @@ bool processor_t::IsRCP(std::vector<uint8_t> const & data, const std::wstring & 
 /// <summary>
 /// Processes the sequence data.
 /// </summary>
-bool processor_t::ProcessRCP(std::vector<uint8_t> const & data, const std::wstring & filePath, container_t & container)
+bool processor_t::ProcessRCP(bytes_t const & data, const std::wstring & filePath, container_t & container)
 {
     rcp::converter_t RCPConverter;
 
@@ -77,7 +77,7 @@ bool processor_t::ProcessRCP(std::vector<uint8_t> const & data, const std::wstri
 
     RCPConverter.ToSMF(SrcData, DstData);
 
-    std::vector<uint8_t> Data;
+    bytes_t Data;
 
     Data.insert(Data.end(), DstData.Data, DstData.Data + DstData.Size);
 

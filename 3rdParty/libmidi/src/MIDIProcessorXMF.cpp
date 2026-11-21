@@ -125,7 +125,7 @@ struct xmf_metadata_type_t
 struct xmf_international_content_t
 {
     uint32_t ID;
-    std::vector<uint8_t> Data;
+    bytes_t Data;
 };
 
 // 3.2.1.1.1. FieldSpecifier Structure (RP-030)
@@ -140,7 +140,7 @@ struct xmf_metadata_item_t
     xmf_field_specifier_t FieldSpecifier;
 
     StringFormatID UniversalContentsFormat;
-    std::vector<uint8_t> UniversalContentsData;
+    bytes_t UniversalContentsData;
 
     std::vector<xmf_international_content_t> _InternationalContents;
 };
@@ -180,7 +180,7 @@ struct xmf_node_t
 
     std::vector<xmf_node_t> Children;
 
-    std::vector<uint8_t> Unpack(const std::vector<uint8_t> & data);
+    bytes_t Unpack(const bytes_t & data);
 };
 
 struct xmf_file_t
@@ -198,7 +198,7 @@ const size_t MagicSize = 4;
 /// <summary>
 /// Returns true if the byte vector contains XMF data.
 /// </summary>
-bool processor_t::IsXMF(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsXMF(bytes_t const & data) noexcept
 {
     if (data.size() < MagicSize)
         return false;
@@ -212,7 +212,7 @@ bool processor_t::IsXMF(std::vector<uint8_t> const & data) noexcept
 /// <summary>
 /// Processes a byte vector with XMF data.
 /// </summary>
-bool processor_t::ProcessXMF(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessXMF(bytes_t const & data, container_t & container)
 {
     TRACE_INDENT();
 
@@ -292,7 +292,7 @@ bool processor_t::ProcessXMF(std::vector<uint8_t> const & data, container_t & co
 /// <summary>
 /// Processes a tree node.
 /// </summary>
-bool processor_t::ProcessNode(std::vector<uint8_t>::const_iterator & head, std::vector<uint8_t>::const_iterator tail, std::vector<uint8_t>::const_iterator & data, metadata_table_t & metadata, container_t & container)
+bool processor_t::ProcessNode(iterator_t & head, iterator_t tail, iterator_t & data, metadata_table_t & metadata, container_t & container)
 {
     #ifdef __TRACE
     ::printf("%*sNode\n", __TRACE_LEVEL * 4, "");
@@ -300,7 +300,7 @@ bool processor_t::ProcessNode(std::vector<uint8_t>::const_iterator & head, std::
 
     TRACE_INDENT();
 
-    const std::vector<uint8_t>::const_iterator HeaderHead = data;
+    const iterator_t HeaderHead = data;
 
     xmf_node_t Node = {};
 
@@ -636,8 +636,8 @@ bool processor_t::ProcessNode(std::vector<uint8_t>::const_iterator & head, std::
             // File node
             ptrdiff_t Size = (ptrdiff_t) (Node.Size - Node.HeaderSize - 1);
 
-            std::vector<uint8_t> Data(data, data + Size);
-            std::vector<uint8_t> UnpackedData;
+            bytes_t Data(data, data + Size);
+            bytes_t UnpackedData;
 
             switch (StandardResourceFormat)
             {
@@ -716,13 +716,13 @@ bool processor_t::ProcessNode(std::vector<uint8_t>::const_iterator & head, std::
 /// <summary>
 /// Unpackes the specified data, if necessary.
 /// </summary>
-std::vector<uint8_t> xmf_node_t::Unpack(const std::vector<uint8_t> & data)
+bytes_t xmf_node_t::Unpack(const bytes_t & data)
 {
     if (Unpackers.size() == 0)
         return data;
 
     const auto & Unpacker = Unpackers[0];
-    std::vector<uint8_t> UnpackedData;
+    bytes_t UnpackedData;
 
     if (Unpacker.StandardUnpackerID == StandardUnpackerID::Zlib)
     {
@@ -749,7 +749,7 @@ std::vector<uint8_t> xmf_node_t::Unpack(const std::vector<uint8_t> & data)
 /// <summary>
 /// Inflates a zlib deflated data stream.
 /// </summary>
-int processor_t::Inflate(const std::vector<uint8_t> & src, std::vector<uint8_t> & dst) noexcept
+int processor_t::Inflate(const bytes_t & src, bytes_t & dst) noexcept
 {
     z_stream Stream = { };
 
@@ -777,7 +777,7 @@ int processor_t::Inflate(const std::vector<uint8_t> & src, std::vector<uint8_t> 
 /// <summary>
 /// Inflates a raw deflated data stream.
 /// </summary>
-int processor_t::InflateRaw(const std::vector<uint8_t> & src, std::vector<uint8_t> & dst) noexcept
+int processor_t::InflateRaw(const bytes_t & src, bytes_t & dst) noexcept
 {
     z_stream Stream = { };
 

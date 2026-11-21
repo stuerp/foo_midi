@@ -12,7 +12,7 @@ namespace midi
 /// <summary>
 /// Returns true if the byte vector contains XMI data.
 /// </summary>
-bool processor_t::IsXMI(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsXMI(bytes_t const & data) noexcept
 {
     if (data.size() < 34)
         return false;
@@ -28,7 +28,7 @@ bool processor_t::IsXMI(std::vector<uint8_t> const & data) noexcept
 /// <summary>
 /// Processes a byte vector with XMI data.
 /// </summary>
-bool processor_t::ProcessXMI(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessXMI(bytes_t const & data, container_t & container)
 {
     container.FileFormat = FileFormat::XMI;
 
@@ -63,7 +63,7 @@ bool processor_t::ProcessXMI(std::vector<uint8_t> const & data, container_t & co
         if (EVNTChunk.Id != FOURCC_EVNT)
             throw midi::exception("EVNT chunk not found");
 
-        std::vector<uint8_t> const & Data = EVNTChunk._Data;
+        bytes_t const & Data = EVNTChunk._Data;
 
         {
             track_t Track;
@@ -73,7 +73,7 @@ bool processor_t::ProcessXMI(std::vector<uint8_t> const & data, container_t & co
             uint32_t CurrentTimestamp = 0;
             uint32_t LastEventTimestamp = 0;
 
-            std::vector<uint8_t> Temp(3);
+            bytes_t Temp(3);
 
             auto it = Data.begin(), end = Data.end();
 
@@ -216,7 +216,7 @@ bool processor_t::ProcessXMI(std::vector<uint8_t> const & data, container_t & co
 /// <summary>
 /// Reads a byte vector and converts it to a stream of chunks.
 /// </summary>
-bool processor_t::ReadStream(std::vector<uint8_t> const & data, iff_stream_t & stream)
+bool processor_t::ReadStream(bytes_t const & data, iff_stream_t & stream)
 {
     auto it = data.begin(), end = data.end();
 
@@ -244,7 +244,7 @@ bool processor_t::ReadStream(std::vector<uint8_t> const & data, iff_stream_t & s
 /// <summary>
 /// Reads a chunk from a byte vector.
 /// </summary>
-bool processor_t::ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end, iff_chunk_t & chunk, bool isFirstChunk)
+bool processor_t::ReadChunk(iterator_t & it, iterator_t end, iff_chunk_t & chunk, bool isFirstChunk)
 {
     if (end - it < 8)
         return false;
@@ -318,7 +318,7 @@ bool processor_t::ReadChunk(std::vector<uint8_t>::const_iterator & it, std::vect
 /// <summary>
 /// Decodes a variable length quantity.
 /// </summary>
-uint32_t processor_t::DecodeVariableLengthQuantityXMI(std::vector<uint8_t>::const_iterator & it, std::vector<uint8_t>::const_iterator end) noexcept
+uint32_t processor_t::DecodeVariableLengthQuantityXMI(iterator_t & it, iterator_t end) noexcept
 {
     uint32_t Quantity = 0;
 

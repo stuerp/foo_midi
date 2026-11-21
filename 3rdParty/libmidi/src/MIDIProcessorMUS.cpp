@@ -8,7 +8,7 @@
 namespace midi
 {
 
-bool processor_t::IsMUS(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsMUS(bytes_t const & data) noexcept
 {
     if (data.size() < 0x20)
         return false;
@@ -26,7 +26,7 @@ bool processor_t::IsMUS(std::vector<uint8_t> const & data) noexcept
     return false;
 }
 
-bool processor_t::ProcessMUS(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessMUS(bytes_t const & data, container_t & container)
 {
     uint16_t Length = (uint16_t) (data[ 4] | (data[ 5] << 8)); // Song length in bytes
     uint16_t Offset = (uint16_t) (data[ 6] | (data[ 7] << 8)); // Offset to song data

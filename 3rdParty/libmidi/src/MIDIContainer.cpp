@@ -216,14 +216,14 @@ bool metadata_table_t::GetItem(const char * name, metadata_item_t & item) const 
     return false;
 }
 
-bool metadata_table_t::GetBitmap(std::vector<uint8_t> & bitmap) const
+bool metadata_table_t::GetBitmap(bytes_t & bitmap) const
 {
     bitmap = _Bitmap;
 
     return bitmap.size() != 0;
 }
 
-void metadata_table_t::AssignBitmap(std::vector<uint8_t>::const_iterator const & begin, std::vector<uint8_t>::const_iterator const & end)
+void metadata_table_t::AssignBitmap(iterator_t const & begin, iterator_t const & end)
 {
     _Bitmap.assign(begin, end);
 }
@@ -474,7 +474,7 @@ void container_t::ApplyHack(uint32_t hack)
 /// <summary>
 /// Serializes the tracks as a stream of MIDI events.
 /// </summary>
-void container_t::SerializeAsStream(size_t subSongIndex, std::vector<message_t> & midiStream, sysex_table_t & sysExTable, std::vector<uint8_t> & portNumbers, uint32_t & loopBegin, uint32_t & loopEnd, uint32_t cleanFlags) const
+void container_t::SerializeAsStream(size_t subSongIndex, std::vector<message_t> & midiStream, sysex_table_t & sysExTable, bytes_t & portNumbers, uint32_t & loopBegin, uint32_t & loopEnd, uint32_t cleanFlags) const
 {
     uint32_t LoopBeginTimestamp = GetLoopBeginTimestamp(subSongIndex);
     uint32_t LoopEndTimestamp = GetLoopEndTimestamp(subSongIndex);
@@ -485,7 +485,7 @@ void container_t::SerializeAsStream(size_t subSongIndex, std::vector<message_t> 
     size_t TrackCount = _Tracks.size();
 
     std::vector<std::size_t> TrackPositions(TrackCount, 0);
-    std::vector<uint8_t> PortNumbers(TrackCount, 0);
+    bytes_t PortNumbers(TrackCount, 0);
     std::vector<std::string> DeviceNames(TrackCount);
 
     bool CleanEMIDI = (cleanFlags & CleanFlagEMIDI) == CleanFlagEMIDI;
@@ -699,7 +699,7 @@ void container_t::SerializeAsStream(size_t subSongIndex, std::vector<message_t> 
 /// <summary>
 /// Serializes the tracks as an SMF file.
 /// </summary>
-void container_t::SerializeAsSMF(std::vector<uint8_t> & midiStream) const
+void container_t::SerializeAsSMF(bytes_t & midiStream) const
 {
     if (_Tracks.size() == 0)
         return;
@@ -1039,7 +1039,7 @@ void container_t::GetMetaData(size_t subSongIndex, metadata_table_t & metaData)
 
                 DataSize -= 2;
 
-//                std::vector<uint8_t> Data(Event.Data.begin() + 2, Event.Data.end());
+//                bytes_t Data(Event.Data.begin() + 2, Event.Data.end());
 
                 switch (Event.Data[1])
                 {
@@ -1609,7 +1609,7 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
                 {
                     size_t Size = Event.Data.size() - 2;
 
-                    std::vector<uint8_t> Name(Event.Data.begin() + 2, Event.Data.end());
+                    bytes_t Name(Event.Data.begin() + 2, Event.Data.end());
 
 //                  Event.GetData(Name.data(), 2, Size);
 
@@ -1664,7 +1664,7 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
     }
 }
 
-void container_t::EncodeVariableLengthQuantity(std::vector<uint8_t> & data, uint32_t quantity)
+void container_t::EncodeVariableLengthQuantity(bytes_t & data, uint32_t quantity)
 {
     uint32_t Shift = 7 * 4;
 

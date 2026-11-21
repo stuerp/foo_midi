@@ -9,7 +9,7 @@
 namespace midi
 {
 
-bool processor_t::IsGMF(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsGMF(bytes_t const & data) noexcept
 {
     if (data.size() < 32)
         return false;
@@ -20,7 +20,7 @@ bool processor_t::IsGMF(std::vector<uint8_t> const & data) noexcept
     return true;
 }
 
-bool processor_t::ProcessGMF(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessGMF(bytes_t const & data, container_t & container)
 {
     container.FileFormat = FileFormat::GMF;
 

@@ -1,11 +1,14 @@
 
-/** $VER: MIDIProcessor.cpp (2026.05.17) **/
+/** $VER: MIDIProcessor.cpp (2026.11.21) **/
 
 #include "pch.h"
 
 #include "MIDIProcessor.h"
 #include "MIDIContainer.h"
 #include "MIDI.h"
+
+#include "HMIProcessor.h"
+#include "HMPProcessor.h"
 
 #include <filesystem>
 
@@ -21,7 +24,7 @@ const uint8_t processor_t::LoopEndMarker[9]       = { StatusCode::MetaData, Meta
 /// <summary>
 /// Processes a stream of bytes.
 /// </summary>
-bool processor_t::Process(std::vector<uint8_t> const & data, const wchar_t * filePath, container_t & container, const processor_options_t & options)
+bool processor_t::Process(bytes_t const & data, const wchar_t * filePath, container_t & container, const processor_options_t & options)
 {
     _Options = options;
 
@@ -51,11 +54,11 @@ bool processor_t::Process(std::vector<uint8_t> const & data, const wchar_t * fil
     if (IsMDS(data))
         return ProcessMDS(data, container);
 
-    if (IsHMP(data))
-        return ProcessHMP(data, container);
+    if (hmp::processor_t::IsHMP(data))
+        return hmp::processor_t::Process(data, container);
 
-    if (IsHMI(data))
-        return ProcessHMI(data, container);
+    if (hmi::processor_t::IsHMI(data))
+        return hmi::processor_t::Process(data, container);
 
     if (IsMUS(data))
         return ProcessMUS(data, container);
@@ -98,7 +101,7 @@ bool processor_t::Process(std::vector<uint8_t> const & data, const wchar_t * fil
 /// <summary>
 /// Returns true if the data represents a SysEx message.
 /// </summary>
-bool processor_t::IsSYX(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsSYX(bytes_t const & data) noexcept
 {
     if (data.size() < 2)
         return false;
@@ -112,7 +115,7 @@ bool processor_t::IsSYX(std::vector<uint8_t> const & data) noexcept
 /// <summary>
 /// Processes a byte stream containing 1 or more SysEx messages.
 /// </summary>
-bool processor_t::ProcessSYX(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessSYX(bytes_t const & data, container_t & container)
 {
     container.FileFormat = FileFormat::SYX;
 
@@ -146,7 +149,7 @@ bool processor_t::ProcessSYX(std::vector<uint8_t> const & data, container_t & co
 /// <summary>
 /// Decodes a variable-length quantity.
 /// </summary>
-int32_t processor_t::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator & data, std::vector<uint8_t>::const_iterator tail) noexcept
+int32_t processor_t::DecodeVariableLengthQuantity(iterator_t & data, const iterator_t & tail) noexcept
 {
     int32_t Quantity = 0;
 
@@ -163,6 +166,32 @@ int32_t processor_t::DecodeVariableLengthQuantity(std::vector<uint8_t>::const_it
     while (Byte & 0x80);
 
     return Quantity;
+}
+
+/// <summary>
+/// Decodes a MIDI variable-length quantity.
+/// </summary>
+bool processor_t::DecodeMIDIVariableLengthQuantity(iterator_t & it, const iterator_t & end, uint32_t & value) noexcept
+{
+    value = 0;
+
+    for (uint32_t Count = 0; Count < 4; ++Count)
+    {
+        if (it == end)
+            return false;
+
+        const uint8_t Byte = *it++;
+
+        if (value > (0x0FFFFFFFu >> 7))
+            return false;
+
+        value = (value << 7) | (Byte & 0x7Fu);
+
+        if ((Byte & 0x80u) == 0)
+            return true;
+    }
+
+    return false;
 }
 
 }

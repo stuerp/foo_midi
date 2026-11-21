@@ -6,8 +6,7 @@
     <ClCompile Include="src\MIDIContainer.cpp" />
     <ClCompile Include="src\MIDIProcessorGMF.cpp" />
     <ClCompile Include="src\MIDIProcessor.cpp" />
-    <ClCompile Include="src\MIDIProcessorHMI.cpp" />
-    <ClCompile Include="src\MIDIProcessorHMP.cpp" />
+    <ClCompile Include="src\HMPProcessor.cpp" />
     <ClCompile Include="src\MIDIProcessorLDS.cpp" />
     <ClCompile Include="src\MIDIProcessorMDS.cpp" />
     <ClCompile Include="src\MIDIProcessorMMF.cpp" />
@@ -34,6 +33,7 @@
     <ClCompile Include="src\RCP\Converter.cpp" />
     <ClCompile Include="src\MIDIProcessorMIDI2.cpp" />
     <ClCompile Include="src\MIDI2.cpp" />
+    <ClCompile Include="src\HMIProcessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Exception.h" />
@@ -55,6 +55,8 @@
     <ClInclude Include="src\MMD\MMD.h" />
     <ClInclude Include="src\MMD\Stream.h" />
     <ClInclude Include="src\MIDI2.h" />
+    <ClInclude Include="src\HMPProcessor.h" />
+    <ClInclude Include="src\HMIProcessor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

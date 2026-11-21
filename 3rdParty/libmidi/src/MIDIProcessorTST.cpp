@@ -14,7 +14,7 @@ namespace midi
 /// <summary>
 /// Returns true if the byte vector contains TST data.
 /// </summary>
-bool processor_t::IsTST(std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept
+bool processor_t::IsTST(bytes_t const & data, const std::wstring & fileExtension) noexcept
 {
     if (::_wcsicmp(fileExtension.c_str(), L"tst"))
         return false;
@@ -25,7 +25,7 @@ bool processor_t::IsTST(std::vector<uint8_t> const & data, const std::wstring & 
 /// <summary>
 /// Processes a byte vector with TST data.
 /// </summary>
-bool processor_t::ProcessTST(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessTST(bytes_t const & data, container_t & container)
 {
     container.FileFormat = FileFormat::TST;
 

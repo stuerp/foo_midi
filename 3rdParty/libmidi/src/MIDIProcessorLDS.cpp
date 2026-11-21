@@ -50,7 +50,7 @@ static const unsigned char tremtab[] =
 };
 #endif
 
-bool processor_t::IsLDS(std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept
+bool processor_t::IsLDS(bytes_t const & data, const std::wstring & fileExtension) noexcept
 {
     if (fileExtension.empty())
         return false;
@@ -350,7 +350,7 @@ static void PlaySound(uint8_t currentInstrument[], std::vector<SoundPatch> const
     c->finetune = 0;
 }
 
-bool processor_t::ProcessLDS(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessLDS(bytes_t const & data, container_t & container)
 {
     container.FileFormat = FileFormat::LDS;
 

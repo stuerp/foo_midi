@@ -6,6 +6,9 @@
 namespace midi
 {
 
+typedef std::vector<uint8_t> bytes_t;
+typedef bytes_t::const_iterator iterator_t;
+
 enum StatusCode : uint8_t
 {
     NoteOff                 = 0x80,

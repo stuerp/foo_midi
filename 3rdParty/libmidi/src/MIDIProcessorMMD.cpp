@@ -14,7 +14,7 @@ namespace midi
 /// <summary>
 /// Returns true if data points to an MMD sequence.
 /// </summary>
-bool processor_t::IsMMD(std::vector<uint8_t> const & data, const std::wstring & fileExtension) noexcept
+bool processor_t::IsMMD(bytes_t const & data, const std::wstring & fileExtension) noexcept
 {
     if (fileExtension.empty())
         return false;
@@ -33,11 +33,11 @@ bool processor_t::IsMMD(std::vector<uint8_t> const & data, const std::wstring & 
 /// <summary>
 /// Processes the MMD data.
 /// </summary>
-bool processor_t::ProcessMMD(std::vector<uint8_t> const & data, const std::wstring & filePath, container_t & container)
+bool processor_t::ProcessMMD(bytes_t const & data, const std::wstring & filePath, container_t & container)
 {
     mmd::converter_t Converter;
 
-    std::vector<uint8_t> Data;
+    bytes_t Data;
 
     if (!Converter.ToSMF(data.data(), (uint32_t) data.size(), Data))
         return false;

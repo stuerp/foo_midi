@@ -42,18 +42,18 @@ static inline uint32_t toInt32LE(const uint8_t * data)
     return static_cast<uint32_t>(data[0]) | static_cast<uint32_t>(data[1] << 8) | static_cast<uint32_t>(data[2] << 16) | static_cast<uint32_t>(data[3] << 24);
 }
 
-static inline uint32_t toInt32LE(std::vector<uint8_t>::const_iterator data)
+static inline uint32_t toInt32LE(bytes_t::const_iterator data)
 {
     return static_cast<uint32_t>(data[0]) | static_cast<uint32_t>(data[1] << 8) | static_cast<uint32_t>(data[2] << 16) | static_cast<uint32_t>(data[3] << 24);
 }
 
-static bool ProcessList(std::vector<uint8_t>::const_iterator data, ptrdiff_t size, container_t & container, metadata_table_t & MetaData) noexcept;
-static bool GetCodePage(std::vector<uint8_t>::const_iterator data, ptrdiff_t size, uint32_t & codePage) noexcept;
+static bool ProcessList(iterator_t data, ptrdiff_t size, container_t & container, metadata_table_t & MetaData) noexcept;
+static bool GetCodePage(iterator_t data, ptrdiff_t size, uint32_t & codePage) noexcept;
 
 /// <summary>
 /// Returns true if the data contains a RIFF file.
 /// </summary>
-bool processor_t::IsRMI(std::vector<uint8_t> const & data) noexcept
+bool processor_t::IsRMI(bytes_t const & data) noexcept
 {
     if (data.size() < 20)
         return false;
@@ -74,7 +74,7 @@ bool processor_t::IsRMI(std::vector<uint8_t> const & data) noexcept
     if ((DataSize < 18) || (data.size() < (size_t) DataSize + 20) || (Size < DataSize + 12))
         return false;
 
-    std::vector<uint8_t> Data(data.begin() + 20, data.begin() + 20 + 18);
+    bytes_t Data(data.begin() + 20, data.begin() + 20 + 18);
 
     return IsSMF(Data);
 }
@@ -82,7 +82,7 @@ bool processor_t::IsRMI(std::vector<uint8_t> const & data) noexcept
 /// <summary>
 /// Processes the data as an RIFF file and returns an intialized container.
 /// </summary>
-bool processor_t::ProcessRMI(std::vector<uint8_t> const & data, container_t & container)
+bool processor_t::ProcessRMI(bytes_t const & data, container_t & container)
 {
     container.FileFormat = FileFormat::RMI;
 
@@ -119,7 +119,7 @@ bool processor_t::ProcessRMI(std::vector<uint8_t> const & data, container_t & co
             if (HasDataChunk)
                 throw midi::exception("Multiple RIFF data chunks found");
 
-            std::vector<uint8_t> Data(it + 8, it + 8 + ChunkSize);
+            bytes_t Data(it + 8, it + 8 + ChunkSize);
 
             if (!ProcessSMF(Data, container))
                 return false;
@@ -157,7 +157,7 @@ bool processor_t::ProcessRMI(std::vector<uint8_t> const & data, container_t & co
 
             if (IsDLS || (::memcmp(&it[8], "sfbk", 4) == 0) || (::memcmp(&it[8], "sfpk", 4) == 0))
             {
-                std::vector<uint8_t> Data(it, ChunkTail);
+                bytes_t Data(it, ChunkTail);
 
                 container.SoundFont = Data;
             }
@@ -200,7 +200,7 @@ bool processor_t::ProcessRMI(std::vector<uint8_t> const & data, container_t & co
 /// <summary>
 /// Processes a RIFF LIST chunk and update the metadata with it.
 /// </summary>
-bool ProcessList(std::vector<uint8_t>::const_iterator data, ptrdiff_t chunkSize, container_t & container, metadata_table_t & MetaData) noexcept
+bool ProcessList(iterator_t data, ptrdiff_t chunkSize, container_t & container, metadata_table_t & MetaData) noexcept
 {
     // Determine which code page to use before we encounter any text chunks.
     uint32_t CodePage = ~0u;
@@ -233,7 +233,7 @@ bool ProcessList(std::vector<uint8_t>::const_iterator data, ptrdiff_t chunkSize,
         else
         if (ChunkId == "IPIC")
         {
-            container.SetArtwork(std::vector<uint8_t>(ChunkData, ChunkData + ChunkSize));
+            container.SetArtwork(bytes_t(ChunkData, ChunkData + ChunkSize));
         }
         else
         if (ChunkId == "DBNK")
@@ -279,7 +279,7 @@ bool ProcessList(std::vector<uint8_t>::const_iterator data, ptrdiff_t chunkSize,
 /// <summary>
 /// Gets the code page from the IENC chunk, if present.
 /// </summary>
-bool GetCodePage(std::vector<uint8_t>::const_iterator data, ptrdiff_t chunkSize, uint32_t & codePage) noexcept
+bool GetCodePage(iterator_t data, ptrdiff_t chunkSize, uint32_t & codePage) noexcept
 {
     const auto Tail = data + chunkSize;
 
