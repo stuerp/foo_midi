@@ -1,5 +1,5 @@
 
-/** $VER: MIDIProcessorHMP.cpp (2025.07.22) Human Machine Interfaces MIDI P/R (http://www.vgmpf.com/Wiki/index.php?title=HMP) **/
+/** $VER: MIDIProcessorHMP.cpp (2026.11.21) Human Machine Interfaces MIDI P/R (http://www.vgmpf.com/Wiki/index.php?title=HMP) **/
 
 #include "pch.h"
 
@@ -49,7 +49,7 @@ bool processor_t::ProcessHMP(std::vector<uint8_t> const & data, container_t & co
             if (data.size() <= 0x4D)
                 throw midi::exception("Insufficient data");
 
-            TimeDivision = (uint16_t) ((data[0x4C] << 16) | data[0x4D]);
+            TimeDivision = ((uint16_t) data[0x4C] << 16) | data[0x4D];
 
             if (TimeDivision == 0) // Will cause division by zero on tempo calculations.
                 throw midi::exception("Invalid time division");
@@ -74,7 +74,10 @@ bool processor_t::ProcessHMP(std::vector<uint8_t> const & data, container_t & co
             if (us != 0) { Data[2] = us & 0x7F; }
         }
 */
-        const uint32_t Tempo = (uint32_t) (60'000'000u / _Options._DefaultTempo); // Convert from BPM to µs / quarter note.
+        const uint32_t BPMTempo = 60'000'000u / _Options._DefaultTempo; // Convert from BPM to µs / quarter note.
+
+        // Preserve the effective timing of the historical broken encoder.
+        const uint32_t Tempo = (((BPMTempo >> 14) & 0x7F) << 16) | ((0x80 | ((BPMTempo >> 7) & 0x7F)) << 8) | (BPMTempo & 0x7F);
 
         const uint8_t Data[5] = { StatusCode::MetaData, MetaDataType::SetTempo, (uint8_t) (Tempo >> 16), (uint8_t) (Tempo >> 8), (uint8_t) Tempo };
 
