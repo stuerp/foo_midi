@@ -14,12 +14,14 @@
 //#include <sflist.h> // Old code for compatibility testing.
 
 #include <fstream>
+#include <cctype>
 
 static json_value * ReadJSON(const std::string & data);
 static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::path & parentPath, float defaultGain);
 static std::vector<soundfont_t> ProcessText(const std::string & data, const fs::path & parentPath);
 static void ProcessPatchMappings(const json_value * patchMappings, uint32_t channel, std::vector<BASS_MIDI_FONTEX> & out, BASS_MIDI_FONTEX & fontex);
 static const json_value * FindObject(const json_value * object, const char * name);
+static fs::path ResolveSoundfontPath(const fs::path & parentPath, const char * fileName);
 
 /// <summary>
 /// Loads a soundfont list (*.sflist, *.json)
@@ -277,12 +279,7 @@ static std::vector<soundfont_t> ProcessJSON(const json_value * json, const fs::p
         {
             auto FileName = ::FindObject(JSONSoundfont, "fileName");
 
-            if (fs::path(FileName->u.string.ptr).is_relative())
-                sf.FilePath = parentPath / FileName->u.string.ptr;
-            else
-                sf.FilePath = FileName->u.string.ptr;
-
-            sf.FilePath.make_preferred();
+            sf.FilePath = ResolveSoundfontPath(parentPath, FileName->u.string.ptr);
         }
 
         {
@@ -417,12 +414,7 @@ static std::vector<soundfont_t> ProcessText(const std::string & data, const fs::
 
         soundfont_t sf = { };
 
-        if (fs::path(Line).is_relative())
-            sf.FilePath = parentPath / Line;
-        else
-            sf.FilePath = Line;
-
-        sf.FilePath.make_preferred();
+        sf.FilePath = ResolveSoundfontPath(parentPath, Line.c_str());
 
         sf.Fonts.push_back
         ({
@@ -440,4 +432,41 @@ static std::vector<soundfont_t> ProcessText(const std::string & data, const fs::
     std::reverse(Items.begin(), Items.end());
 
     return Items;
+}
+
+/// <summary>
+/// Resolves a soundfont path from a list file. A leading '/' is relative to the list directory (docs / kode54), not the drive root.
+/// </summary>
+static fs::path ResolveSoundfontPath(const fs::path & parentPath, const char * fileName)
+{
+    const std::string Name = (fileName != nullptr) ? fileName : "";
+
+    if (Name.empty())
+        return { };
+
+    const bool IsUnc = (Name.size() >= 2) && ((Name[0] == '/' && Name[1] == '/') || (Name[0] == '\\' && Name[1] == '\\'));
+    const bool IsDrive = (Name.size() >= 3) && std::isalpha((unsigned char) Name[1]) && (Name[2] == ':') && ((Name[0] == '/') || (Name[0] == '\\'));
+
+    if (!IsUnc && !IsDrive && ((Name[0] == '/') || (Name[0] == '\\')))
+    {
+        size_t Offset = 0;
+
+        while ((Offset < Name.size()) && ((Name[Offset] == '/') || (Name[Offset] == '\\')))
+            ++Offset;
+
+        fs::path Path = parentPath / Name.substr(Offset);
+
+        Path.make_preferred();
+
+        return Path;
+    }
+
+    fs::path Path(Name);
+
+    if (Path.is_relative())
+        Path = parentPath / Path;
+
+    Path.make_preferred();
+
+    return Path;
 }

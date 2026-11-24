@@ -398,7 +398,7 @@ void BMPlayer::LoadSoundfonts(const soundfont_t & sf, std::vector<BASS_MIDI_FONT
         return;
     }
 
-    if (msc::IsOneOf(sf.FilePath.extension(), { L".sf2", L".sf3", L".sf2pack", L".sfogg" }))
+    if (msc::IsOneOf(sf.FilePath.extension(), { L".sf2", L".sf3", L".sf2pack", L".sfogg", L".sfz" }))
     {
         HSOUNDFONT hSoundfont = ::CacheAddSoundfont(sf.FilePath, sf.IsTemporary);
 

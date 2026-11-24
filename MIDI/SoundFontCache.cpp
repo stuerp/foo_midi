@@ -8,6 +8,7 @@
 #include "Exception.h"
 #include "CriticalSection.h"
 #include "Log.h"
+#include "Resource.h"
 
 #include <map>
 #include <thread>
@@ -145,6 +146,38 @@ void CacheDispose()
 }
 
 /// <summary>
+/// Returns a native OS path when the soundfont is a regular disk file.
+/// Archive / VFS items (foobar paths with '|', remote, unrecognized) return empty so FontInitUser is used.
+/// </summary>
+static std::wstring TryGetNativeSoundfontPath(const fs::path & filePath)
+{
+    const std::string Path = (const char *) filePath.u8string().c_str();
+
+    if (Path.find('|') != std::string::npos)
+        return { };
+
+    if (filesystem::g_is_remote_or_unrecognized(Path.c_str()))
+        return { };
+
+    const pfc::string Native = filesystem::g_get_native_path(Path.c_str());
+
+    if (Native.isEmpty())
+        return { };
+
+    if (::strchr(Native.c_str(), '|') != nullptr)
+        return { };
+
+    const std::wstring Wide = msc::UTF8ToWide(Native.c_str());
+
+    const DWORD Attributes = ::GetFileAttributesW(Wide.c_str());
+
+    if ((Attributes == INVALID_FILE_ATTRIBUTES) || (Attributes & FILE_ATTRIBUTE_DIRECTORY))
+        return { };
+
+    return Wide;
+}
+
+/// <summary>
 /// Adds a Soundfont to the cache.
 /// </summary>
 HSOUNDFONT CacheAddSoundfont(const fs::path & filePath, bool isTemporary)
@@ -163,13 +196,24 @@ HSOUNDFONT CacheAddSoundfont(const fs::path & filePath, bool isTemporary)
     if (Item._hSoundfont == 0)
     {
         const DWORD Flags = BASS_MIDI_FONT_XGDRUMS;
+        const std::wstring NativePath = TryGetNativeSoundfontPath(filePath);
 
-        auto * File = new file::ptr;
+        if (!NativePath.empty())
+        {
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " is loading soundfont \"%s\" with BASS_MIDI_FontInit.", filePath.string().c_str());
 
-        filesystem::g_open(*File, filePath.string().c_str(), filesystem::open_mode_read, fb2k::noAbort);
+            hSoundfont = ::BASS_MIDI_FontInit(NativePath.c_str(), Flags);
+        }
+        else
+        {
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " is loading soundfont \"%s\" with BASS_MIDI_FontInitUser.", filePath.string().c_str());
 
-        hSoundfont = ::BASS_MIDI_FontInitUser(&_BASSMIDICallbacks, File, Flags);
-//      hSoundfont = ::BASS_MIDI_FontInit(::UTF8ToWide((const char *) filePath.string().c_str()).c_str(), Flags);
+            auto * File = new file::ptr;
+
+            filesystem::g_open(*File, filePath.string().c_str(), filesystem::open_mode_read, fb2k::noAbort);
+
+            hSoundfont = ::BASS_MIDI_FontInitUser(&_BASSMIDICallbacks, File, Flags);
+        }
 
         if (hSoundfont != 0)
         {

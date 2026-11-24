@@ -243,7 +243,7 @@ void InputDecoder::AddSoundFont(const soundfont_t & sf, std::unordered_set<std::
         Log.AtInfo().Write(STR_COMPONENT_BASENAME " read %d soundfonts from the list.", Count);
     }
     else
-    if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))
+    if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".sfz", ".dls" }))
     {
         if (!filesystem::g_exists(sf.FilePath.string().c_str(), fb2k::noAbort))
         {
@@ -292,6 +292,7 @@ fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback & abortH
         "sfogg",
         "sf2",
         "sf3",
+        "sfz",
         "dls"
     };
 
