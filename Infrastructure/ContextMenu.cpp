@@ -19,6 +19,8 @@
 #include "MIDISysExDumps.h"
 #include "MIDISysExFilter.h"
 
+#include "Log.h"
+
 #pragma comment(lib, "comdlg32")
 
 static void ConvertDLSToSF2(const std::vector<uint8_t> & dlsData, const std::string & filePath) noexcept;
@@ -181,9 +183,15 @@ void ContextMenu::context_command(unsigned int itemIndex, const pfc::list_base_c
 
                             Container.SerializeAsSMF(Object);
 
-                            filesystem::g_open(File, FilePath, filesystem::open_mode_write_new, fb2k::noAbort);
+                            try
+                            {
+                                filesystem::g_open(File, FilePath, filesystem::open_mode_write_new, fb2k::noAbort);
 
-                            File->write_object(Object.data(), Object.size(), fb2k::noAbort);
+                                File->write_object(Object.data(), Object.size(), fb2k::noAbort);
+                            }
+                            catch (...)
+                            {
+                            }
                         }
                     }
                 }

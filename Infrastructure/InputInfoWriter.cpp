@@ -8,7 +8,7 @@
 /// <summary>
 /// Sets the tags for the specified file.
 /// </summary>
-void InputDecoder::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const
+void input_decoder_t::retag_set_info(t_uint32, const file_info & fileInfo, abort_callback & abortHandler) const
 {
     if (_IsSysExFile)
         throw pfc::exception("You cannot tag SysEx files.");

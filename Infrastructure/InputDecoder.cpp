@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoder.cpp (2026.09.12) **/
+/** $VER: InputDecoder.cpp (2026.11.25) **/
 
 #include "pch.h"
 
@@ -12,14 +12,29 @@
 #include <pfc/string-conv-lite.h>
 
 #include "PreferencesFM.h"
-#include "CLAPHost.h"
 
 #include "Log.h"
+
+/** Players **/
+
+#include "ADLPlayer.h"
+#include "BMPlayer.h"
+#include "CLAPPlayer.h"
+#include "EdMPlayer.h"
+#include "FMMPlayer.h"
+#include "FSPlayer.h"
+#include "MCIPlayer.h"
+#include "MT32Player/MT32Player.h"
+#include "NukedOPL3Player.h"
+#include "NukedSC-55Player.h"
+#include "OPNPlayer/OPNPlayer.h"
+#include "SCPlayer.h"
+#include "VSTiPlayer.h"
 
 /// <summary>
 /// Creates a new instance.
 /// </summary>
-InputDecoder::InputDecoder() noexcept :
+input_decoder_t::input_decoder_t() noexcept :
     _DecoderFlags(),
 
     _FileStats {},
@@ -36,6 +51,7 @@ InputDecoder::InputDecoder() noexcept :
     _DetectXMILoops((bool) CfgDetectXMILoops),
     _DetectTouhouLoops((bool) CfgDetectTouhouLoops),
     _DetectFF7Loops((bool) CfgDetectFF7Loops),
+    _DetectRecomposerLoops(true),
 
     _Player(nullptr),
     _PlayerType(),
@@ -69,15 +85,12 @@ InputDecoder::InputDecoder() noexcept :
     _CleanFlags = (uint32_t) (CfgExcludeEMIDITrackDesignation ? midi::container_t::CleanFlagEMIDI : 0) |
                              (CfgFilterInstruments            ? midi::container_t::CleanFlagInstruments : 0) |
                              (CfgFilterBanks                  ? midi::container_t::CleanFlagBanks : 0);
-/* KEEP? 06/07/25
-    _CurrentSampleRate = _SampleRate;
-*/
 }
 
 /// <summary>
 /// Deletes this instance.
 /// </summary>
-InputDecoder::~InputDecoder() noexcept
+input_decoder_t::~input_decoder_t() noexcept
 {
     for (const auto & sf : _Soundfonts)
     {
@@ -95,20 +108,12 @@ InputDecoder::~InputDecoder() noexcept
         delete _Player;
         _Player = nullptr;
     }
-
-/* KEEP? 06/07/25
-    if (_PlayerType == PlayerType::EmuDeMIDI)
-    {
-        insync(_Lock);
-        _IsRunning -= 1;
-    }
-*/
 }
 
 /// <summary>
 /// Opens the specified file and parses it.
 /// </summary>
-void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler)
+void input_decoder_t::open(service_ptr_t<file> file, const char * filePath, t_input_open_reason, abort_callback & abortHandler)
 {
     if (file.is_empty())
         filesystem::g_open(file, filePath, filesystem::open_mode_read, abortHandler);
@@ -206,7 +211,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
                 throw exception_io_data("Invalid MIDI file: No timestamps found in any of the tracks");
         }
 
-        _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops, _DetectLeapFrogLoops);
+        _Container.DetectLoops(_DetectXMILoops, _DetectFF7Loops, _DetectRPGMakerLoops, _DetectTouhouLoops, _DetectLeapFrogLoops, _DetectRecomposerLoops);
     }
 
     // Calculate the hash of the MIDI data.
@@ -238,7 +243,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
 /// Resets playback position to the beginning of specified subsong. This must be called first, before any other input_decoder methods (other than those inherited from input_info_reader).
 /// It is legal to set initialize() more than once, with same or different subsong, to play either the same subsong again or another subsong from same file without full reopen.
 /// </summary>
-void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
+void input_decoder_t::decode_initialize(unsigned subSongIndex, unsigned flags, abort_callback & abortHandler)
 {
     Log.AtDebug().Write(STR_COMPONENT_BASENAME " is initializing the decoder.");
 
@@ -326,19 +331,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             if (!_Player->Load(_Container, subSongIndex, _LoopType, _DecayTime, _CleanFlags))
                 throw pfc::exception("Failed to load MIDI stream");
-/* KEEP? 06/07/25
-            {
-                insync(_Lock);
 
-                _IsRunning += 1;
-
-                if (_IsRunning == 1)
-                    _CurrentSampleRate = _SampleRate;
-                else
-                if (_SampleRate != _CurrentSampleRate)
-                    _SampleRate = _CurrentSampleRate;
-            }
-*/
             break;
         }
 
@@ -684,7 +677,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 /// Reads/decodes one chunk of audio data.
 /// Use false return value to signal end of file (no more data to return). Before calling decode_run(), decoding must be initialized by a decode_initialize() call.
 /// </summary>
-bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHandler)
+bool input_decoder_t::decode_run(audio_chunk & audioChunk, abort_callback & abortHandler)
 {
     abortHandler.check();
 
@@ -784,7 +777,7 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 /// <summary>
 /// Seeks to the specified time offset. Before seeking or other decoding calls, decoding must be initialized with decode_initialize() call.
 /// </summary>
-void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
+void input_decoder_t::decode_seek(double timeInSeconds, abort_callback &)
 {
     _FrameIndex = (uint32_t) (timeInSeconds * _ActualSampleRate);
 
@@ -812,7 +805,7 @@ void InputDecoder::decode_seek(double timeInSeconds, abort_callback &)
 /// <summary>
 /// Signals dynamic VBR bitrate, etc. Called after each decode_run() (or not called at all if caller doesn't care about dynamic info).
 /// </summary>
-bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timestampDelta)
+bool input_decoder_t::decode_get_dynamic_info(file_info & fileInfo, double & timestampDelta)
 {
     bool Success = false;
 
@@ -956,7 +949,7 @@ bool InputDecoder::decode_get_dynamic_info(file_info & fileInfo, double & timest
 /// <summary>
 /// Initializes the Index Manager.
 /// </summary>
-void InputDecoder::InitializeIndexManager()
+void input_decoder_t::InitializeIndexManager()
 {
     try
     {       
@@ -968,7 +961,7 @@ void InputDecoder::InitializeIndexManager()
 /// <summary>
 /// Gets the total length of the specified sub-song taking into account looping, fade-out and decay time (in ms).
 /// </summary>
-uint32_t InputDecoder::GetLength(size_t subSongIndex) noexcept
+uint32_t input_decoder_t::GetLength(size_t subSongIndex) noexcept
 {
     uint32_t TotalTime = _Container.GetDuration(subSongIndex, true);
 
@@ -992,7 +985,7 @@ uint32_t InputDecoder::GetLength(size_t subSongIndex) noexcept
 /// <summary>
 /// Initializes the fade-out range.
 /// </summary>
-void InputDecoder::InitializeFade() noexcept
+void input_decoder_t::InitializeFade() noexcept
 {
     _FadeRange.Clear();
 
@@ -1038,7 +1031,7 @@ void InputDecoder::InitializeFade() noexcept
 /// <summary>
 /// Overrides the selected player depending on the metadata and some configuration settings.
 /// </summary>
-void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept
+void input_decoder_t::OverridePlayerSelection(preset_t & preset, size_t subSongIndex, abort_callback & abortHandler) noexcept
 {
     _PlayerType = preset._PlayerType;
     _IsPlayerTypeOverriden = false;
@@ -1118,7 +1111,7 @@ void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongInde
     }
 }
 
-const char * InputDecoder::PlayerTypeNames[15] =
+const char * input_decoder_t::PlayerTypeNames[15] =
 {
     "LibEDMIDI",
     "VSTi",
@@ -1137,4 +1130,4 @@ const char * InputDecoder::PlayerTypeNames[15] =
     "CLAP",
 };
 
-static input_factory_t<InputDecoder> _Factory;
+static input_factory_t<input_decoder_t> _Factory;

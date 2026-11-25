@@ -1,9 +1,7 @@
 
-/** $VER: SoundfontList.h (2025.10.04) P. Stuer - Represents a soundfont. **/
+/** $VER: SoundfontList.h (2026.11.25) P. Stuer - Represents a soundfont. **/
 
 #pragma once
-
-#include <string>
 
 #include <bassmidi.h>
 
@@ -12,9 +10,7 @@
 class soundfont_t
 {
 public:
-    soundfont_t() noexcept : Gain(), BankOffset(), IsTemporary(false), IsDLS(false)
-    {
-    }
+    soundfont_t() = default;
 
     soundfont_t(const fs::path & filePath, float gain, int bankOffset, bool isTemporary, bool isDLS) noexcept
     {
@@ -44,10 +40,10 @@ public:
 
 public:
     fs::path FilePath;
-    float Gain;
-    int BankOffset;
-    bool IsTemporary;
-    bool IsDLS;
+    float Gain       = 0.f;
+    int BankOffset   = 0;
+    bool IsTemporary = false;
+    bool IsDLS       = false;
 
     std::vector<BASS_MIDI_FONTEX> Fonts;
 };

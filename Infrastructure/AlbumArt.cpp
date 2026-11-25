@@ -60,7 +60,7 @@ public:
     /// </summary>
     GUID get_guid() final
     {
-        return InputDecoder::g_get_guid();
+        return input_decoder_t::g_get_guid();
     }
 
     /// <summary>
@@ -119,7 +119,7 @@ public:
     /// </summary>
     bool is_our_path(const char * path, const char * extension) final
     {
-        return InputDecoder::g_is_our_path(path, extension);
+        return input_decoder_t::g_is_our_path(path, extension);
     }
 };
 

@@ -1,7 +1,9 @@
 
-/** $VER: MIDIContainer.cpp (2026.05.20) **/
+/** $VER: MIDIContainer.cpp (2026.11.25) **/
 
 #include "pch.h"
+
+#include <ranges>
 
 #include "MIDIContainer.h"
 #include "SysEx.h"
@@ -252,7 +254,7 @@ void container_t::Initialize(uint32_t format, uint32_t timeDivision)
         _EndTimestamps[0] = 0;
     }
 
-    _Loop.resize(1);
+    _Loops.resize(1);
 
     // Initialize the port number map.
     uint8_t PortNumber = 0; NormalizePortNumber(PortNumber);
@@ -927,12 +929,12 @@ uint32_t container_t::GetLoopBeginTimestamp(size_t subSongIndex, bool ms /* = fa
 {
     size_t TrackIndex = 0;
 
-    uint32_t Timestamp = _Loop[0].Begin();
+    uint32_t Timestamp = _Loops[0].Begin();
 
     if ((_Format == 2) && (subSongIndex > 0))
     {
         TrackIndex = subSongIndex;
-        Timestamp = _Loop[subSongIndex].Begin();
+        Timestamp = _Loops[subSongIndex].Begin();
     }
 
     if (!ms)
@@ -948,12 +950,12 @@ uint32_t container_t::GetLoopEndTimestamp(size_t subSongIndex, bool ms /* = fals
 {
     size_t TrackIndex = 0;
 
-    uint32_t Timestamp = _Loop[0].End();
+    uint32_t Timestamp = _Loops[0].End();
 
     if ((_Format == 2) && (subSongIndex > 0))
     {
         TrackIndex = subSongIndex;
-        Timestamp = _Loop[subSongIndex].End();
+        Timestamp = _Loops[subSongIndex].End();
     }
 
     if (!ms)
@@ -1290,15 +1292,15 @@ void container_t::TrimRange(size_t start, size_t end)
 
             _EndTimestamps[start] -= timestamp_first_note;
 
-            if (_Loop[start].HasEnd())
-                _Loop[start].SetEnd(_Loop[start].End() - timestamp_first_note);
+            if (_Loops[start].HasEnd())
+                _Loops[start].SetEnd(_Loops[start].End() - timestamp_first_note);
 
-            if (_Loop[start].HasBegin())
+            if (_Loops[start].HasBegin())
             {
-                if (_Loop[start].Begin() > timestamp_first_note)
-                    _Loop[start].SetBegin(_Loop[start].Begin() - timestamp_first_note);
+                if (_Loops[start].Begin() > timestamp_first_note)
+                    _Loops[start].SetBegin(_Loops[start].Begin() - timestamp_first_note);
                 else
-                    _Loop[start].SetBegin(0);
+                    _Loops[start].SetBegin(0);
             }
         }
         else
@@ -1307,15 +1309,15 @@ void container_t::TrimRange(size_t start, size_t end)
 
             _EndTimestamps[0] -= timestamp_first_note;
 
-            if (_Loop[0].HasEnd())
-                _Loop[0].SetEnd(_Loop[0].End() - timestamp_first_note);
+            if (_Loops[0].HasEnd())
+                _Loops[0].SetEnd(_Loops[0].End() - timestamp_first_note);
 
-            if (_Loop[0].HasBegin())
+            if (_Loops[0].HasBegin())
             {
-                if (_Loop[0].Begin() > timestamp_first_note)
-                    _Loop[0].SetBegin(_Loop[0].Begin() - timestamp_first_note);
+                if (_Loops[0].Begin() > timestamp_first_note)
+                    _Loops[0].SetBegin(_Loops[0].Begin() - timestamp_first_note);
                 else
-                    _Loop[0].SetBegin(0);
+                    _Loops[0].SetBegin(0);
             }
         }
     }
@@ -1418,15 +1420,55 @@ void container_t::SplitByInstrumentChanges(SplitCallback callback)
     }
 }
 
-void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops, bool detectLeapFrogLoops)
+void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops, bool detectLeapFrogLoops, bool detectRecomposerLoops) noexcept
 {
     size_t SubSongCount = (_Format == 2) ? _Tracks.size() : 1;
 
     {
-        _Loop.resize(SubSongCount);
+        _Loops.resize(SubSongCount);
 
         for (size_t i = 0; i < SubSongCount; ++i)
-            _Loop[i].Clear();
+            _Loops[i].Clear();
+    }
+
+    // Recomposer
+    if (detectRecomposerLoops && (FileFormat == FileFormat::RCP))
+    {
+        for (size_t i = 0; i < _Tracks.size(); ++i)
+        {
+            const size_t SubSongIndex = (_Format != 2) ? 0 : i;
+
+            const track_t & Track = _Tracks[i];
+
+            for (const auto Event : Track)
+            {
+                if (Event.Type != event_t::ControlChange)
+                    continue;
+
+                // Mark the beginning of a Recomposer loop.
+                if (Event.Data[0] == 111 /* 0x6F */)
+                {
+                    _Loops[SubSongIndex].SetBegin(Event.Time);
+                    break;
+                }
+            }
+
+            if (_Loops[SubSongIndex].HasBegin())
+            {
+                for (const auto & Event : Track | std::views::reverse)
+                {
+                    if (Event.Type != event_t::ControlChange)
+                        continue;
+
+                    // Mark the end of a Recomposer loop.
+                    if (Event.Data[0] == 111 /* 0x6F */)
+                    {
+                        _Loops[SubSongIndex].SetEnd(Event.Time);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     // Project Touhou
@@ -1453,7 +1495,7 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
                             break;
                         }
 
-                        _Loop[0].SetBegin(Event.Time);
+                        _Loops[0].SetBegin(Event.Time);
                         FoundTouhouLoop = true;
                     }
 
@@ -1465,14 +1507,14 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
                             break;
                         }
 
-                        _Loop[0].SetEnd(Event.Time);
+                        _Loops[0].SetEnd(Event.Time);
                     }
                 }
             }
         }
 
         if (HasLoopError)
-            _Loop[0].Clear();
+            _Loops[0].Clear();
     }
 
     // RPG Maker
@@ -1493,17 +1535,17 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
                 if (Event.Type == event_t::ControlChange)
                 {
                     // Mark the beginning of an RPG Maker loop. The end of the loop is always the end of the song.
-                    if ((Event.Data[0] == 111 /* 0x6F */) && (!_Loop[SubSongIndex].HasBegin() || (Event.Time < _Loop[SubSongIndex].Begin())))
+                    if ((Event.Data[0] == 111 /* 0x6F */) && (!_Loops[SubSongIndex].HasBegin() || (Event.Time < _Loops[SubSongIndex].Begin())))
                     {
-                        _Loop[SubSongIndex].SetBegin(Event.Time);
+                        _Loops[SubSongIndex].SetBegin(Event.Time);
 
                         FoundRPGMakerLoop = true;
                     }
                     else
                     // Any EMIDI control change (besides 111) terminates the search for RPGMaker loops.
-                    if (((Event.Data[0] == 110) || msc::InRange(Event.Data[0], (uint8_t) 112, (uint8_t) 119)) && FoundRPGMakerLoop)
+                    if (((Event.Data[0] == 110 /* 0x6E */) || msc::InRange(Event.Data[0], (uint8_t) 112, (uint8_t) 119)) && FoundRPGMakerLoop)
                     {
-                        _Loop[SubSongIndex].Clear();
+                        _Loops[SubSongIndex].Clear();
                         break;
                     }
                 }
@@ -1529,20 +1571,20 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
                 if (Event.Type == event_t::ControlChange)
                 {
                     // Mark the beginning of a LeapFrog loop.
-                    if ((Event.Data[0] == 110 /* 0x6E */) && (!_Loop[SubSongIndex].HasBegin() || (Event.Time < _Loop[SubSongIndex].Begin())))
+                    if ((Event.Data[0] == 110 /* 0x6E */) && (!_Loops[SubSongIndex].HasBegin() || (Event.Time < _Loops[SubSongIndex].Begin())))
                     {
-                        _Loop[SubSongIndex].SetBegin(Event.Time);
+                        _Loops[SubSongIndex].SetBegin(Event.Time);
                         FoundLeapFrogLoop = true;
                     }
                     else
                     // Mark the end of a LeapFrog loop.
-                    if ((Event.Data[0] == 111 /* 0x6F */) && (!_Loop[SubSongIndex].HasEnd() || (Event.Time > _Loop[SubSongIndex].End())) && FoundLeapFrogLoop)
-                        _Loop[SubSongIndex].SetEnd(Event.Time);
+                    if ((Event.Data[0] == 111 /* 0x6F */) && (!_Loops[SubSongIndex].HasEnd() || (Event.Time > _Loops[SubSongIndex].End())) && FoundLeapFrogLoop)
+                        _Loops[SubSongIndex].SetEnd(Event.Time);
                     else
                     // Any EMIDI control change (besides 110 and 111) terminates the search for LeapFrog loops.
                     if (msc::InRange(Event.Data[0], (uint8_t) 112, (uint8_t) 119))
                     {
-                        _Loop[SubSongIndex].Clear();
+                        _Loops[SubSongIndex].Clear();
                         break;
                     }
                 }
@@ -1572,9 +1614,9 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
                     // 116 / 0x74, AIL loop: FOR loop = 1 to n, 118 / 0x76, AIL clear beat / measure count (AIL = Audio Interface Library)
                     if (Event.Data[0] == 116 || Event.Data[0] == 118)
                     {
-                        if (!_Loop[SubSongIndex].HasBegin() || (Event.Time < _Loop[SubSongIndex].Begin()))
+                        if (!_Loops[SubSongIndex].HasBegin() || (Event.Time < _Loops[SubSongIndex].Begin()))
                         {
-                            _Loop[SubSongIndex].SetBegin(Event.Time); // LoopCount = Event.Data[1]; // 0 = Forever, 1 - 127 = Finite
+                            _Loops[SubSongIndex].SetBegin(Event.Time); // LoopCount = Event.Data[1]; // 0 = Forever, 1 - 127 = Finite
 
                             FoundXMILoop = true;
                         }
@@ -1582,8 +1624,8 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
                     // 117 / 0x75, AIL loop: NEXT/BREAK, 119 / 0x77, AIL callback trigger
                     else
                     {
-                        if ((!_Loop[SubSongIndex].HasEnd() || (Event.Time > _Loop[SubSongIndex].End())) && FoundXMILoop)
-                            _Loop[SubSongIndex].SetEnd(Event.Time); // Event.Data[1] should be 127.
+                        if ((!_Loops[SubSongIndex].HasEnd() || (Event.Time > _Loops[SubSongIndex].End())) && FoundXMILoop)
+                            _Loops[SubSongIndex].SetEnd(Event.Time); // Event.Data[1] should be 127.
                     }
                 }
             }
@@ -1615,17 +1657,17 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
 
                     if ((Size == 9) && (::_strnicmp((const char *) Name.data(), "loopStart", 9) == 0))
                     {
-                        if (!_Loop[SubSongIndex].HasBegin() || (Event.Time < _Loop[SubSongIndex].Begin()))
+                        if (!_Loops[SubSongIndex].HasBegin() || (Event.Time < _Loops[SubSongIndex].Begin()))
                         {
-                            _Loop[SubSongIndex].SetBegin(Event.Time);
+                            _Loops[SubSongIndex].SetBegin(Event.Time);
                             FoundFFLoop = true;
                         }
                     }
                     else
                     if ((Size == 7) && (::_strnicmp((const char *) Name.data(), "loopEnd", 7) == 0) && FoundFFLoop)
                     {
-                        if (!_Loop[SubSongIndex].HasEnd() || (Event.Time > _Loop[SubSongIndex].End()))
-                            _Loop[SubSongIndex].SetEnd(Event.Time);
+                        if (!_Loops[SubSongIndex].HasEnd() || (Event.Time > _Loops[SubSongIndex].End()))
+                            _Loops[SubSongIndex].SetEnd(Event.Time);
                     }
                 }
             }
@@ -1656,11 +1698,11 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
             }
         }
 
-        if (_Loop[i].HasBegin() && !_Loop[i].HasEnd())
-            _Loop[i].SetEnd(EndOfSongTimestamp); // RPG Maker loops always end at the end of the song.
+        if (_Loops[i].HasBegin() && !_Loops[i].HasEnd())
+            _Loops[i].SetEnd(EndOfSongTimestamp); // RPG Maker loops always end at the end of the song.
 
-        if (_Loop[i].HasBegin() && (_Loop[i].IsEmpty() || (_Loop[i].Begin() == EndOfSongTimestamp)))
-            _Loop[i].Clear();
+        if (_Loops[i].HasBegin() && (_Loops[i].IsEmpty() || (_Loops[i].Begin() == EndOfSongTimestamp)))
+            _Loops[i].Clear();
     }
 }
 

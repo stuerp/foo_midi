@@ -1,5 +1,5 @@
 
-/** $VER: RCP.h (2025.06.09) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: RCP.h (2026.11.25) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #pragma once
 
@@ -77,11 +77,11 @@ public:
 class rcp_track_t
 {
 public:
-    uint32_t Offs;
+    size_t Offset;
     uint32_t Size;
     uint32_t Duration;      // In ticks
 
-    uint32_t LoopStartOffs; // Offset of the start of the loop
+    size_t LoopStartOffs;   // Offset of the start of the loop
     uint32_t LoopStartTick; // Tick of the start of the loop
     uint16_t LoopCount;     // Number of loops
 };
@@ -107,12 +107,12 @@ public:
     rcp_file_t & operator=(const rcp_file_t &) = delete;
     rcp_file_t & operator=(rcp_file_t &&) = delete;
 
-    void ParseTrack(const uint8_t * data, uint32_t size, uint32_t offset, rcp_track_t * track) const;
-    void ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * offset, rcp_track_t * track, midi_stream_t & midiStream) const;
+    void ParseTrack(const uint8_t * data, uint32_t size, size_t offset, rcp_track_t * track) const;
+    void ConvertTrack(const uint8_t * data, uint32_t size, size_t & offset, rcp_track_t * track, midi_stream_t & midiStream) const;
 
 private:
-    uint16_t GetMultiCmdDataSize(const uint8_t * data, uint32_t size, uint32_t offset, uint8_t flags) const;
-    uint16_t ReadMultiCmdData(const uint8_t * srcData, uint32_t srcSize, uint32_t * srcOffset, uint8_t * dstData, uint32_t dstSize, uint8_t flags) const;
+    uint16_t GetCommandSize(const uint8_t * data, uint32_t size, size_t offset, uint8_t flags) const noexcept;
+    uint16_t GetCommand(const uint8_t * srcData, uint32_t srcSize, size_t & srcOffset, uint8_t * dstData, uint32_t dstSize, uint8_t flags) const noexcept;
 
 public:
     uint8_t _Version;

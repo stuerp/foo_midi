@@ -1,6 +1,11 @@
 
 # foo_midi History
 
+v3.4.0.0-alpha1, 2026-11-21
+
+- Improved: Rewrote the HMI/HMP converter.
+  - The Default Tempo configuration setting is obsolete now for the HMP converter.
+
 v3.3.0.0, 2026-11-12
 
 - New: Upgraded to libADLMIDI 1.6.2.1.

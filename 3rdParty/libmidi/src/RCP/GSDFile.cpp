@@ -26,12 +26,12 @@ void gsd_file_t::Read(const buffer_t & data)
 
     _Data = data;
 
-    sysParams = &_Data.Data[0x0020];
+    sysParams    = &_Data.Data[0x0020];
     reverbParams = &_Data.Data[0x0027];
     chorusParams = &_Data.Data[0x002E];
-    partParams = &_Data.Data[0x0036];
-    drumSetup = &_Data.Data[0x07D6];
-    masterTune = &_Data.Data[0x0A6E];
+    partParams   = &_Data.Data[0x0036];
+    drumSetup    = &_Data.Data[0x07D6];
+    masterTune   = &_Data.Data[0x0A6E];
 }
 
 /// <summary>

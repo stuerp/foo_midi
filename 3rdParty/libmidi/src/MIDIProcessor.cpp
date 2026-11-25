@@ -9,6 +9,7 @@
 
 #include "HMIProcessor.h"
 #include "HMPProcessor.h"
+#include "RCPProcessor.h"
 
 #include <filesystem>
 
@@ -69,8 +70,8 @@ bool processor_t::Process(bytes_t const & data, const wchar_t * filePath, contai
     if (IsGMF(data))
         return ProcessGMF(data, container);
 
-    if (IsRCP(data, FileExtension))
-        return ProcessRCP(data, filePath, container);
+    if (rcp::processor_t::IsRCP(data, FileExtension))
+        return rcp::processor_t::Process(data, filePath, container);
 
     if (IsXMF(data))
         return ProcessXMF(data, container);
@@ -149,7 +150,7 @@ bool processor_t::ProcessSYX(bytes_t const & data, container_t & container)
 /// <summary>
 /// Decodes a variable-length quantity.
 /// </summary>
-int32_t processor_t::DecodeVariableLengthQuantity(iterator_t & data, const iterator_t & tail) noexcept
+int32_t processor_t::DecodeVariableLengthQuantity(iterator_t & it, const iterator_t & end) noexcept
 {
     int32_t Quantity = 0;
 
@@ -157,10 +158,10 @@ int32_t processor_t::DecodeVariableLengthQuantity(iterator_t & data, const itera
 
     do
     {
-        if (data == tail)
+        if (it == end)
             return 0;
 
-        Byte = *data++;
+        Byte = *it++;
         Quantity = (Quantity << 7) + (Byte & 0x7F);
     }
     while (Byte & 0x80);

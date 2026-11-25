@@ -200,7 +200,7 @@ public:
         if (NewOffs <= _Size)
             return;
 
-        const uint32_t ChunkSize = 0x8000;
+        constexpr uint32_t ChunkSize = 0x8000;
 
         size_t NewSize = _Size;
 

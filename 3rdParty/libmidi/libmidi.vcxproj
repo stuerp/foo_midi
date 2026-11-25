@@ -70,7 +70,7 @@
     <ClCompile Include="src\MIDIProcessorMDS.cpp" />
     <ClCompile Include="src\MIDIProcessorMMF.cpp" />
     <ClCompile Include="src\MIDIProcessorMUS.cpp" />
-    <ClCompile Include="src\MIDIProcessorRCP.cpp" />
+    <ClCompile Include="src\RCPProcessor.cpp" />
     <ClCompile Include="src\MIDIProcessorRMI.cpp" />
     <ClCompile Include="src\MIDIProcessorSMF.cpp" />
     <ClCompile Include="src\MIDIProcessorXMF.cpp" />
@@ -112,6 +112,7 @@
     <ClInclude Include="src\MIDIContainer.h" />
     <ClInclude Include="src\Range.h" />
     <ClInclude Include="src\MIDIProcessor.h" />
+    <ClInclude Include="src\RCPProcessor.h" />
     <ClInclude Include="src\RCP\MIDIStream.h" />
     <ClInclude Include="src\RCP\RCP.h" />
     <ClInclude Include="src\RCP\RunningNotes.h" />

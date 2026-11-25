@@ -27,17 +27,17 @@ void cm6_file_t::Read(const buffer_t & data)
 
     Comment.Assign(&_Data.Data[0x0040], 0x40);
 
-    laSystem = &_Data.Data[0x0080];
-    laChnVol = &_Data.Data[0x0097];
-    laPatchTemp = &_Data.Data[0x00A0];
+    laSystem     = &_Data.Data[0x0080];
+    laChnVol     = &_Data.Data[0x0097];
+    laPatchTemp  = &_Data.Data[0x00A0];
     laRhythmTemp = &_Data.Data[0x0130];
     laTimbreTemp = &_Data.Data[0x0284];
-    laPatchMem = &_Data.Data[0x0A34];
-    laTimbreMem = &_Data.Data[0x0E34];
+    laPatchMem   = &_Data.Data[0x0A34];
+    laTimbreMem  = &_Data.Data[0x0E34];
     pcmPatchTemp = &_Data.Data[0x4E34];
-    pcmPatchMem = &_Data.Data[0x4EB2];
-    pcmSystem = &_Data.Data[0x5832];
-    pcmChnVol = &_Data.Data[0x5843];
+    pcmPatchMem  = &_Data.Data[0x4EB2];
+    pcmSystem    = &_Data.Data[0x5832];
+    pcmChnVol    = &_Data.Data[0x5843];
 }
 
 /// <summary>

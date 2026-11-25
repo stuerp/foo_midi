@@ -17,7 +17,7 @@
 /// <summary>
 /// Retrieves information about the specified subsong.
 /// </summary>
-void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
+void input_decoder_t::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
 {
     if (_IsSysExFile)
         return;
@@ -30,7 +30,7 @@ void InputDecoder::get_info(t_uint32 subSongIndex, file_info & fileInfo, abort_c
 /// <summary>
 /// Converts the MIDI metadata to tags.
 /// </summary>
-void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
+void input_decoder_t::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileInfo, abort_callback & abortHandler)
 {
     _IsMT32 = false;
     _IsXG = false;
@@ -232,7 +232,7 @@ void InputDecoder::ConvertMetaDataToTags(size_t subSongIndex, file_info & fileIn
 /// <summary>
 /// Adds the specified tag.
 /// </summary>
-void InputDecoder::AddTag(file_info & fileInfo, const char * name, const char * value, t_size maxLength)
+void input_decoder_t::AddTag(file_info & fileInfo, const char * name, const char * value, t_size maxLength)
 {
     if ((name == nullptr) || (value == nullptr))
         return;

@@ -1,5 +1,5 @@
 
-/** $VER: InputDecoder.h (2025.10.04) **/
+/** $VER: InputDecoder.h (2026.11.25) **/
 
 #pragma once
 
@@ -15,28 +15,15 @@
 #include <pfc/synchro.h>
 
 #include <unordered_set>
+#include <vector>
 
 #include "Configuration.h"
+#include "CLAPHost.h"
 #include "FileHasher.h"
 #include "Preset.h"
 #include "MIDISysExDumps.h"
 #include "Soundfont.h"
-
-/** Players **/
-
-#include "ADLPlayer.h"
-#include "BMPlayer.h"
-#include "CLAPPlayer.h"
-#include "EdMPlayer.h"
-#include "FMMPlayer.h"
-#include "FSPlayer.h"
-#include "MCIPlayer.h"
-#include "MT32Player/MT32Player.h"
-#include "NukedOPL3Player.h"
-#include "NukedSC-55Player.h"
-#include "OPNPlayer/OPNPlayer.h"
-#include "SCPlayer.h"
-#include "VSTiPlayer.h"
+#include "SoundfontList.h"
 
 #include "Resource.h"
 
@@ -51,18 +38,18 @@ bool WriteSF2(const sf::bank_t & bank, const fs::path & filePath) noexcept;
 /// <summary>
 /// Implements an input decoder.
 /// </summary>
-class InputDecoder : public input_stubs
+class input_decoder_t : public input_stubs
 {
 public:
-    InputDecoder() noexcept;
+    input_decoder_t() noexcept;
 
-    InputDecoder(const InputDecoder &) = delete;
-    InputDecoder(InputDecoder &&) = delete;
+    input_decoder_t(const input_decoder_t &) = delete;
+    input_decoder_t(input_decoder_t &&) = delete;
 
-    InputDecoder & operator=(const InputDecoder &) = delete;
-    InputDecoder & operator=(InputDecoder &&) = delete;
+    input_decoder_t & operator=(const input_decoder_t &) = delete;
+    input_decoder_t & operator=(input_decoder_t &&) = delete;
 
-    virtual ~InputDecoder() noexcept;
+    virtual ~input_decoder_t() noexcept;
 
 public:
     #pragma region input_impl
@@ -204,6 +191,7 @@ private:
     bool _DetectXMILoops;
     bool _DetectTouhouLoops;
     bool _DetectFF7Loops;
+    bool _DetectRecomposerLoops;
 
     // Player Properties
     player_t * _Player;

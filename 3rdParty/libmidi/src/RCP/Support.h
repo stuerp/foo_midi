@@ -7,6 +7,13 @@
 
 #include "MIDI.h"
 
+#include <cstdio>
+#include <iostream>
+#include <io.h>
+#include <cerrno>
+#include <fcntl.h>
+#include <system_error>
+
 namespace rcp
 {
 
@@ -153,3 +160,78 @@ inline uint32_t ReadLE32(const uint8_t * data)
 }
 
 }
+
+/// <summary>
+/// Scoped stdout suppresor
+/// </summary>
+class scoped_stdout_suppressor_t
+{
+public:
+    scoped_stdout_suppressor_t()
+    {
+        std::cout.flush();
+        std::fflush(stdout);
+
+        const int stdoutFd = ::_fileno(stdout);
+
+        if (stdoutFd < 0)
+            throw std::system_error(EBADF, std::generic_category(), "stdout is not associated with a valid file descriptor");
+
+        _OldStdOut = ::_dup(stdoutFd);
+
+        if (_OldStdOut == -1)
+            throw std::system_error(errno, std::generic_category(), "_dup(stdout) failed");
+
+        int nulFd = -1;
+
+        const errno_t Error = ::_sopen_s(&nulFd, "NUL", _O_WRONLY, _SH_DENYNO, 0);
+
+        if (Error != 0)
+        {
+            ::_close(_OldStdOut);
+            _OldStdOut = -1;
+
+            throw std::system_error((int) Error, std::generic_category(), "_sopen_s(NUL) failed");
+        }
+
+        if (::_dup2(nulFd, stdoutFd) == -1)
+        {
+            const int error = errno;
+
+            ::_close(nulFd);
+            ::_close(_OldStdOut);
+            _OldStdOut = -1;
+
+            throw std::system_error(error, std::generic_category(), "_dup2(NUL, stdout) failed");
+        }
+
+        ::_close(nulFd);
+        std::cout.clear();
+    }
+
+    ~scoped_stdout_suppressor_t() noexcept
+    {
+        if (_OldStdOut == -1)
+            return;
+
+        std::cout.flush();
+        std::fflush(stdout);
+
+        const int stdoutFd = ::_fileno(stdout);
+
+        if (stdoutFd >= 0)
+            ::_dup2(_OldStdOut, stdoutFd);
+
+        ::_close(_OldStdOut);
+        _OldStdOut = -1;
+
+        std::cout.clear();
+    }
+
+    scoped_stdout_suppressor_t(const scoped_stdout_suppressor_t &) = delete;
+
+    scoped_stdout_suppressor_t & operator=(const scoped_stdout_suppressor_t &) = delete;
+
+private:
+    int _OldStdOut = -1;
+};

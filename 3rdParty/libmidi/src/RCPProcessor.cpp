@@ -1,13 +1,13 @@
 
-/** $VER: MIDIProcessorRCP.cpp (2026.05.03) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: RCPProcessor.cpp (2026.11.23) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #include "pch.h"
 
-#include "MIDIProcessor.h"
+#include "RCPProcessor.h"
 
 #include <RCP.h>
 
-namespace midi
+namespace rcp
 {
 
 /// <summary>
@@ -52,7 +52,7 @@ bool processor_t::IsRCP(bytes_t const & data, const std::wstring & fileExtension
 /// <summary>
 /// Processes the sequence data.
 /// </summary>
-bool processor_t::ProcessRCP(bytes_t const & data, const std::wstring & filePath, container_t & container)
+bool processor_t::Process(bytes_t const & data, const std::wstring & filePath, container_t & container)
 {
     rcp::converter_t RCPConverter;
 
@@ -69,21 +69,25 @@ bool processor_t::ProcessRCP(bytes_t const & data, const std::wstring & filePath
     Options._KeepMutedChannels  = _Options._KeepMutedChannels;
     Options._IncludeControlData = _Options._IncludeControlData;
 
-    rcp::buffer_t SrcData;
-
-    SrcData.Copy(data.data(), data.size());
-
     rcp::buffer_t DstData;
 
-    RCPConverter.ToSMF(SrcData, DstData);
+    {
+        rcp::buffer_t SrcData;
+
+        SrcData.Copy(data.data(), data.size());
+
+        RCPConverter.ToSMF(SrcData, DstData);
+    }
 
     bytes_t Data;
 
     Data.insert(Data.end(), DstData.Data, DstData.Data + DstData.Size);
 
+    bool Result = midi::processor_t::Process(Data, filePath.c_str(), container);
+
     container.FileFormat = FileFormat::RCP;
 
-    return processor_t::Process(Data, filePath.c_str(), container);
+    return Result;
 }
 
 }

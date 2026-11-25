@@ -73,7 +73,7 @@ void converter_t::ConvertSequence(const buffer_t & rcpData, buffer_t & midData)
     ::printf("RCP version %u\n\n", RCPFile._Version);
 #endif
 
-    uint32_t Offset = 0;
+    size_t Offset = 0;
 
     const uint8_t * RCPData = rcpData.Data;
 
@@ -101,7 +101,6 @@ void converter_t::ConvertSequence(const buffer_t & rcpData, buffer_t & midData)
         Offset += 32 * (14 + 2); // Skip rhythm definitions (16 bytes each)
     }
     else
- // if (RCPFile._Version == 3)
     {
         RCPFile._Title.Assign(&RCPData[Offset + 0x020], 0x80);
 
@@ -145,7 +144,7 @@ void converter_t::ConvertSequence(const buffer_t & rcpData, buffer_t & midData)
     std::vector<rcp_track_t> RCPTracks(RCPFile._TrackCount);
 
     {
-        uint32_t TrackOffset = Offset + (8 * (NameSize + DataSize)); // Skip the User SysEx messages for now.
+        size_t TrackOffset = Offset + (8 * (NameSize + DataSize)); // Skip the User SysEx messages for now.
         uint16_t n = 0;
 
         for (auto & Track : RCPTracks)
@@ -153,7 +152,7 @@ void converter_t::ConvertSequence(const buffer_t & rcpData, buffer_t & midData)
             if (TrackOffset >= rcpData.Size)
             {
             #ifdef _RCP_VERBOSE
-                ::printf("%04X: Warning: Insufficient track data.\n", TrackOffset);
+                ::printf("%04X: Warning: Insufficient track data.\n", (int) TrackOffset);
             #endif
 
                 RCPFile._TrackCount = n;
@@ -426,7 +425,7 @@ void converter_t::ConvertSequence(const buffer_t & rcpData, buffer_t & midData)
     {
         for (auto & SysEx : RCPFile._SysEx)
         {
-            const uint32_t SyxOffset = Offset;
+            const size_t SyxOffset = Offset;
 
             SysEx.Name.Assign(RCPData + Offset, NameSize);
 
@@ -438,7 +437,7 @@ void converter_t::ConvertSequence(const buffer_t & rcpData, buffer_t & midData)
             Offset += DataSize;
 
         #ifdef _RCP_VERBOSE
-            ::printf("%04X: User SysEx \"%s\",", SyxOffset, msc::TextToUTF8(SysEx.Name.Data, SysEx.Name.Len).c_str());
+            ::printf("%04X: User SysEx \"%s\",", (int) SyxOffset, msc::TextToUTF8(SysEx.Name.Data, SysEx.Name.Len).c_str());
 
             if (SysEx.Size != 0)
             {
@@ -484,7 +483,7 @@ void converter_t::ConvertSequence(const buffer_t & rcpData, buffer_t & midData)
 
         try
         {
-            RCPFile.ConvertTrack(rcpData.Data, rcpData.Size, &Offset, &RCPTrack, MIDIStream);
+            RCPFile.ConvertTrack(rcpData.Data, rcpData.Size, Offset, &RCPTrack, MIDIStream);
         }
         catch (std::exception &)
         {

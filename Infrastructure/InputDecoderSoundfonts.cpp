@@ -16,7 +16,7 @@ static fs::path GetSoundfontFilePath(const fs::path & filePath, abort_callback &
 /// <summary>
 /// Gets the soundfonts and adjusts the player type, if necessary.
 /// </summary>
-void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abort_callback & abortHandler)
+void  input_decoder_t::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abort_callback & abortHandler)
 {
     std::vector<soundfont_t> Soundfonts;
 
@@ -207,7 +207,7 @@ void  InputDecoder::GetSoundfonts(const fs::path & defaultSoundfontFilePath, abo
 /// <summary>
 /// Adds only existing soundfonts to the final list. Also handles recursively loading Soundfont list in soundfont lists.
 /// </summary>
-void InputDecoder::AddSoundFont(const soundfont_t & sf, std::unordered_set<std::string> & uniqueLists, std::vector<soundfont_t> & soundfonts, std::string & report) noexcept
+void input_decoder_t::AddSoundFont(const soundfont_t & sf, std::unordered_set<std::string> & uniqueLists, std::vector<soundfont_t> & soundfonts, std::string & report) noexcept
 {
     if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sflist", ".json" }))
     {

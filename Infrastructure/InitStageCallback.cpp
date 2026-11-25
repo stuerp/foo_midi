@@ -41,7 +41,7 @@ public:
 
             Log.AtDebug().Write(STR_COMPONENT_BASENAME " is initializing the metadb index manager after the user interface has been initialized.");
 
-            InputDecoder::InitializeIndexManager();
+            input_decoder_t::InitializeIndexManager();
         }
     }
 };

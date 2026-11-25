@@ -97,10 +97,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.4.0.0-alpha1, 2026-11-21
+v3.4.0.0-alpha2, 2026-11-21
 
-- Improved: Rewrote the HMI/HMP converter.
-  - The Default Tempo configuration setting is obsolete now for the HMP converter.
+- Improved: Implemented special handling of loops in RCP (Recomposer) files.
 
 You can read the full history [here](docs/History.md).
 

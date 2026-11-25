@@ -11,7 +11,7 @@
     <ClCompile Include="src\MIDIProcessorMDS.cpp" />
     <ClCompile Include="src\MIDIProcessorMMF.cpp" />
     <ClCompile Include="src\MIDIProcessorMUS.cpp" />
-    <ClCompile Include="src\MIDIProcessorRCP.cpp" />
+    <ClCompile Include="src\RCPProcessor.cpp" />
     <ClCompile Include="src\MIDIProcessorRMI.cpp" />
     <ClCompile Include="src\MIDIProcessorSMF.cpp" />
     <ClCompile Include="src\MIDIProcessorXMF.cpp" />
@@ -57,6 +57,7 @@
     <ClInclude Include="src\MIDI2.h" />
     <ClInclude Include="src\HMPProcessor.h" />
     <ClInclude Include="src\HMIProcessor.h" />
+    <ClInclude Include="src\RCPProcessor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

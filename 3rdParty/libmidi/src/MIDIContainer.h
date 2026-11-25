@@ -412,7 +412,7 @@ public:
         return _ExtraPercussionChannel;
     }
 
-    void DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops, bool detectLeapFrogLoops);
+    void DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops, bool detectLeapFrogLoops, bool detectRecomposerLoops) noexcept;
 
     uint32_t TimestampToMS(uint32_t timestamp, size_t subsongIndex) const;
 
@@ -499,7 +499,7 @@ private:
 
     uint32_t _ExtraPercussionChannel;
 
-    const size_t MaxChannels = 48;
+    static constexpr size_t MaxChannels = 48;
 
     std::vector<uint64_t> _ChannelMask;
     std::vector<tempo_map_t> _TempoMaps;
@@ -513,8 +513,10 @@ private:
 
     std::vector<uint32_t> _EndTimestamps;   // Largest timestamp for each track.
 
-    std::vector<range_t> _Loop;
+    std::vector<range_t> _Loops;
     std::vector<uint8_t> _Artwork;
+
+    
 };
 
 }

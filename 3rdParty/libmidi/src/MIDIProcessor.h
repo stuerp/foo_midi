@@ -1,5 +1,5 @@
 
-/** $VER: MIDIProcessor.h (2026.11.21) **/
+/** $VER: MIDIProcessor.h (2026.11.23) **/
 
 #pragma once
 
@@ -106,7 +106,6 @@ private:
     static bool IsMDS  (bytes_t const & data) noexcept;
     static bool IsLDS  (bytes_t const & data, const std::wstring & fileExtension) noexcept;
     static bool IsGMF  (bytes_t const & data) noexcept;
-    static bool IsRCP  (bytes_t const & data, const std::wstring & fileExtension) noexcept;
     static bool IsXMF  (bytes_t const & data) noexcept;
     static bool IsMMF  (bytes_t const & data) noexcept;
     static bool IsMMD  (bytes_t const & data, const std::wstring & fileExtension) noexcept;
@@ -118,13 +117,11 @@ private:
 
     static bool ProcessSMF  (bytes_t const & data, container_t & container);
     static bool ProcessRMI  (bytes_t const & data, container_t & container);
-    static bool ProcessHMI  (bytes_t const & data, container_t & container);
     static bool ProcessXMI  (bytes_t const & data, container_t & container);
     static bool ProcessMUS  (bytes_t const & data, container_t & container);
     static bool ProcessMDS  (bytes_t const & data, container_t & container);
     static bool ProcessLDS  (bytes_t const & data, container_t & container);
     static bool ProcessGMF  (bytes_t const & data, container_t & container);
-    static bool ProcessRCP  (bytes_t const & data, const std::wstring & filePath, container_t & container);
     static bool ProcessXMF  (bytes_t const & data, container_t & container);
     static bool ProcessMMF  (bytes_t const & data, container_t & container);
     static bool ProcessMMD  (bytes_t const & data, const std::wstring & filePath, container_t & container);

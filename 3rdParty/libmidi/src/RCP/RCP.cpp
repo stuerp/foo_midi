@@ -1,7 +1,9 @@
 
-/** $VER: RCP.cpp (2025.06.09) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: RCP.cpp (2026.11.25) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #include "pch.h"
+
+#include <array>
 
 #include "RCP.h"
 #include "RunningNotes.h"
@@ -18,15 +20,27 @@ constexpr uint8_t MCMD_RET_DATASIZE = 0x02; // return number of data bytes
 static uint8_t DetermineShift(uint32_t value);
 static uint16_t ConvertRCPSysExToMIDISysEx(const uint8_t * srcData, uint16_t srcSize, uint8_t * dstData, uint8_t param1, uint8_t param2, uint8_t channel);
 
+struct loop_t
+{
+    size_t ParentOffset;
+    size_t StartOffset;
+    uint32_t StartTick;
+    uint16_t Count;
+};
+
 /// <summary>
 /// Parses the RCP track data.
 /// </summary>
-void rcp_file_t::ParseTrack(const uint8_t * data, uint32_t size, uint32_t offset, rcp_track_t * track) const
+void rcp_file_t::ParseTrack(const uint8_t * data, uint32_t size, size_t offset, rcp_track_t * track) const
 {
     if (offset >= size)
         throw std::runtime_error("Insufficient data to read track");
 
-    const uint32_t TrackHead = offset;
+#ifdef _RCP_VERBOSE
+    ::printf("%04X: Track begin\n", (int) offset);
+#endif
+
+    const size_t TrackHead = offset;
 
     uint32_t TrackSize = 0;
 
@@ -42,53 +56,35 @@ void rcp_file_t::ParseTrack(const uint8_t * data, uint32_t size, uint32_t offset
         offset += 4;
     }
 
-    const uint32_t TrackTail = std::min(TrackHead + TrackSize, size);
+    const size_t TrackTail = std::min(TrackHead + TrackSize, (size_t) size);
 
+    // Process the RCP track header.
     if (offset + 0x2A > size)
         throw std::runtime_error("Insufficient data to read track header");
 
     offset += 0x2A; // Skip the track header.
 
-    track->Offs = TrackHead;
-    track->Size = TrackSize;
-    track->Duration = 0;
+    track->Offset        = TrackHead;
+    track->Size          = TrackSize;
+    track->Duration      = 0;
     track->LoopStartOffs = 0;
     track->LoopStartTick = 0;
 
-    std::vector<uint32_t> MeasureOffsets;
+    std::vector<size_t> MeasureOffsets;
 
     MeasureOffsets.reserve(256);
 
-#ifdef _RCP_VERBOSE
-    ::printf("%04X: Track begin\n", offset);
-#endif
-
     MeasureOffsets.push_back(offset);
 
-    bool EndOfTrack = false;
+    bool StopTrackProcessing = false;
 
-    uint32_t ParentOffs = 0;
+    size_t ParentOffset = 0;
 
-    struct loop_t
-    {
-        uint32_t ParentOffs;
-        uint32_t StartOffs;
-        uint32_t StartTick;
-        uint16_t Counter;
-    };
+    std::array<loop_t, 8> Loops = { };
 
-    std::vector<loop_t> Loops;
+    uint8_t LoopIndex = 0;
 
-    Loops.reserve(8);
-
-    uint8_t LoopCount = 0;
-
-    uint32_t LoopParentOffs[8] = { };
-    uint32_t LoopStartOffs[8] = { };
-    uint32_t LoopStartTick[8] = { };
-    uint16_t LoopCounter[8] = { };
-
-    while ((offset < TrackTail) && !EndOfTrack)
+    while ((offset < TrackTail) && !StopTrackProcessing)
     {
         uint8_t  CmdType     = 0;
         uint16_t CmdP0       = 0;
@@ -122,27 +118,25 @@ void rcp_file_t::ParseTrack(const uint8_t * data, uint32_t size, uint32_t offset
         {
             case 0xF8: // Loop End
             {
-                if (LoopCount > 0)
+                if (LoopIndex > 0)
                 {
-                    LoopCount--;
+                    Loops[--LoopIndex].Count++;
 
-                    LoopCounter[LoopCount]++;
-
-                    if (CmdP0 == 0)
+                    if ((CmdP0 == 0) || (CmdP0 >= 0x7F))
                     {
-                        track->LoopStartOffs = LoopStartOffs[LoopCount];
-                        track->LoopStartTick = LoopStartTick[LoopCount];
+                        track->LoopStartOffs = Loops[LoopIndex].StartOffset;
+                        track->LoopStartTick = Loops[LoopIndex].StartTick;
 
-                        EndOfTrack = 1;
+                        StopTrackProcessing = true;
                     }
                     else
                     {
-                        if (LoopCounter[LoopCount] < CmdP0)
+                        if (Loops[LoopIndex].Count < CmdP0)
                         {
-                            ParentOffs = LoopParentOffs[LoopCount];
-                            offset = LoopStartOffs[LoopCount];
+                            ParentOffset = Loops[LoopIndex].ParentOffset;
+                            offset     = Loops[LoopIndex].StartOffset;
 
-                            LoopCount++;
+                            ++LoopIndex;
                         }
                     }
                 }
@@ -153,17 +147,15 @@ void rcp_file_t::ParseTrack(const uint8_t * data, uint32_t size, uint32_t offset
 
             case 0xF9: // Loop Begin
             {
-                if (LoopCount < 8)
+                if (LoopIndex < 8)
                 {
-                    LoopParentOffs[LoopCount] = ParentOffs;
-                    LoopStartOffs[LoopCount] = offset;
-                    LoopStartTick[LoopCount] = track->Duration;
-                    LoopCounter[LoopCount] = 0;
+                    Loops[LoopIndex].ParentOffset = ParentOffset;
+                    Loops[LoopIndex].StartOffset  = offset;
+                    Loops[LoopIndex].StartTick    = track->Duration;
+                    Loops[LoopIndex].Count        = 0;
 
-                    LoopCount++;
+                    ++LoopIndex;
                 }
-
-                Loops.push_back({ ParentOffs, offset, track->Duration, 0 });
 
                 CmdP0 = 0;
                 break;
@@ -171,24 +163,16 @@ void rcp_file_t::ParseTrack(const uint8_t * data, uint32_t size, uint32_t offset
 
             case 0xFC: // Repeat previous bar
             {
-                if (ParentOffs)
+                if (ParentOffset == 0)
                 {
-                    offset = ParentOffs;
-                    ParentOffs = 0x00;
-                }
-                else
-                {
-                    if (_Version == 2)
-                        offset -= 0x04;
-                    else
-                    if (_Version == 3)
-                        offset -= 0x06;
+                    offset -= (_Version == 2) ? 0x04 : 0x06;
+
                     do
                     {
-                        uint32_t OldOffset = offset;
+                        size_t OldOffset = offset;
 
-                        uint16_t MeasureId = 0;
-                        uint32_t RepeatOffset = 0;
+                        uint16_t MeasureIndex = 0;
+                        uint32_t MeasureOffset = 0;
 
                         if (_Version == 2)
                         {
@@ -196,31 +180,37 @@ void rcp_file_t::ParseTrack(const uint8_t * data, uint32_t size, uint32_t offset
                             CmdP1 = data[offset + 0x02];
                             CmdP2 = data[offset + 0x03];
 
-                            MeasureId    = (uint16_t)  (CmdP0          | ((CmdP1 & 0x03) << 8));
-                            RepeatOffset = (uint32_t) ((CmdP1 & ~0x03) |  (CmdP2         << 8));
+                            MeasureIndex  = (uint16_t)  (CmdP0          | ((CmdP1 & 0x03) << 8));
+                            MeasureOffset = (uint32_t) ((CmdP1 & ~0x03) |  (CmdP2         << 8));
 
                             offset += 0x04;
                         }
                         else
-                        if (_Version == 3)
                         {
-                            MeasureId    = ReadLE16(&data[offset + 0x02]);
-                            RepeatOffset = (uint32_t) (0x002E + (ReadLE16(&data[offset + 0x04]) - 0x0030) * 0x06);
+                            MeasureIndex  = ReadLE16(&data[offset + 0x02]);
+                            MeasureOffset = (uint32_t) (0x002E + (ReadLE16(&data[offset + 0x04]) - 0x0030) * 6);
 
                             offset += 0x06;
                         }
-                        if (MeasureId >= MeasureOffsets.size())
+
+                        if (MeasureIndex >= MeasureOffsets.size())
                             break;
 
-                        if (TrackHead + RepeatOffset == OldOffset)
-                            break; // prevent recursion
+                        if (TrackHead + MeasureOffset == OldOffset)
+                            break; // Prevent recursion
 
-                        if (!ParentOffs) // necessary for following FC command chain
-                            ParentOffs = offset;
+                        if (ParentOffset == 0) // Necessary for following FC command chain
+                            ParentOffset = offset;
 
-                        offset = TrackHead + RepeatOffset;
+                        offset = TrackHead + MeasureOffset;
                     }
                     while (data[offset] == 0xFC);
+                }
+                else
+                {
+                    offset = ParentOffset;
+
+                    ParentOffset = 0;
                 }
 
                 CmdP0 = 0;
@@ -229,57 +219,56 @@ void rcp_file_t::ParseTrack(const uint8_t * data, uint32_t size, uint32_t offset
 
             case 0xFD: // Measure end
             {
-                if (MeasureOffsets.size() >= 0x8000)
+                if (ParentOffset == 0)
                 {
-                #ifdef _RCP_VERBOSE
-                    ::printf("Warning: too many measures in track.\n");
-                #endif
+                    if (MeasureOffsets.size() >= 0x8000)
+                    {
+                    #ifdef _RCP_VERBOSE
+                        ::printf("Warning: too many measures in track.\n");
+                    #endif
 
-                    EndOfTrack = 1;
-                    break;
+                        StopTrackProcessing = 1;
+                        break;
+                    }
+
+                    MeasureOffsets.push_back(offset);
                 }
-                if (ParentOffs)
+                else
                 {
-                    offset = ParentOffs;
-                    ParentOffs = 0x00;
+                    offset = ParentOffset;
+
+                    ParentOffset = 0x00;
                 }
 
-                MeasureOffsets.push_back(offset);
+                if (_Options._WolfteamLoopMode && (MeasureOffsets.size() == 2))
+                {
+                    LoopIndex = 0;
+
+                    Loops[LoopIndex].ParentOffset = ParentOffset;
+                    Loops[LoopIndex].StartOffset  = offset;
+                    Loops[LoopIndex].StartTick  = track->Duration;
+                    Loops[LoopIndex].Count    = 0;
+
+                    ++LoopIndex;
+                }
 
                 CmdP0 = 0;
-
-                if (_Options._WolfteamLoopMode && MeasureOffsets.size() == 2)
-                {
-                    LoopCount = 0;
-
-                    LoopParentOffs[LoopCount] = ParentOffs;
-                    LoopStartOffs[LoopCount] = offset;
-                    LoopStartTick[LoopCount] = track->Duration;
-                    LoopCounter[LoopCount] = 0;
-
-                    LoopCount++;
-
-                    Loops.clear();
-
-                    Loops.push_back({ ParentOffs, offset, track->Duration, 0 });
-                }
                 break;
             }
 
             case 0xFE: // Track end
             {
-                EndOfTrack = true;
-                CmdP0 = 0;
+                StopTrackProcessing = true;
 
-                if (_Options._WolfteamLoopMode && (LoopCount > 0))
+                if (_Options._WolfteamLoopMode && (LoopIndex > 0))
                 {
-                    LoopCount = 0;
+                    LoopIndex = 0;
 
-                    track->LoopStartOffs = LoopStartOffs[LoopCount];
-                    track->LoopStartTick = LoopStartTick[LoopCount];
-
-                    Loops.clear();
+                    track->LoopStartOffs = Loops[LoopIndex].StartOffset;
+                    track->LoopStartTick = Loops[LoopIndex].StartTick;
                 }
+
+                CmdP0 = 0;
                 break;
             }
 
@@ -294,21 +283,21 @@ void rcp_file_t::ParseTrack(const uint8_t * data, uint32_t size, uint32_t offset
     }
 
 #ifdef _RCP_VERBOSE
-    ::printf("%04X: Track End: %d measures, %d ticks.\n\n", offset, (int) MeasureOffsets.size(), track->Duration);
+    ::printf("%04X: Track End: %d measures, %d ticks.\n\n", (int) offset, (int) MeasureOffsets.size(), track->Duration);
 #endif
 }
 
 /// <summary>
 /// Converts an RCP track to a MIDI track.
 /// </summary>
-void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * offset, rcp_track_t * track, midi_stream_t & midiStream) const
+void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, size_t & offset, rcp_track_t * track, midi_stream_t & midiStream) const
 {
-    uint32_t Offset = *offset;
+    size_t Offset = offset;
 
     if (Offset >= size)
         throw std::runtime_error("Invalid start of track position");
 
-    const uint32_t TrackHead = Offset;
+    const size_t TrackHead = Offset;
 
     uint32_t TrackSize = 0;
 
@@ -321,13 +310,12 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
         Offset += 2;
     }
     else
-    if (_Version == 3)
     {
         TrackSize = ReadLE32(&data[Offset]);
         Offset += 4;
     }
 
-    uint32_t TrackTail = std::min(TrackHead + TrackSize, size);
+    const size_t TrackTail = std::min(TrackHead + TrackSize, (size_t) size);
 
     if (Offset + 0x2A > size)
         throw std::runtime_error("Insufficient data to read track header");
@@ -385,7 +373,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
         if ((MuteMode == 0x01) && !_Options._KeepMutedChannels)
         {
             // Ignore muted tracks.
-            *offset = TrackHead + TrackSize;
+            offset = TrackHead + TrackSize;
 
             return;
         }
@@ -438,10 +426,10 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
         uint8_t GSParameters[6] = { }; // 0 device ID, 1 model ID, 2 address high, 3 address low
         uint8_t XGParameters[6] = { }; // 0 device ID, 1 model ID, 2 address high, 3 address low
 
-        uint32_t ParentOffs = 0;
-        uint16_t RepeatingBarID = 0xFFFF;
+        size_t ParentOffset = 0;
+        uint16_t RepeatMeasureIndex = 0xFFFF;
 
-        std::vector<uint32_t> BarOffsets;
+        std::vector<size_t> BarOffsets;
         uint16_t BarCount = 0;
 
         BarOffsets.reserve(256);
@@ -451,15 +439,21 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
         buffer_t Text;
         bool EndOfTrack = false;
 
-        uint8_t LoopCount = 0;
-    
-        uint32_t LoopParentOffs[8] = { };
-        uint32_t LoopStartOffs[8] = { };
-        uint16_t LoopCounter[8] = { };
+        struct loop_t
+        {
+            size_t ParentOffset;
+            size_t StartOffset; // Offset of the loop data
+            uint32_t StartTick; // Tick count when the loop starts.
+            uint32_t Count;
+        };
 
+        std::array<loop_t, 8> Loops = { };
+
+        size_t LoopIndex = 0;
+    
         while ((Offset < TrackTail) && !EndOfTrack)
         {
-            uint32_t CmdOffset = Offset; // Offset of the start of the command
+            size_t CmdOffset = Offset; // Offset of the start of the command
 
             uint8_t  CmdType     = 0;
             uint16_t CmdP0       = 0;
@@ -520,17 +514,13 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                 if ((CmdDuration > 0) && (DstChannel != 0xFF))
                 {
                 #ifdef _RCP_VERBOSE
-                    ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Note On %02X %02X\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), Code, CmdP2);
+                    ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Note On %02X %02X\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), Code, CmdP2);
                 #endif
 
                     midiStream.WriteEvent(midi::NoteOn, Code, CmdP2);
 
                     RunningNotes.Add(midiStream.GetChannel(), Code, 0x80, CmdDuration);
                 }
-            #ifdef _RCP_VERBOSE
-                else
-                    ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Note On %02X %02X (Skipped)\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), Code, CmdP2);
-            #endif
             }
             else
             {
@@ -552,7 +542,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         #ifdef _RCP_VERBOSE
                         {
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Add User SysEx \"%.*s\",", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), us.Name.Len, us.Name.Data);
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Add User SysEx \"%.*s\",", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), us.Name.Len, us.Name.Data);
 
                             for (uint16_t i = 0; i < Size; ++i)
                                 ::printf(" %02X", Temp[i]);
@@ -568,19 +558,19 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                             midiStream.WriteEvent(midi::SysEx, Temp, Size);
                         #ifdef _RCP_VERBOSE
                         else
-                            ::printf("Warning: Track %2u, 0x%04X: Using empty User SysEx command %u.\n", TrackId, CmdOffset, CmdType & 0x07);
+                            ::printf("Warning: Track %2u, 0x%04X: Using empty User SysEx command %u.\n", TrackId, (int) CmdOffset, CmdType & 0x07);
                         #endif
                         break;
                     }
 
                     case 0x98: // Add SysEx message.
                     {
-                        uint16_t Size = GetMultiCmdDataSize(data, size, Offset, MCMD_INI_EXCLUDE | MCMD_RET_DATASIZE);
+                        uint16_t Size = GetCommandSize(data, size, Offset, MCMD_INI_EXCLUDE | MCMD_RET_DATASIZE);
 
                         if (Text.Size < (uint32_t) Size)
                             Text.Grow((uint32_t) ((Size + 0x0F) & ~0x0F)); // Round up to 0x10.
 
-                        Size = ReadMultiCmdData(data, size, &Offset, Text.Data, Text.Size, MCMD_INI_EXCLUDE);
+                        Size = GetCommand(data, size, Offset, Text.Data, Text.Size, MCMD_INI_EXCLUDE);
 
                         if (DstChannel == 0xFF)
                             break;
@@ -589,7 +579,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         #ifdef _RCP_VERBOSE
                         {
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Send SysEx,", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Send SysEx,", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
 
                             for (uint16_t i = 0; i < Size; ++i)
                                 ::printf(" %02X", Temp[i]);
@@ -631,7 +621,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         #ifdef _RCP_VERBOSE
                         {
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha SysEx", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha SysEx", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
 
                             for (uint16_t i = 0; i < 6; ++i)
                                 ::printf(" %02X", Temp[i]);
@@ -659,7 +649,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         #ifdef _RCP_VERBOSE
                         {
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha SysEx", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha SysEx", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
 
                             for (uint16_t i = 0; i < 6; ++i)
                                 ::printf(" %02X", Temp[i]);
@@ -688,7 +678,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         #ifdef _RCP_VERBOSE
                         {
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha SysEx", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha SysEx", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
 
                             for (uint16_t i = 0; i < 6; ++i)
                                 ::printf(" %02X", Temp[i]);
@@ -707,7 +697,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         XGParameters[3] = CmdP2;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha XG base address %02X %02X", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha XG base address %02X %02X", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
                     #endif
                         break;
                     }
@@ -718,7 +708,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         XGParameters[1] = CmdP2;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha XG device data %02X %02X", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha XG device data %02X %02X", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
                     #endif
                         break;
                     }
@@ -737,7 +727,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         #ifdef _RCP_VERBOSE
                         {
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha XG SysEx", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha XG SysEx", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
 
                             for (uint16_t i = 0; i < 8; ++i)
                                 ::printf(" %02X", Temp[i]);
@@ -766,7 +756,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         #ifdef _RCP_VERBOSE
                         {
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha XG SysEx", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Yamaha XG SysEx", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
 
                             for (uint16_t i = 0; i < 8; ++i)
                                 ::printf(" %02X", Temp[i]);
@@ -793,7 +783,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         #ifdef _RCP_VERBOSE
                         {
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Roland MKS-7 SysEx", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Roland MKS-7 SysEx", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
 
                             for (uint16_t i = 0; i < 6; ++i)
                                 ::printf(" %02X", Temp[i]);
@@ -812,7 +802,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         GSParameters[3] = CmdP2;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Roland GS base address %02X %02X\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Roland GS base address %02X %02X\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
                     #endif
                         break;
                     }
@@ -843,7 +833,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         #ifdef _RCP_VERBOSE
                         {
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Roland GS SysEx", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Roland GS SysEx", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
 
                             for (uint16_t i = 0; i < 10; ++i)
                                 ::printf(" %02X", Temp[i]);
@@ -862,7 +852,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         GSParameters[1] = CmdP2;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Roland GS device %02X %02X\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Roland GS device %02X %02X\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
                     #endif
                         break;
                     }
@@ -873,7 +863,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                             break;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Set XG instrument (Control Change 20 %02X, Program Change %02X 00)\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP2, CmdP1);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Set XG instrument (Control Change 20 %02X, Program Change %02X 00)\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP2, CmdP1);
                     #endif
 
                         midiStream.WriteEvent(midi::ControlChange, 0x20, CmdP2);
@@ -887,7 +877,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                             break;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Set GS instrument (Control Change 00 %02X, Program Change %02X 00)\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP2, CmdP1);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Set GS instrument (Control Change 00 %02X, Program Change %02X 00)\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP2, CmdP1);
                     #endif
 
                         midiStream.WriteEvent(midi::ControlChange, 0x00, CmdP2);
@@ -897,7 +887,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                     case 0xE5: // Key Scan
                     {
-                        ::printf("Warning: Track %2u, 0x%04X: Key Scan command found.\n", TrackId, CmdOffset);
+                        ::printf("Warning: Track %2u, 0x%04X: Key Scan command found.\n", TrackId, (int) CmdOffset);
                         break;
                     }
 
@@ -920,7 +910,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                             SrcChannel = (uint8_t) (CmdP1 & 0x0F); // channel ID
 
                         #ifdef _RCP_VERBOSE
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Set MIDI channel (MIDI Port %02X, Channel Prefix %02X)\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), DstChannel, SrcChannel);
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Set MIDI channel (MIDI Port %02X, Channel Prefix %02X)\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), DstChannel, SrcChannel);
                         #endif
 
                             midiStream.WriteMetaEvent(midi::MIDIPort,      &DstChannel, 1);
@@ -935,7 +925,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                     {
                     #ifdef _RCP_VERBOSE
                         if (CmdP2 != 0)
-                            ::printf("Warning: Track %2u, 0x%04X: Ignoring gradual tempo change. Speed 0x40, P2 = 0x%02X.\n", TrackId, CmdOffset, CmdP2);
+                            ::printf("Warning: Track %2u, 0x%04X: Ignoring gradual tempo change. Speed 0x40, P2 = 0x%02X.\n", TrackId, (int) CmdOffset, CmdP2);
                     #endif
 
                         if (CmdP1 == 0)
@@ -944,7 +934,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         uint32_t Ticks = BPM2Ticks(_Tempo, CmdP1);
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Set tempo to %u bpm / %u ticks.\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), _Tempo, Ticks);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Set tempo to %u bpm / %u ticks.\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), _Tempo, Ticks);
                     #endif
 
                         midiStream.WriteMetaEvent(midi::SetTempo, Ticks, 3u);
@@ -957,7 +947,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                             break;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Channel Pressure %02X\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Channel Pressure %02X\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1);
                     #endif
 
                         midiStream.WriteEvent(midi::ChannelPressure, CmdP1, 0);
@@ -970,7 +960,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                             break;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Control Change %02X %02X\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Control Change %02X %02X\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
                     #endif
 
                         midiStream.WriteEvent(midi::ControlChange, CmdP1, CmdP2);
@@ -985,7 +975,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         if (CmdP1 < 0x80)
                         {
                         #ifdef _RCP_VERBOSE
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Program Change %02X\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1);
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Program Change %02X\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1);
                         #endif
 
                             midiStream.WriteEvent(midi::ProgramChange, CmdP1, 0);
@@ -994,7 +984,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         if ((CmdP1 < 0xC0) && (SrcChannel >= 1 && SrcChannel < 9))
                         {
                         #ifdef _RCP_VERBOSE
-                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: MT-32 instrument change\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                            ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: MT-32 instrument change\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
                         #endif
 
                             // Set MT-32 instrument from user bank used by RCP files from Granada X68000.
@@ -1016,7 +1006,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                             break;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Key Pressure %02X %02X\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Key Pressure %02X %02X\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
                     #endif
 
                         midiStream.WriteEvent(midi::KeyPressure, CmdP1, CmdP2);
@@ -1029,7 +1019,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                             break;
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Pitch Bend Change %02X %02X\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Pitch Bend Change %02X %02X\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), CmdP1, CmdP2);
                     #endif
 
                         midiStream.WriteEvent(midi::PitchBendChange, CmdP1, CmdP2);
@@ -1041,7 +1031,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         RCP2MIDIKeySignature((uint8_t) CmdP0, Temp);
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Key Signature %02X %02X\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), Temp[0], Temp[1]);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Key Signature %02X %02X\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), Temp[0], Temp[1]);
                     #endif
 
                         midiStream.WriteMetaEvent(midi::KeySignature, Temp, 2);
@@ -1052,16 +1042,16 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                     case 0xF6: // Comment
                     {
-                        uint16_t Size = GetMultiCmdDataSize(data, size, Offset, MCMD_INI_INCLUDE | MCMD_RET_DATASIZE);
+                        uint16_t Size = GetCommandSize(data, size, Offset, MCMD_INI_INCLUDE | MCMD_RET_DATASIZE);
 
                         if (Text.Size < Size)
                             Text.Grow((uint8_t) ((Size + 0x0F) & ~0x0F)); // Round up to 0x10.
 
-                        Size = ReadMultiCmdData(data, size, &Offset, Text.Data, Text.Size, MCMD_INI_INCLUDE);
+                        Size = GetCommand(data, size, Offset, Text.Data, Text.Size, MCMD_INI_INCLUDE);
                         Size = GetTrimmedLength((char *) Text.Data, Size, ' ', false);
 
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Meta Data Text \"%s\"\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), msc::TextToUTF8((const char *) Text.Data, Size).c_str());
+                        ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Meta Data Text \"%s\"\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration(), msc::TextToUTF8((const char *) Text.Data, Size).c_str());
                     #endif
 
                         midiStream.WriteMetaEvent(midi::Text, Text.Data, Size);
@@ -1073,62 +1063,62 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                     case 0xF7: // Continuation of previous command
                     {
                     #ifdef _RCP_VERBOSE
-                        ::printf("Warning: Track %2u, 0x%04X: Unexpected continuation command.\n", TrackId, CmdOffset);
+                        ::printf("Warning: Track %2u, 0x%04X: Unexpected continuation command.\n", TrackId, (int) CmdOffset);
                     #endif
                         break;
                     }
 
                     case 0xF8: // Loop End
                     {
-                        if (LoopCount != 0)
+                        if (LoopIndex != 0)
                         {
-                            LoopCount--;
+                            LoopIndex--;
 
-                            LoopCounter[LoopCount]++;
+                            Loops[LoopIndex].Count++;
 
                             bool TakeLoop = false;
 
                             // Loops == 0 -> infinite, but some songs also use very high values (like 0xFF) for that.
-                            if (CmdP0 == 0 || CmdP0 >= 0x7F)
+                            if ((CmdP0 == 0) || (CmdP0 >= 0x7F))
                             {
                                 // Infinite loop
-                                if (LoopCounter[LoopCount] < 0x80 && (DstChannel != 0xFF))
+                                if ((Loops[LoopIndex].Count < 0x80) && (DstChannel != 0xFF))
                                 {
                                 #ifdef _RCP_VERBOSE
-                                    ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Loop Begin (RPG Maker)\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                                    ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Loop End\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
                                 #endif
 
-                                    midiStream.WriteEvent(midi::ControlChange, 0x6F, (uint8_t) LoopCounter[LoopCount]);
+                                    midiStream.WriteEvent(midi::ControlChange, 0x6F, (uint8_t) Loops[LoopIndex].Count); // Encode the loop counter in the meta event.
                                 }
 
-                                if (LoopCounter[LoopCount] < track->LoopCount)
+                                if (Loops[LoopIndex].Count < track->LoopCount)
                                     TakeLoop = true;
                             }
                             else
                             {
-                                if (LoopCounter[LoopCount] < CmdP0)
+                                if (Loops[LoopIndex].Count < CmdP0)
                                     TakeLoop = true;
                             }
 
                             if (_Options._WriteBarMarkers)
                             {
-                                int Length = ::sprintf_s((char*) Temp, _countof(Temp), "Loop %u End (%u/%u)", 1 + LoopCount, LoopCounter[LoopCount], CmdP0);
+                                int Length = ::sprintf_s((char *) Temp, _countof(Temp), "Loop %u End (%u/%u)", 1 + (int) LoopIndex, Loops[LoopIndex].Count, CmdP0);
 
                                 midiStream.WriteMetaEvent(midi::CueMarker, Temp, (uint32_t) Length);
                             }
 
                             if (TakeLoop)
                             {
-                                ParentOffs = LoopParentOffs[LoopCount];
-                                Offset = LoopStartOffs[LoopCount];
+                                ParentOffset = Loops[LoopIndex].ParentOffset;
+                                Offset       = Loops[LoopIndex].StartOffset;
 
-                                LoopCount++;
+                                LoopIndex++;
                             }
                         }
                         else
                         {
                         #ifdef _RCP_VERBOSE
-                            ::printf("Warning: Track %2u, 0x%04X: Loop End without Loop Start.\n", TrackId, CmdOffset);
+                            ::printf("Warning: Track %2u, 0x%04X: Loop End without Loop Begin.\n", TrackId, (int) CmdOffset);
                         #endif
 
                             if (_Options._WriteBarMarkers)
@@ -1143,31 +1133,31 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                     {
                         if (_Options._WriteBarMarkers)
                         {
-                            int Length = ::sprintf_s((char*) Temp, _countof(Temp), "Loop %u Start", LoopCount + 1);
+                            int Length = ::sprintf_s((char*) Temp, _countof(Temp), "Loop %u Begin", (int) LoopIndex + 1);
 
                             midiStream.WriteMetaEvent(midi::CueMarker, Temp, (uint32_t) Length);
                         }
 
-                        if (LoopCount < 8)
+                        if (LoopIndex < 8)
                         {
                             if (Offset == track->LoopStartOffs && DstChannel != 0xFF)
                             {
                             #ifdef _RCP_VERBOSE
-                                ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Loop Begin (RPG Maker)\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                                ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Loop Begin\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
                             #endif
 
                                 midiStream.WriteEvent(midi::ControlChange, 0x6F, 0);
                             }
 
-                            LoopParentOffs[LoopCount] = ParentOffs; // required by YS-2･018.RCP
-                            LoopStartOffs[LoopCount] = Offset;
-                            LoopCounter[LoopCount] = 0;
+                            Loops[LoopIndex].ParentOffset = ParentOffset; // required by YS-2･018.RCP
+                            Loops[LoopIndex].StartOffset = Offset;
+                            Loops[LoopIndex].Count = 0;
 
-                            LoopCount++;
+                            LoopIndex++;
                         }
                     #ifdef _RCP_VERBOSE
                         else
-                            ::printf("Error: Track %u, 0x%04X: Trying to do more than 8 nested loops.\n", TrackId, CmdOffset);
+                            ::printf("Error: Track %u, 0x%04X: Trying to do more than 8 nested loops.\n", TrackId, (int) CmdOffset);
                     #endif
 
                         CmdP0 = 0;
@@ -1179,18 +1169,12 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         // Behaviour of the FC command:
                         // - Already in "repeating bar" mode: return to parent bar (same as FD)
                         // - Else follow chain of FC commands: i.e. "FC -> FC -> FC -> non-FC command" is a valid sequence that is followed to the end.
-                        if (ParentOffs == 0)
+                        if (ParentOffset == 0)
                         {
-                            if (_Version == 2)
-                                Offset -= 4;
-                            else
-                            if (_Version == 3)
-                                Offset -= 6;
+                            Offset -= (_Version == 2) ? 0x04 : 0x06;
 
-                            uint16_t BarID = 0;
-
-                            uint32_t RepeatOffs = 0;
-                            uint32_t CachedOffs = 0;
+                            uint16_t MeasureIndex = 0;
+                            uint32_t RepeatOffset = 0;
 
                             do
                             {
@@ -1200,54 +1184,49 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                                     CmdP1 = data[Offset + 0x02];
                                     CmdP2 = data[Offset + 0x03];
 
-                                    BarID      = (uint16_t) (CmdP0          | ((CmdP1 & 0x03) << 8));
-                                    RepeatOffs = (uint32_t)((CmdP1 & ~0x03) | ( CmdP2         << 8));
+                                    MeasureIndex = (uint16_t) (CmdP0          | ((CmdP1 & 0x03) << 8));
+                                    RepeatOffset = (uint32_t)((CmdP1 & ~0x03) | ( CmdP2         << 8));
 
                                     Offset += 4;
                                 }
                                 else
-                                if (_Version == 3)
                                 {
-                                    CmdP0 = ReadLE16(&data[Offset + 0x02]);
+                                    CmdP0       = ReadLE16(&data[Offset + 0x02]);
                                     CmdDuration = ReadLE16(&data[Offset + 0x04]);
-                                    BarID = CmdP0;
+                                    MeasureIndex = CmdP0;
 
                                     // Why has the first command ID 0x30?
-                                    RepeatOffs = (uint32_t) (0x002E + (CmdDuration - 0x0030) * 0x06); // Calculate offset from command ID
+                                    RepeatOffset = (uint32_t) (0x002E + (CmdDuration - 0x0030) * 0x06); // Calculate offset from command ID
 
                                     Offset += 6;
                                 }
 
                                 if (_Options._WriteBarMarkers)
                                 {
-                                    int Length = ::sprintf_s((char *) Temp, _countof(Temp), "Repeat Bar %u", 1 + BarID);
+                                    int Length = ::sprintf_s((char *) Temp, _countof(Temp), "Repeat Bar %u", 1 + MeasureIndex);
 
                                     midiStream.WriteMetaEvent(midi::CueMarker, Temp, (uint32_t) Length);
                                 }
 
-                                if (BarID >= BarOffsets.size())
+                                if (MeasureIndex >= BarOffsets.size())
                                 {
                                 #ifdef _RCP_VERBOSE
-                                    ::printf("Warning: Track %2u, 0x%04X: Trying to repeat invalid bar %u. Max %u bars.\n", TrackId, CmdOffset, BarID, BarCount + 1);
+                                    ::printf("Warning: Track %2u, 0x%04X: Trying to repeat invalid bar %u. Max %u bars.\n", TrackId, (int) CmdOffset, MeasureIndex, BarCount + 1);
                                 #endif
                                     break;
                                 }
 
-                                CachedOffs = BarOffsets[BarID] - TrackHead;
-
-                            //  if (cachedPos != repeatPos)
-                            //      printf("Warning: Track %2u: Repeat Measure %u: offset mismatch (file: 0x%04X != expected 0x%04X) at 0x%04X!\n", trkID, measureID, repeatPos, cachedPos, prevPos);
-
-                                if (TrackHead + RepeatOffs == CmdOffset)
+                                if (TrackHead + RepeatOffset == CmdOffset)
                                     break; // prevent recursion (just for safety)
 
-                                if (!ParentOffs) // necessary for following FC command chain
-                                    ParentOffs = Offset;
+                                if (!ParentOffset) // necessary for following FC command chain
+                                    ParentOffset = Offset;
 
-                                RepeatingBarID = BarID;
+                                RepeatMeasureIndex = MeasureIndex;
 
                                 // YS3-25.RCP relies on using the actual offset. (*Some* of its bar numbers are off by 1.)
-                                Offset = TrackHead + RepeatOffs;
+                                Offset = TrackHead + RepeatOffset;
+
                                 CmdOffset = Offset;
                             }
                             while (data[Offset] == 0xFC);
@@ -1255,12 +1234,12 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                         else
                         {
                         #ifdef _RCP_VERBOSE
-                            ::printf("Warning: Track %2u, 0x%04X: Leaving recursive repeat bar.\n", TrackId, CmdOffset);
+                            ::printf("Warning: Track %2u, 0x%04X: Leaving recursive repeat bar.\n", TrackId, (int) CmdOffset);
                         #endif
-                            Offset = ParentOffs;
+                            Offset = ParentOffset;
 
-                            ParentOffs = 0x00;
-                            RepeatingBarID = 0xFFFF;
+                            ParentOffset = 0x00;
+                            RepeatMeasureIndex = 0xFFFF;
                         }
 
                         CmdP0 = 0;
@@ -1275,11 +1254,12 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
                             break;
                         }
 
-                        if (ParentOffs)
+                        if (ParentOffset != 0)
                         {
-                            Offset = ParentOffs;
-                            ParentOffs = 0x00;
-                            RepeatingBarID = 0xFFFF;
+                            Offset = ParentOffset;
+                            ParentOffset = 0x00;
+
+                            RepeatMeasureIndex = 0xFFFF;
                         }
 
                         BarOffsets.push_back(Offset);
@@ -1296,16 +1276,16 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         if (_Options._WolfteamLoopMode && (BarOffsets.size() == 2))
                         {
-                            LoopCount = 0;
+                            LoopIndex = 0;
 
                             if (DstChannel != 0xFF)
                                 midiStream.WriteEvent(midi::ControlChange, 0x6F, 0);
 
-                            LoopParentOffs[LoopCount] = ParentOffs;
-                            LoopStartOffs[LoopCount] = Offset;
-                            LoopCounter[LoopCount] = 0;
+                            Loops[LoopIndex].ParentOffset = ParentOffset;
+                            Loops[LoopIndex].StartOffset = Offset;
+                            Loops[LoopIndex].Count = 0;
 
-                            LoopCount++;
+                            LoopIndex++;
                         }
                         break;
                     }
@@ -1317,23 +1297,25 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                         if (_Options._WolfteamLoopMode)
                         {
-                            LoopCount = 0;
-                            LoopCounter[LoopCount]++;
+                            LoopIndex = 0;
+                            Loops[LoopIndex].Count++;
 
-                            if (LoopCounter[LoopCount] < 0x80 && DstChannel != 0xFF)
+                            if ((Loops[LoopIndex].Count < 0x80) && (DstChannel != 0xFF))
                             {
-                                midiStream.WriteEvent(midi::ControlChange, 0x6F, (uint8_t) LoopCounter[LoopCount]);
+                                midiStream.WriteEvent(midi::ControlChange, 0x6F, (uint8_t) Loops[LoopIndex].Count);
 
                             #ifdef _RCP_VERBOSE
-                                ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Loop Begin (RPG Maker)\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
+                                ::printf("    %04X: %02X %04X %02X %02X %04X | %08X: Loop Begin (RPG Maker)\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration, midiStream.GetDuration());
                             #endif
                             }
 
-                            if (LoopCounter[LoopCount] < _Options._RCPLoopCount)
+                            if (Loops[LoopIndex].Count < _Options._RCPLoopCount)
                             {
-                                ParentOffs = LoopParentOffs[LoopCount];
-                                Offset = LoopStartOffs[LoopCount];
-                                LoopCount++;
+                                ParentOffset = Loops[LoopIndex].ParentOffset;
+                                Offset = Loops[LoopIndex].StartOffset;
+
+                                LoopIndex++;
+
                                 EndOfTrack = false;
                             }
                         }
@@ -1342,7 +1324,7 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
                     default:
                     #ifdef _RCP_VERBOSE
-                        ::printf("    %04X: %02X %04X %02X %02X %04X Unknown command\n", CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration);
+                        ::printf("    %04X: %02X %04X %02X %02X %04X Unknown command\n", (int) CmdOffset, CmdType, CmdP0, CmdP1, CmdP2, CmdDuration);
                     #endif
                         break;
                 }
@@ -1374,28 +1356,27 @@ void rcp_file_t::ConvertTrack(const uint8_t * data, uint32_t size, uint32_t * of
 
     midiStream.SetDuration(RunningNotes.Flush(midiStream, false));
 
-    *offset = TrackHead + TrackSize;
+    offset = TrackHead + TrackSize;
 }
 
 /// <summary>
 /// 
 /// </summary>
-uint16_t rcp_file_t::GetMultiCmdDataSize(const uint8_t * data, uint32_t size, uint32_t offset, uint8_t flags) const
+uint16_t rcp_file_t::GetCommandSize(const uint8_t * data, uint32_t size, size_t offset, uint8_t flags) const noexcept
 {
     uint16_t Size = (uint16_t) ((flags & MCMD_INI_INCLUDE) ? 1 : 0);
 
     if (_Version == 2)
     {
-        for (uint32_t inPos = offset; inPos < size && data[inPos] == 0xF7; inPos += 0x04)
+        for (size_t i = offset; (i < size) && (data[i] == 0xF7); i += 4)
             Size++;
 
         if (flags & MCMD_RET_DATASIZE)
             Size *= 2; // 2 data bytes per command
     }
     else
-    if (_Version == 3)
     {
-        for (uint32_t inPos = offset; inPos < size && data[inPos] == 0xF7; inPos += 0x06)
+        for (size_t i = offset; (i < size) && (data[i] == 0xF7); i += 6)
             Size++;
 
         if (flags & MCMD_RET_DATASIZE)
@@ -1408,10 +1389,10 @@ uint16_t rcp_file_t::GetMultiCmdDataSize(const uint8_t * data, uint32_t size, ui
 /// <summary>
 /// 
 /// </summary>
-uint16_t rcp_file_t:: ReadMultiCmdData(const uint8_t * srcData, uint32_t srcSize, uint32_t * srcOffset, uint8_t * dstData, uint32_t dstSize, uint8_t flags) const
+uint16_t rcp_file_t:: GetCommand(const uint8_t * srcData, uint32_t srcSize, size_t & srcOffset, uint8_t * dstData, uint32_t dstSize, uint8_t flags) const noexcept
 {
-    uint32_t SrcOffset = *srcOffset;
-    uint32_t DstOffset = 0;
+    size_t SrcOffset = srcOffset;
+    size_t DstOffset = 0;
 
     if (_Version == 2)
     {
@@ -1434,7 +1415,6 @@ uint16_t rcp_file_t:: ReadMultiCmdData(const uint8_t * srcData, uint32_t srcSize
         }
     }
     else
-    if (_Version == 3)
     {
         if (flags & MCMD_INI_INCLUDE)
         {
@@ -1455,7 +1435,7 @@ uint16_t rcp_file_t:: ReadMultiCmdData(const uint8_t * srcData, uint32_t srcSize
         }
     }
 
-    *srcOffset = SrcOffset;
+    srcOffset = SrcOffset;
 
     return (uint16_t) DstOffset;
 }
