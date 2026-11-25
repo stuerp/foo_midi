@@ -99,7 +99,7 @@ To create the component first build the x64 configuration and next the x86 confi
 
 v3.4.0.0-alpha2, 2026-11-21
 
-- Improved: Implemented special handling of loops in RCP (Recomposer) files.
+- Improved: Implemented special handling of loops in RCP (Recomposer) files. [GitHub Issue 160](https://github.com/stuerp/foo_midi/issues/160)
 
 You can read the full history [here](docs/History.md).
 
