@@ -19,13 +19,13 @@ typedef bytes_t::const_iterator iterator_t;
 struct processor_options_t
 {
     // RCP
-    uint16_t _LoopExpansion = 0;
-    bool _WriteBarMarkers = false;
-    bool _WriteSysExNames = false;
-    bool _ExtendLoops = true;
-    bool _WolfteamLoopMode = false;
-    bool _KeepMutedChannels = false;
-    bool _IncludeControlData = true;
+    uint16_t LoopExpansion = 0;
+    bool WriteBarMarkers = false;
+    bool WriteSysExNames = false;
+    bool ExpandLoops = true;
+    bool WolfteamLoopMode = false;
+    bool KeepMutedChannels = false;
+    bool IncludeControlData = true;
 
     // HMI / HMP
     uint16_t DefaultTempo = 160; // in bpm

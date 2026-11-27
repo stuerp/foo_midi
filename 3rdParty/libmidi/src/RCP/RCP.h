@@ -11,29 +11,23 @@
 namespace rcp
 {
 
-class converter_options_t
+class options_t
 {
 public:
-    uint16_t _RCPLoopCount = 2;
+    uint16_t RCPLoopExpansion = 2;
 
-    bool _WriteBarMarkers = false;
-    bool _WriteSysExNames = false;
-    bool _ExtendLoops = true;
-    bool _WolfteamLoopMode = false;
-    bool _KeepMutedChannels = false;
-    bool _IncludeControlData = true;
+    bool WriteBarMarkers = false;
+    bool WriteSysExNames = false;
+    bool ExpandLoops = true;
+    bool WolfteamLoopMode = false;
+    bool KeepMutedChannels = false;
+    bool IncludeControlData = true;
 };
 
-class rcp_string_t
+class string_t
 {
 public:
-    rcp_string_t() : Data(), Size(), Len()
-    {
-    }
-
-    const char * Data;
-    uint16_t Size;
-    uint16_t Len; // Length after trimming
+    string_t() = default;
 
     uint32_t Assign(const uint8_t * data, uint16_t size)
     {
@@ -59,22 +53,22 @@ public:
 
         return size;
     }
+
+public:
+    const char * Data = nullptr;
+    uint16_t Size = 0;
+    uint16_t Len = 0; // Length after trimming
 };
 
-class rcp_user_sysex_t
+class sysex_t
 {
 public:
-    rcp_user_sysex_t() : Data(), Size()
-    {
-    }
-
-    rcp_string_t Name;
-
-    const uint8_t * Data;
-    uint32_t Size;
+    string_t Name;
+    const uint8_t * Data = nullptr;
+    uint32_t Size = 0;
 };
 
-class rcp_track_t
+class track_t
 {
 public:
     size_t Offset;
@@ -86,123 +80,91 @@ public:
     uint16_t LoopCount;     // Number of loops
 };
 
-class rcp_file_t
+class rcp_t
 {
 public:
-    rcp_file_t(const converter_options_t & options) : _Options(options)
-    {
-        _Version = 0;
-        _TrackCount = 0;
-        _TicksPerQuarter = 0;
-        _Tempo = 0;
-        _BPMNumerator = 0;
-        _BPMDenominator = 0;
-        _KeySignature = 0;
-        _GlobalTransposition = 0;
-        _CommentSize = 0;
-    }
+    rcp_t(const options_t & options) : _Options(options) { }
 
-    rcp_file_t(const rcp_file_t &) = delete;
-    rcp_file_t(const rcp_file_t &&) = delete;
-    rcp_file_t & operator=(const rcp_file_t &) = delete;
-    rcp_file_t & operator=(rcp_file_t &&) = delete;
+    rcp_t(const rcp_t &) = delete;
+    rcp_t(const rcp_t &&) = delete;
 
-    void ParseTrack(const uint8_t * data, uint32_t size, size_t offset, rcp_track_t * track) const;
-    void ConvertTrack(const uint8_t * data, uint32_t size, size_t & offset, rcp_track_t * track, midi_stream_t & midiStream) const;
+    rcp_t & operator=(const rcp_t &) = delete;
+    rcp_t & operator=(rcp_t &&) = delete;
+
+    void ParseTrack(const uint8_t * data, uint32_t size, size_t offset, track_t * track) const;
+    void ConvertTrack(const uint8_t * data, uint32_t size, size_t & offset, track_t * track, midi_stream_t & midiStream) const;
 
 private:
     uint16_t GetCommandSize(const uint8_t * data, uint32_t size, size_t offset, uint8_t flags) const noexcept;
     uint16_t GetCommand(const uint8_t * srcData, uint32_t srcSize, size_t & srcOffset, uint8_t * dstData, uint32_t dstSize, uint8_t flags) const noexcept;
 
 public:
-    uint8_t _Version;
-    uint16_t _TrackCount;
-    uint16_t _TicksPerQuarter;
-    uint16_t _Tempo;
-    uint8_t _BPMNumerator;
-    uint8_t _BPMDenominator;
-    uint8_t _KeySignature;
-    int8_t _GlobalTransposition;
-    rcp_string_t _Title;
-    uint16_t _CommentSize;
-    rcp_string_t _Comments;
-    rcp_string_t _CM6FileName;
-    rcp_string_t _GSD1FileName;
-    rcp_string_t _GSD2FileName;
-    rcp_user_sysex_t _SysEx[8];
+    uint8_t _Version            = 0;
+    uint16_t _TrackCount        = 0;
+    uint16_t _TicksPerQuarter   = 0;
+    uint16_t _Tempo             = 0;
+    uint8_t _BPMNumerator       = 0;
+    uint8_t _BPMDenominator     = 0;
+    uint8_t _KeySignature       = 0;
+    int8_t _GlobalTransposition = 0;
+    uint16_t _CommentSize       = 0;
+
+    string_t _Title;
+    string_t _Comments;
+    string_t _CM6FileName;
+    string_t _GSD1FileName;
+    string_t _GSD2FileName;
+
+    sysex_t _SysEx[8] = { };
 
 private:
-    const converter_options_t & _Options;
+    const options_t & _Options;
 };
 
-class cm6_file_t
+class cm6_t
 {
 public:
-    cm6_file_t()
-    {
-        DeviceType = 0;
-
-        laSystem = nullptr;
-        laChnVol = nullptr;
-        laPatchTemp = nullptr;
-        laRhythmTemp = nullptr;
-        laTimbreTemp = nullptr;
-        laPatchMem = nullptr;
-        laTimbreMem = nullptr;
-
-        pcmPatchTemp = nullptr;
-        pcmPatchMem = nullptr;
-        pcmSystem = nullptr;
-        pcmChnVol = nullptr;
-    }
+    cm6_t() = default;
 
     void Read(const buffer_t & cm6Data);
 
 public:
-    uint8_t DeviceType; // 0 - MT-32, 3 - CM-64
-    rcp_string_t Comment;
+    uint8_t DeviceType = 0; // 0 - MT-32, 3 - CM-64
+    string_t Comment;
 
     // MT-32 (LA) data
-    const uint8_t * laSystem;
-    const uint8_t * laChnVol;
-    const uint8_t * laPatchTemp;
-    const uint8_t * laRhythmTemp;
-    const uint8_t * laTimbreTemp;
-    const uint8_t * laPatchMem;
-    const uint8_t * laTimbreMem;
+    const uint8_t * laSystem        = nullptr;
+    const uint8_t * laChnVol        = nullptr;
+    const uint8_t * laPatchTemp     = nullptr;
+    const uint8_t * laRhythmTemp    = nullptr;
+    const uint8_t * laTimbreTemp    = nullptr;
+    const uint8_t * laPatchMem      = nullptr;
+    const uint8_t * laTimbreMem     = nullptr;
 
     // CM-32P (PCM) data
-    const uint8_t * pcmPatchTemp;
-    const uint8_t * pcmPatchMem;
-    const uint8_t * pcmSystem;
-    const uint8_t * pcmChnVol;
+    const uint8_t * pcmPatchTemp    = nullptr;
+    const uint8_t * pcmPatchMem     = nullptr;
+    const uint8_t * pcmSystem       = nullptr;
+    const uint8_t * pcmChnVol       = nullptr;
 
 private:
     buffer_t _Data;
 };
 
-class gsd_file_t
+class gsd_t
 {
 public:
-    gsd_file_t()
-    {
-        sysParams = nullptr;
-        reverbParams = nullptr;
-        chorusParams = nullptr;
-        partParams = nullptr;
-        drumSetup = nullptr;
-        masterTune = nullptr;
-    }
+    gsd_t() = default;
 
     void Read(const buffer_t & gsdData);
 
 public:
-    const uint8_t * sysParams;
-    const uint8_t * reverbParams;
-    const uint8_t * chorusParams;
-    const uint8_t * partParams;
-    const uint8_t * drumSetup;
-    const uint8_t * masterTune;
+    const uint8_t * sysParams       = nullptr;
+    const uint8_t * reverbParams    = nullptr;
+    const uint8_t * chorusParams    = nullptr;
+    const uint8_t * partParams      = nullptr;
+    const uint8_t * drumSetup       = nullptr;
+    const uint8_t * masterTune      = nullptr;
 
 private:
     buffer_t _Data;
@@ -218,17 +180,17 @@ public:
     void ConvertSequence(const buffer_t & rcpData, buffer_t & midData);
     void ConvertControl(const buffer_t & rcpData, buffer_t & midData, uint8_t fileType, uint8_t outMode);
 
-    void Convert(const cm6_file_t & cm6File, midi_stream_t & midiStream, uint8_t mode);
-    void Convert(const gsd_file_t & gsdFile, midi_stream_t & midiStream, uint8_t mode);
+    void Convert(const cm6_t & cm6File, midi_stream_t & midiStream, uint8_t mode);
+    void Convert(const gsd_t & gsdFile, midi_stream_t & midiStream, uint8_t mode);
 
     static uint8_t GetFileType(const buffer_t & rcpData) noexcept;
 
 private:
-    static uint16_t BalanceTrackTimes(std::vector<rcp_track_t> & rcpTracks, uint32_t minLoopTicks, uint8_t verbose);
+    static uint16_t BalanceTrackTimes(std::vector<track_t> & rcpTracks, uint32_t minLoopTicks, uint8_t verbose);
     static uint8_t HandleDuration(midi_stream_t * fileInfo, uint32_t & duration);
 
 public:
-    converter_options_t _Options;
+    options_t _Options;
 
     std::wstring _FilePath;
 };

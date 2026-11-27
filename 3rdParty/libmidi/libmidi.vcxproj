@@ -75,7 +75,7 @@
     <ClCompile Include="src\MIDIProcessorSMF.cpp" />
     <ClCompile Include="src\MIDIProcessorXMF.cpp" />
     <ClCompile Include="src\MIDIProcessorXMI.cpp" />
-    <ClCompile Include="src\RCP\CM6File.cpp" />
+    <ClCompile Include="src\RCP\CM6.cpp" />
     <ClCompile Include="src\RCP\Converter.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)ConverterRCP.o</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)ConverterRCP.o</ObjectFileName>
@@ -84,7 +84,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)ConverterRCP.o</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">$(IntDir)ConverterRCP.o</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="src\RCP\GSDFile.cpp" />
+    <ClCompile Include="src\RCP\GSD.cpp" />
     <ClCompile Include="src\RCP\MIDIStream.cpp" />
     <ClCompile Include="src\RCP\RCP.cpp" />
     <ClCompile Include="src\RCP\RunningNotes.cpp">

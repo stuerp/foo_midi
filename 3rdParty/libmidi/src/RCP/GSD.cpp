@@ -14,7 +14,7 @@ static void ConvertBytes2Nibbles (const uint8_t * srcData, size_t srcSize, uint8
 /// <summary>
 /// 
 /// </summary>
-void gsd_file_t::Read(const buffer_t & data)
+void gsd_t::Read(const buffer_t & data)
 {
     uint8_t FileType = converter_t::GetFileType(data);
 
@@ -37,7 +37,7 @@ void gsd_file_t::Read(const buffer_t & data)
 /// <summary>
 /// Converts a GSD file to a MIDI stream.
 /// </summary>
-void converter_t::Convert(const gsd_file_t & gsdFile, midi_stream_t & midiStream, uint8_t mode)
+void converter_t::Convert(const gsd_t & gsdFile, midi_stream_t & midiStream, uint8_t mode)
 {
     static const uint8_t Part2Channel[0x10] = { 0x09, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
     static const uint8_t Channel2Part[0x10] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };

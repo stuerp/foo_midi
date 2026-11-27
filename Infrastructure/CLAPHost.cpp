@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.cpp (2025.10.07) P. Stuer - Implements a CLAP host **/
+/** $VER: CLAPHost.cpp (2026.11.27) P. Stuer - Implements a CLAP host **/
 
 #include "pch.h"
 
@@ -9,6 +9,7 @@
 #include "Log.h"
 
 #include "CLAPHost.h"
+#include "CLAPEvents.h"
 #include "CLAPWindow.h"
 #include "CLAPPlayer.h"
 
@@ -21,7 +22,7 @@ static critical_section_t _CriticalSection;
 Host::Host() noexcept
 {
     clap_version  = CLAP_VERSION;
-    host_data     = nullptr;
+    host_data     = this;
 
     name          = STR_COMPONENT_BASENAME;
     vendor        = STR_COMPONENT_COMPANY_NAME;
@@ -97,7 +98,18 @@ Host::Host() noexcept
     {
         Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to schedule a call on the main thread.");
 
-//      auto This = (CLAP::Host *) self;
+        auto This = (CLAP::Host *) self->host_data;
+
+        if (This->_MainThreadCallbackPending.exchange(true))
+            return;
+
+        fb2k::inMainThread([This]()
+        {
+            This->_MainThreadCallbackPending = false;
+
+            if (auto PlugIn = This->_EditorPlugIn)
+                PlugIn->OnMainThread();
+        });
     };
 
     _CurrentDSO = nullptr;
@@ -265,7 +277,10 @@ void Host::DestroyPlugIn()
 
     critical_section_lock_t Lock(_CriticalSection);
 
-    if (_CurrentDSO != nullptr)
+    if (_CurrentDSO == nullptr)
+        return;
+
+    if (_CurrentDSO->_InstanceCount == 0)
         return;
 
     --_CurrentDSO->_InstanceCount;
@@ -274,7 +289,7 @@ void Host::DestroyPlugIn()
 /// <summary>
 /// Opens the editor of the plug-in.
 /// </summary>
-void Host::OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating)
+void Host::OpenEditor(PlugIn * plugIn, HWND hWnd, bool isFloating)
 {
     if (!core_api::is_main_thread())
         throw std::runtime_error("Host::OpenEditor() must be called from the main thread");
@@ -290,12 +305,21 @@ void Host::OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating
     Window::Context p =
     {
         ._Host = this,
-        ._PlugIn = plugIn
+        ._PlugIn = plugIn,
     };
+
+    _EditorPlugIn = plugIn;
 
     Window w;
 
     w.DoModal(hWnd, (LPARAM) &p);
+
+    UnregisterTimers();
+
+    _EditorWindow = NULL;
+    _EditorPlugIn = nullptr;
+    _MainThreadCallbackPending = false;
+    _ParamsFlushPending = false;
 
     CfgCLAPConfig[GetPlugInId()] = plugIn->SaveState();
 
@@ -303,6 +327,137 @@ void Host::OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating
 }
 
 #pragma region Private
+
+/// <summary>
+/// Registers a periodic timer for the plug-in.
+/// </summary>
+bool Host::RegisterTimer(uint32_t period, clap_id * timerId) noexcept
+{
+    if (!core_api::is_main_thread() || (_EditorWindow == NULL) || (timerId == nullptr))
+        return false;
+
+    const clap_id Id = _NextTimerId++;
+    const UINT_PTR Handle = ::SetTimer(_EditorWindow, 0, period, nullptr);
+
+    if (Handle == 0)
+        return false;
+
+    _Timers.push_back({ Id, Handle });
+    *timerId = Id;
+
+    return true;
+}
+
+/// <summary>
+/// Unregisters a periodic timer for the plug-in.
+/// </summary>
+bool Host::UnregisterTimer(clap_id timerId) noexcept
+{
+    if (!core_api::is_main_thread())
+        return false;
+
+    auto it = std::find_if(_Timers.begin(), _Timers.end(), [timerId](const Timer & timer)
+    {
+        return timer.Id == timerId;
+    });
+
+    if (it == _Timers.end())
+        return false;
+
+    if (_EditorWindow != NULL)
+        ::KillTimer(_EditorWindow, it->Handle);
+
+    _Timers.erase(it);
+
+    return true;
+}
+
+/// <summary>
+/// Unregisters all periodic timers for the plug-in.
+/// </summary>
+void Host::UnregisterTimers() noexcept
+{
+    if (_EditorWindow != NULL)
+    {
+        for (const auto & Timer : _Timers)
+            ::KillTimer(_EditorWindow, Timer.Handle);
+    }
+
+    _Timers.clear();
+}
+
+/// <summary>
+/// Handles a periodic timer registered by the plug-in.
+/// </summary>
+void Host::OnTimer(UINT_PTR timerId) noexcept
+{
+    auto it = std::find_if(_Timers.begin(), _Timers.end(), [timerId](const Timer & timer)
+    {
+        return timer.Handle == timerId;
+    });
+
+    if (it == _Timers.end())
+        return;
+
+    if (auto PlugIn = _EditorPlugIn)
+        PlugIn->OnTimer(it->Id);
+}
+
+/// <summary>
+/// Rescans the parameters of the plug-in.
+/// </summary>
+void Host::RescanParameterss(clap_param_rescan_flags flags) noexcept
+{
+    const uint32_t SupportedFlags = CLAP_PARAM_RESCAN_VALUES | CLAP_PARAM_RESCAN_TEXT | CLAP_PARAM_RESCAN_INFO | CLAP_PARAM_RESCAN_ALL;
+
+    if ((flags & ~SupportedFlags) != 0)
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " CLAP plug-in requested a parameter rescan with unsupported flags 0x%08X.", flags & ~SupportedFlags);
+
+    if ((flags & CLAP_PARAM_RESCAN_ALL) != 0)
+    {
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP plug-in requested a rescan of all parameters.");
+
+        _ParamsFlushPending = false;
+
+        return;
+    }
+
+    if ((flags & CLAP_PARAM_RESCAN_INFO) != 0)
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP plug-in requested a rescan of parameter information.");
+
+    if ((flags & CLAP_PARAM_RESCAN_TEXT) != 0)
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP plug-in requested a rescan of parameter text.");
+
+    if ((flags & CLAP_PARAM_RESCAN_VALUES) != 0)
+    {
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP plug-in requested a rescan of parameter values.");
+        _ParamsFlushPending = false;
+    }
+}
+
+/// <summary>
+/// Clears references to a parameter.
+/// </summary>
+void Host::ClearParameters(clap_id paramId, clap_param_clear_flags flags) noexcept
+{
+    const uint32_t SupportedFlags = CLAP_PARAM_CLEAR_ALL | CLAP_PARAM_CLEAR_AUTOMATIONS | CLAP_PARAM_CLEAR_MODULATIONS;
+
+    if ((flags & ~SupportedFlags) != 0)
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " CLAP plug-in requested parameter %u to be cleared with unsupported flags 0x%08X.", paramId, flags & ~SupportedFlags);
+
+    if ((flags & CLAP_PARAM_CLEAR_ALL) != 0)
+    {
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP plug-in requested all references to parameter %u to be cleared.", paramId);
+
+        return;
+    }
+
+    if ((flags & CLAP_PARAM_CLEAR_AUTOMATIONS) != 0)
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP plug-in requested automation references to parameter %u to be cleared.", paramId);
+
+    if ((flags & CLAP_PARAM_CLEAR_MODULATIONS) != 0)
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP plug-in requested modulation references to parameter %u to be cleared.", paramId);
+}
 
 /// <summary>
 /// Gets the CLAP plug-ins.
@@ -436,16 +591,19 @@ bool Host::VerifyNotePorts(const clap_plugin_t * plugIn) noexcept
     }
 
     const bool InputPort = true;
-    const auto InputPortCount = NotePorts->count(plugIn, InputPort);
 
+//  const auto InputPortCount = NotePorts->count(plugIn, InputPort);
+/*
     if (InputPortCount != 1)
     {
         Log.AtError().Write(STR_COMPONENT_BASENAME " does not support CLAP plug-ins with more than 1 MIDI input port.");
 
         return false;
     }
+*/
 /*
     const bool OutputPort = false;
+
     const auto OutputPortCount = NotePorts->count(plugIn, OutputPort);
 
     if (OutputPortCount != 0)
@@ -759,19 +917,64 @@ const clap_host_params_t Host::GetParamsExtension
     // Rescan the full list of parameters according to the flags.
     .rescan = [](const clap_host_t * self, clap_param_rescan_flags flags)
     {
-        // TODO
+        auto This = (CLAP::Host *) self->host_data;
+
+        if (core_api::is_main_thread())
+        {
+            This->RescanParameterss(flags);
+
+            return;
+        }
+
+        #pragma warning(disable: 4820)
+
+        fb2k::inMainThread([This, flags]()
+        {
+            This->RescanParameterss(flags);
+        });
     },
 
     // Clears references to a parameter.
     .clear = [](const clap_host_t * self, clap_id param_id, clap_param_clear_flags flags)
     {
-        // TODO
+        auto This = (CLAP::Host *) self->host_data;
+
+        if (core_api::is_main_thread())
+        {
+            This->ClearParameters(param_id, flags);
+
+            return;
+        }
+
+        fb2k::inMainThread([This, param_id, flags]()
+        {
+            This->ClearParameters(param_id, flags);
+        });
     },
 
     // Request a parameter flush.
     .request_flush = [](const clap_host_t * self)
     {
-        // TODO
+        auto This = (CLAP::Host *) self->host_data;
+
+        if (This->_ParamsFlushPending.exchange(true))
+            return;
+
+        fb2k::inMainThread([This]()
+        {
+            This->_ParamsFlushPending = false;
+
+            if (auto PlugIn = This->_EditorPlugIn)
+            {
+                if (!PlugIn->IsProcessing())
+                {
+                    InputEvents InputEvents;
+                    OutputEvents OutputEvents;
+
+                    PlugIn->FlushParams(&InputEvents, &OutputEvents);
+                }
+            }
+        });
     }
 };
 
@@ -848,13 +1051,17 @@ const clap_host_timer_support_t Host::GetTimerSupportExtension
     // Registers a periodic timer. The host may adjust the period if it is under a certain threshold. 30 Hz should be allowed. Returns true on success.
     .register_timer = [](const clap_host_t * self, uint32_t period_ms, clap_id * timerId) -> bool
     {
-        return false; // TODO
+        auto This = (CLAP::Host *) self->host_data;
+
+        return This->RegisterTimer(period_ms, timerId);
     },
 
     // Returns true on success.
     .unregister_timer = [](const clap_host_t * self, clap_id timerId) -> bool
     {
-        return false; // TODO
+        auto This = (CLAP::Host *) self->host_data;
+
+        return This->UnregisterTimer(timerId);
     }
 };
 

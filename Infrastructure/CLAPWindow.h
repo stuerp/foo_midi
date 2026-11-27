@@ -1,5 +1,5 @@
 
-/** $VER: CLAPWindow.h (2025.08.01) P. Stuer **/
+/** $VER: CLAPWindow.h (2026.11.27) P. Stuer **/
 
 #pragma once
 
@@ -32,21 +32,21 @@ class Host;
 class Window : public CDialogImpl<Window>
 {
 public:
-    Window() noexcept : m_bMsgHandled(false), _Context(), _MinMaxBounds() { }
+    Window() noexcept : m_bMsgHandled(false) { }
 
     Window(const Window &) = delete;
     Window & operator=(const Window &) = delete;
     Window(Window &&) = delete;
     Window & operator=(Window &&) = delete;
 
-    virtual ~Window() { }
+    virtual ~Window() = default;
 
     enum { IDD = IDD_CLAP_WINDOW };
 
     struct Context
     {
         CLAP::Host * _Host;
-        std::shared_ptr<CLAP::PlugIn> _PlugIn;
+        CLAP::PlugIn * _PlugIn;
 
         CRect _Bounds;
     };
@@ -60,6 +60,7 @@ private:
     void OnClose() noexcept;
 
     void OnGetMinMaxInfo(LPMINMAXINFO mmi) const noexcept;
+    void OnTimer(UINT_PTR timerId) noexcept;
 
     /// <summary>
     /// Returns a brush that the system uses to draw the dialog background.
@@ -74,6 +75,7 @@ private:
 
         MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
         MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
+        MSG_WM_TIMER(OnTimer)
 
         MSG_WM_CLOSE(OnClose)
     END_MSG_MAP()
@@ -81,8 +83,8 @@ private:
     #pragma endregion
 
 private:
-    Context _Context;
-    CRect _MinMaxBounds;
+    Context _Context { };
+    CRect _MinMaxBounds { };
 };
 
 }

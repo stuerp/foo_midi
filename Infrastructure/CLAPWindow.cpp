@@ -1,5 +1,5 @@
 
-/** $VER: Window.cpp (2025.08.02) P. Stuer **/
+/** $VER: CLAPWindow.cpp (2026.11.27) P. Stuer **/
 
 #include "pch.h"
 
@@ -38,7 +38,13 @@ BOOL Window::OnInitDialog(CWindow w, LPARAM lParam) noexcept
 
         SetWindowTextW(Text.c_str());
 
-        _Context._PlugIn->ShowGUI(m_hWnd);
+        _Context._Host->SetEditorWindow(m_hWnd);
+
+        if (!_Context._PlugIn->ShowGUI(m_hWnd))
+        {
+            _Context._Host->SetEditorWindow(NULL);
+            return FALSE;
+        }
 
         return TRUE;
     }
@@ -58,6 +64,7 @@ void Window::OnClose() noexcept
     GetWindowRect(&_Context._Bounds);
 
     _Context._PlugIn->HideGUI();
+    _Context._Host->SetEditorWindow(NULL);
 
     EndDialog(0);
 }
@@ -72,6 +79,14 @@ void Window::OnGetMinMaxInfo(LPMINMAXINFO mmi) const noexcept
 
     mmi->ptMaxTrackSize.x = _MinMaxBounds.Width();
     mmi->ptMaxTrackSize.y = _MinMaxBounds.Height();
+}
+
+/// <summary>
+/// Handles the WM_TIMER message.
+/// </summary>
+void Window::OnTimer(UINT_PTR timerId) noexcept
+{
+    _Context._Host->OnTimer(timerId);
 }
 
 /// <summary>

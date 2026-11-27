@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.cpp (2026.08.11) P. Stuer **/
+/** $VER: PreferencesProcessing.cpp (2026.11.25) P. Stuer **/
 
 #include "pch.h"
 
@@ -322,6 +322,7 @@ HBRUSH ProcessingDialog::OnCtlColorDlg(CDCHandle dc, CWindow wnd) const noexcept
     return FALSE;
 #endif
 }
+
 /// <summary>
 /// Handles the notification when a control loses focus.
 /// </summary>
@@ -427,8 +428,12 @@ void ProcessingDialog::OnButtonClick(UINT, int id, CWindow w) noexcept
             break;
 
         case IDC_EXPAND_LOOPS:
+        {
             _ExpandLoops = !_ExpandLoops;
+
+            UpdateDialog();
             break;
+        }
 
         case IDC_WOLFTEAM_LOOPS:
             _WolfteamLoopMode = !_WolfteamLoopMode;
@@ -562,6 +567,8 @@ void ProcessingDialog::UpdateDialog() noexcept
     SendDlgItemMessageW(IDC_KEEP_MUTED_CHANNELS,  BM_SETCHECK, (WPARAM) _KeepMutedChannels);
     SendDlgItemMessageW(IDC_INCLUDE_CONTROL_DATA, BM_SETCHECK, (WPARAM) _IncludeControlData);
 
+    GetDlgItem(IDC_LOOP_EXPANSION).EnableWindow(_ExpandLoops);
+
     ::uSetDlgItemText(m_hWnd, IDC_DEFAULT_TEMPO, pfc::format_int(_DefaultTempo));
 
     UpdateChannelButtons();
@@ -600,14 +607,14 @@ void ProcessingDialog::UpdateChannelButtons() noexcept
 class ProcessingPage : public preferences_page_impl<ProcessingDialog>
 {
 public:
-    ProcessingPage() noexcept { };
+    ProcessingPage() noexcept = default;
 
     ProcessingPage(const ProcessingPage &) = delete;
     ProcessingPage(const ProcessingPage &&) = delete;
     ProcessingPage & operator=(const ProcessingPage &) = delete;
     ProcessingPage & operator=(ProcessingPage &&) = delete;
 
-    virtual ~ProcessingPage() noexcept { };
+    virtual ~ProcessingPage() = default;
 
     const char * get_name() noexcept
     {

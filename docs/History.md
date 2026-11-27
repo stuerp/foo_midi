@@ -1,6 +1,10 @@
 
 # foo_midi History
 
+v3.4.0.0-alpha2, 2026-11-25
+
+- Improved: Implemented special handling of loops in RCP (Recomposer) files. [GitHub Issue 160](https://github.com/stuerp/foo_midi/issues/160)
+
 v3.4.0.0-alpha1, 2026-11-21
 
 - Improved: Rewrote the HMI/HMP converter.

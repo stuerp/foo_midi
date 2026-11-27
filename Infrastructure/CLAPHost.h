@@ -1,5 +1,5 @@
 
-/** $VER: CLAPHost.h (2025.10.07) P. Stuer - Implements a CLAP host **/
+/** $VER: CLAPHost.h (2026.11.27) P. Stuer - Implements a CLAP host **/
 
 #pragma once
 
@@ -60,7 +60,7 @@ public:
     Host & operator=(const Host &) { return *this; }
     Host & operator=(Host &&) = delete;
 
-    virtual ~Host() { };
+    virtual ~Host() = default;
 
     std::vector<PlugInEntry> GetPlugInEntries(const fs::path & directoryPath) noexcept;
 
@@ -70,7 +70,10 @@ public:
     std::shared_ptr<PlugIn> CreatePlugIn();
     void DestroyPlugIn();
 
-    void OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating);
+    void OpenEditor(PlugIn * plugIn, HWND hWnd, bool isFloating);
+
+    void SetEditorWindow(HWND hWnd) noexcept { _EditorWindow = hWnd; }
+    void OnTimer(UINT_PTR timerId) noexcept;
 
     bool IsPlugInLoaded() const noexcept { return (_CurrentDSO != nullptr) && (_CurrentDSO->_hModule != NULL); }
 
@@ -84,6 +87,13 @@ private:
     static bool VerifyNotePorts(const clap_plugin_t * plugIn) noexcept;
     static bool VerifyAudioPorts(const clap_plugin_t * plugIn) noexcept;
     static bool HasGUI(const clap_plugin_t * plugIn, bool isFloatingGUI) noexcept;
+
+    bool RegisterTimer(uint32_t period, clap_id * timerId) noexcept;
+    bool UnregisterTimer(clap_id timerId) noexcept;
+    void UnregisterTimers() noexcept;
+
+    void RescanParameterss(clap_param_rescan_flags flags) noexcept;
+    void ClearParameters(clap_id paramId, clap_param_clear_flags flags) noexcept;
 
 private:
     static const clap_host_audio_ports_t GetAudioPortsExtension;
@@ -106,6 +116,19 @@ private:
 
     std::vector<DSO> _PlugInModules;
     DSO * _CurrentDSO;
+
+    struct Timer
+    {
+        clap_id Id;
+        UINT_PTR Handle;
+    };
+
+    PlugIn * _EditorPlugIn;
+    HWND _EditorWindow = NULL;
+    std::vector<Timer> _Timers;
+    clap_id _NextTimerId = 0;
+    std::atomic_bool _MainThreadCallbackPending = false;
+    std::atomic_bool _ParamsFlushPending = false;
 };
 
 }

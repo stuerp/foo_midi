@@ -1,5 +1,5 @@
 
-/** $VER: PreferencesProcessing.rc (2026.05.09) **/
+/** $VER: PreferencesProcessing.rc (2026.11.25) **/
 
 #include "Resource.h"
 
@@ -37,29 +37,11 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
 
     #pragma region Loop expansion
 
-    // Label
-    #define X_C11    X_C00 + 5
-    #define Y_C11    Y_C00 + 11
-    #define W_C11    52
-    #define H_C11    H_LBL
-
-    // EditBox
-    #define X_C12    X_C11 + W_C11 + IX
-    #define Y_C12    Y_C11
-    #define W_C12    24
-    #define H_C12    H_EBX
-
-    // Label
-    #define X_C13    X_C12 + W_C12 + IX
-    #define Y_C13    Y_C11
-    #define W_C13    18
-    #define H_C13    H_LBL
-
     #pragma endregion
 
     // Checkbox
-    #define X_C20    X_C11
-    #define Y_C20    Y_C12 + H_C12 + IY
+    #define X_C20    X_C00 + 5
+    #define Y_C20    Y_C00 + 11
     #define W_C20    86
     #define H_C20    H_CHB
 
@@ -74,6 +56,19 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define Y_C22    Y_C21 + H_C21 + IY
     #define W_C22    86
     #define H_C22    H_CHB
+
+// EditBox
+    #define X_C12    X_C21 + W_C21 + IX
+    #define Y_C12    Y_C22
+    #define W_C12    24
+    #define H_C12    H_EBX
+
+    // Label
+    #define X_C13    X_C12 + W_C12 + IX
+    #define Y_C13    Y_C12
+    #define W_C13    18
+    #define H_C13    H_LBL
+
 
     // Checkbox
     #define X_C23    X_C22
@@ -93,8 +88,8 @@ language LANG_ENGLISH, SUBLANG_ENGLISH_US
     #define W_C25    86
     #define H_C25    H_CHB
 
-#define W_C00    5 + W_C11 + IX + W_C12 + IX + W_C13 + 5
-#define H_C00   11 + H_C12 + IY + H_C20 + IY + H_C21 + IY + H_C22 + IY + H_C23 + IY + H_C24 + IY + H_C25 + 7
+#define W_C00    5 + W_C20 + IX + W_C12 + IX + W_C13 + 5
+#define H_C00   11 + H_C20 + IY + H_C21 + IY + H_C22 + IY + H_C23 + IY + H_C24 + IY + H_C25 + 7
 
 #pragma endregion
 
@@ -368,14 +363,12 @@ style DS_SHELLFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 1
 {
     groupbox "Recomposer", IDC_STATIC, X_C00, Y_C00, W_C00, H_C00
-        rtext       "Expand loops:",            IDC_STATIC,                 X_C11, Y_C11 + 2, W_C11, H_C11
-        edittext                                IDC_LOOP_EXPANSION,         X_C12, Y_C12,     W_C12, H_C12, ES_AUTOHSCROLL | ES_RIGHT
-        ltext       "times",                    IDC_STATIC,                 X_C13, Y_C13 + 2, W_C13, H_C13
-
         control     "Write bar markers",        IDC_WRITE_BAR_MARKERS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C20, Y_C20, W_C20, H_C20
         control     "Write SysEx names",        IDC_WRITE_SYSEX_NAMES,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C21, Y_C21, W_C21, H_C21
-        control     "Expand loops ",            IDC_EXPAND_LOOPS,           "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C22, Y_C22, W_C22, H_C22
-        control     "Wolfteam loops ",          IDC_WOLFTEAM_LOOPS,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C23, Y_C23, W_C23, H_C23
+        control     "Expand loops",             IDC_EXPAND_LOOPS,           "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C22, Y_C22, W_C22, H_C22
+        edittext                                IDC_LOOP_EXPANSION,         X_C12, Y_C12,     W_C12, H_C12, ES_AUTOHSCROLL | ES_RIGHT
+        ltext       "times",                    IDC_STATIC,                 X_C13, Y_C13 + 2, W_C13, H_C13
+        control     "Wolfteam loops",           IDC_WOLFTEAM_LOOPS,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C23, Y_C23, W_C23, H_C23
         control     "Keep muted channels",      IDC_KEEP_MUTED_CHANNELS,    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C24, Y_C24, W_C24, H_C24
         control     "Include control data",     IDC_INCLUDE_CONTROL_DATA,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_C25, Y_C25, W_C25, H_C25
 

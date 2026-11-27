@@ -49,7 +49,7 @@ The following libraries are included in the code:
   - [BASSWV](https://www.un4seen.com/) 2.4.7.4
   - [BASSOPUS](https://www.un4seen.com/) 2.4.3.3
   - [BASSMPC](https://www.un4seen.com/) 2.4.1.2
-- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.6.2
+- [FluidSynth](https://github.com/FluidSynth/fluidsynth/) 2.6.3
 - [LibADLMIDI](https://github.com/Wohlstand/libADLMIDI) 1.6.2.1, Yamaha YMF262 and CT1747 (OPL3)
 - [LibOPNMIDI](https://github.com/Wohlstand/libOPNMIDI) 1.6.2, Yamaha YM2612 (OPN2), Yamaha YM2608 (OPNA), Yamaha YM3438 (OPN2C) and YMF276 (OPN2L).
 - [LibEMIDI](https://github.com/Wohlstand/libEDMIDI), Yamaha (OPLL), PSG and SCC
@@ -97,9 +97,10 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.4.0.0-alpha2, 2026-11-21
+v3.4.0.0-alpha3, 2026-11-27
 
-- Improved: Implemented special handling of loops in RCP (Recomposer) files. [GitHub Issue 160](https://github.com/stuerp/foo_midi/issues/160)
+- Improved: Changed CLAP host implementation to support [S-MU2000](https://github.com/tarboh/S-MU2000) CLAP plugin.
+- Fixed: Crash when processing malformed JSON files.
 
 You can read the full history [here](docs/History.md).
 

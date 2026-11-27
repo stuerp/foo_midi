@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlugIn.cpp (2025.08.02) P. Stuer - Implements a CLAP plug-in wrapper **/
+/** $VER: CLAPPlugIn.cpp (2026.11.27) P. Stuer - Implements a CLAP plug-in wrapper **/
 
 #include "pch.h"
 
@@ -15,7 +15,7 @@
 namespace CLAP
 {
 
-PlugIn::PlugIn(const std::string & id, Host * host, const clap_plugin_t * plugIn) noexcept : _GUI(), _IsProcessing(false)
+PlugIn::PlugIn(const std::string & id, Host * host, const clap_plugin_t * plugIn) noexcept : _GUI(), _Params(), _TimerSupport(), _IsProcessing(false)
 {
     _Id     = id;
     _Host   = host;
@@ -33,9 +33,18 @@ bool PlugIn::Initialize()
     // [main-thread]
     auto Result = _PlugIn->init(_PlugIn);
 
+    if (!Result)
+        return false;
+
+    if (_PlugIn->get_extension != nullptr)
+    {
+        _Params = (const clap_plugin_params_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_PARAMS);
+        _TimerSupport = (const clap_plugin_timer_support_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_TIMER_SUPPORT);
+    }
+
     LoadState(CfgCLAPConfig[_Id]);
 
-    return Result;
+    return true;
 }
 
 /// <summary>
@@ -54,6 +63,9 @@ void PlugIn::Terminate()
         _GUI->destroy(_PlugIn);
         _GUI = nullptr;
     }
+
+    _TimerSupport = nullptr;
+    _Params = nullptr;
 
     if (_PlugIn)
     {
@@ -139,6 +151,51 @@ bool PlugIn::Process(const clap_process_t & processor) noexcept
 {
     // [audio-thread & active & processing]
     return (_PlugIn->process(_PlugIn, &processor) != CLAP_PROCESS_ERROR);
+}
+
+/// <summary>
+/// Called by the host on the main thread in response to a request from the plug-in.
+/// </summary>
+void PlugIn::OnMainThread() const
+{
+    if (!core_api::is_main_thread())
+        throw std::runtime_error("PlugIn::OnMainThread() must be called from the main thread");
+
+    if ((_PlugIn == nullptr) || (_PlugIn->on_main_thread == nullptr))
+        return;
+
+    // [main-thread]
+    _PlugIn->on_main_thread(_PlugIn);
+}
+
+/// <summary>
+/// Handles a timer registered by the plug-in.
+/// </summary>
+void PlugIn::OnTimer(clap_id timerId) const
+{
+    if (!core_api::is_main_thread())
+        throw std::runtime_error("PlugIn::OnTimer() must be called from the main thread");
+
+    if ((_PlugIn == nullptr) || (_TimerSupport == nullptr) || (_TimerSupport->on_timer == nullptr))
+        return;
+
+    // [main-thread]
+    _TimerSupport->on_timer(_PlugIn, timerId);
+}
+
+/// <summary>
+/// Flushes parameter changes while the plug-in is not processing.
+/// </summary>
+void PlugIn::FlushParams(const clap_input_events_t * inputEvents, const clap_output_events_t * outputEvents) const
+{
+    if (!core_api::is_main_thread())
+        throw std::runtime_error("PlugIn::FlushParams() must be called from the main thread");
+
+    if (_IsProcessing || (_Params == nullptr) || (_Params->flush == nullptr))
+        return;
+
+    // [main-thread & active & !processing]
+    _Params->flush(_PlugIn, inputEvents, outputEvents);
 }
 
 /// <summary>

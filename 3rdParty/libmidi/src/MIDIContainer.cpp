@@ -1422,7 +1422,7 @@ void container_t::SplitByInstrumentChanges(SplitCallback callback)
 
 void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops, bool detectLeapFrogLoops, bool detectRecomposerLoops) noexcept
 {
-    size_t SubSongCount = (_Format == 2) ? _Tracks.size() : 1;
+    const size_t SubSongCount = (_Format == 2) ? _Tracks.size() : 1;
 
     {
         _Loops.resize(SubSongCount);
@@ -1432,11 +1432,13 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
     }
 
     // Recomposer
-    if (detectRecomposerLoops && (FileFormat == FileFormat::RCP))
+    // FIXME: This code stops looking for a loop after the first track that has both a begin and end infinite loop marker.
+    // FIXME: Track 13 of "_BR2_336.RCP" has an end marker that is set 160 ticks later than the other tracks; probable a bug in the data.
+    if (detectRecomposerLoops && (_Format == 1) && (FileFormat == FileFormat::RCP))
     {
         for (size_t i = 0; i < _Tracks.size(); ++i)
         {
-            const size_t SubSongIndex = (_Format != 2) ? 0 : i;
+            _Loops[0].Clear();
 
             const track_t & Track = _Tracks[i];
 
@@ -1445,34 +1447,39 @@ void container_t::DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool 
                 if (Event.Type != event_t::ControlChange)
                     continue;
 
-                // Mark the beginning of a Recomposer loop.
+                // Marks the beginning of a Recomposer loop.
                 if (Event.Data[0] == 111 /* 0x6F */)
                 {
-                    _Loops[SubSongIndex].SetBegin(Event.Time);
+                    _Loops[0].SetBegin(Event.Time);
                     break;
                 }
             }
 
-            if (_Loops[SubSongIndex].HasBegin())
+            if (_Loops[0].HasBegin())
             {
+                // Assume the last marker of the track marks the end of the loop.
                 for (const auto & Event : Track | std::views::reverse)
                 {
                     if (Event.Type != event_t::ControlChange)
                         continue;
 
-                    // Mark the end of a Recomposer loop.
+                    // Marks the end of a Recomposer loop.
                     if (Event.Data[0] == 111 /* 0x6F */)
                     {
-                        _Loops[SubSongIndex].SetEnd(Event.Time);
+                        _Loops[0].SetEnd(Event.Time);
                         break;
                     }
                 }
             }
+
+            // Stop looking if we have a loop begin and end.
+            if ((_Format != 2) && _Loops[0].HasBegin() && _Loops[0].HasEnd())
+                break;
         }
     }
 
     // Project Touhou
-    if (detectTouhouLoops && (_Format == 0))
+    if (detectTouhouLoops && (_Format == 0) && !(_Loops[0].HasBegin() && _Loops[0].HasEnd()))
     {
         bool FoundTouhouLoop = false;
         bool HasLoopError = false;

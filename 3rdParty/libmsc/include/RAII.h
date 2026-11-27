@@ -1,5 +1,5 @@
 
-/** $VER: RAII.h (2026.07.31) P. Stuer - RAII wrappers **/
+/** $VER: RAII.h (2026.11.25) P. Stuer - RAII wrappers **/
 
 #pragma once
 

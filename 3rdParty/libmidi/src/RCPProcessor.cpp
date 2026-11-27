@@ -1,5 +1,5 @@
 
-/** $VER: RCPProcessor.cpp (2026.11.23) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: RCPProcessor.cpp (2026.11.25) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #include "pch.h"
 
@@ -58,16 +58,16 @@ bool processor_t::Process(bytes_t const & data, const std::wstring & filePath, c
 
     RCPConverter.SetFilePath(filePath);
 
-    rcp::converter_options_t & Options = RCPConverter._Options;
+    rcp::options_t & Options = RCPConverter._Options;
 
-    Options._RCPLoopCount       = _Options._LoopExpansion;
+    Options.RCPLoopExpansion   = _Options.LoopExpansion;
 
-    Options._WriteBarMarkers    = _Options._WriteBarMarkers;
-    Options._WriteSysExNames    = _Options._WriteSysExNames;
-    Options._ExtendLoops        = _Options._ExtendLoops;
-    Options._WolfteamLoopMode   = _Options._WolfteamLoopMode;
-    Options._KeepMutedChannels  = _Options._KeepMutedChannels;
-    Options._IncludeControlData = _Options._IncludeControlData;
+    Options.WriteBarMarkers    = _Options.WriteBarMarkers;
+    Options.WriteSysExNames    = _Options.WriteSysExNames;
+    Options.ExpandLoops        = _Options.ExpandLoops;
+    Options.WolfteamLoopMode   = _Options.WolfteamLoopMode;
+    Options.KeepMutedChannels  = _Options.KeepMutedChannels;
+    Options.IncludeControlData = _Options.IncludeControlData;
 
     rcp::buffer_t DstData;
 

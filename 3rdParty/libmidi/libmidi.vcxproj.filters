@@ -16,8 +16,8 @@
     <ClCompile Include="src\MIDIProcessorSMF.cpp" />
     <ClCompile Include="src\MIDIProcessorXMF.cpp" />
     <ClCompile Include="src\MIDIProcessorXMI.cpp" />
-    <ClCompile Include="src\RCP\CM6File.cpp" />
-    <ClCompile Include="src\RCP\GSDFile.cpp" />
+    <ClCompile Include="src\RCP\CM6.cpp" />
+    <ClCompile Include="src\RCP\GSD.cpp" />
     <ClCompile Include="src\RCP\MIDIStream.cpp" />
     <ClCompile Include="src\RCP\RCP.cpp" />
     <ClCompile Include="src\RCP\RunningNotes.cpp" />

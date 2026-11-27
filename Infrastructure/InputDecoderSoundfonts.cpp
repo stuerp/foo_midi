@@ -1,5 +1,5 @@
  
-/** $VER: InputDecoderSoundfonts.cpp (2025.10.04) - Soundfont support functions for the InputDecoder **/
+/** $VER: InputDecoderSoundfonts.cpp (2026.11.27) - Soundfont support functions for the InputDecoder **/
 
 #include "pch.h"
 
@@ -234,13 +234,20 @@ void input_decoder_t::AddSoundFont(const soundfont_t & sf, std::unordered_set<st
 
         const float DefaultGain = (_PlayerType == PlayerType::BASSMIDI) ? _BASSMIDIGain : 0.f;
 
-        for (const auto & iter : LoadSoundfontList(sf.FilePath, DefaultGain))
+        try
         {
-            AddSoundFont(iter, uniqueLists, soundfonts, report);
-            ++Count;
-        }
+            for (const auto & iter : LoadSoundfontList(sf.FilePath, DefaultGain))
+            {
+                AddSoundFont(iter, uniqueLists, soundfonts, report);
+                ++Count;
+            }
 
-        Log.AtInfo().Write(STR_COMPONENT_BASENAME " read %d soundfonts from the list.", Count);
+            Log.AtInfo().Write(STR_COMPONENT_BASENAME " read %d soundfonts from the list.", Count);
+        }
+        catch (std::exception & e)
+        {
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to add soundfont: %s", e.what());
+        }
     }
     else
     if (msc::IsOneOf(sf.FilePath.extension().string().c_str(), { ".sf2", ".sf3", ".sf2pack", ".sfogg", ".dls" }))

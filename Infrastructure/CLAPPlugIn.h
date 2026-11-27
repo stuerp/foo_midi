@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlugIn.h (2025.08.02) P. Stuer - Implements a CLAP plug-in wrapper **/
+/** $VER: CLAPPlugIn.h (2026.11.27) P. Stuer - Implements a CLAP plug-in wrapper **/
 
 #pragma once
 
@@ -24,7 +24,7 @@ public:
     PlugIn & operator=(const PlugIn &) { return *this; }
     PlugIn & operator=(PlugIn &&) = delete;
 
-    virtual ~PlugIn() { };
+    virtual ~PlugIn() = default;
 
     bool Initialize();
     void Terminate();
@@ -39,6 +39,9 @@ public:
     bool IsProcessing() const noexcept { return _IsProcessing; }
 
     bool Process(const clap_process_t & processor) noexcept;
+    void OnMainThread() const;
+    void OnTimer(clap_id timerId) const;
+    void FlushParams(const clap_input_events_t * inputEvents, const clap_output_events_t * outputEvents) const;
 
     bool HasGUI(bool isFloatingGUI);
     bool CreateGUI(bool isFloating);
@@ -60,6 +63,8 @@ private:
     Host * _Host;
     const clap_plugin_t * _PlugIn;
     const clap_plugin_gui_t * _GUI;
+    const clap_plugin_params_t * _Params;
+    const clap_plugin_timer_support_t * _TimerSupport;
 
     clap_audio_port_info _OutPortInfo { };
     clap_voice_info _VoiceInfo { };

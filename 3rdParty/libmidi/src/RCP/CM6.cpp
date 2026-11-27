@@ -1,5 +1,5 @@
 
-/** $VER: CM6File.cpp (2025.03.21) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
+/** $VER: CM6File.cpp (2026.11.25) P. Stuer - Based on Valley Bell's rpc2mid (https://github.com/ValleyBell/MidiConverters). **/
 
 #include "pch.h"
 
@@ -11,7 +11,7 @@ namespace rcp
 /// <summary>
 /// 
 /// </summary>
-void cm6_file_t::Read(const buffer_t & data)
+void cm6_t::Read(const buffer_t & data)
 {
     uint8_t FileType = converter_t::GetFileType(data);
 
@@ -43,7 +43,7 @@ void cm6_file_t::Read(const buffer_t & data)
 /// <summary>
 /// Converts a CM6 file to a MIDI file.
 /// </summary>
-void converter_t::Convert(const cm6_file_t & cm6File, midi_stream_t & midiStream, uint8_t mode)
+void converter_t::Convert(const cm6_t & cm6File, midi_stream_t & midiStream, uint8_t mode)
 {
     if (mode & 0x01)
         midiStream.WriteMetaEvent(midi::MetaDataType::Text, cm6File.Comment.Data, cm6File.Comment.Len);

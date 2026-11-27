@@ -1,5 +1,5 @@
 
-/** $VER: SoundfontList.cpp (2025.10.04) P. Stuer - Soundfont list support routines for wavetable players **/
+/** $VER: SoundfontList.cpp (2026.11.27) P. Stuer - Soundfont list support routines for wavetable players **/
 
 #include "pch.h"
 
@@ -60,11 +60,18 @@ std::vector<soundfont_t> LoadSoundfontList(const fs::path & filePath, float defa
 
     if (JSON != nullptr)
     {
-        auto List = ProcessJSON(JSON, filePath.parent_path(), defaultGain);
+        try
+        {
+            auto List = ProcessJSON(JSON, filePath.parent_path(), defaultGain);
 
-        ::json_builder_free(JSON);
+            ::json_builder_free(JSON);
 
-        return List;
+            return List;
+        }
+        catch (pfc::exception & e)
+        {
+            throw std::exception(msc::FormatText("Failed to process soundfont list \"%s\": %s", filePath.string().c_str(), e.what()).c_str());
+        }
     }
     else
     {

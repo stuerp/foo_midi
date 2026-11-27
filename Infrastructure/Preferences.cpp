@@ -790,7 +790,7 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
 
                 PlugIn->Initialize();
 
-                Host.OpenEditor(PlugIn, m_hWnd, false);
+                Host.OpenEditor(PlugIn.get(), m_hWnd, false);
 
                 PlugIn->Terminate();
 

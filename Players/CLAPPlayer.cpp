@@ -27,7 +27,7 @@ bool CLAPPlayer::Startup()
     if (_IsStarted)
         return true;
 
-	fb2k::inMainThreadSynchronous2([this]
+    fb2k::inMainThreadSynchronous2([this]
     {
         if (_PlugIn != nullptr)
             return;
