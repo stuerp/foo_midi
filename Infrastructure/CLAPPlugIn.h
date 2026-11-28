@@ -4,33 +4,35 @@
 #pragma once
 
 #include <clap/clap.h>
+#include <memory>
 
 namespace CLAP
 {
 class Host;
+class DSO;
+class Window;
 
 #pragma warning(disable: 4820) // 'x' bytes padding added after data member 'y'
 
 /// <summary>
 /// Implements a CLAP plug-in wrapper
 /// </summary>
-class PlugIn
+class PlugIn : public std::enable_shared_from_this<PlugIn>
 {
 public:
-    PlugIn(const std::string & id, Host * host, const clap_plugin_t * plugin) noexcept;
+    PlugIn(Host & host, DSO & module);
+    ~PlugIn();
 
     PlugIn(const PlugIn &) = delete;
     PlugIn(const PlugIn &&) = delete;
     PlugIn & operator=(const PlugIn &) { return *this; }
     PlugIn & operator=(PlugIn &&) = delete;
 
-    virtual ~PlugIn() { };
-
     bool Initialize();
     void Terminate();
 
     bool Activate(double sampleRate);
-    void Deactivate() const;
+    void Deactivate();
 
     bool StartProcessing();
     void StopProcessing();
@@ -40,31 +42,44 @@ public:
 
     bool Process(const clap_process_t & processor) noexcept;
 
-    bool HasGUI(bool isFloatingGUI);
-    bool CreateGUI(bool isFloating);
-    void DestroyGUI();
+    bool OpenEditor(HWND owner, bool live, bool activate);
+    void CloseEditor();
+    void FinishEditor(bool saveState);
+    bool ResizeEditor(uint32_t width, uint32_t height);
+    bool SetEditorVisible(bool visible);
+    void EditorClosed(bool wasDestroyed);
+    void RequestCallback();
 
+    const char * GetName() const noexcept;
+    const fs::path & GetFilePath() const noexcept;
+
+    void SetGUIScale(double scale) const;
     void GetPreferredGUISize(RECT & wr) const;
-    bool ShowGUI(HWND hWnd);
-    void HideGUI();
-
-    const std::vector<uint8_t> SaveState() const noexcept;
-    void LoadState(const std::vector<uint8_t> & state) noexcept;
+    bool AttachGUI(HWND parent);
+    bool ShowGUI();
 
 private:
+    std::vector<uint8_t> SaveState() const;
+    void LoadState(const std::vector<uint8_t> & state);
+    void DestroyGUI();
+
     bool GetAudioPortsInfo() noexcept;
     bool GetVoiceInfo() noexcept;
 
 private:
-    std::string _Id;
-    Host * _Host;
-    const clap_plugin_t * _PlugIn;
-    const clap_plugin_gui_t * _GUI;
+    Host & _Host;
+    DSO & _Module;
+    clap_host_t _Callbacks;
+    const clap_plugin_t * _PlugIn = nullptr;
+    const clap_plugin_gui_t * _GUI = nullptr;
+    std::unique_ptr<Window> _Editor;
 
     clap_audio_port_info _OutPortInfo { };
     clap_voice_info _VoiceInfo { };
 
-    bool _IsProcessing;
+    bool _IsActive = false;
+    bool _IsProcessing = false;
+    bool _GuiWasDestroyed = false;
 };
 
  const uint32_t BlockSize = 2 * 256;

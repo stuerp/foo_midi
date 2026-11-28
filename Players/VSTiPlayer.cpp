@@ -7,8 +7,146 @@
 #include "Resource.h"
 #include "Log.h"
 
+#include <sdk/dsp_manager.h>
+#include <sdk/initquit.h>
+#include <sdk/playback_control.h>
+#include <sdk/timer.h>
+#include <sdk/ui_element.h>
+#include <memory>
+#include <mutex>
+
 namespace VSTi
 {
+
+namespace
+{
+    struct PlaybackPlayer
+    {
+        playable_location_impl Location;
+        fs::path FilePath;
+        HANDLE EditorRequest;
+        HANDLE AutoEditorRequest;
+        DWORD ProcessId = 0;
+        bool EditorRequested = false;
+    };
+
+    constexpr DWORD HostSetupTimeout = 30'000;
+
+    std::mutex PlaybackPlayersMutex;
+    std::vector<PlaybackPlayer> PlaybackPlayers;
+
+    HANDLE EditorDarkModeEvent()
+    {
+        // A manual-reset event lets all out-of-process editors read the current theme.
+        static const std::unique_ptr<void, decltype(&::CloseHandle)> Event(
+            ::CreateEventW(nullptr, TRUE, FALSE, nullptr), ::CloseHandle);
+        return Event.get();
+    }
+
+    class EditorThemeObserver : public ui_config_callback_impl
+    {
+    public:
+        EditorThemeObserver() { ui_colors_changed(); }
+
+        void ui_colors_changed() override
+        {
+            if (const HANDLE Event = EditorDarkModeEvent())
+            {
+                if (ui_config_manager::g_is_dark_mode())
+                    ::SetEvent(Event);
+                else
+                    ::ResetEvent(Event);
+            }
+        }
+    };
+
+    std::unique_ptr<EditorThemeObserver> EditorTheme;
+    FB2K_RUN_ON_INIT_QUIT(
+        [] { EditorTheme = std::make_unique<EditorThemeObserver>(); },
+        [] { EditorTheme.reset(); });
+
+    // Main thread only. The decoder can run ahead of the audible track in large batches.
+    struct LiveEditorScope
+    {
+        service_ptr Scope;
+        fb2k::objRef Timer;
+        ULONGLONG OpenDeadline = 0;
+        DWORD ProcessId = 0;
+        HWND Window = nullptr;
+    };
+
+    LiveEditorScope EditorScope;
+
+    void ClearEditorScope()
+    {
+        EditorScope.Timer.release();
+        EditorScope.Scope.release();
+        EditorScope.ProcessId = 0;
+        EditorScope.Window = nullptr;
+    }
+
+    FB2K_RUN_ON_QUIT(ClearEditorScope);
+
+    bool IsPlaybackEditorWindow(HWND window)
+    {
+        DWORD ProcessId = 0;
+        ::GetWindowThreadProcessId(window, &ProcessId);
+        return ProcessId == EditorScope.ProcessId && ::GetPropW(window, L"foo_midi.playback_editor") != nullptr;
+    }
+
+    BOOL CALLBACK FindPlaybackEditorWindow(HWND window, LPARAM)
+    {
+        if (!IsPlaybackEditorWindow(window))
+            return TRUE;
+
+        EditorScope.Window = window;
+        return FALSE;
+    }
+
+    void UpdateEditorScope()
+    {
+        if (!EditorScope.Window)
+        {
+            ::EnumWindows(FindPlaybackEditorWindow, 0);
+            if (!EditorScope.Window && ::GetTickCount64() < EditorScope.OpenDeadline)
+                return;
+        }
+
+        if (!EditorScope.Window || !IsPlaybackEditorWindow(EditorScope.Window))
+            ClearEditorScope();
+    }
+
+    void RequestEditorScope(DWORD processId)
+    {
+        if (processId == 0 || (processId == EditorScope.ProcessId && EditorScope.Timer.is_valid()))
+            return;
+
+        ClearEditorScope();
+        auto Manager = dsp_config_manager_v3::tryGet();
+        if (Manager.is_empty())
+            return;
+
+        EditorScope.ProcessId = processId;
+        EditorScope.OpenDeadline = ::GetTickCount64() + 2000;
+        EditorScope.Scope = Manager->acquire_live_edit_scope();
+        EditorScope.Timer = fb2k::registerTimer(0.1, UpdateEditorScope);
+    }
+
+    void SetPlaybackHostProcess(HANDLE editorRequest, DWORD processId)
+    {
+        if (!editorRequest)
+            return;
+
+        const std::lock_guard Lock(PlaybackPlayersMutex);
+        const auto It = std::find_if(PlaybackPlayers.begin(), PlaybackPlayers.end(),
+            [editorRequest](const PlaybackPlayer & item) { return item.EditorRequest == editorRequest; });
+        if (It != PlaybackPlayers.end() && It->ProcessId != processId)
+        {
+            It->ProcessId = processId;
+            It->EditorRequested = false;
+        }
+    }
+}
 
 #pragma region Public
 
@@ -34,12 +172,23 @@ Player::Player() noexcept : player_t(), VendorVersion(), Id()
 
 Player::~Player()
 {
+    if (_hEditorRequest)
+    {
+        const std::lock_guard Lock(PlaybackPlayersMutex);
+        std::erase_if(PlaybackPlayers, [this](const PlaybackPlayer & item) { return item.EditorRequest == _hEditorRequest; });
+    }
+
     StopHost();
+
+    if (_hEditorRequest)
+        ::CloseHandle(_hEditorRequest);
+    if (_hAutoEditorRequest)
+        ::CloseHandle(_hAutoEditorRequest);
 
     SafeDelete(_SrcFrames);
 }
 
-bool Player::LoadVST(const fs::path & filePath)
+bool Player::LoadVST(const fs::path & filePath, const playable_location * playbackLocation)
 {
     if (filePath.empty())
         return false;
@@ -50,7 +199,62 @@ bool Player::LoadVST(const fs::path & filePath)
     if (_ProcessorArchitecture == 0)
         return false;
 
+    if (playbackLocation)
+        _hEditorRequest = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+
+    if (_hEditorRequest)
+    {
+        _hAutoEditorRequest = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+
+        const std::lock_guard Lock(PlaybackPlayersMutex);
+        PlaybackPlayers.push_back({ *playbackLocation, _FilePath, _hEditorRequest, _hAutoEditorRequest });
+    }
+
     return StartHost();
+}
+
+bool Player::OpenPlaybackEditor(const fs::path & filePath, bool activate)
+{
+    metadb_handle_ptr Track;
+    if (!playback_control::get()->get_now_playing(Track))
+        return false;
+
+    DWORD ProcessId = 0;
+    bool Requested = false;
+    {
+        const std::lock_guard Lock(PlaybackPlayersMutex);
+        for (auto It = PlaybackPlayers.rbegin(); It != PlaybackPlayers.rend(); ++It)
+        {
+            // The decoder for the next track may already have started.
+            if (It->Location != Track->get_location())
+                continue;
+
+            std::error_code Error;
+            if (!filePath.empty() && It->FilePath != filePath && !fs::equivalent(It->FilePath, filePath, Error))
+                continue;
+
+            if (!activate && It->EditorRequested)
+                break;
+
+            ProcessId = It->ProcessId;
+            if (activate && ProcessId != 0)
+                ::AllowSetForegroundWindow(ProcessId);
+
+            const HANDLE Request = activate ? It->EditorRequest : It->AutoEditorRequest;
+            if (Request && (activate || ProcessId != 0))
+            {
+                Requested = ::SetEvent(Request) != FALSE;
+                if (Requested)
+                    It->EditorRequested = true;
+            }
+            break;
+        }
+    }
+
+    if (Requested)
+        RequestEditorScope(ProcessId);
+
+    return Requested;
 }
 
 void Player::GetChunk(std::vector<uint8_t> & chunk)
@@ -65,12 +269,18 @@ void Player::GetChunk(std::vector<uint8_t> & chunk)
         return;
     }
 
-    const uint32_t Size = ReadCode();
+    uint32_t Size;
+    if (!ReadBytes(&Size, sizeof(Size)))
+    {
+        StopHost();
+        return;
+    }
 
-    chunk.resize(Size);
-
-    if (Size != 0)
-        ReadBytes(chunk.data(), Size);
+    std::vector<uint8_t> Chunk(Size);
+    if (ReadBytes(Chunk.data(), Size))
+        chunk.swap(Chunk);
+    else
+        StopHost();
 }
 
 void Player::SetChunk(const void * data, size_t size)
@@ -87,7 +297,7 @@ void Player::SetChunk(const void * data, size_t size)
     WriteBytes((uint32_t)size);
     WriteBytesOverlapped(data, (uint32_t)size);
 
-    const uint32_t Code = ReadCode();
+    const uint32_t Code = ReadCode(HostSetupTimeout);
 
     if (Code != 0)
         StopHost();
@@ -106,16 +316,17 @@ bool Player::HasEditor()
         return false;
     }
 
-    Code = ReadCode();
-
-    return (Code != 0);
+    return ReadCode() == 1;
 }
 
 void Player::OpenEditor()
 {
+    if (_hProcess)
+        ::AllowSetForegroundWindow(::GetProcessId(_hProcess));
+
     WriteBytes(4);
 
-    const uint32_t Code = ReadCode();
+    const uint32_t Code = ReadCode(INFINITE);
 
     if (Code != 0)
         StopHost();
@@ -127,24 +338,49 @@ void Player::OpenEditor()
 
 bool Player::Startup()
 {
+    if (!_ErrorMessage.empty())
+        return false;
+
     if (_IsStarted)
         return true;
 
-    // The host may have been stopped by a backwards seek operation.
-    if (!IsHostRunning())
-        StartHost();
+    // A backwards seek can intentionally stop the helper before starting again.
+    if (!IsHostRunning() && !StartHost())
+    {
+        FailHost();
+        return false;
+    }
 
-    if (_Chunk.size() != 0)
+    if (!_Chunk.empty())
         SetChunk(_Chunk.data(), _Chunk.size());
 
+    uint32_t EditorPort = 0;
+
+    if (_hEditorRequest)
+    {
+        // Each bridge instance renders one MIDI port. Open the editor on the first port with a sounding note.
+        for (const auto & Message : _Messages)
+        {
+            if (!Message.IsSysEx() && (Message.Data & 0xF0) == midi::StatusCode::NoteOn &&
+                ((Message.Data >> 16) & 0x7F) != 0)
+            {
+                EditorPort = std::min((Message.Data >> 24) & 0x7FU, 2U);
+                break;
+            }
+        }
+    }
+
     WriteBytes(5);
-    WriteBytes(sizeof(uint32_t));
+    WriteBytes(sizeof(_SampleRate) + (EditorPort != 0 ? sizeof(EditorPort) : 0));
     WriteBytes(_SampleRate);
+    if (EditorPort != 0)
+        WriteBytes(EditorPort);
 
-    const uint32_t code = ReadCode();
-
-    if (code != 0)
-        StopHost();
+    if (ReadCode(HostSetupTimeout) != 0)
+    {
+        FailHost();
+        return false;
+    }
 
     _IsStarted = true;
 
@@ -163,25 +399,21 @@ void Player::Render(audio_sample * dstFrames, uint32_t dstCount)
     WriteBytes(9);
     WriteBytes(dstCount);
 
-    const uint32_t Code = ReadCode();
-
-    if (Code != 0)
+    if (ReadCode() != 0 || !_SrcFrames)
     {
-        StopHost();
-
-        ::memset(dstFrames, 0, (size_t) dstCount * _ChannelCount * sizeof(audio_sample));
-
+        FailHost();
         return;
     }
 
-    if (_SrcFrames == nullptr)
-        return;
-
     while (dstCount != 0)
     {
-        uint32_t ToDo = std::min(dstCount, MaxFrames);
+        const uint32_t ToDo = std::min(dstCount, MaxFrames);
 
-        ReadBytes(_SrcFrames, (uint32_t) (ToDo * _ChannelCount * sizeof(float)));
+        if (!ReadBytes(_SrcFrames, ToDo * _ChannelCount * sizeof(float)))
+        {
+            FailHost();
+            return;
+        }
 
         // Convert the format of the rendered output.
         for (size_t i = 0; i < ToDo * _ChannelCount; ++i)
@@ -197,10 +429,8 @@ void Player::SendEvent(uint32_t data)
     WriteBytes(7);
     WriteBytes(data);
 
-    const uint32_t Code = ReadCode();
-
-    if (Code != 0)
-        StopHost();
+    if (ReadCode() != 0)
+        FailHost();
 }
 
 void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
@@ -211,10 +441,8 @@ void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
     WriteBytes(SizeAndPort);
     WriteBytesOverlapped(data, (uint32_t) size);
 
-    const uint32_t code = ReadCode();
-
-    if (code != 0)
-        StopHost();
+    if (ReadCode() != 0)
+        FailHost();
 }
 
 void Player::SendEvent(uint32_t data, uint32_t time)
@@ -223,10 +451,8 @@ void Player::SendEvent(uint32_t data, uint32_t time)
     WriteBytes(data);
     WriteBytes(time);
 
-    const uint32_t code = ReadCode();
-
-    if (code != 0)
-        StopHost();
+    if (ReadCode() != 0)
+        FailHost();
 }
 
 void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time)
@@ -238,10 +464,14 @@ void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, u
     WriteBytes(time);
     WriteBytesOverlapped(data, (uint32_t) size);
 
-    const uint32_t code = ReadCode();
+    if (ReadCode() != 0)
+        FailHost();
+}
 
-    if (code != 0)
-        StopHost();
+void Player::FailHost()
+{
+    _ErrorMessage = "The VSTi helper stopped responding during MIDI playback.";
+    StopHost();
 }
 
 #pragma endregion
@@ -361,11 +591,39 @@ bool Player::StartHost()
             .hStdError   = ::GetStdHandle(STD_ERROR_HANDLE),
         };
 
+        // Pass editor state and requests independently of the decoder's audio commands.
+        const HANDLE EditorEvents[] = { EditorDarkModeEvent(), _hEditorRequest, _hAutoEditorRequest };
+        HANDLE InheritedEditorEvents[_countof(EditorEvents)] = {};
+        bool CanStart = true;
+        for (size_t i = 0; i < _countof(EditorEvents); ++i)
+        {
+            if (!EditorEvents[i])
+                continue;
+
+            auto & Inherited = InheritedEditorEvents[i];
+            if (!::DuplicateHandle(::GetCurrentProcess(), EditorEvents[i], ::GetCurrentProcess(), &Inherited, SYNCHRONIZE, TRUE, 0))
+            {
+                if (i == 0)
+                    continue;
+
+                CanStart = false;
+                break;
+            }
+
+            CommandLine += i == 0 ? " --theme=" : " ";
+            CommandLine += pfc::format_int(reinterpret_cast<uintptr_t>(Inherited), 0, 16).c_str();
+        }
+
         Log.AtDebug().Write(STR_COMPONENT_BASENAME " is using \"%s\" to start host process.", CommandLine.c_str());
 
         PROCESS_INFORMATION pi = { };
 
-        if (!::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+        const bool Started = CanStart && ::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+        for (const auto Inherited : InheritedEditorEvents)
+            if (Inherited)
+                ::CloseHandle(Inherited);
+
+        if (!Started)
         {
             StopHost();
 
@@ -390,8 +648,8 @@ bool Player::StartHost()
     #endif
     }
 
-    // Get the startup information.
-    const uint32_t Code = ReadCode();
+    // The plug-in may load samples or presets before sending its first reply.
+    const uint32_t Code = ReadCode(HostSetupTimeout);
 
     if (Code != 0)
     {
@@ -400,23 +658,27 @@ bool Player::StartHost()
         return false;
     }
 
-    // Get the name, vendor name and product name.
-    uint32_t NameLength        = ReadCode();
-    uint32_t VendorNameLength  = ReadCode();
-    uint32_t ProductNameLength = ReadCode();
+    // Read the complete header before using sizes sent by the helper.
+    uint32_t Header[6];
+    if (!ReadBytes(Header, sizeof(Header)) || Header[0] > 256 || Header[1] > 256 || Header[2] > 256 ||
+        Header[5] == 0 || Header[5] > 2)
+    {
+        StopHost();
+        return false;
+    }
 
-    VendorVersion = ReadCode();
-    Id            = ReadCode();
-    _ChannelCount = ReadCode();
-
-    Name.resize(NameLength);
-    ReadBytes(Name.data(), NameLength);
-
-    VendorName.resize(VendorNameLength);
-    ReadBytes(VendorName.data(), VendorNameLength);
-
-    ProductName.resize(ProductNameLength);
-    ReadBytes(ProductName.data(), ProductNameLength);
+    VendorVersion = Header[3];
+    Id = Header[4];
+    _ChannelCount = Header[5];
+    Name.resize(Header[0]);
+    VendorName.resize(Header[1]);
+    ProductName.resize(Header[2]);
+    if (!ReadBytes(Name.data(), Header[0]) || !ReadBytes(VendorName.data(), Header[1]) ||
+        !ReadBytes(ProductName.data(), Header[2]))
+    {
+        StopHost();
+        return false;
+    }
 
     if (Name.empty())
         Name = (const char *) _FilePath.stem().u8string().c_str();
@@ -424,6 +686,14 @@ bool Player::StartHost()
     // VST always uses float samples.
     SafeDelete(_SrcFrames);
     _SrcFrames = new float[MaxFrames * _ChannelCount];
+
+    if (_hEditorRequest)
+    {
+        if (HasEditor())
+            SetPlaybackHostProcess(_hEditorRequest, ::GetProcessId(_hProcess));
+        else if (!IsHostRunning())
+            return false;
+    }
 
     return true;
 }
@@ -434,6 +704,7 @@ void Player::StopHost() noexcept
         return;
 
     _IsTerminating = true;
+    SetPlaybackHostProcess(_hEditorRequest, 0);
 
     if (_hProcess)
     {
@@ -500,83 +771,54 @@ bool Player::IsHostRunning() noexcept
     return false;
 }
 
-uint32_t Player::ReadCode() noexcept
+uint32_t Player::ReadCode(DWORD timeout) noexcept
 {
     uint32_t Code;
-
-    ReadBytes(&Code, sizeof(Code));
-
-    return Code;
+    return ReadBytes(&Code, sizeof(Code), timeout) ? Code : UINT32_MAX;
 }
 
-void Player::ReadBytes(void * data, uint32_t size) noexcept
+bool Player::ReadBytes(void * data, uint32_t size, DWORD timeout) noexcept
 {
-    if (size == 0)
-        return;
-
-    if (IsHostRunning())
+    auto * Data = static_cast<uint8_t *>(data);
+    while (size != 0)
     {
-        uint8_t * Data = (uint8_t *) data;
-        uint32_t BytesTotal = 0;
+        if (!IsHostRunning())
+            return false;
 
-        while (BytesTotal < size)
-        {
-            const uint32_t BytesRead = ReadBytesOverlapped(Data + BytesTotal, size - BytesTotal);
+        const uint32_t BytesRead = ReadBytesOverlapped(Data, size, timeout);
+        if (BytesRead == 0)
+            return false;
 
-            if (BytesRead == 0)
-            {
-                ::memset(data, 0xFF, size);
-                break;
-            }
-
-            BytesTotal += BytesRead;
-        }
+        Data += BytesRead;
+        size -= BytesRead;
     }
-    else
-        ::memset(data, 0xFF, size);
+
+    return true;
 }
 
-uint32_t Player::ReadBytesOverlapped(void * data, uint32_t size) noexcept
+uint32_t Player::ReadBytesOverlapped(void * data, uint32_t size, DWORD timeout) noexcept
 {
     ::ResetEvent(_hReadEvent);
 
-    ::SetLastError(NO_ERROR);
+    DWORD BytesRead = 0;
+    OVERLAPPED Operation = {};
+    Operation.hEvent = _hReadEvent;
 
-    DWORD BytesRead;
-    OVERLAPPED ol = { };
-
-    ol.hEvent = _hReadEvent;
-
-    if (::ReadFile(_hPipeOutRead, data, size, &BytesRead, &ol))
+    if (::ReadFile(_hPipeOutRead, data, size, &BytesRead, &Operation))
         return BytesRead;
 
     if (::GetLastError() != ERROR_IO_PENDING)
         return 0;
 
-    ::SetLastError(NO_ERROR);
-
-    const HANDLE Handles[1] = { _hReadEvent };
-
-    DWORD State;
-
-#ifdef MESSAGE_PUMP
-    for (;;)
-    {
-        State = ::MsgWaitForMultipleObjects(_countof(handles), handles, FALSE, INFINITE, QS_ALLEVENTS);
-
-        if (state == WAIT_OBJECT_0 + _countof(handles))
-            ProcessPendingMessages();
-        else
-            break;
-    }
-#else
-    State = ::WaitForMultipleObjects(_countof(Handles), Handles, FALSE, INFINITE);
-#endif
-
-    if ((State == WAIT_OBJECT_0) && ::GetOverlappedResult(_hPipeOutRead, &ol, &BytesRead, TRUE))
+    const HANDLE Handles[] = { _hReadEvent, _hProcess };
+    const DWORD State = ::WaitForMultipleObjects(_countof(Handles), Handles, FALSE, timeout);
+    if (State == WAIT_OBJECT_0 && ::GetOverlappedResult(_hPipeOutRead, &Operation, &BytesRead, FALSE))
         return BytesRead;
 
-    ::CancelIoEx(_hPipeOutRead, &ol);
+    ::CancelIoEx(_hPipeOutRead, &Operation);
+    ::GetOverlappedResult(_hPipeOutRead, &Operation, &BytesRead, TRUE);
+    if (State == WAIT_TIMEOUT)
+        ::TerminateProcess(_hProcess, 1);
 
     return 0;
 }

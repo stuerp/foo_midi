@@ -11,10 +11,77 @@
 #include "Exception.h"
 #include "Log.h"
 
+#include <sdk/playback_control.h>
+#include <sdk/threadsLite.h>
+#include <mutex>
+
 #pragma region player_t
 
-CLAPPlayer::CLAPPlayer() noexcept : player_t(), _OutChannels { }, _AudioOut { }, _AudioOuts { }
+namespace
 {
+    struct PlaybackInstance
+    {
+        playable_location_impl Location;
+        fs::path FilePath;
+        uint32_t Index;
+        std::shared_ptr<CLAP::PlugIn> PlugIn;
+        bool EditorRequested = false;
+    };
+
+    std::mutex PlaybackInstancesMutex;
+    std::vector<PlaybackInstance> PlaybackInstances;
+    std::weak_ptr<CLAP::PlugIn> PlaybackEditor;
+}
+
+CLAPPlayer::CLAPPlayer(fs::path filePath, uint32_t index, const playable_location * playbackLocation)
+    : _FilePath(std::move(filePath)), _Index(index), _OutChannels { }, _AudioOut { }, _AudioOuts { }
+{
+    if (playbackLocation)
+        _PlaybackLocation.emplace(*playbackLocation);
+}
+
+bool CLAPPlayer::OpenPlaybackEditor(const fs::path & filePath, uint32_t index, bool activate)
+{
+    metadb_handle_ptr Track;
+    if (!playback_control::get()->get_now_playing(Track))
+        return false;
+
+    std::shared_ptr<CLAP::PlugIn> PlugIn;
+    {
+        const std::lock_guard Lock(PlaybackInstancesMutex);
+        for (auto It = PlaybackInstances.rbegin(); It != PlaybackInstances.rend(); ++It)
+        {
+            if (It->Location != Track->get_location())
+                continue;
+
+            std::error_code Error;
+            if (!filePath.empty() && (It->Index != index ||
+                (It->FilePath != filePath && !fs::equivalent(It->FilePath, filePath, Error))))
+                continue;
+
+            if (!activate && It->EditorRequested)
+                return true;
+
+            It->EditorRequested = true;
+            PlugIn = It->PlugIn;
+            break;
+        }
+    }
+
+    if (!PlugIn)
+        return false;
+
+    if (PlugIn->OpenEditor(core_api::get_main_window(), true, activate))
+        PlaybackEditor = PlugIn;
+    return true;
+}
+
+void CLAPPlayer::ClosePlaybackEditor()
+{
+    if (auto Editor = PlaybackEditor.lock())
+        Editor->CloseEditor();
+
+    PlaybackEditor.reset();
 }
 
 CLAPPlayer::~CLAPPlayer()
@@ -27,20 +94,30 @@ bool CLAPPlayer::Startup()
     if (_IsStarted)
         return true;
 
-	fb2k::inMainThreadSynchronous2([this]
+    _ErrorMessage.clear();
+    bool Ready = false;
+    fb2k::inMainThreadSynchronous2([this, &Ready]
     {
-        if (_PlugIn != nullptr)
-            return;
-
-        _PlugIn = _CLAPHost.CreatePlugIn();
-
-        if (_PlugIn == nullptr)
-            throw pfc::exception("Failed to create CLAP plug-in");
-
-        _PlugIn->Initialize();
-
-        _PlugIn->Activate(_SampleRate);
+        try
+        {
+            if (_CLAPHost.Load(_FilePath, _Index))
+            {
+                _PlugIn = _CLAPHost.CreatePlugIn();
+                Ready = _PlugIn && _PlugIn->Initialize() && _PlugIn->Activate(_SampleRate);
+            }
+        }
+        catch (const std::exception & Error)
+        {
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to start the CLAP plug-in: %s", Error.what());
+        }
     });
+
+    if (!Ready)
+    {
+        Shutdown();
+        _ErrorMessage = "Failed to initialize or activate the CLAP plug-in";
+        return false;
+    }
 
     if (!_PlugIn->Prefers64bitAudio())
     {
@@ -62,49 +139,54 @@ bool CLAPPlayer::Startup()
     _AudioOuts[0] = _AudioOut;
 
     if (!_PlugIn->StartProcessing())
+    {
+        Shutdown();
+        _ErrorMessage = "Failed to start CLAP audio processing";
         return false;
+    }
 
     _IsStarted = true;
 
     Configure(_MIDIFlavor, _FilterEffects);
     Reset();
 
+    if (_PlaybackLocation)
+    {
+        const std::lock_guard Lock(PlaybackInstancesMutex);
+        PlaybackInstances.push_back({ *_PlaybackLocation, _FilePath, _Index, _PlugIn });
+    }
+
     return true;
 }
 
 void CLAPPlayer::Shutdown()
 {
-    if (!_IsStarted)
+    _IsStarted = false;
+
+    if (!_PlugIn)
         return;
 
-    _IsStarted = false; // Prevent re-entry
-
-    if (_PlugIn)
-        _PlugIn->StopProcessing();
-
-    if (_OutChannels[1])
+    if (_PlaybackLocation)
     {
-        delete[] _OutChannels[1];
-        _OutChannels[1] = nullptr;
+        const std::lock_guard Lock(PlaybackInstancesMutex);
+        std::erase_if(PlaybackInstances, [this](const PlaybackInstance & item) { return item.PlugIn == _PlugIn; });
     }
 
-    if (_OutChannels[0])
+    _PlugIn->StopProcessing();
+
+    for (void * & Channel : _OutChannels)
     {
-        delete[] _OutChannels[0];
-        _OutChannels[0] = nullptr;
+        if (_PlugIn->Prefers64bitAudio())
+            delete[] static_cast<double *>(Channel);
+        else
+            delete[] static_cast<float *>(Channel);
+        Channel = nullptr;
     }
 
-    // Add another reference to the plug-in pointer to prevent it from being destroyed prematurely and schedule a cleanup on the main thread.
-    std::shared_ptr<CLAP::PlugIn> PlugIn(_PlugIn);
+    _AudioOut = {};
 
-    auto Cleanup = [PlugIn]
-    {
-        PlugIn->Deactivate();
-
-        PlugIn->Terminate();
-    };
-
-    fb2k::inMainThread(Cleanup);
+    // The audio thread has stopped using this instance. Close its editor and unload it on the UI thread.
+    fb2k::inMainThread([PlugIn = std::move(_PlugIn)] { PlugIn->Terminate(); });
 }
 
 void CLAPPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)

@@ -182,6 +182,7 @@ private:
 
     // File Properties
     pfc::string _FilePath;
+    pfc::string _SourcePath;
 
     t_filestats _FileStats;
     t_filestats2 _FileStats2;

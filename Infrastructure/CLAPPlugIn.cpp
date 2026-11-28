@@ -10,59 +10,57 @@
 
 #include "CLAPHost.h"
 #include "CLAPPlugIn.h"
-#include "CLAPPlayer.h"
+#include "CLAPWindow.h"
+
+#include <sdk/threadsLite.h>
+#include <span>
 
 namespace CLAP
 {
 
-PlugIn::PlugIn(const std::string & id, Host * host, const clap_plugin_t * plugIn) noexcept : _GUI(), _IsProcessing(false)
+PlugIn::PlugIn(Host & host, DSO & module)
+    : _Host(host), _Module(module), _Callbacks(host)
 {
-    _Id     = id;
-    _Host   = host;
-    _PlugIn = plugIn;
+    _Callbacks.host_data = this;
 }
 
-/// <summary>
-/// Initializes the plug-in.
-/// </summary>
+PlugIn::~PlugIn() = default;
+
 bool PlugIn::Initialize()
 {
     if (!core_api::is_main_thread())
-        throw std::runtime_error("PlugIn::init() must be called from the main thread");
+        throw std::runtime_error("PlugIn::Initialize() must be called from the main thread");
 
-    // [main-thread]
-    auto Result = _PlugIn->init(_PlugIn);
+    _PlugIn = _Module._Factory->create_plugin(_Module._Factory, &_Callbacks, _Module._Descriptor->id);
+    if (!_PlugIn || !_PlugIn->init(_PlugIn))
+        return false;
 
-    LoadState(CfgCLAPConfig[_Id]);
-
-    return Result;
+    LoadState(CfgCLAPConfig[_Module._Descriptor->id]);
+    return true;
 }
 
-/// <summary>
-/// Terminates the plug-in.
-/// </summary>
 void PlugIn::Terminate()
 {
     if (!core_api::is_main_thread())
-        throw std::runtime_error("PlugIn::destroy() must be called from the main thread");
+        throw std::runtime_error("PlugIn::Terminate() must be called from the main thread");
 
-    if (_GUI)
-    {
-        HideGUI();
-
-        // [main-thread]
-        _GUI->destroy(_PlugIn);
-        _GUI = nullptr;
-    }
+    CloseEditor();
+    Deactivate();
 
     if (_PlugIn)
-    {
-        // [main-thread & !active]
-        _PlugIn->destroy(_PlugIn);
-        _PlugIn = nullptr;
-    }
+        _PlugIn->destroy(std::exchange(_PlugIn, nullptr));
 
-    _Host->DestroyPlugIn();
+    _Host.DestroyPlugIn(_Module);
+}
+
+const char * PlugIn::GetName() const noexcept
+{
+    return _Module._Descriptor->name;
+}
+
+const fs::path & PlugIn::GetFilePath() const noexcept
+{
+    return _Module._FilePath;
 }
 
 /// <summary>
@@ -77,30 +75,30 @@ bool PlugIn::Activate(double sampleRate)
     if (!_PlugIn->activate(_PlugIn, sampleRate, 1, CLAP::BlockSize))
         return false;
 
-    if (!GetAudioPortsInfo())
-        return false;
+    _IsActive = true;
 
-    if (!GetVoiceInfo()) // Must be called after activate().
-        return false;
+    if (GetVoiceInfo())
+    {
+        Log.AtInfo().Write(STR_COMPONENT_BASENAME " CLAP player has max. %d voices.", _VoiceInfo.voice_capacity);
 
-    Log.AtInfo().Write(STR_COMPONENT_BASENAME " CLAP player has max. %d voices.", _VoiceInfo.voice_capacity);
+        if ((_VoiceInfo.flags & CLAP_VOICE_INFO_SUPPORTS_OVERLAPPING_NOTES) == 0)
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " CLAP player does not support overlapping notes.");
+    }
 
-    if ((_VoiceInfo.flags & CLAP_VOICE_INFO_SUPPORTS_OVERLAPPING_NOTES) == 0)
-        Log.AtWarn().Write(STR_COMPONENT_BASENAME " CLAP player does not support overlapping notes.");
-
-    return true;
+    return GetAudioPortsInfo();
 }
 
 /// <summary>
 /// Deactivates the plug-in.
 /// </summary>
-void PlugIn::Deactivate() const
+void PlugIn::Deactivate()
 {
     if (!core_api::is_main_thread())
         throw std::runtime_error("PlugIn::Dectivate() must be called from the main thread");
 
     // [main-thread & active]
-    _PlugIn->deactivate(_PlugIn);
+    if (std::exchange(_IsActive, false))
+        _PlugIn->deactivate(_PlugIn);
 }
 
 /// <summary>
@@ -141,112 +139,105 @@ bool PlugIn::Process(const clap_process_t & processor) noexcept
     return (_PlugIn->process(_PlugIn, &processor) != CLAP_PROCESS_ERROR);
 }
 
-/// <summary>
-/// Returns true if the specified plug-in has a GUI.
-/// </summary>
-bool PlugIn::HasGUI(bool isFloatingGUI)
+bool PlugIn::OpenEditor(HWND owner, bool live, bool activate)
 {
-    if (!core_api::is_main_thread())
-        throw std::runtime_error("PlugIn::HasGUI() must be called from the main thread");
-
-    if (_PlugIn->get_extension == nullptr)
+    if (!_PlugIn || !_PlugIn->get_extension || !::IsWindow(owner))
         return false;
 
-    // Must be called after clap_plugin_t::init().
-    const auto * GUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
+    if (_GUI)
+    {
+        _Editor->Show(activate);
+        return true;
+    }
 
-    if (GUI == nullptr)
+    const auto * GUI = static_cast<const clap_plugin_gui_t *>(_PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI));
+    if (!GUI || !GUI->is_api_supported(_PlugIn, CLAP_WINDOW_API_WIN32, false) ||
+        !GUI->create(_PlugIn, CLAP_WINDOW_API_WIN32, false))
         return false;
 
-    // [main-thread]
-    if (!GUI->is_api_supported(_PlugIn, CLAP_WINDOW_API_WIN32, isFloatingGUI))
-        return false;
+    _GUI = GUI;
+    _GuiWasDestroyed = false;
 
-    return true;
+    if (!_Editor)
+        _Editor = std::make_unique<Window>(*this);
+
+    const bool Opened = _Editor->Open(owner, live, activate);
+    if (!Opened)
+        DestroyGUI();
+    return Opened;
 }
 
-/// <summary>
-/// Creates the plug-in GUI.
-/// </summary>
-bool PlugIn::CreateGUI(bool isFloating)
+void PlugIn::CloseEditor()
 {
-    if (!core_api::is_main_thread())
-        throw std::runtime_error("PlugIn::CreateGUI() must be called from the main thread");
-
-    if (_PlugIn->get_extension == nullptr)
-        return false;
-
-    // Must be called after clap_plugin_t::init().
-    _GUI = (const clap_plugin_gui_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_GUI);
-
-    if (_GUI == nullptr)
-        return false;
-
-    // [main-thread]
-    if (!_GUI->is_api_supported(_PlugIn, CLAP_WINDOW_API_WIN32, isFloating))
-        return false;
-
-    // [main-thread]
-    if (!_GUI->create(_PlugIn, CLAP_WINDOW_API_WIN32, isFloating))
-        return false;
-
-    return true;
+    if (_Editor)
+        _Editor->Close();
 }
 
-/// <summary>
-/// Destroys the plug-in GUI.
-/// </summary>
+void PlugIn::FinishEditor(bool saveState)
+{
+    DestroyGUI();
+
+    if (saveState)
+        CfgCLAPConfig[_Module._Descriptor->id] = SaveState();
+}
+
 void PlugIn::DestroyGUI()
 {
-    if (!core_api::is_main_thread())
-        throw std::runtime_error("PlugIn::CreateGUI() must be called from the main thread");
+    if (const auto * GUI = std::exchange(_GUI, nullptr))
+    {
+        if (!_GuiWasDestroyed)
+            GUI->hide(_PlugIn);
 
-    if (_GUI == nullptr)
-        return;
-
-    // [main-thread]
-    _GUI->destroy(_PlugIn);
-
-    _GUI = nullptr;
+        GUI->destroy(_PlugIn);
+    }
 }
 
-/// <summary>
-/// Shows the GUI to the host window.
-/// </summary>
-bool PlugIn::ShowGUI(HWND hWnd)
+bool PlugIn::AttachGUI(HWND parent)
 {
-    if (!core_api::is_main_thread())
-        throw std::runtime_error("PlugIn::ShowGUI() must be called from the main thread");
-
-    if (_GUI == nullptr)
-        return false;
-
-    clap_window_t w = { .api = CLAP_WINDOW_API_WIN32, .win32 = hWnd };
-
-    // [main-thread & !floating]
-    if (!_GUI->set_parent(_PlugIn, &w))
-        return false;
-
-    // [main-thread]
-    if (!_GUI->show(_PlugIn))
-        return false;
-
-    return true;
+    clap_window_t Window = { .api = CLAP_WINDOW_API_WIN32, .win32 = parent };
+    return _GUI->set_parent(_PlugIn, &Window);
 }
 
-/// <summary>
-/// Hides the GUI from the host window.
-/// </summary>
-void PlugIn::HideGUI()
+bool PlugIn::ShowGUI()
 {
-    if (!core_api::is_main_thread())
-        throw std::runtime_error("PlugIn::HideGUI() must be called from the main thread");
+    return _GUI->show(_PlugIn);
+}
 
-    if (_GUI == nullptr)
-        return;
+bool PlugIn::ResizeEditor(uint32_t width, uint32_t height)
+{
+    return _Editor && _Editor->Resize(width, height);
+}
 
-    // [main-thread]
-    _GUI->hide(_PlugIn);
+bool PlugIn::SetEditorVisible(bool visible)
+{
+    return _Editor && _Editor->SetVisible(visible);
+}
+
+void PlugIn::EditorClosed(bool wasDestroyed)
+{
+    fb2k::inMainThread([Instance = weak_from_this(), wasDestroyed]
+    {
+        if (auto PlugIn = Instance.lock(); PlugIn && PlugIn->_GUI)
+        {
+            PlugIn->_GuiWasDestroyed = wasDestroyed;
+            PlugIn->CloseEditor();
+        }
+    });
+}
+
+void PlugIn::RequestCallback()
+{
+    fb2k::inMainThread([Instance = weak_from_this()]
+    {
+        if (auto PlugIn = Instance.lock(); PlugIn && PlugIn->_PlugIn && PlugIn->_PlugIn->on_main_thread)
+            PlugIn->_PlugIn->on_main_thread(PlugIn->_PlugIn);
+    });
+}
+
+void PlugIn::SetGUIScale(double scale) const
+{
+    if (_GUI->set_scale)
+        _GUI->set_scale(_PlugIn, scale);
 }
 
 /// <summary>
@@ -314,77 +305,60 @@ bool PlugIn::GetVoiceInfo() noexcept
 /// <summary>
 /// Gets the plugin state.
 /// </summary>
-const std::vector<uint8_t> PlugIn::SaveState() const noexcept
+std::vector<uint8_t> PlugIn::SaveState() const
 {
-    if (_PlugIn == nullptr)
+    if (!_PlugIn || !_PlugIn->get_extension)
         return { };
 
-    if (_PlugIn->get_extension == nullptr)
-        return { };
-
-    auto StateContext = (const clap_plugin_state_context_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_STATE_CONTEXT);
-
-    if (StateContext == nullptr)
-        return { };
-
+    const auto * Context = static_cast<const clap_plugin_state_context_t *>(_PlugIn->get_extension(_PlugIn, CLAP_EXT_STATE_CONTEXT));
+    const auto * Extension = static_cast<const clap_plugin_state_t *>(_PlugIn->get_extension(_PlugIn, CLAP_EXT_STATE));
     std::vector<uint8_t> State;
-
-    clap_ostream_t Stream
+    const clap_ostream_t Stream
     {
         .ctx = &State,
-
-        // Returns the number of bytes written; -1 on write error
-        .write = [](const clap_ostream * stream, const void * data, uint64_t size) -> int64_t
+        .write = [](const clap_ostream_t * stream, const void * data, uint64_t size) -> int64_t
         {
-            auto State = (std::vector<uint8_t> *) stream->ctx;
-
-            State->insert(State->end(), (uint8_t *) data, (uint8_t *) data + size);
-
-            return (int64_t) size;
+            auto & State = *static_cast<std::vector<uint8_t> *>(stream->ctx);
+            const auto * Bytes = static_cast<const uint8_t *>(data);
+            State.insert(State.end(), Bytes, Bytes + size);
+            return static_cast<int64_t>(size);
         }
     };
 
-    StateContext->save(_PlugIn, &Stream, CLAP_STATE_CONTEXT_FOR_DUPLICATE);
+    if (Context)
+        Context->save(_PlugIn, &Stream, CLAP_STATE_CONTEXT_FOR_DUPLICATE);
+    else if (Extension)
+        Extension->save(_PlugIn, &Stream);
 
     return State;
 }
 
-/// <summary>
-/// Sets the plugin state.
-/// </summary>
-void PlugIn::LoadState(const std::vector<uint8_t> & state) noexcept
+void PlugIn::LoadState(const std::vector<uint8_t> & state)
 {
-    if (_PlugIn == nullptr)
+    if (state.empty() || !_PlugIn || !_PlugIn->get_extension)
         return;
 
-    if (_PlugIn->get_extension == nullptr)
-        return;
-
-    auto StateContext = (const clap_plugin_state_context_t *) _PlugIn->get_extension(_PlugIn, CLAP_EXT_STATE_CONTEXT);
-
-    if (StateContext == nullptr)
-        return;
-
-    std::vector<uint8_t> State;
-
-    clap_istream_t Stream
+    const auto * Context = static_cast<const clap_plugin_state_context_t *>(_PlugIn->get_extension(_PlugIn, CLAP_EXT_STATE_CONTEXT));
+    const auto * Extension = static_cast<const clap_plugin_state_t *>(_PlugIn->get_extension(_PlugIn, CLAP_EXT_STATE));
+    std::span<const uint8_t> Bytes(state);
+    const clap_istream_t Stream
     {
-        .ctx = &State,
-
-        // Returns the number of bytes read; 0 indicates end of file and -1 a read error.
-        .read = [](const clap_istream * stream, void * data, uint64_t size) -> int64_t
+        .ctx = &Bytes,
+        .read = [](const clap_istream_t * stream, void * data, uint64_t size) -> int64_t
         {
-            auto State = (std::vector<uint8_t> *) stream->ctx;
-
-            size = std::min((size_t) size, State->size());
-
-            ::memcpy(data, State->data(), (size_t) size);
-
-            return (int64_t) size;
+            auto & Bytes = *static_cast<std::span<const uint8_t> *>(stream->ctx);
+            const auto Count = static_cast<size_t>(std::min<uint64_t>(size, Bytes.size()));
+            if (Count)
+                ::memcpy(data, Bytes.data(), Count);
+            Bytes = Bytes.subspan(Count);
+            return static_cast<int64_t>(Count);
         }
     };
 
-    StateContext->load(_PlugIn, &Stream, CLAP_STATE_CONTEXT_FOR_DUPLICATE);
+    if (Context)
+        Context->load(_PlugIn, &Stream, CLAP_STATE_CONTEXT_FOR_DUPLICATE);
+    else if (Extension)
+        Extension->load(_PlugIn, &Stream);
 }
 
 }

@@ -115,6 +115,8 @@ public:
         COMMAND_HANDLER_EX(IDC_FILTER_INSTRUMENTS,              BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_FILTER_BANKS,                    BN_CLICKED, OnButtonClick)
         COMMAND_HANDLER_EX(IDC_SKIP_TO_FIRST_NOTE,              BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_SHOW_VSTI_DURING_PLAYBACK,       BN_CLICKED, OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_SHOW_CLAP_DURING_PLAYBACK,       BN_CLICKED, OnButtonClick)
     END_MSG_MAP()
 
     enum
@@ -297,8 +299,6 @@ void RootDialog::apply()
             CfgPlugInFilePath = (const char *) PlugIn.FilePath.u8string().c_str();
             CfgCLAPIndex      = (int64_t) PlugIn.Index;
             CfgPlugInName     = PlugIn.Name.c_str();
-
-            _CLAPHost.Load(CfgPlugInFilePath.get().c_str(), (uint32_t) CfgCLAPIndex);
         }
         else
         if (_SelectedPlayer.Type == PlayerType::VSTi)
@@ -360,6 +360,8 @@ void RootDialog::apply()
         CfgUseSCWithGS          = (bool) SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS, BM_GETCHECK);
         CfgUseSCWithSC88orLater = (bool) SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_SC88_OR_LATER, BM_GETCHECK);
         CfgUseVSTiWithXG        = (t_int32) SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK);
+        CfgShowVSTiDuringPlayback = SendDlgItemMessage(IDC_SHOW_VSTI_DURING_PLAYBACK, BM_GETCHECK) == BST_CHECKED;
+        CfgShowCLAPDuringPlayback = SendDlgItemMessage(IDC_SHOW_CLAP_DURING_PLAYBACK, BM_GETCHECK) == BST_CHECKED;
         CfgDetectExtraDrum      = (bool)    SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK);
 
         CfgExcludeEMIDITrackDesignation = (t_int32) SendDlgItemMessage(IDC_EMIDI_EXCLUSION, BM_GETCHECK);
@@ -449,6 +451,8 @@ void RootDialog::reset()
         SendDlgItemMessage(IDC_MIDI_EFFECTS,                BM_SETCHECK, DefaultUseMIDIEffects ? 0 : 1);
         SendDlgItemMessage(IDC_MIDI_USE_MT32EMU_WITH_MT32,  BM_SETCHECK, DefaultUseMT32EmuWithMT32);
         SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,       BM_SETCHECK, DefaultUseVSTiWithXG);
+        SendDlgItemMessage(IDC_SHOW_VSTI_DURING_PLAYBACK,    BM_SETCHECK, BST_UNCHECKED);
+        SendDlgItemMessage(IDC_SHOW_CLAP_DURING_PLAYBACK,    BM_SETCHECK, BST_UNCHECKED);
         SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM,      BM_SETCHECK, DefaultDetectExtraDrum);
         SendDlgItemMessage(IDC_EMIDI_EXCLUSION,             BM_SETCHECK, DefaultEmuDeMIDIExclusion);
         SendDlgItemMessage(IDC_FILTER_INSTRUMENTS,          BM_SETCHECK, DefaultFilterInstruments);
@@ -492,7 +496,8 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
 
     #pragma endregion
 
-    _SelectedPlayer = installed_player_t("", (PlayerType) CfgPlayerType.get(), CfgPlugInFilePath.get().c_str(), (size_t) CfgCLAPIndex, (size_t) -1);
+    _SelectedPlayer = installed_player_t("", (PlayerType) CfgPlayerType.get(),
+        fs::path((const char8_t *) CfgPlugInFilePath.get().c_str()), (size_t) CfgCLAPIndex, (size_t) -1);
 
     #pragma region VSTi Players
 
@@ -674,6 +679,8 @@ BOOL RootDialog::OnInitDialog(CWindow, LPARAM)
         SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_GS,            BM_SETCHECK, (WPARAM) CfgUseSCWithGS);
         SendDlgItemMessage(IDC_MIDI_USE_SC_WITH_SC88_OR_LATER, BM_SETCHECK, (WPARAM) CfgUseSCWithSC88orLater);
         SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG,          BM_SETCHECK, (WPARAM) CfgUseVSTiWithXG);
+        SendDlgItemMessage(IDC_SHOW_VSTI_DURING_PLAYBACK,       BM_SETCHECK, (bool) CfgShowVSTiDuringPlayback ? BST_CHECKED : BST_UNCHECKED);
+        SendDlgItemMessage(IDC_SHOW_CLAP_DURING_PLAYBACK,       BM_SETCHECK, (bool) CfgShowCLAPDuringPlayback ? BST_CHECKED : BST_UNCHECKED);
         SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM,         BM_SETCHECK, (WPARAM) CfgDetectExtraDrum);
 
         const bool HasSecretSauce = !CfgSecretSauceDirectoryPath.get().isEmpty();
@@ -756,6 +763,14 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
     if (SelectedIndex == -1)
         return;
 
+    // Reuse a live editor if playback is already using the selected plug-in.
+    if (_SelectedPlayer.Type == PlayerType::VSTi && VSTi::Player::OpenPlaybackEditor(_SelectedPlayer.FilePath))
+        return;
+
+    if (_SelectedPlayer.Type == PlayerType::CLAP &&
+        CLAPPlayer::OpenPlaybackEditor(_SelectedPlayer.FilePath, (uint32_t) _SelectedPlayer.Index))
+        return;
+
     _IsBusy = true;
     OnChanged();
 
@@ -788,13 +803,9 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
             {
                 std::shared_ptr<CLAP::PlugIn> PlugIn = Host.CreatePlugIn();
 
-                PlugIn->Initialize();
-
-                Host.OpenEditor(PlugIn, m_hWnd, false);
-
+                if (PlugIn->Initialize())
+                    PlugIn->OpenEditor(m_hWnd, false, true);
                 PlugIn->Terminate();
-
-                Host.Unload();
             }
 
             break;
@@ -983,6 +994,12 @@ bool RootDialog::HasChanged()
             return true;
 
         if (SendDlgItemMessage(IDC_MIDI_USE_VSTI_WITH_XG, BM_GETCHECK) != CfgUseVSTiWithXG)
+            return true;
+
+        if ((SendDlgItemMessage(IDC_SHOW_VSTI_DURING_PLAYBACK, BM_GETCHECK) == BST_CHECKED) != (bool) CfgShowVSTiDuringPlayback)
+            return true;
+
+        if ((SendDlgItemMessage(IDC_SHOW_CLAP_DURING_PLAYBACK, BM_GETCHECK) == BST_CHECKED) != (bool) CfgShowCLAPDuringPlayback)
             return true;
 
         if (SendDlgItemMessage(IDC_MIDI_DETECT_EXTRA_DRUM, BM_GETCHECK) != CfgDetectExtraDrum)

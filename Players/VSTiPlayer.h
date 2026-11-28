@@ -18,7 +18,7 @@ public:
     Player() noexcept;
     virtual ~Player();
 
-    bool LoadVST(const fs::path & filePath);
+    bool LoadVST(const fs::path & filePath, const playable_location * playbackLocation = nullptr);
 
     // Configuration
     void GetChunk(std::vector<uint8_t> & data);
@@ -27,6 +27,7 @@ public:
     // Editor
     bool HasEditor();
     void OpenEditor();
+    static bool OpenPlaybackEditor(const fs::path & filePath, bool activate = true);
 
     // Setup
     virtual uint32_t GetAudioChannelCount() const noexcept override { return _ChannelCount; }
@@ -50,10 +51,11 @@ private:
     void StopHost() noexcept;
     bool IsHostRunning() noexcept;
 
-    uint32_t ReadCode() noexcept;
+    uint32_t ReadCode(DWORD timeout = 5000) noexcept;
 
-    void ReadBytes(void * data, uint32_t size) noexcept;
-    uint32_t ReadBytesOverlapped(void * data, uint32_t size) noexcept;
+    bool ReadBytes(void * data, uint32_t size, DWORD timeout = 5000) noexcept;
+    uint32_t ReadBytesOverlapped(void * data, uint32_t size, DWORD timeout) noexcept;
+    void FailHost();
 
     void WriteBytes(uint32_t code) noexcept;
     void WriteBytesOverlapped(const void * data, uint32_t size) noexcept;
@@ -80,6 +82,8 @@ private:
     HANDLE _hPipeOutWrite;
     HANDLE _hProcess;
     HANDLE _hThread;
+    HANDLE _hEditorRequest = nullptr;
+    HANDLE _hAutoEditorRequest = nullptr;
 
     const uint32_t MaxFrames = 4096;
     uint32_t _ChannelCount;

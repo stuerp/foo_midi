@@ -9,15 +9,8 @@
 #include "Log.h"
 
 #include "CLAPHost.h"
-#include "CLAPWindow.h"
-#include "CLAPPlayer.h"
-
-#include "CriticalSection.h"
-
 namespace CLAP
 {
-static critical_section_t _CriticalSection;
-
 Host::Host() noexcept
 {
     clap_version  = CLAP_VERSION;
@@ -95,9 +88,8 @@ Host::Host() noexcept
     // Handles a request to schedule a call to plugin->on_main_thread(plugin) on the main thread.
     request_callback = [](const clap_host * self)
     {
-        Log.AtTrace().Write(STR_COMPONENT_BASENAME " CLAP Host received request to schedule a call on the main thread.");
-
-//      auto This = (CLAP::Host *) self;
+        if (auto * PlugIn = static_cast<CLAP::PlugIn *>(self->host_data))
+            PlugIn->RequestCallback();
     };
 
     _CurrentDSO = nullptr;
@@ -125,181 +117,92 @@ std::vector<PlugInEntry> Host::GetPlugInEntries(const fs::path & directoryPath) 
 }
 
 /// <summary>
-/// Loads a plug-in file and creates the plug-in with the specified index.
+/// Releases the module after its last instance has been destroyed.
 /// </summary>
+DSO::~DSO()
+{
+    if (_Entry)
+        _Entry->deinit();
+
+    if (_hModule)
+        ::FreeLibrary(_hModule);
+}
+
 bool Host::Load(const fs::path & filePath, uint32_t index)
 {
     if (!core_api::is_main_thread())
         throw std::runtime_error("Host::Load() must be called from the main thread");
 
-    if (filePath.empty() || (index == (uint32_t) -1))
+    if (filePath.empty() || index == static_cast<uint32_t>(-1))
         return false;
 
-    critical_section_lock_t Lock(_CriticalSection);
-
-    #pragma warning(disable: 4820)
-
-    auto it = std::find_if(_PlugInModules.begin(), _PlugInModules.end(), [filePath, index](const DSO & m)
+    auto Module = std::find_if(_PlugInModules.begin(), _PlugInModules.end(), [&filePath, index](const DSO & item)
     {
-        return ((m._FilePath == filePath) && (m._Index == index));
+        return item._FilePath == filePath && item._Index == index;
     });
 
-    #pragma warning(default: 4820)
-
-    if (it != _PlugInModules.end())
+    if (Module == _PlugInModules.end())
     {
-        if (it->_Descriptor != nullptr) // Already loaded
-        {
-            _CurrentDSO = &it[0];
+        // Keep the DLL and entry initialized for as long as a decoder or editor uses it.
+        std::list<DSO> Candidate(1);
+        auto & DSO = Candidate.front();
+        DSO._FilePath = filePath;
+        DSO._Index = index;
+        DSO._hModule = ::LoadLibraryW(filePath.c_str());
+        if (!DSO._hModule)
+            return false;
 
-            return true;
-        }
+        const auto * Entry = reinterpret_cast<const clap_plugin_entry_t *>(::GetProcAddress(DSO._hModule, "clap_entry"));
+        if (!Entry || !Entry->init || !Entry->deinit || !Entry->get_factory ||
+            !::clap_version_is_compatible(Entry->clap_version) || !Entry->init(reinterpret_cast<const char *>(filePath.u8string().c_str())))
+            return false;
+
+        DSO._Entry = Entry;
+        DSO._Factory = static_cast<const clap_plugin_factory_t *>(Entry->get_factory(CLAP_PLUGIN_FACTORY_ID));
+        if (!DSO._Factory || !DSO._Factory->get_plugin_descriptor || !DSO._Factory->create_plugin)
+            return false;
+
+        DSO._Descriptor = DSO._Factory->get_plugin_descriptor(DSO._Factory, index);
+        if (!DSO._Descriptor)
+            return false;
+
+        Module = Candidate.begin();
+        _PlugInModules.splice(_PlugInModules.end(), Candidate);
     }
-    else
+
+    if (_CurrentDSO != &*Module)
     {
-        _PlugInModules.push_back(DSO());
-
-        it = _PlugInModules.end() - 1;
+        Unload();
+        _CurrentDSO = &*Module;
     }
-
-    it->_FilePath = filePath;
-    it->_Index    = index;
-
-    it->_hModule = ::LoadLibraryW(msc::UTF8ToWide(filePath.string().c_str()).c_str());
-
-    if (it->_hModule == NULL)
-        return false;
-
-    it->_Entry = (const clap_plugin_entry_t *) ::GetProcAddress(it->_hModule, "clap_entry");
-
-    if (it->_Entry == nullptr)
-        return false;
-
-    if (it->_Entry->init == nullptr)
-        return false;
-
-    if (!it->_Entry->init(filePath.string().c_str()))
-        return false;
-
-    it->_Factory = (const clap_plugin_factory_t *) it->_Entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
-
-    if (it->_Factory == nullptr)
-        return false;
-
-    if (it->_Factory->get_plugin_descriptor == nullptr)
-        return false;
-
-    it->_Descriptor = it->_Factory->get_plugin_descriptor(it->_Factory, index);
-
-    if (it->_Descriptor == nullptr)
-        return false;
-
-    _CurrentDSO = &it[0];
 
     return true;
 }
 
-/// <summary>
-/// Unloads the current DSO.
-/// </summary>
 void Host::Unload()
 {
-    if (!core_api::is_main_thread())
-        throw std::runtime_error("Host::Unload() must be called from the main thread");
-
-    critical_section_lock_t Lock(_CriticalSection);
-
-    if (_CurrentDSO == nullptr)
-        return;
-
-    if (_CurrentDSO->_InstanceCount != 0)
-        return;
-
-    _CurrentDSO->_Descriptor = nullptr;
-    _CurrentDSO->_Factory = nullptr;
-
-    if (_CurrentDSO->_Entry != nullptr)
-    {
-        if (_CurrentDSO->_Entry->deinit)
-            _CurrentDSO->_Entry->deinit();
-
-        _CurrentDSO->_Entry = nullptr;
-    }
-
-    if (_CurrentDSO->_hModule != NULL)
-    {
-        ::FreeLibrary(_CurrentDSO->_hModule);
-        _CurrentDSO->_hModule = NULL;
-    }
+    DSO * Previous = std::exchange(_CurrentDSO, nullptr);
+    if (Previous && !Previous->_InstanceCount)
+        _PlugInModules.remove_if([Previous](const DSO & item) { return &item == Previous; });
 }
 
-/// <summary>
-/// Creates a new instance of the plug-in.
-/// </summary>
 std::shared_ptr<PlugIn> Host::CreatePlugIn()
 {
     if (!core_api::is_main_thread())
         throw std::runtime_error("Host::CreatePlugIn() must be called from the main thread");
 
-    critical_section_lock_t Lock(_CriticalSection);
-
-    if (_CurrentDSO == nullptr)
+    if (!_CurrentDSO)
         return nullptr;
 
-    auto * Instance = _CurrentDSO->_Factory->create_plugin(_CurrentDSO->_Factory, this, _CurrentDSO->_Descriptor->id);
-
+    auto Instance = std::make_shared<PlugIn>(*this, *_CurrentDSO);
     ++_CurrentDSO->_InstanceCount;
-
-    auto p = std::make_shared<PlugIn>(GetPlugInId(), this, Instance);
-
-    return p;
+    return Instance;
 }
 
-/// <summary>
-/// Destroys a plug-in instance.
-/// </summary>
-void Host::DestroyPlugIn()
+void Host::DestroyPlugIn(DSO & module)
 {
-    if (!core_api::is_main_thread())
-        throw std::runtime_error("Host::CreatePlugIn() must be called from the main thread");
-
-    critical_section_lock_t Lock(_CriticalSection);
-
-    if (_CurrentDSO != nullptr)
-        return;
-
-    --_CurrentDSO->_InstanceCount;
-}
-
-/// <summary>
-/// Opens the editor of the plug-in.
-/// </summary>
-void Host::OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating)
-{
-    if (!core_api::is_main_thread())
-        throw std::runtime_error("Host::OpenEditor() must be called from the main thread");
-
-    if (!::IsWindow(hWnd))
-        return;
-
-    if (!plugIn->CreateGUI(isFloating))
-        return;
-
-    plugIn->LoadState(CfgCLAPConfig[GetPlugInId()]);
-
-    Window::Context p =
-    {
-        ._Host = this,
-        ._PlugIn = plugIn
-    };
-
-    Window w;
-
-    w.DoModal(hWnd, (LPARAM) &p);
-
-    CfgCLAPConfig[GetPlugInId()] = plugIn->SaveState();
-
-    plugIn->DestroyGUI();
+    if (--module._InstanceCount == 0 && &module != _CurrentDSO)
+        _PlugInModules.remove_if([&module](const DSO & item) { return &item == &module; });
 }
 
 #pragma region Private
@@ -636,51 +539,26 @@ const clap_host_gui_t Host::GetGUIExtension =
     // If the request then can't be satisfied then the host will call set_size() to revert the operation.
     .request_resize = [](const clap_host_t * self, uint32_t width, uint32_t height) -> bool
     {
-        if (!core_api::is_main_thread())
-            return false;
-/*
-        auto This = (CLAP::Host *) self;
-
-        RECT rc = { 0, 0, (LONG) width, (LONG) height };
-
-        This->_Window.AdjustSize(rc);
-
-        This->_Window.ResizeClient(rc.right - rc.left, rc.bottom - rc.top, TRUE);
-*/
-        return true;
+        auto * PlugIn = static_cast<CLAP::PlugIn *>(self->host_data);
+        return PlugIn && core_api::is_main_thread() && PlugIn->ResizeEditor(width, height);
     },
 
-    // Request the host to show the plugin gui. Return true on success, false otherwise.
     .request_show = [](const clap_host_t * self) -> bool
     {
-        if (!core_api::is_main_thread())
-            return false;
-
-//      auto This = (CLAP::Host *) self;
-
-        // TODO
-
-        return true;
+        auto * PlugIn = static_cast<CLAP::PlugIn *>(self->host_data);
+        return PlugIn && core_api::is_main_thread() && PlugIn->SetEditorVisible(true);
     },
 
-    // Request the host to hide the plugin gui. Return true on success, false otherwise.
     .request_hide = [](const clap_host_t * self) -> bool
     {
-        if (!core_api::is_main_thread())
-            return false;
-
-//      auto This = (CLAP::Host *) self;
-
-        // TODO
-
-        return true;
+        auto * PlugIn = static_cast<CLAP::PlugIn *>(self->host_data);
+        return PlugIn && core_api::is_main_thread() && PlugIn->SetEditorVisible(false);
     },
 
-    // The floating window has been closed, or the connection to the gui has been lost.
-    // If was_destroyed() is true, then the host must call clap_plugin_gui->destroy() to acknowledge the gui destruction.
-    .closed = [](const clap_host_t * self, bool was_destroyed)
+    .closed = [](const clap_host_t * self, bool wasDestroyed)
     {
-        // TODO
+        if (auto * PlugIn = static_cast<CLAP::PlugIn *>(self->host_data))
+            PlugIn->EditorClosed(wasDestroyed);
     }
 };
 

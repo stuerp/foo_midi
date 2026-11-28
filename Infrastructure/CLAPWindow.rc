@@ -9,9 +9,12 @@
 language LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
+IDI_CLAP_NORMAL icon "Infrastructure\\clap-normal.ico"
+IDI_CLAP_DARK   icon "Infrastructure\\clap-dark.ico"
+
 IDD_CLAP_WINDOW dialogex 0, 0, 0, 0
 caption "CLAP Plug-in"
 font 8, "MS Shell Dlg", 400, 0, 0x1
-style DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+style DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
 {
 }

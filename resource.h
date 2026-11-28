@@ -87,6 +87,8 @@
 #define IDC_MIDI_USE_SC_WITH_SC88_OR_LATER  1023
 #define IDC_MIDI_USE_VSTI_WITH_XG           1024
 #define IDC_MIDI_DETECT_EXTRA_DRUM          1025
+#define IDC_SHOW_VSTI_DURING_PLAYBACK       1026
+#define IDC_SHOW_CLAP_DURING_PLAYBACK       1028
 
 /** Dialog: Preferences FM Synthesis **/
 
@@ -260,6 +262,8 @@
 #define IDC_FLUIDSYNTH_DYN_LOADING          2256
 
 #define IDD_CLAP_WINDOW                     2600
+#define IDI_CLAP_NORMAL                     2601
+#define IDI_CLAP_DARK                       2602
 
 #define IDC_SECRETSAUCE_GAIN_LBL            2701
 #define IDC_SECRETSAUCE_GAIN                2702

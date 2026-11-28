@@ -113,6 +113,7 @@ void InputDecoder::open(service_ptr_t<file> file, const char * filePath, t_input
     if (file.is_empty())
         filesystem::g_open(file, filePath, filesystem::open_mode_read, abortHandler);
 
+    _SourcePath = filePath;
     _FilePath = filesystem::g_get_native_path(filePath);
 
     {
@@ -245,6 +246,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
     if (_IsSysExFile)
         throw pfc::exception("You cannot play SysEx files");
 
+    delete _Player;
+    _Player = nullptr;
+
     _DecoderFlags = flags;
     _IsFirstBlock = true;
 
@@ -348,9 +352,10 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (Preset._PlugInFilePath.is_empty())
                 throw pfc::exception("No plug-in specified in preset");
 
-            auto Player = new VSTi::Player;
+            auto Player = std::make_unique<VSTi::Player>();
+            const make_playable_location Location(_SourcePath.c_str(), subSongIndex);
 
-            if (!Player->LoadVST((const char8_t *) Preset._PlugInFilePath.c_str()))
+            if (!Player->LoadVST((const char8_t *) Preset._PlugInFilePath.c_str(), (flags & input_flag_playback) ? &Location : nullptr))
                 throw pfc::exception(pfc::string("Unable to load VSTi plug-in from \"") + Preset._PlugInFilePath + "\"");
 
             if (Preset._VSTiConfig.size() != 0)
@@ -358,28 +363,29 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
             _PlugInName = Player->Name;
 
-            _Player = Player;
+            Player->SetSampleRate(_RequestedSampleRate);
+            Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
 
-            _Player->SetSampleRate(_RequestedSampleRate);
-            _Player->Configure(Preset._MIDIFlavor, !Preset._UseMIDIEffects);
-
-            if (!_Player->Load(_Container, subSongIndex, _LoopType, _DecayTime, _CleanFlags))
+            if (!Player->Load(_Container, subSongIndex, _LoopType, _DecayTime, _CleanFlags))
             {
-                const std::string ErrorMessage = _Player->GetErrorMessage();
+                const std::string ErrorMessage = Player->GetErrorMessage();
 
                 throw pfc::exception(!ErrorMessage.empty() ? ErrorMessage.c_str() : "Failed to load MIDI stream");
             }
 
+            _Player = Player.release();
             break;
         }
 
         // CLAP (CLever Audio Plug-in API)
         case PlayerType::CLAP:
         {
-            if (!_CLAPHost.IsPlugInLoaded())
-                throw pfc::exception("No CLAP plug-in loaded into host");
+            if (Preset._PlugInFilePath.is_empty())
+                throw pfc::exception("No CLAP plug-in specified in preset");
 
-            auto Player = new CLAPPlayer();
+            const make_playable_location Location(_SourcePath.c_str(), subSongIndex);
+            auto Player = new CLAPPlayer(fs::path((const char8_t *) Preset._PlugInFilePath.c_str()), Preset._CLAPPlugInIndex,
+                (flags & input_flag_playback) ? &Location : nullptr);
 
             _Player = Player;
 

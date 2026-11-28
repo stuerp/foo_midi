@@ -11,6 +11,8 @@
 #include "CLAPHost.h"
 #include "CLAPEvents.h"
 
+#include <optional>
+
 #pragma warning(disable: 4266) // A derived class did not override all overloads of a virtual function.
 #pragma warning(disable: 4820) // x bytes padding added after data member
 
@@ -20,7 +22,10 @@
 class CLAPPlayer : public player_t
 {
 public:
-    CLAPPlayer() noexcept;
+    CLAPPlayer(fs::path filePath, uint32_t index, const playable_location * playbackLocation);
+
+    static bool OpenPlaybackEditor(const fs::path & filePath, uint32_t index, bool activate = true);
+    static void ClosePlaybackEditor();
 
     virtual ~CLAPPlayer();
 
@@ -49,6 +54,7 @@ private:
 
     fs::path _FilePath;
     uint32_t _Index;
+    std::optional<playable_location_impl> _PlaybackLocation;
 
     CLAP::InputEvents _InEvents;
     CLAP::OutputEvents _OutEvents;

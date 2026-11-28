@@ -28,8 +28,8 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
 
     // Hack: The setting can be a concatination of multiple paths separated by a pipe (|) character.
     {
-        const std::string Source = directoryPath.string().c_str();
-        const char Separator = '|';
+        const std::wstring_view Source = directoryPath.native();
+        const wchar_t Separator = L'|';
 
         size_t Offset = 0;
 
@@ -37,7 +37,7 @@ std::vector<PlugIn> Host::GetPlugIns(const fs::path & directoryPath) noexcept
         {
             size_t Position = Source.find(Separator, Offset);
 
-            if (Position == std::string_view::npos)
+            if (Position == std::wstring_view::npos)
             {
                 DirectoryPaths.emplace_back(Source.substr(Offset));
                 break;

@@ -6,9 +6,9 @@
 #include "pch.h"
 
 #include <clap/clap.h>
+#include <list>
 
 #include "CLAPPlugIn.h"
-#include "CLAPWindow.h"
 
 namespace CLAP
 {
@@ -34,17 +34,20 @@ struct PlugInEntry
 class DSO
 {
 public:
-    DSO() : _Index(), _hModule(), _Entry(), _Factory(), _Descriptor(), _InstanceCount() { }
+    DSO() = default;
+    DSO(const DSO &) = delete;
+    DSO & operator=(const DSO &) = delete;
+    ~DSO();
 
     fs::path _FilePath;
-    uint32_t _Index;
+    uint32_t _Index = 0;
 
-    HMODULE _hModule;
-    const clap_plugin_entry_t * _Entry;
-    const clap_plugin_factory_t * _Factory;
-    const clap_plugin_descriptor_t * _Descriptor;
+    HMODULE _hModule = nullptr;
+    const clap_plugin_entry_t * _Entry = nullptr;
+    const clap_plugin_factory_t * _Factory = nullptr;
+    const clap_plugin_descriptor_t * _Descriptor = nullptr;
 
-    size_t _InstanceCount; // Number of plug-in instance created from this DSO
+    size_t _InstanceCount = 0; // Number of plug-in instance created from this DSO
 };
 
 /// <summary>
@@ -68,14 +71,7 @@ public:
     void Unload();
 
     std::shared_ptr<PlugIn> CreatePlugIn();
-    void DestroyPlugIn();
-
-    void OpenEditor(std::shared_ptr<PlugIn> plugIn, HWND hWnd, bool isFloating);
-
-    bool IsPlugInLoaded() const noexcept { return (_CurrentDSO != nullptr) && (_CurrentDSO->_hModule != NULL); }
-
-    std::string GetPlugInId() const noexcept { return ((_CurrentDSO != nullptr) && (_CurrentDSO->_Descriptor != nullptr)) ? _CurrentDSO->_Descriptor->id : ""; }
-    std::string GetPlugInName() const noexcept { return ((_CurrentDSO != nullptr) && (_CurrentDSO->_Descriptor != nullptr)) ? _CurrentDSO->_Descriptor->name : ""; }
+    void DestroyPlugIn(DSO & module);
 
 private:
     void GetPlugInDescriptors_(const fs::path & directoryPath) noexcept;
@@ -104,7 +100,7 @@ private:
 
     std::vector<PlugInEntry> _PlugInEntries;
 
-    std::vector<DSO> _PlugInModules;
+    std::list<DSO> _PlugInModules;
     DSO * _CurrentDSO;
 };
 

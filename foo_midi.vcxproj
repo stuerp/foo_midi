@@ -445,6 +445,7 @@
     <ClCompile Include="Infrastructure\InputInfoWriter.cpp" />
     <ClCompile Include="Infrastructure\Log.cpp" />
     <ClCompile Include="Infrastructure\MainMenu.cpp" />
+    <ClCompile Include="Infrastructure\PlaybackWindows.cpp" />
     <ClCompile Include="Infrastructure\Preferences.cpp" />
     <ClCompile Include="Infrastructure\PreferencesFM.cpp" />
     <ClCompile Include="Infrastructure\PreferencesPaths.cpp" />

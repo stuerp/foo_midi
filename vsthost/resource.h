@@ -3,6 +3,8 @@
 // Used by vsthost.rc
 //
 #define IDI_ICON1 101
+#define IDI_VSTI_NORMAL 32513
+#define IDI_VSTI_DARK   32514
 
 // Next default values for new objects
 //

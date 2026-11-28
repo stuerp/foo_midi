@@ -40,6 +40,7 @@
     <ClCompile Include="Players\CLAPPlayer.cpp" />
     <ClCompile Include="Infrastructure\CLAPPlugIn.cpp" />
     <ClCompile Include="Infrastructure\MainMenu.cpp" />
+    <ClCompile Include="Infrastructure\PlaybackWindows.cpp" />
     <ClCompile Include="Infrastructure\FS.cpp" />
     <ClCompile Include="Infrastructure\PreferencesWT.cpp" />
     <ClCompile Include="Infrastructure\CLAPWindow.cpp" />

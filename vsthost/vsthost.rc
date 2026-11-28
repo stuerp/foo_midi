@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "resource.h"
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
@@ -36,4 +37,6 @@ BEGIN
     END
 END
 
-32512   ICON    "vsthost.ico"
+32512           ICON    "vsthost.ico"
+IDI_VSTI_NORMAL ICON    "vst-normal.ico"
+IDI_VSTI_DARK   ICON    "vst-dark.ico"

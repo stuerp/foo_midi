@@ -1,7 +1,16 @@
 #include "stdafx.h"
+#include "resource.h"
 
 #include <pluginterfaces/vst2.x/aeffect.h>
 #include <pluginterfaces/vst2.x/aeffectx.h>
+
+#include <dwmapi.h>
+#include <shlobj.h>
+
+#include <atomic>
+#include <string>
+
+#pragma comment(lib, "dwmapi.lib")
 
 typedef AEffect * (VSTCALLBACK * main_func)(audioMasterCallback audioMaster);
 
@@ -16,7 +25,7 @@ enum
     BUFFER_SIZE = 4096
 };
 
-bool need_idle = false;
+std::atomic<bool> need_idle{false};
 bool idle_started = false;
 
 static char * _DirectoryPath = nullptr;
@@ -24,6 +33,284 @@ static char * _DirectoryPath = nullptr;
 static HANDLE _hFileNUL = nullptr;
 static HANDLE _hPipeIn = nullptr;
 static HANDLE _hPipeOut = nullptr;
+static HANDLE _hEditorRequest = nullptr;
+static HANDLE _hAutoEditorRequest = nullptr;
+static HANDLE _hDarkTheme = nullptr;
+
+struct EditorIdentity
+{
+    const wchar_t * FilePath;
+    std::wstring Title;
+};
+
+struct EditorDialog
+{
+    AEffect * Effect = nullptr;
+    const EditorIdentity * Identity = nullptr;
+    HWND Window = nullptr;
+    HWND ContentWindow = nullptr;
+    LONG ContentWidth = 0;
+    LONG ContentHeight = 0;
+    DPI_HOSTING_BEHAVIOR PreviousHosting = DPI_HOSTING_BEHAVIOR_INVALID;
+    HICON LargeIcon = nullptr;
+    HICON SmallIcon = nullptr;
+    UINT IconDpi = 0;
+    bool IsModal = false;
+    bool DarkRequested = false;
+    bool IsDark = false;
+    bool UseFallbackIcons = false;
+};
+
+static constexpr COLORREF EditorDarkBackground = RGB(32, 32, 32);
+static constexpr int LegacyEditorDpi = 96;
+static constexpr UINT DpiChangedMessage = 0x02E0; // WM_DPICHANGED
+
+struct EditorDpi
+{
+    bool CanHostLegacyContent() const
+    {
+        return SetContext && SetHosting && GetDpi && GetMetric && AdjustRect;
+    }
+
+private:
+    const HMODULE User32 = ::GetModuleHandleW(L"user32.dll");
+
+    template <typename Function>
+    Function Resolve(const char * name) const
+    {
+        return reinterpret_cast<Function>(::GetProcAddress(User32, name));
+    }
+
+public:
+    DPI_AWARENESS_CONTEXT (WINAPI * const SetContext)(DPI_AWARENESS_CONTEXT) =
+        Resolve<decltype(SetContext)>("SetThreadDpiAwarenessContext");
+    DPI_HOSTING_BEHAVIOR (WINAPI * const SetHosting)(DPI_HOSTING_BEHAVIOR) =
+        Resolve<decltype(SetHosting)>("SetThreadDpiHostingBehavior");
+    UINT (WINAPI * const GetDpi)(HWND) = Resolve<decltype(GetDpi)>("GetDpiForWindow");
+    int (WINAPI * const GetMetric)(int, UINT) = Resolve<decltype(GetMetric)>("GetSystemMetricsForDpi");
+    BOOL (WINAPI * const AdjustRect)(LPRECT, DWORD, BOOL, DWORD, UINT) =
+        Resolve<decltype(AdjustRect)>("AdjustWindowRectExForDpi");
+};
+
+static const EditorDpi DpiApi;
+
+class ScopedDpiContext
+{
+public:
+    explicit ScopedDpiContext(DPI_AWARENESS_CONTEXT context)
+        : _Previous(context ? DpiApi.SetContext(context) : nullptr)
+    {
+    }
+
+    ~ScopedDpiContext()
+    {
+        if (_Previous)
+            DpiApi.SetContext(_Previous);
+    }
+
+    bool Changed() const
+    {
+        return _Previous != nullptr;
+    }
+
+private:
+    const DPI_AWARENESS_CONTEXT _Previous;
+};
+
+static void RestoreEditorHosting(EditorDialog & editor)
+{
+    if (editor.PreviousHosting == DPI_HOSTING_BEHAVIOR_INVALID)
+        return;
+
+    DpiApi.SetHosting(editor.PreviousHosting);
+    editor.PreviousHosting = DPI_HOSTING_BEHAVIOR_INVALID;
+}
+
+static DPI_AWARENESS_CONTEXT PluginContext(const EditorDialog & editor)
+{
+    return editor.ContentWindow ? DPI_AWARENESS_CONTEXT_UNAWARE : nullptr;
+}
+
+static void ResizeEditor(const EditorDialog & editor, UINT dpi, const RECT * position = nullptr)
+{
+    if (!editor.ContentWidth || !editor.ContentHeight)
+        return;
+
+    const HWND Window = editor.Window;
+    const DWORD Style = static_cast<DWORD>(::GetWindowLongW(Window, GWL_STYLE));
+    const DWORD ExStyle = static_cast<DWORD>(::GetWindowLongW(Window, GWL_EXSTYLE));
+    RECT Bounds = { 0, 0, editor.ContentWidth, editor.ContentHeight };
+
+    if (editor.ContentWindow)
+    {
+        Bounds.right = ::MulDiv(Bounds.right, dpi, LegacyEditorDpi);
+        Bounds.bottom = ::MulDiv(Bounds.bottom, dpi, LegacyEditorDpi);
+        ::SetWindowPos(editor.ContentWindow, nullptr, 0, 0, Bounds.right, Bounds.bottom, SWP_NOZORDER | SWP_NOACTIVATE);
+        DpiApi.AdjustRect(&Bounds, Style, FALSE, ExStyle, dpi);
+    }
+    else
+    {
+        ::AdjustWindowRectEx(&Bounds, Style, FALSE, ExStyle);
+    }
+
+    const LONG Width = Bounds.right - Bounds.left;
+    const LONG Height = Bounds.bottom - Bounds.top;
+    LONG X = 0;
+    LONG Y = 0;
+    UINT Flags = SWP_NOZORDER | SWP_NOACTIVATE;
+
+    if (position)
+    {
+        X = position->left;
+        Y = position->top;
+    }
+    else
+    {
+        MONITORINFO Monitor = { sizeof(Monitor) };
+        if (::GetMonitorInfoW(::MonitorFromWindow(Window, MONITOR_DEFAULTTONEAREST), &Monitor))
+        {
+            // DS_CENTER positions the empty dialog before we know its final size.
+            const RECT & Work = Monitor.rcWork;
+            X = Work.left + max(0, (Work.right - Work.left - Width) / 2);
+            Y = Work.top + max(0, (Work.bottom - Work.top - Height) / 2);
+        }
+        else
+        {
+            Flags |= SWP_NOMOVE;
+        }
+    }
+
+    ::SetWindowPos(Window, nullptr, X, Y, Width, Height, Flags);
+}
+
+static void SetEditorIcons(HWND window, EditorDialog & editor, HICON largeIcon, HICON smallIcon)
+{
+    ::SendMessageW(window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(largeIcon ? largeIcon : smallIcon));
+    ::SendMessageW(window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon ? smallIcon : largeIcon));
+
+    if (editor.LargeIcon)
+        ::DestroyIcon(editor.LargeIcon);
+    if (editor.SmallIcon)
+        ::DestroyIcon(editor.SmallIcon);
+
+    editor.LargeIcon = largeIcon;
+    editor.SmallIcon = smallIcon;
+}
+
+static void UpdateEditorIcons(HWND window, EditorDialog & editor, bool themeChanged = false)
+{
+    const UINT Dpi = DpiApi.GetDpi ? DpiApi.GetDpi(window) : 0;
+    const bool KeepIcons = Dpi == editor.IconDpi && (editor.LargeIcon || editor.SmallIcon);
+    if (KeepIcons && (!themeChanged || !editor.UseFallbackIcons))
+        return;
+
+    const auto Metric = [Dpi](int metric)
+    {
+        return Dpi && DpiApi.GetMetric ? DpiApi.GetMetric(metric, Dpi) : ::GetSystemMetrics(metric);
+    };
+    const int LargeWidth = Metric(SM_CXICON);
+    const int SmallWidth = Metric(SM_CXSMICON);
+    HICON LargeIcon = nullptr;
+    HICON SmallIcon = nullptr;
+
+    if (!editor.UseFallbackIcons)
+    {
+        ::SHDefExtractIconW(editor.Identity->FilePath, 0, 0, &LargeIcon, &SmallIcon,
+            MAKELONG(LargeWidth, SmallWidth));
+        editor.UseFallbackIcons = !LargeIcon && !SmallIcon;
+    }
+
+    if (editor.UseFallbackIcons)
+    {
+        const auto Resource = MAKEINTRESOURCEW(editor.IsDark ? IDI_VSTI_DARK : IDI_VSTI_NORMAL);
+        const HINSTANCE Instance = ::GetModuleHandleW(nullptr);
+        LargeIcon = static_cast<HICON>(::LoadImageW(Instance, Resource, IMAGE_ICON,
+            LargeWidth, Metric(SM_CYICON), LR_DEFAULTCOLOR));
+        SmallIcon = static_cast<HICON>(::LoadImageW(Instance, Resource, IMAGE_ICON,
+            SmallWidth, Metric(SM_CYSMICON), LR_DEFAULTCOLOR));
+    }
+
+    if (LargeIcon || SmallIcon)
+    {
+        editor.IconDpi = Dpi;
+        SetEditorIcons(window, editor, LargeIcon, SmallIcon);
+    }
+}
+
+static void UpdateEditorTheme(HWND window, EditorDialog & editor, bool systemChanged = false)
+{
+    const bool Requested = _hDarkTheme && ::WaitForSingleObject(_hDarkTheme, 0) == WAIT_OBJECT_0;
+    if (!systemChanged && Requested == editor.DarkRequested)
+        return;
+
+    editor.DarkRequested = Requested;
+
+    HIGHCONTRASTW Contrast = { sizeof(Contrast) };
+    const bool HighContrast = Requested && ::SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(Contrast), &Contrast, 0) &&
+                              (Contrast.dwFlags & HCF_HIGHCONTRASTON);
+    const BOOL Dark = Requested && !HighContrast;
+    if (editor.IsDark == (Dark != FALSE))
+        return;
+
+    editor.IsDark = Dark != FALSE;
+    if (FAILED(::DwmSetWindowAttribute(window, DWMWA_USE_IMMERSIVE_DARK_MODE, &Dark, sizeof(Dark))))
+    {
+        // Windows 10 builds before 20H1 used attribute 19.
+        ::DwmSetWindowAttribute(window, 19, &Dark, sizeof(Dark));
+    }
+
+    // foobar2000 can choose dark mode independently of the system theme.
+    const COLORREF Caption = Dark ? EditorDarkBackground : DWMWA_COLOR_DEFAULT;
+    const COLORREF Text = Dark ? RGB(243, 243, 243) : DWMWA_COLOR_DEFAULT;
+    ::DwmSetWindowAttribute(window, DWMWA_CAPTION_COLOR, &Caption, sizeof(Caption));
+    ::DwmSetWindowAttribute(window, DWMWA_TEXT_COLOR, &Text, sizeof(Text));
+    if (editor.UseFallbackIcons)
+        UpdateEditorIcons(window, editor, true);
+    ::RedrawWindow(window, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME);
+}
+
+static std::wstring DecodePluginText(const char * text)
+{
+    UINT CodePage = CP_UTF8;
+    DWORD Flags = MB_ERR_INVALID_CHARS;
+    int Length = ::MultiByteToWideChar(CodePage, Flags, text, -1, nullptr, 0);
+    if (Length == 0)
+    {
+        CodePage = CP_ACP;
+        Flags = 0;
+        Length = ::MultiByteToWideChar(CodePage, Flags, text, -1, nullptr, 0);
+    }
+
+    if (Length <= 1)
+        return {};
+
+    std::wstring Result(static_cast<size_t>(Length), L'\0');
+    ::MultiByteToWideChar(CodePage, Flags, text, -1, &Result[0], Length);
+    Result.pop_back();
+    return Result;
+}
+
+static std::wstring GetEditorTitle(const char * name, const char * vendor, const char * product, const wchar_t * filePath)
+{
+    auto Title = DecodePluginText(*product ? product : name);
+    if (!Title.empty())
+    {
+        const auto Vendor = DecodePluginText(vendor);
+        if (!Vendor.empty() && ::_wcsnicmp(Title.c_str(), Vendor.c_str(), Vendor.size()) != 0)
+            Title = Vendor + L' ' + Title;
+
+        return Title;
+    }
+
+    const std::wstring Path(filePath);
+    const auto Separator = Path.find_last_of(L"\\/");
+    Title = Separator == std::wstring::npos ? Path : Path.substr(Separator + 1);
+    const auto Extension = Title.find_last_of(L'.');
+    if (Extension != std::wstring::npos && Extension != 0)
+        Title.resize(Extension);
+
+    return Title.empty() ? L"VST Editor" : Title;
+}
 
 #pragma pack(push, 8)
 #pragma warning(disable: 4820) // x bytes padding added after data member
@@ -226,9 +513,25 @@ struct MyDLGTEMPLATE : DLGTEMPLATE
     };
 };
 
-INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM, LPARAM lParam) noexcept
+static LRESULT CALLBACK EditorContentProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam,
+    UINT_PTR subclass, DWORD_PTR) noexcept
 {
-    AEffect * effect;
+    if (message == WM_CLOSE)
+    {
+        // Legacy editors can request closure through the parent HWND passed to effEditOpen.
+        ::PostMessageW(::GetParent(window), WM_CLOSE, 0, 0);
+        return 0;
+    }
+
+    if (message == WM_NCDESTROY)
+        ::RemoveWindowSubclass(window, EditorContentProc, subclass);
+
+    return ::DefSubclassProc(window, message, wParam, lParam);
+}
+
+INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+{
+    auto Editor = reinterpret_cast<EditorDialog *>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA));
 
     switch (msg)
     {
@@ -236,65 +539,284 @@ INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM, LPARAM lParam) noexcept
         {
             ::SetWindowLongPtrW(hwnd, GWLP_USERDATA, lParam);
 
-            effect = (AEffect *) lParam;
-
-            ::SetWindowTextW(hwnd, L"VST Editor");
-            ::SetTimer(hwnd, 1, 20, 0);
-
-            if (effect)
+            Editor = reinterpret_cast<EditorDialog *>(lParam);
+            Editor->Window = hwnd;
+            Editor->DarkRequested = false;
+            Editor->IsDark = false;
+            if (Editor->PreviousHosting != DPI_HOSTING_BEHAVIOR_INVALID)
             {
-                effect->dispatcher(effect, effEditOpen, 0, 0, hwnd, 0);
+                RestoreEditorHosting(*Editor);
 
-                ERect * eRect = 0;
-
-                effect->dispatcher(effect, effEditGetRect, 0, 0, &eRect, 0);
-
-                if (eRect)
+                // Give the frame native DPI while Windows scales the legacy VST editor.
+                const ScopedDpiContext Context(DPI_AWARENESS_CONTEXT_UNAWARE);
+                if (Context.Changed())
                 {
-                    int width = eRect->right - eRect->left;
-                    int height = eRect->bottom - eRect->top;
-
-                    if (width < 50)
-                        width = 50;
-                    if (height < 50)
-                        height = 50;
-
-                    RECT wRect;
-
-                    ::SetRect(&wRect, 0, 0, width, height);
-                    ::AdjustWindowRectEx(&wRect, (DWORD) ::GetWindowLongW(hwnd, GWL_STYLE), FALSE, (DWORD) ::GetWindowLongW(hwnd, GWL_EXSTYLE));
-
-                    width = wRect.right - wRect.left;
-                    height = wRect.bottom - wRect.top;
-
-                    ::SetWindowPos(hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE);
+                    Editor->ContentWindow = ::CreateWindowExW(WS_EX_CONTROLPARENT, L"STATIC", nullptr,
+                        WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0, 0, 0, 0, hwnd,
+                        nullptr, ::GetModuleHandleW(nullptr), nullptr);
+                    if (Editor->ContentWindow)
+                        ::SetWindowSubclass(Editor->ContentWindow, EditorContentProc, 0, 0);
                 }
             }
+
+            UpdateEditorTheme(hwnd, *Editor);
+            if (!Editor->IsModal)
+                ::SetPropW(hwnd, L"foo_midi.playback_editor", reinterpret_cast<HANDLE>(1));
+
+            ::SetTimer(hwnd, 1, 20, 0);
+
+            if (auto effect = Editor->Effect)
+            {
+                {
+                    const ScopedDpiContext Context(PluginContext(*Editor));
+                    HWND Parent = Editor->ContentWindow ? Editor->ContentWindow : hwnd;
+                    effect->dispatcher(effect, effEditOpen, 0, 0, Parent, 0);
+
+                    ERect * eRect = nullptr;
+                    effect->dispatcher(effect, effEditGetRect, 0, 0, &eRect, 0);
+
+                    if (eRect)
+                    {
+                        Editor->ContentWidth = max(50, eRect->right - eRect->left);
+                        Editor->ContentHeight = max(50, eRect->bottom - eRect->top);
+                    }
+                    else if (Editor->ContentWindow)
+                    {
+                        RECT Content = {};
+                        ::GetClientRect(Editor->ContentWindow, &Content);
+                        Editor->ContentWidth = Content.right;
+                        Editor->ContentHeight = Content.bottom;
+                    }
+                }
+
+                if (Editor->Window == hwnd)
+                    ResizeEditor(*Editor, DpiApi.GetDpi ? DpiApi.GetDpi(hwnd) : 0);
+            }
+
+            if (Editor->Window != hwnd)
+                return FALSE;
+
+            ::SetWindowTextW(hwnd, Editor->Identity->Title.c_str());
+            UpdateEditorIcons(hwnd, *Editor);
         } break;
 
         case WM_TIMER:
-            effect = (AEffect *) ::GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+            if (Editor)
+            {
+                // The command loop cannot detect a broken pipe while the modal dialog is open.
+                if (Editor->IsModal && !::PeekNamedPipe(_hPipeIn, nullptr, 0, nullptr, nullptr, nullptr))
+                {
+                    const DWORD Error = ::GetLastError();
+                    if (Error == ERROR_BROKEN_PIPE || Error == ERROR_PIPE_NOT_CONNECTED)
+                    {
+                        ::EndDialog(hwnd, IDCANCEL);
+                        return TRUE;
+                    }
+                }
 
-            if (effect)
-                effect->dispatcher(effect, effEditIdle, 0, 0, 0, 0);
+                UpdateEditorTheme(hwnd, *Editor);
+                if (Editor->Effect)
+                {
+                    const ScopedDpiContext Context(PluginContext(*Editor));
+                    Editor->Effect->dispatcher(Editor->Effect, effEditIdle, 0, 0, 0, 0);
+                }
+            }
             break;
 
+        case WM_SETTINGCHANGE:
+        case WM_THEMECHANGED:
+            if (Editor)
+                UpdateEditorTheme(hwnd, *Editor, true);
+            break;
+
+        case DpiChangedMessage:
+            if (Editor)
+            {
+                UpdateEditorIcons(hwnd, *Editor);
+                if (Editor->ContentWindow && Editor->ContentWidth && Editor->ContentHeight)
+                {
+                    ResizeEditor(*Editor, HIWORD(wParam), reinterpret_cast<const RECT *>(lParam));
+                    return TRUE;
+                }
+            }
+            break;
+
+        case WM_CTLCOLORDLG:
+            if (Editor && Editor->IsDark)
+            {
+                ::SetDCBrushColor(reinterpret_cast<HDC>(wParam), EditorDarkBackground);
+                return reinterpret_cast<INT_PTR>(::GetStockObject(DC_BRUSH));
+            }
+            break;
+
+        case WM_COMMAND:
+            if (LOWORD(wParam) != IDOK && LOWORD(wParam) != IDCANCEL)
+                break;
+            // Fall through to close the dialog.
         case WM_CLOSE:
+            if (Editor && Editor->IsModal)
+                ::EndDialog(hwnd, IDOK);
+            else
+                ::DestroyWindow(hwnd);
+            return TRUE;
+
+        case WM_DESTROY:
         {
-            effect = (AEffect *) ::GetWindowLongPtrW(hwnd, GWLP_USERDATA);
-
             ::KillTimer(hwnd, 1);
+            if (Editor)
+            {
+                if (Editor->Effect)
+                {
+                    const ScopedDpiContext Context(PluginContext(*Editor));
+                    Editor->Effect->dispatcher(Editor->Effect, effEditClose, 0, 0, 0, 0);
+                }
+                Editor->ContentWindow = nullptr;
+                Editor->ContentWidth = 0;
+                Editor->ContentHeight = 0;
+                if (!Editor->IsModal)
+                    ::RemovePropW(hwnd, L"foo_midi.playback_editor");
+                Editor->Window = nullptr;
+            }
+            break;
+        }
 
-            if (effect)
-                effect->dispatcher(effect, effEditClose, 0, 0, 0, 0);
-
-            ::EndDialog(hwnd, IDOK);
+        case WM_NCDESTROY:
+        {
+            if (Editor)
+            {
+                Editor->UseFallbackIcons = false;
+                SetEditorIcons(hwnd, *Editor, nullptr, nullptr);
+            }
             break;
         }
     }
 
     return 0;
 }
+
+static void ShowEditor(EditorDialog & editor, bool activate = true)
+{
+    if (!editor.Window)
+    {
+        const ScopedDpiContext Context(DpiApi.CanHostLegacyContent() ? DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 : nullptr);
+        if (Context.Changed())
+            editor.PreviousHosting = DpiApi.SetHosting(DPI_HOSTING_BEHAVIOR_MIXED);
+
+        MyDLGTEMPLATE Template;
+        Template.style = WS_POPUPWINDOW | WS_DLGFRAME | DS_CENTER | WS_CLIPCHILDREN;
+
+        if (editor.IsModal)
+            ::DialogBoxIndirectParamW(nullptr, &Template, ::GetDesktopWindow(), EditorProc, reinterpret_cast<LPARAM>(&editor));
+        else
+            ::CreateDialogIndirectParamW(::GetModuleHandleW(nullptr), &Template, nullptr, EditorProc, reinterpret_cast<LPARAM>(&editor));
+
+        RestoreEditorHosting(editor);
+    }
+
+    if (editor.IsModal)
+        return;
+
+    if (editor.Window)
+    {
+        ::ShowWindow(editor.Window, activate ? SW_SHOWNORMAL : SW_SHOWNOACTIVATE);
+        if (activate)
+            ::SetForegroundWindow(editor.Window);
+    }
+}
+
+static void DispatchEditorMessages(const EditorDialog & editor)
+{
+    MSG Message;
+    while (::PeekMessageW(&Message, nullptr, 0, 0, PM_REMOVE))
+    {
+        if (!editor.Window || !::IsDialogMessageW(editor.Window, &Message))
+        {
+            ::TranslateMessage(&Message);
+            ::DispatchMessageW(&Message);
+        }
+    }
+}
+
+class PlaybackEditor
+{
+public:
+    bool Start(AEffect * effect, const EditorIdentity & identity)
+    {
+        if (!_hEditorRequest || !(effect->flags & effFlagsHasEditor))
+            return true;
+
+        _Editor.Effect = effect;
+        _Editor.Identity = &identity;
+        _Stop = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+        if (!_Stop)
+            return false;
+
+        _Thread = ::CreateThread(nullptr, 0, Run, this, 0, &_ThreadId);
+        return _Thread != nullptr;
+    }
+
+    void Stop()
+    {
+        if (_Thread)
+        {
+            ::SetEvent(_Stop);
+
+            // A plug-in can start a modal dialog whose loop cannot see the stop event.
+            while (::WaitForSingleObject(_Thread, 50) == WAIT_TIMEOUT)
+                ::EnumThreadWindows(_ThreadId, CloseEnabledWindow, 0);
+
+            ::CloseHandle(_Thread);
+            _Thread = nullptr;
+        }
+
+        if (_Stop)
+        {
+            ::CloseHandle(_Stop);
+            _Stop = nullptr;
+        }
+    }
+
+private:
+    static BOOL CALLBACK CloseEnabledWindow(HWND window, LPARAM)
+    {
+        if (::IsWindowVisible(window) && ::IsWindowEnabled(window))
+            ::PostMessageW(window, WM_CLOSE, 0, 0);
+
+        return TRUE;
+    }
+
+    static DWORD WINAPI Run(void * context)
+    {
+        auto & Self = *static_cast<PlaybackEditor *>(context);
+        const HRESULT COM = ::CoInitialize(nullptr);
+        const HANDLE Handles[] = { Self._Stop, _hEditorRequest, _hAutoEditorRequest };
+        const DWORD Count = _hAutoEditorRequest ? _countof(Handles) : _countof(Handles) - 1;
+        for (;;)
+        {
+            const DWORD Ready = ::MsgWaitForMultipleObjectsEx(Count, Handles, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+            if (Ready == WAIT_OBJECT_0 + 1)
+                ShowEditor(Self._Editor);
+            else if (Ready == WAIT_OBJECT_0 + Count)
+                DispatchEditorMessages(Self._Editor);
+            else if (Ready == WAIT_OBJECT_0 + 2)
+                ShowEditor(Self._Editor, false);
+            else
+                break;
+        }
+
+        if (Self._Editor.Window)
+            ::DestroyWindow(Self._Editor.Window);
+
+        if (SUCCEEDED(COM))
+            ::CoUninitialize();
+        return 0;
+    }
+
+    EditorDialog _Editor;
+    HANDLE _Stop = nullptr;
+    HANDLE _Thread = nullptr;
+    DWORD _ThreadId = 0;
+};
 
 struct audioMasterData
 {
@@ -374,7 +896,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
     LPWSTR * argv = ::CommandLineToArgvW(::GetCommandLineW(), &argc);
 
-    if (argv == nullptr || argc != 3)
+    if (argv == nullptr || argc < 3 || argc > 6)
         return 1;
 
     wchar_t * end_char = nullptr;
@@ -398,15 +920,44 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
         return 3;
 #endif
 
+    int FirstEditorRequest = 3;
+    constexpr wchar_t ThemeOption[] = L"--theme=";
+    constexpr size_t ThemeOptionLength = _countof(ThemeOption) - 1;
+    if (argc > FirstEditorRequest && ::wcsncmp(argv[FirstEditorRequest], ThemeOption, ThemeOptionLength) == 0)
+    {
+        const auto Value = argv[FirstEditorRequest++] + ThemeOptionLength;
+        const auto Handle = ::wcstoull(Value, &end_char, 16);
+        if (end_char == Value || *end_char || Handle == 0)
+            return 2;
+
+        _hDarkTheme = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(Handle));
+    }
+
+    HANDLE * const EditorRequests[] = { &_hEditorRequest, &_hAutoEditorRequest };
+    if (argc - FirstEditorRequest > static_cast<int>(_countof(EditorRequests)))
+        return 1;
+
+    for (int i = FirstEditorRequest; i < argc; ++i)
+    {
+        const auto Handle = ::wcstoull(argv[i], &end_char, 16);
+        if (end_char == argv[i] || *end_char || Handle == 0)
+            return 2;
+
+        *EditorRequests[i - FirstEditorRequest] = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(Handle));
+    }
+
     uint32_t Code = 0;
 
     AEffect * Effect[3] = { 0, 0, 0 };
+    EditorIdentity Identity{ argv[1], {} };
+    PlaybackEditor LiveEditor;
 
     audioMasterData effectData[3] = { { 0 }, { 1 }, { 2 } };
 
     std::vector<uint8_t> State;
 
     uint32_t SampleRate = 44100;
+    uint32_t EditorPort = 0;
 
     std::vector<uint8_t> chunk;
     std::vector<float> sample_buffer;
@@ -522,6 +1073,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
         vendor_version = (uint32_t) Effect[0]->dispatcher(Effect[0], effGetVendorVersion, 0, 0, 0, 0);
         unique_id = (uint32_t) Effect[0]->uniqueID;
 
+        if (Effect[0]->flags & effFlagsHasEditor)
+            Identity.Title = GetEditorTitle(name_string, vendor_string, product_string, Identity.FilePath);
+
         WriteCode(0);
         WriteCode(name_string_length);
         WriteCode(vendor_string_length);
@@ -591,11 +1145,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
             {
                 if (Effect[0]->flags & effFlagsHasEditor)
                 {
-                    MyDLGTEMPLATE t;
-
-                    t.style = WS_POPUPWINDOW | WS_DLGFRAME | DS_MODALFRAME | DS_CENTER;
-
-                    DialogBoxIndirectParam(0, &t, ::GetDesktopWindow(), (DLGPROC) EditorProc, (LPARAM) (Effect[0]));
+                    EditorDialog ModalEditor{ Effect[0], &Identity };
+                    ModalEditor.IsModal = true;
+                    ShowEditor(ModalEditor);
 
                     ReadChunk(Effect[0], chunk);
                     setChunk(Effect[1], chunk);
@@ -606,17 +1158,23 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                 break;
             }
 
-            case 5: // Set Sample Rate
+            case 5: // Set Sample Rate and optional playback editor port
             {
-                uint32_t size = ReadCode();
-
-                if (size != sizeof(SampleRate))
+                const uint32_t Size = ReadCode();
+                const bool HasEditorPort = Size == sizeof(SampleRate) + sizeof(EditorPort);
+                if (Size != sizeof(SampleRate) && !HasEditorPort)
                 {
                     Code = 10;
                     goto exit;
                 }
 
                 SampleRate = ReadCode();
+                EditorPort = HasEditorPort ? ReadCode() : 0;
+                if (EditorPort >= _countof(Effect))
+                {
+                    Code = 10;
+                    goto exit;
+                }
 
                 WriteCode(0);
                 break;
@@ -624,6 +1182,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
             case 6: // Reset
             {
+                LiveEditor.Stop();
+
                 if (Effect[2])
                 {
                     if (State.size())
@@ -810,6 +1370,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                         size_t NewSize = BUFFER_SIZE * MaxOutputs * sizeof(float);
 
                         sample_buffer.resize(NewSize);
+                    }
+
+                    // The nonzero-port instances are created on the first render call.
+                    if (!LiveEditor.Start(Effect[EditorPort], Identity))
+                    {
+                        Code = 13;
+                        goto exit;
                     }
                 }
 
@@ -1070,6 +1637,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
     }
 
 exit:
+    LiveEditor.Stop();
+
     if (Effect[2])
     {
         if (State.size())
@@ -1108,6 +1677,13 @@ exit:
         ::LocalFree(argv);
 
     WriteCode(Code);
+
+    if (_hEditorRequest)
+        ::CloseHandle(_hEditorRequest);
+    if (_hAutoEditorRequest)
+        ::CloseHandle(_hAutoEditorRequest);
+    if (_hDarkTheme)
+        ::CloseHandle(_hDarkTheme);
 
     if (_hFileNUL)
     {

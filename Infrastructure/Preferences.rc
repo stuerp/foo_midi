@@ -319,6 +319,8 @@ font 8, "MS Shell Dlg", 400, 0, 1
         control     "Disable bank changes",                             IDC_FILTER_BANKS,                   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A33, Y_A33, W_A33, H_A33
 
         control     "Skip to first note",                               IDC_SKIP_TO_FIRST_NOTE,             "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A34, Y_A34, W_A34, H_A34
+        control     "Show VSTi window during playback",                  IDC_SHOW_VSTI_DURING_PLAYBACK,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A34, Y_A86, W_A34, H_A34
+        control     "Show CLAP window during playback",                  IDC_SHOW_CLAP_DURING_PLAYBACK,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A34, Y_A31, W_A34, H_A34
 
 //  ltext "Regular Munt is used by default.", IDC_MUNT_WARNING, X_A50, H_A00 - 4 - 8, W_A00, 8, NOT WS_VISIBLE
 }
