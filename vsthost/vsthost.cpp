@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "resource.h"
+#include "../Infrastructure/PlaybackDialogPosition.h"
 
 #include <pluginterfaces/vst2.x/aeffect.h>
 #include <pluginterfaces/vst2.x/aeffectx.h>
@@ -37,6 +38,7 @@ static HANDLE _hEditorRequest = nullptr;
 static HANDLE _hAutoEditorRequest = nullptr;
 static HANDLE _hEditorClosed = nullptr;
 static HANDLE _hDarkTheme = nullptr;
+static PlaybackDialogPosition * EditorPosition = nullptr;
 
 struct EditorIdentity
 {
@@ -545,6 +547,10 @@ INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) n
             Editor->Window = hwnd;
             Editor->DarkRequested = false;
             Editor->IsDark = false;
+            // Allow the frame and legacy content to pick up the saved monitor's DPI.
+            if (!Editor->IsModal && EditorPosition)
+                EditorPosition->Restore(hwnd);
+
             if (Editor->PreviousHosting != DPI_HOSTING_BEHAVIOR_INVALID)
             {
                 RestoreEditorHosting(*Editor);
@@ -600,7 +606,14 @@ INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) n
 
             ::SetWindowTextW(hwnd, Editor->Identity->Title.c_str());
             UpdateEditorIcons(hwnd, *Editor);
+            if (!Editor->IsModal && EditorPosition)
+                EditorPosition->Restore(hwnd);
         } break;
+
+        case WM_MOVE:
+            if (Editor && !Editor->IsModal && EditorPosition)
+                EditorPosition->Save(hwnd);
+            break;
 
         case WM_TIMER:
             if (Editor)
@@ -908,7 +921,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
     LPWSTR * argv = ::CommandLineToArgvW(::GetCommandLineW(), &argc);
 
-    if (argv == nullptr || argc < 3 || argc > 7)
+    if (argv == nullptr || argc < 3 || argc > 8)
         return 1;
 
     wchar_t * end_char = nullptr;
@@ -932,17 +945,33 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
         return 3;
 #endif
 
-    int FirstEditorRequest = 3;
-    constexpr wchar_t ThemeOption[] = L"--theme=";
-    constexpr size_t ThemeOptionLength = _countof(ThemeOption) - 1;
-    if (argc > FirstEditorRequest && ::wcsncmp(argv[FirstEditorRequest], ThemeOption, ThemeOptionLength) == 0)
+    const auto ReadHandle = [](const wchar_t * value) -> HANDLE
     {
-        const auto Value = argv[FirstEditorRequest++] + ThemeOptionLength;
-        const auto Handle = ::wcstoull(Value, &end_char, 16);
-        if (end_char == Value || *end_char || Handle == 0)
-            return 2;
+        wchar_t * End = nullptr;
+        const auto Handle = ::wcstoull(value, &End, 16);
+        if (End == value || *End || Handle == 0)
+            return nullptr;
 
-        _hDarkTheme = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(Handle));
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(Handle));
+    };
+
+    HANDLE PositionMapping = nullptr;
+    const struct
+    {
+        const wchar_t * Prefix;
+        HANDLE * Target;
+    } EditorOptions[] = { { L"--theme=", &_hDarkTheme }, { L"--position=", &PositionMapping } };
+
+    int FirstEditorRequest = 3;
+    for (const auto & Option : EditorOptions)
+    {
+        const size_t Length = ::wcslen(Option.Prefix);
+        if (argc > FirstEditorRequest && ::wcsncmp(argv[FirstEditorRequest], Option.Prefix, Length) == 0)
+        {
+            *Option.Target = ReadHandle(argv[FirstEditorRequest++] + Length);
+            if (!*Option.Target)
+                return 2;
+        }
     }
 
     HANDLE * const EditorRequests[] = { &_hEditorRequest, &_hAutoEditorRequest, &_hEditorClosed };
@@ -951,11 +980,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
     for (int i = FirstEditorRequest; i < argc; ++i)
     {
-        const auto Handle = ::wcstoull(argv[i], &end_char, 16);
-        if (end_char == argv[i] || *end_char || Handle == 0)
+        auto & Request = *EditorRequests[i - FirstEditorRequest];
+        Request = ReadHandle(argv[i]);
+        if (!Request)
             return 2;
+    }
 
-        *EditorRequests[i - FirstEditorRequest] = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(Handle));
+    if (PositionMapping)
+    {
+        EditorPosition = static_cast<PlaybackDialogPosition *>(::MapViewOfFile(PositionMapping, FILE_MAP_WRITE, 0, 0, sizeof(PlaybackDialogPosition)));
+        ::CloseHandle(PositionMapping);
     }
 
     uint32_t Code = 0;
@@ -1698,6 +1732,8 @@ exit:
         ::CloseHandle(_hEditorClosed);
     if (_hDarkTheme)
         ::CloseHandle(_hDarkTheme);
+    if (EditorPosition)
+        ::UnmapViewOfFile(EditorPosition);
 
     if (_hFileNUL)
     {

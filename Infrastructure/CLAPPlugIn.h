@@ -51,6 +51,7 @@ public:
     void RequestCallback();
 
     const char * GetName() const noexcept;
+    const char * GetId() const noexcept;
     const fs::path & GetFilePath() const noexcept;
 
     void SetGUIScale(double scale) const;

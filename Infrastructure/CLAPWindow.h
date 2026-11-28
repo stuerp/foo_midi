@@ -10,6 +10,8 @@
 
 #include "Resource.h"
 
+struct PlaybackDialogPosition;
+
 namespace CLAP
 {
 class PlugIn;
@@ -34,6 +36,7 @@ public:
 
 private:
     BOOL OnInitDialog(CWindow, LPARAM);
+    void OnMove(CPoint);
     void OnDestroy();
     void ui_colors_changed() override;
     void SetEditorIcons(HICON largeIcon, HICON smallIcon);
@@ -43,11 +46,13 @@ private:
     BEGIN_MSG_MAP_EX(Window)
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_CLOSE(Close)
+        MSG_WM_MOVE(OnMove)
         MSG_WM_DESTROY(OnDestroy)
         COMMAND_ID_HANDLER_EX(IDCANCEL, OnCancel)
     END_MSG_MAP()
 
     PlugIn & _PlugIn;
+    PlaybackDialogPosition * _Position = nullptr;
     fb2k::CCoreDarkModeHooks _DarkModeHooks;
     service_ptr _LiveEditScope;
     HICON _LargeIcon = nullptr;

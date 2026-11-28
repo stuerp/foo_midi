@@ -4,20 +4,28 @@
 
 #include <shellapi.h>
 #include <cmath>
+#include <map>
 #include <sdk/dsp_manager.h>
 
 #include "CLAPWindow.h"
 #include "CLAPPlugIn.h"
 #include "Encoding.h"
 #include "Log.h"
+#include "PlaybackDialogPosition.h"
 
 namespace CLAP
 {
+namespace
+{
+    std::map<std::string, PlaybackDialogPosition> DialogPositions;
+}
+
 bool Window::Open(HWND owner, bool live, bool activate)
 {
     _Live = live;
     _Opened = false;
     _EditorSizeScale = 1.0;
+    _Position = _Live ? &DialogPositions[_PlugIn.GetId()] : nullptr;
 
     if (!_Live)
         return DoModal(owner) != -1 && _Opened;
@@ -73,6 +81,10 @@ BOOL Window::OnInitDialog(CWindow, LPARAM)
         SetWindowTextW(msc::UTF8ToWide(_PlugIn.GetName()).c_str());
         _DarkModeHooks.AddDialog(m_hWnd);
 
+        // Place the hidden window on the saved monitor before querying its DPI.
+        if (_Position)
+            _Position->Restore(m_hWnd);
+
         HICON LargeIcon = nullptr;
         HICON SmallIcon = nullptr;
         ::ExtractIconExW(_PlugIn.GetFilePath().c_str(), 0, &LargeIcon, &SmallIcon, 1);
@@ -91,7 +103,8 @@ BOOL Window::OnInitDialog(CWindow, LPARAM)
         if (_PlugIn.AttachGUI(m_hWnd))
         {
             FitEditor(Width, Height);
-            CenterWindow(GetParent());
+            if (!_Position || !_Position->Restore(m_hWnd))
+                CenterWindow(GetParent());
             _Opened = _PlugIn.ShowGUI();
         }
     }
@@ -153,6 +166,14 @@ bool Window::SetVisible(bool visible)
         _LiveEditScope.release();
     }
     return true;
+}
+
+void Window::OnMove(CPoint)
+{
+    if (_Position && _Opened)
+        _Position->Save(m_hWnd);
+
+    SetMsgHandled(FALSE);
 }
 
 void Window::OnDestroy()

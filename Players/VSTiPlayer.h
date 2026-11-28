@@ -88,6 +88,7 @@ private:
     HANDLE _hEditorRequest = nullptr;
     HANDLE _hAutoEditorRequest = nullptr;
     std::shared_ptr<void> _EditorClosed;
+    HANDLE _EditorPosition = nullptr;
 
     const uint32_t MaxFrames = 4096;
     uint32_t _ChannelCount;

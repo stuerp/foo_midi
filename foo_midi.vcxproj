@@ -538,6 +538,7 @@
     <ClInclude Include="Infrastructure\CLAPHost.h" />
     <ClInclude Include="Infrastructure\CLAPPlugIn.h" />
     <ClInclude Include="Infrastructure\CLAPWindow.h" />
+    <ClInclude Include="Infrastructure\PlaybackDialogPosition.h" />
     <ClInclude Include="Infrastructure\Configuration.h" />
     <ClInclude Include="Infrastructure\ConfigurationMap.h" />
     <ClInclude Include="Infrastructure\ContextMenu.h" />

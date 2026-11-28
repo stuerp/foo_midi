@@ -58,6 +58,11 @@ const char * PlugIn::GetName() const noexcept
     return _Module._Descriptor->name;
 }
 
+const char * PlugIn::GetId() const noexcept
+{
+    return _Module._Descriptor->id;
+}
+
 const fs::path & PlugIn::GetFilePath() const noexcept
 {
     return _Module._FilePath;

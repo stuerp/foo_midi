@@ -6,12 +6,14 @@
 #include "VSTiPlayer.h"
 #include "Resource.h"
 #include "Log.h"
+#include "PlaybackDialogPosition.h"
 
 #include <sdk/dsp_manager.h>
 #include <sdk/initquit.h>
 #include <sdk/playback_control.h>
 #include <sdk/timer.h>
 #include <sdk/ui_element.h>
+#include <map>
 #include <memory>
 #include <mutex>
 
@@ -35,6 +37,7 @@ namespace
 
     std::mutex PlaybackPlayersMutex;
     std::vector<PlaybackPlayer> PlaybackPlayers;
+    std::map<fs::path, std::unique_ptr<void, decltype(&::CloseHandle)>> EditorPositions;
 
     // Main thread only. Keep the close event alive when the track gets a new decoder.
     std::shared_ptr<void> EditorClosedForTrack;
@@ -216,6 +219,12 @@ bool Player::LoadVST(const fs::path & filePath, const playable_location * playba
         }
 
         const std::lock_guard Lock(PlaybackPlayersMutex);
+        // Retain the shared position when playback starts a new bridge process.
+        auto & Position = EditorPositions.try_emplace(_FilePath.lexically_normal(), nullptr, ::CloseHandle).first->second;
+        if (!Position)
+            Position.reset(::CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, sizeof(PlaybackDialogPosition), nullptr));
+        _EditorPosition = Position.get();
+
         PlaybackPlayers.push_back({ *playbackLocation, _FilePath, _hEditorRequest, _hAutoEditorRequest, _EditorClosed });
     }
 
@@ -612,26 +621,38 @@ bool Player::StartHost()
         };
 
         // Pass editor state and requests independently of the decoder's audio commands.
-        const HANDLE EditorEvents[] = { EditorDarkModeEvent(), _hEditorRequest, _hAutoEditorRequest, _EditorClosed.get() };
-        HANDLE InheritedEditorEvents[_countof(EditorEvents)] = {};
-        bool CanStart = true;
-        for (size_t i = 0; i < _countof(EditorEvents); ++i)
+        const struct
         {
-            if (!EditorEvents[i])
+            HANDLE Handle;
+            DWORD Access;
+            const char * Prefix;
+            bool Optional;
+        } EditorHandles[] = {
+            { EditorDarkModeEvent(), SYNCHRONIZE, " --theme=", true },
+            { _EditorPosition, FILE_MAP_WRITE, " --position=", true },
+            { _hEditorRequest, SYNCHRONIZE, " ", false },
+            { _hAutoEditorRequest, SYNCHRONIZE, " ", false },
+            { _EditorClosed.get(), SYNCHRONIZE | EVENT_MODIFY_STATE, " ", false }
+        };
+        HANDLE InheritedEditorHandles[_countof(EditorHandles)] = {};
+        bool CanStart = true;
+        for (size_t i = 0; i < _countof(EditorHandles); ++i)
+        {
+            const auto & Source = EditorHandles[i];
+            if (!Source.Handle)
                 continue;
 
-            auto & Inherited = InheritedEditorEvents[i];
-            const DWORD Access = EditorEvents[i] == _EditorClosed.get() ? SYNCHRONIZE | EVENT_MODIFY_STATE : SYNCHRONIZE;
-            if (!::DuplicateHandle(::GetCurrentProcess(), EditorEvents[i], ::GetCurrentProcess(), &Inherited, Access, TRUE, 0))
+            auto & Inherited = InheritedEditorHandles[i];
+            if (!::DuplicateHandle(::GetCurrentProcess(), Source.Handle, ::GetCurrentProcess(), &Inherited, Source.Access, TRUE, 0))
             {
-                if (i == 0)
+                if (Source.Optional)
                     continue;
 
                 CanStart = false;
                 break;
             }
 
-            CommandLine += i == 0 ? " --theme=" : " ";
+            CommandLine += Source.Prefix;
             CommandLine += pfc::format_int(reinterpret_cast<uintptr_t>(Inherited), 0, 16).c_str();
         }
 
@@ -640,7 +661,7 @@ bool Player::StartHost()
         PROCESS_INFORMATION pi = { };
 
         const bool Started = CanStart && ::CreateProcess(NULL, (LPTSTR) (LPCTSTR) pfc::stringcvt::string_os_from_utf8(CommandLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
-        for (const auto Inherited : InheritedEditorEvents)
+        for (const auto Inherited : InheritedEditorHandles)
             if (Inherited)
                 ::CloseHandle(Inherited);
 
