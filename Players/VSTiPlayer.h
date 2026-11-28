@@ -5,6 +5,8 @@
 
 #include "Player.h"
 
+#include <memory>
+
 typedef void * HANDLE;
 
 namespace VSTi
@@ -28,6 +30,7 @@ public:
     bool HasEditor();
     void OpenEditor();
     static bool OpenPlaybackEditor(const fs::path & filePath, bool activate = true);
+    static void ResetPlaybackEditorDismissal();
 
     // Setup
     virtual uint32_t GetAudioChannelCount() const noexcept override { return _ChannelCount; }
@@ -84,6 +87,7 @@ private:
     HANDLE _hThread;
     HANDLE _hEditorRequest = nullptr;
     HANDLE _hAutoEditorRequest = nullptr;
+    std::shared_ptr<void> _EditorClosed;
 
     const uint32_t MaxFrames = 4096;
     uint32_t _ChannelCount;

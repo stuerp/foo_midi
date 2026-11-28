@@ -26,6 +26,7 @@ namespace
         fs::path FilePath;
         HANDLE EditorRequest;
         HANDLE AutoEditorRequest;
+        std::shared_ptr<void> EditorClosed;
         DWORD ProcessId = 0;
         bool EditorRequested = false;
     };
@@ -34,6 +35,9 @@ namespace
 
     std::mutex PlaybackPlayersMutex;
     std::vector<PlaybackPlayer> PlaybackPlayers;
+
+    // Main thread only. Keep the close event alive when the track gets a new decoder.
+    std::shared_ptr<void> EditorClosedForTrack;
 
     HANDLE EditorDarkModeEvent()
     {
@@ -205,16 +209,29 @@ bool Player::LoadVST(const fs::path & filePath, const playable_location * playba
     if (_hEditorRequest)
     {
         _hAutoEditorRequest = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+        if (_hAutoEditorRequest)
+        {
+            if (const HANDLE Closed = ::CreateEventW(nullptr, TRUE, FALSE, nullptr))
+                _EditorClosed = std::shared_ptr<void>(Closed, ::CloseHandle);
+        }
 
         const std::lock_guard Lock(PlaybackPlayersMutex);
-        PlaybackPlayers.push_back({ *playbackLocation, _FilePath, _hEditorRequest, _hAutoEditorRequest });
+        PlaybackPlayers.push_back({ *playbackLocation, _FilePath, _hEditorRequest, _hAutoEditorRequest, _EditorClosed });
     }
 
     return StartHost();
 }
 
+void Player::ResetPlaybackEditorDismissal()
+{
+    EditorClosedForTrack.reset();
+}
+
 bool Player::OpenPlaybackEditor(const fs::path & filePath, bool activate)
 {
+    if (!activate && EditorClosedForTrack && ::WaitForSingleObject(EditorClosedForTrack.get(), 0) == WAIT_OBJECT_0)
+        return false;
+
     metadb_handle_ptr Track;
     if (!playback_control::get()->get_now_playing(Track))
         return false;
@@ -245,7 +262,10 @@ bool Player::OpenPlaybackEditor(const fs::path & filePath, bool activate)
             {
                 Requested = ::SetEvent(Request) != FALSE;
                 if (Requested)
+                {
                     It->EditorRequested = true;
+                    EditorClosedForTrack = It->EditorClosed;
+                }
             }
             break;
         }
@@ -592,7 +612,7 @@ bool Player::StartHost()
         };
 
         // Pass editor state and requests independently of the decoder's audio commands.
-        const HANDLE EditorEvents[] = { EditorDarkModeEvent(), _hEditorRequest, _hAutoEditorRequest };
+        const HANDLE EditorEvents[] = { EditorDarkModeEvent(), _hEditorRequest, _hAutoEditorRequest, _EditorClosed.get() };
         HANDLE InheritedEditorEvents[_countof(EditorEvents)] = {};
         bool CanStart = true;
         for (size_t i = 0; i < _countof(EditorEvents); ++i)
@@ -601,7 +621,8 @@ bool Player::StartHost()
                 continue;
 
             auto & Inherited = InheritedEditorEvents[i];
-            if (!::DuplicateHandle(::GetCurrentProcess(), EditorEvents[i], ::GetCurrentProcess(), &Inherited, SYNCHRONIZE, TRUE, 0))
+            const DWORD Access = EditorEvents[i] == _EditorClosed.get() ? SYNCHRONIZE | EVENT_MODIFY_STATE : SYNCHRONIZE;
+            if (!::DuplicateHandle(::GetCurrentProcess(), EditorEvents[i], ::GetCurrentProcess(), &Inherited, Access, TRUE, 0))
             {
                 if (i == 0)
                     continue;

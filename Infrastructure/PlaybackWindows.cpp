@@ -88,6 +88,7 @@ namespace
             ++_Generation;
             _PlayerType = PlayerType::Unknown;
             _Track.release();
+            VSTi::Player::ResetPlaybackEditorDismissal();
             CLAPPlayer::ClosePlaybackEditor();
         }
 

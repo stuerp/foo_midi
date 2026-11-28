@@ -35,6 +35,7 @@ static HANDLE _hPipeIn = nullptr;
 static HANDLE _hPipeOut = nullptr;
 static HANDLE _hEditorRequest = nullptr;
 static HANDLE _hAutoEditorRequest = nullptr;
+static HANDLE _hEditorClosed = nullptr;
 static HANDLE _hDarkTheme = nullptr;
 
 struct EditorIdentity
@@ -49,6 +50,7 @@ struct EditorDialog
     const EditorIdentity * Identity = nullptr;
     HWND Window = nullptr;
     HWND ContentWindow = nullptr;
+    HANDLE StopEvent = nullptr;
     LONG ContentWidth = 0;
     LONG ContentHeight = 0;
     DPI_HOSTING_BEHAVIOR PreviousHosting = DPI_HOSTING_BEHAVIOR_INVALID;
@@ -665,6 +667,10 @@ INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) n
             ::KillTimer(hwnd, 1);
             if (Editor)
             {
+                if (_hEditorClosed && Editor->StopEvent &&
+                    ::WaitForSingleObject(Editor->StopEvent, 0) == WAIT_TIMEOUT)
+                    ::SetEvent(_hEditorClosed);
+
                 if (Editor->Effect)
                 {
                     const ScopedDpiContext Context(PluginContext(*Editor));
@@ -747,8 +753,8 @@ public:
 
         _Editor.Effect = effect;
         _Editor.Identity = &identity;
-        _Stop = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
-        if (!_Stop)
+        _Editor.StopEvent = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+        if (!_Editor.StopEvent)
             return false;
 
         _Thread = ::CreateThread(nullptr, 0, Run, this, 0, &_ThreadId);
@@ -759,7 +765,7 @@ public:
     {
         if (_Thread)
         {
-            ::SetEvent(_Stop);
+            ::SetEvent(_Editor.StopEvent);
 
             // A plug-in can start a modal dialog whose loop cannot see the stop event.
             while (::WaitForSingleObject(_Thread, 50) == WAIT_TIMEOUT)
@@ -769,10 +775,10 @@ public:
             _Thread = nullptr;
         }
 
-        if (_Stop)
+        if (_Editor.StopEvent)
         {
-            ::CloseHandle(_Stop);
-            _Stop = nullptr;
+            ::CloseHandle(_Editor.StopEvent);
+            _Editor.StopEvent = nullptr;
         }
     }
 
@@ -789,17 +795,24 @@ private:
     {
         auto & Self = *static_cast<PlaybackEditor *>(context);
         const HRESULT COM = ::CoInitialize(nullptr);
-        const HANDLE Handles[] = { Self._Stop, _hEditorRequest, _hAutoEditorRequest };
+        const HANDLE Handles[] = { Self._Editor.StopEvent, _hEditorRequest, _hAutoEditorRequest };
         const DWORD Count = _hAutoEditorRequest ? _countof(Handles) : _countof(Handles) - 1;
         for (;;)
         {
             const DWORD Ready = ::MsgWaitForMultipleObjectsEx(Count, Handles, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
             if (Ready == WAIT_OBJECT_0 + 1)
+            {
+                if (_hEditorClosed)
+                    ::ResetEvent(_hEditorClosed);
                 ShowEditor(Self._Editor);
+            }
             else if (Ready == WAIT_OBJECT_0 + Count)
                 DispatchEditorMessages(Self._Editor);
             else if (Ready == WAIT_OBJECT_0 + 2)
-                ShowEditor(Self._Editor, false);
+            {
+                if (!_hEditorClosed || ::WaitForSingleObject(_hEditorClosed, 0) == WAIT_TIMEOUT)
+                    ShowEditor(Self._Editor, false);
+            }
             else
                 break;
         }
@@ -813,7 +826,6 @@ private:
     }
 
     EditorDialog _Editor;
-    HANDLE _Stop = nullptr;
     HANDLE _Thread = nullptr;
     DWORD _ThreadId = 0;
 };
@@ -896,7 +908,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
     LPWSTR * argv = ::CommandLineToArgvW(::GetCommandLineW(), &argc);
 
-    if (argv == nullptr || argc < 3 || argc > 6)
+    if (argv == nullptr || argc < 3 || argc > 7)
         return 1;
 
     wchar_t * end_char = nullptr;
@@ -933,7 +945,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
         _hDarkTheme = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(Handle));
     }
 
-    HANDLE * const EditorRequests[] = { &_hEditorRequest, &_hAutoEditorRequest };
+    HANDLE * const EditorRequests[] = { &_hEditorRequest, &_hAutoEditorRequest, &_hEditorClosed };
     if (argc - FirstEditorRequest > static_cast<int>(_countof(EditorRequests)))
         return 1;
 
@@ -1682,6 +1694,8 @@ exit:
         ::CloseHandle(_hEditorRequest);
     if (_hAutoEditorRequest)
         ::CloseHandle(_hAutoEditorRequest);
+    if (_hEditorClosed)
+        ::CloseHandle(_hEditorClosed);
     if (_hDarkTheme)
         ::CloseHandle(_hDarkTheme);
 
