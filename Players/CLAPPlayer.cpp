@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.cpp (2025.10.06) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.cpp (2025.11.28) P. Stuer - Wrapper for CLAP plugins **/
 
 #include "pch.h"
 
@@ -82,16 +82,10 @@ void CLAPPlayer::Shutdown()
     if (_PlugIn)
         _PlugIn->StopProcessing();
 
-    if (_OutChannels[1])
+    for (auto * & Channel : _OutChannels)
     {
-        delete[] _OutChannels[1];
-        _OutChannels[1] = nullptr;
-    }
-
-    if (_OutChannels[0])
-    {
-        delete[] _OutChannels[0];
-        _OutChannels[0] = nullptr;
+        delete[] Channel;
+        Channel = nullptr;
     }
 
     // Add another reference to the plug-in pointer to prevent it from being destroyed prematurely and schedule a cleanup on the main thread.
@@ -175,7 +169,7 @@ bool CLAPPlayer::Reset()
     return true;
 }
 
-void CLAPPlayer::SendEvent(uint32_t data, uint32_t time)
+void CLAPPlayer::SendEvent(uint32_t data, uint32_t time) noexcept
 {
     auto Status     = (uint8_t) (data);
     auto Data1      = (uint8_t) (data >>  8);

@@ -1,5 +1,5 @@
 
-/** $VER: CLAPEventList.cpp (2025.10.06) P. Stuer **/
+/** $VER: CLAPEvents.cpp (2026.11.28) P. Stuer **/
 
 #include "pch.h"
 
@@ -19,7 +19,7 @@ InputEvents::InputEvents()
     // Returns the number of events in the list
     this->size = [](const clap_input_events_t * self) -> uint32_t
     {
-        const auto * This = static_cast<const InputEvents *>(self->ctx);
+        const auto * This = (const InputEvents *) self->ctx;
 
         return (uint32_t) This->Events.size();
     };
@@ -27,7 +27,7 @@ InputEvents::InputEvents()
     // Gets an event from the list.
     this->get = [](const clap_input_events_t * self, uint32_t index) -> const clap_event_header *
     {
-        const auto * This = static_cast<const InputEvents *>(self->ctx);
+        const auto * This = (const InputEvents *)self->ctx;
 
         return (index < This->Events.size()) ? This->Events[index] : nullptr;
     };
@@ -102,7 +102,10 @@ OutputEvents::OutputEvents()
             case CLAP_EVENT_PARAM_GESTURE_BEGIN:    // Indicates that the user started or finished adjusting a knob.
             case CLAP_EVENT_PARAM_GESTURE_END:
             case CLAP_EVENT_TRANSPORT:              // Update the transport info; clap_event_transport.
+            {
+                Log.AtTrace().Write(STR_COMPONENT_BASENAME " received event %u.", event->type);
                 break;
+            }
 
             case CLAP_EVENT_MIDI:
             {

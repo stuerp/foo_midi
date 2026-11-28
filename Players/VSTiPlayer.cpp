@@ -192,7 +192,7 @@ void Player::Render(audio_sample * dstFrames, uint32_t dstCount)
     }
 }
 
-void Player::SendEvent(uint32_t data)
+void Player::SendEvent(uint32_t data) noexcept
 {
     WriteBytes(7);
     WriteBytes(data);
@@ -217,7 +217,7 @@ void Player::SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber)
         StopHost();
 }
 
-void Player::SendEvent(uint32_t data, uint32_t time)
+void Player::SendEvent(uint32_t data, uint32_t time) noexcept
 {
     WriteBytes(10);
     WriteBytes(data);

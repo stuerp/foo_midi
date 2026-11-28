@@ -26,6 +26,6 @@ private:
 
     virtual uint8_t GetPortCount() const noexcept override { return 1; };
 
-    virtual void SendEvent(uint32_t);
-    virtual void SendEvent(uint32_t, uint32_t time) { };
+    virtual void SendEvent(uint32_t) noexcept;
+    virtual void SendEvent(uint32_t, uint32_t time) noexcept { };
 };

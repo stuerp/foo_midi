@@ -224,7 +224,7 @@ void ADLPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 #endif
 }
 
-void ADLPlayer::SendEvent(uint32_t data)
+void ADLPlayer::SendEvent(uint32_t data) noexcept
 {
     ADL_UInt8 Event[3]
     {

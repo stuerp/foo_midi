@@ -97,10 +97,9 @@ To create the component first build the x64 configuration and next the x86 confi
 
 ## Change Log
 
-v3.4.0.0-alpha3, 2026-11-27
+v3.4.0.0-alpha4, 2026-xx-xx
 
-- Improved: Changed CLAP host implementation to support [S-MU2000](https://github.com/tarboh/S-MU2000) CLAP plugin.
-- Fixed: Crash when processing malformed JSON files.
+- Fixed: Note Transposition only work on channel 1.
 
 You can read the full history [here](docs/History.md).
 

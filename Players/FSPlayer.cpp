@@ -317,7 +317,7 @@ bool FSPlayer::Reset()
 /// <summary>
 /// Sends a message to the library.
 /// </summary>
-void FSPlayer::SendEvent(uint32_t data)
+void FSPlayer::SendEvent(uint32_t data) noexcept
 {
     auto PortNumber = (size_t) ((data >> 24) & 0x7F);
     auto Param2     = (int)    ((data >> 16) & 0xFF);

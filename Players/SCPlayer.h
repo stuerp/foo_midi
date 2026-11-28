@@ -24,10 +24,10 @@ protected:
     virtual uint32_t GetBlockSize() const noexcept override { return 0; } // 4096; This doesn't work for some reason.
     virtual uint8_t GetPortCount() const noexcept override { return MaxPorts; };
 
-    virtual void SendEvent(uint32_t data) override;
+    virtual void SendEvent(uint32_t data) noexcept override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override;
 
-    virtual void SendEvent(uint32_t data, uint32_t time) override;
+    virtual void SendEvent(uint32_t data, uint32_t time) noexcept override;
     virtual void SendSysEx(const uint8_t * data, size_t size , uint32_t portNumber, uint32_t time) override;
 
 private:

@@ -101,7 +101,7 @@ void MCIPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 /// <summary>
 /// Sends a MIDI event to the device.
 /// </summary>
-void MCIPlayer::SendEvent(uint32_t data)
+void MCIPlayer::SendEvent(uint32_t data) noexcept
 {
     auto Status     = (uint8_t) (data);
     auto Data1      = (uint8_t) (data >>  8);

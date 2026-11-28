@@ -252,7 +252,7 @@ void OPNPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 #endif
 }
 
-void OPNPlayer::SendEvent(uint32_t data)
+void OPNPlayer::SendEvent(uint32_t data) noexcept
 {
     OPN2_UInt8 Event[3]
     {

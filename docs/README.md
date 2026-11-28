@@ -196,6 +196,8 @@ Here are some examples of CLAP synthesizer plug-ins:
 | [OctaSine](https://github.com/greatest-ape/OctaSine) | Frequency modulation synthesizer plugin | ![Supported](https://img.shields.io/badge/supported-green) |
 | [Odin 2](https://thewavewarden.com/pages/odin-2/) | 24-voice polyphonic powerhouse | ![Supported](https://img.shields.io/badge/supported-green) |
 | [Surge XT](https://surge-synthesizer.github.io/) | Hybrid synthesizer | ![Supported](https://img.shields.io/badge/supported-green) |
+| [S-MU2000](https://github.com/tarboh/S-MU2000) | A software tone generator modeled on the Yamaha MU2000 | ![Supported](https://img.shields.io/badge/supported-green) |
+| [Tabula Sonora](https://github.com/TabulaSonora/Plugin) | The Roland Sound Canvas VA voice as a CLAP plugin | ![Supported](https://img.shields.io/badge/supported-green) |
 
 ---
 

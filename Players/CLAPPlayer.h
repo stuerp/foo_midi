@@ -1,5 +1,5 @@
 
-/** $VER: CLAPPlayer.h (2025.08.02) P. Stuer - Wrapper for CLAP plugins **/
+/** $VER: CLAPPlayer.h (2026.11.28) P. Stuer - Wrapper for CLAP plugins **/
 
 #pragma once
 
@@ -36,10 +36,10 @@ private:
 
     virtual uint8_t GetPortCount() const noexcept override { return _countof(_AudioOuts); };
 
-    virtual void SendEvent(uint32_t data) override { SendEvent(data, 0); }
+    virtual void SendEvent(uint32_t data) noexcept override { SendEvent(data, 0); }
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber) override { SendSysEx(data, size, portNumber, 0); }
 
-    virtual void SendEvent(uint32_t, uint32_t time) override;
+    virtual void SendEvent(uint32_t, uint32_t time) noexcept override;
     virtual void SendSysEx(const uint8_t * data, size_t size, uint32_t portNumber, uint32_t time) override;
 
     #pragma endregion
@@ -48,14 +48,14 @@ private:
     std::shared_ptr<CLAP::PlugIn> _PlugIn;
 
     fs::path _FilePath;
-    uint32_t _Index;
+    uint32_t _Index = 0;
 
     CLAP::InputEvents _InEvents;
     CLAP::OutputEvents _OutEvents;
 
-    void * _OutChannels[2];
-    clap_audio_buffer_t _AudioOut;
-    clap_audio_buffer_t _AudioOuts[1];
+    void * _OutChannels[2] {};
+    clap_audio_buffer_t _AudioOut {};
+    clap_audio_buffer_t _AudioOuts[1] {};
 };
 
 #pragma warning(default: 4820) // x bytes padding added after data member

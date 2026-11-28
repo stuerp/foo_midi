@@ -36,6 +36,6 @@ void NukedSC55Player::Render(audio_sample * dstFrames, uint32_t dstCount)
 {
 }
 
-void NukedSC55Player::SendEvent(uint32_t data)
+void NukedSC55Player::SendEvent(uint32_t data) noexcept
 {
 }

@@ -100,7 +100,7 @@ void NukedOPL3Player::Render(audio_sample * dstFrames, uint32_t dstCount)
     }
 }
 
-void NukedOPL3Player::SendEvent(uint32_t data)
+void NukedOPL3Player::SendEvent(uint32_t data) noexcept
 {
     _Synth->midi_write(data);
 }

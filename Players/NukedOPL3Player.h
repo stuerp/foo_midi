@@ -41,7 +41,7 @@ protected:
 
     virtual uint8_t GetPortCount() const noexcept override { return 1; };
 
-    virtual void SendEvent(uint32_t data) override;
+    virtual void SendEvent(uint32_t data) noexcept override;
     virtual void SendSysEx(const uint8_t * /*event*/, size_t /*size*/, uint32_t /*portNumber*/) override { }
 
 private:

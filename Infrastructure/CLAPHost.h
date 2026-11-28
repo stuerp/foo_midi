@@ -34,17 +34,18 @@ struct PlugInEntry
 class DSO
 {
 public:
-    DSO() : _Index(), _hModule(), _Entry(), _Factory(), _Descriptor(), _InstanceCount() { }
+    DSO() = default;
 
+public:
     fs::path _FilePath;
-    uint32_t _Index;
+    uint32_t _Index = 0;
 
-    HMODULE _hModule;
-    const clap_plugin_entry_t * _Entry;
-    const clap_plugin_factory_t * _Factory;
-    const clap_plugin_descriptor_t * _Descriptor;
+    HMODULE _hModule = NULL;
+    const clap_plugin_entry_t * _Entry = nullptr;
+    const clap_plugin_factory_t * _Factory = nullptr;
+    const clap_plugin_descriptor_t * _Descriptor = nullptr;
 
-    size_t _InstanceCount; // Number of plug-in instance created from this DSO
+    size_t _InstanceCount = 0; // Number of plug-in instance created from this DSO
 };
 
 /// <summary>
@@ -57,6 +58,7 @@ public:
 
     Host(const Host &) = delete;
     Host(const Host &&) = delete;
+
     Host & operator=(const Host &) { return *this; }
     Host & operator=(Host &&) = delete;
 
@@ -125,8 +127,10 @@ private:
 
     PlugIn * _EditorPlugIn;
     HWND _EditorWindow = NULL;
+
     std::vector<Timer> _Timers;
     clap_id _NextTimerId = 0;
+
     std::atomic_bool _MainThreadCallbackPending = false;
     std::atomic_bool _ParamsFlushPending = false;
 };

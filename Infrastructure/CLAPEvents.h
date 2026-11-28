@@ -1,5 +1,5 @@
 
-/** $VER: CLAPEventList.h (2025.10.06) P. Stuer **/
+/** $VER: CLAPEvents.h (2026.11.28) P. Stuer **/
 
 #pragma once
 

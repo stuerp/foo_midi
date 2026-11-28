@@ -1,5 +1,5 @@
 
-/** $VER: Player.cpp (2026.09.12) **/
+/** $VER: Player.cpp (2026.11.28) **/
 
 #include "pch.h"
 
@@ -11,33 +11,35 @@
 #include <Configuration.h>
 #include <libmidi.h>
 
+#include <array>
 #include <fstream>
-
-/// <summary>
-/// Initializes a new instance.
-/// </summary>
-player_t::player_t() noexcept
-{
-    _SampleRate = 1'000;
-
-    _FrameIndex = 0;
-    _FrameCount = 0;
-    _FramesRemaining = 0;
-
-    _FrameIndexLoopBegin = 0;
-
-    _FileFormat = midi::FileFormat::Unknown;
-
-    _IsStarted = false;
-}
 
 /// <summary>
 /// Loads the specified MIDI container.
 /// </summary>
 bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, LoopType loopType, uint32_t decayTime, uint32_t cleanFlags)
 {
+    if (_IsStarted)
+        Shutdown();
+
+    _IsStarted = false;
+    _ErrorMessage.clear();
+    _FileFormat = midi::FileFormat::Unknown;
+
     _LoopType = loopType;
     _DecayTime = decayTime;
+
+    _Messages.clear();
+    _SysExMap = midi::sysex_table_t();
+    _PortNumbers.clear();
+    _MessageIndex = 0;
+    _MessageIndexLoopBegin = ~0u;
+    _LoopEndIndex = ~0u;
+
+    _FrameIndex = 0;
+    _FrameCount = 0;
+    _FramesRemaining = 0;
+    _FrameIndexLoopBegin = 0;
 
     // Initialize the event stream.
     {
@@ -48,7 +50,11 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
         container.SerializeAsStream(subSongIndex, _Messages, _SysExMap, _PortNumbers, _MessageIndexLoopBegin, _LoopEndIndex, cleanFlags);
 
         if (_Messages.size() == 0)
+        {
+            _ErrorMessage = "The MIDI stream does not contain any events.";
+
             return false;
+        }
 
         _FileFormat = container.FileFormat;
     }
@@ -59,7 +65,12 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
     // Transpose the Note On/Off messages and insert Pitch Bend Change messages if necessary.
     if ((Semitones != 0) || (Microtones != 0))
     {
-        bool NeedPitchBend[16] = { true };
+        constexpr size_t PortCount = 128;
+        constexpr size_t ChannelCount = 16;
+
+        std::array<bool, PortCount * ChannelCount> NeedPitchBend;
+
+        NeedPitchBend.fill(true);
 
         for (size_t i = 0; i < _Messages.size(); ++i)
         {
@@ -74,6 +85,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
 
                 const auto EventType     = StatusCode & 0xF0;
                 const auto ChannelNumber = StatusCode & 0x0F;
+                const size_t PitchBendIndex = ((size_t) PortNumber * ChannelCount) + ChannelNumber;
 
                 // Skip the percussion channel.
                 if (ChannelNumber == 0x09)
@@ -93,46 +105,59 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
                 {
                     // The Reset All Controllers message resets the Pitch Bend to the default value.
                     if ((EventType == midi::StatusCode::ControlChange) && (Data1 == midi::Controller::ResetAllControllers) && (Data2 == 0x00))   // Reset All Controllers
-                        NeedPitchBend[ChannelNumber] = true;
+                        NeedPitchBend[PitchBendIndex] = true;
                     else
                     // Modify existing Pitch Bend Change messages.
                     if (EventType == midi::StatusCode::PitchBendChange)
                     {
+                        const auto NewStatusCode = (uint8_t) (midi::StatusCode::PitchBendChange + ChannelNumber);
+
                         const int NewValue = std::clamp(midi::BytesToPitchBend(Data1, Data2) + (int) Microtones, -8192, 8191);
                         const auto [LSB, MSB] = midi::PitchBendToBytes(NewValue);
 
-                        Message.Data = midi::PackMessage(midi::StatusCode::PitchBendChange, LSB, MSB, PortNumber);
+                        Message.Data = midi::PackMessage(NewStatusCode, LSB, MSB, PortNumber);
 
-                        NeedPitchBend[ChannelNumber] = false;
+                        NeedPitchBend[PitchBendIndex] = false;
                     }
                     else
                     // Insert a Pitch Bend Change message if necessary.
-                    if ((EventType == midi::StatusCode::NoteOn) && NeedPitchBend[ChannelNumber])
+                    if ((EventType == midi::StatusCode::NoteOn) && NeedPitchBend[PitchBendIndex])
                     {
+                        const auto NewStatusCode = (uint8_t) (midi::StatusCode::PitchBendChange + ChannelNumber);
+
                         const auto [LSB, MSB] = midi::PitchBendToBytes((int32_t) Microtones);
-                        const uint32_t Data = midi::PackMessage(midi::StatusCode::PitchBendChange, LSB, MSB, PortNumber);
+                        const uint32_t Data = midi::PackMessage(NewStatusCode, LSB, MSB, PortNumber);
 
-                        _Messages.insert(_Messages.begin() + (int64_t) i++, midi::message_t(Message.Time, Data)); // Insert a Pitch Bend Change message and skip it.
+                        const size_t InsertIndex = i;
 
-                        NeedPitchBend[ChannelNumber] = false;
+                        _Messages.insert(_Messages.begin() + (ptrdiff_t) InsertIndex, midi::message_t(Message.Time, Data)); // Insert a Pitch Bend Change message and skip it.
+
+                        if ((_MessageIndexLoopBegin != ~0u) && (InsertIndex <= _MessageIndexLoopBegin))
+                            ++_MessageIndexLoopBegin;
+
+                        if ((_LoopEndIndex != ~0u) && (InsertIndex < _LoopEndIndex))
+                            ++_LoopEndIndex;
+
+                        ++i;
+
+                        NeedPitchBend[PitchBendIndex] = false;
                     }
                 }
             }
             else
             {
-                const uint32_t Index = Message.Data & 0x00FFFFFFu;
-
-                const uint8_t * Data;
-                size_t Size;
-                uint8_t PortNumber;
+                const uint32_t  Index      = Message.Data & 0x00FFFFFFu;
+                const uint8_t * Data       = nullptr;
+                size_t          Size       = 0;
+                uint8_t         PortNumber = 0;
 
                 if (!_SysExMap.GetItem(Index, Data, Size, PortNumber))
                     continue;
 
                 if (midi::sysex_t::IsGMSystemOn(Data, Size) || midi::sysex_t::IsGM2SystemOn(Data, Size) || midi::sysex_t::IsGSSystemOn(Data, Size) || midi::sysex_t::IsXGSystemOn(Data, Size))
                 {
-                    for (size_t j = 0; j < _countof(NeedPitchBend); ++j)
-                        NeedPitchBend[j] = true;
+                    for (size_t Channel = 0; Channel < ChannelCount; ++Channel)
+                        NeedPitchBend[((size_t) PortNumber * ChannelCount) + Channel] = true;
                 }
             }
         }
@@ -158,58 +183,72 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
             if (LoopEndTime == ~0UL)
                 LoopEndTime =  _FrameCount;
 
-            // FIXME: I don't have a clue what this does.
+            // Stop all notes that are still active at the loop end.
             {
-                constexpr size_t NoteOnSize = (size_t) 128 * 16;
+                constexpr size_t PortCount    = 128;
+                constexpr size_t ChannelCount =  16;
+                constexpr size_t NoteCount    = 128;
+                constexpr size_t NoteOnSize = PortCount * ChannelCount * NoteCount;
 
-                std::vector<uint8_t> NoteOn(NoteOnSize, 0);
+                std::vector<uint16_t> NoteOn(NoteOnSize, 0);
 
                 {
                     size_t i;
 
                     for (i = 0; (i < _Messages.size()) && (i < _LoopEndIndex); ++i)
                     {
-                        uint32_t Message = _Messages[i].Data;
-
-                        uint32_t Event = Message & 0x800000F0;
+                        const uint32_t Message = _Messages[i].Data;
+                        const uint32_t Event   = Message & 0x800000F0;
 
                         if (Event == midi::NoteOn || Event == midi::NoteOff)
                         {
-                            const unsigned long Port     = (Message >> 24) & 0x7F;
-                            const unsigned long Velocity = (Message >> 16) & 0xFF;
-                            const unsigned long Note     = (Message >>  8) & 0x7F;
-                            const unsigned long Channel  =  Message        & 0x0F;
+                            const uint32_t Port     = (Message >> 24) & 0x7F;
+                            const uint32_t Velocity = (Message >> 16) & 0xFF;
+                            const uint32_t Note     = (Message >>  8) & 0x7F;
+                            const uint32_t Channel  =  Message        & 0x0F;
 
                             const bool IsNoteOn = (Event == midi::NoteOn) && (Velocity > 0);
+                            const size_t Index = ((size_t) Port * ChannelCount * NoteCount) + ((size_t) Channel * NoteCount) + Note;
 
-                            const unsigned long bit = (unsigned long) (1 << Port);
-
-                            size_t Index = (size_t) ((Channel * 128) + Note);
-
-                            NoteOn[Index] = (uint8_t) ((NoteOn[Index] & ~bit) | (bit * IsNoteOn));
+                            if (IsNoteOn)
+                            {
+                                if (NoteOn[Index] != std::numeric_limits<uint16_t>::max())
+                                    ++NoteOn[Index];
+                            }
+                            else
+                            if (NoteOn[Index] != 0)
+                                --NoteOn[Index];
                         }
                     }
 
                     _Messages.resize(i);
 
-                    _FrameCount = std::max(LoopEndTime - 1, _Messages[i - 1].Time);
-                }
+                    const uint32_t LastMessageTime = _Messages.empty() ? 0 : _Messages.back().Time;
+                    const uint32_t AdjustedLoopEndTime = (LoopEndTime == 0) ? 0 : LoopEndTime - 1;
 
-                for (size_t i = 0; i < NoteOnSize; ++i)
-                {
-                    if (NoteOn[i] != 0x00)
+                    _FrameCount = std::max(AdjustedLoopEndTime, LastMessageTime);
+
+                    for (size_t Port = 0; Port < PortCount; ++Port)
                     {
-                        for (size_t j = 0; j < 8; ++j)
+                        for (size_t Channel = 0; Channel < ChannelCount; ++Channel)
                         {
-                            if (NoteOn[i] & (1 << j))
+                            for (size_t Note = 0; Note < NoteCount; ++Note)
                             {
-                                _Messages.push_back(midi::message_t(_FrameCount, (uint32_t) ((j << 24) + (i >> 7) + ((i & 0x7F) << 8) + midi::StatusCode::NoteOn)));
+                                const size_t Index = (Port * ChannelCount * NoteCount) + (Channel * NoteCount) + Note;
+
+                                while (NoteOn[Index] != 0)
+                                {
+                                    const uint32_t Data = midi::PackMessage((uint8_t) (midi::StatusCode::NoteOff + Channel), (uint8_t) Note, 0x00, (uint8_t) Port);
+
+                                    _Messages.push_back(midi::message_t(_FrameCount, Data));
+                                    --NoteOn[Index];
+                                }
                             }
                         }
                     }
-                }
 
-                _FrameCount = LoopEndTime;
+                    _FrameCount = LoopEndTime;
+                }
             }
         }
     }
@@ -237,7 +276,7 @@ bool player_t::Load(const midi::container_t & container, uint32_t subSongIndex, 
 /// Renders the specified number of samples to an audio sample buffer.
 /// </summary>
 /// <remarks>All calculations are in samples. The MIDIStreamEvent::Timestamps have already been from ms to samples before playing starts.</remarks>
-uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
+uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount)
 {
     assert(_Messages.size());
 
@@ -252,8 +291,8 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
 //  wchar_t Line[256]; ::swprintf_s(Line, _countof(Line), L"Event: %6d/%6d | Sample: %8d/%8d | Chunk: %6d, Rem: %8d\n", (int) _MessageIndex, (int) _Messages.size(), (int) _Time, (int) _TotalTime, (int) size, (int) _TimeRemaining); ::OutputDebugStringW(Line);
 #endif
 
-    const uint32_t BlockSize = GetBlockSize();
-    const uint32_t ChannelCount = 2;
+    const uint32_t BlockSize    = GetBlockSize();
+    const uint32_t ChannelCount = GetAudioChannelCount();
 
     uint32_t FrameIndex = 0;
     uint32_t BlockToDo = 0;
@@ -379,7 +418,7 @@ uint32_t player_t::Play(audio_sample * frameData, uint32_t frameCount) noexcept
             if (Remainder >= BlockSize)
             {
                 {
-                    Render(frameData + (FrameIndex * 2), Remainder);
+                    Render(frameData + (FrameIndex * ChannelCount), Remainder);
 
                     FrameIndex += Remainder;
                     _FrameIndex += Remainder;
@@ -446,10 +485,11 @@ void player_t::Seek(uint32_t newFrameIndex)
 {
     if (newFrameIndex >= _FrameCount)
     {
-        if (_LoopType >= LoopType::LoopWhenDetectedAndFade)
+        if ((_LoopType >= LoopType::LoopWhenDetectedAndFade) && (_FrameIndexLoopBegin < _FrameCount))
         {
-            while (newFrameIndex >= _FrameCount)
-                newFrameIndex -= _FrameCount - _FrameIndexLoopBegin;
+            const uint32_t LoopLength = _FrameCount - _FrameIndexLoopBegin;
+
+            newFrameIndex = _FrameIndexLoopBegin + ((newFrameIndex - _FrameIndexLoopBegin) % LoopLength);
         }
         else
             newFrameIndex = _FrameCount;
@@ -486,14 +526,13 @@ void player_t::Seek(uint32_t newFrameIndex)
     if (_MessageIndex <= OldMessageIndex)
         return;
 
-    std::vector<midi::message_t> FillerMessages(_MessageIndex - OldMessageIndex);
+    const size_t EndMessageIndex = std::min<size_t>(_MessageIndex, _Messages.size());
 
-    if (_MessageIndex >= _Messages.size())
-        _MessageIndex--;
+    std::vector<midi::message_t> FillerMessages;
 
     // Generate filler messages.
     {
-        FillerMessages.assign(&_Messages[OldMessageIndex], &_Messages[_MessageIndex]);
+        FillerMessages.assign(_Messages.begin() + (ptrdiff_t) OldMessageIndex, _Messages.begin() + (ptrdiff_t) EndMessageIndex);
 
         for (size_t i = 0; i < FillerMessages.size(); ++i)
         {
@@ -533,11 +572,11 @@ void player_t::Seek(uint32_t newFrameIndex)
     {
         FrameCount = 16;
 
-        audio_sample * FrameData = new audio_sample[FrameCount * 2];
+        std::vector<audio_sample> FrameData((size_t) FrameCount * GetAudioChannelCount());
 
-        if (FrameData != nullptr)
+        if (!FrameData.empty())
         {
-            Render(FrameData, FrameCount); // Flush events
+            Render(FrameData.data(), FrameCount); // Flush events
 
             uint32_t LastTimestamp = 0;
             bool IsTimestampSet = false;
@@ -547,7 +586,7 @@ void player_t::Seek(uint32_t newFrameIndex)
                 if (m.Data != 0)
                 {
                     if (IsTimestampSet && (m.Time != LastTimestamp))
-                        Render(FrameData, FrameCount); // Flush events
+                        Render(FrameData.data(), FrameCount); // Flush events
 
                     LastTimestamp = m.Time;
                     IsTimestampSet = true;
@@ -556,20 +595,18 @@ void player_t::Seek(uint32_t newFrameIndex)
                 }
             }
 
-            Render(FrameData, FrameCount); // Flush events
-
-            delete[] FrameData;
+            Render(FrameData.data(), FrameCount); // Flush events
         }
     }
     else
     {
-        audio_sample * FrameData = new audio_sample[FrameCount * 2];
+        std::vector<audio_sample> FrameData((size_t) FrameCount * GetAudioChannelCount());
 
-        if (FrameData != nullptr)
+        if (!FrameData.empty())
         {
             uint32_t JunkSize = 0;
 
-            Render(FrameData, FrameCount); // Flush events
+            Render(FrameData.data(), FrameCount); // Flush events
 
             uint32_t LastTimestamp = 0;
             bool IsTimestampSet = false;
@@ -588,15 +625,13 @@ void player_t::Seek(uint32_t newFrameIndex)
 
                     if (JunkSize >= FrameCount)
                     {
-                        Render(FrameData, FrameCount); // Flush events
+                        Render(FrameData.data(), FrameCount); // Flush events
                         JunkSize -= FrameCount;
                     }
                 }
             }
 
-            Render(FrameData, FrameCount); // Flush events
-
-            delete[] FrameData;
+            Render(FrameData.data(), FrameCount); // Flush events
         }
     }
 }
@@ -604,6 +639,7 @@ void player_t::Seek(uint32_t newFrameIndex)
 /// <summary>
 /// Re-calculates the timestamps whenever the sample rate changes.
 /// </summary>
+#ifdef v1
 void player_t::SetSampleRate(uint32_t sampleRate)
 {
     if (_SampleRate == sampleRate)
@@ -623,8 +659,30 @@ void player_t::SetSampleRate(uint32_t sampleRate)
 
 
     _SampleRate = sampleRate;
+}
+#endif
+void player_t::SetSampleRate(uint32_t sampleRate)
+{
+    if ((_SampleRate == sampleRate) || (sampleRate == 0))
+        return;
 
-//  Shutdown(); FIXME
+    #pragma warning(disable: 4820)
+    const auto ScaleFrames = [sampleRate, this](uint32_t value) noexcept -> uint32_t
+    {
+        const uint64_t ScaledValue = (((uint64_t) value * sampleRate) + (_SampleRate / 2)) / _SampleRate;
+
+        return (ScaledValue > std::numeric_limits<uint32_t>::max()) ? std::numeric_limits<uint32_t>::max() : (uint32_t) ScaledValue;
+    };
+
+    for (midi::message_t & it : _Messages)
+        it.Time = ScaleFrames(it.Time);
+
+    _FrameIndex          = ScaleFrames(_FrameIndex);
+    _FrameCount          = ScaleFrames(_FrameCount);
+    _FrameIndexLoopBegin = ScaleFrames(_FrameIndexLoopBegin);
+    _FramesRemaining     = ScaleFrames(_FramesRemaining);
+
+    _SampleRate = sampleRate;
 }
 
 /// <summary>
@@ -981,7 +1039,12 @@ void player_t::EnableVisualization(bool enabled) noexcept
 {
 #ifdef HAVE_FOO_VIS_MIDI
     if (!enabled)
+    {
+        _MusicKeyboard2.release();
+        _MusicKeyboard.release();
+
         return;
+    }
 
     IAPI::ptr api;
 
@@ -998,42 +1061,55 @@ void player_t::EnableVisualization(bool enabled) noexcept
 #endif
 }
 
-static uint16_t GetWord(const uint8_t * data) noexcept
-{
-    return (uint16_t) (data[0] | (((uint16_t) data[1]) << 8));
-}
-
-static uint32_t GetDWord(const uint8_t * data) noexcept
-{
-    return data[0] | (((uint32_t) data[1]) << 8) | (((uint32_t) data[2]) << 16) | (((uint32_t) data[3]) << 24);
-}
-
 /// <summary>
 /// Determines the processor architecture of a Windows binary file.
 /// </summary>
 uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
 {
+    const auto GetWord = [](const uint8_t * data) noexcept -> uint16_t
+    {
+        return (uint16_t) (data[0] | (((uint16_t) data[1]) << 8));
+    };
+
+    const auto GetDWord = [](const uint8_t * data) noexcept -> uint32_t
+    {
+        return data[0] | (((uint32_t) data[1]) << 8) | (((uint32_t) data[2]) << 16) | (((uint32_t) data[3]) << 24);
+    };
+
     try
     {
-        std::ifstream File(filePath, std::ios::binary);
+        std::ifstream File(filePath, std::ios::binary | std::ios::ate);
 
         if (!File.is_open())
             return 0;
 
+        const std::streamoff FileSize = File.tellg();
+
+        if (FileSize < 64)
+            return 0;
+
+        File.seekg(0, std::ios::beg);
+
         uint8_t MZHeader[64] = { };
 
-        File.read((char *) MZHeader, sizeof(MZHeader));
+        if (!File.read((char *) MZHeader, sizeof(MZHeader)))
+            return 0;
 
         if (GetWord(MZHeader) != 0x5A4D)
             return 0;
 
         const uint32_t OffsetPEHeader = GetDWord(MZHeader + 0x3C);
+        constexpr size_t PEHeaderSize = 4 + 20;
 
-        File.seekg(OffsetPEHeader, std::ios::beg);
+        if (((uint64_t) OffsetPEHeader + PEHeaderSize) > (uint64_t) FileSize)
+            return 0;
 
-        uint8_t PEHeader[(size_t) 4 + 20 + 224] = { };
+        File.seekg((std::streamoff) OffsetPEHeader, std::ios::beg);
 
-        File.read((char *) PEHeader, sizeof(PEHeader));
+        uint8_t PEHeader[PEHeaderSize] = { };
+
+        if (!File.read((char *) PEHeader, sizeof(PEHeader)))
+            return 0;
 
         if (GetDWord(PEHeader) != 0x00004550)
             return 0;
@@ -1041,10 +1117,13 @@ uint32_t player_t::GetProcessorArchitecture(const fs::path & filePath) const
         switch (GetWord(PEHeader + 4))
         {
             case 0x014C:
-                return 32;
+                return 32; // x86
 
             case 0x8664:
-                return 64;
+                return 64; // x64
+
+            case 0xAA64:
+                return 64; // ARM64
 
             default:
                 return 0;

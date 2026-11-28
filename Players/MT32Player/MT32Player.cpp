@@ -149,7 +149,7 @@ bool MT32Player::Reset()
     return true;
 }
 
-void MT32Player::SendEvent(uint32_t data)
+void MT32Player::SendEvent(uint32_t data) noexcept
 {
     _Service.playMsg(data);
 }

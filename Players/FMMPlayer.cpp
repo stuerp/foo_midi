@@ -149,7 +149,7 @@ void FMMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
     }
 }
 
-void FMMPlayer::SendEvent(uint32_t data)
+void FMMPlayer::SendEvent(uint32_t data) noexcept
 {
     if (!(data & 0x80000000u))
     {

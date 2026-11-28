@@ -1,6 +1,11 @@
 
 # foo_midi History
 
+v3.4.0.0-alpha3, 2026-11-27
+
+- Improved: Changed CLAP host implementation to support [S-MU2000](https://github.com/tarboh/S-MU2000) CLAP plugin.
+- Fixed: Crash when processing malformed JSON files. [GitHub Issue 171](https://github.com/stuerp/foo_midi/issues/171)
+
 v3.4.0.0-alpha2, 2026-11-25
 
 - Improved: Implemented special handling of loops in RCP (Recomposer) files. [GitHub Issue 160](https://github.com/stuerp/foo_midi/issues/160)

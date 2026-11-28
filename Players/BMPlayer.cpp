@@ -289,7 +289,7 @@ bool BMPlayer::Reset()
 /// <summary>
 /// Sends a message to the library.
 /// </summary>
-void BMPlayer::SendEvent(uint32_t data)
+void BMPlayer::SendEvent(uint32_t data) noexcept
 {
     uint8_t Event[3]
     {

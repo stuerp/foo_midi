@@ -164,7 +164,7 @@ bool SCPlayer::Reset()
 /// <summary>
 /// Sends the specified MIDI event.
 /// </summary>
-void SCPlayer::SendEvent(uint32_t event)
+void SCPlayer::SendEvent(uint32_t event) noexcept
 {
     uint32_t PortNumber = (event >> 24) & 0xFF;
 
@@ -181,7 +181,7 @@ void SCPlayer::SendEvent(uint32_t event)
 /// <summary>
 /// Sends the specified MIDI event with a timestamp.
 /// </summary>
-void SCPlayer::SendEvent(uint32_t data, uint32_t time)
+void SCPlayer::SendEvent(uint32_t data, uint32_t time) noexcept
 {
     uint32_t PortNumber = (data >> 24) & 0xFF;
 

@@ -27,7 +27,7 @@ private:
 
     virtual uint8_t GetPortCount() const noexcept override { return _countof(_Modules); };
 
-    virtual void SendEvent(uint32_t) override;
+    virtual void SendEvent(uint32_t) noexcept override;
     virtual void SendSysEx(const uint8_t * event, size_t size, uint32_t portNumber) override;
 
     void InitializeDrumChannels() noexcept;

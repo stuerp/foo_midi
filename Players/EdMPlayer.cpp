@@ -105,7 +105,7 @@ void EdMPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 /// <summary>
 /// Sends a message to the library.
 /// </summary>
-void EdMPlayer::SendEvent(uint32_t data)
+void EdMPlayer::SendEvent(uint32_t data) noexcept
 {
     const uint8_t Status  = (uint8_t) data & 0xF0u;
     const uint8_t Channel = (uint8_t) data & 0x0Fu;
