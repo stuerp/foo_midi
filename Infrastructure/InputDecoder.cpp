@@ -708,15 +708,11 @@ bool InputDecoder::decode_run(audio_chunk & audioChunk, abort_callback & abortHa
 
         uint32_t FramesDone = _Player->Play(FrameData, FrameCount);
 
+        if (const auto & ErrorMessage = _Player->GetErrorMessage(); !ErrorMessage.empty())
+            throw exception_io_data(ErrorMessage.c_str());
+
         if (FramesDone == 0)
-        {
-            const std::string ErrorMessage = _Player->GetErrorMessage();
-
-            if (!ErrorMessage.empty())
-                throw exception_io_data(ErrorMessage.c_str());
-
             return false;
-        }
 
         _ActualSampleRate = _Player->GetSampleRate(); // Allows us to store the actual sample rate in the info field.
 

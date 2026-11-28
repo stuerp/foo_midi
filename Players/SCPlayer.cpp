@@ -66,8 +66,11 @@ void SCPlayer::SetRootPath(const fs::path & directoryPath)
 /// </summary>
 bool SCPlayer::Startup()
 {
+    if (!_ErrorMessage.empty())
+        return false;
+
     if (_IsStarted)
-        return (_hProcess[0] != NULL) && (_hProcess[1] != NULL) && (_hProcess[2] != NULL);
+        return true;
 
     if (_RootPath.empty())
         return false;
@@ -75,7 +78,11 @@ bool SCPlayer::Startup()
     fs::path FilePath = _RootPath / _DLLFileName;
 
     if (!StartHosts(FilePath))
+    {
+        _ErrorMessage = "Failed to start the Secret Sauce helpers.";
+        Shutdown();
         return false;
+    }
 
     for (uint32_t i = 0; i < _countof(_hProcess); ++i)
     {
@@ -84,7 +91,11 @@ bool SCPlayer::Startup()
         WriteBytes(i, _SampleRate);
 
         if (ReadCode(i) != 0)
+        {
+            _ErrorMessage = "Failed to initialize a Secret Sauce helper.";
+            Shutdown();
             return false;
+        }
     }
 
     _IsStarted = true;
@@ -115,12 +126,8 @@ void SCPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
 
     ::memset(dstFrames, 0, dstCount * 2 * sizeof(audio_sample));
 
-    if (_hProcess[0] == NULL || _hProcess[1] == NULL || _hProcess[2] == NULL)
-    {
-        Shutdown();
-
+    if (!_ErrorMessage.empty())
         return;
-    }
 
     while (dstCount != 0)
     {
@@ -130,8 +137,8 @@ void SCPlayer::Render(audio_sample * dstFrames, uint32_t dstCount)
         {
             if (!RenderPort(i, _Samples, ToDo))
             {
+                _ErrorMessage = "A Secret Sauce helper stopped responding during MIDI playback.";
                 Shutdown();
-
                 return;
             }
 
@@ -275,18 +282,7 @@ bool SCPlayer::RenderPort(uint32_t portNumber, float * data, uint32_t size) noex
     WriteBytes(portNumber, 4);
     WriteBytes(portNumber, size);
 
-    if (ReadCode(portNumber) != 0)
-    {
-        StopHost(portNumber);
-
-        ::memset(data, 0, size * sizeof(float) * 2);
-
-        return false;
-    }
-
-    ReadBytes(portNumber, data, size * sizeof(float) * 2);
-
-    return true;
+    return ReadCode(portNumber) == 0 && ReadBytes(portNumber, data, size * sizeof(float) * 2);
 }
 
 /// <summary>
@@ -303,9 +299,15 @@ bool SCPlayer::StartHost(uint32_t portNumber)
             return false;
     }
 
-    ++_COMInitialisationCount;
-
     _hReadEvent[portNumber] = ::CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (!_hReadEvent[portNumber])
+    {
+        if (_COMInitialisationCount == 0)
+            ::CoUninitialize();
+        return false;
+    }
+
+    ++_COMInitialisationCount;
 
     SECURITY_ATTRIBUTES sa =
     {
@@ -437,7 +439,7 @@ bool SCPlayer::StartHost(uint32_t portNumber)
 /// </summary>
 void SCPlayer::StopHost(uint32_t portNumber) noexcept
 {
-    if ((portNumber >= _countof(_hProcess)) || (_hProcess[portNumber] == NULL))
+    if (portNumber >= _countof(_hProcess) || !_hReadEvent[portNumber])
         return;
 
     if (_IsPortTerminating[portNumber])
@@ -519,91 +521,51 @@ bool SCPlayer::CreatePipeName(pfc::string_base & pipeName) noexcept
 uint32_t SCPlayer::ReadCode(uint32_t portNumber) noexcept
 {
     uint32_t Code;
-
-    ReadBytes(portNumber, &Code, sizeof(Code));
-
-    return Code;
+    return ReadBytes(portNumber, &Code, sizeof(Code)) ? Code : UINT32_MAX;
 }
 
-/// <summary>
-/// Reads a number of bytes from a port.
-/// </summary>
-void SCPlayer::ReadBytes(uint32_t portNumber, void * data, uint32_t size) noexcept
+bool SCPlayer::ReadBytes(uint32_t portNumber, void * data, uint32_t size) noexcept
 {
-    if ((portNumber >= _countof(_hProcess)) || (size == 0))
-        return;
-
-    if (IsHostRunning(portNumber))
+    auto * Data = static_cast<uint8_t *>(data);
+    while (size != 0)
     {
-        uint8_t * Data = (uint8_t *) data;
-        uint32_t BytesTotal = 0;
+        if (!IsHostRunning(portNumber))
+            return false;
 
-        while (BytesTotal < size)
-        {
-            const uint32_t BytesRead = ReadBytesOverlapped(portNumber, Data, size);
+        const uint32_t BytesRead = ReadBytesOverlapped(portNumber, Data, size);
+        if (BytesRead == 0)
+            return false;
 
-            if (BytesRead == 0)
-            {
-                ::memset(data, 0xFF, size);
-                break;
-            }
-
-            Data       += BytesRead;
-            BytesTotal += BytesRead;
-            size       -= BytesRead;
-        }
+        Data += BytesRead;
+        size -= BytesRead;
     }
-    else
-        ::memset(data, 0xFF, size);
+
+    return true;
 }
 
-/// <summary>
-/// Reads a number of bytes from a port using overlapped I/O.
-/// </summary>
 uint32_t SCPlayer::ReadBytesOverlapped(uint32_t portNumber, void * data, uint32_t size) noexcept
 {
-    if ((portNumber >= _countof(_hProcess)) || (size == 0))
-        return 0;
+    ::ResetEvent(_hReadEvent[portNumber]);
 
-    ::ResetEvent(_hReadEvent);
+    DWORD BytesRead = 0;
+    OVERLAPPED Operation = {};
+    Operation.hEvent = _hReadEvent[portNumber];
 
-    ::SetLastError(NO_ERROR);
-
-    DWORD BytesRead;
-    OVERLAPPED ol = { 0 };
-
-    ol.hEvent = _hReadEvent[portNumber];
-
-    if (::ReadFile(_hSrcPipeIn[portNumber], data, size, &BytesRead, &ol))
+    if (::ReadFile(_hSrcPipeIn[portNumber], data, size, &BytesRead, &Operation))
         return BytesRead;
 
     if (::GetLastError() != ERROR_IO_PENDING)
         return 0;
 
-    const HANDLE WaitHandles[1] = { _hReadEvent[portNumber] };
-
-    ::SetLastError(NO_ERROR);
-
-    DWORD Result;
-
-#ifdef MESSAGE_PUMP
-    for (;;)
-    {
-        Result = ::MsgWaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE, QS_ALLEVENTS);
-
-        if (Result == WAIT_OBJECT_0 + _countof(WaitHandles))
-            ProcessPendingMessages();
-        else
-            break;
-    }
-#else
-    Result = ::WaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE);
-#endif
-
-    if ((Result == WAIT_OBJECT_0) && ::GetOverlappedResult(_hSrcPipeIn[portNumber], &ol, &BytesRead, TRUE))
+    const HANDLE Handles[] = { _hReadEvent[portNumber], _hProcess[portNumber] };
+    const DWORD Result = ::WaitForMultipleObjects(_countof(Handles), Handles, FALSE, 5000);
+    if (Result == WAIT_OBJECT_0 && ::GetOverlappedResult(_hSrcPipeIn[portNumber], &Operation, &BytesRead, FALSE))
         return BytesRead;
 
-    ::CancelIoEx(_hSrcPipeIn, &ol);
+    ::CancelIoEx(_hSrcPipeIn[portNumber], &Operation);
+    ::GetOverlappedResult(_hSrcPipeIn[portNumber], &Operation, &BytesRead, TRUE);
+    if (Result == WAIT_TIMEOUT)
+        ::TerminateProcess(_hProcess[portNumber], 1);
 
     return 0;
 }

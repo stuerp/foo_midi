@@ -42,7 +42,7 @@ private:
 
     uint32_t ReadCode(uint32_t port) noexcept;
 
-    void ReadBytes(uint32_t port, void * data, uint32_t size) noexcept;
+    bool ReadBytes(uint32_t port, void * data, uint32_t size) noexcept;
     uint32_t ReadBytesOverlapped(uint32_t port, void * data, uint32_t size) noexcept;
 
     void WriteBytes(uint32_t port, uint32_t code) noexcept;

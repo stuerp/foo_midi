@@ -44,7 +44,7 @@ public:
     virtual uint32_t GetAudioChannelCount() const noexcept { return 2; } // Gets the number of audio channels the player supports.
     virtual void SetAbortHandler(foobar2000_io::abort_callback * abortHandler) noexcept { UNREFERENCED_PARAMETER(abortHandler); }
     
-    std::string GetErrorMessage() const noexcept { return _ErrorMessage; };
+    const std::string & GetErrorMessage() const noexcept { return _ErrorMessage; };
 
 protected:
     virtual bool Startup() { return false; }
