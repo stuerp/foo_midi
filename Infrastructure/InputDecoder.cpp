@@ -268,6 +268,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
 
     // The preset collects the settings to configure the player.
     preset_t Preset;
+    bool HasTrackPreset = false;
 
     // Load the preset from the song if it has one.
     {
@@ -283,6 +284,7 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
                 Log.AtInfo().Write(STR_COMPONENT_BASENAME " is using preset \"%s\" from tags.", PresetText);
 
                 Preset.Deserialize(PresetText);
+                HasTrackPreset = true;
             }
         }
     
@@ -358,7 +360,9 @@ void InputDecoder::decode_initialize(unsigned subSongIndex, unsigned flags, abor
             if (!Player->LoadVST((const char8_t *) Preset._PlugInFilePath.c_str(), (flags & input_flag_playback) ? &Location : nullptr))
                 throw pfc::exception(pfc::string("Unable to load VSTi plug-in from \"") + Preset._PlugInFilePath + "\"");
 
-            if (Preset._VSTiConfig.size() != 0)
+            if (!HasTrackPreset || _IsPlayerTypeOverriden)
+                Player->UseSavedConfig();
+            else if (!Preset._VSTiConfig.empty())
                 Player->SetChunk(Preset._VSTiConfig.data(), Preset._VSTiConfig.size());
 
             _PlugInName = Player->Name;
@@ -1109,7 +1113,6 @@ void InputDecoder::OverridePlayerSelection(preset_t & preset, size_t subSongInde
                 _IsPlayerTypeOverriden = true;
 
                 preset._PlugInFilePath = FilePath;
-                preset._VSTiConfig = CfgVSTiConfig[Player->Id];
 
                 delete Player;
             }

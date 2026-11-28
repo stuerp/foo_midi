@@ -25,6 +25,7 @@ public:
     // Configuration
     void GetChunk(std::vector<uint8_t> & data);
     void SetChunk(const void * data, size_t size);
+    void UseSavedConfig() noexcept { _UseSavedConfig = true; }
 
     // Editor
     bool HasEditor();
@@ -51,8 +52,9 @@ protected:
 
 private:
     bool StartHost();
-    void StopHost() noexcept;
+    void StopHost(bool saveConfig = false) noexcept;
     bool IsHostRunning() noexcept;
+    void SavePlaybackConfig(bool closeEditor);
 
     uint32_t ReadCode(DWORD timeout = 5000) noexcept;
 
@@ -89,11 +91,13 @@ private:
     HANDLE _hAutoEditorRequest = nullptr;
     std::shared_ptr<void> _EditorClosed;
     HANDLE _EditorPosition = nullptr;
+    HANDLE _hEditorStateReady = nullptr;
 
     const uint32_t MaxFrames = 4096;
     uint32_t _ChannelCount;
 
     std::vector<uint8_t> _Chunk;
+    bool _UseSavedConfig = false;
     float * _SrcFrames;
 
     bool _IsTerminating;

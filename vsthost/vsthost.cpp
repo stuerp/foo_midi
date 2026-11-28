@@ -9,6 +9,7 @@
 #include <shlobj.h>
 
 #include <atomic>
+#include <mutex>
 #include <string>
 
 #pragma comment(lib, "dwmapi.lib")
@@ -38,12 +39,39 @@ static HANDLE _hEditorRequest = nullptr;
 static HANDLE _hAutoEditorRequest = nullptr;
 static HANDLE _hEditorClosed = nullptr;
 static HANDLE _hDarkTheme = nullptr;
+static HANDLE _hEditorStateReady = nullptr;
 static PlaybackDialogPosition * EditorPosition = nullptr;
 
 struct EditorIdentity
 {
     const wchar_t * FilePath;
     std::wstring Title;
+};
+
+class PlaybackEditorConfig
+{
+public:
+    void Publish(const std::vector<uint8_t> & config)
+    {
+        const std::lock_guard<std::mutex> Lock(_Mutex);
+        _Pending = config;
+        ::SetEvent(_hEditorStateReady);
+    }
+
+    std::vector<uint8_t> Take()
+    {
+        const std::lock_guard<std::mutex> Lock(_Mutex);
+        if (_hEditorStateReady)
+            ::ResetEvent(_hEditorStateReady);
+
+        std::vector<uint8_t> Config;
+        Config.swap(_Pending);
+        return Config;
+    }
+
+private:
+    std::mutex _Mutex;
+    std::vector<uint8_t> _Pending;
 };
 
 struct EditorDialog
@@ -63,6 +91,9 @@ struct EditorDialog
     bool DarkRequested = false;
     bool IsDark = false;
     bool UseFallbackIcons = false;
+    PlaybackEditorConfig * SavedConfig = nullptr;
+    std::vector<uint8_t> LastConfig;
+    bool ConfigCheckPending = false;
 };
 
 static constexpr COLORREF EditorDarkBackground = RGB(32, 32, 32);
@@ -439,17 +470,17 @@ void ReadChunk(AEffect * effect, std::vector<uint8_t> & out)
     }
     else
     {
-        void * chunk;
+        void * Data = nullptr;
+        const VstIntPtr Size = effect->dispatcher(effect, effGetChunk, 0, 0, &Data, 0);
+        if (!Data || Size <= 0 || static_cast<uint64_t>(Size) > UINT32_MAX - out.size() - sizeof(uint32_t))
+        {
+            out.clear();
+            return;
+        }
 
-        uint32_t size = (uint32_t) effect->dispatcher(effect, effGetChunk, 0, 0, &chunk, 0);
-
-        append_be(out, size);
-
-        size_t chunk_size = out.size();
-
-        out.resize(chunk_size + size);
-
-        memcpy(&out[chunk_size], chunk, size);
+        append_be(out, static_cast<uint32_t>(Size));
+        const auto Bytes = static_cast<const uint8_t *>(Data);
+        out.insert(out.end(), Bytes, Bytes + Size);
     }
 }
 
@@ -504,6 +535,20 @@ void setChunk(AEffect * pEffect, std::vector<uint8_t> const & in)
             return;
 
         pEffect->dispatcher(pEffect, effSetChunk, 0, (VstIntPtr) chunk_size, (void *) inc, 0);
+    }
+}
+
+static void CheckPlaybackEditorConfig(EditorDialog & editor)
+{
+    if (editor.LastConfig.empty())
+        return;
+
+    std::vector<uint8_t> Config;
+    ReadChunk(editor.Effect, Config);
+    if (!Config.empty() && Config != editor.LastConfig)
+    {
+        editor.SavedConfig->Publish(Config);
+        editor.LastConfig.swap(Config);
     }
 }
 
@@ -580,6 +625,9 @@ INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) n
                     HWND Parent = Editor->ContentWindow ? Editor->ContentWindow : hwnd;
                     effect->dispatcher(effect, effEditOpen, 0, 0, Parent, 0);
 
+                    if (Editor->SavedConfig)
+                        ReadChunk(effect, Editor->LastConfig);
+
                     ERect * eRect = nullptr;
                     effect->dispatcher(effect, effEditGetRect, 0, 0, &eRect, 0);
 
@@ -615,6 +663,11 @@ INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) n
                 EditorPosition->Save(hwnd);
             break;
 
+        case WM_ENABLE:
+            if (Editor && wParam && Editor->SavedConfig)
+                Editor->ConfigCheckPending = true;
+            break;
+
         case WM_TIMER:
             if (Editor)
             {
@@ -634,6 +687,12 @@ INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) n
                 {
                     const ScopedDpiContext Context(PluginContext(*Editor));
                     Editor->Effect->dispatcher(Editor->Effect, effEditIdle, 0, 0, 0, 0);
+                    if (Editor->ConfigCheckPending)
+                    {
+                        // A plug-in's modal setup dialog has returned to the playback editor.
+                        Editor->ConfigCheckPending = false;
+                        CheckPlaybackEditorConfig(*Editor);
+                    }
                 }
             }
             break;
@@ -688,7 +747,10 @@ INT_PTR CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) n
                 {
                     const ScopedDpiContext Context(PluginContext(*Editor));
                     Editor->Effect->dispatcher(Editor->Effect, effEditClose, 0, 0, 0, 0);
+                    CheckPlaybackEditorConfig(*Editor);
                 }
+                Editor->LastConfig.clear();
+                Editor->ConfigCheckPending = false;
                 Editor->ContentWindow = nullptr;
                 Editor->ContentWidth = 0;
                 Editor->ContentHeight = 0;
@@ -766,6 +828,8 @@ public:
 
         _Editor.Effect = effect;
         _Editor.Identity = &identity;
+        if (_hEditorStateReady)
+            _Editor.SavedConfig = &_Config;
         _Editor.StopEvent = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
         if (!_Editor.StopEvent)
             return false;
@@ -794,6 +858,8 @@ public:
             _Editor.StopEvent = nullptr;
         }
     }
+
+    std::vector<uint8_t> TakeConfig() { return _Config.Take(); }
 
 private:
     static BOOL CALLBACK CloseEnabledWindow(HWND window, LPARAM)
@@ -839,6 +905,7 @@ private:
     }
 
     EditorDialog _Editor;
+    PlaybackEditorConfig _Config;
     HANDLE _Thread = nullptr;
     DWORD _ThreadId = 0;
 };
@@ -921,7 +988,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
     LPWSTR * argv = ::CommandLineToArgvW(::GetCommandLineW(), &argc);
 
-    if (argv == nullptr || argc < 3 || argc > 8)
+    if (argv == nullptr || argc < 3 || argc > 9)
         return 1;
 
     wchar_t * end_char = nullptr;
@@ -960,7 +1027,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
     {
         const wchar_t * Prefix;
         HANDLE * Target;
-    } EditorOptions[] = { { L"--theme=", &_hDarkTheme }, { L"--position=", &PositionMapping } };
+    } EditorOptions[] = {
+        { L"--theme=", &_hDarkTheme },
+        { L"--position=", &PositionMapping },
+        { L"--state=", &_hEditorStateReady }
+    };
 
     int FirstEditorRequest = 3;
     for (const auto & Option : EditorOptions)
@@ -1674,6 +1745,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
                 break;
             }
 
+            case 12: // Collect settings changed from the playback editor
+            {
+                if (ReadCode())
+                    LiveEditor.Stop();
+
+                const auto Config = LiveEditor.TakeConfig();
+                WriteCode(0);
+                WriteCode(static_cast<uint32_t>(Config.size()));
+                WriteBytes(Config.data(), static_cast<uint32_t>(Config.size()));
+                break;
+            }
+
             default:
             {
                 Code = 12;
@@ -1732,6 +1815,8 @@ exit:
         ::CloseHandle(_hEditorClosed);
     if (_hDarkTheme)
         ::CloseHandle(_hDarkTheme);
+    if (_hEditorStateReady)
+        ::CloseHandle(_hEditorStateReady);
     if (EditorPosition)
         ::UnmapViewOfFile(EditorPosition);
 

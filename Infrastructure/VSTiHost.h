@@ -30,10 +30,6 @@ public:
 private:
     void GetPlugIns_(const fs::path & directoryPath) noexcept;
 
-public:
-    std::vector<uint8_t> Config;
-
-private:
     std::vector<PlugIn> _PlugIns;
 };
 

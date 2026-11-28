@@ -38,7 +38,7 @@ preset_t::preset_t() noexcept
 
                 if (Player->LoadVST((const char8_t *) _PlugInFilePath.c_str()))
                 {
-                    _VSTiConfig = CfgVSTiConfig[Player->Id];
+                    _VSTiConfig = CfgVSTiConfig.Get(Player->Id);
 
                     delete Player;
                 }

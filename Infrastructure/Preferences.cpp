@@ -230,6 +230,7 @@ private:
 
     // VSTi
     VSTi::Host _VSTiHost;
+    std::optional<std::vector<uint8_t>> _EditedVSTiConfig;
     std::vector<VSTi::PlugIn> _VSTiPlugIns;
 
     // CLAP
@@ -309,7 +310,11 @@ void RootDialog::apply()
             CfgCLAPIndex             = (int64_t) -1;
             CfgPlugInName            = PlugIn.Name.c_str();
 
-            CfgVSTiConfig[PlugIn.Id] = _VSTiHost.Config;
+            if (_EditedVSTiConfig)
+            {
+                CfgVSTiConfig.Set(PlugIn.Id, std::move(*_EditedVSTiConfig));
+                _EditedVSTiConfig.reset();
+            }
         }
         else
         {
@@ -460,7 +465,7 @@ void RootDialog::reset()
         SendDlgItemMessage(IDC_SKIP_TO_FIRST_NOTE,          BM_SETCHECK, DefaultSkipToFirstNote);
     }
 
-    _VSTiHost.Config.resize(0);
+    _EditedVSTiConfig.reset();
 
     UpdateDialog();
 
@@ -784,12 +789,16 @@ void RootDialog::OnButtonConfig(UINT, int, CWindow)
 
             if (Player.LoadVST(_SelectedPlayer.FilePath))
             {
-                if (_VSTiHost.Config.size() != 0)
-                    Player.SetChunk(_VSTiHost.Config.data(), _VSTiHost.Config.size());
+                const auto Config = _EditedVSTiConfig ? *_EditedVSTiConfig : CfgVSTiConfig.Get(Player.Id);
+                if (!Config.empty())
+                    Player.SetChunk(Config.data(), Config.size());
 
                 Player.OpenEditor();
 
-                Player.GetChunk(_VSTiHost.Config);
+                auto Edited = Config;
+                Player.GetChunk(Edited);
+                if (Edited != Config)
+                    _EditedVSTiConfig = std::move(Edited);
             }
 
             break;
@@ -829,9 +838,7 @@ void RootDialog::OnPlayerTypeChange(UINT, int, CWindow w)
     if (SelectedIndex != -1)
     {
         _SelectedPlayer = _InstalledPlayers[(size_t) SelectedIndex];
-
-        if (_SelectedPlayer.Type == PlayerType::VSTi)
-            _VSTiHost.Config = CfgVSTiConfig[_VSTiPlugIns[_SelectedPlayer.PlugInIndex].Id];
+        _EditedVSTiConfig.reset();
     }
 
     // Configure
@@ -917,12 +924,7 @@ bool RootDialog::HasChanged()
                 if (CfgPlugInFilePath.get() != (const char *) _SelectedPlayer.FilePath.u8string().c_str())
                     return true;
 
-                t_uint32 Id = _VSTiPlugIns[_SelectedPlayer.PlugInIndex].Id;
-
-                if (_VSTiHost.Config.size() != CfgVSTiConfig[Id].size())
-                    return true;
-
-                if ((_VSTiHost.Config.size() != 0) && (::memcmp(_VSTiHost.Config.data(), CfgVSTiConfig[Id].data(), _VSTiHost.Config.size()) != 0))
+                if (_EditedVSTiConfig && *_EditedVSTiConfig != CfgVSTiConfig.Get(_VSTiPlugIns[_SelectedPlayer.PlugInIndex].Id))
                     return true;
             }
             else
@@ -1061,8 +1063,6 @@ void RootDialog::UpdateConfigureButton() noexcept
                 const auto & Plugin = _VSTiPlugIns[_SelectedPlayer.PlugInIndex];
 
                 Enable = Plugin.HasEditor;
-
-                _VSTiHost.Config = CfgVSTiConfig[Plugin.Id];
                 break;
             }
 

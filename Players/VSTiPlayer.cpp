@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include "VSTiPlayer.h"
+#include "Configuration.h"
 #include "Resource.h"
 #include "Log.h"
 #include "PlaybackDialogPosition.h"
@@ -185,12 +186,14 @@ Player::~Player()
         std::erase_if(PlaybackPlayers, [this](const PlaybackPlayer & item) { return item.EditorRequest == _hEditorRequest; });
     }
 
-    StopHost();
+    StopHost(true);
 
     if (_hEditorRequest)
         ::CloseHandle(_hEditorRequest);
     if (_hAutoEditorRequest)
         ::CloseHandle(_hAutoEditorRequest);
+    if (_hEditorStateReady)
+        ::CloseHandle(_hEditorStateReady);
 
     SafeDelete(_SrcFrames);
 }
@@ -212,6 +215,7 @@ bool Player::LoadVST(const fs::path & filePath, const playable_location * playba
     if (_hEditorRequest)
     {
         _hAutoEditorRequest = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+        _hEditorStateReady = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
         if (_hAutoEditorRequest)
         {
             if (const HANDLE Closed = ::CreateEventW(nullptr, TRUE, FALSE, nullptr))
@@ -314,10 +318,9 @@ void Player::GetChunk(std::vector<uint8_t> & chunk)
 
 void Player::SetChunk(const void * data, size_t size)
 {
-    if ((_Chunk.size() == 0) || ((_Chunk.size() == size) && (size != 0) && (data != (const void *) _Chunk.data())))
+    if (data != _Chunk.data())
     {
         _Chunk.resize(size);
-
         if (size != 0)
             ::memcpy(_Chunk.data(), data, size);
     }
@@ -330,6 +333,26 @@ void Player::SetChunk(const void * data, size_t size)
 
     if (Code != 0)
         StopHost();
+}
+
+void Player::SavePlaybackConfig(bool closeEditor)
+{
+    WriteBytes(12);
+    WriteBytes(closeEditor ? 1 : 0);
+
+    if (ReadCode() != 0)
+        return;
+
+    uint32_t Size = 0;
+    if (!ReadBytes(&Size, sizeof(Size)) || Size == 0)
+        return;
+
+    std::vector<uint8_t> Config(Size);
+    if (ReadBytes(Config.data(), Size))
+    {
+        CfgVSTiConfig.Set(Id, Config);
+        _Chunk = std::move(Config);
+    }
 }
 
 bool Player::HasEditor()
@@ -380,6 +403,9 @@ bool Player::Startup()
         return false;
     }
 
+    if (_UseSavedConfig)
+        _Chunk = CfgVSTiConfig.Get(Id);
+
     if (!_Chunk.empty())
         SetChunk(_Chunk.data(), _Chunk.size());
 
@@ -420,7 +446,7 @@ bool Player::Startup()
 
 void Player::Shutdown()
 {
-    StopHost();
+    StopHost(true);
 }
 
 void Player::Render(audio_sample * dstFrames, uint32_t dstCount)
@@ -451,6 +477,9 @@ void Player::Render(audio_sample * dstFrames, uint32_t dstCount)
         dstFrames += ToDo * _ChannelCount;
         dstCount -= ToDo;
     }
+
+    if (_hEditorStateReady && ::WaitForSingleObject(_hEditorStateReady, 0) == WAIT_OBJECT_0)
+        SavePlaybackConfig(false);
 }
 
 void Player::SendEvent(uint32_t data)
@@ -620,6 +649,9 @@ bool Player::StartHost()
             .hStdError   = ::GetStdHandle(STD_ERROR_HANDLE),
         };
 
+        if (_hEditorStateReady)
+            ::ResetEvent(_hEditorStateReady);
+
         // Pass editor state and requests independently of the decoder's audio commands.
         const struct
         {
@@ -630,6 +662,7 @@ bool Player::StartHost()
         } EditorHandles[] = {
             { EditorDarkModeEvent(), SYNCHRONIZE, " --theme=", true },
             { _EditorPosition, FILE_MAP_WRITE, " --position=", true },
+            { _hEditorStateReady, SYNCHRONIZE | EVENT_MODIFY_STATE, " --state=", true },
             { _hEditorRequest, SYNCHRONIZE, " ", false },
             { _hAutoEditorRequest, SYNCHRONIZE, " ", false },
             { _EditorClosed.get(), SYNCHRONIZE | EVENT_MODIFY_STATE, " ", false }
@@ -740,7 +773,7 @@ bool Player::StartHost()
     return true;
 }
 
-void Player::StopHost() noexcept
+void Player::StopHost(bool saveConfig) noexcept
 {
     if (_IsTerminating || (_hReadEvent == 0))
         return;
@@ -750,6 +783,18 @@ void Player::StopHost() noexcept
 
     if (_hProcess)
     {
+        if (saveConfig && _IsStarted && _hEditorStateReady && IsHostRunning())
+        {
+            try
+            {
+                SavePlaybackConfig(true);
+            }
+            catch (const std::exception & Error)
+            {
+                Log.AtError().Write(STR_COMPONENT_BASENAME " could not save the VSTi settings: %s", Error.what());
+            }
+        }
+
         WriteBytes(0);
 
         ::WaitForSingleObject(_hProcess, 5000);

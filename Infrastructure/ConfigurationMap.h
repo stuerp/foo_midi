@@ -11,16 +11,17 @@
 #include <sdk/cfg_var_legacy.h>
 
 #include <map>
+#include <mutex>
 
 using namespace cfg_var_modern;
 
 /// <summary>
 /// Implements a configuration variable for maps that uses integer keys.
 /// </summary>
-class cfg_vsti_map : public cfg_var_legacy::cfg_var, public std::map<uint32_t, std::vector<uint8_t>>
+class cfg_vsti_map : public cfg_var_legacy::cfg_var
 {
 public:
-    cfg_vsti_map(const GUID & guid) noexcept : cfg_var_legacy::cfg_var(guid), std::map<uint32_t, std::vector<uint8_t>>() { }
+    cfg_vsti_map(const GUID & guid) noexcept : cfg_var_legacy::cfg_var(guid) { }
 
     cfg_vsti_map(const cfg_vsti_map &) = delete;
     cfg_vsti_map(const cfg_vsti_map &&) = delete;
@@ -29,6 +30,19 @@ public:
     cfg_vsti_map& operator=(cfg_vsti_map &&) = delete;
 
     virtual ~cfg_vsti_map() = default;
+
+    std::vector<uint8_t> Get(uint32_t id) const
+    {
+        const std::lock_guard Lock(_Mutex);
+        const auto It = _Values.find(id);
+        return It == _Values.end() ? std::vector<uint8_t>{} : It->second;
+    }
+
+    void Set(uint32_t id, std::vector<uint8_t> value)
+    {
+        const std::lock_guard Lock(_Mutex);
+        _Values[id] = std::move(value);
+    }
 
     #pragma region cfg_var_writer
 
@@ -39,9 +53,10 @@ public:
 
         stream_writer_formatter<> out(*streamWriter, handleAbort);
 
-        out.write_int(size());
+        const std::lock_guard Lock(_Mutex);
+        out.write_int(_Values.size());
 
-        for (auto it = begin(); it != end(); ++it)
+        for (auto it = _Values.begin(); it != _Values.end(); ++it)
         {
             out.write_int(it->first);
 
@@ -64,8 +79,8 @@ public:
             return;
 
         stream_reader_formatter<> in(*streamReader, handleAbort);
-
-        clear();
+        const std::lock_guard Lock(_Mutex);
+        _Values.clear();
 
         t_size Count;
 
@@ -86,11 +101,15 @@ public:
             for (size_t j = 0; j < (size_t) Size; ++j)
                 in >> Value[j];
 
-            operator[](Key) = Value;
+            _Values[Key] = std::move(Value);
         }
     }
 
     #pragma endregion
+
+private:
+    mutable std::mutex _Mutex;
+    std::map<uint32_t, std::vector<uint8_t>> _Values;
 };
 
 /// <summary>
